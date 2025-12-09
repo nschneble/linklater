@@ -1,4 +1,5 @@
 # Linklater
 A del.icio.us reinterpretation of Instapaper.
 
-![richard-linklater](https://github.com/user-attachments/assets/7bd86236-50ba-46dd-9da8-265cda79ff26)
+![Richard Linklater](https://github.com/user-attachments/assets/7bd86236-50ba-46dd-9da8-265cda79ff26)
+_Source: [Bryan Berlin](https://commons.wikimedia.org/w/index.php?curid=176305476)_
