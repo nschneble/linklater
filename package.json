@@ -1,21 +1,17 @@
 {
   "name": "linklater",
+  "private": true,
   "version": "1.0.0",
   "description": "A del.icio.us reinterpretation of Instapaper.",
-  "main": "index.js",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "concurrently \"npm run dev --workspace @linklater/api\" \"npm run dev --workspace @linklater/web\"",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nschneble/linklater.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/nschneble/linklater/issues"
-  },
-  "homepage": "https://github.com/nschneble/linklater#readme"
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
 }
