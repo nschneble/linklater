@@ -67,3 +67,93 @@ export async function getMe() {
     method: 'GET',
   });
 }
+
+export interface Link {
+  id: string;
+  url: string;
+  title: string;
+  host: string;
+  notes?: string | null;
+  archivedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function getLinks(options?: {
+  search?: string;
+  archived?: boolean;
+}): Promise<Link[]> {
+  const params = new URLSearchParams();
+  if (options?.search) params.set('search', options.search);
+  if (options?.archived !== undefined) {
+    params.set('archived', options.archived ? 'true' : 'false');
+  }
+
+  const query = params.toString();
+  const path = query ? `/links?${query}` : '/links';
+
+  return apiFetch<Link[]>(path);
+}
+
+export async function createLink(input: {
+  url: string;
+  title?: string;
+  notes?: string;
+}): Promise<Link> {
+  return apiFetch<Link>('/links', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateLink(
+  id: string,
+  input: { title?: string; notes?: string },
+): Promise<Link> {
+  return apiFetch<Link>(`/links/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function archiveLink(id: string): Promise<Link> {
+  return apiFetch<Link>(`/links/${id}/archive`, {
+    method: 'POST',
+  });
+}
+
+export async function deleteLink(id: string): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>(`/links/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getRandomLink(options?: {
+  archived?: boolean;
+}): Promise<{ link: Link | null }> {
+  const params = new URLSearchParams();
+  if (options?.archived) params.set('archived', 'true');
+  const query = params.toString();
+  const path = query ? `/links/random?${query}` : '/links/random';
+
+  return apiFetch<{ link: Link | null }>(path);
+}
+
+export async function updateMe(input: {
+  email?: string;
+  password?: string;
+}) {
+  return apiFetch<{ id: string; email: string }>(
+    '/users/me',
+    {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function deleteMe() {
+  return apiFetch<{ success: boolean }>('/users/me', {
+    method: 'DELETE',
+  });
+}
