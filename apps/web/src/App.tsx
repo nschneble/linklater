@@ -5,6 +5,7 @@ import {
   getLinks,
   createLink,
   archiveLink,
+  unarchiveLink,
   deleteLink,
   getRandomLink,
   updateMe,
@@ -193,11 +194,11 @@ function LinkForm({ onCreated }: { onCreated: (link: Link) => void }) {
 
 function LinkCard({
   link,
-  onArchive,
+  onArchiveToggle,
   onDelete,
 }: {
   link: Link;
-  onArchive: () => void;
+  onArchiveToggle: () => void;
   onDelete: () => void;
 }) {
   const created = new Date(link.createdAt).toLocaleString();
@@ -230,10 +231,10 @@ function LinkCard({
       </div>
       <div className="flex items-center gap-2 justify-end">
         <button
-          onClick={onArchive}
+          onClick={onArchiveToggle}
           className="px-2.5 py-1.5 text-xs rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800"
         >
-          Archive
+          {link.archivedAt ? 'Unarchive' : 'Archive'}
         </button>
         <button
           onClick={onDelete}
@@ -416,12 +417,15 @@ function AppShell() {
     setLinks((prev) => [link, ...prev]);
   };
 
-  const handleArchive = async (id: string) => {
+  const handleToggleArchive = async (link: Link) => {
     try {
-      const updated = await archiveLink(id);
-      setLinks((prev) => prev.map((l) => (l.id === id ? updated : l)));
+      const updated = link.archivedAt
+        ? await unarchiveLink(link.id)
+        : await archiveLink(link.id);
+
+      setLinks((prev) => prev.map((l) => (l.id === link.id ? updated : l)));
     } catch (e) {
-      console.error('Failed to archive link', e);
+      console.error('Failed to toggle archive state', e);
     }
   };
 
@@ -607,7 +611,7 @@ function AppShell() {
                   <LinkCard
                     key={link.id}
                     link={link}
-                    onArchive={() => handleArchive(link.id)}
+                    onArchiveToggle={() => handleToggleArchive(link)}
                     onDelete={() => handleDelete(link.id)}
                   />
                 ))

@@ -110,6 +110,17 @@ export class LinksService {
     return link;
   }
 
+  async unarchive(userId: string, id: string) {
+    await this.findOne(userId, id);
+
+    const link = await this.prisma.link.update({
+      where: { id },
+      data: { archivedAt: null },
+    });
+
+    return link;
+  }
+
   async remove(userId: string, id: string) {
     await this.findOne(userId, id);
 

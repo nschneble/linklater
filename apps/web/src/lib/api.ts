@@ -122,6 +122,12 @@ export async function archiveLink(id: string): Promise<Link> {
   });
 }
 
+export async function unarchiveLink(id: string): Promise<Link> {
+  return apiFetch<Link>(`/links/${id}/unarchive`, {
+    method: 'POST',
+  });
+}
+
 export async function deleteLink(id: string): Promise<{ success: boolean }> {
   return apiFetch<{ success: boolean }>(`/links/${id}`, {
     method: 'DELETE',

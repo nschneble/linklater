@@ -81,6 +81,12 @@ export class LinksController {
     return this.linksService.archive(userId, id);
   }
 
+  @Post(':id/unarchive')
+  async unarchive(@Req() req: any, @Param('id') id: string) {
+    const userId = req.user.userId;
+    return this.linksService.unarchive(userId, id);
+  }
+
   @Delete(':id')
   async remove(@Req() req: any, @Param('id') id: string) {
     const userId = req.user.userId;
