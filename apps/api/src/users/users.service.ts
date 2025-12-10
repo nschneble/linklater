@@ -22,6 +22,33 @@ export class UsersService {
     return safeUser;
   }
 
+  async updateMe(id: string, data: { email?: string; password?: string }) {
+    const updateData: { email?: string; passwordHash?: string } = {};
+
+    if (data.email) {
+      const existing = await this.prisma.user.findUnique({
+        where: { email: data.email },
+      });
+      if (existing && existing.id !== id) {
+        throw new ConflictException('Email already in use');
+      }
+      updateData.email = data.email;
+    }
+
+    if (data.password) {
+      const passwordHash = await bcrypt.hash(data.password, 12);
+      updateData.passwordHash = passwordHash;
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id },
+      data: updateData,
+    });
+
+    const { passwordHash, ...safe } = user;
+    return safe;
+  }
+
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email } });
   }
