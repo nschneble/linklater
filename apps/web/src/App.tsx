@@ -125,8 +125,12 @@ function AuthForm() {
 }
 
 function LinkForm({ onCreated }: { onCreated: (link: Link) => void }) {
-  const [url, setUrl] = useState('');
-  const [title, setTitle] = useState('');
+  const params = new URLSearchParams(window.location.search);
+  const initialUrl = params.get('url') ?? '';
+  const initialTitle = params.get('title') ?? '';
+
+  const [url, setUrl] = useState(initialUrl);
+  const [title, setTitle] = useState(initialTitle);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
