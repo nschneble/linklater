@@ -247,7 +247,7 @@ function LinkCard({
 }
 
 function SettingsView() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateEmail } = useAuth();
   const [email, setEmail] = useState(user?.email ?? '');
   const [password, setPassword] = useState('');
   const [saving, setSaving] = useState(false);
@@ -269,6 +269,9 @@ function SettingsView() {
         setMessage('Nothing to update');
       } else {
         await updateMe(payload);
+        if (payload.email) {
+          updateEmail(payload.email);
+        }
         setMessage('Settings updated');
       }
       setPassword('');
