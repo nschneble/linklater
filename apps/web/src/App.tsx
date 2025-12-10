@@ -1,13 +1,187 @@
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
+import { useAuth } from './auth/AuthContext';
 import './App.css';
 
-function App() {
+type Mode = 'login' | 'register';
+
+function AuthForm() {
+  const { login, register } = useAuth();
+  const [mode, setMode] = useState<Mode>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      if (mode === 'login') {
+        await login(email, password);
+      } else {
+        await register(email, password);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <>
-      <h1 className="text-4xl text-emerald-400">Linklater</h1>
-      <p className="italic">A del.icio.us reinterpretation of Instapaper.</p>
-    </>
-  )
+    <div className="max-w-md w-full mx-auto bg-slate-900/80 border border-slate-700 rounded-2xl shadow-xl p-8">
+      <h1 className="text-3xl font-bold text-slate-50 mb-2 text-center">
+        Linklater
+      </h1>
+      <p className="text-slate-400 text-center mb-6">
+        Save links now, read them later.
+      </p>
+
+      <div className="flex mb-6 rounded-full bg-slate-800 p-1">
+        <button
+          type="button"
+          onClick={() => setMode('login')}
+          className={`flex-1 py-2 text-sm rounded-full transition ${
+            mode === 'login'
+              ? 'bg-slate-100 text-slate-900 font-semibold'
+              : 'text-slate-400'
+          }`}
+        >
+          Log in
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('register')}
+          className={`flex-1 py-2 text-sm rounded-full transition ${
+            mode === 'register'
+              ? 'bg-slate-100 text-slate-900 font-semibold'
+              : 'text-slate-400'
+          }`}
+        >
+          Sign up
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <label className="block text-sm font-medium text-slate-200">
+          Email
+          <input
+            type="email"
+            autoComplete="email"
+            className="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </label>
+
+        <label className="block text-sm font-medium text-slate-200">
+          Password
+          <input
+            type="password"
+            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            className="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </label>
+
+        {error && (
+          <p className="text-sm text-rose-400 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2">
+            {error}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-400 text-slate-950 font-semibold py-2.5 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-wait transition"
+        >
+          {loading ? 'Working…' : mode === 'login' ? 'Log in' : 'Create account'}
+        </button>
+      </form>
+
+      <p className="mt-4 text-xs text-center text-slate-500">
+        This is a demo app for a take-home assignment. Please don&apos;t use a real
+        password 🙃
+      </p>
+    </div>
+  );
 }
 
-export default App;
+function AppShell() {
+  const { user, logout } = useAuth();
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-50">
+      <header className="border-b border-slate-800">
+        <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-xl bg-emerald-400 flex items-center justify-center text-slate-950 font-black text-lg">
+              L
+            </div>
+            <div>
+              <div className="font-semibold text-sm">Linklater</div>
+              <div className="text-xs text-slate-400">
+                Your personal read-it-later pile
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 text-sm">
+            <span className="text-slate-300">{user?.email}</span>
+            <button
+              onClick={logout}
+              className="px-3 py-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-4 py-8">
+        <h2 className="text-2xl font-semibold mb-2">Your Links</h2>
+        <p className="text-slate-400 mb-4">
+          Link management UI coming up next. For now, you&apos;re logged in and the
+          API connection is live.
+        </p>
+        <div className="rounded-2xl border border-dashed border-slate-700 p-6 text-sm text-slate-400">
+          We&apos;ll add:
+          <ul className="list-disc list-inside mt-2 space-y-1">
+            <li>List of saved links</li>
+            <li>Search, archive, delete actions</li>
+            <li>Random &quot;Surprise me&quot; link</li>
+            <li>Settings page (email/password, account deletion)</li>
+          </ul>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default function App() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-200">
+        <div className="animate-pulse text-sm text-slate-400">
+          Warming up Linklater…
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 px-4">
+        <AuthForm />
+      </div>
+    );
+  }
+
+  return <AppShell />;
+}
