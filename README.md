@@ -8,9 +8,9 @@ _Source: [Bryan Berlin](https://commons.wikimedia.org/w/index.php?curid=17630547
 
 ```js
 javascript:(function(){
+  const base = 'http://localhost:5173';
   const url = encodeURIComponent(location.href);
   const title = encodeURIComponent(document.title);
-  const base = 'http://localhost:5173';
-  window.open(`${base}/?url=${url}&title=${title}`, '_blank');
+  window.open(`${base}/?url=${url}&title=${title}`, '_blank','noopener,noreferrer');
 })();
 ```
