@@ -1,8 +1,20 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useAuth } from './auth/AuthContext';
-import './App.css';
+import { useTheme } from './theme/ThemeContext';
+import {
+  getLinks,
+  createLink,
+  archiveLink,
+  deleteLink,
+  getRandomLink,
+  updateMe,
+  deleteMe,
+  type Link,
+} from './lib/api';
+import { gravatarUrl } from './lib/gravatar';
 
 type Mode = 'login' | 'register';
+type AppView = 'links' | 'settings';
 
 function AuthForm() {
   const { login, register } = useAuth();
@@ -111,52 +123,497 @@ function AuthForm() {
   );
 }
 
-function AppShell() {
-  const { user, logout } = useAuth();
+function LinkForm({ onCreated }: { onCreated: (link: Link) => void }) {
+  const [url, setUrl] = useState('');
+  const [title, setTitle] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSaving(true);
+    try {
+      const link = await createLink({ url, title: title || undefined });
+      onCreated(link);
+      setUrl('');
+      setTitle('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to save link');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-50">
-      <header className="border-b border-slate-800">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-3 sm:flex-row sm:items-end"
+    >
+      <div className="flex-1">
+        <label className="block text-xs font-medium text-slate-300">
+          URL
+          <input
+            type="url"
+            required
+            placeholder="https://example.com/article"
+            className="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+        </label>
+      </div>
+      <div className="flex-1">
+        <label className="block text-xs font-medium text-slate-300">
+          Title (optional)
+          <input
+            type="text"
+            placeholder="If blank, we&apos;ll use the URL"
+            className="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </label>
+      </div>
+      <button
+        type="submit"
+        disabled={saving}
+        className="sm:w-auto w-full inline-flex items-center justify-center rounded-lg bg-emerald-400 text-slate-950 font-semibold py-2.5 px-4 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-wait transition"
+      >
+        {saving ? 'Saving…' : 'Save link'}
+      </button>
+      {error && (
+        <p className="text-xs text-rose-400 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2 sm:ml-2">
+          {error}
+        </p>
+      )}
+    </form>
+  );
+}
+
+function LinkCard({
+  link,
+  onArchive,
+  onDelete,
+}: {
+  link: Link;
+  onArchive: () => void;
+  onDelete: () => void;
+}) {
+  const created = new Date(link.createdAt).toLocaleString();
+  const archived = link.archivedAt
+    ? new Date(link.archivedAt).toLocaleString()
+    : null;
+
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="flex-1 min-w-0">
+        <a
+          href={link.url}
+          target="_blank"
+          rel="noreferrer"
+          className="text-sm font-semibold text-slate-50 hover:text-emerald-300 truncate block"
+        >
+          {link.title}
+        </a>
+        <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
+          <span className="truncate">{link.host}</span>
+          <span className="w-1 h-1 rounded-full bg-slate-600" />
+          <span>Saved {created}</span>
+          {archived && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-slate-600" />
+              <span className="text-amber-300">Archived {archived}</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 justify-end">
+        <button
+          onClick={onArchive}
+          className="px-2.5 py-1.5 text-xs rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800"
+        >
+          Archive
+        </button>
+        <button
+          onClick={onDelete}
+          className="px-2.5 py-1.5 text-xs rounded-full border border-rose-700 text-rose-200 hover:bg-rose-900/70"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SettingsView() {
+  const { user, logout } = useAuth();
+  const [email, setEmail] = useState(user?.email ?? '');
+  const [password, setPassword] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const handleSave = async (e: FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const payload: { email?: string; password?: string } = {};
+      if (email && email !== user?.email) payload.email = email;
+      if (password) payload.password = password;
+
+      if (!payload.email && !payload.password) {
+        setMessage('Nothing to update');
+      } else {
+        await updateMe(payload);
+        setMessage('Settings updated');
+      }
+      setPassword('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to update settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteMe();
+      logout();
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete account');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <form onSubmit={handleSave} className="space-y-4 max-w-md">
+        <h2 className="text-xl font-semibold text-slate-50">Account settings</h2>
+
+        <label className="block text-xs font-medium text-slate-300">
+          Email
+          <input
+            type="email"
+            className="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </label>
+
+        <label className="block text-xs font-medium text-slate-300">
+          New password
+          <input
+            type="password"
+            placeholder="Leave blank to keep current password"
+            className="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </label>
+
+        {message && (
+          <p className="text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-700 rounded-lg px-3 py-2">
+            {message}
+          </p>
+        )}
+        {error && (
+          <p className="text-xs text-rose-300 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2">
+            {error}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={saving}
+          className="inline-flex items-center justify-center rounded-lg bg-emerald-400 text-slate-950 font-semibold py-2.5 px-4 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-wait transition"
+        >
+          {saving ? 'Saving…' : 'Save changes'}
+        </button>
+      </form>
+
+      <div className="border border-rose-800/70 bg-rose-950/40 rounded-xl p-4 max-w-md">
+        <h3 className="text-sm font-semibold text-rose-200 mb-1">
+          Danger zone
+        </h3>
+        <p className="text-xs text-rose-200/80 mb-3">
+          Deleting your account will remove all your saved links. This cannot be
+          undone.
+        </p>
+        {!confirmDelete ? (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="px-3 py-1.5 rounded-full border border-rose-700 text-rose-200 text-xs hover:bg-rose-900/60"
+          >
+            Delete my account
+          </button>
+        ) : (
+          <div className="flex gap-2 items-center text-xs">
+            <span className="text-rose-200">
+              Are you sure? This is permanent.
+            </span>
+            <button
+              onClick={handleDelete}
+              className="px-3 py-1.5 rounded-full bg-rose-600 text-rose-50 hover:bg-rose-500"
+            >
+              Yes, delete
+            </button>
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="px-3 py-1.5 rounded-full border border-slate-700 text-slate-200"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AppShell() {
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const [view, setView] = useState<AppView>('links');
+  const [links, setLinks] = useState<Link[]>([]);
+  const [loadingLinks, setLoadingLinks] = useState(true);
+  const [search, setSearch] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
+  const [randomLoading, setRandomLoading] = useState(false);
+  const [randomError, setRandomError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setLoadingLinks(true);
+      try {
+        const data = await getLinks({
+          search: search || undefined,
+          archived: showArchived ? true : undefined,
+        });
+        if (!cancelled) setLinks(data);
+      } catch (e) {
+        console.error('Failed to load links', e);
+      } finally {
+        if (!cancelled) setLoadingLinks(false);
+      }
+    };
+
+    const timeout = setTimeout(load, 200);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [search, showArchived]);
+
+  const handleCreated = (link: Link) => {
+    setLinks((prev) => [link, ...prev]);
+  };
+
+  const handleArchive = async (id: string) => {
+    try {
+      const updated = await archiveLink(id);
+      setLinks((prev) => prev.map((l) => (l.id === id ? updated : l)));
+    } catch (e) {
+      console.error('Failed to archive link', e);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteLink(id);
+      setLinks((prev) => prev.filter((l) => l.id !== id));
+    } catch (e) {
+      console.error('Failed to delete link', e);
+    }
+  };
+
+  const handleRandom = async () => {
+    setRandomError(null);
+    setRandomLoading(true);
+    try {
+      const { link } = await getRandomLink({ archived: showArchived });
+      if (!link) {
+        setRandomError('No links available to randomize');
+      } else {
+        window.open(link.url, '_blank', 'noopener,noreferrer');
+      }
+    } catch (e) {
+      setRandomError('Failed to get a random link');
+    } finally {
+      setRandomLoading(false);
+    }
+  };
+
+  const avatarUrl = user ? gravatarUrl(user.email, 64) : '';
+
+  return (
+    <div
+      className={`min-h-screen ${
+        theme === 'light'
+          ? 'bg-slate-50 text-slate-900'
+          : 'bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-50'
+      }`}
+    >
+      <header
+        className={`border-b ${
+          theme === 'light' ? 'border-slate-200 bg-white' : 'border-slate-800'
+        }`}
+      >
         <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-emerald-400 flex items-center justify-center text-slate-950 font-black text-lg">
+            <div
+              className={`h-8 w-8 rounded-xl flex items-center justify-center text-slate-950 font-black text-lg ${
+                theme === 'light' ? 'bg-emerald-400' : 'bg-emerald-400'
+              }`}
+            >
               L
             </div>
             <div>
-              <div className="font-semibold text-sm">Linklater</div>
-              <div className="text-xs text-slate-400">
+              <div
+                className={`font-semibold text-sm ${
+                  theme === 'light' ? 'text-slate-900' : 'text-slate-50'
+                }`}
+              >
+                Linklater
+              </div>
+              <div
+                className={`text-xs ${
+                  theme === 'light' ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
                 Your personal read-it-later pile
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-slate-300">{user?.email}</span>
+          <div className="flex items-center gap-3 text-sm">
             <button
-              onClick={logout}
-              className="px-3 py-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs"
+              onClick={toggleTheme}
+              className="px-2 py-1.5 rounded-full border border-slate-700/70 text-xs text-slate-200 hover:bg-slate-800/70"
             >
-              Logout
+              {theme === 'light' ? 'Dark mode' : 'Light mode'}
             </button>
+
+            <button
+              onClick={() => setView('links')}
+              className={`px-2 py-1.5 rounded-full text-xs ${
+                view === 'links'
+                  ? 'bg-slate-100 text-slate-900 font-semibold'
+                  : 'text-slate-300 hover:bg-slate-800'
+              }`}
+            >
+              Links
+            </button>
+            <button
+              onClick={() => setView('settings')}
+              className={`px-2 py-1.5 rounded-full text-xs ${
+                view === 'settings'
+                  ? 'bg-slate-100 text-slate-900 font-semibold'
+                  : 'text-slate-300 hover:bg-slate-800'
+              }`}
+            >
+              Settings
+            </button>
+
+            <div className="flex items-center gap-2">
+              {avatarUrl && (
+                <img
+                  src={avatarUrl}
+                  alt={user?.email}
+                  className="h-8 w-8 rounded-full border border-slate-700"
+                />
+              )}
+              <span className="hidden sm:inline text-slate-300 text-xs">
+                {user?.email}
+              </span>
+              <button
+                onClick={logout}
+                className="px-3 py-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        <h2 className="text-2xl font-semibold mb-2">Your Links</h2>
-        <p className="text-slate-400 mb-4">
-          Link management UI coming up next. For now, you&apos;re logged in and the
-          API connection is live.
-        </p>
-        <div className="rounded-2xl border border-dashed border-slate-700 p-6 text-sm text-slate-400">
-          We&apos;ll add:
-          <ul className="list-disc list-inside mt-2 space-y-1">
-            <li>List of saved links</li>
-            <li>Search, archive, delete actions</li>
-            <li>Random &quot;Surprise me&quot; link</li>
-            <li>Settings page (email/password, account deletion)</li>
-          </ul>
-        </div>
+      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+        {view === 'links' ? (
+          <>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold">
+                  {showArchived ? 'Archived links' : 'Your links'}
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Add links, search, archive, and let Linklater pick something
+                  at random when you&apos;re indecisive.
+                </p>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <label className="inline-flex items-center gap-2 text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={showArchived}
+                    onChange={(e) => setShowArchived(e.target.checked)}
+                    className="w-3 h-3 rounded border-slate-600 bg-slate-950"
+                  />
+                  Show only archived
+                </label>
+                <button
+                  onClick={handleRandom}
+                  disabled={randomLoading}
+                  className="px-3 py-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs disabled:opacity-60"
+                >
+                  {randomLoading ? 'Rolling…' : 'Random link'}
+                </button>
+              </div>
+            </div>
+
+            <LinkForm onCreated={handleCreated} />
+
+            <div className="flex items-center gap-2 mt-4">
+              <input
+                type="search"
+                placeholder="Search by title, URL, or host…"
+                className="flex-1 rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
+            {randomError && (
+              <p className="text-xs text-amber-300 bg-amber-950/40 border border-amber-800 rounded-lg px-3 py-2">
+                {randomError}
+              </p>
+            )}
+
+            <div className="mt-4 space-y-3">
+              {loadingLinks ? (
+                <p className="text-sm text-slate-400">Loading links…</p>
+              ) : links.length === 0 ? (
+                <p className="text-sm text-slate-400">
+                  No links yet. Paste a URL above to get started.
+                </p>
+              ) : (
+                links.map((link) => (
+                  <LinkCard
+                    key={link.id}
+                    link={link}
+                    onArchive={() => handleArchive(link.id)}
+                    onDelete={() => handleDelete(link.id)}
+                  />
+                ))
+              )}
+            </div>
+          </>
+        ) : (
+          <SettingsView />
+        )}
       </main>
     </div>
   );
