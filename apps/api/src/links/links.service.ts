@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { LinkWhereInput } from '@prisma/client';
 
 export interface CreateLinkInput {
   url: string;
@@ -49,7 +50,7 @@ export class LinksService {
   async findAll(userId: string, query: LinksQuery) {
     const { search, archived } = query;
 
-    const where: any = {
+    const where: LinkWhereInput = {
       userId,
     };
 
@@ -132,7 +133,7 @@ export class LinksService {
   }
 
   async getRandom(userId: string, archived = false) {
-    const where: any = {
+    const where: LinkWhereInput = {
       userId,
       archivedAt: archived ? { not: null } : null,
     };

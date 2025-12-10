@@ -8,10 +8,15 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace @linklater/api\" \"npm run dev --workspace @linklater/web\"",
-    "lint": "npm run lint --workspaces",
-    "test": "npm run test --workspaces"
+    "lint": "npm run lint --workspace @linklater/api && npm run lint --workspace @linklater/web",
+    "test": "npm run test --workspace @linklater/api && npm run test --workspace @linklater/web"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "@eslint/js": "^9.39.1",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.7.4",
+    "typescript-eslint": "^8.49.0"
   }
 }

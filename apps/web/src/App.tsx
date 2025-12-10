@@ -35,8 +35,10 @@ function AuthForm() {
       } else {
         await register(email, password);
       }
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Something went wrong';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -143,8 +145,10 @@ function LinkForm({ onCreated }: { onCreated: (link: Link) => void }) {
       onCreated(link);
       setUrl('');
       setTitle('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to save link');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to save link';
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -280,8 +284,10 @@ function SettingsView() {
         setMessage('Settings updated');
       }
       setPassword('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to update settings');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to update settings';
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -291,8 +297,10 @@ function SettingsView() {
     try {
       await deleteMe();
       logout();
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete account');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to delete account';
+      setError(message);
     }
   };
 
@@ -428,8 +436,8 @@ function AppShell() {
         : await archiveLink(link.id);
 
       setLinks((prev) => prev.map((l) => (l.id === link.id ? updated : l)));
-    } catch (e) {
-      console.error('Failed to toggle archive state', e);
+    } catch (err: unknown) {
+      console.error('Failed to toggle archive state', err);
     }
   };
 
@@ -437,8 +445,8 @@ function AppShell() {
     try {
       await deleteLink(id);
       setLinks((prev) => prev.filter((l) => l.id !== id));
-    } catch (e) {
-      console.error('Failed to delete link', e);
+    } catch (err: unknown) {
+      console.error('Failed to delete link', err);
     }
   };
 
@@ -452,8 +460,8 @@ function AppShell() {
       } else {
         window.open(link.url, '_blank', 'noopener,noreferrer');
       }
-    } catch (e) {
-      setRandomError('Failed to get a random link');
+    } catch (err: unknown) {
+      setRandomError('Failed to get a random link', err);
     } finally {
       setRandomLoading(false);
     }

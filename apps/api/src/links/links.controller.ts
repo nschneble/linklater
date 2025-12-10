@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { LinksService } from './links.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import type { AuthRequest } from '../auth/auth-request.type';
 
 @Controller('links')
 @UseGuards(JwtAuthGuard)
@@ -20,7 +21,7 @@ export class LinksController {
 
   @Post()
   async create(
-    @Req() req: any,
+    @Req() req: AuthRequest,
     @Body() body: { url: string; title?: string; notes?: string },
   ) {
     const userId = req.user.userId;
@@ -29,13 +30,13 @@ export class LinksController {
 
   @Get()
   async findAll(
-    @Req() req: any,
+    @Req() req: AuthRequest,
     @Query('search') search?: string,
     @Query('archived') archived?: string,
   ) {
     const userId = req.user.userId;
 
-    let archivedFlag: boolean | undefined = undefined;
+    let archivedFlag: boolean | undefined;
     if (archived === 'true') archivedFlag = true;
     if (archived === 'false') archivedFlag = false;
 
@@ -47,7 +48,7 @@ export class LinksController {
 
   @Get('random')
   async random(
-    @Req() req: any,
+    @Req() req: AuthRequest,
     @Query('archived') archived?: string,
   ) {
     const userId = req.user.userId;
@@ -60,14 +61,14 @@ export class LinksController {
   }
 
   @Get(':id')
-  async findOne(@Req() req: any, @Param('id') id: string) {
+  async findOne(@Req() req: AuthRequest, @Param('id') id: string) {
     const userId = req.user.userId;
     return this.linksService.findOne(userId, id);
   }
 
   @Patch(':id')
   async update(
-    @Req() req: any,
+    @Req() req: AuthRequest,
     @Param('id') id: string,
     @Body() body: { title?: string; notes?: string },
   ) {
@@ -76,19 +77,19 @@ export class LinksController {
   }
 
   @Post(':id/archive')
-  async archive(@Req() req: any, @Param('id') id: string) {
+  async archive(@Req() req: AuthRequest, @Param('id') id: string) {
     const userId = req.user.userId;
     return this.linksService.archive(userId, id);
   }
 
   @Post(':id/unarchive')
-  async unarchive(@Req() req: any, @Param('id') id: string) {
+  async unarchive(@Req() req: AuthRequest, @Param('id') id: string) {
     const userId = req.user.userId;
     return this.linksService.unarchive(userId, id);
   }
 
   @Delete(':id')
-  async remove(@Req() req: any, @Param('id') id: string) {
+  async remove(@Req() req: AuthRequest, @Param('id') id: string) {
     const userId = req.user.userId;
     return this.linksService.remove(userId, id);
   }

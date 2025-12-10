@@ -18,7 +18,7 @@ export class UsersService {
       data: { email, passwordHash },
     });
 
-    const { passwordHash: _, ...safeUser } = user;
+    const { passwordHash: _passwordHash, ...safeUser } = user;
     return safeUser;
   }
 
@@ -45,7 +45,7 @@ export class UsersService {
       data: updateData,
     });
 
-    const { passwordHash, ...safe } = user;
+    const { passwordHash: _passwordHash, ...safe } = user;
     return safe;
   }
 
