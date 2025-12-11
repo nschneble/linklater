@@ -197,7 +197,7 @@ function LinkForm({ onCreated }: { onCreated: (link: Link) => void }) {
       <button
         type="submit"
         disabled={saving}
-        className="sm:w-auto w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-400 text-slate-950 font-semibold py-2.5 px-4 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-wait transition"
+        className="sm:w-auto w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-400 border-1 border-emerald-400 text-slate-950 font-semibold py-2 px-4 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 hover:border-emerald-300 disabled:opacity-60 disabled:cursor-wait transition"
       >
         <i className="fa-solid fa-bookmark text-xs" />
         {saving ? 'Saving…' : 'Save link'}
