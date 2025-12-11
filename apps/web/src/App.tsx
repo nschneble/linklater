@@ -114,6 +114,7 @@ function AuthForm() {
           disabled={loading}
           className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-400 text-slate-950 font-semibold py-2.5 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-wait transition"
         >
+          <i className="fa-solid fa-right-to-bracket text-xs" />
           {loading ? 'Working…' : mode === 'login' ? 'Log in' : 'Create account'}
         </button>
       </form>
@@ -187,8 +188,9 @@ function LinkForm({ onCreated }: { onCreated: (link: Link) => void }) {
       <button
         type="submit"
         disabled={saving}
-        className="sm:w-auto w-full inline-flex items-center justify-center rounded-lg bg-emerald-400 text-slate-950 font-semibold py-2.5 px-4 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-wait transition"
+        className="sm:w-auto w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-400 text-slate-950 font-semibold py-2.5 px-4 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-wait transition"
       >
+        <i className="fa-solid fa-bookmark text-xs" />
         {saving ? 'Saving…' : 'Save link'}
       </button>
       {error && (
@@ -240,14 +242,23 @@ function LinkCard({
       <div className="flex items-center gap-2 justify-end">
         <button
           onClick={onArchiveToggle}
-          className="px-2.5 py-1.5 text-xs rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800"
+          className="px-2.5 py-1.5 inline-flex items-center gap-1.5 text-xs rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800"
         >
+          <i
+            className={
+              link.archivedAt
+                ? 'fa-solid fa-box-archive text-[0.7rem]'
+                : 'fa-regular fa-square-check text-[0.7rem]'
+            }
+          />
           {link.archivedAt ? 'Unarchive' : 'Archive'}
         </button>
+
         <button
           onClick={onDelete}
-          className="px-2.5 py-1.5 text-xs rounded-full border border-rose-700 text-rose-200 hover:bg-rose-900/70"
+          className="px-2.5 py-1.5 inline-flex items-center gap-1.5 text-xs rounded-full border border-rose-700 text-rose-200 hover:bg-rose-900/70"
         >
+          <i className="fa-solid fa-trash-can text-[0.7rem]" />
           Delete
         </button>
       </div>
@@ -512,8 +523,15 @@ function AppShell() {
           <div className="flex items-center gap-3 text-sm">
             <button
               onClick={toggleTheme}
-              className="px-2 py-1.5 rounded-full border border-slate-700/70 text-xs text-slate-200 hover:bg-slate-800/70"
+              className="px-2 py-1.5 inline-flex items-center gap-1.5 rounded-full border border-slate-700/70 text-xs text-slate-200 hover:bg-slate-800/70"
             >
+              <i
+                className={
+                  theme === 'light'
+                    ? 'fa-solid fa-moon text-[0.7rem]'
+                    : 'fa-solid fa-sun text-[0.7rem]'
+                }
+              />
               {theme === 'light' ? 'Dark mode' : 'Light mode'}
             </button>
 
@@ -586,8 +604,9 @@ function AppShell() {
                 <button
                   onClick={handleRandom}
                   disabled={randomLoading}
-                  className="px-3 py-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs disabled:opacity-60"
+                  className="px-3 py-1.5 inline-flex items-center gap-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs disabled:opacity-60"
                 >
+                  <i className="fa-solid fa-shuffle text-[0.7rem]" />
                   {randomLoading ? 'Rolling…' : 'Random link'}
                 </button>
               </div>
