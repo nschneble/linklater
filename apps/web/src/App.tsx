@@ -417,6 +417,7 @@ function AppShell() {
   const [loadingLinks, setLoadingLinks] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<LinksFilter>('active');
+  const [showLinkForm, setShowLinkForm] = useState(false);
   const [randomLoading, setRandomLoading] = useState(false);
   const [randomError, setRandomError] = useState<string | null>(null);
 
@@ -446,8 +447,14 @@ function AppShell() {
   }, [search, filter]);
 
   const handleCreated = (link: Link) => {
-    if (filter === 'archived') return;
+    // new links are always active; only prepend when viewing active links
+    if (filter === 'archived') {
+      setShowLinkForm(false);
+      return;
+    }
+
     setLinks((prev) => [link, ...prev]);
+    setShowLinkForm(false);
   };
 
   const handleToggleArchive = async (link: Link) => {
@@ -600,80 +607,92 @@ function AppShell() {
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {view === 'links' ? (
           <>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="w-full space-y-1">
-                <h2 className="text-lg font-semibold">
-                  {filter === 'archived' ? 'Archived links' : 'Your links'}
-                </h2>
-                <p className="mt-1 text-xs text-slate-400">
-                  {filter === 'archived'
-                    ? "Review things you've already read or decided to move aside."
-                    : "Add links, search, archive, and let Linklater pick something at random when you're indecisive."}
-                </p>
+            <h2 className="text-lg font-semibold">
+              {filter === 'archived' ? 'Archived links' : 'Your links'}
+            </h2>
+            <p className="mt-1 text-xs text-slate-400">
+              {filter === 'archived'
+                ? "Review things you've already read or decided to move aside."
+                : "Add links, search, archive, and let Linklater pick something at random when you're indecisive."}
+            </p>
 
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="inline-flex rounded-full bg-slate-900/80 border border-slate-700 p-1 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setFilter('active')}
-                      className={`px-3 py-1.5 rounded-full transition ${
-                        filter === 'active'
-                          ? 'bg-slate-100 text-slate-900 font-semibold'
-                          : 'text-slate-300 hover:bg-slate-800'
-                      }`}
-                    >
-                      Your links
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFilter('archived')}
-                      className={`px-3 py-1.5 rounded-full transition ${
-                        filter === 'archived'
-                          ? 'bg-slate-100 text-slate-900 font-semibold'
-                          : 'text-slate-300 hover:bg-slate-800'
-                      }`}
-                    >
-                      Archived
-                    </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleRandom}
-                    disabled={randomLoading}
-                    className="px-3 py-1.5 inline-flex items-center gap-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs disabled:opacity-60"
-                  >
-                    <i className="fa-solid fa-shuffle text-[0.7rem]" />
-                    {randomLoading ? 'Rolling…' : 'Random link'}
-                  </button>
-                </div>
+            {/* Filter pills + Random button */}
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="inline-flex rounded-full bg-slate-900/80 border border-slate-700 p-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setFilter('active')}
+                  className={`px-3 py-1.5 rounded-full transition ${
+                    filter === 'active'
+                      ? 'bg-slate-100 text-slate-900 font-semibold'
+                      : 'text-slate-300 hover:bg-slate-800 cursor-pointer'
+                  }`}
+                >
+                  Your links
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilter('archived')}
+                  className={`px-3 py-1.5 rounded-full transition ${
+                    filter === 'archived'
+                      ? 'bg-slate-100 text-slate-900 font-semibold'
+                      : 'text-slate-300 hover:bg-slate-800 cursor-pointer'
+                  }`}
+                >
+                  Archived
+                </button>
               </div>
+
+              <button
+                type="button"
+                onClick={handleRandom}
+                disabled={randomLoading}
+                className="px-4 py-2 inline-flex items-center gap-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs disabled:opacity-60 disabled:cursor-wait cursor-pointer"
+              >
+                <i className="fa-solid fa-shuffle text-[0.7rem]" />
+                {randomLoading ? 'Rolling…' : 'Random link'}
+              </button>
             </div>
 
-            <LinkForm onCreated={handleCreated} />
-
-            <div className="flex items-center gap-2 mt-4">
+            {/* Search + Add link row */}
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <input
                 type="search"
-                placeholder="Search by title, URL, or host…"
-                className="flex-1 rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search your links…"
+                className="w-full sm:max-w-sm rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/70"
               />
+              <button
+                type="button"
+                onClick={() => setShowLinkForm((open) => !open)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-400 text-slate-950 font-semibold text-xs px-4 py-2 shadow-md shadow-emerald-500/30 hover:bg-emerald-300 transition cursor-pointer"
+              >
+                <i className="fa-solid fa-plus text-[0.7rem]" />
+                {showLinkForm ? 'Hide form' : 'Add link'}
+              </button>
             </div>
 
+            {/* Random error, if any */}
             {randomError && (
-              <p className="text-xs text-amber-300 bg-amber-950/40 border border-amber-800 rounded-lg px-3 py-2">
-                {randomError}
-              </p>
+              <p className="mt-2 text-xs text-rose-300">{randomError}</p>
             )}
 
-            <div className="mt-4 space-y-3">
+            {/* Inline Link form – hidden by default */}
+            {showLinkForm && (
+              <div className="mt-4 rounded-xl border border-slate-700 bg-slate-900/70 p-4">
+                <LinkForm onCreated={handleCreated} />
+              </div>
+            )}
+
+            {/* Link list / empty state */}
+            <div className="mt-6 space-y-3">
               {loadingLinks ? (
-                <p className="text-sm text-slate-400">Loading links…</p>
+                <p className="text-sm text-slate-300">Loading links…</p>
               ) : links.length === 0 ? (
                 <p className="text-sm text-slate-400">
-                  No links yet. Paste a URL above to get started.
+                  No links yet. Click <span className="font-semibold">Add link</span> to
+                  save something for later.
                 </p>
               ) : (
                 links.map((link) => (
