@@ -16,6 +16,7 @@ import { gravatarUrl } from './lib/gravatar';
 
 type Mode = 'login' | 'register';
 type AppView = 'links' | 'settings';
+type LinksFilter = 'active' | 'archived';
 
 function AuthForm() {
   const { login, register } = useAuth();
@@ -415,7 +416,7 @@ function AppShell() {
   const [links, setLinks] = useState<Link[]>([]);
   const [loadingLinks, setLoadingLinks] = useState(true);
   const [search, setSearch] = useState('');
-  const [showArchived, setShowArchived] = useState(false);
+  const [filter, setFilter] = useState<LinksFilter>('active');
   const [randomLoading, setRandomLoading] = useState(false);
   const [randomError, setRandomError] = useState<string | null>(null);
 
@@ -427,7 +428,7 @@ function AppShell() {
       try {
         const data = await getLinks({
           search: search || undefined,
-          archived: showArchived ? true : undefined,
+          archived: filter === 'archived' ? true : false,
         });
         if (!cancelled) setLinks(data);
       } catch (e) {
@@ -442,9 +443,10 @@ function AppShell() {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [search, showArchived]);
+  }, [search, filter]);
 
   const handleCreated = (link: Link) => {
+    if (filter === 'archived') return;
     setLinks((prev) => [link, ...prev]);
   };
 
@@ -454,7 +456,20 @@ function AppShell() {
         ? await unarchiveLink(link.id)
         : await archiveLink(link.id);
 
-      setLinks((prev) => prev.map((l) => (l.id === link.id ? updated : l)));
+      setLinks((prev) => {
+        // if we’re viewing active links and this just became archived, remove it
+        if (filter === 'active' && updated.archivedAt) {
+          return prev.filter((l) => l.id !== link.id);
+        }
+
+        // if we’re viewing archived links and this just became active, remove it
+        if (filter === 'archived' && !updated.archivedAt) {
+          return prev.filter((l) => l.id !== link.id);
+        }
+
+        // otherwise, just update the item in place
+        return prev.map((l) => (l.id === link.id ? updated : l));
+      });
     } catch (err: unknown) {
       console.error('Failed to toggle archive state', err);
     }
@@ -473,7 +488,9 @@ function AppShell() {
     setRandomError(null);
     setRandomLoading(true);
     try {
-      const { link } = await getRandomLink({ archived: showArchived });
+      const { link } = await getRandomLink({
+        archived: filter === 'archived',
+      });
       if (!link) {
         setRandomError('No links available to randomize');
       } else {
@@ -584,33 +601,52 @@ function AppShell() {
         {view === 'links' ? (
           <>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold">
-                  {showArchived ? 'Archived links' : 'Your links'}
+              <div className="w-full space-y-1">
+                <h2 className="text-lg font-semibold">
+                  {filter === 'archived' ? 'Archived links' : 'Your links'}
                 </h2>
-                <p className="text-xs text-slate-400">
-                  Add links, search, archive, and let Linklater pick something
-                  at random when you&apos;re indecisive.
+                <p className="mt-1 text-xs text-slate-400">
+                  {filter === 'archived'
+                    ? "Review things you've already read or decided to move aside."
+                    : "Add links, search, archive, and let Linklater pick something at random when you're indecisive."}
                 </p>
-              </div>
-              <div className="flex items-center gap-3 text-xs">
-                <label className="inline-flex items-center gap-2 text-slate-300">
-                  <input
-                    type="checkbox"
-                    checked={showArchived}
-                    onChange={(e) => setShowArchived(e.target.checked)}
-                    className="w-3 h-3 rounded border-slate-600 bg-slate-950"
-                  />
-                  Only show archived
-                </label>
-                <button
-                  onClick={handleRandom}
-                  disabled={randomLoading}
-                  className="px-3 py-1.5 inline-flex items-center gap-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs disabled:opacity-60"
-                >
-                  <i className="fa-solid fa-shuffle text-[0.7rem]" />
-                  {randomLoading ? 'Rolling…' : 'Random link'}
-                </button>
+
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="inline-flex rounded-full bg-slate-900/80 border border-slate-700 p-1 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setFilter('active')}
+                      className={`px-3 py-1.5 rounded-full transition ${
+                        filter === 'active'
+                          ? 'bg-slate-100 text-slate-900 font-semibold'
+                          : 'text-slate-300 hover:bg-slate-800'
+                      }`}
+                    >
+                      Your links
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFilter('archived')}
+                      className={`px-3 py-1.5 rounded-full transition ${
+                        filter === 'archived'
+                          ? 'bg-slate-100 text-slate-900 font-semibold'
+                          : 'text-slate-300 hover:bg-slate-800'
+                      }`}
+                    >
+                      Archived
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleRandom}
+                    disabled={randomLoading}
+                    className="px-3 py-1.5 inline-flex items-center gap-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs disabled:opacity-60"
+                  >
+                    <i className="fa-solid fa-shuffle text-[0.7rem]" />
+                    {randomLoading ? 'Rolling…' : 'Random link'}
+                  </button>
+                </div>
               </div>
             </div>
 

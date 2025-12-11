@@ -54,8 +54,10 @@ export class LinksService {
       userId,
     };
 
-    if (archived !== undefined) {
-      where.archivedAt = archived ? { not: null } : null;
+    if (archived === true) {
+      where.archivedAt = { not: null };
+    } else if (archived === false) {
+      where.archivedAt = null;
     }
 
     if (search && search.trim() !== '') {
