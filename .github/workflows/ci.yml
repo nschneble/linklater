@@ -9,6 +9,9 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/linklater_test?schema=public'
+      JWT_SECRET: 'ci-jwt-secret'
 
     steps:
       - name: Checkout
@@ -31,9 +34,6 @@ jobs:
         run: npm run lint
 
       - name: Test API
-        env:
-          DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/linklater_test?schema=public'
-          JWT_SECRET: 'ci-jwt-secret'
         run: npm run test --workspace @linklater/api
 
       - name: Test Web
