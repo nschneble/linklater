@@ -19,8 +19,15 @@ const STORAGE_KEY = 'linklater_theme';
 
 function getInitialTheme(): Theme {
   if (typeof window === 'undefined') return 'dark';
-  const stored = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
-  if (stored === 'light' || stored === 'dark') return stored;
+
+  const hasLocalStorage =
+    typeof window.localStorage !== 'undefined' &&
+    typeof window.localStorage.getItem === 'function';
+
+  if (hasLocalStorage) {
+    const stored = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
+    if (stored === 'light' || stored === 'dark') return stored;
+  }
 
   if (window.matchMedia?.('(prefers-color-scheme: light)').matches) {
     return 'light';
