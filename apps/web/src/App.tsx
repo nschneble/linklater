@@ -616,7 +616,6 @@ function AppShell() {
                 : "Add links, search, archive, and let Linklater pick something at random when you're indecisive."}
             </p>
 
-            {/* Filter pills + Random button */}
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="inline-flex rounded-full bg-slate-900/80 border border-slate-700 p-1 text-xs">
                 <button
@@ -654,7 +653,6 @@ function AppShell() {
               </button>
             </div>
 
-            {/* Search + Add link row */}
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <input
                 type="search"
@@ -673,19 +671,16 @@ function AppShell() {
               </button>
             </div>
 
-            {/* Random error, if any */}
             {randomError && (
               <p className="mt-2 text-xs text-rose-300">{randomError}</p>
             )}
 
-            {/* Inline Link form – hidden by default */}
             {showLinkForm && (
               <div className="mt-4 rounded-xl border border-slate-700 bg-slate-900/70 p-4">
                 <LinkForm onCreated={handleCreated} />
               </div>
             )}
 
-            {/* Link list / empty state */}
             <div className="mt-6 space-y-3">
               {loadingLinks ? (
                 <p className="text-sm text-slate-300">Loading links…</p>
