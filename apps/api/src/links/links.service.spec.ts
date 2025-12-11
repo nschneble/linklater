@@ -1,3 +1,10 @@
+// mock Prisma so tests don't require a real database
+jest.mock('@prisma/client', () => {
+  return {
+    PrismaClient: jest.fn().mockImplementation(() => ({})),
+  };
+});
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { LinksService } from './links.service';
 import { PrismaService } from '../prisma/prisma.service';
