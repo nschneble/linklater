@@ -123,7 +123,7 @@ function AuthForm() {
           className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-400 text-slate-950 font-semibold py-2.5 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-wait transition"
         >
           <i className="fa-solid fa-right-to-bracket text-xs" />
-          {loading ? 'Working…' : mode === 'login' ? 'Log in' : 'Create account'}
+          {loading ? 'Working…' : mode === 'login' ? 'Log in' : 'Sign up'}
         </button>
       </form>
 
@@ -523,7 +523,7 @@ function AppShell() {
                   theme === 'light' ? 'text-slate-500' : 'text-slate-400'
                 }`}
               >
-                Your personal read-it-later pile
+                Save links now, read them later.
               </div>
             </div>
           </div>
@@ -607,7 +607,7 @@ function AppShell() {
                     onChange={(e) => setShowArchived(e.target.checked)}
                     className="w-3 h-3 rounded border-slate-600 bg-slate-950"
                   />
-                  Show only archived
+                  Only show archived
                 </label>
                 <button
                   onClick={handleRandom}
