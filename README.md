@@ -1,8 +1,8 @@
 # Linklater
 
-Linklater is a tiny Instapaper-style “read it later” app built as a take-home assignment for a job interview.
+Linklater is a tiny [Instapaper](https://www.instapaper.com)-style “read it later” app built as a take-home assignment for a job interview.
 
-It’s both an homage to Richard Linklater and a ridiculously apt portmanteau.
+It’s both an homage to [Richard Linklater](https://en.wikipedia.org/wiki/Richard_Linklater) and a ridiculously apt portmanteau.
 
 ## Features
 
@@ -13,15 +13,15 @@ It’s both an homage to Richard Linklater and a ridiculously apt portmanteau.
 - Delete links you can no longer stand the sight of
 - StumbleUpon a random saved link
 - Toggle between light and dark mode
-- Use a bookmarklet to save links
+- Use a [bookmarklet](#bookmarklet) to save links
 - Delete your account and burn it to the ground
 
 ## Tech Stack
 
-- **Front-end**: React + Vite + Tailwind CSS + Font Awesome
-- **Back-end**: NestJS
+- **Front-end**: React + [Vite](https://vite.dev) + [Tailwind CSS](https://tailwindcss.com) + [Font Awesome](https://fontawesome.com)
+- **Back-end**: [NestJS](https://nestjs.com)
 - **Database**: Prisma + PostgreSQL
-- **Authentication**: Passport.js
+- **Authentication**: [Passport](https://www.passportjs.org)
 - **Linting**: ESLint + Prettier
 - **Testing**: Vitest (front-end) + Jest (back-end)
 
