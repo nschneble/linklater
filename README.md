@@ -148,11 +148,13 @@ GitHub Actions lint and test on pushes and PRs to `main`.
 
 - Created a monorepo to keep local dev simple and straightforward
 - Used email/pass authentication for speed and simplicity
+  - No email verification or 2FA
 - Vite makes it real easy to spin up a UI and wire up Tailwind for styles
 - Kept the UX focused on clarity
   - One main “Links” view with all actions
   - Separate “Settings” view for user account changes
   - Light/dark theme persistence via localStorage
+  - Basic responsive layout
 - Back-end tests mock Prisma to avoid DB dependencies
 - Front-end tests cover core UI behaviors
 
@@ -163,3 +165,5 @@ GitHub Actions lint and test on pushes and PRs to `main`.
 - Link tags and collections
 - Improve the full-text search
 - Create browser extensions for one-click saving
+- Higher contrast light and dark mode color palettes
+- THEMES
