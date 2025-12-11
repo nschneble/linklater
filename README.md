@@ -10,7 +10,7 @@ Most curious adults come across dozens of interesting articles on any given day.
 
 Linklater allows these articles to quickly and easily be saved for later reading.
 
-As an added bonus, you don’t have to use (or pay!) for a service that’s gone decidedly downhill since Marco Arment left.
+_As an added bonus, you don’t have to use (or pay!) for a service that’s gone decidedly downhill since Marco Arment left._
 
 ## Features
 
@@ -25,6 +25,8 @@ As an added bonus, you don’t have to use (or pay!) for a service that’s gone
 - Delete your account and burn it to the ground
 
 ## Screenshots
+
+Click on a thumbnail to see the full-size screenshot:
 
 [![Your Links](/screenshots/your-links-thumbnail.jpg)](/screenshots/your-links.jpg)
 [![Archived Links](/screenshots/archived-links-thumbnail.jpg)](/screenshots/archived-links.jpg)
