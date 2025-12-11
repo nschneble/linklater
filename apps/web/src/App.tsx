@@ -503,13 +503,7 @@ function AppShell() {
       >
         <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <div
-              className={`h-8 w-8 rounded-xl flex items-center justify-center text-slate-950 font-black text-lg ${
-                theme === 'light' ? 'bg-emerald-400' : 'bg-emerald-400'
-              }`}
-            >
-              L
-            </div>
+            <img className="h-8 w-8 rounded-xl" src="/linklater.svg" alt="Richard Linklater" />
             <div>
               <div
                 className={`font-semibold text-sm ${
