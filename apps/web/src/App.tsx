@@ -251,7 +251,7 @@ function LinkCard({
       <div className="flex items-center gap-2 justify-end">
         <button
           onClick={onArchiveToggle}
-          className="px-2.5 py-1.5 inline-flex items-center gap-1.5 text-xs rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800"
+          className="px-2.5 py-1.5 inline-flex items-center gap-1.5 text-xs rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 cursor-pointer"
         >
           <i
             className={
@@ -265,7 +265,7 @@ function LinkCard({
 
         <button
           onClick={onDelete}
-          className="px-2.5 py-1.5 inline-flex items-center gap-1.5 text-xs rounded-full border border-rose-700 text-rose-200 hover:bg-rose-900/70"
+          className="px-2.5 py-1.5 inline-flex items-center gap-1.5 text-xs rounded-full border border-rose-700 text-rose-200 hover:bg-rose-900/70 cursor-pointer"
         >
           <i className="fa-solid fa-trash-can text-[0.7rem]" />
           Delete
@@ -364,7 +364,7 @@ function SettingsView() {
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center justify-center rounded-lg bg-emerald-400 text-slate-950 font-semibold py-2.5 px-4 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-wait transition"
+          className="inline-flex items-center justify-center rounded-lg bg-emerald-400 text-slate-950 font-semibold py-2.5 px-4 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-wait transition cursor-pointer"
         >
           {saving ? 'Saving…' : 'Save changes'}
         </button>
@@ -381,7 +381,7 @@ function SettingsView() {
         {!confirmDelete ? (
           <button
             onClick={() => setConfirmDelete(true)}
-            className="px-3 py-1.5 rounded-full border border-rose-700 text-rose-200 text-xs hover:bg-rose-900/60"
+            className="px-3 py-1.5 rounded-full border border-rose-700 text-rose-200 text-xs hover:bg-rose-900/60 cursor-pointer"
           >
             Delete my account
           </button>
@@ -542,7 +542,7 @@ function AppShell() {
           <div className="flex items-center gap-3 text-sm">
             <button
               onClick={toggleTheme}
-              className="px-2 py-1.5 inline-flex items-center gap-1.5 rounded-full border border-slate-700/70 text-xs text-slate-200 hover:bg-slate-800/70"
+              className="px-2 py-1.5 inline-flex items-center gap-1.5 rounded-full border border-slate-700/70 text-xs text-slate-200 hover:bg-slate-800/70 cursor-pointer"
             >
               <i
                 className={
@@ -559,7 +559,7 @@ function AppShell() {
               className={`px-2 py-1.5 rounded-full text-xs ${
                 view === 'links'
                   ? 'bg-slate-100 text-slate-900 font-semibold'
-                  : 'text-slate-300 hover:bg-slate-800'
+                  : 'text-slate-300 hover:bg-slate-800 cursor-pointer'
               }`}
             >
               Links
@@ -569,7 +569,7 @@ function AppShell() {
               className={`px-2 py-1.5 rounded-full text-xs ${
                 view === 'settings'
                   ? 'bg-slate-100 text-slate-900 font-semibold'
-                  : 'text-slate-300 hover:bg-slate-800'
+                  : 'text-slate-300 hover:bg-slate-800 cursor-pointer'
               }`}
             >
               Settings
@@ -588,7 +588,7 @@ function AppShell() {
               </span>
               <button
                 onClick={logout}
-                className="px-3 py-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs"
+                className="px-3 py-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs cursor-pointer"
               >
                 Logout
               </button>
