@@ -44,6 +44,14 @@ function AuthForm() {
     }
   };
 
+  const changeModes = async (newMode: string) => {
+    setMode(newMode);
+
+    // cleans up the UI to try again
+    setError(null);
+    setLoading(false);
+  };
+
   return (
     <div className="max-w-md w-full mx-auto bg-slate-900/80 border border-slate-700 rounded-2xl shadow-xl p-8">
       <h1 className="text-3xl font-bold text-slate-50 mb-2 text-center">
@@ -56,7 +64,7 @@ function AuthForm() {
       <div className="flex mb-6 rounded-full bg-slate-800 p-1">
         <button
           type="button"
-          onClick={() => setMode('login')}
+          onClick={() => changeModes('login')}
           className={`flex-1 py-2 text-sm rounded-full transition ${
             mode === 'login'
               ? 'bg-slate-100 text-slate-900 font-semibold'
@@ -67,7 +75,7 @@ function AuthForm() {
         </button>
         <button
           type="button"
-          onClick={() => setMode('register')}
+          onClick={() => changeModes('register')}
           className={`flex-1 py-2 text-sm rounded-full transition ${
             mode === 'register'
               ? 'bg-slate-100 text-slate-900 font-semibold'
