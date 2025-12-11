@@ -4,6 +4,14 @@ Linklater is a tiny [Instapaper](https://www.instapaper.com)-style “read it la
 
 It’s both an homage to [Richard Linklater](https://en.wikipedia.org/wiki/Richard_Linklater) and a ridiculously apt portmanteau.
 
+## What Problem Does This Solve?
+
+Most curious adults come across dozens of interesting articles on any given day. Do they have time to read them all? Nope. Do they often forget about them? Totally.
+
+Linklater allows these articles to quickly and easily be saved for later reading.
+
+As an added bonus, you don’t have to use (or pay!) for a service that’s gone decidedly downhill since Marco Arment left.
+
 ## Features
 
 - Sign up for an account with an email and password
@@ -168,3 +176,13 @@ GitHub Actions lint and test on pushes and PRs to `main`.
 - Higher contrast light and dark mode color palettes
   - Use Tailwind's `dark` variant w/ overrides
 - THEMES
+
+## AI Assistance
+
+ChatGPT was instrumental in rapidly prototyping this project.
+
+An initial prompt of **600 words (!?)** was used to create a plan of attack for the features and design considerations.
+
+Additionally, ChatGPT was used to analyze several authentication frameworks and provide rationale for their use in the project.
+
+A **300 word (!)** prompt was written to address a handful of fast-follows to improve and refine the user experience.
