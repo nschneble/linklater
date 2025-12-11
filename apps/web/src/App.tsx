@@ -141,6 +141,7 @@ function LinkForm({ onCreated }: { onCreated: (link: Link) => void }) {
   const initialUrl = params.get('url') ?? '';
   const initialTitle = params.get('title') ?? '';
 
+  const { theme } = useTheme();
   const [url, setUrl] = useState(initialUrl);
   const [title, setTitle] = useState(initialTitle);
   const [saving, setSaving] = useState(false);
@@ -176,7 +177,11 @@ function LinkForm({ onCreated }: { onCreated: (link: Link) => void }) {
             type="url"
             required
             placeholder="https://example.com/article"
-            className="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent ${
+              theme === 'light'
+                ? 'bg-slate-50 border-slate-700 text-slate-900 placeholder-slate-400'
+                : 'bg-slate-950 border-slate-700 text-slate-50'
+            }`}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
@@ -188,7 +193,11 @@ function LinkForm({ onCreated }: { onCreated: (link: Link) => void }) {
           <input
             type="text"
             placeholder="If blank, we&apos;ll use the URL"
-            className="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent ${
+              theme === 'light'
+                ? 'bg-slate-50 border-slate-700 text-slate-900 placeholder-slate-400'
+                : 'bg-slate-950 border-slate-700 text-slate-50'
+            }`}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
@@ -277,6 +286,7 @@ function LinkCard({
 
 function SettingsView() {
   const { user, logout, updateEmail } = useAuth();
+  const { theme } = useTheme();
   const [email, setEmail] = useState(user?.email ?? '');
   const [password, setPassword] = useState('');
   const [saving, setSaving] = useState(false);
@@ -329,22 +339,38 @@ function SettingsView() {
       <form onSubmit={handleSave} className="space-y-4 max-w-md">
         <h2 className="text-xl font-semibold text-slate-50">Account settings</h2>
 
-        <label className="block text-xs font-medium text-slate-300">
+        <label className={`block text-xs font-medium ${
+          theme === 'light'
+            ? 'text-slate-900'
+            : 'text-slate-300'
+        }`}>
           Email
           <input
             type="email"
-            className="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent ${
+              theme === 'light'
+                ? 'bg-slate-50 border-slate-700 text-slate-900 placeholder-slate-400'
+                : 'bg-slate-950 border-slate-700 text-slate-50'
+            }`}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
         </label>
 
-        <label className="block text-xs font-medium text-slate-300">
+        <label className={`block text-xs font-medium ${
+          theme === 'light'
+            ? 'text-slate-900'
+            : 'text-slate-300'
+        }`}>
           New password
           <input
             type="password"
             placeholder="Leave blank to keep current password"
-            className="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent ${
+              theme === 'light'
+                ? 'bg-slate-50 border-slate-700 text-slate-900 placeholder-slate-400'
+                : 'bg-slate-950 border-slate-700 text-slate-50'
+            }`}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -370,7 +396,11 @@ function SettingsView() {
         </button>
       </form>
 
-      <div className="border border-rose-800/70 bg-rose-950/40 rounded-xl p-4 max-w-md">
+      <div className={`border border-rose-800/70 rounded-xl p-4 max-w-md ${
+        theme === 'light'
+          ? 'bg-rose-950/90'
+          : 'bg-rose-950/40'
+      }`}>
         <h3 className="text-sm font-semibold text-rose-200 mb-1">
           Danger zone
         </h3>
@@ -710,7 +740,11 @@ function AppShell() {
                 type="button"
                 onClick={handleRandom}
                 disabled={randomLoading}
-                className="px-4 py-2 inline-flex items-center gap-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs disabled:opacity-60 disabled:cursor-wait cursor-pointer"
+                className={`px-4 py-2 inline-flex items-center gap-1.5 rounded-full border font-semibold shadow-md text-xs disabled:opacity-60 disabled:cursor-wait cursor-pointer ${
+                    theme === 'light'
+                      ? 'bg-slate-900 border-slate-900 text-slate-50 hover:bg-slate-700 hover:border-slate-700 shadow-slate-500/30'
+                      : 'bg-slate-900 border-slate-700 text-slate-200 hover:bg-slate-800 shadow-slate-700/30'
+                  }`}
               >
                 <i className="fa-solid fa-shuffle text-[0.7rem]" />
                 {randomLoading ? 'Rolling…' : 'Random link'}
@@ -723,7 +757,11 @@ function AppShell() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search your links…"
-                className="w-full sm:max-w-sm rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/70"
+                className={`w-full sm:max-w-sm rounded-lg border px-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/70 ${
+                    theme === 'light'
+                      ? 'bg-white border-slate-300 text-slate-900'
+                      : 'bg-slate-900/80 border-slate-700 text-slate-100'
+                  }`}
               />
               <button
                 type="button"
