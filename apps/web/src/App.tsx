@@ -37,7 +37,7 @@ function AuthForm() {
       }
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Something went wrong';
+        err instanceof Error ? JSON.parse(err.message).message : 'Something went dreafully wrong';
       setError(message);
     } finally {
       setLoading(false);
