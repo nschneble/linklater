@@ -24,6 +24,14 @@ As an added bonus, you don’t have to use (or pay!) for a service that’s gone
 - Use a [bookmarklet](#bookmarklet) to save links
 - Delete your account and burn it to the ground
 
+## Screenshots
+
+[![Your Links](/screenshots/your-links-thumbnail.jpg)](/screenshots/your-links.jpg)
+[![Archived Links](/screenshots/archived-links-thumbnail.jpg)](/screenshots/archived-links.jpg)
+[![Account Settings](/screenshots/account-settings-thumbnail.jpg)](/screenshots/account-settings.jpg)
+[![Log In](/screenshots/log-in-thumbnail.jpg)](/screenshots/log-in.jpg)
+[![Light Mode](/screenshots/light-mode-thumbnail.jpg)](/screenshots/light-mode.jpg)
+
 ## Tech Stack
 
 - **Front-end**: React + [Vite](https://vite.dev) + [Tailwind CSS](https://tailwindcss.com) + [Font Awesome](https://fontawesome.com)
