@@ -166,4 +166,5 @@ GitHub Actions lint and test on pushes and PRs to `main`.
 - Improve the full-text search
 - Create browser extensions for one-click saving
 - Higher contrast light and dark mode color palettes
+  - Use Tailwind's `dark` variant w/ overrides
 - THEMES
