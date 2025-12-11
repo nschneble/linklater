@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useAuth } from './auth/AuthContext';
 import { useTheme } from './theme/ThemeContext';
 import {
@@ -418,6 +418,7 @@ function AppShell() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<LinksFilter>('active');
   const [showLinkForm, setShowLinkForm] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [randomLoading, setRandomLoading] = useState(false);
   const [randomError, setRandomError] = useState<string | null>(null);
 
@@ -511,6 +512,31 @@ function AppShell() {
   };
 
   const avatarUrl = user ? gravatarUrl(user.email, 64) : '';
+  const avatarRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!showUserMenu) return;
+
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node;
+
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(target) &&
+        avatarRef.current &&
+        !avatarRef.current.contains(target)
+      ) {
+        setShowUserMenu(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   return (
     <div
@@ -546,60 +572,98 @@ function AppShell() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-sm">
-            <button
-              onClick={toggleTheme}
-              className="px-2 py-1.5 inline-flex items-center gap-1.5 rounded-full border border-slate-700/70 text-xs text-slate-200 hover:bg-slate-800/70 cursor-pointer"
-            >
-              <i
-                className={
-                  theme === 'light'
-                    ? 'fa-solid fa-moon text-[0.7rem]'
-                    : 'fa-solid fa-sun text-[0.7rem]'
-                }
-              />
-              {theme === 'light' ? 'Dark mode' : 'Light mode'}
-            </button>
+          <div className="flex items-center gap-3">
+            {avatarUrl && (
+              <div className="relative">
+                <button
+                  ref={avatarRef}
+                  type="button"
+                  onClick={() => setShowUserMenu((open) => !open)}
+                  className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/70 px-2 py-1.5 hover:bg-slate-800 transition cursor-pointer"
+                >
+                  <img
+                    src={avatarUrl}
+                    alt={user?.email ?? 'User avatar'}
+                    className="h-7 w-7 rounded-full"
+                  />
+                  <i className="fa-solid fa-chevron-down text-[0.6rem] text-slate-400" />
+                </button>
 
-            <button
-              onClick={() => setView('links')}
-              className={`px-2 py-1.5 rounded-full text-xs ${
-                view === 'links'
-                  ? 'bg-slate-100 text-slate-900 font-semibold'
-                  : 'text-slate-300 hover:bg-slate-800 cursor-pointer'
-              }`}
-            >
-              Links
-            </button>
-            <button
-              onClick={() => setView('settings')}
-              className={`px-2 py-1.5 rounded-full text-xs ${
-                view === 'settings'
-                  ? 'bg-slate-100 text-slate-900 font-semibold'
-                  : 'text-slate-300 hover:bg-slate-800 cursor-pointer'
-              }`}
-            >
-              Settings
-            </button>
+                {showUserMenu && (
+                  <div ref={menuRef} className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-700 bg-slate-900/95 shadow-lg shadow-black/40 py-2 text-xs">
+                    <div className="px-3 pb-2 border-b border-slate-700/80 mb-2">
+                      <p className="text-[0.65rem] uppercase tracking-tight font-semibold text-slate-500">
+                        Signed in as
+                      </p>
+                      <p className="mt-1 truncate text-slate-200 font-medium text-xs">
+                        {user?.email}
+                      </p>
+                    </div>
 
-            <div className="flex items-center gap-2">
-              {avatarUrl && (
-                <img
-                  src={avatarUrl}
-                  alt={user?.email}
-                  className="h-8 w-8 rounded-full border border-slate-700"
-                />
-              )}
-              <span className="hidden sm:inline text-slate-300 text-xs">
-                {user?.email}
-              </span>
-              <button
-                onClick={logout}
-                className="px-3 py-1.5 rounded-full border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs cursor-pointer"
-              >
-                Logout
-              </button>
-            </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setView('links');
+                        setShowUserMenu(false);
+                      }}
+                      className={`flex w-full items-center gap-2 px-3 py-2 hover:bg-slate-800/80 text-left cursor-pointer ${
+                        view === 'links' ? 'text-slate-50' : 'text-slate-100'
+                      }`}
+                    >
+                      <i className={`fa-solid fa-bookmark text-[0.75rem] ${
+                          view === 'links' ? 'text-emerald-400' : 'text-slate-400'
+                        }`} />
+                      <span>Your links</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setView('settings');
+                        setShowUserMenu(false);
+                      }}
+                      className={`flex w-full items-center gap-2 px-3 py-2 hover:bg-slate-800/80 text-left cursor-pointer ${
+                        view === 'settings' ? 'text-slate-50' : 'text-slate-100'
+                      }`}
+                    >
+                      <i className={`fa-solid fa-gear text-[0.75rem] ${
+                          view === 'settings' ? 'text-emerald-400' : 'text-slate-400'
+                        }`} />
+                      <span>Settings</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toggleTheme();
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 hover:bg-slate-800/80 text-slate-100 text-left cursor-pointer"
+                    >
+                      <i
+                        className={
+                          theme === 'light'
+                            ? 'fa-solid fa-moon text-[0.75rem] text-slate-400'
+                            : 'fa-solid fa-sun text-[0.75rem] text-slate-400'
+                        }
+                      />
+                      <span>{theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        logout();
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 hover:bg-slate-800/80 text-slate-100 text-left cursor-pointer"
+                    >
+                      <i className="fa-solid fa-right-from-bracket text-[0.75rem] text-slate-400" />
+                      <span>Log out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </header>
