@@ -178,10 +178,18 @@ GitHub Actions lint and test on pushes and PRs to `main`.
 
 ## Future Ideas To Grow This Into Something Extra
 
+- Do a proper accessibility pass (ARIA, roles, focus states, color contrast)
+- Add meta tags + OpenGraph preview
+- Use skeleton loaders for the link views
+- Improve UX with subtle micro-animations (cards, menus, buttons)
 - Add OAuth2 support to login with Google, GitHub, etc.
 - Fetch and store link metadata via a background job
-- Link tags and collections
+- Reading time estimates
+- Bulk actions to archive and/or delete links
+- Organize links into folders or collections
+- Sort links by date, domain, or title
 - Improve the full-text search
+- Create a “real” bookmarklet
 - Create browser extensions for one-click saving
 - Higher contrast light and dark mode color palettes
   - Use Tailwind's `dark` variant w/ overrides
