@@ -11,6 +11,10 @@
     "lint": "npm run lint --workspace @linklater/api && npm run lint --workspace @linklater/web",
     "test": "npm run test --workspace @linklater/api && npm run test --workspace @linklater/web"
   },
+  "overrides": {
+    "webpack": "^5.105.0",
+    "picomatch": "^4.0.4"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "concurrently": "^9.2.1",
