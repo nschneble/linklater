@@ -6,11 +6,11 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './local-auth.guard';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { UsersService } from '../users/users.service';
-import type { AuthRequest } from './auth-request.type';
+import { AuthService } from './auth.service.js';
+import { LocalAuthGuard } from './local-auth.guard.js';
+import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { UsersService } from '../users/users.service.js';
+import type { AuthRequest } from './auth-request.type.js';
 
 @Controller('auth')
 export class AuthController {

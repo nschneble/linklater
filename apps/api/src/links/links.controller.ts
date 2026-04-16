@@ -10,9 +10,9 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { LinksService } from './links.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import type { AuthRequest } from '../auth/auth-request.type';
+import { LinksService } from './links.service.js';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import type { AuthRequest } from '../auth/auth-request.type.js';
 
 @Controller('links')
 @UseGuards(JwtAuthGuard)
