@@ -63,7 +63,7 @@ export function logout() {
 }
 
 export async function getMe() {
-  return apiFetch<{ userId: string; email: string }>('/auth/me', {
+  return apiFetch<{ userId: string; email: string; theme: string }>('/auth/me', {
     method: 'GET',
   });
 }
@@ -148,6 +148,7 @@ export async function getRandomLink(options?: {
 export async function updateMe(input: {
   email?: string;
   password?: string;
+  theme?: string;
 }) {
   return apiFetch<{ id: string; email: string }>(
     '/users/me',
