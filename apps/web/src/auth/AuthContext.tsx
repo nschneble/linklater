@@ -5,7 +5,12 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { getMe, login as apiLogin, logout as apiLogout, register as apiRegister } from '../lib/api';
+import {
+  getMe,
+  login as apiLogin,
+  logout as apiLogout,
+  register as apiRegister,
+} from '../lib/api';
 import { useTheme, type Theme } from '../theme/ThemeContext';
 
 interface User {
@@ -48,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [setTheme]);
 
   const login = async (email: string, password: string) => {
     await apiLogin(email, password);

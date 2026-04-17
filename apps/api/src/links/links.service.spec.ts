@@ -1,3 +1,5 @@
+import { jest } from '@jest/globals';
+
 // mock PrismaService and generated client so tests don't require a real database
 jest.mock('../prisma/prisma.service', () => ({
   PrismaService: jest.fn().mockImplementation(() => ({})),
