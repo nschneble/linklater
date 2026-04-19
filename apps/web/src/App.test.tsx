@@ -23,7 +23,7 @@ describe('App auth UI', () => {
 
   it('lets you toggle between login and sign up modes', () => {
     renderWithProviders();
-    const signupTab = screen.getByRole('button', { name: /Sign up/i });
+    const signupTab = screen.getByRole('tab', { name: /Sign up/i });
     fireEvent.click(signupTab);
     expect(
       screen.getByRole('button', { name: /Create account/i }),
