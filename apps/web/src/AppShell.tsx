@@ -12,7 +12,7 @@ import {
 } from './lib/api';
 import { gravatarUrl } from './lib/gravatar';
 import LinkForm from './components/LinkForm';
-import LinkCard from './components/LinkCard';
+import LinkCard, { LinkCardSkeleton } from './components/LinkCard';
 import SettingsView from './components/SettingsView';
 
 type AppView = 'links' | 'settings';
@@ -435,7 +435,9 @@ export default function AppShell() {
 
             <div className="mt-6 space-y-3">
               {loadingLinks ? (
-                <p className="text-sm text-[var(--text-muted)]">Loading links…</p>
+                Array.from({ length: 5 }).map((_, index) => (
+                  <LinkCardSkeleton key={index} />
+                ))
               ) : links.length === 0 ? (
                 <p className="text-sm text-[var(--text-muted)]">
                   No links yet. Click{' '}

@@ -8,7 +8,6 @@ This is a list of upcoming features and bugfixes.
 - Add OAuth2 support to login with Google, GitHub, etc
 - Add 2FA
 - Add meta tags and an OpenGraph preview
-- Use skeleton loaders for the link cards
 - Do a proper accessibility pass (ARIA, roles, focus states, color contrast)
 - Improve UX with subtle micro-animations (cards, menus, buttons)
 - Fetch and store link metadata via a background job

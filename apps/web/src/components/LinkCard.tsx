@@ -1,5 +1,24 @@
 import type { Link } from '../lib/api';
 
+export function LinkCardSkeleton() {
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 animate-pulse">
+      <div className="flex-1 min-w-0 space-y-2">
+        <div className="h-4 w-3/4 rounded bg-[var(--bg-elevated)]" />
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-20 rounded bg-[var(--bg-elevated)]" />
+          <div className="w-1 h-1 rounded-full bg-[var(--bg-elevated)]" />
+          <div className="h-3 w-32 rounded bg-[var(--bg-elevated)]" />
+        </div>
+      </div>
+      <div className="flex items-center gap-2 justify-end">
+        <div className="h-7 w-20 rounded-full bg-[var(--bg-elevated)]" />
+        <div className="h-7 w-16 rounded-full bg-[var(--bg-elevated)]" />
+      </div>
+    </div>
+  );
+}
+
 interface LinkCardProps {
   link: Link;
   onArchiveToggle: () => void;
