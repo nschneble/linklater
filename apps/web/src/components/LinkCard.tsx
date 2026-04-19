@@ -36,7 +36,7 @@ export default function LinkCard({
     : null;
 
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+    <div className="animate-fade-in-up rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
       <div className="flex-1 min-w-0">
         <a
           href={link.url}

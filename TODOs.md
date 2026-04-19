@@ -9,7 +9,6 @@ This is a list of upcoming features and bugfixes.
 - Add 2FA
 - Add meta tags and an OpenGraph preview
 - Do a proper accessibility pass (ARIA, roles, focus states, color contrast)
-- Improve UX with subtle micro-animations (cards, menus, buttons)
 - Fetch and store link metadata via a background job
 - Add reading time estimates
 - Create a “real” bookmarklet that will save a link without leaving the article

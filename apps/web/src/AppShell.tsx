@@ -231,7 +231,7 @@ export default function AppShell() {
                 {showUserMenu && (
                   <div
                     ref={menuRef}
-                    className="absolute right-0 mt-2 w-60 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-lg shadow-black/40 py-2 text-xs"
+                    className="animate-fade-in-up absolute right-0 mt-2 w-60 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-lg shadow-black/40 py-2 text-xs"
                   >
                     <div className="px-3 pb-2 border-b border-[var(--border)] mb-2">
                       <p className="text-[0.65rem] uppercase tracking-tight font-semibold text-[var(--text-subtle)]">
@@ -424,11 +424,11 @@ export default function AppShell() {
             </div>
 
             {randomError && (
-              <p className="mt-2 text-xs text-rose-300">{randomError}</p>
+              <p className="animate-fade-in-up mt-2 text-xs text-rose-300">{randomError}</p>
             )}
 
             {showLinkForm && (
-              <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-4">
+              <div className="animate-fade-in-up mt-4 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-4">
                 <LinkForm onCreated={handleCreated} />
               </div>
             )}
