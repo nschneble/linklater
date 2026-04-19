@@ -81,11 +81,12 @@ export default function AppShell() {
 
   const scheduleHide = (currentTheme: string) => {
     cancelHide();
-    hideSubmenuTimeout.current = setTimeout(() => {
-      setShowThemeSubmenu(false);
-      setPreviewTheme(null);
-      document.documentElement.dataset.theme = currentTheme;
-    }, 350);
+    setShowThemeSubmenu(false);
+    setPreviewTheme(null);
+    const root = document.documentElement;
+    root.style.setProperty('--theme-transition-duration', '250ms');
+    root.style.setProperty('--theme-transition-easing', 'ease-out');
+    root.dataset.theme = currentTheme;
   };
 
   const handleThemeRowEnter = () => {
@@ -315,7 +316,10 @@ export default function AppShell() {
                             type="button"
                             onMouseEnter={() => {
                               setPreviewTheme(t.id);
-                              document.documentElement.dataset.theme = t.id;
+                              const root = document.documentElement;
+                              root.style.setProperty('--theme-transition-duration', '1s');
+                              root.style.setProperty('--theme-transition-easing', 'ease-in');
+                              root.dataset.theme = t.id;
                             }}
                             onClick={() => handleSelectTheme(t.id)}
                             className="flex w-full items-center gap-2 px-3 py-2 hover:bg-[var(--bg-surface)] text-left cursor-pointer text-[var(--text)]"

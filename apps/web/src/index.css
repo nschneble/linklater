@@ -180,8 +180,12 @@
 }
 
 /* ─── Theme transition ─────────────────────────────────────────────────────── */
+:root {
+  --theme-transition-duration: 160ms;
+  --theme-transition-easing: ease;
+}
 *, *::before, *::after {
   transition-property: background-color, color, border-color;
-  transition-duration: 160ms;
-  transition-timing-function: ease;
+  transition-duration: var(--theme-transition-duration);
+  transition-timing-function: var(--theme-transition-easing);
 }
