@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { UsersService } from '../users/users.service.js';
+import { withoutPasswordHash } from '../users/users.utils.js';
 
 type LoginUser = { id: string; email: string } | { userId: string; email: string };
 
@@ -19,8 +20,7 @@ export class AuthService {
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) return null;
 
-    const { passwordHash: _passwordHash, ...result } = user;
-    return result;
+    return withoutPasswordHash(user);
   }
 
   async login(user: LoginUser) {

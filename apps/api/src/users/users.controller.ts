@@ -18,9 +18,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@Req() req: AuthRequest) {
-    const user = await this.usersService.findById(req.user.userId);
-    const { passwordHash: _passwordHash, ...safeUser } = user;
-    return safeUser;
+    return this.usersService.findById(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)

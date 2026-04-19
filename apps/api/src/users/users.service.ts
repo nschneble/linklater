@@ -1,6 +1,7 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import * as bcrypt from 'bcryptjs';
+import { withoutPasswordHash } from './users.utils.js';
 
 export const VALID_THEMES = [
   'light',
@@ -31,8 +32,7 @@ export class UsersService {
       data: { email, passwordHash },
     });
 
-    const { passwordHash: _passwordHash, ...safeUser } = user;
-    return safeUser;
+    return withoutPasswordHash(user);
   }
 
   async updateMe(id: string, data: { email?: string; password?: string; theme?: string }) {
@@ -65,8 +65,7 @@ export class UsersService {
       data: updateData,
     });
 
-    const { passwordHash: _passwordHash, ...safe } = user;
-    return safe;
+    return withoutPasswordHash(user);
   }
 
   async findByEmail(email: string) {
@@ -76,7 +75,7 @@ export class UsersService {
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    return withoutPasswordHash(user);
   }
 
   async deleteById(id: string) {
