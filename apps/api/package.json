@@ -15,9 +15,9 @@
     "start:prod": "node dist/main",
     "dev": "npm run start:dev",
     "lint": "eslint \"src/**/*.ts\" --max-warnings=0",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
+    "test": "NODE_OPTIONS=\"--experimental-vm-modules --no-experimental-webstorage --disable-warning=ExperimentalWarning\" jest",
+    "test:watch": "NODE_OPTIONS=\"--experimental-vm-modules --no-experimental-webstorage --disable-warning=ExperimentalWarning\" jest --watch",
+    "test:cov": "NODE_OPTIONS=\"--experimental-vm-modules --no-experimental-webstorage --disable-warning=ExperimentalWarning\" jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
@@ -74,10 +74,11 @@
       "json",
       "ts"
     ],
+    "extensionsToTreatAsEsm": [".ts"],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.(t|j)s$": ["ts-jest", { "useESM": true }]
     },
     "moduleNameMapper": {
       "^(\\.\\.?/.*)\\.js$": "$1"

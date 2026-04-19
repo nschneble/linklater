@@ -1,6 +1,19 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import * as bcrypt from 'bcryptjs';
+
+export const VALID_THEMES = [
+  'light',
+  'dark',
+  'scanner-darkly',
+  'before-sunrise',
+  'before-sunset',
+  'before-midnight',
+  'boyhood',
+  'dazed-and-confused',
+  'hit-man',
+  'school-of-rock',
+] as const;
 
 @Injectable()
 export class UsersService {
@@ -22,8 +35,8 @@ export class UsersService {
     return safeUser;
   }
 
-  async updateMe(id: string, data: { email?: string; password?: string }) {
-    const updateData: { email?: string; passwordHash?: string } = {};
+  async updateMe(id: string, data: { email?: string; password?: string; theme?: string }) {
+    const updateData: { email?: string; passwordHash?: string; theme?: string } = {};
 
     if (data.email) {
       const existing = await this.prisma.user.findUnique({
@@ -38,6 +51,13 @@ export class UsersService {
     if (data.password) {
       const passwordHash = await bcrypt.hash(data.password, 12);
       updateData.passwordHash = passwordHash;
+    }
+
+    if (data.theme !== undefined) {
+      if (!(VALID_THEMES as readonly string[]).includes(data.theme)) {
+        throw new BadRequestException('Invalid theme');
+      }
+      updateData.theme = data.theme;
     }
 
     const user = await this.prisma.user.update({

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from './auth/AuthContext';
-import { useTheme } from './theme/ThemeContext';
+import { useTheme, THEMES } from './theme/ThemeContext';
 import {
   getLinks,
   archiveLink,
   unarchiveLink,
   deleteLink,
   getRandomLink,
+  updateMe,
   type Link,
 } from './lib/api';
 import { gravatarUrl } from './lib/gravatar';
@@ -19,7 +20,7 @@ type LinksFilter = 'active' | 'archived';
 
 export default function AppShell() {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   const [view, setView] = useState<AppView>('links');
   const [links, setLinks] = useState<Link[]>([]);
@@ -28,6 +29,11 @@ export default function AppShell() {
   const [filter, setFilter] = useState<LinksFilter>('active');
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showThemeSubmenu, setShowThemeSubmenu] = useState(false);
+  const [themeSubmenuOnLeft, setThemeSubmenuOnLeft] = useState(false);
+  const [previewTheme, setPreviewTheme] = useState<string | null>(null);
+  const themeRowRef = useRef<HTMLDivElement | null>(null);
+  const hideSubmenuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [randomLoading, setRandomLoading] = useState(false);
   const [randomError, setRandomError] = useState<string | null>(null);
 
@@ -60,6 +66,38 @@ export default function AppShell() {
       clearTimeout(timeout);
     };
   }, [search, filter]);
+
+  // reset submenu when the menu closes
+  useEffect(() => {
+    if (!showUserMenu) setShowThemeSubmenu(false);
+  }, [showUserMenu]);
+
+  const cancelHide = () => {
+    if (hideSubmenuTimeout.current) {
+      clearTimeout(hideSubmenuTimeout.current);
+      hideSubmenuTimeout.current = null;
+    }
+  };
+
+  const scheduleHide = (currentTheme: string) => {
+    cancelHide();
+    setShowThemeSubmenu(false);
+    setPreviewTheme(null);
+    const root = document.documentElement;
+    root.style.setProperty('--theme-transition-duration', '250ms');
+    root.style.setProperty('--theme-transition-easing', 'ease-out');
+    root.dataset.theme = currentTheme;
+  };
+
+  const handleThemeRowEnter = () => {
+    cancelHide();
+    if (themeRowRef.current) {
+      const rect = themeRowRef.current.getBoundingClientRect();
+      // submenu is w-56 = 224px; 8px safety margin
+      setThemeSubmenuOnLeft(rect.right + 224 + 8 > window.innerWidth);
+    }
+    setShowThemeSubmenu(true);
+  };
 
   // close user menu on outside click
   useEffect(() => {
@@ -145,19 +183,17 @@ export default function AppShell() {
     }
   };
 
+  const handleSelectTheme = (id: typeof theme) => {
+    setTheme(id);
+    setShowUserMenu(false);
+    updateMe({ theme: id }).catch((err) =>
+      console.error('Failed to save theme', err),
+    );
+  };
+
   return (
-    <div
-      className={`min-h-screen ${
-        theme === 'light'
-          ? 'bg-slate-50 text-slate-900'
-          : 'bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-50'
-      }`}
-    >
-      <header
-        className={`border-b ${
-          theme === 'light' ? 'border-slate-200 bg-white' : 'border-slate-800'
-        }`}
-      >
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+      <header className="border-b border-[var(--border)] bg-[var(--bg-elevated)]">
         <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <img
@@ -166,18 +202,10 @@ export default function AppShell() {
               alt="Richard Linklater"
             />
             <div>
-              <div
-                className={`font-semibold text-sm ${
-                  theme === 'light' ? 'text-slate-900' : 'text-slate-50'
-                }`}
-              >
+              <div className="font-semibold text-sm text-[var(--text)]">
                 Linklater
               </div>
-              <div
-                className={`text-xs ${
-                  theme === 'light' ? 'text-slate-500' : 'text-slate-400'
-                }`}
-              >
+              <div className="text-xs text-[var(--text-muted)]">
                 Save links now, read them later.
               </div>
             </div>
@@ -190,26 +218,26 @@ export default function AppShell() {
                   ref={avatarRef}
                   type="button"
                   onClick={() => setShowUserMenu((open) => !open)}
-                  className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/70 px-2 py-1.5 hover:bg-slate-800 transition cursor-pointer"
+                  className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-2 py-1.5 hover:bg-[var(--bg-surface)] transition cursor-pointer"
                 >
                   <img
                     src={avatarUrl}
                     alt={user?.email ?? 'User avatar'}
                     className="h-7 w-7 rounded-full"
                   />
-                  <i className="fa-solid fa-chevron-down text-[0.6rem] text-slate-400" />
+                  <i className="fa-solid fa-chevron-down text-[0.6rem] text-[var(--text-muted)]" />
                 </button>
 
                 {showUserMenu && (
                   <div
                     ref={menuRef}
-                    className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-700 bg-slate-900/95 shadow-lg shadow-black/40 py-2 text-xs"
+                    className="absolute right-0 mt-2 w-60 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-lg shadow-black/40 py-2 text-xs"
                   >
-                    <div className="px-3 pb-2 border-b border-slate-700/80 mb-2">
-                      <p className="text-[0.65rem] uppercase tracking-tight font-semibold text-slate-500">
+                    <div className="px-3 pb-2 border-b border-[var(--border)] mb-2">
+                      <p className="text-[0.65rem] uppercase tracking-tight font-semibold text-[var(--text-subtle)]">
                         Signed in as
                       </p>
-                      <p className="mt-1 truncate text-slate-200 font-medium text-xs">
+                      <p className="mt-1 truncate text-[var(--text)] font-medium text-xs">
                         {user?.email}
                       </p>
                     </div>
@@ -220,15 +248,13 @@ export default function AppShell() {
                         setView('links');
                         setShowUserMenu(false);
                       }}
-                      className={`flex w-full items-center gap-2 px-3 py-2 hover:bg-slate-800/80 text-left cursor-pointer ${
-                        view === 'links' ? 'text-slate-50' : 'text-slate-100'
-                      }`}
+                      className="flex w-full items-center gap-2 px-3 py-2 hover:bg-[var(--bg-surface)] text-left cursor-pointer text-[var(--text)]"
                     >
                       <i
                         className={`fa-solid fa-bookmark text-[0.75rem] ${
                           view === 'links'
-                            ? 'text-emerald-400'
-                            : 'text-slate-400'
+                            ? 'text-[var(--accent)]'
+                            : 'text-[var(--text-muted)]'
                         }`}
                       />
                       <span>Your links</span>
@@ -240,40 +266,76 @@ export default function AppShell() {
                         setView('settings');
                         setShowUserMenu(false);
                       }}
-                      className={`flex w-full items-center gap-2 px-3 py-2 hover:bg-slate-800/80 text-left cursor-pointer ${
-                        view === 'settings' ? 'text-slate-50' : 'text-slate-100'
-                      }`}
+                      className="flex w-full items-center gap-2 px-3 py-2 hover:bg-[var(--bg-surface)] text-left cursor-pointer text-[var(--text)]"
                     >
                       <i
                         className={`fa-solid fa-gear text-[0.75rem] ${
                           view === 'settings'
-                            ? 'text-emerald-400'
-                            : 'text-slate-400'
+                            ? 'text-[var(--accent)]'
+                            : 'text-[var(--text-muted)]'
                         }`}
                       />
                       <span>Settings</span>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        toggleTheme();
-                      }}
-                      className="flex w-full items-center gap-2 px-3 py-2 hover:bg-slate-800/80 text-slate-100 text-left cursor-pointer"
+                    {/* Theme row — hover opens flyout submenu */}
+                    <div
+                      ref={themeRowRef}
+                      className="relative"
+                      onMouseEnter={handleThemeRowEnter}
+                      onMouseLeave={() => scheduleHide(theme)}
                     >
-                      <i
-                        className={
-                          theme === 'light'
-                            ? 'fa-solid fa-moon text-[0.75rem] text-slate-400'
-                            : 'fa-solid fa-sun text-[0.75rem] text-slate-400'
-                        }
-                      />
-                      <span>
-                        {theme === 'light'
-                          ? 'Switch to dark mode'
-                          : 'Switch to light mode'}
-                      </span>
-                    </button>
+                      <div
+                        className={`flex w-full items-center gap-2 px-3 py-2 cursor-default text-[var(--text)] ${
+                          showThemeSubmenu ? 'bg-[var(--bg-surface)]' : 'hover:bg-[var(--bg-surface)]'
+                        }`}
+                      >
+                        <i className="fa-solid fa-palette text-[0.75rem] text-[var(--text-muted)]" />
+                        <div className="flex-1">
+                          <div>Theme</div>
+                          <div className="text-[var(--text-muted)] mt-0.5">
+                            {previewTheme && previewTheme !== theme
+                              ? `Previewing ${THEMES.find((t) => t.id === previewTheme)?.label}`
+                              : THEMES.find((t) => t.id === theme)?.label}
+                          </div>
+                        </div>
+                        <i className="fa-solid fa-chevron-right text-[0.6rem] text-[var(--text-subtle)]" />
+                      </div>
+
+                      <div
+                        onMouseEnter={cancelHide}
+                        onMouseLeave={() => scheduleHide(theme)}
+                        className={`absolute top-0 w-56 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-lg shadow-black/40 py-2
+                          transition-[opacity,transform] duration-150 ease-out
+                          ${showThemeSubmenu ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}
+                          ${themeSubmenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
+                      >
+                        {THEMES.map((t) => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onMouseEnter={() => {
+                              setPreviewTheme(t.id);
+                              const root = document.documentElement;
+                              root.style.setProperty('--theme-transition-duration', '1s');
+                              root.style.setProperty('--theme-transition-easing', 'ease-in');
+                              root.dataset.theme = t.id;
+                            }}
+                            onClick={() => handleSelectTheme(t.id)}
+                            className="flex w-full items-center gap-2 px-3 py-2 hover:bg-[var(--bg-surface)] text-left cursor-pointer text-[var(--text)]"
+                          >
+                            <span
+                              className="inline-block h-3 w-3 rounded-full shrink-0"
+                              style={{ backgroundColor: t.accent }}
+                            />
+                            <span className="flex-1">{t.label}</span>
+                            {theme === t.id && (
+                              <i className="fa-solid fa-check text-[0.6rem] text-[var(--accent)]" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
                     <button
                       type="button"
@@ -281,9 +343,9 @@ export default function AppShell() {
                         setShowUserMenu(false);
                         logout();
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2 hover:bg-slate-800/80 text-slate-100 text-left cursor-pointer"
+                      className="flex w-full items-center gap-2 px-3 py-2 mt-1 border-t border-[var(--border)] hover:bg-[var(--bg-surface)] text-[var(--text)] text-left cursor-pointer"
                     >
-                      <i className="fa-solid fa-right-from-bracket text-[0.75rem] text-slate-400" />
+                      <i className="fa-solid fa-right-from-bracket text-[0.75rem] text-[var(--text-muted)]" />
                       <span>Log out</span>
                     </button>
                   </div>
@@ -300,21 +362,21 @@ export default function AppShell() {
             <h2 className="text-lg font-semibold">
               {filter === 'archived' ? 'Archived links' : 'Your links'}
             </h2>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
               {filter === 'archived'
                 ? "Review things you've already read or decided to move aside."
                 : "Add links, search, archive, and let Linklater pick something at random when you're indecisive."}
             </p>
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="inline-flex rounded-full bg-slate-900/80 border border-slate-700 p-1 text-xs">
+              <div className="inline-flex rounded-full bg-[var(--bg-surface)] border border-[var(--border)] p-1 text-xs">
                 <button
                   type="button"
                   onClick={() => setFilter('active')}
                   className={`px-3 py-1.5 rounded-full transition ${
                     filter === 'active'
-                      ? 'bg-slate-100 text-slate-900 font-semibold'
-                      : 'text-slate-300 hover:bg-slate-800 cursor-pointer'
+                      ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
+                      : 'text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] cursor-pointer'
                   }`}
                 >
                   Your links
@@ -324,8 +386,8 @@ export default function AppShell() {
                   onClick={() => setFilter('archived')}
                   className={`px-3 py-1.5 rounded-full transition ${
                     filter === 'archived'
-                      ? 'bg-slate-100 text-slate-900 font-semibold'
-                      : 'text-slate-300 hover:bg-slate-800 cursor-pointer'
+                      ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
+                      : 'text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] cursor-pointer'
                   }`}
                 >
                   Archived
@@ -336,11 +398,7 @@ export default function AppShell() {
                 type="button"
                 onClick={handleRandom}
                 disabled={randomLoading}
-                className={`px-4 py-2 inline-flex items-center gap-1.5 rounded-full border font-semibold shadow-md text-xs disabled:opacity-60 disabled:cursor-wait cursor-pointer ${
-                  theme === 'light'
-                    ? 'bg-slate-900 border-slate-900 text-slate-50 hover:bg-slate-700 hover:border-slate-700 shadow-slate-500/30'
-                    : 'bg-slate-900 border-slate-700 text-slate-200 hover:bg-slate-800 shadow-slate-700/30'
-                }`}
+                className="px-4 py-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text)] font-semibold shadow-md text-xs disabled:opacity-60 disabled:cursor-wait cursor-pointer hover:bg-[var(--bg-surface)]"
               >
                 <i className="fa-solid fa-shuffle text-[0.7rem]" />
                 {randomLoading ? 'Rolling…' : 'Random link'}
@@ -353,16 +411,12 @@ export default function AppShell() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search your links…"
-                className={`w-full sm:max-w-sm rounded-lg border px-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/70 ${
-                  theme === 'light'
-                    ? 'bg-white border-slate-300 text-slate-900'
-                    : 'bg-slate-900/80 border-slate-700 text-slate-100'
-                }`}
+                className="w-full sm:max-w-sm rounded-lg border border-[var(--border)] px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/70"
               />
               <button
                 type="button"
                 onClick={() => setShowLinkForm((open) => !open)}
-                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-400 text-slate-950 font-semibold text-xs px-4 py-2 shadow-md shadow-emerald-500/30 hover:bg-emerald-300 transition cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] font-semibold text-xs px-4 py-2 shadow-md hover:bg-[var(--accent-hover)] transition cursor-pointer"
               >
                 <i className="fa-solid fa-plus text-[0.7rem]" />
                 {showLinkForm ? 'Hide form' : 'Add link'}
@@ -374,16 +428,16 @@ export default function AppShell() {
             )}
 
             {showLinkForm && (
-              <div className="mt-4 rounded-xl border border-slate-700 bg-slate-900/70 p-4">
+              <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-4">
                 <LinkForm onCreated={handleCreated} />
               </div>
             )}
 
             <div className="mt-6 space-y-3">
               {loadingLinks ? (
-                <p className="text-sm text-slate-300">Loading links…</p>
+                <p className="text-sm text-[var(--text-muted)]">Loading links…</p>
               ) : links.length === 0 ? (
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-[var(--text-muted)]">
                   No links yet. Click{' '}
                   <span className="font-semibold">Add link</span> to save
                   something for later.

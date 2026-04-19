@@ -1,5 +1,171 @@
 @import "tailwindcss";
 
+/* ─── Default theme variables (dark) ──────────────────────────────────────── */
+:root {
+  --bg:           #020617;
+  --bg-surface:   #0f172a;
+  --bg-elevated:  #1e293b;
+  --bg-input:     #0f172a;
+  --text:         #f8fafc;
+  --text-muted:   #94a3b8;
+  --text-subtle:  #475569;
+  --border:       #334155;
+  --accent:       #34d399;
+  --accent-hover: #6ee7b7;
+  --accent-fg:    #020617;
+}
+
+/* ─── Theme: light ─────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:           #f8fafc;
+  --bg-surface:   #ffffff;
+  --bg-elevated:  #ffffff;
+  --bg-input:     #ffffff;
+  --text:         #0f172a;
+  --text-muted:   #64748b;
+  --text-subtle:  #94a3b8;
+  --border:       #e2e8f0;
+  --accent:       #34d399;
+  --accent-hover: #10b981;
+  --accent-fg:    #020617;
+}
+
+/* ─── Theme: dark ──────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg:           #020617;
+  --bg-surface:   #0f172a;
+  --bg-elevated:  #1e293b;
+  --bg-input:     #0f172a;
+  --text:         #f8fafc;
+  --text-muted:   #94a3b8;
+  --text-subtle:  #475569;
+  --border:       #334155;
+  --accent:       #34d399;
+  --accent-hover: #6ee7b7;
+  --accent-fg:    #020617;
+}
+
+/* ─── Theme: scanner-darkly ────────────────────────────────────────────────── */
+[data-theme="scanner-darkly"] {
+  --bg:           #0d0e24;
+  --bg-surface:   #141628;
+  --bg-elevated:  #1a1c35;
+  --bg-input:     #141628;
+  --text:         #f0e6d0;
+  --text-muted:   #a89070;
+  --text-subtle:  #6b5c44;
+  --border:       #2a2d50;
+  --accent:       #a3e635;
+  --accent-hover: #bef264;
+  --accent-fg:    #0d0e24;
+}
+
+/* ─── Theme: before-sunrise ────────────────────────────────────────────────── */
+[data-theme="before-sunrise"] {
+  --bg:           #fdf6e3;
+  --bg-surface:   #fff8ed;
+  --bg-elevated:  #ffffff;
+  --bg-input:     #fff8ed;
+  --text:         #2c1a08;
+  --text-muted:   #78430f;
+  --text-subtle:  #b07840;
+  --border:       #e8d4b0;
+  --accent:       #b45309;
+  --accent-hover: #92400e;
+  --accent-fg:    #fdf6e3;
+}
+
+/* ─── Theme: before-sunset ─────────────────────────────────────────────────── */
+[data-theme="before-sunset"] {
+  --bg:           #070604;
+  --bg-surface:   #120e07;
+  --bg-elevated:  #1c170c;
+  --bg-input:     #120e07;
+  --text:         #f5e6c0;
+  --text-muted:   #c4a060;
+  --text-subtle:  #7a6030;
+  --border:       #2e2210;
+  --accent:       #d97706;
+  --accent-hover: #f59e0b;
+  --accent-fg:    #070604;
+}
+
+/* ─── Theme: before-midnight ───────────────────────────────────────────────── */
+[data-theme="before-midnight"] {
+  --bg:           #0e2a45;
+  --bg-surface:   #143350;
+  --bg-elevated:  #1a3d5c;
+  --bg-input:     #143350;
+  --text:         #e8f4ff;
+  --text-muted:   #90b8d8;
+  --text-subtle:  #4a7898;
+  --border:       #1e4060;
+  --accent:       #f59e0b;
+  --accent-hover: #fbbf24;
+  --accent-fg:    #0e2a45;
+}
+
+/* ─── Theme: boyhood ───────────────────────────────────────────────────────── */
+[data-theme="boyhood"] {
+  --bg:           #0d1f0d;
+  --bg-surface:   #122012;
+  --bg-elevated:  #182a18;
+  --bg-input:     #122012;
+  --text:         #f0faf0;
+  --text-muted:   #86c886;
+  --text-subtle:  #4a7a4a;
+  --border:       #1e3a1e;
+  --accent:       #86efac;
+  --accent-hover: #bbf7d0;
+  --accent-fg:    #0d1f0d;
+}
+
+/* ─── Theme: dazed-and-confused ────────────────────────────────────────────── */
+[data-theme="dazed-and-confused"] {
+  --bg:           #e8f5fe;
+  --bg-surface:   #f0f9ff;
+  --bg-elevated:  #ffffff;
+  --bg-input:     #f0f9ff;
+  --text:         #0f1a2a;
+  --text-muted:   #2c5282;
+  --text-subtle:  #5a8ab0;
+  --border:       #bfdbf0;
+  --accent:       #dc2626;
+  --accent-hover: #b91c1c;
+  --accent-fg:    #f0f9ff;
+}
+
+/* ─── Theme: hit-man ───────────────────────────────────────────────────────── */
+[data-theme="hit-man"] {
+  --bg:           #110c00;
+  --bg-surface:   #1c1400;
+  --bg-elevated:  #261c00;
+  --bg-input:     #1c1400;
+  --text:         #fef3c7;
+  --text-muted:   #d4a840;
+  --text-subtle:  #8a6c20;
+  --border:       #2e2400;
+  --accent:       #f59e0b;
+  --accent-hover: #fbbf24;
+  --accent-fg:    #110c00;
+}
+
+/* ─── Theme: school-of-rock ────────────────────────────────────────────────── */
+[data-theme="school-of-rock"] {
+  --bg:           #fafafa;
+  --bg-surface:   #ffffff;
+  --bg-elevated:  #ffffff;
+  --bg-input:     #f4f4f5;
+  --text:         #1a0505;
+  --text-muted:   #6b2222;
+  --text-subtle:  #a05050;
+  --border:       #e4c0c0;
+  --accent:       #b91c1c;
+  --accent-hover: #991b1b;
+  --accent-fg:    #fafafa;
+}
+
+/* ─── Base styles ──────────────────────────────────────────────────────────── */
 @layer base {
   html,
   body,
@@ -8,10 +174,18 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900;
+    background-color: var(--bg);
+    color: var(--text);
   }
+}
 
-  [data-theme='dark'] body {
-    @apply bg-slate-950 text-slate-50;
-  }
+/* ─── Theme transition ─────────────────────────────────────────────────────── */
+:root {
+  --theme-transition-duration: 160ms;
+  --theme-transition-easing: ease;
+}
+*, *::before, *::after {
+  transition-property: background-color, color, border-color;
+  transition-duration: var(--theme-transition-duration);
+  transition-timing-function: var(--theme-transition-easing);
 }

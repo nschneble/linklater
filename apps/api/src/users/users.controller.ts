@@ -27,7 +27,7 @@ export class UsersController {
   @Patch('me')
   async updateMe(
     @Req() req: AuthRequest,
-    @Body() body: { email?: string; password?: string },
+    @Body() body: { email?: string; password?: string; theme?: string },
   ) {
     return this.usersService.updateMe(req.user.userId, body);
   }

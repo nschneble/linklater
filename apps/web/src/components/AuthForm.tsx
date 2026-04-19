@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useAuth } from '../auth/AuthContext';
 
 type Mode = 'login' | 'register';
@@ -39,22 +39,22 @@ export default function AuthForm() {
   };
 
   return (
-    <div className="max-w-md w-full mx-auto bg-slate-900/80 border border-slate-700 rounded-2xl shadow-xl p-8">
-      <h1 className="text-3xl font-bold text-slate-50 mb-2 text-center">
+    <div className="max-w-md w-full mx-auto bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl p-8">
+      <h1 className="text-3xl font-bold text-[var(--text)] mb-2 text-center">
         Linklater
       </h1>
-      <p className="text-slate-400 text-center mb-6">
+      <p className="text-[var(--text-muted)] text-center mb-6">
         Save links now, read them later.
       </p>
 
-      <div className="flex mb-6 rounded-full bg-slate-800 p-1">
+      <div className="flex mb-6 rounded-full bg-[var(--bg-elevated)] p-1">
         <button
           type="button"
           onClick={() => changeModes('login')}
           className={`flex-1 py-2 text-sm rounded-full transition ${
             mode === 'login'
-              ? 'bg-slate-100 text-slate-900 font-semibold'
-              : 'text-slate-400'
+              ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
+              : 'text-[var(--text-muted)]'
           }`}
         >
           Log in
@@ -64,8 +64,8 @@ export default function AuthForm() {
           onClick={() => changeModes('register')}
           className={`flex-1 py-2 text-sm rounded-full transition ${
             mode === 'register'
-              ? 'bg-slate-100 text-slate-900 font-semibold'
-              : 'text-slate-400'
+              ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
+              : 'text-[var(--text-muted)]'
           }`}
         >
           Sign up
@@ -73,24 +73,24 @@ export default function AuthForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <label className="block text-sm font-medium text-slate-200">
+        <label className="block text-sm font-medium text-[var(--text-muted)]">
           Email
           <input
             type="email"
             autoComplete="email"
-            className="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            className="mt-1 block w-full rounded-lg bg-[var(--bg-input)] border border-[var(--border)] px-3 py-2 text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </label>
 
-        <label className="block text-sm font-medium text-slate-200">
+        <label className="block text-sm font-medium text-[var(--text-muted)]">
           Password
           <input
             type="password"
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            className="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            className="mt-1 block w-full rounded-lg bg-[var(--bg-input)] border border-[var(--border)] px-3 py-2 text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -106,14 +106,14 @@ export default function AuthForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-400 text-slate-950 font-semibold py-2.5 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-wait transition"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--accent)] text-[var(--accent-fg)] font-semibold py-2.5 text-sm shadow-md hover:bg-[var(--accent-hover)] disabled:opacity-60 disabled:cursor-wait transition"
         >
           <i className="fa-solid fa-right-to-bracket text-xs" />
           {loading ? 'Working…' : mode === 'login' ? 'Log in' : 'Create account'}
         </button>
       </form>
 
-      <p className="mt-4 text-xs text-center text-slate-500">
+      <p className="mt-4 text-xs text-center text-[var(--text-subtle)]">
         This is a demo app for a take-home assignment. Please don&apos;t use a real
         password 🙃
       </p>

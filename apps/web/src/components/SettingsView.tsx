@@ -1,11 +1,9 @@
-import { FormEvent, useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useAuth } from '../auth/AuthContext';
-import { useTheme } from '../theme/ThemeContext';
 import { updateMe, deleteMe } from '../lib/api';
 
 export default function SettingsView() {
   const { user, logout, updateEmail } = useAuth();
-  const { theme } = useTheme();
   const [email, setEmail] = useState(user?.email ?? '');
   const [password, setPassword] = useState('');
   const [saving, setSaving] = useState(false);
@@ -56,42 +54,26 @@ export default function SettingsView() {
   return (
     <div className="space-y-6">
       <form onSubmit={handleSave} className="space-y-4 max-w-md">
-        <h2 className="text-xl font-semibold text-slate-50">
+        <h2 className="text-xl font-semibold text-[var(--text)]">
           Account settings
         </h2>
 
-        <label
-          className={`block text-xs font-medium ${
-            theme === 'light' ? 'text-slate-900' : 'text-slate-300'
-          }`}
-        >
+        <label className="block text-xs font-medium text-[var(--text-muted)]">
           Email
           <input
             type="email"
-            className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent ${
-              theme === 'light'
-                ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
-                : 'bg-slate-950 border-slate-700 text-slate-50'
-            }`}
+            className="mt-1 block w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
         </label>
 
-        <label
-          className={`block text-xs font-medium ${
-            theme === 'light' ? 'text-slate-900' : 'text-slate-300'
-          }`}
-        >
+        <label className="block text-xs font-medium text-[var(--text-muted)]">
           New password
           <input
             type="password"
             placeholder="Leave blank to keep current password"
-            className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent ${
-              theme === 'light'
-                ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
-                : 'bg-slate-950 border-slate-700 text-slate-50'
-            }`}
+            className="mt-1 block w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -111,34 +93,30 @@ export default function SettingsView() {
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center justify-center rounded-lg bg-emerald-400 text-slate-950 font-semibold py-2.5 px-4 text-sm shadow-md shadow-emerald-500/30 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-wait transition cursor-pointer"
+          className="inline-flex items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-fg)] font-semibold py-2.5 px-4 text-sm shadow-md hover:bg-[var(--accent-hover)] disabled:opacity-60 disabled:cursor-wait transition cursor-pointer"
         >
           {saving ? 'Saving…' : 'Save changes'}
         </button>
       </form>
 
-      <div
-        className={`border border-rose-800/70 rounded-xl p-4 max-w-md ${
-          theme === 'light' ? 'bg-rose-50' : 'bg-rose-950/40'
-        }`}
-      >
-        <h3 className="text-sm font-semibold text-rose-700 dark:text-rose-200 mb-1">
+      <div className="border border-rose-800/70 rounded-xl p-4 max-w-md bg-[var(--bg-surface)]">
+        <h3 className="text-sm font-semibold text-rose-400 mb-1">
           Danger zone
         </h3>
-        <p className="text-xs text-rose-700/80 dark:text-rose-200/80 mb-3">
+        <p className="text-xs text-rose-300/80 mb-3">
           Deleting your account will remove all your saved links. This cannot be
           undone.
         </p>
         {!confirmDelete ? (
           <button
             onClick={() => setConfirmDelete(true)}
-            className="px-3 py-1.5 rounded-full border border-rose-700 text-rose-700 dark:text-rose-200 text-xs hover:bg-rose-100 dark:hover:bg-rose-900/60 cursor-pointer"
+            className="px-3 py-1.5 rounded-full border border-rose-700 text-rose-300 text-xs hover:bg-rose-900/40 cursor-pointer"
           >
             Delete my account
           </button>
         ) : (
           <div className="flex gap-2 items-center text-xs">
-            <span className="text-rose-700 dark:text-rose-200">
+            <span className="text-rose-300">
               Are you sure? This is permanent.
             </span>
             <button
@@ -149,7 +127,7 @@ export default function SettingsView() {
             </button>
             <button
               onClick={() => setConfirmDelete(false)}
-              className="px-3 py-1.5 rounded-full border border-slate-700 text-slate-700 dark:text-slate-200"
+              className="px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-muted)]"
             >
               Cancel
             </button>

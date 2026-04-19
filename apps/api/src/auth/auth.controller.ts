@@ -36,6 +36,8 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async me(@Req() req: AuthRequest) {
-    return req.user;
+    const user = await this.usersService.findById(req.user.userId);
+    const { passwordHash: _, id, ...rest } = user;
+    return { userId: id, ...rest };
   }
 }
