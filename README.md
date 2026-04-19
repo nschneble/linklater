@@ -66,10 +66,10 @@ It’s a majestic modular monorepo!
 
 ```txt
 apps
-├── api       # NestJS back-end
-└── web       # React + Vite front-end
-package.json  # root workspace + scripts
-README.md
+├─ api/          # NestJS back-end
+├─ web/          # React + Vite front-end
+├─ package.json  # root workspace + scripts
+└─ README.md
 ```
 
 ## Bookmarklet
