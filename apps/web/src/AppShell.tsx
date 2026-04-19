@@ -50,7 +50,7 @@ export default function AppShell() {
       try {
         const data = await getLinks({
           search: search || undefined,
-          archived: filter === 'archived' ? true : false,
+          archived: filter === 'archived',
         });
         if (!cancelled) setLinks(data);
       } catch (err) {

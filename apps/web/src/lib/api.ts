@@ -83,13 +83,13 @@ export async function getLinks(options?: {
   search?: string;
   archived?: boolean;
 }): Promise<Link[]> {
-  const params = new URLSearchParams();
-  if (options?.search) params.set('search', options.search);
+  const queryParameters = new URLSearchParams();
+  if (options?.search) queryParameters.set('search', options.search);
   if (options?.archived !== undefined) {
-    params.set('archived', options.archived ? 'true' : 'false');
+    queryParameters.set('archived', options.archived ? 'true' : 'false');
   }
 
-  const query = params.toString();
+  const query = queryParameters.toString();
   const path = query ? `/links?${query}` : '/links';
 
   return apiFetch<Link[]>(path);
@@ -137,9 +137,9 @@ export async function deleteLink(id: string): Promise<{ success: boolean }> {
 export async function getRandomLink(options?: {
   archived?: boolean;
 }): Promise<{ link: Link | null }> {
-  const params = new URLSearchParams();
-  if (options?.archived) params.set('archived', 'true');
-  const query = params.toString();
+  const queryParameters = new URLSearchParams();
+  if (options?.archived) queryParameters.set('archived', 'true');
+  const query = queryParameters.toString();
   const path = query ? `/links/random?${query}` : '/links/random';
 
   return apiFetch<{ link: Link | null }>(path);

@@ -6,9 +6,9 @@ interface LinkFormProps {
 }
 
 export default function LinkForm({ onCreated }: LinkFormProps) {
-  const params = new URLSearchParams(window.location.search);
-  const initialUrl = params.get('url') ?? '';
-  const initialTitle = params.get('title') ?? '';
+  const queryParameters = new URLSearchParams(window.location.search);
+  const initialUrl = queryParameters.get('url') ?? '';
+  const initialTitle = queryParameters.get('title') ?? '';
 
   const [url, setUrl] = useState(initialUrl);
   const [title, setTitle] = useState(initialTitle);
