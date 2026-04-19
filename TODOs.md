@@ -7,7 +7,6 @@ This is a list of upcoming features and bugfixes.
 - Add account/email verification
 - Add OAuth2 support to login with Google, GitHub, etc
 - Add 2FA
-- Add meta tags and an OpenGraph preview
 - Do a proper accessibility pass (ARIA, roles, focus states, color contrast)
 - Fetch and store link metadata via a background job
 - Add reading time estimates
