@@ -74,22 +74,11 @@ apps
 
 ## Bookmarklet
 
-Linklater supports a simple “send to Linklater” bookmarklet by using query parameters to pre-fill the url and title of the current page.
+Linklater includes a one-click bookmarklet that saves the current page directly to your collection — no new tab, no form to fill out.
 
-Example:
+To install it, go to **Settings → Bookmarklet** and drag the _Save to Linklater_ button to your bookmarks bar. Your auth token is pre-embedded so clicking it on any page immediately calls the API and shows a confirmation toast.
 
-```js
-javascript:(function(){
-
-  /* use http://localhost:5173 for local development */
-  const base = 'https://linklater.example.com';
-
-  const url = encodeURIComponent(location.href);
-  const title = encodeURIComponent(document.title);
-
-  window.open(`${base}/?url=${url}&title=${title}`, '_blank','noopener,noreferrer');
-})();
-```
+The token embedded in the bookmarklet expires after 90 days. If saving stops working, revisit Settings and reinstall it.
 
 ## Local Development
 

@@ -9,7 +9,6 @@ This is a list of upcoming features and bugfixes.
 - Add 2FA
 - Fetch and store link metadata via a background job
 - Add reading time estimates
-- Create a “real” bookmarklet that will save a link without leaving the article
 - Create browser extension(s) for one-click saving
 - Add light and dark variants of all themes
 - Add light/dark mode to go with updated themes

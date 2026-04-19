@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { updateMe, deleteMe } from '../lib/api';
 
@@ -10,6 +10,34 @@ export default function SettingsView() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const bookmarkletRef = useRef<HTMLAnchorElement>(null);
+
+  // React sanitises javascript: URLs when set declaratively, replacing them with
+  // about:blank. Setting the href via setAttribute after render bypasses that.
+  useEffect(() => {
+    if (!bookmarkletRef.current) return;
+    const token = localStorage.getItem('linklater_token') ?? '';
+    const apiUrl = import.meta.env.VITE_API_BASE_URL as string;
+    const code =
+      'javascript:(function(){' +
+      'var t=' + JSON.stringify(token) + ',a=' + JSON.stringify(apiUrl) + ';' +
+      "function n(m,k){var e=document.createElement('div');e.textContent=m;" +
+      "e.style.cssText='position:fixed;top:16px;right:16px;padding:12px 18px;" +
+        "border-radius:8px;font:600 14px/1 system-ui;z-index:2147483647;" +
+        "box-shadow:0 4px 16px rgba(0,0,0,.35);transition:opacity .3s;" +
+        "color:'+(k?'#020617':'#fff')+';background:'+(k?'#34d399':'#ef4444');" +
+      "document.body.appendChild(e);" +
+      "setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.remove()},350)},2500)}" +
+      "fetch(a+'/links',{method:'POST'," +
+        "headers:{'Content-Type':'application/json','Authorization':'Bearer '+t}," +
+        "body:JSON.stringify({url:location.href,title:document.title})})" +
+      ".then(function(r){r.ok" +
+        "?n('Saved to Linklater \u2713',true)" +
+        ":r.text().then(function(m){n(m||'Error saving link',false)})})" +
+      ".catch(function(){n('Could not reach Linklater',false)})" +
+      '})();';
+    bookmarkletRef.current.setAttribute('href', code);
+  }, []);
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
@@ -98,6 +126,27 @@ export default function SettingsView() {
           {saving ? 'Saving…' : 'Save changes'}
         </button>
       </form>
+
+      <div className="max-w-md space-y-3">
+        <h3 className="text-sm font-semibold text-[var(--text)]">Bookmarklet</h3>
+        <p className="text-xs text-[var(--text-muted)]">
+          Drag the button below to your bookmarks bar. Clicking it on any page saves
+          the link directly to Linklater — no new tab, no form to fill out.
+        </p>
+        <a
+          ref={bookmarkletRef}
+          draggable
+          onClick={(e) => e.preventDefault()}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text)] text-xs font-semibold cursor-grab active:cursor-grabbing select-none hover:bg-[var(--bg-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] transition"
+        >
+          <i className="fa-solid fa-bookmark text-[0.7rem] text-[var(--accent)]" />
+          Save to Linklater
+        </a>
+        <p className="text-xs text-[var(--text-subtle)]">
+          Your auth token is embedded in this bookmarklet — keep it private. It
+          expires after 90 days; reinstall it from this page when it does.
+        </p>
+      </div>
 
       <div className="border border-rose-800/70 rounded-xl p-4 max-w-md bg-[var(--bg-surface)]">
         <h3 className="text-sm font-semibold text-rose-400 mb-1">
