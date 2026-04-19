@@ -4,8 +4,6 @@ import * as bcrypt from 'bcryptjs';
 import { withoutPasswordHash } from './users.utils.js';
 
 export const VALID_THEMES = [
-  'light',
-  'dark',
   'scanner-darkly',
   'before-sunrise',
   'before-sunset',
@@ -15,6 +13,8 @@ export const VALID_THEMES = [
   'hit-man',
   'school-of-rock',
 ] as const;
+
+export const VALID_MODES = ['light', 'dark'] as const;
 
 @Injectable()
 export class UsersService {
@@ -35,8 +35,8 @@ export class UsersService {
     return withoutPasswordHash(user);
   }
 
-  async updateMe(id: string, data: { email?: string; password?: string; theme?: string }) {
-    const updateData: { email?: string; passwordHash?: string; theme?: string } = {};
+  async updateMe(id: string, data: { email?: string; password?: string; theme?: string; mode?: string }) {
+    const updateData: { email?: string; passwordHash?: string; theme?: string; mode?: string } = {};
 
     if (data.email) {
       const existing = await this.prisma.user.findUnique({
@@ -58,6 +58,13 @@ export class UsersService {
         throw new BadRequestException('Invalid theme');
       }
       updateData.theme = data.theme;
+    }
+
+    if (data.mode !== undefined) {
+      if (!(VALID_MODES as readonly string[]).includes(data.mode)) {
+        throw new BadRequestException('Invalid mode');
+      }
+      updateData.mode = data.mode;
     }
 
     const user = await this.prisma.user.update({

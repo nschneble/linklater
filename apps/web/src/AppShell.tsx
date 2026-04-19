@@ -20,7 +20,7 @@ type LinksFilter = 'active' | 'archived';
 
 export default function AppShell() {
   const { user, logout } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { baseTheme, mode, setBaseTheme, toggleMode } = useTheme();
 
   const [view, setView] = useState<AppView>('links');
   const [links, setLinks] = useState<Link[]>([]);
@@ -79,14 +79,14 @@ export default function AppShell() {
     }
   };
 
-  const scheduleHide = (currentTheme: string) => {
+  const scheduleHide = (currentBaseTheme: string) => {
     cancelHide();
     setShowThemeSubmenu(false);
     setPreviewTheme(null);
     const root = document.documentElement;
     root.style.setProperty('--theme-transition-duration', '250ms');
     root.style.setProperty('--theme-transition-easing', 'ease-out');
-    root.dataset.theme = currentTheme;
+    root.dataset.theme = currentBaseTheme;
   };
 
   const handleThemeRowEnter = () => {
@@ -183,11 +183,19 @@ export default function AppShell() {
     }
   };
 
-  const handleSelectTheme = (id: typeof theme) => {
-    setTheme(id);
+  const handleSelectTheme = (id: typeof baseTheme) => {
+    setBaseTheme(id);
     setShowUserMenu(false);
     updateMe({ theme: id }).catch((err) =>
       console.error('Failed to save theme', err),
+    );
+  };
+
+  const handleToggleMode = () => {
+    const nextMode = mode === 'light' ? 'dark' : 'light';
+    toggleMode();
+    updateMe({ mode: nextMode }).catch((err) =>
+      console.error('Failed to save mode', err),
     );
   };
 
@@ -234,7 +242,7 @@ export default function AppShell() {
                 {showUserMenu && (
                   <div
                     ref={menuRef}
-                    className="animate-fade-in-up absolute right-0 mt-2 w-60 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-lg shadow-black/40 py-2 text-xs"
+                    className="animate-fade-in-up absolute right-0 mt-2 w-60 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-lg shadow-black/40 py-2 text-xs z-50"
                   >
                     <div className="px-3 pb-2 border-b border-[var(--border)] mb-2">
                       <p className="text-[0.65rem] uppercase tracking-tight font-semibold text-[var(--text-subtle)]">
@@ -281,12 +289,24 @@ export default function AppShell() {
                       <span>Settings</span>
                     </button>
 
+                    {/* Light/dark mode toggle */}
+                    <button
+                      type="button"
+                      onClick={handleToggleMode}
+                      className="flex w-full items-center gap-2 px-3 py-2 hover:bg-[var(--bg-surface)] text-[var(--text)] text-left cursor-pointer"
+                    >
+                      <i
+                        className={`fa-solid ${mode === 'light' ? 'fa-moon' : 'fa-sun'} text-[0.75rem] text-[var(--text-muted)]`}
+                      />
+                      <span>Switch to {mode === 'light' ? 'dark' : 'light'} mode</span>
+                    </button>
+
                     {/* Theme row — hover opens flyout submenu */}
                     <div
                       ref={themeRowRef}
                       className="relative"
                       onMouseEnter={handleThemeRowEnter}
-                      onMouseLeave={() => scheduleHide(theme)}
+                      onMouseLeave={() => scheduleHide(baseTheme)}
                     >
                       <div
                         className={`flex w-full items-center gap-2 px-3 py-2 cursor-default text-[var(--text)] ${
@@ -297,9 +317,9 @@ export default function AppShell() {
                         <div className="flex-1">
                           <div>Theme</div>
                           <div className="text-[var(--text-muted)] mt-0.5">
-                            {previewTheme && previewTheme !== theme
+                            {previewTheme && previewTheme !== baseTheme
                               ? `Previewing ${THEMES.find((t) => t.id === previewTheme)?.label}`
-                              : THEMES.find((t) => t.id === theme)?.label}
+                              : THEMES.find((t) => t.id === baseTheme)?.label}
                           </div>
                         </div>
                         <i className="fa-solid fa-chevron-right text-[0.6rem] text-[var(--text-subtle)]" />
@@ -307,8 +327,8 @@ export default function AppShell() {
 
                       <div
                         onMouseEnter={cancelHide}
-                        onMouseLeave={() => scheduleHide(theme)}
-                        className={`absolute top-0 w-56 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-lg shadow-black/40 py-2
+                        onMouseLeave={() => scheduleHide(baseTheme)}
+                        className={`absolute top-0 w-56 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-lg shadow-black/40 py-2 z-50
                           transition-[opacity,transform] duration-150 ease-out
                           ${showThemeSubmenu ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}
                           ${themeSubmenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
@@ -332,7 +352,7 @@ export default function AppShell() {
                               style={{ backgroundColor: t.accent }}
                             />
                             <span className="flex-1">{t.label}</span>
-                            {theme === t.id && (
+                            {baseTheme === t.id && (
                               <i className="fa-solid fa-check text-[0.6rem] text-[var(--accent)]" />
                             )}
                           </button>

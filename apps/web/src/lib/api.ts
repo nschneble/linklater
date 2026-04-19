@@ -63,7 +63,7 @@ export function logout() {
 }
 
 export async function getMe() {
-  return apiFetch<{ userId: string; email: string; theme: string }>('/auth/me', {
+  return apiFetch<{ userId: string; email: string; theme: string; mode: string }>('/auth/me', {
     method: 'GET',
   });
 }
@@ -149,6 +149,7 @@ export async function updateMe(input: {
   email?: string;
   password?: string;
   theme?: string;
+  mode?: string;
 }) {
   return apiFetch<{ id: string; email: string }>(
     '/users/me',

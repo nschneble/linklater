@@ -11,7 +11,7 @@ import {
   logout as apiLogout,
   register as apiRegister,
 } from '../lib/api';
-import { useTheme, type Theme } from '../theme/ThemeContext';
+import { useTheme, type BaseTheme } from '../theme/ThemeContext';
 
 interface User {
   userId: string;
@@ -32,7 +32,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { setTheme } = useTheme();
+  const { setBaseTheme, setMode } = useTheme();
 
   useEffect(() => {
     const token = localStorage.getItem('linklater_token');
@@ -45,7 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const me = await getMe();
         setUser({ userId: me.userId, email: me.email });
-        setTheme(me.theme as Theme);
+        if (me.theme) setBaseTheme(me.theme as BaseTheme);
+        if (me.mode === 'light' || me.mode === 'dark') setMode(me.mode);
       } catch (e) {
         console.error('Failed to fetch current user', e);
         localStorage.removeItem('linklater_token');
@@ -53,13 +54,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     })();
-  }, [setTheme]);
+  }, [setBaseTheme, setMode]);
 
   const login = async (email: string, password: string) => {
     await apiLogin(email, password);
     const me = await getMe();
     setUser({ userId: me.userId, email: me.email });
-    setTheme(me.theme as Theme);
+    if (me.theme) setBaseTheme(me.theme as BaseTheme);
+    if (me.mode === 'light' || me.mode === 'dark') setMode(me.mode);
   };
 
   const register = async (email: string, password: string) => {

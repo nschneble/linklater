@@ -10,8 +10,6 @@ This is a list of upcoming features and bugfixes.
 - Fetch and store link metadata via a background job
 - Add reading time estimates
 - Create browser extension(s) for one-click saving
-- Add light and dark variants of all themes
-- Add light/dark mode to go with updated themes
 
 ## Bugfixes
 
