@@ -60,8 +60,10 @@ export default function LinkCard({
       </div>
       <div className="flex items-center gap-2 justify-end">
         <button
+          type="button"
           onClick={onArchiveToggle}
-          className="px-2.5 py-1.5 inline-flex items-center gap-1.5 text-xs rounded-full border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-elevated)] cursor-pointer"
+          aria-label={link.archivedAt ? `Unarchive "${link.title}"` : `Archive "${link.title}"`}
+          className="px-2.5 py-1.5 inline-flex items-center gap-1.5 text-xs rounded-full border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-elevated)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] cursor-pointer"
         >
           <i
             className={
@@ -74,8 +76,10 @@ export default function LinkCard({
         </button>
 
         <button
+          type="button"
           onClick={onDelete}
-          className="px-2.5 py-1.5 inline-flex items-center gap-1.5 text-xs rounded-full border border-rose-700 text-rose-300 hover:bg-rose-900/40 cursor-pointer"
+          aria-label={`Delete "${link.title}"`}
+          className="px-2.5 py-1.5 inline-flex items-center gap-1.5 text-xs rounded-full border border-rose-700 text-rose-300 hover:bg-rose-900/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 cursor-pointer"
         >
           <i className="fa-solid fa-trash-can text-[0.7rem]" />
           Delete

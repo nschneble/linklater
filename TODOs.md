@@ -7,7 +7,6 @@ This is a list of upcoming features and bugfixes.
 - Add account/email verification
 - Add OAuth2 support to login with Google, GitHub, etc
 - Add 2FA
-- Do a proper accessibility pass (ARIA, roles, focus states, color contrast)
 - Fetch and store link metadata via a background job
 - Add reading time estimates
 - Create a “real” bookmarklet that will save a link without leaving the article

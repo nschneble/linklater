@@ -80,12 +80,12 @@ export default function SettingsView() {
         </label>
 
         {message && (
-          <p className="text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-700 rounded-lg px-3 py-2">
+          <p role="status" className="text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-700 rounded-lg px-3 py-2">
             {message}
           </p>
         )}
         {error && (
-          <p className="text-xs text-rose-300 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2">
+          <p role="alert" className="text-xs text-rose-300 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2">
             {error}
           </p>
         )}
@@ -109,8 +109,9 @@ export default function SettingsView() {
         </p>
         {!confirmDelete ? (
           <button
+            type="button"
             onClick={() => setConfirmDelete(true)}
-            className="px-3 py-1.5 rounded-full border border-rose-700 text-rose-300 text-xs hover:bg-rose-900/40 cursor-pointer"
+            className="px-3 py-1.5 rounded-full border border-rose-700 text-rose-300 text-xs hover:bg-rose-900/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 cursor-pointer"
           >
             Delete my account
           </button>
@@ -120,14 +121,16 @@ export default function SettingsView() {
               Are you sure? This is permanent.
             </span>
             <button
+              type="button"
               onClick={handleDelete}
-              className="px-3 py-1.5 rounded-full bg-rose-600 text-rose-50 hover:bg-rose-500"
+              className="px-3 py-1.5 rounded-full bg-rose-600 text-rose-50 hover:bg-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
             >
               Yes, delete
             </button>
             <button
+              type="button"
               onClick={() => setConfirmDelete(false)}
-              className="px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-muted)]"
+              className="px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             >
               Cancel
             </button>

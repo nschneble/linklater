@@ -72,7 +72,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
         {saving ? 'Saving…' : 'Save link'}
       </button>
       {error && (
-        <p className="text-xs text-rose-400 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2 sm:ml-2">
+        <p role="alert" className="text-xs text-rose-400 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2 sm:ml-2">
           {error}
         </p>
       )}

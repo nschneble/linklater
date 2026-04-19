@@ -217,8 +217,11 @@ export default function AppShell() {
                 <button
                   ref={avatarRef}
                   type="button"
+                  aria-label="User menu"
+                  aria-haspopup="true"
+                  aria-expanded={showUserMenu}
                   onClick={() => setShowUserMenu((open) => !open)}
-                  className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-2 py-1.5 hover:bg-[var(--bg-surface)] transition cursor-pointer"
+                  className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-2 py-1.5 hover:bg-[var(--bg-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] transition cursor-pointer"
                 >
                   <img
                     src={avatarUrl}
@@ -369,11 +372,13 @@ export default function AppShell() {
             </p>
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="inline-flex rounded-full bg-[var(--bg-surface)] border border-[var(--border)] p-1 text-xs">
+              <div role="tablist" aria-label="Links filter" className="inline-flex rounded-full bg-[var(--bg-surface)] border border-[var(--border)] p-1 text-xs">
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={filter === 'active'}
                   onClick={() => setFilter('active')}
-                  className={`px-3 py-1.5 rounded-full transition ${
+                  className={`px-3 py-1.5 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
                     filter === 'active'
                       ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
                       : 'text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] cursor-pointer'
@@ -383,8 +388,10 @@ export default function AppShell() {
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={filter === 'archived'}
                   onClick={() => setFilter('archived')}
-                  className={`px-3 py-1.5 rounded-full transition ${
+                  className={`px-3 py-1.5 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
                     filter === 'archived'
                       ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
                       : 'text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] cursor-pointer'
@@ -408,6 +415,7 @@ export default function AppShell() {
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <input
                 type="search"
+                aria-label="Search your links"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search your links…"
@@ -415,8 +423,9 @@ export default function AppShell() {
               />
               <button
                 type="button"
+                aria-expanded={showLinkForm}
                 onClick={() => setShowLinkForm((open) => !open)}
-                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] font-semibold text-xs px-4 py-2 shadow-md hover:bg-[var(--accent-hover)] transition cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] font-semibold text-xs px-4 py-2 shadow-md hover:bg-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] transition cursor-pointer"
               >
                 <i className="fa-solid fa-plus text-[0.7rem]" />
                 {showLinkForm ? 'Hide form' : 'Add link'}
@@ -424,7 +433,7 @@ export default function AppShell() {
             </div>
 
             {randomError && (
-              <p className="animate-fade-in-up mt-2 text-xs text-rose-300">{randomError}</p>
+              <p role="alert" className="animate-fade-in-up mt-2 text-xs text-rose-300">{randomError}</p>
             )}
 
             {showLinkForm && (
