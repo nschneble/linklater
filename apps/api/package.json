@@ -86,7 +86,8 @@
       "ts"
     ],
     "moduleNameMapper": {
-      "^(\\.\\.?/.*)\\.js$": "$1"
+      "^(\\.\\.?/.*)\\.js$": "$1",
+      "^@linklater/(.*)$": "<rootDir>/$1/index.ts"
     },
     "rootDir": "src",
     "testEnvironment": "node",

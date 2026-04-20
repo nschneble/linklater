@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as cheerio from 'cheerio';
-import { PrismaService } from '../prisma/index.js';
-import { QueueService, QUEUES } from '../queue/index.js';
+import { PrismaService } from '@linklater/prisma';
+import { QueueService, QUEUES } from '@linklater/queue';
 
 @Injectable()
 export class MetadataService implements OnModuleInit {

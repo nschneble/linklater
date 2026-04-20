@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from './auth/index.js';
-import { LinksModule } from './links/index.js';
-import { MetadataModule } from './metadata/index.js';
-import { PrismaModule } from './prisma/index.js';
-import { QueueModule } from './queue/index.js';
-import { UsersModule } from './users/index.js';
+import { AuthModule } from './auth/auth.module.js';
+import { LinksModule } from './links/links.module.js';
+import { MetadataModule } from './metadata/metadata.module.js';
+import { PrismaModule } from './prisma/prisma.module.js';
+import { QueueModule } from './queue/queue.module.js';
+import { UsersModule } from './users/users.module.js';
 
 @Module({
   imports: [

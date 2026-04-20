@@ -21,7 +21,10 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@linklater/*": ["./src/*/index.ts"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "prisma.config.ts"]
