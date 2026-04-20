@@ -10,6 +10,7 @@ describe('QueueService', () => {
   const bossMock = {
     start: jest.fn().mockResolvedValue(undefined),
     stop: jest.fn().mockResolvedValue(undefined),
+    createQueue: jest.fn().mockResolvedValue(undefined),
     send: jest.fn().mockResolvedValue('job-id'),
     work: jest.fn().mockResolvedValue('worker-id'),
   };
@@ -43,6 +44,7 @@ describe('QueueService', () => {
   it('delegates send to boss.send', async () => {
     bossMock.send.mockResolvedValue('job-id');
     const result = await service.send('my-queue', { foo: 'bar' });
+    expect(bossMock.createQueue).toHaveBeenCalledWith('my-queue');
     expect(bossMock.send).toHaveBeenCalledWith('my-queue', { foo: 'bar' });
     expect(result).toBe('job-id');
   });
@@ -50,6 +52,7 @@ describe('QueueService', () => {
   it('delegates work to boss.work', async () => {
     const handler = jest.fn();
     await service.work('my-queue', handler as never);
+    expect(bossMock.createQueue).toHaveBeenCalledWith('my-queue');
     expect(bossMock.work).toHaveBeenCalledWith('my-queue', handler);
   });
 });

@@ -15,13 +15,15 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   async send(queue: string, data: object): Promise<string | null> {
+    await this.boss.createQueue(queue);
     return this.boss.send(queue, data);
   }
 
-  work<T extends object>(
+  async work<T extends object>(
     queue: string,
     handler: (jobs: Job<T>[]) => Promise<void>,
   ): Promise<string> {
+    await this.boss.createQueue(queue);
     return this.boss.work(queue, handler);
   }
 }
