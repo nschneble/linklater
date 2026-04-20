@@ -7,6 +7,13 @@ import { MetadataModule } from './metadata/metadata.module.js';
 import { QueueModule } from './queue/queue.module.js';
 
 @Module({
-  imports: [PrismaModule, QueueModule, UsersModule, AuthModule, LinksModule, MetadataModule],
+  imports: [
+    PrismaModule,
+    QueueModule,
+    UsersModule,
+    AuthModule,
+    LinksModule,
+    MetadataModule,
+  ],
 })
 export class AppModule {}

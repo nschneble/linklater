@@ -50,10 +50,7 @@ export class LinksController {
   }
 
   @Get('random')
-  async random(
-    @Req() req: AuthRequest,
-    @Query('archived') archived?: string,
-  ) {
+  async random(@Req() req: AuthRequest, @Query('archived') archived?: string) {
     const userId = req.user.userId;
 
     let archivedFlag = false;

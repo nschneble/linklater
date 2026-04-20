@@ -18,7 +18,7 @@ describe('LinksController', () => {
     remove: jest.fn(),
   } as unknown as LinksService;
 
-  const makeReq = (userId = 'user-1') => ({ user: { userId } } as never);
+  const makeReq = (userId = 'user-1') => ({ user: { userId } }) as never;
   const makeLink = (overrides = {}) => ({
     id: 'link-1',
     userId: 'user-1',
@@ -51,9 +51,13 @@ describe('LinksController', () => {
       const link = makeLink();
       (linksServiceMock.create as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.create(makeReq(), { url: 'https://example.com' } as never);
+      const result = await controller.create(makeReq(), {
+        url: 'https://example.com',
+      } as never);
 
-      expect(linksServiceMock.create).toHaveBeenCalledWith('user-1', { url: 'https://example.com' });
+      expect(linksServiceMock.create).toHaveBeenCalledWith('user-1', {
+        url: 'https://example.com',
+      });
       expect(result).toBe(link);
     });
   });
@@ -74,9 +78,20 @@ describe('LinksController', () => {
     });
 
     it('passes undefined for archived when the query param is absent', async () => {
-      (linksServiceMock.findAll as jest.Mock).mockResolvedValue({ data: [], total: 0, page: 1, limit: 50 });
+      (linksServiceMock.findAll as jest.Mock).mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 50,
+      });
 
-      await controller.findAll(makeReq(), undefined, undefined, undefined, undefined);
+      await controller.findAll(
+        makeReq(),
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
 
       expect(linksServiceMock.findAll).toHaveBeenCalledWith('user-1', {
         search: undefined,
@@ -131,9 +146,13 @@ describe('LinksController', () => {
       const link = makeLink({ title: 'Updated' });
       (linksServiceMock.update as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.update(makeReq(), 'link-1', { title: 'Updated' } as never);
+      const result = await controller.update(makeReq(), 'link-1', {
+        title: 'Updated',
+      } as never);
 
-      expect(linksServiceMock.update).toHaveBeenCalledWith('user-1', 'link-1', { title: 'Updated' });
+      expect(linksServiceMock.update).toHaveBeenCalledWith('user-1', 'link-1', {
+        title: 'Updated',
+      });
       expect(result).toBe(link);
     });
   });
@@ -157,14 +176,19 @@ describe('LinksController', () => {
 
       const result = await controller.unarchive(makeReq(), 'link-1');
 
-      expect(linksServiceMock.unarchive).toHaveBeenCalledWith('user-1', 'link-1');
+      expect(linksServiceMock.unarchive).toHaveBeenCalledWith(
+        'user-1',
+        'link-1',
+      );
       expect(result).toBe(link);
     });
   });
 
   describe('remove', () => {
     it('delegates to LinksService.remove', async () => {
-      (linksServiceMock.remove as jest.Mock).mockResolvedValue({ success: true });
+      (linksServiceMock.remove as jest.Mock).mockResolvedValue({
+        success: true,
+      });
 
       const result = await controller.remove(makeReq(), 'link-1');
 

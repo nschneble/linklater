@@ -1,4 +1,10 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import * as bcrypt from 'bcryptjs';
 import { withoutPasswordHash } from './users.utils.js';
@@ -35,8 +41,22 @@ export class UsersService {
     return withoutPasswordHash(user);
   }
 
-  async updateMe(id: string, data: { email?: string; password?: string; currentPassword?: string; theme?: string; mode?: string }) {
-    const updateData: { email?: string; passwordHash?: string; theme?: string; mode?: string } = {};
+  async updateMe(
+    id: string,
+    data: {
+      email?: string;
+      password?: string;
+      currentPassword?: string;
+      theme?: string;
+      mode?: string;
+    },
+  ) {
+    const updateData: {
+      email?: string;
+      passwordHash?: string;
+      theme?: string;
+      mode?: string;
+    } = {};
 
     if (data.email) {
       const existing = await this.prisma.user.findUnique({
@@ -50,12 +70,18 @@ export class UsersService {
 
     if (data.password) {
       if (!data.currentPassword) {
-        throw new BadRequestException('Current password is required to set a new password');
+        throw new BadRequestException(
+          'Current password is required to set a new password',
+        );
       }
       const user = await this.prisma.user.findUnique({ where: { id } });
       if (!user) throw new NotFoundException('User not found');
-      const isValid = await bcrypt.compare(data.currentPassword, user.passwordHash);
-      if (!isValid) throw new UnauthorizedException('Current password is incorrect');
+      const isValid = await bcrypt.compare(
+        data.currentPassword,
+        user.passwordHash,
+      );
+      if (!isValid)
+        throw new UnauthorizedException('Current password is incorrect');
       const passwordHash = await bcrypt.hash(data.password, 12);
       updateData.passwordHash = passwordHash;
     }

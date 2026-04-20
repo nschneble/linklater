@@ -36,12 +36,25 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('delegates to UsersService.create', async () => {
-      const user = { id: 'u1', email: 'a@b.com', theme: 'scanner-darkly', mode: 'dark', createdAt: new Date(), updatedAt: new Date() };
+      const user = {
+        id: 'u1',
+        email: 'a@b.com',
+        theme: 'scanner-darkly',
+        mode: 'dark',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
       (usersServiceMock.create as jest.Mock).mockResolvedValue(user);
 
-      const result = await controller.register({ email: 'a@b.com', password: 'password123' } as never);
+      const result = await controller.register({
+        email: 'a@b.com',
+        password: 'password123',
+      } as never);
 
-      expect(usersServiceMock.create).toHaveBeenCalledWith('a@b.com', 'password123');
+      expect(usersServiceMock.create).toHaveBeenCalledWith(
+        'a@b.com',
+        'password123',
+      );
       expect(result).toBe(user);
     });
   });
@@ -49,7 +62,9 @@ describe('AuthController', () => {
   describe('login', () => {
     it('delegates to AuthService.login with the request user', async () => {
       const req = { user: { userId: 'u1', email: 'a@b.com' } } as never;
-      (authServiceMock.login as jest.Mock).mockResolvedValue({ accessToken: 'token' });
+      (authServiceMock.login as jest.Mock).mockResolvedValue({
+        accessToken: 'token',
+      });
 
       const result = await controller.login(req);
 

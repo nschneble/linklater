@@ -4,7 +4,9 @@ import * as bcrypt from 'bcryptjs';
 import { UsersService } from '../users/users.service.js';
 import { withoutPasswordHash } from '../users/users.utils.js';
 
-type LoginUser = { id: string; email: string } | { userId: string; email: string };
+type LoginUser =
+  | { id: string; email: string }
+  | { userId: string; email: string };
 
 @Injectable()
 export class AuthService {

@@ -1,4 +1,9 @@
-import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import type { PgBoss, Job } from 'pg-boss';
 import { PGBOSS_INSTANCE } from './queue.constants.js';
 

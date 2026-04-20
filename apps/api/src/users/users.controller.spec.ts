@@ -13,7 +13,7 @@ describe('UsersController', () => {
     deleteById: jest.fn(),
   } as unknown as UsersService;
 
-  const makeReq = (userId = 'user-1') => ({ user: { userId } } as never);
+  const makeReq = (userId = 'user-1') => ({ user: { userId } }) as never;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,9 +43,13 @@ describe('UsersController', () => {
     const updated = { id: 'user-1', email: 'new@b.com' };
     (usersServiceMock.updateMe as jest.Mock).mockResolvedValue(updated);
 
-    const result = await controller.updateMe(makeReq(), { email: 'new@b.com' } as never);
+    const result = await controller.updateMe(makeReq(), {
+      email: 'new@b.com',
+    } as never);
 
-    expect(usersServiceMock.updateMe).toHaveBeenCalledWith('user-1', { email: 'new@b.com' });
+    expect(usersServiceMock.updateMe).toHaveBeenCalledWith('user-1', {
+      email: 'new@b.com',
+    });
     expect(result).toBe(updated);
   });
 

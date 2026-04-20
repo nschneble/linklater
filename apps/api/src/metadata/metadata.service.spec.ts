@@ -11,11 +11,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 import { QUEUES } from '../queue/queue.constants';
 
-const makeHtml = (overrides: {
-  ogDescription?: string;
-  metaDescription?: string;
-  ogImage?: string;
-} = {}) => {
+const makeHtml = (
+  overrides: {
+    ogDescription?: string;
+    metaDescription?: string;
+    ogImage?: string;
+  } = {},
+) => {
   const { ogDescription, metaDescription, ogImage } = overrides;
 
   const ogDescriptionTag = ogDescription
@@ -71,7 +73,10 @@ describe('MetadataService', () => {
 
   it('extracts og:description and og:image from HTML', async () => {
     mockFetch(
-      makeHtml({ ogDescription: 'A great page', ogImage: 'https://example.com/img.jpg' }),
+      makeHtml({
+        ogDescription: 'A great page',
+        ogImage: 'https://example.com/img.jpg',
+      }),
     );
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
@@ -97,7 +102,9 @@ describe('MetadataService', () => {
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ metaDescription: 'Fallback description' }),
+        data: expect.objectContaining({
+          metaDescription: 'Fallback description',
+        }),
       }),
     );
   });
@@ -135,7 +142,9 @@ describe('MetadataService', () => {
   });
 
   it('marks fetch as attempted when fetch() throws', async () => {
-    global.fetch = jest.fn().mockRejectedValue(new Error('Network error')) as unknown as typeof fetch;
+    global.fetch = jest
+      .fn()
+      .mockRejectedValue(new Error('Network error')) as unknown as typeof fetch;
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
     await service.fetchAndStore('link1', 'https://example.com');
