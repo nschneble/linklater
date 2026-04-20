@@ -23,20 +23,20 @@ export class LinksController {
   constructor(private readonly linksService: LinksService) {}
 
   @Post()
-  async create(@Req() req: AuthRequest, @Body() body: CreateLinkDto) {
-    const userId = req.user.userId;
+  async create(@Req() request: AuthRequest, @Body() body: CreateLinkDto) {
+    const userId = request.user.userId;
     return this.linksService.create(userId, body);
   }
 
   @Get()
   async findAll(
-    @Req() req: AuthRequest,
+    @Req() request: AuthRequest,
     @Query('search') search?: string,
     @Query('archived') archived?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const userId = req.user.userId;
+    const userId = request.user.userId;
 
     let archivedFlag: boolean | undefined;
     if (archived === 'true') archivedFlag = true;
@@ -51,8 +51,11 @@ export class LinksController {
   }
 
   @Get('random')
-  async random(@Req() req: AuthRequest, @Query('archived') archived?: string) {
-    const userId = req.user.userId;
+  async random(
+    @Req() request: AuthRequest,
+    @Query('archived') archived?: string,
+  ) {
+    const userId = request.user.userId;
 
     let archivedFlag = false;
     if (archived === 'true') archivedFlag = true;
@@ -62,36 +65,36 @@ export class LinksController {
   }
 
   @Get(':id')
-  async findOne(@Req() req: AuthRequest, @Param('id') id: string) {
-    const userId = req.user.userId;
+  async findOne(@Req() request: AuthRequest, @Param('id') id: string) {
+    const userId = request.user.userId;
     return this.linksService.findOne(userId, id);
   }
 
   @Patch(':id')
   async update(
-    @Req() req: AuthRequest,
+    @Req() request: AuthRequest,
     @Param('id') id: string,
     @Body() body: UpdateLinkDto,
   ) {
-    const userId = req.user.userId;
+    const userId = request.user.userId;
     return this.linksService.update(userId, id, body);
   }
 
   @Post(':id/archive')
-  async archive(@Req() req: AuthRequest, @Param('id') id: string) {
-    const userId = req.user.userId;
+  async archive(@Req() request: AuthRequest, @Param('id') id: string) {
+    const userId = request.user.userId;
     return this.linksService.archive(userId, id);
   }
 
   @Post(':id/unarchive')
-  async unarchive(@Req() req: AuthRequest, @Param('id') id: string) {
-    const userId = req.user.userId;
+  async unarchive(@Req() request: AuthRequest, @Param('id') id: string) {
+    const userId = request.user.userId;
     return this.linksService.unarchive(userId, id);
   }
 
   @Delete(':id')
-  async remove(@Req() req: AuthRequest, @Param('id') id: string) {
-    const userId = req.user.userId;
+  async remove(@Req() request: AuthRequest, @Param('id') id: string) {
+    const userId = request.user.userId;
     return this.linksService.remove(userId, id);
   }
 }

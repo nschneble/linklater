@@ -7,9 +7,10 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { UsersService } from './users.service.js';
+
 import { JwtAuthGuard, type AuthRequest } from '@linklater/auth';
 import { UpdateMeDto } from './dto/update-me.dto.js';
+import { UsersService } from './users.service.js';
 
 @Controller('users')
 export class UsersController {
@@ -17,20 +18,20 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getMe(@Req() req: AuthRequest) {
-    return this.usersService.findById(req.user.userId);
+  async getMe(@Req() request: AuthRequest) {
+    return this.usersService.findById(request.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('me')
-  async updateMe(@Req() req: AuthRequest, @Body() body: UpdateMeDto) {
-    return this.usersService.updateMe(req.user.userId, body);
+  async updateMe(@Req() request: AuthRequest, @Body() body: UpdateMeDto) {
+    return this.usersService.updateMe(request.user.userId, body);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete('me')
-  async deleteMe(@Req() req: AuthRequest) {
-    await this.usersService.deleteById(req.user.userId);
+  async deleteMe(@Req() request: AuthRequest) {
+    await this.usersService.deleteById(request.user.userId);
     return { success: true };
   }
 }

@@ -61,21 +61,21 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('delegates to AuthService.login with the request user', async () => {
-      const req = { user: { userId: 'u1', email: 'a@b.com' } } as never;
+      const request = { user: { userId: 'u1', email: 'a@b.com' } } as never;
       (authServiceMock.login as jest.Mock).mockResolvedValue({
         accessToken: 'token',
       });
 
-      const result = await controller.login(req);
+      const result = await controller.login(request);
 
-      expect(authServiceMock.login).toHaveBeenCalledWith(req.user);
+      expect(authServiceMock.login).toHaveBeenCalledWith(request.user);
       expect(result).toEqual({ accessToken: 'token' });
     });
   });
 
   describe('me', () => {
     it('returns user with id remapped to userId', async () => {
-      const req = { user: { userId: 'u1', email: 'a@b.com' } } as never;
+      const request = { user: { userId: 'u1', email: 'a@b.com' } } as never;
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: 'u1',
         email: 'a@b.com',
@@ -85,7 +85,7 @@ describe('AuthController', () => {
         updatedAt: new Date(),
       });
 
-      const result = await controller.me(req);
+      const result = await controller.me(request);
 
       expect(result).not.toHaveProperty('id');
       expect(result.userId).toBe('u1');
