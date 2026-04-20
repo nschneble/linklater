@@ -46,7 +46,7 @@ export class MetadataService implements OnModuleInit {
     try {
       hostname = new URL(url).hostname.toLowerCase();
     } catch {
-      return true; // unparseable URLs treated as private
+      return true; // treats un-parseable urls as private
     }
 
     if (hostname === 'localhost') return true;
