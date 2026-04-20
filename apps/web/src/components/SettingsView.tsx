@@ -5,6 +5,7 @@ import { updateMe, deleteMe } from '../lib/api';
 export default function SettingsView() {
   const { user, logout, updateEmail } = useAuth();
   const [email, setEmail] = useState(user?.email ?? '');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -45,9 +46,12 @@ export default function SettingsView() {
     setMessage(null);
     setError(null);
     try {
-      const payload: { email?: string; password?: string } = {};
+      const payload: { email?: string; password?: string; currentPassword?: string } = {};
       if (email && email !== user?.email) payload.email = email;
-      if (password) payload.password = password;
+      if (password) {
+        payload.password = password;
+        payload.currentPassword = currentPassword;
+      }
 
       if (!payload.email && !payload.password) {
         setMessage('Nothing to update');
@@ -58,6 +62,7 @@ export default function SettingsView() {
         }
         setMessage('Settings updated');
       }
+      setCurrentPassword('');
       setPassword('');
     } catch (err: unknown) {
       const message =
@@ -106,6 +111,20 @@ export default function SettingsView() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </label>
+
+        {password && (
+          <label className="block text-xs font-medium text-[var(--text-muted)]">
+            Current password
+            <input
+              type="password"
+              placeholder="Required to confirm password change"
+              className="mt-1 block w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              required
+            />
+          </label>
+        )}
 
         {message && (
           <p role="status" className="text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-700 rounded-lg px-3 py-2">

@@ -11,6 +11,7 @@ import { LocalAuthGuard } from './local-auth.guard.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { UsersService } from '../users/users.service.js';
 import type { AuthRequest } from './auth-request.type.js';
+import { RegisterDto } from './dto/register.dto.js';
 
 @Controller('auth')
 export class AuthController {
@@ -20,9 +21,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
-  async register(
-    @Body() body: { email: string; password: string },
-  ) {
+  async register(@Body() body: RegisterDto) {
     const user = await this.usersService.create(body.email, body.password);
     return user;
   }

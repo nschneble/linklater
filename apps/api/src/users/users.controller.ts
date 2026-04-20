@@ -10,6 +10,7 @@ import {
 import { UsersService } from './users.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import type { AuthRequest } from '../auth/auth-request.type.js';
+import { UpdateMeDto } from './dto/update-me.dto.js';
 
 @Controller('users')
 export class UsersController {
@@ -23,10 +24,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Patch('me')
-  async updateMe(
-    @Req() req: AuthRequest,
-    @Body() body: { email?: string; password?: string; theme?: string; mode?: string },
-  ) {
+  async updateMe(@Req() req: AuthRequest, @Body() body: UpdateMeDto) {
     return this.usersService.updateMe(req.user.userId, body);
   }
 

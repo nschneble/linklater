@@ -24,8 +24,8 @@ export default function AuthForm() {
     } catch (err: unknown) {
       const message =
         err instanceof Error
-          ? JSON.parse(err.message).message
-          : 'Something went dreafully wrong';
+          ? err.message
+          : 'Something went dreadfully wrong';
       setError(message);
     } finally {
       setLoading(false);
