@@ -6,12 +6,12 @@ interface LinkFormProps {
 }
 
 export default function LinkForm({ onCreated }: LinkFormProps) {
-  const params = new URLSearchParams(window.location.search);
-  const initialUrl = params.get('url') ?? '';
-  const initialTitle = params.get('title') ?? '';
-
-  const [url, setUrl] = useState(initialUrl);
-  const [title, setTitle] = useState(initialTitle);
+  const [url, setUrl] = useState(
+    () => new URLSearchParams(window.location.search).get('url') ?? '',
+  );
+  const [title, setTitle] = useState(
+    () => new URLSearchParams(window.location.search).get('title') ?? '',
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,7 +72,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
         {saving ? 'Saving…' : 'Save link'}
       </button>
       {error && (
-        <p className="text-xs text-rose-400 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2 sm:ml-2">
+        <p role="alert" className="text-xs text-rose-400 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2 sm:ml-2">
           {error}
         </p>
       )}

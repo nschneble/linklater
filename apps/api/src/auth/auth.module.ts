@@ -12,8 +12,8 @@ import { JwtStrategy } from './jwt.strategy.js';
     UsersModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'dev-super-secret-change-me',
-      signOptions: { expiresIn: '7d' },
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '90d' },
     }),
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy],

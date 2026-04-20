@@ -13,6 +13,8 @@ import {
 import { LinksService } from './links.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import type { AuthRequest } from '../auth/auth-request.type.js';
+import { CreateLinkDto } from './dto/create-link.dto.js';
+import { UpdateLinkDto } from './dto/update-link.dto.js';
 
 @Controller('links')
 @UseGuards(JwtAuthGuard)
@@ -20,10 +22,7 @@ export class LinksController {
   constructor(private readonly linksService: LinksService) {}
 
   @Post()
-  async create(
-    @Req() req: AuthRequest,
-    @Body() body: { url: string; title?: string; notes?: string },
-  ) {
+  async create(@Req() req: AuthRequest, @Body() body: CreateLinkDto) {
     const userId = req.user.userId;
     return this.linksService.create(userId, body);
   }
@@ -33,6 +32,8 @@ export class LinksController {
     @Req() req: AuthRequest,
     @Query('search') search?: string,
     @Query('archived') archived?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     const userId = req.user.userId;
 
@@ -43,6 +44,8 @@ export class LinksController {
     return this.linksService.findAll(userId, {
       search,
       archived: archivedFlag,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
     });
   }
 
@@ -70,7 +73,7 @@ export class LinksController {
   async update(
     @Req() req: AuthRequest,
     @Param('id') id: string,
-    @Body() body: { title?: string; notes?: string },
+    @Body() body: UpdateLinkDto,
   ) {
     const userId = req.user.userId;
     return this.linksService.update(userId, id, body);

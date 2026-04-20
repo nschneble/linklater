@@ -1,45 +1,64 @@
 # Linklater
 
-Linklater is a tiny [Instapaper](https://www.instapaper.com)-style “read it later” app built as a take-home assignment for a job interview.
+[![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](http://creativecommons.org/publicdomain/zero/1.0)
+
+Linklater is an [Instapaper](https://www.instapaper.com)-inspired “read it later” app.
 
 It’s both an homage to [Richard Linklater](https://en.wikipedia.org/wiki/Richard_Linklater) and a ridiculously apt portmanteau.
 
-## What Problem Does This Solve?
+![Linklater](screenshots/your-links.jpg)
+
+## Who Needs This?
 
 Most curious adults come across dozens of interesting articles on any given day. Do they have time to read them all? Nope. Do they often forget about them? Totally.
 
-Linklater allows these articles to quickly and easily be saved for later reading.
-
-_As an added bonus, you don’t have to use (or pay!) for a service that’s gone decidedly downhill since Marco Arment left._
+**Linklater allows these articles to be saved quickly and easily for later reading.**
 
 ## Features
 
-- Sign up for an account with an email and password
-- Save links to read later
-- Search through your links to find something to read
-- Archive links you’ve managed to read
-- Delete links you can no longer stand the sight of
-- StumbleUpon a random saved link
+As a user, you can:
+
+- Create an account
+- Save links in-app or using the handy [bookmarklet](#bookmarklet)
+- Search and [StumbleUpon](https://en.wikipedia.org/wiki/StumbleUpon)
+- Toggle themes based on Richard Linklater's filmography
 - Toggle between light and dark mode
-- Use a [bookmarklet](#bookmarklet) to save links
 - Delete your account and burn it to the ground
 
 ## Screenshots
 
-Click on a thumbnail to see the full-size screenshot:
+Click on an image to open it full-size in a new browser tab:
 
-[![Your Links](/screenshots/your-links-thumbnail.jpg)](/screenshots/your-links.jpg)
-[![Archived Links](/screenshots/archived-links-thumbnail.jpg)](/screenshots/archived-links.jpg)
-[![Account Settings](/screenshots/account-settings-thumbnail.jpg)](/screenshots/account-settings.jpg)
-[![Log In](/screenshots/log-in-thumbnail.jpg)](/screenshots/log-in.jpg)
-[![Light Mode](/screenshots/light-mode-thumbnail.jpg)](/screenshots/light-mode.jpg)
+<table>
+  <tr>
+    <td align="center">
+      <a href="screenshots/account-settings.jpg">
+        <img src="screenshots/log-in-thumbnail.jpg" alt="Log In" />
+      </a>
+      <br><sub><em>Log In</em></sub>
+    </td>
+    <td align="center">
+      <a href="screenshots/account-settings.jpg">
+        <img src="screenshots/account-settings-thumbnail.jpg" alt="Account Settings" />
+      </a>
+      <br><sub><em>Account Settings</em></sub>
+    </td>
+    <td align="center">
+      <a href="screenshots/light-mode.jpg">
+        <img src="screenshots/light-mode-thumbnail.jpg" alt="Themes" />
+      </a>
+      <br><sub><em>Themes</em></sub>
+    </td>
+  </tr>
+</table>
 
 ## Tech Stack
 
-- **Front-end**: React + [Vite](https://vite.dev) + [Tailwind CSS](https://tailwindcss.com) + [Font Awesome](https://fontawesome.com)
+- **Front-end**: React + [Vite](https://vite.dev) + [Tailwind](https://tailwindcss.com) + [Font Awesome](https://fontawesome.com)
 - **Back-end**: [NestJS](https://nestjs.com)
 - **Database**: Prisma + PostgreSQL
 - **Authentication**: [Passport](https://www.passportjs.org)
+- **Jobs:** [pg-boss](https://timgit.github.io/pg-boss/#/)
 - **Linting**: ESLint + Prettier
 - **Testing**: Vitest (front-end) + Jest (back-end)
 
@@ -48,159 +67,83 @@ Click on a thumbnail to see the full-size screenshot:
 It’s a majestic modular monorepo!
 
 ```txt
-.
-├── apps
-│   ├── api       # NestJS back-end
-│   └── web       # React + Vite front-end
-├── package.json  # root workspace + scripts
-└── README.md
+apps
+├─ api/          # NestJS back-end
+├─ web/          # React + Vite front-end
+├─ package.json  # root workspace + scripts
+└─ README.md
 ```
 
 ## Bookmarklet
 
-Linklater supports a simple “send this page to Linklater” bookmarklet by pre-filling the url + title via query params.
+Linklater includes a one-click bookmarklet that saves the current page directly to your collection — no new tab, no form to fill out.
 
-Example bookmarklet:
+To install it, go to **Settings → Bookmarklet** and drag the _Save to Linklater_ button to your bookmarks bar. Your auth token is pre-embedded so clicking it on any page immediately calls the API and shows a confirmation toast.
 
-```js
-javascript:(function(){
-  const base = 'https://linklater.example.com';
-  const url = encodeURIComponent(location.href);
-  const title = encodeURIComponent(document.title);
-  window.open(`${base}/?url=${url}&title=${title}`, '_blank','noopener,noreferrer');
-})();
-```
+The token embedded in the bookmarklet expires after 90 days. If saving stops working, revisit Settings and reinstall it.
 
-For local development:
-
-```js
-javascript:(function(){
-  const base = 'http://localhost:5173';
-  const url = encodeURIComponent(location.href);
-  const title = encodeURIComponent(document.title);
-  window.open(`${base}/?url=${url}&title=${title}`, '_blank','noopener,noreferrer');
-})();
-```
-
-## Running The Project Locally
+## Local Development
 
 ### Prerequisites
 
-* Node.js (22.x recommended)
-* PostgreSQL running locally with a “linklater” database
+- Node 25
+- PostgreSQL 18
 
 ### Install Dependencies
 
 ```bash
-# from the repo root
+# cd /path/to/your/repo
 npm install
 ```
 
-### Configure Environment Variables
+### Set Environment Variables
 
-Create `apps/api/.env`:
+You'll need to set the database url and JWT secret on the back-end, and the API's base url on the front-end for Vite to access.
 
-```env
-DATABASE_URL="postgresql://YOUR_PG_USER:YOUR_PG_PASSWORD@localhost:5432/linklater?schema=public"
-JWT_SECRET="dev-secret-change-me"
-```
+```bash
+# cd /path/to/your/repo
 
-Create `apps/web/.env`:
-
-```env
-VITE_API_BASE_URL="http://localhost:3000"
+cp apps/api/.env.example apps/api/.env  # set DATABASE_URL, JWT_SECRET
+cp apps/web/.env.example apps/web/.env  # set VITE_API_BASE_URL
 ```
 
 ### Run Database Migrations
 
 ```bash
-cd apps/api
+# cd /path/to/your/repo/apps/api
 npx prisma migrate dev --name init
+npx prisma generate
 ```
 
-### Start It Up
+> **Note:** Run `npx prisma generate` after any migration. The custom client output path in this project prevents `migrate dev` from triggering it automatically.
+
+### Start Development Server
 
 ```bash
-# from the repo root
+# cd /path/to/your/repo
 npm run dev
 ```
 
-This uses `concurrently` to run:
-* NestJS on http://localhost:3000
-* Vite on http://localhost:5173
+This uses `concurrently` to run NestJS on [localhost:3000](http://localhost:3000) and Vite on [localhost:5173](http://localhost:5173).
 
-Open http://localhost:5173 in your web browser.
+**Open [localhost:5173](http://localhost:5173) in your web browser and you're good to go!**
 
 ### Linting, Tests, and CI
 
-Both the front and back-end use ESLint and Prettier:
+Both the front and back-end use ESLint and Prettier. Vitest is used to test the front-end and Jest is used to test the back-end. GitHub Actions lint and test on pushes and PRs to `main`.
 
 ```bash
-# lint everything
+# cd /path/to/your/repo
+
+# lint + test everything
 npm run lint
+npm run test
 
-# lint front-end only
+# lint + test front-end only
 npm run lint --workspace @linklater/web
+npm run test --workspace @linklater/web
 
-# lint back-end only
+# lint + test back-end only
 npm run lint --workspace @linklater/api
+npm run test --workspace @linklater/api
 ```
-
-Vitest is used to test the front-end:
-
-```bash
-cd apps/web
-npm run test
-```
-
-Jest is used to test the back-end:
-
-```bash
-cd apps/api
-npm run test
-```
-
-GitHub Actions lint and test on pushes and PRs to `main`.
-
-## Design Notes & Tradeoffs
-
-- Created a monorepo to keep local dev simple and straightforward
-- Used email/pass authentication for speed and simplicity
-  - No email verification or 2FA
-- Vite makes it real easy to spin up a UI and wire up Tailwind for styles
-- Kept the UX focused on clarity
-  - One main “Links” view with all actions
-  - Separate “Settings” view for user account changes
-  - Light/dark theme persistence via localStorage
-  - Basic responsive layout
-- Back-end tests mock Prisma to avoid DB dependencies
-- Front-end tests cover core UI behaviors
-
-## Future Ideas To Grow This Into Something Extra
-
-- Do a proper accessibility pass (ARIA, roles, focus states, color contrast)
-- Add meta tags + OpenGraph preview
-- Use skeleton loaders for the link views
-- Improve UX with subtle micro-animations (cards, menus, buttons)
-- Add OAuth2 support to login with Google, GitHub, etc.
-- Fetch and store link metadata via a background job
-- Reading time estimates
-- Bulk actions to archive and/or delete links
-- Organize links into folders or collections
-- Sort links by date, domain, or title
-- Improve the full-text search
-- Create a “real” bookmarklet
-- Create browser extensions for one-click saving
-- Higher contrast light and dark mode color palettes
-  - Use Tailwind's `dark` variant w/ overrides
-- THEMES
-
-## AI Assistance
-
-ChatGPT was instrumental in rapidly prototyping this project.
-
-An initial prompt of **600 words (!?)** was used to create a plan of attack for the features and design considerations.
-
-Additionally, ChatGPT was used to analyze several authentication frameworks and provide rationale for their use in the project.
-
-A **300 word (!)** prompt was written to address a handful of fast-follows to improve and refine the user experience.

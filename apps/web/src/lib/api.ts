@@ -63,7 +63,7 @@ export function logout() {
 }
 
 export async function getMe() {
-  return apiFetch<{ userId: string; email: string; theme: string }>('/auth/me', {
+  return apiFetch<{ userId: string; email: string; theme: string; mode: string }>('/auth/me', {
     method: 'GET',
   });
 }
@@ -77,22 +77,40 @@ export interface Link {
   archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  metaDescription?: string | null;
+  metaImage?: string | null;
+  metaFetchedAt?: string | null;
+}
+
+export async function getLink(id: string): Promise<Link> {
+  return apiFetch<Link>(`/links/${id}`);
+}
+
+export interface PaginatedLinks {
+  data: Link[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export async function getLinks(options?: {
   search?: string;
   archived?: boolean;
-}): Promise<Link[]> {
-  const params = new URLSearchParams();
-  if (options?.search) params.set('search', options.search);
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedLinks> {
+  const queryParameters = new URLSearchParams();
+  if (options?.search) queryParameters.set('search', options.search);
   if (options?.archived !== undefined) {
-    params.set('archived', options.archived ? 'true' : 'false');
+    queryParameters.set('archived', options.archived ? 'true' : 'false');
   }
+  if (options?.page !== undefined) queryParameters.set('page', String(options.page));
+  if (options?.limit !== undefined) queryParameters.set('limit', String(options.limit));
 
-  const query = params.toString();
+  const query = queryParameters.toString();
   const path = query ? `/links?${query}` : '/links';
 
-  return apiFetch<Link[]>(path);
+  return apiFetch<PaginatedLinks>(path);
 }
 
 export async function createLink(input: {
@@ -137,9 +155,9 @@ export async function deleteLink(id: string): Promise<{ success: boolean }> {
 export async function getRandomLink(options?: {
   archived?: boolean;
 }): Promise<{ link: Link | null }> {
-  const params = new URLSearchParams();
-  if (options?.archived) params.set('archived', 'true');
-  const query = params.toString();
+  const queryParameters = new URLSearchParams();
+  if (options?.archived) queryParameters.set('archived', 'true');
+  const query = queryParameters.toString();
   const path = query ? `/links/random?${query}` : '/links/random';
 
   return apiFetch<{ link: Link | null }>(path);
@@ -149,6 +167,7 @@ export async function updateMe(input: {
   email?: string;
   password?: string;
   theme?: string;
+  mode?: string;
 }) {
   return apiFetch<{ id: string; email: string }>(
     '/users/me',

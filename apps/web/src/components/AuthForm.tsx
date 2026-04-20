@@ -24,15 +24,15 @@ export default function AuthForm() {
     } catch (err: unknown) {
       const message =
         err instanceof Error
-          ? JSON.parse(err.message).message
-          : 'Something went dreafully wrong';
+          ? err.message
+          : 'Something went dreadfully wrong';
       setError(message);
     } finally {
       setLoading(false);
     }
   };
 
-  const changeModes = async (newMode: Mode) => {
+  const changeModes = (newMode: Mode) => {
     setMode(newMode);
     setError(null);
     setLoading(false);
@@ -47,11 +47,13 @@ export default function AuthForm() {
         Save links now, read them later.
       </p>
 
-      <div className="flex mb-6 rounded-full bg-[var(--bg-elevated)] p-1">
+      <div role="tablist" aria-label="Authentication mode" className="flex mb-6 rounded-full bg-[var(--bg-elevated)] p-1">
         <button
           type="button"
+          role="tab"
+          aria-selected={mode === 'login'}
           onClick={() => changeModes('login')}
-          className={`flex-1 py-2 text-sm rounded-full transition ${
+          className={`flex-1 py-2 text-sm rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
             mode === 'login'
               ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
               : 'text-[var(--text-muted)]'
@@ -61,8 +63,10 @@ export default function AuthForm() {
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={mode === 'register'}
           onClick={() => changeModes('register')}
-          className={`flex-1 py-2 text-sm rounded-full transition ${
+          className={`flex-1 py-2 text-sm rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
             mode === 'register'
               ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
               : 'text-[var(--text-muted)]'
@@ -98,7 +102,7 @@ export default function AuthForm() {
         </label>
 
         {error && (
-          <p className="text-sm text-rose-400 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2">
+          <p role="alert" className="text-sm text-rose-400 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2">
             {error}
           </p>
         )}

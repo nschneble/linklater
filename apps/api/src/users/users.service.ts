@@ -1,10 +1,9 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import * as bcrypt from 'bcryptjs';
+import { withoutPasswordHash } from './users.utils.js';
 
 export const VALID_THEMES = [
-  'light',
-  'dark',
   'scanner-darkly',
   'before-sunrise',
   'before-sunset',
@@ -14,6 +13,8 @@ export const VALID_THEMES = [
   'hit-man',
   'school-of-rock',
 ] as const;
+
+export const VALID_MODES = ['light', 'dark'] as const;
 
 @Injectable()
 export class UsersService {
@@ -31,12 +32,11 @@ export class UsersService {
       data: { email, passwordHash },
     });
 
-    const { passwordHash: _passwordHash, ...safeUser } = user;
-    return safeUser;
+    return withoutPasswordHash(user);
   }
 
-  async updateMe(id: string, data: { email?: string; password?: string; theme?: string }) {
-    const updateData: { email?: string; passwordHash?: string; theme?: string } = {};
+  async updateMe(id: string, data: { email?: string; password?: string; currentPassword?: string; theme?: string; mode?: string }) {
+    const updateData: { email?: string; passwordHash?: string; theme?: string; mode?: string } = {};
 
     if (data.email) {
       const existing = await this.prisma.user.findUnique({
@@ -49,6 +49,13 @@ export class UsersService {
     }
 
     if (data.password) {
+      if (!data.currentPassword) {
+        throw new BadRequestException('Current password is required to set a new password');
+      }
+      const user = await this.prisma.user.findUnique({ where: { id } });
+      if (!user) throw new NotFoundException('User not found');
+      const isValid = await bcrypt.compare(data.currentPassword, user.passwordHash);
+      if (!isValid) throw new UnauthorizedException('Current password is incorrect');
       const passwordHash = await bcrypt.hash(data.password, 12);
       updateData.passwordHash = passwordHash;
     }
@@ -60,13 +67,19 @@ export class UsersService {
       updateData.theme = data.theme;
     }
 
+    if (data.mode !== undefined) {
+      if (!(VALID_MODES as readonly string[]).includes(data.mode)) {
+        throw new BadRequestException('Invalid mode');
+      }
+      updateData.mode = data.mode;
+    }
+
     const user = await this.prisma.user.update({
       where: { id },
       data: updateData,
     });
 
-    const { passwordHash: _passwordHash, ...safe } = user;
-    return safe;
+    return withoutPasswordHash(user);
   }
 
   async findByEmail(email: string) {
@@ -76,7 +89,7 @@ export class UsersService {
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    return withoutPasswordHash(user);
   }
 
   async deleteById(id: string) {

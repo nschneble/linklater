@@ -10,6 +10,7 @@ import {
 import { UsersService } from './users.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import type { AuthRequest } from '../auth/auth-request.type.js';
+import { UpdateMeDto } from './dto/update-me.dto.js';
 
 @Controller('users')
 export class UsersController {
@@ -18,17 +19,12 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@Req() req: AuthRequest) {
-    const user = await this.usersService.findById(req.user.userId);
-    const { passwordHash: _passwordHash, ...safeUser } = user;
-    return safeUser;
+    return this.usersService.findById(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('me')
-  async updateMe(
-    @Req() req: AuthRequest,
-    @Body() body: { email?: string; password?: string; theme?: string },
-  ) {
+  async updateMe(@Req() req: AuthRequest, @Body() body: UpdateMeDto) {
     return this.usersService.updateMe(req.user.userId, body);
   }
 

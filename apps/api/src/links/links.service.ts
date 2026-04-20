@@ -1,6 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '../prisma/generated/client.js';
+import { QueueService } from '../queue/queue.service.js';
+import { QUEUES } from '../queue/queue.constants.js';
 
 export interface CreateLinkInput {
   url: string;
@@ -13,14 +15,24 @@ export interface UpdateLinkInput {
   notes?: string;
 }
 
+const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 50;
+
 export interface LinksQuery {
   search?: string;
   archived?: boolean;
+  page?: number;
+  limit?: number;
 }
 
 @Injectable()
 export class LinksService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(LinksService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly queueService: QueueService,
+  ) {}
 
   private parseHost(url: string): string {
     try {
@@ -44,11 +56,18 @@ export class LinksService {
       },
     });
 
+    void this.queueService.send(QUEUES.METADATA_FETCH, { linkId: link.id, url: link.url })
+      .catch((error: unknown) => {
+        this.logger.error(`Failed to enqueue metadata fetch for link ${link.id}: ${String(error)}`);
+      });
+
     return link;
   }
 
   async findAll(userId: string, query: LinksQuery) {
-    const { search, archived } = query;
+    const { search, archived, page = 1, limit = DEFAULT_LIMIT } = query;
+    const safeLimit = Math.min(Math.max(limit, 1), MAX_LIMIT);
+    const safePage = Math.max(page, 1);
 
     const where: Prisma.LinkWhereInput = {
       userId,
@@ -62,6 +81,9 @@ export class LinksService {
 
     if (search && search.trim() !== '') {
       const term = search.trim();
+      // NOTE: contains with insensitive mode generates ILIKE '%term%' in PostgreSQL,
+      // which cannot use B-tree indexes and does a sequential scan. For large datasets
+      // this should be replaced with a full-text search index (tsvector).
       where.OR = [
         { title: { contains: term, mode: 'insensitive' } },
         { url: { contains: term, mode: 'insensitive' } },
@@ -70,10 +92,17 @@ export class LinksService {
       ];
     }
 
-    return this.prisma.link.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-    });
+    const [data, total] = await Promise.all([
+      this.prisma.link.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: safeLimit,
+        skip: (safePage - 1) * safeLimit,
+      }),
+      this.prisma.link.count({ where }),
+    ]);
+
+    return { data, total, page: safePage, limit: safeLimit };
   }
 
   async findOne(userId: string, id: string) {
@@ -88,49 +117,58 @@ export class LinksService {
     return link;
   }
 
+  private mapP2025ToNotFound(error: unknown): never {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2025'
+    ) {
+      throw new NotFoundException('Link not found');
+    }
+    throw error;
+  }
+
   async update(userId: string, id: string, input: UpdateLinkInput) {
-    await this.findOne(userId, id);
-
-    const link = await this.prisma.link.update({
-      where: { id },
-      data: {
-        ...(input.title !== undefined ? { title: input.title } : {}),
-        ...(input.notes !== undefined ? { notes: input.notes } : {}),
-      },
-    });
-
-    return link;
+    try {
+      return await this.prisma.link.update({
+        where: { id, userId },
+        data: {
+          ...(input.title !== undefined ? { title: input.title } : {}),
+          ...(input.notes !== undefined ? { notes: input.notes } : {}),
+        },
+      });
+    } catch (error) {
+      this.mapP2025ToNotFound(error);
+    }
   }
 
   async archive(userId: string, id: string) {
-    await this.findOne(userId, id);
-
-    const link = await this.prisma.link.update({
-      where: { id },
-      data: { archivedAt: new Date() },
-    });
-
-    return link;
+    try {
+      return await this.prisma.link.update({
+        where: { id, userId },
+        data: { archivedAt: new Date() },
+      });
+    } catch (error) {
+      this.mapP2025ToNotFound(error);
+    }
   }
 
   async unarchive(userId: string, id: string) {
-    await this.findOne(userId, id);
-
-    const link = await this.prisma.link.update({
-      where: { id },
-      data: { archivedAt: null },
-    });
-
-    return link;
+    try {
+      return await this.prisma.link.update({
+        where: { id, userId },
+        data: { archivedAt: null },
+      });
+    } catch (error) {
+      this.mapP2025ToNotFound(error);
+    }
   }
 
   async remove(userId: string, id: string) {
-    await this.findOne(userId, id);
-
-    await this.prisma.link.delete({
-      where: { id },
-    });
-
+    try {
+      await this.prisma.link.delete({ where: { id, userId } });
+    } catch (error) {
+      this.mapP2025ToNotFound(error);
+    }
     return { success: true };
   }
 

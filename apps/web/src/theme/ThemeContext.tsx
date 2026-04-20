@@ -6,9 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 
-export type Theme =
-  | 'light'
-  | 'dark'
+export type BaseTheme =
   | 'scanner-darkly'
   | 'before-sunrise'
   | 'before-sunset'
@@ -18,9 +16,9 @@ export type Theme =
   | 'hit-man'
   | 'school-of-rock';
 
-export const THEMES: Array<{ id: Theme; label: string; accent: string }> = [
-  { id: 'light',              label: 'Light',              accent: '#34d399' },
-  { id: 'dark',               label: 'Dark',               accent: '#34d399' },
+export type Mode = 'light' | 'dark';
+
+export const THEMES: Array<{ id: BaseTheme; label: string; accent: string }> = [
   { id: 'scanner-darkly',     label: 'A Scanner Darkly',   accent: '#a3e635' },
   { id: 'before-sunrise',     label: 'Before Sunrise',     accent: '#b45309' },
   { id: 'before-sunset',      label: 'Before Sunset',      accent: '#d97706' },
@@ -31,50 +29,71 @@ export const THEMES: Array<{ id: Theme; label: string; accent: string }> = [
   { id: 'school-of-rock',     label: 'School of Rock',     accent: '#b91c1c' },
 ];
 
-const VALID_THEME_IDS = new Set<string>(THEMES.map((t) => t.id));
+const VALID_BASE_THEME_IDS = new Set<string>(THEMES.map((t) => t.id));
+
+function readLocalStorage(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
 
 interface ThemeContextValue {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
+  baseTheme: BaseTheme;
+  mode: Mode;
+  setBaseTheme: (theme: BaseTheme) => void;
+  setMode: (mode: Mode) => void;
+  toggleMode: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-const STORAGE_KEY = 'linklater_theme';
+const THEME_STORAGE_KEY = 'linklater_theme';
+const MODE_STORAGE_KEY = 'linklater_mode';
 
-function getInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'dark';
+function getInitialBaseTheme(): BaseTheme {
+  const stored = readLocalStorage(THEME_STORAGE_KEY);
+  if (stored && VALID_BASE_THEME_IDS.has(stored)) return stored as BaseTheme;
+  return 'scanner-darkly';
+}
 
-  const hasLocalStorage =
-    typeof window.localStorage !== 'undefined' &&
-    typeof window.localStorage.getItem === 'function';
-
-  if (hasLocalStorage) {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored && VALID_THEME_IDS.has(stored)) return stored as Theme;
-  }
-
-  if (window.matchMedia?.('(prefers-color-scheme: light)').matches) {
+function getInitialMode(): Mode {
+  const stored = readLocalStorage(MODE_STORAGE_KEY);
+  if (stored === 'light' || stored === 'dark') return stored;
+  if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: light)').matches) {
     return 'light';
   }
   return 'dark';
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  const [baseTheme, setBaseThemeState] = useState<BaseTheme>(getInitialBaseTheme);
+  const [mode, setModeState] = useState<Mode>(getInitialMode);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme]);
+    document.documentElement.dataset.theme = baseTheme;
+    document.documentElement.dataset.mode = mode;
+    window.localStorage.setItem(THEME_STORAGE_KEY, baseTheme);
+    window.localStorage.setItem(MODE_STORAGE_KEY, mode);
+  }, [baseTheme, mode]);
 
-  const setTheme = (t: Theme) => {
-    setThemeState(t);
+  const setBaseTheme = (t: BaseTheme) => {
+    setBaseThemeState(t);
+  };
+
+  const setMode = (m: Mode) => {
+    setModeState(m);
+  };
+
+  const toggleMode = () => {
+    setModeState((current) => (current === 'light' ? 'dark' : 'light'));
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ baseTheme, mode, setBaseTheme, setMode, toggleMode }}>
       {children}
     </ThemeContext.Provider>
   );
