@@ -8,6 +8,8 @@ jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 import { Test, TestingModule } from '@nestjs/testing';
 import { MetadataService } from './metadata.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { QueueService } from '../queue/queue.service';
+import { QUEUES } from '../queue/queue.constants';
 
 const makeHtml = (overrides: {
   ogDescription?: string;
@@ -50,11 +52,16 @@ describe('MetadataService', () => {
     },
   } as unknown as PrismaService;
 
+  const queueMock = {
+    work: jest.fn().mockResolvedValue('worker-id'),
+  } as unknown as QueueService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MetadataService,
         { provide: PrismaService, useValue: prismaMock },
+        { provide: QueueService, useValue: queueMock },
       ],
     }).compile();
 
@@ -176,6 +183,17 @@ describe('MetadataService', () => {
           metaFetchedAt: expect.any(Date),
         }),
       }),
+    );
+  });
+
+  it('registers a worker for the METADATA_FETCH queue on init', async () => {
+    (queueMock.work as jest.Mock).mockResolvedValue('worker-id');
+
+    await service.onModuleInit();
+
+    expect(queueMock.work).toHaveBeenCalledWith(
+      QUEUES.METADATA_FETCH,
+      expect.any(Function),
     );
   });
 });

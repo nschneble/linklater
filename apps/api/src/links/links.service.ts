@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '../prisma/generated/client.js';
-import { MetadataService } from '../metadata/metadata.service.js';
+import { QueueService } from '../queue/queue.service.js';
+import { QUEUES } from '../queue/queue.constants.js';
 
 export interface CreateLinkInput {
   url: string;
@@ -23,7 +24,7 @@ export interface LinksQuery {
 export class LinksService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly metadataService: MetadataService,
+    private readonly queueService: QueueService,
   ) {}
 
   private parseHost(url: string): string {
@@ -48,7 +49,7 @@ export class LinksService {
       },
     });
 
-    void this.metadataService.fetchAndStore(link.id, link.url);
+    void this.queueService.send(QUEUES.METADATA_FETCH, { linkId: link.id, url: link.url });
 
     return link;
   }

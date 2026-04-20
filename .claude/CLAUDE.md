@@ -6,6 +6,7 @@
 - **Back-end**: [NestJS](https://nestjs.com)
 - **Database**: Prisma + PostgreSQL
 - **Authentication**: [Passport](https://www.passportjs.org)
+- **Jobs:** [pg-boss](https://timgit.github.io/pg-boss/#/)
 - **Linting**: ESLint + Prettier
 - **Testing**: Vitest (front-end) + Jest (back-end)
 

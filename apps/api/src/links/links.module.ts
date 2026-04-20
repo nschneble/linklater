@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { LinksService } from './links.service.js';
 import { LinksController } from './links.controller.js';
-import { MetadataModule } from '../metadata/metadata.module.js';
+import { QueueModule } from '../queue/queue.module.js';
 
 @Module({
-  imports: [MetadataModule],
+  imports: [QueueModule],
   providers: [LinksService],
   controllers: [LinksController],
 })
