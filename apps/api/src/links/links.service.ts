@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '../prisma/generated/client.js';
 import { QueueService } from '../queue/queue.service.js';
@@ -22,6 +22,8 @@ export interface LinksQuery {
 
 @Injectable()
 export class LinksService {
+  private readonly logger = new Logger(LinksService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly queueService: QueueService,
@@ -49,7 +51,10 @@ export class LinksService {
       },
     });
 
-    void this.queueService.send(QUEUES.METADATA_FETCH, { linkId: link.id, url: link.url });
+    void this.queueService.send(QUEUES.METADATA_FETCH, { linkId: link.id, url: link.url })
+      .catch((error: unknown) => {
+        this.logger.error(`Failed to enqueue metadata fetch for link ${link.id}: ${String(error)}`);
+      });
 
     return link;
   }
