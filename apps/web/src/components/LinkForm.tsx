@@ -24,9 +24,9 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
       onCreated(link);
       setUrl('');
       setTitle('');
-    } catch (err: unknown) {
+    } catch (error: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to save link';
+        error instanceof Error ? error.message : 'Failed to save link';
       setError(message);
     } finally {
       setSaving(false);

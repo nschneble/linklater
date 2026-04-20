@@ -21,10 +21,10 @@ export default function AuthForm() {
       } else {
         await register(email, password);
       }
-    } catch (err: unknown) {
+    } catch (error: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
+        error instanceof Error
+          ? error.message
           : 'Something went dreadfully wrong';
       setError(message);
     } finally {

@@ -64,9 +64,9 @@ export default function SettingsView() {
       }
       setCurrentPassword('');
       setPassword('');
-    } catch (err: unknown) {
+    } catch (error: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to update settings';
+        error instanceof Error ? error.message : 'Failed to update settings';
       setError(message);
     } finally {
       setSaving(false);
@@ -77,9 +77,9 @@ export default function SettingsView() {
     try {
       await deleteMe();
       logout();
-    } catch (err: unknown) {
+    } catch (error: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to delete account';
+        error instanceof Error ? error.message : 'Failed to delete account';
       setError(message);
     }
   };

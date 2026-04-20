@@ -45,8 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const me = await getMe();
         setUser({ userId: me.userId, email: me.email, theme: me.theme, mode: me.mode });
-      } catch (e) {
-        console.error('Failed to fetch current user', e);
+      } catch (error) {
+        console.error('Failed to fetch current user', error);
         localStorage.removeItem('linklater_token');
       } finally {
         setLoading(false);
@@ -87,9 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
+  const context = useContext(AuthContext);
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  return ctx;
+  return context;
 }

@@ -65,8 +65,8 @@ export default function AppShell() {
           }
           setPagination({ total: result.total, limit: result.limit });
         }
-      } catch (err) {
-        console.error('Failed to load links', err);
+      } catch (error) {
+        console.error('Failed to load links', error);
       } finally {
         if (!cancelled) setLoadingLinks(false);
       }
@@ -105,8 +105,8 @@ export default function AppShell() {
         }
         return prev.map((l) => (l.id === link.id ? updated : l));
       });
-    } catch (err: unknown) {
-      console.error('Failed to toggle archive state', err);
+    } catch (error: unknown) {
+      console.error('Failed to toggle archive state', error);
     }
   };
 
@@ -114,8 +114,8 @@ export default function AppShell() {
     try {
       await deleteLink(id);
       setLinks((prev) => prev.filter((l) => l.id !== id));
-    } catch (err: unknown) {
-      console.error('Failed to delete link', err);
+    } catch (error: unknown) {
+      console.error('Failed to delete link', error);
     }
   };
 
@@ -129,9 +129,9 @@ export default function AppShell() {
       } else {
         window.open(link.url, '_blank', 'noopener,noreferrer');
       }
-    } catch (err: unknown) {
+    } catch (error: unknown) {
       setRandomError('Failed to get a random link');
-      console.error('Failed to get a random link', err);
+      console.error('Failed to get a random link', error);
     } finally {
       setRandomLoading(false);
     }
@@ -139,13 +139,13 @@ export default function AppShell() {
 
   const handleThemeSelect = (theme: BaseTheme) => {
     setBaseTheme(theme);
-    updateMe({ theme }).catch((err) => console.error('Failed to save theme', err));
+    updateMe({ theme }).catch((error) => console.error('Failed to save theme', error));
   };
 
   const handleModeToggle = () => {
     const nextMode = user?.mode === 'light' ? 'dark' : 'light';
     toggleMode();
-    updateMe({ mode: nextMode }).catch((err) => console.error('Failed to save mode', err));
+    updateMe({ mode: nextMode }).catch((error) => console.error('Failed to save mode', error));
   };
 
   if (!user) return null;
