@@ -29,6 +29,10 @@ model Link {
   host       String
   notes      String?
 
+  metaDescription String?
+  metaImage       String?
+  metaFetchedAt   DateTime?
+
   archivedAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

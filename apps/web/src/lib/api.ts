@@ -77,6 +77,13 @@ export interface Link {
   archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  metaDescription?: string | null;
+  metaImage?: string | null;
+  metaFetchedAt?: string | null;
+}
+
+export async function getLink(id: string): Promise<Link> {
+  return apiFetch<Link>(`/links/${id}`);
 }
 
 export async function getLinks(options?: {

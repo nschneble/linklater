@@ -56,7 +56,33 @@ export default function LinkCard({
               <span className="text-amber-300">Archived {archived}</span>
             </>
           )}
+          {!link.metaFetchedAt && (
+            <span
+              title="Fetching page info…"
+              className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse"
+            />
+          )}
         </div>
+        {link.metaFetchedAt && (link.metaImage || link.metaDescription) && (
+          <div className="mt-2 flex items-start gap-3">
+            {link.metaImage && (
+              <img
+                src={link.metaImage}
+                alt=""
+                aria-hidden="true"
+                className="h-12 w-16 rounded-md object-cover shrink-0 bg-[var(--bg-elevated)]"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            )}
+            {link.metaDescription && (
+              <p className="text-xs text-[var(--text-muted)] line-clamp-2">
+                {link.metaDescription}
+              </p>
+            )}
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-2 justify-end">
         <button

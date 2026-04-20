@@ -11,6 +11,7 @@ import {
   type Link,
 } from './lib/api';
 import { gravatarUrl } from './lib/gravatar';
+import { useMetadataPolling } from './lib/useMetadataPolling';
 import LinkForm from './components/LinkForm';
 import LinkCard, { LinkCardSkeleton } from './components/LinkCard';
 import SettingsView from './components/SettingsView';
@@ -36,6 +37,12 @@ export default function AppShell() {
   const hideSubmenuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [randomLoading, setRandomLoading] = useState(false);
   const [randomError, setRandomError] = useState<string | null>(null);
+  const [pendingMetaLinkId, setPendingMetaLinkId] = useState<string | null>(null);
+
+  useMetadataPolling(pendingMetaLinkId, (updatedLink) => {
+    setLinks((prev) => prev.map((l) => (l.id === updatedLink.id ? updatedLink : l)));
+    setPendingMetaLinkId(null);
+  });
 
   const avatarUrl = user ? gravatarUrl(user.email, 64) : '';
   const avatarRef = useRef<HTMLButtonElement | null>(null);
@@ -127,6 +134,7 @@ export default function AppShell() {
     }
     setLinks((prev) => [link, ...prev]);
     setShowLinkForm(false);
+    setPendingMetaLinkId(link.id);
   };
 
   const handleToggleArchive = async (link: Link) => {

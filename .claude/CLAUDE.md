@@ -41,7 +41,10 @@ npm run test --workspace @linklater/api  # Test back-end only
 # Database
 npx prisma migrate dev --name init       # Run migrations (first time)
 npx prisma migrate dev                   # Run migrations
+npx prisma generate                      # Regenerate client after migrations
 ```
+
+> **Note:** Run `npx prisma generate` after any migration. The custom client output path in this project prevents `migrate dev` from triggering it automatically.
 
 ## Development Workflow
 

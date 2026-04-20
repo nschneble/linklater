@@ -9,9 +9,14 @@ jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 import { Test, TestingModule } from '@nestjs/testing';
 import { LinksService } from './links.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { MetadataService } from '../metadata/metadata.service';
 
 describe('LinksService', () => {
   let service: LinksService;
+
+  const metadataMock = {
+    fetchAndStore: jest.fn().mockResolvedValue(undefined),
+  } as unknown as MetadataService;
 
   const prismaMock = {
     link: {
@@ -28,10 +33,8 @@ describe('LinksService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LinksService,
-        {
-          provide: PrismaService,
-          useValue: prismaMock,
-        },
+        { provide: PrismaService, useValue: prismaMock },
+        { provide: MetadataService, useValue: metadataMock },
       ],
     }).compile();
 
@@ -69,6 +72,7 @@ describe('LinksService', () => {
       }),
     );
     expect(link.host).toBe('example.com');
+    expect(metadataMock.fetchAndStore).toHaveBeenCalledWith('1', 'https://example.com/path');
   });
 
   it('throws on invalid URL', async () => {

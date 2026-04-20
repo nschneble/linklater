@@ -110,7 +110,10 @@ cp apps/web/.env.example apps/web/.env  # set VITE_API_BASE_URL
 ```bash
 # cd /path/to/your/repo/apps/api
 npx prisma migrate dev --name init
+npx prisma generate
 ```
+
+> **Note:** Run `npx prisma generate` after any migration. The custom client output path in this project prevents `migrate dev` from triggering it automatically.
 
 ### Start Development Server
 

@@ -7,7 +7,6 @@ This is a list of upcoming features and bugfixes.
 - Add account/email verification
 - Add OAuth2 support to login with Google, GitHub, etc
 - Add 2FA
-- Fetch and store link metadata via a background job
 - Add reading time estimates
 - Create browser extension(s) for one-click saving
 
