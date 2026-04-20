@@ -31,6 +31,15 @@ export const THEMES: Array<{ id: BaseTheme; label: string; accent: string }> = [
 
 const VALID_BASE_THEME_IDS = new Set<string>(THEMES.map((t) => t.id));
 
+function readLocalStorage(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
 interface ThemeContextValue {
   baseTheme: BaseTheme;
   mode: Mode;
@@ -45,33 +54,15 @@ const THEME_STORAGE_KEY = 'linklater_theme';
 const MODE_STORAGE_KEY = 'linklater_mode';
 
 function getInitialBaseTheme(): BaseTheme {
-  if (typeof window === 'undefined') return 'scanner-darkly';
-
-  const hasLocalStorage =
-    typeof window.localStorage !== 'undefined' &&
-    typeof window.localStorage.getItem === 'function';
-
-  if (hasLocalStorage) {
-    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored && VALID_BASE_THEME_IDS.has(stored)) return stored as BaseTheme;
-  }
-
+  const stored = readLocalStorage(THEME_STORAGE_KEY);
+  if (stored && VALID_BASE_THEME_IDS.has(stored)) return stored as BaseTheme;
   return 'scanner-darkly';
 }
 
 function getInitialMode(): Mode {
-  if (typeof window === 'undefined') return 'dark';
-
-  const hasLocalStorage =
-    typeof window.localStorage !== 'undefined' &&
-    typeof window.localStorage.getItem === 'function';
-
-  if (hasLocalStorage) {
-    const stored = window.localStorage.getItem(MODE_STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark') return stored;
-  }
-
-  if (window.matchMedia?.('(prefers-color-scheme: light)').matches) {
+  const stored = readLocalStorage(MODE_STORAGE_KEY);
+  if (stored === 'light' || stored === 'dark') return stored;
+  if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: light)').matches) {
     return 'light';
   }
   return 'dark';

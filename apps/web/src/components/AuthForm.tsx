@@ -32,7 +32,7 @@ export default function AuthForm() {
     }
   };
 
-  const changeModes = async (newMode: Mode) => {
+  const changeModes = (newMode: Mode) => {
     setMode(newMode);
     setError(null);
     setLoading(false);

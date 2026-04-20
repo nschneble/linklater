@@ -15,12 +15,8 @@ const makeHtml = (overrides: {
   ogDescription?: string;
   metaDescription?: string;
   ogImage?: string;
-} = '') => {
-  const { ogDescription, metaDescription, ogImage } = overrides as {
-    ogDescription?: string;
-    metaDescription?: string;
-    ogImage?: string;
-  };
+} = {}) => {
+  const { ogDescription, metaDescription, ogImage } = overrides;
 
   const ogDescriptionTag = ogDescription
     ? `<meta property="og:description" content="${ogDescription}" />`
