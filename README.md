@@ -22,6 +22,7 @@ As a user, you can:
 - Save links in-app or using the handy [bookmarklet](#bookmarklet)
 - Search and [StumbleUpon](https://en.wikipedia.org/wiki/StumbleUpon)
 - Toggle themes based on Richard Linklater's filmography
+- Toggle between light and dark mode
 - Delete your account and burn it to the ground
 
 ## Screenshots
