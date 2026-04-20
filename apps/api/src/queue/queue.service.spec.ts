@@ -1,8 +1,8 @@
 import { jest } from '@jest/globals';
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { QueueService } from './queue.service';
 import { PGBOSS_INSTANCE } from './queue.constants';
+import { QueueService } from './queue.service';
 
 describe('QueueService', () => {
   let service: QueueService;
