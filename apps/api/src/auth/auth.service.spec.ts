@@ -92,7 +92,7 @@ describe('AuthService', () => {
       });
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith({
-        sub: 'user-1',
+        subject: 'user-1',
         email: 'test@example.com',
       });
       expect(result.accessToken).toBe('signed-token');
@@ -105,7 +105,7 @@ describe('AuthService', () => {
       });
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith({
-        sub: 'user-1',
+        subject: 'user-1',
         email: 'test@example.com',
       });
       expect(result.accessToken).toBe('signed-token');

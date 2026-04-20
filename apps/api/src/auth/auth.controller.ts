@@ -1,10 +1,10 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
-import { LocalAuthGuard } from './local-auth.guard.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { LocalAuthGuard } from './local-auth.guard.js';
+import { RegisterDto } from './dto/register.dto.js';
 import { UsersService } from '@linklater/users';
 import type { AuthRequest } from './auth-request.type.js';
-import { RegisterDto } from './dto/register.dto.js';
 
 @Controller('auth')
 export class AuthController {
