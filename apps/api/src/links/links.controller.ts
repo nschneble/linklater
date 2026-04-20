@@ -10,8 +10,10 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { LinksService } from './links.service.js';
+
 import { JwtAuthGuard, type AuthRequest } from '@linklater/auth';
+import { LinksService } from './links.service.js';
+
 import { CreateLinkDto } from './dto/create-link.dto.js';
 import { UpdateLinkDto } from './dto/update-link.dto.js';
 

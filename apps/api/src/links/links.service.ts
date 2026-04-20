@@ -4,6 +4,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+
 import { PrismaService, Prisma } from '@linklater/prisma';
 import { QueueService, QUEUES } from '@linklater/queue';
 
@@ -42,7 +43,7 @@ export class LinksService {
       const parsed = new URL(url);
       return parsed.host;
     } catch {
-      throw new BadRequestException('Invalid URL');
+      throw new BadRequestException('Invalid url');
     }
   }
 
@@ -87,9 +88,12 @@ export class LinksService {
 
     if (search && search.trim() !== '') {
       const term = search.trim();
-      // NOTE: contains with insensitive mode generates ILIKE '%term%' in PostgreSQL,
-      // which cannot use B-tree indexes and does a sequential scan. For large datasets
-      // this should be replaced with a full-text search index (tsvector).
+
+      // NOTE: contains with insensitive mode generates ILIKE '%term%' in
+      // PostgreSQL, which cannot use B-tree indexes and does a sequential
+      // scan. For large datasets this should be replaced with a full-text
+      // search index (tsvector)
+
       where.OR = [
         { title: { contains: term, mode: 'insensitive' } },
         { url: { contains: term, mode: 'insensitive' } },
@@ -116,10 +120,7 @@ export class LinksService {
       where: { id, userId },
     });
 
-    if (!link) {
-      throw new NotFoundException('Link not found');
-    }
-
+    if (!link) throw new NotFoundException('Link not found');
     return link;
   }
 
@@ -185,10 +186,7 @@ export class LinksService {
     };
 
     const count = await this.prisma.link.count({ where });
-
-    if (count === 0) {
-      return null;
-    }
+    if (count === 0) return null;
 
     const randomIndex = Math.floor(Math.random() * count);
 
