@@ -57,3 +57,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Prisma
 /src/prisma/generated
+prisma.config.d.ts
+prisma.config.js
+prisma.config.js.map
