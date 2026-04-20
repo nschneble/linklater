@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MetadataService } from './metadata.service.js';
-import { QueueModule } from '../queue/queue.module.js';
+import { QueueModule } from '../queue/index.js';
 
 @Module({
   imports: [QueueModule],

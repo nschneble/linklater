@@ -8,8 +8,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service.js';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
-import type { AuthRequest } from '../auth/auth-request.type.js';
+import { JwtAuthGuard } from '../auth/index.js';
+import type { AuthRequest } from '../auth/index.js';
 import { UpdateMeDto } from './dto/update-me.dto.js';
 
 @Controller('users')
