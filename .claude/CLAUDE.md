@@ -42,6 +42,7 @@ npm run test --workspace @linklater/api  # Test back-end only
 # Database
 npx prisma migrate dev --name init       # Run migrations (first time)
 npx prisma migrate dev                   # Run migrations
+npx prisma migrate reset                 # Wipe and re-run all migrations
 npx prisma generate                      # Regenerate client after migrations
 ```
 

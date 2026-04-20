@@ -111,7 +111,7 @@ cp apps/web/.env.example apps/web/.env  # set VITE_API_BASE_URL
 
 ```bash
 # cd /path/to/your/repo/apps/api
-npx prisma migrate dev --name init
+npx prisma migrate dev
 npx prisma generate
 ```
 
