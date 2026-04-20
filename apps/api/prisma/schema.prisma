@@ -36,4 +36,8 @@ model Link {
   archivedAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, archivedAt])
+  @@index([userId, createdAt])
 }

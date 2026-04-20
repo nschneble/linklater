@@ -32,6 +32,8 @@ export class LinksController {
     @Req() req: AuthRequest,
     @Query('search') search?: string,
     @Query('archived') archived?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     const userId = req.user.userId;
 
@@ -42,6 +44,8 @@ export class LinksController {
     return this.linksService.findAll(userId, {
       search,
       archived: archivedFlag,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
     });
   }
 

@@ -9,6 +9,7 @@ import {
   getRandomLink,
   updateMe,
   type Link,
+  type PaginatedLinks,
 } from './lib/api';
 import { gravatarUrl } from './lib/gravatar';
 import { useMetadataPolling } from './lib/useMetadataPolling';
@@ -28,6 +29,8 @@ export default function AppShell() {
   const [loadingLinks, setLoadingLinks] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<LinksFilter>('active');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<Pick<PaginatedLinks, 'total' | 'limit'> | null>(null);
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showThemeSubmenu, setShowThemeSubmenu] = useState(false);
@@ -48,18 +51,31 @@ export default function AppShell() {
   const avatarRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // load links when search/filter changes
+  // reset to page 1 when search or filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, filter]);
+
+  // load links when search/filter/page changes
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
       setLoadingLinks(true);
       try {
-        const data = await getLinks({
+        const result = await getLinks({
           search: search || undefined,
           archived: filter === 'archived',
+          page,
         });
-        if (!cancelled) setLinks(data);
+        if (!cancelled) {
+          if (page === 1) {
+            setLinks(result.data);
+          } else {
+            setLinks((prev) => [...prev, ...result.data]);
+          }
+          setPagination({ total: result.total, limit: result.limit });
+        }
       } catch (err) {
         console.error('Failed to load links', err);
       } finally {
@@ -72,7 +88,7 @@ export default function AppShell() {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [search, filter]);
+  }, [search, filter, page]);
 
   // reset submenu when the menu closes
   useEffect(() => {
@@ -471,7 +487,7 @@ export default function AppShell() {
             )}
 
             <div className="mt-6 space-y-3">
-              {loadingLinks ? (
+              {loadingLinks && page === 1 ? (
                 Array.from({ length: 5 }).map((_, index) => (
                   <LinkCardSkeleton key={index} />
                 ))
@@ -490,6 +506,19 @@ export default function AppShell() {
                     onDelete={() => handleDelete(link.id)}
                   />
                 ))
+              )}
+
+              {pagination && links.length < pagination.total && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={loadingLinks}
+                    className="px-4 py-2 text-xs rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text)] hover:bg-[var(--bg-surface)] disabled:opacity-60 disabled:cursor-wait cursor-pointer"
+                  >
+                    {loadingLinks ? 'Loading…' : `Load more (${pagination.total - links.length} remaining)`}
+                  </button>
+                </div>
               )}
             </div>
           </>

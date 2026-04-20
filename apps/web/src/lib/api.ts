@@ -86,20 +86,31 @@ export async function getLink(id: string): Promise<Link> {
   return apiFetch<Link>(`/links/${id}`);
 }
 
+export interface PaginatedLinks {
+  data: Link[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export async function getLinks(options?: {
   search?: string;
   archived?: boolean;
-}): Promise<Link[]> {
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedLinks> {
   const queryParameters = new URLSearchParams();
   if (options?.search) queryParameters.set('search', options.search);
   if (options?.archived !== undefined) {
     queryParameters.set('archived', options.archived ? 'true' : 'false');
   }
+  if (options?.page !== undefined) queryParameters.set('page', String(options.page));
+  if (options?.limit !== undefined) queryParameters.set('limit', String(options.limit));
 
   const query = queryParameters.toString();
   const path = query ? `/links?${query}` : '/links';
 
-  return apiFetch<Link[]>(path);
+  return apiFetch<PaginatedLinks>(path);
 }
 
 export async function createLink(input: {
