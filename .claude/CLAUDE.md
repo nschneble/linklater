@@ -115,6 +115,49 @@ Follow three simple steps repeatedly:
 - Embrace the slow software movement
   - Refer to [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software) for a manifesto
 
+## TypeScript Conventions
+
+- Use `class` for DTOs (required for class-validator decorators)
+- Use `interface` for request/response shapes and component props
+- Use `type` for unions and aliases
+- Props interfaces end in `Props` (e.g. `FormInputProps`, `LinkCardProps`)
+
+## Nest.JS Patterns
+
+- Controllers delegate 100% to services (no business logic in controllers)
+- Services throw NestJS HTTP exceptions:
+  - `BadRequestException:` invalid input
+  - `ConflictException:` duplicate/constraint violation
+  - `NotFoundException:` record not found (map Prisma `P2025`)
+  - `UnauthorizedException:` auth failure
+- Extract `userId` from `@Req() request: AuthRequest`
+  - `AuthRequest` is a custom type extending Express `Request`
+- Place `@UseGuards(JwtAuthGuard)` at class level to protect entire resource
+- Service inputs use `Input` suffix (e.g. `CreateLinkInput`, `UpdateLinkInput`)
+- Each module exposes a barrel `index.ts` controlling its public API
+
+## React Patterns
+
+- Name event handlers `handle*` (e.g. `handleDelete`, `handleSubmit`)
+- Name callback props `on*` (e.g. `onCreated`, `onDelete`)
+- Contexts use `createContext(undefined)` with a custom hook that throws if used outside provider
+- Form state sequence: clear error → set loading → attempt action → handle result
+- Extract errors with: `error instanceof Error ? error.message : 'Something went wrong'`
+
+## Testing Patterns
+
+- Backend mock services typed as: `jest.fn() as unknown as ServiceType`
+- Use mock factories (e.g. `makeLink()`, `makeUser()`) returning consistent data with spread overrides
+- Call `jest.clearAllMocks()` in `beforeEach`
+- Back-end test files: `*.spec.ts` co-located with source
+- Front-end test files: `*.test.tsx` co-located with source
+
+## Accessibility
+
+- Decorative icons: `aria-hidden="true"`
+- Error messages: `role="alert"`
+- Interactive elements: explicit `role`, `aria-selected`, and `aria-label` where needed
+
 ## Tailwind Styling
 
 - Favor adding Tailwind CSS styles in this order:
