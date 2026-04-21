@@ -1,4 +1,5 @@
 import type { Link } from '../lib/api';
+import IconButton from './ui/IconButton';
 
 export function LinkCardSkeleton() {
   return (
@@ -88,9 +89,7 @@ export default function LinkCard({
       </div>
 
       <div className="flex items-center gap-2 justify-end">
-        <button
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full cursor-pointer"
-          type="button"
+        <IconButton
           onClick={onArchiveToggle}
           aria-label={
             link.archivedAt
@@ -106,17 +105,16 @@ export default function LinkCard({
             }
           />
           {link.archivedAt ? 'Unarchive' : 'Archive'}
-        </button>
+        </IconButton>
 
-        <button
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-rose-900/40 border border-rose-700 text-rose-300 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 rounded-full cursor-pointer"
-          type="button"
+        <IconButton
+          variant="danger"
           onClick={onDelete}
           aria-label={`Delete "${link.title}"`}
         >
           <i className="fa-solid fa-trash-can text-[0.7rem]" />
           Delete
-        </button>
+        </IconButton>
       </div>
     </div>
   );

@@ -1,6 +1,9 @@
 import { deleteMe, updateMe } from '../lib/api';
 import { useAuth } from '../auth/AuthContext';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import Alert from './ui/Alert';
+import FormInput from './ui/FormInput';
+import PrimaryButton from './ui/PrimaryButton';
 
 export default function SettingsView() {
   const { logout, updateEmail, user } = useAuth();
@@ -107,8 +110,7 @@ export default function SettingsView() {
 
         <label className="block text-[var(--text-muted)] text-xs font-medium">
           Email
-          <input
-            className="block w-full mt-1 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent rounded-lg"
+          <FormInput
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -117,8 +119,7 @@ export default function SettingsView() {
 
         <label className="block text-xs font-medium text-[var(--text-muted)]">
           New password
-          <input
-            className="block w-full mt-1 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent rounded-lg"
+          <FormInput
             type="password"
             placeholder="Leave blank to keep current password"
             value={password}
@@ -129,8 +130,7 @@ export default function SettingsView() {
         {password && (
           <label className="block text-xs font-medium text-[var(--text-muted)]">
             Current password
-            <input
-              className="block w-full mt-1 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent rounded-lg"
+            <FormInput
               type="password"
               placeholder="Required to confirm password change"
               value={currentPassword}
@@ -140,31 +140,12 @@ export default function SettingsView() {
           </label>
         )}
 
-        {message && (
-          <p
-            className="px-3 py-2 bg-emerald-950/40 border border-emerald-700 text-emerald-300 text-xs rounded-lg"
-            role="status"
-          >
-            {message}
-          </p>
-        )}
+        {message && <Alert variant="success">{message}</Alert>}
+        {error && <Alert variant="error">{error}</Alert>}
 
-        {error && (
-          <p
-            className="px-3 py-2 bg-rose-950/40 border border-rose-800 text-rose-300 text-xs rounded-lg"
-            role="alert"
-          >
-            {error}
-          </p>
-        )}
-
-        <button
-          className="inline-flex items-center justify-center px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-fg)] text-sm font-semibold shadow-md rounded-lg cursor-pointer disabled:cursor-wait disabled:opacity-60 transition"
-          type="submit"
-          disabled={saving}
-        >
+        <PrimaryButton disabled={saving} className="py-2.5">
           {saving ? 'Saving…' : 'Save changes'}
-        </button>
+        </PrimaryButton>
       </form>
 
       <div className="max-w-md space-y-3">

@@ -1,5 +1,8 @@
+import IconButton from './ui/IconButton';
 import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import LinkForm from './LinkForm';
+import PrimaryButton from './ui/PrimaryButton';
+import TabButton from './ui/TabButton';
 import type { Link, PaginatedLinks } from '../lib/api';
 
 type LinksFilter = 'active' | 'archived';
@@ -60,43 +63,30 @@ export default function LinksView({
           role="tablist"
           aria-label="Links filter"
         >
-          <button
-            className={`px-3 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full transition ${
-              filter === 'active'
-                ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
-                : 'hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] cursor-pointer'
-            }`}
-            type="button"
-            role="tab"
+          <TabButton
+            className="px-3 py-1.5"
+            isActive={filter === 'active'}
             onClick={() => onFilterChange('active')}
-            aria-selected={filter === 'active'}
           >
             Your links
-          </button>
-          <button
-            className={`px-3 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full transition ${
-              filter === 'archived'
-                ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
-                : 'hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] cursor-pointer'
-            }`}
-            type="button"
-            role="tab"
+          </TabButton>
+          <TabButton
+            className="px-3 py-1.5"
+            isActive={filter === 'archived'}
             onClick={() => onFilterChange('archived')}
-            aria-selected={filter === 'archived'}
           >
             Archived
-          </button>
+          </TabButton>
         </div>
 
-        <button
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text)] text-xs font-semibold shadow-md rounded-full cursor-pointer disabled:cursor-wait disabled:opacity-60"
-          type="button"
+        <IconButton
+          variant="elevated"
           disabled={randomLoading}
           onClick={onRandom}
         >
           <i className="fa-solid fa-shuffle text-[0.7rem]" />
           {randomLoading ? 'Stumbling…' : 'Stumble upon'}
-        </button>
+        </IconButton>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
@@ -108,15 +98,15 @@ export default function LinksView({
           onChange={(event) => onSearchChange(event.target.value)}
           aria-label="Search through your links"
         />
-        <button
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-fg)] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] shadow-md rounded-full transition cursor-pointer"
+        <PrimaryButton
+          className="gap-1.5 text-xs rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] cursor-pointer"
           type="button"
           onClick={onToggleForm}
           aria-expanded={showLinkForm}
         >
           <i className="fa-solid fa-plus text-[0.7rem]" />
           {showLinkForm ? 'Hide form' : 'Add link'}
-        </button>
+        </PrimaryButton>
       </div>
 
       {randomError && (

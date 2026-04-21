@@ -1,5 +1,8 @@
 import { createLink, type Link } from '../lib/api';
 import { useState, type FormEvent } from 'react';
+import Alert from './ui/Alert';
+import FormInput from './ui/FormInput';
+import PrimaryButton from './ui/PrimaryButton';
 
 interface LinkFormProps {
   onCreated: (link: Link) => void;
@@ -42,8 +45,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
       <div className="flex-1">
         <label className="block text-[var(--text-muted)] text-xs font-medium">
           URL
-          <input
-            className="block w-full mt-1 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent rounded-lg"
+          <FormInput
             type="url"
             placeholder="https://example.com/article"
             value={url}
@@ -55,8 +57,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
       <div className="flex-1">
         <label className="block text-[var(--text-muted)] text-xs font-medium">
           Title (optional)
-          <input
-            className="block w-full mt-1 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent rounded-lg"
+          <FormInput
             type="text"
             placeholder="If blank, we'll use the url"
             value={title}
@@ -64,21 +65,14 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
           />
         </label>
       </div>
-      <button
-        className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] border border-[var(--accent)] hover:border-[var(--accent-hover)] text-[var(--accent-fg)] text-sm font-semibold shadow-md rounded-lg disabled:opacity-60 disabled:cursor-wait transition"
-        type="submit"
-        disabled={saving}
-      >
+      <PrimaryButton disabled={saving} className="w-full sm:w-auto">
         <i className="fa-solid fa-bookmark text-xs" />
         {saving ? 'Saving…' : 'Save link'}
-      </button>
+      </PrimaryButton>
       {error && (
-        <p
-          className="sm:ml-2 px-3 py-2 bg-rose-950/40 border border-rose-800 text-rose-400 text-xs rounded-lg"
-          role="alert"
-        >
+        <Alert variant="error" className="sm:ml-2">
           {error}
-        </p>
+        </Alert>
       )}
     </form>
   );
