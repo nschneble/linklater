@@ -1,28 +1,32 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
-import { Prisma } from '../prisma/generated/client.js';
-import { QueueService } from '../queue/queue.service.js';
-import { QUEUES } from '../queue/queue.constants.js';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+
+import { PrismaService, Prisma } from '@linklater/prisma';
+import { QueueService, QUEUES } from '@linklater/queue';
 
 export interface CreateLinkInput {
   url: string;
-  title?: string;
   notes?: string;
+  title?: string;
 }
 
 export interface UpdateLinkInput {
-  title?: string;
   notes?: string;
+  title?: string;
 }
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 50;
 
 export interface LinksQuery {
-  search?: string;
   archived?: boolean;
-  page?: number;
   limit?: number;
+  page?: number;
+  search?: string;
 }
 
 @Injectable()
@@ -39,7 +43,7 @@ export class LinksService {
       const parsed = new URL(url);
       return parsed.host;
     } catch {
-      throw new BadRequestException('Invalid URL');
+      throw new BadRequestException('Invalid url');
     }
   }
 
@@ -56,9 +60,12 @@ export class LinksService {
       },
     });
 
-    void this.queueService.send(QUEUES.METADATA_FETCH, { linkId: link.id, url: link.url })
+    void this.queueService
+      .send(QUEUES.METADATA_FETCH, { linkId: link.id, url: link.url })
       .catch((error: unknown) => {
-        this.logger.error(`Failed to enqueue metadata fetch for link ${link.id}: ${String(error)}`);
+        this.logger.error(
+          `Failed to enqueue metadata fetch for link ${link.id}: ${String(error)}`,
+        );
       });
 
     return link;
@@ -81,9 +88,12 @@ export class LinksService {
 
     if (search && search.trim() !== '') {
       const term = search.trim();
-      // NOTE: contains with insensitive mode generates ILIKE '%term%' in PostgreSQL,
-      // which cannot use B-tree indexes and does a sequential scan. For large datasets
-      // this should be replaced with a full-text search index (tsvector).
+
+      // NOTE: contains with insensitive mode generates ILIKE '%term%' in
+      // PostgreSQL, which cannot use B-tree indexes and does a sequential
+      // scan. For large datasets this should be replaced with a full-text
+      // search index (tsvector)
+
       where.OR = [
         { title: { contains: term, mode: 'insensitive' } },
         { url: { contains: term, mode: 'insensitive' } },
@@ -110,10 +120,7 @@ export class LinksService {
       where: { id, userId },
     });
 
-    if (!link) {
-      throw new NotFoundException('Link not found');
-    }
-
+    if (!link) throw new NotFoundException('Link not found');
     return link;
   }
 
@@ -179,10 +186,7 @@ export class LinksService {
     };
 
     const count = await this.prisma.link.count({ where });
-
-    if (count === 0) {
-      return null;
-    }
+    if (count === 0) return null;
 
     const randomIndex = Math.floor(Math.random() * count);
 

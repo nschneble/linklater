@@ -1,32 +1,36 @@
-import { useState, type FormEvent } from 'react';
 import { createLink, type Link } from '../lib/api';
+import { useState, type FormEvent } from 'react';
+import Alert from './ui/Alert';
+import FormInput from './ui/FormInput';
+import PrimaryButton from './ui/PrimaryButton';
 
 interface LinkFormProps {
   onCreated: (link: Link) => void;
 }
 
 export default function LinkForm({ onCreated }: LinkFormProps) {
-  const [url, setUrl] = useState(
-    () => new URLSearchParams(window.location.search).get('url') ?? '',
-  );
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState(
     () => new URLSearchParams(window.location.search).get('title') ?? '',
   );
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [url, setUrl] = useState(
+    () => new URLSearchParams(window.location.search).get('url') ?? '',
+  );
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
     setError(null);
     setSaving(true);
+
     try {
       const link = await createLink({ url, title: title || undefined });
       onCreated(link);
       setUrl('');
       setTitle('');
-    } catch (err: unknown) {
+    } catch (error: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to save link';
+        error instanceof Error ? error.message : 'Failed to save link';
       setError(message);
     } finally {
       setSaving(false);
@@ -35,46 +39,40 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
 
   return (
     <form
+      className="flex flex-col sm:flex-row gap-3 sm:items-end"
       onSubmit={handleSubmit}
-      className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
       <div className="flex-1">
-        <label className="block text-xs font-medium text-[var(--text-muted)]">
+        <label className="block text-[var(--text-muted)] text-xs font-medium">
           URL
-          <input
+          <FormInput
             type="url"
-            required
             placeholder="https://example.com/article"
-            className="mt-1 block w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(event) => setUrl(event.target.value)}
+            required
           />
         </label>
       </div>
       <div className="flex-1">
-        <label className="block text-xs font-medium text-[var(--text-muted)]">
+        <label className="block text-[var(--text-muted)] text-xs font-medium">
           Title (optional)
-          <input
+          <FormInput
             type="text"
-            placeholder="If blank, we&apos;ll use the URL"
-            className="mt-1 block w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            placeholder="If blank, we'll use the url"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(event) => setTitle(event.target.value)}
           />
         </label>
       </div>
-      <button
-        type="submit"
-        disabled={saving}
-        className="sm:w-auto w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--accent)] border border-[var(--accent)] text-[var(--accent-fg)] font-semibold py-2 px-4 text-sm shadow-md hover:bg-[var(--accent-hover)] hover:border-[var(--accent-hover)] disabled:opacity-60 disabled:cursor-wait transition"
-      >
+      <PrimaryButton disabled={saving} className="w-full sm:w-auto">
         <i className="fa-solid fa-bookmark text-xs" />
         {saving ? 'Saving…' : 'Save link'}
-      </button>
+      </PrimaryButton>
       {error && (
-        <p role="alert" className="text-xs text-rose-400 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2 sm:ml-2">
+        <Alert variant="error" className="sm:ml-2">
           {error}
-        </p>
+        </Alert>
       )}
     </form>
   );

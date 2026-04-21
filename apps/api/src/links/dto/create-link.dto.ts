@@ -1,7 +1,7 @@
 import { IsOptional, IsString, IsUrl } from 'class-validator';
 
 export class CreateLinkDto {
-  @IsUrl({}, { message: 'url must be a valid URL' })
+  @IsUrl({}, { message: 'url must be a valid url' })
   url: string;
 
   @IsOptional()

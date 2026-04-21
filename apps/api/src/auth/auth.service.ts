@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { UsersService, withoutPasswordHash } from '@linklater/users';
 import * as bcrypt from 'bcryptjs';
-import { UsersService } from '../users/users.service.js';
-import { withoutPasswordHash } from '../users/users.utils.js';
 
-type LoginUser = { id: string; email: string } | { userId: string; email: string };
+type LoginUser =
+  | { id: string; email: string }
+  | { userId: string; email: string };
 
 @Injectable()
 export class AuthService {
@@ -25,9 +26,8 @@ export class AuthService {
 
   async login(user: LoginUser) {
     const userId = 'id' in user ? user.id : user.userId;
-    const payload = { sub: userId, email: user.email };
-    return {
-      accessToken: this.jwtService.sign(payload),
-    };
+    const payload = { subject: userId, email: user.email };
+
+    return { accessToken: this.jwtService.sign(payload) };
   }
 }

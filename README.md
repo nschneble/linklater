@@ -32,20 +32,20 @@ Click on an image to open it full-size in a new browser tab:
 <table>
   <tr>
     <td align="center">
-      <a href="screenshots/account-settings.jpg">
-        <img src="screenshots/log-in-thumbnail.jpg" alt="Log In" />
+      <a href="screenshots/log-in.jpg">
+        <img src="thumbnails/log-in.jpg" alt="Log In" />
       </a>
       <br><sub><em>Log In</em></sub>
     </td>
     <td align="center">
       <a href="screenshots/account-settings.jpg">
-        <img src="screenshots/account-settings-thumbnail.jpg" alt="Account Settings" />
+        <img src="thumbnails/account-settings.jpg" alt="Account Settings" />
       </a>
       <br><sub><em>Account Settings</em></sub>
     </td>
     <td align="center">
       <a href="screenshots/light-mode.jpg">
-        <img src="screenshots/light-mode-thumbnail.jpg" alt="Themes" />
+        <img src="thumbnails/light-mode.jpg" alt="Themes" />
       </a>
       <br><sub><em>Themes</em></sub>
     </td>
@@ -111,7 +111,7 @@ cp apps/web/.env.example apps/web/.env  # set VITE_API_BASE_URL
 
 ```bash
 # cd /path/to/your/repo/apps/api
-npx prisma migrate dev --name init
+npx prisma migrate dev
 npx prisma generate
 ```
 

@@ -1,8 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { PrismaService } from '@linklater/prisma';
+import { QueueService, QUEUES } from '@linklater/queue';
 import * as cheerio from 'cheerio';
-import { PrismaService } from '../prisma/prisma.service.js';
-import { QueueService } from '../queue/queue.service.js';
-import { QUEUES } from '../queue/queue.constants.js';
 
 @Injectable()
 export class MetadataService implements OnModuleInit {
@@ -47,7 +46,7 @@ export class MetadataService implements OnModuleInit {
     try {
       hostname = new URL(url).hostname.toLowerCase();
     } catch {
-      return true; // unparseable URLs treated as private
+      return true; // treats un-parseable urls as private
     }
 
     if (hostname === 'localhost') return true;
@@ -59,15 +58,13 @@ export class MetadataService implements OnModuleInit {
     if (/^\[?f[cd]/i.test(hostname)) return true;
 
     // IPv4 private ranges
-    const ipv4 = hostname.match(
-      /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/,
-    );
+    const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
     if (ipv4) {
       const [, a, b] = ipv4.map(Number);
-      if (a === 127) return true;                        // 127.x.x.x loopback
-      if (a === 10) return true;                         // 10.x.x.x private
-      if (a === 169 && b === 254) return true;           // 169.254.x.x link-local (AWS metadata)
-      if (a === 192 && b === 168) return true;           // 192.168.x.x private
+      if (a === 127) return true; // 127.x.x.x loopback
+      if (a === 10) return true; // 10.x.x.x private
+      if (a === 169 && b === 254) return true; // 169.254.x.x link-local (AWS metadata)
+      if (a === 192 && b === 168) return true; // 192.168.x.x private
       if (a === 172 && b >= 16 && b <= 31) return true; // 172.16-31.x.x private
     }
 
@@ -118,8 +115,7 @@ export class MetadataService implements OnModuleInit {
       $('meta[name="description"]').attr('content') ||
       null;
 
-    const rawImage =
-      $('meta[property="og:image"]').attr('content') || null;
+    const rawImage = $('meta[property="og:image"]').attr('content') || null;
 
     const metaDescription = rawDescription
       ? rawDescription.slice(0, 500)

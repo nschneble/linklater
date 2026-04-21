@@ -36,31 +36,46 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('delegates to UsersService.create', async () => {
-      const user = { id: 'u1', email: 'a@b.com', theme: 'scanner-darkly', mode: 'dark', createdAt: new Date(), updatedAt: new Date() };
+      const user = {
+        id: 'u1',
+        email: 'a@b.com',
+        theme: 'scanner-darkly',
+        mode: 'dark',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
       (usersServiceMock.create as jest.Mock).mockResolvedValue(user);
 
-      const result = await controller.register({ email: 'a@b.com', password: 'password123' } as never);
+      const result = await controller.register({
+        email: 'a@b.com',
+        password: 'password123',
+      } as never);
 
-      expect(usersServiceMock.create).toHaveBeenCalledWith('a@b.com', 'password123');
+      expect(usersServiceMock.create).toHaveBeenCalledWith(
+        'a@b.com',
+        'password123',
+      );
       expect(result).toBe(user);
     });
   });
 
   describe('login', () => {
     it('delegates to AuthService.login with the request user', async () => {
-      const req = { user: { userId: 'u1', email: 'a@b.com' } } as never;
-      (authServiceMock.login as jest.Mock).mockResolvedValue({ accessToken: 'token' });
+      const request = { user: { userId: 'u1', email: 'a@b.com' } } as never;
+      (authServiceMock.login as jest.Mock).mockResolvedValue({
+        accessToken: 'token',
+      });
 
-      const result = await controller.login(req);
+      const result = await controller.login(request);
 
-      expect(authServiceMock.login).toHaveBeenCalledWith(req.user);
+      expect(authServiceMock.login).toHaveBeenCalledWith(request.user);
       expect(result).toEqual({ accessToken: 'token' });
     });
   });
 
   describe('me', () => {
     it('returns user with id remapped to userId', async () => {
-      const req = { user: { userId: 'u1', email: 'a@b.com' } } as never;
+      const request = { user: { userId: 'u1', email: 'a@b.com' } } as never;
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: 'u1',
         email: 'a@b.com',
@@ -70,7 +85,7 @@ describe('AuthController', () => {
         updatedAt: new Date(),
       });
 
-      const result = await controller.me(req);
+      const result = await controller.me(request);
 
       expect(result).not.toHaveProperty('id');
       expect(result.userId).toBe('u1');

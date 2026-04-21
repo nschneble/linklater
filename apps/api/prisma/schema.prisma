@@ -8,34 +8,34 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  theme        String   @default("scanner-darkly")
-  mode         String   @default("dark")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  theme           String    @default("scanner-darkly")
+  mode            String    @default("dark")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  links        Link[]
+  links           Link[]
 }
 
 model Link {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  url        String
-  title      String
-  host       String
-  notes      String?
+  url             String
+  title           String
+  host            String
+  notes           String?
 
   metaDescription String?
   metaImage       String?
   metaFetchedAt   DateTime?
 
-  archivedAt DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  archivedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([userId])
   @@index([userId, archivedAt])

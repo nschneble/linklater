@@ -7,29 +7,29 @@ import {
 } from 'react';
 
 export type BaseTheme =
-  | 'scanner-darkly'
+  | 'before-midnight'
   | 'before-sunrise'
   | 'before-sunset'
-  | 'before-midnight'
   | 'boyhood'
   | 'dazed-and-confused'
   | 'hit-man'
+  | 'scanner-darkly'
   | 'school-of-rock';
 
 export type Mode = 'light' | 'dark';
 
 export const THEMES: Array<{ id: BaseTheme; label: string; accent: string }> = [
-  { id: 'scanner-darkly',     label: 'A Scanner Darkly',   accent: '#a3e635' },
-  { id: 'before-sunrise',     label: 'Before Sunrise',     accent: '#b45309' },
-  { id: 'before-sunset',      label: 'Before Sunset',      accent: '#d97706' },
-  { id: 'before-midnight',    label: 'Before Midnight',    accent: '#f59e0b' },
-  { id: 'boyhood',            label: 'Boyhood',            accent: '#86efac' },
+  { id: 'before-midnight', label: 'Before Midnight', accent: '#f59e0b' },
+  { id: 'before-sunrise', label: 'Before Sunrise', accent: '#b45309' },
+  { id: 'before-sunset', label: 'Before Sunset', accent: '#d97706' },
+  { id: 'boyhood', label: 'Boyhood', accent: '#86efac' },
   { id: 'dazed-and-confused', label: 'Dazed and Confused', accent: '#dc2626' },
-  { id: 'hit-man',            label: 'Hit Man',            accent: '#f59e0b' },
-  { id: 'school-of-rock',     label: 'School of Rock',     accent: '#b91c1c' },
+  { id: 'hit-man', label: 'Hit Man', accent: '#f59e0b' },
+  { id: 'scanner-darkly', label: 'A Scanner Darkly', accent: '#a3e635' },
+  { id: 'school-of-rock', label: 'School of Rock', accent: '#b91c1c' },
 ];
 
-const VALID_BASE_THEME_IDS = new Set<string>(THEMES.map((t) => t.id));
+const VALID_BASE_THEME_IDS = new Set<string>(THEMES.map((theme) => theme.id));
 
 function readLocalStorage(key: string): string | null {
   if (typeof window === 'undefined') return null;
@@ -62,14 +62,18 @@ function getInitialBaseTheme(): BaseTheme {
 function getInitialMode(): Mode {
   const stored = readLocalStorage(MODE_STORAGE_KEY);
   if (stored === 'light' || stored === 'dark') return stored;
-  if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: light)').matches) {
+  if (
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-color-scheme: light)').matches
+  ) {
     return 'light';
   }
   return 'dark';
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [baseTheme, setBaseThemeState] = useState<BaseTheme>(getInitialBaseTheme);
+  const [baseTheme, setBaseThemeState] =
+    useState<BaseTheme>(getInitialBaseTheme);
   const [mode, setModeState] = useState<Mode>(getInitialMode);
 
   useEffect(() => {
@@ -93,16 +97,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ baseTheme, mode, setBaseTheme, setMode, toggleMode }}>
+    <ThemeContext.Provider
+      value={{ baseTheme, mode, setBaseTheme, setMode, toggleMode }}
+    >
       {children}
     </ThemeContext.Provider>
   );
 }
 
 export function useTheme() {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return ctx;
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error('useTheme must be used within a ThemeProvider');
+
+  return context;
 }

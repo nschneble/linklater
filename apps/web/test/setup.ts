@@ -8,18 +8,23 @@ const localStorageMock: Storage = {
       ? storage[key]
       : null;
   },
+
   setItem(key: string, value: string): void {
     storage[key] = String(value);
   },
+
   removeItem(key: string): void {
     delete storage[key];
   },
+
   clear(): void {
     Object.keys(storage).forEach((key) => delete storage[key]);
   },
+
   key(index: number): string | null {
     return Object.keys(storage)[index] ?? null;
   },
+
   get length(): number {
     return Object.keys(storage).length;
   },

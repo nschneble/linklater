@@ -1,14 +1,15 @@
-import { useEffect } from 'react';
-import AuthForm from './components/AuthForm';
-import AppShell from './AppShell';
 import { useAuth } from './auth/AuthContext';
+import { useEffect } from 'react';
 import { useTheme, type BaseTheme } from './theme/ThemeContext';
+
+import AppShell from './AppShell';
+import AuthForm from './components/AuthForm';
 
 export default function App() {
   const { user, loading } = useAuth();
   const { setBaseTheme, setMode } = useTheme();
 
-  // Sync server-side theme/mode preferences into ThemeContext when user logs in or loads
+  // syncs server-side preferences into ThemeContext when the user logs in
   useEffect(() => {
     if (!user) return;
     setBaseTheme(user.theme as BaseTheme);
@@ -17,9 +18,9 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-200">
-        <div className="animate-pulse text-sm text-slate-400">
-          Warming up Linklater…
+      <div className="flex items-center justify-center min-h-screen bg-slate-950 text-slate-200">
+        <div className="text-slate-400 text-sm animate-pulse">
+          Defrosting Linklater in the microwave…
         </div>
       </div>
     );
@@ -27,7 +28,7 @@ export default function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 px-4">
+      <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900">
         <AuthForm />
       </div>
     );

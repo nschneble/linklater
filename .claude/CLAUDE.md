@@ -42,6 +42,7 @@ npm run test --workspace @linklater/api  # Test back-end only
 # Database
 npx prisma migrate dev --name init       # Run migrations (first time)
 npx prisma migrate dev                   # Run migrations
+npx prisma migrate reset                 # Wipe and re-run all migrations
 npx prisma generate                      # Regenerate client after migrations
 ```
 
@@ -62,12 +63,40 @@ Follow three simple steps repeatedly:
 - Always organize code into modules
   - Refer to [Organizing Your React App Into Modules](https://dev.to/jack/organizing-your-react-app-into-modules-d6n) for examples
 - Use self-explanatory folder, file, method, and variable names
-  - Use `index` over `idx`
-  - Use `parameters` over `params` or `p`
+  - Keep React conventions like `prop` and `props`
+  - Never, ever use one-character variables (e.g. `e` or `i`)
+  - Common shortenings to avoid:
+
+  | Avoid             | Use instead               |
+  | ----------------- | ------------------------- |
+  | `arg`, `args`     | `argument`, `arguments`   |
+  | `arr`             | `array`                   |
+  | `btn`             | `button`                  |
+  | `cb`              | `callback`                |
+  | `ctx`             | `context`                 |
+  | `e`, `err`        | `error`                   |
+  | `e`, `evt`        | `event`                   |
+  | `el`, `elem`      | `element`                 |
+  | `fn`              | `function`                |
+  | `idx`             | `index`                   |
+  | `msg`             | `message`                 |
+  | `num`             | `number`                  |
+  | `obj`             | `object`                  |
+  | `param`, `params` | `parameter`, `parameters` |
+  | `ref`             | `reference`               |
+  | `req`             | `request`                 |
+  | `res`             | `response`                |
+  | `str`             | `string`                  |
+  | `sub`             | `subject`                 |
+  | `tmp`             | `temp`                    |
+  | `val`             | `value`                   |
+
 - Favor code clarity over "perfect" optimization
   - Use full `if` statements instead of one-liners with ternary operators
 - Stay DRY (but not barren)
   - Extract common code into something reusable when it's used more than twice
+- Avoid complex monoliths or "god" files
+  - Look for ways to refactor files over 100 lines
 - Don't optimize prematurely
   - Don't worry if the homepage takes 1-2 seconds to load
   - Do worry if the homepage load time increases exponentially based on link count
@@ -86,8 +115,71 @@ Follow three simple steps repeatedly:
 - Embrace the slow software movement
   - Refer to [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software) for a manifesto
 
-## Naming Conventions
+## TypeScript Conventions
 
-| Layer | Pattern | Example |
-| ----- | ------- | ------- |
-| TBD   | TBD     | TBD     |
+- Use `class` for DTOs (required for class-validator decorators)
+- Use `interface` for request/response shapes and component props
+- Use `type` for unions and aliases
+- Props interfaces end in `Props` (e.g. `FormInputProps`, `LinkCardProps`)
+
+## Nest.JS Patterns
+
+- Controllers delegate 100% to services (no business logic in controllers)
+- Services throw NestJS HTTP exceptions:
+  - `BadRequestException:` invalid input
+  - `ConflictException:` duplicate/constraint violation
+  - `NotFoundException:` record not found (map Prisma `P2025`)
+  - `UnauthorizedException:` auth failure
+- Extract `userId` from `@Req() request: AuthRequest`
+  - `AuthRequest` is a custom type extending Express `Request`
+- Place `@UseGuards(JwtAuthGuard)` at class level to protect entire resource
+- Service inputs use `Input` suffix (e.g. `CreateLinkInput`, `UpdateLinkInput`)
+- Each module exposes a barrel `index.ts` controlling its public API
+
+## React Patterns
+
+- Name event handlers `handle*` (e.g. `handleDelete`, `handleSubmit`)
+- Name callback props `on*` (e.g. `onCreated`, `onDelete`)
+- Contexts use `createContext(undefined)` with a custom hook that throws if used outside provider
+- Form state sequence: clear error → set loading → attempt action → handle result
+- Extract errors with: `error instanceof Error ? error.message : 'Something went wrong'`
+
+## Testing Patterns
+
+- Backend mock services typed as: `jest.fn() as unknown as ServiceType`
+- Use mock factories (e.g. `makeLink()`, `makeUser()`) returning consistent data with spread overrides
+- Call `jest.clearAllMocks()` in `beforeEach`
+- Back-end test files: `*.spec.ts` co-located with source
+- Front-end test files: `*.test.tsx` co-located with source
+
+## Accessibility
+
+- Decorative icons: `aria-hidden="true"`
+- Error messages: `role="alert"`
+- Interactive elements: explicit `role`, `aria-selected`, and `aria-label` where needed
+
+## Tailwind Styling
+
+- Favor adding Tailwind CSS styles in this order:
+  - layouts (flex, block, relative, absolute)
+  - sizes (w, max-w, h, max-h)
+  - margins (mx, my)
+  - paddings (px, py)
+  - backgrounds (bg, bg-color)
+  - borders (border, border-color)
+  - text (text-color, text-size)
+  - fonts (font-weight)
+  - focus/outline/ring
+  - rounded borders (rounded, rounded-size)
+  - shadows (shadow, shadow-size)
+  - transitions
+  - pointers (cursor-pointer)
+- Always start with layouts
+- Always widths before heights
+- Always x before y
+- Always margins before padding
+- Always backgrounds before borders before text
+- Always colors before sizes
+- Always end with transitions
+- Always primary before states (border, hover:border, focus:border)
+- Always primary before sizes (mx-auto, sm:mx-0)

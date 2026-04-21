@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+# super — run format, lint, and test with a terminal UI
+
+set -uo pipefail
+
+# ── Arguments ───────────────────────────────────────────────────────────────────
+RUN_UPDATE=false
+for arg in "$@"; do
+  case "$arg" in
+    --update) RUN_UPDATE=true ;;
+  esac
+done
+
+# ── Colors & symbols ────────────────────────────────────────────────────────────
+if [[ -t 1 ]]; then
+  RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m' CYN=$'\033[36m'
+  BLD=$'\033[1m'  DIM=$'\033[2m'  RST=$'\033[0m'
+else
+  RED='' GRN='' YLW='' CYN='' BLD='' DIM='' RST=''
+fi
+
+SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
+TICK=✓  CROSS=✗  CIRC=○
+
+# ── Layout constants ────────────────────────────────────────────────────────────
+if [[ "$RUN_UPDATE" == true ]]; then
+  STEPS=(Update Install Format Lint Test)
+else
+  STEPS=(Install Format Lint Test)
+fi
+NS=${#STEPS[@]}
+
+# Lines from status/cursor to step index i (0-based)
+step_up() { echo $(( NS - $1 + 1 )); }
+
+_spinner_pid=""
+
+# ── Cursor helpers ──────────────────────────────────────────────────────────────
+hide_cursor() { printf '\033[?25l'; }
+show_cursor()  { printf '\033[?25h'; }
+
+# ── Cleanup on exit ─────────────────────────────────────────────────────────────
+_cleanup() {
+  stop_spinner
+  show_cursor
+  printf '\n'
+}
+trap _cleanup EXIT INT TERM HUP
+
+# ── Draw initial UI ─────────────────────────────────────────────────────────────
+draw_ui() {
+  printf '\033[2J\033[H'
+  printf "  ${BLD}${CYN}╔═════════════════╗${RST}\n"
+  printf "  ${BLD}${CYN}║    Linklater    ║${RST}\n"
+  printf "  ${BLD}${CYN}╚═════════════════╝${RST}\n"
+  printf '\n'
+  for name in "${STEPS[@]}"; do
+    printf "  ${DIM}${CIRC} %s${RST}\n" "$name"
+  done
+  printf '\n'
+  printf "  ${DIM}Initializing…${RST}"
+}
+
+# Write text onto a step line then return cursor to status line.
+write_step() {
+  local idx=$1; shift
+  local up; up=$(step_up "$idx")
+  printf '\033[%dA\033[2K\r  %b\033[%dB\033[2K\r' "$up" "$*" "$up"
+}
+
+set_status() {
+  printf '\033[2K\r  %b' "$*"
+}
+
+mark_run()  { write_step "$1" "${YLW}${SPIN[0]} ${STEPS[$1]}${RST}"; }
+mark_done() { write_step "$1" "${GRN}${TICK} ${STEPS[$1]}${RST}"; }
+mark_fail() { write_step "$1" "${RED}${CROSS} ${STEPS[$1]}${RST}"; }
+
+# ── Background spinner ──────────────────────────────────────────────────────────
+start_spinner() {
+  local idx=$1
+  local up name
+  up=$(step_up "$idx")
+  name="${STEPS[$idx]}"
+  (
+    local i=0
+    while true; do
+      local frame="${SPIN[$((i % ${#SPIN[@]}))]}"
+      printf '\033[%dA\033[2K\r  \033[33m%s %s\033[0m\033[%dB\033[2K\r' \
+        "$up" "$frame" "$name" "$up" > /dev/tty
+      sleep 0.08
+      i=$(( i + 1 ))
+    done
+  ) &
+  _spinner_pid=$!
+}
+
+stop_spinner() {
+  if [[ -n "$_spinner_pid" ]]; then
+    kill "$_spinner_pid" 2>/dev/null || true
+    wait "$_spinner_pid" 2>/dev/null || true
+    _spinner_pid=""
+  fi
+}
+
+# ── Step runner ─────────────────────────────────────────────────────────────────
+# run_step <idx> <command> [args…]
+# Returns 0 on success, 1 on failure (output stored in STEP_OUTPUT).
+STEP_OUTPUT=""
+run_step() {
+  local idx=$1; shift
+  start_spinner "$idx"
+  local output rc=0
+  output=$("$@" 2>&1) || rc=$?
+  stop_spinner
+  STEP_OUTPUT="$output"
+  if [[ $rc -eq 0 ]]; then
+    mark_done "$idx"
+    return 0
+  else
+    mark_fail "$idx"
+    return 1
+  fi
+}
+
+# ── Main ────────────────────────────────────────────────────────────────────────
+hide_cursor
+draw_ui
+
+FAILED_STEP=""
+FAILED_OUTPUT=""
+
+# Build step index offset based on whether --update was requested
+STEP_OFFSET=0
+
+if [[ "$RUN_UPDATE" == true ]]; then
+  if ! run_step 0 npm update; then
+    FAILED_STEP="Update"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+  STEP_OFFSET=1
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step "$STEP_OFFSET" npm install; then
+    FAILED_STEP="Install"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step $(( STEP_OFFSET + 1 )) npm run format; then
+    FAILED_STEP="Format"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step $(( STEP_OFFSET + 2 )) npm run lint; then
+    FAILED_STEP="Lint"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step $(( STEP_OFFSET + 3 )) npm run test; then
+    FAILED_STEP="Test"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  set_status "${GRN}${BLD}All checks passed.${RST}"
+  printf '\n'
+  exit 0
+else
+  set_status "${RED}${BLD}${FAILED_STEP} failed — see below.${RST}"
+  printf '\n\n'
+  printf '%s\n' "$FAILED_OUTPUT" | sed 's/^/  /'
+  printf '\n'
+  exit 1
+fi

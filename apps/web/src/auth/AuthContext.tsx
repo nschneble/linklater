@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+
 import {
   getMe,
   login as apiLogin,
@@ -13,26 +14,26 @@ import {
 } from '../lib/api';
 
 export interface User {
-  userId: string;
   email: string;
-  theme: string;
   mode: string;
+  theme: string;
+  userId: string;
 }
 
 interface AuthContextValue {
-  user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  register: (email: string, password: string) => Promise<void>;
   updateEmail: (email: string) => void;
+  user: User | null;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('linklater_token');
@@ -44,9 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         const me = await getMe();
-        setUser({ userId: me.userId, email: me.email, theme: me.theme, mode: me.mode });
-      } catch (e) {
-        console.error('Failed to fetch current user', e);
+        setUser({
+          userId: me.userId,
+          email: me.email,
+          mode: me.mode,
+          theme: me.theme,
+        });
+      } catch (error) {
+        console.error('Failed to fetch current user', error);
         localStorage.removeItem('linklater_token');
       } finally {
         setLoading(false);
@@ -57,7 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     await apiLogin(email, password);
     const me = await getMe();
-    setUser({ userId: me.userId, email: me.email, theme: me.theme, mode: me.mode });
+    setUser({
+      userId: me.userId,
+      email: me.email,
+      mode: me.mode,
+      theme: me.theme,
+    });
   };
 
   const register = async (email: string, password: string) => {
@@ -71,25 +82,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateEmail = (email: string) => {
-    setUser((prev) => (prev ? { ...prev, email } : prev));
+    setUser((previous) => (previous ? { ...previous, email } : previous));
   };
 
   const value: AuthContextValue = {
-    user,
     loading,
     login,
-    register,
     logout,
+    register,
     updateEmail,
+    user,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return ctx;
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+
+  return context;
 }

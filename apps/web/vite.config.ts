@@ -9,8 +9,8 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
-    globals: true,
     environment: 'jsdom',
+    globals: true,
     setupFiles: './test/setup.ts',
   },
 });

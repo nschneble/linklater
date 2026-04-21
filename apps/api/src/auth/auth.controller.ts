@@ -1,17 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
-import { LocalAuthGuard } from './local-auth.guard.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
-import { UsersService } from '../users/users.service.js';
-import type { AuthRequest } from './auth-request.type.js';
+import { LocalAuthGuard } from './local-auth.guard.js';
 import { RegisterDto } from './dto/register.dto.js';
+import { UsersService } from '@linklater/users';
+import type { AuthRequest } from './auth-request.type.js';
 
 @Controller('auth')
 export class AuthController {
@@ -28,14 +21,16 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Req() req: AuthRequest) {
-    return this.authService.login(req.user);
+  async login(@Req() request: AuthRequest) {
+    return this.authService.login(request.user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async me(@Req() req: AuthRequest) {
-    const { id, ...rest } = await this.usersService.findById(req.user.userId);
+  async me(@Req() request: AuthRequest) {
+    const { id, ...rest } = await this.usersService.findById(
+      request.user.userId,
+    );
     return { userId: id, ...rest };
   }
 }

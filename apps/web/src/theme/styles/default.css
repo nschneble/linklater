@@ -1,0 +1,38 @@
+:root {
+  --bg: #0d0e24;
+  --bg-surface: #141628;
+  --bg-elevated: #1a1c35;
+  --bg-input: #141628;
+  --text: #f0e6d0;
+  --text-muted: #a89070;
+  --text-subtle: #6b5c44;
+  --border: #2a2d50;
+  --accent: #a3e635;
+  --accent-hover: #bef264;
+  --accent-fg: #0d0e24;
+  --theme-transition-duration: 160ms;
+  --theme-transition-easing: ease;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@theme {
+  --animate-fade-in-up: fade-in-up 180ms ease-out both;
+}
+
+*,
+*::before,
+*::after {
+  transition-property: background-color, color, border-color;
+  transition-duration: var(--theme-transition-duration);
+  transition-timing-function: var(--theme-transition-easing);
+}

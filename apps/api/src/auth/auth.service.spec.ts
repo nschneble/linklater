@@ -1,8 +1,9 @@
 import { jest } from '@jest/globals';
 import * as bcrypt from 'bcryptjs';
 
-import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 
@@ -45,7 +46,10 @@ describe('AuthService', () => {
         passwordHash: KNOWN_HASH,
       });
 
-      const result = await service.validateUser('test@example.com', KNOWN_PASSWORD);
+      const result = await service.validateUser(
+        'test@example.com',
+        KNOWN_PASSWORD,
+      );
 
       expect(result).not.toBeNull();
       expect(result).not.toHaveProperty('passwordHash');
@@ -59,7 +63,10 @@ describe('AuthService', () => {
         passwordHash: KNOWN_HASH,
       });
 
-      const result = await service.validateUser('test@example.com', 'definitelywrongpassword');
+      const result = await service.validateUser(
+        'test@example.com',
+        'definitelywrongpassword',
+      );
 
       expect(result).toBeNull();
     });
@@ -67,7 +74,10 @@ describe('AuthService', () => {
     it('returns null when user is not found', async () => {
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
 
-      const result = await service.validateUser('unknown@example.com', 'password123');
+      const result = await service.validateUser(
+        'unknown@example.com',
+        'password123',
+      );
 
       expect(result).toBeNull();
     });
@@ -77,20 +87,26 @@ describe('AuthService', () => {
     it('returns an accessToken when given a user with id', async () => {
       (jwtServiceMock.sign as jest.Mock).mockReturnValue('signed-token');
 
-      const result = await service.login({ id: 'user-1', email: 'test@example.com' });
+      const result = await service.login({
+        id: 'user-1',
+        email: 'test@example.com',
+      });
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith({
-        sub: 'user-1',
+        subject: 'user-1',
         email: 'test@example.com',
       });
       expect(result.accessToken).toBe('signed-token');
     });
 
     it('returns an accessToken when given a user with userId', async () => {
-      const result = await service.login({ userId: 'user-1', email: 'test@example.com' });
+      const result = await service.login({
+        userId: 'user-1',
+        email: 'test@example.com',
+      });
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith({
-        sub: 'user-1',
+        subject: 'user-1',
         email: 'test@example.com',
       });
       expect(result.accessToken).toBe('signed-token');

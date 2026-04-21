@@ -9,9 +9,9 @@ export interface LoginResponse {
 }
 
 export async function apiFetch<T>(
-  path: string,
-  options: RequestInit = {},
   includeAuth = true,
+  options: RequestInit = {},
+  path: string,
 ): Promise<T> {
   const token = includeAuth ? localStorage.getItem('linklater_token') : null;
 
@@ -20,36 +20,38 @@ export async function apiFetch<T>(
     ...(options.headers || {}),
   };
 
-  if (token && includeAuth) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+  if (token && includeAuth) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `Request failed with ${res.status}`);
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Request failed with ${response.status}`);
   }
 
-  return res.json() as Promise<T>;
+  return response.json() as Promise<T>;
 }
 
 export async function register(email: string, password: string) {
-  return apiFetch('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  }, false);
+  return apiFetch(
+    '/auth/register',
+    {
+      body: JSON.stringify({ email, password }),
+      method: 'POST',
+    },
+    false,
+  );
 }
 
 export async function login(email: string, password: string) {
   const data = await apiFetch<LoginResponse>(
     '/auth/login',
     {
-      method: 'POST',
       body: JSON.stringify({ email, password }),
+      method: 'POST',
     },
     false,
   );
@@ -63,23 +65,28 @@ export function logout() {
 }
 
 export async function getMe() {
-  return apiFetch<{ userId: string; email: string; theme: string; mode: string }>('/auth/me', {
+  return apiFetch<{
+    email: string;
+    mode: string;
+    theme: string;
+    userId: string;
+  }>('/auth/me', {
     method: 'GET',
   });
 }
 
 export interface Link {
-  id: string;
-  url: string;
-  title: string;
-  host: string;
-  notes?: string | null;
-  archivedAt?: string | null;
   createdAt: string;
+  host: string;
+  id: string;
+  title: string;
   updatedAt: string;
+  url: string;
+  archivedAt?: string | null;
   metaDescription?: string | null;
-  metaImage?: string | null;
   metaFetchedAt?: string | null;
+  metaImage?: string | null;
+  notes?: string | null;
 }
 
 export async function getLink(id: string): Promise<Link> {
@@ -88,24 +95,26 @@ export async function getLink(id: string): Promise<Link> {
 
 export interface PaginatedLinks {
   data: Link[];
-  total: number;
-  page: number;
   limit: number;
+  page: number;
+  total: number;
 }
 
 export async function getLinks(options?: {
-  search?: string;
   archived?: boolean;
-  page?: number;
   limit?: number;
+  page?: number;
+  search?: string;
 }): Promise<PaginatedLinks> {
   const queryParameters = new URLSearchParams();
-  if (options?.search) queryParameters.set('search', options.search);
-  if (options?.archived !== undefined) {
+
+  if (options?.archived !== undefined)
     queryParameters.set('archived', options.archived ? 'true' : 'false');
-  }
-  if (options?.page !== undefined) queryParameters.set('page', String(options.page));
-  if (options?.limit !== undefined) queryParameters.set('limit', String(options.limit));
+  if (options?.limit !== undefined)
+    queryParameters.set('limit', String(options.limit));
+  if (options?.page !== undefined)
+    queryParameters.set('page', String(options.page));
+  if (options?.search) queryParameters.set('search', options.search);
 
   const query = queryParameters.toString();
   const path = query ? `/links?${query}` : '/links';
@@ -115,12 +124,12 @@ export async function getLinks(options?: {
 
 export async function createLink(input: {
   url: string;
-  title?: string;
   notes?: string;
+  title?: string;
 }): Promise<Link> {
   return apiFetch<Link>('/links', {
-    method: 'POST',
     body: JSON.stringify(input),
+    method: 'POST',
   });
 }
 
@@ -129,8 +138,8 @@ export async function updateLink(
   input: { title?: string; notes?: string },
 ): Promise<Link> {
   return apiFetch<Link>(`/links/${id}`, {
-    method: 'PATCH',
     body: JSON.stringify(input),
+    method: 'PATCH',
   });
 }
 
@@ -156,7 +165,9 @@ export async function getRandomLink(options?: {
   archived?: boolean;
 }): Promise<{ link: Link | null }> {
   const queryParameters = new URLSearchParams();
+
   if (options?.archived) queryParameters.set('archived', 'true');
+
   const query = queryParameters.toString();
   const path = query ? `/links/random?${query}` : '/links/random';
 
@@ -165,17 +176,14 @@ export async function getRandomLink(options?: {
 
 export async function updateMe(input: {
   email?: string;
+  mode?: string;
   password?: string;
   theme?: string;
-  mode?: string;
 }) {
-  return apiFetch<{ id: string; email: string }>(
-    '/users/me',
-    {
-      method: 'PATCH',
-      body: JSON.stringify(input),
-    },
-  );
+  return apiFetch<{ id: string; email: string }>('/users/me', {
+    body: JSON.stringify(input),
+    method: 'PATCH',
+  });
 }
 
 export async function deleteMe() {

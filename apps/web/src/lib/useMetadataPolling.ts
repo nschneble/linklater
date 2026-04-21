@@ -1,9 +1,10 @@
+import { getLink } from './api';
 import { useEffect, useRef } from 'react';
 import type { Link } from './api';
-import { getLink } from './api';
 
+// polls for 30 seconds
+const MAX_TICKS = 15;
 const POLL_INTERVAL_MS = 2_000;
-const MAX_TICKS = 10; // 20 seconds total
 
 export function useMetadataPolling(
   linkId: string | null,
@@ -13,9 +14,7 @@ export function useMetadataPolling(
   onSettledRef.current = onSettled;
 
   useEffect(() => {
-    if (!linkId) {
-      return;
-    }
+    if (!linkId) return;
 
     let ticks = 0;
     const intervalId = setInterval(() => {

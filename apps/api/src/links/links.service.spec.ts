@@ -45,8 +45,11 @@ const makeLink = (overrides = {}) => ({
 });
 
 const makeP2025 = () =>
-  new (Prisma as { PrismaClientKnownRequestError: typeof MockPrismaClientKnownRequestError })
-    .PrismaClientKnownRequestError('Record not found', { code: 'P2025' });
+  new (
+    Prisma as {
+      PrismaClientKnownRequestError: typeof MockPrismaClientKnownRequestError;
+    }
+  ).PrismaClientKnownRequestError('Record not found', { code: 'P2025' });
 
 describe('LinksService', () => {
   let service: LinksService;
@@ -87,7 +90,11 @@ describe('LinksService', () => {
 
   it('parses host from URL on create', async () => {
     (prismaMock.link.create as jest.Mock).mockResolvedValue(
-      makeLink({ id: '1', url: 'https://example.com/path', host: 'example.com' }),
+      makeLink({
+        id: '1',
+        url: 'https://example.com/path',
+        host: 'example.com',
+      }),
     );
 
     const link = await service.create('user1', {
@@ -108,7 +115,9 @@ describe('LinksService', () => {
   });
 
   it('throws on invalid URL', async () => {
-    await expect(service.create('user1', { url: 'not-a-url' })).rejects.toThrow('Invalid URL');
+    await expect(service.create('user1', { url: 'not-a-url' })).rejects.toThrow(
+      'Invalid url',
+    );
   });
 
   // --- findAll ---
@@ -120,7 +129,11 @@ describe('LinksService', () => {
     const result = await service.findAll('user1', {});
 
     expect(prismaMock.link.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { userId: 'user1' }, take: 50, skip: 0 }),
+      expect.objectContaining({
+        where: { userId: 'user1' },
+        take: 50,
+        skip: 0,
+      }),
     );
     expect(result.total).toBe(1);
     expect(result.data).toHaveLength(1);
@@ -166,7 +179,9 @@ describe('LinksService', () => {
   it('findOne throws NotFoundException when link is not found', async () => {
     (prismaMock.link.findFirst as jest.Mock).mockResolvedValue(null);
 
-    await expect(service.findOne('user1', 'missing')).rejects.toThrow(NotFoundException);
+    await expect(service.findOne('user1', 'missing')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   // --- update ---
@@ -175,7 +190,9 @@ describe('LinksService', () => {
     const link = makeLink({ title: 'Updated' });
     (prismaMock.link.update as jest.Mock).mockResolvedValue(link);
 
-    const result = await service.update('user1', 'link-1', { title: 'Updated' });
+    const result = await service.update('user1', 'link-1', {
+      title: 'Updated',
+    });
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 'link-1', userId: 'user1' } }),
@@ -186,7 +203,9 @@ describe('LinksService', () => {
   it('update throws NotFoundException on P2025', async () => {
     (prismaMock.link.update as jest.Mock).mockRejectedValue(makeP2025());
 
-    await expect(service.update('user1', 'missing', {})).rejects.toThrow(NotFoundException);
+    await expect(service.update('user1', 'missing', {})).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   // --- archive ---
@@ -203,7 +222,9 @@ describe('LinksService', () => {
   it('archive throws NotFoundException on P2025', async () => {
     (prismaMock.link.update as jest.Mock).mockRejectedValue(makeP2025());
 
-    await expect(service.archive('user1', 'missing')).rejects.toThrow(NotFoundException);
+    await expect(service.archive('user1', 'missing')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   // --- unarchive ---
@@ -220,7 +241,9 @@ describe('LinksService', () => {
   it('unarchive throws NotFoundException on P2025', async () => {
     (prismaMock.link.update as jest.Mock).mockRejectedValue(makeP2025());
 
-    await expect(service.unarchive('user1', 'missing')).rejects.toThrow(NotFoundException);
+    await expect(service.unarchive('user1', 'missing')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   // --- remove ---
@@ -239,7 +262,9 @@ describe('LinksService', () => {
   it('remove throws NotFoundException on P2025', async () => {
     (prismaMock.link.delete as jest.Mock).mockRejectedValue(makeP2025());
 
-    await expect(service.remove('user1', 'missing')).rejects.toThrow(NotFoundException);
+    await expect(service.remove('user1', 'missing')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   // --- getRandom ---
