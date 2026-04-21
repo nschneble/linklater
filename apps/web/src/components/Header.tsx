@@ -146,12 +146,17 @@ export default function Header({
 
                 <button
                   type="button"
-                  onClick={() => { onViewChange('links'); setShowUserMenu(false); }}
+                  onClick={() => {
+                    onViewChange('links');
+                    setShowUserMenu(false);
+                  }}
                   className="flex w-full items-center gap-2 px-3 py-2 hover:bg-[var(--bg-surface)] text-left cursor-pointer text-[var(--text)]"
                 >
                   <i
                     className={`fa-solid fa-bookmark text-[0.75rem] ${
-                      view === 'links' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
+                      view === 'links'
+                        ? 'text-[var(--accent)]'
+                        : 'text-[var(--text-muted)]'
                     }`}
                   />
                   <span>Your links</span>
@@ -159,12 +164,17 @@ export default function Header({
 
                 <button
                   type="button"
-                  onClick={() => { onViewChange('settings'); setShowUserMenu(false); }}
+                  onClick={() => {
+                    onViewChange('settings');
+                    setShowUserMenu(false);
+                  }}
                   className="flex w-full items-center gap-2 px-3 py-2 hover:bg-[var(--bg-surface)] text-left cursor-pointer text-[var(--text)]"
                 >
                   <i
                     className={`fa-solid fa-gear text-[0.75rem] ${
-                      view === 'settings' ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
+                      view === 'settings'
+                        ? 'text-[var(--accent)]'
+                        : 'text-[var(--text-muted)]'
                     }`}
                   />
                   <span>Settings</span>
@@ -178,7 +188,9 @@ export default function Header({
                   <i
                     className={`fa-solid ${mode === 'light' ? 'fa-moon' : 'fa-sun'} text-[0.75rem] text-[var(--text-muted)]`}
                   />
-                  <span>Switch to {mode === 'light' ? 'dark' : 'light'} mode</span>
+                  <span>
+                    Switch to {mode === 'light' ? 'dark' : 'light'} mode
+                  </span>
                 </button>
 
                 {/* Theme row — hover opens flyout submenu */}
@@ -190,7 +202,9 @@ export default function Header({
                 >
                   <div
                     className={`flex w-full items-center gap-2 px-3 py-2 cursor-default text-[var(--text)] ${
-                      showThemeSubmenu ? 'bg-[var(--bg-surface)]' : 'hover:bg-[var(--bg-surface)]'
+                      showThemeSubmenu
+                        ? 'bg-[var(--bg-surface)]'
+                        : 'hover:bg-[var(--bg-surface)]'
                     }`}
                   >
                     <i className="fa-solid fa-palette text-[0.75rem] text-[var(--text-muted)]" />
@@ -220,8 +234,14 @@ export default function Header({
                         onMouseEnter={() => {
                           setPreviewTheme(t.id);
                           const root = document.documentElement;
-                          root.style.setProperty('--theme-transition-duration', '1s');
-                          root.style.setProperty('--theme-transition-easing', 'ease-in');
+                          root.style.setProperty(
+                            '--theme-transition-duration',
+                            '1s',
+                          );
+                          root.style.setProperty(
+                            '--theme-transition-easing',
+                            'ease-in',
+                          );
                           root.dataset.theme = t.id;
                         }}
                         onClick={() => handleThemeSelect(t.id)}
@@ -242,7 +262,10 @@ export default function Header({
 
                 <button
                   type="button"
-                  onClick={() => { setShowUserMenu(false); onLogout(); }}
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    onLogout();
+                  }}
                   className="flex w-full items-center gap-2 px-3 py-2 mt-1 border-t border-[var(--border)] hover:bg-[var(--bg-surface)] text-[var(--text)] text-left cursor-pointer"
                 >
                   <i className="fa-solid fa-right-from-bracket text-[0.75rem] text-[var(--text-muted)]" />

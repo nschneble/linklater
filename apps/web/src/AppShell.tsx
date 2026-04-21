@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from './auth/AuthContext';
-import { useTheme, type BaseTheme } from './theme/ThemeContext';
 import {
-  getLinks,
   archiveLink,
-  unarchiveLink,
   deleteLink,
+  getLinks,
   getRandomLink,
+  unarchiveLink,
   updateMe,
   type Link,
   type PaginatedLinks,
 } from './lib/api';
+
+import { useAuth } from './auth/AuthContext';
+import { useEffect, useState } from 'react';
+import { useTheme, type BaseTheme } from './theme/ThemeContext';
 import { useMetadataPolling } from './lib/useMetadataPolling';
+
 import Header from './components/Header';
 import LinksView from './components/LinksView';
 import SettingsView from './components/SettingsView';
@@ -20,32 +22,39 @@ type AppView = 'links' | 'settings';
 type LinksFilter = 'active' | 'archived';
 
 export default function AppShell() {
-  const { user, logout } = useAuth();
+  const { logout, user } = useAuth();
   const { setBaseTheme, toggleMode } = useTheme();
 
-  const [view, setView] = useState<AppView>('links');
+  const [filter, setFilter] = useState<LinksFilter>('active');
   const [links, setLinks] = useState<Link[]>([]);
   const [loadingLinks, setLoadingLinks] = useState(true);
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<LinksFilter>('active');
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState<Pick<PaginatedLinks, 'total' | 'limit'> | null>(null);
-  const [showLinkForm, setShowLinkForm] = useState(false);
-  const [randomLoading, setRandomLoading] = useState(false);
+  const [pagination, setPagination] = useState<Pick<
+    PaginatedLinks,
+    'total' | 'limit'
+  > | null>(null);
+  const [pendingMetaLinkId, setPendingMetaLinkId] = useState<string | null>(
+    null,
+  );
   const [randomError, setRandomError] = useState<string | null>(null);
-  const [pendingMetaLinkId, setPendingMetaLinkId] = useState<string | null>(null);
+  const [randomLoading, setRandomLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [showLinkForm, setShowLinkForm] = useState(false);
+  const [view, setView] = useState<AppView>('links');
 
   useMetadataPolling(pendingMetaLinkId, (updatedLink) => {
-    setLinks((prev) => prev.map((l) => (l.id === updatedLink.id ? updatedLink : l)));
+    setLinks((previous) =>
+      previous.map((link) => (link.id === updatedLink.id ? updatedLink : link)),
+    );
     setPendingMetaLinkId(null);
   });
 
-  // Reset to page 1 when search or filter changes
+  // resets to page 1 when the search or filter changes
   useEffect(() => {
     setPage(1);
   }, [search, filter]);
 
-  // Load links when search/filter/page changes
+  // loads links when the search, filter, or page changes
   useEffect(() => {
     let cancelled = false;
 
@@ -80,12 +89,12 @@ export default function AppShell() {
   }, [search, filter, page]);
 
   const handleCreated = (link: Link) => {
-    // New links are always active; only prepend when viewing active links
+    // only prepends when viewing active links
     if (filter === 'archived') {
       setShowLinkForm(false);
       return;
     }
-    setLinks((prev) => [link, ...prev]);
+    setLinks((previous) => [link, ...previous]);
     setShowLinkForm(false);
     setPendingMetaLinkId(link.id);
   };
@@ -96,14 +105,14 @@ export default function AppShell() {
         ? await unarchiveLink(link.id)
         : await archiveLink(link.id);
 
-      setLinks((prev) => {
+      setLinks((previous) => {
         if (filter === 'active' && updated.archivedAt) {
-          return prev.filter((l) => l.id !== link.id);
+          return previous.filter((link) => link.id !== link.id);
         }
         if (filter === 'archived' && !updated.archivedAt) {
-          return prev.filter((l) => l.id !== link.id);
+          return previous.filter((link) => link.id !== link.id);
         }
-        return prev.map((l) => (l.id === link.id ? updated : l));
+        return previous.map((link) => (link.id === link.id ? updated : link));
       });
     } catch (error: unknown) {
       console.error('Failed to toggle archive state', error);
@@ -113,7 +122,7 @@ export default function AppShell() {
   const handleDelete = async (id: string) => {
     try {
       await deleteLink(id);
-      setLinks((prev) => prev.filter((l) => l.id !== id));
+      setLinks((previous) => previous.filter((link) => link.id !== id));
     } catch (error: unknown) {
       console.error('Failed to delete link', error);
     }
@@ -125,7 +134,7 @@ export default function AppShell() {
     try {
       const { link } = await getRandomLink({ archived: filter === 'archived' });
       if (!link) {
-        setRandomError('No links available to randomize');
+        setRandomError('No links available');
       } else {
         window.open(link.url, '_blank', 'noopener,noreferrer');
       }
@@ -139,13 +148,17 @@ export default function AppShell() {
 
   const handleThemeSelect = (theme: BaseTheme) => {
     setBaseTheme(theme);
-    updateMe({ theme }).catch((error) => console.error('Failed to save theme', error));
+    updateMe({ theme }).catch((error) =>
+      console.error('Failed to save theme', error),
+    );
   };
 
   const handleModeToggle = () => {
     const nextMode = user?.mode === 'light' ? 'dark' : 'light';
     toggleMode();
-    updateMe({ mode: nextMode }).catch((error) => console.error('Failed to save mode', error));
+    updateMe({ mode: nextMode }).catch((error) =>
+      console.error('Failed to save mode', error),
+    );
   };
 
   if (!user) return null;
@@ -153,34 +166,34 @@ export default function AppShell() {
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
       <Header
-        user={user}
-        view={view}
-        onViewChange={setView}
+        onLogout={logout}
         onModeToggle={handleModeToggle}
         onThemeSelect={handleThemeSelect}
-        onLogout={logout}
+        onViewChange={setView}
+        user={user}
+        view={view}
       />
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {view === 'links' ? (
           <LinksView
+            filter={filter}
             links={links}
             loadingLinks={loadingLinks}
-            search={search}
-            filter={filter}
-            showLinkForm={showLinkForm}
-            randomLoading={randomLoading}
-            randomError={randomError}
+            onArchiveToggle={handleToggleArchive}
+            onCreated={handleCreated}
+            onDelete={handleDelete}
+            onFilterChange={setFilter}
+            onLoadMore={() => setPage((page) => page + 1)}
+            onRandom={handleRandom}
+            onSearchChange={setSearch}
+            onToggleForm={() => setShowLinkForm((open) => !open)}
             page={page}
             pagination={pagination}
-            onSearchChange={setSearch}
-            onFilterChange={setFilter}
-            onToggleForm={() => setShowLinkForm((open) => !open)}
-            onCreated={handleCreated}
-            onArchiveToggle={handleToggleArchive}
-            onDelete={handleDelete}
-            onRandom={handleRandom}
-            onLoadMore={() => setPage((p) => p + 1)}
+            randomError={randomError}
+            randomLoading={randomLoading}
+            search={search}
+            showLinkForm={showLinkForm}
           />
         ) : (
           <SettingsView />

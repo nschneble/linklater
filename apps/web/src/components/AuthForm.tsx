@@ -1,20 +1,22 @@
-import { useState, type FormEvent } from 'react';
 import { useAuth } from '../auth/AuthContext';
+import { useState, type FormEvent } from 'react';
 
 type Mode = 'login' | 'register';
 
 export default function AuthForm() {
   const { login, register } = useAuth();
-  const [mode, setMode] = useState<Mode>('login');
+
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<Mode>('login');
+  const [password, setPassword] = useState('');
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (formEvent: FormEvent) => {
+    formEvent.preventDefault();
     setError(null);
     setLoading(true);
+
     try {
       if (mode === 'login') {
         await login(email, password);
@@ -39,88 +41,96 @@ export default function AuthForm() {
   };
 
   return (
-    <div className="max-w-md w-full mx-auto bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl p-8">
-      <h1 className="text-3xl font-bold text-[var(--text)] mb-2 text-center">
+    <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl">
+      <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold">
         Linklater
       </h1>
-      <p className="text-[var(--text-muted)] text-center mb-6">
+      <p className="mb-6 text-[var(--text-muted)] text-center">
         Save links now, read them later.
       </p>
 
-      <div role="tablist" aria-label="Authentication mode" className="flex mb-6 rounded-full bg-[var(--bg-elevated)] p-1">
+      <div
+        className="flex mb-6 p-1 bg-[var(--bg-elevated)] rounded-full"
+        role="tablist"
+        aria-label="Authentication mode"
+      >
         <button
           type="button"
-          role="tab"
-          aria-selected={mode === 'login'}
-          onClick={() => changeModes('login')}
           className={`flex-1 py-2 text-sm rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
             mode === 'login'
               ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
               : 'text-[var(--text-muted)]'
           }`}
+          onClick={() => changeModes('login')}
+          role="tab"
+          aria-selected={mode === 'login'}
         >
           Log in
         </button>
         <button
           type="button"
-          role="tab"
-          aria-selected={mode === 'register'}
-          onClick={() => changeModes('register')}
           className={`flex-1 py-2 text-sm rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
             mode === 'register'
               ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
               : 'text-[var(--text-muted)]'
           }`}
+          onClick={() => changeModes('register')}
+          role="tab"
+          aria-selected={mode === 'register'}
         >
           Sign up
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <label className="block text-sm font-medium text-[var(--text-muted)]">
+      <form className="space-y-4" onSubmit={handleSubmit}>
+        <label className="block text-[var(--text-muted)] text-sm font-medium">
           Email
           <input
             type="email"
             autoComplete="email"
-            className="mt-1 block w-full rounded-lg bg-[var(--bg-input)] border border-[var(--border)] px-3 py-2 text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            className="block w-full mt-1 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            onChange={(event) => setEmail(event.target.value)}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </label>
 
-        <label className="block text-sm font-medium text-[var(--text-muted)]">
+        <label className="block text-[var(--text-muted)] text-sm font-medium">
           Password
           <input
             type="password"
-            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            className="mt-1 block w-full rounded-lg bg-[var(--bg-input)] border border-[var(--border)] px-3 py-2 text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            autoComplete={
+              mode === 'login' ? 'current-password' : 'new-password'
+            }
+            className="block w-full mt-1 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            onChange={(event) => setPassword(event.target.value)}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
             required
           />
         </label>
 
         {error && (
-          <p role="alert" className="text-sm text-rose-400 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2">
+          <p
+            className="px-3 py-2 bg-rose-950/40 border border-rose-800 text-sm text-rose-400 rounded-lg"
+            role="alert"
+          >
             {error}
           </p>
         )}
 
         <button
           type="submit"
+          className="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-fg)] text-sm font-semibold rounded-lg shadow-md disabled:opacity-60 disabled:cursor-wait transition"
           disabled={loading}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--accent)] text-[var(--accent-fg)] font-semibold py-2.5 text-sm shadow-md hover:bg-[var(--accent-hover)] disabled:opacity-60 disabled:cursor-wait transition"
         >
           <i className="fa-solid fa-right-to-bracket text-xs" />
-          {loading ? 'Working…' : mode === 'login' ? 'Log in' : 'Create account'}
+          {loading
+            ? 'Working…'
+            : mode === 'login'
+              ? 'Log in'
+              : 'Create account'}
         </button>
       </form>
-
-      <p className="mt-4 text-xs text-center text-[var(--text-subtle)]">
-        This is a demo app for a take-home assignment. Please don&apos;t use a real
-        password 🙃
-      </p>
     </div>
   );
 }
