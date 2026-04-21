@@ -64,6 +64,7 @@ Follow three simple steps repeatedly:
   - Refer to [Organizing Your React App Into Modules](https://dev.to/jack/organizing-your-react-app-into-modules-d6n) for examples
 - Use self-explanatory folder, file, method, and variable names
   - Keep React conventions like `prop` and `props`
+  - Never, ever use one-character variables (e.g. `e` or `i`)
   - Common shortenings to avoid:
 
   | Avoid             | Use instead               |
@@ -94,6 +95,8 @@ Follow three simple steps repeatedly:
   - Use full `if` statements instead of one-liners with ternary operators
 - Stay DRY (but not barren)
   - Extract common code into something reusable when it's used more than twice
+- Avoid complex monoliths or "god" files
+  - Look for ways to refactor files over 100 lines
 - Don't optimize prematurely
   - Don't worry if the homepage takes 1-2 seconds to load
   - Do worry if the homepage load time increases exponentially based on link count
@@ -111,3 +114,29 @@ Follow three simple steps repeatedly:
   - Refer to [Details That Make Interfaces Feel Better](https://jakub.kr/writing/details-that-make-interfaces-feel-better) for examples
 - Embrace the slow software movement
   - Refer to [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software) for a manifesto
+
+## Tailwind Styling
+
+- Favor adding Tailwind CSS styles in this order:
+  - layouts (flex, block, relative, absolute)
+  - sizes (w, max-w, h, max-h)
+  - margins (mx, my)
+  - paddings (px, py)
+  - borders (border, border-color)
+  - backgrounds (bg, bg-color)
+  - text (text-color, text-size)
+  - fonts (font-weight)
+  - focus/outline/ring
+  - rounded borders (rounded, rounded-size)
+  - shadows (shadow, shadow-size)
+  - transitions
+  - pointers (cursor-pointer)
+- Always start with layouts
+- Always widths before heights
+- Always x before y
+- Always margins before padding
+- Always backgrounds before borders before text
+- Always colors before sizes
+- Always end with transitions
+- Always primary before states (border, hover:border, focus:border)
+- Always primary before sizes (mx-auto, sm:mx-0)
