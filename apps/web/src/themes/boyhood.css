@@ -1,0 +1,27 @@
+[data-theme='boyhood'][data-mode='dark'] {
+  --bg: #0d1f0d;
+  --bg-surface: #122012;
+  --bg-elevated: #182a18;
+  --bg-input: #122012;
+  --text: #f0faf0;
+  --text-muted: #86c886;
+  --text-subtle: #4a7a4a;
+  --border: #1e3a1e;
+  --accent: #86efac;
+  --accent-hover: #bbf7d0;
+  --accent-fg: #0d1f0d;
+}
+
+[data-theme='boyhood'][data-mode='light'] {
+  --bg: #f0fdf4;
+  --bg-surface: #f8fff8;
+  --bg-elevated: #ffffff;
+  --bg-input: #f8fff8;
+  --text: #052e16;
+  --text-muted: #166534;
+  --text-subtle: #86efac;
+  --border: #bbf7d0;
+  --accent: #16a34a;
+  --accent-hover: #15803d;
+  --accent-fg: #f0fdf4;
+}

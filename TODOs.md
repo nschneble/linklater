@@ -32,7 +32,6 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 - do a Tailwind style organization pass
 - look into grouping + reusing common Tailwind style sets
 - do a repo pass and look for common organization + design patterns
-- extra theme styles into individual css files
 - regenerate preview and all screenshots
 
 ## Bugfixes

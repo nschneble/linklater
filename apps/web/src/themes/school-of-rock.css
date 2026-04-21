@@ -1,0 +1,27 @@
+[data-theme='school-of-rock'][data-mode='light'] {
+  --bg: #fafafa;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-input: #f4f4f5;
+  --text: #1a0505;
+  --text-muted: #6b2222;
+  --text-subtle: #a05050;
+  --border: #e4c0c0;
+  --accent: #b91c1c;
+  --accent-hover: #991b1b;
+  --accent-fg: #fafafa;
+}
+
+[data-theme='school-of-rock'][data-mode='dark'] {
+  --bg: #1a0505;
+  --bg-surface: #2a0808;
+  --bg-elevated: #380c0c;
+  --bg-input: #2a0808;
+  --text: #fafafa;
+  --text-muted: #f87171;
+  --text-subtle: #b45454;
+  --border: #4a1010;
+  --accent: #ef4444;
+  --accent-hover: #f87171;
+  --accent-fg: #1a0505;
+}

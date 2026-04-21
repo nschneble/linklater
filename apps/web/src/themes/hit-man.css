@@ -1,0 +1,27 @@
+[data-theme='hit-man'][data-mode='dark'] {
+  --bg: #110c00;
+  --bg-surface: #1c1400;
+  --bg-elevated: #261c00;
+  --bg-input: #1c1400;
+  --text: #fef3c7;
+  --text-muted: #d4a840;
+  --text-subtle: #8a6c20;
+  --border: #2e2400;
+  --accent: #f59e0b;
+  --accent-hover: #fbbf24;
+  --accent-fg: #110c00;
+}
+
+[data-theme='hit-man'][data-mode='light'] {
+  --bg: #fffbeb;
+  --bg-surface: #fff8e0;
+  --bg-elevated: #ffffff;
+  --bg-input: #fff8e0;
+  --text: #1c1400;
+  --text-muted: #6b4f00;
+  --text-subtle: #a07810;
+  --border: #e8d090;
+  --accent: #d97706;
+  --accent-hover: #b45309;
+  --accent-fg: #fffbeb;
+}
