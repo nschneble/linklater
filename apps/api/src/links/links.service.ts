@@ -10,23 +10,23 @@ import { QueueService, QUEUES } from '@linklater/queue';
 
 export interface CreateLinkInput {
   url: string;
-  title?: string;
   notes?: string;
+  title?: string;
 }
 
 export interface UpdateLinkInput {
-  title?: string;
   notes?: string;
+  title?: string;
 }
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 50;
 
 export interface LinksQuery {
-  search?: string;
   archived?: boolean;
-  page?: number;
   limit?: number;
+  page?: number;
+  search?: string;
 }
 
 @Injectable()

@@ -1,53 +1,68 @@
-import { useState, useRef, useEffect, type FormEvent } from 'react';
+import { deleteMe, updateMe } from '../lib/api';
 import { useAuth } from '../auth/AuthContext';
-import { updateMe, deleteMe } from '../lib/api';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 export default function SettingsView() {
-  const { user, logout, updateEmail } = useAuth();
-  const [email, setEmail] = useState(user?.email ?? '');
+  const { logout, updateEmail, user } = useAuth();
+
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
+  const [email, setEmail] = useState(user?.email ?? '');
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+
   const bookmarkletRef = useRef<HTMLAnchorElement>(null);
 
-  // React sanitises javascript: URLs when set declaratively, replacing them with
-  // about:blank. Setting the href via setAttribute after render bypasses that.
+  // Note: React sanitizes `javascript:` urls that are set declaratively
+  // Setting the href via setAttribute (after render) bypasses this
+
   useEffect(() => {
     if (!bookmarkletRef.current) return;
+
     const token = localStorage.getItem('linklater_token') ?? '';
     const apiUrl = import.meta.env.VITE_API_BASE_URL as string;
     const code =
       'javascript:(function(){' +
-      'var t=' + JSON.stringify(token) + ',a=' + JSON.stringify(apiUrl) + ';' +
+      'var t=' +
+      JSON.stringify(token) +
+      ',a=' +
+      JSON.stringify(apiUrl) +
+      ';' +
       "function n(m,k){var e=document.createElement('div');e.textContent=m;" +
       "e.style.cssText='position:fixed;top:16px;right:16px;padding:12px 18px;" +
-        "border-radius:8px;font:600 14px/1 system-ui;z-index:2147483647;" +
-        "box-shadow:0 4px 16px rgba(0,0,0,.35);transition:opacity .3s;" +
-        "color:'+(k?'#020617':'#fff')+';background:'+(k?'#34d399':'#ef4444');" +
-      "document.body.appendChild(e);" +
+      'border-radius:8px;font:600 14px/1 system-ui;z-index:2147483647;' +
+      'box-shadow:0 4px 16px rgba(0,0,0,.35);transition:opacity .3s;' +
+      "color:'+(k?'#020617':'#fff')+';background:'+(k?'#34d399':'#ef4444');" +
+      'document.body.appendChild(e);' +
       "setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.remove()},350)},2500)}" +
       "fetch(a+'/links',{method:'POST'," +
-        "headers:{'Content-Type':'application/json','Authorization':'Bearer '+t}," +
-        "body:JSON.stringify({url:location.href,title:document.title})})" +
-      ".then(function(r){r.ok" +
-        "?n('Saved to Linklater \u2713',true)" +
-        ":r.text().then(function(m){n(m||'Error saving link',false)})})" +
+      "headers:{'Content-Type':'application/json','Authorization':'Bearer '+t}," +
+      'body:JSON.stringify({url:location.href,title:document.title})})' +
+      '.then(function(r){r.ok' +
+      "?n('Saved to Linklater \u2713',true)" +
+      ":r.text().then(function(m){n(m||'Error saving link',false)})})" +
       ".catch(function(){n('Could not reach Linklater',false)})" +
       '})();';
     bookmarkletRef.current.setAttribute('href', code);
   }, []);
 
-  const handleSave = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (event: FormEvent) => {
+    event.preventDefault();
     setSaving(true);
     setMessage(null);
     setError(null);
+
     try {
-      const payload: { email?: string; password?: string; currentPassword?: string } = {};
+      const payload: {
+        email?: string;
+        currentPassword?: string;
+        password?: string;
+      } = {};
+
       if (email && email !== user?.email) payload.email = email;
+
       if (password) {
         payload.password = password;
         payload.currentPassword = currentPassword;
@@ -57,11 +72,10 @@ export default function SettingsView() {
         setMessage('Nothing to update');
       } else {
         await updateMe(payload);
-        if (payload.email) {
-          updateEmail(payload.email);
-        }
+        if (payload.email) updateEmail(payload.email);
         setMessage('Settings updated');
       }
+
       setCurrentPassword('');
       setPassword('');
     } catch (error: unknown) {
@@ -86,29 +100,29 @@ export default function SettingsView() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSave} className="space-y-4 max-w-md">
-        <h2 className="text-xl font-semibold text-[var(--text)]">
+      <form className="max-w-md space-y-4" onSubmit={handleSave}>
+        <h2 className="text-[var(--text)] text-xl font-semibold">
           Account settings
         </h2>
 
-        <label className="block text-xs font-medium text-[var(--text-muted)]">
+        <label className="block text-[var(--text-muted)] text-xs font-medium">
           Email
           <input
+            className="block w-full mt-1 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent rounded-lg"
             type="email"
-            className="mt-1 block w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(event) => setEmail(event.target.value)}
           />
         </label>
 
         <label className="block text-xs font-medium text-[var(--text-muted)]">
           New password
           <input
+            className="block w-full mt-1 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent rounded-lg"
             type="password"
             placeholder="Leave blank to keep current password"
-            className="mt-1 block w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(event) => setPassword(event.target.value)}
           />
         </label>
 
@@ -116,70 +130,80 @@ export default function SettingsView() {
           <label className="block text-xs font-medium text-[var(--text-muted)]">
             Current password
             <input
+              className="block w-full mt-1 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent rounded-lg"
               type="password"
               placeholder="Required to confirm password change"
-              className="mt-1 block w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
+              onChange={(event) => setCurrentPassword(event.target.value)}
               required
             />
           </label>
         )}
 
         {message && (
-          <p role="status" className="text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-700 rounded-lg px-3 py-2">
+          <p
+            className="px-3 py-2 bg-emerald-950/40 border border-emerald-700 text-emerald-300 text-xs rounded-lg"
+            role="status"
+          >
             {message}
           </p>
         )}
+
         {error && (
-          <p role="alert" className="text-xs text-rose-300 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2">
+          <p
+            className="px-3 py-2 bg-rose-950/40 border border-rose-800 text-rose-300 text-xs rounded-lg"
+            role="alert"
+          >
             {error}
           </p>
         )}
 
         <button
+          className="inline-flex items-center justify-center px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-fg)] text-sm font-semibold shadow-md rounded-lg cursor-pointer disabled:cursor-wait disabled:opacity-60 transition"
           type="submit"
           disabled={saving}
-          className="inline-flex items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-fg)] font-semibold py-2.5 px-4 text-sm shadow-md hover:bg-[var(--accent-hover)] disabled:opacity-60 disabled:cursor-wait transition cursor-pointer"
         >
           {saving ? 'Saving…' : 'Save changes'}
         </button>
       </form>
 
       <div className="max-w-md space-y-3">
-        <h3 className="text-sm font-semibold text-[var(--text)]">Bookmarklet</h3>
-        <p className="text-xs text-[var(--text-muted)]">
-          Drag the button below to your bookmarks bar. Clicking it on any page saves
-          the link directly to Linklater — no new tab, no form to fill out.
+        <h3 className="text-[var(--text)] text-sm font-semibold">
+          Bookmarklet
+        </h3>
+        <p className="text-[var(--text-muted)] text-xs">
+          Drag this button to your bookmarks bar. Click it on any page to save
+          the link directly to Linklater.
         </p>
         <a
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text)] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full cursor-grab active:cursor-grabbing select-none transition"
           ref={bookmarkletRef}
+          onClick={(event) => event.preventDefault()}
           draggable
-          onClick={(e) => e.preventDefault()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text)] text-xs font-semibold cursor-grab active:cursor-grabbing select-none hover:bg-[var(--bg-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] transition"
         >
-          <i className="fa-solid fa-bookmark text-[0.7rem] text-[var(--accent)]" />
+          <i className="fa-solid fa-bookmark text-[var(--accent)] text-[0.7rem]" />
           Save to Linklater
         </a>
-        <p className="text-xs text-[var(--text-subtle)]">
-          Your auth token is embedded in this bookmarklet — keep it private. It
-          expires after 90 days; reinstall it from this page when it does.
+        <p className="text-[var(--text-subtle)] text-xs">
+          Your auth token is embedded in this bookmarklet. Keep it private. It
+          expires after 90 days. Reinstall it from this page when it does.
         </p>
       </div>
 
-      <div className="border border-rose-800/70 rounded-xl p-4 max-w-md bg-[var(--bg-surface)]">
-        <h3 className="text-sm font-semibold text-rose-400 mb-1">
+      <div className="max-w-md p-4 bg-[var(--bg-surface)] border border-rose-800/70 rounded-xl">
+        <h3 className="mb-1 text-rose-400 text-sm font-semibold">
           Danger zone
         </h3>
-        <p className="text-xs text-rose-300/80 mb-3">
+        <p className="mb-3 text-rose-300/80 text-xs">
           Deleting your account will remove all your saved links. This cannot be
           undone.
         </p>
+
         {!confirmDelete ? (
           <button
+            className="px-3 py-1.5 hover:bg-rose-900/40 border border-rose-700 text-rose-300 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 rounded-full cursor-pointer"
             type="button"
             onClick={() => setConfirmDelete(true)}
-            className="px-3 py-1.5 rounded-full border border-rose-700 text-rose-300 text-xs hover:bg-rose-900/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 cursor-pointer"
           >
             Delete my account
           </button>
@@ -189,16 +213,16 @@ export default function SettingsView() {
               Are you sure? This is permanent.
             </span>
             <button
+              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 rounded-full"
               type="button"
               onClick={handleDelete}
-              className="px-3 py-1.5 rounded-full bg-rose-600 text-rose-50 hover:bg-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
             >
               Yes, delete
             </button>
             <button
+              className="px-3 py-1.5 border border-[var(--border)] text-[var(--text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full"
               type="button"
               onClick={() => setConfirmDelete(false)}
-              className="px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             >
               Cancel
             </button>

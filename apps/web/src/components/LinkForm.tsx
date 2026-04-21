@@ -1,24 +1,25 @@
-import { useState, type FormEvent } from 'react';
 import { createLink, type Link } from '../lib/api';
+import { useState, type FormEvent } from 'react';
 
 interface LinkFormProps {
   onCreated: (link: Link) => void;
 }
 
 export default function LinkForm({ onCreated }: LinkFormProps) {
-  const [url, setUrl] = useState(
-    () => new URLSearchParams(window.location.search).get('url') ?? '',
-  );
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState(
     () => new URLSearchParams(window.location.search).get('title') ?? '',
   );
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [url, setUrl] = useState(
+    () => new URLSearchParams(window.location.search).get('url') ?? '',
+  );
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
     setError(null);
     setSaving(true);
+
     try {
       const link = await createLink({ url, title: title || undefined });
       onCreated(link);
@@ -35,44 +36,47 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
 
   return (
     <form
+      className="flex flex-col sm:flex-row gap-3 sm:items-end"
       onSubmit={handleSubmit}
-      className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
       <div className="flex-1">
-        <label className="block text-xs font-medium text-[var(--text-muted)]">
+        <label className="block text-[var(--text-muted)] text-xs font-medium">
           URL
           <input
+            className="block w-full mt-1 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent rounded-lg"
             type="url"
-            required
             placeholder="https://example.com/article"
-            className="mt-1 block w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(event) => setUrl(event.target.value)}
+            required
           />
         </label>
       </div>
       <div className="flex-1">
-        <label className="block text-xs font-medium text-[var(--text-muted)]">
+        <label className="block text-[var(--text-muted)] text-xs font-medium">
           Title (optional)
           <input
+            className="block w-full mt-1 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent rounded-lg"
             type="text"
-            placeholder="If blank, we&apos;ll use the URL"
-            className="mt-1 block w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            placeholder="If blank, we'll use the url"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(event) => setTitle(event.target.value)}
           />
         </label>
       </div>
       <button
+        className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] border border-[var(--accent)] hover:border-[var(--accent-hover)] text-[var(--accent-fg)] text-sm font-semibold shadow-md rounded-lg disabled:opacity-60 disabled:cursor-wait transition"
         type="submit"
         disabled={saving}
-        className="sm:w-auto w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--accent)] border border-[var(--accent)] text-[var(--accent-fg)] font-semibold py-2 px-4 text-sm shadow-md hover:bg-[var(--accent-hover)] hover:border-[var(--accent-hover)] disabled:opacity-60 disabled:cursor-wait transition"
       >
         <i className="fa-solid fa-bookmark text-xs" />
         {saving ? 'Saving…' : 'Save link'}
       </button>
       {error && (
-        <p role="alert" className="text-xs text-rose-400 bg-rose-950/40 border border-rose-800 rounded-lg px-3 py-2 sm:ml-2">
+        <p
+          className="sm:ml-2 px-3 py-2 bg-rose-950/40 border border-rose-800 text-rose-400 text-xs rounded-lg"
+          role="alert"
+        >
           {error}
         </p>
       )}

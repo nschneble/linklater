@@ -2,18 +2,18 @@ import type { Link } from '../lib/api';
 
 export function LinkCardSkeleton() {
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 animate-pulse">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl animate-pulse">
       <div className="flex-1 min-w-0 space-y-2">
-        <div className="h-4 w-3/4 rounded bg-[var(--bg-elevated)]" />
+        <div className="w-3/4 h-4 bg-[var(--bg-elevated)] rounded" />
         <div className="flex items-center gap-2">
-          <div className="h-3 w-20 rounded bg-[var(--bg-elevated)]" />
-          <div className="w-1 h-1 rounded-full bg-[var(--bg-elevated)]" />
-          <div className="h-3 w-32 rounded bg-[var(--bg-elevated)]" />
+          <div className="w-20 h-3 bg-[var(--bg-elevated)] rounded" />
+          <div className="w-1 h-1 bg-[var(--bg-elevated)] rounded-full" />
+          <div className="w-32 h-3 bg-[var(--bg-elevated)] rounded" />
         </div>
       </div>
       <div className="flex items-center gap-2 justify-end">
-        <div className="h-7 w-20 rounded-full bg-[var(--bg-elevated)]" />
-        <div className="h-7 w-16 rounded-full bg-[var(--bg-elevated)]" />
+        <div className="w-20 h-7 bg-[var(--bg-elevated)] rounded-full" />
+        <div className="w-16 h-7 bg-[var(--bg-elevated)] rounded-full" />
       </div>
     </div>
   );
@@ -30,66 +30,73 @@ export default function LinkCard({
   onArchiveToggle,
   onDelete,
 }: LinkCardProps) {
-  const created = new Date(link.createdAt).toLocaleString();
   const archived = link.archivedAt
     ? new Date(link.archivedAt).toLocaleString()
     : null;
+  const created = new Date(link.createdAt).toLocaleString();
 
   return (
-    <div className="animate-fade-in-up rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl animate-fade-in-up">
       <div className="flex-1 min-w-0">
         <a
+          className="block text-[var(--text)] hover:text-[var(--accent)] text-sm font-semibold truncate"
           href={link.url}
-          target="_blank"
           rel="noreferrer"
-          className="text-sm font-semibold text-[var(--text)] hover:text-[var(--accent)] truncate block"
+          target="_blank"
         >
           {link.title}
         </a>
-        <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] mt-1">
+
+        <div className="flex items-center gap-2 mt-1 text-[var(--text-muted)] text-xs">
           <span className="truncate">{link.host}</span>
-          <span className="w-1 h-1 rounded-full bg-[var(--text-subtle)]" />
+          <span className="w-1 h-1 bg-[var(--text-subtle)] rounded-full" />
           <span>Saved {created}</span>
           {archived && (
             <>
-              <span className="w-1 h-1 rounded-full bg-[var(--text-subtle)]" />
+              <span className="w-1 h-1 bg-[var(--text-subtle)] rounded-full" />
               <span className="text-amber-300">Archived {archived}</span>
             </>
           )}
           {!link.metaFetchedAt && (
             <span
-              title="Fetching page info…"
-              className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse"
+              title="Fetching info…"
+              className="inline-block w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-pulse"
             />
           )}
         </div>
+
         {link.metaFetchedAt && (link.metaImage || link.metaDescription) && (
-          <div className="mt-2 flex items-start gap-3">
+          <div className="flex items-start gap-3 mt-2">
             {link.metaImage && (
               <img
+                className="shrink-0 w-16 h-12 bg-[var(--bg-elevated)] object-cover rounded-md"
                 src={link.metaImage}
-                alt=""
-                aria-hidden="true"
-                className="h-12 w-16 rounded-md object-cover shrink-0 bg-[var(--bg-elevated)]"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
+                alt={link.title}
+                onError={(error) => {
+                  (error.target as HTMLImageElement).style.display = 'none';
                 }}
+                aria-hidden="true"
               />
             )}
             {link.metaDescription && (
-              <p className="text-xs text-[var(--text-muted)] line-clamp-2">
+              <p className="text-[var(--text-muted)] text-xs line-clamp-2">
                 {link.metaDescription}
               </p>
             )}
           </div>
         )}
       </div>
+
       <div className="flex items-center gap-2 justify-end">
         <button
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full cursor-pointer"
           type="button"
           onClick={onArchiveToggle}
-          aria-label={link.archivedAt ? `Unarchive "${link.title}"` : `Archive "${link.title}"`}
-          className="px-2.5 py-1.5 inline-flex items-center gap-1.5 text-xs rounded-full border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-elevated)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] cursor-pointer"
+          aria-label={
+            link.archivedAt
+              ? `Unarchive "${link.title}"`
+              : `Archive "${link.title}"`
+          }
         >
           <i
             className={
@@ -102,10 +109,10 @@ export default function LinkCard({
         </button>
 
         <button
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-rose-900/40 border border-rose-700 text-rose-300 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 rounded-full cursor-pointer"
           type="button"
           onClick={onDelete}
           aria-label={`Delete "${link.title}"`}
-          className="px-2.5 py-1.5 inline-flex items-center gap-1.5 text-xs rounded-full border border-rose-700 text-rose-300 hover:bg-rose-900/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 cursor-pointer"
         >
           <i className="fa-solid fa-trash-can text-[0.7rem]" />
           Delete

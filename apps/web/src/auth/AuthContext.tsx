@@ -14,10 +14,10 @@ import {
 } from '../lib/api';
 
 export interface User {
-  userId: string;
   email: string;
   mode: string;
   theme: string;
+  userId: string;
 }
 
 interface AuthContextValue {
