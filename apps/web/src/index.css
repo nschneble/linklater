@@ -1,13 +1,13 @@
 @import 'tailwindcss';
-@import './themes/default.css';
-@import './themes/before-midnight.css';
-@import './themes/before-sunrise.css';
-@import './themes/before-sunset.css';
-@import './themes/boyhood.css';
-@import './themes/dazed-and-confused.css';
-@import './themes/hit-man.css';
-@import './themes/scanner-darkly.css';
-@import './themes/school-of-rock.css';
+@import './theme/styles/default.css';
+@import './theme/styles/before-midnight.css';
+@import './theme/styles/before-sunrise.css';
+@import './theme/styles/before-sunset.css';
+@import './theme/styles/boyhood.css';
+@import './theme/styles/dazed-and-confused.css';
+@import './theme/styles/hit-man.css';
+@import './theme/styles/scanner-darkly.css';
+@import './theme/styles/school-of-rock.css';
 
 @layer base {
   html,
