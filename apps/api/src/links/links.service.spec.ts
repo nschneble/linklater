@@ -116,7 +116,7 @@ describe('LinksService', () => {
 
   it('throws on invalid URL', async () => {
     await expect(service.create('user1', { url: 'not-a-url' })).rejects.toThrow(
-      'Invalid URL',
+      'Invalid url',
     );
   });
 
