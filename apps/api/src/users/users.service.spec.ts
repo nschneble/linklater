@@ -1,10 +1,4 @@
 import { jest } from '@jest/globals';
-
-jest.mock('../prisma/prisma.service', () => ({
-  PrismaService: jest.fn().mockImplementation(() => ({})),
-}));
-jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
-
 import * as bcrypt from 'bcryptjs';
 
 import {
@@ -15,10 +9,14 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
+jest.mock('../prisma/prisma.service', () => ({
+  PrismaService: jest.fn().mockImplementation(() => ({})),
+}));
+jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
+
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from './users.service';
 
-// Use a real bcrypt hash (low rounds for speed) so bcrypt.compare works without mocking
 const KNOWN_PASSWORD = 'password123';
 const KNOWN_HASH = bcrypt.hashSync(KNOWN_PASSWORD, 1);
 
@@ -72,7 +70,6 @@ describe('UsersService', () => {
         expect.objectContaining({
           data: expect.objectContaining({
             email: 'test@example.com',
-            // hash should not be the plain password
             passwordHash: expect.not.stringMatching('password123'),
           }),
         }),

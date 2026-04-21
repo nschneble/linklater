@@ -11,13 +11,13 @@ import { withoutPasswordHash } from './users.utils.js';
 import * as bcrypt from 'bcryptjs';
 
 export const VALID_THEMES = [
-  'scanner-darkly',
+  'before-midnight',
   'before-sunrise',
   'before-sunset',
-  'before-midnight',
   'boyhood',
   'dazed-and-confused',
   'hit-man',
+  'scanner-darkly',
   'school-of-rock',
 ] as const;
 
@@ -29,9 +29,7 @@ export class UsersService {
 
   async create(email: string, password: string) {
     const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      throw new ConflictException('Email already in use');
-    }
+    if (existing) throw new ConflictException('Email already in use');
 
     const passwordHash = await bcrypt.hash(password, 12);
 
