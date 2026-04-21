@@ -9,6 +9,10 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
+    coverage: {
+      include: ['src/**/*.{ts,tsx}'],
+      provider: 'istanbul',
+    },
     environment: 'jsdom',
     globals: true,
     setupFiles: './test/setup.ts',

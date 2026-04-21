@@ -23,6 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
+# Code coverage
+.nyc_output
+coverage
+
 # Environment variables
 .env
 .env.development.local
