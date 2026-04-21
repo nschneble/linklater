@@ -1,6 +1,6 @@
 # Project TODOs
 
-This is a list of upcoming features and bugfixes.
+This is a list of upcoming features, planned refactoring, and bugfixes.
 
 ## Features
 
@@ -25,6 +25,18 @@ This is a list of upcoming features and bugfixes.
   - 7-day free trial
   - free plan: 3 unread links, 2 themes (Default + A Scanner Darkly)
   - paid plan: Unlimited unread links, all themes
+
+## Refactoring
+
+- extract user menu from apps/web/src/components/Header.tsx
+- create reusable component for menu items
+- create reusable component for link view buttons
+- do a Tailwind style organization pass
+- look into grouping + reusing common Tailwind style sets
+- do a repo pass and look for common organization + design patterns
+- extra theme styles into individual css files
+- add a top-level `format` script for Prettier formatting
+- regenerate preview and all screenshots
 
 ## Bugfixes
 
