@@ -74,8 +74,8 @@ Follow three simple steps repeatedly:
   | `cb`              | `callback`                |
   | `ctx`             | `context`                 |
   | `e`, `err`        | `error`                   |
+  | `e`, `evt`        | `event`                   |
   | `el`, `elem`      | `element`                 |
-  | `evt`             | `event`                   |
   | `fn`              | `function`                |
   | `idx`             | `index`                   |
   | `msg`             | `message`                 |
