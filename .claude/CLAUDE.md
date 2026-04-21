@@ -122,8 +122,8 @@ Follow three simple steps repeatedly:
   - sizes (w, max-w, h, max-h)
   - margins (mx, my)
   - paddings (px, py)
-  - borders (border, border-color)
   - backgrounds (bg, bg-color)
+  - borders (border, border-color)
   - text (text-color, text-size)
   - fonts (font-weight)
   - focus/outline/ring

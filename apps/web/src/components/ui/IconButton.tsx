@@ -17,7 +17,7 @@ const variantClasses: Record<
   ghost:
     'px-2.5 py-1.5 border border-[var(--border)] text-[var(--text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]',
   elevated:
-    'px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text)] font-semibold shadow-md disabled:cursor-wait disabled:opacity-60 transition',
+    'px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text)] font-semibold shadow-md disabled:opacity-60 transition disabled:cursor-wait',
 };
 
 export default function IconButton({
@@ -28,7 +28,7 @@ export default function IconButton({
 }: IconButtonProps) {
   return (
     <button
-      className={`inline-flex items-center gap-1.5 text-xs rounded-full cursor-pointer ${variantClasses[variant]} ${className}`}
+      className={`inline-flex items-center gap-1.5 ${variantClasses[variant]} text-xs rounded-full cursor-pointer ${className}`}
       type="button"
       {...props}
     >

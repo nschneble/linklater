@@ -118,7 +118,7 @@ export default function SettingsView() {
           />
         </label>
 
-        <label className="block text-xs font-medium text-[var(--text-muted)]">
+        <label className="block text-[var(--text-muted)] text-xs font-medium">
           New password
           <FormInput
             type="password"
@@ -129,7 +129,7 @@ export default function SettingsView() {
         </label>
 
         {password && (
-          <label className="block text-xs font-medium text-[var(--text-muted)]">
+          <label className="block text-[var(--text-muted)] text-xs font-medium">
             Current password
             <FormInput
               type="password"
@@ -158,7 +158,7 @@ export default function SettingsView() {
           the link directly to Linklater.
         </p>
         <a
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text)] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full cursor-grab active:cursor-grabbing select-none transition"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text)] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full select-none transition cursor-grab active:cursor-grabbing"
           ref={bookmarkletRef}
           onClick={(event) => event.preventDefault()}
           draggable
