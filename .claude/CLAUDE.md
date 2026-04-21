@@ -63,8 +63,33 @@ Follow three simple steps repeatedly:
 - Always organize code into modules
   - Refer to [Organizing Your React App Into Modules](https://dev.to/jack/organizing-your-react-app-into-modules-d6n) for examples
 - Use self-explanatory folder, file, method, and variable names
-  - Use `index` over `idx`
-  - Use `parameters` over `params` or `p`
+  - Keep React conventions like `prop` and `props`
+  - Common shortenings to avoid:
+
+  | Avoid             | Use instead               |
+  | ----------------- | ------------------------- |
+  | `arg`, `args`     | `argument`, `arguments`   |
+  | `arr`             | `array`                   |
+  | `btn`             | `button`                  |
+  | `cb`              | `callback`                |
+  | `ctx`             | `context`                 |
+  | `e`, `err`        | `error`                   |
+  | `el`, `elem`      | `element`                 |
+  | `evt`             | `event`                   |
+  | `fn`              | `function`                |
+  | `idx`             | `index`                   |
+  | `msg`             | `message`                 |
+  | `num`             | `number`                  |
+  | `obj`             | `object`                  |
+  | `param`, `params` | `parameter`, `parameters` |
+  | `ref`             | `reference`               |
+  | `req`             | `request`                 |
+  | `res`             | `response`                |
+  | `str`             | `string`                  |
+  | `sub`             | `subject`                 |
+  | `tmp`             | `temp`                    |
+  | `val`             | `value`                   |
+
 - Favor code clarity over "perfect" optimization
   - Use full `if` statements instead of one-liners with ternary operators
 - Stay DRY (but not barren)
@@ -86,9 +111,3 @@ Follow three simple steps repeatedly:
   - Refer to [Details That Make Interfaces Feel Better](https://jakub.kr/writing/details-that-make-interfaces-feel-better) for examples
 - Embrace the slow software movement
   - Refer to [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software) for a manifesto
-
-## Naming Conventions
-
-| Layer | Pattern | Example |
-| ----- | ------- | ------- |
-| TBD   | TBD     | TBD     |
