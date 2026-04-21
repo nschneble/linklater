@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
 import { UsersService, withoutPasswordHash } from '@linklater/users';
+import * as bcrypt from 'bcryptjs';
 
 type LoginUser =
   | { id: string; email: string }

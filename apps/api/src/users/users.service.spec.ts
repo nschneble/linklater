@@ -7,15 +7,16 @@ jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 
 import * as bcrypt from 'bcryptjs';
 
-import { Test, TestingModule } from '@nestjs/testing';
 import {
+  BadRequestException,
   ConflictException,
   NotFoundException,
-  BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { PrismaService } from '../prisma/prisma.service';
+import { UsersService } from './users.service';
 
 // Use a real bcrypt hash (low rounds for speed) so bcrypt.compare works without mocking
 const KNOWN_PASSWORD = 'password123';

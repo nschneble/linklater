@@ -5,9 +5,10 @@ import {
   BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
+
 import { PrismaService } from '@linklater/prisma';
-import * as bcrypt from 'bcryptjs';
 import { withoutPasswordHash } from './users.utils.js';
+import * as bcrypt from 'bcryptjs';
 
 export const VALID_THEMES = [
   'scanner-darkly',
