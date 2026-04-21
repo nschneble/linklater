@@ -3,6 +3,14 @@
 
 set -uo pipefail
 
+# ── Arguments ───────────────────────────────────────────────────────────────────
+RUN_UPDATE=false
+for arg in "$@"; do
+  case "$arg" in
+    --update) RUN_UPDATE=true ;;
+  esac
+done
+
 # ── Colors & symbols ────────────────────────────────────────────────────────────
 if [[ -t 1 ]]; then
   RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m' CYN=$'\033[36m'
@@ -15,7 +23,11 @@ SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
 TICK=✓  CROSS=✗  CIRC=○
 
 # ── Layout constants ────────────────────────────────────────────────────────────
-STEPS=(Format Lint Test)
+if [[ "$RUN_UPDATE" == true ]]; then
+  STEPS=(Update Install Format Lint Test)
+else
+  STEPS=(Install Format Lint Test)
+fi
 NS=${#STEPS[@]}
 
 # Lines from status/cursor to step index i (0-based)
@@ -92,14 +104,14 @@ stop_spinner() {
 }
 
 # ── Step runner ─────────────────────────────────────────────────────────────────
-# run_step <idx> <npm-script>
+# run_step <idx> <command> [args…]
 # Returns 0 on success, 1 on failure (output stored in STEP_OUTPUT).
 STEP_OUTPUT=""
 run_step() {
-  local idx=$1 script=$2
+  local idx=$1; shift
   start_spinner "$idx"
   local output rc=0
-  output=$(npm run "$script" 2>&1) || rc=$?
+  output=$("$@" 2>&1) || rc=$?
   stop_spinner
   STEP_OUTPUT="$output"
   if [[ $rc -eq 0 ]]; then
@@ -118,15 +130,43 @@ draw_ui
 FAILED_STEP=""
 FAILED_OUTPUT=""
 
-if ! run_step 0 format; then
-  FAILED_STEP="Format"
-  FAILED_OUTPUT="$STEP_OUTPUT"
-elif ! run_step 1 lint; then
-  FAILED_STEP="Lint"
-  FAILED_OUTPUT="$STEP_OUTPUT"
-elif ! run_step 2 test; then
-  FAILED_STEP="Test"
-  FAILED_OUTPUT="$STEP_OUTPUT"
+# Build step index offset based on whether --update was requested
+STEP_OFFSET=0
+
+if [[ "$RUN_UPDATE" == true ]]; then
+  if ! run_step 0 npm update; then
+    FAILED_STEP="Update"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+  STEP_OFFSET=1
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step "$STEP_OFFSET" npm install; then
+    FAILED_STEP="Install"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step $(( STEP_OFFSET + 1 )) npm run format; then
+    FAILED_STEP="Format"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step $(( STEP_OFFSET + 2 )) npm run lint; then
+    FAILED_STEP="Lint"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step $(( STEP_OFFSET + 3 )) npm run test; then
+    FAILED_STEP="Test"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
