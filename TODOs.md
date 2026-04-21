@@ -29,7 +29,6 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 ## Refactoring
 
 - regenerate preview and all screenshots
-- manually review all specs/tests
 - analyze/improve code coverage
 - review all large files + refactor if possible
 - review all theme css

@@ -18,13 +18,14 @@ describe('LinksController', () => {
     remove: jest.fn(),
   } as unknown as LinksService;
 
-  const makeRequest = (userId = 'user-1') => ({ user: { userId } }) as never;
+  const makeRequest = (userId = 'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF') =>
+    ({ user: { userId } }) as never;
   const makeLink = (overrides = {}) => ({
-    id: 'link-1',
-    userId: 'user-1',
-    url: 'https://example.com',
-    title: 'Example',
-    host: 'example.com',
+    id: '3046E089-DC27-4618-A0E9-A08B293729E0',
+    userId: 'A3073906-6844-42A3-A3A1-3744584F0587',
+    url: 'https://webawesome.com',
+    title: 'Web Awesome',
+    host: 'webawesome.com',
     notes: null,
     archivedAt: null,
     createdAt: new Date(),
@@ -52,12 +53,15 @@ describe('LinksController', () => {
       (linksServiceMock.create as jest.Mock).mockResolvedValue(link);
 
       const result = await controller.create(makeRequest(), {
-        url: 'https://example.com',
+        url: 'https://webawesome.com',
       } as never);
 
-      expect(linksServiceMock.create).toHaveBeenCalledWith('user-1', {
-        url: 'https://example.com',
-      });
+      expect(linksServiceMock.create).toHaveBeenCalledWith(
+        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
+        {
+          url: 'https://webawesome.com',
+        },
+      );
       expect(result).toBe(link);
     });
   });
@@ -69,12 +73,15 @@ describe('LinksController', () => {
 
       await controller.findAll(makeRequest(), 'term', 'true', '2', '25');
 
-      expect(linksServiceMock.findAll).toHaveBeenCalledWith('user-1', {
-        search: 'term',
-        archived: true,
-        page: 2,
-        limit: 25,
-      });
+      expect(linksServiceMock.findAll).toHaveBeenCalledWith(
+        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
+        {
+          search: 'term',
+          archived: true,
+          page: 2,
+          limit: 25,
+        },
+      );
     });
 
     it('passes undefined for archived when the query param is absent', async () => {
@@ -93,12 +100,15 @@ describe('LinksController', () => {
         undefined,
       );
 
-      expect(linksServiceMock.findAll).toHaveBeenCalledWith('user-1', {
-        search: undefined,
-        archived: undefined,
-        page: undefined,
-        limit: undefined,
-      });
+      expect(linksServiceMock.findAll).toHaveBeenCalledWith(
+        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
+        {
+          search: undefined,
+          archived: undefined,
+          page: undefined,
+          limit: undefined,
+        },
+      );
     });
   });
 
@@ -108,7 +118,10 @@ describe('LinksController', () => {
 
       await controller.random(makeRequest(), undefined);
 
-      expect(linksServiceMock.getRandom).toHaveBeenCalledWith('user-1', false);
+      expect(linksServiceMock.getRandom).toHaveBeenCalledWith(
+        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
+        false,
+      );
     });
 
     it('passes archived=true when query param is "true"', async () => {
@@ -116,7 +129,10 @@ describe('LinksController', () => {
 
       await controller.random(makeRequest(), 'true');
 
-      expect(linksServiceMock.getRandom).toHaveBeenCalledWith('user-1', true);
+      expect(linksServiceMock.getRandom).toHaveBeenCalledWith(
+        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
+        true,
+      );
     });
 
     it('wraps result in { link }', async () => {
@@ -134,25 +150,39 @@ describe('LinksController', () => {
       const link = makeLink();
       (linksServiceMock.findOne as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.findOne(makeRequest(), 'link-1');
+      const result = await controller.findOne(
+        makeRequest(),
+        '1CC1C58D-7B46-4311-8CF9-35566920DDAD',
+      );
 
-      expect(linksServiceMock.findOne).toHaveBeenCalledWith('user-1', 'link-1');
+      expect(linksServiceMock.findOne).toHaveBeenCalledWith(
+        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
+        '1CC1C58D-7B46-4311-8CF9-35566920DDAD',
+      );
       expect(result).toBe(link);
     });
   });
 
   describe('update', () => {
     it('delegates to LinksService.update', async () => {
-      const link = makeLink({ title: 'Updated' });
+      const link = makeLink({ title: 'Slow Software Movement' });
       (linksServiceMock.update as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.update(makeRequest(), 'link-1', {
-        title: 'Updated',
-      } as never);
+      const result = await controller.update(
+        makeRequest(),
+        '9111B773-FA82-413B-9510-6E032DB8721D',
+        {
+          title: 'Slow Software Movement',
+        } as never,
+      );
 
-      expect(linksServiceMock.update).toHaveBeenCalledWith('user-1', 'link-1', {
-        title: 'Updated',
-      });
+      expect(linksServiceMock.update).toHaveBeenCalledWith(
+        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
+        '9111B773-FA82-413B-9510-6E032DB8721D',
+        {
+          title: 'Slow Software Movement',
+        },
+      );
       expect(result).toBe(link);
     });
   });
@@ -162,9 +192,15 @@ describe('LinksController', () => {
       const link = makeLink({ archivedAt: new Date() });
       (linksServiceMock.archive as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.archive(makeRequest(), 'link-1');
+      const result = await controller.archive(
+        makeRequest(),
+        '71F6449F-363A-4DB3-B54D-EC6BA8C8C868',
+      );
 
-      expect(linksServiceMock.archive).toHaveBeenCalledWith('user-1', 'link-1');
+      expect(linksServiceMock.archive).toHaveBeenCalledWith(
+        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
+        '71F6449F-363A-4DB3-B54D-EC6BA8C8C868',
+      );
       expect(result).toBe(link);
     });
   });
@@ -174,11 +210,14 @@ describe('LinksController', () => {
       const link = makeLink();
       (linksServiceMock.unarchive as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.unarchive(makeRequest(), 'link-1');
+      const result = await controller.unarchive(
+        makeRequest(),
+        'C15F2A28-08B1-4F58-9E48-A3C8FB4D019F',
+      );
 
       expect(linksServiceMock.unarchive).toHaveBeenCalledWith(
-        'user-1',
-        'link-1',
+        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
+        'C15F2A28-08B1-4F58-9E48-A3C8FB4D019F',
       );
       expect(result).toBe(link);
     });
@@ -190,9 +229,15 @@ describe('LinksController', () => {
         success: true,
       });
 
-      const result = await controller.remove(makeRequest(), 'link-1');
+      const result = await controller.remove(
+        makeRequest(),
+        '224C219C-26B2-436A-A46D-418BE1A755A9',
+      );
 
-      expect(linksServiceMock.remove).toHaveBeenCalledWith('user-1', 'link-1');
+      expect(linksServiceMock.remove).toHaveBeenCalledWith(
+        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
+        '224C219C-26B2-436A-A46D-418BE1A755A9',
+      );
       expect(result).toEqual({ success: true });
     });
   });

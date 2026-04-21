@@ -13,7 +13,8 @@ describe('UsersController', () => {
     deleteById: jest.fn(),
   } as unknown as UsersService;
 
-  const makeRequest = (userId = 'user-1') => ({ user: { userId } }) as never;
+  const makeRequest = (userId = '0A758448-0873-4101-8D5D-ED52246B63B5') =>
+    ({ user: { userId } }) as never;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -30,26 +31,37 @@ describe('UsersController', () => {
   });
 
   it('getMe delegates to UsersService.findById with userId from request', async () => {
-    const user = { id: 'user-1', email: 'a@b.com' };
+    const user = {
+      id: '0A758448-0873-4101-8D5D-ED52246B63B5',
+      email: 'bene.gesserit@arrakis.order',
+    };
     (usersServiceMock.findById as jest.Mock).mockResolvedValue(user);
 
     const result = await controller.getMe(makeRequest());
 
-    expect(usersServiceMock.findById).toHaveBeenCalledWith('user-1');
+    expect(usersServiceMock.findById).toHaveBeenCalledWith(
+      '0A758448-0873-4101-8D5D-ED52246B63B5',
+    );
     expect(result).toBe(user);
   });
 
   it('updateMe delegates to UsersService.updateMe with userId from request', async () => {
-    const updated = { id: 'user-1', email: 'new@b.com' };
+    const updated = {
+      id: 'A87B3CD7-93F9-4CF3-B77A-AE58F326F0E0',
+      email: 'trillian.wildspace@hhggverse.org',
+    };
     (usersServiceMock.updateMe as jest.Mock).mockResolvedValue(updated);
 
     const result = await controller.updateMe(makeRequest(), {
-      email: 'new@b.com',
+      email: 'trillian.wildspace@hhggverse.org',
     } as never);
 
-    expect(usersServiceMock.updateMe).toHaveBeenCalledWith('user-1', {
-      email: 'new@b.com',
-    });
+    expect(usersServiceMock.updateMe).toHaveBeenCalledWith(
+      '0A758448-0873-4101-8D5D-ED52246B63B5',
+      {
+        email: 'trillian.wildspace@hhggverse.org',
+      },
+    );
     expect(result).toBe(updated);
   });
 
@@ -58,7 +70,9 @@ describe('UsersController', () => {
 
     const result = await controller.deleteMe(makeRequest());
 
-    expect(usersServiceMock.deleteById).toHaveBeenCalledWith('user-1');
+    expect(usersServiceMock.deleteById).toHaveBeenCalledWith(
+      '0A758448-0873-4101-8D5D-ED52246B63B5',
+    );
     expect(result).toEqual({ success: true });
   });
 });

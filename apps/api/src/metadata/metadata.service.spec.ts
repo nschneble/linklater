@@ -51,7 +51,7 @@ describe('MetadataService', () => {
   } as unknown as PrismaService;
 
   const queueMock = {
-    work: jest.fn().mockResolvedValue('worker-id'),
+    work: jest.fn().mockResolvedValue('88383E14-F80F-4F38-8473-119775738EF5'),
   } as unknown as QueueService;
 
   beforeEach(async () => {
@@ -74,20 +74,23 @@ describe('MetadataService', () => {
   it('extracts og:description and og:image from HTML', async () => {
     mockFetch(
       makeHtml({
-        ogDescription: 'A great page',
-        ogImage: 'https://example.com/img.jpg',
+        ogDescription: 'JavaScript test coverage made simple.',
+        ogImage: 'https://istanbul.js.org/assets/istanbul-logo.png',
       }),
     );
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore('link1', 'https://example.com');
+    await service.fetchAndStore(
+      'F85A62B9-C7DD-4E9D-872B-C6322AC6AC72',
+      'https://istanbul.js.org',
+    );
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'link1' },
+        where: { id: 'F85A62B9-C7DD-4E9D-872B-C6322AC6AC72' },
         data: expect.objectContaining({
-          metaDescription: 'A great page',
-          metaImage: 'https://example.com/img.jpg',
+          metaDescription: 'JavaScript test coverage made simple.',
+          metaImage: 'https://istanbul.js.org/assets/istanbul-logo.png',
           metaFetchedAt: expect.any(Date),
         }),
       }),
@@ -95,30 +98,36 @@ describe('MetadataService', () => {
   });
 
   it('falls back to meta[name="description"] when og:description is absent', async () => {
-    mockFetch(makeHtml({ metaDescription: 'Fallback description' }));
+    mockFetch(makeHtml({ metaDescription: "I'm a fallback description!" }));
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore('link1', 'https://example.com');
+    await service.fetchAndStore(
+      '67A1551B-2C1A-4476-8D17-D864436D4FF3',
+      'https://istanbul.js.org',
+    );
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          metaDescription: 'Fallback description',
+          metaDescription: "I'm a fallback description!",
         }),
       }),
     );
   });
 
   it('resolves relative og:image URL against the page origin', async () => {
-    mockFetch(makeHtml({ ogImage: '/images/preview.jpg' }));
+    mockFetch(makeHtml({ ogImage: '/assets/istanbul-logo.png' }));
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore('link1', 'https://example.com/some/page');
+    await service.fetchAndStore(
+      '7FC86F3E-1761-4033-8BA6-100C72138F48',
+      'https://istanbul.js.org',
+    );
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          metaImage: 'https://example.com/images/preview.jpg',
+          metaImage: 'https://istanbul.js.org/assets/istanbul-logo.png',
         }),
       }),
     );
@@ -128,7 +137,10 @@ describe('MetadataService', () => {
     mockFetch('<html><head></head><body></body></html>');
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore('link1', 'https://example.com');
+    await service.fetchAndStore(
+      '22DD1FE4-2AED-4402-829C-6321683E7A49',
+      'https://constantinople.js.org',
+    );
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -147,11 +159,14 @@ describe('MetadataService', () => {
       .mockRejectedValue(new Error('Network error')) as unknown as typeof fetch;
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore('link1', 'https://example.com');
+    await service.fetchAndStore(
+      '84052E1F-8067-449A-B9C2-2732D2AE6D7C',
+      'https://istanbul.js.org',
+    );
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'link1' },
+        where: { id: '84052E1F-8067-449A-B9C2-2732D2AE6D7C' },
         data: expect.objectContaining({ metaFetchedAt: expect.any(Date) }),
       }),
     );
@@ -162,7 +177,10 @@ describe('MetadataService', () => {
     mockFetch(makeHtml({ ogDescription: longDescription }));
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore('link1', 'https://example.com');
+    await service.fetchAndStore(
+      'A6C5A089-4EBC-4427-9872-F79A77389F24',
+      'https://istanbul.js.org',
+    );
 
     const call = (prismaMock.link.update as jest.Mock).mock.calls[0][0] as {
       data: { metaDescription: string };
@@ -178,7 +196,10 @@ describe('MetadataService', () => {
     }) as unknown as typeof fetch;
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore('link1', 'https://example.com/file.pdf');
+    await service.fetchAndStore(
+      '067104FD-4DB8-498F-9B20-07D3F0A01E5A',
+      'https://smallpdf.com/handle-widget#url=https://assets.ctfassets.net/l3l0sjr15nav/29D2yYGKlHNm0fB2YM1uW4/8e638080a0603252b1a50f35ae8762fd/Get_Started_With_Smallpdf.pdf',
+    );
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -192,7 +213,9 @@ describe('MetadataService', () => {
   });
 
   it('registers a worker for the METADATA_FETCH queue on init', async () => {
-    (queueMock.work as jest.Mock).mockResolvedValue('worker-id');
+    (queueMock.work as jest.Mock).mockResolvedValue(
+      '6535E04E-580C-4C79-8D24-CE5A58DC7CAC',
+    );
 
     await service.onModuleInit();
 

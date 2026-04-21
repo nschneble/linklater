@@ -7,7 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 
-const KNOWN_PASSWORD = 'password123';
+const KNOWN_PASSWORD = 'L4+036MA76pkTpOQm/gu+Ljp';
 const KNOWN_HASH = bcrypt.hashSync(KNOWN_PASSWORD, 1);
 
 describe('AuthService', () => {
@@ -41,31 +41,31 @@ describe('AuthService', () => {
   describe('validateUser', () => {
     it('returns user without passwordHash when credentials are valid', async () => {
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: 'user-1',
-        email: 'test@example.com',
+        id: '3079C0DA-0F39-4127-ACE3-F554592C49E8',
+        email: 'jake@brooklyn99.com',
         passwordHash: KNOWN_HASH,
       });
 
       const result = await service.validateUser(
-        'test@example.com',
+        'jake@brooklyn99.com',
         KNOWN_PASSWORD,
       );
 
       expect(result).not.toBeNull();
       expect(result).not.toHaveProperty('passwordHash');
-      expect(result?.email).toBe('test@example.com');
+      expect(result?.email).toBe('jake@brooklyn99.com');
     });
 
     it('returns null when password is wrong', async () => {
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: 'user-1',
-        email: 'test@example.com',
+        id: '31844487-ECC9-4F3B-BD63-57B58A98FDD2',
+        email: 'bruno@bakeoff.ca',
         passwordHash: KNOWN_HASH,
       });
 
       const result = await service.validateUser(
-        'test@example.com',
-        'definitelywrongpassword',
+        'bruno@bakeoff.ca',
+        'wrong wrong wrong wrong wrong',
       );
 
       expect(result).toBeNull();
@@ -75,8 +75,8 @@ describe('AuthService', () => {
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
 
       const result = await service.validateUser(
-        'unknown@example.com',
-        'password123',
+        'patrick@sewingbee.co.uk',
+        'tweedlover',
       );
 
       expect(result).toBeNull();
@@ -88,26 +88,26 @@ describe('AuthService', () => {
       (jwtServiceMock.sign as jest.Mock).mockReturnValue('signed-token');
 
       const result = await service.login({
-        id: 'user-1',
-        email: 'test@example.com',
+        id: 'CD501719-8337-474F-8B34-5DB59BF3A11D',
+        email: 'grace@hailmary.gov',
       });
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith({
-        subject: 'user-1',
-        email: 'test@example.com',
+        subject: 'CD501719-8337-474F-8B34-5DB59BF3A11D',
+        email: 'grace@hailmary.gov',
       });
       expect(result.accessToken).toBe('signed-token');
     });
 
     it('returns an accessToken when given a user with userId', async () => {
       const result = await service.login({
-        userId: 'user-1',
-        email: 'test@example.com',
+        userId: '9C72FBB7-1C0D-4BBA-A97C-C99BD526DE8A',
+        email: 'rocky@hailmary.gov',
       });
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith({
-        subject: 'user-1',
-        email: 'test@example.com',
+        subject: '9C72FBB7-1C0D-4BBA-A97C-C99BD526DE8A',
+        email: 'rocky@hailmary.gov',
       });
       expect(result.accessToken).toBe('signed-token');
     });

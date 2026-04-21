@@ -37,8 +37,8 @@ describe('AuthController', () => {
   describe('register', () => {
     it('delegates to UsersService.create', async () => {
       const user = {
-        id: 'u1',
-        email: 'a@b.com',
+        id: '032361A0-C019-4B27-B573-E56D93A9CE62',
+        email: 'kirk.ventures@starlore.fic',
         theme: 'scanner-darkly',
         mode: 'dark',
         createdAt: new Date(),
@@ -47,13 +47,13 @@ describe('AuthController', () => {
       (usersServiceMock.create as jest.Mock).mockResolvedValue(user);
 
       const result = await controller.register({
-        email: 'a@b.com',
-        password: 'password123',
+        email: 'kirk.ventures@starlore.fic',
+        password: 'redshirts are snacks',
       } as never);
 
       expect(usersServiceMock.create).toHaveBeenCalledWith(
-        'a@b.com',
-        'password123',
+        'kirk.ventures@starlore.fic',
+        'redshirts are snacks',
       );
       expect(result).toBe(user);
     });
@@ -61,7 +61,12 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('delegates to AuthService.login with the request user', async () => {
-      const request = { user: { userId: 'u1', email: 'a@b.com' } } as never;
+      const request = {
+        user: {
+          userId: 'E074972A-53C5-4703-B9A4-18363D8577EC',
+          email: 'spock.logic@starlore.space',
+        },
+      } as never;
       (authServiceMock.login as jest.Mock).mockResolvedValue({
         accessToken: 'token',
       });
@@ -75,10 +80,15 @@ describe('AuthController', () => {
 
   describe('me', () => {
     it('returns user with id remapped to userId', async () => {
-      const request = { user: { userId: 'u1', email: 'a@b.com' } } as never;
+      const request = {
+        user: {
+          userId: '1F3D88F8-2050-461C-A099-F1454BC6FD20',
+          email: 'picard.captain@starlore.gal',
+        },
+      } as never;
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        id: 'u1',
-        email: 'a@b.com',
+        id: '1F3D88F8-2050-461C-A099-F1454BC6FD20',
+        email: 'picard.captain@starlore.gal',
         theme: 'scanner-darkly',
         mode: 'dark',
         createdAt: new Date(),
@@ -88,8 +98,8 @@ describe('AuthController', () => {
       const result = await controller.me(request);
 
       expect(result).not.toHaveProperty('id');
-      expect(result.userId).toBe('u1');
-      expect(result.email).toBe('a@b.com');
+      expect(result.userId).toBe('1F3D88F8-2050-461C-A099-F1454BC6FD20');
+      expect(result.email).toBe('picard.captain@starlore.gal');
     });
   });
 });

@@ -11,8 +11,8 @@ describe('QueueService', () => {
     start: jest.fn().mockResolvedValue(undefined),
     stop: jest.fn().mockResolvedValue(undefined),
     createQueue: jest.fn().mockResolvedValue(undefined),
-    send: jest.fn().mockResolvedValue('job-id'),
-    work: jest.fn().mockResolvedValue('worker-id'),
+    send: jest.fn().mockResolvedValue('4E550783-D068-45B6-A944-53CDE6098D19'),
+    work: jest.fn().mockResolvedValue('87DC4093-BC67-44A9-A113-AD4AEB824ACC'),
   };
 
   beforeEach(async () => {
@@ -42,17 +42,19 @@ describe('QueueService', () => {
   });
 
   it('delegates send to boss.send', async () => {
-    bossMock.send.mockResolvedValue('job-id');
-    const result = await service.send('my-queue', { foo: 'bar' });
-    expect(bossMock.createQueue).toHaveBeenCalledWith('my-queue');
-    expect(bossMock.send).toHaveBeenCalledWith('my-queue', { foo: 'bar' });
-    expect(result).toBe('job-id');
+    bossMock.send.mockResolvedValue('33D5C5ED-1CBB-4268-A776-053D2302EBE4');
+    const result = await service.send('maintenance', { marco: 'polo' });
+    expect(bossMock.createQueue).toHaveBeenCalledWith('maintenance');
+    expect(bossMock.send).toHaveBeenCalledWith('maintenance', {
+      marco: 'polo',
+    });
+    expect(result).toBe('33D5C5ED-1CBB-4268-A776-053D2302EBE4');
   });
 
   it('delegates work to boss.work', async () => {
     const handler = jest.fn();
-    await service.work('my-queue', handler as never);
-    expect(bossMock.createQueue).toHaveBeenCalledWith('my-queue');
-    expect(bossMock.work).toHaveBeenCalledWith('my-queue', handler);
+    await service.work('maintenance', handler as never);
+    expect(bossMock.createQueue).toHaveBeenCalledWith('maintenance');
+    expect(bossMock.work).toHaveBeenCalledWith('maintenance', handler);
   });
 });
