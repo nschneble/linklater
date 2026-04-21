@@ -35,7 +35,6 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 - look into grouping + reusing common Tailwind style sets
 - do a repo pass and look for common organization + design patterns
 - extra theme styles into individual css files
-- add a top-level `format` script for Prettier formatting
 - regenerate preview and all screenshots
 
 ## Bugfixes
