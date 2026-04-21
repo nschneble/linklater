@@ -28,8 +28,6 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 
 ## Refactoring
 
-- extract user menu from apps/web/src/components/Header.tsx
-- create reusable component for menu items
 - create reusable component for link view buttons
 - do a Tailwind style organization pass
 - look into grouping + reusing common Tailwind style sets
