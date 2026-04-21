@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Alert from './ui/Alert';
 import FormInput from './ui/FormInput';
+import IconButton from './ui/IconButton';
 import PrimaryButton from './ui/PrimaryButton';
 
 export default function SettingsView() {
@@ -181,32 +182,35 @@ export default function SettingsView() {
         </p>
 
         {!confirmDelete ? (
-          <button
-            className="px-3 py-1.5 hover:bg-rose-900/40 border border-rose-700 text-rose-300 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 rounded-full cursor-pointer"
+          <IconButton
+            variant="danger"
+            className="px-3"
             type="button"
             onClick={() => setConfirmDelete(true)}
           >
             Delete my account
-          </button>
+          </IconButton>
         ) : (
           <div className="flex gap-2 items-center text-xs">
             <span className="text-rose-300">
               Are you sure? This is permanent.
             </span>
-            <button
-              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 rounded-full"
+            <IconButton
+              variant="danger-filled"
+              className="px-3"
               type="button"
               onClick={handleDelete}
             >
               Yes, delete
-            </button>
-            <button
-              className="px-3 py-1.5 border border-[var(--border)] text-[var(--text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full"
+            </IconButton>
+            <IconButton
+              variant="ghost"
+              className="px-3"
               type="button"
               onClick={() => setConfirmDelete(false)}
             >
               Cancel
-            </button>
+            </IconButton>
           </div>
         )}
       </div>

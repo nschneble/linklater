@@ -91,7 +91,7 @@ export default function LinksView({
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
         <input
-          className="w-full sm:max-w-sm px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/70 rounded-lg"
+          className="w-full sm:max-w-sm px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
           type="search"
           placeholder="Search"
           value={search}
@@ -99,7 +99,7 @@ export default function LinksView({
           aria-label="Search through your links"
         />
         <PrimaryButton
-          className="gap-1.5 text-xs rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] cursor-pointer"
+          className="gap-1.5 text-xs rounded-full cursor-pointer"
           type="button"
           onClick={onToggleForm}
           aria-expanded={showLinkForm}

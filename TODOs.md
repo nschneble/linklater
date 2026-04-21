@@ -29,7 +29,6 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 ## Refactoring
 
 - do a Tailwind style organization pass
-- look into grouping + reusing common Tailwind style sets
 - do a repo pass and look for common organization + design patterns
 - regenerate preview and all screenshots
 
