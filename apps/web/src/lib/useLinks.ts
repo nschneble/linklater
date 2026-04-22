@@ -8,7 +8,7 @@ import {
   type PaginatedLinks,
 } from './api';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMetadataPolling } from './useMetadataPolling';
 
 type LinksFilter = 'active' | 'archived';
@@ -20,6 +20,7 @@ export interface UseLinksResult {
   handleRandom: () => Promise<void>;
   handleToggleArchive: (link: Link) => Promise<void>;
   handleToggleForm: () => void;
+  initialLoad: boolean;
   links: Link[];
   loadingLinks: boolean;
   page: number;
@@ -43,6 +44,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
   const [randomError, setRandomError] = useState<string | null>(null);
   const [randomLoading, setRandomLoading] = useState(false);
   const [showLinkForm, setShowLinkForm] = useState(false);
+  const hasFetchedOnce = useRef(false);
 
   useMetadataPolling(pendingMetaLinkId, (updatedLink) => {
     setLinks((previous) =>
@@ -79,7 +81,10 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
       } catch (error) {
         console.error('Failed to load links', error);
       } finally {
-        if (!cancelled) setLoadingLinks(false);
+        if (!cancelled) {
+          setLoadingLinks(false);
+          hasFetchedOnce.current = true;
+        }
       }
     };
 
@@ -165,6 +170,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     handleRandom,
     handleToggleArchive,
     handleToggleForm,
+    initialLoad: !hasFetchedOnce.current,
     links,
     loadingLinks,
     page,

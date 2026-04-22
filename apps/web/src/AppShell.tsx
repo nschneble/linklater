@@ -26,6 +26,7 @@ export default function AppShell() {
     handleRandom,
     handleToggleArchive,
     handleToggleForm,
+    initialLoad,
     links,
     loadingLinks,
     page,
@@ -67,6 +68,7 @@ export default function AppShell() {
         {view === 'links' ? (
           <LinksView
             filter={filter}
+            initialLoad={initialLoad}
             links={links}
             loadingLinks={loadingLinks}
             onArchiveToggle={handleToggleArchive}

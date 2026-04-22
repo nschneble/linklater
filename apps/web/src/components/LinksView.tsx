@@ -9,6 +9,7 @@ type LinksFilter = 'active' | 'archived';
 
 interface LinksViewProps {
   filter: LinksFilter;
+  initialLoad: boolean;
   links: Link[];
   loadingLinks: boolean;
   page: number;
@@ -29,6 +30,7 @@ interface LinksViewProps {
 
 export default function LinksView({
   filter,
+  initialLoad,
   links,
   loadingLinks,
   page,
@@ -125,7 +127,7 @@ export default function LinksView({
       )}
 
       <div className="mt-6 space-y-3">
-        {loadingLinks && page === 1 ? (
+        {loadingLinks && page === 1 && initialLoad ? (
           Array.from({ length: 5 }).map((_, index) => (
             <LinkCardSkeleton key={index} />
           ))
