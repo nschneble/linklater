@@ -40,6 +40,7 @@ export default function AuthForm() {
 
   const changeModes = (newMode: Mode) => {
     setMode(newMode);
+    setPassword('');
     setError(null);
     setLoading(false);
   };
