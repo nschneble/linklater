@@ -9,9 +9,9 @@ export interface LoginResponse {
 }
 
 export async function apiFetch<T>(
-  includeAuth = true,
-  options: RequestInit = {},
   path: string,
+  options: RequestInit = {},
+  includeAuth = true,
 ): Promise<T> {
   const token = includeAuth ? localStorage.getItem('linklater_token') : null;
 
