@@ -5,26 +5,36 @@ jest.mock('../prisma/prisma.service', () => ({
 }));
 jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 
-import { Test, TestingModule } from '@nestjs/testing';
+import { MAX_DESCRIPTION_LENGTH } from './metadata.constants';
 import { MetadataService } from './metadata.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 import { QUEUES } from '../queue/queue.constants';
+import { Test, TestingModule } from '@nestjs/testing';
+
+const FALLBACK_DESCRIPTION = 'This is a fallback example';
+const LINK_ID = 'link-1';
+const LINK_PDF_URL = 'https://example.com/page/attachment.pdf';
+const LINK_URL = 'https://example.com/page';
+const OG_DESCRIPTION = 'This is an example';
+const OG_IMAGE = 'https://example.com/page/preview.jpg';
+const RELATIVE_OG_IMAGE = '/page/preview.jpg';
+const WORKER_ID = 'worker-1';
 
 const makeHtml = (
   overrides: {
-    ogDescription?: string;
     metaDescription?: string;
+    ogDescription?: string;
     ogImage?: string;
   } = {},
 ) => {
-  const { ogDescription, metaDescription, ogImage } = overrides;
+  const { metaDescription, ogDescription, ogImage } = overrides;
 
-  const ogDescriptionTag = ogDescription
-    ? `<meta property="og:description" content="${ogDescription}" />`
-    : '';
   const metaDescriptionTag = metaDescription
     ? `<meta name="description" content="${metaDescription}" />`
+    : '';
+  const ogDescriptionTag = ogDescription
+    ? `<meta property="og:description" content="${ogDescription}" />`
     : '';
   const ogImageTag = ogImage
     ? `<meta property="og:image" content="${ogImage}" />`
@@ -35,8 +45,8 @@ const makeHtml = (
 
 const mockFetch = (html: string, contentType = 'text/html; charset=utf-8') => {
   global.fetch = jest.fn().mockResolvedValue({
-    ok: true,
     headers: { get: () => contentType },
+    ok: true,
     text: () => Promise.resolve(html),
   }) as unknown as typeof fetch;
 };
@@ -51,7 +61,7 @@ describe('MetadataService', () => {
   } as unknown as PrismaService;
 
   const queueMock = {
-    work: jest.fn().mockResolvedValue('88383E14-F80F-4F38-8473-119775738EF5'),
+    work: jest.fn().mockResolvedValue(WORKER_ID),
   } as unknown as QueueService;
 
   beforeEach(async () => {
@@ -72,62 +82,48 @@ describe('MetadataService', () => {
   });
 
   it('extracts og:description and og:image from HTML', async () => {
-    mockFetch(
-      makeHtml({
-        ogDescription: 'JavaScript test coverage made simple.',
-        ogImage: 'https://istanbul.js.org/assets/istanbul-logo.png',
-      }),
-    );
+    mockFetch(makeHtml({ ogDescription: OG_DESCRIPTION, ogImage: OG_IMAGE }));
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore(
-      'F85A62B9-C7DD-4E9D-872B-C6322AC6AC72',
-      'https://istanbul.js.org',
-    );
+    await service.fetchAndStore(LINK_ID, LINK_URL);
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'F85A62B9-C7DD-4E9D-872B-C6322AC6AC72' },
+        where: { id: LINK_ID },
         data: expect.objectContaining({
-          metaDescription: 'JavaScript test coverage made simple.',
-          metaImage: 'https://istanbul.js.org/assets/istanbul-logo.png',
+          metaDescription: OG_DESCRIPTION,
           metaFetchedAt: expect.any(Date),
+          metaImage: OG_IMAGE,
         }),
       }),
     );
   });
 
   it('falls back to meta[name="description"] when og:description is absent', async () => {
-    mockFetch(makeHtml({ metaDescription: "I'm a fallback description!" }));
+    mockFetch(makeHtml({ metaDescription: FALLBACK_DESCRIPTION }));
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore(
-      '67A1551B-2C1A-4476-8D17-D864436D4FF3',
-      'https://istanbul.js.org',
-    );
+    await service.fetchAndStore(LINK_ID, LINK_URL);
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          metaDescription: "I'm a fallback description!",
+          metaDescription: FALLBACK_DESCRIPTION,
         }),
       }),
     );
   });
 
   it('resolves relative og:image URL against the page origin', async () => {
-    mockFetch(makeHtml({ ogImage: '/assets/istanbul-logo.png' }));
+    mockFetch(makeHtml({ ogImage: RELATIVE_OG_IMAGE }));
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore(
-      '7FC86F3E-1761-4033-8BA6-100C72138F48',
-      'https://istanbul.js.org',
-    );
+    await service.fetchAndStore(LINK_ID, LINK_URL);
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          metaImage: 'https://istanbul.js.org/assets/istanbul-logo.png',
+          metaImage: OG_IMAGE,
         }),
       }),
     );
@@ -137,17 +133,14 @@ describe('MetadataService', () => {
     mockFetch('<html><head></head><body></body></html>');
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore(
-      '22DD1FE4-2AED-4402-829C-6321683E7A49',
-      'https://constantinople.js.org',
-    );
+    await service.fetchAndStore(LINK_ID, LINK_URL);
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           metaDescription: null,
-          metaImage: null,
           metaFetchedAt: expect.any(Date),
+          metaImage: null,
         }),
       }),
     );
@@ -159,63 +152,52 @@ describe('MetadataService', () => {
       .mockRejectedValue(new Error('Network error')) as unknown as typeof fetch;
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore(
-      '84052E1F-8067-449A-B9C2-2732D2AE6D7C',
-      'https://istanbul.js.org',
-    );
+    await service.fetchAndStore(LINK_ID, LINK_URL);
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: '84052E1F-8067-449A-B9C2-2732D2AE6D7C' },
+        where: { id: LINK_ID },
         data: expect.objectContaining({ metaFetchedAt: expect.any(Date) }),
       }),
     );
   });
 
-  it('truncates metaDescription longer than 500 chars', async () => {
-    const longDescription = 'x'.repeat(600);
+  it('truncates metaDescription longer than 500 characters', async () => {
+    const longDescription = 'duck '.repeat(MAX_DESCRIPTION_LENGTH * 2);
     mockFetch(makeHtml({ ogDescription: longDescription }));
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore(
-      'A6C5A089-4EBC-4427-9872-F79A77389F24',
-      'https://istanbul.js.org',
-    );
+    await service.fetchAndStore(LINK_ID, LINK_URL);
 
     const call = (prismaMock.link.update as jest.Mock).mock.calls[0][0] as {
       data: { metaDescription: string };
     };
-    expect(call.data.metaDescription?.length).toBe(500);
+    expect(call.data.metaDescription?.length).toBe(MAX_DESCRIPTION_LENGTH);
   });
 
   it('skips parsing and marks metaFetchedAt for non-HTML content types', async () => {
     global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
       headers: { get: () => 'application/pdf' },
+      ok: true,
       text: () => Promise.resolve(''),
     }) as unknown as typeof fetch;
     (prismaMock.link.update as jest.Mock).mockResolvedValue({});
 
-    await service.fetchAndStore(
-      '067104FD-4DB8-498F-9B20-07D3F0A01E5A',
-      'https://smallpdf.com/handle-widget#url=https://assets.ctfassets.net/l3l0sjr15nav/29D2yYGKlHNm0fB2YM1uW4/8e638080a0603252b1a50f35ae8762fd/Get_Started_With_Smallpdf.pdf',
-    );
+    await service.fetchAndStore(LINK_ID, LINK_PDF_URL);
 
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           metaDescription: null,
-          metaImage: null,
           metaFetchedAt: expect.any(Date),
+          metaImage: null,
         }),
       }),
     );
   });
 
   it('registers a worker for the METADATA_FETCH queue on init', async () => {
-    (queueMock.work as jest.Mock).mockResolvedValue(
-      '6535E04E-580C-4C79-8D24-CE5A58DC7CAC',
-    );
+    (queueMock.work as jest.Mock).mockResolvedValue(WORKER_ID);
 
     await service.onModuleInit();
 

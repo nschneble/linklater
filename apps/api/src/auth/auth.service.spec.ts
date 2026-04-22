@@ -7,8 +7,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 
-const KNOWN_PASSWORD = 'L4+036MA76pkTpOQm/gu+Ljp';
-const KNOWN_HASH = bcrypt.hashSync(KNOWN_PASSWORD, 1);
+const KNOWN_PASSWORD = 'open-sesame';
+const KNOWN_PASSWORD_HASH = bcrypt.hashSync(KNOWN_PASSWORD, 1);
+const SIGNED_TOKEN = 'signed-token';
+const UNKNOWN_PASSWORD = 'open-poppy-seed';
+const USER_EMAIL = 'email@addy.com';
+const USER_ID = 'user-1';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -18,7 +22,7 @@ describe('AuthService', () => {
   } as unknown as UsersService;
 
   const jwtServiceMock = {
-    sign: jest.fn().mockReturnValue('signed-token'),
+    sign: jest.fn().mockReturnValue(SIGNED_TOKEN),
   } as unknown as JwtService;
 
   beforeEach(async () => {
@@ -41,75 +45,64 @@ describe('AuthService', () => {
   describe('validateUser', () => {
     it('returns user without passwordHash when credentials are valid', async () => {
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: '3079C0DA-0F39-4127-ACE3-F554592C49E8',
-        email: 'jake@brooklyn99.com',
-        passwordHash: KNOWN_HASH,
+        email: USER_EMAIL,
+        id: USER_ID,
+        passwordHash: KNOWN_PASSWORD_HASH,
       });
 
-      const result = await service.validateUser(
-        'jake@brooklyn99.com',
-        KNOWN_PASSWORD,
-      );
+      const result = await service.validateUser(USER_EMAIL, KNOWN_PASSWORD);
 
       expect(result).not.toBeNull();
       expect(result).not.toHaveProperty('passwordHash');
-      expect(result?.email).toBe('jake@brooklyn99.com');
+      expect(result?.email).toBe(USER_EMAIL);
     });
 
     it('returns null when password is wrong', async () => {
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: '31844487-ECC9-4F3B-BD63-57B58A98FDD2',
-        email: 'bruno@bakeoff.ca',
-        passwordHash: KNOWN_HASH,
+        email: USER_EMAIL,
+        id: USER_ID,
+        passwordHash: KNOWN_PASSWORD_HASH,
       });
 
-      const result = await service.validateUser(
-        'bruno@bakeoff.ca',
-        'wrong wrong wrong wrong wrong',
-      );
-
+      const result = await service.validateUser(USER_EMAIL, UNKNOWN_PASSWORD);
       expect(result).toBeNull();
     });
 
     it('returns null when user is not found', async () => {
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
 
-      const result = await service.validateUser(
-        'patrick@sewingbee.co.uk',
-        'tweedlover',
-      );
-
+      const result = await service.validateUser(USER_EMAIL, UNKNOWN_PASSWORD);
       expect(result).toBeNull();
     });
   });
 
   describe('login', () => {
     it('returns an accessToken when given a user with id', async () => {
-      (jwtServiceMock.sign as jest.Mock).mockReturnValue('signed-token');
+      (jwtServiceMock.sign as jest.Mock).mockReturnValue(SIGNED_TOKEN);
 
       const result = await service.login({
-        id: 'CD501719-8337-474F-8B34-5DB59BF3A11D',
-        email: 'grace@hailmary.gov',
+        email: USER_EMAIL,
+        id: USER_ID,
       });
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith({
-        subject: 'CD501719-8337-474F-8B34-5DB59BF3A11D',
-        email: 'grace@hailmary.gov',
+        email: USER_EMAIL,
+        subject: USER_ID,
       });
-      expect(result.accessToken).toBe('signed-token');
+      expect(result.accessToken).toBe(SIGNED_TOKEN);
     });
 
     it('returns an accessToken when given a user with userId', async () => {
       const result = await service.login({
-        userId: '9C72FBB7-1C0D-4BBA-A97C-C99BD526DE8A',
-        email: 'rocky@hailmary.gov',
+        email: USER_EMAIL,
+        userId: USER_ID,
       });
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith({
-        subject: '9C72FBB7-1C0D-4BBA-A97C-C99BD526DE8A',
-        email: 'rocky@hailmary.gov',
+        email: USER_EMAIL,
+        subject: USER_ID,
       });
-      expect(result.accessToken).toBe('signed-token');
+      expect(result.accessToken).toBe(SIGNED_TOKEN);
     });
   });
 });

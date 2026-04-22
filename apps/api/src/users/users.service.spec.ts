@@ -17,16 +17,27 @@ jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from './users.service';
 
-const KNOWN_PASSWORD = 'perfect flake practice';
-const KNOWN_HASH = bcrypt.hashSync(KNOWN_PASSWORD, 1);
+const KNOWN_PASSWORD = 'open-sesame';
+const KNOWN_PASSWORD_HASH = bcrypt.hashSync(KNOWN_PASSWORD, 1);
+const MISSING_USER_ID = 'missing-user';
+const NEW_PASSWORD = 'open-toasted-sesame';
+const OTHER_USER_ID = 'user-2';
+const OTHER_USER_EMAIL = 'other.email@addy.com';
+const SITE_MODE = 'dark';
+const THEME_NAME = 'scanner-darkly';
+const UNKNOWN_PASSWORD = 'open-poppy-seed';
+const UPDATED_USER_EMAIL = 'new.email@addy.com';
+const USER_EMAIL = 'email@addy.com';
+const USER_ID = 'user-1';
+const USER_PASSWORD = 'open-sesame';
 
 const makeUser = (overrides = {}) => ({
-  id: '4F925A26-62D5-41AD-8FE3-8A62054FA308',
-  email: 'mary.crumbs@bakeverse.co',
-  passwordHash: KNOWN_HASH,
-  theme: 'scanner-darkly',
-  mode: 'dark',
   createdAt: new Date(),
+  email: USER_EMAIL,
+  id: USER_ID,
+  mode: SITE_MODE,
+  passwordHash: KNOWN_PASSWORD_HASH,
+  theme: THEME_NAME,
   updatedAt: new Date(),
   ...overrides,
 });
@@ -36,10 +47,10 @@ describe('UsersService', () => {
 
   const prismaMock = {
     user: {
-      findUnique: jest.fn(),
       create: jest.fn(),
-      update: jest.fn(),
       delete: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
     },
   } as unknown as PrismaService;
 
@@ -64,16 +75,13 @@ describe('UsersService', () => {
       (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaMock.user.create as jest.Mock).mockResolvedValue(makeUser());
 
-      const result = await service.create(
-        'mary.crumbs@bakeverse.co',
-        'perfect flake practice',
-      );
+      const result = await service.create(USER_EMAIL, USER_PASSWORD);
 
       expect(prismaMock.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            email: 'mary.crumbs@bakeverse.co',
-            passwordHash: expect.not.stringMatching('perfect flake practice'),
+            email: USER_EMAIL,
+            passwordHash: expect.not.stringMatching(USER_PASSWORD),
           }),
         }),
       );
@@ -83,9 +91,9 @@ describe('UsersService', () => {
     it('throws ConflictException when email is already in use', async () => {
       (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
 
-      await expect(
-        service.create('mary.crumbs@bakeverse.co', 'perfect flake practice'),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.create(USER_EMAIL, USER_PASSWORD)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -93,17 +101,17 @@ describe('UsersService', () => {
     it('updates email when it is not in use by another user', async () => {
       (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaMock.user.update as jest.Mock).mockResolvedValue(
-        makeUser({ email: 'sue.celebrate@bakeverse.uk' }),
+        makeUser({ email: UPDATED_USER_EMAIL }),
       );
 
-      await service.updateMe('77021635-4F5F-40A5-9696-4E69CC09B32B', {
-        email: 'sue.celebrate@bakeverse.uk',
+      await service.updateMe(USER_ID, {
+        email: UPDATED_USER_EMAIL,
       });
 
       expect(prismaMock.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            email: 'sue.celebrate@bakeverse.uk',
+            email: UPDATED_USER_EMAIL,
           }),
         }),
       );
@@ -111,21 +119,17 @@ describe('UsersService', () => {
 
     it('throws ConflictException when new email belongs to a different user', async () => {
       (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(
-        makeUser({ id: 'frodo-baggins' }),
+        makeUser({ id: OTHER_USER_ID }),
       );
 
       await expect(
-        service.updateMe('23F4FDAC-B595-4BC1-968B-9A2FBBB9FEB6', {
-          email: 'frodo.baggins@mythrealm.shire',
-        }),
+        service.updateMe(USER_ID, { email: OTHER_USER_EMAIL }),
       ).rejects.toThrow(ConflictException);
     });
 
     it('throws BadRequestException when changing password without currentPassword', async () => {
       await expect(
-        service.updateMe('7EE8FF6E-EDD3-49A5-B94F-15E1A9691969', {
-          password: 'tenting and triumph',
-        }),
+        service.updateMe(USER_ID, { password: NEW_PASSWORD }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -133,9 +137,9 @@ describe('UsersService', () => {
       (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
 
       await expect(
-        service.updateMe('5F05CBAB-464C-4513-9F78-852E81231D70', {
-          password: 'tenting and triumph',
-          currentPassword: 'definitely extremely wrong',
+        service.updateMe(USER_ID, {
+          currentPassword: UNKNOWN_PASSWORD,
+          password: NEW_PASSWORD,
         }),
       ).rejects.toThrow(UnauthorizedException);
     });
@@ -144,15 +148,15 @@ describe('UsersService', () => {
       (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
       (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
 
-      await service.updateMe('A0C7847A-B602-4DFF-9CCF-5B0A53D8CBFB', {
-        password: 'tenting and triumph',
+      await service.updateMe(USER_ID, {
         currentPassword: KNOWN_PASSWORD,
+        password: NEW_PASSWORD,
       });
 
       expect(prismaMock.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            passwordHash: expect.not.stringMatching('tenting and triumph'),
+            passwordHash: expect.not.stringMatching(NEW_PASSWORD),
           }),
         }),
       );
@@ -160,17 +164,13 @@ describe('UsersService', () => {
 
     it('throws BadRequestException for an invalid theme', async () => {
       await expect(
-        service.updateMe('5A84A187-3B65-4629-8655-FE8DE3E618CC', {
-          theme: 'not-a-real-theme',
-        }),
+        service.updateMe(USER_ID, { theme: 'not-a-real-theme' }),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException for an invalid mode', async () => {
       await expect(
-        service.updateMe('5BAB3652-A1D3-44C3-9829-70F3DBCC1C32', {
-          mode: 'sepia',
-        }),
+        service.updateMe(USER_ID, { mode: 'sepia' }),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -179,18 +179,16 @@ describe('UsersService', () => {
     it('returns user without passwordHash', async () => {
       (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
 
-      const result = await service.findById(
-        '92C2762D-A22D-4E4A-B324-09B04072984D',
-      );
+      const result = await service.findById(USER_ID);
 
       expect(result).not.toHaveProperty('passwordHash');
-      expect(result.email).toBe('mary.crumbs@bakeverse.co');
+      expect(result.email).toBe(USER_EMAIL);
     });
 
     it('throws NotFoundException when user does not exist', async () => {
       (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.findById('missing')).rejects.toThrow(
+      await expect(service.findById(MISSING_USER_ID)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -200,10 +198,10 @@ describe('UsersService', () => {
     it('delegates deletion to prisma', async () => {
       (prismaMock.user.delete as jest.Mock).mockResolvedValue(undefined);
 
-      await service.deleteById('95B7389C-1218-4287-94E5-F2851D118B69');
+      await service.deleteById(USER_ID);
 
       expect(prismaMock.user.delete).toHaveBeenCalledWith({
-        where: { id: '95B7389C-1218-4287-94E5-F2851D118B69' },
+        where: { id: USER_ID },
       });
     });
   });

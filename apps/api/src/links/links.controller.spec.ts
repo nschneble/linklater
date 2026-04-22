@@ -1,8 +1,15 @@
 import { jest } from '@jest/globals';
 
-import { Test, TestingModule } from '@nestjs/testing';
 import { LinksController } from './links.controller';
 import { LinksService } from './links.service';
+import { Test, TestingModule } from '@nestjs/testing';
+
+const LINK_HOST = 'example.com';
+const LINK_ID = 'link-1';
+const LINK_TITLE = 'Example';
+const LINK_URL = 'https://example.com/page';
+const UPDATED_LINK_TITLE = 'Example Update';
+const USER_ID = 'user-1';
 
 describe('LinksController', () => {
   let controller: LinksController;
@@ -18,18 +25,17 @@ describe('LinksController', () => {
     remove: jest.fn(),
   } as unknown as LinksService;
 
-  const makeRequest = (userId = 'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF') =>
-    ({ user: { userId } }) as never;
+  const makeRequest = (userId = USER_ID) => ({ user: { userId } }) as never;
   const makeLink = (overrides = {}) => ({
-    id: '3046E089-DC27-4618-A0E9-A08B293729E0',
-    userId: 'A3073906-6844-42A3-A3A1-3744584F0587',
-    url: 'https://webawesome.com',
-    title: 'Web Awesome',
-    host: 'webawesome.com',
-    notes: null,
     archivedAt: null,
     createdAt: new Date(),
+    host: LINK_HOST,
+    id: LINK_ID,
+    notes: null,
+    title: LINK_TITLE,
+    url: LINK_URL,
     updatedAt: new Date(),
+    userId: USER_ID,
     ...overrides,
   });
 
@@ -53,43 +59,37 @@ describe('LinksController', () => {
       (linksServiceMock.create as jest.Mock).mockResolvedValue(link);
 
       const result = await controller.create(makeRequest(), {
-        url: 'https://webawesome.com',
+        url: LINK_URL,
       } as never);
 
-      expect(linksServiceMock.create).toHaveBeenCalledWith(
-        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
-        {
-          url: 'https://webawesome.com',
-        },
-      );
+      expect(linksServiceMock.create).toHaveBeenCalledWith(USER_ID, {
+        url: LINK_URL,
+      });
       expect(result).toBe(link);
     });
   });
 
   describe('findAll', () => {
     it('passes search and archived flag parsed from query strings', async () => {
-      const paginated = { data: [], total: 0, page: 1, limit: 50 };
+      const paginated = { data: [], limit: 50, page: 1, total: 0 };
       (linksServiceMock.findAll as jest.Mock).mockResolvedValue(paginated);
 
-      await controller.findAll(makeRequest(), 'term', 'true', '2', '25');
+      await controller.findAll(makeRequest(), 'duck', 'true', '2', '25');
 
-      expect(linksServiceMock.findAll).toHaveBeenCalledWith(
-        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
-        {
-          search: 'term',
-          archived: true,
-          page: 2,
-          limit: 25,
-        },
-      );
+      expect(linksServiceMock.findAll).toHaveBeenCalledWith(USER_ID, {
+        archived: true,
+        limit: 25,
+        page: 2,
+        search: 'duck',
+      });
     });
 
     it('passes undefined for archived when the query param is absent', async () => {
       (linksServiceMock.findAll as jest.Mock).mockResolvedValue({
         data: [],
-        total: 0,
-        page: 1,
         limit: 50,
+        page: 1,
+        total: 0,
       });
 
       await controller.findAll(
@@ -100,15 +100,12 @@ describe('LinksController', () => {
         undefined,
       );
 
-      expect(linksServiceMock.findAll).toHaveBeenCalledWith(
-        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
-        {
-          search: undefined,
-          archived: undefined,
-          page: undefined,
-          limit: undefined,
-        },
-      );
+      expect(linksServiceMock.findAll).toHaveBeenCalledWith(USER_ID, {
+        archived: undefined,
+        limit: undefined,
+        page: undefined,
+        search: undefined,
+      });
     });
   });
 
@@ -118,10 +115,7 @@ describe('LinksController', () => {
 
       await controller.random(makeRequest(), undefined);
 
-      expect(linksServiceMock.getRandom).toHaveBeenCalledWith(
-        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
-        false,
-      );
+      expect(linksServiceMock.getRandom).toHaveBeenCalledWith(USER_ID, false);
     });
 
     it('passes archived=true when query param is "true"', async () => {
@@ -129,10 +123,7 @@ describe('LinksController', () => {
 
       await controller.random(makeRequest(), 'true');
 
-      expect(linksServiceMock.getRandom).toHaveBeenCalledWith(
-        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
-        true,
-      );
+      expect(linksServiceMock.getRandom).toHaveBeenCalledWith(USER_ID, true);
     });
 
     it('wraps result in { link }', async () => {
@@ -150,39 +141,25 @@ describe('LinksController', () => {
       const link = makeLink();
       (linksServiceMock.findOne as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.findOne(
-        makeRequest(),
-        '1CC1C58D-7B46-4311-8CF9-35566920DDAD',
-      );
+      const result = await controller.findOne(makeRequest(), LINK_ID);
 
-      expect(linksServiceMock.findOne).toHaveBeenCalledWith(
-        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
-        '1CC1C58D-7B46-4311-8CF9-35566920DDAD',
-      );
+      expect(linksServiceMock.findOne).toHaveBeenCalledWith(USER_ID, LINK_ID);
       expect(result).toBe(link);
     });
   });
 
   describe('update', () => {
     it('delegates to LinksService.update', async () => {
-      const link = makeLink({ title: 'Slow Software Movement' });
+      const link = makeLink({ title: UPDATED_LINK_TITLE });
       (linksServiceMock.update as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.update(
-        makeRequest(),
-        '9111B773-FA82-413B-9510-6E032DB8721D',
-        {
-          title: 'Slow Software Movement',
-        } as never,
-      );
+      const result = await controller.update(makeRequest(), LINK_ID, {
+        title: UPDATED_LINK_TITLE,
+      } as never);
 
-      expect(linksServiceMock.update).toHaveBeenCalledWith(
-        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
-        '9111B773-FA82-413B-9510-6E032DB8721D',
-        {
-          title: 'Slow Software Movement',
-        },
-      );
+      expect(linksServiceMock.update).toHaveBeenCalledWith(USER_ID, LINK_ID, {
+        title: UPDATED_LINK_TITLE,
+      });
       expect(result).toBe(link);
     });
   });
@@ -192,15 +169,9 @@ describe('LinksController', () => {
       const link = makeLink({ archivedAt: new Date() });
       (linksServiceMock.archive as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.archive(
-        makeRequest(),
-        '71F6449F-363A-4DB3-B54D-EC6BA8C8C868',
-      );
+      const result = await controller.archive(makeRequest(), LINK_ID);
 
-      expect(linksServiceMock.archive).toHaveBeenCalledWith(
-        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
-        '71F6449F-363A-4DB3-B54D-EC6BA8C8C868',
-      );
+      expect(linksServiceMock.archive).toHaveBeenCalledWith(USER_ID, LINK_ID);
       expect(result).toBe(link);
     });
   });
@@ -210,15 +181,9 @@ describe('LinksController', () => {
       const link = makeLink();
       (linksServiceMock.unarchive as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.unarchive(
-        makeRequest(),
-        'C15F2A28-08B1-4F58-9E48-A3C8FB4D019F',
-      );
+      const result = await controller.unarchive(makeRequest(), LINK_ID);
 
-      expect(linksServiceMock.unarchive).toHaveBeenCalledWith(
-        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
-        'C15F2A28-08B1-4F58-9E48-A3C8FB4D019F',
-      );
+      expect(linksServiceMock.unarchive).toHaveBeenCalledWith(USER_ID, LINK_ID);
       expect(result).toBe(link);
     });
   });
@@ -229,15 +194,9 @@ describe('LinksController', () => {
         success: true,
       });
 
-      const result = await controller.remove(
-        makeRequest(),
-        '224C219C-26B2-436A-A46D-418BE1A755A9',
-      );
+      const result = await controller.remove(makeRequest(), LINK_ID);
 
-      expect(linksServiceMock.remove).toHaveBeenCalledWith(
-        'E70BFB8A-CC9C-45A8-9B30-0BF3C4F72CCF',
-        '224C219C-26B2-436A-A46D-418BE1A755A9',
-      );
+      expect(linksServiceMock.remove).toHaveBeenCalledWith(USER_ID, LINK_ID);
       expect(result).toEqual({ success: true });
     });
   });

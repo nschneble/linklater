@@ -47,13 +47,13 @@ describe('MenuItem', () => {
     expect(icon?.className).toContain('text-[var(--text-muted)]');
   });
 
-  it('forwards extra className to the button', () => {
+  it('forwards extra classes to the button', () => {
     render(
       <MenuItem
         icon="fa-bookmark"
         label="Your links"
-        onClick={() => {}}
         className="border-t"
+        onClick={() => {}}
       />,
     );
     expect(screen.getByRole('button')).toHaveClass('border-t');

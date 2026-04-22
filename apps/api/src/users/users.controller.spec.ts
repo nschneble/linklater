@@ -4,17 +4,19 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
+const USER_EMAIL = 'email@addy.com';
+const USER_ID = 'user-1';
+
 describe('UsersController', () => {
   let controller: UsersController;
 
   const usersServiceMock = {
+    deleteById: jest.fn(),
     findById: jest.fn(),
     updateMe: jest.fn(),
-    deleteById: jest.fn(),
   } as unknown as UsersService;
 
-  const makeRequest = (userId = '0A758448-0873-4101-8D5D-ED52246B63B5') =>
-    ({ user: { userId } }) as never;
+  const makeRequest = (userId = USER_ID) => ({ user: { userId } }) as never;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -31,37 +33,26 @@ describe('UsersController', () => {
   });
 
   it('getMe delegates to UsersService.findById with userId from request', async () => {
-    const user = {
-      id: '0A758448-0873-4101-8D5D-ED52246B63B5',
-      email: 'bene.gesserit@arrakis.order',
-    };
+    const user = { email: USER_EMAIL, id: USER_ID };
     (usersServiceMock.findById as jest.Mock).mockResolvedValue(user);
 
     const result = await controller.getMe(makeRequest());
 
-    expect(usersServiceMock.findById).toHaveBeenCalledWith(
-      '0A758448-0873-4101-8D5D-ED52246B63B5',
-    );
+    expect(usersServiceMock.findById).toHaveBeenCalledWith(USER_ID);
     expect(result).toBe(user);
   });
 
   it('updateMe delegates to UsersService.updateMe with userId from request', async () => {
-    const updated = {
-      id: 'A87B3CD7-93F9-4CF3-B77A-AE58F326F0E0',
-      email: 'trillian.wildspace@hhggverse.org',
-    };
+    const updated = { email: USER_EMAIL, id: USER_ID };
     (usersServiceMock.updateMe as jest.Mock).mockResolvedValue(updated);
 
     const result = await controller.updateMe(makeRequest(), {
-      email: 'trillian.wildspace@hhggverse.org',
+      email: USER_EMAIL,
     } as never);
 
-    expect(usersServiceMock.updateMe).toHaveBeenCalledWith(
-      '0A758448-0873-4101-8D5D-ED52246B63B5',
-      {
-        email: 'trillian.wildspace@hhggverse.org',
-      },
-    );
+    expect(usersServiceMock.updateMe).toHaveBeenCalledWith(USER_ID, {
+      email: USER_EMAIL,
+    });
     expect(result).toBe(updated);
   });
 
@@ -70,9 +61,7 @@ describe('UsersController', () => {
 
     const result = await controller.deleteMe(makeRequest());
 
-    expect(usersServiceMock.deleteById).toHaveBeenCalledWith(
-      '0A758448-0873-4101-8D5D-ED52246B63B5',
-    );
+    expect(usersServiceMock.deleteById).toHaveBeenCalledWith(USER_ID);
     expect(result).toEqual({ success: true });
   });
 });
