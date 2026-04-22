@@ -47,10 +47,10 @@ export default function AuthForm() {
 
   return (
     <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl">
-      <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold">
+      <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold select-none">
         Linklater
       </h1>
-      <p className="mb-6 text-[var(--text-muted)] text-center">
+      <p className="mb-6 text-[var(--text-muted)] text-center select-none">
         Save links now, read them later.
       </p>
 
@@ -76,29 +76,27 @@ export default function AuthForm() {
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <label className="block text-[var(--text-muted)] text-sm font-medium">
+        <label className="block mb-0 text-[var(--text-muted)] text-sm font-medium select-none">
           Email
-          <FormInput
-            type="email"
-            autoComplete="email"
-            onChange={(event) => setEmail(event.target.value)}
-            value={email}
-            required
-          />
         </label>
+        <FormInput
+          type="email"
+          autoComplete="email"
+          onChange={(event) => setEmail(event.target.value)}
+          value={email}
+          required
+        />
 
-        <label className="block text-[var(--text-muted)] text-sm font-medium">
+        <label className="block mb-0 text-[var(--text-muted)] text-sm font-medium select-none">
           Password
-          <FormInput
-            type="password"
-            autoComplete={
-              mode === 'login' ? 'current-password' : 'new-password'
-            }
-            onChange={(event) => setPassword(event.target.value)}
-            value={password}
-            required
-          />
         </label>
+        <FormInput
+          type="password"
+          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+          onChange={(event) => setPassword(event.target.value)}
+          value={password}
+          required
+        />
 
         {error && <Alert variant="error">{error}</Alert>}
 
