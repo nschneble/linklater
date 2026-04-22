@@ -30,7 +30,6 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 
 - regenerate preview and all screenshots
 - analyze/improve code coverage
-- review all large files + refactor if possible
 - review all theme css
   - pull light/dark movie posters
   - derive refreshed light/dark styles from posters
