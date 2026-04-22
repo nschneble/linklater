@@ -23,7 +23,7 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 - Introduce paid Stripe subscriptions
   - US$5 monthly and US$48 yearly plans
   - 7-day free trial
-  - free plan: 3 unread links, 2 themes (Default + A Scanner Darkly)
+  - free plan: 3 unread links, 1 theme (A Scanner Darkly)
   - paid plan: Unlimited unread links, all themes
 
 ## Refactoring

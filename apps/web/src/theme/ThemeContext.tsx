@@ -20,13 +20,13 @@ export type BaseTheme =
 export type Mode = 'light' | 'dark';
 
 export const THEMES: Array<{ id: BaseTheme; label: string; accent: string }> = [
-  { id: 'before-midnight', label: 'Before Midnight', accent: '#f59e0b' },
+  { id: 'scanner-darkly', label: 'A Scanner Darkly', accent: '#a3e635' },
   { id: 'before-sunrise', label: 'Before Sunrise', accent: '#b45309' },
   { id: 'before-sunset', label: 'Before Sunset', accent: '#d97706' },
+  { id: 'before-midnight', label: 'Before Midnight', accent: '#f59e0b' },
   { id: 'boyhood', label: 'Boyhood', accent: '#86efac' },
   { id: 'dazed-and-confused', label: 'Dazed and Confused', accent: '#dc2626' },
   { id: 'hit-man', label: 'Hit Man', accent: '#f59e0b' },
-  { id: 'scanner-darkly', label: 'A Scanner Darkly', accent: '#a3e635' },
   { id: 'school-of-rock', label: 'School of Rock', accent: '#b91c1c' },
 ];
 
