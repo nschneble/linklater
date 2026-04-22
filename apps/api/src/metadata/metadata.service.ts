@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { MAX_DESCRIPTION_LENGTH, MAX_URL_LENGTH } from './metadata.constants';
+import { MAX_DESCRIPTION_LENGTH, MAX_URL_LENGTH } from './metadata.constants.js';
 import { PrismaService } from '@linklater/prisma';
 import { QueueService, QUEUES } from '@linklater/queue';
 import * as cheerio from 'cheerio';
