@@ -15,9 +15,9 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const token = includeAuth ? localStorage.getItem('linklater_token') : null;
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers || {}),
+    ...((options.headers as Record<string, string>) || {}),
   };
 
   if (token && includeAuth) headers['Authorization'] = `Bearer ${token}`;
@@ -29,7 +29,14 @@ export async function apiFetch<T>(
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `Request failed with ${response.status}`);
+    let message = text || `Request failed with ${response.status}`;
+    try {
+      const body = JSON.parse(text) as { message?: string };
+      if (body.message) message = body.message;
+    } catch {
+      // indicates `message` is already a string
+    }
+    throw new Error(message);
   }
 
   return response.json() as Promise<T>;
