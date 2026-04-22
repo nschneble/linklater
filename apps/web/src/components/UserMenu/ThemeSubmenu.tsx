@@ -7,6 +7,7 @@ interface ThemeSubmenuProps {
   submenuOnLeft: boolean;
   onFlyoutMouseEnter: () => void;
   onFlyoutMouseLeave: () => void;
+  onPreviewChange: (theme: BaseTheme | null) => void;
   onSelect: (theme: BaseTheme) => void;
 }
 
@@ -17,6 +18,7 @@ export default function ThemeSubmenu({
   submenuOnLeft,
   onFlyoutMouseEnter,
   onFlyoutMouseLeave,
+  onPreviewChange,
   onSelect,
 }: ThemeSubmenuProps) {
   const currentLabel =
@@ -60,6 +62,7 @@ export default function ThemeSubmenu({
               root.style.setProperty('--theme-transition-duration', '1s');
               root.style.setProperty('--theme-transition-easing', 'ease-in');
               root.dataset.theme = theme.id;
+              onPreviewChange(theme.id);
             }}
           >
             <span

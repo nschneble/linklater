@@ -167,6 +167,7 @@ export default function UserMenu({
               submenuOnLeft={themeSubmenuOnLeft}
               onFlyoutMouseEnter={cancelHide}
               onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
+              onPreviewChange={setPreviewTheme}
               onSelect={handleThemeSelect}
             />
           </div>

@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -84,17 +85,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(MODE_STORAGE_KEY, mode);
   }, [baseTheme, mode]);
 
-  const setBaseTheme = (t: BaseTheme) => {
-    setBaseThemeState(t);
-  };
+  const setBaseTheme = useCallback((theme: BaseTheme) => {
+    setBaseThemeState(theme);
+  }, []);
 
-  const setMode = (m: Mode) => {
-    setModeState(m);
-  };
+  const setMode = useCallback((mode: Mode) => {
+    setModeState(mode);
+  }, []);
 
-  const toggleMode = () => {
+  const toggleMode = useCallback(() => {
     setModeState((current) => (current === 'light' ? 'dark' : 'light'));
-  };
+  }, []);
 
   return (
     <ThemeContext.Provider
