@@ -32,7 +32,7 @@ export default function AuthForm() {
         error instanceof Error
           ? error.message
           : 'Something went dreadfully wrong';
-      setError(message);
+      setError(message.charAt(0).toUpperCase() + message.slice(1));
     } finally {
       setLoading(false);
     }
