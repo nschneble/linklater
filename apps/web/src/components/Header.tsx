@@ -24,13 +24,19 @@ export default function Header({
   return (
     <header className="bg-[var(--bg-elevated)] border-b border-[var(--border)]">
       <div className="flex items-center justify-between max-w-5xl mx-auto px-4 py-3">
-        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => {
+            onViewChange('links');
+          }}
+        >
           <img
             className="w-8 h-8 rounded-xl"
             src="/linklater.svg"
             alt="Richard Linklater"
           />
-          <div>
+          <div className="text-left select-none">
             <div className="text-[var(--text)] text-sm font-semibold">
               Linklater
             </div>
@@ -38,7 +44,7 @@ export default function Header({
               Save links now, read them later.
             </div>
           </div>
-        </div>
+        </button>
 
         <div className="flex items-center gap-3">
           <UserMenu
