@@ -24,5 +24,6 @@
     "noUnusedParameters": true,
     "strict": true,
   },
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"],
   "include": ["src"]
 }
