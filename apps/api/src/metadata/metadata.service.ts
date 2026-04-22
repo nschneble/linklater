@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { MAX_DESCRIPTION_LENGTH, MAX_URL_LENGTH } from './metadata.constants';
 import { PrismaService } from '@linklater/prisma';
 import { QueueService, QUEUES } from '@linklater/queue';
 import * as cheerio from 'cheerio';
@@ -118,7 +119,7 @@ export class MetadataService implements OnModuleInit {
     const rawImage = $('meta[property="og:image"]').attr('content') || null;
 
     const metaDescription = rawDescription
-      ? rawDescription.slice(0, 500)
+      ? rawDescription.slice(0, MAX_DESCRIPTION_LENGTH)
       : null;
 
     const metaImage = rawImage ? this.resolveUrl(rawImage, pageUrl) : null;
@@ -128,12 +129,12 @@ export class MetadataService implements OnModuleInit {
 
   private resolveUrl(imageUrl: string, pageUrl: string): string {
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl.slice(0, 2000);
+      return imageUrl.slice(0, MAX_URL_LENGTH);
     }
 
     try {
       const resolved = new URL(imageUrl, pageUrl).toString();
-      return resolved.slice(0, 2000);
+      return resolved.slice(0, MAX_URL_LENGTH);
     } catch {
       return '';
     }
