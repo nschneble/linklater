@@ -6,6 +6,7 @@
   "private": true,
   "license": "CC0-1.0",
   "scripts": {
+    "build": "npm run build --workspace @linklater/api && npm run build --workspace @linklater/web",
     "dev": "concurrently \"npm run dev --workspace @linklater/api\" \"npm run dev --workspace @linklater/web\"",
     "format": "npm run format --workspace @linklater/api && npm run format --workspace @linklater/web",
     "lint": "npm run lint --workspace @linklater/api && npm run lint --workspace @linklater/web",
