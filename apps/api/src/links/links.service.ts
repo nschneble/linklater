@@ -5,8 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { PrismaService, Prisma } from '@linklater/prisma';
-import { QueueService, QUEUES } from '@linklater/queue';
+import { PrismaService, Prisma } from '../prisma/index.js';
+import { QueueService, QUEUES } from '../queue/index.js';
 
 export interface CreateLinkInput {
   url: string;

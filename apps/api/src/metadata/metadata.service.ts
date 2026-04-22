@@ -3,8 +3,8 @@ import {
   MAX_DESCRIPTION_LENGTH,
   MAX_URL_LENGTH,
 } from './metadata.constants.js';
-import { PrismaService } from '@linklater/prisma';
-import { QueueService, QUEUES } from '@linklater/queue';
+import { PrismaService } from '../prisma/index.js';
+import { QueueService, QUEUES } from '../queue/index.js';
 import * as cheerio from 'cheerio';
 
 @Injectable()

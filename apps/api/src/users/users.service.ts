@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
-import { PrismaService } from '@linklater/prisma';
+import { PrismaService } from '../prisma/index.js';
 import { withoutPasswordHash } from './users.utils.js';
 import * as bcrypt from 'bcryptjs';
 

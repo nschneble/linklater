@@ -3,7 +3,7 @@ import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { LocalAuthGuard } from './local-auth.guard.js';
 import { RegisterDto } from './dto/register.dto.js';
-import { UsersService } from '@linklater/users';
+import { UsersService } from '../users/index.js';
 import type { AuthRequest } from './auth-request.type.js';
 
 @Controller('auth')
