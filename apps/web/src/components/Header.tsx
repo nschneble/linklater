@@ -23,7 +23,7 @@ export default function Header({
 }: HeaderProps) {
   return (
     <header className="bg-[var(--bg-elevated)] border-b border-[var(--border)]">
-      <div className="flex items-center justify-between max-w-5xl mx-auto px-4 py-3">
+      <div className="flex items-center justify-between max-w-4xl mx-auto px-4 py-3">
         <button
           type="button"
           className="flex items-center gap-2 cursor-pointer"

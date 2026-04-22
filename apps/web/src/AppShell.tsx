@@ -64,7 +64,7 @@ export default function AppShell() {
         view={view}
       />
 
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-3xl mx-auto px-4 py-12 space-y-6">
         {view === 'links' ? (
           <LinksView
             filter={filter}
