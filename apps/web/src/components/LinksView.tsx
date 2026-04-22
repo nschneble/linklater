@@ -50,13 +50,11 @@ export default function LinksView({
 }: LinksViewProps) {
   return (
     <>
-      <h2 className="text-lg font-semibold">
-        {filter === 'archived' ? 'Archived links' : 'Your links'}
-      </h2>
-      <p className="mt-1 text-[var(--text-muted)] text-xs">
+      <h2 className="mb-1 text-lg font-semibold">Your links</h2>
+      <p className="text-[var(--text-muted)] text-xs">
         {filter === 'archived'
-          ? "Review you've already read or decided to move aside."
-          : 'Add links, search, archive, or stumble upon something random.'}
+          ? "Review what you've already read."
+          : 'Add, search, or stumble upon something random.'}
       </p>
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
@@ -70,45 +68,52 @@ export default function LinksView({
             isActive={filter === 'active'}
             onClick={() => onFilterChange('active')}
           >
-            Your links
+            Unread
           </TabButton>
           <TabButton
             className="px-3 py-1.5"
             isActive={filter === 'archived'}
             onClick={() => onFilterChange('archived')}
           >
-            Archived
+            Read
           </TabButton>
         </div>
 
-        <IconButton
-          variant="elevated"
-          disabled={randomLoading}
-          onClick={onRandom}
-        >
-          <i className="fa-solid fa-shuffle text-[0.7rem]" />
-          {randomLoading ? 'Stumbling…' : 'Stumble upon'}
-        </IconButton>
+        {filter === 'active' && (
+          <div className="flex items-end gap-3">
+            <IconButton
+              variant="elevated"
+              disabled={randomLoading}
+              onClick={onRandom}
+            >
+              <i className="fa-solid fa-shuffle text-[0.7rem]" />
+              {randomLoading ? 'Stumbling…' : 'Stumble upon'}
+            </IconButton>
+
+            {links.length > 0 && (
+              <PrimaryButton
+                className="gap-1.5 text-xs rounded-full! cursor-pointer"
+                type="button"
+                onClick={onToggleForm}
+                aria-expanded={showLinkForm}
+              >
+                <i className="fa-solid fa-plus text-[0.7rem]" />
+                {showLinkForm ? 'Hide form' : 'Add link'}
+              </PrimaryButton>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
         <input
-          className="w-full sm:max-w-sm px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
+          className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
           type="search"
           placeholder="Search"
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
           aria-label="Search through your links"
         />
-        <PrimaryButton
-          className="gap-1.5 text-xs rounded-full cursor-pointer"
-          type="button"
-          onClick={onToggleForm}
-          aria-expanded={showLinkForm}
-        >
-          <i className="fa-solid fa-plus text-[0.7rem]" />
-          {showLinkForm ? 'Hide form' : 'Add link'}
-        </PrimaryButton>
       </div>
 
       {randomError && (
@@ -132,10 +137,19 @@ export default function LinksView({
             <LinkCardSkeleton key={index} />
           ))
         ) : links.length === 0 ? (
-          <p className="text-[var(--text-muted)] text-sm">
-            No links yet. Click <span className="font-semibold">Add link</span>{' '}
-            to save something to read later.
-          </p>
+          <div className="flex items-center justify-center mt-12">
+            {filter === 'active' && (
+              <PrimaryButton
+                className="gap-1.5 text-md rounded-full! cursor-pointer"
+                type="button"
+                onClick={onToggleForm}
+                aria-expanded={showLinkForm}
+              >
+                <i className="fa-solid fa-plus text-[0.7rem]" />
+                {showLinkForm ? 'Hide form' : 'Add your first link'}
+              </PrimaryButton>
+            )}
+          </div>
         ) : (
           links.map((link) => (
             <LinkCard
