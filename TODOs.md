@@ -34,6 +34,7 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 - review all theme css
   - pull light/dark movie posters
   - derive refreshed light/dark styles from posters
+- drop `.js` suffix from import statements
 
 ## Bugfixes
 
