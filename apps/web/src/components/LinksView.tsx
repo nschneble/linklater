@@ -105,7 +105,7 @@ export default function LinksView({
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 mb-3">
         <input
           className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
           type="search"
@@ -126,7 +126,7 @@ export default function LinksView({
       )}
 
       {showLinkForm && (
-        <div className="mt-4 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl animate-fade-in-up">
+        <div className="mt-0 animate-fade-in-up">
           <LinkForm onCreated={onCreated} />
         </div>
       )}
