@@ -15,10 +15,10 @@ export default function TabButton({
 }: TabButtonProps) {
   return (
     <button
-      className={`rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
+      className={`relative z-10 flex-1 text-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
         isActive
-          ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
-          : 'hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] cursor-pointer'
+          ? 'text-[var(--bg)] font-semibold'
+          : 'text-[var(--text-muted)] cursor-pointer'
       } ${className}`}
       type="button"
       role="tab"

@@ -1,3 +1,8 @@
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
 :root {
   --bg: #0f0b1b;
   --bg-surface: #201e43;

@@ -61,10 +61,16 @@ export default function LinksView({
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
         <div
-          className="inline-flex p-1 bg-[var(--bg-surface)] border border-[var(--border)] text-xs rounded-full"
+          className="relative inline-flex p-1 bg-[var(--bg-surface)] border border-[var(--border)] text-xs rounded-full"
           role="tablist"
           aria-label="Links filter"
         >
+          <div
+            aria-hidden="true"
+            className={`absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full bg-[var(--text)] transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+              filter === 'archived' ? 'translate-x-full' : ''
+            }`}
+          />
           <TabButton
             className="px-3 py-1.5"
             isActive={filter === 'active'}
@@ -167,10 +173,11 @@ export default function LinksView({
           ? Array.from({ length: 5 }).map((_, index) => (
               <LinkCardSkeleton key={index} />
             ))
-          : links.map((link) => (
+          : links.map((link, index) => (
               <LinkCard
                 key={link.id}
                 link={link}
+                animationDelay={Math.min(index * 40, 200)}
                 onArchiveToggle={() => onArchiveToggle(link)}
               />
             ))}

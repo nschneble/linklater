@@ -20,10 +20,15 @@ export function LinkCardSkeleton() {
 
 interface LinkCardProps {
   link: Link;
+  animationDelay?: number;
   onArchiveToggle: () => void;
 }
 
-export default function LinkCard({ link, onArchiveToggle }: LinkCardProps) {
+export default function LinkCard({
+  link,
+  animationDelay = 0,
+  onArchiveToggle,
+}: LinkCardProps) {
   function handleCardClick() {
     window.open(link.url, '_blank', 'noreferrer');
     if (!link.archivedAt) {
@@ -39,6 +44,7 @@ export default function LinkCard({ link, onArchiveToggle }: LinkCardProps) {
   return (
     <LinkCardLayout
       link={link}
+      animationDelay={animationDelay}
       onCardClick={handleCardClick}
       onUnarchiveClick={handleUnarchiveClick}
     />

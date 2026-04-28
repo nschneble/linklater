@@ -2,6 +2,7 @@ import type { Link } from '../lib/api';
 
 interface LinkCardLayoutProps {
   link: Link;
+  animationDelay?: number;
   onCardClick: () => void;
   onUnarchiveClick: (event: React.MouseEvent) => void;
 }
@@ -19,6 +20,7 @@ function getPlaceholderUrl(link) {
 
 export default function LinkCardLayout({
   link,
+  animationDelay = 0,
   onCardClick,
   onUnarchiveClick,
 }: LinkCardLayoutProps) {
@@ -31,7 +33,8 @@ export default function LinkCardLayout({
   return (
     <article
       onClick={onCardClick}
-      className="relative border-l-4 border-[var(--accent)] rounded-r-xl bg-[var(--bg-surface)] cursor-pointer pl-10 pr-8 py-4 animate-fade-in-up overflow-visible"
+      style={{ animationDelay: `${animationDelay}ms` }}
+      className="relative border-l-4 border-[var(--accent)] rounded-r-xl bg-[var(--bg-surface)] cursor-pointer pl-10 pr-8 py-4 animate-fade-in-up overflow-visible hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-150 ease-out"
     >
       {/* Favicon — straddles left border */}
       <div className="absolute left-0 top-4 -translate-x-1/2 z-10">
@@ -69,7 +72,7 @@ export default function LinkCardLayout({
           {displaySiteName}
         </p>
 
-        <p className="text-[var(--text)] text-sm font-semibold line-clamp-2">
+        <p className="text-[var(--text)] text-sm font-semibold line-clamp-2 [text-wrap:balance]">
           {displayTitle}
         </p>
 
@@ -86,7 +89,7 @@ export default function LinkCardLayout({
             src={link.meta.imageUrl ?? getPlaceholderUrl(link)}
             alt=""
             aria-hidden="true"
-            className="w-full max-h-40 object-cover rounded-md mt-0 mb-4"
+            className="w-full max-h-40 object-cover rounded-md mt-0 mb-4 outline outline-1 outline-black/10 -outline-offset-1"
             onError={(event) => {
               (event.target as HTMLImageElement).src = getPlaceholderUrl(link);
             }}

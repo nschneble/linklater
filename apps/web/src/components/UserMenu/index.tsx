@@ -111,78 +111,82 @@ export default function UserMenu({
           alt={user.email}
           className="w-7 h-7 rounded-full"
         />
-        <i className="fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem]" />
+        <i
+          className={`fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] transition-transform duration-200 ease-out ${showUserMenu ? '-rotate-180' : ''}`}
+        />
       </button>
 
-      {showUserMenu && (
+      <div
+        ref={menuRef}
+        className={`absolute right-0 w-60 mt-2 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] text-xs shadow-black/40 shadow-lg rounded-xl z-50 origin-top-right transition-[opacity,transform] duration-150 ease-out ${
+          showUserMenu
+            ? 'opacity-100 scale-100 pointer-events-auto'
+            : 'opacity-0 scale-95 pointer-events-none'
+        }`}
+      >
+        <div className="mb-2 px-3 pb-2 border-b border-[var(--border)]">
+          <p className="text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-tight font-semibold">
+            Logged in as
+          </p>
+          <p className="mt-1 text-[var(--text)] text-xs font-medium truncate">
+            {user.email}
+          </p>
+        </div>
+
+        <MenuItem
+          icon="fa-bookmark"
+          label="Your links"
+          onClick={() => {
+            onViewChange('links');
+            setShowUserMenu(false);
+          }}
+          active={view === 'links'}
+        />
+
+        <MenuItem
+          icon="fa-gear"
+          label="Settings"
+          onClick={() => {
+            onViewChange('settings');
+            setShowUserMenu(false);
+          }}
+          active={view === 'settings'}
+        />
+
+        <MenuItem
+          icon={mode === 'light' ? 'fa-moon' : 'fa-sun'}
+          label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
+          onClick={onModeToggle}
+        />
+
         <div
-          ref={menuRef}
-          className="absolute right-0 w-60 mt-2 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] text-xs shadow-black/40 shadow-lg rounded-xl animate-fade-in-up z-50"
+          ref={themeRowRef}
+          className="relative"
+          onMouseEnter={handleThemeRowEnter}
+          onMouseLeave={() => scheduleHide(baseTheme)}
         >
-          <div className="mb-2 px-3 pb-2 border-b border-[var(--border)]">
-            <p className="text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-tight font-semibold">
-              Logged in as
-            </p>
-            <p className="mt-1 text-[var(--text)] text-xs font-medium truncate">
-              {user.email}
-            </p>
-          </div>
-
-          <MenuItem
-            icon="fa-bookmark"
-            label="Your links"
-            onClick={() => {
-              onViewChange('links');
-              setShowUserMenu(false);
-            }}
-            active={view === 'links'}
-          />
-
-          <MenuItem
-            icon="fa-gear"
-            label="Settings"
-            onClick={() => {
-              onViewChange('settings');
-              setShowUserMenu(false);
-            }}
-            active={view === 'settings'}
-          />
-
-          <MenuItem
-            icon={mode === 'light' ? 'fa-moon' : 'fa-sun'}
-            label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
-            onClick={onModeToggle}
-          />
-
-          <div
-            ref={themeRowRef}
-            className="relative"
-            onMouseEnter={handleThemeRowEnter}
-            onMouseLeave={() => scheduleHide(baseTheme)}
-          >
-            <ThemeSubmenu
-              baseTheme={baseTheme}
-              previewTheme={previewTheme}
-              showSubmenu={showThemeSubmenu}
-              submenuOnLeft={themeSubmenuOnLeft}
-              onFlyoutMouseEnter={cancelHide}
-              onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
-              onPreviewChange={setPreviewTheme}
-              onSelect={handleThemeSelect}
-            />
-          </div>
-
-          <MenuItem
-            icon="fa-right-from-bracket"
-            label="Log out"
-            onClick={() => {
-              setShowUserMenu(false);
-              onLogout();
-            }}
-            className="mt-1 border-t border-[var(--border)]"
+          <ThemeSubmenu
+            baseTheme={baseTheme}
+            previewTheme={previewTheme}
+            showSubmenu={showThemeSubmenu}
+            submenuOnLeft={themeSubmenuOnLeft}
+            onFlyoutMouseEnter={cancelHide}
+            onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
+            onPreviewChange={setPreviewTheme}
+            onSelect={handleThemeSelect}
           />
         </div>
-      )}
+
+        <MenuItem
+          icon="fa-right-from-bracket"
+          label="Log out"
+          onClick={() => {
+            setShowUserMenu(false);
+            onLogout();
+          }}
+          className="mt-1 border-t border-[var(--border)]"
+        />
+      </div>
     </div>
   );
 }
