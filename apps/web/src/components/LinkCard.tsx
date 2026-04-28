@@ -1,20 +1,18 @@
 import type { Link } from '../lib/api';
-import IconButton from './ui/IconButton';
+import LinkCardLayout from './LinkCardLayout';
 
 export function LinkCardSkeleton() {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl animate-pulse">
-      <div className="flex-1 min-w-0 space-y-2">
+    <div className="relative border-l-4 border-[var(--border)] rounded-r-xl bg-[var(--bg-surface)] pl-10 pr-8 py-4 animate-pulse">
+      <div className="absolute left-0 top-4 -translate-x-1/2 w-8 h-8 rounded-full bg-[var(--bg-elevated)]" />
+      <div className="space-y-1">
+        <div className="w-24 h-3 bg-[var(--bg-elevated)] rounded" />
         <div className="w-3/4 h-4 bg-[var(--bg-elevated)] rounded" />
-        <div className="flex items-center gap-2">
-          <div className="w-20 h-3 bg-[var(--bg-elevated)] rounded" />
-          <div className="w-1 h-1 bg-[var(--bg-elevated)] rounded-full" />
-          <div className="w-32 h-3 bg-[var(--bg-elevated)] rounded" />
+        <div className="h-12 space-y-1">
+          <div className="w-full h-3 bg-[var(--bg-elevated)] rounded" />
+          <div className="w-2/3 h-3 bg-[var(--bg-elevated)] rounded" />
         </div>
-      </div>
-      <div className="flex items-center gap-2 justify-end">
-        <div className="w-20 h-7 bg-[var(--bg-elevated)] rounded-full" />
-        <div className="w-16 h-7 bg-[var(--bg-elevated)] rounded-full" />
+        <div className="w-full h-40 bg-[var(--bg-elevated)] rounded-md mt-0 mb-4" />
       </div>
     </div>
   );
@@ -23,99 +21,26 @@ export function LinkCardSkeleton() {
 interface LinkCardProps {
   link: Link;
   onArchiveToggle: () => void;
-  onDelete: () => void;
 }
 
-export default function LinkCard({
-  link,
-  onArchiveToggle,
-  onDelete,
-}: LinkCardProps) {
-  const archived = link.archivedAt
-    ? new Date(link.archivedAt).toLocaleString()
-    : null;
-  const created = new Date(link.createdAt).toLocaleString();
+export default function LinkCard({ link, onArchiveToggle }: LinkCardProps) {
+  function handleCardClick() {
+    window.open(link.url, '_blank', 'noreferrer');
+    if (!link.archivedAt) {
+      onArchiveToggle();
+    }
+  }
+
+  function handleUnarchiveClick(event: React.MouseEvent) {
+    event.stopPropagation();
+    onArchiveToggle();
+  }
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl animate-fade-in-up">
-      <div className="flex-1 min-w-0">
-        <a
-          className="block text-[var(--text)] hover:text-[var(--accent)] text-sm font-semibold truncate"
-          href={link.url}
-          rel="noreferrer"
-          target="_blank"
-        >
-          {link.title}
-        </a>
-
-        <div className="flex items-center gap-2 mt-1 text-[var(--text-muted)] text-xs">
-          <span className="truncate">{link.host}</span>
-          <span className="w-1 h-1 bg-[var(--text-subtle)] rounded-full" />
-          <span>Saved {created}</span>
-          {archived && (
-            <>
-              <span className="w-1 h-1 bg-[var(--text-subtle)] rounded-full" />
-              <span className="text-amber-300">Archived {archived}</span>
-            </>
-          )}
-          {!link.metaFetchedAt && (
-            <span
-              title="Fetching info…"
-              className="inline-block w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-pulse"
-            />
-          )}
-        </div>
-
-        {link.metaFetchedAt && (link.metaImage || link.metaDescription) && (
-          <div className="flex items-start gap-3 mt-2">
-            {link.metaImage && (
-              <img
-                className="shrink-0 w-16 h-12 bg-[var(--bg-elevated)] object-cover rounded-md"
-                src={link.metaImage}
-                alt={link.title}
-                onError={(error) => {
-                  (error.target as HTMLImageElement).style.display = 'none';
-                }}
-                aria-hidden="true"
-              />
-            )}
-            {link.metaDescription && (
-              <p className="text-[var(--text-muted)] text-xs line-clamp-2">
-                {link.metaDescription}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center gap-2 justify-end">
-        <IconButton
-          onClick={onArchiveToggle}
-          aria-label={
-            link.archivedAt
-              ? `Unarchive "${link.title}"`
-              : `Archive "${link.title}"`
-          }
-        >
-          <i
-            className={
-              link.archivedAt
-                ? 'fa-solid fa-box-archive text-[0.7rem]'
-                : 'fa-regular fa-square-check text-[0.7rem]'
-            }
-          />
-          {link.archivedAt ? 'Unarchive' : 'Archive'}
-        </IconButton>
-
-        <IconButton
-          variant="danger"
-          onClick={onDelete}
-          aria-label={`Delete "${link.title}"`}
-        >
-          <i className="fa-solid fa-trash-can text-[0.7rem]" />
-          Delete
-        </IconButton>
-      </div>
-    </div>
+    <LinkCardLayout
+      link={link}
+      onCardClick={handleCardClick}
+      onUnarchiveClick={handleUnarchiveClick}
+    />
   );
 }

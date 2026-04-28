@@ -21,7 +21,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
     setSaving(true);
 
     try {
-      const link = await createLink({ url, title: undefined });
+      const link = await createLink({ url });
       onCreated(link);
       setUrl('');
     } catch (error: unknown) {

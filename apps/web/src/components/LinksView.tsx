@@ -16,11 +16,12 @@ interface LinksViewProps {
   pagination: Pick<PaginatedLinks, 'total' | 'limit'> | null;
   randomError: string | null;
   randomLoading: boolean;
+  saveError: string | null;
   search: string;
   showLinkForm: boolean;
   onArchiveToggle: (link: Link) => void;
   onCreated: (link: Link) => void;
-  onDelete: (id: string) => void;
+  onDeleteAllArchived: () => void;
   onFilterChange: (filter: LinksFilter) => void;
   onLoadMore: () => void;
   onRandom: () => void;
@@ -37,11 +38,12 @@ export default function LinksView({
   pagination,
   randomError,
   randomLoading,
+  saveError,
   search,
   showLinkForm,
   onArchiveToggle,
   onCreated,
-  onDelete,
+  onDeleteAllArchived,
   onFilterChange,
   onLoadMore,
   onRandom,
@@ -53,7 +55,7 @@ export default function LinksView({
       <h2 className="mb-1 text-lg font-semibold">Your links</h2>
       <p className="text-[var(--text-muted)] text-xs">
         {filter === 'archived'
-          ? "Review what you've already read."
+          ? 'Read links are automatically removed after 7 days.'
           : 'Add, search, or stumble upon something random.'}
       </p>
 
@@ -84,23 +86,35 @@ export default function LinksView({
             <IconButton
               variant="elevated"
               disabled={randomLoading}
+              title="Opens a random unread link and marks it as read."
               onClick={onRandom}
             >
               <i className="fa-solid fa-shuffle text-[0.7rem]" />
               {randomLoading ? 'Stumbling…' : 'Stumble upon'}
             </IconButton>
 
-            {links.length > 0 && (
-              <PrimaryButton
-                className="gap-1.5 text-xs rounded-full! cursor-pointer"
-                type="button"
-                onClick={onToggleForm}
-                aria-expanded={showLinkForm}
-              >
-                <i className="fa-solid fa-plus text-[0.7rem]" />
-                {showLinkForm ? 'Hide form' : 'Add link'}
-              </PrimaryButton>
-            )}
+            <PrimaryButton
+              className="gap-1.5 text-xs rounded-full! cursor-pointer"
+              type="button"
+              onClick={onToggleForm}
+              aria-expanded={showLinkForm}
+            >
+              <i className="fa-solid fa-plus text-[0.7rem]" />
+              {showLinkForm ? 'Hide form' : 'Add link'}
+            </PrimaryButton>
+          </div>
+        )}
+
+        {filter === 'archived' && links.length > 0 && (
+          <div className="flex items-end gap-3">
+            <IconButton
+              variant="elevated"
+              title="Permanently removes all read links."
+              onClick={onDeleteAllArchived}
+            >
+              <i className="fa-solid fa-trash text-[0.7rem]" />
+              Remove all read
+            </IconButton>
           </div>
         )}
       </div>
@@ -109,7 +123,9 @@ export default function LinksView({
         <input
           className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
           type="search"
-          placeholder="Search"
+          placeholder={
+            filter === 'active' ? 'Search unread links' : 'Search read links'
+          }
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
           aria-label="Search through your links"
@@ -125,41 +141,39 @@ export default function LinksView({
         </p>
       )}
 
-      {showLinkForm && (
-        <div className="mt-0 animate-fade-in-up">
-          <LinkForm onCreated={onCreated} />
-        </div>
+      {saveError && (
+        <p
+          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
+          role="alert"
+        >
+          {saveError}
+        </p>
       )}
 
-      <div className="mt-6 space-y-3">
-        {loadingLinks && page === 1 && initialLoad ? (
-          Array.from({ length: 5 }).map((_, index) => (
-            <LinkCardSkeleton key={index} />
-          ))
-        ) : links.length === 0 ? (
-          <div className="flex items-center justify-center mt-12">
-            {filter === 'active' && (
-              <PrimaryButton
-                className="gap-1.5 text-md rounded-full! cursor-pointer"
-                type="button"
-                onClick={onToggleForm}
-                aria-expanded={showLinkForm}
-              >
-                <i className="fa-solid fa-plus text-[0.7rem]" />
-                {showLinkForm ? 'Hide form' : 'Add your first link'}
-              </PrimaryButton>
-            )}
+      {showLinkForm && (
+        <>
+          <div
+            className="fixed inset-0 z-10 bg-black/50 backdrop-blur-sm"
+            onClick={onToggleForm}
+          />
+          <div className="relative z-20 mt-0 animate-fade-in-up">
+            <LinkForm onCreated={onCreated} />
           </div>
-        ) : (
-          links.map((link) => (
-            <LinkCard
-              key={link.id}
-              link={link}
-              onArchiveToggle={() => onArchiveToggle(link)}
-              onDelete={() => onDelete(link.id)}
-            />
-          ))
-        )}
+        </>
+      )}
+
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {loadingLinks && page === 1 && initialLoad
+          ? Array.from({ length: 5 }).map((_, index) => (
+              <LinkCardSkeleton key={index} />
+            ))
+          : links.map((link) => (
+              <LinkCard
+                key={link.id}
+                link={link}
+                onArchiveToggle={() => onArchiveToggle(link)}
+              />
+            ))}
 
         {pagination && links.length < pagination.total && (
           <div className="flex justify-center pt-2">
