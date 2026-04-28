@@ -92,6 +92,12 @@ export class LinksController {
     return this.linksService.unarchive(userId, id);
   }
 
+  @Delete('archived')
+  async removeAllArchived(@Req() request: AuthRequest) {
+    const userId = request.user.userId;
+    return this.linksService.removeAllArchived(userId);
+  }
+
   @Delete(':id')
   async remove(@Req() request: AuthRequest, @Param('id') id: string) {
     const userId = request.user.userId;

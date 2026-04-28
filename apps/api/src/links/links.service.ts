@@ -10,14 +10,9 @@ import { QueueService, QUEUES } from '../queue/index.js';
 
 export interface CreateLinkInput {
   url: string;
-  notes?: string;
-  title?: string;
 }
 
-export interface UpdateLinkInput {
-  notes?: string;
-  title?: string;
-}
+export interface UpdateLinkInput {}
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 50;
@@ -38,26 +33,16 @@ export class LinksService {
     private readonly queueService: QueueService,
   ) {}
 
-  private parseHost(url: string): string {
+  async create(userId: string, input: CreateLinkInput) {
     try {
-      const parsed = new URL(url);
-      return parsed.host;
+      new URL(input.url);
     } catch {
       throw new BadRequestException('Invalid url');
     }
-  }
-
-  async create(userId: string, input: CreateLinkInput) {
-    const host = this.parseHost(input.url);
 
     const link = await this.prisma.link.create({
-      data: {
-        userId,
-        url: input.url,
-        title: input.title ?? input.url,
-        host,
-        notes: input.notes ?? null,
-      },
+      data: { userId, url: input.url },
+      include: { meta: true },
     });
 
     void this.queueService
@@ -76,9 +61,7 @@ export class LinksService {
     const safeLimit = Math.min(Math.max(limit, 1), MAX_LIMIT);
     const safePage = Math.max(page, 1);
 
-    const where: Prisma.LinkWhereInput = {
-      userId,
-    };
+    const where: Prisma.LinkWhereInput = { userId };
 
     if (archived === true) {
       where.archivedAt = { not: null };
@@ -95,10 +78,8 @@ export class LinksService {
       // search index (tsvector)
 
       where.OR = [
-        { title: { contains: term, mode: 'insensitive' } },
         { url: { contains: term, mode: 'insensitive' } },
-        { host: { contains: term, mode: 'insensitive' } },
-        { notes: { contains: term, mode: 'insensitive' } },
+        { meta: { title: { contains: term, mode: 'insensitive' } } },
       ];
     }
 
@@ -108,6 +89,7 @@ export class LinksService {
         orderBy: { createdAt: 'desc' },
         take: safeLimit,
         skip: (safePage - 1) * safeLimit,
+        include: { meta: true },
       }),
       this.prisma.link.count({ where }),
     ]);
@@ -118,6 +100,7 @@ export class LinksService {
   async findOne(userId: string, id: string) {
     const link = await this.prisma.link.findFirst({
       where: { id, userId },
+      include: { meta: true },
     });
 
     if (!link) throw new NotFoundException('Link not found');
@@ -134,14 +117,12 @@ export class LinksService {
     throw error;
   }
 
-  async update(userId: string, id: string, input: UpdateLinkInput) {
+  async update(userId: string, id: string, _input: UpdateLinkInput) {
     try {
       return await this.prisma.link.update({
         where: { id, userId },
-        data: {
-          ...(input.title !== undefined ? { title: input.title } : {}),
-          ...(input.notes !== undefined ? { notes: input.notes } : {}),
-        },
+        data: {},
+        include: { meta: true },
       });
     } catch (error) {
       this.mapP2025ToNotFound(error);
@@ -153,6 +134,7 @@ export class LinksService {
       return await this.prisma.link.update({
         where: { id, userId },
         data: { archivedAt: new Date() },
+        include: { meta: true },
       });
     } catch (error) {
       this.mapP2025ToNotFound(error);
@@ -164,6 +146,7 @@ export class LinksService {
       return await this.prisma.link.update({
         where: { id, userId },
         data: { archivedAt: null },
+        include: { meta: true },
       });
     } catch (error) {
       this.mapP2025ToNotFound(error);
@@ -177,6 +160,13 @@ export class LinksService {
       this.mapP2025ToNotFound(error);
     }
     return { success: true };
+  }
+
+  async removeAllArchived(userId: string) {
+    const result = await this.prisma.link.deleteMany({
+      where: { userId, archivedAt: { not: null } },
+    });
+    return { count: result.count };
   }
 
   async getRandom(userId: string, archived = false) {
@@ -195,6 +185,7 @@ export class LinksService {
       skip: randomIndex,
       take: 1,
       orderBy: { createdAt: 'asc' },
+      include: { meta: true },
     });
 
     return link ?? null;

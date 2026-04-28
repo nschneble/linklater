@@ -4,11 +4,8 @@ import { LinksController } from './links.controller';
 import { LinksService } from './links.service';
 import { Test, TestingModule } from '@nestjs/testing';
 
-const LINK_HOST = 'example.com';
 const LINK_ID = 'link-1';
-const LINK_TITLE = 'Example';
 const LINK_URL = 'https://example.com/page';
-const UPDATED_LINK_TITLE = 'Example Update';
 const USER_ID = 'user-1';
 
 describe('LinksController', () => {
@@ -23,18 +20,17 @@ describe('LinksController', () => {
     archive: jest.fn(),
     unarchive: jest.fn(),
     remove: jest.fn(),
+    removeAllArchived: jest.fn(),
   } as unknown as LinksService;
 
   const makeRequest = (userId = USER_ID) => ({ user: { userId } }) as never;
   const makeLink = (overrides = {}) => ({
     archivedAt: null,
     createdAt: new Date(),
-    host: LINK_HOST,
     id: LINK_ID,
-    notes: null,
-    title: LINK_TITLE,
-    url: LINK_URL,
+    meta: null,
     updatedAt: new Date(),
+    url: LINK_URL,
     userId: USER_ID,
     ...overrides,
   });
@@ -150,16 +146,20 @@ describe('LinksController', () => {
 
   describe('update', () => {
     it('delegates to LinksService.update', async () => {
-      const link = makeLink({ title: UPDATED_LINK_TITLE });
+      const link = makeLink();
       (linksServiceMock.update as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.update(makeRequest(), LINK_ID, {
-        title: UPDATED_LINK_TITLE,
-      } as never);
+      const result = await controller.update(
+        makeRequest(),
+        LINK_ID,
+        {} as never,
+      );
 
-      expect(linksServiceMock.update).toHaveBeenCalledWith(USER_ID, LINK_ID, {
-        title: UPDATED_LINK_TITLE,
-      });
+      expect(linksServiceMock.update).toHaveBeenCalledWith(
+        USER_ID,
+        LINK_ID,
+        {},
+      );
       expect(result).toBe(link);
     });
   });
@@ -185,6 +185,19 @@ describe('LinksController', () => {
 
       expect(linksServiceMock.unarchive).toHaveBeenCalledWith(USER_ID, LINK_ID);
       expect(result).toBe(link);
+    });
+  });
+
+  describe('removeAllArchived', () => {
+    it('delegates to LinksService.removeAllArchived', async () => {
+      (linksServiceMock.removeAllArchived as jest.Mock).mockResolvedValue({
+        count: 5,
+      });
+
+      const result = await controller.removeAllArchived(makeRequest());
+
+      expect(linksServiceMock.removeAllArchived).toHaveBeenCalledWith(USER_ID);
+      expect(result).toEqual({ count: 5 });
     });
   });
 
