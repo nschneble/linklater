@@ -114,6 +114,8 @@ Follow three simple steps repeatedly:
   - Refer to [Details That Make Interfaces Feel Better](https://jakub.kr/writing/details-that-make-interfaces-feel-better) for examples
 - Embrace the slow software movement
   - Refer to [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software) for a manifesto
+- Always clean up after yourself! Kill any listeners or temporary-running processes that are no longer necessary once the work is complete
+- Always run `./flintest` when you're done to ensure formatting, linting, and testing all execute successfully
 
 ## TypeScript Conventions
 
