@@ -17,8 +17,6 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 - Add advanced settings (hidden/collapsed by default)
   - Add advanced setting option to re-fetch missing link metadata
   - Add advanced setting option to re-fetch ALL link metadata
-- Transform "archived" into "read" links
-  - Automatically remove read links after 7 days
 - Consider bookmarklet tokens that never expire (or last 1+ years)
 - Introduce paid Stripe subscriptions
   - US$5 monthly and US$48 yearly plans
@@ -30,9 +28,6 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 
 - regenerate preview and all screenshots
 - analyze/improve code coverage
-- review all theme css
-  - pull light/dark movie posters
-  - derive refreshed light/dark styles from posters
 
 ## Bugfixes
 
