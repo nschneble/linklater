@@ -13,6 +13,7 @@ describe('QueueService', () => {
 
   const bossMock = {
     createQueue: jest.fn().mockResolvedValue(undefined),
+    schedule: jest.fn().mockResolvedValue(undefined),
     send: jest.fn().mockResolvedValue(JOB_ID),
     start: jest.fn().mockResolvedValue(undefined),
     stop: jest.fn().mockResolvedValue(undefined),
@@ -64,5 +65,29 @@ describe('QueueService', () => {
 
     expect(bossMock.createQueue).toHaveBeenCalledWith(QUEUE_NAME);
     expect(bossMock.work).toHaveBeenCalledWith(QUEUE_NAME, handler);
+  });
+
+  it('delegates schedule to boss.schedule', async () => {
+    await service.schedule(QUEUE_NAME, '0 3 * * *');
+
+    expect(bossMock.createQueue).toHaveBeenCalledWith(QUEUE_NAME);
+    expect(bossMock.schedule).toHaveBeenCalledWith(
+      QUEUE_NAME,
+      '0 3 * * *',
+      null,
+      {},
+    );
+  });
+
+  it('passes data to boss.schedule when provided', async () => {
+    await service.schedule(QUEUE_NAME, '0 3 * * *', { key: 'value' });
+
+    expect(bossMock.createQueue).toHaveBeenCalledWith(QUEUE_NAME);
+    expect(bossMock.schedule).toHaveBeenCalledWith(
+      QUEUE_NAME,
+      '0 3 * * *',
+      { key: 'value' },
+      {},
+    );
   });
 });

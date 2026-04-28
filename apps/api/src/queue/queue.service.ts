@@ -32,4 +32,13 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     await this.boss.createQueue(queue);
     return this.boss.work(queue, handler);
   }
+
+  async schedule(
+    name: string,
+    cron: string,
+    data?: object | null,
+  ): Promise<void> {
+    await this.boss.createQueue(name);
+    await this.boss.schedule(name, cron, data ?? null, {});
+  }
 }
