@@ -82,18 +82,22 @@ export async function getMe() {
   });
 }
 
+export interface LinkMeta {
+  title?: string | null;
+  description?: string | null;
+  imageUrl?: string | null;
+  siteName?: string | null;
+  faviconUrl?: string | null;
+  fetchedAt?: string | null;
+}
+
 export interface Link {
-  createdAt: string;
-  host: string;
   id: string;
-  title: string;
-  updatedAt: string;
   url: string;
+  createdAt: string;
+  updatedAt: string;
   archivedAt?: string | null;
-  metaDescription?: string | null;
-  metaFetchedAt?: string | null;
-  metaImage?: string | null;
-  notes?: string | null;
+  meta?: LinkMeta | null;
 }
 
 export async function getLink(id: string): Promise<Link> {
@@ -129,23 +133,16 @@ export async function getLinks(options?: {
   return apiFetch<PaginatedLinks>(path);
 }
 
-export async function createLink(input: {
-  url: string;
-  notes?: string;
-  title?: string;
-}): Promise<Link> {
+export async function createLink(input: { url: string }): Promise<Link> {
   return apiFetch<Link>('/links', {
     body: JSON.stringify(input),
     method: 'POST',
   });
 }
 
-export async function updateLink(
-  id: string,
-  input: { title?: string; notes?: string },
-): Promise<Link> {
+export async function updateLink(id: string): Promise<Link> {
   return apiFetch<Link>(`/links/${id}`, {
-    body: JSON.stringify(input),
+    body: JSON.stringify({}),
     method: 'PATCH',
   });
 }
@@ -168,6 +165,12 @@ export async function deleteLink(id: string): Promise<{ success: boolean }> {
   });
 }
 
+export async function deleteAllArchivedLinks(): Promise<{ count: number }> {
+  return apiFetch<{ count: number }>('/links/archived', {
+    method: 'DELETE',
+  });
+}
+
 export async function getRandomLink(options?: {
   archived?: boolean;
 }): Promise<{ link: Link | null }> {
@@ -186,7 +189,7 @@ export async function updateMe(input: {
   mode?: string;
   password?: string;
   theme?: string;
-}) {
+}): Promise<{ id: string; email: string }> {
   return apiFetch<{ id: string; email: string }>('/users/me', {
     body: JSON.stringify(input),
     method: 'PATCH',

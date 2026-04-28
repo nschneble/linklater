@@ -21,7 +21,7 @@ export default function AppShell() {
 
   const {
     handleCreated,
-    handleDelete,
+    handleDeleteAllArchived,
     handleLoadMore,
     handleRandom,
     handleToggleArchive,
@@ -33,6 +33,7 @@ export default function AppShell() {
     pagination,
     randomError,
     randomLoading,
+    saveError,
     showLinkForm,
   } = useLinks(filter, search);
 
@@ -73,7 +74,7 @@ export default function AppShell() {
             loadingLinks={loadingLinks}
             onArchiveToggle={handleToggleArchive}
             onCreated={handleCreated}
-            onDelete={handleDelete}
+            onDeleteAllArchived={handleDeleteAllArchived}
             onFilterChange={setFilter}
             onLoadMore={handleLoadMore}
             onRandom={handleRandom}
@@ -83,6 +84,7 @@ export default function AppShell() {
             pagination={pagination}
             randomError={randomError}
             randomLoading={randomLoading}
+            saveError={saveError}
             search={search}
             showLinkForm={showLinkForm}
           />

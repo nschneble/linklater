@@ -1,6 +1,7 @@
 import {
   archiveLink,
-  deleteLink,
+  createLink,
+  deleteAllArchivedLinks,
   getLinks,
   getRandomLink,
   unarchiveLink,
@@ -8,14 +9,16 @@ import {
   type PaginatedLinks,
 } from './api';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMetadataPolling } from './useMetadataPolling';
+import { useLinkDrop } from './useLinkDrop';
+import { usePasteDetection } from './usePasteDetection';
 
 type LinksFilter = 'active' | 'archived';
 
 export interface UseLinksResult {
   handleCreated: (link: Link) => void;
-  handleDelete: (id: string) => Promise<void>;
+  handleDeleteAllArchived: () => Promise<void>;
   handleLoadMore: () => void;
   handleRandom: () => Promise<void>;
   handleToggleArchive: (link: Link) => Promise<void>;
@@ -27,6 +30,7 @@ export interface UseLinksResult {
   pagination: Pick<PaginatedLinks, 'total' | 'limit'> | null;
   randomError: string | null;
   randomLoading: boolean;
+  saveError: string | null;
   showLinkForm: boolean;
 }
 
@@ -43,6 +47,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
   );
   const [randomError, setRandomError] = useState<string | null>(null);
   const [randomLoading, setRandomLoading] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [showLinkForm, setShowLinkForm] = useState(false);
   const hasFetchedOnce = useRef(false);
 
@@ -95,16 +100,39 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     };
   }, [search, filter, page]);
 
-  const handleCreated = (link: Link) => {
-    // only prepends when viewing active links
-    if (filter === 'archived') {
+  const handleCreated = useCallback(
+    (link: Link) => {
+      if (filter === 'archived') {
+        setShowLinkForm(false);
+        return;
+      }
+      setLinks((previous) => [link, ...previous]);
+      setPagination((previous) =>
+        previous ? { ...previous, total: previous.total + 1 } : previous,
+      );
       setShowLinkForm(false);
-      return;
-    }
-    setLinks((previous) => [link, ...previous]);
-    setShowLinkForm(false);
-    setPendingMetaLinkId(link.id);
-  };
+      setPendingMetaLinkId(link.id);
+    },
+    [filter],
+  );
+
+  const handleDirectSave = useCallback(
+    async (url: string) => {
+      setSaveError(null);
+      try {
+        const link = await createLink({ url });
+        handleCreated(link);
+      } catch (error: unknown) {
+        setSaveError(
+          error instanceof Error ? error.message : 'Failed to save link',
+        );
+      }
+    },
+    [handleCreated],
+  );
+
+  useLinkDrop({ onSave: handleDirectSave });
+  usePasteDetection({ onSave: handleDirectSave });
 
   const handleToggleArchive = async (link: Link) => {
     try {
@@ -113,12 +141,17 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
         : await archiveLink(link.id);
 
       setLinks((previous) => {
-        if (filter === 'active' && updated.archivedAt) {
+        const isFilteredOut =
+          (filter === 'active' && updated.archivedAt) ||
+          (filter === 'archived' && !updated.archivedAt);
+
+        if (isFilteredOut) {
+          setPagination((previous) =>
+            previous ? { ...previous, total: previous.total - 1 } : previous,
+          );
           return previous.filter((item) => item.id !== updated.id);
         }
-        if (filter === 'archived' && !updated.archivedAt) {
-          return previous.filter((item) => item.id !== updated.id);
-        }
+
         return previous.map((item) =>
           item.id === updated.id ? updated : item,
         );
@@ -128,12 +161,15 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteAllArchived = async () => {
     try {
-      await deleteLink(id);
-      setLinks((previous) => previous.filter((link) => link.id !== id));
+      await deleteAllArchivedLinks();
+      setLinks([]);
+      setPagination((previous) =>
+        previous ? { ...previous, total: 0 } : previous,
+      );
     } catch (error: unknown) {
-      console.error('Failed to delete link', error);
+      console.error('Failed to delete all archived links', error);
     }
   };
 
@@ -146,6 +182,15 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
         setRandomError('No links available');
       } else {
         window.open(link.url, '_blank', 'noopener,noreferrer');
+        if (!link.archivedAt) {
+          await archiveLink(link.id);
+          setLinks((previous) =>
+            previous.filter((item) => item.id !== link.id),
+          );
+          setPagination((previous) =>
+            previous ? { ...previous, total: previous.total - 1 } : previous,
+          );
+        }
       }
     } catch (error: unknown) {
       setRandomError('Failed to get a random link');
@@ -165,7 +210,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
 
   return {
     handleCreated,
-    handleDelete,
+    handleDeleteAllArchived,
     handleLoadMore,
     handleRandom,
     handleToggleArchive,
@@ -177,6 +222,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     pagination,
     randomError,
     randomLoading,
+    saveError,
     showLinkForm,
   };
 }

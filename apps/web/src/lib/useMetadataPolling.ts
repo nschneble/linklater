@@ -22,7 +22,7 @@ export function useMetadataPolling(
 
       getLink(linkId)
         .then((link) => {
-          if (link.metaFetchedAt) {
+          if (link.meta?.fetchedAt) {
             clearInterval(intervalId);
             onSettledRef.current(link);
           } else if (ticks >= MAX_TICKS) {
