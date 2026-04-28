@@ -11,7 +11,6 @@ import {
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMetadataPolling } from './useMetadataPolling';
-import { useLinkDrop } from './useLinkDrop';
 import { usePasteDetection } from './usePasteDetection';
 
 type LinksFilter = 'active' | 'archived';
@@ -131,7 +130,6 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     [handleCreated],
   );
 
-  useLinkDrop({ onSave: handleDirectSave });
   usePasteDetection({ onSave: handleDirectSave });
 
   const handleToggleArchive = async (link: Link) => {
