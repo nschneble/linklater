@@ -5,6 +5,7 @@ import {
 } from './metadata.constants.js';
 import { PrismaService } from '../prisma/index.js';
 import { QueueService, QUEUES } from '../queue/index.js';
+import type { LinkMetadata } from './metadata.types.js';
 import * as cheerio from 'cheerio';
 
 @Injectable()
@@ -29,17 +30,37 @@ export class MetadataService implements OnModuleInit {
 
   async fetchAndStore(linkId: string, url: string): Promise<void> {
     try {
-      const { metaDescription, metaImage } = await this.fetchMetadata(url);
-      await this.prisma.link.update({
-        where: { id: linkId },
-        data: { metaDescription, metaImage, metaFetchedAt: new Date() },
+      const metadata = await this.fetchMetadata(url);
+
+      await this.prisma.meta.upsert({
+        where: { linkId },
+        create: {
+          linkId,
+          description: metadata.description,
+          faviconUrl: metadata.faviconUrl,
+          imageUrl: metadata.imageUrl,
+          siteName: metadata.siteName,
+          source: metadata.source,
+          title: metadata.title,
+          fetchedAt: new Date(),
+        },
+        update: {
+          description: metadata.description,
+          faviconUrl: metadata.faviconUrl,
+          imageUrl: metadata.imageUrl,
+          siteName: metadata.siteName,
+          source: metadata.source,
+          title: metadata.title,
+          fetchedAt: new Date(),
+        },
       });
     } catch (error) {
       this.logger.warn(`Metadata fetch failed for ${url}: ${String(error)}`);
-      await this.prisma.link
-        .update({
-          where: { id: linkId },
-          data: { metaFetchedAt: new Date() },
+      await this.prisma.meta
+        .upsert({
+          where: { linkId },
+          create: { linkId, fetchedAt: new Date() },
+          update: { fetchedAt: new Date() },
         })
         .catch(() => {});
     }
@@ -50,39 +71,47 @@ export class MetadataService implements OnModuleInit {
     try {
       hostname = new URL(url).hostname.toLowerCase();
     } catch {
-      return true; // treats un-parseable urls as private
+      return true;
     }
 
     if (hostname === 'localhost') return true;
 
-    // IPv6 loopback
     if (hostname === '::1' || hostname === '[::1]') return true;
 
-    // IPv6 private (fc00::/7 covers fc00:: through fdff::)
     if (/^\[?f[cd]/i.test(hostname)) return true;
 
-    // IPv4 private ranges
     const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
     if (ipv4) {
       const [, a, b] = ipv4.map(Number);
-      if (a === 127) return true; // 127.x.x.x loopback
-      if (a === 10) return true; // 10.x.x.x private
-      if (a === 169 && b === 254) return true; // 169.254.x.x link-local (AWS metadata)
-      if (a === 192 && b === 168) return true; // 192.168.x.x private
-      if (a === 172 && b >= 16 && b <= 31) return true; // 172.16-31.x.x private
+      if (a === 127) return true;
+      if (a === 10) return true;
+      if (a === 169 && b === 254) return true;
+      if (a === 192 && b === 168) return true;
+      if (a === 172 && b >= 16 && b <= 31) return true;
     }
 
     return false;
   }
 
-  private async fetchMetadata(
-    url: string,
-  ): Promise<{ metaDescription: string | null; metaImage: string | null }> {
+  private async fetchMetadata(url: string): Promise<LinkMetadata> {
     if (this.isPrivateHost(url)) {
       this.logger.warn(`Blocked SSRF attempt to private host: ${url}`);
-      return { metaDescription: null, metaImage: null };
+      return this.emptyMetadata();
     }
 
+    const html = await this.fetchHtml(url);
+    let metadata = html ? this.extractMeta(html, url) : this.emptyMetadata();
+    const source = html ?? null;
+
+    if (!metadata.faviconUrl) {
+      const faviconFallback = new URL('/favicon.ico', url).toString();
+      metadata = { ...metadata, faviconUrl: faviconFallback };
+    }
+
+    return { ...metadata, source };
+  }
+
+  private async fetchHtml(url: string): Promise<string | null> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10_000);
 
@@ -91,52 +120,85 @@ export class MetadataService implements OnModuleInit {
       response = await fetch(url, {
         signal: controller.signal,
         headers: {
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
           'User-Agent':
-            'Mozilla/5.0 (compatible; Linklater/1.0; +https://linklater.app)',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         },
       });
     } finally {
       clearTimeout(timeout);
     }
 
-    const contentType = response.headers.get('content-type') ?? '';
-    if (!contentType.includes('text/html')) {
-      return { metaDescription: null, metaImage: null };
-    }
+    if (!response.ok) return null;
 
-    const html = await response.text();
-    return this.extractMeta(html, url);
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.includes('text/html')) return null;
+
+    return response.text();
   }
 
-  private extractMeta(
-    html: string,
-    pageUrl: string,
-  ): { metaDescription: string | null; metaImage: string | null } {
+  private extractMeta(html: string, pageUrl: string): LinkMetadata {
     const $ = cheerio.load(html);
 
     const rawDescription =
       $('meta[property="og:description"]').attr('content') ||
+      $('meta[property="twitter:description"]').attr('content') ||
       $('meta[name="description"]').attr('content') ||
       null;
 
-    const rawImage = $('meta[property="og:image"]').attr('content') || null;
+    const rawFaviconUrl =
+      $('link[rel="icon"]').attr('href') ||
+      $('link[rel="shortcut icon"]').attr('href') ||
+      null;
 
-    const metaDescription = rawDescription
-      ? rawDescription.slice(0, MAX_DESCRIPTION_LENGTH)
-      : null;
+    const rawImageUrl =
+      $('meta[property="og:image"]').attr('content') ||
+      $('meta[property="twitter:image"]').attr('content') ||
+      null;
 
-    const metaImage = rawImage ? this.resolveUrl(rawImage, pageUrl) : null;
+    const rawSiteName =
+      $('meta[property="og:site_name"]').attr('content') || null;
 
-    return { metaDescription, metaImage };
+    const rawTitle =
+      $('meta[property="og:title"]').attr('content') ||
+      $('meta[property="twitter:title"]').attr('content') ||
+      $('title').text() ||
+      null;
+
+    return {
+      description: rawDescription
+        ? rawDescription.slice(0, MAX_DESCRIPTION_LENGTH)
+        : null,
+      faviconUrl: rawFaviconUrl
+        ? this.resolveUrl(rawFaviconUrl, pageUrl)
+        : null,
+      imageUrl: rawImageUrl ? this.resolveUrl(rawImageUrl, pageUrl) : null,
+      siteName: rawSiteName || null,
+      source: null,
+      title: rawTitle ? rawTitle.trim() || null : null,
+    };
   }
 
-  private resolveUrl(imageUrl: string, pageUrl: string): string {
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl.slice(0, MAX_URL_LENGTH);
+  private emptyMetadata(): LinkMetadata {
+    return {
+      description: null,
+      faviconUrl: null,
+      imageUrl: null,
+      siteName: null,
+      source: null,
+      title: null,
+    };
+  }
+
+  private resolveUrl(rawUrl: string, pageUrl: string): string {
+    if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+      return rawUrl.slice(0, MAX_URL_LENGTH);
     }
 
     try {
-      const resolved = new URL(imageUrl, pageUrl).toString();
+      const resolved = new URL(rawUrl, pageUrl).toString();
       return resolved.slice(0, MAX_URL_LENGTH);
     } catch {
       return '';

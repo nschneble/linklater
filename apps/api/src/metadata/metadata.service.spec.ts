@@ -18,18 +18,38 @@ const LINK_PDF_URL = 'https://example.com/page/attachment.pdf';
 const LINK_URL = 'https://example.com/page';
 const OG_DESCRIPTION = 'This is an example';
 const OG_IMAGE = 'https://example.com/page/preview.jpg';
+const OG_TITLE = 'My Article Title';
+const OG_SITE_NAME = 'Example Site';
+const FAVICON_URL = 'https://example.com/favicon.ico';
 const RELATIVE_OG_IMAGE = '/page/preview.jpg';
 const WORKER_ID = 'worker-1';
 
 const makeHtml = (
   overrides: {
+    faviconHref?: string;
+    faviconRel?: string;
     metaDescription?: string;
     ogDescription?: string;
     ogImage?: string;
+    ogSiteName?: string;
+    ogTitle?: string;
+    title?: string;
   } = {},
 ) => {
-  const { metaDescription, ogDescription, ogImage } = overrides;
+  const {
+    faviconHref,
+    faviconRel = 'icon',
+    metaDescription,
+    ogDescription,
+    ogImage,
+    ogSiteName,
+    ogTitle,
+    title,
+  } = overrides;
 
+  const faviconTag = faviconHref
+    ? `<link rel="${faviconRel}" href="${faviconHref}" />`
+    : '';
   const metaDescriptionTag = metaDescription
     ? `<meta name="description" content="${metaDescription}" />`
     : '';
@@ -39,8 +59,15 @@ const makeHtml = (
   const ogImageTag = ogImage
     ? `<meta property="og:image" content="${ogImage}" />`
     : '';
+  const ogSiteNameTag = ogSiteName
+    ? `<meta property="og:site_name" content="${ogSiteName}" />`
+    : '';
+  const ogTitleTag = ogTitle
+    ? `<meta property="og:title" content="${ogTitle}" />`
+    : '';
+  const titleTag = title ? `<title>${title}</title>` : '';
 
-  return `<html><head>${ogDescriptionTag}${metaDescriptionTag}${ogImageTag}</head><body></body></html>`;
+  return `<html><head>${ogDescriptionTag}${metaDescriptionTag}${ogImageTag}${ogTitleTag}${ogSiteNameTag}${faviconTag}${titleTag}</head><body></body></html>`;
 };
 
 const mockFetch = (html: string, contentType = 'text/html; charset=utf-8') => {
@@ -55,8 +82,8 @@ describe('MetadataService', () => {
   let service: MetadataService;
 
   const prismaMock = {
-    link: {
-      update: jest.fn(),
+    meta: {
+      upsert: jest.fn(),
     },
   } as unknown as PrismaService;
 
@@ -81,119 +108,235 @@ describe('MetadataService', () => {
     expect(service).toBeDefined();
   });
 
-  it('extracts og:description and og:image from HTML', async () => {
-    mockFetch(makeHtml({ ogDescription: OG_DESCRIPTION, ogImage: OG_IMAGE }));
-    (prismaMock.link.update as jest.Mock).mockResolvedValue({});
+  describe('fetchAndStore', () => {
+    beforeEach(() => {
+      (prismaMock.meta.upsert as jest.Mock).mockResolvedValue({});
+    });
 
-    await service.fetchAndStore(LINK_ID, LINK_URL);
+    it('extracts og:description and og:image from HTML', async () => {
+      mockFetch(makeHtml({ ogDescription: OG_DESCRIPTION, ogImage: OG_IMAGE }));
 
-    expect(prismaMock.link.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: LINK_ID },
-        data: expect.objectContaining({
-          metaDescription: OG_DESCRIPTION,
-          metaFetchedAt: expect.any(Date),
-          metaImage: OG_IMAGE,
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { linkId: LINK_ID },
+          create: expect.objectContaining({
+            description: OG_DESCRIPTION,
+            imageUrl: OG_IMAGE,
+            fetchedAt: expect.any(Date),
+          }),
         }),
-      }),
-    );
-  });
+      );
+    });
 
-  it('falls back to meta[name="description"] when og:description is absent', async () => {
-    mockFetch(makeHtml({ metaDescription: FALLBACK_DESCRIPTION }));
-    (prismaMock.link.update as jest.Mock).mockResolvedValue({});
-
-    await service.fetchAndStore(LINK_ID, LINK_URL);
-
-    expect(prismaMock.link.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          metaDescription: FALLBACK_DESCRIPTION,
+    it('upserts all meta fields', async () => {
+      mockFetch(
+        makeHtml({
+          ogDescription: OG_DESCRIPTION,
+          ogImage: OG_IMAGE,
+          ogTitle: OG_TITLE,
+          ogSiteName: OG_SITE_NAME,
+          faviconHref: FAVICON_URL,
         }),
-      }),
-    );
-  });
+      );
 
-  it('resolves relative og:image URL against the page origin', async () => {
-    mockFetch(makeHtml({ ogImage: RELATIVE_OG_IMAGE }));
-    (prismaMock.link.update as jest.Mock).mockResolvedValue({});
+      await service.fetchAndStore(LINK_ID, LINK_URL);
 
-    await service.fetchAndStore(LINK_ID, LINK_URL);
-
-    expect(prismaMock.link.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          metaImage: OG_IMAGE,
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            description: OG_DESCRIPTION,
+            imageUrl: OG_IMAGE,
+            title: OG_TITLE,
+            siteName: OG_SITE_NAME,
+            faviconUrl: FAVICON_URL,
+          }),
         }),
-      }),
-    );
-  });
+      );
+    });
 
-  it('handles pages with no meta tags gracefully', async () => {
-    mockFetch('<html><head></head><body></body></html>');
-    (prismaMock.link.update as jest.Mock).mockResolvedValue({});
+    it('extracts og:title', async () => {
+      mockFetch(makeHtml({ ogTitle: OG_TITLE }));
 
-    await service.fetchAndStore(LINK_ID, LINK_URL);
+      await service.fetchAndStore(LINK_ID, LINK_URL);
 
-    expect(prismaMock.link.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          metaDescription: null,
-          metaFetchedAt: expect.any(Date),
-          metaImage: null,
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ title: OG_TITLE }),
         }),
-      }),
-    );
-  });
+      );
+    });
 
-  it('marks fetch as attempted when fetch() throws', async () => {
-    global.fetch = jest
-      .fn()
-      .mockRejectedValue(new Error('Network error')) as unknown as typeof fetch;
-    (prismaMock.link.update as jest.Mock).mockResolvedValue({});
+    it('falls back to <title> when og:title is absent', async () => {
+      mockFetch(makeHtml({ title: 'Page Title' }));
 
-    await service.fetchAndStore(LINK_ID, LINK_URL);
+      await service.fetchAndStore(LINK_ID, LINK_URL);
 
-    expect(prismaMock.link.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: LINK_ID },
-        data: expect.objectContaining({ metaFetchedAt: expect.any(Date) }),
-      }),
-    );
-  });
-
-  it('truncates metaDescription longer than 500 characters', async () => {
-    const longDescription = 'duck '.repeat(MAX_DESCRIPTION_LENGTH * 2);
-    mockFetch(makeHtml({ ogDescription: longDescription }));
-    (prismaMock.link.update as jest.Mock).mockResolvedValue({});
-
-    await service.fetchAndStore(LINK_ID, LINK_URL);
-
-    const call = (prismaMock.link.update as jest.Mock).mock.calls[0][0] as {
-      data: { metaDescription: string };
-    };
-    expect(call.data.metaDescription?.length).toBe(MAX_DESCRIPTION_LENGTH);
-  });
-
-  it('skips parsing and marks metaFetchedAt for non-HTML content types', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      headers: { get: () => 'application/pdf' },
-      ok: true,
-      text: () => Promise.resolve(''),
-    }) as unknown as typeof fetch;
-    (prismaMock.link.update as jest.Mock).mockResolvedValue({});
-
-    await service.fetchAndStore(LINK_ID, LINK_PDF_URL);
-
-    expect(prismaMock.link.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          metaDescription: null,
-          metaFetchedAt: expect.any(Date),
-          metaImage: null,
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ title: 'Page Title' }),
         }),
-      }),
-    );
+      );
+    });
+
+    it('extracts og:site_name', async () => {
+      mockFetch(makeHtml({ ogSiteName: OG_SITE_NAME }));
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ siteName: OG_SITE_NAME }),
+        }),
+      );
+    });
+
+    it('extracts favicon from <link rel="icon">', async () => {
+      mockFetch(makeHtml({ faviconHref: FAVICON_URL, faviconRel: 'icon' }));
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ faviconUrl: FAVICON_URL }),
+        }),
+      );
+    });
+
+    it('falls back to <link rel="shortcut icon"> when rel="icon" absent', async () => {
+      mockFetch(
+        makeHtml({ faviconHref: FAVICON_URL, faviconRel: 'shortcut icon' }),
+      );
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ faviconUrl: FAVICON_URL }),
+        }),
+      );
+    });
+
+    it('falls back to /favicon.ico when no favicon link tag found', async () => {
+      mockFetch(makeHtml({ ogDescription: OG_DESCRIPTION }));
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            faviconUrl: 'https://example.com/favicon.ico',
+          }),
+        }),
+      );
+    });
+
+    it('falls back to meta[name="description"] when og:description is absent', async () => {
+      mockFetch(makeHtml({ metaDescription: FALLBACK_DESCRIPTION }));
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            description: FALLBACK_DESCRIPTION,
+          }),
+        }),
+      );
+    });
+
+    it('resolves relative og:image URL against the page origin', async () => {
+      mockFetch(makeHtml({ ogImage: RELATIVE_OG_IMAGE }));
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ imageUrl: OG_IMAGE }),
+        }),
+      );
+    });
+
+    it('handles pages with no meta tags gracefully', async () => {
+      mockFetch('<html><head></head><body></body></html>');
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            description: null,
+            imageUrl: null,
+            title: null,
+            siteName: null,
+            fetchedAt: expect.any(Date),
+          }),
+        }),
+      );
+    });
+
+    it('marks fetch as attempted when fetch() throws', async () => {
+      global.fetch = jest
+        .fn()
+        .mockRejectedValue(
+          new Error('Network error'),
+        ) as unknown as typeof fetch;
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { linkId: LINK_ID },
+          create: expect.objectContaining({ fetchedAt: expect.any(Date) }),
+        }),
+      );
+    });
+
+    it('truncates description longer than 500 characters', async () => {
+      const longDescription = 'duck '.repeat(MAX_DESCRIPTION_LENGTH * 2);
+      mockFetch(makeHtml({ ogDescription: longDescription }));
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      const call = (prismaMock.meta.upsert as jest.Mock).mock.calls[0][0] as {
+        create: { description: string };
+      };
+      expect(call.create.description?.length).toBe(MAX_DESCRIPTION_LENGTH);
+    });
+
+    it('skips parsing and marks fetchedAt for non-HTML content types', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        headers: { get: () => 'application/pdf' },
+        ok: true,
+        text: () => Promise.resolve(''),
+      }) as unknown as typeof fetch;
+
+      await service.fetchAndStore(LINK_ID, LINK_PDF_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            description: null,
+            imageUrl: null,
+            fetchedAt: expect.any(Date),
+          }),
+        }),
+      );
+    });
+
+    it('stores raw HTML source', async () => {
+      const html = makeHtml({ ogTitle: OG_TITLE });
+      mockFetch(html);
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ source: html }),
+        }),
+      );
+    });
   });
 
   it('registers a worker for the METADATA_FETCH queue on init', async () => {

@@ -8,36 +8,49 @@ datasource db {
 }
 
 model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  passwordHash    String
-  theme           String    @default("scanner-darkly")
-  mode            String    @default("dark")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
 
-  links           Link[]
+  mode         String    @default("dark")
+  theme        String    @default("scanner-darkly")
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  links        Link[]
 }
 
 model Link {
-  id              String    @id @default(cuid())
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  url             String
-  title           String
-  host            String
-  notes           String?
+  url          String
+  meta         Meta?
 
-  metaDescription String?
-  metaImage       String?
-  metaFetchedAt   DateTime?
-
-  archivedAt      DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  archivedAt   DateTime?
 
   @@index([userId])
   @@index([userId, archivedAt])
   @@index([userId, createdAt])
+}
+
+model Meta {
+  id           String    @id @default(cuid())
+  linkId       String    @unique
+  link         Link      @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  description  String?
+  faviconUrl   String?
+  imageUrl     String?
+  siteName     String?
+  source       String?
+  title        String?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  fetchedAt    DateTime?
 }
