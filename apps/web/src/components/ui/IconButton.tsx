@@ -9,15 +9,15 @@ const variantClasses: Record<
   string
 > = {
   default:
-    'px-2.5 py-1.5 hover:bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]',
+    'pl-2 pr-2.5 py-1.5 hover:bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]',
   danger:
-    'px-2.5 py-1.5 hover:bg-rose-900/40 border border-rose-700 text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400',
+    'pl-2 pr-2.5 py-1.5 hover:bg-rose-900/40 border border-rose-700 text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400',
   'danger-filled':
-    'px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400',
+    'pl-2 pr-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400',
   ghost:
-    'px-2.5 py-1.5 border border-[var(--border)] text-[var(--text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]',
+    'pl-2 pr-2.5 py-1.5 border border-[var(--border)] text-[var(--text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]',
   elevated:
-    'px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text)] font-semibold shadow-md disabled:opacity-60 transition disabled:cursor-wait',
+    'pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text)] font-semibold shadow-md disabled:opacity-60 transition disabled:cursor-wait',
 };
 
 export default function IconButton({
