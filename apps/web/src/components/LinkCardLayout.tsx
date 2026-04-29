@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { Link } from '../lib/api';
 
 interface LinkCardLayoutProps {
@@ -24,6 +25,14 @@ export default function LinkCardLayout({
   onCardClick,
   onUnarchiveClick,
 }: LinkCardLayoutProps) {
+  const [visible, setVisible] = useState(false);
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   const hasTitle = Boolean(link.meta?.title);
   const displayTitle = link.meta?.title ?? '(No title)';
   const displayDescription = hasTitle ? link.meta?.description : link.url;
@@ -33,8 +42,11 @@ export default function LinkCardLayout({
   return (
     <article
       onClick={onCardClick}
-      style={{ animationDelay: `${animationDelay}ms` }}
-      className="relative border-l-4 border-[var(--accent)] rounded-r-xl bg-[var(--bg-surface)] cursor-pointer pl-10 pr-8 py-4 animate-fade-in-up overflow-visible hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-150 ease-out"
+      onTransitionEnd={() => {
+        if (!entered) setEntered(true);
+      }}
+      style={{ transitionDelay: entered ? '0ms' : `${animationDelay}ms` }}
+      className={`relative border-l-4 border-[var(--accent)] rounded-r-xl bg-[var(--bg-surface)] cursor-pointer pl-10 pr-8 py-4 overflow-visible hover:-translate-y-0.5 hover:shadow-lg transition-[opacity,transform,box-shadow] duration-[180ms] ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1.5'}`}
     >
       {/* Favicon — straddles left border */}
       <div className="absolute left-0 top-4 -translate-x-1/2 z-10">
