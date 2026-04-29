@@ -46,11 +46,11 @@ export default function LinkCardLayout({
         )}
 
         {link.meta?.fetchedAt && (
-          <span className="relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-white">
+          <span className="relative w-8 h-8 p-1 flex items-center justify-center bg-[var(--accent)] rounded-2xl">
             {link.meta?.faviconUrl ? (
               <img
                 src={link.meta.faviconUrl}
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-full h-full bg-[var(--accent)] rounded-xl object-cover"
                 aria-hidden="true"
                 onError={(event) => {
                   (event.target as HTMLImageElement).style.display = 'none';

@@ -98,7 +98,7 @@ export default function UserMenu({
   return (
     <div className="relative">
       <button
-        className="flex items-center gap-2 px-2 py-1.5 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full transition cursor-pointer"
+        className="flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-4xl transition cursor-pointer"
         ref={avatarRef}
         type="button"
         onClick={() => setShowUserMenu((open) => !open)}
@@ -109,7 +109,7 @@ export default function UserMenu({
         <img
           src={avatarUrl}
           alt={user.email}
-          className="w-7 h-7 rounded-full"
+          className="w-8 h-8 rounded-[26px]"
         />
         <i
           className={`fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] transition-transform duration-200 ease-out ${showUserMenu ? '-rotate-180' : ''}`}
