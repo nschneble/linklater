@@ -9,7 +9,7 @@ import {
   type PaginatedLinks,
 } from './api';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useMetadataPolling } from './useMetadataPolling';
 import { usePasteDetection } from './usePasteDetection';
 
@@ -22,7 +22,6 @@ export interface UseLinksResult {
   handleRandom: () => Promise<void>;
   handleToggleArchive: (link: Link) => Promise<void>;
   handleToggleForm: () => void;
-  initialLoad: boolean;
   links: Link[];
   loadingLinks: boolean;
   page: number;
@@ -48,8 +47,6 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
   const [randomLoading, setRandomLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showLinkForm, setShowLinkForm] = useState(false);
-  const hasFetchedOnce = useRef(false);
-
   useMetadataPolling(pendingMetaLinkId, (updatedLink) => {
     setLinks((previous) =>
       previous.map((link) => (link.id === updatedLink.id ? updatedLink : link)),
@@ -67,6 +64,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     let cancelled = false;
 
     const load = async () => {
+      if (page === 1) setLinks([]);
       setLoadingLinks(true);
       try {
         const result = await getLinks({
@@ -87,7 +85,6 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
       } finally {
         if (!cancelled) {
           setLoadingLinks(false);
-          hasFetchedOnce.current = true;
         }
       }
     };
@@ -213,7 +210,6 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     handleRandom,
     handleToggleArchive,
     handleToggleForm,
-    initialLoad: !hasFetchedOnce.current,
     links,
     loadingLinks,
     page,

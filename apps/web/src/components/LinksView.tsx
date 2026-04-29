@@ -9,7 +9,6 @@ type LinksFilter = 'active' | 'archived';
 
 interface LinksViewProps {
   filter: LinksFilter;
-  initialLoad: boolean;
   links: Link[];
   loadingLinks: boolean;
   page: number;
@@ -31,7 +30,6 @@ interface LinksViewProps {
 
 export default function LinksView({
   filter,
-  initialLoad,
   links,
   loadingLinks,
   page,
@@ -169,7 +167,7 @@ export default function LinksView({
       )}
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {loadingLinks && page === 1 && initialLoad
+        {loadingLinks && page === 1
           ? Array.from({ length: 5 }).map((_, index) => (
               <LinkCardSkeleton key={index} />
             ))
@@ -177,7 +175,7 @@ export default function LinksView({
               <LinkCard
                 key={link.id}
                 link={link}
-                animationDelay={Math.min(index * 40, 200)}
+                animationDelay={Math.min(index * 60, 240)}
                 onArchiveToggle={() => onArchiveToggle(link)}
               />
             ))}

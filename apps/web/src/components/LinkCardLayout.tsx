@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import type { Link } from '../lib/api';
 
 interface LinkCardLayoutProps {
@@ -25,13 +24,15 @@ export default function LinkCardLayout({
   onCardClick,
   onUnarchiveClick,
 }: LinkCardLayoutProps) {
-  const [visible, setVisible] = useState(false);
-  const [entered, setEntered] = useState(false);
+  function childStyle(elementIndex: number) {
+    return {
+      animationDelay: `${animationDelay + elementIndex * 60}ms`,
+    };
+  }
 
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
+  function childClass() {
+    return 'animate-card-enter';
+  }
 
   const hasTitle = Boolean(link.meta?.title);
   const displayTitle = link.meta?.title ?? '(No title)';
@@ -42,11 +43,7 @@ export default function LinkCardLayout({
   return (
     <article
       onClick={onCardClick}
-      onTransitionEnd={() => {
-        if (!entered) setEntered(true);
-      }}
-      style={{ transitionDelay: entered ? '0ms' : `${animationDelay}ms` }}
-      className={`relative border-l-4 border-[var(--accent)] rounded-r-xl bg-[var(--bg-surface)] cursor-pointer pl-10 pr-8 py-4 overflow-visible hover:-translate-y-0.5 hover:shadow-lg transition-[opacity,transform,box-shadow] duration-[180ms] ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1.5'}`}
+      className="relative border-l-4 border-[var(--accent)] rounded-r-xl bg-[var(--bg-surface)] cursor-pointer pl-10 pr-8 py-4 overflow-visible hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-[180ms] ease-out"
     >
       {/* Favicon — straddles left border */}
       <div className="absolute left-0 top-4 -translate-x-1/2 z-10">
@@ -80,16 +77,25 @@ export default function LinkCardLayout({
 
       {/* Card content */}
       <div className="space-y-1">
-        <p className="text-[var(--text-subtle)] text-xs truncate">
+        <p
+          style={childStyle(0)}
+          className={`text-[var(--text-subtle)] text-xs truncate ${childClass()}`}
+        >
           {displaySiteName}
         </p>
 
-        <p className="text-[var(--text)] text-sm font-semibold line-clamp-2 [text-wrap:balance]">
+        <p
+          style={childStyle(1)}
+          className={`text-[var(--text)] text-sm font-semibold line-clamp-2 [text-wrap:balance] ${childClass()}`}
+        >
           {displayTitle}
         </p>
 
         {displayDescription && (
-          <div className="leading-6 h-12 overflow-hidden">
+          <div
+            style={childStyle(2)}
+            className={`leading-6 h-12 overflow-hidden ${childClass()}`}
+          >
             <p className="text-[var(--text-muted)] text-xs text-pretty line-clamp-2">
               {displayDescription}
             </p>
@@ -101,7 +107,8 @@ export default function LinkCardLayout({
             src={link.meta.imageUrl ?? getPlaceholderUrl(link)}
             alt=""
             aria-hidden="true"
-            className="w-full max-h-40 object-cover rounded-md mt-0 mb-4 outline outline-1 outline-black/10 -outline-offset-1"
+            style={childStyle(3)}
+            className={`w-full max-h-40 object-cover rounded-md mt-0 mb-4 outline outline-1 outline-black/10 -outline-offset-1 ${childClass()}`}
             onError={(event) => {
               (event.target as HTMLImageElement).src = getPlaceholderUrl(link);
             }}

@@ -30,8 +30,17 @@ body {
   }
 }
 
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(4px);
+  }
+}
+
 @theme {
   --animate-fade-in-up: fade-in-up 180ms ease-out both;
+  --animate-card-enter: card-enter 400ms ease-out both;
 }
 
 *,
