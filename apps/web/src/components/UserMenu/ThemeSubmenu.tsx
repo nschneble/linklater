@@ -45,8 +45,7 @@ export default function ThemeSubmenu({
 
       <div
         className={`absolute top-0 w-56 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] shadow-black/40 shadow-lg rounded-xl z-50
-          transition-[opacity,transform] duration-150 ease-out
-          ${showSubmenu ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}
+          ${showSubmenu ? 'transition-[opacity,transform] duration-150 ease-out opacity-100 scale-100 pointer-events-auto' : 'transition-opacity duration-100 ease-in opacity-0 scale-95 pointer-events-none'}
           ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
         onMouseEnter={onFlyoutMouseEnter}
         onMouseLeave={onFlyoutMouseLeave}

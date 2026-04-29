@@ -118,10 +118,10 @@ export default function UserMenu({
 
       <div
         ref={menuRef}
-        className={`absolute right-0 w-60 mt-2 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] text-xs shadow-black/40 shadow-lg rounded-xl z-50 origin-top-right transition-[opacity,transform] duration-150 ease-out ${
+        className={`absolute right-0 w-60 mt-2 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] text-xs shadow-black/40 shadow-lg rounded-xl z-50 origin-top-right ${
           showUserMenu
-            ? 'opacity-100 scale-100 pointer-events-auto'
-            : 'opacity-0 scale-95 pointer-events-none'
+            ? 'transition-[opacity,transform] duration-150 ease-out opacity-100 scale-100 pointer-events-auto'
+            : 'transition-opacity duration-100 ease-in opacity-0 scale-95 pointer-events-none'
         }`}
       >
         <div className="mb-2 px-3 pb-2 border-b border-[var(--border)]">
