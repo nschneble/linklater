@@ -78,7 +78,7 @@ export default function LinkCardLayout({
 
         {displayDescription && (
           <div className="leading-6 h-12 overflow-hidden">
-            <p className="text-[var(--text-muted)] text-xs line-clamp-2">
+            <p className="text-[var(--text-muted)] text-xs text-pretty line-clamp-2">
               {displayDescription}
             </p>
           </div>

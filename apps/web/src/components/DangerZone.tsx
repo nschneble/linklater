@@ -24,7 +24,7 @@ export default function DangerZone() {
   return (
     <div className="max-w-md p-4 bg-[var(--bg-surface)] border border-rose-800/70 rounded-xl">
       <h3 className="mb-1 text-rose-400 text-sm font-semibold">Danger zone</h3>
-      <p className="mb-3 text-rose-300/80 text-xs">
+      <p className="mb-3 text-rose-300/80 text-xs text-pretty">
         Deleting your account will remove all your saved links. This cannot be
         undone.
       </p>

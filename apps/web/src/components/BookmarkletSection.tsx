@@ -39,7 +39,7 @@ export default function BookmarkletSection() {
   return (
     <div className="max-w-md space-y-3">
       <h3 className="text-[var(--text)] text-sm font-semibold">Bookmarklet</h3>
-      <p className="text-[var(--text-muted)] text-xs">
+      <p className="text-[var(--text-muted)] text-xs text-pretty">
         Drag this button to your bookmarks bar. Click it on any page to save the
         link directly to Linklater.
       </p>
@@ -52,7 +52,7 @@ export default function BookmarkletSection() {
         <i className="fa-solid fa-bookmark text-[var(--accent)] text-[0.7rem]" />
         Save to Linklater
       </a>
-      <p className="text-[var(--text-subtle)] text-xs">
+      <p className="text-[var(--text-subtle)] text-xs text-pretty">
         Your auth token is embedded in this bookmarklet. Keep it private. It
         expires after 90 days. Reinstall it from this page when it does.
       </p>
