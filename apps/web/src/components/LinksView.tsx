@@ -3,6 +3,7 @@ import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import LinkForm from './LinkForm';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
+import { useEffect } from 'react';
 import type { Link, PaginatedLinks } from '../lib/api';
 
 type LinksFilter = 'active' | 'archived';
@@ -48,6 +49,19 @@ export default function LinksView({
   onSearchChange,
   onToggleForm,
 }: LinksViewProps) {
+  useEffect(() => {
+    if (!showLinkForm) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onToggleForm();
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showLinkForm, onToggleForm]);
+
   return (
     <>
       <h2 className="mb-1 text-lg font-semibold">Your links</h2>
@@ -93,7 +107,10 @@ export default function LinksView({
               title="Opens a random unread link and marks it as read."
               onClick={onRandom}
             >
-              <i className="fa-solid fa-shuffle text-[0.7rem]" aria-hidden="true" />
+              <i
+                className="fa-solid fa-shuffle text-[0.7rem]"
+                aria-hidden="true"
+              />
               {randomLoading ? 'Stumbling…' : 'Stumble upon'}
             </IconButton>
 
@@ -103,7 +120,10 @@ export default function LinksView({
               onClick={onToggleForm}
               aria-expanded={showLinkForm}
             >
-              <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
+              <i
+                className="fa-solid fa-plus text-[0.7rem]"
+                aria-hidden="true"
+              />
               {showLinkForm ? 'Hide form' : 'Add link'}
             </PrimaryButton>
           </div>
@@ -116,7 +136,10 @@ export default function LinksView({
               title="Permanently removes all read links."
               onClick={onDeleteAllArchived}
             >
-              <i className="fa-solid fa-trash text-[0.7rem]" aria-hidden="true" />
+              <i
+                className="fa-solid fa-trash text-[0.7rem]"
+                aria-hidden="true"
+              />
               Remove all read
             </IconButton>
           </div>
@@ -157,16 +180,16 @@ export default function LinksView({
       {showLinkForm && (
         <>
           <div
-            className="fixed inset-0 z-10 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-20 bg-black/50 backdrop-blur-sm"
             onClick={onToggleForm}
           />
-          <div className="relative z-20 mt-0 animate-fade-in-up">
+          <div className="relative z-30 mt-0 animate-fade-in-up">
             <LinkForm onCreated={onCreated} />
           </div>
         </>
       )}
 
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-1 gap-6">
         {loadingLinks && page === 1
           ? Array.from({ length: 5 }).map((_, index) => (
               <LinkCardSkeleton key={index} />

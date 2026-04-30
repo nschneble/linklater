@@ -18,6 +18,7 @@ type LinksFilter = 'active' | 'archived';
 export interface UseLinksResult {
   handleCreated: (link: Link) => void;
   handleDeleteAllArchived: () => Promise<void>;
+  handleDismissToast: () => void;
   handleLoadMore: () => void;
   handleRandom: () => Promise<void>;
   handleToggleArchive: (link: Link) => Promise<void>;
@@ -30,6 +31,7 @@ export interface UseLinksResult {
   randomLoading: boolean;
   saveError: string | null;
   showLinkForm: boolean;
+  toastMessage: string | null;
 }
 
 export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
@@ -47,6 +49,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
   const [randomLoading, setRandomLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showLinkForm, setShowLinkForm] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   useMetadataPolling(pendingMetaLinkId, (updatedLink) => {
     setLinks((previous) =>
       previous.map((link) => (link.id === updatedLink.id ? updatedLink : link)),
@@ -108,6 +111,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
       );
       setShowLinkForm(false);
       setPendingMetaLinkId(link.id);
+      setToastMessage('Link saved!');
     },
     [filter],
   );
@@ -203,9 +207,14 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     setShowLinkForm((open) => !open);
   };
 
+  const handleDismissToast = useCallback(() => {
+    setToastMessage(null);
+  }, []);
+
   return {
     handleCreated,
     handleDeleteAllArchived,
+    handleDismissToast,
     handleLoadMore,
     handleRandom,
     handleToggleArchive,
@@ -218,5 +227,6 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     randomLoading,
     saveError,
     showLinkForm,
+    toastMessage,
   };
 }

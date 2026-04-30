@@ -40,12 +40,16 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
     >
       <div className="flex-1">
         <FormInput
+          autoFocus
           type="url"
           placeholder="https://example.com/article"
           value={url}
           onChange={(event) => setUrl(event.target.value)}
           required
         />
+        <p className="mt-1.5 text-[var(--text-subtle)] text-xs">
+          Tip: paste a URL anywhere on the page to save it instantly.
+        </p>
       </div>
       <PrimaryButton
         disabled={saving}

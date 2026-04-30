@@ -8,6 +8,7 @@ import Header from './components/Header';
 import LinksView from './components/LinksView';
 import SettingsView from './components/SettingsView';
 import ThemeEditor from './components/ThemeEditor';
+import Toast from './components/ui/Toast';
 
 type AppView = 'links' | 'settings' | 'theme-editor';
 type LinksFilter = 'active' | 'archived';
@@ -23,6 +24,7 @@ export default function AppShell() {
   const {
     handleCreated,
     handleDeleteAllArchived,
+    handleDismissToast,
     handleLoadMore,
     handleRandom,
     handleToggleArchive,
@@ -35,6 +37,7 @@ export default function AppShell() {
     randomLoading,
     saveError,
     showLinkForm,
+    toastMessage,
   } = useLinks(filter, search);
 
   const handleThemeSelect = (theme: BaseTheme) => {
@@ -99,6 +102,9 @@ export default function AppShell() {
           <SettingsView />
         )}
       </main>
+      {toastMessage && (
+        <Toast message={toastMessage} onDismiss={handleDismissToast} />
+      )}
     </div>
   );
 }
