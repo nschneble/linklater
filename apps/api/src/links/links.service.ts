@@ -15,7 +15,7 @@ export interface CreateLinkInput {
 export type UpdateLinkInput = object;
 
 const MAX_LIMIT = 100;
-const DEFAULT_LIMIT = 50;
+const DEFAULT_LIMIT = 10;
 
 export interface LinksQuery {
   archived?: boolean;
