@@ -2,7 +2,7 @@ import UserMenu from './UserMenu';
 import type { BaseTheme } from '../theme/ThemeContext';
 import type { User } from '../auth/AuthContext';
 
-type AppView = 'links' | 'settings';
+type AppView = 'links' | 'settings' | 'theme-editor';
 
 interface HeaderProps {
   user: User;

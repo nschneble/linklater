@@ -59,7 +59,7 @@ export default function LinksView({
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
         <div
-          className="relative inline-flex p-1 bg-[var(--bg-surface)] border border-[var(--border)] text-xs rounded-full"
+          className="relative inline-flex p-1 bg-[var(--bg-surface)] shadow-sm text-xs rounded-full"
           role="tablist"
           aria-label="Links filter"
         >
@@ -183,7 +183,7 @@ export default function LinksView({
         {pagination && links.length < pagination.total && (
           <div className="flex justify-center pt-2">
             <button
-              className="px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text)] text-xs rounded-full cursor-pointer disabled:cursor-wait disabled:opacity-60"
+              className="px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] shadow-sm text-[var(--text)] text-xs rounded-full cursor-pointer disabled:cursor-wait disabled:opacity-60"
               type="button"
               disabled={loadingLinks}
               onClick={onLoadMore}

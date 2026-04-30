@@ -46,7 +46,7 @@ export default function AuthForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl">
+    <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] rounded-2xl shadow-xl">
       <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold select-none">
         Linklater
       </h1>

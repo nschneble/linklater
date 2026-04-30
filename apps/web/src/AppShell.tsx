@@ -7,8 +7,9 @@ import { useTheme, type BaseTheme } from './theme/ThemeContext';
 import Header from './components/Header';
 import LinksView from './components/LinksView';
 import SettingsView from './components/SettingsView';
+import ThemeEditor from './components/ThemeEditor';
 
-type AppView = 'links' | 'settings';
+type AppView = 'links' | 'settings' | 'theme-editor';
 type LinksFilter = 'active' | 'archived';
 
 export default function AppShell() {
@@ -64,7 +65,13 @@ export default function AppShell() {
         view={view}
       />
 
-      <main className="max-w-3xl mx-auto px-4 py-12 space-y-6">
+      <main
+        className={
+          view === 'theme-editor'
+            ? 'px-4 py-8'
+            : 'max-w-3xl mx-auto px-4 py-12 space-y-6'
+        }
+      >
         {view === 'links' ? (
           <LinksView
             filter={filter}
@@ -86,6 +93,8 @@ export default function AppShell() {
             search={search}
             showLinkForm={showLinkForm}
           />
+        ) : view === 'theme-editor' ? (
+          <ThemeEditor />
         ) : (
           <SettingsView />
         )}

@@ -44,7 +44,7 @@ export default function BookmarkletSection() {
         link directly to Linklater.
       </p>
       <a
-        className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text)] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full select-none transition cursor-grab active:cursor-grabbing"
+        className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] shadow-sm text-[var(--text)] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full select-none transition cursor-grab active:cursor-grabbing"
         ref={bookmarkletRef}
         onClick={(event) => event.preventDefault()}
         draggable
