@@ -13,11 +13,27 @@ interface ContrastPair {
 const CONTRAST_PAIRS: ContrastPair[] = [
   { label: 'Text / Background', foreground: '--text', background: '--bg' },
   { label: 'Text / Surface', foreground: '--text', background: '--bg-surface' },
-  { label: 'Text / Elevated', foreground: '--text', background: '--bg-elevated' },
-  { label: 'Muted / Background', foreground: '--text-muted', background: '--bg' },
-  { label: 'Subtle / Background', foreground: '--text-subtle', background: '--bg' },
+  {
+    label: 'Text / Elevated',
+    foreground: '--text',
+    background: '--bg-elevated',
+  },
+  {
+    label: 'Muted / Background',
+    foreground: '--text-muted',
+    background: '--bg',
+  },
+  {
+    label: 'Subtle / Background',
+    foreground: '--text-subtle',
+    background: '--bg',
+  },
   { label: 'Text / Input', foreground: '--text', background: '--bg-input' },
-  { label: 'Accent fg / Accent', foreground: '--accent-fg', background: '--accent' },
+  {
+    label: 'Accent fg / Accent',
+    foreground: '--accent-fg',
+    background: '--accent',
+  },
 ];
 
 function linearizeColorComponent(component: number): number {
@@ -85,7 +101,7 @@ export default function ContrastChecker({ colorValues }: ContrastCheckerProps) {
       {CONTRAST_PAIRS.map((pair) => {
         const ratio = computeContrastRatio(
           colorValues[pair.foreground],
-          colorValues[pair.background]
+          colorValues[pair.background],
         );
 
         return (
@@ -94,11 +110,15 @@ export default function ContrastChecker({ colorValues }: ContrastCheckerProps) {
             className="flex items-center gap-2 py-1.5 border-b border-[var(--border)] last:border-0"
           >
             <div className="flex-1 min-w-0">
-              <p className="text-[var(--text)] text-xs truncate">{pair.label}</p>
+              <p className="text-[var(--text)] text-xs truncate">
+                {pair.label}
+              </p>
             </div>
 
             {ratio === null ? (
-              <span className="text-[var(--text-subtle)] text-[0.65rem]">—</span>
+              <span className="text-[var(--text-subtle)] text-[0.65rem]">
+                —
+              </span>
             ) : (
               <div className="flex items-center gap-1 flex-shrink-0">
                 <span className="text-[var(--text-muted)] text-[0.65rem] font-mono w-8 text-right">

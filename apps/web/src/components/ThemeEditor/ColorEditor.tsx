@@ -22,7 +22,12 @@ function normalizeToSixDigitHex(value: string): string {
   return trimmed;
 }
 
-function ColorRow({ label, variable, currentValue, onOverride }: ColorRowProps) {
+function ColorRow({
+  label,
+  variable,
+  currentValue,
+  onOverride,
+}: ColorRowProps) {
   const [inputValue, setInputValue] = useState(currentValue);
 
   useEffect(() => {
@@ -49,7 +54,9 @@ function ColorRow({ label, variable, currentValue, onOverride }: ColorRowProps) 
     }
   }
 
-  const pickerValue = /^#[0-9a-fA-F]{6}$/.test(inputValue) ? inputValue : '#000000';
+  const pickerValue = /^#[0-9a-fA-F]{6}$/.test(inputValue)
+    ? inputValue
+    : '#000000';
 
   return (
     <div className="flex items-center gap-2">
@@ -72,7 +79,9 @@ function ColorRow({ label, variable, currentValue, onOverride }: ColorRowProps) 
 
       <div className="flex-1 min-w-0">
         <p className="text-[var(--text)] text-xs font-medium">{label}</p>
-        <p className="text-[var(--text-subtle)] text-[0.65rem] font-mono">{variable}</p>
+        <p className="text-[var(--text-subtle)] text-[0.65rem] font-mono">
+          {variable}
+        </p>
       </div>
 
       <input
@@ -89,7 +98,10 @@ function ColorRow({ label, variable, currentValue, onOverride }: ColorRowProps) 
   );
 }
 
-export default function ColorEditor({ colorValues, onOverride }: ColorEditorProps) {
+export default function ColorEditor({
+  colorValues,
+  onOverride,
+}: ColorEditorProps) {
   return (
     <div className="space-y-5">
       {VAR_GROUPS.map((group) => (

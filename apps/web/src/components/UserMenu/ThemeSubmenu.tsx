@@ -35,12 +35,18 @@ export default function ThemeSubmenu({
             : 'hover:bg-[var(--bg-surface)]'
         }`}
       >
-        <i className="fa-solid fa-palette text-[var(--text-muted)] text-[0.75rem]" aria-hidden="true" />
+        <i
+          className="fa-solid fa-palette text-[var(--text-muted)] text-[0.75rem]"
+          aria-hidden="true"
+        />
         <div className="flex-1">
           <div>Theme</div>
           <div className="mt-0.5 text-[var(--text-muted)]">{currentLabel}</div>
         </div>
-        <i className="fa-solid fa-chevron-right text-[var(--text-subtle)] text-[0.6rem]" aria-hidden="true" />
+        <i
+          className="fa-solid fa-chevron-right text-[var(--text-subtle)] text-[0.6rem]"
+          aria-hidden="true"
+        />
       </div>
 
       <div
@@ -70,7 +76,10 @@ export default function ThemeSubmenu({
             />
             <span className="flex-1">{theme.label}</span>
             {baseTheme === theme.id && (
-              <i className="fa-solid fa-check text-[var(--accent)] text-[0.6rem]" aria-hidden="true" />
+              <i
+                className="fa-solid fa-check text-[var(--accent)] text-[0.6rem]"
+                aria-hidden="true"
+              />
             )}
           </button>
         ))}

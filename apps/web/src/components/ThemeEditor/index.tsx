@@ -1,4 +1,9 @@
-import { THEMES, useTheme, type BaseTheme, type Mode } from '../../theme/ThemeContext';
+import {
+  THEMES,
+  useTheme,
+  type BaseTheme,
+  type Mode,
+} from '../../theme/ThemeContext';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import ContrastChecker from './ContrastChecker';
@@ -20,9 +25,12 @@ export default function ThemeEditor() {
     <div className="max-w-5xl mx-auto">
       <div className="flex flex-wrap items-start gap-3 mb-8">
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-semibold text-[var(--text)]">Theme editor</h1>
+          <h1 className="text-lg font-semibold text-[var(--text)]">
+            Theme editor
+          </h1>
           <p className="mt-0.5 text-[var(--text-muted)] text-xs">
-            Edit color variables and see changes live. Resets when you navigate away.
+            Edit color variables and see changes live. Resets when you navigate
+            away.
           </p>
         </div>
 

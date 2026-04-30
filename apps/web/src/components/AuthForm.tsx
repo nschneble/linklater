@@ -101,7 +101,10 @@ export default function AuthForm() {
         {error && <Alert variant="error">{error}</Alert>}
 
         <PrimaryButton disabled={loading} className="w-full py-2.5">
-          <i className="fa-solid fa-right-to-bracket text-xs" aria-hidden="true" />
+          <i
+            className="fa-solid fa-right-to-bracket text-xs"
+            aria-hidden="true"
+          />
           {loading
             ? 'Working…'
             : mode === 'login'

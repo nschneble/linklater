@@ -56,7 +56,7 @@ function readAllComputedVars(): Record<ThemeVariable, string> {
     EDITABLE_VARS.map((variable) => [
       variable,
       computedStyle.getPropertyValue(variable).trim(),
-    ])
+    ]),
   ) as Record<ThemeVariable, string>;
 }
 
@@ -69,9 +69,8 @@ function clearAllInlineOverrides(): void {
 
 export function useThemeOverrides() {
   const { baseTheme, mode } = useTheme();
-  const [colorValues, setColorValues] = useState<Record<ThemeVariable, string>>(
-    readAllComputedVars
-  );
+  const [colorValues, setColorValues] =
+    useState<Record<ThemeVariable, string>>(readAllComputedVars);
 
   useEffect(() => {
     clearAllInlineOverrides();

@@ -44,7 +44,9 @@ export default function ComponentShowcase() {
               style={{ backgroundColor: `var(${variable})` }}
             >
               <p className="text-[var(--text)] text-xs font-medium">{label}</p>
-              <p className="text-[var(--text-subtle)] text-[0.65rem] font-mono">{variable}</p>
+              <p className="text-[var(--text-subtle)] text-[0.65rem] font-mono">
+                {variable}
+              </p>
             </div>
           ))}
         </div>
@@ -52,9 +54,15 @@ export default function ComponentShowcase() {
 
       <ShowcaseSection title="Typography">
         <div className="space-y-1.5 px-3 py-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg">
-          <p className="text-[var(--text)] text-sm font-semibold">Primary text</p>
-          <p className="text-[var(--text-muted)] text-sm">Muted — labels and captions</p>
-          <p className="text-[var(--text-subtle)] text-sm">Subtle — hints and URLs</p>
+          <p className="text-[var(--text)] text-sm font-semibold">
+            Primary text
+          </p>
+          <p className="text-[var(--text-muted)] text-sm">
+            Muted — labels and captions
+          </p>
+          <p className="text-[var(--text-subtle)] text-sm">
+            Subtle — hints and URLs
+          </p>
         </div>
       </ShowcaseSection>
 
@@ -65,19 +73,31 @@ export default function ComponentShowcase() {
             Add link
           </PrimaryButton>
           <IconButton variant="elevated">
-            <i className="fa-solid fa-shuffle text-[0.7rem]" aria-hidden="true" />
+            <i
+              className="fa-solid fa-shuffle text-[0.7rem]"
+              aria-hidden="true"
+            />
             Stumble upon
           </IconButton>
           <IconButton variant="default">
-            <i className="fa-solid fa-bookmark text-[0.7rem]" aria-hidden="true" />
+            <i
+              className="fa-solid fa-bookmark text-[0.7rem]"
+              aria-hidden="true"
+            />
             Default
           </IconButton>
           <IconButton variant="ghost">
-            <i className="fa-solid fa-ellipsis text-[0.7rem]" aria-hidden="true" />
+            <i
+              className="fa-solid fa-ellipsis text-[0.7rem]"
+              aria-hidden="true"
+            />
             Ghost
           </IconButton>
           <IconButton variant="danger">
-            <i className="fa-solid fa-triangle-exclamation text-[0.7rem]" aria-hidden="true" />
+            <i
+              className="fa-solid fa-triangle-exclamation text-[0.7rem]"
+              aria-hidden="true"
+            />
             Danger
           </IconButton>
           <IconButton variant="danger-filled">
@@ -140,12 +160,14 @@ export default function ComponentShowcase() {
               <p className="text-[var(--text)] text-sm font-medium truncate">
                 Example saved link
               </p>
-              <p className="text-[var(--text-subtle)] text-xs truncate">example.com</p>
+              <p className="text-[var(--text-subtle)] text-xs truncate">
+                example.com
+              </p>
             </div>
           </div>
           <p className="mt-2 text-[var(--text-muted)] text-xs line-clamp-2">
-            A brief description of the saved link. This shows how muted text looks within a
-            card surface in the current theme.
+            A brief description of the saved link. This shows how muted text
+            looks within a card surface in the current theme.
           </p>
         </div>
       </ShowcaseSection>
@@ -153,7 +175,9 @@ export default function ComponentShowcase() {
       <ShowcaseSection title="Accent">
         <div className="flex items-center gap-3">
           <div className="flex-1 px-3 py-2.5 bg-[var(--accent)] rounded-lg">
-            <p className="text-[var(--accent-fg)] text-xs font-semibold">Accent surface</p>
+            <p className="text-[var(--accent-fg)] text-xs font-semibold">
+              Accent surface
+            </p>
             <p className="text-[var(--accent-fg)] text-[0.65rem] opacity-75">
               --accent-fg on --accent
             </p>
