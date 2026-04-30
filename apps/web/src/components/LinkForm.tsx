@@ -35,7 +35,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
 
   return (
     <form
-      className="flex flex-col sm:flex-row gap-3 sm:items-end"
+      className="flex flex-col sm:flex-row gap-3 sm:items-start"
       onSubmit={handleSubmit}
     >
       <div className="flex-1">
@@ -48,12 +48,12 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
           required
         />
         <p className="mt-1.5 text-[var(--text-subtle)] text-xs">
-          Tip: paste a URL anywhere on the page to save it instantly.
+          Tip: Paste a link anywhere on the page to save it instantly
         </p>
       </div>
       <PrimaryButton
         disabled={saving}
-        className="w-full sm:w-auto rounded-full!"
+        className="w-full sm:w-auto my-[5px] rounded-full!"
       >
         <i className="fa-solid fa-bookmark text-xs" aria-hidden="true" />
         {saving ? 'Saving…' : 'Save link'}
