@@ -113,6 +113,7 @@ export default function UserMenu({
         />
         <i
           className={`fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] transition-transform duration-200 ease-out ${showUserMenu ? '-rotate-180' : ''}`}
+          aria-hidden="true"
         />
       </button>
 

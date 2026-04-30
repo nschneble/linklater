@@ -49,7 +49,7 @@ export default function BookmarkletSection() {
         onClick={(event) => event.preventDefault()}
         draggable
       >
-        <i className="fa-solid fa-bookmark text-[var(--accent)] text-[0.7rem]" />
+        <i className="fa-solid fa-bookmark text-[var(--accent)] text-[0.7rem]" aria-hidden="true" />
         Save to Linklater
       </a>
       <p className="text-[var(--text-subtle)] text-xs text-pretty">

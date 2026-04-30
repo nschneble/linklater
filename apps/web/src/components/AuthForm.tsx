@@ -38,7 +38,7 @@ export default function AuthForm() {
     }
   };
 
-  const changeModes = (newMode: Mode) => {
+  const handleModeChange = (newMode: Mode) => {
     setMode(newMode);
     setPassword('');
     setError(null);
@@ -62,14 +62,14 @@ export default function AuthForm() {
         <TabButton
           className="flex-1 py-2 text-sm"
           isActive={mode === 'login'}
-          onClick={() => changeModes('login')}
+          onClick={() => handleModeChange('login')}
         >
           Log in
         </TabButton>
         <TabButton
           className="flex-1 py-2 text-sm"
           isActive={mode === 'register'}
-          onClick={() => changeModes('register')}
+          onClick={() => handleModeChange('register')}
         >
           Sign up
         </TabButton>
@@ -101,7 +101,7 @@ export default function AuthForm() {
         {error && <Alert variant="error">{error}</Alert>}
 
         <PrimaryButton disabled={loading} className="w-full py-2.5">
-          <i className="fa-solid fa-right-to-bracket text-xs" />
+          <i className="fa-solid fa-right-to-bracket text-xs" aria-hidden="true" />
           {loading
             ? 'Working…'
             : mode === 'login'

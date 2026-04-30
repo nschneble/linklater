@@ -93,7 +93,7 @@ export default function LinksView({
               title="Opens a random unread link and marks it as read."
               onClick={onRandom}
             >
-              <i className="fa-solid fa-shuffle text-[0.7rem]" />
+              <i className="fa-solid fa-shuffle text-[0.7rem]" aria-hidden="true" />
               {randomLoading ? 'Stumbling…' : 'Stumble upon'}
             </IconButton>
 
@@ -103,7 +103,7 @@ export default function LinksView({
               onClick={onToggleForm}
               aria-expanded={showLinkForm}
             >
-              <i className="fa-solid fa-plus text-[0.7rem]" />
+              <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
               {showLinkForm ? 'Hide form' : 'Add link'}
             </PrimaryButton>
           </div>
@@ -116,7 +116,7 @@ export default function LinksView({
               title="Permanently removes all read links."
               onClick={onDeleteAllArchived}
             >
-              <i className="fa-solid fa-trash text-[0.7rem]" />
+              <i className="fa-solid fa-trash text-[0.7rem]" aria-hidden="true" />
               Remove all read
             </IconButton>
           </div>

@@ -51,7 +51,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
         disabled={saving}
         className="w-full sm:w-auto rounded-full!"
       >
-        <i className="fa-solid fa-bookmark text-xs" />
+        <i className="fa-solid fa-bookmark text-xs" aria-hidden="true" />
         {saving ? 'Saving…' : 'Save link'}
       </PrimaryButton>
       {error && (
