@@ -9,7 +9,7 @@
   --border: #7c421d;
   --accent: #cc310d;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
-  --accent-fg: #efb88e;
+  --accent-fg: #ffffff;
 }
 
 [data-theme='hit-man'][data-mode='light'] {
@@ -23,5 +23,5 @@
   --border: #7c421d;
   --accent: #cc310d;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #efb88e;
+  --accent-fg: #ffffff;
 }

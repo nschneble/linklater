@@ -9,7 +9,7 @@
   --border: #935035;
   --accent: #e02a15;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
-  --accent-fg: #e0d0c1;
+  --accent-fg: #ffffff;
 }
 
 [data-theme='school-of-rock'][data-mode='light'] {
@@ -23,5 +23,5 @@
   --border: #918c89;
   --accent: #e02a15;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #e0d0c1;
+  --accent-fg: #ffffff;
 }
