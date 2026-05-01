@@ -119,7 +119,7 @@ export default function UserMenu({
 
       <div
         ref={menuRef}
-        className={`absolute right-0 w-60 mt-2 py-2 bg-[var(--bg-elevated)] text-xs shadow-black/40 shadow-lg rounded-xl z-50 origin-top-right ${
+        className={`absolute right-0 w-64 mt-2 py-2 bg-[var(--bg-elevated)] text-xs shadow-black/40 shadow-lg rounded-xl z-50 origin-top-right ${
           showUserMenu
             ? 'transition-[opacity,transform] duration-150 ease-out opacity-100 scale-100 pointer-events-auto'
             : 'transition-opacity duration-100 ease-in opacity-0 scale-95 pointer-events-none'
