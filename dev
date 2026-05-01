@@ -86,7 +86,7 @@ draw_header() {
 render_service_line() {
   local state=$1 url=$2 frame_char=$3 label=$4
   case "$state" in
-    starting) printf "${YLW}%s${RST} %-4s  ${DIM}starting…${RST}" "$frame_char" "$label" ;;
+    starting) printf "${YLW}%s${RST} %-4s  ${DIM}starting${RST}"  "$frame_char" "$label" ;;
     ready)    printf "${GRN}%s${RST} %-4s  ${GRN}%s${RST}"        "$TICK"       "$label" "$url" ;;
     error)    printf "${RED}%s${RST} %-4s  ${RED}error${RST}"     "$CROSS"      "$label" ;;
   esac
@@ -105,9 +105,9 @@ render_status_view() {
   if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" ]]; then
     out+="  ${GRN}${BLD}Ready.${RST}  Ctrl+C stop  ·  ${DIM}1 API logs  ·  2 Web logs${RST}"
   elif [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" ]]; then
-    out+="  ${RED}${BLD}error${RST}"$'\n'$'\n'
-    out+="  ${DIM}1. View API logs"$'\n'
-    out+="  2. View Web logs${RST}"$'\n'$'\n'
+    out+="  ${RED}${BLD}An error occurred.${RST}"$'\n'$'\n'
+    out+="  ${DIM}1. API logs"$'\n'
+    out+="  2. Web logs${RST}"$'\n'$'\n'
     out+="  Press Control+C to stop"
   else
     out+="  ${DIM}Starting up…${RST}"
@@ -133,9 +133,20 @@ render_log_view() {
   out+="  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"$'\n'
   out+="  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"$'\n'
   out+=$'\n'
-  out+="  0. ← back to status"$'\n'$'\n'
-  out+="  ${DIM}1. View API logs${RST}"$'\n'
-  out+="  ${DIM}2. View Web logs${RST}"$'\n'
+  out+="  ${DIM}0. (back to status)${RST}"$'\n'$'\n'
+
+  if [[ "$label" == "API" ]]; then
+    out+="  →  API logs"$'\n'
+  else
+    out+="  ${DIM}1. API logs${RST}"$'\n'
+  fi
+
+  if [[ "$label" == "Web" ]]; then
+    out+="  →  Web logs"$'\n'
+  else
+    out+="  ${DIM}2. Web logs${RST}"$'\n'
+  fi
+
   out+=$'\n'
 
   local prefix_len=$(( ${#label} + 8 ))
