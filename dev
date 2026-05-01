@@ -20,7 +20,7 @@ WEB_LOG=$(mktemp)
 KEY_FILE=$(mktemp)
 
 # ── Process state ─────────────────────────────────────────────────────────────
-# Values: starting | ready | crashed
+# Values: starting | ready | error
 API_STATE="starting"
 WEB_STATE="starting"
 API_URL=""
@@ -87,8 +87,8 @@ render_service_line() {
   local state=$1 url=$2 frame_char=$3 label=$4
   case "$state" in
     starting) printf "${YLW}%s${RST} %-4s  ${DIM}starting…${RST}" "$frame_char" "$label" ;;
-    ready)    printf "${GRN}%s${RST} %-4s  ${GRN}%s${RST}"         "$TICK"       "$label" "$url" ;;
-    crashed)  printf "${RED}%s${RST} %-4s  ${RED}crashed${RST}"    "$CROSS"      "$label" ;;
+    ready)    printf "${GRN}%s${RST} %-4s  ${GRN}%s${RST}"        "$TICK"       "$label" "$url" ;;
+    error)    printf "${RED}%s${RST} %-4s  ${RED}error${RST}"     "$CROSS"      "$label" ;;
   esac
 }
 
@@ -104,8 +104,8 @@ render_status_view() {
 
   if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" ]]; then
     out+="  ${GRN}${BLD}Ready.${RST}  Ctrl+C stop  ·  ${DIM}1 API logs  ·  2 Web logs${RST}"
-  elif [[ "$API_STATE" == "crashed" || "$WEB_STATE" == "crashed" ]]; then
     out+="  ${RED}${BLD}Crashed.${RST}  Ctrl+C stop  ·  ${DIM}1 API logs  ·  2 Web logs${RST}"
+  elif [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" ]]; then
   else
     out+="  ${DIM}Starting up…  ·  1 API logs  ·  2 Web logs${RST}"
   fi
@@ -139,7 +139,7 @@ render_log_view() {
   [[ "$log_file" == "$API_LOG" ]] && service_state="$API_STATE" || service_state="$WEB_STATE"
 
   local log_source
-  if [[ "$service_state" == "crashed" ]]; then
+  if [[ "$service_state" == "error" ]]; then
     # Start from 2 lines before the first error so the full message is visible
     local error_line
     error_line=$(grep -n 'Error\|EADDR\|EACCES\|UnhandledPromise\|Cannot find module' \
@@ -211,17 +211,17 @@ while true; do
   fi
 
   # Detect crashes — process death or fatal error in log
-  if [[ "$API_STATE" != "crashed" ]]; then
+  if [[ "$API_STATE" != "error" ]]; then
     if ! kill -0 "$API_PID" 2>/dev/null || \
        grep -qE '(EADDRINUSE|EACCES|UnhandledPromiseRejection|Error:.*listen)' "$API_LOG" 2>/dev/null; then
-      API_STATE="crashed"
+      API_STATE="error"
       VIEW="api"
     fi
   fi
-  if [[ "$WEB_STATE" != "crashed" ]]; then
+  if [[ "$WEB_STATE" != "error" ]]; then
     if ! kill -0 "$WEB_PID" 2>/dev/null || \
        grep -qE '(EADDRINUSE|EACCES|error when starting dev server)' "$WEB_LOG" 2>/dev/null; then
-      WEB_STATE="crashed"
+      WEB_STATE="error"
       VIEW="web"
     fi
   fi
