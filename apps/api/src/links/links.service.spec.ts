@@ -119,7 +119,7 @@ describe('LinksService', () => {
       expect.objectContaining({
         where: { userId: USER_ID },
         skip: 0,
-        take: 50,
+        take: 10,
       }),
     );
     expect(result.total).toBe(1);
