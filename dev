@@ -104,10 +104,13 @@ render_status_view() {
 
   if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" ]]; then
     out+="  ${GRN}${BLD}Ready.${RST}  Ctrl+C stop  ·  ${DIM}1 API logs  ·  2 Web logs${RST}"
-    out+="  ${RED}${BLD}Crashed.${RST}  Ctrl+C stop  ·  ${DIM}1 API logs  ·  2 Web logs${RST}"
   elif [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" ]]; then
+    out+="  ${RED}${BLD}error${RST}"$'\n'$'\n'
+    out+="  ${DIM}1. View API logs"$'\n'
+    out+="  2. View Web logs${RST}"$'\n'$'\n'
+    out+="  Press Control+C to stop"
   else
-    out+="  ${DIM}Starting up…  ·  1 API logs  ·  2 Web logs${RST}"
+    out+="  ${DIM}Starting up…${RST}"
   fi
 
   printf '%s' "$out"
@@ -120,8 +123,8 @@ render_log_view() {
   local rows; rows=${stty_size%% *}; rows=${rows:-24}
   local cols; cols=${stty_size##* }; cols=${cols:-80}
   local content_width=$(( cols - 4 ))
-  # Lines above log content: 4 header + 2 service + 1 blank + 1 hint + 1 blank + 1 log label = 10
-  local available=$(( rows - 10 ))
+  # Lines above log content: 4 header + 3 service + 2 status + 3 options + 2 log labels = 14
+  local available=$(( rows - 14 ))
   local divider; divider=$(printf '─%.0s' $(seq 1 "$content_width"))
 
   local out=''
@@ -130,11 +133,13 @@ render_log_view() {
   out+="  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"$'\n'
   out+="  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"$'\n'
   out+=$'\n'
-  out+="  ${DIM}0 ← back  ·  1 API logs  ·  2 Web logs${RST}"$'\n'
+  out+="  0. ← back to status"$'\n'$'\n'
+  out+="  ${DIM}1. View API logs${RST}"$'\n'
+  out+="  ${DIM}2. View Web logs${RST}"$'\n'
   out+=$'\n'
 
   local prefix_len=$(( ${#label} + 8 ))
-  out+="  ${DIM}── ${label} ${divider:0:$(( content_width - prefix_len ))}${RST}"$'\n'
+  out+="  ${DIM}── ${label} ${divider:0:$(( content_width - prefix_len ))}${RST}"$'\n'$'\n'
 
   local service_state
   [[ "$log_file" == "$API_LOG" ]] && service_state="$API_STATE" || service_state="$WEB_STATE"
