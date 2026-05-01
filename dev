@@ -116,8 +116,9 @@ render_status_view() {
 # ── Log view ──────────────────────────────────────────────────────────────────
 render_log_view() {
   local frame_char=$1 label=$2 log_file=$3
-  local rows; rows=$(tput lines 2>/dev/null || echo 24)
-  local cols; cols=$(tput cols 2>/dev/null || echo 80)
+  local stty_size; stty_size=$(stty size </dev/tty 2>/dev/null)
+  local rows; rows=${stty_size%% *}; rows=${rows:-24}
+  local cols; cols=${stty_size##* }; cols=${cols:-80}
   local content_width=$(( cols - 4 ))
   # Lines above log content: 4 header + 2 service + 1 blank + 1 hint + 1 blank + 1 log label = 10
   local available=$(( rows - 10 ))
