@@ -103,7 +103,10 @@ render_status_view() {
   out+=$'\n'
 
   if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" ]]; then
-    out+="  ${GRN}${BLD}Ready.${RST}  Ctrl+C stop  ·  ${DIM}1 API logs  ·  2 Web logs${RST}"
+    out+="  ${GRN}${BLD}Ready.${RST}"$'\n'$'\n'
+    out+="  ${DIM}1. API logs"$'\n'
+    out+="  2. Web logs${RST}"$'\n'$'\n'
+    out+="  Press Control+C to stop"
   elif [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" ]]; then
     out+="  ${RED}${BLD}An error occurred.${RST}"$'\n'$'\n'
     out+="  ${DIM}1. API logs"$'\n'
