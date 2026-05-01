@@ -41,7 +41,9 @@ export default function ThemeSubmenu({
         />
         <div className="flex-1">
           <div>Theme</div>
-          <div className="mt-0.5 text-[var(--text-muted)]">{currentLabel}</div>
+          <div className="mt-0.5 text-[var(--text-muted)] line-clamp-1">
+            {currentLabel}
+          </div>
         </div>
         <i
           className="fa-solid fa-chevron-right text-[var(--text-subtle)] text-[0.6rem]"
