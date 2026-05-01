@@ -3,6 +3,7 @@ import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import LinkForm from './LinkForm';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
+import { createPortal } from 'react-dom';
 import { useEffect } from 'react';
 import type { Link, PaginatedLinks } from '../lib/api';
 
@@ -73,7 +74,7 @@ export default function LinksView({
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
         <div
-          className="relative inline-flex p-1 bg-[var(--bg-surface)] shadow-sm text-xs rounded-full"
+          className="relative grid grid-cols-2 p-1 bg-[var(--bg-surface)] shadow-sm text-xs rounded-full"
           role="tablist"
           aria-label="Links filter"
         >
@@ -177,16 +178,19 @@ export default function LinksView({
         </p>
       )}
 
-      {showLinkForm && (
-        <>
+      {showLinkForm &&
+        createPortal(
           <div
             className="fixed inset-0 z-20 bg-black/50 backdrop-blur-sm"
             onClick={onToggleForm}
-          />
-          <div className="relative z-30 mt-0 animate-fade-in-up">
-            <LinkForm onCreated={onCreated} />
-          </div>
-        </>
+          />,
+          document.body,
+        )}
+
+      {showLinkForm && (
+        <div className="relative z-30 mt-0 animate-fade-in-up">
+          <LinkForm onCreated={onCreated} />
+        </div>
       )}
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-1 gap-6">
