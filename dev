@@ -126,8 +126,8 @@ render_log_view() {
   local rows; rows=${stty_size%% *}; rows=${rows:-24}
   local cols; cols=${stty_size##* }; cols=${cols:-80}
   local content_width=$(( cols - 4 ))
-  # Lines above log content: 4 header + 3 service + 2 status + 3 options + 2 log labels = 14
-  local available=$(( rows - 14 ))
+  # Lines above log content: 4 title + 3 service + 2 status + 3 options + 3 log labels = 15
+  local available=$(( rows - 15 ))
   local divider; divider=$(printf '─%.0s' $(seq 1 "$content_width"))
 
   local out=''
