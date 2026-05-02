@@ -72,7 +72,7 @@ export default function UserMenu({
   const resetPreview = (currentBaseTheme: string) => {
     setPreviewTheme(null);
     const root = document.documentElement;
-    root.style.setProperty('--theme-transition-duration', '250ms');
+    root.style.setProperty('--theme-transition-duration', '600ms');
     root.style.setProperty('--theme-transition-easing', 'ease-out');
     root.dataset.theme = currentBaseTheme;
   };
