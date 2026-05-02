@@ -67,9 +67,10 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
   useEffect(() => {
     let cancelled = false;
 
+    if (page === 1) setLinks([]);
+    setLoadingLinks(true);
+
     const load = async () => {
-      if (page === 1) setLinks([]);
-      setLoadingLinks(true);
       try {
         const result = await getLinks({
           search: search || undefined,
