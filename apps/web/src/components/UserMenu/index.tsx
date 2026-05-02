@@ -34,6 +34,7 @@ export default function UserMenu({
 
   const avatarRef = useRef<HTMLButtonElement | null>(null);
   const hideSubmenuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const themeRowRef = useRef<HTMLDivElement | null>(null);
 
@@ -70,11 +71,27 @@ export default function UserMenu({
   };
 
   const resetPreview = (currentBaseTheme: string) => {
+    if (resetTransitionTimeout.current) {
+      clearTimeout(resetTransitionTimeout.current);
+    }
     setPreviewTheme(null);
     const root = document.documentElement;
     root.style.setProperty('--theme-transition-duration', '600ms');
     root.style.setProperty('--theme-transition-easing', 'ease-out');
     root.dataset.theme = currentBaseTheme;
+    resetTransitionTimeout.current = setTimeout(() => {
+      root.style.removeProperty('--theme-transition-duration');
+      root.style.removeProperty('--theme-transition-easing');
+      resetTransitionTimeout.current = null;
+    }, 650);
+  };
+
+  const handlePreviewChange = (theme: BaseTheme | null) => {
+    if (resetTransitionTimeout.current) {
+      clearTimeout(resetTransitionTimeout.current);
+      resetTransitionTimeout.current = null;
+    }
+    setPreviewTheme(theme);
   };
 
   const scheduleHide = (currentBaseTheme: string) => {
@@ -197,7 +214,7 @@ export default function UserMenu({
             onFlyoutMouseEnter={cancelHide}
             onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
             onThemeRowItemEnter={handleThemeRowItemEnter}
-            onPreviewChange={setPreviewTheme}
+            onPreviewChange={handlePreviewChange}
             onSelect={handleThemeSelect}
           />
         </div>
