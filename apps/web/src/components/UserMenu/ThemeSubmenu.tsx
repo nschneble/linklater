@@ -29,7 +29,7 @@ export default function ThemeSubmenu({
   return (
     <>
       <div
-        className={`flex items-center gap-2 w-full px-3 py-2 text-[var(--text)] cursor-default ${
+        className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 text-[var(--text)] cursor-default ${
           showSubmenu
             ? 'bg-[var(--bg-surface)]'
             : 'hover:bg-[var(--bg-surface)]'
