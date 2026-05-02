@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { Link } from '../lib/api';
 
 interface LinkCardLayoutProps {
@@ -7,14 +8,16 @@ interface LinkCardLayoutProps {
   onUnarchiveClick: (event: React.MouseEvent) => void;
 }
 
-function getPlaceholderUrl(link: Link) {
+const CARD_ENTER_CLASS = 'animate-card-enter';
+
+function getPlaceholderUrl(url: string) {
   const style = getComputedStyle(document.documentElement);
   const accent = style.getPropertyValue('--accent').trim().replace('#', '');
   const accentFg = style
     .getPropertyValue('--accent-fg')
     .trim()
     .replace('#', '');
-  const text = new URL(link.url).hostname.replace(/^www\./, '');
+  const text = new URL(url).hostname.replace(/^www\./, '');
   return `https://placehold.co/284x160/${accent}/${accentFg}?text=${text}`;
 }
 
@@ -24,14 +27,12 @@ export default function LinkCardLayout({
   onCardClick,
   onUnarchiveClick,
 }: LinkCardLayoutProps) {
+  const placeholderUrl = useMemo(() => getPlaceholderUrl(link.url), [link.url]);
+
   function childStyle(elementIndex: number) {
     return {
       animationDelay: `${animationDelay + elementIndex * 60}ms`,
     };
-  }
-
-  function childClass() {
-    return 'animate-card-enter';
   }
 
   const hasTitle = Boolean(link.meta?.title);
@@ -46,14 +47,7 @@ export default function LinkCardLayout({
       className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] rounded-r-xl hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-[180ms] ease-out cursor-pointer"
     >
       <div className="absolute left-0 top-4 -translate-x-1/2 z-10">
-        {!link.meta?.fetchedAt && (
-          <span
-            title="Fetching info…"
-            className="block w-5 h-5 bg-[var(--accent)] ring-2 ring-[var(--bg-surface)] rounded-full animate-pulse"
-          />
-        )}
-
-        {link.meta?.fetchedAt && (
+        {link.meta?.fetchedAt ? (
           <span className="relative flex items-center justify-center w-8 h-8 p-1 bg-[var(--accent)] rounded-2xl">
             {link.meta?.faviconUrl ? (
               <img
@@ -71,54 +65,58 @@ export default function LinkCardLayout({
               />
             )}
           </span>
+        ) : (
+          <span
+            title="Fetching info…"
+            className="block w-5 h-5 bg-[var(--accent)] ring-2 ring-[var(--bg-surface)] rounded-full animate-pulse"
+          />
         )}
       </div>
 
       <div className="space-y-1">
         <div className="flex flex-row items-center">
-          {link.meta?.fetchedAt && (
+          {link.meta?.fetchedAt ? (
             <img
-              src={link.meta.imageUrl ?? getPlaceholderUrl(link)}
+              src={link.meta.imageUrl ?? placeholderUrl}
               alt=""
               aria-hidden="true"
               style={childStyle(3)}
-              className={`w-[120px] h-[63px] object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${childClass()}`}
+              className={`w-[120px] h-[63px] object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
               onError={(event) => {
-                (event.target as HTMLImageElement).src =
-                  getPlaceholderUrl(link);
+                (event.target as HTMLImageElement).src = placeholderUrl;
               }}
             />
-          )}
+          ) : null}
 
           <div className="flex flex-col items-start ml-3">
             <p
               style={childStyle(1)}
-              className={`text-[var(--text)] text-sm font-semibold line-clamp-2 [text-wrap:balance] ${childClass()}`}
+              className={`text-[var(--text)] text-sm font-semibold line-clamp-2 [text-wrap:balance] ${CARD_ENTER_CLASS}`}
             >
               {displayTitle}
             </p>
 
             <p
               style={childStyle(0)}
-              className={`text-[var(--text-subtle)] text-xs truncate ${childClass()}`}
+              className={`text-[var(--text-subtle)] text-xs truncate ${CARD_ENTER_CLASS}`}
             >
               {displaySiteName}
             </p>
           </div>
         </div>
 
-        {displayDescription && (
+        {displayDescription ? (
           <div
             style={childStyle(2)}
-            className={`overflow-hidden h-8 mt-2 leading-4 ${childClass()}`}
+            className={`overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS}`}
           >
             <p className="text-[var(--text-muted)] text-xs text-pretty line-clamp-2">
               {displayDescription}
             </p>
           </div>
-        )}
+        ) : null}
 
-        {link.archivedAt && (
+        {link.archivedAt ? (
           <div className="flex justify-end pt-1">
             <button
               onClick={onUnarchiveClick}
@@ -127,7 +125,7 @@ export default function LinkCardLayout({
               Mark as unread
             </button>
           </div>
-        )}
+        ) : null}
       </div>
     </article>
   );

@@ -1,5 +1,5 @@
 import { gravatarUrl } from '../../lib/gravatar';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme, type BaseTheme } from '../../theme/ThemeContext';
 import MenuItem from './MenuItem';
 import ThemeSubmenu from './ThemeSubmenu';
@@ -24,7 +24,7 @@ export default function UserMenu({
   onThemeSelect,
   onViewChange,
 }: UserMenuProps) {
-  const avatarUrl = gravatarUrl(user.email, 64);
+  const avatarUrl = useMemo(() => gravatarUrl(user.email, 64), [user.email]);
   const { baseTheme, mode } = useTheme();
 
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);

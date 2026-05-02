@@ -1,7 +1,9 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react';
@@ -60,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     await apiLogin(email, password);
     const me = await getMe();
     setUser({
@@ -69,30 +71,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mode: me.mode,
       theme: me.theme,
     });
-  };
+  }, []);
 
-  const register = async (email: string, password: string) => {
-    await apiRegister(email, password);
-    await login(email, password);
-  };
+  const register = useCallback(
+    async (email: string, password: string) => {
+      await apiRegister(email, password);
+      await login(email, password);
+    },
+    [login],
+  );
 
-  const logout = () => {
+  const logout = useCallback(() => {
     apiLogout();
     setUser(null);
-  };
+  }, []);
 
-  const updateEmail = (email: string) => {
+  const updateEmail = useCallback((email: string) => {
     setUser((previous) => (previous ? { ...previous, email } : previous));
-  };
+  }, []);
 
-  const value: AuthContextValue = {
-    loading,
-    login,
-    logout,
-    register,
-    updateEmail,
-    user,
-  };
+  const value = useMemo<AuthContextValue>(
+    () => ({ loading, login, logout, register, updateEmail, user }),
+    [loading, login, logout, register, updateEmail, user],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
