@@ -65,7 +65,7 @@ function ColorRow({
         aria-label={`Pick color for ${label}`}
       >
         <span
-          className="block w-7 h-7 rounded-md border border-[var(--border)] shadow-sm"
+          className="block w-7 h-7 border border-[var(--border)] rounded-md shadow-sm"
           style={{ backgroundColor: currentValue }}
         />
         <input
@@ -89,7 +89,7 @@ function ColorRow({
         value={inputValue}
         onChange={handleTextChange}
         onBlur={handleTextBlur}
-        className="w-20 px-2 py-1 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-xs font-mono rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-transparent"
+        className="w-20 px-2 py-1 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-transparent rounded-md"
         placeholder="#000000"
         maxLength={7}
         spellCheck={false}

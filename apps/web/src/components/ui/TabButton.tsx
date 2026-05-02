@@ -15,7 +15,7 @@ export default function TabButton({
 }: TabButtonProps) {
   return (
     <button
-      className={`relative z-10 w-full font-semibold text-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
+      className={`relative z-10 w-full font-semibold text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full transition-colors duration-200 ${
         isActive
           ? 'text-[var(--bg)]'
           : 'text-[var(--text-muted)] cursor-pointer'

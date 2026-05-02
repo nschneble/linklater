@@ -119,7 +119,7 @@ export default function UserMenu({
 
       <div
         ref={menuRef}
-        className="absolute right-0 w-64 mt-2 py-2 bg-[var(--bg-elevated)] text-xs border-shadow-lg rounded-lg z-50 origin-top-right"
+        className="absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] text-xs border-shadow-lg rounded-lg"
         style={{
           transition: `opacity ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}`,
           opacity: showUserMenu ? 1 : 0,

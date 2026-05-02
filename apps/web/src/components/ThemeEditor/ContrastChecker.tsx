@@ -84,7 +84,7 @@ function PassBadge({ label, threshold, ratio }: PassBadgeProps) {
   const passes = ratio >= threshold;
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold ${
+      className={`inline-flex items-center px-1.5 py-0.5 text-[0.6rem] font-semibold rounded ${
         passes
           ? 'bg-emerald-900/40 text-emerald-400'
           : 'bg-rose-900/40 text-rose-400'
@@ -121,7 +121,7 @@ export default function ContrastChecker({ colorValues }: ContrastCheckerProps) {
               </span>
             ) : (
               <div className="flex items-center gap-1 flex-shrink-0">
-                <span className="text-[var(--text-muted)] text-[0.65rem] font-mono w-8 text-right">
+                <span className="w-8 text-[var(--text-muted)] text-[0.65rem] text-right font-mono">
                   {ratio.toFixed(1)}
                 </span>
                 <PassBadge label="AA" threshold={4.5} ratio={ratio} />

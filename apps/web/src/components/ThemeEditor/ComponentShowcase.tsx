@@ -113,13 +113,13 @@ export default function ComponentShowcase() {
 
       <ShowcaseSection title="Tabs">
         <div
-          className="relative inline-flex p-1 bg-[var(--bg-surface)] shadow-sm text-xs rounded-full"
+          className="relative inline-flex p-1 bg-[var(--bg-surface)] text-xs rounded-full shadow-sm"
           role="tablist"
           aria-label="Tab example"
         >
           <div
             aria-hidden="true"
-            className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full bg-[var(--text)]"
+            className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-[var(--text)] rounded-full"
             style={{
               transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
               transform: activeTab === 'read' ? 'translateX(100%)' : 'translateX(0)',

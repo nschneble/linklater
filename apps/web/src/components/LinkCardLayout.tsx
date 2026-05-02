@@ -43,18 +43,18 @@ export default function LinkCardLayout({
   return (
     <article
       onClick={onCardClick}
-      className="relative border-l-4 border-[var(--accent)] rounded-r-xl bg-[var(--bg-surface)] cursor-pointer pl-10 pr-8 py-4 overflow-visible hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-[180ms] ease-out"
+      className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] rounded-r-xl hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-[180ms] ease-out cursor-pointer"
     >
       <div className="absolute left-0 top-4 -translate-x-1/2 z-10">
         {!link.meta?.fetchedAt && (
           <span
             title="Fetching info…"
-            className="block w-5 h-5 rounded-full bg-[var(--accent)] ring-2 ring-[var(--bg-surface)] animate-pulse"
+            className="block w-5 h-5 bg-[var(--accent)] ring-2 ring-[var(--bg-surface)] rounded-full animate-pulse"
           />
         )}
 
         {link.meta?.fetchedAt && (
-          <span className="relative w-8 h-8 p-1 flex items-center justify-center bg-[var(--accent)] rounded-2xl">
+          <span className="relative flex items-center justify-center w-8 h-8 p-1 bg-[var(--accent)] rounded-2xl">
             {link.meta?.faviconUrl ? (
               <img
                 src={link.meta.faviconUrl}
@@ -110,7 +110,7 @@ export default function LinkCardLayout({
         {displayDescription && (
           <div
             style={childStyle(2)}
-            className={`mt-2 leading-4 h-8 overflow-hidden ${childClass()}`}
+            className={`overflow-hidden h-8 mt-2 leading-4 ${childClass()}`}
           >
             <p className="text-[var(--text-muted)] text-xs text-pretty line-clamp-2">
               {displayDescription}
