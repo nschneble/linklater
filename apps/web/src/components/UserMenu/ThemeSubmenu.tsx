@@ -39,7 +39,7 @@ export default function ThemeSubmenu({
           className="fa-solid fa-palette text-[var(--text-muted)] text-[0.75rem]"
           aria-hidden="true"
         />
-        <div className="flex-1">
+        <div className="flex-1 select-none">
           <div>Theme</div>
           <div className="mt-0.5 text-[var(--text-muted)] line-clamp-1">
             {currentLabel}
@@ -76,7 +76,7 @@ export default function ThemeSubmenu({
               className="shrink-0 inline-block w-3 h-3 rounded-full"
               style={{ backgroundColor: theme.accent }}
             />
-            <span className="flex-1">{theme.label}</span>
+            <span className="flex-1 select-none">{theme.label}</span>
             {baseTheme === theme.id && (
               <i
                 className="fa-solid fa-check text-[var(--accent)] text-[0.6rem]"

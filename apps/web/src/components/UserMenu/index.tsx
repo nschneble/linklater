@@ -125,7 +125,7 @@ export default function UserMenu({
             : 'transition-opacity duration-100 ease-in opacity-0 scale-95 pointer-events-none'
         }`}
       >
-        <div className="mb-2 px-3 pb-2 border-b border-[var(--border)]">
+        <div className="mb-2 px-3 pb-2 border-b border-[var(--border)] select-none">
           <p className="text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-tight font-semibold">
             Logged in as
           </p>

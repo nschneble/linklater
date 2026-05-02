@@ -65,8 +65,8 @@ export default function LinksView({
 
   return (
     <>
-      <h2 className="mb-1 text-lg font-semibold">Your links</h2>
-      <p className="text-[var(--text-muted)] text-xs">
+      <h2 className="mb-1 text-lg font-semibold select-none">Your links</h2>
+      <p className="text-[var(--text-muted)] text-xs select-none">
         {filter === 'archived'
           ? 'Read links are automatically removed after 7 days.'
           : 'Add, search, or stumble upon something random.'}
