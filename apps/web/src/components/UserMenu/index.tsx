@@ -30,7 +30,7 @@ export default function UserMenu({
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
   const [showThemeSubmenu, setShowThemeSubmenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [themeSubmenuOnLeft, setThemeSubmenuOnLeft] = useState(false);
+  const [themeSubmenuOnLeft, setThemeSubmenuOnLeft] = useState(true);
 
   const avatarRef = useRef<HTMLButtonElement | null>(null);
   const hideSubmenuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,15 +69,26 @@ export default function UserMenu({
     }
   };
 
-  const scheduleHide = (currentBaseTheme: string) => {
-    cancelHide();
-    setShowThemeSubmenu(false);
+  const resetPreview = (currentBaseTheme: string) => {
     setPreviewTheme(null);
-
     const root = document.documentElement;
     root.style.setProperty('--theme-transition-duration', '250ms');
     root.style.setProperty('--theme-transition-easing', 'ease-out');
     root.dataset.theme = currentBaseTheme;
+  };
+
+  const scheduleHide = (currentBaseTheme: string) => {
+    cancelHide();
+    hideSubmenuTimeout.current = setTimeout(() => {
+      setShowThemeSubmenu(false);
+      resetPreview(currentBaseTheme);
+      hideSubmenuTimeout.current = null;
+    }, 80);
+  };
+
+  const handleThemeRowItemEnter = () => {
+    cancelHide();
+    resetPreview(baseTheme);
   };
 
   const handleThemeRowEnter = () => {
@@ -185,6 +196,7 @@ export default function UserMenu({
             submenuOnLeft={themeSubmenuOnLeft}
             onFlyoutMouseEnter={cancelHide}
             onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
+            onThemeRowItemEnter={handleThemeRowItemEnter}
             onPreviewChange={setPreviewTheme}
             onSelect={handleThemeSelect}
           />

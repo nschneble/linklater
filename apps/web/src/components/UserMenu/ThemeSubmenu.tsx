@@ -7,6 +7,7 @@ interface ThemeSubmenuProps {
   submenuOnLeft: boolean;
   onFlyoutMouseEnter: () => void;
   onFlyoutMouseLeave: () => void;
+  onThemeRowItemEnter: () => void;
   onPreviewChange: (theme: BaseTheme | null) => void;
   onSelect: (theme: BaseTheme) => void;
 }
@@ -18,6 +19,7 @@ export default function ThemeSubmenu({
   submenuOnLeft,
   onFlyoutMouseEnter,
   onFlyoutMouseLeave,
+  onThemeRowItemEnter,
   onPreviewChange,
   onSelect,
 }: ThemeSubmenuProps) {
@@ -34,6 +36,7 @@ export default function ThemeSubmenu({
             ? 'bg-[var(--bg-surface)]'
             : 'hover:bg-[var(--bg-surface)]'
         }`}
+        onMouseEnter={onThemeRowItemEnter}
       >
         <i
           className="fa-solid fa-palette text-[var(--text-muted)] text-[0.75rem]"
@@ -52,7 +55,7 @@ export default function ThemeSubmenu({
       </div>
 
       <div
-        className={`absolute top-0 z-50 w-56 py-2 bg-[var(--bg-elevated)] rounded-xl shadow-black/40 shadow-lg ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
+        className={`absolute top-0 z-50 w-56 py-2 bg-[var(--bg-elevated)] border-shadow-lg rounded-lg ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
         style={{
           transition: `opacity ${showSubmenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showSubmenu ? '150ms ease-out' : '100ms ease-in'}`,
           opacity: showSubmenu ? 1 : 0,
@@ -65,6 +68,10 @@ export default function ThemeSubmenu({
         {THEMES.map((theme) => (
           <button
             className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[var(--bg-surface)] text-[var(--text)] text-left cursor-pointer"
+            style={{
+              transitionDuration:
+                '150ms, var(--theme-transition-duration), var(--theme-transition-duration)',
+            }}
             key={theme.id}
             type="button"
             onClick={() => onSelect(theme.id)}
