@@ -17,7 +17,7 @@ const variantClasses: Record<
   ghost:
     'pl-2 pr-2.5 py-1.5 ring-1 ring-[var(--border)] text-[var(--text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]',
   elevated:
-    'pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] text-[var(--text)] font-semibold shadow-md disabled:opacity-60 transition disabled:cursor-wait',
+    'pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow-[var(--bg-elevated)] border-shadow-[var(--bg-surface)] border-shadow-md hover:border-shadow-md text-[var(--text)] font-semibold disabled:opacity-60 transition disabled:cursor-wait',
 };
 
 export default function IconButton({
