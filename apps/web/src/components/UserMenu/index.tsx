@@ -109,7 +109,7 @@ export default function UserMenu({
         <img
           src={avatarUrl}
           alt={user.email}
-          className="w-8 h-8 rounded-[26px]"
+          className="w-8 h-8 outline outline-[var(--border)]/10 -outline-offset-1 rounded-[26px] select-none"
         />
         <i
           className={`fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] transition-transform duration-200 ease-out ${showUserMenu ? '-rotate-180' : ''}`}

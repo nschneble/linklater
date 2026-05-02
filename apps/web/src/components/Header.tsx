@@ -32,7 +32,7 @@ export default function Header({
           }}
         >
           <img
-            className="w-8 h-8 rounded-4xl"
+            className="w-8 h-8 outline outline-[var(--border)]/10 -outline-offset-1 rounded-4xl select-none"
             src="/linklater.svg"
             alt="Richard Linklater"
           />
