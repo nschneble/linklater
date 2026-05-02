@@ -98,7 +98,7 @@ export default function UserMenu({
   return (
     <div className="relative">
       <button
-        className="flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-4xl transition cursor-pointer"
+        className="flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] border-shadow-md hover:border-shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-4xl transition cursor-pointer"
         ref={avatarRef}
         type="button"
         onClick={() => setShowUserMenu((open) => !open)}
@@ -119,7 +119,7 @@ export default function UserMenu({
 
       <div
         ref={menuRef}
-        className={`absolute right-0 w-64 mt-2 py-2 bg-[var(--bg-elevated)] text-xs shadow-black/40 shadow-lg rounded-xl z-50 origin-top-right ${
+        className={`absolute right-0 w-64 mt-2 py-2 bg-[var(--bg-elevated)] text-xs border-shadow-lg rounded-lg z-50 origin-top-right ${
           showUserMenu
             ? 'transition-[opacity,transform] duration-150 ease-out opacity-100 scale-100 pointer-events-auto'
             : 'transition-opacity duration-100 ease-in opacity-0 scale-95 pointer-events-none'

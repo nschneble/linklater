@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 
 @import './theme/styles/default.css';
+@import './theme/styles/border-shadow.css';
+
 @import './theme/styles/before-midnight.css';
 @import './theme/styles/before-sunrise.css';
 @import './theme/styles/before-sunset.css';
