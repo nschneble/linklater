@@ -53,10 +53,19 @@ export default function AuthForm() {
       </p>
 
       <div
-        className="flex mb-6 p-1 bg-[var(--bg-elevated)] rounded-full"
+        className="relative flex mb-6 p-1 bg-[var(--bg-elevated)] rounded-full"
         role="tablist"
         aria-label="Authentication mode"
       >
+        <div
+          aria-hidden="true"
+          className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-[var(--text)] rounded-full"
+          style={{
+            transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+            transform:
+              mode === 'register' ? 'translateX(100%)' : 'translateX(0)',
+          }}
+        />
         <TabButton
           className="flex-1 py-2 text-sm"
           isActive={mode === 'login'}
