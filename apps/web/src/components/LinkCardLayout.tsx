@@ -45,7 +45,6 @@ export default function LinkCardLayout({
       onClick={onCardClick}
       className="relative border-l-4 border-[var(--accent)] rounded-r-xl bg-[var(--bg-surface)] cursor-pointer pl-10 pr-8 py-4 overflow-visible hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-[180ms] ease-out"
     >
-      {/* Favicon — straddles left border */}
       <div className="absolute left-0 top-4 -translate-x-1/2 z-10">
         {!link.meta?.fetchedAt && (
           <span
@@ -75,7 +74,6 @@ export default function LinkCardLayout({
         )}
       </div>
 
-      {/* Card content */}
       <div className="space-y-1">
         <p
           style={childStyle(0)}
