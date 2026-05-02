@@ -122,7 +122,8 @@ export default function ComponentShowcase() {
             className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-[var(--text)] rounded-full"
             style={{
               transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transform: activeTab === 'read' ? 'translateX(100%)' : 'translateX(0)',
+              transform:
+                activeTab === 'read' ? 'translateX(100%)' : 'translateX(0)',
             }}
           />
           <TabButton
