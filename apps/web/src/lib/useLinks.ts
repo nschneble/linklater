@@ -106,10 +106,15 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
         setShowLinkForm(false);
         return;
       }
-      setLinks((previous) => [link, ...previous]);
-      setPagination((previous) =>
-        previous ? { ...previous, total: previous.total + 1 } : previous,
-      );
+      setLinks((previous) => {
+        const isNew = !previous.some((item) => item.id === link.id);
+        if (isNew) {
+          setPagination((prev) =>
+            prev ? { ...prev, total: prev.total + 1 } : prev,
+          );
+        }
+        return [link, ...previous.filter((item) => item.id !== link.id)];
+      });
       setShowLinkForm(false);
       setPendingMetaLinkId(link.id);
       setToastMessage('Link saved!');

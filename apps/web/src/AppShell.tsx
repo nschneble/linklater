@@ -1,5 +1,6 @@
 import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
+import { useKeyboardShortcuts } from './lib/useKeyboardShortcuts';
 import { useLinks } from './lib/useLinks';
 import { useState } from 'react';
 import { useTheme, type BaseTheme } from './theme/ThemeContext';
@@ -19,6 +20,7 @@ export default function AppShell() {
 
   const [filter, setFilter] = useState<LinksFilter>('active');
   const [search, setSearch] = useState('');
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [view, setView] = useState<AppView>('links');
 
   const {
@@ -46,6 +48,15 @@ export default function AppShell() {
       console.error('Failed to save theme', error),
     );
   };
+
+  useKeyboardShortcuts({
+    enabled: view === 'links',
+    onShowUnread: () => setFilter('active'),
+    onShowRead: () => setFilter('archived'),
+    onToggleForm: handleToggleForm,
+    onStumble: handleRandom,
+    onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
+  });
 
   const handleModeToggle = () => {
     const nextMode = user?.mode === 'light' ? 'dark' : 'light';
@@ -87,6 +98,7 @@ export default function AppShell() {
             onLoadMore={handleLoadMore}
             onRandom={handleRandom}
             onSearchChange={setSearch}
+            onToggleShortcuts={() => setShowShortcuts((previous) => !previous)}
             onToggleForm={handleToggleForm}
             page={page}
             pagination={pagination}
@@ -95,6 +107,7 @@ export default function AppShell() {
             saveError={saveError}
             search={search}
             showLinkForm={showLinkForm}
+            showShortcuts={showShortcuts}
           />
         ) : view === 'theme-editor' ? (
           <ThemeEditor />

@@ -1,10 +1,11 @@
 import IconButton from './ui/IconButton';
+import KeyboardShortcutsModal from './KeyboardShortcutsModal';
 import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import LinkForm from './LinkForm';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
 import { createPortal } from 'react-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { Link, PaginatedLinks } from '../lib/api';
 
 type LinksFilter = 'active' | 'archived';
@@ -20,13 +21,15 @@ interface LinksViewProps {
   saveError: string | null;
   search: string;
   showLinkForm: boolean;
+  showShortcuts: boolean;
   onArchiveToggle: (link: Link) => void;
   onCreated: (link: Link) => void;
-  onDeleteAllArchived: () => void;
+  onDeleteAllArchived: () => Promise<void>;
   onFilterChange: (filter: LinksFilter) => void;
   onLoadMore: () => void;
   onRandom: () => void;
   onSearchChange: (value: string) => void;
+  onToggleShortcuts: () => void;
   onToggleForm: () => void;
 }
 
@@ -41,6 +44,7 @@ export default function LinksView({
   saveError,
   search,
   showLinkForm,
+  showShortcuts,
   onArchiveToggle,
   onCreated,
   onDeleteAllArchived,
@@ -48,8 +52,15 @@ export default function LinksView({
   onLoadMore,
   onRandom,
   onSearchChange,
+  onToggleShortcuts,
   onToggleForm,
 }: LinksViewProps) {
+  const [isClearingArchived, setIsClearingArchived] = useState(false);
+
+  useEffect(() => {
+    setIsClearingArchived(false);
+  }, [filter]);
+
   useEffect(() => {
     if (!showLinkForm) return;
 
@@ -63,9 +74,30 @@ export default function LinksView({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showLinkForm, onToggleForm]);
 
+  async function handleClearArchived() {
+    setIsClearingArchived(true);
+    await new Promise<void>((resolve) => setTimeout(resolve, 400));
+    try {
+      await onDeleteAllArchived();
+    } finally {
+      setIsClearingArchived(false);
+    }
+  }
+
   return (
     <>
-      <h2 className="mb-1 text-lg font-semibold select-none">Your links</h2>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-lg font-semibold select-none">Your links</h2>
+        <button
+          type="button"
+          className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-pointer"
+          onClick={onToggleShortcuts}
+          aria-label="Show keyboard shortcuts"
+          title="Keyboard shortcuts"
+        >
+          <i className="fa-regular fa-keyboard text-sm" aria-hidden="true" />
+        </button>
+      </div>
       <p className="text-[var(--text-muted)] text-xs select-none">
         {filter === 'archived'
           ? 'Read links are automatically removed after 7 days.'
@@ -74,7 +106,7 @@ export default function LinksView({
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
         <div
-          className="relative grid grid-cols-2 p-1 bg-[var(--bg-surface)] text-xs rounded-full shadow-sm"
+          className="relative grid grid-cols-2 p-1 bg-[var(--bg-surface)] border-shadow-[var(--bg-surface)] border-shadow-md hover:border-shadow-md text-xs rounded-full"
           role="tablist"
           aria-label="Links filter"
         >
@@ -104,7 +136,7 @@ export default function LinksView({
         </div>
 
         {filter === 'active' && (
-          <div className="flex items-end gap-3">
+          <div className="flex items-end gap-3 select-none">
             <IconButton
               variant="elevated"
               disabled={randomLoading}
@@ -137,8 +169,9 @@ export default function LinksView({
           <div className="flex items-end gap-3">
             <IconButton
               variant="elevated"
+              disabled={isClearingArchived}
               title="Permanently removes all read links."
-              onClick={onDeleteAllArchived}
+              onClick={handleClearArchived}
             >
               <i
                 className="fa-solid fa-trash text-[0.7rem]"
@@ -181,6 +214,8 @@ export default function LinksView({
         </p>
       )}
 
+      {showShortcuts && <KeyboardShortcutsModal onClose={onToggleShortcuts} />}
+
       {showLinkForm &&
         createPortal(
           <div
@@ -197,18 +232,50 @@ export default function LinksView({
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-6">
-        {loadingLinks && page === 1
-          ? Array.from({ length: 5 }).map((_, index) => (
-              <LinkCardSkeleton key={index} />
-            ))
-          : links.map((link, index) => (
+        {loadingLinks && page === 1 ? (
+          Array.from({ length: 5 }).map((_, index) => (
+            <LinkCardSkeleton key={index} />
+          ))
+        ) : links.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in-up">
+            <i
+              className={`text-4xl text-[var(--text-subtle)] mb-3 fa-regular ${
+                filter === 'archived' ? 'fa-circle-check' : 'fa-bookmark'
+              }`}
+              aria-hidden="true"
+            />
+            <p className="text-[var(--text-muted)] text-sm font-medium">
+              {filter === 'archived' ? 'No read links' : 'No unread links'}
+            </p>
+            <p className="text-[var(--text-subtle)] text-xs mt-1">
+              {filter === 'archived'
+                ? 'Links you read will appear here.'
+                : 'Add a link to get started.'}
+            </p>
+          </div>
+        ) : (
+          links.map((link, index) => (
+            <div
+              key={link.id}
+              className={
+                isClearingArchived
+                  ? 'animate-card-exit pointer-events-none'
+                  : ''
+              }
+              style={
+                isClearingArchived
+                  ? { animationDelay: `${index * 40}ms` }
+                  : undefined
+              }
+            >
               <LinkCard
-                key={link.id}
                 link={link}
                 animationDelay={Math.min(index * 60, 240)}
                 onArchiveToggle={() => onArchiveToggle(link)}
               />
-            ))}
+            </div>
+          ))
+        )}
 
         {pagination && links.length < pagination.total && (
           <div className="flex justify-center pt-2">

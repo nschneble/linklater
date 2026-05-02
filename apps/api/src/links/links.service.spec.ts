@@ -87,6 +87,7 @@ describe('LinksService', () => {
   });
 
   it('creates link with url and enqueues metadata fetch', async () => {
+    (prismaMock.link.findFirst as jest.Mock).mockResolvedValue(null);
     (prismaMock.link.create as jest.Mock).mockResolvedValue(makeLink());
 
     const link = await service.create(USER_ID, { url: LINK_URL });
@@ -107,6 +108,39 @@ describe('LinksService', () => {
     await expect(
       service.create(USER_ID, { url: INVALID_LINK_URL }),
     ).rejects.toThrow('Invalid url');
+  });
+
+  it('upserts existing link: clears archivedAt, moves to top, re-enqueues metadata when not fetched', async () => {
+    const existing = makeLink({ archivedAt: new Date(), meta: null });
+    const updated = makeLink({ archivedAt: null });
+    (prismaMock.link.findFirst as jest.Mock).mockResolvedValue(existing);
+    (prismaMock.link.update as jest.Mock).mockResolvedValue(updated);
+
+    const link = await service.create(USER_ID, { url: LINK_URL });
+
+    expect(prismaMock.link.create).not.toHaveBeenCalled();
+    expect(prismaMock.link.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: LINK_ID },
+        data: expect.objectContaining({ archivedAt: null }),
+      }),
+    );
+    expect(queueMock.send).toHaveBeenCalledWith(QUEUES.METADATA_FETCH, {
+      linkId: LINK_ID,
+      url: LINK_URL,
+    });
+    expect(link.archivedAt).toBeNull();
+  });
+
+  it('upserts existing link without re-enqueuing metadata when already fetched', async () => {
+    const existing = makeLink({ meta: { fetchedAt: new Date() } });
+    const updated = makeLink();
+    (prismaMock.link.findFirst as jest.Mock).mockResolvedValue(existing);
+    (prismaMock.link.update as jest.Mock).mockResolvedValue(updated);
+
+    await service.create(USER_ID, { url: LINK_URL });
+
+    expect(queueMock.send).not.toHaveBeenCalled();
   });
 
   it('findAll returns paginated results with defaults', async () => {

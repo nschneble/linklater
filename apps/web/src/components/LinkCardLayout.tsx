@@ -81,14 +81,14 @@ export default function LinkCardLayout({
               alt=""
               aria-hidden="true"
               style={childStyle(3)}
-              className={`w-[120px] h-[63px] object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
+              className={`w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
               onError={(event) => {
                 (event.target as HTMLImageElement).src = placeholderUrl;
               }}
             />
           ) : null}
 
-          <div className="flex flex-col items-start ml-3">
+          <div className="flex flex-col items-start min-w-0 ml-3">
             <p
               style={childStyle(1)}
               className={`text-[var(--text)] text-sm font-semibold line-clamp-2 [text-wrap:balance] ${CARD_ENTER_CLASS}`}
@@ -98,7 +98,7 @@ export default function LinkCardLayout({
 
             <p
               style={childStyle(0)}
-              className={`text-[var(--text-subtle)] text-xs truncate ${CARD_ENTER_CLASS}`}
+              className={`w-full text-[var(--text-subtle)] text-xs truncate ${CARD_ENTER_CLASS}`}
             >
               {displaySiteName}
             </p>

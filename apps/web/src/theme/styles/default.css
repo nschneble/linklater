@@ -41,9 +41,21 @@ body {
   }
 }
 
+@keyframes card-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+}
+
 @theme {
   --animate-fade-in-up: fade-in-up 180ms ease-out both;
   --animate-card-enter: card-enter 400ms ease-out both;
+  --animate-card-exit: card-exit 280ms ease-in forwards;
 }
 
 *,

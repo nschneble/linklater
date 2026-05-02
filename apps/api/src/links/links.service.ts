@@ -40,6 +40,31 @@ export class LinksService {
       throw new BadRequestException('Invalid url');
     }
 
+    const existing = await this.prisma.link.findFirst({
+      where: { userId, url: input.url },
+      include: { meta: true },
+    });
+
+    if (existing) {
+      const link = await this.prisma.link.update({
+        where: { id: existing.id },
+        data: { archivedAt: null, createdAt: new Date() },
+        include: { meta: true },
+      });
+
+      if (!existing.meta?.fetchedAt) {
+        void this.queueService
+          .send(QUEUES.METADATA_FETCH, { linkId: link.id, url: link.url })
+          .catch((error: unknown) => {
+            this.logger.error(
+              `Failed to enqueue metadata fetch for link ${link.id}: ${String(error)}`,
+            );
+          });
+      }
+
+      return link;
+    }
+
     const link = await this.prisma.link.create({
       data: { userId, url: input.url },
       include: { meta: true },
