@@ -129,7 +129,7 @@ export default function UserMenu({
           <p className="text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-tight font-semibold">
             Logged in as
           </p>
-          <p className="mt-1 text-[var(--text)] text-xs font-medium truncate">
+          <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
             {user.email}
           </p>
         </div>
@@ -172,7 +172,7 @@ export default function UserMenu({
 
         <div
           ref={themeRowRef}
-          className="relative"
+          className="relative pb-2 border-b border-[var(--border)]"
           onMouseEnter={handleThemeRowEnter}
           onMouseLeave={() => scheduleHide(baseTheme)}
         >
@@ -195,7 +195,7 @@ export default function UserMenu({
             setShowUserMenu(false);
             onLogout();
           }}
-          className="mt-1 border-t border-[var(--border)]"
+          className="mt-2"
         />
       </div>
     </div>
