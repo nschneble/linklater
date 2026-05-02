@@ -3,16 +3,20 @@ import LinkCardLayout from './LinkCardLayout';
 
 export function LinkCardSkeleton() {
   return (
-    <div className="relative border-l-4 border-[var(--border)] rounded-r-xl bg-[var(--bg-surface)] pl-10 pr-8 py-4 animate-pulse">
-      <div className="absolute left-0 top-4 -translate-x-1/2 w-8 h-8 rounded-full bg-[var(--bg-elevated)]" />
-      <div className="space-y-1">
-        <div className="w-24 h-3 bg-[var(--bg-elevated)] rounded" />
-        <div className="w-3/4 h-4 bg-[var(--bg-elevated)] rounded" />
-        <div className="h-12 space-y-1">
+    <div className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] rounded-r-xl">
+      <div className="absolute left-0 top-4 -translate-x-1/2 w-8 h-8 rounded-2xl bg-[var(--accent)]" />
+      <div className="space-y-1 animate-pulse">
+        <div className="flex flex-row items-center">
+          <div className="w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] rounded-md bg-[var(--bg-elevated)] shrink-0" />
+          <div className="flex flex-col items-start min-w-0 ml-3 gap-1.5 w-full">
+            <div className="w-3/4 h-3.5 bg-[var(--bg-elevated)] rounded" />
+            <div className="w-24 h-3 bg-[var(--bg-elevated)] rounded" />
+          </div>
+        </div>
+        <div className="h-8 mt-2 space-y-1">
           <div className="w-full h-3 bg-[var(--bg-elevated)] rounded" />
           <div className="w-2/3 h-3 bg-[var(--bg-elevated)] rounded" />
         </div>
-        <div className="w-full h-40 bg-[var(--bg-elevated)] rounded-md mt-0 mb-4" />
       </div>
     </div>
   );
