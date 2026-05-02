@@ -83,7 +83,8 @@ export default function LinksView({
             className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-[var(--text)] rounded-full"
             style={{
               transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transform: filter === 'archived' ? 'translateX(100%)' : 'translateX(0)',
+              transform:
+                filter === 'archived' ? 'translateX(100%)' : 'translateX(0)',
             }}
           />
           <TabButton
@@ -195,7 +196,7 @@ export default function LinksView({
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-1 gap-6">
+      <div className="mt-6 grid grid-cols-1 gap-6">
         {loadingLinks && page === 1
           ? Array.from({ length: 5 }).map((_, index) => (
               <LinkCardSkeleton key={index} />

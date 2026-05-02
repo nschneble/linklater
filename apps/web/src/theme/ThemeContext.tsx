@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react';
@@ -97,12 +98,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setModeState((current) => (current === 'light' ? 'dark' : 'light'));
   }, []);
 
+  const value = useMemo(
+    () => ({ baseTheme, mode, setBaseTheme, setMode, toggleMode }),
+    [baseTheme, mode, setBaseTheme, setMode, toggleMode],
+  );
+
   return (
-    <ThemeContext.Provider
-      value={{ baseTheme, mode, setBaseTheme, setMode, toggleMode }}
-    >
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 

@@ -7,7 +7,7 @@ interface LinkCardLayoutProps {
   onUnarchiveClick: (event: React.MouseEvent) => void;
 }
 
-function getPlaceholderUrl(link) {
+function getPlaceholderUrl(link: Link) {
   const style = getComputedStyle(document.documentElement);
   const accent = style.getPropertyValue('--accent').trim().replace('#', '');
   const accentFg = style

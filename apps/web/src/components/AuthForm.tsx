@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../lib/errors';
 import { useAuth } from '../auth/AuthContext';
 import { useState, type FormEvent } from 'react';
 import Alert from './ui/Alert';
@@ -28,10 +29,7 @@ export default function AuthForm() {
         await register(email, password);
       }
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Something went dreadfully wrong';
+      const message = getErrorMessage(error, 'Something went dreadfully wrong');
       setError(message.charAt(0).toUpperCase() + message.slice(1));
     } finally {
       setLoading(false);

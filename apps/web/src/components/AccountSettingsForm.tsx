@@ -1,4 +1,5 @@
 import { updateMe } from '../lib/api';
+import { getErrorMessage } from '../lib/errors';
 import { useAuth } from '../auth/AuthContext';
 import { useState, type FormEvent } from 'react';
 import Alert from './ui/Alert';
@@ -46,9 +47,7 @@ export default function AccountSettingsForm() {
       setCurrentPassword('');
       setPassword('');
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to update settings';
-      setError(message);
+      setError(getErrorMessage(error, 'Failed to update settings'));
     } finally {
       setSaving(false);
     }

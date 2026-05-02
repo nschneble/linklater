@@ -1,4 +1,5 @@
 import { deleteMe } from '../lib/api';
+import { getErrorMessage } from '../lib/errors';
 import { useAuth } from '../auth/AuthContext';
 import { useState } from 'react';
 import Alert from './ui/Alert';
@@ -15,9 +16,7 @@ export default function DangerZone() {
       await deleteMe();
       logout();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to delete account';
-      setError(message);
+      setError(getErrorMessage(error, 'Failed to delete account'));
     }
   };
 

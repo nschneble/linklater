@@ -1,4 +1,5 @@
 import { createLink, type Link } from '../lib/api';
+import { getErrorMessage } from '../lib/errors';
 import { useState, type FormEvent } from 'react';
 import Alert from './ui/Alert';
 import FormInput from './ui/FormInput';
@@ -25,9 +26,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
       onCreated(link);
       setUrl('');
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to save link';
-      setError(message);
+      setError(getErrorMessage(error, 'Failed to save link'));
     } finally {
       setSaving(false);
     }

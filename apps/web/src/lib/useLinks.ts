@@ -9,6 +9,7 @@ import {
   type PaginatedLinks,
 } from './api';
 
+import { getErrorMessage } from './errors';
 import { useCallback, useEffect, useState } from 'react';
 import { useMetadataPolling } from './useMetadataPolling';
 import { usePasteDetection } from './usePasteDetection';
@@ -123,9 +124,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
         const link = await createLink({ url });
         handleCreated(link);
       } catch (error: unknown) {
-        setSaveError(
-          error instanceof Error ? error.message : 'Failed to save link',
-        );
+        setSaveError(getErrorMessage(error, 'Failed to save link'));
       }
     },
     [handleCreated],
@@ -133,34 +132,37 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
 
   usePasteDetection({ onSave: handleDirectSave });
 
-  const handleToggleArchive = async (link: Link) => {
-    try {
-      const updated = link.archivedAt
-        ? await unarchiveLink(link.id)
-        : await archiveLink(link.id);
+  const handleToggleArchive = useCallback(
+    async (link: Link) => {
+      try {
+        const updated = link.archivedAt
+          ? await unarchiveLink(link.id)
+          : await archiveLink(link.id);
 
-      setLinks((previous) => {
-        const isFilteredOut =
-          (filter === 'active' && updated.archivedAt) ||
-          (filter === 'archived' && !updated.archivedAt);
+        setLinks((previous) => {
+          const isFilteredOut =
+            (filter === 'active' && updated.archivedAt) ||
+            (filter === 'archived' && !updated.archivedAt);
 
-        if (isFilteredOut) {
-          setPagination((previous) =>
-            previous ? { ...previous, total: previous.total - 1 } : previous,
+          if (isFilteredOut) {
+            setPagination((previous) =>
+              previous ? { ...previous, total: previous.total - 1 } : previous,
+            );
+            return previous.filter((item) => item.id !== updated.id);
+          }
+
+          return previous.map((item) =>
+            item.id === updated.id ? updated : item,
           );
-          return previous.filter((item) => item.id !== updated.id);
-        }
+        });
+      } catch (error: unknown) {
+        console.error('Failed to toggle archive state', error);
+      }
+    },
+    [filter],
+  );
 
-        return previous.map((item) =>
-          item.id === updated.id ? updated : item,
-        );
-      });
-    } catch (error: unknown) {
-      console.error('Failed to toggle archive state', error);
-    }
-  };
-
-  const handleDeleteAllArchived = async () => {
+  const handleDeleteAllArchived = useCallback(async () => {
     try {
       await deleteAllArchivedLinks();
       setLinks([]);
@@ -170,13 +172,15 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     } catch (error: unknown) {
       console.error('Failed to delete all archived links', error);
     }
-  };
+  }, []);
 
-  const handleRandom = async () => {
+  const handleRandom = useCallback(async () => {
     setRandomError(null);
     setRandomLoading(true);
     try {
-      const { link } = await getRandomLink({ archived: filter === 'archived' });
+      const { link } = await getRandomLink({
+        archived: filter === 'archived',
+      });
       if (!link) {
         setRandomError('No links available');
       } else {
@@ -197,15 +201,15 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     } finally {
       setRandomLoading(false);
     }
-  };
+  }, [filter]);
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
     setPage((previous) => previous + 1);
-  };
+  }, []);
 
-  const handleToggleForm = () => {
+  const handleToggleForm = useCallback(() => {
     setShowLinkForm((open) => !open);
-  };
+  }, []);
 
   const handleDismissToast = useCallback(() => {
     setToastMessage(null);
