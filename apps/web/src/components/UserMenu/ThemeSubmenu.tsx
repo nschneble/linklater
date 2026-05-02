@@ -52,9 +52,13 @@ export default function ThemeSubmenu({
       </div>
 
       <div
-        className={`absolute top-0 w-56 py-2 bg-[var(--bg-elevated)] shadow-black/40 shadow-lg rounded-xl z-50
-          ${showSubmenu ? 'transition-[opacity,transform] duration-150 ease-out opacity-100 scale-100 pointer-events-auto' : 'transition-opacity duration-100 ease-in opacity-0 scale-95 pointer-events-none'}
-          ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
+        className={`absolute top-0 w-56 py-2 bg-[var(--bg-elevated)] shadow-black/40 shadow-lg rounded-xl z-50 ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
+        style={{
+          transition: `opacity ${showSubmenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showSubmenu ? '150ms ease-out' : '100ms ease-in'}`,
+          opacity: showSubmenu ? 1 : 0,
+          transform: showSubmenu ? 'scale(1)' : 'scale(0.95)',
+          pointerEvents: showSubmenu ? 'auto' : 'none',
+        }}
         onMouseEnter={onFlyoutMouseEnter}
         onMouseLeave={onFlyoutMouseLeave}
       >

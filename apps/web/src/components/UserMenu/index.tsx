@@ -119,11 +119,13 @@ export default function UserMenu({
 
       <div
         ref={menuRef}
-        className={`absolute right-0 w-64 mt-2 py-2 bg-[var(--bg-elevated)] text-xs border-shadow-lg rounded-lg z-50 origin-top-right ${
-          showUserMenu
-            ? 'transition-[opacity,transform] duration-150 ease-out opacity-100 scale-100 pointer-events-auto'
-            : 'transition-opacity duration-100 ease-in opacity-0 scale-95 pointer-events-none'
-        }`}
+        className="absolute right-0 w-64 mt-2 py-2 bg-[var(--bg-elevated)] text-xs border-shadow-lg rounded-lg z-50 origin-top-right"
+        style={{
+          transition: `opacity ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}`,
+          opacity: showUserMenu ? 1 : 0,
+          transform: showUserMenu ? 'scale(1)' : 'scale(0.95)',
+          pointerEvents: showUserMenu ? 'auto' : 'none',
+        }}
       >
         <div className="mb-2 px-3 pb-2 border-b border-[var(--border)] select-none">
           <p className="text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-tight font-semibold">

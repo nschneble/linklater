@@ -80,9 +80,11 @@ export default function LinksView({
         >
           <div
             aria-hidden="true"
-            className={`absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full bg-[var(--text)] transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
-              filter === 'archived' ? 'translate-x-full' : ''
-            }`}
+            className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full bg-[var(--text)]"
+            style={{
+              transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+              transform: filter === 'archived' ? 'translateX(100%)' : 'translateX(0)',
+            }}
           />
           <TabButton
             className="px-3 py-1.5"
