@@ -75,24 +75,42 @@ export default function LinkCardLayout({
       </div>
 
       <div className="space-y-1">
-        <p
-          style={childStyle(0)}
-          className={`text-[var(--text-subtle)] text-xs truncate ${childClass()}`}
-        >
-          {displaySiteName}
-        </p>
+        <div className="flex flex-row items-center">
+          {link.meta?.fetchedAt && (
+            <img
+              src={link.meta.imageUrl ?? getPlaceholderUrl(link)}
+              alt=""
+              aria-hidden="true"
+              style={childStyle(3)}
+              className={`w-[120px] h-[63px] object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${childClass()}`}
+              onError={(event) => {
+                (event.target as HTMLImageElement).src =
+                  getPlaceholderUrl(link);
+              }}
+            />
+          )}
 
-        <p
-          style={childStyle(1)}
-          className={`text-[var(--text)] text-sm font-semibold line-clamp-2 [text-wrap:balance] ${childClass()}`}
-        >
-          {displayTitle}
-        </p>
+          <div className="flex flex-col items-start ml-3">
+            <p
+              style={childStyle(1)}
+              className={`text-[var(--text)] text-sm font-semibold line-clamp-2 [text-wrap:balance] ${childClass()}`}
+            >
+              {displayTitle}
+            </p>
+
+            <p
+              style={childStyle(0)}
+              className={`text-[var(--text-subtle)] text-xs truncate ${childClass()}`}
+            >
+              {displaySiteName}
+            </p>
+          </div>
+        </div>
 
         {displayDescription && (
           <div
             style={childStyle(2)}
-            className={`leading-6 h-12 overflow-hidden ${childClass()}`}
+            className={`mt-2 leading-4 h-8 overflow-hidden ${childClass()}`}
           >
             <p className="text-[var(--text-muted)] text-xs text-pretty line-clamp-2">
               {displayDescription}
@@ -100,24 +118,11 @@ export default function LinkCardLayout({
           </div>
         )}
 
-        {link.meta?.fetchedAt && (
-          <img
-            src={link.meta.imageUrl ?? getPlaceholderUrl(link)}
-            alt=""
-            aria-hidden="true"
-            style={childStyle(3)}
-            className={`w-full max-h-40 object-cover rounded-md mt-0 mb-4 outline outline-1 outline-black/10 -outline-offset-1 ${childClass()}`}
-            onError={(event) => {
-              (event.target as HTMLImageElement).src = getPlaceholderUrl(link);
-            }}
-          />
-        )}
-
         {link.archivedAt && (
           <div className="flex justify-end pt-1">
             <button
               onClick={onUnarchiveClick}
-              className="text-[var(--text-muted)] text-xs hover:text-[var(--accent)] transition-colors"
+              className="text-[var(--text-muted)] text-xs hover:text-[var(--accent)] transition-colors cursor-pointer"
             >
               Mark as unread
             </button>
