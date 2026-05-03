@@ -241,7 +241,7 @@ export default function LinksView({
 
       <div className="mt-6 grid grid-cols-1 gap-6">
         {loadingLinks && page === 1 ? (
-          Array.from({ length: 5 }).map((_, index) => (
+          Array.from({ length: 1 }).map((_, index) => (
             <LinkCardSkeleton key={index} />
           ))
         ) : links.length === 0 ? (
