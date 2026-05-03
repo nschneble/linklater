@@ -247,8 +247,12 @@ export default function LinksView({
         ) : links.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-9 text-center animate-fade-in-up">
             <i
-                filter === 'archived' ? 'fa-circle-check' : 'fa-bookmark'
               className={`text-4xl text-[var(--text-subtle)] mb-[7px] fa-regular ${
+                search !== ''
+                  ? 'fa-magnifying-glass'
+                  : filter === 'archived'
+                    ? 'fa-circle-check'
+                    : 'fa-bookmark'
               }`}
               aria-hidden="true"
             />
