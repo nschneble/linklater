@@ -153,7 +153,6 @@ export default function LinksView({
             </IconButton>
 
             <PrimaryButton
-              className="gap-1.5 text-xs rounded-full! cursor-pointer"
               type="button"
               onClick={onToggleForm}
               aria-expanded={showLinkForm}

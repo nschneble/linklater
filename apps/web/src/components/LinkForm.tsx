@@ -52,7 +52,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
       </div>
       <PrimaryButton
         disabled={saving}
-        className="w-full sm:w-auto my-[5px] rounded-full!"
+        className="w-full sm:w-auto sm:my-[7.5px]"
       >
         <i className="fa-solid fa-bookmark text-xs" aria-hidden="true" />
         {saving ? 'Saving…' : 'Save link'}
