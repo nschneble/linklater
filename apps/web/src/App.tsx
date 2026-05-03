@@ -1,3 +1,4 @@
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { useEffect } from 'react';
 import { useTheme, type BaseTheme } from './theme/ThemeContext';
@@ -34,5 +35,10 @@ export default function App() {
     );
   }
 
-  return <AppShell />;
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/unread" replace />} />
+      <Route path="/*" element={<AppShell />} />
+    </Routes>
+  );
 }

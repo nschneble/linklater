@@ -2,6 +2,7 @@ import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
 import { useKeyboardShortcuts } from './lib/useKeyboardShortcuts';
 import { useLinks } from './lib/useLinks';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import { useTheme, type BaseTheme } from './theme/ThemeContext';
 
@@ -14,16 +15,29 @@ import Toast from './components/ui/Toast';
 type AppView = 'links' | 'settings' | 'theme-editor';
 type LinksFilter = 'active' | 'archived';
 
+function viewFromPath(pathname: string): AppView {
+  if (pathname === '/settings') return 'settings';
+  if (pathname === '/editor') return 'theme-editor';
+  return 'links';
+}
+
+function filterFromPath(pathname: string): LinksFilter {
+  return pathname === '/read' ? 'archived' : 'active';
+}
+
 export default function AppShell() {
   const { logout, user } = useAuth();
   const { setBaseTheme, toggleMode } = useTheme();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const [filter, setFilter] = useState<LinksFilter>('active');
+  const view = viewFromPath(location.pathname);
+  const filter = filterFromPath(location.pathname);
+
   const [search, setSearch] = useState('');
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [view, setView] = useState<AppView>('links');
 
   const {
     handleCreated,
@@ -58,8 +72,8 @@ export default function AppShell() {
   useKeyboardShortcuts({
     enabled: view === 'links',
     isShortcutsModalOpen: showShortcuts,
-    onShowUnread: () => setFilter('active'),
-    onShowRead: () => setFilter('archived'),
+    onShowUnread: () => navigate('/unread'),
+    onShowRead: () => navigate('/read'),
     onSearch: handleSearch,
     onToggleForm: handleToggleForm,
     onStumble: handleRandom,
@@ -82,7 +96,11 @@ export default function AppShell() {
         onLogout={logout}
         onModeToggle={handleModeToggle}
         onThemeSelect={handleThemeSelect}
-        onViewChange={setView}
+        onViewChange={(newView) => {
+          if (newView === 'links') navigate('/unread');
+          else if (newView === 'settings') navigate('/settings');
+          else navigate('/editor');
+        }}
         user={user}
         view={view}
       />
@@ -102,7 +120,9 @@ export default function AppShell() {
             onArchiveToggle={handleToggleArchive}
             onCreated={handleCreated}
             onDeleteAllArchived={handleDeleteAllArchived}
-            onFilterChange={setFilter}
+            onFilterChange={(newFilter) =>
+              navigate(newFilter === 'active' ? '/unread' : '/read')
+            }
             onLoadMore={handleLoadMore}
             onRandom={handleRandom}
             onSearchChange={setSearch}
