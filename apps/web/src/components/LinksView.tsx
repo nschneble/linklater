@@ -245,20 +245,15 @@ export default function LinksView({
             <LinkCardSkeleton key={index} />
           ))
         ) : links.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in-up">
+          <div className="flex flex-col items-center justify-center py-9 text-center animate-fade-in-up">
             <i
-              className={`text-4xl text-[var(--text-subtle)] mb-3 fa-regular ${
                 filter === 'archived' ? 'fa-circle-check' : 'fa-bookmark'
+              className={`text-4xl text-[var(--text-subtle)] mb-[7px] fa-regular ${
               }`}
               aria-hidden="true"
             />
             <p className="text-[var(--text-muted)] text-sm font-medium">
               {filter === 'archived' ? 'No read links' : 'No unread links'}
-            </p>
-            <p className="text-[var(--text-subtle)] text-xs mt-1">
-              {filter === 'archived'
-                ? 'Links you read will appear here.'
-                : 'Add a link to get started.'}
             </p>
           </div>
         ) : (
