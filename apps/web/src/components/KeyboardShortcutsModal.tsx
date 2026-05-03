@@ -11,7 +11,7 @@ const shortcuts = [
   { key: 'Q', description: 'Search' },
   { key: 'A', description: 'Add link' },
   { key: 'S', description: 'Stumble upon' },
-  { key: 'K', description: 'Show shortcuts' },
+  { key: 'Z', description: 'Show shortcuts' },
 ];
 
 export default function KeyboardShortcutsModal({
@@ -35,13 +35,13 @@ export default function KeyboardShortcutsModal({
         onClick={onClose}
       />
       <div
-        className="fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm p-6 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl animate-fade-in-up"
+        className="fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs p-6 bg-[var(--bg-surface)] border-shadow-lg rounded-xl select-none animate-fade-in-up"
         role="dialog"
         aria-modal="true"
         aria-label="Keyboard shortcuts"
       >
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-sm font-semibold text-[var(--text)] select-none">
+        <div className="flex items-center justify-between mb-7.5">
+          <h2 className="text-sm font-semibold text-[var(--text)]">
             Keyboard shortcuts
           </h2>
           <button
@@ -50,7 +50,10 @@ export default function KeyboardShortcutsModal({
             onClick={onClose}
             aria-label="Close keyboard shortcuts"
           >
-            <i className="fa-solid fa-xmark text-sm" aria-hidden="true" />
+            <i
+              className="pr-[5px] fa-solid fa-xmark text-sm"
+              aria-hidden="true"
+            />
           </button>
         </div>
         <ul className="space-y-3">
@@ -59,7 +62,7 @@ export default function KeyboardShortcutsModal({
               <span className="text-[var(--text-muted)] text-sm">
                 {description}
               </span>
-              <kbd className="px-2 py-0.5 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-xs rounded-md font-mono">
+              <kbd className="px-2 py-0.5 bg-[var(--bg-elevated)] border-shadow-lg text-[var(--text)] text-xs rounded-md font-mono">
                 {key}
               </kbd>
             </li>
