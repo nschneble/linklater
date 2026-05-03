@@ -60,7 +60,7 @@ export function useKeyboardShortcuts({
           event.preventDefault();
           onToggleForm();
           break;
-        case 's':
+        case 'd':
           event.preventDefault();
           onStumble();
           break;
