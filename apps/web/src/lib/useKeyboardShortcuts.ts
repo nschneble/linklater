@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 interface UseKeyboardShortcutsOptions {
   enabled: boolean;
+  isShortcutsModalOpen: boolean;
   onShowUnread: () => void;
   onShowRead: () => void;
   onSearch: () => void;
@@ -12,6 +13,7 @@ interface UseKeyboardShortcutsOptions {
 
 export function useKeyboardShortcuts({
   enabled,
+  isShortcutsModalOpen,
   onShowUnread,
   onShowRead,
   onSearch,
@@ -32,6 +34,14 @@ export function useKeyboardShortcuts({
         target.isContentEditable;
 
       if (isTypingField) return;
+
+      if (isShortcutsModalOpen) {
+        if (event.key.toLowerCase() === 'z') {
+          event.preventDefault();
+          onToggleShortcuts();
+        }
+        return;
+      }
 
       switch (event.key.toLowerCase()) {
         case '1':
@@ -65,6 +75,7 @@ export function useKeyboardShortcuts({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [
     enabled,
+    isShortcutsModalOpen,
     onShowUnread,
     onShowRead,
     onSearch,

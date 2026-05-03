@@ -57,6 +57,7 @@ export default function AppShell() {
 
   useKeyboardShortcuts({
     enabled: view === 'links',
+    isShortcutsModalOpen: showShortcuts,
     onShowUnread: () => setFilter('active'),
     onShowRead: () => setFilter('archived'),
     onSearch: handleSearch,
