@@ -34,7 +34,9 @@ export default function UserMenu({
 
   const avatarRef = useRef<HTMLButtonElement | null>(null);
   const hideSubmenuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const menuRef = useRef<HTMLDivElement | null>(null);
   const themeRowRef = useRef<HTMLDivElement | null>(null);
 
