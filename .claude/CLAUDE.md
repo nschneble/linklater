@@ -93,6 +93,7 @@ Follow three simple steps repeatedly:
 
 - Favor code clarity over "perfect" optimization
   - Use full `if` statements instead of one-liners with ternary operators
+  - Exception: in JSX, use `{condition && <Element />}` instead of `{condition ? <Element /> : null}`
 - Stay DRY (but not barren)
   - Extract common code into something reusable when it's used more than twice
 - Avoid complex monoliths or "god" files

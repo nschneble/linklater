@@ -75,7 +75,7 @@ export default function LinkCardLayout({
 
       <div className="space-y-1">
         <div className="flex flex-row items-center">
-          {link.meta?.fetchedAt ? (
+          {link.meta?.fetchedAt && (
             <img
               src={link.meta.imageUrl ?? placeholderUrl}
               alt=""
@@ -86,7 +86,7 @@ export default function LinkCardLayout({
                 (event.target as HTMLImageElement).src = placeholderUrl;
               }}
             />
-          ) : null}
+          )}
 
           <div className="flex flex-col items-start min-w-0 ml-3">
             <p
@@ -105,7 +105,7 @@ export default function LinkCardLayout({
           </div>
         </div>
 
-        {displayDescription ? (
+        {displayDescription && (
           <div
             style={childStyle(2)}
             className={`overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS}`}
@@ -114,9 +114,9 @@ export default function LinkCardLayout({
               {displayDescription}
             </p>
           </div>
-        ) : null}
+        )}
 
-        {link.archivedAt ? (
+        {link.archivedAt && (
           <div className="flex justify-end pt-1">
             <button
               onClick={onUnarchiveClick}
@@ -125,7 +125,7 @@ export default function LinkCardLayout({
               Mark as unread
             </button>
           </div>
-        ) : null}
+        )}
       </div>
     </article>
   );
