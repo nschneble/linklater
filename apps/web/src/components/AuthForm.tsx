@@ -44,11 +44,11 @@ export default function AuthForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] rounded-2xl shadow-xl">
-      <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold select-none">
+    <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] rounded-2xl shadow-xl select-none">
+      <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold">
         Linklater
       </h1>
-      <p className="mb-6 text-[var(--text-muted)] text-center select-none">
+      <p className="mb-6 text-[var(--text-muted)] text-center">
         Save links now, read them later.
       </p>
 
@@ -83,7 +83,7 @@ export default function AuthForm() {
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <label className="block mb-0 text-[var(--text-muted)] text-sm font-medium select-none">
+        <label className="block mb-0 text-[var(--text-muted)] text-sm font-medium">
           Email
         </label>
         <FormInput
@@ -94,7 +94,7 @@ export default function AuthForm() {
           required
         />
 
-        <label className="block mb-0 text-[var(--text-muted)] text-sm font-medium select-none">
+        <label className="block mb-0 text-[var(--text-muted)] text-sm font-medium">
           Password
         </label>
         <FormInput

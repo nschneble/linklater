@@ -137,7 +137,7 @@ export default function UserMenu({
         <img
           src={avatarUrl}
           alt={user.email}
-          className="w-8 h-8 outline outline-[var(--border)]/10 -outline-offset-1 rounded-[26px] select-none"
+          className="w-8 h-8 outline outline-[var(--border)]/10 -outline-offset-1 rounded-[26px]"
         />
         <i
           className={`fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] transition-transform duration-200 ease-out ${showUserMenu ? '-rotate-180' : ''}`}
@@ -155,7 +155,7 @@ export default function UserMenu({
           pointerEvents: showUserMenu ? 'auto' : 'none',
         }}
       >
-        <div className="mb-2 px-3 pb-2 border-b border-[var(--border)] select-none">
+        <div className="mb-2 px-3 pb-2 border-b border-[var(--border)]">
           <p className="text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-tight font-semibold">
             Logged in as
           </p>

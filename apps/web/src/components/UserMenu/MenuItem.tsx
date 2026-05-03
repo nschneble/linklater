@@ -24,7 +24,7 @@ export default function MenuItem({
           active ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
         }`}
       />
-      <span className="select-none">{label}</span>
+      <span>{label}</span>
     </button>
   );
 }

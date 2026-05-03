@@ -87,7 +87,7 @@ export default function LinksView({
   return (
     <>
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-lg font-semibold select-none">Your links</h2>
+        <h2 className="text-lg font-semibold">Your links</h2>
         <button
           type="button"
           className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-pointer"
@@ -98,7 +98,7 @@ export default function LinksView({
           <i className="fa-regular fa-keyboard text-sm" aria-hidden="true" />
         </button>
       </div>
-      <p className="text-[var(--text-muted)] text-xs select-none">
+      <p className="text-[var(--text-muted)] text-xs">
         {filter === 'archived'
           ? 'Read links are automatically removed after 7 days.'
           : 'Add, search, or stumble upon something random.'}
@@ -136,7 +136,7 @@ export default function LinksView({
         </div>
 
         {filter === 'active' && (
-          <div className="flex items-end gap-3 select-none">
+          <div className="flex items-end gap-3">
             <IconButton
               variant="elevated"
               disabled={randomLoading}

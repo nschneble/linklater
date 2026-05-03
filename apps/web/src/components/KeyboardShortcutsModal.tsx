@@ -55,7 +55,7 @@ export default function KeyboardShortcutsModal({
         <ul className="space-y-3">
           {shortcuts.map(({ key, description }) => (
             <li key={key} className="flex items-center justify-between">
-              <span className="text-[var(--text-muted)] text-sm select-none">
+              <span className="text-[var(--text-muted)] text-sm">
                 {description}
               </span>
               <kbd className="px-2 py-0.5 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-xs rounded-md font-mono">

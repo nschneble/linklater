@@ -69,7 +69,7 @@ export default function AppShell() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] select-none">
       <Header
         onLogout={logout}
         onModeToggle={handleModeToggle}
