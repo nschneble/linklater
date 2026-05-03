@@ -4,6 +4,7 @@ interface UseKeyboardShortcutsOptions {
   enabled: boolean;
   onShowUnread: () => void;
   onShowRead: () => void;
+  onSearch: () => void;
   onToggleForm: () => void;
   onStumble: () => void;
   onToggleShortcuts: () => void;
@@ -13,6 +14,7 @@ export function useKeyboardShortcuts({
   enabled,
   onShowUnread,
   onShowRead,
+  onSearch,
   onToggleForm,
   onStumble,
   onToggleShortcuts,
@@ -31,7 +33,7 @@ export function useKeyboardShortcuts({
 
       if (isTypingField) return;
 
-      switch (event.key) {
+      switch (event.key.toLowerCase()) {
         case '1':
           event.preventDefault();
           onShowUnread();
@@ -40,18 +42,19 @@ export function useKeyboardShortcuts({
           event.preventDefault();
           onShowRead();
           break;
+        case 'q':
+          event.preventDefault();
+          onSearch();
+          break;
         case 'a':
-        case 'A':
           event.preventDefault();
           onToggleForm();
           break;
         case 's':
-        case 'S':
           event.preventDefault();
           onStumble();
           break;
-        case 'k':
-        case 'K':
+        case 'z':
           event.preventDefault();
           onToggleShortcuts();
           break;
@@ -64,6 +67,7 @@ export function useKeyboardShortcuts({
     enabled,
     onShowUnread,
     onShowRead,
+    onSearch,
     onToggleForm,
     onStumble,
     onToggleShortcuts,

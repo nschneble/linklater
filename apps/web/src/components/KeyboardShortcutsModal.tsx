@@ -8,6 +8,7 @@ interface KeyboardShortcutsModalProps {
 const shortcuts = [
   { key: '1', description: 'Show unread links' },
   { key: '2', description: 'Show read links' },
+  { key: 'Q', description: 'Search' },
   { key: 'A', description: 'Add link' },
   { key: 'S', description: 'Stumble upon' },
   { key: 'K', description: 'Show shortcuts' },

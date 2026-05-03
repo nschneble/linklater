@@ -5,7 +5,7 @@ import LinkForm from './LinkForm';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
 import { createPortal } from 'react-dom';
-import { useEffect, useState } from 'react';
+import { type RefObject, useEffect, useState } from 'react';
 import type { Link, PaginatedLinks } from '../lib/api';
 
 type LinksFilter = 'active' | 'archived';
@@ -29,6 +29,7 @@ interface LinksViewProps {
   onLoadMore: () => void;
   onRandom: () => void;
   onSearchChange: (value: string) => void;
+  searchInputRef: RefObject<HTMLInputElement>;
   onToggleShortcuts: () => void;
   onToggleForm: () => void;
 }
@@ -52,6 +53,7 @@ export default function LinksView({
   onLoadMore,
   onRandom,
   onSearchChange,
+  searchInputRef,
   onToggleShortcuts,
   onToggleForm,
 }: LinksViewProps) {
@@ -185,6 +187,7 @@ export default function LinksView({
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 mb-3">
         <input
+          ref={searchInputRef}
           className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
           type="search"
           placeholder={
@@ -192,6 +195,11 @@ export default function LinksView({
           }
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.currentTarget.blur();
+            }
+          }}
           aria-label="Search through your links"
         />
       </div>

@@ -2,7 +2,7 @@ import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
 import { useKeyboardShortcuts } from './lib/useKeyboardShortcuts';
 import { useLinks } from './lib/useLinks';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTheme, type BaseTheme } from './theme/ThemeContext';
 
 import Header from './components/Header';
@@ -17,6 +17,8 @@ type LinksFilter = 'active' | 'archived';
 export default function AppShell() {
   const { logout, user } = useAuth();
   const { setBaseTheme, toggleMode } = useTheme();
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [filter, setFilter] = useState<LinksFilter>('active');
   const [search, setSearch] = useState('');
@@ -49,10 +51,15 @@ export default function AppShell() {
     );
   };
 
+  function handleSearch() {
+    searchInputRef.current?.focus();
+  }
+
   useKeyboardShortcuts({
     enabled: view === 'links',
     onShowUnread: () => setFilter('active'),
     onShowRead: () => setFilter('archived'),
+    onSearch: handleSearch,
     onToggleForm: handleToggleForm,
     onStumble: handleRandom,
     onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
@@ -98,6 +105,7 @@ export default function AppShell() {
             onLoadMore={handleLoadMore}
             onRandom={handleRandom}
             onSearchChange={setSearch}
+            searchInputRef={searchInputRef}
             onToggleShortcuts={() => setShowShortcuts((previous) => !previous)}
             onToggleForm={handleToggleForm}
             page={page}
