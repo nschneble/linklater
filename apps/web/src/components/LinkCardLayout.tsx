@@ -44,7 +44,7 @@ export default function LinkCardLayout({
   return (
     <article
       onClick={onCardClick}
-      className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] rounded-r-xl hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-[180ms] ease-out cursor-pointer"
+      className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] border-shadow-[var(--bg-surface)] border-shadow-lg hover:border-shadow-lg rounded-r-xl hover:scale-101 transform-gpu transition-transform! duration-200! ease-out cursor-pointer"
     >
       <div className="absolute left-0 top-4 -translate-x-1/2 z-10">
         {link.meta?.fetchedAt ? (
