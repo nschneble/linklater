@@ -193,8 +193,9 @@ describe('LinksService', () => {
 
     await service.findAll(USER_ID, { search: 'duck' });
 
-    const call = (prismaMock.link.findMany as jest.Mock).mock
-      .calls[0]?.[0] as { where?: { OR?: unknown } } | undefined;
+    const call = (prismaMock.link.findMany as jest.Mock).mock.calls[0]?.[0] as
+      | { where?: { OR?: unknown } }
+      | undefined;
     expect(call?.where?.OR).toBeUndefined();
   });
 

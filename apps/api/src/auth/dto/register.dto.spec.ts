@@ -16,7 +16,9 @@ describe('RegisterDto', () => {
 
   it('rejects passwords shorter than 12 characters', async () => {
     const errors = await validate(makeDto({ password: 'short789' }));
-    const passwordErrors = errors.filter((error) => error.property === 'password');
+    const passwordErrors = errors.filter(
+      (error) => error.property === 'password',
+    );
     expect(passwordErrors.length).toBeGreaterThan(0);
   });
 

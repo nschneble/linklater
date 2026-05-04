@@ -13,7 +13,8 @@ export class EmailService {
     },
   });
 
-  private readonly from = process.env.SMTP_FROM ?? 'Linklater <noreply@linklater.app>';
+  private readonly from =
+    process.env.SMTP_FROM ?? 'Linklater <noreply@linklater.app>';
 
   async sendVerificationEmail(email: string, token: string) {
     const verifyUrl = `${process.env.APP_URL}/verify-email?token=${token}`;

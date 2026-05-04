@@ -1,4 +1,10 @@
-import { IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsIn,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { VALID_MODES, VALID_THEMES } from '../users.constants.js';
 
 export class UpdateMeDto {

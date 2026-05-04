@@ -127,13 +127,17 @@ describe('AuthController', () => {
 
       await controller.verifyEmail(VERIFICATION_TOKEN);
 
-      expect(authServiceMock.verifyEmail).toHaveBeenCalledWith(VERIFICATION_TOKEN);
+      expect(authServiceMock.verifyEmail).toHaveBeenCalledWith(
+        VERIFICATION_TOKEN,
+      );
     });
   });
 
   describe('forgotPassword', () => {
     it('delegates to AuthService.forgotPassword with the email', async () => {
-      (authServiceMock.forgotPassword as jest.Mock).mockResolvedValue(undefined);
+      (authServiceMock.forgotPassword as jest.Mock).mockResolvedValue(
+        undefined,
+      );
 
       await controller.forgotPassword({ email: USER_EMAIL });
 
@@ -145,7 +149,10 @@ describe('AuthController', () => {
     it('delegates to AuthService.resetPassword with token and password', async () => {
       (authServiceMock.resetPassword as jest.Mock).mockResolvedValue(undefined);
 
-      await controller.resetPassword({ token: RESET_TOKEN, password: 'new-password-123' });
+      await controller.resetPassword({
+        token: RESET_TOKEN,
+        password: 'new-password-123',
+      });
 
       expect(authServiceMock.resetPassword).toHaveBeenCalledWith(
         RESET_TOKEN,

@@ -95,7 +95,13 @@ export class LinksService {
     }
 
     if (search && search.trim() !== '') {
-      return this.findAllByText(userId, search.trim(), where, safePage, safeLimit);
+      return this.findAllByText(
+        userId,
+        search.trim(),
+        where,
+        safePage,
+        safeLimit,
+      );
     }
 
     const [data, total] = await Promise.all([
@@ -128,9 +134,7 @@ export class LinksService {
 
     const offset = (page - 1) * limit;
 
-    const rows = await this.prisma.$queryRaw<
-      { id: string; total: bigint }[]
-    >`
+    const rows = await this.prisma.$queryRaw<{ id: string; total: bigint }[]>`
       SELECT l.id, COUNT(*) OVER() AS total
       FROM "Link" l
       WHERE l."userId" = ${userId}
@@ -154,9 +158,7 @@ export class LinksService {
     });
 
     const orderMap = new Map(ids.map((id, index) => [id, index]));
-    links.sort(
-      (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0),
-    );
+    links.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
 
     return { data: links, total, page, limit };
   }
