@@ -12,6 +12,9 @@ import { UsersModule } from './users/users.module.js';
     ThrottlerModule.forRoot([
       { name: 'auth-register', ttl: 60000, limit: 5 },
       { name: 'auth-login', ttl: 60000, limit: 10 },
+      { name: 'auth-forgot-password', ttl: 60000, limit: 3 },
+      { name: 'auth-reset-password', ttl: 60000, limit: 5 },
+      { name: 'auth-verify-email', ttl: 60000, limit: 10 },
     ]),
     AuthModule,
     LinksModule,

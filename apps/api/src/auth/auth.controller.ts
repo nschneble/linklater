@@ -51,17 +51,23 @@ export class AuthController {
     return { userId: id, ...rest };
   }
 
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-verify-email': { ttl: 60000, limit: 10 } })
   @Get('verify-email/:token')
   async verifyEmail(@Param('token') token: string) {
     await this.authService.verifyEmail(token);
   }
 
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-forgot-password': { ttl: 60000, limit: 3 } })
   @Post('forgot-password')
   @HttpCode(200)
   async forgotPassword(@Body() body: ForgotPasswordDto) {
     await this.authService.forgotPassword(body.email);
   }
 
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-reset-password': { ttl: 60000, limit: 5 } })
   @Post('reset-password')
   @HttpCode(200)
   async resetPassword(@Body() body: ResetPasswordDto) {
