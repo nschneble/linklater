@@ -1,0 +1,48 @@
+import { validate } from 'class-validator';
+import { UpdateMeDto } from './update-me.dto.js';
+
+const makeDto = (overrides: Partial<UpdateMeDto> = {}) =>
+  Object.assign(new UpdateMeDto(), overrides);
+
+describe('UpdateMeDto', () => {
+  it('accepts an empty object (all fields optional)', async () => {
+    const errors = await validate(makeDto());
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a new password shorter than 12 characters', async () => {
+    const errors = await validate(makeDto({ password: 'short789' }));
+    const passwordErrors = errors.filter((error) => error.property === 'password');
+    expect(passwordErrors.length).toBeGreaterThan(0);
+  });
+
+  it('rejects a currentPassword shorter than 12 characters', async () => {
+    const errors = await validate(makeDto({ currentPassword: 'short789' }));
+    const passwordErrors = errors.filter(
+      (error) => error.property === 'currentPassword',
+    );
+    expect(passwordErrors.length).toBeGreaterThan(0);
+  });
+
+  it('rejects an invalid theme value', async () => {
+    const errors = await validate(makeDto({ theme: 'not-a-real-theme' }));
+    const themeErrors = errors.filter((error) => error.property === 'theme');
+    expect(themeErrors.length).toBeGreaterThan(0);
+  });
+
+  it('rejects an invalid mode value', async () => {
+    const errors = await validate(makeDto({ mode: 'sepia' }));
+    const modeErrors = errors.filter((error) => error.property === 'mode');
+    expect(modeErrors.length).toBeGreaterThan(0);
+  });
+
+  it('accepts a valid theme value', async () => {
+    const errors = await validate(makeDto({ theme: 'scanner-darkly' }));
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts a valid mode value', async () => {
+    const errors = await validate(makeDto({ mode: 'dark' }));
+    expect(errors).toHaveLength(0);
+  });
+});

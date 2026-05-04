@@ -8,20 +8,10 @@ import {
 
 import { PrismaService } from '../prisma/index.js';
 import { withoutPasswordHash } from './users.utils.js';
+import { VALID_MODES, VALID_THEMES } from './users.constants.js';
 import * as bcrypt from 'bcryptjs';
 
-export const VALID_THEMES = [
-  'before-midnight',
-  'before-sunrise',
-  'before-sunset',
-  'boyhood',
-  'dazed-and-confused',
-  'hit-man',
-  'scanner-darkly',
-  'school-of-rock',
-] as const;
-
-export const VALID_MODES = ['light', 'dark'] as const;
+export { VALID_MODES, VALID_THEMES };
 
 @Injectable()
 export class UsersService {

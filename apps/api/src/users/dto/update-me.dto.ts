@@ -1,4 +1,5 @@
-import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import { VALID_MODES, VALID_THEMES } from '../users.constants.js';
 
 export class UpdateMeDto {
   @IsOptional()
@@ -7,18 +8,19 @@ export class UpdateMeDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(8)
+  @MinLength(12)
   password?: string;
 
   @IsOptional()
   @IsString()
+  @MinLength(12)
   currentPassword?: string;
 
   @IsOptional()
-  @IsString()
+  @IsIn([...VALID_THEMES])
   theme?: string;
 
   @IsOptional()
-  @IsString()
+  @IsIn([...VALID_MODES])
   mode?: string;
 }

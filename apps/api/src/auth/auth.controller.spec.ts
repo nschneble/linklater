@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 
 import { Test, TestingModule } from '@nestjs/testing';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
@@ -31,7 +32,10 @@ describe('AuthController', () => {
         { provide: AuthService, useValue: authServiceMock },
         { provide: UsersService, useValue: usersServiceMock },
       ],
-    }).compile();
+    })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<AuthController>(AuthController);
     jest.clearAllMocks();

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module.js';
 import { LinksModule } from './links/links.module.js';
 import { MetadataModule } from './metadata/metadata.module.js';
@@ -8,6 +9,10 @@ import { UsersModule } from './users/users.module.js';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      { name: 'auth-register', ttl: 60000, limit: 5 },
+      { name: 'auth-login', ttl: 60000, limit: 10 },
+    ]),
     AuthModule,
     LinksModule,
     MetadataModule,
