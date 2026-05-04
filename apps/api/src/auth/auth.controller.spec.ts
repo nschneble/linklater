@@ -6,6 +6,9 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 
+const RESET_TOKEN = 'reset-token-abc';
+const VERIFICATION_TOKEN = 'verification-token-xyz';
+
 const ACCESS_TOKEN = 'token';
 const SITE_MODE = 'dark';
 const THEME_NAME = 'scanner-darkly';
@@ -17,7 +20,11 @@ describe('AuthController', () => {
   let controller: AuthController;
 
   const authServiceMock = {
+    forgotPassword: jest.fn(),
     login: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
+    resetPassword: jest.fn(),
+    sendVerificationEmail: jest.fn(),
+    verifyEmail: jest.fn(),
   } as unknown as AuthService;
 
   const usersServiceMock = {
@@ -111,6 +118,39 @@ describe('AuthController', () => {
       expect(result).not.toHaveProperty('id');
       expect(result.userId).toBe(USER_ID);
       expect(result.email).toBe(USER_EMAIL);
+    });
+  });
+
+  describe('verifyEmail', () => {
+    it('delegates to AuthService.verifyEmail with the token', async () => {
+      (authServiceMock.verifyEmail as jest.Mock).mockResolvedValue(undefined);
+
+      await controller.verifyEmail(VERIFICATION_TOKEN);
+
+      expect(authServiceMock.verifyEmail).toHaveBeenCalledWith(VERIFICATION_TOKEN);
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('delegates to AuthService.forgotPassword with the email', async () => {
+      (authServiceMock.forgotPassword as jest.Mock).mockResolvedValue(undefined);
+
+      await controller.forgotPassword({ email: USER_EMAIL });
+
+      expect(authServiceMock.forgotPassword).toHaveBeenCalledWith(USER_EMAIL);
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('delegates to AuthService.resetPassword with token and password', async () => {
+      (authServiceMock.resetPassword as jest.Mock).mockResolvedValue(undefined);
+
+      await controller.resetPassword({ token: RESET_TOKEN, password: 'new-password-123' });
+
+      expect(authServiceMock.resetPassword).toHaveBeenCalledWith(
+        RESET_TOKEN,
+        'new-password-123',
+      );
     });
   });
 });

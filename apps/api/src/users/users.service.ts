@@ -110,4 +110,48 @@ export class UsersService {
   async deleteById(id: string) {
     await this.prisma.user.delete({ where: { id } });
   }
+
+  async updateVerificationToken(id: string, token: string, expiresAt: Date) {
+    await this.prisma.user.update({
+      where: { id },
+      data: { verificationToken: token, verificationTokenExpiresAt: expiresAt },
+    });
+  }
+
+  async findByVerificationToken(token: string) {
+    return this.prisma.user.findUnique({ where: { verificationToken: token } });
+  }
+
+  async clearVerificationToken(id: string) {
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        emailVerifiedAt: new Date(),
+        verificationToken: null,
+        verificationTokenExpiresAt: null,
+      },
+    });
+  }
+
+  async updateResetToken(id: string, token: string, expiresAt: Date) {
+    await this.prisma.user.update({
+      where: { id },
+      data: { resetToken: token, resetTokenExpiresAt: expiresAt },
+    });
+  }
+
+  async findByResetToken(token: string) {
+    return this.prisma.user.findUnique({ where: { resetToken: token } });
+  }
+
+  async resetPasswordWithToken(id: string, newPasswordHash: string) {
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        passwordHash: newPasswordHash,
+        resetToken: null,
+        resetTokenExpiresAt: null,
+      },
+    });
+  }
 }

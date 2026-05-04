@@ -1,3 +1,4 @@
+import { forgotPassword as apiForgotPassword } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
 import { useAuth } from '../auth/AuthContext';
 import { useState, type FormEvent } from 'react';
@@ -6,7 +7,7 @@ import FormInput from './ui/FormInput';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
 
-type Mode = 'login' | 'register';
+type Mode = 'login' | 'register' | 'forgot-password';
 
 export default function AuthForm() {
   const { login, register } = useAuth();
@@ -16,6 +17,7 @@ export default function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<Mode>('login');
   const [password, setPassword] = useState('');
+  const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
@@ -25,8 +27,11 @@ export default function AuthForm() {
     try {
       if (mode === 'login') {
         await login(email, password);
-      } else {
+      } else if (mode === 'register') {
         await register(email, password);
+      } else {
+        await apiForgotPassword(email);
+        setForgotPasswordSent(true);
       }
     } catch (error: unknown) {
       const message = getErrorMessage(error, 'Something went dreadfully wrong');
@@ -41,7 +46,66 @@ export default function AuthForm() {
     setPassword('');
     setError(null);
     setLoading(false);
+    setForgotPasswordSent(false);
   };
+
+  if (mode === 'forgot-password') {
+    return (
+      <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
+        <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold">
+          Forgot password?
+        </h1>
+        <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
+          Enter your email and we&apos;ll send a reset link.
+        </p>
+
+        {forgotPasswordSent ? (
+          <div className="text-center space-y-4">
+            <Alert variant="success">
+              Check your email for a reset link. It expires in 1 hour.
+            </Alert>
+            <button
+              type="button"
+              className="text-[var(--text-muted)] text-xs underline"
+              onClick={() => handleModeChange('login')}
+            >
+              Back to login
+            </button>
+          </div>
+        ) : (
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <label className="block text-[var(--text-muted)] text-sm font-medium">
+              Email
+            </label>
+            <FormInput
+              type="email"
+              autoComplete="email"
+              onChange={(event) => setEmail(event.target.value)}
+              value={email}
+              required
+            />
+
+            {error && <Alert variant="error">{error}</Alert>}
+
+            <PrimaryButton disabled={loading} className="w-full py-2.5">
+              <i className="fa-solid fa-envelope text-xs" aria-hidden="true" />
+              {loading ? 'Sending…' : 'Send reset link'}
+            </PrimaryButton>
+
+            <p className="text-center">
+              <button
+                type="button"
+                className="text-[var(--text-muted)] text-xs underline"
+                onClick={() => handleModeChange('login')}
+              >
+                Back to login
+              </button>
+            </p>
+          </form>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
@@ -119,6 +183,18 @@ export default function AuthForm() {
               : 'Create account'}
         </PrimaryButton>
       </form>
+
+      {mode === 'login' && (
+        <p className="mt-4 text-center">
+          <button
+            type="button"
+            className="text-[var(--text-muted)] text-xs underline"
+            onClick={() => handleModeChange('forgot-password')}
+          >
+            Forgot password?
+          </button>
+        </p>
+      )}
     </div>
   );
 }

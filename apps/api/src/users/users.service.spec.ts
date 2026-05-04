@@ -205,4 +205,101 @@ describe('UsersService', () => {
       });
     });
   });
+
+  describe('updateVerificationToken', () => {
+    it('stores verification token and expiry on the user', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+      const token = 'verification-token-abc';
+      const expiresAt = new Date(Date.now() + 86400000);
+
+      await service.updateVerificationToken(USER_ID, token, expiresAt);
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          verificationToken: token,
+          verificationTokenExpiresAt: expiresAt,
+        },
+      });
+    });
+  });
+
+  describe('findByVerificationToken', () => {
+    it('looks up user by verificationToken field', async () => {
+      const token = 'verification-token-abc';
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.findByVerificationToken(token);
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { verificationToken: token },
+      });
+    });
+  });
+
+  describe('clearVerificationToken', () => {
+    it('sets emailVerifiedAt and clears the token fields', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.clearVerificationToken(USER_ID);
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          emailVerifiedAt: expect.any(Date),
+          verificationToken: null,
+          verificationTokenExpiresAt: null,
+        },
+      });
+    });
+  });
+
+  describe('updateResetToken', () => {
+    it('stores password reset token and expiry on the user', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+      const token = 'reset-token-xyz';
+      const expiresAt = new Date(Date.now() + 3600000);
+
+      await service.updateResetToken(USER_ID, token, expiresAt);
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          resetToken: token,
+          resetTokenExpiresAt: expiresAt,
+        },
+      });
+    });
+  });
+
+  describe('findByResetToken', () => {
+    it('looks up user by resetToken field', async () => {
+      const token = 'reset-token-xyz';
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.findByResetToken(token);
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { resetToken: token },
+      });
+    });
+  });
+
+  describe('resetPasswordWithToken', () => {
+    it('updates password hash and clears reset token fields', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+      const newHash = 'hashed-new-password';
+
+      await service.resetPasswordWithToken(USER_ID, newHash);
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          passwordHash: newHash,
+          resetToken: null,
+          resetTokenExpiresAt: null,
+        },
+      });
+    });
+  });
 });

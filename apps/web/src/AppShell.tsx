@@ -43,8 +43,18 @@ export default function AppShell() {
 
   if (!user) return null;
 
+  const isEmailUnverified = !user.emailVerifiedAt;
+
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] select-none">
+      {isEmailUnverified && (
+        <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 text-center">
+          <p className="text-amber-600 dark:text-amber-400 text-xs">
+            <i className="fa-solid fa-triangle-exclamation mr-1.5" aria-hidden="true" />
+            Please verify your email address. Check your inbox for a verification link.
+          </p>
+        </div>
+      )}
       <Header
         onLogout={logout}
         onModeToggle={handleModeToggle}

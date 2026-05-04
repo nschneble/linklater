@@ -90,12 +90,36 @@ export function logout() {
 export async function getMe() {
   return apiFetch<{
     email: string;
+    emailVerifiedAt: string | null;
     mode: string;
     theme: string;
     userId: string;
   }>('/auth/me', {
     method: 'GET',
   });
+}
+
+export async function forgotPassword(email: string): Promise<void> {
+  await apiFetch(
+    '/auth/forgot-password',
+    { body: JSON.stringify({ email }), method: 'POST' },
+    false,
+  );
+}
+
+export async function verifyEmail(token: string): Promise<void> {
+  await apiFetch(`/auth/verify-email/${token}`, { method: 'GET' }, false);
+}
+
+export async function resetPassword(
+  token: string,
+  password: string,
+): Promise<void> {
+  await apiFetch(
+    '/auth/reset-password',
+    { body: JSON.stringify({ token, password }), method: 'POST' },
+    false,
+  );
 }
 
 export interface LinkMeta {

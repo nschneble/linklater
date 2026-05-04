@@ -15,6 +15,13 @@ model User {
   mode         String    @default("dark")
   theme        String    @default("scanner-darkly")
 
+  emailVerifiedAt              DateTime?
+  verificationToken            String?   @unique
+  verificationTokenExpiresAt   DateTime?
+
+  resetToken                   String?   @unique
+  resetTokenExpiresAt          DateTime?
+
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

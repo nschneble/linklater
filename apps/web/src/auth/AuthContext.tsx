@@ -19,6 +19,7 @@ import {
 
 export interface User {
   email: string;
+  emailVerifiedAt: string | null;
   mode: string;
   theme: string;
   userId: string;
@@ -52,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({
           userId: me.userId,
           email: me.email,
+          emailVerifiedAt: me.emailVerifiedAt,
           mode: me.mode,
           theme: me.theme,
         });
@@ -70,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser({
       userId: me.userId,
       email: me.email,
+      emailVerifiedAt: me.emailVerifiedAt,
       mode: me.mode,
       theme: me.theme,
     });
