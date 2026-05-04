@@ -22,7 +22,10 @@ function viewFromPath(pathname: string): AppView {
 }
 
 function filterFromPath(pathname: string): LinksFilter {
-  return pathname === '/read' ? 'archived' : 'active';
+  if (pathname === '/read') {
+    return 'archived';
+  }
+  return 'active';
 }
 
 export default function AppShell() {
@@ -120,9 +123,13 @@ export default function AppShell() {
             onArchiveToggle={handleToggleArchive}
             onCreated={handleCreated}
             onDeleteAllArchived={handleDeleteAllArchived}
-            onFilterChange={(newFilter) =>
-              navigate(newFilter === 'active' ? '/unread' : '/read')
-            }
+            onFilterChange={(newFilter) => {
+              if (newFilter === 'active') {
+                navigate('/unread');
+              } else {
+                navigate('/read');
+              }
+            }}
             onLoadMore={handleLoadMore}
             onRandom={handleRandom}
             onSearchChange={setSearch}

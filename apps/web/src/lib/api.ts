@@ -119,8 +119,13 @@ export async function getLinks(options?: {
 }): Promise<PaginatedLinks> {
   const queryParameters = new URLSearchParams();
 
-  if (options?.archived !== undefined)
-    queryParameters.set('archived', options.archived ? 'true' : 'false');
+  if (options?.archived !== undefined) {
+    if (options.archived) {
+      queryParameters.set('archived', 'true');
+    } else {
+      queryParameters.set('archived', 'false');
+    }
+  }
   if (options?.limit !== undefined)
     queryParameters.set('limit', String(options.limit));
   if (options?.page !== undefined)

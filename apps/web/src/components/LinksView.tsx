@@ -86,6 +86,50 @@ export default function LinksView({
     }
   }
 
+  function renderLinksList() {
+    if (loadingLinks && page === 1) {
+      return <LinkCardSkeleton key={0} />;
+    }
+
+    if (links.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-9 text-center animate-fade-in-up">
+          <i
+            className={`text-4xl text-[var(--text-subtle)] mb-[7px] fa-regular ${
+              search !== ''
+                ? 'fa-magnifying-glass'
+                : filter === 'archived'
+                  ? 'fa-circle-check'
+                  : 'fa-bookmark'
+            }`}
+            aria-hidden="true"
+          />
+          <p className="text-[var(--text-muted)] text-sm font-medium">
+            {filter === 'archived' ? 'No read links' : 'No unread links'}
+          </p>
+        </div>
+      );
+    }
+
+    return links.map((link, index) => (
+      <div
+        key={link.id}
+        className={
+          isClearingArchived ? 'animate-card-exit pointer-events-none' : ''
+        }
+        style={
+          isClearingArchived ? { animationDelay: `${index * 40}ms` } : undefined
+        }
+      >
+        <LinkCard
+          link={link}
+          animationDelay={Math.min(index * 60, 240)}
+          onArchiveToggle={() => onArchiveToggle(link)}
+        />
+      </div>
+    ));
+  }
+
   return (
     <>
       <div className="flex items-center justify-between mb-1">
@@ -239,49 +283,7 @@ export default function LinksView({
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-6">
-        {loadingLinks && page === 1 ? (
-          Array.from({ length: 1 }).map((_, index) => (
-            <LinkCardSkeleton key={index} />
-          ))
-        ) : links.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-9 text-center animate-fade-in-up">
-            <i
-              className={`text-4xl text-[var(--text-subtle)] mb-[7px] fa-regular ${
-                search !== ''
-                  ? 'fa-magnifying-glass'
-                  : filter === 'archived'
-                    ? 'fa-circle-check'
-                    : 'fa-bookmark'
-              }`}
-              aria-hidden="true"
-            />
-            <p className="text-[var(--text-muted)] text-sm font-medium">
-              {filter === 'archived' ? 'No read links' : 'No unread links'}
-            </p>
-          </div>
-        ) : (
-          links.map((link, index) => (
-            <div
-              key={link.id}
-              className={
-                isClearingArchived
-                  ? 'animate-card-exit pointer-events-none'
-                  : ''
-              }
-              style={
-                isClearingArchived
-                  ? { animationDelay: `${index * 40}ms` }
-                  : undefined
-              }
-            >
-              <LinkCard
-                link={link}
-                animationDelay={Math.min(index * 60, 240)}
-                onArchiveToggle={() => onArchiveToggle(link)}
-              />
-            </div>
-          ))
-        )}
+        {renderLinksList()}
 
         {pagination && links.length < pagination.total && (
           <div className="flex justify-center pt-2">

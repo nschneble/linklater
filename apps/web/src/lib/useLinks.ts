@@ -110,8 +110,8 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
       setLinks((previous) => {
         const isNew = !previous.some((item) => item.id === link.id);
         if (isNew) {
-          setPagination((prev) =>
-            prev ? { ...prev, total: prev.total + 1 } : prev,
+          setPagination((previous) =>
+            previous ? { ...previous, total: previous.total + 1 } : previous,
           );
         }
         return [link, ...previous.filter((item) => item.id !== link.id)];

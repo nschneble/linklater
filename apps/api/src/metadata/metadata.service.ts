@@ -62,7 +62,11 @@ export class MetadataService implements OnModuleInit {
           create: { linkId, fetchedAt: new Date() },
           update: { fetchedAt: new Date() },
         })
-        .catch(() => {});
+        .catch((upsertError: unknown) => {
+          this.logger.warn(
+            `Failed to record metadata fetch failure for ${url}: ${String(upsertError)}`,
+          );
+        });
     }
   }
 
@@ -82,12 +86,13 @@ export class MetadataService implements OnModuleInit {
 
     const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
     if (ipv4) {
-      const [, a, b] = ipv4.map(Number);
-      if (a === 127) return true;
-      if (a === 10) return true;
-      if (a === 169 && b === 254) return true;
-      if (a === 192 && b === 168) return true;
-      if (a === 172 && b >= 16 && b <= 31) return true;
+      const [, firstOctet, secondOctet] = ipv4.map(Number);
+      if (firstOctet === 127) return true;
+      if (firstOctet === 10) return true;
+      if (firstOctet === 169 && secondOctet === 254) return true;
+      if (firstOctet === 192 && secondOctet === 168) return true;
+      if (firstOctet === 172 && secondOctet >= 16 && secondOctet <= 31)
+        return true;
     }
 
     return false;
