@@ -112,6 +112,22 @@ describe('useKeyboardShortcuts', () => {
     expect(options.onToggleShortcuts).toHaveBeenCalledOnce();
   });
 
+  it('Escape calls onEscape when provided', () => {
+    const onEscape = vi.fn();
+    const options = makeOptions({ onEscape });
+    renderHook(() => useKeyboardShortcuts(options));
+    fireKey('Escape');
+    expect(onEscape).toHaveBeenCalledOnce();
+  });
+
+  it('Escape does nothing when onEscape is not provided', () => {
+    const options = makeOptions();
+    renderHook(() => useKeyboardShortcuts(options));
+    fireKey('Escape');
+    expect(options.onToggleForm).not.toHaveBeenCalled();
+    expect(options.onToggleShortcuts).not.toHaveBeenCalled();
+  });
+
   it('removes the event listener on unmount', () => {
     const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
     const options = makeOptions();

@@ -71,7 +71,7 @@ export default function LinksList({
           <LinkCard
             link={link}
             animationDelay={Math.min(index * 60, 240)}
-            onArchiveToggle={() => onArchiveToggle(link)}
+            onArchiveToggle={onArchiveToggle}
           />
         </div>
       ))}

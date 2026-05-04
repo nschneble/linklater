@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface UseKeyboardShortcutsOptions {
   enabled: boolean;
@@ -9,6 +9,7 @@ interface UseKeyboardShortcutsOptions {
   onToggleForm: () => void;
   onStumble: () => void;
   onToggleShortcuts: () => void;
+  onEscape?: () => void;
 }
 
 export function useKeyboardShortcuts({
@@ -20,7 +21,26 @@ export function useKeyboardShortcuts({
   onToggleForm,
   onStumble,
   onToggleShortcuts,
+  onEscape,
 }: UseKeyboardShortcutsOptions) {
+  const isShortcutsModalOpenRef = useRef(isShortcutsModalOpen);
+  const onShowUnreadRef = useRef(onShowUnread);
+  const onShowReadRef = useRef(onShowRead);
+  const onSearchRef = useRef(onSearch);
+  const onToggleFormRef = useRef(onToggleForm);
+  const onStumbleRef = useRef(onStumble);
+  const onToggleShortcutsRef = useRef(onToggleShortcuts);
+  const onEscapeRef = useRef(onEscape);
+
+  isShortcutsModalOpenRef.current = isShortcutsModalOpen;
+  onShowUnreadRef.current = onShowUnread;
+  onShowReadRef.current = onShowRead;
+  onSearchRef.current = onSearch;
+  onToggleFormRef.current = onToggleForm;
+  onStumbleRef.current = onStumble;
+  onToggleShortcutsRef.current = onToggleShortcuts;
+  onEscapeRef.current = onEscape;
+
   useEffect(() => {
     if (!enabled) return;
 
@@ -35,10 +55,16 @@ export function useKeyboardShortcuts({
 
       if (isTypingField) return;
 
-      if (isShortcutsModalOpen) {
+      if (event.key === 'Escape' && onEscapeRef.current) {
+        event.preventDefault();
+        onEscapeRef.current();
+        return;
+      }
+
+      if (isShortcutsModalOpenRef.current) {
         if (event.key.toLowerCase() === 'z') {
           event.preventDefault();
-          onToggleShortcuts();
+          onToggleShortcutsRef.current();
         }
         return;
       }
@@ -46,41 +72,32 @@ export function useKeyboardShortcuts({
       switch (event.key.toLowerCase()) {
         case '1':
           event.preventDefault();
-          onShowUnread();
+          onShowUnreadRef.current();
           break;
         case '2':
           event.preventDefault();
-          onShowRead();
+          onShowReadRef.current();
           break;
         case 'q':
           event.preventDefault();
-          onSearch();
+          onSearchRef.current();
           break;
         case 'a':
           event.preventDefault();
-          onToggleForm();
+          onToggleFormRef.current();
           break;
         case 'd':
           event.preventDefault();
-          onStumble();
+          onStumbleRef.current();
           break;
         case 'z':
           event.preventDefault();
-          onToggleShortcuts();
+          onToggleShortcutsRef.current();
           break;
       }
     }
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [
-    enabled,
-    isShortcutsModalOpen,
-    onShowUnread,
-    onShowRead,
-    onSearch,
-    onToggleForm,
-    onStumble,
-    onToggleShortcuts,
-  ]);
+  }, [enabled]);
 }

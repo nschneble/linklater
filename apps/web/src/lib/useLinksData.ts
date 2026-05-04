@@ -90,10 +90,9 @@ export function useLinksData(
       }
     };
 
-    const timeout = setTimeout(load, 200);
+    load();
     return () => {
       cancelled = true;
-      clearTimeout(timeout);
     };
   }, [fetchParams]);
 

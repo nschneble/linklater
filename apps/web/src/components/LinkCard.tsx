@@ -25,7 +25,7 @@ export function LinkCardSkeleton() {
 interface LinkCardProps {
   link: Link;
   animationDelay?: number;
-  onArchiveToggle: () => void;
+  onArchiveToggle: (link: Link) => void;
 }
 
 export default function LinkCard({
@@ -36,13 +36,13 @@ export default function LinkCard({
   function handleCardClick() {
     window.open(link.url, '_blank', 'noreferrer');
     if (!link.archivedAt) {
-      onArchiveToggle();
+      onArchiveToggle(link);
     }
   }
 
   function handleUnarchiveClick(event: React.MouseEvent) {
     event.stopPropagation();
-    onArchiveToggle();
+    onArchiveToggle(link);
   }
 
   return (

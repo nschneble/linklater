@@ -3,7 +3,14 @@ import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';
 import Toast from './ui/Toast';
 import { createPortal } from 'react-dom';
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from 'react';
 import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts';
 import { useLinks } from '../lib/useLinks';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -25,11 +32,12 @@ export default function LinksView() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isClearingArchived, setIsClearingArchived] = useState(false);
+  const [, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(
-      () => setDebouncedSearch(search),
+      () => startTransition(() => setDebouncedSearch(search)),
       SEARCH_DEBOUNCE_MS,
     );
     return () => clearTimeout(timer);
@@ -63,24 +71,12 @@ export default function LinksView() {
     onToggleForm: handleToggleForm,
     onStumble: handleRandom,
     onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
+    onEscape: showLinkForm ? handleToggleForm : undefined,
   });
 
   useEffect(() => {
     setIsClearingArchived(false);
   }, [filter]);
-
-  useEffect(() => {
-    if (!showLinkForm) return;
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        handleToggleForm();
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showLinkForm, handleToggleForm]);
 
   async function handleClearArchived() {
     setIsClearingArchived(true);
