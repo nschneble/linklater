@@ -1,4 +1,5 @@
 import { gravatarUrl } from '../../lib/gravatar';
+import { FOCUS_RING } from '../../lib/styles';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme, type BaseTheme } from '../../theme/ThemeContext';
 import MenuItem from './MenuItem';
@@ -128,7 +129,7 @@ export default function UserMenu({
   return (
     <div className="relative">
       <button
-        className="flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] border-shadow hover:border-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-4xl transition cursor-pointer"
+        className={`flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] border-shadow hover:border-shadow ${FOCUS_RING} rounded-4xl transition cursor-pointer`}
         ref={avatarRef}
         type="button"
         onClick={() => setShowUserMenu((open) => !open)}

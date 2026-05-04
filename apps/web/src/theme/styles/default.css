@@ -52,10 +52,22 @@ body {
   }
 }
 
+@keyframes fade-out-down {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+}
+
 @theme {
   --animate-fade-in-up: fade-in-up 180ms ease-out both;
   --animate-card-enter: card-enter 400ms ease-out both;
   --animate-card-exit: card-exit 280ms ease-in forwards;
+  --animate-fade-out-down: fade-out-down 150ms ease-in forwards;
 }
 
 *,

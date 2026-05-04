@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { FOCUS_RING } from '../../lib/styles';
 
 interface TabButtonProps {
   children: ReactNode;
@@ -15,7 +16,7 @@ export default function TabButton({
 }: TabButtonProps) {
   return (
     <button
-      className={`relative z-10 w-full font-semibold text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full transition-colors duration-200 ${
+      className={`relative z-10 w-full font-semibold text-center ${FOCUS_RING} rounded-full transition-colors duration-200 ${
         isActive
           ? 'text-[var(--bg)]'
           : 'text-[var(--text-muted)] cursor-pointer'

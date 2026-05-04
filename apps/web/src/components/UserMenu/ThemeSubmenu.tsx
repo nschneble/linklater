@@ -77,11 +77,8 @@ export default function ThemeSubmenu({
             onClick={() => onSelect(theme.id)}
             onMouseEnter={() => {
               const root = document.documentElement;
-              root.style.setProperty('--theme-transition-duration', '800ms');
-              root.style.setProperty(
-                '--theme-transition-easing',
-                'ease-in-out',
-              );
+              root.style.setProperty('--theme-transition-duration', '150ms');
+              root.style.setProperty('--theme-transition-easing', 'ease-out');
               root.dataset.theme = theme.id;
               onPreviewChange(theme.id);
             }}

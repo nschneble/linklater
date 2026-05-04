@@ -1,4 +1,5 @@
 import { getStoredToken } from '../lib/api';
+import { FOCUS_RING } from '../lib/styles';
 import { useEffect, useRef } from 'react';
 
 export default function BookmarkletSection() {
@@ -45,7 +46,7 @@ export default function BookmarkletSection() {
         link directly to Linklater.
       </p>
       <a
-        className="inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full cursor-grab active:cursor-grabbing transition"
+        className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing transition`}
         ref={bookmarkletRef}
         onClick={(event) => event.preventDefault()}
         draggable
