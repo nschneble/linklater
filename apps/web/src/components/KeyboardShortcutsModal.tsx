@@ -35,7 +35,7 @@ export default function KeyboardShortcutsModal({
         onClick={onClose}
       />
       <div
-        className="fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs p-6 bg-[var(--bg-surface)] border-shadow-lg rounded-xl select-none animate-fade-in-up"
+        className="fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs p-6 bg-[var(--bg-surface)] border-shadow rounded-xl select-none animate-fade-in-up"
         role="dialog"
         aria-modal="true"
         aria-label="Keyboard shortcuts"
@@ -51,7 +51,7 @@ export default function KeyboardShortcutsModal({
             aria-label="Close keyboard shortcuts"
           >
             <i
-              className="pr-[5px] fa-solid fa-xmark text-sm"
+              className="pr-[6px] fa-solid fa-xmark text-sm"
               aria-hidden="true"
             />
           </button>
@@ -62,7 +62,7 @@ export default function KeyboardShortcutsModal({
               <span className="text-[var(--text-muted)] text-sm">
                 {description}
               </span>
-              <kbd className="px-2 py-0.5 bg-[var(--bg-elevated)] border-shadow-lg text-[var(--text)] text-xs rounded-md font-mono">
+              <kbd className="px-2 py-0.5 bg-[var(--bg-elevated)] border-shadow text-[var(--text)] text-xs rounded-md font-mono">
                 {key}
               </kbd>
             </li>

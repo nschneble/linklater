@@ -44,15 +44,15 @@ export default function LinkCardLayout({
   return (
     <article
       onClick={onCardClick}
-      className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] border-shadow-[var(--bg-surface)] border-shadow-lg hover:border-shadow-lg rounded-r-xl hover:scale-101 transform-gpu transition-transform! duration-200! ease-out cursor-pointer"
+      className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] border-shadow hover:border-shadow rounded-r-xl hover:scale-105 transform-gpu transition-transform! duration-200! ease-out cursor-pointer"
     >
       <div className="absolute left-0 top-4 -translate-x-1/2 z-10">
         {link.meta?.fetchedAt ? (
-          <span className="relative flex items-center justify-center w-8 h-8 p-1 bg-[var(--accent)] rounded-2xl">
+          <span className="relative flex items-center justify-center">
             {link.meta?.faviconUrl ? (
               <img
                 src={link.meta.faviconUrl}
-                className="w-full h-full bg-[var(--accent)] rounded-xl object-cover"
+                className="w-8 h-8 bg-[var(--accent)] outline outline-black/10 -outline-offset-1 rounded-4xl object-cover"
                 aria-hidden="true"
                 onError={(event) => {
                   (event.target as HTMLImageElement).style.display = 'none';

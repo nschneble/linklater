@@ -15,7 +15,7 @@ export default function Toast({ message, onDismiss }: ToastProps) {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 bg-[var(--text)] text-[var(--bg)] text-sm font-medium rounded-full shadow-lg animate-fade-in-up"
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 bg-[var(--text)] border-shadow text-[var(--bg)] text-sm font-medium rounded-full animate-fade-in-up"
     >
       <i className="fa-solid fa-check text-xs" aria-hidden="true" />
       {message}

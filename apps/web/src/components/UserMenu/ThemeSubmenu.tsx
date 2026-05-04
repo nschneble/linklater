@@ -55,7 +55,7 @@ export default function ThemeSubmenu({
       </div>
 
       <div
-        className={`absolute top-0 z-50 w-56 py-2 bg-[var(--bg-elevated)] border-shadow-lg rounded-lg ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
+        className={`absolute top-0 z-50 w-56 py-2 bg-[var(--bg-elevated)] border-shadow rounded-lg ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
         style={{
           transition: `opacity ${showSubmenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showSubmenu ? '150ms ease-out' : '100ms ease-in'}`,
           opacity: showSubmenu ? 1 : 0,

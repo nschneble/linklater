@@ -113,7 +113,7 @@ export default function ComponentShowcase() {
 
       <ShowcaseSection title="Tabs">
         <div
-          className="relative inline-flex p-1 bg-[var(--bg-surface)] text-xs rounded-full shadow-sm"
+          className="relative grid grid-cols-2 p-1 bg-[var(--bg-surface)] border-shadow hover:border-shadow text-xs rounded-full"
           role="tablist"
           aria-label="Tab example"
         >

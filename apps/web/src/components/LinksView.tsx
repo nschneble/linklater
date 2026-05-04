@@ -108,7 +108,7 @@ export default function LinksView({
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
         <div
-          className="relative grid grid-cols-2 p-1 bg-[var(--bg-surface)] border-shadow-[var(--bg-surface)] border-shadow-md hover:border-shadow-md text-xs rounded-full"
+          className="relative grid grid-cols-2 p-1 bg-[var(--bg-surface)] border-shadow hover:border-shadow text-xs rounded-full"
           role="tablist"
           aria-label="Links filter"
         >
@@ -187,7 +187,7 @@ export default function LinksView({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 mb-3">
         <input
           ref={searchInputRef}
-          className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
+          className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring focus:ring-[var(--accent)] focus:border-[var(--accent)] rounded-lg"
           type="search"
           placeholder={
             filter === 'active' ? 'Search unread links' : 'Search read links'
@@ -285,16 +285,15 @@ export default function LinksView({
 
         {pagination && links.length < pagination.total && (
           <div className="flex justify-center pt-2">
-            <button
-              className="px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] text-[var(--text)] text-xs rounded-full shadow-sm disabled:opacity-60 cursor-pointer disabled:cursor-wait"
-              type="button"
+            <IconButton
+              variant="elevated"
               disabled={loadingLinks}
               onClick={onLoadMore}
             >
               {loadingLinks
                 ? 'Loading…'
                 : `Load more (${pagination.total - links.length} remaining)`}
-            </button>
+            </IconButton>
           </div>
         )}
       </div>

@@ -43,9 +43,8 @@ export default function BookmarkletSection() {
         Drag this button to your bookmarks bar. Click it on any page to save the
         link directly to Linklater.
       </p>
-      {/* FIXME: model this after IconButton */}
       <a
-        className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] text-[var(--text)] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full shadow-sm transition cursor-grab active:cursor-grabbing"
+        className="inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full cursor-grab active:cursor-grabbing transition"
         ref={bookmarkletRef}
         onClick={(event) => event.preventDefault()}
         draggable
