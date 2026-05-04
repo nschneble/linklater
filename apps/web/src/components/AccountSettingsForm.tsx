@@ -95,6 +95,10 @@ export default function AccountSettingsForm() {
       {error && <Alert variant="error">{error}</Alert>}
 
       <PrimaryButton disabled={saving} className="py-2.5">
+        <i
+          className="fa-solid fa-floppy-disk text-[0.7rem]"
+          aria-hidden="true"
+        />
         {saving ? 'Saving…' : 'Save changes'}
       </PrimaryButton>
     </form>

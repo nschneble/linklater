@@ -37,6 +37,10 @@ export default function DangerZone() {
           type="button"
           onClick={() => setConfirmDelete(true)}
         >
+          <i
+            className="fa-solid fa-skull-crossbones text-[0.7rem]"
+            aria-hidden="true"
+          />
           Delete my account
         </IconButton>
       ) : (
