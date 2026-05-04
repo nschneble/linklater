@@ -76,16 +76,12 @@ export default function LinksList({
         </div>
       ))}
 
-      {pagination && links.length < pagination.total && (
+      {loadingLinks && page > 1 && <LinkCardSkeleton />}
+
+      {pagination && links.length < pagination.total && !loadingLinks && (
         <div className="flex justify-center pt-2">
-          <IconButton
-            variant="elevated"
-            disabled={loadingLinks}
-            onClick={onLoadMore}
-          >
-            {loadingLinks
-              ? 'Loading…'
-              : `Load more (${pagination.total - links.length} remaining)`}
+          <IconButton variant="elevated" onClick={onLoadMore}>
+            {`Load more (${pagination.total - links.length} remaining)`}
           </IconButton>
         </div>
       )}

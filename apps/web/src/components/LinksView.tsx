@@ -11,6 +11,8 @@ import { useLinks } from '../lib/useLinks';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { LinksFilter } from '../lib/useLinks';
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 const KeyboardShortcutsModal = lazy(() => import('./KeyboardShortcutsModal'));
 
 function filterFromPath(pathname: string): LinksFilter {
@@ -22,9 +24,15 @@ export default function LinksView() {
   const navigate = useNavigate();
   const filter = filterFromPath(location.pathname);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isClearingArchived, setIsClearingArchived] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const {
     handleCreated,
@@ -43,7 +51,7 @@ export default function LinksView() {
     saveError,
     showLinkForm,
     toastMessage,
-  } = useLinks(filter, search);
+  } = useLinks(filter, debouncedSearch);
 
   useKeyboardShortcuts({
     enabled: true,
