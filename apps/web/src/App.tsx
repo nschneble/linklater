@@ -5,6 +5,7 @@ import { useTheme, type BaseTheme } from './theme/ThemeContext';
 
 import AppShell from './AppShell';
 import AuthForm from './components/AuthForm';
+import ErrorBoundary from './components/ErrorBoundary';
 import ResetPasswordPage from './components/ResetPasswordPage';
 import VerifyEmailPage from './components/VerifyEmailPage';
 
@@ -30,6 +31,7 @@ export default function App() {
   }
 
   return (
+    <ErrorBoundary>
     <Routes>
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -50,5 +52,6 @@ export default function App() {
         </>
       )}
     </Routes>
+    </ErrorBoundary>
   );
 }
