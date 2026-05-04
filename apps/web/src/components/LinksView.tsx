@@ -9,6 +9,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts';
 import { useLinks } from '../lib/useLinks';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTabNavigation } from '../lib/useTabNavigation';
 import type { LinksFilter } from '../lib/useLinks';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -28,6 +29,8 @@ export default function LinksView() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isClearingArchived, setIsClearingArchived] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const tablistRef = useRef<HTMLDivElement>(null);
+  useTabNavigation(tablistRef);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
@@ -113,6 +116,7 @@ export default function LinksView() {
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
         <div
+          ref={tablistRef}
           className="relative grid grid-cols-2 p-1 bg-[var(--bg-surface)] border-shadow hover:border-shadow text-xs rounded-full"
           role="tablist"
           aria-label="Links filter"
