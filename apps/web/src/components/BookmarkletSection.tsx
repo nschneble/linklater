@@ -45,6 +45,7 @@ export default function BookmarkletSection() {
         Drag this button to your bookmarks bar. Click it on any page to save the
         link directly to Linklater.
       </p>
+      {/* eslint-disable-next-line jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <a
         className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing transition`}
         ref={bookmarkletRef}

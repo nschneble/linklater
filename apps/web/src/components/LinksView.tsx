@@ -154,8 +154,10 @@ export default function LinksView() {
 
       {showLinkForm &&
         createPortal(
-          <div
-            className="fixed inset-0 z-20 bg-black/50 backdrop-blur-sm"
+          <button
+            type="button"
+            aria-label="Close form"
+            className="fixed inset-0 z-20 w-full h-full bg-black/50 backdrop-blur-sm cursor-default"
             onClick={handleToggleForm}
           />,
           document.body,

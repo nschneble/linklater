@@ -74,10 +74,14 @@ export default function AuthForm() {
           </div>
         ) : (
           <form className="space-y-4" onSubmit={handleSubmit}>
-            <label className="block text-[var(--text-muted)] text-sm font-medium">
+            <label
+              htmlFor="forgot-email"
+              className="block text-[var(--text-muted)] text-sm font-medium"
+            >
               Email
             </label>
             <FormInput
+              id="forgot-email"
               type="email"
               autoComplete="email"
               onChange={(event) => setEmail(event.target.value)}
@@ -147,10 +151,14 @@ export default function AuthForm() {
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <label className="block mb-0 text-[var(--text-muted)] text-sm font-medium">
+        <label
+          htmlFor="auth-email"
+          className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+        >
           Email
         </label>
         <FormInput
+          id="auth-email"
           type="email"
           autoComplete="email"
           onChange={(event) => setEmail(event.target.value)}
@@ -158,10 +166,14 @@ export default function AuthForm() {
           required
         />
 
-        <label className="block mb-0 text-[var(--text-muted)] text-sm font-medium">
+        <label
+          htmlFor="auth-password"
+          className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+        >
           Password
         </label>
         <FormInput
+          id="auth-password"
           type="password"
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           onChange={(event) => setPassword(event.target.value)}

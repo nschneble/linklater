@@ -1,5 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, vi } from 'vitest';
 import MenuItem from './MenuItem';
+
+afterEach(() => vi.restoreAllMocks());
 
 describe('MenuItem', () => {
   it('renders the label', () => {

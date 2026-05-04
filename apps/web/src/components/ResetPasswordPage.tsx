@@ -54,7 +54,10 @@ export default function ResetPasswordPage() {
         {success ? (
           <div className="text-center space-y-4">
             <p className="text-[var(--text-muted)]">
-              <i className="fa-solid fa-circle-check mr-2 text-emerald-500" aria-hidden="true" />
+              <i
+                className="fa-solid fa-circle-check mr-2 text-emerald-500"
+                aria-hidden="true"
+              />
               Password updated! You can now log in.
             </p>
             <button
@@ -66,10 +69,14 @@ export default function ResetPasswordPage() {
           </div>
         ) : (
           <form className="space-y-4" onSubmit={handleSubmit}>
-            <label className="block text-[var(--text-muted)] text-sm font-medium">
+            <label
+              htmlFor="reset-password"
+              className="block text-[var(--text-muted)] text-sm font-medium"
+            >
               New password
             </label>
             <FormInput
+              id="reset-password"
               type="password"
               autoComplete="new-password"
               onChange={(event) => setPassword(event.target.value)}
@@ -78,10 +85,14 @@ export default function ResetPasswordPage() {
               minLength={12}
             />
 
-            <label className="block text-[var(--text-muted)] text-sm font-medium">
+            <label
+              htmlFor="reset-confirm"
+              className="block text-[var(--text-muted)] text-sm font-medium"
+            >
               Confirm password
             </label>
             <FormInput
+              id="reset-confirm"
               type="password"
               autoComplete="new-password"
               onChange={(event) => setConfirm(event.target.value)}

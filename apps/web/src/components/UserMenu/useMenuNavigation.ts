@@ -30,7 +30,8 @@ export function useMenuNavigation(
 
       event.preventDefault();
       const direction = event.key === 'ArrowDown' ? 1 : -1;
-      const nextIndex = (currentIndex + direction + items.length) % items.length;
+      const nextIndex =
+        (currentIndex + direction + items.length) % items.length;
       items[nextIndex].focus();
     }
 

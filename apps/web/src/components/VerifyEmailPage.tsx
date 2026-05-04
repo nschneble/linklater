@@ -43,7 +43,10 @@ export default function VerifyEmailPage() {
         {status === 'success' && (
           <>
             <p className="mb-6 text-[var(--text-muted)]">
-              <i className="fa-solid fa-circle-check mr-2 text-emerald-500" aria-hidden="true" />
+              <i
+                className="fa-solid fa-circle-check mr-2 text-emerald-500"
+                aria-hidden="true"
+              />
               Your email has been verified. You&apos;re all set!
             </p>
             <button
@@ -61,7 +64,8 @@ export default function VerifyEmailPage() {
               {errorMessage}
             </p>
             <p className="mb-6 text-[var(--text-muted)] text-sm">
-              The link may have expired. Request a new verification email from your account settings.
+              The link may have expired. Request a new verification email from
+              your account settings.
             </p>
             <button
               className="text-[var(--accent)] underline text-sm"

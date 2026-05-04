@@ -32,26 +32,26 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-    <Routes>
-      <Route path="/verify-email" element={<VerifyEmailPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Routes>
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-      {!user ? (
-        <Route
-          path="*"
-          element={
-            <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
-              <AuthForm />
-            </div>
-          }
-        />
-      ) : (
-        <>
-          <Route path="/" element={<Navigate to="/unread" replace />} />
-          <Route path="/*" element={<AppShell />} />
-        </>
-      )}
-    </Routes>
+        {!user ? (
+          <Route
+            path="*"
+            element={
+              <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
+                <AuthForm />
+              </div>
+            }
+          />
+        ) : (
+          <>
+            <Route path="/" element={<Navigate to="/unread" replace />} />
+            <Route path="/*" element={<AppShell />} />
+          </>
+        )}
+      </Routes>
     </ErrorBoundary>
   );
 }

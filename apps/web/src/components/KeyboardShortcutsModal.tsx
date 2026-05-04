@@ -30,8 +30,10 @@ export default function KeyboardShortcutsModal({
 
   return createPortal(
     <>
-      <div
-        className="fixed inset-0 z-20 bg-black/50 backdrop-blur-sm"
+      <button
+        type="button"
+        aria-label="Close shortcuts"
+        className="fixed inset-0 z-20 w-full h-full bg-black/50 backdrop-blur-sm cursor-default"
         onClick={onClose}
       />
       <div

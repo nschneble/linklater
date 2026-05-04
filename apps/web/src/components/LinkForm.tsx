@@ -1,6 +1,6 @@
 import { createLink, type Link } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Alert from './ui/Alert';
 import FormInput from './ui/FormInput';
 import PrimaryButton from './ui/PrimaryButton';
@@ -15,6 +15,11 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
   const [url, setUrl] = useState(
     () => new URLSearchParams(window.location.search).get('url') ?? '',
   );
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -39,7 +44,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
     >
       <div className="flex-1">
         <FormInput
-          autoFocus
+          ref={inputRef}
           type="url"
           placeholder="https://example.com/article"
           value={url}

@@ -86,7 +86,7 @@ The token embedded in the bookmarklet expires after 90 days. If saving stops wor
 
 ### Prerequisites
 
-- Node 25
+- Node 22.x
 - PostgreSQL 18
 
 ### Install Dependencies

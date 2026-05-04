@@ -32,7 +32,7 @@ describe('LinkCard', () => {
     it('opens the link in a new tab', () => {
       render(<LinkCard link={makeLink()} onArchiveToggle={vi.fn()} />);
 
-      fireEvent.click(screen.getByRole('article'));
+      fireEvent.click(screen.getByRole('link'));
 
       expect(window.open).toHaveBeenCalledWith(
         'https://example.com/article',
@@ -50,7 +50,7 @@ describe('LinkCard', () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole('article'));
+      fireEvent.click(screen.getByRole('link'));
 
       expect(onArchiveToggle).toHaveBeenCalledOnce();
     });
@@ -64,7 +64,7 @@ describe('LinkCard', () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole('article'));
+      fireEvent.click(screen.getByRole('link'));
 
       expect(onArchiveToggle).not.toHaveBeenCalled();
     });
