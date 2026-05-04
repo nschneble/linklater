@@ -183,6 +183,7 @@ export class LinksService {
     throw error;
   }
 
+  // FIXME: no updatable fields defined yet; data: {} keeps the endpoint wired for future use
   async update(userId: string, id: string, _input: UpdateLinkInput) {
     try {
       return await this.prisma.link.update({

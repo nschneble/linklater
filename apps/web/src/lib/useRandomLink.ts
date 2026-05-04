@@ -33,9 +33,13 @@ export function useRandomLink({
       } else {
         window.open(link.url, '_blank', 'noopener,noreferrer');
         if (!link.archivedAt) {
-          await archiveLink(link.id);
-          onRemoveLink(link.id);
-          onDecrementTotal();
+          try {
+            await archiveLink(link.id);
+            onRemoveLink(link.id);
+            onDecrementTotal();
+          } catch (error: unknown) {
+            console.error('Failed to archive link after opening', error);
+          }
         }
       }
     } catch (error: unknown) {

@@ -44,6 +44,7 @@ export default function LinksView() {
   }, [search]);
 
   const {
+    archiveError,
     handleCreated,
     handleDeleteAllArchived,
     handleDismissToast,
@@ -139,6 +140,15 @@ export default function LinksView() {
           role="alert"
         >
           {saveError}
+        </p>
+      )}
+
+      {archiveError && (
+        <p
+          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
+          role="alert"
+        >
+          {archiveError}
         </p>
       )}
 

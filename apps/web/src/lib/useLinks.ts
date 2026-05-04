@@ -6,6 +6,7 @@ import type { Link, PaginatedLinks } from './api';
 export type LinksFilter = 'active' | 'archived';
 
 export interface UseLinksResult {
+  archiveError: string | null;
   handleCreated: (link: Link) => void;
   handleDeleteAllArchived: () => Promise<void>;
   handleDismissToast: () => void;
@@ -27,13 +28,19 @@ export interface UseLinksResult {
 export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
   const data = useLinksData(filter, search);
   const actions = useLinksActions({
+    adjustTotal: data.adjustTotal,
+    clearLinks: data.clearLinks,
     filter,
-    setLinks: data.setLinks,
-    setPagination: data.setPagination,
+    links: data.links,
+    prependLink: data.prependLink,
+    removeLink: data.removeLink,
+    resetTotal: data.resetTotal,
+    updateLink: data.updateLink,
   });
   const form = useLinksForm({ onDirectSave: actions.handleDirectSave });
 
   return {
+    archiveError: actions.archiveError,
     handleCreated: actions.handleCreated,
     handleDeleteAllArchived: actions.handleDeleteAllArchived,
     handleDismissToast: actions.handleDismissToast,

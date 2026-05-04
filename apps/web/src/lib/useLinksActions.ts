@@ -4,7 +4,6 @@ import {
   deleteAllArchivedLinks,
   unarchiveLink,
   type Link,
-  type PaginatedLinks,
 } from './api';
 import { getErrorMessage } from './errors';
 import { useCallback, useState } from 'react';
@@ -13,14 +12,18 @@ import { useRandomLink } from './useRandomLink';
 import type { LinksFilter } from './useLinks';
 
 interface UseLinksActionsOptions {
+  adjustTotal: (delta: number) => void;
+  clearLinks: () => void;
   filter: LinksFilter;
-  setLinks: React.Dispatch<React.SetStateAction<Link[]>>;
-  setPagination: React.Dispatch<
-    React.SetStateAction<Pick<PaginatedLinks, 'total' | 'limit'> | null>
-  >;
+  links: Link[];
+  prependLink: (link: Link) => void;
+  removeLink: (linkId: string) => void;
+  resetTotal: () => void;
+  updateLink: (link: Link) => void;
 }
 
 export interface UseLinksActionsResult {
+  archiveError: string | null;
   handleCreated: (link: Link) => void;
   handleDeleteAllArchived: () => Promise<void>;
   handleDismissToast: () => void;
@@ -34,39 +37,37 @@ export interface UseLinksActionsResult {
 }
 
 export function useLinksActions({
+  adjustTotal,
+  clearLinks,
   filter,
-  setLinks,
-  setPagination,
+  links,
+  prependLink,
+  removeLink,
+  resetTotal,
+  updateLink,
 }: UseLinksActionsOptions): UseLinksActionsResult {
   const [pendingMetaLinkId, setPendingMetaLinkId] = useState<string | null>(
     null,
   );
+  const [archiveError, setArchiveError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useMetadataPolling(pendingMetaLinkId, (updatedLink) => {
-    setLinks((previous) =>
-      previous.map((link) => (link.id === updatedLink.id ? updatedLink : link)),
-    );
+    updateLink(updatedLink);
     setPendingMetaLinkId(null);
   });
 
   const handleCreated = useCallback(
     (link: Link) => {
       if (filter === 'archived') return;
-      setLinks((previous) => {
-        const isNew = !previous.some((item) => item.id === link.id);
-        if (isNew) {
-          setPagination((previous) =>
-            previous ? { ...previous, total: previous.total + 1 } : previous,
-          );
-        }
-        return [link, ...previous.filter((item) => item.id !== link.id)];
-      });
+      const isNew = !links.some((item) => item.id === link.id);
+      if (isNew) adjustTotal(1);
+      prependLink(link);
       setPendingMetaLinkId(link.id);
       setToastMessage('Link saved!');
     },
-    [filter, setLinks, setPagination],
+    [filter, links, adjustTotal, prependLink],
   );
 
   const handleDirectSave = useCallback(
@@ -84,58 +85,49 @@ export function useLinksActions({
 
   const handleToggleArchive = useCallback(
     async (link: Link) => {
+      setArchiveError(null);
       try {
         const updated = link.archivedAt
           ? await unarchiveLink(link.id)
           : await archiveLink(link.id);
 
-        setLinks((previous) => {
-          const isFilteredOut =
-            (filter === 'active' && updated.archivedAt) ||
-            (filter === 'archived' && !updated.archivedAt);
+        const isFilteredOut =
+          (filter === 'active' && updated.archivedAt) ||
+          (filter === 'archived' && !updated.archivedAt);
 
-          if (isFilteredOut) {
-            setPagination((previous) =>
-              previous ? { ...previous, total: previous.total - 1 } : previous,
-            );
-            return previous.filter((item) => item.id !== updated.id);
-          }
-
-          return previous.map((item) =>
-            item.id === updated.id ? updated : item,
-          );
-        });
+        if (isFilteredOut) {
+          removeLink(updated.id);
+          adjustTotal(-1);
+        } else {
+          updateLink(updated);
+        }
       } catch (error: unknown) {
-        console.error('Failed to toggle archive state', error);
+        setArchiveError(getErrorMessage(error, 'Failed to update link'));
       }
     },
-    [filter, setLinks, setPagination],
+    [filter, adjustTotal, removeLink, updateLink],
   );
 
   const handleDeleteAllArchived = useCallback(async () => {
     try {
       await deleteAllArchivedLinks();
-      setLinks([]);
-      setPagination((previous) =>
-        previous ? { ...previous, total: 0 } : previous,
-      );
+      clearLinks();
+      resetTotal();
     } catch (error: unknown) {
       console.error('Failed to delete all archived links', error);
     }
-  }, [setLinks, setPagination]);
+  }, [clearLinks, resetTotal]);
 
   const handleRemoveLink = useCallback(
     (linkId: string) => {
-      setLinks((previous) => previous.filter((link) => link.id !== linkId));
+      removeLink(linkId);
     },
-    [setLinks],
+    [removeLink],
   );
 
   const handleDecrementTotal = useCallback(() => {
-    setPagination((previous) =>
-      previous ? { ...previous, total: previous.total - 1 } : previous,
-    );
-  }, [setPagination]);
+    adjustTotal(-1);
+  }, [adjustTotal]);
 
   const { handleRandom, randomError, randomLoading } = useRandomLink({
     filter,
@@ -148,6 +140,7 @@ export function useLinksActions({
   }, []);
 
   return {
+    archiveError,
     handleCreated,
     handleDeleteAllArchived,
     handleDismissToast,

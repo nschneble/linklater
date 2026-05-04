@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   HttpCode,
-  Param,
   Post,
   Req,
   UseGuards,
@@ -15,6 +14,7 @@ import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { LocalAuthGuard } from './local-auth.guard.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
+import { VerifyEmailDto } from './dto/verify-email.dto.js';
 import { UsersService } from '../users/index.js';
 import type { AuthRequest } from './auth-request.type.js';
 
@@ -53,9 +53,10 @@ export class AuthController {
 
   @UseGuards(ThrottlerGuard)
   @Throttle({ 'auth-verify-email': { ttl: 60000, limit: 10 } })
-  @Get('verify-email/:token')
-  async verifyEmail(@Param('token') token: string) {
-    await this.authService.verifyEmail(token);
+  @Post('verify-email')
+  @HttpCode(200)
+  async verifyEmail(@Body() body: VerifyEmailDto) {
+    await this.authService.verifyEmail(body.token);
   }
 
   @UseGuards(ThrottlerGuard)

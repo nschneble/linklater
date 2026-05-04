@@ -95,22 +95,7 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('returns an accessToken when given a user with id', async () => {
-      (jwtServiceMock.sign as jest.Mock).mockReturnValue(SIGNED_TOKEN);
-
-      const result = await service.login({
-        email: USER_EMAIL,
-        id: USER_ID,
-      });
-
-      expect(jwtServiceMock.sign).toHaveBeenCalledWith({
-        email: USER_EMAIL,
-        subject: USER_ID,
-      });
-      expect(result.accessToken).toBe(SIGNED_TOKEN);
-    });
-
-    it('returns an accessToken when given a user with userId', async () => {
+    it('returns an accessToken', async () => {
       const result = await service.login({
         email: USER_EMAIL,
         userId: USER_ID,

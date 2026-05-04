@@ -108,7 +108,11 @@ export async function forgotPassword(email: string): Promise<void> {
 }
 
 export async function verifyEmail(token: string): Promise<void> {
-  await apiFetch(`/auth/verify-email/${token}`, { method: 'GET' }, false);
+  await apiFetch(
+    '/auth/verify-email',
+    { body: JSON.stringify({ token }), method: 'POST' },
+    false,
+  );
 }
 
 export async function resetPassword(

@@ -5,10 +5,6 @@ import * as bcrypt from 'bcryptjs';
 import { EmailService } from '../email/index.js';
 import { UsersService, withoutPasswordHash } from '../users/index.js';
 
-type LoginUser =
-  | { id: string; email: string }
-  | { userId: string; email: string };
-
 @Injectable()
 export class AuthService {
   constructor(
@@ -27,10 +23,8 @@ export class AuthService {
     return withoutPasswordHash(user);
   }
 
-  async login(user: LoginUser) {
-    const userId = 'id' in user ? user.id : user.userId;
-    const payload = { subject: userId, email: user.email };
-
+  async login(user: { userId: string; email: string }) {
+    const payload = { subject: user.userId, email: user.email };
     return { accessToken: this.jwtService.sign(payload) };
   }
 

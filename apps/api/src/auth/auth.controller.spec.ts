@@ -125,7 +125,7 @@ describe('AuthController', () => {
     it('delegates to AuthService.verifyEmail with the token', async () => {
       (authServiceMock.verifyEmail as jest.Mock).mockResolvedValue(undefined);
 
-      await controller.verifyEmail(VERIFICATION_TOKEN);
+      await controller.verifyEmail({ token: VERIFICATION_TOKEN });
 
       expect(authServiceMock.verifyEmail).toHaveBeenCalledWith(
         VERIFICATION_TOKEN,

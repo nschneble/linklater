@@ -28,15 +28,17 @@ export function fetchParamsReducer(
 }
 
 export interface UseLinksDataResult {
+  adjustTotal: (delta: number) => void;
+  clearLinks: () => void;
   handleLoadMore: () => void;
   links: Link[];
   loadingLinks: boolean;
   page: number;
   pagination: Pick<PaginatedLinks, 'total' | 'limit'> | null;
-  setLinks: React.Dispatch<React.SetStateAction<Link[]>>;
-  setPagination: React.Dispatch<
-    React.SetStateAction<Pick<PaginatedLinks, 'total' | 'limit'> | null>
-  >;
+  prependLink: (link: Link) => void;
+  removeLink: (linkId: string) => void;
+  resetTotal: () => void;
+  updateLink: (link: Link) => void;
 }
 
 export function useLinksData(
@@ -100,13 +102,50 @@ export function useLinksData(
     dispatchFetchParams({ type: 'load-more' });
   }, []);
 
+  const prependLink = useCallback((link: Link) => {
+    setLinks((previous) => [
+      link,
+      ...previous.filter((item) => item.id !== link.id),
+    ]);
+  }, []);
+
+  const updateLink = useCallback((link: Link) => {
+    setLinks((previous) =>
+      previous.map((item) => (item.id === link.id ? link : item)),
+    );
+  }, []);
+
+  const removeLink = useCallback((linkId: string) => {
+    setLinks((previous) => previous.filter((item) => item.id !== linkId));
+  }, []);
+
+  const clearLinks = useCallback(() => {
+    setLinks([]);
+  }, []);
+
+  const adjustTotal = useCallback((delta: number) => {
+    setPagination((previous) =>
+      previous ? { ...previous, total: previous.total + delta } : previous,
+    );
+  }, []);
+
+  const resetTotal = useCallback(() => {
+    setPagination((previous) =>
+      previous ? { ...previous, total: 0 } : previous,
+    );
+  }, []);
+
   return {
+    adjustTotal,
+    clearLinks,
     handleLoadMore,
     links,
     loadingLinks,
     page: fetchParams.page,
     pagination,
-    setLinks,
-    setPagination,
+    prependLink,
+    removeLink,
+    resetTotal,
+    updateLink,
   };
 }

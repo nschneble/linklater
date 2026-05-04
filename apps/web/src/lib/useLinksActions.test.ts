@@ -41,53 +41,66 @@ function makeLink(overrides: Partial<Link> = {}): Link {
   };
 }
 
+function makeOptions(overrides: object = {}) {
+  return {
+    adjustTotal: vi.fn(),
+    clearLinks: vi.fn(),
+    filter: 'active' as const,
+    links: [],
+    prependLink: vi.fn(),
+    removeLink: vi.fn(),
+    resetTotal: vi.fn(),
+    updateLink: vi.fn(),
+    ...overrides,
+  };
+}
+
 describe('useLinksActions', () => {
   it('toastMessage is null initially', () => {
-    const { result } = renderHook(() =>
-      useLinksActions({
-        filter: 'active',
-        setLinks: vi.fn(),
-        setPagination: vi.fn(),
-      }),
-    );
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
     expect(result.current.toastMessage).toBeNull();
   });
 
-  it('handleDismissToast clears toastMessage', async () => {
-    const setLinks = vi.fn();
-    const setPagination = vi.fn();
-    const { result } = renderHook(() =>
-      useLinksActions({ filter: 'active', setLinks, setPagination }),
-    );
+  it('archiveError is null initially', () => {
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+    expect(result.current.archiveError).toBeNull();
+  });
 
-    const link = makeLink();
-    act(() => result.current.handleCreated(link));
-    expect(result.current.toastMessage).toBe('Link saved!');
-
-    act(() => result.current.handleDismissToast());
-    expect(result.current.toastMessage).toBeNull();
+  it('saveError is null initially', () => {
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+    expect(result.current.saveError).toBeNull();
   });
 
   it('handleCreated sets toast message', () => {
-    const { result } = renderHook(() =>
-      useLinksActions({
-        filter: 'active',
-        setLinks: vi.fn(),
-        setPagination: vi.fn(),
-      }),
-    );
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
     act(() => result.current.handleCreated(makeLink()));
     expect(result.current.toastMessage).toBe('Link saved!');
   });
 
-  it('saveError is null initially', () => {
-    const { result } = renderHook(() =>
-      useLinksActions({
-        filter: 'active',
-        setLinks: vi.fn(),
-        setPagination: vi.fn(),
-      }),
-    );
-    expect(result.current.saveError).toBeNull();
+  it('handleCreated calls prependLink and adjustTotal for new link', () => {
+    const options = makeOptions({ links: [] });
+    const { result } = renderHook(() => useLinksActions(options));
+    act(() => result.current.handleCreated(makeLink()));
+    expect(options.prependLink).toHaveBeenCalled();
+    expect(options.adjustTotal).toHaveBeenCalledWith(1);
+  });
+
+  it('handleCreated does not adjustTotal for existing link', () => {
+    const link = makeLink();
+    const options = makeOptions({ links: [link] });
+    const { result } = renderHook(() => useLinksActions(options));
+    act(() => result.current.handleCreated(link));
+    expect(options.prependLink).toHaveBeenCalled();
+    expect(options.adjustTotal).not.toHaveBeenCalled();
+  });
+
+  it('handleDismissToast clears toastMessage', async () => {
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+
+    act(() => result.current.handleCreated(makeLink()));
+    expect(result.current.toastMessage).toBe('Link saved!');
+
+    act(() => result.current.handleDismissToast());
+    expect(result.current.toastMessage).toBeNull();
   });
 });

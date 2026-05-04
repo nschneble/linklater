@@ -26,13 +26,16 @@ export function useMenuNavigation(
         container!.querySelectorAll<HTMLElement>('[role="menuitem"]'),
       );
       const currentIndex = items.indexOf(document.activeElement as HTMLElement);
-      if (currentIndex === -1) return;
 
       event.preventDefault();
       const direction = event.key === 'ArrowDown' ? 1 : -1;
       const nextIndex =
-        (currentIndex + direction + items.length) % items.length;
-      items[nextIndex].focus();
+        currentIndex === -1
+          ? direction === 1
+            ? 0
+            : items.length - 1
+          : (currentIndex + direction + items.length) % items.length;
+      items[nextIndex]?.focus();
     }
 
     container.addEventListener('keydown', handleKeyDown);
