@@ -58,6 +58,7 @@ describe('LinksService', () => {
   } as unknown as QueueService;
 
   const prismaMock = {
+    $queryRaw: jest.fn(),
     link: {
       count: jest.fn(),
       create: jest.fn(),
@@ -304,24 +305,24 @@ describe('LinksService', () => {
   });
 
   it('getRandom returns null when there are no links', async () => {
-    (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
+    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
 
     const result = await service.getRandom(USER_ID);
 
     expect(result).toBeNull();
-    expect(prismaMock.link.findMany).not.toHaveBeenCalled();
+    expect(prismaMock.link.findFirst).not.toHaveBeenCalled();
   });
 
   it('getRandom returns a link when links exist', async () => {
     const link = makeLink();
-    (prismaMock.link.count as jest.Mock).mockResolvedValue(3);
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([link]);
+    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([{ id: LINK_ID }]);
+    (prismaMock.link.findFirst as jest.Mock).mockResolvedValue(link);
 
     const result = await service.getRandom(USER_ID);
 
     expect(result).toBe(link);
-    expect(prismaMock.link.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ take: 1 }),
+    expect(prismaMock.link.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: LINK_ID } }),
     );
   });
 });

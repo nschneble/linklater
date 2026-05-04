@@ -34,6 +34,7 @@ model Link {
   archivedAt   DateTime?
 
   @@index([userId])
+  @@index([userId, url])
   @@index([userId, archivedAt])
   @@index([userId, createdAt])
 }

@@ -195,24 +195,27 @@ export class LinksService {
   }
 
   async getRandom(userId: string, archived = false) {
-    const where: Prisma.LinkWhereInput = {
-      userId,
-      archivedAt: archived ? { not: null } : null,
-    };
+    let result: { id: string }[];
 
-    const count = await this.prisma.link.count({ where });
-    if (count === 0) return null;
+    if (archived) {
+      result = await this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT id FROM "Link"
+        WHERE "userId" = ${userId} AND "archivedAt" IS NOT NULL
+        ORDER BY RANDOM() LIMIT 1
+      `;
+    } else {
+      result = await this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT id FROM "Link"
+        WHERE "userId" = ${userId} AND "archivedAt" IS NULL
+        ORDER BY RANDOM() LIMIT 1
+      `;
+    }
 
-    const randomIndex = Math.floor(Math.random() * count);
+    if (result.length === 0) return null;
 
-    const [link] = await this.prisma.link.findMany({
-      where,
-      skip: randomIndex,
-      take: 1,
-      orderBy: { createdAt: 'asc' },
+    return this.prisma.link.findFirst({
+      where: { id: result[0].id },
       include: { meta: true },
     });
-
-    return link ?? null;
   }
 }

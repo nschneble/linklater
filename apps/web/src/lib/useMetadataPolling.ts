@@ -2,9 +2,9 @@ import { getLink } from './api';
 import { useEffect, useRef } from 'react';
 import type { Link } from './api';
 
-// polls for 30 seconds
-const MAX_TICKS = 15;
-const POLL_INTERVAL_MS = 2_000;
+const INITIAL_INTERVAL_MS = 2_000;
+const MAX_INTERVAL_MS = 16_000;
+const MAX_ELAPSED_MS = 60_000;
 
 export function useMetadataPolling(
   linkId: string | null,
@@ -16,26 +16,30 @@ export function useMetadataPolling(
   useEffect(() => {
     if (!linkId) return;
 
-    let ticks = 0;
-    const intervalId = setInterval(() => {
-      ticks += 1;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let elapsed = 0;
+    let intervalMs = INITIAL_INTERVAL_MS;
 
-      getLink(linkId)
+    function poll() {
+      getLink(linkId as string)
         .then((link) => {
           if (link.meta?.fetchedAt) {
-            clearInterval(intervalId);
             onSettledRef.current(link);
-          } else if (ticks >= MAX_TICKS) {
-            clearInterval(intervalId);
+            return;
+          }
+          elapsed += intervalMs;
+          if (elapsed < MAX_ELAPSED_MS) {
+            intervalMs = Math.min(intervalMs * 2, MAX_INTERVAL_MS);
+            timeoutId = setTimeout(poll, intervalMs);
           }
         })
         .catch(() => {
-          clearInterval(intervalId);
+          // stop polling on error
         });
-    }, POLL_INTERVAL_MS);
+    }
 
-    return () => {
-      clearInterval(intervalId);
-    };
+    timeoutId = setTimeout(poll, INITIAL_INTERVAL_MS);
+
+    return () => clearTimeout(timeoutId);
   }, [linkId]);
 }

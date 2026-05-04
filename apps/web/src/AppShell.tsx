@@ -1,32 +1,21 @@
+import { lazy, Suspense } from 'react';
 import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
-import { useKeyboardShortcuts } from './lib/useKeyboardShortcuts';
-import { useLinks } from './lib/useLinks';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { lazy, Suspense, useRef, useState } from 'react';
 import { useTheme, type BaseTheme } from './theme/ThemeContext';
 
 import Header from './components/Header';
 import LinksView from './components/LinksView';
 import SettingsView from './components/SettingsView';
-import Toast from './components/ui/Toast';
 
 const ThemeEditor = lazy(() => import('./components/ThemeEditor'));
 
 type AppView = 'links' | 'settings' | 'theme-editor';
-type LinksFilter = 'active' | 'archived';
 
 function viewFromPath(pathname: string): AppView {
   if (pathname === '/settings') return 'settings';
   if (pathname === '/editor') return 'theme-editor';
   return 'links';
-}
-
-function filterFromPath(pathname: string): LinksFilter {
-  if (pathname === '/read') {
-    return 'archived';
-  }
-  return 'active';
 }
 
 export default function AppShell() {
@@ -35,32 +24,7 @@ export default function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
   const view = viewFromPath(location.pathname);
-  const filter = filterFromPath(location.pathname);
-
-  const [search, setSearch] = useState('');
-  const [showShortcuts, setShowShortcuts] = useState(false);
-
-  const {
-    handleCreated,
-    handleDeleteAllArchived,
-    handleDismissToast,
-    handleLoadMore,
-    handleRandom,
-    handleToggleArchive,
-    handleToggleForm,
-    links,
-    loadingLinks,
-    page,
-    pagination,
-    randomError,
-    randomLoading,
-    saveError,
-    showLinkForm,
-    toastMessage,
-  } = useLinks(filter, search);
 
   const handleThemeSelect = (theme: BaseTheme) => {
     setBaseTheme(theme);
@@ -68,21 +32,6 @@ export default function AppShell() {
       console.error('Failed to save theme', error),
     );
   };
-
-  function handleSearch() {
-    searchInputRef.current?.focus();
-  }
-
-  useKeyboardShortcuts({
-    enabled: view === 'links',
-    isShortcutsModalOpen: showShortcuts,
-    onShowUnread: () => navigate('/unread'),
-    onShowRead: () => navigate('/read'),
-    onSearch: handleSearch,
-    onToggleForm: handleToggleForm,
-    onStumble: handleRandom,
-    onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
-  });
 
   const handleModeToggle = () => {
     const nextMode = user?.mode === 'light' ? 'dark' : 'light';
@@ -117,35 +66,7 @@ export default function AppShell() {
         }
       >
         {view === 'links' ? (
-          <LinksView
-            filter={filter}
-            links={links}
-            loadingLinks={loadingLinks}
-            onArchiveToggle={handleToggleArchive}
-            onCreated={handleCreated}
-            onDeleteAllArchived={handleDeleteAllArchived}
-            onFilterChange={(newFilter) => {
-              if (newFilter === 'active') {
-                navigate('/unread');
-              } else {
-                navigate('/read');
-              }
-            }}
-            onLoadMore={handleLoadMore}
-            onRandom={handleRandom}
-            onSearchChange={setSearch}
-            searchInputRef={searchInputRef}
-            onToggleShortcuts={() => setShowShortcuts((previous) => !previous)}
-            onToggleForm={handleToggleForm}
-            page={page}
-            pagination={pagination}
-            randomError={randomError}
-            randomLoading={randomLoading}
-            saveError={saveError}
-            search={search}
-            showLinkForm={showLinkForm}
-            showShortcuts={showShortcuts}
-          />
+          <LinksView />
         ) : view === 'theme-editor' ? (
           <Suspense>
             <ThemeEditor />
@@ -154,9 +75,6 @@ export default function AppShell() {
           <SettingsView />
         )}
       </main>
-      {toastMessage && (
-        <Toast message={toastMessage} onDismiss={handleDismissToast} />
-      )}
     </div>
   );
 }

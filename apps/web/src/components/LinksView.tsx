@@ -1,64 +1,60 @@
 import IconButton from './ui/IconButton';
-import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import LinkForm from './LinkForm';
+import LinksList from './LinksList';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
+import Toast from './ui/Toast';
 import { createPortal } from 'react-dom';
-import { lazy, Suspense, type RefObject, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts';
+import { useLinks } from '../lib/useLinks';
+import { useLocation, useNavigate } from 'react-router-dom';
+import type { LinksFilter } from '../lib/useLinks';
 
 const KeyboardShortcutsModal = lazy(() => import('./KeyboardShortcutsModal'));
-import type { Link, PaginatedLinks } from '../lib/api';
 
-type LinksFilter = 'active' | 'archived';
-
-interface LinksViewProps {
-  filter: LinksFilter;
-  links: Link[];
-  loadingLinks: boolean;
-  page: number;
-  pagination: Pick<PaginatedLinks, 'total' | 'limit'> | null;
-  randomError: string | null;
-  randomLoading: boolean;
-  saveError: string | null;
-  search: string;
-  showLinkForm: boolean;
-  showShortcuts: boolean;
-  onArchiveToggle: (link: Link) => void;
-  onCreated: (link: Link) => void;
-  onDeleteAllArchived: () => Promise<void>;
-  onFilterChange: (filter: LinksFilter) => void;
-  onLoadMore: () => void;
-  onRandom: () => void;
-  onSearchChange: (value: string) => void;
-  searchInputRef: RefObject<HTMLInputElement>;
-  onToggleShortcuts: () => void;
-  onToggleForm: () => void;
+function filterFromPath(pathname: string): LinksFilter {
+  return pathname === '/read' ? 'archived' : 'active';
 }
 
-export default function LinksView({
-  filter,
-  links,
-  loadingLinks,
-  page,
-  pagination,
-  randomError,
-  randomLoading,
-  saveError,
-  search,
-  showLinkForm,
-  showShortcuts,
-  onArchiveToggle,
-  onCreated,
-  onDeleteAllArchived,
-  onFilterChange,
-  onLoadMore,
-  onRandom,
-  onSearchChange,
-  searchInputRef,
-  onToggleShortcuts,
-  onToggleForm,
-}: LinksViewProps) {
+export default function LinksView() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const filter = filterFromPath(location.pathname);
+  const [search, setSearch] = useState('');
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [isClearingArchived, setIsClearingArchived] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    handleCreated,
+    handleDeleteAllArchived,
+    handleDismissToast,
+    handleLoadMore,
+    handleRandom,
+    handleToggleArchive,
+    handleToggleForm,
+    links,
+    loadingLinks,
+    page,
+    pagination,
+    randomError,
+    randomLoading,
+    saveError,
+    showLinkForm,
+    toastMessage,
+  } = useLinks(filter, search);
+
+  useKeyboardShortcuts({
+    enabled: true,
+    isShortcutsModalOpen: showShortcuts,
+    onShowUnread: () => navigate('/unread'),
+    onShowRead: () => navigate('/read'),
+    onSearch: () => searchInputRef.current?.focus(),
+    onToggleForm: handleToggleForm,
+    onStumble: handleRandom,
+    onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
+  });
 
   useEffect(() => {
     setIsClearingArchived(false);
@@ -69,66 +65,22 @@ export default function LinksView({
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
-        onToggleForm();
+        handleToggleForm();
       }
     }
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showLinkForm, onToggleForm]);
+  }, [showLinkForm, handleToggleForm]);
 
   async function handleClearArchived() {
     setIsClearingArchived(true);
     await new Promise<void>((resolve) => setTimeout(resolve, 400));
     try {
-      await onDeleteAllArchived();
+      await handleDeleteAllArchived();
     } finally {
       setIsClearingArchived(false);
     }
-  }
-
-  function renderLinksList() {
-    if (loadingLinks && page === 1) {
-      return <LinkCardSkeleton key={0} />;
-    }
-
-    if (links.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center py-9 text-center animate-fade-in-up">
-          <i
-            className={`text-4xl text-[var(--text-subtle)] mb-[7px] fa-regular ${
-              search !== ''
-                ? 'fa-magnifying-glass'
-                : filter === 'archived'
-                  ? 'fa-circle-check'
-                  : 'fa-bookmark'
-            }`}
-            aria-hidden="true"
-          />
-          <p className="text-[var(--text-muted)] text-sm font-medium">
-            {filter === 'archived' ? 'No read links' : 'No unread links'}
-          </p>
-        </div>
-      );
-    }
-
-    return links.map((link, index) => (
-      <div
-        key={link.id}
-        className={
-          isClearingArchived ? 'animate-card-exit pointer-events-none' : ''
-        }
-        style={
-          isClearingArchived ? { animationDelay: `${index * 40}ms` } : undefined
-        }
-      >
-        <LinkCard
-          link={link}
-          animationDelay={Math.min(index * 60, 240)}
-          onArchiveToggle={() => onArchiveToggle(link)}
-        />
-      </div>
-    ));
   }
 
   return (
@@ -138,7 +90,7 @@ export default function LinksView({
         <button
           type="button"
           className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-pointer"
-          onClick={onToggleShortcuts}
+          onClick={() => setShowShortcuts((previous) => !previous)}
           aria-label="Show keyboard shortcuts"
           title="Keyboard shortcuts"
         >
@@ -169,14 +121,14 @@ export default function LinksView({
           <TabButton
             className="px-3 py-1.5"
             isActive={filter === 'active'}
-            onClick={() => onFilterChange('active')}
+            onClick={() => navigate('/unread')}
           >
             Unread
           </TabButton>
           <TabButton
             className="px-3 py-1.5"
             isActive={filter === 'archived'}
-            onClick={() => onFilterChange('archived')}
+            onClick={() => navigate('/read')}
           >
             Read
           </TabButton>
@@ -188,7 +140,7 @@ export default function LinksView({
               variant="elevated"
               disabled={randomLoading}
               title="Opens a random unread link and marks it as read."
-              onClick={onRandom}
+              onClick={handleRandom}
             >
               <i
                 className="fa-solid fa-shuffle text-[0.7rem]"
@@ -199,7 +151,7 @@ export default function LinksView({
 
             <PrimaryButton
               type="button"
-              onClick={onToggleForm}
+              onClick={handleToggleForm}
               aria-expanded={showLinkForm}
             >
               <i
@@ -238,7 +190,7 @@ export default function LinksView({
             filter === 'active' ? 'Search unread links' : 'Search read links'
           }
           value={search}
-          onChange={(event) => onSearchChange(event.target.value)}
+          onChange={(event) => setSearch(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === 'Escape') {
               event.currentTarget.blur();
@@ -268,7 +220,7 @@ export default function LinksView({
 
       {showShortcuts && (
         <Suspense>
-          <KeyboardShortcutsModal onClose={onToggleShortcuts} />
+          <KeyboardShortcutsModal onClose={() => setShowShortcuts(false)} />
         </Suspense>
       )}
 
@@ -276,34 +228,32 @@ export default function LinksView({
         createPortal(
           <div
             className="fixed inset-0 z-20 bg-black/50 backdrop-blur-sm"
-            onClick={onToggleForm}
+            onClick={handleToggleForm}
           />,
           document.body,
         )}
 
       {showLinkForm && (
         <div className="relative z-30 mt-0 animate-fade-in-up">
-          <LinkForm onCreated={onCreated} />
+          <LinkForm onCreated={handleCreated} />
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-6">
-        {renderLinksList()}
+      <LinksList
+        filter={filter}
+        isClearingArchived={isClearingArchived}
+        links={links}
+        loadingLinks={loadingLinks}
+        page={page}
+        pagination={pagination}
+        search={search}
+        onArchiveToggle={handleToggleArchive}
+        onLoadMore={handleLoadMore}
+      />
 
-        {pagination && links.length < pagination.total && (
-          <div className="flex justify-center pt-2">
-            <IconButton
-              variant="elevated"
-              disabled={loadingLinks}
-              onClick={onLoadMore}
-            >
-              {loadingLinks
-                ? 'Loading…'
-                : `Load more (${pagination.total - links.length} remaining)`}
-            </IconButton>
-          </div>
-        )}
-      </div>
+      {toastMessage && (
+        <Toast message={toastMessage} onDismiss={handleDismissToast} />
+      )}
     </>
   );
 }

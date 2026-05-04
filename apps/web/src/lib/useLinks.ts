@@ -14,7 +14,7 @@ import { useMetadataPolling } from './useMetadataPolling';
 import { usePasteDetection } from './usePasteDetection';
 import { useRandomLink } from './useRandomLink';
 
-type LinksFilter = 'active' | 'archived';
+export type LinksFilter = 'active' | 'archived';
 
 interface FetchParams {
   filter: LinksFilter;
