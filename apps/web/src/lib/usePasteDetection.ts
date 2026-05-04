@@ -16,9 +16,9 @@ export function usePasteDetection({ onSave }: UsePasteDetectionOptions): void {
         return;
       }
 
-      const text = event.clipboardData?.getData('text') ?? '';
+      const text = (event.clipboardData?.getData('text') ?? '').trim();
       if (looksLikeUrl(text)) {
-        onSave(text.trim());
+        onSave(text);
       }
     }
 

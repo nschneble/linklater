@@ -23,11 +23,11 @@ describe('usePasteDetection', () => {
     expect(onSave).toHaveBeenCalledWith('https://example.com/article');
   });
 
-  it('trims trailing whitespace from the pasted URL', () => {
+  it('trims leading and trailing whitespace from the pasted URL', () => {
     const onSave = vi.fn();
     renderHook(() => usePasteDetection({ onSave }));
 
-    firePasteOn(window, 'https://example.com/article   ');
+    firePasteOn(window, '  https://example.com/article   ');
 
     expect(onSave).toHaveBeenCalledWith('https://example.com/article');
   });
