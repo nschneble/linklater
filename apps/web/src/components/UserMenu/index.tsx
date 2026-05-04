@@ -2,6 +2,7 @@ import { gravatarUrl } from '../../lib/gravatar';
 import { FOCUS_RING } from '../../lib/styles';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme, type BaseTheme } from '../../theme/ThemeContext';
+import MenuSection from './MenuSection';
 import MenuItem from './MenuItem';
 import ThemeSubmenu from './ThemeSubmenu';
 import { useMenuNavigation } from './useMenuNavigation';
@@ -165,69 +166,70 @@ export default function UserMenu({
           pointerEvents: showUserMenu ? 'auto' : 'none',
         }}
       >
-        <div className="mb-2 px-3 pb-2 border-b border-[var(--border)]">
-          <p className="text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-tight font-semibold">
-            Logged in as
-          </p>
+        <MenuSection label="Logged in as" className="px-3">
           <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
             {user.email}
           </p>
-        </div>
+        </MenuSection>
 
-        <MenuItem
-          icon="fa-bookmark"
-          label="Your links"
-          onClick={() => {
-            onViewChange('links');
-            setShowUserMenu(false);
-          }}
-          active={view === 'links'}
-        />
-
-        <MenuItem
-          icon="fa-gear"
-          label="Settings"
-          onClick={() => {
-            onViewChange('settings');
-            setShowUserMenu(false);
-          }}
-          active={view === 'settings'}
-        />
-
-        <MenuItem
-          icon="fa-palette"
-          label="Theme editor"
-          onClick={() => {
-            onViewChange('theme-editor');
-            setShowUserMenu(false);
-          }}
-          active={view === 'theme-editor'}
-        />
-
-        <MenuItem
-          icon={mode === 'light' ? 'fa-moon' : 'fa-sun'}
-          label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
-          onClick={onModeToggle}
-        />
-
-        <div
-          ref={themeRowRef}
-          className="relative pb-2 border-b border-[var(--border)]"
-          onMouseEnter={handleThemeRowEnter}
-          onMouseLeave={() => scheduleHide(baseTheme)}
-        >
-          <ThemeSubmenu
-            baseTheme={baseTheme}
-            previewTheme={previewTheme}
-            showSubmenu={showThemeSubmenu}
-            submenuOnLeft={themeSubmenuOnLeft}
-            onFlyoutMouseEnter={cancelHide}
-            onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
-            onThemeRowItemEnter={handleThemeRowItemEnter}
-            onPreviewChange={handlePreviewChange}
-            onSelect={handleThemeSelect}
+        <MenuSection>
+          <MenuItem
+            icon="fa-bookmark"
+            label="Your links"
+            onClick={() => {
+              onViewChange('links');
+              setShowUserMenu(false);
+            }}
+            active={view === 'links'}
           />
-        </div>
+
+          <MenuItem
+            icon="fa-gear"
+            label="Settings"
+            onClick={() => {
+              onViewChange('settings');
+              setShowUserMenu(false);
+            }}
+            active={view === 'settings'}
+          />
+
+          <MenuItem
+            icon="fa-palette"
+            label="Theme editor"
+            onClick={() => {
+              onViewChange('theme-editor');
+              setShowUserMenu(false);
+            }}
+            active={view === 'theme-editor'}
+          />
+
+          <MenuItem
+            icon={mode === 'light' ? 'fa-moon' : 'fa-sun'}
+            label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
+            onClick={onModeToggle}
+          />
+        </MenuSection>
+
+        <MenuSection>
+          <div
+            ref={themeRowRef}
+            className="relative"
+            onMouseEnter={handleThemeRowEnter}
+            onMouseLeave={() => scheduleHide(baseTheme)}
+          >
+            <ThemeSubmenu
+              baseTheme={baseTheme}
+              previewTheme={previewTheme}
+              showSubmenu={showThemeSubmenu}
+              submenuOnLeft={themeSubmenuOnLeft}
+              onFlyoutMouseEnter={cancelHide}
+              onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
+              onThemeRowItemEnter={handleThemeRowItemEnter}
+              onPreviewChange={handlePreviewChange}
+              onSelect={handleThemeSelect}
+            />
+          </div>
+        </MenuSection>
 
         <MenuItem
           icon="fa-right-from-bracket"
