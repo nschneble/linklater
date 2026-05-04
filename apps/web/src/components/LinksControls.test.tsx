@@ -30,7 +30,9 @@ describe('LinksControls', () => {
 
     it('calls onToggleForm when Add link is clicked', () => {
       const onToggleForm = vi.fn();
-      render(<LinksControls {...defaultActiveProps} onToggleForm={onToggleForm} />);
+      render(
+        <LinksControls {...defaultActiveProps} onToggleForm={onToggleForm} />,
+      );
       fireEvent.click(screen.getByText(/add link/i));
       expect(onToggleForm).toHaveBeenCalledOnce();
     });

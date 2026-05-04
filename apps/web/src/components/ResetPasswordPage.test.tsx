@@ -44,9 +44,7 @@ describe('ResetPasswordPage', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
-      expect(
-        screen.getByText(/no reset token found/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/no reset token found/i)).toBeInTheDocument();
     });
   });
 
@@ -93,9 +91,7 @@ describe('ResetPasswordPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /reset password/i }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Token expired or invalid'),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Token expired or invalid')).toBeInTheDocument();
     });
   });
 

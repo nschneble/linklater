@@ -22,7 +22,9 @@ describe('Toast', () => {
 
   it('shows a dismiss button', () => {
     render(<Toast message="Link saved!" onDismiss={vi.fn()} />);
-    expect(screen.getByRole('button', { name: /dismiss/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /dismiss/i }),
+    ).toBeInTheDocument();
   });
 
   it('calls onDismiss after clicking the dismiss button and the animation delay', () => {

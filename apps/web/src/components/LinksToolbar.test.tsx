@@ -4,8 +4,12 @@ import LinksToolbar from './LinksToolbar';
 
 afterEach(() => vi.restoreAllMocks());
 
-function renderToolbar(overrides: Partial<Parameters<typeof LinksToolbar>[0]> = {}) {
-  const searchInputRef = { current: null } as React.RefObject<HTMLInputElement | null>;
+function renderToolbar(
+  overrides: Partial<Parameters<typeof LinksToolbar>[0]> = {},
+) {
+  const searchInputRef = {
+    current: null,
+  } as React.RefObject<HTMLInputElement | null>;
   return render(
     <LinksToolbar
       filter="active"
@@ -98,5 +102,4 @@ describe('LinksToolbar', () => {
     renderToolbar({ search: 'hello' });
     expect(screen.getByRole('searchbox')).toHaveValue('hello');
   });
-
 });

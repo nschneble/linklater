@@ -32,9 +32,7 @@ describe('VerifyEmailPage', () => {
     renderVerifyPage();
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/email has been verified/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/email has been verified/i)).toBeInTheDocument();
     });
   });
 
@@ -84,7 +82,9 @@ describe('VerifyEmailPage', () => {
     renderVerifyPage('');
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /back to linklater/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /back to linklater/i }),
+      ).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: /back to linklater/i }));

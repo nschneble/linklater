@@ -61,9 +61,7 @@ describe('LinksList', () => {
     const { container } = render(
       <LinksList {...defaultProps} links={[]} search="typescript" />,
     );
-    expect(
-      container.querySelector('.fa-magnifying-glass'),
-    ).toBeInTheDocument();
+    expect(container.querySelector('.fa-magnifying-glass')).toBeInTheDocument();
   });
 
   it('renders one card per link', () => {
