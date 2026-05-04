@@ -1,3 +1,4 @@
+import { getStoredToken } from '../lib/api';
 import { useEffect, useRef } from 'react';
 
 export default function BookmarkletSection() {
@@ -9,7 +10,7 @@ export default function BookmarkletSection() {
   useEffect(() => {
     if (!bookmarkletRef.current) return;
 
-    const token = localStorage.getItem('linklater_token') ?? '';
+    const token = getStoredToken() ?? '';
     const apiUrl = import.meta.env.VITE_API_BASE_URL as string;
     const code =
       'javascript:(function(){' +

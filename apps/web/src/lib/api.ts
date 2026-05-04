@@ -4,6 +4,22 @@ if (!API_BASE_URL) {
   console.warn('VITE_API_BASE_URL is not set');
 }
 
+let storedToken: string | null = localStorage.getItem('linklater_token');
+
+export function getStoredToken(): string | null {
+  return storedToken;
+}
+
+export function setStoredToken(token: string): void {
+  storedToken = token;
+  localStorage.setItem('linklater_token', token);
+}
+
+export function clearStoredToken(): void {
+  storedToken = null;
+  localStorage.removeItem('linklater_token');
+}
+
 export interface LoginResponse {
   accessToken: string;
 }
@@ -13,7 +29,7 @@ export async function apiFetch<T>(
   options: RequestInit = {},
   includeAuth = true,
 ): Promise<T> {
-  const token = includeAuth ? localStorage.getItem('linklater_token') : null;
+  const token = includeAuth ? storedToken : null;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -63,12 +79,12 @@ export async function login(email: string, password: string) {
     false,
   );
 
-  localStorage.setItem('linklater_token', data.accessToken);
+  setStoredToken(data.accessToken);
   return data;
 }
 
 export function logout() {
-  localStorage.removeItem('linklater_token');
+  clearStoredToken();
 }
 
 export async function getMe() {

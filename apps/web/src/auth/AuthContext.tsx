@@ -9,7 +9,9 @@ import {
 } from 'react';
 
 import {
+  clearStoredToken,
   getMe,
+  getStoredToken,
   login as apiLogin,
   logout as apiLogout,
   register as apiRegister,
@@ -38,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('linklater_token');
+    const token = getStoredToken();
     if (!token) {
       setLoading(false);
       return;
@@ -55,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       } catch (error) {
         console.error('Failed to fetch current user', error);
-        localStorage.removeItem('linklater_token');
+        clearStoredToken();
       } finally {
         setLoading(false);
       }

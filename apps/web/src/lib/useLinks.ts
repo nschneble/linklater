@@ -3,18 +3,43 @@ import {
   createLink,
   deleteAllArchivedLinks,
   getLinks,
-  getRandomLink,
   unarchiveLink,
   type Link,
   type PaginatedLinks,
 } from './api';
 
 import { getErrorMessage } from './errors';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useReducer, useState } from 'react';
 import { useMetadataPolling } from './useMetadataPolling';
 import { usePasteDetection } from './usePasteDetection';
+import { useRandomLink } from './useRandomLink';
 
 type LinksFilter = 'active' | 'archived';
+
+interface FetchParams {
+  filter: LinksFilter;
+  page: number;
+  search: string;
+}
+
+type FetchParamsAction =
+  | { type: 'reset'; filter: LinksFilter; search: string }
+  | { type: 'load-more' };
+
+function fetchParamsReducer(
+  state: FetchParams,
+  action: FetchParamsAction,
+): FetchParams {
+  switch (action.type) {
+    case 'reset':
+      if (state.filter === action.filter && state.search === action.search) {
+        return state;
+      }
+      return { filter: action.filter, page: 1, search: action.search };
+    case 'load-more':
+      return { ...state, page: state.page + 1 };
+  }
+}
 
 export interface UseLinksResult {
   handleCreated: (link: Link) => void;
@@ -38,7 +63,6 @@ export interface UseLinksResult {
 export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
   const [links, setLinks] = useState<Link[]>([]);
   const [loadingLinks, setLoadingLinks] = useState(true);
-  const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<Pick<
     PaginatedLinks,
     'total' | 'limit'
@@ -46,11 +70,16 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
   const [pendingMetaLinkId, setPendingMetaLinkId] = useState<string | null>(
     null,
   );
-  const [randomError, setRandomError] = useState<string | null>(null);
-  const [randomLoading, setRandomLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const [fetchParams, dispatchFetchParams] = useReducer(fetchParamsReducer, {
+    filter,
+    page: 1,
+    search,
+  });
+
   useMetadataPolling(pendingMetaLinkId, (updatedLink) => {
     setLinks((previous) =>
       previous.map((link) => (link.id === updatedLink.id ? updatedLink : link)),
@@ -58,27 +87,25 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     setPendingMetaLinkId(null);
   });
 
-  // resets to page 1 when the search or filter changes
   useEffect(() => {
-    setPage(1);
-  }, [search, filter]);
+    dispatchFetchParams({ type: 'reset', filter, search });
+  }, [filter, search]);
 
-  // loads links when the search, filter, or page changes
   useEffect(() => {
     let cancelled = false;
 
-    if (page === 1) setLinks([]);
+    if (fetchParams.page === 1) setLinks([]);
     setLoadingLinks(true);
 
     const load = async () => {
       try {
         const result = await getLinks({
-          search: search || undefined,
-          archived: filter === 'archived',
-          page,
+          search: fetchParams.search || undefined,
+          archived: fetchParams.filter === 'archived',
+          page: fetchParams.page,
         });
         if (!cancelled) {
-          if (page === 1) {
+          if (fetchParams.page === 1) {
             setLinks(result.data);
           } else {
             setLinks((previous) => [...previous, ...result.data]);
@@ -99,7 +126,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [search, filter, page]);
+  }, [fetchParams]);
 
   const handleCreated = useCallback(
     (link: Link) => {
@@ -180,37 +207,24 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     }
   }, []);
 
-  const handleRandom = useCallback(async () => {
-    setRandomError(null);
-    setRandomLoading(true);
-    try {
-      const { link } = await getRandomLink({
-        archived: filter === 'archived',
-      });
-      if (!link) {
-        setRandomError('No links available');
-      } else {
-        window.open(link.url, '_blank', 'noopener,noreferrer');
-        if (!link.archivedAt) {
-          await archiveLink(link.id);
-          setLinks((previous) =>
-            previous.filter((item) => item.id !== link.id),
-          );
-          setPagination((previous) =>
-            previous ? { ...previous, total: previous.total - 1 } : previous,
-          );
-        }
-      }
-    } catch (error: unknown) {
-      setRandomError('Failed to get a random link');
-      console.error('Failed to get a random link', error);
-    } finally {
-      setRandomLoading(false);
-    }
-  }, [filter]);
+  const handleRemoveLink = useCallback((linkId: string) => {
+    setLinks((previous) => previous.filter((link) => link.id !== linkId));
+  }, []);
+
+  const handleDecrementTotal = useCallback(() => {
+    setPagination((previous) =>
+      previous ? { ...previous, total: previous.total - 1 } : previous,
+    );
+  }, []);
+
+  const { handleRandom, randomError, randomLoading } = useRandomLink({
+    filter,
+    onDecrementTotal: handleDecrementTotal,
+    onRemoveLink: handleRemoveLink,
+  });
 
   const handleLoadMore = useCallback(() => {
-    setPage((previous) => previous + 1);
+    dispatchFetchParams({ type: 'load-more' });
   }, []);
 
   const handleToggleForm = useCallback(() => {
@@ -231,7 +245,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     handleToggleForm,
     links,
     loadingLinks,
-    page,
+    page: fetchParams.page,
     pagination,
     randomError,
     randomLoading,

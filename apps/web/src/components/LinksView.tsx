@@ -1,11 +1,12 @@
 import IconButton from './ui/IconButton';
-import KeyboardShortcutsModal from './KeyboardShortcutsModal';
 import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import LinkForm from './LinkForm';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
 import { createPortal } from 'react-dom';
-import { type RefObject, useEffect, useState } from 'react';
+import { lazy, Suspense, type RefObject, useEffect, useState } from 'react';
+
+const KeyboardShortcutsModal = lazy(() => import('./KeyboardShortcutsModal'));
 import type { Link, PaginatedLinks } from '../lib/api';
 
 type LinksFilter = 'active' | 'archived';
@@ -265,7 +266,11 @@ export default function LinksView({
         </p>
       )}
 
-      {showShortcuts && <KeyboardShortcutsModal onClose={onToggleShortcuts} />}
+      {showShortcuts && (
+        <Suspense>
+          <KeyboardShortcutsModal onClose={onToggleShortcuts} />
+        </Suspense>
+      )}
 
       {showLinkForm &&
         createPortal(

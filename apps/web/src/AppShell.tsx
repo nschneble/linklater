@@ -3,14 +3,15 @@ import { useAuth } from './auth/AuthContext';
 import { useKeyboardShortcuts } from './lib/useKeyboardShortcuts';
 import { useLinks } from './lib/useLinks';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useRef, useState } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import { useTheme, type BaseTheme } from './theme/ThemeContext';
 
 import Header from './components/Header';
 import LinksView from './components/LinksView';
 import SettingsView from './components/SettingsView';
-import ThemeEditor from './components/ThemeEditor';
 import Toast from './components/ui/Toast';
+
+const ThemeEditor = lazy(() => import('./components/ThemeEditor'));
 
 type AppView = 'links' | 'settings' | 'theme-editor';
 type LinksFilter = 'active' | 'archived';
@@ -146,7 +147,9 @@ export default function AppShell() {
             showShortcuts={showShortcuts}
           />
         ) : view === 'theme-editor' ? (
-          <ThemeEditor />
+          <Suspense>
+            <ThemeEditor />
+          </Suspense>
         ) : (
           <SettingsView />
         )}
