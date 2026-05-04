@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme, type BaseTheme } from '../../theme/ThemeContext';
 import MenuItem from './MenuItem';
 import ThemeSubmenu from './ThemeSubmenu';
+import { useMenuNavigation } from './useMenuNavigation';
 import type { User } from '../../auth/AuthContext';
 
 type AppView = 'links' | 'settings' | 'theme-editor';
@@ -39,6 +40,11 @@ export default function UserMenu({
     null,
   );
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useMenuNavigation(menuRef, () => {
+    setShowUserMenu(false);
+    avatarRef.current?.focus();
+  });
   const themeRowRef = useRef<HTMLDivElement | null>(null);
 
   // resets submenu when main menu closes
@@ -150,6 +156,7 @@ export default function UserMenu({
 
       <div
         ref={menuRef}
+        role="menu"
         className="absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] border-shadow text-xs rounded-lg"
         style={{
           transition: `opacity ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}`,

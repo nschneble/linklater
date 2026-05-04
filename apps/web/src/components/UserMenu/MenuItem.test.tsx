@@ -22,7 +22,7 @@ describe('MenuItem', () => {
     render(
       <MenuItem icon="fa-bookmark" label="Your links" onClick={onClick} />,
     );
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('menuitem'));
     expect(onClick).toHaveBeenCalledOnce();
   });
 
@@ -56,6 +56,6 @@ describe('MenuItem', () => {
         onClick={() => {}}
       />,
     );
-    expect(screen.getByRole('button')).toHaveClass('border-t');
+    expect(screen.getByRole('menuitem')).toHaveClass('border-t');
   });
 });
