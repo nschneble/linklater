@@ -27,7 +27,7 @@ export default function BookmarkletSection() {
       "setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.remove()},350)},2500)}" +
       "fetch(a+'/links',{method:'POST'," +
       "headers:{'Content-Type':'application/json','Authorization':'Bearer '+t}," +
-      'body:JSON.stringify({url:location.href,title:document.title})})' +
+      'body:JSON.stringify({url:location.href})})' +
       '.then(function(r){r.ok' +
       "?n('Saved to Linklater \u2713',true)" +
       ":r.text().then(function(m){n(m||'Error saving link',false)})})" +
