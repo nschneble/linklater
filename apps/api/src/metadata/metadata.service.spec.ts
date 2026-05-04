@@ -82,6 +82,7 @@ describe('MetadataService', () => {
   let service: MetadataService;
 
   const prismaMock = {
+    $executeRaw: jest.fn().mockResolvedValue(1),
     meta: {
       upsert: jest.fn(),
     },
@@ -337,6 +338,15 @@ describe('MetadataService', () => {
         }),
       );
     });
+  });
+
+  it('updates searchVector on link after successful metadata fetch', async () => {
+    (prismaMock.meta.upsert as jest.Mock).mockResolvedValue({});
+    mockFetch(makeHtml({ ogTitle: OG_TITLE, ogDescription: OG_DESCRIPTION }));
+
+    await service.fetchAndStore(LINK_ID, LINK_URL);
+
+    expect(prismaMock.$executeRaw).toHaveBeenCalled();
   });
 
   it('registers a worker for the METADATA_FETCH queue on init', async () => {

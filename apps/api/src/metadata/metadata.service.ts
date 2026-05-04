@@ -54,6 +54,15 @@ export class MetadataService implements OnModuleInit {
           fetchedAt: new Date(),
         },
       });
+
+      await this.prisma.$executeRaw`
+        UPDATE "Link" SET "searchVector" = to_tsvector('english',
+          coalesce(${metadata.title}, '') || ' ' ||
+          coalesce(${metadata.description}, '') || ' ' ||
+          coalesce(${metadata.siteName}, '') || ' ' ||
+          url)
+        WHERE id = ${linkId}
+      `;
     } catch (error) {
       this.logger.warn(`Metadata fetch failed for ${url}: ${String(error)}`);
       await this.prisma.meta

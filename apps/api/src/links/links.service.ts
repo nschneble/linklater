@@ -95,17 +95,7 @@ export class LinksService {
     }
 
     if (search && search.trim() !== '') {
-      const term = search.trim();
-
-      // NOTE: contains with insensitive mode generates ILIKE '%term%' in
-      // PostgreSQL, which cannot use B-tree indexes and does a sequential
-      // scan. For large datasets this should be replaced with a full-text
-      // search index (tsvector)
-
-      where.OR = [
-        { url: { contains: term, mode: 'insensitive' } },
-        { meta: { title: { contains: term, mode: 'insensitive' } } },
-      ];
+      return this.findAllByText(userId, search.trim(), where, safePage, safeLimit);
     }
 
     const [data, total] = await Promise.all([
@@ -120,6 +110,55 @@ export class LinksService {
     ]);
 
     return { data, total, page: safePage, limit: safeLimit };
+  }
+
+  private async findAllByText(
+    userId: string,
+    term: string,
+    where: Prisma.LinkWhereInput,
+    page: number,
+    limit: number,
+  ) {
+    const archivedFilter =
+      where.archivedAt === null
+        ? Prisma.sql`AND l."archivedAt" IS NULL`
+        : where.archivedAt !== undefined
+          ? Prisma.sql`AND l."archivedAt" IS NOT NULL`
+          : Prisma.empty;
+
+    const offset = (page - 1) * limit;
+
+    const rows = await this.prisma.$queryRaw<
+      { id: string; total: bigint }[]
+    >`
+      SELECT l.id, COUNT(*) OVER() AS total
+      FROM "Link" l
+      WHERE l."userId" = ${userId}
+        AND l."searchVector" @@ plainto_tsquery('english', ${term})
+        ${archivedFilter}
+      ORDER BY ts_rank(l."searchVector", plainto_tsquery('english', ${term})) DESC,
+               l."createdAt" DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    if (rows.length === 0) {
+      return { data: [], total: 0, page, limit };
+    }
+
+    const ids = rows.map((row) => row.id);
+    const total = Number(rows[0].total);
+
+    const links = await this.prisma.link.findMany({
+      where: { id: { in: ids } },
+      include: { meta: true },
+    });
+
+    const orderMap = new Map(ids.map((id, index) => [id, index]));
+    links.sort(
+      (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0),
+    );
+
+    return { data: links, total, page, limit };
   }
 
   async findOne(userId: string, id: string) {

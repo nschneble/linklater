@@ -174,34 +174,38 @@ describe('LinksService', () => {
     );
   });
 
-  it('findAll adds OR search conditions when search is provided', async () => {
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
-    (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
+  it('findAll uses tsvector query when search is provided', async () => {
+    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
+      { id: LINK_ID, total: BigInt(1) },
+    ]);
+    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([makeLink()]);
 
-    await service.findAll(USER_ID, { search: 'duck' });
+    const result = await service.findAll(USER_ID, { search: 'duck' });
 
-    expect(prismaMock.link.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ OR: expect.any(Array) }),
-      }),
-    );
+    expect(prismaMock.$queryRaw).toHaveBeenCalled();
+    expect(result.total).toBe(1);
+    expect(result.data).toHaveLength(1);
   });
 
-  it('findAll searches by url and meta.title', async () => {
+  it('findAll does not use OR filter when search is provided', async () => {
+    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
     (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
-    (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
 
     await service.findAll(USER_ID, { search: 'duck' });
 
-    const call = (prismaMock.link.findMany as jest.Mock).mock.calls[0][0] as {
-      where: { OR: unknown[] };
-    };
-    expect(call.where.OR).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ url: expect.any(Object) }),
-        expect.objectContaining({ meta: expect.any(Object) }),
-      ]),
-    );
+    const call = (prismaMock.link.findMany as jest.Mock).mock
+      .calls[0]?.[0] as { where?: { OR?: unknown } } | undefined;
+    expect(call?.where?.OR).toBeUndefined();
+  });
+
+  it('findAll returns empty result when tsvector finds no matches', async () => {
+    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
+
+    const result = await service.findAll(USER_ID, { search: 'xyzzy' });
+
+    expect(result.total).toBe(0);
+    expect(result.data).toHaveLength(0);
+    expect(prismaMock.link.findMany).not.toHaveBeenCalled();
   });
 
   it('findOne returns link when found', async () => {
