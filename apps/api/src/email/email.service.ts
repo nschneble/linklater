@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger(EmailService.name);
+
   private readonly transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT ?? 587),
@@ -16,10 +18,21 @@ export class EmailService {
   private readonly from =
     process.env.SMTP_FROM ?? 'Linklater <noreply@linklater.app>';
 
+  private async send(options: nodemailer.SendMailOptions) {
+    try {
+      await this.transporter.sendMail(options);
+    } catch (error: unknown) {
+      this.logger.error('Failed to send email', error);
+      throw new ServiceUnavailableException(
+        'Failed to send email. Please try again later.',
+      );
+    }
+  }
+
   async sendVerificationEmail(email: string, token: string) {
     const verifyUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
 
-    await this.transporter.sendMail({
+    await this.send({
       from: this.from,
       to: email,
       subject: 'Verify your Linklater email',
@@ -31,7 +44,7 @@ export class EmailService {
   async sendPasswordResetEmail(email: string, token: string) {
     const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
 
-    await this.transporter.sendMail({
+    await this.send({
       from: this.from,
       to: email,
       subject: 'Reset your Linklater password',
@@ -43,7 +56,7 @@ export class EmailService {
   async sendEmailChangeVerificationEmail(email: string, token: string) {
     const verifyUrl = `${process.env.APP_URL}/verify-email-change?token=${token}`;
 
-    await this.transporter.sendMail({
+    await this.send({
       from: this.from,
       to: email,
       subject: 'Confirm your new Linklater email',
