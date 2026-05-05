@@ -47,6 +47,12 @@ export function useKeyboardShortcuts({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
+      if (event.key === 'Escape' && onEscapeRef.current) {
+        event.preventDefault();
+        onEscapeRef.current();
+        return;
+      }
+
       const target = event.target as HTMLElement;
       const isTypingField =
         target.tagName === 'INPUT' ||
@@ -54,12 +60,6 @@ export function useKeyboardShortcuts({
         target.isContentEditable;
 
       if (isTypingField) return;
-
-      if (event.key === 'Escape' && onEscapeRef.current) {
-        event.preventDefault();
-        onEscapeRef.current();
-        return;
-      }
 
       if (isShortcutsModalOpenRef.current) {
         if (event.key.toLowerCase() === 'z') {

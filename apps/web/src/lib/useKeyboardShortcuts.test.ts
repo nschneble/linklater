@@ -120,6 +120,21 @@ describe('useKeyboardShortcuts', () => {
     expect(onEscape).toHaveBeenCalledOnce();
   });
 
+  it('Escape calls onEscape even when target is an input field', () => {
+    const onEscape = vi.fn();
+    const options = makeOptions({ onEscape });
+    renderHook(() => useKeyboardShortcuts(options));
+
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+    document.body.removeChild(input);
+
+    expect(onEscape).toHaveBeenCalledOnce();
+  });
+
   it('Escape does nothing when onEscape is not provided', () => {
     const options = makeOptions();
     renderHook(() => useKeyboardShortcuts(options));
