@@ -7,6 +7,7 @@ import AppShell from './AppShell';
 import AuthForm from './components/AuthForm';
 import ErrorBoundary from './components/ErrorBoundary';
 import ResetPasswordPage from './components/ResetPasswordPage';
+import VerifyEmailChangePage from './components/VerifyEmailChangePage';
 import VerifyEmailPage from './components/VerifyEmailPage';
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
     <ErrorBoundary>
       <Routes>
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/verify-email-change" element={<VerifyEmailChangePage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {!user ? (

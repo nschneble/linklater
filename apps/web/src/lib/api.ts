@@ -91,6 +91,7 @@ export async function getMe() {
   return apiFetch<{
     email: string;
     emailVerifiedAt: string | null;
+    pendingEmail: string | null;
     mode: string;
     theme: string;
     userId: string;
@@ -110,6 +111,25 @@ export async function forgotPassword(email: string): Promise<void> {
 export async function verifyEmail(token: string): Promise<void> {
   await apiFetch(
     '/auth/verify-email',
+    { body: JSON.stringify({ token }), method: 'POST' },
+    false,
+  );
+}
+
+export async function resendVerificationEmail(): Promise<void> {
+  await apiFetch('/auth/resend-verification', { method: 'POST' });
+}
+
+export async function requestEmailChange(email: string): Promise<void> {
+  await apiFetch('/auth/request-email-change', {
+    body: JSON.stringify({ email }),
+    method: 'POST',
+  });
+}
+
+export async function verifyEmailChange(token: string): Promise<void> {
+  await apiFetch(
+    '/auth/verify-email-change',
     { body: JSON.stringify({ token }), method: 'POST' },
     false,
   );
@@ -234,9 +254,9 @@ export async function getRandomLink(options?: {
 }
 
 export async function updateMe(input: {
-  email?: string;
   mode?: string;
   password?: string;
+  currentPassword?: string;
   theme?: string;
 }): Promise<{ id: string; email: string }> {
   return apiFetch<{ id: string; email: string }>('/users/me', {

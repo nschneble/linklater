@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
@@ -78,5 +82,53 @@ export class AuthService {
 
     const newPasswordHash = await bcrypt.hash(newPassword, 12);
     await this.usersService.resetPasswordWithToken(user.id, newPasswordHash);
+  }
+
+  async resendVerificationEmail(userId: string) {
+    const user = await this.usersService.findById(userId);
+
+    if (user.emailVerifiedAt) {
+      throw new BadRequestException('Email is already verified');
+    }
+
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await this.usersService.updateVerificationToken(userId, token, expiresAt);
+    await this.emailService.sendVerificationEmail(user.email, token);
+  }
+
+  async requestEmailChange(userId: string, newEmail: string) {
+    const existing = await this.usersService.findByEmail(newEmail);
+    if (existing && existing.id !== userId) {
+      throw new ConflictException('Email already in use');
+    }
+
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await this.usersService.updatePendingEmail(userId, newEmail, token, expiresAt);
+    await this.emailService.sendEmailChangeVerificationEmail(newEmail, token);
+  }
+
+  async confirmEmailChange(token: string) {
+    const user = await this.usersService.findByPendingEmailToken(token);
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired email change link');
+    }
+
+    if (
+      !user.pendingEmailTokenExpiresAt ||
+      user.pendingEmailTokenExpiresAt < new Date()
+    ) {
+      throw new BadRequestException('Email change link has expired');
+    }
+
+    if (!user.pendingEmail) {
+      throw new BadRequestException('Invalid or expired email change link');
+    }
+
+    await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
   }
 }

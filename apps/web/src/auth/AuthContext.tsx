@@ -15,11 +15,13 @@ import {
   login as apiLogin,
   logout as apiLogout,
   register as apiRegister,
+  resendVerificationEmail as apiResendVerificationEmail,
 } from '../lib/api';
 
 export interface User {
   email: string;
   emailVerifiedAt: string | null;
+  pendingEmail: string | null;
   mode: string;
   theme: string;
   userId: string;
@@ -30,7 +32,8 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (email: string, password: string) => Promise<void>;
-  updateEmail: (email: string) => void;
+  resendVerificationEmail: () => Promise<void>;
+  setPendingEmail: (email: string) => void;
   user: User | null;
 }
 
@@ -54,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userId: me.userId,
           email: me.email,
           emailVerifiedAt: me.emailVerifiedAt,
+          pendingEmail: me.pendingEmail,
           mode: me.mode,
           theme: me.theme,
         });
@@ -73,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userId: me.userId,
       email: me.email,
       emailVerifiedAt: me.emailVerifiedAt,
+      pendingEmail: me.pendingEmail,
       mode: me.mode,
       theme: me.theme,
     });
@@ -91,13 +96,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const updateEmail = useCallback((email: string) => {
-    setUser((previous) => (previous ? { ...previous, email } : previous));
+  const resendVerificationEmail = useCallback(async () => {
+    await apiResendVerificationEmail();
+  }, []);
+
+  const setPendingEmail = useCallback((email: string) => {
+    setUser((previous) =>
+      previous ? { ...previous, pendingEmail: email } : previous,
+    );
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ loading, login, logout, register, updateEmail, user }),
-    [loading, login, logout, register, updateEmail, user],
+    () => ({
+      loading,
+      login,
+      logout,
+      register,
+      resendVerificationEmail,
+      setPendingEmail,
+      user,
+    }),
+    [loading, login, logout, register, resendVerificationEmail, setPendingEmail, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

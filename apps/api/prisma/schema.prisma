@@ -22,6 +22,10 @@ model User {
   resetToken                   String?   @unique
   resetTokenExpiresAt          DateTime?
 
+  pendingEmail                 String?
+  pendingEmailToken            String?   @unique
+  pendingEmailTokenExpiresAt   DateTime?
+
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

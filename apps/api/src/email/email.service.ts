@@ -39,4 +39,16 @@ export class EmailService {
       html: `<p>Reset your password by clicking <a href="${resetUrl}">this link</a>.</p><p>This link expires in 1 hour.</p>`,
     });
   }
+
+  async sendEmailChangeVerificationEmail(email: string, token: string) {
+    const verifyUrl = `${process.env.APP_URL}/verify-email-change?token=${token}`;
+
+    await this.transporter.sendMail({
+      from: this.from,
+      to: email,
+      subject: 'Confirm your new Linklater email',
+      text: `Confirm your new email address by visiting: ${verifyUrl}\n\nThis link expires in 24 hours.`,
+      html: `<p>Confirm your new email address by clicking <a href="${verifyUrl}">this link</a>.</p><p>This link expires in 24 hours.</p>`,
+    });
+  }
 }

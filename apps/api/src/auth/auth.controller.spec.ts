@@ -6,6 +6,8 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 
+const NEW_EMAIL = 'new.email@addy.com';
+const PENDING_EMAIL_TOKEN = 'pending-email-token-abc';
 const RESET_TOKEN = 'reset-token-abc';
 const VERIFICATION_TOKEN = 'verification-token-xyz';
 
@@ -20,8 +22,11 @@ describe('AuthController', () => {
   let controller: AuthController;
 
   const authServiceMock = {
+    confirmEmailChange: jest.fn(),
     forgotPassword: jest.fn(),
     login: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
+    requestEmailChange: jest.fn(),
+    resendVerificationEmail: jest.fn(),
     resetPassword: jest.fn(),
     sendVerificationEmail: jest.fn(),
     verifyEmail: jest.fn(),
@@ -157,6 +162,51 @@ describe('AuthController', () => {
       expect(authServiceMock.resetPassword).toHaveBeenCalledWith(
         RESET_TOKEN,
         'new-password-123',
+      );
+    });
+  });
+
+  describe('resendVerification', () => {
+    it('delegates to AuthService.resendVerificationEmail with the userId', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      (authServiceMock.resendVerificationEmail as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.resendVerification(request);
+
+      expect(authServiceMock.resendVerificationEmail).toHaveBeenCalledWith(
+        USER_ID,
+      );
+    });
+  });
+
+  describe('requestEmailChange', () => {
+    it('delegates to AuthService.requestEmailChange with userId and new email', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      (authServiceMock.requestEmailChange as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.requestEmailChange(request, { email: NEW_EMAIL });
+
+      expect(authServiceMock.requestEmailChange).toHaveBeenCalledWith(
+        USER_ID,
+        NEW_EMAIL,
+      );
+    });
+  });
+
+  describe('verifyEmailChange', () => {
+    it('delegates to AuthService.confirmEmailChange with the token', async () => {
+      (authServiceMock.confirmEmailChange as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.verifyEmailChange({ token: PENDING_EMAIL_TOKEN });
+
+      expect(authServiceMock.confirmEmailChange).toHaveBeenCalledWith(
+        PENDING_EMAIL_TOKEN,
       );
     });
   });

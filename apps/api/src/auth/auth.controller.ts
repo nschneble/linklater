@@ -13,6 +13,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { LocalAuthGuard } from './local-auth.guard.js';
 import { RegisterDto } from './dto/register.dto.js';
+import { RequestEmailChangeDto } from './dto/request-email-change.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { VerifyEmailDto } from './dto/verify-email.dto.js';
 import { UsersService } from '../users/index.js';
@@ -73,5 +74,34 @@ export class AuthController {
   @HttpCode(200)
   async resetPassword(@Body() body: ResetPasswordDto) {
     await this.authService.resetPassword(body.token, body.password);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-resend-verification': { ttl: 60000, limit: 3 } })
+  @Post('resend-verification')
+  @HttpCode(200)
+  async resendVerification(@Req() request: AuthRequest) {
+    await this.authService.resendVerificationEmail(request.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-request-email-change': { ttl: 60000, limit: 3 } })
+  @Post('request-email-change')
+  @HttpCode(200)
+  async requestEmailChange(
+    @Req() request: AuthRequest,
+    @Body() body: RequestEmailChangeDto,
+  ) {
+    await this.authService.requestEmailChange(request.user.userId, body.email);
+  }
+
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-verify-email-change': { ttl: 60000, limit: 10 } })
+  @Post('verify-email-change')
+  @HttpCode(200)
+  async verifyEmailChange(@Body() body: VerifyEmailDto) {
+    await this.authService.confirmEmailChange(body.token);
   }
 }

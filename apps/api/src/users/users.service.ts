@@ -33,7 +33,6 @@ export class UsersService {
   async updateMe(
     id: string,
     data: {
-      email?: string;
       password?: string;
       currentPassword?: string;
       theme?: string;
@@ -41,21 +40,10 @@ export class UsersService {
     },
   ) {
     const updateData: {
-      email?: string;
       passwordHash?: string;
       theme?: string;
       mode?: string;
     } = {};
-
-    if (data.email) {
-      const existing = await this.prisma.user.findUnique({
-        where: { email: data.email },
-      });
-      if (existing && existing.id !== id) {
-        throw new ConflictException('Email already in use');
-      }
-      updateData.email = data.email;
-    }
 
     if (data.password) {
       if (!data.currentPassword) {
@@ -151,6 +139,41 @@ export class UsersService {
         passwordHash: newPasswordHash,
         resetToken: null,
         resetTokenExpiresAt: null,
+      },
+    });
+  }
+
+  async updatePendingEmail(
+    id: string,
+    pendingEmail: string,
+    token: string,
+    expiresAt: Date,
+  ) {
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        pendingEmail,
+        pendingEmailToken: token,
+        pendingEmailTokenExpiresAt: expiresAt,
+      },
+    });
+  }
+
+  async findByPendingEmailToken(token: string) {
+    return this.prisma.user.findUnique({ where: { pendingEmailToken: token } });
+  }
+
+  async confirmPendingEmail(id: string, newEmail: string) {
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        email: newEmail,
+        emailVerifiedAt: new Date(),
+        pendingEmail: null,
+        pendingEmailToken: null,
+        pendingEmailTokenExpiresAt: null,
+        verificationToken: null,
+        verificationTokenExpiresAt: null,
       },
     });
   }

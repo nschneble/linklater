@@ -21,22 +21,26 @@ const KNOWN_PASSWORD = 'open-sesame';
 const KNOWN_PASSWORD_HASH = bcrypt.hashSync(KNOWN_PASSWORD, 1);
 const MISSING_USER_ID = 'missing-user';
 const NEW_PASSWORD = 'open-toasted-sesame';
-const OTHER_USER_ID = 'user-2';
-const OTHER_USER_EMAIL = 'other.email@addy.com';
 const SITE_MODE = 'dark';
 const THEME_NAME = 'scanner-darkly';
 const UNKNOWN_PASSWORD = 'open-poppy-seed';
-const UPDATED_USER_EMAIL = 'new.email@addy.com';
 const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';
 const USER_PASSWORD = 'open-sesame';
 
+const PENDING_EMAIL = 'pending.email@addy.com';
+const PENDING_EMAIL_TOKEN = 'pending-email-token-abc';
+
 const makeUser = (overrides = {}) => ({
   createdAt: new Date(),
   email: USER_EMAIL,
+  emailVerifiedAt: null,
   id: USER_ID,
   mode: SITE_MODE,
   passwordHash: KNOWN_PASSWORD_HASH,
+  pendingEmail: null,
+  pendingEmailToken: null,
+  pendingEmailTokenExpiresAt: null,
   theme: THEME_NAME,
   updatedAt: new Date(),
   ...overrides,
@@ -98,35 +102,6 @@ describe('UsersService', () => {
   });
 
   describe('updateMe', () => {
-    it('updates email when it is not in use by another user', async () => {
-      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
-      (prismaMock.user.update as jest.Mock).mockResolvedValue(
-        makeUser({ email: UPDATED_USER_EMAIL }),
-      );
-
-      await service.updateMe(USER_ID, {
-        email: UPDATED_USER_EMAIL,
-      });
-
-      expect(prismaMock.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            email: UPDATED_USER_EMAIL,
-          }),
-        }),
-      );
-    });
-
-    it('throws ConflictException when new email belongs to a different user', async () => {
-      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(
-        makeUser({ id: OTHER_USER_ID }),
-      );
-
-      await expect(
-        service.updateMe(USER_ID, { email: OTHER_USER_EMAIL }),
-      ).rejects.toThrow(ConflictException);
-    });
-
     it('throws BadRequestException when changing password without currentPassword', async () => {
       await expect(
         service.updateMe(USER_ID, { password: NEW_PASSWORD }),
@@ -298,6 +273,62 @@ describe('UsersService', () => {
           passwordHash: newHash,
           resetToken: null,
           resetTokenExpiresAt: null,
+        },
+      });
+    });
+  });
+
+  describe('updatePendingEmail', () => {
+    it('stores pending email, token, and expiry on the user', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+      const expiresAt = new Date(Date.now() + 86400000);
+
+      await service.updatePendingEmail(
+        USER_ID,
+        PENDING_EMAIL,
+        PENDING_EMAIL_TOKEN,
+        expiresAt,
+      );
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          pendingEmail: PENDING_EMAIL,
+          pendingEmailToken: PENDING_EMAIL_TOKEN,
+          pendingEmailTokenExpiresAt: expiresAt,
+        },
+      });
+    });
+  });
+
+  describe('findByPendingEmailToken', () => {
+    it('looks up user by pendingEmailToken field', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.findByPendingEmailToken(PENDING_EMAIL_TOKEN);
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { pendingEmailToken: PENDING_EMAIL_TOKEN },
+      });
+    });
+  });
+
+  describe('confirmPendingEmail', () => {
+    it('moves pendingEmail to email and clears pending fields', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.confirmPendingEmail(USER_ID, PENDING_EMAIL);
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          email: PENDING_EMAIL,
+          emailVerifiedAt: expect.any(Date),
+          pendingEmail: null,
+          pendingEmailToken: null,
+          pendingEmailTokenExpiresAt: null,
+          verificationToken: null,
+          verificationTokenExpiresAt: null,
         },
       });
     });
