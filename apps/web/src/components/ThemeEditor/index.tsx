@@ -73,7 +73,7 @@ export default function ThemeEditor() {
           <button
             type="button"
             onClick={resetOverrides}
-            className="px-2.5 py-1.5 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-muted)] text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded-lg transition cursor-pointer"
+            className="px-2.5 py-1.5 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-muted)] text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded-lg transition-colors active:scale-[0.96] cursor-pointer"
           >
             Reset
           </button>

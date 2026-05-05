@@ -33,7 +33,7 @@ export default function Toast({ message, onDismiss }: ToastProps) {
         type="button"
         aria-label="Dismiss"
         onClick={dismiss}
-        className={`ml-1 opacity-60 hover:opacity-100 transition-opacity cursor-pointer ${FOCUS_RING} rounded-full`}
+        className={`p-1.5 -m-1.5 ml-0.5 opacity-60 hover:opacity-100 transition-opacity active:scale-[0.96] cursor-pointer ${FOCUS_RING} rounded-full`}
       >
         <i className="fa-solid fa-xmark text-xs" aria-hidden="true" />
       </button>

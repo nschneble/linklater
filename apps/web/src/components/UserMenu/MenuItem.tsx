@@ -15,7 +15,7 @@ export default function MenuItem({
 }: MenuItemProps) {
   return (
     <button
-      className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 hover:bg-[var(--bg-surface)] text-[var(--text)] text-left cursor-pointer ${className}`}
+      className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 hover:bg-[var(--bg-surface)] text-[var(--text)] text-left cursor-pointer active:scale-[0.96] ${className}`}
       type="button"
       role="menuitem"
       onClick={onClick}

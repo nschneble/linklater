@@ -52,7 +52,7 @@ export default function AuthForm() {
   if (mode === 'forgot-password') {
     return (
       <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
-        <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold">
+        <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold [text-wrap:balance]">
           Forgot password?
         </h1>
         <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
@@ -113,7 +113,7 @@ export default function AuthForm() {
 
   return (
     <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
-      <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold">
+      <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold [text-wrap:balance]">
         Linklater
       </h1>
       <p className="mb-6 text-[var(--text-muted)] text-center">
