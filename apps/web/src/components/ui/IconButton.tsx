@@ -14,7 +14,7 @@ const variantClasses: Record<
   string
 > = {
   default: `pl-2 pr-2.5 py-1.5 hover:bg-[var(--bg-elevated)] ring-1 ring-[var(--border)] text-[var(--text)] ${FOCUS_RING} active:scale-[0.96]`,
-  danger: `pl-2 pr-2.5 py-1.5 hover:bg-rose-900/40 border border-rose-700 text-rose-300 ${FOCUS_RING_DANGER} active:scale-[0.96]`,
+  danger: `pl-2 pr-2.5 py-1.5 hover:bg-rose-100 [[data-mode='dark']_&]:hover:bg-rose-900/40 border border-rose-400 [[data-mode='dark']_&]:border-rose-700 text-rose-700 [[data-mode='dark']_&]:text-rose-300 ${FOCUS_RING_DANGER} active:scale-[0.96]`,
   'danger-filled': `pl-2 pr-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-rose-50 ${FOCUS_RING_DANGER} active:scale-[0.96]`,
   ghost: `pl-2 pr-2.5 py-1.5 ring-1 ring-[var(--border)] text-[var(--text-muted)] ${FOCUS_RING} active:scale-[0.96]`,
   elevated: `pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] font-semibold ${DISABLED} transition active:scale-[0.96] disabled:active:scale-100`,

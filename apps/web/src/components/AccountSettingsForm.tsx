@@ -105,7 +105,7 @@ export default function AccountSettingsForm() {
             {user?.email}
           </span>
           {isVerified ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs rounded-full">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 [[data-mode='dark']_&]:bg-emerald-950/20 border border-emerald-300 [[data-mode='dark']_&]:border-emerald-800/40 text-emerald-700 [[data-mode='dark']_&]:text-emerald-400 text-xs rounded-full">
               <i
                 className="fa-solid fa-circle-check text-[0.6rem]"
                 aria-hidden="true"
@@ -113,7 +113,7 @@ export default function AccountSettingsForm() {
               Verified
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs rounded-full">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/20 border border-amber-300 [[data-mode='dark']_&]:border-amber-800/40 text-amber-700 [[data-mode='dark']_&]:text-amber-300 text-xs rounded-full">
               <i
                 className="fa-solid fa-circle-exclamation text-[0.6rem]"
                 aria-hidden="true"

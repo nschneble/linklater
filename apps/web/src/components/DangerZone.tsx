@@ -21,9 +21,11 @@ export default function DangerZone() {
   };
 
   return (
-    <div className="max-w-md p-4 bg-[var(--bg-surface)] border border-rose-800/70 rounded-xl">
-      <h3 className="mb-1 text-rose-400 text-sm font-semibold">Danger zone</h3>
-      <p className="mb-3 text-rose-300/80 text-xs text-pretty">
+    <div className="max-w-md p-4 bg-rose-50 [[data-mode='dark']_&]:bg-rose-950/20 border border-rose-200 [[data-mode='dark']_&]:border-rose-800/50 rounded-xl">
+      <h3 className="mb-1 text-rose-700 [[data-mode='dark']_&]:text-rose-400 text-sm font-semibold">
+        Danger zone
+      </h3>
+      <p className="mb-3 text-rose-600/80 [[data-mode='dark']_&]:text-rose-300/80 text-xs text-pretty">
         Deleting your account will remove all your saved links. This cannot be
         undone.
       </p>
@@ -45,7 +47,7 @@ export default function DangerZone() {
         </IconButton>
       ) : (
         <div className="flex gap-2 items-center text-xs">
-          <span className="text-rose-300">
+          <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300">
             Are you sure? This is permanent.
           </span>
           <IconButton
