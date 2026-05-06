@@ -107,7 +107,12 @@ export class AuthService {
     const token = randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    await this.usersService.updatePendingEmail(userId, newEmail, token, expiresAt);
+    await this.usersService.updatePendingEmail(
+      userId,
+      newEmail,
+      token,
+      expiresAt,
+    );
     await this.emailService.sendEmailChangeVerificationEmail(newEmail, token);
   }
 

@@ -60,7 +60,9 @@ export default function AccountSettingsForm() {
       await resendVerificationEmail();
       setResendMessage('Verification email sent. Check your inbox.');
     } catch (error: unknown) {
-      setResendError(getErrorMessage(error, 'Failed to resend verification email'));
+      setResendError(
+        getErrorMessage(error, 'Failed to resend verification email'),
+      );
     } finally {
       setResending(false);
     }
@@ -99,15 +101,23 @@ export default function AccountSettingsForm() {
         <h3 className="text-[var(--text)] text-sm font-semibold">Email</h3>
 
         <div className="flex items-center gap-2">
-          <span className="text-[var(--text-muted)] text-xs">{user?.email}</span>
+          <span className="text-[var(--text-muted)] text-xs">
+            {user?.email}
+          </span>
           {isVerified ? (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs rounded-full">
-              <i className="fa-solid fa-circle-check text-[0.6rem]" aria-hidden="true" />
+              <i
+                className="fa-solid fa-circle-check text-[0.6rem]"
+                aria-hidden="true"
+              />
               Verified
             </span>
           ) : (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs rounded-full">
-              <i className="fa-solid fa-circle-exclamation text-[0.6rem]" aria-hidden="true" />
+              <i
+                className="fa-solid fa-circle-exclamation text-[0.6rem]"
+                aria-hidden="true"
+              />
               Unverified
             </span>
           )}
@@ -131,8 +141,8 @@ export default function AccountSettingsForm() {
         {hasPendingEmail && (
           <Alert variant="success">
             Verification email sent to{' '}
-            <span className="font-medium">{user?.pendingEmail}</span>. Check your
-            inbox to confirm the change.
+            <span className="font-medium">{user?.pendingEmail}</span>. Check
+            your inbox to confirm the change.
           </Alert>
         )}
 
@@ -152,7 +162,10 @@ export default function AccountSettingsForm() {
           disabled={emailSaving || emailInput === user?.email}
           className="py-2.5"
         >
-          <i className="fa-solid fa-envelope text-[0.7rem]" aria-hidden="true" />
+          <i
+            className="fa-solid fa-envelope text-[0.7rem]"
+            aria-hidden="true"
+          />
           {emailSaving ? 'Sending…' : 'Change email'}
         </PrimaryButton>
       </form>
@@ -186,7 +199,10 @@ export default function AccountSettingsForm() {
         {passwordMessage && <Alert variant="success">{passwordMessage}</Alert>}
         {passwordError && <Alert variant="error">{passwordError}</Alert>}
 
-        <PrimaryButton disabled={passwordSaving || !password} className="py-2.5">
+        <PrimaryButton
+          disabled={passwordSaving || !password}
+          className="py-2.5"
+        >
           <i
             className="fa-solid fa-floppy-disk text-[0.7rem]"
             aria-hidden="true"

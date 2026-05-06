@@ -366,9 +366,9 @@ describe('AuthService', () => {
         null,
       );
 
-      await expect(
-        service.confirmEmailChange('unknown-token'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.confirmEmailChange('unknown-token')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws BadRequestException when the token has expired', async () => {

@@ -116,7 +116,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPendingEmail,
       user,
     }),
-    [loading, login, logout, register, resendVerificationEmail, setPendingEmail, user],
+    [
+      loading,
+      login,
+      logout,
+      register,
+      resendVerificationEmail,
+      setPendingEmail,
+      user,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
