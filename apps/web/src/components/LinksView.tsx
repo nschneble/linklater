@@ -77,6 +77,8 @@ export default function LinksView() {
 
   useEffect(() => {
     setIsClearingArchived(false);
+    setSearch('');
+    setDebouncedSearch('');
   }, [filter]);
 
   async function handleClearArchived() {
