@@ -204,17 +204,17 @@ export default function AuthForm() {
         </PrimaryButton>
       </form>
 
-      {mode === 'login' && (
-        <p className="mt-4 text-center">
-          <button
-            type="button"
-            className="text-[var(--text-muted)] text-xs underline underline-offset-3 cursor-pointer"
-            onClick={() => handleModeChange('forgot-password')}
-          >
-            I literally have no idea what my password is
-          </button>
-        </p>
-      )}
+      <p
+        className={`mt-4 text-center transition-opacity duration-200 ${mode === 'login' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      >
+        <button
+          type="button"
+          className="text-[var(--text-muted)] hover:text-[var(--accent)] text-xs underline underline-offset-3 cursor-pointer"
+          onClick={() => handleModeChange('forgot-password')}
+        >
+          I literally have no idea what my password is
+        </button>
+      </p>
     </div>
   );
 }
