@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { usePasteDetection } from './usePasteDetection';
 
 interface UseLinksFormOptions {
+  enabled?: boolean;
   onDirectSave: (url: string) => Promise<void>;
 }
 
@@ -11,11 +12,12 @@ export interface UseLinksFormResult {
 }
 
 export function useLinksForm({
+  enabled = true,
   onDirectSave,
 }: UseLinksFormOptions): UseLinksFormResult {
   const [showLinkForm, setShowLinkForm] = useState(false);
 
-  usePasteDetection({ onSave: onDirectSave });
+  usePasteDetection({ enabled, onSave: onDirectSave });
 
   const handleToggleForm = useCallback(() => {
     setShowLinkForm((open) => !open);

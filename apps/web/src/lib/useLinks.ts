@@ -37,7 +37,10 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     resetTotal: data.resetTotal,
     updateLink: data.updateLink,
   });
-  const form = useLinksForm({ onDirectSave: actions.handleDirectSave });
+  const form = useLinksForm({
+    enabled: filter !== 'archived',
+    onDirectSave: actions.handleDirectSave,
+  });
 
   return {
     archiveError: actions.archiveError,

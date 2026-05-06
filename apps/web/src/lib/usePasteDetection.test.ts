@@ -65,6 +65,15 @@ describe('usePasteDetection', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
+  it('does not call onSave when enabled is false', () => {
+    const onSave = vi.fn();
+    renderHook(() => usePasteDetection({ onSave, enabled: false }));
+
+    firePasteOn(window, 'https://example.com/article');
+
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   it('removes the event listener on unmount', () => {
     const onSave = vi.fn();
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
