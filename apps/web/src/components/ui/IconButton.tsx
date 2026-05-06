@@ -2,6 +2,7 @@ import type { ButtonHTMLAttributes } from 'react';
 import { DISABLED, FOCUS_RING } from '../../lib/styles';
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  hidden?: boolean;
   variant?: 'default' | 'danger' | 'danger-filled' | 'ghost' | 'elevated';
 }
 
@@ -22,12 +23,17 @@ const variantClasses: Record<
 export default function IconButton({
   className = '',
   children,
+  hidden = false,
   variant = 'default',
   ...props
 }: IconButtonProps) {
+  const visibilityClasses = hidden
+    ? 'opacity-0 scale-95 pointer-events-none'
+    : 'opacity-100 scale-100';
+
   return (
     <button
-      className={`inline-flex items-center gap-1.5 ${variantClasses[variant]} text-xs rounded-full cursor-pointer ${className}`}
+      className={`inline-flex items-center gap-1.5 ${variantClasses[variant]} text-xs rounded-full cursor-pointer transition duration-200 ${visibilityClasses} ${className}`}
       type="button"
       {...props}
     >

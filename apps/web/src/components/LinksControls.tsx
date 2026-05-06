@@ -23,46 +23,38 @@ export default function LinksControls({
   onRandom,
   onToggleForm,
 }: LinksControlsProps) {
-  if (filter === 'active') {
-    return (
-      <div className="flex items-end gap-3">
-        <IconButton
-          variant="elevated"
-          disabled={randomLoading}
-          title="Opens a random unread link and marks it as read."
-          onClick={onRandom}
-        >
-          <i className="fa-solid fa-shuffle text-[0.7rem]" aria-hidden="true" />
-          {randomLoading ? 'Stumbling…' : 'Stumble upon'}
-        </IconButton>
+  return (
+    <div className="flex items-end gap-3">
+      <IconButton
+        variant="elevated"
+        disabled={isClearingArchived}
+        hidden={filter === 'active' || linksCount == 0}
+        title="Permanently removes all read links."
+        onClick={onClearArchived}
+      >
+        <i className="fa-solid fa-trash text-[0.7rem]" aria-hidden="true" />
+        Remove all read
+      </IconButton>
+      <IconButton
+        variant="elevated"
+        disabled={randomLoading}
+        hidden={filter !== 'active'}
+        title="Opens a random unread link and marks it as read."
+        onClick={onRandom}
+      >
+        <i className="fa-solid fa-shuffle text-[0.7rem]" aria-hidden="true" />
+        {randomLoading ? 'Stumbling…' : 'Stumble upon'}
+      </IconButton>
 
-        <PrimaryButton
-          type="button"
-          onClick={onToggleForm}
-          aria-expanded={showLinkForm}
-        >
-          <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
-          {showLinkForm ? 'Hide form' : 'Add link'}
-        </PrimaryButton>
-      </div>
-    );
-  }
-
-  if (linksCount > 0) {
-    return (
-      <div className="flex items-end gap-3">
-        <IconButton
-          variant="elevated"
-          disabled={isClearingArchived}
-          title="Permanently removes all read links."
-          onClick={onClearArchived}
-        >
-          <i className="fa-solid fa-trash text-[0.7rem]" aria-hidden="true" />
-          Remove all read
-        </IconButton>
-      </div>
-    );
-  }
-
-  return null;
+      <PrimaryButton
+        type="button"
+        hidden={filter !== 'active'}
+        onClick={onToggleForm}
+        aria-expanded={showLinkForm}
+      >
+        <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
+        {showLinkForm ? 'Hide form' : 'Add link'}
+      </PrimaryButton>
+    </div>
+  );
 }
