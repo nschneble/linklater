@@ -54,8 +54,7 @@ export default function AppShell() {
               className="fa-solid fa-triangle-exclamation mr-1.5"
               aria-hidden="true"
             />
-            Please verify your email address. Check your inbox for a
-            verification link.
+            Please verify your email address. Check your inbox!
           </p>
         </div>
       )}
