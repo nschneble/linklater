@@ -48,8 +48,8 @@ export default function AppShell() {
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] select-none">
       {isEmailUnverified && (
-        <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 text-center">
-          <p className="text-amber-600 dark:text-amber-400 text-xs">
+        <div className="px-4 py-2 bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/25 border-b border-amber-300 [[data-mode='dark']_&]:border-amber-800/50 text-center">
+          <p className="text-amber-800 [[data-mode='dark']_&]:text-amber-300 text-xs font-medium">
             <i
               className="fa-solid fa-triangle-exclamation mr-1.5"
               aria-hidden="true"

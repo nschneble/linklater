@@ -1,12 +1,12 @@
 [data-theme='dazed-and-confused'][data-mode='dark'] {
   --bg: #2a201d;
-  --bg-surface: #a15144;
+  --bg-surface: #7a3028;
   --bg-elevated: #596f78;
-  --bg-input: #a15144;
+  --bg-input: #7a3028;
   --text: #f3f0ed;
-  --text-muted: #ecb518;
-  --text-subtle: #69c4e3;
-  --border: #26aad0;
+  --text-muted: #d89510;
+  --text-subtle: #4898b8;
+  --border: #1878a0;
   --accent: #d4212b;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #f3f0ed;
@@ -15,12 +15,12 @@
 [data-theme='dazed-and-confused'][data-mode='light'] {
   --bg: #f3f0ed;
   --bg-surface: #e79d7f;
-  --bg-elevated: #a1bcac;
+  --bg-elevated: #d4b898;
   --bg-input: #f3f0ed;
   --text: #2a201d;
   --text-muted: #a15144;
   --text-subtle: #596f78;
-  --border: #ecb518;
+  --border: #c07818;
   --accent: #d4212b;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #f3f0ed;

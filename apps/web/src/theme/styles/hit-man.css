@@ -4,7 +4,7 @@
   --bg-elevated: #594c3f;
   --bg-input: #4e2c14;
   --text: #efb88e;
-  --text-muted: #eba622;
+  --text-muted: #d08c18;
   --text-subtle: #988679;
   --border: #7c421d;
   --accent: #cc310d;
@@ -13,13 +13,13 @@
 }
 
 [data-theme='hit-man'][data-mode='light'] {
-  --bg: #efb88e;
-  --bg-surface: #988679;
-  --bg-elevated: #eba622;
-  --bg-input: #efb88e;
+  --bg: #f0c870;
+  --bg-surface: #c4a860;
+  --bg-elevated: #a07830;
+  --bg-input: #f0c870;
   --text: #1a150e;
   --text-muted: #4e2c14;
-  --text-subtle: #4a4245;
+  --text-subtle: #5a3c20;
   --border: #7c421d;
   --accent: #cc310d;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);

@@ -1,25 +1,25 @@
 [data-theme='boyhood'][data-mode='dark'] {
   --bg: #0d150d;
   --bg-surface: #335215;
-  --bg-elevated: #2d5173;
+  --bg-elevated: #304820;
   --bg-input: #335215;
   --text: #d0cf93;
   --text-muted: #87973c;
-  --text-subtle: #6d8924;
-  --border: #6c9229;
-  --accent: #99ba48;
+  --text-subtle: #527015;
+  --border: #406818;
+  --accent: #aacb50;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #0d150d;
 }
 
 [data-theme='boyhood'][data-mode='light'] {
   --bg: #d0cf93;
-  --bg-surface: #99ba48;
-  --bg-elevated: #d0cf93;
+  --bg-surface: #bcd068;
+  --bg-elevated: #a8bc48;
   --bg-input: #d0cf93;
   --text: #0d150d;
   --text-muted: #335215;
-  --text-subtle: #2d5173;
+  --text-subtle: #385028;
   --border: #637628;
   --accent: #b25e59;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);

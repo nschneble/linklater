@@ -4,8 +4,8 @@
   --bg-elevated: #5f594f;
   --bg-input: #4c310b;
   --text: #e0d0c1;
-  --text-muted: #a4a296;
-  --text-subtle: #918c89;
+  --text-muted: #b89870;
+  --text-subtle: #7a7060;
   --border: #935035;
   --accent: #e02a15;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
@@ -14,13 +14,13 @@
 
 [data-theme='school-of-rock'][data-mode='light'] {
   --bg: #e0d0c1;
-  --bg-surface: #c08e4e;
-  --bg-elevated: #a4a296;
+  --bg-surface: #d4b07a;
+  --bg-elevated: #b08c30;
   --bg-input: #e0d0c1;
   --text: #0a0a07;
   --text-muted: #4c310b;
-  --text-subtle: #5f594f;
-  --border: #918c89;
+  --text-subtle: #6a4820;
+  --border: #8a5e28;
   --accent: #e02a15;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #ffffff;
