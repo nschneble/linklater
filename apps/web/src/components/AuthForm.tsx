@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useState, useRef, useEffect, type FormEvent } from 'react';
 import Alert from './ui/Alert';
 import FormInput from './ui/FormInput';
+import LinkButton from './ui/LinkButton';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
 
@@ -70,13 +71,9 @@ export default function AuthForm() {
             <Alert variant="success">
               Check your email for a reset link. It expires in 1 hour.
             </Alert>
-            <button
-              type="button"
-              className="text-[var(--text-muted)] text-xs underline"
-              onClick={() => handleModeChange('login')}
-            >
+            <LinkButton onClick={() => handleModeChange('login')}>
               Back to login
-            </button>
+            </LinkButton>
           </div>
         ) : (
           <form className="space-y-4" onSubmit={handleSubmit}>
@@ -104,13 +101,9 @@ export default function AuthForm() {
             </PrimaryButton>
 
             <p className="text-center">
-              <button
-                type="button"
-                className="text-[var(--text-muted)] text-xs underline"
-                onClick={() => handleModeChange('login')}
-              >
+              <LinkButton onClick={() => handleModeChange('login')}>
                 Back to login
-              </button>
+              </LinkButton>
             </p>
           </form>
         )}
@@ -207,13 +200,9 @@ export default function AuthForm() {
       <p
         className={`mt-4 text-center transition-opacity duration-200 ${mode === 'login' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
-        <button
-          type="button"
-          className="text-[var(--text-muted)] hover:text-[var(--accent)] text-xs underline underline-offset-3 cursor-pointer"
-          onClick={() => handleModeChange('forgot-password')}
-        >
+        <LinkButton onClick={() => handleModeChange('forgot-password')}>
           I literally have no idea what my password is
-        </button>
+        </LinkButton>
       </p>
     </div>
   );

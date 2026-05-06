@@ -62,15 +62,16 @@ describe('LinksControls', () => {
       expect(screen.getByText(/remove all read/i)).toBeInTheDocument();
     });
 
-    it('renders nothing when no links exist', () => {
-      const { container } = render(
+    it('hides Remove all read button when no links exist', () => {
+      render(
         <LinksControls
           {...defaultActiveProps}
           filter="archived"
           linksCount={0}
         />,
       );
-      expect(container.firstChild).toBeNull();
+      const button = screen.getByText(/remove all read/i).closest('button');
+      expect(button).toHaveClass('opacity-0');
     });
 
     it('calls onClearArchived when Remove all read is clicked', () => {
