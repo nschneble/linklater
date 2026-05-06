@@ -217,7 +217,7 @@ while true; do
      grep -q "Nest application successfully started" "$API_LOG" 2>/dev/null; then
     PORT=$(grep -oE 'Listening on port [0-9]+' "$API_LOG" 2>/dev/null \
            | grep -oE '[0-9]+$' | tail -1 || true)
-    API_URL="http://localhost:${PORT:-3000}"
+    API_URL="https://localhost:${PORT:-3000}"
     API_STATE="ready"
   fi
 
