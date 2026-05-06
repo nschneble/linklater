@@ -7,8 +7,10 @@ interface AlertProps {
 }
 
 const variantClasses = {
-  error: 'bg-rose-950/40 border-rose-800 text-rose-400',
-  success: 'bg-emerald-950/40 border-emerald-700 text-emerald-300',
+  error:
+    "bg-rose-50 [[data-mode='dark']_&]:bg-rose-950/40 border-rose-200 [[data-mode='dark']_&]:border-rose-800 text-rose-700 [[data-mode='dark']_&]:text-rose-400",
+  success:
+    "bg-emerald-50 [[data-mode='dark']_&]:bg-emerald-950/40 border-emerald-200 [[data-mode='dark']_&]:border-emerald-700 text-emerald-700 [[data-mode='dark']_&]:text-emerald-300",
 };
 
 const variantRoles: Record<AlertProps['variant'], string> = {
