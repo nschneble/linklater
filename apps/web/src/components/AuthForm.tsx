@@ -60,10 +60,10 @@ export default function AuthForm() {
     return (
       <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
         <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold [text-wrap:balance]">
-          Forgot password?
+          You forgot?
         </h1>
         <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
-          Enter your email and we&apos;ll send a reset link.
+          Silly goose. Fear not, we'll get you sorted.
         </p>
 
         {forgotPasswordSent ? (
@@ -79,7 +79,7 @@ export default function AuthForm() {
           <form className="space-y-4" onSubmit={handleSubmit}>
             <label
               htmlFor="forgot-email"
-              className="block text-[var(--text-muted)] text-sm font-medium"
+              className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
             >
               Email
             </label>
@@ -97,7 +97,7 @@ export default function AuthForm() {
 
             <PrimaryButton disabled={loading} className="w-full py-2.5">
               <i className="fa-solid fa-envelope text-xs" aria-hidden="true" />
-              {loading ? 'Sending…' : 'Send reset link'}
+              {loading ? 'Sending…' : 'Send password reset link'}
             </PrimaryButton>
 
             <p className="text-center">
@@ -121,7 +121,7 @@ export default function AuthForm() {
       </p>
 
       <div
-        className="relative flex mb-6 p-1 bg-[var(--bg-elevated)] rounded-full"
+        className="relative flex mb-[24.5px] p-1 bg-[var(--bg-elevated)] rounded-full"
         role="tablist"
         aria-label="Authentication mode"
       >
