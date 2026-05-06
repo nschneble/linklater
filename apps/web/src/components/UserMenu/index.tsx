@@ -194,6 +194,12 @@ export default function UserMenu({
           />
 
           <MenuItem
+            icon={mode === 'light' ? 'fa-moon' : 'fa-sun'}
+            label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
+            onClick={onModeToggle}
+          />
+
+          <MenuItem
             icon="fa-palette"
             label="Theme editor"
             onClick={() => {
@@ -201,12 +207,6 @@ export default function UserMenu({
               setShowUserMenu(false);
             }}
             active={view === 'theme-editor'}
-          />
-
-          <MenuItem
-            icon={mode === 'light' ? 'fa-moon' : 'fa-sun'}
-            label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
-            onClick={onModeToggle}
           />
         </MenuSection>
 
