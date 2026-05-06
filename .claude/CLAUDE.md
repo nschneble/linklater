@@ -48,6 +48,13 @@ npx prisma generate                      # Regenerate client after migrations
 
 > **Note:** Run `npx prisma generate` after any migration. The custom client output path in this project prevents `migrate dev` from triggering it automatically.
 
+## Tool Versions
+
+- Always check the **actual installed version** of a tool before making suggestions. Don't assume based on training data or common defaults.
+  - Read `package.json` to confirm versions before referencing APIs, syntax, or behavior.
+  - Example failure mode: assuming Tailwind v3 syntax (e.g. `duration-2000`, trailing `!` modifiers, `@layer` behaviors) when v4 is installed.
+- When **installing new packages**, always pick the latest stable version unless there's an explicit reason not to (and provide that reason).
+
 ## Development Workflow
 
 Use the [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopment.html) (TDD) technique.
