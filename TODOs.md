@@ -30,12 +30,8 @@ _Bugs will be added here as they are reported or discovered_
 
 ## Verifications
 
-- Toast notifications have a dismiss button and animate on close
 - You can use arrow keys to navigate the tabs and user menu
-- Searches are performed on a delay (check Network tab)
-- Sped up theme submenu previews
 - Loading more links shows the skeleton cards while loading
-- Rate limiting will trigger after 5 rapid registration attempts
 - Signup flow includes email verification
 - Forgot password flow sends expiring reset email
 - Enhanced search matches titles, descriptions, and urls
