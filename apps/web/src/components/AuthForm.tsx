@@ -1,7 +1,7 @@
 import { forgotPassword as apiForgotPassword } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
 import { useAuth } from '../auth/AuthContext';
-import { useState, type FormEvent } from 'react';
+import { useState, useRef, useEffect, type FormEvent } from 'react';
 import Alert from './ui/Alert';
 import FormInput from './ui/FormInput';
 import PrimaryButton from './ui/PrimaryButton';
@@ -12,12 +12,18 @@ type Mode = 'login' | 'register' | 'forgot-password';
 export default function AuthForm() {
   const { login, register } = useAuth();
 
+  const emailReference = useRef<HTMLInputElement>(null);
+
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<Mode>('login');
   const [password, setPassword] = useState('');
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
+
+  useEffect(() => {
+    emailReference.current?.focus();
+  }, [mode]);
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
@@ -82,6 +88,7 @@ export default function AuthForm() {
             </label>
             <FormInput
               id="forgot-email"
+              ref={emailReference}
               type="email"
               autoComplete="email"
               onChange={(event) => setEmail(event.target.value)}
@@ -159,6 +166,7 @@ export default function AuthForm() {
         </label>
         <FormInput
           id="auth-email"
+          ref={emailReference}
           type="email"
           autoComplete="email"
           onChange={(event) => setEmail(event.target.value)}
@@ -200,10 +208,10 @@ export default function AuthForm() {
         <p className="mt-4 text-center">
           <button
             type="button"
-            className="text-[var(--text-muted)] text-xs underline"
+            className="text-[var(--text-muted)] text-xs underline underline-offset-3 cursor-pointer"
             onClick={() => handleModeChange('forgot-password')}
           >
-            Forgot password?
+            I literally have no idea what my password is
           </button>
         </p>
       )}
