@@ -19,13 +19,19 @@ describe('LinksControls', () => {
   describe('active filter', () => {
     it('shows Stumble upon and Add link buttons', () => {
       render(<LinksControls {...defaultActiveProps} />);
-      expect(screen.getByText(/stumble upon/i)).toBeInTheDocument();
-      expect(screen.getByText(/add link/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /stumble upon/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /add link/i }),
+      ).toBeInTheDocument();
     });
 
     it('shows Hide form when showLinkForm is true', () => {
       render(<LinksControls {...defaultActiveProps} showLinkForm={true} />);
-      expect(screen.getByText(/hide form/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /hide form/i }),
+      ).toBeInTheDocument();
     });
 
     it('calls onToggleForm when Add link is clicked', () => {
@@ -33,20 +39,20 @@ describe('LinksControls', () => {
       render(
         <LinksControls {...defaultActiveProps} onToggleForm={onToggleForm} />,
       );
-      fireEvent.click(screen.getByText(/add link/i));
+      fireEvent.click(screen.getByRole('button', { name: /add link/i }));
       expect(onToggleForm).toHaveBeenCalledOnce();
     });
 
     it('calls onRandom when Stumble upon is clicked', () => {
       const onRandom = vi.fn();
       render(<LinksControls {...defaultActiveProps} onRandom={onRandom} />);
-      fireEvent.click(screen.getByText(/stumble upon/i));
+      fireEvent.click(screen.getByRole('button', { name: /stumble upon/i }));
       expect(onRandom).toHaveBeenCalledOnce();
     });
 
     it('disables Stumble upon button while randomLoading', () => {
       render(<LinksControls {...defaultActiveProps} randomLoading={true} />);
-      expect(screen.getByText(/stumbling/i).closest('button')).toBeDisabled();
+      expect(screen.getByRole('button', { name: /stumbling/i })).toBeDisabled();
     });
   });
 
@@ -59,7 +65,9 @@ describe('LinksControls', () => {
           linksCount={3}
         />,
       );
-      expect(screen.getByText(/remove all read/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /remove all read/i }),
+      ).toBeInTheDocument();
     });
 
     it('hides Remove all read button when no links exist', () => {
@@ -70,7 +78,7 @@ describe('LinksControls', () => {
           linksCount={0}
         />,
       );
-      const button = screen.getByText(/remove all read/i).closest('button');
+      const button = screen.getByRole('button', { name: /remove all read/i });
       expect(button).toHaveClass('opacity-0');
     });
 
@@ -84,7 +92,7 @@ describe('LinksControls', () => {
           onClearArchived={onClearArchived}
         />,
       );
-      fireEvent.click(screen.getByText(/remove all read/i));
+      fireEvent.click(screen.getByRole('button', { name: /remove all read/i }));
       expect(onClearArchived).toHaveBeenCalledOnce();
     });
 
@@ -98,7 +106,7 @@ describe('LinksControls', () => {
         />,
       );
       expect(
-        screen.getByText(/remove all read/i).closest('button'),
+        screen.getByRole('button', { name: /remove all read/i }),
       ).toBeDisabled();
     });
   });

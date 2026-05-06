@@ -1,4 +1,6 @@
 import LinksControls from './LinksControls';
+import IconButton from './ui/IconButton';
+import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
 import { useRef } from 'react';
 import { useTabNavigation } from '../lib/useTabNavigation';
@@ -73,22 +75,25 @@ export default function LinksToolbar({
           </TabButton>
         </div>
 
-        <LinksControls
-          filter={filter}
-          isClearingArchived={isClearingArchived}
-          linksCount={links.length}
-          randomLoading={randomLoading}
-          showLinkForm={showLinkForm}
-          onClearArchived={onClearArchived}
-          onRandom={onRandom}
-          onToggleForm={onToggleForm}
-        />
+        {/* sm+: controls with text labels */}
+        <div className="hidden sm:contents">
+          <LinksControls
+            filter={filter}
+            isClearingArchived={isClearingArchived}
+            linksCount={links.length}
+            randomLoading={randomLoading}
+            showLinkForm={showLinkForm}
+            onClearArchived={onClearArchived}
+            onRandom={onRandom}
+            onToggleForm={onToggleForm}
+          />
+        </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 mb-3">
+      <div className="flex items-center gap-2 mt-3 sm:mt-4 mb-3">
         <input
           ref={searchInputRef}
-          className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring focus:ring-[var(--accent)] focus:border-[var(--accent)] rounded-lg"
+          className="flex-1 min-w-0 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring focus:ring-[var(--accent)] focus:border-[var(--accent)] rounded-lg"
           type="search"
           placeholder={
             filter === 'active' ? 'Search unread links' : 'Search read links'
@@ -102,6 +107,56 @@ export default function LinksToolbar({
           }}
           aria-label="Search through your links"
         />
+
+        {/* Mobile-only: icon-only controls, conditionally rendered so hidden buttons take no space */}
+        <div className="flex sm:hidden shrink-0 gap-2">
+          {filter === 'archived' && links.length > 0 && (
+            <IconButton
+              variant="elevated"
+              disabled={isClearingArchived}
+              aria-label="Remove all read links"
+              title="Permanently removes all read links."
+              className="!px-2.5"
+              onClick={onClearArchived}
+            >
+              <i
+                className="fa-solid fa-trash text-[0.7rem]"
+                aria-hidden="true"
+              />
+            </IconButton>
+          )}
+          {filter === 'active' && (
+            <>
+              <IconButton
+                variant="elevated"
+                disabled={randomLoading}
+                aria-label={
+                  randomLoading ? 'Stumbling…' : 'Stumble upon a random link'
+                }
+                title="Opens a random unread link and marks it as read."
+                className="!px-2.5"
+                onClick={onRandom}
+              >
+                <i
+                  className="fa-solid fa-shuffle text-[0.7rem]"
+                  aria-hidden="true"
+                />
+              </IconButton>
+              <PrimaryButton
+                type="button"
+                aria-label={showLinkForm ? 'Hide form' : 'Add link'}
+                aria-expanded={showLinkForm}
+                className="!px-2.5"
+                onClick={onToggleForm}
+              >
+                <i
+                  className="fa-solid fa-plus text-[0.7rem]"
+                  aria-hidden="true"
+                />
+              </PrimaryButton>
+            </>
+          )}
+        </div>
       </div>
     </>
   );
