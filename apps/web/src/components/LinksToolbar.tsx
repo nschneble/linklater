@@ -75,7 +75,6 @@ export default function LinksToolbar({
           </TabButton>
         </div>
 
-        {/* sm+: controls with text labels */}
         <div className="hidden sm:contents">
           <LinksControls
             filter={filter}
@@ -108,7 +107,6 @@ export default function LinksToolbar({
           aria-label="Search through your links"
         />
 
-        {/* Mobile-only: icon-only controls, conditionally rendered so hidden buttons take no space */}
         <div className="flex sm:hidden shrink-0 gap-2">
           {filter === 'archived' && links.length > 0 && (
             <IconButton

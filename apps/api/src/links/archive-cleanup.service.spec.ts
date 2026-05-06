@@ -62,7 +62,7 @@ describe('ArchiveCleanupService', () => {
     );
   });
 
-  it('deletes links archived more than 7 days ago', async () => {
+  it('deletes links archived more than seven days ago', async () => {
     (prismaMock.link.deleteMany as jest.Mock).mockResolvedValue({ count: 2 });
 
     await service.deleteExpiredArchivedLinks();

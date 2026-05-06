@@ -107,7 +107,7 @@ export default function LinksView() {
       </div>
       <p className="text-[var(--text-muted)] text-xs">
         {filter === 'archived'
-          ? 'Read links are automatically removed after 7 days.'
+          ? 'Read links are automatically removed after seven days.'
           : 'Add, search, or stumble upon something random.'}
       </p>
 
