@@ -41,10 +41,10 @@ export default function LinksToolbar({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-4">
         <div
           ref={tablistRef}
-          className="relative grid grid-cols-2 p-1 bg-[var(--bg-surface)] border-shadow hover:border-shadow text-xs rounded-full"
+          className="relative grid grid-cols-2 shrink-0 p-1 bg-[var(--bg-surface)] border-shadow hover:border-shadow text-xs rounded-full"
           role="tablist"
           aria-label="Links filter"
         >

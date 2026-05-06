@@ -24,7 +24,7 @@ export default function LinksControls({
   onToggleForm,
 }: LinksControlsProps) {
   return (
-    <div className="flex items-end gap-3">
+    <div className="flex flex-1 justify-between gap-3">
       <IconButton
         variant="elevated"
         disabled={isClearingArchived}
@@ -35,26 +35,29 @@ export default function LinksControls({
         <i className="fa-solid fa-trash text-[0.7rem]" aria-hidden="true" />
         Remove all read
       </IconButton>
-      <IconButton
-        variant="elevated"
-        disabled={randomLoading}
-        hidden={filter !== 'active'}
-        title="Opens a random unread link and marks it as read."
-        onClick={onRandom}
-      >
-        <i className="fa-solid fa-shuffle text-[0.7rem]" aria-hidden="true" />
-        {randomLoading ? 'Stumbling…' : 'Stumble upon'}
-      </IconButton>
 
-      <PrimaryButton
-        type="button"
-        hidden={filter !== 'active'}
-        onClick={onToggleForm}
-        aria-expanded={showLinkForm}
-      >
-        <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
-        {showLinkForm ? 'Hide form' : 'Add link'}
-      </PrimaryButton>
+      <div className="flex gap-3">
+        <IconButton
+          variant="elevated"
+          disabled={randomLoading}
+          hidden={filter !== 'active'}
+          title="Opens a random unread link and marks it as read."
+          onClick={onRandom}
+        >
+          <i className="fa-solid fa-shuffle text-[0.7rem]" aria-hidden="true" />
+          {randomLoading ? 'Stumbling…' : 'Stumble upon'}
+        </IconButton>
+
+        <PrimaryButton
+          type="button"
+          hidden={filter !== 'active'}
+          onClick={onToggleForm}
+          aria-expanded={showLinkForm}
+        >
+          <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
+          {showLinkForm ? 'Hide form' : 'Add link'}
+        </PrimaryButton>
+      </div>
     </div>
   );
 }
