@@ -23,6 +23,7 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 
 - regenerate preview and all screenshots
 - analyze/improve code coverage
+- avoid needing to run `npx prisma generate` after migrations
 
 ## Bugfixes
 
