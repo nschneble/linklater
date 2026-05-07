@@ -20,8 +20,8 @@ As a user, you can:
 
 - Create an account
 - Save links in-app or using the handy [bookmarklet](#bookmarklet)
-- Search and [StumbleUpon](https://en.wikipedia.org/wiki/StumbleUpon)
-- Toggle themes based on Richard Linklater's filmography
+- Search and [stumble upon](https://en.wikipedia.org/wiki/StumbleUpon)
+- Preview themes based on Richard Linklater's filmography
 - Toggle between light and dark mode
 - Delete your account and burn it to the ground
 
@@ -69,18 +69,22 @@ It’s a majestic modular monorepo!
 ```txt
 apps
 ├─ api/          # NestJS back-end
+│  └─ README.md  # .env, modules, auth, jobs
+│
 ├─ web/          # React + Vite front-end
+│  └─ README.md  # .env, components, state, API, routes
+│
 ├─ package.json  # root workspace + scripts
 └─ README.md
 ```
 
 ## Bookmarklet
 
-Linklater includes a one-click bookmarklet that saves the current page directly to your collection — no new tab, no form to fill out.
+Linklater includes a one-click bookmarklet that saves the current page directly to your account.
 
-To install it, go to **Settings → Bookmarklet** and drag the _Save to Linklater_ button to your bookmarks bar. Your auth token is pre-embedded so clicking it on any page immediately calls the API and shows a confirmation toast.
+To install, go to **Settings → Bookmarklet** and drag the _Save to Linklater_ button directly to your bookmarks bar. Your auth token is pre-embedded, so you can click it on any page and immediately save the link to your account.
 
-The token embedded in the bookmarklet expires after 90 days. If saving stops working, revisit Settings and reinstall it.
+The embedded token expires after 90 days. If it stops working, revisit Settings and reinstall it.
 
 ## Local Development
 
@@ -98,13 +102,16 @@ npm install
 
 ### Set Environment Variables
 
-You'll need to set the database url and JWT secret on the back-end, and the API's base url on the front-end for Vite to access.
+You'll need to set the database url, JWT secret, app url, and SMTP values on the back-end, and the API's base url on the front-end for Vite to access.
 
 ```bash
 # cd /path/to/your/repo
 
-cp apps/api/.env.example apps/api/.env  # set DATABASE_URL, JWT_SECRET
-cp apps/web/.env.example apps/web/.env  # set VITE_API_BASE_URL
+# set DATABASE_URL, JWT_SECRET, APP_URL, SMTP_*
+cp apps/api/.env.example apps/api/.env
+
+# set VITE_API_BASE_URL
+cp apps/web/.env.example apps/web/.env
 ```
 
 ### Run Database Migrations
@@ -135,15 +142,25 @@ Both the front and back-end use ESLint and Prettier. Vitest is used to test the 
 ```bash
 # cd /path/to/your/repo
 
-# lint + test everything
+# format, lint, and test everything
+npm run format
 npm run lint
 npm run test
-
-# lint + test front-end only
-npm run lint --workspace @linklater/web
-npm run test --workspace @linklater/web
-
-# lint + test back-end only
-npm run lint --workspace @linklater/api
-npm run test --workspace @linklater/api
 ```
+
+### Convenience Scripts
+
+There are two helpful scripts which generate terminal user interfaces (TUIs) for use when developing and testing Linklater:
+
+```bash
+# cd /path/to/your/repo
+
+# starts the dev server
+./dev
+
+# installs, formats, lints, and tests
+./flintest
+./flintest --update
+```
+
+![dev](screenshots/dev.jpg)

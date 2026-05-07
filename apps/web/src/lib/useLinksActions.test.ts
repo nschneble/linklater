@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { describe, expect, it, vi, afterEach } from 'vitest';
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
 import { useLinksActions } from './useLinksActions';
 import type { Link } from './api';
 
@@ -9,6 +9,8 @@ vi.mock('./api', () => ({
   deleteAllArchivedLinks: vi.fn(),
   unarchiveLink: vi.fn(),
 }));
+
+import * as apiModule from './api';
 
 vi.mock('./useRandomLink', () => ({
   useRandomLink: () => ({
@@ -22,6 +24,7 @@ vi.mock('./useMetadataPolling', () => ({
   useMetadataPolling: vi.fn(),
 }));
 
+beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.restoreAllMocks());
 
 function makeLink(overrides: Partial<Link> = {}): Link {
@@ -102,5 +105,42 @@ describe('useLinksActions', () => {
 
     act(() => result.current.handleDismissToast());
     expect(result.current.toastMessage).toBeNull();
+  });
+
+  it('deleteError is null initially', () => {
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+    expect(result.current.deleteError).toBeNull();
+  });
+
+  it('handleDeleteAllArchived clears links and resets total on success', async () => {
+    vi.mocked(apiModule.deleteAllArchivedLinks).mockResolvedValue({ count: 2 });
+    const options = makeOptions();
+    const { result } = renderHook(() => useLinksActions(options));
+
+    await act(() => result.current.handleDeleteAllArchived());
+
+    expect(options.clearLinks).toHaveBeenCalled();
+    expect(options.resetTotal).toHaveBeenCalled();
+    expect(result.current.deleteError).toBeNull();
+  });
+
+  it('handleDeleteAllArchived sets deleteError when the API call fails', async () => {
+    vi.mocked(apiModule.deleteAllArchivedLinks).mockRejectedValue(
+      new Error('Network error'),
+    );
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+
+    await act(() => result.current.handleDeleteAllArchived());
+
+    expect(result.current.deleteError).toBe('Network error');
+  });
+
+  it('handleDeleteAllArchived sets a fallback deleteError for non-Error rejections', async () => {
+    vi.mocked(apiModule.deleteAllArchivedLinks).mockRejectedValue('boom');
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+
+    await act(() => result.current.handleDeleteAllArchived());
+
+    expect(result.current.deleteError).toBe('Failed to delete archived links');
   });
 });

@@ -6,6 +6,22 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
+/**
+ * Application-scoped Prisma client. Extends `PrismaClient` so that NestJS
+ * can inject it as a service while keeping the full Prisma query API.
+ *
+ * Uses the `@prisma/adapter-pg` driver adapter with an underlying `pg.Pool`
+ * instead of the default connection string approach. This lets multiple
+ * NestJS services share a single connection pool rather than each creating
+ * their own connections.
+ *
+ * NOTE: The Prisma client is generated to a custom output path
+ * (`src/prisma/generated/`) rather than the default `node_modules/.prisma`.
+ * This is why `npx prisma generate` must be run manually after every migration
+ * — `migrate dev` does not trigger generation for custom output paths.
+ *
+ * @throws {Error} When `DATABASE_URL` is not set in the environment.
+ */
 @Injectable()
 export class PrismaService extends PrismaClient {
   constructor() {

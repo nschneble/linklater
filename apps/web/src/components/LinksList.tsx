@@ -3,18 +3,44 @@ import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import type { Link, PaginatedLinks } from '../lib/api';
 import type { LinksFilter } from '../lib/useLinks';
 
+/**
+ * Props for `LinksList`. All data and callbacks are passed down from
+ * `LinksView` via `useLinks`.
+ */
 interface LinksListProps {
+  /** The active tab — determines the empty-state message and icon. */
   filter: LinksFilter;
+  /**
+   * When `true`, all cards play an exit animation (`animate-card-exit`)
+   * to signal that the "delete all archived" action is in progress.
+   */
   isClearingArchived: boolean;
+  /** The links to render. */
   links: Link[];
+  /** `true` while a fetch is in progress. */
   loadingLinks: boolean;
+  /** The current page number (1-based). */
   page: number;
+  /** Pagination metadata used to decide whether to show "Load more". */
   pagination: Pick<PaginatedLinks, 'total' | 'limit'> | null;
+  /** Current search query — used to pick the right empty-state icon. */
   search: string;
+  /** Passed through to each `LinkCard`. */
   onArchiveToggle: (link: Link) => void;
+  /** Called when the user clicks "Load more". */
   onLoadMore: () => void;
 }
 
+/**
+ * Renders the paginated list of link cards. Handles three states:
+ * - Initial loading: single `LinkCardSkeleton`.
+ * - Empty: contextual empty-state message (different for unread, archived, and search).
+ * - Populated: a grid of `LinkCard` components with a "Load more" button when
+ *   additional pages exist.
+ *
+ * Card animation delays are capped at 240ms (`Math.min(index * 60, 240)`) so
+ * that large lists do not have an unacceptably long stagger.
+ */
 export default function LinksList({
   filter,
   isClearingArchived,

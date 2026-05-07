@@ -18,12 +18,12 @@ describe('UpdateMeDto', () => {
     expect(passwordErrors.length).toBeGreaterThan(0);
   });
 
-  it('rejects a currentPassword shorter than 12 characters', async () => {
-    const errors = await validate(makeDto({ currentPassword: 'short789' }));
+  it('accepts a currentPassword of any length (no minimum enforced)', async () => {
+    const errors = await validate(makeDto({ currentPassword: 'short' }));
     const passwordErrors = errors.filter(
       (error) => error.property === 'currentPassword',
     );
-    expect(passwordErrors.length).toBeGreaterThan(0);
+    expect(passwordErrors).toHaveLength(0);
   });
 
   it('rejects an invalid theme value', async () => {

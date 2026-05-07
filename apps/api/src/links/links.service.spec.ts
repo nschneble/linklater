@@ -330,4 +330,109 @@ describe('LinksService', () => {
       expect.objectContaining({ where: { id: LINK_ID } }),
     );
   });
+
+  it('getRandom queries archived links when archived=true', async () => {
+    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
+
+    await service.getRandom(USER_ID, true);
+
+    expect(prismaMock.$queryRaw).toHaveBeenCalled();
+  });
+
+  it('findAll filters non-archived links when archived=false', async () => {
+    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
+    (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
+
+    await service.findAll(USER_ID, { archived: false });
+
+    expect(prismaMock.link.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ archivedAt: null }),
+      }),
+    );
+  });
+
+  it('findAll treats whitespace-only search as no search term', async () => {
+    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([makeLink()]);
+    (prismaMock.link.count as jest.Mock).mockResolvedValue(1);
+
+    await service.findAll(USER_ID, { search: '   ' });
+
+    // should use standard findMany, not the raw tsvector query
+    expect(prismaMock.$queryRaw).not.toHaveBeenCalled();
+    expect(prismaMock.link.findMany).toHaveBeenCalled();
+  });
+
+  it('findAll caps limit at MAX_LIMIT (100)', async () => {
+    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
+    (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
+
+    await service.findAll(USER_ID, { limit: 999 });
+
+    expect(prismaMock.link.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 100 }),
+    );
+  });
+
+  it('findAll enforces minimum page of 1', async () => {
+    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
+    (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
+
+    await service.findAll(USER_ID, { page: -5 });
+
+    expect(prismaMock.link.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 0 }),
+    );
+  });
+
+  it('update rethrows non-P2025 errors', async () => {
+    const networkError = new Error('Network failure');
+    (prismaMock.link.update as jest.Mock).mockRejectedValue(networkError);
+
+    await expect(service.update(USER_ID, LINK_ID, {})).rejects.toThrow(
+      'Network failure',
+    );
+  });
+
+  it('archive rethrows non-P2025 errors', async () => {
+    const networkError = new Error('Network failure');
+    (prismaMock.link.update as jest.Mock).mockRejectedValue(networkError);
+
+    await expect(service.archive(USER_ID, LINK_ID)).rejects.toThrow(
+      'Network failure',
+    );
+  });
+
+  it('unarchive rethrows non-P2025 errors', async () => {
+    const networkError = new Error('Network failure');
+    (prismaMock.link.update as jest.Mock).mockRejectedValue(networkError);
+
+    await expect(service.unarchive(USER_ID, LINK_ID)).rejects.toThrow(
+      'Network failure',
+    );
+  });
+
+  it('remove rethrows non-P2025 errors', async () => {
+    const networkError = new Error('Network failure');
+    (prismaMock.link.delete as jest.Mock).mockRejectedValue(networkError);
+
+    await expect(service.remove(USER_ID, LINK_ID)).rejects.toThrow(
+      'Network failure',
+    );
+  });
+
+  it('findAll with search uses archived filter when archived=false', async () => {
+    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
+      { id: LINK_ID, total: BigInt(1) },
+    ]);
+    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([makeLink()]);
+
+    const result = await service.findAll(USER_ID, {
+      search: 'duck',
+      archived: false,
+    });
+
+    expect(prismaMock.$queryRaw).toHaveBeenCalled();
+    expect(result.total).toBe(1);
+  });
 });

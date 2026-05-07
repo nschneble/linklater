@@ -16,14 +16,35 @@ import { useLinks } from '../lib/useLinks';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { LinksFilter } from '../lib/useLinks';
 
+/** How long to wait after the user stops typing before firing the search request. */
 const SEARCH_DEBOUNCE_MS = 300;
 
+// Lazy-loaded because the modal is rarely open and this keeps it out of the
+// initial bundle.
 const KeyboardShortcutsModal = lazy(() => import('./KeyboardShortcutsModal'));
 
+/**
+ * Maps the current URL pathname to the links filter.
+ * `/read` → `'archived'`, everything else → `'active'`.
+ */
 function filterFromPath(pathname: string): LinksFilter {
   return pathname === '/read' ? 'archived' : 'active';
 }
 
+/**
+ * The main links view, rendered inside `AppShell` for both `/unread` and `/read`.
+ *
+ * Responsibilities:
+ * - Reads the active filter from the URL (`/unread` vs `/read`).
+ * - Debounces the search input (300ms) and wraps the `setDebouncedSearch` call
+ *   in `startTransition` so that React can defer the expensive re-render.
+ * - Wires up keyboard shortcuts via `useKeyboardShortcuts`.
+ * - Renders `LinksToolbar`, `LinksList`, the inline `LinkForm`, and a success
+ *   `Toast`.
+ * - Portals a backdrop `<button>` when the link form is open so that clicking
+ *   outside the form closes it.
+ * - Resets search and the `isClearingArchived` flag whenever the filter changes.
+ */
 export default function LinksView() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -45,6 +66,7 @@ export default function LinksView() {
 
   const {
     archiveError,
+    deleteError,
     handleCreated,
     handleDeleteAllArchived,
     handleDismissToast,
@@ -83,7 +105,6 @@ export default function LinksView() {
 
   async function handleClearArchived() {
     setIsClearingArchived(true);
-    await new Promise<void>((resolve) => setTimeout(resolve, 400));
     try {
       await handleDeleteAllArchived();
     } finally {
@@ -151,6 +172,15 @@ export default function LinksView() {
           role="alert"
         >
           {archiveError}
+        </p>
+      )}
+
+      {deleteError && (
+        <p
+          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
+          role="alert"
+        >
+          {deleteError}
         </p>
       )}
 

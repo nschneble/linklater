@@ -8,8 +8,23 @@ import LinkButton from './ui/LinkButton';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
 
+/** The three sub-views rendered by `AuthForm`. */
 type Mode = 'login' | 'register' | 'forgot-password';
 
+/**
+ * Authentication form shown to unauthenticated users at the root route.
+ *
+ * Has three modes controlled by a local `mode` state:
+ * - `'login'`: email + password, submits to `POST /auth/login`.
+ * - `'register'`: same fields, submits to `POST /auth/register` then logs in.
+ * - `'forgot-password'`: email only, submits to `POST /auth/forgot-password`.
+ *
+ * Switching modes resets password, error, and loading state. The email input
+ * is auto-focused whenever the mode changes.
+ *
+ * After a successful forgot-password submission the form switches to a
+ * confirmation state showing an `Alert` instead of the form fields.
+ */
 export default function AuthForm() {
   const { login, register } = useAuth();
 

@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 
 interface UseKeyboardShortcutsOptions {
+  /** When `false`, no keyboard events are handled. Use to disable shortcuts while the user is not on the links view. */
   enabled: boolean;
+  /** Whether the keyboard shortcuts modal is currently open. Needed so `Z` can close it. */
   isShortcutsModalOpen: boolean;
   onShowUnread: () => void;
   onShowRead: () => void;
@@ -9,9 +11,34 @@ interface UseKeyboardShortcutsOptions {
   onToggleForm: () => void;
   onStumble: () => void;
   onToggleShortcuts: () => void;
+  /** Called when Escape is pressed. Optional — only used when a closeable element (e.g. the form) is open. */
   onEscape?: () => void;
 }
 
+/**
+ * Registers global keyboard shortcuts for the links view. Shortcuts are
+ * disabled when the user is typing in an input or textarea to avoid
+ * intercepting normal text entry.
+ *
+ * Shortcut map:
+ * - `1` → Show unread links
+ * - `2` → Show read links
+ * - `Q` → Focus the search input
+ * - `A` → Toggle the link form
+ * - `D` → Stumble upon (random link)
+ * - `Z` → Toggle the shortcuts modal
+ * - `Escape` → Calls `onEscape` if provided (e.g. close the link form)
+ *
+ * When the shortcuts modal is open, only `Z` (close modal) and `Escape` are
+ * handled — all other shortcuts are suppressed.
+ *
+ * GOTCHA: All callbacks are stored in refs so the `keydown` listener only
+ * needs to be attached once (when `enabled` changes). Without refs, the
+ * listener would need to be re-registered on every render to pick up fresh
+ * callback references.
+ *
+ * Side effects: adds and removes a `keydown` event listener on `document`.
+ */
 export function useKeyboardShortcuts({
   enabled,
   isShortcutsModalOpen,
@@ -32,6 +59,7 @@ export function useKeyboardShortcuts({
   const onToggleShortcutsRef = useRef(onToggleShortcuts);
   const onEscapeRef = useRef(onEscape);
 
+  // Always keep refs current so the stable listener uses the latest callbacks.
   isShortcutsModalOpenRef.current = isShortcutsModalOpen;
   onShowUnreadRef.current = onShowUnread;
   onShowReadRef.current = onShowRead;

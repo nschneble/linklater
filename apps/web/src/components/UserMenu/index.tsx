@@ -8,10 +8,13 @@ import ThemeSubmenu from './ThemeSubmenu';
 import { useMenuNavigation } from './useMenuNavigation';
 import type { User } from '../../auth/AuthContext';
 
+/** The three main app sections navigable from the user menu. */
 type AppView = 'links' | 'settings' | 'theme-editor';
 
 interface UserMenuProps {
+  /** The authenticated user. Email is used for the Gravatar avatar and the "Logged in as" label. */
   user: User;
+  /** The currently active view — highlights the corresponding menu item. */
   view: AppView;
   onLogout: () => void;
   onModeToggle: () => void;
@@ -19,6 +22,25 @@ interface UserMenuProps {
   onViewChange: (view: AppView) => void;
 }
 
+/**
+ * Avatar button that opens a dropdown menu with navigation, theme/mode
+ * controls, and logout.
+ *
+ * State:
+ * - `showUserMenu` — whether the main dropdown is visible.
+ * - `showThemeSubmenu` — whether the theme flyout is visible.
+ * - `previewTheme` — the theme currently being previewed on hover.
+ * - `themeSubmenuOnLeft` — whether the flyout opens left (when near the right edge).
+ *
+ * The submenu uses a hover timeout (`hideSubmenuTimeout`) with an 80ms delay
+ * before hiding, so the user has time to move the cursor from the trigger row
+ * to the flyout panel without it disappearing.
+ *
+ * Keyboard navigation within the dropdown is handled by `useMenuNavigation`.
+ * Clicking outside the menu closes it via a `mousedown` listener on `document`.
+ *
+ * The Gravatar URL is memoized so it only recomputes when `user.email` changes.
+ */
 export default function UserMenu({
   user,
   view,
@@ -141,7 +163,7 @@ export default function UserMenu({
         type="button"
         onClick={() => setShowUserMenu((open) => !open)}
         aria-expanded={showUserMenu}
-        aria-haspopup="true"
+        aria-haspopup="menu"
         aria-label="User menu"
       >
         <img
@@ -158,6 +180,7 @@ export default function UserMenu({
       <div
         ref={menuRef}
         role="menu"
+        aria-hidden={!showUserMenu}
         className="absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] border-shadow text-xs rounded-lg"
         style={{
           transition: `opacity ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}`,
@@ -225,6 +248,7 @@ export default function UserMenu({
               onFlyoutMouseEnter={cancelHide}
               onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
               onThemeRowItemEnter={handleThemeRowItemEnter}
+              onTriggerClick={handleThemeRowEnter}
               onPreviewChange={handlePreviewChange}
               onSelect={handleThemeSelect}
             />

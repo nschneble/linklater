@@ -6,6 +6,10 @@ import IconButton from '../ui/IconButton';
 import PrimaryButton from '../ui/PrimaryButton';
 import TabButton from '../ui/TabButton';
 
+/**
+ * A labeled section within `ComponentShowcase`. Renders a small-caps title
+ * above its children.
+ */
 function ShowcaseSection({
   title,
   children,
@@ -30,6 +34,14 @@ const SURFACE_ITEMS = [
   { label: 'Input', variable: '--bg-input' },
 ] as const;
 
+/**
+ * A read-only preview panel showing all major UI components styled with the
+ * current theme. Used in the theme editor so changes to CSS variables are
+ * immediately visible in realistic context.
+ *
+ * The tab switcher in this showcase is interactive (controlled by local state)
+ * so users can verify that active/inactive tab styles look correct.
+ */
 export default function ComponentShowcase() {
   const [activeTab, setActiveTab] = useState<'unread' | 'read'>('unread');
 
@@ -108,7 +120,12 @@ export default function ComponentShowcase() {
       </ShowcaseSection>
 
       <ShowcaseSection title="Form input">
-        <FormInput type="text" placeholder="Paste a URL to save…" readOnly />
+        <FormInput
+          type="text"
+          placeholder="Paste a URL to save…"
+          aria-label="Demo URL input"
+          readOnly
+        />
       </ShowcaseSection>
 
       <ShowcaseSection title="Tabs">

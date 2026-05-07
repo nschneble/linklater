@@ -5,6 +5,17 @@ import {
 } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
+/**
+ * Sends transactional emails via SMTP. Configuration is read from environment
+ * variables at startup (see `apps/api/README.md` for the full list).
+ *
+ * All public methods follow the same pattern: build the email options and
+ * delegate to the private `send` wrapper which handles errors uniformly.
+ *
+ * NOTE: When no SMTP credentials are configured (e.g. in local development),
+ * nodemailer will still attempt to connect and will throw — run a local SMTP
+ * server like Mailpit (`brew install mailpit`) to catch emails in development.
+ */
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -19,9 +30,18 @@ export class EmailService {
     },
   });
 
+  /** The "From" address shown in outgoing emails. Defaults to `Linklater <noreply@linklater.app>`. */
   private readonly from =
     process.env.SMTP_FROM ?? 'Linklater <noreply@linklater.app>';
 
+  /**
+   * Internal helper that wraps nodemailer's `sendMail` with error handling.
+   * Converts SMTP failures into a 503 Service Unavailable so the caller
+   * receives a meaningful HTTP error rather than an uncaught exception.
+   *
+   * @param options - Standard nodemailer `SendMailOptions`.
+   * @throws {ServiceUnavailableException} When nodemailer fails to send the email.
+   */
   private async send(options: nodemailer.SendMailOptions) {
     try {
       await this.transporter.sendMail(options);
@@ -33,6 +53,15 @@ export class EmailService {
     }
   }
 
+  /**
+   * Sends an email verification link to a new or unverified user.
+   * The link contains a 64-character hex token and expires in 24 hours.
+   *
+   * Endpoint consumed by the link: POST /auth/verify-email
+   *
+   * @param email - The recipient's email address.
+   * @param token - The 64-character hex verification token.
+   */
   async sendVerificationEmail(email: string, token: string) {
     const verifyUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
 
@@ -45,6 +74,15 @@ export class EmailService {
     });
   }
 
+  /**
+   * Sends a password reset link to the given email address.
+   * The link contains a 64-character hex token and expires in 1 hour.
+   *
+   * Endpoint consumed by the link: POST /auth/reset-password
+   *
+   * @param email - The recipient's email address.
+   * @param token - The 64-character hex reset token.
+   */
   async sendPasswordResetEmail(email: string, token: string) {
     const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
 
@@ -57,6 +95,15 @@ export class EmailService {
     });
   }
 
+  /**
+   * Sends a verification link to a user's *new* email address to confirm an
+   * email change. The link contains a 64-character hex token and expires in 24 hours.
+   *
+   * Endpoint consumed by the link: POST /auth/verify-email-change
+   *
+   * @param email - The new (pending) email address to send the link to.
+   * @param token - The 64-character hex email-change verification token.
+   */
   async sendEmailChangeVerificationEmail(email: string, token: string) {
     const verifyUrl = `${process.env.APP_URL}/verify-email-change?token=${token}`;
 

@@ -6,6 +6,25 @@ import Alert from './ui/Alert';
 import FormInput from './ui/FormInput';
 import PrimaryButton from './ui/PrimaryButton';
 
+/**
+ * Settings section for updating email address and password.
+ *
+ * **Email flow**: submits to `POST /users/me/email-change`. The API sends a
+ * verification link to the new address. On success, the pending email is
+ * optimistically written into `AuthContext` via `setPendingEmail` so the UI
+ * reflects the in-progress change without a refetch. The email input is then
+ * reset to the current address (not the pending one) and a success alert is shown.
+ *
+ * **Password flow**: submits to `PATCH /users/me` with both `currentPassword`
+ * and `password`. The current-password field is only rendered once the user
+ * starts typing a new password, to keep the form minimal.
+ *
+ * **Verification resend**: shown only when the current email is unverified.
+ * Calls `POST /auth/resend-verification`.
+ *
+ * Both forms use the standard form state sequence: clear error → set loading
+ * → attempt action → handle result.
+ */
 export default function AccountSettingsForm() {
   const { resendVerificationEmail, setPendingEmail, user } = useAuth();
 

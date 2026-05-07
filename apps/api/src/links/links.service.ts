@@ -8,22 +8,43 @@ import {
 import { PrismaService, Prisma } from '../prisma/index.js';
 import { QueueService, QUEUES } from '../queue/index.js';
 
+/** Minimum fields required to create a link. */
 export interface CreateLinkInput {
   url: string;
 }
 
+/**
+ * Input shape for `update`. Currently empty because no user-editable fields
+ * exist yet — the type is declared as `object` so the route stays wired for
+ * future additions without breaking the call site.
+ *
+ * // TODO: Add optional fields (e.g. `title`, `tags`) as the feature grows.
+ */
 export type UpdateLinkInput = object;
 
+/** Maximum results per page regardless of what the caller requests. */
 const MAX_LIMIT = 100;
+
+/** Default results per page when the caller omits `limit`. */
 const DEFAULT_LIMIT = 10;
 
+/** Parameters accepted by the `findAll` method. */
 export interface LinksQuery {
+  /** When `true`, return only archived links. When `false`, return only active links. Omit to return all. */
   archived?: boolean;
+  /** Results per page (clamped to 1–100). */
   limit?: number;
+  /** 1-based page number. */
   page?: number;
+  /** Full-text search term. Delegates to PostgreSQL `plainto_tsquery`. */
   search?: string;
 }
 
+/**
+ * All business logic for saving, fetching, archiving, and deleting links.
+ * Every method is scoped to a specific `userId` — the service never
+ * operates on links belonging to a different user.
+ */
 @Injectable()
 export class LinksService {
   private readonly logger = new Logger(LinksService.name);
@@ -33,6 +54,16 @@ export class LinksService {
     private readonly queueService: QueueService,
   ) {}
 
+  /**
+   * Saves a URL for the given user. If the URL was previously saved and then
+   * archived, it is resurfaced (unarchived, timestamp reset) rather than
+   * creating a duplicate entry. A metadata fetch job is enqueued in both cases.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param input - Contains the URL to save.
+   * @returns The created or resurfaced link with its `meta` relation included.
+   * @throws {BadRequestException} When the URL cannot be parsed by the `URL` constructor.
+   */
   async create(userId: string, input: CreateLinkInput) {
     try {
       new URL(input.url);
@@ -46,12 +77,15 @@ export class LinksService {
     });
 
     if (existing) {
+      // Resurface the link at the top of the list by resetting its timestamps.
       const link = await this.prisma.link.update({
         where: { id: existing.id },
         data: { archivedAt: null, createdAt: new Date() },
         include: { meta: true },
       });
 
+      // Only re-fetch metadata if it has never been fetched before (e.g. the
+      // previous fetch attempt failed before producing a `fetchedAt` timestamp).
       if (!existing.meta?.fetchedAt) {
         void this.queueService
           .send(QUEUES.METADATA_FETCH, { linkId: link.id, url: link.url })
@@ -70,6 +104,8 @@ export class LinksService {
       include: { meta: true },
     });
 
+    // Fire-and-forget: metadata fetching is async and non-critical. Errors are
+    // logged but do not affect the HTTP response.
     void this.queueService
       .send(QUEUES.METADATA_FETCH, { linkId: link.id, url: link.url })
       .catch((error: unknown) => {
@@ -81,6 +117,16 @@ export class LinksService {
     return link;
   }
 
+  /**
+   * Returns a paginated list of links for the given user. When `search` is
+   * provided, delegates to `findAllByText` which uses PostgreSQL full-text
+   * search for relevance ranking. Otherwise uses a simple `ORDER BY createdAt
+   * DESC` query.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param query - Filtering, pagination, and search parameters.
+   * @returns `{ data, total, page, limit }` where `data` is the current page of results.
+   */
   async findAll(userId: string, query: LinksQuery) {
     const { search, archived, page = 1, limit = DEFAULT_LIMIT } = query;
     const safeLimit = Math.min(Math.max(limit, 1), MAX_LIMIT);
@@ -118,6 +164,24 @@ export class LinksService {
     return { data, total, page: safePage, limit: safeLimit };
   }
 
+  /**
+   * Full-text search implementation using PostgreSQL `tsvector` / `tsquery`.
+   * Uses a raw query so that results can be ordered by `ts_rank` (relevance)
+   * rather than `createdAt`. A second Prisma query fetches the full Link
+   * records including their metadata, then re-sorts them to match the rank
+   * order returned by Postgres.
+   *
+   * GOTCHA: The `total` is derived from `COUNT(*) OVER()` on the raw query
+   * result (a window function). When there are no results the array is empty
+   * so `total` defaults to 0 rather than reading from a missing first row.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param term - The trimmed search string passed to `plainto_tsquery`.
+   * @param where - The base `LinkWhereInput` carrying the archive filter.
+   * @param page - The 1-based page number.
+   * @param limit - The number of results per page.
+   * @returns `{ data, total, page, limit }` sorted by relevance.
+   */
   private async findAllByText(
     userId: string,
     term: string,
@@ -152,6 +216,8 @@ export class LinksService {
     const ids = rows.map((row) => row.id);
     const total = Number(rows[0].total);
 
+    // Prisma does not guarantee result order when using `id: { in: ids }`, so
+    // we re-sort by the rank order captured in the raw query above.
     const links = await this.prisma.link.findMany({
       where: { id: { in: ids } },
       include: { meta: true },
@@ -163,6 +229,14 @@ export class LinksService {
     return { data: links, total, page, limit };
   }
 
+  /**
+   * Retrieves a single link by its UUID, scoped to the given user.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param id - The UUID of the link.
+   * @returns The link with its `meta` relation included.
+   * @throws {NotFoundException} When no link with that ID belongs to this user.
+   */
   async findOne(userId: string, id: string) {
     const link = await this.prisma.link.findFirst({
       where: { id, userId },
@@ -173,6 +247,17 @@ export class LinksService {
     return link;
   }
 
+  /**
+   * Converts Prisma's `P2025` "record not found" error into a NestJS
+   * `NotFoundException`. Any other error is re-thrown unchanged.
+   *
+   * Used by `update`, `archive`, `unarchive`, and `remove` to produce
+   * consistent 404 responses when a link does not belong to the current user.
+   *
+   * @param error - The caught error.
+   * @throws {NotFoundException} When `error` is a Prisma P2025 error.
+   * @throws The original `error` for any other error type.
+   */
   private mapP2025ToNotFound(error: unknown): never {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -183,7 +268,19 @@ export class LinksService {
     throw error;
   }
 
-  // FIXME: no updatable fields defined yet; data: {} keeps the endpoint wired for future use
+  /**
+   * Updates a link's editable fields. Currently a no-op — `data: {}` is sent
+   * to keep the endpoint wired for future use without skipping the database
+   * round-trip (which also validates ownership via the `userId` filter).
+   *
+   * // TODO: Populate `data` once user-editable fields are added.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param id - The UUID of the link.
+   * @param _input - The update payload (unused until fields are defined).
+   * @returns The link unchanged.
+   * @throws {NotFoundException} When the link does not exist for this user.
+   */
   async update(userId: string, id: string, _input: UpdateLinkInput) {
     try {
       return await this.prisma.link.update({
@@ -196,6 +293,14 @@ export class LinksService {
     }
   }
 
+  /**
+   * Archives a link by setting `archivedAt` to the current timestamp.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param id - The UUID of the link.
+   * @returns The updated link with `archivedAt` set.
+   * @throws {NotFoundException} When the link does not exist for this user.
+   */
   async archive(userId: string, id: string) {
     try {
       return await this.prisma.link.update({
@@ -208,6 +313,14 @@ export class LinksService {
     }
   }
 
+  /**
+   * Removes the archive timestamp from a link, returning it to the active list.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param id - The UUID of the link.
+   * @returns The updated link with `archivedAt` cleared to `null`.
+   * @throws {NotFoundException} When the link does not exist for this user.
+   */
   async unarchive(userId: string, id: string) {
     try {
       return await this.prisma.link.update({
@@ -220,6 +333,14 @@ export class LinksService {
     }
   }
 
+  /**
+   * Permanently deletes a single link and its associated metadata.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param id - The UUID of the link.
+   * @returns `{ success: true }` on success.
+   * @throws {NotFoundException} When the link does not exist for this user.
+   */
   async remove(userId: string, id: string) {
     try {
       await this.prisma.link.delete({ where: { id, userId } });
@@ -229,6 +350,14 @@ export class LinksService {
     return { success: true };
   }
 
+  /**
+   * Permanently deletes all archived links for a user. Used by the
+   * "Remove all read" button in the UI. Not scoped to a date threshold —
+   * all archived links regardless of age are deleted.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @returns `{ count: number }` — the number of links deleted.
+   */
   async removeAllArchived(userId: string) {
     const result = await this.prisma.link.deleteMany({
       where: { userId, archivedAt: { not: null } },
@@ -236,6 +365,15 @@ export class LinksService {
     return { count: result.count };
   }
 
+  /**
+   * Returns a single randomly selected link from the user's collection.
+   * Uses `ORDER BY RANDOM()` in a raw query for true randomness without
+   * loading the full collection into memory.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param archived - When `true`, picks from archived links; when `false` (default), picks from active links.
+   * @returns The randomly selected link with metadata, or `null` if no matching links exist.
+   */
   async getRandom(userId: string, archived = false) {
     let result: { id: string }[];
 

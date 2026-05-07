@@ -1,10 +1,12 @@
 import { createPortal } from 'react-dom';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface KeyboardShortcutsModalProps {
+  /** Called when the user presses Escape or clicks the close button or backdrop. */
   onClose: () => void;
 }
 
+/** The shortcuts displayed in the modal. Must stay in sync with `useKeyboardShortcuts`. */
 const shortcuts = [
   { key: '1', description: 'Show unread links' },
   { key: '2', description: 'Show read links' },
@@ -14,13 +16,74 @@ const shortcuts = [
   { key: 'Z', description: 'Show shortcuts' },
 ];
 
+const HEADING_ID = 'keyboard-shortcuts-heading';
+
+/**
+ * Modal dialog listing all keyboard shortcuts available in `LinksView`.
+ * Rendered via `createPortal` into `document.body` so it layers above all
+ * other content.
+ *
+ * Accessibility:
+ * - `role="dialog"` with `aria-modal="true"` and `aria-labelledby`.
+ * - Focus is moved to the first focusable element on open and restored to the
+ *   previously focused element on close.
+ * - Tab key is trapped within the modal.
+ * - Escape key closes the modal.
+ *
+ * Lazy-loaded from `LinksView` to keep it out of the initial bundle.
+ */
 export default function KeyboardShortcutsModal({
   onClose,
 }: KeyboardShortcutsModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedElement = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    previouslyFocusedElement.current = document.activeElement as HTMLElement;
+
+    const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    firstFocusable?.focus();
+
+    return () => {
+      previouslyFocusedElement.current?.focus();
+    };
+  }, []);
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         onClose();
+        return;
+      }
+
+      if (event.key === 'Tab') {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+
+        const focusableElements = Array.from(
+          dialog.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          ),
+        );
+
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (event.shiftKey) {
+          if (document.activeElement === firstElement) {
+            event.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            event.preventDefault();
+            firstElement.focus();
+          }
+        }
       }
     }
 
@@ -30,25 +93,29 @@ export default function KeyboardShortcutsModal({
 
   return createPortal(
     <>
-      <button
-        type="button"
-        aria-label="Close shortcuts"
-        className="fixed inset-0 z-20 w-full h-full bg-black/50 backdrop-blur-sm cursor-default"
+      <div
+        aria-hidden="true"
+        data-testid="modal-backdrop"
+        className="fixed inset-0 z-20 w-full h-full bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
       <div
+        ref={dialogRef}
         className="fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs p-6 bg-[var(--bg-surface)] border-shadow rounded-xl select-none animate-fade-in-up"
         role="dialog"
         aria-modal="true"
-        aria-label="Keyboard shortcuts"
+        aria-labelledby={HEADING_ID}
       >
         <div className="flex items-center justify-between mb-7.5">
-          <h2 className="text-sm font-semibold text-[var(--text)]">
+          <h2
+            id={HEADING_ID}
+            className="text-sm font-semibold text-[var(--text)]"
+          >
             Keyboard shortcuts
           </h2>
           <button
             type="button"
-            className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-pointer"
+            className="text-[var(--text-subtle)] hover:text-[var(--text)] focus:outline-none transition-colors cursor-pointer"
             onClick={onClose}
             aria-label="Close keyboard shortcuts"
           >

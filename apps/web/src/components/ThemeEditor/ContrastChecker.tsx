@@ -1,12 +1,17 @@
 import type { ThemeVariable } from './useThemeOverrides';
 
 interface ContrastCheckerProps {
+  /** The current (possibly overridden) hex values for all editable CSS variables. */
   colorValues: Record<ThemeVariable, string>;
 }
 
+/** A foreground/background color pair to test for WCAG contrast compliance. */
 interface ContrastPair {
+  /** Human-readable description shown in the UI. */
   label: string;
+  /** The CSS variable name of the foreground color. */
   foreground: ThemeVariable;
+  /** The CSS variable name of the background color. */
   background: ThemeVariable;
 }
 
@@ -36,12 +41,21 @@ const CONTRAST_PAIRS: ContrastPair[] = [
   },
 ];
 
+/**
+ * Converts a single 8-bit sRGB channel value (0–1) to its linear light
+ * equivalent, as specified by the WCAG 2.1 relative luminance formula.
+ */
 function linearizeColorComponent(component: number): number {
   return component <= 0.03928
     ? component / 12.92
     : Math.pow((component + 0.055) / 1.055, 2.4);
 }
 
+/**
+ * Computes the WCAG 2.1 relative luminance of a hex color string.
+ * Supports 3-digit and 6-digit hex (with or without `#`).
+ * Returns `null` if the input is not a valid hex color.
+ */
 function hexToRelativeLuminance(hex: string): number | null {
   const clean = hex.replace('#', '');
   const expanded =
@@ -65,6 +79,11 @@ function hexToRelativeLuminance(hex: string): number | null {
   );
 }
 
+/**
+ * Computes the WCAG 2.1 contrast ratio between two hex colors.
+ * Returns `null` if either color is invalid.
+ * A ratio of 4.5:1 meets WCAG AA for normal text; 7:1 meets AAA.
+ */
 function computeContrastRatio(hexA: string, hexB: string): number | null {
   const luminanceA = hexToRelativeLuminance(hexA);
   const luminanceB = hexToRelativeLuminance(hexB);
@@ -75,19 +94,26 @@ function computeContrastRatio(hexA: string, hexB: string): number | null {
 }
 
 interface PassBadgeProps {
+  /** The WCAG level label, e.g. `'AA'` or `'AAA'`. */
   label: string;
+  /** The minimum contrast ratio required to pass this level. */
   threshold: number;
+  /** The actual computed contrast ratio to test against the threshold. */
   ratio: number;
 }
 
+/**
+ * A small badge showing whether a contrast ratio meets a given WCAG threshold.
+ * Green when passing, red when failing.
+ */
 function PassBadge({ label, threshold, ratio }: PassBadgeProps) {
   const passes = ratio >= threshold;
   return (
     <span
       className={`inline-flex items-center px-1.5 py-0.5 text-[0.6rem] font-semibold rounded ${
         passes
-          ? 'bg-emerald-900/40 text-emerald-400'
-          : 'bg-rose-900/40 text-rose-400'
+          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+          : 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400'
       }`}
     >
       {label}
@@ -95,6 +121,11 @@ function PassBadge({ label, threshold, ratio }: PassBadgeProps) {
   );
 }
 
+/**
+ * Displays WCAG 2.1 AA and AAA contrast ratios for the key color pairs used
+ * in the Linklater UI. Re-evaluates automatically whenever `colorValues` changes
+ * (i.e. on every live edit in the theme editor).
+ */
 export default function ContrastChecker({ colorValues }: ContrastCheckerProps) {
   return (
     <div className="space-y-1">

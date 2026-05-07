@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 interface ErrorBoundaryProps {
+  /** The subtree to protect from unhandled render errors. */
   children: ReactNode;
 }
 
@@ -8,6 +9,20 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 
+/**
+ * Class-based error boundary that catches unhandled errors thrown during
+ * rendering, in lifecycle methods, or in constructors of any child component.
+ *
+ * When an error is caught, it renders a full-screen fallback with a "Retry"
+ * button that reloads the page. This covers the case where an unexpected
+ * exception leaves the React tree in an unrecoverable state.
+ *
+ * NOTE: Error boundaries must be class components — hooks cannot catch render
+ * errors. This is the only class component in the codebase for this reason.
+ *
+ * Placed at the root of the app (`App.tsx`) to catch any unhandled error
+ * from the entire component tree.
+ */
 export default class ErrorBoundary extends Component<
   ErrorBoundaryProps,
   ErrorBoundaryState

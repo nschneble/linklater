@@ -1,8 +1,27 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FOCUS_RING } from '../../lib/styles';
 
+/**
+ * Fixed-position success notification that appears at the bottom of the screen
+ * and auto-dismisses after 3 seconds.
+ *
+ * Uses `role="status"` and `aria-live="polite"` so screen readers announce the
+ * message without interrupting the current read flow.
+ *
+ * A brief exit animation (`animate-fade-out-down`) plays before `onDismiss` is
+ * called, giving the CSS transition 150ms to complete. The parent is responsible
+ * for removing the `<Toast>` from the tree once `onDismiss` fires.
+ *
+ * Currently used in `LinksView` to confirm that a link was saved successfully.
+ */
 interface ToastProps {
+  /** The text to display inside the toast. */
   message: string;
+  /**
+   * Called 150ms after the exit animation begins (either from the auto-dismiss
+   * timer or from the user clicking the dismiss button). The parent should
+   * unmount the toast at this point.
+   */
   onDismiss: () => void;
 }
 

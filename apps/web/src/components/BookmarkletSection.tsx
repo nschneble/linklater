@@ -2,11 +2,29 @@ import { getStoredToken } from '../lib/api';
 import { FOCUS_RING } from '../lib/styles';
 import { useEffect, useRef } from 'react';
 
+/**
+ * Settings section that generates and renders the Linklater bookmarklet.
+ *
+ * The bookmarklet is a `javascript:` URL that, when clicked in the browser,
+ * calls `POST /links` with the current page's URL using the user's stored JWT.
+ * A small toast notification (built into the bookmarklet itself) shows the
+ * result inline on whatever page the user is visiting.
+ *
+ * GOTCHA: React sanitizes `javascript:` URLs set declaratively via the `href`
+ * prop. The href is therefore set imperatively via `setAttribute` inside a
+ * `useEffect` to bypass this sanitization. This is intentional.
+ *
+ * The JWT is embedded at render time and expires after 90 days. Users must
+ * return to this page to reinstall the bookmarklet when it expires.
+ */
 export default function BookmarkletSection() {
   const bookmarkletRef = useRef<HTMLAnchorElement>(null);
 
-  // Note: React sanitizes `javascript:` urls that are set declaratively
-  // Setting the href via setAttribute (after render) bypasses this
+  // NOTE: React sanitizes `javascript:` URLs that are set declaratively via
+  // the `href` prop (it replaces them with `about:blank`). Setting the href
+  // via `setAttribute` after render bypasses this safety check. This is the
+  // intended approach for bookmarklet generation.
+  // See: https://github.com/facebook/react/issues/16382
 
   useEffect(() => {
     if (!bookmarkletRef.current) return;

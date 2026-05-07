@@ -2,17 +2,27 @@ import { useEffect, useState } from 'react';
 import { VAR_GROUPS, type ThemeVariable } from './useThemeOverrides';
 
 interface ColorEditorProps {
+  /** The current (possibly overridden) hex values for all editable CSS variables. */
   colorValues: Record<ThemeVariable, string>;
+  /** Called when the user changes a color via the picker or text input. */
   onOverride: (variable: ThemeVariable, value: string) => void;
 }
 
 interface ColorRowProps {
+  /** Human-readable label for this color row (e.g. "Base", "Surface"). */
   label: string;
+  /** The CSS variable name this row controls (e.g. `'--bg'`). */
   variable: ThemeVariable;
+  /** The current resolved hex value of this variable. */
   currentValue: string;
+  /** Called when the user commits a new color value. */
   onOverride: (variable: ThemeVariable, value: string) => void;
 }
 
+/**
+ * Expands a 3-digit hex shorthand (e.g. `#abc`) to 6-digit form (`#aabbcc`).
+ * Returns the input unchanged if it is already 6-digit or not a valid 3-digit hex.
+ */
 function normalizeToSixDigitHex(value: string): string {
   const trimmed = value.trim();
   if (/^#[0-9a-fA-F]{3}$/.test(trimmed)) {
@@ -22,6 +32,18 @@ function normalizeToSixDigitHex(value: string): string {
   return trimmed;
 }
 
+/**
+ * A single color variable row with a native color picker, a hex text input,
+ * and the variable name in monospace.
+ *
+ * The color picker fires `onOverride` on every change (live preview). The text
+ * input only fires on blur, after normalizing and validating the hex value.
+ * Invalid hex strings are silently reset to `currentValue` on blur.
+ *
+ * The local `inputValue` state keeps the text input controlled independently
+ * of `currentValue` so the user can type partial values without them being
+ * overwritten by the theme change effect.
+ */
 function ColorRow({
   label,
   variable,
@@ -89,6 +111,7 @@ function ColorRow({
         value={inputValue}
         onChange={handleTextChange}
         onBlur={handleTextBlur}
+        aria-label={`Hex value for ${label}`}
         className="w-20 px-2 py-1 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-transparent rounded-md"
         placeholder="#000000"
         maxLength={7}
@@ -98,6 +121,10 @@ function ColorRow({
   );
 }
 
+/**
+ * Renders the full list of editable color variables, grouped by `VAR_GROUPS`.
+ * Each group has a label and a stack of `ColorRow` components.
+ */
 export default function ColorEditor({
   colorValues,
   onOverride,

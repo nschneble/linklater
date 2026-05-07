@@ -7,22 +7,41 @@ import { useTabNavigation } from '../lib/useTabNavigation';
 import type { Link } from '../lib/api';
 import type { LinksFilter } from '../lib/useLinks';
 
+/** Props for `LinksToolbar`. All values come from `LinksView`. */
 interface LinksToolbarProps {
+  /** The active filter, driving which tab is highlighted and which controls are shown. */
   filter: LinksFilter;
+  /** Disables the "Remove all" button while the delete request is in progress. */
   isClearingArchived: boolean;
+  /** Passed to `LinksControls` to conditionally hide the "Remove all" button. */
   links: Link[];
+  /** Passed to `LinksControls` to disable/relabel the "Stumble upon" button. */
   randomLoading: boolean;
+  /** The controlled value of the search input. */
   search: string;
+  /** Ref forwarded to the search input so `LinksView` can imperatively focus it on shortcut press. */
   searchInputRef: React.RefObject<HTMLInputElement | null>;
+  /** Whether the inline link form is open — drives button label and `aria-expanded`. */
   showLinkForm: boolean;
   onClearArchived: () => void;
   onNavigateRead: () => void;
   onNavigateUnread: () => void;
   onRandom: () => Promise<void>;
+  /** Called with the new search string on every keystroke. */
   onSearch: (value: string) => void;
   onToggleForm: () => void;
 }
 
+/**
+ * The full toolbar above the links list. Contains:
+ * - An Unread/Read tab switcher (accessible with arrow keys via `useTabNavigation`).
+ * - Desktop action buttons via `LinksControls` (hidden on mobile).
+ * - A search input with Escape-to-blur behavior.
+ * - Mobile icon-only equivalents of the action buttons.
+ *
+ * The tab switcher uses a CSS-animated sliding pill indicator (`translateX`)
+ * rather than conditional class changes so that the transition is smooth.
+ */
 export default function LinksToolbar({
   filter,
   isClearingArchived,

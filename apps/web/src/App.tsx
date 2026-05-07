@@ -10,11 +10,29 @@ import ResetPasswordPage from './components/ResetPasswordPage';
 import VerifyEmailChangePage from './components/VerifyEmailChangePage';
 import VerifyEmailPage from './components/VerifyEmailPage';
 
+/**
+ * Root application component. Handles top-level routing and auth-gating.
+ *
+ * Route structure:
+ * - `/verify-email` and `/verify-email-change` are always accessible (no auth
+ *   required) so that email links work even when the user is logged out.
+ * - `/reset-password` is similarly public.
+ * - Unauthenticated users are redirected to the login form for all other routes.
+ * - Authenticated users are redirected from `/` to `/unread` and then rendered
+ *   inside `AppShell`.
+ *
+ * NOTE: The `useEffect` that syncs server preferences into `ThemeContext` runs
+ * whenever `user` changes (i.e. on login). This ensures that the theme and
+ * mode stored in the database override the `localStorage` defaults the user
+ * may have set in a different browser session.
+ */
 export default function App() {
   const { user, loading } = useAuth();
   const { setBaseTheme, setMode } = useTheme();
 
-  // syncs server-side preferences into ThemeContext when the user logs in
+  // Sync server-side theme and mode preferences into ThemeContext after login
+  // or initial auth-check. Without this, a user who changed their theme on
+  // one device would see the old theme on another device until they changed it.
   useEffect(() => {
     if (!user) return;
     setBaseTheme(user.theme as BaseTheme);
@@ -34,6 +52,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <Routes>
+        {/* Public routes — accessible without authentication */}
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route
           path="/verify-email-change"

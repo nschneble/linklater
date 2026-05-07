@@ -1,8 +1,20 @@
 import type { ReactNode } from 'react';
 
+/**
+ * Inline alert banner used for form-level error and success messages.
+ *
+ * Renders a `<p>` element. The `role` attribute is set automatically:
+ * `'alert'` for errors (announced immediately by screen readers) and
+ * `'status'` for success (polite announcement).
+ *
+ * Use directly below the field or form section it relates to.
+ */
 interface AlertProps {
+  /** The message content. Can include inline elements. */
   children: ReactNode;
+  /** Additional Tailwind classes for layout overrides (e.g. `"sm:ml-2"`). */
   className?: string;
+  /** `'error'` renders red; `'success'` renders green. */
   variant: 'error' | 'success';
 }
 

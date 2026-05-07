@@ -4,7 +4,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { UsersService } from '../users/users.service';
 
 const NEW_EMAIL = 'new.email@addy.com';
 const PENDING_EMAIL_TOKEN = 'pending-email-token-abc';
@@ -25,6 +24,8 @@ describe('AuthController', () => {
     confirmEmailChange: jest.fn(),
     forgotPassword: jest.fn(),
     login: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
+    me: jest.fn(),
+    register: jest.fn(),
     requestEmailChange: jest.fn(),
     resendVerificationEmail: jest.fn(),
     resetPassword: jest.fn(),
@@ -32,18 +33,10 @@ describe('AuthController', () => {
     verifyEmail: jest.fn(),
   } as unknown as AuthService;
 
-  const usersServiceMock = {
-    create: jest.fn(),
-    findById: jest.fn(),
-  } as unknown as UsersService;
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [
-        { provide: AuthService, useValue: authServiceMock },
-        { provide: UsersService, useValue: usersServiceMock },
-      ],
+      providers: [{ provide: AuthService, useValue: authServiceMock }],
     })
       .overrideGuard(ThrottlerGuard)
       .useValue({ canActivate: () => true })
@@ -58,7 +51,7 @@ describe('AuthController', () => {
   });
 
   describe('register', () => {
-    it('delegates to UsersService.create', async () => {
+    it('delegates to AuthService.register with email and password', async () => {
       const user = {
         createdAt: new Date(),
         email: USER_EMAIL,
@@ -67,14 +60,14 @@ describe('AuthController', () => {
         theme: THEME_NAME,
         updatedAt: new Date(),
       };
-      (usersServiceMock.create as jest.Mock).mockResolvedValue(user);
+      (authServiceMock.register as jest.Mock).mockResolvedValue(user);
 
       const result = await controller.register({
         email: USER_EMAIL,
         password: USER_PASSWORD,
       } as never);
 
-      expect(usersServiceMock.create).toHaveBeenCalledWith(
+      expect(authServiceMock.register).toHaveBeenCalledWith(
         USER_EMAIL,
         USER_PASSWORD,
       );
@@ -102,27 +95,27 @@ describe('AuthController', () => {
   });
 
   describe('me', () => {
-    it('returns user with id remapped to userId', async () => {
+    it('delegates to AuthService.me with the userId', async () => {
       const request = {
         user: {
           email: USER_EMAIL,
           userId: USER_ID,
         },
       } as never;
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+      const meResult = {
         createdAt: new Date(),
         email: USER_EMAIL,
-        id: USER_ID,
+        userId: USER_ID,
         mode: SITE_MODE,
         theme: THEME_NAME,
         updatedAt: new Date(),
-      });
+      };
+      (authServiceMock.me as jest.Mock).mockResolvedValue(meResult);
 
       const result = await controller.me(request);
 
-      expect(result).not.toHaveProperty('id');
-      expect(result.userId).toBe(USER_ID);
-      expect(result.email).toBe(USER_EMAIL);
+      expect(authServiceMock.me).toHaveBeenCalledWith(USER_ID);
+      expect(result).toBe(meResult);
     });
   });
 

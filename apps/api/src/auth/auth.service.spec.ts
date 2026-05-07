@@ -27,6 +27,7 @@ describe('AuthService', () => {
   const usersServiceMock = {
     clearVerificationToken: jest.fn(),
     confirmPendingEmail: jest.fn(),
+    create: jest.fn(),
     findByEmail: jest.fn(),
     findByPendingEmailToken: jest.fn(),
     findByResetToken: jest.fn(),
@@ -64,6 +65,50 @@ describe('AuthService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('register', () => {
+    it('creates the user and sends a verification email', async () => {
+      const user = { id: USER_ID, email: USER_EMAIL };
+      (usersServiceMock.create as jest.Mock).mockResolvedValue(user);
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(user);
+      (usersServiceMock.updateVerificationToken as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (emailServiceMock.sendVerificationEmail as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await service.register(USER_EMAIL, KNOWN_PASSWORD);
+
+      expect(usersServiceMock.create).toHaveBeenCalledWith(
+        USER_EMAIL,
+        KNOWN_PASSWORD,
+      );
+      expect(emailServiceMock.sendVerificationEmail).toHaveBeenCalledWith(
+        USER_EMAIL,
+        expect.any(String),
+      );
+      expect(result).toBe(user);
+    });
+  });
+
+  describe('me', () => {
+    it('returns user with id remapped to userId', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const result = await service.me(USER_ID);
+
+      expect(usersServiceMock.findById).toHaveBeenCalledWith(USER_ID);
+      expect(result).not.toHaveProperty('id');
+      expect(result.userId).toBe(USER_ID);
+      expect(result.email).toBe(USER_EMAIL);
+    });
   });
 
   describe('validateUser', () => {

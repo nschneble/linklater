@@ -108,6 +108,17 @@ describe('UsersService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
+    it('throws NotFoundException when user is not found during password change', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.updateMe(USER_ID, {
+          currentPassword: KNOWN_PASSWORD,
+          password: NEW_PASSWORD,
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
     it('throws UnauthorizedException when currentPassword is wrong', async () => {
       (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
 
@@ -137,6 +148,30 @@ describe('UsersService', () => {
       );
     });
 
+    it('updates theme when a valid theme is provided', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.updateMe(USER_ID, { theme: THEME_NAME });
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ theme: THEME_NAME }),
+        }),
+      );
+    });
+
+    it('updates mode when a valid mode is provided', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.updateMe(USER_ID, { mode: SITE_MODE });
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ mode: SITE_MODE }),
+        }),
+      );
+    });
+
     it('throws BadRequestException for an invalid theme', async () => {
       await expect(
         service.updateMe(USER_ID, { theme: 'not-a-real-theme' }),
@@ -147,6 +182,35 @@ describe('UsersService', () => {
       await expect(
         service.updateMe(USER_ID, { mode: 'sepia' }),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('returns user without passwordHash after update', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      const result = await service.updateMe(USER_ID, { theme: THEME_NAME });
+
+      expect(result).not.toHaveProperty('passwordHash');
+    });
+  });
+
+  describe('findByEmail', () => {
+    it('looks up user by email field', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+
+      const result = await service.findByEmail(USER_EMAIL);
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { email: USER_EMAIL },
+      });
+      expect(result).not.toBeNull();
+    });
+
+    it('returns null when email is not found', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.findByEmail('unknown@example.com');
+
+      expect(result).toBeNull();
     });
   });
 

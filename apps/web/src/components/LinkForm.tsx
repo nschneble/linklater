@@ -6,9 +6,22 @@ import FormInput from './ui/FormInput';
 import PrimaryButton from './ui/PrimaryButton';
 
 interface LinkFormProps {
+  /**
+   * Called with the newly created `Link` after a successful `POST /links`.
+   * The parent (`LinksView`) uses this to prepend the link and start metadata
+   * polling without a full list refetch.
+   */
   onCreated: (link: Link) => void;
 }
 
+/**
+ * Inline form for manually saving a link by URL. Auto-focuses its input on
+ * mount and pre-fills from the `?url=` query parameter (used by the bookmarklet
+ * fallback when the direct API call fails).
+ *
+ * Calls `POST /links` on submit. On success calls `onCreated` and clears the
+ * input. On failure shows an inline error.
+ */
 export default function LinkForm({ onCreated }: LinkFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -43,7 +56,11 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
       onSubmit={handleSubmit}
     >
       <div className="flex-1">
+        <label htmlFor="link-url" className="sr-only">
+          URL
+        </label>
         <FormInput
+          id="link-url"
           ref={inputRef}
           type="url"
           placeholder="https://example.com/article"

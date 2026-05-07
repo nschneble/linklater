@@ -12,10 +12,14 @@
 
 ## Architecture
 
-```
+```txt
 apps
 ├─ api/          # NestJS back-end
+│  └─ README.md  # .env, modules, auth, jobs
+│
 ├─ web/          # React + Vite front-end
+│  └─ README.md  # .env, components, state, API, routes
+│
 ├─ package.json  # root workspace + scripts
 └─ README.md
 ```
@@ -23,6 +27,11 @@ apps
 ## Key Commands
 
 ```bash
+# Convenience Scripts
+./dev                                    # Start development server
+./flintest                               # Install, format, lint, test
+./flintest --update                      # Update, install, format, lint, test
+
 # Setup
 npm install                              # Install dependencies
 
@@ -51,9 +60,9 @@ npx prisma generate                      # Regenerate client after migrations
 ## Tool Versions
 
 - Always check the **actual installed version** of a tool before making suggestions. Don't assume based on training data or common defaults.
-  - Read `package.json` to confirm versions before referencing APIs, syntax, or behavior.
-  - Example failure mode: assuming Tailwind v3 syntax (e.g. `duration-2000`, trailing `!` modifiers, `@layer` behaviors) when v4 is installed.
-- When **installing new packages**, always pick the latest stable version unless there's an explicit reason not to (and provide that reason).
+  - Read `package.json` to confirm versions before referencing APIs, syntax, or behavior
+  - Example failure: assuming Tailwind v3 syntax (e.g. `@layer` behaviors) when v4 is installed
+- When **installing new packages**, always pick the latest stable version unless there's an explicit reason not to do so.
 
 ## Development Workflow
 

@@ -36,7 +36,8 @@ describe('KeyboardShortcutsModal', () => {
     const onClose = vi.fn();
     render(<KeyboardShortcutsModal onClose={onClose} />);
 
-    fireEvent.click(screen.getByLabelText('Close shortcuts'));
+    // The backdrop is an aria-hidden div — query it via its test id
+    fireEvent.click(screen.getByTestId('modal-backdrop'));
 
     expect(onClose).toHaveBeenCalledOnce();
   });

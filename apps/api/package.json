@@ -27,6 +27,7 @@
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "^11.4.2",
     "@nestjs/throttler": "^6.5.0",
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.7.0",
@@ -89,7 +90,8 @@
       "ts"
     ],
     "moduleNameMapper": {
-      "^(\\.\\.?/.*)\\.js$": "$1"
+      "^(\\.\\.?/.*)\\.js$": "$1",
+      "^@nestjs/swagger$": "<rootDir>/__mocks__/@nestjs/swagger.ts"
     },
     "rootDir": "src",
     "testEnvironment": "node",

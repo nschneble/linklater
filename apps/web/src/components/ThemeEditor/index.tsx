@@ -9,6 +9,25 @@ import ComponentShowcase from './ComponentShowcase';
 import ContrastChecker from './ContrastChecker';
 import { useThemeOverrides } from './useThemeOverrides';
 
+/**
+ * Full-page theme editor accessible from the user menu under "Theme editor".
+ *
+ * Allows the user to live-edit any of the ten CSS color variables that make up
+ * a theme. Changes are applied immediately as inline overrides on
+ * `document.documentElement` (via `useThemeOverrides`) and reset when the user
+ * navigates away.
+ *
+ * The editor also supports switching between themes (using the base theme from
+ * `ThemeContext`) and toggling light/dark mode — both of which clear any active
+ * overrides so the new theme's values are the new baseline.
+ *
+ * Layout: a left panel with `ColorEditor` and `ContrastChecker`, and a right
+ * panel with `ComponentShowcase` for a live preview of key UI components.
+ *
+ * NOTE: Changes made in the editor are not persisted. They only affect the
+ * current browser session. Theme selection (via the UserMenu) is the persistent
+ * preference.
+ */
 export default function ThemeEditor() {
   const { baseTheme, mode, setBaseTheme, setMode } = useTheme();
   const { colorValues, setOverride, resetOverrides } = useThemeOverrides();

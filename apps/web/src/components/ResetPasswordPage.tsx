@@ -6,6 +6,17 @@ import Alert from './ui/Alert';
 import FormInput from './ui/FormInput';
 import PrimaryButton from './ui/PrimaryButton';
 
+/**
+ * Handles the `/reset-password?token=...` route. Renders a form for the user
+ * to choose a new password. Validates that both password fields match
+ * client-side before calling `POST /auth/reset-password`.
+ *
+ * On success, switches to a confirmation view with a link back to the login
+ * screen. The token is read from the `?token=` query parameter and is only
+ * valid for 1 hour after the forgot-password email is sent.
+ *
+ * This route is always accessible without authentication.
+ */
 export default function ResetPasswordPage() {
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
@@ -61,6 +72,7 @@ export default function ResetPasswordPage() {
               Password updated! You can now log in.
             </p>
             <button
+              type="button"
               className="text-[var(--accent)] underline text-sm"
               onClick={() => navigate('/')}
             >

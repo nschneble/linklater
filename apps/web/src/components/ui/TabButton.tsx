@@ -1,10 +1,24 @@
 import type { ReactNode } from 'react';
 import { FOCUS_RING } from '../../lib/styles';
 
+/**
+ * A single tab within a `role="tablist"` container.
+ *
+ * Renders as a `<button>` with `role="tab"` and `aria-selected` set from
+ * `isActive`. The active indicator (a sliding pill) is rendered separately
+ * by the parent using an `aria-hidden` `<div>` so that the text color
+ * transitions correctly over the highlight.
+ *
+ * Used in `LinksToolbar` (Unread/Read tabs) and `AuthForm` (Log in/Sign up).
+ */
 interface TabButtonProps {
+  /** Tab label content. */
   children: ReactNode;
+  /** Whether this tab is currently selected. Drives `aria-selected`. */
   isActive: boolean;
+  /** Called when the tab is clicked. Parent is responsible for navigation. */
   onClick: () => void;
+  /** Additional Tailwind classes for sizing/spacing overrides. */
   className?: string;
 }
 

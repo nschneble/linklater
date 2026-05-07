@@ -5,6 +5,17 @@ import { useState } from 'react';
 import Alert from './ui/Alert';
 import IconButton from './ui/IconButton';
 
+/**
+ * Settings section for permanently deleting the account.
+ *
+ * Uses a two-step confirmation pattern: the first click reveals a confirmation
+ * row ("Are you sure? This is permanent.") with a destructive "Yes, delete"
+ * button and a "Cancel" escape hatch. This prevents accidental deletion from a
+ * single misclick.
+ *
+ * On confirmed deletion, calls `DELETE /users/me` and then `logout()` to clear
+ * auth state and redirect the user to the login screen.
+ */
 export default function DangerZone() {
   const { logout } = useAuth();
 
