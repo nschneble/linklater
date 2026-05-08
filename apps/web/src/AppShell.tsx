@@ -7,6 +7,7 @@ import { useTheme, type BaseTheme } from './theme/ThemeContext';
 import Header from './components/Header';
 import LinksView from './components/LinksView';
 import SettingsView from './components/SettingsView';
+import LinkButton from './components/ui/LinkButton';
 
 // ThemeEditor is lazy-loaded because it is rarely visited and its color-math
 // utilities add non-trivial weight to the bundle.
@@ -80,7 +81,10 @@ export default function AppShell() {
               className="fa-solid fa-triangle-exclamation mr-1.5"
               aria-hidden="true"
             />
-            Please verify your email address. Check your inbox!
+            Please verify your email address.{' '}
+            <LinkButton onClick={() => navigate('/settings')}>
+              Need to resend the verification email?
+            </LinkButton>
           </p>
         </div>
       )}
