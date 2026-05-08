@@ -95,6 +95,21 @@ export default function UserMenu({
     return () => document.removeEventListener('mousedown', handleOutsideClicks);
   }, [showUserMenu]);
 
+  // closes main menu on Escape (covers focus outside the menu container)
+  useEffect(() => {
+    if (!showUserMenu) return;
+
+    function handleEscapeKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setShowUserMenu(false);
+        avatarRef.current?.focus();
+      }
+    }
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [showUserMenu]);
+
   const cancelHide = () => {
     if (hideSubmenuTimeout.current) {
       clearTimeout(hideSubmenuTimeout.current);
