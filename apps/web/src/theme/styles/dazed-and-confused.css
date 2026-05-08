@@ -8,7 +8,7 @@
   --text-subtle: #4898b8;
   --border: #1878a0;
   --accent: #d4212b;
-  --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
+  --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #f3f0ed;
 }
 
@@ -22,6 +22,6 @@
   --text-subtle: #596f78;
   --border: #c07818;
   --accent: #d4212b;
-  --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
+  --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #f3f0ed;
 }
