@@ -35,6 +35,7 @@ const defaultProps = {
   page: 1,
   pagination: null,
   search: '',
+  debouncedSearch: '',
   onArchiveToggle: vi.fn(),
   onLoadMore: vi.fn(),
 };

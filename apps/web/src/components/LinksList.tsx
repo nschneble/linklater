@@ -25,6 +25,8 @@ interface LinksListProps {
   pagination: Pick<PaginatedLinks, 'total' | 'limit'> | null;
   /** Current search query — used to pick the right empty-state icon. */
   search: string;
+  /** Debounced search query — used alongside `search` to avoid icon flicker during transition. */
+  debouncedSearch: string;
   /** Passed through to each `LinkCard`. */
   onArchiveToggle: (link: Link) => void;
   /** Called when the user clicks "Load more". */
@@ -49,6 +51,7 @@ export default function LinksList({
   page,
   pagination,
   search,
+  debouncedSearch,
   onArchiveToggle,
   onLoadMore,
 }: LinksListProps) {
@@ -65,7 +68,7 @@ export default function LinksList({
       <div className="flex flex-col items-center justify-center py-9 text-center animate-fade-in-up">
         <i
           className={`text-4xl text-[var(--text-subtle)] mb-[7px] fa-regular ${
-            search !== ''
+            search !== '' || debouncedSearch !== ''
               ? 'fa-magnifying-glass'
               : filter === 'archived'
                 ? 'fa-circle-check'

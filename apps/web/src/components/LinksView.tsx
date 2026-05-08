@@ -57,6 +57,10 @@ export default function LinksView() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (search === '') {
+      startTransition(() => setDebouncedSearch(''));
+      return;
+    }
     const timer = setTimeout(
       () => startTransition(() => setDebouncedSearch(search)),
       SEARCH_DEBOUNCE_MS,
@@ -215,6 +219,7 @@ export default function LinksView() {
         page={page}
         pagination={pagination}
         search={search}
+        debouncedSearch={debouncedSearch}
         onArchiveToggle={handleToggleArchive}
         onLoadMore={handleLoadMore}
       />
