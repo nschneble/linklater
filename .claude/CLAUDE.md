@@ -28,34 +28,32 @@ apps
 
 ```bash
 # Convenience Scripts
-./dev                                    # Start development server
-./flintest                               # Install, format, lint, test
-./flintest --update                      # Update, install, format, lint, test
+./dev                                             # Start development server
+./flintest                                        # Install, format, lint, test
+./flintest --update                               # Update, install, format, lint, test
 
 # Setup
-npm install                              # Install dependencies
+npm install                                       # Install dependencies
 
 # Run
-npm run dev                              # Start development server
+npm run dev                                       # Start development server
 
 # Linting
-npm run lint                             # Lint code for consistent style
-npm run lint --workspace @linklater/web  # Lint front-end only
-npm run lint --workspace @linklater/api  # Lint back-end only
+npm run lint                                      # Lint code for consistent style
+npm run lint --workspace @linklater/web           # Lint front-end only
+npm run lint --workspace @linklater/api           # Lint back-end only
 
 # Testing
-npm run test                             # Run all tests
-npm run test --workspace @linklater/web  # Test front-end only
-npm run test --workspace @linklater/api  # Test back-end only
+npm run test                                      # Run all tests
+npm run test --workspace @linklater/web           # Test front-end only
+npm run test --workspace @linklater/api           # Test back-end only
 
 # Database
-npx prisma migrate dev --name init       # Run migrations (first time)
-npx prisma migrate dev                   # Run migrations
-npx prisma migrate reset                 # Wipe and re-run all migrations
-npx prisma generate                      # Regenerate client after migrations
+npm run migrate --workspace @linklater/api        # Run migrations + regenerate client
+npm run migrate:reset --workspace @linklater/api  # Wipe, re-run migrations + regenerate client
 ```
 
-> **Note:** Run `npx prisma generate` after any migration. The custom client output path in this project prevents `migrate dev` from triggering it automatically.
+> **Note:** The `migrate` and `migrate:reset` scripts chain `prisma migrate dev` with `prisma generate`. Prisma 7's `prisma-client` generator requires a custom `output` path, so `migrate dev` alone does not auto-regenerate the client.
 
 ## Tool Versions
 

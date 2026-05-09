@@ -117,12 +117,11 @@ cp apps/web/.env.example apps/web/.env
 ### Run Database Migrations
 
 ```bash
-# cd /path/to/your/repo/apps/api
-npx prisma migrate dev
-npx prisma generate
+# cd /path/to/your/repo
+npm run migrate --workspace @linklater/api
 ```
 
-> **Note:** Run `npx prisma generate` after any migration. The custom client output path in this project prevents `migrate dev` from triggering it automatically.
+> **Note:** Use `npm run migrate` instead of `npx prisma migrate dev` directly. Prisma 7's `prisma-client` generator requires a custom output path, so `migrate dev` does not automatically regenerate the client.
 
 ### Start Development Server
 
