@@ -6,10 +6,17 @@ import { AuthService } from './auth.service.js';
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private readonly authService: AuthService) {
+    if (!process.env.GOOGLE_CLIENT_ID)
+      throw new Error('GOOGLE_CLIENT_ID must be set');
+    if (!process.env.GOOGLE_CLIENT_SECRET)
+      throw new Error('GOOGLE_CLIENT_SECRET must be set');
+    if (!process.env.GOOGLE_CALLBACK_URL)
+      throw new Error('GOOGLE_CALLBACK_URL must be set');
+
     super({
-      clientID: process.env.GOOGLE_CLIENT_ID ?? '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
-      callbackURL: process.env.GOOGLE_CALLBACK_URL ?? '',
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: process.env.GOOGLE_CALLBACK_URL,
       scope: ['email', 'profile'],
       state: false,
     });
