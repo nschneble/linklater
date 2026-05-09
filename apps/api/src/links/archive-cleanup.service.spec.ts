@@ -88,4 +88,23 @@ describe('ArchiveCleanupService', () => {
     await expect(service.deleteExpiredArchivedLinks()).resolves.not.toThrow();
     expect(prismaMock.link.deleteMany).toHaveBeenCalledTimes(1);
   });
+
+  it('worker callback invokes deleteExpiredArchivedLinks', async () => {
+    let capturedCallback: (() => Promise<void>) | null = null;
+
+    (queueMock.work as jest.Mock).mockImplementation(
+      (_queue: string, callback: () => Promise<void>) => {
+        capturedCallback = callback;
+        return Promise.resolve(WORKER_ID);
+      },
+    );
+    (prismaMock.link.deleteMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+    await service.onModuleInit();
+
+    expect(capturedCallback).not.toBeNull();
+    await capturedCallback!();
+
+    expect(prismaMock.link.deleteMany).toHaveBeenCalledTimes(1);
+  });
 });

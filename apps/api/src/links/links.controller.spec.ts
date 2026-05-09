@@ -80,6 +80,30 @@ describe('LinksController', () => {
       });
     });
 
+    it('passes archived=false when the query param is "false"', async () => {
+      (linksServiceMock.findAll as jest.Mock).mockResolvedValue({
+        data: [],
+        limit: 50,
+        page: 1,
+        total: 0,
+      });
+
+      await controller.findAll(
+        makeRequest(),
+        undefined,
+        'false',
+        undefined,
+        undefined,
+      );
+
+      expect(linksServiceMock.findAll).toHaveBeenCalledWith(USER_ID, {
+        archived: false,
+        limit: undefined,
+        page: undefined,
+        search: undefined,
+      });
+    });
+
     it('passes undefined for archived when the query param is absent', async () => {
       (linksServiceMock.findAll as jest.Mock).mockResolvedValue({
         data: [],

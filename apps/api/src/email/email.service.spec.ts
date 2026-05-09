@@ -86,5 +86,79 @@ describe('EmailService', () => {
       const [mailOptions] = sendMailMock.mock.calls[0] as [{ text: string }];
       expect(mailOptions.text).toContain('1 hour');
     });
+
+    it('throws ServiceUnavailableException when SMTP fails', async () => {
+      const { ServiceUnavailableException } = await import('@nestjs/common');
+      sendMailMock.mockRejectedValue(new Error('SMTP connection refused'));
+
+      await expect(
+        service.sendPasswordResetEmail(USER_EMAIL, RESET_TOKEN),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+
+  describe('sendVerificationEmail SMTP error', () => {
+    it('throws ServiceUnavailableException when SMTP fails', async () => {
+      const { ServiceUnavailableException } = await import('@nestjs/common');
+      sendMailMock.mockRejectedValue(new Error('SMTP connection refused'));
+
+      await expect(
+        service.sendVerificationEmail(USER_EMAIL, VERIFICATION_TOKEN),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+
+  describe('sendEmailChangeVerificationEmail', () => {
+    it('sends to the correct recipient with the email-change subject', async () => {
+      await service.sendEmailChangeVerificationEmail(
+        USER_EMAIL,
+        VERIFICATION_TOKEN,
+      );
+
+      expect(sendMailMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: USER_EMAIL,
+          subject: 'Confirm your new Linklater email',
+        }),
+      );
+    });
+
+    it('includes the token and the verify-email-change path in the body', async () => {
+      process.env.APP_URL = 'https://app.example.com';
+
+      await service.sendEmailChangeVerificationEmail(
+        USER_EMAIL,
+        VERIFICATION_TOKEN,
+      );
+
+      const [mailOptions] = sendMailMock.mock.calls[0] as [
+        { text: string; html: string },
+      ];
+      expect(mailOptions.text).toContain(VERIFICATION_TOKEN);
+      expect(mailOptions.text).toContain('verify-email-change');
+      expect(mailOptions.html).toContain(VERIFICATION_TOKEN);
+    });
+
+    it('mentions the 24-hour expiry in the email body', async () => {
+      await service.sendEmailChangeVerificationEmail(
+        USER_EMAIL,
+        VERIFICATION_TOKEN,
+      );
+
+      const [mailOptions] = sendMailMock.mock.calls[0] as [{ text: string }];
+      expect(mailOptions.text).toContain('24 hours');
+    });
+
+    it('throws ServiceUnavailableException when SMTP fails', async () => {
+      const { ServiceUnavailableException } = await import('@nestjs/common');
+      sendMailMock.mockRejectedValue(new Error('SMTP connection refused'));
+
+      await expect(
+        service.sendEmailChangeVerificationEmail(
+          USER_EMAIL,
+          VERIFICATION_TOKEN,
+        ),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
   });
 });

@@ -21,6 +21,17 @@ describe('JwtStrategy', () => {
     expect(strategy).toBeDefined();
   });
 
+  it('throws when JWT_SECRET is not set', () => {
+    const original = process.env.JWT_SECRET;
+    delete process.env.JWT_SECRET;
+
+    try {
+      expect(() => new JwtStrategy()).toThrow('JWT_SECRET must be set');
+    } finally {
+      process.env.JWT_SECRET = original;
+    }
+  });
+
   describe('validate', () => {
     it('maps subject to userId and returns userId and email', async () => {
       const result = await strategy.validate({

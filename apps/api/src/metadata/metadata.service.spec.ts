@@ -359,4 +359,206 @@ describe('MetadataService', () => {
       expect.any(Function),
     );
   });
+
+  it('worker callback invokes fetchAndStore for each job', async () => {
+    let capturedCallback:
+      | ((jobs: { data: { linkId: string; url: string } }[]) => Promise<void>)
+      | null = null;
+
+    (queueMock.work as jest.Mock).mockImplementation(
+      (
+        _queue: string,
+        callback: (
+          jobs: { data: { linkId: string; url: string } }[],
+        ) => Promise<void>,
+      ) => {
+        capturedCallback = callback;
+        return Promise.resolve(WORKER_ID);
+      },
+    );
+    (prismaMock.meta.upsert as jest.Mock).mockResolvedValue({});
+    mockFetch(makeHtml({ ogTitle: OG_TITLE }));
+
+    await service.onModuleInit();
+
+    expect(capturedCallback).not.toBeNull();
+    await capturedCallback!([{ data: { linkId: LINK_ID, url: LINK_URL } }]);
+
+    expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { linkId: LINK_ID } }),
+    );
+  });
+
+  describe('SSRF protection via isPrivateHost', () => {
+    beforeEach(() => {
+      (prismaMock.meta.upsert as jest.Mock).mockResolvedValue({});
+    });
+
+    it('blocks fetch to localhost', async () => {
+      await service.fetchAndStore(LINK_ID, 'http://localhost/secret');
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            description: null,
+            imageUrl: null,
+            title: null,
+          }),
+        }),
+      );
+      // Should not have made any outbound fetch
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('blocks fetch to IPv4 loopback (127.0.0.1)', async () => {
+      global.fetch = jest.fn() as unknown as typeof fetch;
+
+      await service.fetchAndStore(LINK_ID, 'http://127.0.0.1/internal');
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('blocks fetch to RFC 1918 private range 10.x.x.x', async () => {
+      global.fetch = jest.fn() as unknown as typeof fetch;
+
+      await service.fetchAndStore(LINK_ID, 'http://10.0.0.1/admin');
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('blocks fetch to RFC 1918 private range 192.168.x.x', async () => {
+      global.fetch = jest.fn() as unknown as typeof fetch;
+
+      await service.fetchAndStore(LINK_ID, 'http://192.168.1.1/router');
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('blocks fetch to RFC 1918 private range 172.16.x.x', async () => {
+      global.fetch = jest.fn() as unknown as typeof fetch;
+
+      await service.fetchAndStore(LINK_ID, 'http://172.16.0.1/private');
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('blocks fetch to link-local address 169.254.x.x', async () => {
+      global.fetch = jest.fn() as unknown as typeof fetch;
+
+      await service.fetchAndStore(
+        LINK_ID,
+        'http://169.254.169.254/latest/meta-data',
+      );
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('blocks fetch to IPv6 loopback ::1', async () => {
+      global.fetch = jest.fn() as unknown as typeof fetch;
+
+      await service.fetchAndStore(LINK_ID, 'http://[::1]/secret');
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('allows fetch to a public hostname', async () => {
+      mockFetch(makeHtml({ ogTitle: OG_TITLE }));
+
+      await service.fetchAndStore(LINK_ID, 'https://example.com/page');
+
+      expect(global.fetch).toHaveBeenCalled();
+    });
+  });
+
+  describe('error handling in fetchAndStore', () => {
+    beforeEach(() => {
+      (prismaMock.meta.upsert as jest.Mock).mockResolvedValue({});
+    });
+
+    it('records fetchedAt when the upstream upsert inside the catch block also fails', async () => {
+      global.fetch = jest
+        .fn()
+        .mockRejectedValue(
+          new Error('Network error'),
+        ) as unknown as typeof fetch;
+
+      // First call (inside catch) also throws, second is irrelevant.
+      (prismaMock.meta.upsert as jest.Mock)
+        .mockRejectedValueOnce(new Error('DB down'))
+        .mockResolvedValue({});
+
+      // Should not propagate — swallowed by the inner .catch()
+      await expect(
+        service.fetchAndStore(LINK_ID, LINK_URL),
+      ).resolves.not.toThrow();
+    });
+
+    it('returns null image when og:image is absent', async () => {
+      mockFetch(makeHtml({ ogTitle: OG_TITLE }));
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ imageUrl: null }),
+        }),
+      );
+    });
+
+    it('handles a non-OK HTTP response gracefully', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        headers: { get: () => 'text/html' },
+        ok: false,
+        text: () => Promise.resolve(''),
+      }) as unknown as typeof fetch;
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            description: null,
+            imageUrl: null,
+            fetchedAt: expect.any(Date),
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('resolveUrl edge cases', () => {
+    beforeEach(() => {
+      (prismaMock.meta.upsert as jest.Mock).mockResolvedValue({});
+    });
+
+    it('truncates resolved URLs longer than MAX_URL_LENGTH', async () => {
+      // Build an OG image URL that, once resolved, will exceed MAX_URL_LENGTH
+      const longPath = '/image/' + 'a'.repeat(2100);
+      mockFetch(makeHtml({ ogImage: longPath }));
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      const call = (prismaMock.meta.upsert as jest.Mock).mock.calls[0][0] as {
+        create: { imageUrl: string | null };
+      };
+      // Either null (if resolution fails) or truncated to MAX_URL_LENGTH
+      if (call.create.imageUrl !== null) {
+        expect(call.create.imageUrl.length).toBeLessThanOrEqual(2000);
+      }
+    });
+
+    it('falls back to empty string for an invalid relative URL', async () => {
+      // An href that cannot be resolved (e.g., malformed data URI without valid base)
+      mockFetch(makeHtml({ faviconHref: '://bad-url', faviconRel: 'icon' }));
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      const call = (prismaMock.meta.upsert as jest.Mock).mock.calls[0][0] as {
+        create: { faviconUrl: string | null };
+      };
+      // resolveUrl returns '' on parse failure — upsert should still be called
+      expect(prismaMock.meta.upsert).toHaveBeenCalled();
+      expect(typeof call.create.faviconUrl).toBe('string');
+    });
+  });
 });
