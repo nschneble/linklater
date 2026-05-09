@@ -8,40 +8,38 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String?
+  id                         String    @id @default(cuid())
+  email                      String    @unique
+  mode                       String    @default("dark")
+  theme                      String    @default("scanner-darkly")
 
-  mode         String    @default("dark")
-  theme        String    @default("scanner-darkly")
+  passwordHash               String?
+  pendingEmail               String?
+  pendingEmailToken          String?   @unique
+  resetToken                 String?   @unique
+  verificationToken          String?   @unique
 
-  emailVerifiedAt              DateTime?
-  verificationToken            String?   @unique
-  verificationTokenExpiresAt   DateTime?
+  emailVerifiedAt            DateTime?
+  pendingEmailTokenExpiresAt DateTime?
+  resetTokenExpiresAt        DateTime?
+  verificationTokenExpiresAt DateTime?
 
-  resetToken                   String?   @unique
-  resetTokenExpiresAt          DateTime?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
 
-  pendingEmail                 String?
-  pendingEmailToken            String?   @unique
-  pendingEmailTokenExpiresAt   DateTime?
-
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  links         Link[]
-  oauthAccounts OAuthAccount[]
+  links                      Link[]
+  oauthAccounts              OAuthAccount[]
 }
 
 model OAuthAccount {
   id         String   @id @default(cuid())
-  userId     String
   provider   String
   providerId String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerId])
   @@index([userId])
@@ -49,11 +47,10 @@ model OAuthAccount {
 
 model Link {
   id           String    @id @default(cuid())
+  meta         Meta?
+  url          String
   userId       String
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  url          String
-  meta         Meta?
 
   searchVector Unsupported("tsvector")?
 
@@ -68,18 +65,18 @@ model Link {
 }
 
 model Meta {
-  id           String    @id @default(cuid())
-  linkId       String    @unique
-  link         Link      @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  linkId      String    @unique
+  link        Link      @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
-  description  String?
-  faviconUrl   String?
-  imageUrl     String?
-  siteName     String?
-  source       String?
-  title        String?
+  description String?
+  faviconUrl  String?
+  imageUrl    String?
+  siteName    String?
+  source      String?
+  title       String?
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  fetchedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  fetchedAt   DateTime?
 }
