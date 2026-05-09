@@ -91,6 +91,7 @@ function renderWithProvider() {
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
 afterEach(() => {

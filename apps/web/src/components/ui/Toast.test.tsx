@@ -4,7 +4,7 @@ import Toast from './Toast';
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => {
-  vi.runOnlyPendingTimers();
+  act(() => vi.runOnlyPendingTimers());
   vi.useRealTimers();
   vi.restoreAllMocks();
 });

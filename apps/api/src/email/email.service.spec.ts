@@ -21,7 +21,11 @@ describe('EmailService', () => {
 
     sendMailMock = jest.fn().mockResolvedValue({ messageId: 'test-id' });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (service as any).transporter.sendMail = sendMailMock;
+    const serviceAsAny = service as any;
+    serviceAsAny.transporter.sendMail = sendMailMock;
+    jest
+      .spyOn(serviceAsAny.logger, 'error')
+      .mockImplementation(() => undefined);
   });
 
   describe('sendVerificationEmail', () => {

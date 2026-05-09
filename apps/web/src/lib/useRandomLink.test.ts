@@ -10,7 +10,10 @@ vi.mock('./api', () => ({
 
 import * as apiModule from './api';
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
+});
 afterEach(() => vi.restoreAllMocks());
 
 function makeLink(overrides: Partial<Link> = {}): Link {

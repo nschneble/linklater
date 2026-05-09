@@ -47,6 +47,7 @@ function makePaginated(
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
 afterEach(() => {
@@ -59,8 +60,8 @@ afterEach(() => {
 
 describe('useLinksData initial fetch', () => {
   it('starts with loadingLinks=true and an empty links array', () => {
-    vi.mocked(apiModule.getLinks).mockResolvedValue(
-      makePaginated([makeLink()]),
+    vi.mocked(apiModule.getLinks).mockImplementation(
+      () => new Promise(() => {}),
     );
 
     const { result } = renderHook(() => useLinksData('active', ''));

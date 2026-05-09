@@ -12,8 +12,8 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "lint": "eslint \"src/**/*.{ts,tsx}\" --max-warnings=0",
     "preview": "vite preview",
-    "test": "vitest --run",
-    "test:cov": "vitest --run --coverage"
+    "test": "NODE_OPTIONS=\"--disable-warning=DEP0205\" vitest --run",
+    "test:cov": "NODE_OPTIONS=\"--disable-warning=DEP0205\" vitest --run --coverage"
   },
   "dependencies": {
     "blueimp-md5": "^2.19.0",
