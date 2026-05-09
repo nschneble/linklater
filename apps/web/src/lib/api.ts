@@ -160,6 +160,7 @@ export async function getMe() {
   return apiFetch<{
     email: string;
     emailVerifiedAt: string | null;
+    hasPassword: boolean;
     pendingEmail: string | null;
     mode: string;
     theme: string;
