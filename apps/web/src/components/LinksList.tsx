@@ -84,7 +84,7 @@ export default function LinksList({
   }
 
   return (
-    <div className="mt-6 grid grid-cols-1 gap-6">
+    <div className="mt-6 mb-28 grid grid-cols-1 gap-6">
       {links.map((link, index) => (
         <div
           key={link.id}
