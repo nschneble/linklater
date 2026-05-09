@@ -180,6 +180,17 @@ describe('apiFetch', () => {
 
     expect(result).toEqual({ id: 'abc', url: 'https://example.com' });
   });
+
+  it('returns undefined when the 2xx response body is empty', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(''),
+    }) as unknown as typeof fetch;
+
+    const result = await apiFetch('/test');
+
+    expect(result).toBeUndefined();
+  });
 });
 
 // ---------------------------------------------------------------------------
