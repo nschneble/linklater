@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { useEffect } from 'react';
 import { useTheme, type BaseTheme } from './theme/ThemeContext';
@@ -18,15 +18,22 @@ import VerifyEmailPage from './components/VerifyEmailPage';
  * - `/verify-email` and `/verify-email-change` are always accessible (no auth
  *   required) so that email links work even when the user is logged out.
  * - `/reset-password` is similarly public.
- * - Unauthenticated users are redirected to the login form for all other routes.
- * - Authenticated users are redirected from `/` to `/unread` and then rendered
- *   inside `AppShell`.
+ * - Unauthenticated users are redirected to `/login` for all other routes. The
+ *   originally-requested path is stored in route state so `AuthForm` can bounce
+ *   the user back after a successful login.
+ * - Authenticated users are redirected from `/` (and `/login`) to `/unread` and
+ *   then rendered inside `AppShell`.
  *
  * NOTE: The `useEffect` that syncs server preferences into `ThemeContext` runs
  * whenever `user` changes (i.e. on login). This ensures that the theme and
  * mode stored in the database override the `localStorage` defaults the user
  * may have set in a different browser session.
  */
+function UnauthenticatedRedirect() {
+  const location = useLocation();
+  return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+}
+
 export default function App() {
   const { user, loading } = useAuth();
   const { setBaseTheme, setMode } = useTheme();
@@ -63,16 +70,20 @@ export default function App() {
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
         {!user ? (
-          <Route
-            path="*"
-            element={
-              <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
-                <AuthForm />
-              </div>
-            }
-          />
+          <>
+            <Route
+              path="/login"
+              element={
+                <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
+                  <AuthForm />
+                </div>
+              }
+            />
+            <Route path="*" element={<UnauthenticatedRedirect />} />
+          </>
         ) : (
           <>
+            <Route path="/login" element={<Navigate to="/unread" replace />} />
             <Route path="/" element={<Navigate to="/unread" replace />} />
             <Route path="/*" element={<AppShell />} />
           </>

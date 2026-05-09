@@ -5,6 +5,7 @@ import {
   fireEvent,
   act,
 } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import AuthForm from './AuthForm';
 
@@ -25,6 +26,14 @@ import { useAuth } from '../auth/AuthContext';
 
 const USER_EMAIL = 'email@example.com';
 const USER_PASSWORD = 'strong-password-123';
+
+function renderAuthForm() {
+  return render(
+    <MemoryRouter>
+      <AuthForm />
+    </MemoryRouter>,
+  );
+}
 
 function makeAuthContext(overrides = {}) {
   return {
@@ -61,7 +70,7 @@ function fillPassword(password: string) {
 describe('AuthForm', () => {
   describe('login mode', () => {
     it('renders login form by default', () => {
-      render(<AuthForm />);
+      renderAuthForm();
       expect(screen.getByRole('tab', { name: /log in/i })).toHaveAttribute(
         'aria-selected',
         'true',
@@ -72,7 +81,7 @@ describe('AuthForm', () => {
       const loginMock = vi.fn().mockResolvedValue(undefined);
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
 
-      render(<AuthForm />);
+      renderAuthForm();
       fillEmail(USER_EMAIL);
       fillPassword(USER_PASSWORD);
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
@@ -88,7 +97,7 @@ describe('AuthForm', () => {
         .mockRejectedValue(new Error('Invalid email or password'));
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
 
-      render(<AuthForm />);
+      renderAuthForm();
       fillEmail(USER_EMAIL);
       fillPassword(USER_PASSWORD);
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
@@ -105,7 +114,7 @@ describe('AuthForm', () => {
       const loginMock = vi.fn().mockRejectedValue('unknown');
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
 
-      render(<AuthForm />);
+      renderAuthForm();
       fillEmail(USER_EMAIL);
       fillPassword(USER_PASSWORD);
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
@@ -118,7 +127,7 @@ describe('AuthForm', () => {
     });
 
     it('shows the forgot password link', () => {
-      render(<AuthForm />);
+      renderAuthForm();
       expect(
         screen.getByRole('button', { name: /literally have no idea/i }),
       ).toBeInTheDocument();
@@ -127,7 +136,7 @@ describe('AuthForm', () => {
 
   describe('register mode', () => {
     it('switches to register mode when Sign up tab is clicked', () => {
-      render(<AuthForm />);
+      renderAuthForm();
       fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
 
       expect(screen.getByRole('tab', { name: /sign up/i })).toHaveAttribute(
@@ -145,7 +154,7 @@ describe('AuthForm', () => {
         makeAuthContext({ register: registerMock }),
       );
 
-      render(<AuthForm />);
+      renderAuthForm();
       fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
       fillEmail(USER_EMAIL);
       fillPassword(USER_PASSWORD);
@@ -164,7 +173,7 @@ describe('AuthForm', () => {
         makeAuthContext({ register: registerMock }),
       );
 
-      render(<AuthForm />);
+      renderAuthForm();
       fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
       fillEmail(USER_EMAIL);
       fillPassword(USER_PASSWORD);
@@ -184,7 +193,7 @@ describe('AuthForm', () => {
         makeAuthContext({ register: registerMock }),
       );
 
-      render(<AuthForm />);
+      renderAuthForm();
       fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
       fillEmail(USER_EMAIL);
       fillPassword(USER_PASSWORD);
@@ -203,7 +212,7 @@ describe('AuthForm', () => {
 
   describe('forgot password mode', () => {
     it('shows the forgot password form when the link is clicked', () => {
-      render(<AuthForm />);
+      renderAuthForm();
       fireEvent.click(
         screen.getByRole('button', { name: /literally have no idea/i }),
       );
@@ -214,7 +223,7 @@ describe('AuthForm', () => {
     it('sends forgot password email and shows success message', async () => {
       vi.mocked(apiModule.forgotPassword).mockResolvedValue(undefined);
 
-      render(<AuthForm />);
+      renderAuthForm();
       fireEvent.click(
         screen.getByRole('button', { name: /literally have no idea/i }),
       );
@@ -236,7 +245,7 @@ describe('AuthForm', () => {
         new Error('Service unavailable'),
       );
 
-      render(<AuthForm />);
+      renderAuthForm();
       fireEvent.click(
         screen.getByRole('button', { name: /literally have no idea/i }),
       );
@@ -256,7 +265,7 @@ describe('AuthForm', () => {
     it('returns to login when Back to login is clicked from the success state', async () => {
       vi.mocked(apiModule.forgotPassword).mockResolvedValue(undefined);
 
-      render(<AuthForm />);
+      renderAuthForm();
       fireEvent.click(
         screen.getByRole('button', { name: /literally have no idea/i }),
       );

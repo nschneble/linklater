@@ -1,6 +1,7 @@
 import { forgotPassword as apiForgotPassword } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
 import { useAuth } from '../auth/AuthContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect, type FormEvent } from 'react';
 import Alert from './ui/Alert';
 import FormInput from './ui/FormInput';
@@ -30,6 +31,8 @@ type Mode = 'login' | 'register' | 'forgot-password';
  */
 export default function AuthForm() {
   const { login, register } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const emailReference = useRef<HTMLInputElement>(null);
 
@@ -57,6 +60,12 @@ export default function AuthForm() {
       } else {
         await apiForgotPassword(email);
         setForgotPasswordSent(true);
+      }
+
+      if (mode !== 'forgot-password') {
+        const destination =
+          (location.state as { from?: string })?.from ?? '/unread';
+        navigate(destination, { replace: true });
       }
     } catch (error: unknown) {
       const message = getErrorMessage(error, 'Something went dreadfully wrong');
