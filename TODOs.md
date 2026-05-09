@@ -5,7 +5,6 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 ## Features
 
 - Improve account security
-  - Add OAuth2 support to login with Google, GitHub, etc.
   - Add 2FA (Twilio SMS?)
 - Create Chrome browser extension
   - https://developer.chrome.com/docs/extensions/get-started/
@@ -21,9 +20,7 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 
 ## Refactoring
 
-- regenerate preview and all screenshots
-- analyze/improve code coverage
-- avoid needing to run `npx prisma generate` after migrations
+_Items will be added here as they are discovered_
 
 ## Bugfixes
 
@@ -32,7 +29,5 @@ _Bugs will be added here as they are reported or discovered_
 ## Verifications
 
 - You can use arrow keys to navigate the tabs and user menu
-- Loading more links shows the skeleton cards while loading
 - Signup flow includes email verification
 - Forgot password flow sends expiring reset email
-- Enhanced search matches titles, descriptions, and urls
