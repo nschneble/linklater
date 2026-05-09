@@ -1,5 +1,5 @@
-import { validate } from 'class-validator';
 import { ForgotPasswordDto } from './forgot-password.dto.js';
+import { validate } from 'class-validator';
 
 const makeDto = (overrides: Partial<ForgotPasswordDto> = {}) =>
   Object.assign(new ForgotPasswordDto(), {

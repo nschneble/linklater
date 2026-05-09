@@ -2,20 +2,20 @@ import { jest } from '@jest/globals';
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ThrottlerGuard } from '@nestjs/throttler';
+
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 
+const ACCESS_TOKEN = 'token';
 const NEW_EMAIL = 'new.email@addy.com';
 const PENDING_EMAIL_TOKEN = 'pending-email-token-abc';
 const RESET_TOKEN = 'reset-token-abc';
-const VERIFICATION_TOKEN = 'verification-token-xyz';
-
-const ACCESS_TOKEN = 'token';
 const SITE_MODE = 'dark';
 const THEME_NAME = 'scanner-darkly';
 const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';
 const USER_PASSWORD = 'open-sesame';
+const VERIFICATION_TOKEN = 'verification-token-xyz';
 
 describe('AuthController', () => {
   let controller: AuthController;

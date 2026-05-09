@@ -1,13 +1,35 @@
 import { jest } from '@jest/globals';
 import * as bcrypt from 'bcryptjs';
 
+class MockPrismaClientKnownRequestError extends Error {
+  code: string;
+  constructor(message: string, { code }: { code: string }) {
+    super(message);
+    this.code = code;
+  }
+}
+
+jest.mock('../prisma/generated/client', () => ({
+  Prisma: { PrismaClientKnownRequestError: MockPrismaClientKnownRequestError },
+}));
+
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Prisma } from '../prisma/generated/client';
 
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../email/email.service';
+
+const makeP2002 = () =>
+  new (
+    Prisma as {
+      PrismaClientKnownRequestError: typeof MockPrismaClientKnownRequestError;
+    }
+  ).PrismaClientKnownRequestError('Unique constraint failed', {
+    code: 'P2002',
+  });
 
 const KNOWN_PASSWORD = 'open-sesame';
 const KNOWN_PASSWORD_HASH = bcrypt.hashSync(KNOWN_PASSWORD, 1);
@@ -253,6 +275,64 @@ describe('AuthService', () => {
         OAUTH_PROVIDER_ID,
       );
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
+    });
+
+    it('recovers via OAuth account lookup when concurrent creation causes P2002', async () => {
+      (usersServiceMock.findOAuthAccount as jest.Mock)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          userId: USER_ID,
+          user: { id: USER_ID, email: USER_EMAIL },
+        });
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
+      (usersServiceMock.createOAuthUser as jest.Mock).mockRejectedValue(
+        makeP2002(),
+      );
+
+      const result = await service.findOrCreateOAuthUser(
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        USER_EMAIL,
+      );
+
+      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
+    });
+
+    it('recovers via email lookup when OAuth account not yet linked after P2002', async () => {
+      (usersServiceMock.findOAuthAccount as jest.Mock)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+      });
+      (usersServiceMock.createOAuthUser as jest.Mock).mockRejectedValue(
+        makeP2002(),
+      );
+
+      const result = await service.findOrCreateOAuthUser(
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        USER_EMAIL,
+      );
+
+      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
+    });
+
+    it('re-throws non-P2002 errors from createOAuthUser', async () => {
+      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
+      (usersServiceMock.createOAuthUser as jest.Mock).mockRejectedValue(
+        new Error('unexpected database error'),
+      );
+
+      await expect(
+        service.findOrCreateOAuthUser(
+          OAUTH_PROVIDER,
+          OAUTH_PROVIDER_ID,
+          USER_EMAIL,
+        ),
+      ).rejects.toThrow('unexpected database error');
     });
   });
 

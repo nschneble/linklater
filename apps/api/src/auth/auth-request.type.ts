@@ -1,14 +1,14 @@
 import { Request } from 'express';
 
 /**
- * The user payload that Passport attaches to `request.user` after a
- * successful JWT or local strategy validation. Contains only the
- * minimum fields needed to identify the authenticated principal.
+ * The user payload Passport attaches to `request.user` after a successful
+ * validation. Contains only the minimum fields needed to identify the
+ * authenticated user.
  */
 export interface AuthUser {
-  /** The UUID of the authenticated user. */
-  email: string;
   /** The email address of the authenticated user. */
+  email: string;
+  /** The UUID of the authenticated user. */
   userId: string;
 }
 

@@ -1,10 +1,10 @@
-import { validate } from 'class-validator';
 import { ResetPasswordDto } from './reset-password.dto.js';
+import { validate } from 'class-validator';
 
 const makeDto = (overrides: Partial<ResetPasswordDto> = {}) =>
   Object.assign(new ResetPasswordDto(), {
     token: 'some-valid-token',
-    password: 'strong-password-123',
+    password: 'super-strong-password-123-!',
     ...overrides,
   });
 
@@ -15,7 +15,7 @@ describe('ResetPasswordDto', () => {
   });
 
   it('rejects a password shorter than 12 characters', async () => {
-    const errors = await validate(makeDto({ password: 'short789' }));
+    const errors = await validate(makeDto({ password: 'too-short' }));
     const passwordErrors = errors.filter(
       (error) => error.property === 'password',
     );

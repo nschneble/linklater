@@ -63,7 +63,7 @@ export class AuthController {
    */
   @ApiOperation({ summary: 'Log in with email and password' })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: 'Returns a signed JWT accessToken.',
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials.' })
@@ -72,6 +72,7 @@ export class AuthController {
   @Throttle({ 'auth-login': { ttl: 60000, limit: 10 } })
   @UseGuards(LocalAuthGuard)
   @Post('login')
+  @HttpCode(200)
   async login(@Req() request: AuthRequest) {
     return this.authService.login(request.user);
   }
@@ -158,7 +159,7 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 429, description: 'Too many resend attempts.' })
   @UseGuards(JwtAuthGuard, ThrottlerGuard)
-  @Throttle({ 'auth-resend-verification': { ttl: 60000, limit: 3 } })
+  @Throttle({ 'auth-resend-verification': { ttl: 60000, limit: 5 } })
   @Post('resend-verification')
   @HttpCode(200)
   async resendVerification(@Req() request: AuthRequest) {

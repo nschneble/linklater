@@ -1,5 +1,5 @@
-import { validate } from 'class-validator';
 import { RequestEmailChangeDto } from './request-email-change.dto.js';
+import { validate } from 'class-validator';
 
 const makeDto = (overrides: Partial<RequestEmailChangeDto> = {}) =>
   Object.assign(new RequestEmailChangeDto(), {

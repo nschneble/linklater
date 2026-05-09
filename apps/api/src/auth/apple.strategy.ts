@@ -1,7 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
 import AppleStrategyLib from '@nicokaiser/passport-apple';
 import { AuthService } from './auth.service.js';
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+
+const APPLE_PARAMS = [
+  'CALLBACK_URL',
+  'CLIENT_ID',
+  'KEY_ID',
+  'PRIVATE_KEY',
+  'TEAM_ID',
+] as const;
 
 interface AppleProfile {
   id: string;
@@ -15,30 +23,25 @@ export class AppleStrategy extends PassportStrategy(
   'apple',
 ) {
   constructor(private readonly authService: AuthService) {
-    if (!process.env.APPLE_CLIENT_ID)
-      throw new Error('APPLE_CLIENT_ID must be set');
-    if (!process.env.APPLE_TEAM_ID)
-      throw new Error('APPLE_TEAM_ID must be set');
-    if (!process.env.APPLE_KEY_ID) throw new Error('APPLE_KEY_ID must be set');
-    if (!process.env.APPLE_PRIVATE_KEY)
-      throw new Error('APPLE_PRIVATE_KEY must be set');
-    if (!process.env.APPLE_CALLBACK_URL)
-      throw new Error('APPLE_CALLBACK_URL must be set');
+    for (const key of APPLE_PARAMS) {
+      if (!process.env[`APPLE_${key}`])
+        throw new Error(`APPLE_${key} must be set`);
+    }
 
     super({
-      clientID: process.env.APPLE_CLIENT_ID,
-      teamID: process.env.APPLE_TEAM_ID,
-      keyID: process.env.APPLE_KEY_ID,
-      key: process.env.APPLE_PRIVATE_KEY,
       callbackURL: process.env.APPLE_CALLBACK_URL,
+      clientID: process.env.APPLE_CLIENT_ID,
+      key: process.env.APPLE_PRIVATE_KEY,
+      keyID: process.env.APPLE_KEY_ID,
       scope: ['email', 'name'],
+      teamID: process.env.APPLE_TEAM_ID,
     });
   }
 
   async validate(
+    profile: AppleProfile,
     _accessToken: string,
     _refreshToken: string,
-    profile: AppleProfile,
   ) {
     const email = profile.email;
     if (!email) throw new Error('No email returned from Apple');

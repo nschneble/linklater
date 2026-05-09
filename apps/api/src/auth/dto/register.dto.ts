@@ -1,11 +1,11 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsString, MinLength } from 'class-validator';
 
-/** Request body for POST /auth/register. */
+/** Request body for POST /auth/register */
 export class RegisterDto {
   @ApiProperty({
     description: 'The email address the new account will be associated with.',
-    example: 'jane@example.com',
+    example: 'user@example.com',
   })
   @IsEmail()
   email: string;

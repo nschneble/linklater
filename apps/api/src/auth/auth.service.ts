@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { EmailService } from '../email/index.js';
+import { Prisma } from '../prisma/index.js';
 import { UsersService, withoutPasswordHash } from '../users/index.js';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -116,9 +117,33 @@ export class AuthService {
       return { userId: existingUser.id, email: existingUser.email };
     }
 
-    const newUser = await this.usersService.createOAuthUser(email);
-    await this.usersService.linkOAuthAccount(newUser.id, provider, providerId);
-    return { userId: newUser.id, email };
+    try {
+      const newUser = await this.usersService.createOAuthUser(email);
+      await this.usersService.linkOAuthAccount(
+        newUser.id,
+        provider,
+        providerId,
+      );
+      return { userId: newUser.id, email };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const raceAccount = await this.usersService.findOAuthAccount(
+          provider,
+          providerId,
+        );
+        if (raceAccount) {
+          return { userId: raceAccount.userId, email: raceAccount.user.email };
+        }
+        const raceUser = await this.usersService.findByEmail(email);
+        if (raceUser) {
+          return { userId: raceUser.id, email: raceUser.email };
+        }
+      }
+      throw error;
+    }
   }
 
   /**

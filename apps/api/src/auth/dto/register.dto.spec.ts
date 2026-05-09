@@ -1,15 +1,15 @@
-import { validate } from 'class-validator';
 import { RegisterDto } from './register.dto.js';
+import { validate } from 'class-validator';
 
 const makeDto = (overrides: Partial<RegisterDto> = {}) =>
   Object.assign(new RegisterDto(), {
     email: 'user@example.com',
-    password: 'strong-password-123',
+    password: 'super-strong-password-123-!',
     ...overrides,
   });
 
 describe('RegisterDto', () => {
-  it('accepts valid email and password of at least 12 characters', async () => {
+  it('accepts a valid email and a password of at least 12 characters', async () => {
     const errors = await validate(makeDto());
     expect(errors).toHaveLength(0);
   });
@@ -23,7 +23,7 @@ describe('RegisterDto', () => {
   });
 
   it('rejects invalid email addresses', async () => {
-    const errors = await validate(makeDto({ email: 'not-an-email' }));
+    const errors = await validate(makeDto({ email: 'certainly-not-an-email' }));
     const emailErrors = errors.filter((error) => error.property === 'email');
     expect(emailErrors.length).toBeGreaterThan(0);
   });
