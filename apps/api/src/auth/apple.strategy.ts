@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const AppleStrategyLib = require('@nicokaiser/passport-apple');
+import AppleStrategyLib from '@nicokaiser/passport-apple';
 import { AuthService } from './auth.service.js';
 
 interface AppleProfile {

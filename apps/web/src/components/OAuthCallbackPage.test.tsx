@@ -96,9 +96,7 @@ describe('OAuthCallbackPage', () => {
   });
 
   it('shows an error when loginWithToken rejects', async () => {
-    const loginWithToken = vi
-      .fn()
-      .mockRejectedValue(new Error('Server error'));
+    const loginWithToken = vi.fn().mockRejectedValue(new Error('Server error'));
     vi.mocked(useAuth).mockReturnValue(makeAuthContext({ loginWithToken }));
 
     renderPage();
