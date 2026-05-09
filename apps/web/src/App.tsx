@@ -6,6 +6,7 @@ import { useTheme, type BaseTheme } from './theme/ThemeContext';
 import AppShell from './AppShell';
 import AuthForm from './components/AuthForm';
 import ErrorBoundary from './components/ErrorBoundary';
+import OAuthCallbackPage from './components/OAuthCallbackPage';
 import ResetPasswordPage from './components/ResetPasswordPage';
 import VerifyEmailChangePage from './components/VerifyEmailChangePage';
 import VerifyEmailPage from './components/VerifyEmailPage';
@@ -59,6 +60,7 @@ export default function App() {
           element={<VerifyEmailChangePage />}
         />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
         {!user ? (
           <Route

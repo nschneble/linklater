@@ -35,6 +35,7 @@ const makeUser = () => ({
   userId: 'user-1',
   email: 'user@example.com',
   emailVerifiedAt: '2024-01-01T00:00:00Z',
+  hasPassword: true,
   pendingEmail: null,
   mode: 'dark',
   theme: 'scanner-darkly',
@@ -319,6 +320,50 @@ describe('setPendingEmail', () => {
     });
 
     expect(screen.getByTestId('pending')).toHaveTextContent('none');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// loginWithToken
+// ---------------------------------------------------------------------------
+
+describe('loginWithToken', () => {
+  it('stores the token, fetches user profile, and populates user state', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
+    vi.mocked(apiModule.setStoredToken).mockImplementation(() => undefined);
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+
+    function TokenLoginConsumer() {
+      const { user, loginWithToken } = useAuth();
+      return (
+        <div>
+          <span data-testid="email">{user?.email ?? 'none'}</span>
+          <button
+            type="button"
+            onClick={() => loginWithToken('oauth-jwt-token')}
+          >
+            loginWithToken
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <AuthProvider>
+        <TokenLoginConsumer />
+      </AuthProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('email')).toHaveTextContent('none'),
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'loginWithToken' }));
+    });
+
+    expect(apiModule.setStoredToken).toHaveBeenCalledWith('oauth-jwt-token');
+    expect(screen.getByTestId('email')).toHaveTextContent('user@example.com');
   });
 });
 

@@ -44,6 +44,7 @@ export default function AccountSettingsForm() {
 
   const isVerified = Boolean(user?.emailVerifiedAt);
   const hasPendingEmail = Boolean(user?.pendingEmail);
+  const hasPassword = Boolean(user?.hasPassword);
 
   const handleEmailSave = async (event: FormEvent) => {
     event.preventDefault();
@@ -189,46 +190,57 @@ export default function AccountSettingsForm() {
         </PrimaryButton>
       </form>
 
-      <form className="space-y-4" onSubmit={handlePasswordSave}>
-        <h3 className="text-[var(--text)] text-sm font-semibold">Password</h3>
+      {hasPassword ? (
+        <form className="space-y-4" onSubmit={handlePasswordSave}>
+          <h3 className="text-[var(--text)] text-sm font-semibold">Password</h3>
 
-        <label className="block text-[var(--text-muted)] text-xs font-medium">
-          New password
-          <FormInput
-            type="password"
-            placeholder="Leave blank to keep current password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-        </label>
-
-        {password && (
           <label className="block text-[var(--text-muted)] text-xs font-medium">
-            Current password
+            New password
             <FormInput
               type="password"
-              placeholder="Required to confirm password change"
-              value={currentPassword}
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              required
+              placeholder="Leave blank to keep current password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
             />
           </label>
-        )}
 
-        {passwordMessage && <Alert variant="success">{passwordMessage}</Alert>}
-        {passwordError && <Alert variant="error">{passwordError}</Alert>}
+          {password && (
+            <label className="block text-[var(--text-muted)] text-xs font-medium">
+              Current password
+              <FormInput
+                type="password"
+                placeholder="Required to confirm password change"
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                required
+              />
+            </label>
+          )}
 
-        <PrimaryButton
-          disabled={passwordSaving || !password}
-          className="py-2.5"
-        >
-          <i
-            className="fa-solid fa-floppy-disk text-[0.7rem]"
-            aria-hidden="true"
-          />
-          {passwordSaving ? 'Saving…' : 'Update password'}
-        </PrimaryButton>
-      </form>
+          {passwordMessage && (
+            <Alert variant="success">{passwordMessage}</Alert>
+          )}
+          {passwordError && <Alert variant="error">{passwordError}</Alert>}
+
+          <PrimaryButton
+            disabled={passwordSaving || !password}
+            className="py-2.5"
+          >
+            <i
+              className="fa-solid fa-floppy-disk text-[0.7rem]"
+              aria-hidden="true"
+            />
+            {passwordSaving ? 'Saving…' : 'Update password'}
+          </PrimaryButton>
+        </form>
+      ) : (
+        <div className="space-y-2">
+          <h3 className="text-[var(--text)] text-sm font-semibold">Password</h3>
+          <p className="text-[var(--text-muted)] text-xs">
+            Your account uses social sign-in — no password is set.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

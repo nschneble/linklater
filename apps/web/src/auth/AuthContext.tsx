@@ -16,6 +16,7 @@ import {
   logout as apiLogout,
   register as apiRegister,
   resendVerificationEmail as apiResendVerificationEmail,
+  setStoredToken,
 } from '../lib/api';
 
 /**
@@ -27,6 +28,8 @@ export interface User {
   email: string;
   /** ISO timestamp of when the email was verified, or `null` if unverified. */
   emailVerifiedAt: string | null;
+  /** `true` when the account has a password set; `false` for SSO-only accounts. */
+  hasPassword: boolean;
   /**
    * The new email address awaiting verification, or `null` if no change is pending.
    * Shown in `AccountSettingsForm` so the user knows their change is in progress.
@@ -49,6 +52,8 @@ interface AuthContextValue {
   loading: boolean;
   /** Authenticates the user. Resolves on success, rejects with an error on failure. */
   login: (email: string, password: string) => Promise<void>;
+  /** Stores an OAuth-issued JWT and fetches the user profile. Used by `OAuthCallbackPage`. */
+  loginWithToken: (token: string) => Promise<void>;
   /** Clears the stored JWT and sets `user` to `null`. */
   logout: () => void;
   /** Creates a new account and immediately logs in. */
@@ -98,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userId: me.userId,
           email: me.email,
           emailVerifiedAt: me.emailVerifiedAt,
+          hasPassword: me.hasPassword,
           pendingEmail: me.pendingEmail,
           mode: me.mode,
           theme: me.theme,
@@ -122,6 +128,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userId: me.userId,
       email: me.email,
       emailVerifiedAt: me.emailVerifiedAt,
+      hasPassword: me.hasPassword,
+      pendingEmail: me.pendingEmail,
+      mode: me.mode,
+      theme: me.theme,
+    });
+  }, []);
+
+  const loginWithToken = useCallback(async (token: string) => {
+    setStoredToken(token);
+    const me = await getMe();
+    setUser({
+      userId: me.userId,
+      email: me.email,
+      emailVerifiedAt: me.emailVerifiedAt,
+      hasPassword: me.hasPassword,
       pendingEmail: me.pendingEmail,
       mode: me.mode,
       theme: me.theme,
@@ -165,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       loading,
       login,
+      loginWithToken,
       logout,
       register,
       resendVerificationEmail,
@@ -174,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [
       loading,
       login,
+      loginWithToken,
       logout,
       register,
       resendVerificationEmail,

@@ -30,6 +30,7 @@ function makeAuthContext(overrides = {}) {
   return {
     loading: false,
     login: vi.fn(),
+    loginWithToken: vi.fn(),
     logout: vi.fn(),
     register: vi.fn(),
     resendVerificationEmail: vi.fn(),

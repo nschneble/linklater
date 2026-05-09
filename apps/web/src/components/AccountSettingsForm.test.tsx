@@ -22,6 +22,7 @@ function makeUser(overrides: Partial<User> = {}): User {
   return {
     email: USER_EMAIL,
     emailVerifiedAt: '2026-01-01T00:00:00.000Z',
+    hasPassword: true,
     mode: 'light',
     pendingEmail: null,
     theme: 'scanner-darkly',
@@ -34,6 +35,7 @@ function makeAuthContext(overrides = {}) {
   return {
     loading: false,
     login: vi.fn(),
+    loginWithToken: vi.fn(),
     logout: vi.fn(),
     register: vi.fn(),
     resendVerificationEmail: vi.fn(),

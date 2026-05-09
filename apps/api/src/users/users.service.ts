@@ -86,6 +86,11 @@ export class UsersService {
       }
       const user = await this.prisma.user.findUnique({ where: { id } });
       if (!user) throw new NotFoundException('User not found');
+      if (!user.passwordHash) {
+        throw new BadRequestException(
+          'Password cannot be changed for accounts created via social login',
+        );
+      }
       const isValid = await bcrypt.compare(
         data.currentPassword,
         user.passwordHash,
@@ -144,7 +149,8 @@ export class UsersService {
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
-    return withoutPasswordHash(user);
+    const { passwordHash, ...safe } = user;
+    return { ...safe, hasPassword: passwordHash !== null };
   }
 
   /**
@@ -300,6 +306,33 @@ export class UsersService {
         verificationToken: null,
         verificationTokenExpiresAt: null,
       },
+    });
+  }
+
+  async createOAuthUser(email: string) {
+    const user = await this.prisma.user.create({
+      data: { email, passwordHash: null, emailVerifiedAt: new Date() },
+    });
+    return withoutPasswordHash(user);
+  }
+
+  async findOAuthAccount(provider: string, providerId: string) {
+    return this.prisma.oAuthAccount.findUnique({
+      where: { provider_providerId: { provider, providerId } },
+      include: { user: true },
+    });
+  }
+
+  async linkOAuthAccount(userId: string, provider: string, providerId: string) {
+    await this.prisma.oAuthAccount.create({
+      data: { userId, provider, providerId },
+    });
+  }
+
+  async markEmailVerified(id: string) {
+    await this.prisma.user.update({
+      where: { id },
+      data: { emailVerifiedAt: new Date() },
     });
   }
 }

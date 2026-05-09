@@ -28,6 +28,9 @@ const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';
 const USER_PASSWORD = 'open-sesame';
 
+const OAUTH_PROVIDER = 'google';
+const OAUTH_PROVIDER_ID = 'google-uid-123';
+const OAUTH_ACCOUNT_ID = 'oauth-account-1';
 const PENDING_EMAIL = 'pending.email@addy.com';
 const PENDING_EMAIL_TOKEN = 'pending-email-token-abc';
 
@@ -50,6 +53,10 @@ describe('UsersService', () => {
   let service: UsersService;
 
   const prismaMock = {
+    oAuthAccount: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+    },
     user: {
       create: jest.fn(),
       delete: jest.fn(),
@@ -224,6 +231,24 @@ describe('UsersService', () => {
       expect(result.email).toBe(USER_EMAIL);
     });
 
+    it('includes hasPassword: true when passwordHash is set', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+
+      const result = await service.findById(USER_ID);
+
+      expect(result).toHaveProperty('hasPassword', true);
+    });
+
+    it('includes hasPassword: false when passwordHash is null', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(
+        makeUser({ passwordHash: null }),
+      );
+
+      const result = await service.findById(USER_ID);
+
+      expect(result).toHaveProperty('hasPassword', false);
+    });
+
     it('throws NotFoundException when user does not exist', async () => {
       (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
 
@@ -394,6 +419,119 @@ describe('UsersService', () => {
           verificationToken: null,
           verificationTokenExpiresAt: null,
         },
+      });
+    });
+  });
+
+  describe('updateMe (SSO user)', () => {
+    it('throws BadRequestException when SSO user attempts to change password', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(
+        makeUser({ passwordHash: null }),
+      );
+
+      await expect(
+        service.updateMe(USER_ID, {
+          currentPassword: KNOWN_PASSWORD,
+          password: NEW_PASSWORD,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('createOAuthUser', () => {
+    it('creates a user with null passwordHash and verified email', async () => {
+      (prismaMock.user.create as jest.Mock).mockResolvedValue(
+        makeUser({ passwordHash: null, emailVerifiedAt: new Date() }),
+      );
+
+      const result = await service.createOAuthUser(USER_EMAIL);
+
+      expect(prismaMock.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: USER_EMAIL,
+            passwordHash: null,
+            emailVerifiedAt: expect.any(Date),
+          }),
+        }),
+      );
+      expect(result).not.toHaveProperty('passwordHash');
+    });
+  });
+
+  describe('findOAuthAccount', () => {
+    it('looks up OAuth account by provider and providerId', async () => {
+      const account = {
+        id: OAUTH_ACCOUNT_ID,
+        userId: USER_ID,
+        provider: OAUTH_PROVIDER,
+        providerId: OAUTH_PROVIDER_ID,
+        user: makeUser(),
+      };
+      (prismaMock.oAuthAccount.findUnique as jest.Mock).mockResolvedValue(
+        account,
+      );
+
+      const result = await service.findOAuthAccount(
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+      );
+
+      expect(prismaMock.oAuthAccount.findUnique).toHaveBeenCalledWith({
+        where: {
+          provider_providerId: {
+            provider: OAUTH_PROVIDER,
+            providerId: OAUTH_PROVIDER_ID,
+          },
+        },
+        include: { user: true },
+      });
+      expect(result).not.toBeNull();
+    });
+
+    it('returns null when no matching account exists', async () => {
+      (prismaMock.oAuthAccount.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.findOAuthAccount(
+        OAUTH_PROVIDER,
+        'unknown-id',
+      );
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('linkOAuthAccount', () => {
+    it('creates an OAuthAccount record linking user to provider', async () => {
+      (prismaMock.oAuthAccount.create as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.linkOAuthAccount(
+        USER_ID,
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+      );
+
+      expect(prismaMock.oAuthAccount.create).toHaveBeenCalledWith({
+        data: {
+          userId: USER_ID,
+          provider: OAUTH_PROVIDER,
+          providerId: OAUTH_PROVIDER_ID,
+        },
+      });
+    });
+  });
+
+  describe('markEmailVerified', () => {
+    it('sets emailVerifiedAt on the user record', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.markEmailVerified(USER_ID);
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: { emailVerifiedAt: expect.any(Date) },
       });
     });
   });

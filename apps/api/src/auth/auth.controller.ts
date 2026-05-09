@@ -5,6 +5,7 @@ import {
   HttpCode,
   Post,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -13,7 +14,9 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
@@ -208,5 +211,39 @@ export class AuthController {
   @HttpCode(200)
   async verifyEmailChange(@Body() body: VerifyEmailDto) {
     await this.authService.confirmEmailChange(body.token);
+  }
+
+  @ApiOperation({ summary: 'Initiate Google OAuth sign-in' })
+  @UseGuards(AuthGuard('google'))
+  @Get('google')
+  async googleAuth() {
+    // Passport redirects to Google — no body needed
+  }
+
+  @ApiOperation({ summary: 'Google OAuth callback' })
+  @UseGuards(AuthGuard('google'))
+  @Get('google/callback')
+  async googleCallback(@Req() request: AuthRequest, @Res() response: Response) {
+    const { accessToken } = await this.authService.login(request.user);
+    response.redirect(
+      `${process.env.APP_URL}/oauth/callback?token=${accessToken}`,
+    );
+  }
+
+  @ApiOperation({ summary: 'Initiate Apple Sign In' })
+  @UseGuards(AuthGuard('apple'))
+  @Get('apple')
+  async appleAuth() {
+    // Passport redirects to Apple — no body needed
+  }
+
+  @ApiOperation({ summary: 'Apple Sign In callback' })
+  @UseGuards(AuthGuard('apple'))
+  @Post('apple/callback')
+  async appleCallback(@Req() request: AuthRequest, @Res() response: Response) {
+    const { accessToken } = await this.authService.login(request.user);
+    response.redirect(
+      `${process.env.APP_URL}/oauth/callback?token=${accessToken}`,
+    );
   }
 }

@@ -82,12 +82,43 @@ export class AuthService {
    */
   async validateUser(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
-    if (!user) return null;
+    if (!user || !user.passwordHash) return null;
 
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) return null;
 
     return withoutPasswordHash(user);
+  }
+
+  async findOrCreateOAuthUser(
+    provider: string,
+    providerId: string,
+    email: string,
+  ): Promise<{ userId: string; email: string }> {
+    const account = await this.usersService.findOAuthAccount(
+      provider,
+      providerId,
+    );
+    if (account) {
+      return { userId: account.userId, email: account.user.email };
+    }
+
+    const existingUser = await this.usersService.findByEmail(email);
+    if (existingUser) {
+      await this.usersService.linkOAuthAccount(
+        existingUser.id,
+        provider,
+        providerId,
+      );
+      if (!existingUser.emailVerifiedAt) {
+        await this.usersService.markEmailVerified(existingUser.id);
+      }
+      return { userId: existingUser.id, email: existingUser.email };
+    }
+
+    const newUser = await this.usersService.createOAuthUser(email);
+    await this.usersService.linkOAuthAccount(newUser.id, provider, providerId);
+    return { userId: newUser.id, email };
   }
 
   /**
