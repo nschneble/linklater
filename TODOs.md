@@ -26,6 +26,8 @@ _Items will be added here as they are discovered_
 
 _Bugs will be added here as they are reported or discovered_
 
+- Page may not refresh automatically after email verification (still showing banner)
+
 ## Verifications
 
 - You can use arrow keys to navigate the tabs and user menu
