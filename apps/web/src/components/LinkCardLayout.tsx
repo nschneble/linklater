@@ -84,10 +84,10 @@ export default function LinkCardLayout({
         if (event.key === 'Enter' || event.key === ' ') onCardClick();
       }}
       tabIndex={0}
-      className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] border-shadow hover:border-shadow rounded-r-xl focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none cursor-pointer"
+      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-transparent'} rounded-r-xl focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none cursor-pointer`}
     >
-      <div className="absolute left-0 top-4 -translate-x-1/2 z-10">
-        {link.meta?.fetchedAt ? (
+      {link.meta?.fetchedAt ? (
+        <div className="absolute left-0 top-4 -translate-x-1/2 z-10">
           <span className="relative flex items-center justify-center">
             {link.meta?.faviconUrl ? (
               <img
@@ -106,13 +106,16 @@ export default function LinkCardLayout({
               />
             )}
           </span>
-        ) : (
+        </div>
+      ) : (
+        <div className="absolute inset-0 pointer-events-none animate-pulse">
+          <div className="absolute top-0 bottom-0 left-0 -translate-x-full w-1 bg-[var(--accent)]" />
           <span
             aria-label="Fetching info…"
-            className="block w-5 h-5 bg-[var(--accent)] ring-2 ring-[var(--bg-surface)] rounded-full animate-pulse"
+            className="absolute left-0 top-4 -translate-x-1/2 z-10 block w-8 h-8 bg-[var(--accent)] ring-2 ring-[var(--bg-surface)] rounded-2xl"
           />
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="space-y-1">
         <div className="flex flex-row items-center">
