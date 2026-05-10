@@ -4,7 +4,7 @@ import { useRandomLink } from './useRandomLink';
 import type { Link } from './api';
 
 vi.mock('./api', () => ({
-  archiveLink: vi.fn(),
+  readLink: vi.fn(),
   getRandomLink: vi.fn(),
 }));
 
@@ -44,10 +44,10 @@ describe('useRandomLink', () => {
     expect(result.current.randomError).toBeNull();
   });
 
-  it('opens the link in a new tab, archives it, and removes it from the list', async () => {
+  it('opens the link in a new tab, marks it as read, and removes it from the list', async () => {
     const link = makeLink();
     vi.mocked(apiModule.getRandomLink).mockResolvedValue({ link });
-    vi.mocked(apiModule.archiveLink).mockResolvedValue({
+    vi.mocked(apiModule.readLink).mockResolvedValue({
       ...link,
       readAt: new Date().toISOString(),
     });
@@ -66,7 +66,7 @@ describe('useRandomLink', () => {
       '_blank',
       'noopener,noreferrer',
     );
-    expect(apiModule.archiveLink).toHaveBeenCalledWith(link.id);
+    expect(apiModule.readLink).toHaveBeenCalledWith(link.id);
     expect(onRemoveLink).toHaveBeenCalledWith(link.id);
     expect(onDecrementTotal).toHaveBeenCalledOnce();
   });
@@ -100,7 +100,7 @@ describe('useRandomLink', () => {
         resolveGetRandom = resolve;
       }),
     );
-    vi.mocked(apiModule.archiveLink).mockResolvedValue(makeLink());
+    vi.mocked(apiModule.readLink).mockResolvedValue(makeLink());
 
     const { result } = renderHook(() => useRandomLink(defaultOptions));
 

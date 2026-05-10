@@ -39,14 +39,14 @@ export class LinksController {
 
   /**
    * Saves a URL to the authenticated user's collection. If the URL was
-   * previously saved and then archived, it is unarchived and moved to the
-   * top of the list rather than creating a duplicate.
+   * previously saved and then read, it is marked as unread and moved
+   * to the top of the list rather than creating a duplicate.
    */
   @ApiOperation({ summary: "Save a URL to the current user's collection" })
   @ApiResponse({
     status: 201,
     description:
-      'Link created (or resurfaced from archive). Metadata fetch queued.',
+      'Link created or re-added to the unread list. Metadata fetch queued.',
   })
   @ApiResponse({ status: 400, description: 'URL is not a valid URL.' })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
@@ -71,10 +71,10 @@ export class LinksController {
     description: 'Full-text search term.',
   })
   @ApiQuery({
-    name: 'archived',
+    name: 'read',
     required: false,
     enum: ['true', 'false'],
-    description: 'Filter by archive status. Omit to return all.',
+    description: 'Filter by read status. Omit to return all.',
   })
   @ApiQuery({
     name: 'page',
@@ -95,7 +95,7 @@ export class LinksController {
   async findAll(
     @Req() request: AuthRequest,
     @Query('search') search?: string,
-    @Query('archived') archived?: string,
+    @Query('read') read?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -103,13 +103,13 @@ export class LinksController {
 
     // Query params arrive as strings — coerce to typed values before passing
     // to the service, which expects booleans and numbers.
-    let archivedFlag: boolean | undefined;
-    if (archived === 'true') archivedFlag = true;
-    if (archived === 'false') archivedFlag = false;
+    let readFlag: boolean | undefined;
+    if (read === 'true') readFlag = true;
+    if (read === 'false') readFlag = false;
 
     return this.linksService.findAll(userId, {
       search,
-      archived: archivedFlag,
+      read: readFlag,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
@@ -117,18 +117,18 @@ export class LinksController {
 
   /**
    * Opens a random link from the user's collection. When the filter is
-   * `active` (the default), the returned link is immediately archived so
-   * the same link is not stumbled upon twice in a row.
+   * `unread` (the default), the returned link is immediately marked as
+   * read so the same link is not stumbled upon twice in a row.
    *
    * NOTE: `GET /links/random` must be declared before `GET /links/:id`
    * so NestJS does not try to interpret the literal string "random" as an ID.
    */
   @ApiOperation({ summary: 'Get a random link from the collection' })
   @ApiQuery({
-    name: 'archived',
+    name: 'read',
     required: false,
     enum: ['true', 'false'],
-    description: 'When true, returns a random archived link.',
+    description: 'When true, returns a random read link.',
   })
   @ApiResponse({
     status: 200,
@@ -136,16 +136,13 @@ export class LinksController {
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @Get('random')
-  async random(
-    @Req() request: AuthRequest,
-    @Query('archived') archived?: string,
-  ) {
+  async random(@Req() request: AuthRequest, @Query('read') read?: string) {
     const userId = request.user.userId;
 
-    let archivedFlag = false;
-    if (archived === 'true') archivedFlag = true;
+    let readFlag = false;
+    if (read === 'true') readFlag = true;
 
-    const link = await this.linksService.getRandom(userId, archivedFlag);
+    const link = await this.linksService.getRandom(userId, readFlag);
     return { link };
   }
 
@@ -186,8 +183,8 @@ export class LinksController {
     return this.linksService.update(userId, id, body);
   }
 
-  /** Marks a link as archived (read) by setting `readAt` to the current timestamp. */
-  @ApiOperation({ summary: 'Archive a link (mark as read)' })
+  /** Marks a link as read by setting `readAt` to the current timestamp. */
+  @ApiOperation({ summary: 'Mark a link as read' })
   @ApiParam({ name: 'id', description: 'UUID of the link.' })
   @ApiResponse({
     status: 201,
@@ -195,14 +192,14 @@ export class LinksController {
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
-  @Post(':id/archive')
-  async archive(@Req() request: AuthRequest, @Param('id') id: string) {
+  @Post(':id/read')
+  async read(@Req() request: AuthRequest, @Param('id') id: string) {
     const userId = request.user.userId;
-    return this.linksService.archive(userId, id);
+    return this.linksService.read(userId, id);
   }
 
-  /** Removes the archive timestamp from a link, returning it to the unread list. */
-  @ApiOperation({ summary: 'Unarchive a link (mark as unread)' })
+  /** Removes the read timestamp from a link, returning it to the unread list. */
+  @ApiOperation({ summary: 'Mark a link as unread' })
   @ApiParam({ name: 'id', description: 'UUID of the link.' })
   @ApiResponse({
     status: 201,
@@ -210,29 +207,29 @@ export class LinksController {
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
-  @Post(':id/unarchive')
-  async unarchive(@Req() request: AuthRequest, @Param('id') id: string) {
+  @Post(':id/unread')
+  async unread(@Req() request: AuthRequest, @Param('id') id: string) {
     const userId = request.user.userId;
-    return this.linksService.unarchive(userId, id);
+    return this.linksService.unread(userId, id);
   }
 
   /**
-   * Permanently deletes all archived links for the authenticated user.
+   * Permanently deletes all read links for the authenticated user.
    * This is a bulk operation and cannot be undone.
    *
-   * NOTE: `DELETE /links/archived` must be declared before `DELETE /links/:id`
-   * so NestJS does not interpret the literal string "archived" as an ID.
+   * NOTE: `DELETE /links/read` must be declared before `DELETE /links/:id`
+   * so NestJS does not interpret the literal string "read" as an ID.
    */
-  @ApiOperation({ summary: 'Permanently delete all archived links' })
+  @ApiOperation({ summary: 'Permanently delete all read links' })
   @ApiResponse({
     status: 200,
     description: '{ count: number } — the number of links deleted.',
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
-  @Delete('archived')
-  async removeAllArchived(@Req() request: AuthRequest) {
+  @Delete('read')
+  async removeAllRead(@Req() request: AuthRequest) {
     const userId = request.user.userId;
-    return this.linksService.removeAllArchived(userId);
+    return this.linksService.removeAllRead(userId);
   }
 
   /** Permanently deletes a single link by its UUID. */

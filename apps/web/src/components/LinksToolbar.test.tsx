@@ -12,14 +12,14 @@ function renderToolbar(
   } as React.RefObject<HTMLInputElement | null>;
   return render(
     <LinksToolbar
-      filter="active"
-      isClearingArchived={false}
+      filter="unread"
+      isClearingRead={false}
       links={[]}
       randomLoading={false}
       search=""
       searchInputRef={searchInputRef}
       showLinkForm={false}
-      onClearArchived={vi.fn()}
+      onClearRead={vi.fn()}
       onNavigateRead={vi.fn()}
       onNavigateUnread={vi.fn()}
       onRandom={vi.fn()}
@@ -37,8 +37,8 @@ describe('LinksToolbar', () => {
     expect(screen.getByRole('tab', { name: 'Read' })).toBeInTheDocument();
   });
 
-  it('marks the Unread tab as active when filter is active', () => {
-    renderToolbar({ filter: 'active' });
+  it('marks the Unread tab as active when filter is unread', () => {
+    renderToolbar({ filter: 'unread' });
     expect(screen.getByRole('tab', { name: 'Unread' })).toHaveAttribute(
       'aria-selected',
       'true',
@@ -49,8 +49,8 @@ describe('LinksToolbar', () => {
     );
   });
 
-  it('marks the Read tab as active when filter is archived', () => {
-    renderToolbar({ filter: 'archived' });
+  it('marks the Read tab as active when filter is read', () => {
+    renderToolbar({ filter: 'read' });
     expect(screen.getByRole('tab', { name: 'Read' })).toHaveAttribute(
       'aria-selected',
       'true',
@@ -76,14 +76,14 @@ describe('LinksToolbar', () => {
   });
 
   it('renders the search input with placeholder for unread filter', () => {
-    renderToolbar({ filter: 'active' });
+    renderToolbar({ filter: 'unread' });
     expect(
       screen.getByPlaceholderText('Search unread links'),
     ).toBeInTheDocument();
   });
 
-  it('renders the search input with placeholder for archived filter', () => {
-    renderToolbar({ filter: 'archived' });
+  it('renders the search input with placeholder for read filter', () => {
+    renderToolbar({ filter: 'read' });
     expect(
       screen.getByPlaceholderText('Search read links'),
     ).toBeInTheDocument();

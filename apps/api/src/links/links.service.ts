@@ -30,8 +30,8 @@ const DEFAULT_LIMIT = 10;
 
 /** Parameters accepted by the `findAll` method. */
 export interface LinksQuery {
-  /** When `true`, return only archived links. When `false`, return only active links. Omit to return all. */
-  archived?: boolean;
+  /** When `true`, return only read links. When `false`, return only unread links. Omit to return all. */
+  read?: boolean;
   /** Results per page (clamped to 1–100). */
   limit?: number;
   /** 1-based page number. */
@@ -41,7 +41,7 @@ export interface LinksQuery {
 }
 
 /**
- * All business logic for saving, fetching, archiving, and deleting links.
+ * All business logic for saving, fetching, marking read/unread, and deleting links.
  * Every method is scoped to a specific `userId` — the service never
  * operates on links belonging to a different user.
  */
@@ -55,9 +55,10 @@ export class LinksService {
   ) {}
 
   /**
-   * Saves a URL for the given user. If the URL was previously saved and then
-   * archived, it is resurfaced (unarchived, timestamp reset) rather than
-   * creating a duplicate entry. A metadata fetch job is enqueued in both cases.
+   * Saves a URL for the given user. If the URL was previously saved and
+   * then marked as read, it is resurfaced (marked unread + new timestamp)
+   * rather than creating a duplicate entry. A metadata fetch job is
+   * enqueued in both cases.
    *
    * @param userId - The UUID of the authenticated user.
    * @param input - Contains the URL to save.
@@ -128,15 +129,15 @@ export class LinksService {
    * @returns `{ data, total, page, limit }` where `data` is the current page of results.
    */
   async findAll(userId: string, query: LinksQuery) {
-    const { search, archived, page = 1, limit = DEFAULT_LIMIT } = query;
+    const { search, read, page = 1, limit = DEFAULT_LIMIT } = query;
     const safeLimit = Math.min(Math.max(limit, 1), MAX_LIMIT);
     const safePage = Math.max(page, 1);
 
     const where: Prisma.LinkWhereInput = { userId };
 
-    if (archived === true) {
+    if (read === true) {
       where.readAt = { not: null };
-    } else if (archived === false) {
+    } else if (read === false) {
       where.readAt = null;
     }
 
@@ -177,7 +178,7 @@ export class LinksService {
    *
    * @param userId - The UUID of the authenticated user.
    * @param term - The trimmed search string passed to `plainto_tsquery`.
-   * @param where - The base `LinkWhereInput` carrying the archive filter.
+   * @param where - The base `LinkWhereInput` carrying the read filter.
    * @param page - The 1-based page number.
    * @param limit - The number of results per page.
    * @returns `{ data, total, page, limit }` sorted by relevance.
@@ -189,7 +190,7 @@ export class LinksService {
     page: number,
     limit: number,
   ) {
-    const archivedFilter =
+    const readFilter =
       where.readAt === null
         ? Prisma.sql`AND l."readAt" IS NULL`
         : where.readAt !== undefined
@@ -203,7 +204,7 @@ export class LinksService {
       FROM "Link" l
       WHERE l."userId" = ${userId}
         AND l."searchVector" @@ plainto_tsquery('english', ${term})
-        ${archivedFilter}
+        ${readFilter}
       ORDER BY ts_rank(l."searchVector", plainto_tsquery('english', ${term})) DESC,
                l."createdAt" DESC
       LIMIT ${limit} OFFSET ${offset}
@@ -251,7 +252,7 @@ export class LinksService {
    * Converts Prisma's `P2025` "record not found" error into a NestJS
    * `NotFoundException`. Any other error is re-thrown unchanged.
    *
-   * Used by `update`, `archive`, `unarchive`, and `remove` to produce
+   * Used by `update`, `read`, `unread`, and `remove` to produce
    * consistent 404 responses when a link does not belong to the current user.
    *
    * @param error - The caught error.
@@ -294,14 +295,14 @@ export class LinksService {
   }
 
   /**
-   * Archives a link by setting `readAt` to the current timestamp.
+   * Marks a link as read by setting `readAt` to the current timestamp.
    *
    * @param userId - The UUID of the authenticated user.
    * @param id - The UUID of the link.
    * @returns The updated link with `readAt` set.
    * @throws {NotFoundException} When the link does not exist for this user.
    */
-  async archive(userId: string, id: string) {
+  async read(userId: string, id: string) {
     try {
       return await this.prisma.link.update({
         where: { id, userId },
@@ -314,14 +315,14 @@ export class LinksService {
   }
 
   /**
-   * Removes the archive timestamp from a link, returning it to the active list.
+   * Removes the read timestamp from a link, returning it to the unread list.
    *
    * @param userId - The UUID of the authenticated user.
    * @param id - The UUID of the link.
    * @returns The updated link with `readAt` cleared to `null`.
    * @throws {NotFoundException} When the link does not exist for this user.
    */
-  async unarchive(userId: string, id: string) {
+  async unread(userId: string, id: string) {
     try {
       return await this.prisma.link.update({
         where: { id, userId },
@@ -351,14 +352,14 @@ export class LinksService {
   }
 
   /**
-   * Permanently deletes all archived links for a user. Used by the
+   * Permanently deletes all read links for a user. Used by the
    * "Remove all read" button in the UI. Not scoped to a date threshold —
-   * all archived links regardless of age are deleted.
+   * all read links regardless of age are deleted.
    *
    * @param userId - The UUID of the authenticated user.
    * @returns `{ count: number }` — the number of links deleted.
    */
-  async removeAllArchived(userId: string) {
+  async removeAllRead(userId: string) {
     const result = await this.prisma.link.deleteMany({
       where: { userId, readAt: { not: null } },
     });
@@ -371,13 +372,13 @@ export class LinksService {
    * loading the full collection into memory.
    *
    * @param userId - The UUID of the authenticated user.
-   * @param archived - When `true`, picks from archived links; when `false` (default), picks from active links.
+   * @param read - When `true`, picks from read links; when `false` (default), picks from unread links.
    * @returns The randomly selected link with metadata, or `null` if no matching links exist.
    */
-  async getRandom(userId: string, archived = false) {
+  async getRandom(userId: string, read = false) {
     let result: { id: string }[];
 
-    if (archived) {
+    if (read) {
       result = await this.prisma.$queryRaw<{ id: string }[]>`
         SELECT id FROM "Link"
         WHERE "userId" = ${userId} AND "readAt" IS NOT NULL

@@ -19,10 +19,10 @@ import {
 
 import {
   apiFetch,
-  archiveLink,
+  readLink,
   clearStoredToken,
   createLink,
-  deleteAllArchivedLinks,
+  deleteAllReadLinks,
   deleteLink,
   deleteMe,
   forgotPassword,
@@ -38,7 +38,7 @@ import {
   resendVerificationEmail,
   resetPassword,
   setStoredToken,
-  unarchiveLink,
+  unreadLink,
   updateLink,
   updateMe,
   verifyEmail,
@@ -366,22 +366,22 @@ describe('getLinks', () => {
     expect(url).toMatch(/\/links$/);
   });
 
-  it('appends archived=true when archived option is true', async () => {
+  it('appends read=true when read option is true', async () => {
     const fetchMock = mockFetch({ data: [], total: 0, page: 1, limit: 10 });
 
-    await getLinks({ archived: true });
+    await getLinks({ read: true });
 
     const [url] = fetchMock.mock.calls[0] as [string];
-    expect(url).toContain('archived=true');
+    expect(url).toContain('read=true');
   });
 
-  it('appends archived=false when archived option is false', async () => {
+  it('appends read=false when read option is false', async () => {
     const fetchMock = mockFetch({ data: [], total: 0, page: 1, limit: 10 });
 
-    await getLinks({ archived: false });
+    await getLinks({ read: false });
 
     const [url] = fetchMock.mock.calls[0] as [string];
-    expect(url).toContain('archived=false');
+    expect(url).toContain('read=false');
   });
 
   it('appends search, page, and limit when provided', async () => {
@@ -427,34 +427,34 @@ describe('updateLink', () => {
   });
 });
 
-describe('archiveLink', () => {
-  it('POSTs to /links/:id/archive', async () => {
+describe('readLink', () => {
+  it('POSTs to /links/:id/read', async () => {
     const fetchMock = mockFetch({
       id: 'link-1',
       url: 'https://example.com',
       readAt: new Date().toISOString(),
     });
 
-    await archiveLink('link-1');
+    await readLink('link-1');
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/links/link-1/archive');
+    expect(url).toContain('/links/link-1/read');
     expect((options as { method: string }).method).toBe('POST');
   });
 });
 
-describe('unarchiveLink', () => {
-  it('POSTs to /links/:id/unarchive', async () => {
+describe('unreadLink', () => {
+  it('POSTs to /links/:id/unread', async () => {
     const fetchMock = mockFetch({
       id: 'link-1',
       url: 'https://example.com',
       readAt: null,
     });
 
-    await unarchiveLink('link-1');
+    await unreadLink('link-1');
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/links/link-1/unarchive');
+    expect(url).toContain('/links/link-1/unread');
     expect((options as { method: string }).method).toBe('POST');
   });
 });
@@ -471,20 +471,20 @@ describe('deleteLink', () => {
   });
 });
 
-describe('deleteAllArchivedLinks', () => {
-  it('DELETEs /links/archived', async () => {
+describe('deleteAllReadLinks', () => {
+  it('DELETEs /links/read', async () => {
     const fetchMock = mockFetch({ count: 5 });
 
-    await deleteAllArchivedLinks();
+    await deleteAllReadLinks();
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/links/archived');
+    expect(url).toContain('/links/read');
     expect((options as { method: string }).method).toBe('DELETE');
   });
 });
 
 describe('getRandomLink', () => {
-  it('GETs /links/random with no query params when options are omitted', async () => {
+  it('GETs /links/random', async () => {
     const fetchMock = mockFetch({ link: null });
 
     await getRandomLink();
@@ -492,20 +492,7 @@ describe('getRandomLink', () => {
     const [url] = fetchMock.mock.calls[0] as [string];
     expect(url).toMatch(/\/links\/random$/);
   });
-
-  it('appends archived=true when the archived option is true', async () => {
-    const fetchMock = mockFetch({ link: null });
-
-    await getRandomLink({ archived: true });
-
-    const [url] = fetchMock.mock.calls[0] as [string];
-    expect(url).toContain('archived=true');
-  });
 });
-
-// ---------------------------------------------------------------------------
-// User endpoints
-// ---------------------------------------------------------------------------
 
 describe('updateMe', () => {
   it('PATCHes /users/me with the provided fields', async () => {

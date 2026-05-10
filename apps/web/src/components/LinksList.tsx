@@ -8,13 +8,13 @@ import type { LinksFilter } from '../lib/useLinks';
  * `LinksView` via `useLinks`.
  */
 interface LinksListProps {
-  /** The active tab — determines the empty-state message and icon. */
+  /** The current tab — determines the empty-state message and icon. */
   filter: LinksFilter;
   /**
    * When `true`, all cards play an exit animation (`animate-card-exit`)
-   * to signal that the "delete all archived" action is in progress.
+   * to signal that the "delete all read" action is in progress.
    */
-  isClearingArchived: boolean;
+  isClearingRead: boolean;
   /** The links to render. */
   links: Link[];
   /** `true` while a fetch is in progress. */
@@ -30,7 +30,7 @@ interface LinksListProps {
   /** Index of the keyboard-selected link, or `null` if one isn't selected. */
   selectedLinkIndex: number | null;
   /** Passed through to each `LinkCard`. */
-  onArchiveToggle: (link: Link) => void;
+  onReadToggle: (link: Link) => void;
   /** Called when the user clicks "Load more". */
   onLoadMore: () => void;
 }
@@ -38,7 +38,7 @@ interface LinksListProps {
 /**
  * Renders the paginated list of link cards. Handles three states:
  * - Initial loading: single `LinkCardSkeleton`.
- * - Empty: contextual empty-state message (different for unread, archived, and search).
+ * - Empty: contextual empty-state message (different for unread, read, and search).
  * - Populated: a grid of `LinkCard` components with a "Load more" button when
  *   additional pages exist.
  *
@@ -47,7 +47,7 @@ interface LinksListProps {
  */
 export default function LinksList({
   filter,
-  isClearingArchived,
+  isClearingRead,
   links,
   loadingLinks,
   page,
@@ -55,7 +55,7 @@ export default function LinksList({
   search,
   debouncedSearch,
   selectedLinkIndex,
-  onArchiveToggle,
+  onReadToggle,
   onLoadMore,
 }: LinksListProps) {
   if (loadingLinks && page === 1) {
@@ -73,14 +73,14 @@ export default function LinksList({
           className={`text-4xl text-[var(--text-subtle)] mb-[7px] fa-regular ${
             search !== '' || debouncedSearch !== ''
               ? 'fa-magnifying-glass'
-              : filter === 'archived'
+              : filter === 'read'
                 ? 'fa-circle-check'
                 : 'fa-bookmark'
           }`}
           aria-hidden="true"
         />
         <p className="text-[var(--text-muted)] text-sm font-medium">
-          {filter === 'archived' ? 'No read links' : 'No unread links'}
+          {filter === 'read' ? 'No read links' : 'No unread links'}
         </p>
       </div>
     );
@@ -92,19 +92,17 @@ export default function LinksList({
         <div
           key={link.id}
           className={
-            isClearingArchived ? 'animate-card-exit pointer-events-none' : ''
+            isClearingRead ? 'animate-card-exit pointer-events-none' : ''
           }
           style={
-            isClearingArchived
-              ? { animationDelay: `${index * 40}ms` }
-              : undefined
+            isClearingRead ? { animationDelay: `${index * 40}ms` } : undefined
           }
         >
           <LinkCard
             link={link}
             animationDelay={Math.min(index * 60, 240)}
             isSelected={selectedLinkIndex === index}
-            onArchiveToggle={onArchiveToggle}
+            onReadToggle={onReadToggle}
           />
         </div>
       ))}

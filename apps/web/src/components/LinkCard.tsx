@@ -45,39 +45,40 @@ interface LinkCardProps {
   animationDelay?: number;
   /** When `true`, renders a keyboard-selection highlight. */
   isSelected?: boolean;
-  /** Called when the user clicks the card (to open + archive) or the "Mark as unread" button. */
-  onArchiveToggle: (link: Link) => void;
+  /** Called when the user clicks the card (to open + read) or the "Mark as unread" button. */
+  onReadToggle: (link: Link) => void;
 }
 
 /**
  * Displays a single saved link as an interactive card.
  *
- * Clicking the card opens the link in a new tab and, if it is currently unread,
- * immediately archives it (the "read it" action). Archived links show a
- * "Mark as unread" button instead.
+ * Clicking the card opens the link in a new tab and, if it is currently
+ * unread, immediately marks it as read. Read links show a "Mark as unread"
+ * button instead.
  *
  * Delegates rendering to `LinkCardLayout` so that the interaction logic
- * (click handling, archive toggling) is separated from the visual structure.
+ * (click handling, read toggling) is separated from the visual structure.
  */
 export default function LinkCard({
   link,
   animationDelay = 0,
   isSelected = false,
-  onArchiveToggle,
+  onReadToggle,
 }: LinkCardProps) {
   function handleCardClick() {
     window.open(link.url, '_blank', 'noreferrer');
-    // Only archive on open when the link is currently unread. Clicking an
-    // already-archived card should just open it without changing its state.
+    // Only mark-as-read on open when the link is currently unread.
+    // Clicking an already-read card should just open it without changing
+    // its state.
     if (!link.readAt) {
-      onArchiveToggle(link);
+      onReadToggle(link);
     }
   }
 
-  function handleUnarchiveClick(event: React.MouseEvent) {
+  function handleUnreadClick(event: React.MouseEvent) {
     // Prevent the click from bubbling up to the card, which would re-open the URL.
     event.stopPropagation();
-    onArchiveToggle(link);
+    onReadToggle(link);
   }
 
   return (
@@ -86,7 +87,7 @@ export default function LinkCard({
       animationDelay={animationDelay}
       isSelected={isSelected}
       onCardClick={handleCardClick}
-      onUnarchiveClick={handleUnarchiveClick}
+      onUnreadClick={handleUnreadClick}
     />
   );
 }

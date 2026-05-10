@@ -28,15 +28,15 @@ const makePagination = (
 });
 
 const defaultProps = {
-  filter: 'active' as const,
-  isClearingArchived: false,
+  filter: 'unread' as const,
+  isClearingRead: false,
   links: [],
   loadingLinks: false,
   page: 1,
   pagination: null,
   search: '',
   debouncedSearch: '',
-  onArchiveToggle: vi.fn(),
+  onReadToggle: vi.fn(),
   onLoadMore: vi.fn(),
 };
 
@@ -48,13 +48,13 @@ describe('LinksList', () => {
     expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
-  it('shows "No unread links" when active filter has no results', () => {
-    render(<LinksList {...defaultProps} filter="active" links={[]} />);
+  it('shows "No unread links" when unread filter has no results', () => {
+    render(<LinksList {...defaultProps} filter="unread" links={[]} />);
     expect(screen.getByText('No unread links')).toBeInTheDocument();
   });
 
-  it('shows "No read links" when archived filter has no results', () => {
-    render(<LinksList {...defaultProps} filter="archived" links={[]} />);
+  it('shows "No read links" when read filter has no results', () => {
+    render(<LinksList {...defaultProps} filter="read" links={[]} />);
     expect(screen.getByText('No read links')).toBeInTheDocument();
   });
 

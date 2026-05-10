@@ -24,7 +24,7 @@ function looksLikeUrl(text: string): boolean {
  * explicitly opening the link form. The listener is skipped when the paste
  * target is an `INPUT` or `TEXTAREA` so normal text editing is unaffected.
  *
- * @param options.enabled - Disable the listener (e.g. on the archived tab).
+ * @param options.enabled - Disable the listener (e.g. on the read tab).
  * @param options.onSave - Callback invoked with the URL string when a valid URL is pasted.
  */
 export function usePasteDetection({

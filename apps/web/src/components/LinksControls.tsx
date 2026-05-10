@@ -7,17 +7,17 @@ import type { LinksFilter } from '../lib/useLinks';
  * `LinksToolbar` passes them down for the desktop action buttons.
  */
 interface LinksControlsProps {
-  /** Drives which buttons are shown (active tab shows Add/Stumble; archived shows Remove all). */
+  /** Drives which buttons are shown (unread tab shows Add/Stumble; read shows Remove all). */
   filter: LinksFilter;
   /** Disables the "Remove all" button while deletion is in progress. */
-  isClearingArchived: boolean;
-  /** Hides the "Remove all" button when there are no archived links to delete. */
+  isClearingRead: boolean;
+  /** Hides the "Remove all" button when there are no read links to delete. */
   linksCount: number;
   /** Disables and relabels the "Stumble upon" button while a random fetch is in flight. */
   randomLoading: boolean;
   /** Drives the `aria-expanded` state and label of the "Add link" / "Hide form" button. */
   showLinkForm: boolean;
-  onClearArchived: () => void;
+  onClearRead: () => void;
   onRandom: () => Promise<void>;
   onToggleForm: () => void;
 }
@@ -25,19 +25,19 @@ interface LinksControlsProps {
 /**
  * The desktop action buttons shown to the right of the tab switcher in `LinksToolbar`.
  *
- * On the active tab: "Stumble upon" + "Add link / Hide form".
- * On the archived tab: "Remove all read" (hidden when the list is empty).
+ * On the unread tab: "Stumble upon" + "Add link / Hide form".
+ * On the read tab: "Remove all read" (hidden when the list is empty).
  *
  * This component is hidden on mobile (`hidden sm:contents` in `LinksToolbar`)
  * — mobile has its own icon-only equivalents rendered inline in `LinksToolbar`.
  */
 export default function LinksControls({
   filter,
-  isClearingArchived,
+  isClearingRead,
   linksCount,
   randomLoading,
   showLinkForm,
-  onClearArchived,
+  onClearRead,
   onRandom,
   onToggleForm,
 }: LinksControlsProps) {
@@ -45,10 +45,10 @@ export default function LinksControls({
     <div className="flex flex-1 justify-between gap-3">
       <IconButton
         variant="elevated"
-        disabled={isClearingArchived}
-        hidden={filter === 'active' || linksCount == 0}
+        disabled={isClearingRead}
+        hidden={filter === 'unread' || linksCount == 0}
         title="Permanently removes all read links."
-        onClick={onClearArchived}
+        onClick={onClearRead}
       >
         <i className="fa-solid fa-trash text-[0.7rem]" aria-hidden="true" />
         Remove all read
@@ -58,7 +58,7 @@ export default function LinksControls({
         <IconButton
           variant="elevated"
           disabled={randomLoading}
-          hidden={filter !== 'active'}
+          hidden={filter !== 'unread'}
           title="Opens a random unread link and marks it as read."
           onClick={onRandom}
         >
@@ -68,7 +68,7 @@ export default function LinksControls({
 
         <PrimaryButton
           type="button"
-          hidden={filter !== 'active'}
+          hidden={filter !== 'unread'}
           onClick={onToggleForm}
           aria-expanded={showLinkForm}
         >

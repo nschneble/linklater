@@ -23,7 +23,7 @@ interface LinkCardLayoutProps {
    * `event.stopPropagation()` (handled in `LinkCard`) to prevent the card
    * click from also firing.
    */
-  onUnarchiveClick: (event: React.MouseEvent) => void;
+  onUnreadClick: (event: React.MouseEvent) => void;
 }
 
 const CARD_ENTER_CLASS = 'animate-card-enter';
@@ -50,7 +50,7 @@ function getPlaceholderUrl(url: string) {
  * - Shows the favicon once metadata arrives.
  * - Shows a placeholder image if no `imageUrl` is available.
  * - Shows the raw URL as the description when no title is present.
- * - Shows a "Mark as unread" button for archived links.
+ * - Shows a "Mark as unread" button for read links.
  *
  * The card uses `role="link"` and responds to Enter/Space so keyboard users
  * can activate it without a pointer device.
@@ -60,7 +60,7 @@ export default function LinkCardLayout({
   animationDelay = 0,
   isSelected = false,
   onCardClick,
-  onUnarchiveClick,
+  onUnreadClick,
 }: LinkCardLayoutProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const placeholderUrl = useMemo(() => getPlaceholderUrl(link.url), [link.url]);
@@ -175,7 +175,7 @@ export default function LinkCardLayout({
           <div className="flex justify-end pt-1">
             <button
               type="button"
-              onClick={onUnarchiveClick}
+              onClick={onUnreadClick}
               className="py-1.5 px-2 -mx-2 -my-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] text-xs transition-colors active:scale-[0.96] cursor-pointer"
             >
               Mark as unread
