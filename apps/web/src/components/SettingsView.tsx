@@ -10,7 +10,7 @@ import DangerZone from './DangerZone';
  */
 export default function SettingsView() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AccountSettingsForm />
       <BookmarkletSection />
       <DangerZone />
