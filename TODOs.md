@@ -31,6 +31,4 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 
 ## Bugfixes
 
-- Page may not refresh automatically after email verification (still showing banner)
-- Page may not refresh automatically after email change (still showing change notice)
-- Theme editor reset button works inconsistently
+_Bugs will be added here as they are reported or discovered_
