@@ -43,6 +43,8 @@ interface LinkCardProps {
    * @default 0
    */
   animationDelay?: number;
+  /** When `true`, renders a keyboard-selection highlight. */
+  isSelected?: boolean;
   /** Called when the user clicks the card (to open + archive) or the "Mark as unread" button. */
   onArchiveToggle: (link: Link) => void;
 }
@@ -60,6 +62,7 @@ interface LinkCardProps {
 export default function LinkCard({
   link,
   animationDelay = 0,
+  isSelected = false,
   onArchiveToggle,
 }: LinkCardProps) {
   function handleCardClick() {
@@ -81,6 +84,7 @@ export default function LinkCard({
     <LinkCardLayout
       link={link}
       animationDelay={animationDelay}
+      isSelected={isSelected}
       onCardClick={handleCardClick}
       onUnarchiveClick={handleUnarchiveClick}
     />

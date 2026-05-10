@@ -58,22 +58,48 @@ export default function UserMenu({
   const [themeSubmenuOnLeft, setThemeSubmenuOnLeft] = useState(true);
 
   const avatarRef = useRef<HTMLButtonElement | null>(null);
+  const flyoutRef = useRef<HTMLDivElement | null>(null);
   const hideSubmenuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-  const menuRef = useRef<HTMLDivElement | null>(null);
+  const submenuOpenedByKeyboard = useRef(false);
+  const themeRowRef = useRef<HTMLDivElement | null>(null);
 
   useMenuNavigation(menuRef, () => {
     setShowUserMenu(false);
     avatarRef.current?.focus();
   });
-  const themeRowRef = useRef<HTMLDivElement | null>(null);
 
-  // resets submenu when main menu closes
+  useMenuNavigation(
+    flyoutRef,
+    () => {
+      setShowThemeSubmenu(false);
+      menuRef.current
+        ?.querySelector<HTMLElement>('[aria-haspopup="menu"]')
+        ?.focus();
+    },
+    '[data-submenu-item]',
+  );
+
+  // resets submenu when main menu closes; auto-focuses first item on keyboard open
   useEffect(() => {
-    if (!showUserMenu) setShowThemeSubmenu(false);
+    if (!showUserMenu) {
+      setShowThemeSubmenu(false);
+      return;
+    }
+    const firstItem = menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
+    firstItem?.focus();
   }, [showUserMenu]);
+
+  // auto-focuses first flyout item when submenu opens via keyboard
+  useEffect(() => {
+    if (!showThemeSubmenu || !submenuOpenedByKeyboard.current) return;
+    submenuOpenedByKeyboard.current = false;
+    const firstItem = flyoutRef.current?.querySelector<HTMLElement>('[data-submenu-item]');
+    firstItem?.focus();
+  }, [showThemeSubmenu]);
 
   // closes main menu on outside clicks
   useEffect(() => {
@@ -176,6 +202,7 @@ export default function UserMenu({
         className={`flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] border-shadow hover:border-shadow ${FOCUS_RING} rounded-4xl transition cursor-pointer`}
         ref={avatarRef}
         type="button"
+        data-usermenu-trigger
         onClick={() => setShowUserMenu((open) => !open)}
         aria-expanded={showUserMenu}
         aria-haspopup="menu"
@@ -260,10 +287,14 @@ export default function UserMenu({
               previewTheme={previewTheme}
               showSubmenu={showThemeSubmenu}
               submenuOnLeft={themeSubmenuOnLeft}
+              flyoutRef={flyoutRef}
               onFlyoutMouseEnter={cancelHide}
               onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
               onThemeRowItemEnter={handleThemeRowItemEnter}
               onTriggerClick={handleThemeRowEnter}
+              onKeyboardOpen={() => {
+                submenuOpenedByKeyboard.current = true;
+              }}
               onPreviewChange={handlePreviewChange}
               onSelect={handleThemeSelect}
             />

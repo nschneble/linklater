@@ -8,6 +8,9 @@ function makeOptions(overrides: Record<string, unknown> = {}) {
   return {
     enabled: true,
     isShortcutsModalOpen: false,
+    onNavigateNextLink: vi.fn(),
+    onNavigatePrevLink: vi.fn(),
+    onOpenSelectedLink: vi.fn(),
     onSearch: vi.fn(),
     onShowRead: vi.fn(),
     onShowUnread: vi.fn(),
@@ -141,6 +144,93 @@ describe('useKeyboardShortcuts', () => {
     fireKey('Escape');
     expect(options.onToggleForm).not.toHaveBeenCalled();
     expect(options.onToggleShortcuts).not.toHaveBeenCalled();
+  });
+
+  it('ArrowDown calls onNavigateNextLink', () => {
+    const options = makeOptions();
+    renderHook(() => useKeyboardShortcuts(options));
+    fireKey('ArrowDown');
+    expect(options.onNavigateNextLink).toHaveBeenCalledOnce();
+  });
+
+  it('ArrowUp calls onNavigatePrevLink', () => {
+    const options = makeOptions();
+    renderHook(() => useKeyboardShortcuts(options));
+    fireKey('ArrowUp');
+    expect(options.onNavigatePrevLink).toHaveBeenCalledOnce();
+  });
+
+  it('ArrowRight calls onShowRead', () => {
+    const options = makeOptions();
+    renderHook(() => useKeyboardShortcuts(options));
+    fireKey('ArrowRight');
+    expect(options.onShowRead).toHaveBeenCalledOnce();
+  });
+
+  it('ArrowLeft calls onShowUnread', () => {
+    const options = makeOptions();
+    renderHook(() => useKeyboardShortcuts(options));
+    fireKey('ArrowLeft');
+    expect(options.onShowUnread).toHaveBeenCalledOnce();
+  });
+
+  it('Enter calls onOpenSelectedLink when target is not interactive', () => {
+    const options = makeOptions();
+    renderHook(() => useKeyboardShortcuts(options));
+    fireKey('Enter');
+    expect(options.onOpenSelectedLink).toHaveBeenCalledOnce();
+  });
+
+  it('Enter does not call onOpenSelectedLink when target is a button', () => {
+    const options = makeOptions();
+    renderHook(() => useKeyboardShortcuts(options));
+
+    const button = document.createElement('button');
+    document.body.appendChild(button);
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    document.body.removeChild(button);
+
+    expect(options.onOpenSelectedLink).not.toHaveBeenCalled();
+  });
+
+  it('Enter does not call onOpenSelectedLink when target has role="link"', () => {
+    const options = makeOptions();
+    renderHook(() => useKeyboardShortcuts(options));
+
+    const element = document.createElement('div');
+    element.setAttribute('role', 'link');
+    document.body.appendChild(element);
+    element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    document.body.removeChild(element);
+
+    expect(options.onOpenSelectedLink).not.toHaveBeenCalled();
+  });
+
+  it('arrow keys are ignored when target is an input field', () => {
+    const options = makeOptions();
+    renderHook(() => useKeyboardShortcuts(options));
+
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    document.body.removeChild(input);
+
+    expect(options.onNavigateNextLink).not.toHaveBeenCalled();
+    expect(options.onNavigatePrevLink).not.toHaveBeenCalled();
+    expect(options.onShowRead).not.toHaveBeenCalled();
+    expect(options.onShowUnread).not.toHaveBeenCalled();
+  });
+
+  it('arrow keys are suppressed when shortcuts modal is open', () => {
+    const options = makeOptions({ isShortcutsModalOpen: true });
+    renderHook(() => useKeyboardShortcuts(options));
+    fireKey('ArrowDown');
+    fireKey('ArrowRight');
+    expect(options.onNavigateNextLink).not.toHaveBeenCalled();
+    expect(options.onShowRead).not.toHaveBeenCalled();
   });
 
   it('removes the event listener on unmount', () => {

@@ -1,4 +1,5 @@
 import { THEMES, type BaseTheme } from '../../theme/ThemeContext';
+import type { RefObject } from 'react';
 
 /**
  * Props for `ThemeSubmenu`. All hover/mouse coordination state is owned by
@@ -27,6 +28,16 @@ interface ThemeSubmenuProps {
   onThemeRowItemEnter: () => void;
   /** Called when the trigger row is clicked (on mobile / keyboard). */
   onTriggerClick: () => void;
+  /**
+   * Called when the trigger is activated via keyboard. Lets `UserMenu` set
+   * a flag so the submenu auto-focuses its first item on open.
+   */
+  onKeyboardOpen: () => void;
+  /**
+   * Forwarded ref attached to the flyout panel, used by `UserMenu` for
+   * keyboard navigation.
+   */
+  flyoutRef?: RefObject<HTMLDivElement | null>;
   /** Called with the hovered theme id while hovering, or `null` when leaving the flyout. */
   onPreviewChange: (theme: BaseTheme | null) => void;
   /** Called when the user clicks a theme option. Closes the menu. */
@@ -54,8 +65,10 @@ export default function ThemeSubmenu({
   onFlyoutMouseLeave,
   onThemeRowItemEnter,
   onTriggerClick,
+  onKeyboardOpen,
   onPreviewChange,
   onSelect,
+  flyoutRef,
 }: ThemeSubmenuProps) {
   const currentLabel =
     previewTheme && previewTheme !== baseTheme
@@ -69,13 +82,26 @@ export default function ThemeSubmenu({
         role="menuitem"
         aria-haspopup="menu"
         aria-expanded={showSubmenu}
-        className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 text-[var(--text)] text-left cursor-default ${
+        className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:outline-none text-[var(--text)] text-left cursor-default ${
           showSubmenu
             ? 'bg-[var(--bg-surface)]'
-            : 'hover:bg-[var(--bg-surface)]'
+            : 'hover:bg-[var(--bg-surface)] focus:bg-[var(--bg-surface)]'
         }`}
         onMouseEnter={onThemeRowItemEnter}
         onClick={onTriggerClick}
+        onKeyDown={(event) => {
+          if (
+            event.key === 'Enter' ||
+            event.key === ' ' ||
+            event.key === 'ArrowRight'
+          ) {
+            if (event.key === 'ArrowRight') {
+              event.preventDefault();
+              onTriggerClick();
+            }
+            onKeyboardOpen();
+          }
+        }}
       >
         <i
           className="fa-solid fa-palette text-[var(--text-muted)] text-[0.75rem]"
@@ -94,6 +120,7 @@ export default function ThemeSubmenu({
       </button>
 
       <div
+        ref={flyoutRef}
         className={`absolute top-0 z-50 w-56 py-2 bg-[var(--bg-elevated)] border-shadow rounded-lg ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
         style={{
           transition: `opacity ${showSubmenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showSubmenu ? '150ms ease-out' : '100ms ease-in'}`,
@@ -106,7 +133,8 @@ export default function ThemeSubmenu({
       >
         {THEMES.map((theme) => (
           <button
-            className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[var(--bg-surface)] text-[var(--text)] text-left cursor-pointer"
+            className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[var(--bg-surface)] focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-pointer"
+            data-submenu-item
             style={{
               transitionDuration:
                 '150ms, var(--theme-transition-duration), var(--theme-transition-duration)',

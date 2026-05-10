@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Link } from '../lib/api';
 
 /**
@@ -14,6 +14,8 @@ interface LinkCardLayoutProps {
    * @default 0
    */
   animationDelay?: number;
+  /** When `true`, the card shows a keyboard-selection highlight. */
+  isSelected?: boolean;
   /** Called when the card body is clicked. */
   onCardClick: () => void;
   /**
@@ -56,10 +58,18 @@ function getPlaceholderUrl(url: string) {
 export default function LinkCardLayout({
   link,
   animationDelay = 0,
+  isSelected = false,
   onCardClick,
   onUnarchiveClick,
 }: LinkCardLayoutProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
   const placeholderUrl = useMemo(() => getPlaceholderUrl(link.url), [link.url]);
+
+  useEffect(() => {
+    if (isSelected) {
+      cardRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [isSelected]);
 
   function childStyle(elementIndex: number) {
     return {
@@ -77,6 +87,7 @@ export default function LinkCardLayout({
 
   return (
     <div
+      ref={cardRef}
       role="link"
       aria-label={cardAriaLabel}
       onClick={onCardClick}
@@ -84,7 +95,7 @@ export default function LinkCardLayout({
         if (event.key === 'Enter' || event.key === ' ') onCardClick();
       }}
       tabIndex={0}
-      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-transparent'} rounded-r-xl focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none cursor-pointer`}
+      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-transparent'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--accent)]/60' : ''} focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none cursor-pointer`}
     >
       {link.meta?.fetchedAt ? (
         <div className="absolute left-0 top-4 -translate-x-1/2 z-10">

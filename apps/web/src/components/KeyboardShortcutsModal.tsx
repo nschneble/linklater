@@ -8,12 +8,16 @@ interface KeyboardShortcutsModalProps {
 
 /** The shortcuts displayed in the modal. Must stay in sync with `useKeyboardShortcuts`. */
 const shortcuts = [
+  { key: '↑ / ↓', description: 'Navigate links / user menu' },
+  { key: '← / →', description: 'Switch tabs' },
+  { key: 'Enter', description: 'Open selected link / menu item' },
   { key: '1', description: 'Show unread links' },
   { key: '2', description: 'Show read links' },
   { key: 'Q', description: 'Search' },
   { key: 'A', description: 'Add link' },
   { key: 'D', description: 'Stumble upon' },
   { key: 'Z', description: 'Show shortcuts' },
+  { key: 'X', description: 'Show user menu' },
 ];
 
 const HEADING_ID = 'keyboard-shortcuts-heading';

@@ -23,6 +23,7 @@ import { useEffect, type RefObject } from 'react';
 export function useMenuNavigation(
   containerReference: RefObject<HTMLElement | null>,
   onClose: () => void,
+  itemSelector = '[role="menuitem"]',
 ) {
   useEffect(() => {
     const container = containerReference.current;
@@ -39,6 +40,10 @@ export function useMenuNavigation(
       }
 
       if (event.key === 'Escape') {
+        // stopPropagation prevents outer containers (e.g. the main menu)
+        // from also seeing this ESC and closing themselves when only the
+        // submenu should close.
+        event.stopPropagation();
         onClose();
         return;
       }
@@ -50,11 +55,12 @@ export function useMenuNavigation(
       }
 
       const items = Array.from(
-        container!.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+        container!.querySelectorAll<HTMLElement>(itemSelector),
       );
       const currentIndex = items.indexOf(document.activeElement as HTMLElement);
 
       event.preventDefault();
+      event.stopPropagation();
       const direction = event.key === 'ArrowDown' ? 1 : -1;
       const nextIndex =
         currentIndex === -1
@@ -67,5 +73,5 @@ export function useMenuNavigation(
 
     container.addEventListener('keydown', handleKeyDown);
     return () => container.removeEventListener('keydown', handleKeyDown);
-  }, [containerReference, onClose]);
+  }, [containerReference, onClose, itemSelector]);
 }

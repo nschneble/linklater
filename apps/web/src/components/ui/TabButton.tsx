@@ -37,6 +37,7 @@ export default function TabButton({
       } ${className}`}
       type="button"
       role="tab"
+      tabIndex={isActive ? 0 : -1}
       onClick={onClick}
       aria-selected={isActive}
     >

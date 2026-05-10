@@ -36,12 +36,30 @@ describe('useTabNavigation', () => {
     expect(document.activeElement).toBe(second);
   });
 
+  it('ArrowRight activates the newly focused tab', () => {
+    const onSecond = vi.fn();
+    render(<Tablist onFirst={vi.fn()} onSecond={onSecond} />);
+    const [first] = screen.getAllByRole('tab');
+    first.focus();
+    fireEvent.keyDown(first, { key: 'ArrowRight' });
+    expect(onSecond).toHaveBeenCalledOnce();
+  });
+
   it('ArrowLeft moves focus from second tab to first', () => {
     render(<Tablist onFirst={vi.fn()} onSecond={vi.fn()} />);
     const [first, second] = screen.getAllByRole('tab');
     second.focus();
     fireEvent.keyDown(second, { key: 'ArrowLeft' });
     expect(document.activeElement).toBe(first);
+  });
+
+  it('ArrowLeft activates the newly focused tab', () => {
+    const onFirst = vi.fn();
+    render(<Tablist onFirst={onFirst} onSecond={vi.fn()} />);
+    const [, second] = screen.getAllByRole('tab');
+    second.focus();
+    fireEvent.keyDown(second, { key: 'ArrowLeft' });
+    expect(onFirst).toHaveBeenCalledOnce();
   });
 
   it('ArrowLeft on first tab wraps to last', () => {

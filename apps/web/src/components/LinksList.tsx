@@ -27,6 +27,8 @@ interface LinksListProps {
   search: string;
   /** Debounced search query — used alongside `search` to avoid icon flicker during transition. */
   debouncedSearch: string;
+  /** Index of the keyboard-selected link, or `null` if one isn't selected. */
+  selectedLinkIndex: number | null;
   /** Passed through to each `LinkCard`. */
   onArchiveToggle: (link: Link) => void;
   /** Called when the user clicks "Load more". */
@@ -52,6 +54,7 @@ export default function LinksList({
   pagination,
   search,
   debouncedSearch,
+  selectedLinkIndex,
   onArchiveToggle,
   onLoadMore,
 }: LinksListProps) {
@@ -100,6 +103,7 @@ export default function LinksList({
           <LinkCard
             link={link}
             animationDelay={Math.min(index * 60, 240)}
+            isSelected={selectedLinkIndex === index}
             onArchiveToggle={onArchiveToggle}
           />
         </div>

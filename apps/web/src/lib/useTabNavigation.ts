@@ -29,9 +29,11 @@ export function useTabNavigation(
       if (currentIndex === -1) return;
 
       event.preventDefault();
+      event.stopPropagation();
       const direction = event.key === 'ArrowRight' ? 1 : -1;
       const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
       tabs[nextIndex].focus();
+      tabs[nextIndex].click();
     }
 
     container.addEventListener('keydown', handleKeyDown);

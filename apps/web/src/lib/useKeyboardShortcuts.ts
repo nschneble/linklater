@@ -7,6 +7,12 @@ interface UseKeyboardShortcutsOptions {
   isShortcutsModalOpen: boolean;
   /** Called when ESC is pressed. Only used when a close-able element (e.g. the form) is open. */
   onEscape?: () => void;
+  /** Called when ArrowDown is pressed, outside of a text field. */
+  onNavigateNextLink: () => void;
+  /** Called when ArrowUp is pressed, outside of a text field. */
+  onNavigatePrevLink: () => void;
+  /** Called when Enter is pressed and no interactive element is focused. */
+  onOpenSelectedLink: () => void;
   onSearch: () => void;
   onShowRead: () => void;
   onShowUnread: () => void;
@@ -21,13 +27,17 @@ interface UseKeyboardShortcutsOptions {
  * intercepting normal text entry.
  *
  * Shortcut map:
- * - `1`   → Show unread links
- * - `2`   → Show read links
- * - `Q`   → Focus the search input
- * - `A`   → Toggle the link form
- * - `D`   → Stumble upon
- * - `Z`   → Toggle the shortcuts modal
- * - `ESC` → Calls `onEscape` if provided (e.g. closes the link form)
+ * - `↑ / ↓`  → Navigate links and user menu
+ * - `← / →`  → Switch tabs (unread / read)
+ * - `Enter`  → Open the selected link or menu item
+ * - `1`      → Show unread links
+ * - `2`      → Show read links
+ * - `Q`      → Focus the search input
+ * - `A`      → Toggle the link form
+ * - `D`      → Stumble upon
+ * - `Z`      → Toggle the shortcuts modal
+ * - `X`      → Toggle the user menu
+ * - `ESC`    → Calls `onEscape` if provided
  *
  * When the shortcuts modal is open, only `Z` (close modal) and `ESC` are
  * handled. All other shortcuts are suppressed.
@@ -41,6 +51,9 @@ export function useKeyboardShortcuts({
   enabled,
   isShortcutsModalOpen,
   onEscape,
+  onNavigateNextLink,
+  onNavigatePrevLink,
+  onOpenSelectedLink,
   onSearch,
   onShowRead,
   onShowUnread,
@@ -50,6 +63,9 @@ export function useKeyboardShortcuts({
 }: UseKeyboardShortcutsOptions) {
   const isShortcutsModalOpenRef = useRef(isShortcutsModalOpen);
   const onEscapeRef = useRef(onEscape);
+  const onNavigateNextLinkRef = useRef(onNavigateNextLink);
+  const onNavigatePrevLinkRef = useRef(onNavigatePrevLink);
+  const onOpenSelectedLinkRef = useRef(onOpenSelectedLink);
   const onSearchRef = useRef(onSearch);
   const onShowReadRef = useRef(onShowRead);
   const onShowUnreadRef = useRef(onShowUnread);
@@ -60,6 +76,9 @@ export function useKeyboardShortcuts({
   // always keep refs current so the listener uses the latest callbacks
   isShortcutsModalOpenRef.current = isShortcutsModalOpen;
   onEscapeRef.current = onEscape;
+  onNavigateNextLinkRef.current = onNavigateNextLink;
+  onNavigatePrevLinkRef.current = onNavigatePrevLink;
+  onOpenSelectedLinkRef.current = onOpenSelectedLink;
   onSearchRef.current = onSearch;
   onShowReadRef.current = onShowRead;
   onShowUnreadRef.current = onShowUnread;
@@ -93,6 +112,41 @@ export function useKeyboardShortcuts({
           onToggleShortcutsRef.current();
         }
         return;
+      }
+
+      // Arrow navigation is handled before keyboard shortcuts so they
+      // can't be swallowed by the switch below.
+      switch (event.key) {
+        case 'ArrowUp':
+          event.preventDefault();
+          onNavigatePrevLinkRef.current();
+          return;
+        case 'ArrowDown':
+          event.preventDefault();
+          onNavigateNextLinkRef.current();
+          return;
+        case 'ArrowLeft':
+          event.preventDefault();
+          onShowUnreadRef.current();
+          return;
+        case 'ArrowRight':
+          event.preventDefault();
+          onShowReadRef.current();
+          return;
+        case 'Enter': {
+          const role =
+            target instanceof Element ? target.getAttribute('role') : null;
+          const isInteractive =
+            target.tagName === 'BUTTON' ||
+            target.tagName === 'A' ||
+            role === 'link' ||
+            role === 'menuitem';
+          if (!isInteractive) {
+            event.preventDefault();
+            onOpenSelectedLinkRef.current();
+          }
+          return;
+        }
       }
 
       switch (event.key.toLowerCase()) {

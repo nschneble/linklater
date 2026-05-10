@@ -51,6 +51,9 @@ export default function LinksView() {
   const filter = filterFromPath(location.pathname);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedLinkIndex, setSelectedLinkIndex] = useState<number | null>(
+    null,
+  );
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isClearingArchived, setIsClearingArchived] = useState(false);
   const [, startTransition] = useTransition();
@@ -89,6 +92,32 @@ export default function LinksView() {
     toastMessage,
   } = useLinks(filter, debouncedSearch);
 
+  function handleNavigateNextLink() {
+    if (links.length === 0) return;
+    setSelectedLinkIndex((previous) => {
+      if (previous === null) return 0;
+      return Math.min(previous + 1, links.length - 1);
+    });
+  }
+
+  function handleNavigatePrevLink() {
+    if (links.length === 0) return;
+    setSelectedLinkIndex((previous) => {
+      if (previous === null) return links.length - 1;
+      return Math.max(previous - 1, 0);
+    });
+  }
+
+  function handleOpenSelectedLink() {
+    if (selectedLinkIndex === null) return;
+    const link = links[selectedLinkIndex];
+    if (!link) return;
+    window.open(link.url, '_blank', 'noreferrer');
+    if (!link.archivedAt) {
+      handleToggleArchive(link);
+    }
+  }
+
   useKeyboardShortcuts({
     enabled: true,
     isShortcutsModalOpen: showShortcuts,
@@ -99,13 +128,29 @@ export default function LinksView() {
     onStumble: handleRandom,
     onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
     onEscape: showLinkForm ? handleToggleForm : undefined,
+    onNavigateNextLink: handleNavigateNextLink,
+    onNavigatePrevLink: handleNavigatePrevLink,
+    onOpenSelectedLink: handleOpenSelectedLink,
   });
 
   useEffect(() => {
     setIsClearingArchived(false);
     setSearch('');
     setDebouncedSearch('');
+    setSelectedLinkIndex(null);
   }, [filter]);
+
+  // clamps selection when the list shrinks (like after a link is archived)
+  useEffect(() => {
+    if (selectedLinkIndex !== null && selectedLinkIndex >= links.length) {
+      setSelectedLinkIndex(links.length > 0 ? links.length - 1 : null);
+    }
+  }, [links.length, selectedLinkIndex]);
+
+  // resets selection when search changes, so the highlighted card matches
+  useEffect(() => {
+    setSelectedLinkIndex(null);
+  }, [debouncedSearch]);
 
   async function handleClearArchived() {
     setIsClearingArchived(true);
@@ -220,6 +265,7 @@ export default function LinksView() {
         pagination={pagination}
         search={search}
         debouncedSearch={debouncedSearch}
+        selectedLinkIndex={selectedLinkIndex}
         onArchiveToggle={handleToggleArchive}
         onLoadMore={handleLoadMore}
       />
