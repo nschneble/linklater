@@ -4,10 +4,10 @@ import { useLinksActions } from './useLinksActions';
 import type { Link } from './api';
 
 vi.mock('./api', () => ({
-  archiveLink: vi.fn(),
+  readLink: vi.fn(),
   createLink: vi.fn(),
-  deleteAllArchivedLinks: vi.fn(),
-  unarchiveLink: vi.fn(),
+  deleteAllReadLinks: vi.fn(),
+  unreadLink: vi.fn(),
 }));
 
 import * as apiModule from './api';
@@ -41,7 +41,7 @@ function makeLink(overrides: Partial<Link> = {}): Link {
     meta: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    archivedAt: null,
+    readAt: null,
     ...overrides,
   };
 }
@@ -50,7 +50,7 @@ function makeOptions(overrides: object = {}) {
   return {
     adjustTotal: vi.fn(),
     clearLinks: vi.fn(),
-    filter: 'active' as const,
+    filter: 'unread' as const,
     links: [],
     prependLink: vi.fn(),
     removeLink: vi.fn(),
@@ -66,9 +66,9 @@ describe('useLinksActions', () => {
     expect(result.current.toastMessage).toBeNull();
   });
 
-  it('archiveError is null initially', () => {
+  it('readError is null initially', () => {
     const { result } = renderHook(() => useLinksActions(makeOptions()));
-    expect(result.current.archiveError).toBeNull();
+    expect(result.current.readError).toBeNull();
   });
 
   it('saveError is null initially', () => {
@@ -114,36 +114,36 @@ describe('useLinksActions', () => {
     expect(result.current.deleteError).toBeNull();
   });
 
-  it('handleDeleteAllArchived clears links and resets total on success', async () => {
-    vi.mocked(apiModule.deleteAllArchivedLinks).mockResolvedValue({ count: 2 });
+  it('handleDeleteAllRead clears links and resets total on success', async () => {
+    vi.mocked(apiModule.deleteAllReadLinks).mockResolvedValue({ count: 2 });
     const options = makeOptions();
     const { result } = renderHook(() => useLinksActions(options));
 
-    await act(() => result.current.handleDeleteAllArchived());
+    await act(() => result.current.handleDeleteAllRead());
 
     expect(options.clearLinks).toHaveBeenCalled();
     expect(options.resetTotal).toHaveBeenCalled();
     expect(result.current.deleteError).toBeNull();
   });
 
-  it('handleDeleteAllArchived sets deleteError when the API call fails', async () => {
-    vi.mocked(apiModule.deleteAllArchivedLinks).mockRejectedValue(
+  it('handleDeleteAllRead sets deleteError when the API call fails', async () => {
+    vi.mocked(apiModule.deleteAllReadLinks).mockRejectedValue(
       new Error('Network error'),
     );
     const { result } = renderHook(() => useLinksActions(makeOptions()));
 
-    await act(() => result.current.handleDeleteAllArchived());
+    await act(() => result.current.handleDeleteAllRead());
 
     expect(result.current.deleteError).toBe('Network error');
   });
 
-  it('handleDeleteAllArchived sets a fallback deleteError for non-Error rejections', async () => {
-    vi.mocked(apiModule.deleteAllArchivedLinks).mockRejectedValue('boom');
+  it('handleDeleteAllRead sets a fallback deleteError for non-Error rejections', async () => {
+    vi.mocked(apiModule.deleteAllReadLinks).mockRejectedValue('boom');
     const { result } = renderHook(() => useLinksActions(makeOptions()));
 
-    await act(() => result.current.handleDeleteAllArchived());
+    await act(() => result.current.handleDeleteAllRead());
 
-    expect(result.current.deleteError).toBe('Failed to delete archived links');
+    expect(result.current.deleteError).toBe('Failed to delete read links');
   });
 
   it('metadata polling callback updates the link and clears pendingMetaLinkId', () => {
@@ -163,8 +163,8 @@ describe('useLinksActions', () => {
     expect(options.updateLink).toHaveBeenCalledWith(updatedLink);
   });
 
-  it('handleCreated is a no-op when the archived tab is active', () => {
-    const options = makeOptions({ filter: 'archived' });
+  it('handleCreated is a no-op when the read tab is active', () => {
+    const options = makeOptions({ filter: 'read' });
     const { result } = renderHook(() => useLinksActions(options));
 
     act(() => result.current.handleCreated(makeLink()));
@@ -209,85 +209,85 @@ describe('useLinksActions', () => {
     });
   });
 
-  describe('handleToggleArchive', () => {
-    it('archives an active link and removes it from the active list', async () => {
-      const link = makeLink({ id: 'link-1', archivedAt: null });
-      const archived = makeLink({
+  describe('handleToggleRead', () => {
+    it('marks an unread link as read and removes it from the unread list', async () => {
+      const link = makeLink({ id: 'link-1', readAt: null });
+      const read = makeLink({
         id: 'link-1',
-        archivedAt: new Date().toISOString(),
+        readAt: new Date().toISOString(),
       });
-      vi.mocked(apiModule.archiveLink).mockResolvedValue(archived);
+      vi.mocked(apiModule.readLink).mockResolvedValue(read);
 
-      const options = makeOptions({ filter: 'active' });
+      const options = makeOptions({ filter: 'unread' });
       const { result } = renderHook(() => useLinksActions(options));
 
-      await act(() => result.current.handleToggleArchive(link));
+      await act(() => result.current.handleToggleRead(link));
 
-      expect(apiModule.archiveLink).toHaveBeenCalledWith('link-1');
+      expect(apiModule.readLink).toHaveBeenCalledWith('link-1');
       expect(options.removeLink).toHaveBeenCalledWith('link-1');
       expect(options.adjustTotal).toHaveBeenCalledWith(-1);
     });
 
-    it('unarchives a link and removes it from the archived list', async () => {
+    it('marks a link as unread and removes it from the read list', async () => {
       const link = makeLink({
         id: 'link-1',
-        archivedAt: new Date().toISOString(),
+        readAt: new Date().toISOString(),
       });
-      const unarchived = makeLink({ id: 'link-1', archivedAt: null });
-      vi.mocked(apiModule.unarchiveLink).mockResolvedValue(unarchived);
+      const unread = makeLink({ id: 'link-1', readAt: null });
+      vi.mocked(apiModule.unreadLink).mockResolvedValue(unread);
 
-      const options = makeOptions({ filter: 'archived' });
+      const options = makeOptions({ filter: 'read' });
       const { result } = renderHook(() => useLinksActions(options));
 
-      await act(() => result.current.handleToggleArchive(link));
+      await act(() => result.current.handleToggleRead(link));
 
-      expect(apiModule.unarchiveLink).toHaveBeenCalledWith('link-1');
+      expect(apiModule.unreadLink).toHaveBeenCalledWith('link-1');
       expect(options.removeLink).toHaveBeenCalledWith('link-1');
       expect(options.adjustTotal).toHaveBeenCalledWith(-1);
     });
 
     it('updates link in place when it stays in the current filter', async () => {
-      // Archiving on the archived tab would never happen in normal use,
-      // but the branch handles: archived tab + archivedAt set → stays in
-      // view. Easier to test: active tab + unarchive → stays.
+      // Marking as read on the read tab would never happen in normal use,
+      // but the branch handles: read tab + readAt set → stays in
+      // view. Easier to test: unread tab + mark as unread → stays.
       const link = makeLink({
         id: 'link-1',
-        archivedAt: new Date().toISOString(),
+        readAt: new Date().toISOString(),
       });
-      const unarchived = makeLink({ id: 'link-1', archivedAt: null });
-      vi.mocked(apiModule.unarchiveLink).mockResolvedValue(unarchived);
+      const unread = makeLink({ id: 'link-1', readAt: null });
+      vi.mocked(apiModule.unreadLink).mockResolvedValue(unread);
 
-      const options = makeOptions({ filter: 'active' });
+      const options = makeOptions({ filter: 'unread' });
       const { result } = renderHook(() => useLinksActions(options));
 
-      await act(() => result.current.handleToggleArchive(link));
+      await act(() => result.current.handleToggleRead(link));
 
-      expect(options.updateLink).toHaveBeenCalledWith(unarchived);
+      expect(options.updateLink).toHaveBeenCalledWith(unread);
       expect(options.removeLink).not.toHaveBeenCalled();
     });
 
-    it('sets archiveError when the API call fails', async () => {
-      const link = makeLink({ id: 'link-1', archivedAt: null });
-      vi.mocked(apiModule.archiveLink).mockRejectedValue(
+    it('sets readError when the API call fails', async () => {
+      const link = makeLink({ id: 'link-1', readAt: null });
+      vi.mocked(apiModule.readLink).mockRejectedValue(
         new Error('Server error'),
       );
 
       const { result } = renderHook(() => useLinksActions(makeOptions()));
 
-      await act(() => result.current.handleToggleArchive(link));
+      await act(() => result.current.handleToggleRead(link));
 
-      expect(result.current.archiveError).toBe('Server error');
+      expect(result.current.readError).toBe('Server error');
     });
 
-    it('sets a fallback archiveError for non-Error rejections', async () => {
-      const link = makeLink({ id: 'link-1', archivedAt: null });
-      vi.mocked(apiModule.archiveLink).mockRejectedValue('boom');
+    it('sets a fallback readError for non-Error rejections', async () => {
+      const link = makeLink({ id: 'link-1', readAt: null });
+      vi.mocked(apiModule.readLink).mockRejectedValue('boom');
 
       const { result } = renderHook(() => useLinksActions(makeOptions()));
 
-      await act(() => result.current.handleToggleArchive(link));
+      await act(() => result.current.handleToggleRead(link));
 
-      expect(result.current.archiveError).toBe('Failed to update link');
+      expect(result.current.readError).toBe('Failed to update link');
     });
   });
 });

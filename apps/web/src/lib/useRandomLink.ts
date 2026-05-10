@@ -1,4 +1,4 @@
-import { archiveLink, getRandomLink } from './api';
+import { readLink, getRandomLink } from './api';
 import { useCallback, useState } from 'react';
 
 interface UseRandomLinkOptions {
@@ -9,7 +9,7 @@ interface UseRandomLinkOptions {
 }
 
 export interface UseRandomLinkResult {
-  /** Opens a random link in a new tab. Archives the link after opening. */
+  /** Opens a random link in a new tab. Marks the link as read after opening. */
   handleRandom: () => Promise<void>;
   /** Error message from the most recent stumble attempt, or `null`. */
   randomError: string | null;
@@ -19,7 +19,7 @@ export interface UseRandomLinkResult {
 
 /**
  * Manages the "Stumble upon" feature. Fetches a random unread link, opens
- * it in a new tab, and immediately archives it.
+ * it in a new tab, and immediately marks it as read.
  *
  * Note: Opening a new tab requires being called from inside a user-gesture
  * handler. This hook is always triggered by a button click or keyboard
@@ -45,11 +45,11 @@ export function useRandomLink({
       } else {
         window.open(link.url, '_blank', 'noopener,noreferrer');
         try {
-          await archiveLink(link.id);
+          await readLink(link.id);
           onRemoveLink(link.id);
           onDecrementTotal();
         } catch (error: unknown) {
-          console.error('Failed to archive link after opening', error);
+          console.error('Failed to mark link as read after opening', error);
         }
       }
     } catch (error: unknown) {

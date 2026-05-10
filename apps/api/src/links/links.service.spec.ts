@@ -33,7 +33,7 @@ const MISSING_LINK_ID = 'missing-link';
 const USER_ID = 'user-1';
 
 const makeLink = (overrides = {}) => ({
-  archivedAt: null,
+  readAt: null,
   createdAt: new Date(),
   id: LINK_ID,
   meta: null,
@@ -111,9 +111,9 @@ describe('LinksService', () => {
     ).rejects.toThrow('Invalid url');
   });
 
-  it('upserts existing link: clears archivedAt, moves to top, re-enqueues metadata when not fetched', async () => {
-    const existing = makeLink({ archivedAt: new Date(), meta: null });
-    const updated = makeLink({ archivedAt: null });
+  it('upserts existing link: clears readAt, moves to top, re-enqueues metadata when not fetched', async () => {
+    const existing = makeLink({ readAt: new Date(), meta: null });
+    const updated = makeLink({ readAt: null });
     (prismaMock.link.findFirst as jest.Mock).mockResolvedValue(existing);
     (prismaMock.link.update as jest.Mock).mockResolvedValue(updated);
 
@@ -123,14 +123,14 @@ describe('LinksService', () => {
     expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: LINK_ID },
-        data: expect.objectContaining({ archivedAt: null }),
+        data: expect.objectContaining({ readAt: null }),
       }),
     );
     expect(queueMock.send).toHaveBeenCalledWith(QUEUES.METADATA_FETCH, {
       linkId: LINK_ID,
       url: LINK_URL,
     });
-    expect(link.archivedAt).toBeNull();
+    expect(link.readAt).toBeNull();
   });
 
   it('upserts existing link without re-enqueuing metadata when already fetched', async () => {
@@ -161,15 +161,15 @@ describe('LinksService', () => {
     expect(result.data).toHaveLength(1);
   });
 
-  it('findAll filters archived links when archived=true', async () => {
+  it('findAll filters read links when read=true', async () => {
     (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
     (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
 
-    await service.findAll(USER_ID, { archived: true });
+    await service.findAll(USER_ID, { read: true });
 
     expect(prismaMock.link.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ archivedAt: { not: null } }),
+        where: expect.objectContaining({ readAt: { not: null } }),
       }),
     );
   });
@@ -247,45 +247,45 @@ describe('LinksService', () => {
     );
   });
 
-  it('archive sets archivedAt and returns link', async () => {
-    const archived = makeLink({ archivedAt: new Date() });
-    (prismaMock.link.update as jest.Mock).mockResolvedValue(archived);
+  it('read sets readAt and returns link', async () => {
+    const read = makeLink({ readAt: new Date() });
+    (prismaMock.link.update as jest.Mock).mockResolvedValue(read);
 
-    const result = await service.archive(USER_ID, LINK_ID);
-    expect(result?.archivedAt).not.toBeNull();
+    const result = await service.read(USER_ID, LINK_ID);
+    expect(result?.readAt).not.toBeNull();
   });
 
-  it('archive throws NotFoundException on P2025', async () => {
+  it('read throws NotFoundException on P2025', async () => {
     (prismaMock.link.update as jest.Mock).mockRejectedValue(makeP2025());
 
-    await expect(service.archive(USER_ID, MISSING_LINK_ID)).rejects.toThrow(
+    await expect(service.read(USER_ID, MISSING_LINK_ID)).rejects.toThrow(
       NotFoundException,
     );
   });
 
-  it('unarchive clears archivedAt and returns link', async () => {
-    const unarchived = makeLink({ archivedAt: null });
-    (prismaMock.link.update as jest.Mock).mockResolvedValue(unarchived);
+  it('unread clears readAt and returns link', async () => {
+    const unread = makeLink({ readAt: null });
+    (prismaMock.link.update as jest.Mock).mockResolvedValue(unread);
 
-    const result = await service.unarchive(USER_ID, LINK_ID);
-    expect(result?.archivedAt).toBeNull();
+    const result = await service.unread(USER_ID, LINK_ID);
+    expect(result?.readAt).toBeNull();
   });
 
-  it('unarchive throws NotFoundException on P2025', async () => {
+  it('unread throws NotFoundException on P2025', async () => {
     (prismaMock.link.update as jest.Mock).mockRejectedValue(makeP2025());
 
-    await expect(service.unarchive(USER_ID, MISSING_LINK_ID)).rejects.toThrow(
+    await expect(service.unread(USER_ID, MISSING_LINK_ID)).rejects.toThrow(
       NotFoundException,
     );
   });
 
-  it('removeAllArchived deletes all archived links and returns count', async () => {
+  it('removeAllRead deletes all read links and returns count', async () => {
     (prismaMock.link.deleteMany as jest.Mock).mockResolvedValue({ count: 3 });
 
-    const result = await service.removeAllArchived(USER_ID);
+    const result = await service.removeAllRead(USER_ID);
 
     expect(prismaMock.link.deleteMany).toHaveBeenCalledWith({
-      where: { userId: USER_ID, archivedAt: { not: null } },
+      where: { userId: USER_ID, readAt: { not: null } },
     });
     expect(result).toEqual({ count: 3 });
   });
@@ -331,7 +331,7 @@ describe('LinksService', () => {
     );
   });
 
-  it('getRandom queries archived links when archived=true', async () => {
+  it('getRandom queries read links when read=true', async () => {
     (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
 
     await service.getRandom(USER_ID, true);
@@ -339,15 +339,15 @@ describe('LinksService', () => {
     expect(prismaMock.$queryRaw).toHaveBeenCalled();
   });
 
-  it('findAll filters non-archived links when archived=false', async () => {
+  it('findAll filters unread links when read=false', async () => {
     (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
     (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
 
-    await service.findAll(USER_ID, { archived: false });
+    await service.findAll(USER_ID, { read: false });
 
     expect(prismaMock.link.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ archivedAt: null }),
+        where: expect.objectContaining({ readAt: null }),
       }),
     );
   });
@@ -394,20 +394,20 @@ describe('LinksService', () => {
     );
   });
 
-  it('archive rethrows non-P2025 errors', async () => {
+  it('read rethrows non-P2025 errors', async () => {
     const networkError = new Error('Network failure');
     (prismaMock.link.update as jest.Mock).mockRejectedValue(networkError);
 
-    await expect(service.archive(USER_ID, LINK_ID)).rejects.toThrow(
+    await expect(service.read(USER_ID, LINK_ID)).rejects.toThrow(
       'Network failure',
     );
   });
 
-  it('unarchive rethrows non-P2025 errors', async () => {
+  it('unread rethrows non-P2025 errors', async () => {
     const networkError = new Error('Network failure');
     (prismaMock.link.update as jest.Mock).mockRejectedValue(networkError);
 
-    await expect(service.unarchive(USER_ID, LINK_ID)).rejects.toThrow(
+    await expect(service.unread(USER_ID, LINK_ID)).rejects.toThrow(
       'Network failure',
     );
   });
@@ -421,7 +421,7 @@ describe('LinksService', () => {
     );
   });
 
-  it('findAll with search uses archived filter when archived=false', async () => {
+  it('findAll with search uses read filter when read=false', async () => {
     (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
       { id: LINK_ID, total: BigInt(1) },
     ]);
@@ -429,7 +429,7 @@ describe('LinksService', () => {
 
     const result = await service.findAll(USER_ID, {
       search: 'duck',
-      archived: false,
+      read: false,
     });
 
     expect(prismaMock.$queryRaw).toHaveBeenCalled();

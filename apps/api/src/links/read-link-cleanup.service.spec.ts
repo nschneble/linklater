@@ -5,7 +5,7 @@ jest.mock('../prisma/prisma.service', () => ({
 }));
 jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 
-import { ArchiveCleanupService } from './archive-cleanup.service';
+import { ReadLinkCleanupService } from './read-link-cleanup.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 import { QUEUES } from '../queue/queue.constants';
@@ -13,8 +13,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 const WORKER_ID = 'worker-1';
 
-describe('ArchiveCleanupService', () => {
-  let service: ArchiveCleanupService;
+describe('ReadLinkCleanupService', () => {
+  let service: ReadLinkCleanupService;
 
   const prismaMock = {
     link: {
@@ -30,13 +30,13 @@ describe('ArchiveCleanupService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        ArchiveCleanupService,
+        ReadLinkCleanupService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: QueueService, useValue: queueMock },
       ],
     }).compile();
 
-    service = module.get<ArchiveCleanupService>(ArchiveCleanupService);
+    service = module.get<ReadLinkCleanupService>(ReadLinkCleanupService);
     jest.clearAllMocks();
   });
 
@@ -44,33 +44,33 @@ describe('ArchiveCleanupService', () => {
     expect(service).toBeDefined();
   });
 
-  it('schedules the archive-cleanup cron on init', async () => {
+  it('schedules the read-link-cleanup cron on init', async () => {
     await service.onModuleInit();
 
     expect(queueMock.schedule).toHaveBeenCalledWith(
-      QUEUES.ARCHIVE_CLEANUP,
+      QUEUES.READ_LINK_CLEANUP,
       '0 3 * * *',
     );
   });
 
-  it('registers a worker for the ARCHIVE_CLEANUP queue on init', async () => {
+  it('registers a worker for the READ_LINK_CLEANUP queue on init', async () => {
     await service.onModuleInit();
 
     expect(queueMock.work).toHaveBeenCalledWith(
-      QUEUES.ARCHIVE_CLEANUP,
+      QUEUES.READ_LINK_CLEANUP,
       expect.any(Function),
     );
   });
 
-  it('deletes links archived more than seven days ago', async () => {
+  it('deletes links read more than seven days ago', async () => {
     (prismaMock.link.deleteMany as jest.Mock).mockResolvedValue({ count: 2 });
 
-    await service.deleteExpiredArchivedLinks();
+    await service.deleteExpiredReadLinks();
 
     const call = (prismaMock.link.deleteMany as jest.Mock).mock.calls[0][0] as {
-      where: { archivedAt: { lt: Date } };
+      where: { readAt: { lt: Date } };
     };
-    const cutoff = call.where.archivedAt.lt;
+    const cutoff = call.where.readAt.lt;
     const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
 
     expect(cutoff).toBeInstanceOf(Date);
@@ -82,14 +82,14 @@ describe('ArchiveCleanupService', () => {
     );
   });
 
-  it('is a no-op when no expired archived links exist', async () => {
+  it('is a no-op when no expired read links exist', async () => {
     (prismaMock.link.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
 
-    await expect(service.deleteExpiredArchivedLinks()).resolves.not.toThrow();
+    await expect(service.deleteExpiredReadLinks()).resolves.not.toThrow();
     expect(prismaMock.link.deleteMany).toHaveBeenCalledTimes(1);
   });
 
-  it('worker callback invokes deleteExpiredArchivedLinks', async () => {
+  it('worker callback invokes deleteExpiredReadLinks', async () => {
     let capturedCallback: (() => Promise<void>) | null = null;
 
     (queueMock.work as jest.Mock).mockImplementation(

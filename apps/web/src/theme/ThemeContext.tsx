@@ -2,7 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -66,12 +66,35 @@ interface ThemeContextValue {
   baseTheme: BaseTheme;
   /** The current color mode. */
   mode: Mode;
-  /** Sets the base theme. Also persists to `localStorage` and updates the `data-theme` attribute. */
+  /**
+   * Sets the base theme from a user action. Persists to `localStorage`
+   * with a timestamp so a subsequent server sync cannot overwrite a very
+   * recent change.
+   */
   setBaseTheme: (theme: BaseTheme) => void;
-  /** Sets the color mode. Also persists to `localStorage` and updates the `data-mode` attribute. */
+  /**
+   * Sets the color mode from a user action. Persists to `localStorage`
+   * with a timestamp so a subsequent server sync cannot overwrite a very
+   * recent change.
+   */
   setMode: (mode: Mode) => void;
-  /** Toggles between `'light'` and `'dark'`. */
+  /**
+   * Toggles between `'light'` and `'dark'`. Writes a timestamp like
+   * `setMode`.
+   */
   toggleMode: () => void;
+  /**
+   * Applies the server-stored theme preference. Skips the update if the
+   * user changed the theme locally within the last 30 seconds as a race
+   * condition guard for optimistic updates that may not have reached the
+   * server before a reload.
+   */
+  applyServerTheme: (theme: BaseTheme) => void;
+  /**
+   * Applies the server-stored mode preference. Skips the update if the
+   * user changed the mode locally within the last 30 seconds.
+   */
+  applyServerMode: (mode: Mode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -80,6 +103,17 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 const THEME_STORAGE_KEY = 'linklater_theme';
 /** `localStorage` key for persisting the selected color mode across sessions. */
 const MODE_STORAGE_KEY = 'linklater_mode';
+/** Timestamp written alongside the theme when a user action changes it. */
+const THEME_UPDATED_AT_KEY = 'linklater_theme_updated_at';
+/** Timestamp written alongside the mode when a user action changes it. */
+const MODE_UPDATED_AT_KEY = 'linklater_mode_updated_at';
+
+/**
+ * If the user changed a preference less than this many milliseconds ago,
+ * the server sync in `App.tsx` will not override it. 30s is well beyond
+ * any realistic `updateMe` round-trip time.
+ */
+const RECENT_LOCAL_CHANGE_MS = 30_000;
 
 /**
  * Returns the theme that was last stored in `localStorage`, falling back
@@ -114,9 +148,13 @@ function getInitialMode(): Mode {
  * `document.documentElement` so that CSS variables defined in the theme
  * stylesheets cascade to the entire page.
  *
- * Both values are persisted to `localStorage` so they survive reloads.
- * Server-stored preferences (from `GET /auth/me`) are synced into this
- * context by `App.tsx` after login.
+ * User-initiated changes (via `setBaseTheme`, `setMode`, `toggleMode`)
+ * write a timestamp to `localStorage` alongside the value. The server sync
+ * path (`applyServerTheme`, `applyServerMode`) checks that timestamp and
+ * skips the update if a local change is less than 30 seconds old. This
+ * prevents a hard page refresh, made before an optimistic
+ * `PATCH /users/me` resolves, from reverting the user's choice back to the
+ * stale server value.
  *
  * @param children - The subtree that should have access to theme state.
  */
@@ -125,30 +163,73 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     useState<BaseTheme>(getInitialBaseTheme);
   const [mode, setModeState] = useState<Mode>(getInitialMode);
 
-  // Applies theme and mode to the DOM and persist to localStorage whenever either changes
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
+  // useLayoutEffect ensures data-theme/data-mode are set before any child
+  // useEffect reads getComputedStyle (e.g. useThemeOverrides).
+  useLayoutEffect(() => {
     document.documentElement.dataset.theme = baseTheme;
     document.documentElement.dataset.mode = mode;
-    window.localStorage.setItem(THEME_STORAGE_KEY, baseTheme);
-    window.localStorage.setItem(MODE_STORAGE_KEY, mode);
   }, [baseTheme, mode]);
 
   const setBaseTheme = useCallback((theme: BaseTheme) => {
     setBaseThemeState(theme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    window.localStorage.setItem(THEME_UPDATED_AT_KEY, Date.now().toString());
   }, []);
 
-  const setMode = useCallback((mode: Mode) => {
-    setModeState(mode);
+  const setMode = useCallback((newMode: Mode) => {
+    setModeState(newMode);
+    window.localStorage.setItem(MODE_STORAGE_KEY, newMode);
+    window.localStorage.setItem(MODE_UPDATED_AT_KEY, Date.now().toString());
   }, []);
 
   const toggleMode = useCallback(() => {
-    setModeState((current) => (current === 'light' ? 'dark' : 'light'));
+    setModeState((current) => {
+      const next = current === 'light' ? 'dark' : 'light';
+      window.localStorage.setItem(MODE_STORAGE_KEY, next);
+      window.localStorage.setItem(MODE_UPDATED_AT_KEY, Date.now().toString());
+      return next;
+    });
+  }, []);
+
+  const applyServerTheme = useCallback((theme: BaseTheme) => {
+    const updatedAt = parseInt(
+      readLocalStorage(THEME_UPDATED_AT_KEY) ?? '0',
+      10,
+    );
+    if (Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS) return;
+    setBaseThemeState(theme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, []);
+
+  const applyServerMode = useCallback((serverMode: Mode) => {
+    const updatedAt = parseInt(
+      readLocalStorage(MODE_UPDATED_AT_KEY) ?? '0',
+      10,
+    );
+    if (Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS) return;
+    setModeState(serverMode);
+    window.localStorage.setItem(MODE_STORAGE_KEY, serverMode);
   }, []);
 
   const value = useMemo(
-    () => ({ baseTheme, mode, setBaseTheme, setMode, toggleMode }),
-    [baseTheme, mode, setBaseTheme, setMode, toggleMode],
+    () => ({
+      applyServerMode,
+      applyServerTheme,
+      baseTheme,
+      mode,
+      setBaseTheme,
+      setMode,
+      toggleMode,
+    }),
+    [
+      applyServerMode,
+      applyServerTheme,
+      baseTheme,
+      mode,
+      setBaseTheme,
+      setMode,
+      toggleMode,
+    ],
   );
 
   return (

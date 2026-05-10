@@ -14,4 +14,4 @@ export const FOCUS_RING =
  * Applied to `PrimaryButton` and `IconButton` so that any disabled button
  * consistently reduces opacity and shows a wait cursor.
  */
-export const DISABLED = 'disabled:opacity-60 disabled:cursor-wait';
+export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';

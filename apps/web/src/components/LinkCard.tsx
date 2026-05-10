@@ -43,46 +43,51 @@ interface LinkCardProps {
    * @default 0
    */
   animationDelay?: number;
-  /** Called when the user clicks the card (to open + archive) or the "Mark as unread" button. */
-  onArchiveToggle: (link: Link) => void;
+  /** When `true`, renders a keyboard-selection highlight. */
+  isSelected?: boolean;
+  /** Called when the user clicks the card (to open + read) or the "Mark as unread" button. */
+  onReadToggle: (link: Link) => void;
 }
 
 /**
  * Displays a single saved link as an interactive card.
  *
- * Clicking the card opens the link in a new tab and, if it is currently unread,
- * immediately archives it (the "read it" action). Archived links show a
- * "Mark as unread" button instead.
+ * Clicking the card opens the link in a new tab and, if it is currently
+ * unread, immediately marks it as read. Read links show a "Mark as unread"
+ * button instead.
  *
  * Delegates rendering to `LinkCardLayout` so that the interaction logic
- * (click handling, archive toggling) is separated from the visual structure.
+ * (click handling, read toggling) is separated from the visual structure.
  */
 export default function LinkCard({
   link,
   animationDelay = 0,
-  onArchiveToggle,
+  isSelected = false,
+  onReadToggle,
 }: LinkCardProps) {
   function handleCardClick() {
     window.open(link.url, '_blank', 'noreferrer');
-    // Only archive on open when the link is currently unread. Clicking an
-    // already-archived card should just open it without changing its state.
-    if (!link.archivedAt) {
-      onArchiveToggle(link);
+    // Only mark-as-read on open when the link is currently unread.
+    // Clicking an already-read card should just open it without changing
+    // its state.
+    if (!link.readAt) {
+      onReadToggle(link);
     }
   }
 
-  function handleUnarchiveClick(event: React.MouseEvent) {
+  function handleUnreadClick(event: React.MouseEvent) {
     // Prevent the click from bubbling up to the card, which would re-open the URL.
     event.stopPropagation();
-    onArchiveToggle(link);
+    onReadToggle(link);
   }
 
   return (
     <LinkCardLayout
       link={link}
       animationDelay={animationDelay}
+      isSelected={isSelected}
       onCardClick={handleCardClick}
-      onUnarchiveClick={handleUnarchiveClick}
+      onUnreadClick={handleUnreadClick}
     />
   );
 }

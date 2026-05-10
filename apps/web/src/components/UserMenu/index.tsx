@@ -58,22 +58,59 @@ export default function UserMenu({
   const [themeSubmenuOnLeft, setThemeSubmenuOnLeft] = useState(true);
 
   const avatarRef = useRef<HTMLButtonElement | null>(null);
+  const flyoutRef = useRef<HTMLDivElement | null>(null);
   const hideSubmenuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const openedByKeyboard = useRef(false);
   const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-  const menuRef = useRef<HTMLDivElement | null>(null);
+  const submenuOpenedByKeyboard = useRef(false);
+  const themeRowRef = useRef<HTMLDivElement | null>(null);
 
   useMenuNavigation(menuRef, () => {
     setShowUserMenu(false);
     avatarRef.current?.focus();
   });
-  const themeRowRef = useRef<HTMLDivElement | null>(null);
 
-  // resets submenu when main menu closes
+  const closeFlyout = () => {
+    setShowThemeSubmenu(false);
+    resetPreview(baseTheme);
+    menuRef.current
+      ?.querySelector<HTMLElement>('[aria-haspopup="menu"]')
+      ?.focus();
+  };
+
+  useMenuNavigation(flyoutRef, closeFlyout, '[data-submenu-item]', closeFlyout);
+
+  // resets submenu when main menu closes; moves focus into menu on open
   useEffect(() => {
-    if (!showUserMenu) setShowThemeSubmenu(false);
+    if (!showUserMenu) {
+      setShowThemeSubmenu(false);
+      return;
+    }
+    if (openedByKeyboard.current) {
+      // Keyboard open: focus first item so arrow-key navigation starts
+      // immediately
+      const firstItem =
+        menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
+      firstItem?.focus();
+    } else {
+      // Mouse open: focus the container so keydown events reach
+      // useMenuNavigation without visually pre-selecting any item
+      menuRef.current?.focus();
+    }
   }, [showUserMenu]);
+
+  // auto-focuses first flyout item when submenu opens via keyboard
+  useEffect(() => {
+    if (!showThemeSubmenu || !submenuOpenedByKeyboard.current) return;
+    submenuOpenedByKeyboard.current = false;
+    const firstItem = flyoutRef.current?.querySelector<HTMLElement>(
+      '[data-submenu-item]',
+    );
+    firstItem?.focus();
+  }, [showThemeSubmenu]);
 
   // closes main menu on outside clicks
   useEffect(() => {
@@ -176,7 +213,11 @@ export default function UserMenu({
         className={`flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] border-shadow hover:border-shadow ${FOCUS_RING} rounded-4xl transition cursor-pointer`}
         ref={avatarRef}
         type="button"
-        onClick={() => setShowUserMenu((open) => !open)}
+        data-usermenu-trigger
+        onClick={(event) => {
+          openedByKeyboard.current = event.detail === 0;
+          setShowUserMenu((open) => !open);
+        }}
         aria-expanded={showUserMenu}
         aria-haspopup="menu"
         aria-label="User menu"
@@ -196,7 +237,8 @@ export default function UserMenu({
         ref={menuRef}
         role="menu"
         aria-hidden={!showUserMenu}
-        className="absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] border-shadow text-xs rounded-lg"
+        tabIndex={-1}
+        className="absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] border-shadow text-xs rounded-lg focus:outline-none"
         style={{
           transition: `opacity ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}`,
           opacity: showUserMenu ? 1 : 0,
@@ -260,10 +302,14 @@ export default function UserMenu({
               previewTheme={previewTheme}
               showSubmenu={showThemeSubmenu}
               submenuOnLeft={themeSubmenuOnLeft}
+              flyoutRef={flyoutRef}
               onFlyoutMouseEnter={cancelHide}
               onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
               onThemeRowItemEnter={handleThemeRowItemEnter}
               onTriggerClick={handleThemeRowEnter}
+              onKeyboardOpen={() => {
+                submenuOpenedByKeyboard.current = true;
+              }}
               onPreviewChange={handlePreviewChange}
               onSelect={handleThemeSelect}
             />

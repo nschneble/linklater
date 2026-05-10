@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 /**
  * A single action item within a `role="menu"` container.
  * Renders a full-width `<button>` with `role="menuitem"`, a Font Awesome icon,
@@ -32,11 +34,19 @@ export default function MenuItem({
   active = false,
   className = '',
 }: MenuItemProps) {
+  const [isPointerOver, setIsPointerOver] = useState(false);
+
   return (
     <button
-      className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 hover:bg-[var(--bg-surface)] text-[var(--text)] text-left cursor-pointer ${className}`}
+      className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 ${isPointerOver ? 'bg-[var(--bg-surface)]' : ''} focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-pointer ${className}`}
       type="button"
       role="menuitem"
+      onMouseEnter={(event) => {
+        setIsPointerOver(true);
+        event.currentTarget.focus();
+      }}
+      onMouseLeave={() => setIsPointerOver(false)}
+      onBlur={() => setIsPointerOver(false)}
       onClick={onClick}
     >
       <i

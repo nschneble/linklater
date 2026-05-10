@@ -7,7 +7,7 @@ const makeLink = (overrides: Partial<Link> = {}): Link => ({
   id: 'link-1',
   updatedAt: '2026-01-01T00:00:00.000Z',
   url: 'https://example.com/article',
-  archivedAt: null,
+  readAt: null,
   meta: {
     fetchedAt: '2026-01-01T00:01:00.000Z',
     title: 'Example Article',
@@ -30,7 +30,7 @@ describe('LinkCard', () => {
 
   describe('card click', () => {
     it('opens the link in a new tab', () => {
-      render(<LinkCard link={makeLink()} onArchiveToggle={vi.fn()} />);
+      render(<LinkCard link={makeLink()} onReadToggle={vi.fn()} />);
 
       fireEvent.click(screen.getByRole('link'));
 
@@ -41,39 +41,39 @@ describe('LinkCard', () => {
       );
     });
 
-    it('calls onArchiveToggle when link is not archived', () => {
-      const onArchiveToggle = vi.fn();
+    it('calls onReadToggle when link is not read', () => {
+      const onReadToggle = vi.fn();
       render(
         <LinkCard
-          link={makeLink({ archivedAt: null })}
-          onArchiveToggle={onArchiveToggle}
+          link={makeLink({ readAt: null })}
+          onReadToggle={onReadToggle}
         />,
       );
 
       fireEvent.click(screen.getByRole('link'));
 
-      expect(onArchiveToggle).toHaveBeenCalledOnce();
+      expect(onReadToggle).toHaveBeenCalledOnce();
     });
 
-    it('does not call onArchiveToggle when link is already archived', () => {
-      const onArchiveToggle = vi.fn();
+    it('does not call onReadToggle when link is already read', () => {
+      const onReadToggle = vi.fn();
       render(
         <LinkCard
-          link={makeLink({ archivedAt: '2026-01-02T00:00:00.000Z' })}
-          onArchiveToggle={onArchiveToggle}
+          link={makeLink({ readAt: '2026-01-02T00:00:00.000Z' })}
+          onReadToggle={onReadToggle}
         />,
       );
 
       fireEvent.click(screen.getByRole('link'));
 
-      expect(onArchiveToggle).not.toHaveBeenCalled();
+      expect(onReadToggle).not.toHaveBeenCalled();
     });
   });
 
   describe('metadata loading state', () => {
     it('shows a pulsing dot when meta is null', () => {
       const { container } = render(
-        <LinkCard link={makeLink({ meta: null })} onArchiveToggle={vi.fn()} />,
+        <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
       );
 
       expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('LinkCard', () => {
       const { container } = render(
         <LinkCard
           link={makeLink({ meta: { fetchedAt: '2026-01-01T00:01:00.000Z' } })}
-          onArchiveToggle={vi.fn()}
+          onReadToggle={vi.fn()}
         />,
       );
 
@@ -101,7 +101,7 @@ describe('LinkCard', () => {
               faviconUrl: 'https://example.com/favicon.ico',
             },
           })}
-          onArchiveToggle={vi.fn()}
+          onReadToggle={vi.fn()}
         />,
       );
 
@@ -125,7 +125,7 @@ describe('LinkCard', () => {
               description: 'An interesting article',
             },
           })}
-          onArchiveToggle={vi.fn()}
+          onReadToggle={vi.fn()}
         />,
       );
 
@@ -141,7 +141,7 @@ describe('LinkCard', () => {
               imageUrl: 'https://example.com/og.jpg',
             },
           })}
-          onArchiveToggle={vi.fn()}
+          onReadToggle={vi.fn()}
         />,
       );
 
@@ -162,7 +162,7 @@ describe('LinkCard', () => {
               imageUrl: null,
             },
           })}
-          onArchiveToggle={vi.fn()}
+          onReadToggle={vi.fn()}
         />,
       );
 
@@ -182,7 +182,7 @@ describe('LinkCard', () => {
               title: null,
             },
           })}
-          onArchiveToggle={vi.fn()}
+          onReadToggle={vi.fn()}
         />,
       );
 
@@ -199,7 +199,7 @@ describe('LinkCard', () => {
               title: null,
             },
           })}
-          onArchiveToggle={vi.fn()}
+          onReadToggle={vi.fn()}
         />,
       );
 
@@ -217,7 +217,7 @@ describe('LinkCard', () => {
               siteName: 'Example Site',
             },
           })}
-          onArchiveToggle={vi.fn()}
+          onReadToggle={vi.fn()}
         />,
       );
 
@@ -226,19 +226,19 @@ describe('LinkCard', () => {
 
     it('falls back to url hostname when meta.siteName is absent', () => {
       render(
-        <LinkCard link={makeLink({ meta: null })} onArchiveToggle={vi.fn()} />,
+        <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
       );
 
       expect(screen.getByText('example.com')).toBeInTheDocument();
     });
   });
 
-  describe('archived state', () => {
-    it('shows Mark as unread button when link is archived', () => {
+  describe('read state', () => {
+    it('shows Mark as unread button when link is read', () => {
       render(
         <LinkCard
-          link={makeLink({ archivedAt: '2026-01-02T00:00:00.000Z' })}
-          onArchiveToggle={vi.fn()}
+          link={makeLink({ readAt: '2026-01-02T00:00:00.000Z' })}
+          onReadToggle={vi.fn()}
         />,
       );
 
@@ -247,12 +247,9 @@ describe('LinkCard', () => {
       ).toBeInTheDocument();
     });
 
-    it('does not show Mark as unread button when link is not archived', () => {
+    it('does not show Mark as unread button when link is not read', () => {
       render(
-        <LinkCard
-          link={makeLink({ archivedAt: null })}
-          onArchiveToggle={vi.fn()}
-        />,
+        <LinkCard link={makeLink({ readAt: null })} onReadToggle={vi.fn()} />,
       );
 
       expect(
@@ -260,25 +257,25 @@ describe('LinkCard', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('calls onArchiveToggle when Mark as unread is clicked', () => {
-      const onArchiveToggle = vi.fn();
+    it('calls onReadToggle when Mark as unread is clicked', () => {
+      const onReadToggle = vi.fn();
       render(
         <LinkCard
-          link={makeLink({ archivedAt: '2026-01-02T00:00:00.000Z' })}
-          onArchiveToggle={onArchiveToggle}
+          link={makeLink({ readAt: '2026-01-02T00:00:00.000Z' })}
+          onReadToggle={onReadToggle}
         />,
       );
 
       fireEvent.click(screen.getByRole('button', { name: /mark as unread/i }));
 
-      expect(onArchiveToggle).toHaveBeenCalledOnce();
+      expect(onReadToggle).toHaveBeenCalledOnce();
     });
 
     it('does not open the link when Mark as unread is clicked', () => {
       render(
         <LinkCard
-          link={makeLink({ archivedAt: '2026-01-02T00:00:00.000Z' })}
-          onArchiveToggle={vi.fn()}
+          link={makeLink({ readAt: '2026-01-02T00:00:00.000Z' })}
+          onReadToggle={vi.fn()}
         />,
       );
 

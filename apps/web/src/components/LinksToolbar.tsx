@@ -9,10 +9,10 @@ import type { LinksFilter } from '../lib/useLinks';
 
 /** Props for `LinksToolbar`. All values come from `LinksView`. */
 interface LinksToolbarProps {
-  /** The active filter, driving which tab is highlighted and which controls are shown. */
+  /** The current filter, driving which tab is highlighted and which controls are shown. */
   filter: LinksFilter;
   /** Disables the "Remove all" button while the delete request is in progress. */
-  isClearingArchived: boolean;
+  isClearingRead: boolean;
   /** Passed to `LinksControls` to conditionally hide the "Remove all" button. */
   links: Link[];
   /** Passed to `LinksControls` to disable/relabel the "Stumble upon" button. */
@@ -23,7 +23,7 @@ interface LinksToolbarProps {
   searchInputRef: React.RefObject<HTMLInputElement | null>;
   /** Whether the inline link form is open — drives button label and `aria-expanded`. */
   showLinkForm: boolean;
-  onClearArchived: () => void;
+  onClearRead: () => void;
   onNavigateRead: () => void;
   onNavigateUnread: () => void;
   onRandom: () => Promise<void>;
@@ -44,13 +44,13 @@ interface LinksToolbarProps {
  */
 export default function LinksToolbar({
   filter,
-  isClearingArchived,
+  isClearingRead,
   links,
   randomLoading,
   search,
   searchInputRef,
   showLinkForm,
-  onClearArchived,
+  onClearRead,
   onNavigateRead,
   onNavigateUnread,
   onRandom,
@@ -75,19 +75,19 @@ export default function LinksToolbar({
             style={{
               transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
               transform:
-                filter === 'archived' ? 'translateX(100%)' : 'translateX(0)',
+                filter === 'read' ? 'translateX(100%)' : 'translateX(0)',
             }}
           />
           <TabButton
             className="px-3 py-1.5"
-            isActive={filter === 'active'}
+            isActive={filter === 'unread'}
             onClick={onNavigateUnread}
           >
             Unread
           </TabButton>
           <TabButton
             className="px-3 py-1.5"
-            isActive={filter === 'archived'}
+            isActive={filter === 'read'}
             onClick={onNavigateRead}
           >
             Read
@@ -97,11 +97,11 @@ export default function LinksToolbar({
         <div className="hidden sm:contents">
           <LinksControls
             filter={filter}
-            isClearingArchived={isClearingArchived}
+            isClearingRead={isClearingRead}
             linksCount={links.length}
             randomLoading={randomLoading}
             showLinkForm={showLinkForm}
-            onClearArchived={onClearArchived}
+            onClearRead={onClearRead}
             onRandom={onRandom}
             onToggleForm={onToggleForm}
           />
@@ -114,7 +114,7 @@ export default function LinksToolbar({
           className="flex-1 min-w-0 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring focus:ring-[var(--accent)] focus:border-[var(--accent)] rounded-lg"
           type="search"
           placeholder={
-            filter === 'active' ? 'Search unread links' : 'Search read links'
+            filter === 'unread' ? 'Search unread links' : 'Search read links'
           }
           value={search}
           onChange={(event) => onSearch(event.target.value)}
@@ -127,14 +127,14 @@ export default function LinksToolbar({
         />
 
         <div className="flex sm:hidden shrink-0 gap-2">
-          {filter === 'archived' && links.length > 0 && (
+          {filter === 'read' && links.length > 0 && (
             <IconButton
               variant="elevated"
-              disabled={isClearingArchived}
+              disabled={isClearingRead}
               aria-label="Remove all read links"
               title="Permanently removes all read links."
               className="!px-2.5"
-              onClick={onClearArchived}
+              onClick={onClearRead}
             >
               <i
                 className="fa-solid fa-trash text-[0.7rem]"
@@ -142,7 +142,7 @@ export default function LinksToolbar({
               />
             </IconButton>
           )}
-          {filter === 'active' && (
+          {filter === 'unread' && (
             <>
               <IconButton
                 variant="elevated"

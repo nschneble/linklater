@@ -16,11 +16,11 @@
 
 ## Module Overview
 
-| Module     | Path           | Responsibility                                     |
+| Module     | Path           | Responsibility                              |
 | ---------- | -------------- | ------------------------------------------- |
 | `Auth`     | `src/auth`     | Signup, login, JWTs, emails, password reset |
 | `Email`    | `src/email`    | Send transactional emails                   |
-| `Links`    | `src/links`    | Link CRUD, search, archive (mark as read)   |
+| `Links`    | `src/links`    | Link CRUD, search, mark as read             |
 | `Metadata` | `src/metadata` | Fetch Open Graph metadata tags              |
 | `Prisma`   | `src/prisma`   | Prisma client                               |
 | `Queue`    | `src/queue`    | Enqueue and process background jobs         |
@@ -34,7 +34,7 @@ Linklater uses **JWT authentication** via Passport.
 2. `POST /auth/login` validates credentials and issues a signed JWT
 3. All protected endpoints require an `Authorization: Bearer <token>` header
 4. Tokens are validated by `JwtStrategy`
-4. JWTs expire after **90 days**
+5. JWTs expire after **90 days**
 
 Email verification is required for full access. Unverified users can still log in and use the app.
 
@@ -43,4 +43,4 @@ Email verification is required for full access. Unverified users can still log i
 Two pg-boss job types run in the background:
 
 - `fetch-metadata` is enqueued immediately after a link is created
-- `archive-cleanup` runs nightly and deletes archived links older than seven days
+- `read-link-cleanup` runs nightly and deletes read links older than seven days

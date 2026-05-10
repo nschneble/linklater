@@ -17,15 +17,15 @@ describe('LinksController', () => {
     getRandom: jest.fn(),
     findOne: jest.fn(),
     update: jest.fn(),
-    archive: jest.fn(),
-    unarchive: jest.fn(),
+    read: jest.fn(),
+    unread: jest.fn(),
     remove: jest.fn(),
-    removeAllArchived: jest.fn(),
+    removeAllRead: jest.fn(),
   } as unknown as LinksService;
 
   const makeRequest = (userId = USER_ID) => ({ user: { userId } }) as never;
   const makeLink = (overrides = {}) => ({
-    archivedAt: null,
+    readAt: null,
     createdAt: new Date(),
     id: LINK_ID,
     meta: null,
@@ -66,21 +66,21 @@ describe('LinksController', () => {
   });
 
   describe('findAll', () => {
-    it('passes search and archived flag parsed from query strings', async () => {
+    it('passes search and read flag parsed from query strings', async () => {
       const paginated = { data: [], limit: 50, page: 1, total: 0 };
       (linksServiceMock.findAll as jest.Mock).mockResolvedValue(paginated);
 
       await controller.findAll(makeRequest(), 'duck', 'true', '2', '25');
 
       expect(linksServiceMock.findAll).toHaveBeenCalledWith(USER_ID, {
-        archived: true,
+        read: true,
         limit: 25,
         page: 2,
         search: 'duck',
       });
     });
 
-    it('passes archived=false when the query param is "false"', async () => {
+    it('passes read=false when the query param is "false"', async () => {
       (linksServiceMock.findAll as jest.Mock).mockResolvedValue({
         data: [],
         limit: 50,
@@ -97,14 +97,14 @@ describe('LinksController', () => {
       );
 
       expect(linksServiceMock.findAll).toHaveBeenCalledWith(USER_ID, {
-        archived: false,
+        read: false,
         limit: undefined,
         page: undefined,
         search: undefined,
       });
     });
 
-    it('passes undefined for archived when the query param is absent', async () => {
+    it('passes undefined for read when the query param is absent', async () => {
       (linksServiceMock.findAll as jest.Mock).mockResolvedValue({
         data: [],
         limit: 50,
@@ -121,7 +121,7 @@ describe('LinksController', () => {
       );
 
       expect(linksServiceMock.findAll).toHaveBeenCalledWith(USER_ID, {
-        archived: undefined,
+        read: undefined,
         limit: undefined,
         page: undefined,
         search: undefined,
@@ -130,7 +130,7 @@ describe('LinksController', () => {
   });
 
   describe('random', () => {
-    it('passes archived=false by default', async () => {
+    it('passes read=false by default', async () => {
       (linksServiceMock.getRandom as jest.Mock).mockResolvedValue(null);
 
       await controller.random(makeRequest(), undefined);
@@ -138,7 +138,7 @@ describe('LinksController', () => {
       expect(linksServiceMock.getRandom).toHaveBeenCalledWith(USER_ID, false);
     });
 
-    it('passes archived=true when query param is "true"', async () => {
+    it('passes read=true when query param is "true"', async () => {
       (linksServiceMock.getRandom as jest.Mock).mockResolvedValue(null);
 
       await controller.random(makeRequest(), 'true');
@@ -188,39 +188,39 @@ describe('LinksController', () => {
     });
   });
 
-  describe('archive', () => {
-    it('delegates to LinksService.archive', async () => {
-      const link = makeLink({ archivedAt: new Date() });
-      (linksServiceMock.archive as jest.Mock).mockResolvedValue(link);
+  describe('read', () => {
+    it('delegates to LinksService.read', async () => {
+      const link = makeLink({ readAt: new Date() });
+      (linksServiceMock.read as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.archive(makeRequest(), LINK_ID);
+      const result = await controller.read(makeRequest(), LINK_ID);
 
-      expect(linksServiceMock.archive).toHaveBeenCalledWith(USER_ID, LINK_ID);
+      expect(linksServiceMock.read).toHaveBeenCalledWith(USER_ID, LINK_ID);
       expect(result).toBe(link);
     });
   });
 
-  describe('unarchive', () => {
-    it('delegates to LinksService.unarchive', async () => {
+  describe('unread', () => {
+    it('delegates to LinksService.unread', async () => {
       const link = makeLink();
-      (linksServiceMock.unarchive as jest.Mock).mockResolvedValue(link);
+      (linksServiceMock.unread as jest.Mock).mockResolvedValue(link);
 
-      const result = await controller.unarchive(makeRequest(), LINK_ID);
+      const result = await controller.unread(makeRequest(), LINK_ID);
 
-      expect(linksServiceMock.unarchive).toHaveBeenCalledWith(USER_ID, LINK_ID);
+      expect(linksServiceMock.unread).toHaveBeenCalledWith(USER_ID, LINK_ID);
       expect(result).toBe(link);
     });
   });
 
-  describe('removeAllArchived', () => {
-    it('delegates to LinksService.removeAllArchived', async () => {
-      (linksServiceMock.removeAllArchived as jest.Mock).mockResolvedValue({
+  describe('removeAllRead', () => {
+    it('delegates to LinksService.removeAllRead', async () => {
+      (linksServiceMock.removeAllRead as jest.Mock).mockResolvedValue({
         count: 5,
       });
 
-      const result = await controller.removeAllArchived(makeRequest());
+      const result = await controller.removeAllRead(makeRequest());
 
-      expect(linksServiceMock.removeAllArchived).toHaveBeenCalledWith(USER_ID);
+      expect(linksServiceMock.removeAllRead).toHaveBeenCalledWith(USER_ID);
       expect(result).toEqual({ count: 5 });
     });
   });

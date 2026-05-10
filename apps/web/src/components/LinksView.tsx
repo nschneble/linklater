@@ -25,17 +25,17 @@ const KeyboardShortcutsModal = lazy(() => import('./KeyboardShortcutsModal'));
 
 /**
  * Maps the current URL pathname to the links filter.
- * `/read` → `'archived'`, everything else → `'active'`.
+ * `/read` → `'read'`, everything else → `'unread'`.
  */
 function filterFromPath(pathname: string): LinksFilter {
-  return pathname === '/read' ? 'archived' : 'active';
+  return pathname === '/read' ? 'read' : 'unread';
 }
 
 /**
  * The main links view, rendered inside `AppShell` for both `/unread` and `/read`.
  *
  * Responsibilities:
- * - Reads the active filter from the URL (`/unread` vs `/read`).
+ * - Reads the current filter from the URL (`/unread` vs `/read`).
  * - Debounces the search input (300ms) and wraps the `setDebouncedSearch` call
  *   in `startTransition` so that React can defer the expensive re-render.
  * - Wires up keyboard shortcuts via `useKeyboardShortcuts`.
@@ -43,7 +43,7 @@ function filterFromPath(pathname: string): LinksFilter {
  *   `Toast`.
  * - Portals a backdrop `<button>` when the link form is open so that clicking
  *   outside the form closes it.
- * - Resets search and the `isClearingArchived` flag whenever the filter changes.
+ * - Resets search and the `isClearingRead` flag whenever the filter changes.
  */
 export default function LinksView() {
   const location = useLocation();
@@ -51,8 +51,11 @@ export default function LinksView() {
   const filter = filterFromPath(location.pathname);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedLinkIndex, setSelectedLinkIndex] = useState<number | null>(
+    null,
+  );
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [isClearingArchived, setIsClearingArchived] = useState(false);
+  const [isClearingRead, setIsClearingRead] = useState(false);
   const [, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,14 +72,14 @@ export default function LinksView() {
   }, [search]);
 
   const {
-    archiveError,
+    readError,
     deleteError,
     handleCreated,
-    handleDeleteAllArchived,
+    handleDeleteAllRead,
     handleDismissToast,
     handleLoadMore,
     handleRandom,
-    handleToggleArchive,
+    handleToggleRead,
     handleToggleForm,
     links,
     loadingLinks,
@@ -89,6 +92,32 @@ export default function LinksView() {
     toastMessage,
   } = useLinks(filter, debouncedSearch);
 
+  function handleNavigateNextLink() {
+    if (links.length === 0) return;
+    setSelectedLinkIndex((previous) => {
+      if (previous === null) return 0;
+      return Math.min(previous + 1, links.length - 1);
+    });
+  }
+
+  function handleNavigatePrevLink() {
+    if (links.length === 0) return;
+    setSelectedLinkIndex((previous) => {
+      if (previous === null) return links.length - 1;
+      return Math.max(previous - 1, 0);
+    });
+  }
+
+  function handleOpenSelectedLink() {
+    if (selectedLinkIndex === null) return;
+    const link = links[selectedLinkIndex];
+    if (!link) return;
+    window.open(link.url, '_blank', 'noreferrer');
+    if (!link.readAt) {
+      handleToggleRead(link);
+    }
+  }
+
   useKeyboardShortcuts({
     enabled: true,
     isShortcutsModalOpen: showShortcuts,
@@ -99,20 +128,36 @@ export default function LinksView() {
     onStumble: handleRandom,
     onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
     onEscape: showLinkForm ? handleToggleForm : undefined,
+    onNavigateNextLink: handleNavigateNextLink,
+    onNavigatePrevLink: handleNavigatePrevLink,
+    onOpenSelectedLink: handleOpenSelectedLink,
   });
 
   useEffect(() => {
-    setIsClearingArchived(false);
+    setIsClearingRead(false);
     setSearch('');
     setDebouncedSearch('');
+    setSelectedLinkIndex(null);
   }, [filter]);
 
-  async function handleClearArchived() {
-    setIsClearingArchived(true);
+  // clamps selection when the list shrinks (e.g. after a link is marked as read)
+  useEffect(() => {
+    if (selectedLinkIndex !== null && selectedLinkIndex >= links.length) {
+      setSelectedLinkIndex(links.length > 0 ? links.length - 1 : null);
+    }
+  }, [links.length, selectedLinkIndex]);
+
+  // resets selection when search changes, so the highlighted card matches
+  useEffect(() => {
+    setSelectedLinkIndex(null);
+  }, [debouncedSearch]);
+
+  async function handleClearRead() {
+    setIsClearingRead(true);
     try {
-      await handleDeleteAllArchived();
+      await handleDeleteAllRead();
     } finally {
-      setIsClearingArchived(false);
+      setIsClearingRead(false);
     }
   }
 
@@ -122,7 +167,7 @@ export default function LinksView() {
         <h2 className="text-lg font-semibold">Your links</h2>
         <button
           type="button"
-          className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-pointer"
+          className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-help"
           onClick={() => setShowShortcuts((previous) => !previous)}
           aria-label="Show keyboard shortcuts"
           title="Keyboard shortcuts"
@@ -131,20 +176,20 @@ export default function LinksView() {
         </button>
       </div>
       <p className="text-[var(--text-muted)] text-xs">
-        {filter === 'archived'
+        {filter === 'read'
           ? 'Read links are automatically removed after seven days.'
           : 'Add, search, or stumble upon something random.'}
       </p>
 
       <LinksToolbar
         filter={filter}
-        isClearingArchived={isClearingArchived}
+        isClearingRead={isClearingRead}
         links={links}
         randomLoading={randomLoading}
         search={search}
         searchInputRef={searchInputRef}
         showLinkForm={showLinkForm}
-        onClearArchived={handleClearArchived}
+        onClearRead={handleClearRead}
         onNavigateRead={() => navigate('/read')}
         onNavigateUnread={() => navigate('/unread')}
         onRandom={handleRandom}
@@ -170,12 +215,12 @@ export default function LinksView() {
         </p>
       )}
 
-      {archiveError && (
+      {readError && (
         <p
           className="mt-2 text-rose-300 text-xs animate-fade-in-up"
           role="alert"
         >
-          {archiveError}
+          {readError}
         </p>
       )}
 
@@ -213,14 +258,15 @@ export default function LinksView() {
 
       <LinksList
         filter={filter}
-        isClearingArchived={isClearingArchived}
+        isClearingRead={isClearingRead}
         links={links}
         loadingLinks={loadingLinks}
         page={page}
         pagination={pagination}
         search={search}
         debouncedSearch={debouncedSearch}
-        onArchiveToggle={handleToggleArchive}
+        selectedLinkIndex={selectedLinkIndex}
+        onReadToggle={handleToggleRead}
         onLoadMore={handleLoadMore}
       />
 

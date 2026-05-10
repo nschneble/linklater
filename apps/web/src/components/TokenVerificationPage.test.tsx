@@ -123,4 +123,40 @@ describe('TokenVerificationPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /back to linklater/i }));
   });
+
+  it('calls onSuccess after verifyFn resolves', async () => {
+    const onSuccess = vi.fn().mockResolvedValue(undefined);
+    DEFAULT_PROPS.verifyFn.mockResolvedValue(undefined);
+    renderPage({ ...DEFAULT_PROPS, onSuccess });
+
+    await waitFor(() => {
+      expect(screen.getByText('All done!')).toBeInTheDocument();
+    });
+
+    expect(onSuccess).toHaveBeenCalledOnce();
+  });
+
+  it('does not call onSuccess when verifyFn rejects', async () => {
+    const onSuccess = vi.fn();
+    DEFAULT_PROPS.verifyFn.mockRejectedValue(new Error('bad token'));
+    renderPage({ ...DEFAULT_PROPS, onSuccess });
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('calls verifyFn only once even when the effect fires twice (StrictMode)', async () => {
+    const singleCallVerifyFn = vi.fn().mockResolvedValue(undefined);
+    const props = { ...DEFAULT_PROPS, verifyFn: singleCallVerifyFn };
+    renderPage(props);
+
+    await waitFor(() => {
+      expect(screen.getByText('All done!')).toBeInTheDocument();
+    });
+
+    expect(singleCallVerifyFn).toHaveBeenCalledTimes(1);
+  });
 });

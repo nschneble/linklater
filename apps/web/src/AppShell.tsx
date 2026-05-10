@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -64,6 +64,26 @@ export default function AppShell() {
       console.error('Failed to save mode', error),
     );
   };
+
+  // Global 'x' shortcut to open/close the user menu from anywhere.
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key.toLowerCase() !== 'x') return;
+      const target = event.target as HTMLElement;
+      const isTypingField =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable;
+      if (isTypingField) return;
+      event.preventDefault();
+      document
+        .querySelector<HTMLButtonElement>('[data-usermenu-trigger]')
+        ?.click();
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (!user) return null;
 

@@ -8,7 +8,7 @@ import VerifyEmailChangePage from './components/VerifyEmailChangePage';
 import VerifyEmailPage from './components/VerifyEmailPage';
 import { useAuth } from './auth/AuthContext';
 import { useEffect } from 'react';
-import { useTheme, type BaseTheme } from './theme/ThemeContext';
+import { useTheme, type BaseTheme, type Mode } from './theme/ThemeContext';
 
 /**
  * Root app component. Handles top-level routing and authentication.
@@ -34,16 +34,19 @@ function UnauthenticatedRedirect() {
 
 export default function App() {
   const { user, loading } = useAuth();
-  const { setBaseTheme, setMode } = useTheme();
+  const { applyServerTheme, applyServerMode } = useTheme();
 
   // Syncs server-side theme and mode preferences into ThemeContext after
   // login. Without this, a user who changed their theme on one device
   // would see the old theme on another device until they changed it.
+  // applyServerTheme/applyServerMode skip the update if the user made a
+  // local change w/in the last 30s (optimistic race-condition guard).
   useEffect(() => {
     if (!user) return;
-    setBaseTheme(user.theme as BaseTheme);
-    if (user.mode === 'light' || user.mode === 'dark') setMode(user.mode);
-  }, [user, setBaseTheme, setMode]);
+    applyServerTheme(user.theme as BaseTheme);
+    if (user.mode === 'light' || user.mode === 'dark')
+      applyServerMode(user.mode as Mode);
+  }, [user, applyServerTheme, applyServerMode]);
 
   if (loading) {
     return (

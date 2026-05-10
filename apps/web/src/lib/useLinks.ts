@@ -3,19 +3,19 @@ import { useLinksData } from './useLinksData';
 import { useLinksForm } from './useLinksForm';
 import type { Link, PaginatedLinks } from './api';
 
-/** The two possible views of the links list — active (unread) or archived (read). */
-export type LinksFilter = 'active' | 'archived';
+/** The two possible views of the links list. */
+export type LinksFilter = 'unread' | 'read';
 
 /** The full public interface returned by `useLinks`. */
 export interface UseLinksResult {
-  archiveError: string | null;
+  readError: string | null;
   deleteError: string | null;
   handleCreated: (link: Link) => void;
-  handleDeleteAllArchived: () => Promise<void>;
+  handleDeleteAllRead: () => Promise<void>;
   handleDismissToast: () => void;
   handleLoadMore: () => void;
   handleRandom: () => Promise<void>;
-  handleToggleArchive: (link: Link) => Promise<void>;
+  handleToggleRead: (link: Link) => Promise<void>;
   handleToggleForm: () => void;
   links: Link[];
   loadingLinks: boolean;
@@ -36,7 +36,7 @@ export interface UseLinksResult {
  * and independently testable. This facade is what `LinksView` actually
  * calls — it does not need to know about the internals.
  *
- * @param filter - Whether to show active (`'active'`) or archived (`'archived'`) links.
+ * @param filter - Whether to show unread or read links.
  * @param search - The current full-text search term (debounced by the caller).
  * @returns The combined state and handlers for the links view.
  */
@@ -53,23 +53,23 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     updateLink: data.updateLink,
   });
 
-  // Paste detection is disabled on the archived tab because saving a new
+  // Paste detection is disabled on the read tab because saving a new
   // link while viewing read links would be confusing; the saved link would
   // appear on a different tab.
   const form = useLinksForm({
-    enabled: filter !== 'archived',
+    enabled: filter !== 'read',
     onDirectSave: actions.handleDirectSave,
   });
 
   return {
-    archiveError: actions.archiveError,
+    readError: actions.readError,
     deleteError: actions.deleteError,
     handleCreated: actions.handleCreated,
-    handleDeleteAllArchived: actions.handleDeleteAllArchived,
+    handleDeleteAllRead: actions.handleDeleteAllRead,
     handleDismissToast: actions.handleDismissToast,
     handleLoadMore: data.handleLoadMore,
     handleRandom: actions.handleRandom,
-    handleToggleArchive: actions.handleToggleArchive,
+    handleToggleRead: actions.handleToggleRead,
     handleToggleForm: form.handleToggleForm,
     links: data.links,
     loadingLinks: data.loadingLinks,

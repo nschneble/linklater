@@ -10,7 +10,7 @@
 
 ### Pages and Views
 
-| Component               | Path               | Description                    |
+| Component               | Path                         | Description          |
 | ----------------------- | ---------------------------- | -------------------- |
 | `App`                   | `src`                        | Root component       |
 | `AppShell`              | `src`                        | Auth'd layout shell  |
@@ -91,14 +91,14 @@ The module:
 
 ## Routing
 
-| Path                   | Access        | Component                 |
-| ---------------------- | ------------- | ------------------------- |
-| `/`                    | Authenticated | _Redirects to_ `/unread`  |
-| `/editor`              | Authenticated | `ThemeEditor`             |
-| `/read`                | Authenticated | `LinksView` (archived)    |
-| `/reset-password`      | Public        | `ResetPasswordPage`       |
-| `/settings`            | Authenticated | `SettingsView`            |
-| `/unread`              | Authenticated | `LinksView` (active)      |
-| `/verify-email`        | Public        | `VerifyEmailPage`         |
-| `/verify-email-change` | Public        | `VerifyEmailChangePage`   |
-| `*` (unauthenticated)  | Public        | `AuthForm`                |
+| Path                   | Access        | Component                |
+| ---------------------- | ------------- | ------------------------ |
+| `/`                    | Authenticated | _Redirects to_ `/unread` |
+| `/editor`              | Authenticated | `ThemeEditor`            |
+| `/read`                | Authenticated | `LinksView` (read)       |
+| `/reset-password`      | Public        | `ResetPasswordPage`      |
+| `/settings`            | Authenticated | `SettingsView`           |
+| `/unread`              | Authenticated | `LinksView` (unread)     |
+| `/verify-email`        | Public        | `VerifyEmailPage`        |
+| `/verify-email-change` | Public        | `VerifyEmailChangePage`  |
+| `*` (unauthenticated)  | Public        | `AuthForm`               |

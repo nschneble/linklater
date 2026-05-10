@@ -277,12 +277,12 @@ export interface Link {
   id: string;
   /** The saved URL. */
   url: string;
-  /** ISO timestamp of when the link was created (or resurfaced from archive). */
+  /** ISO timestamp of when the link was created or re-added to the unread list. */
   createdAt: string;
   /** ISO timestamp of the last update. */
   updatedAt: string;
-  /** ISO timestamp of when the link was archived. `null` means the link is active (unread). */
-  archivedAt?: string | null;
+  /** ISO timestamp of when the link was read. `null` means the link is unread. */
+  readAt?: string | null;
   /** The associated metadata. `null` while the fetch job is pending. */
   meta?: LinkMeta | null;
 }
@@ -311,24 +311,24 @@ export interface PaginatedLinks {
  * Endpoint: GET /links
  * Response: A paginated list of links matching the given filters.
  *
- * @param options.archived - When `true`, returns only archived links. When `false`, returns only active links. Omit to return all.
+ * @param options.read - When `true`, returns only read links. When `false`, returns only unread links. Omit to return all.
  * @param options.limit - Results per page. Server caps at 100.
  * @param options.page - 1-based page number.
  * @param options.search - Full-text search term. Results are ranked by relevance.
  */
 export async function getLinks(options?: {
-  archived?: boolean;
+  read?: boolean;
   limit?: number;
   page?: number;
   search?: string;
 }): Promise<PaginatedLinks> {
   const queryParameters = new URLSearchParams();
 
-  if (options?.archived !== undefined) {
-    if (options.archived) {
-      queryParameters.set('archived', 'true');
+  if (options?.read !== undefined) {
+    if (options.read) {
+      queryParameters.set('read', 'true');
     } else {
-      queryParameters.set('archived', 'false');
+      queryParameters.set('read', 'false');
     }
   }
   if (options?.limit !== undefined)
@@ -368,21 +368,21 @@ export async function updateLink(id: string): Promise<Link> {
 }
 
 /**
- * Endpoint: POST /links/:id/archive
- * Response: The link with `archivedAt` set to the current timestamp.
+ * Endpoint: POST /links/:id/read
+ * Response: The link with `readAt` set to the current timestamp.
  */
-export async function archiveLink(id: string): Promise<Link> {
-  return apiFetch<Link>(`/links/${id}/archive`, {
+export async function readLink(id: string): Promise<Link> {
+  return apiFetch<Link>(`/links/${id}/read`, {
     method: 'POST',
   });
 }
 
 /**
- * Endpoint: POST /links/:id/unarchive
- * Response: The link with `archivedAt` cleared to `null`.
+ * Endpoint: POST /links/:id/unread
+ * Response: The link with `readAt` cleared to `null`.
  */
-export async function unarchiveLink(id: string): Promise<Link> {
-  return apiFetch<Link>(`/links/${id}/unarchive`, {
+export async function unreadLink(id: string): Promise<Link> {
+  return apiFetch<Link>(`/links/${id}/unread`, {
     method: 'POST',
   });
 }
@@ -398,37 +398,24 @@ export async function deleteLink(id: string): Promise<{ success: boolean }> {
 }
 
 /**
- * Endpoint: DELETE /links/archived
+ * Endpoint: DELETE /links/read
  * Response: `{ count: number }` — the number of links deleted.
  */
-export async function deleteAllArchivedLinks(): Promise<{ count: number }> {
-  return apiFetch<{ count: number }>('/links/archived', {
+export async function deleteAllReadLinks(): Promise<{ count: number }> {
+  return apiFetch<{ count: number }>('/links/read', {
     method: 'DELETE',
   });
 }
 
 /**
  * Endpoint: GET /links/random
- * Response: `{ link: Link | null }` — `null` when no links match the filter.
- *
- * @param options.archived - When `true`, returns a random archived link.
+ * Response: `{ link: Link | null }` — `null` when there are no links to fetch.
  */
-export async function getRandomLink(options?: {
-  archived?: boolean;
-}): Promise<{ link: Link | null }> {
-  const queryParameters = new URLSearchParams();
-
-  if (options?.archived) queryParameters.set('archived', 'true');
-
-  const query = queryParameters.toString();
-  const path = query ? `/links/random?${query}` : '/links/random';
-
-  return apiFetch<{ link: Link | null }>(path);
+export async function getRandomLink(): Promise<{
+  link: Link | null;
+}> {
+  return apiFetch<{ link: Link | null }>('/links/random');
 }
-
-// ---------------------------------------------------------------------------
-// User endpoints
-// ---------------------------------------------------------------------------
 
 /**
  * Endpoint: PATCH /users/me

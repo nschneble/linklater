@@ -16,7 +16,7 @@ function makeLink(overrides: Partial<Link> = {}): Link {
     meta: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    archivedAt: null,
+    readAt: null,
     ...overrides,
   };
 }
@@ -45,27 +45,27 @@ afterEach(() => {
 
 describe('fetchParamsReducer', () => {
   it('reset changes filter and resets page to 1', () => {
-    const state = { filter: 'active' as const, page: 3, search: '' };
+    const state = { filter: 'unread' as const, page: 3, search: '' };
     const next = fetchParamsReducer(state, {
       type: 'reset',
-      filter: 'archived',
+      filter: 'read',
       search: '',
     });
-    expect(next).toEqual({ filter: 'archived', page: 1, search: '' });
+    expect(next).toEqual({ filter: 'read', page: 1, search: '' });
   });
 
   it('reset returns same reference when filter and search are unchanged', () => {
-    const state = { filter: 'active' as const, page: 2, search: 'hello' };
+    const state = { filter: 'unread' as const, page: 2, search: 'hello' };
     const next = fetchParamsReducer(state, {
       type: 'reset',
-      filter: 'active',
+      filter: 'unread',
       search: 'hello',
     });
     expect(next).toBe(state);
   });
 
   it('load-more increments page', () => {
-    const state = { filter: 'active' as const, page: 1, search: '' };
+    const state = { filter: 'unread' as const, page: 1, search: '' };
     const next = fetchParamsReducer(state, { type: 'load-more' });
     expect(next.page).toBe(2);
   });
@@ -77,7 +77,7 @@ describe('useLinksData initial fetch', () => {
       () => new Promise(() => {}),
     );
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
 
     expect(result.current.loadingLinks).toBe(true);
     expect(result.current.links).toEqual([]);
@@ -87,7 +87,7 @@ describe('useLinksData initial fetch', () => {
     const link = makeLink();
     vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([link]));
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
 
     await waitFor(() => expect(result.current.loadingLinks).toBe(false));
 
@@ -100,33 +100,33 @@ describe('useLinksData initial fetch', () => {
       makePaginated([makeLink()], { total: 42, limit: 10 }),
     );
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
 
     await waitFor(() => expect(result.current.loadingLinks).toBe(false));
 
     expect(result.current.pagination).toEqual({ total: 42, limit: 10 });
   });
 
-  it('calls getLinks with archived=false for the active filter', async () => {
+  it('calls getLinks with read=false for the unread filter', async () => {
     vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([]));
 
-    renderHook(() => useLinksData('active', ''));
+    renderHook(() => useLinksData('unread', ''));
 
     await waitFor(() =>
       expect(apiModule.getLinks).toHaveBeenCalledWith(
-        expect.objectContaining({ archived: false }),
+        expect.objectContaining({ read: false }),
       ),
     );
   });
 
-  it('calls getLinks with archived=true for the archived filter', async () => {
+  it('calls getLinks with read=true for the read filter', async () => {
     vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([]));
 
-    renderHook(() => useLinksData('archived', ''));
+    renderHook(() => useLinksData('read', ''));
 
     await waitFor(() =>
       expect(apiModule.getLinks).toHaveBeenCalledWith(
-        expect.objectContaining({ archived: true }),
+        expect.objectContaining({ read: true }),
       ),
     );
   });
@@ -134,7 +134,7 @@ describe('useLinksData initial fetch', () => {
   it('passes the search term to getLinks when provided', async () => {
     vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([]));
 
-    renderHook(() => useLinksData('active', 'duck'));
+    renderHook(() => useLinksData('unread', 'duck'));
 
     await waitFor(() =>
       expect(apiModule.getLinks).toHaveBeenCalledWith(
@@ -146,7 +146,7 @@ describe('useLinksData initial fetch', () => {
   it('passes undefined as search when the search string is empty', async () => {
     vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([]));
 
-    renderHook(() => useLinksData('active', ''));
+    renderHook(() => useLinksData('unread', ''));
 
     await waitFor(() =>
       expect(apiModule.getLinks).toHaveBeenCalledWith(
@@ -158,7 +158,7 @@ describe('useLinksData initial fetch', () => {
   it('handles a fetch error gracefully and sets loadingLinks=false', async () => {
     vi.mocked(apiModule.getLinks).mockRejectedValue(new Error('Network error'));
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
 
     await waitFor(() => expect(result.current.loadingLinks).toBe(false));
 
@@ -177,7 +177,7 @@ describe('useLinksData stale request guard', () => {
         }),
     );
 
-    const { result, unmount } = renderHook(() => useLinksData('active', ''));
+    const { result, unmount } = renderHook(() => useLinksData('unread', ''));
 
     unmount();
 
@@ -191,24 +191,24 @@ describe('useLinksData stale request guard', () => {
 
 describe('useLinksData re-fetch on filter change', () => {
   it('resets links and re-fetches when the filter changes', async () => {
-    const activeLink = makeLink({ id: 'active-1' });
-    const archivedLink = makeLink({ id: 'archived-1' });
+    const unreadLink = makeLink({ id: 'unread-1' });
+    const readLink = makeLink({ id: 'read-1' });
 
     vi.mocked(apiModule.getLinks)
-      .mockResolvedValueOnce(makePaginated([activeLink]))
-      .mockResolvedValueOnce(makePaginated([archivedLink]));
+      .mockResolvedValueOnce(makePaginated([unreadLink]))
+      .mockResolvedValueOnce(makePaginated([readLink]));
 
     const { result, rerender } = renderHook(
-      ({ filter, search }: { filter: 'active' | 'archived'; search: string }) =>
+      ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
         useLinksData(filter, search),
-      { initialProps: { filter: 'active' as const, search: '' } },
+      { initialProps: { filter: 'unread' as const, search: '' } },
     );
 
     await waitFor(() => expect(result.current.links).toHaveLength(1));
 
-    rerender({ filter: 'archived', search: '' });
+    rerender({ filter: 'read', search: '' });
 
-    await waitFor(() => expect(result.current.links[0]?.id).toBe('archived-1'));
+    await waitFor(() => expect(result.current.links[0]?.id).toBe('read-1'));
   });
 });
 
@@ -221,7 +221,7 @@ describe('useLinksData handleLoadMore', () => {
       .mockResolvedValueOnce(makePaginated([page1], { total: 2 }))
       .mockResolvedValueOnce(makePaginated([page2], { total: 2, page: 2 }));
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
 
     await waitFor(() => expect(result.current.links).toHaveLength(1));
 
@@ -237,7 +237,7 @@ describe('useLinksData handleLoadMore', () => {
   it('increments page number after load-more', async () => {
     vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([]));
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
 
     await waitFor(() => expect(result.current.loadingLinks).toBe(false));
 
@@ -256,7 +256,7 @@ describe('useLinksData mutation helpers', () => {
     const existing = makeLink({ id: 'old' });
     vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([existing]));
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
     await waitFor(() => expect(result.current.links).toHaveLength(1));
 
     const fresh = makeLink({ id: 'new' });
@@ -273,7 +273,7 @@ describe('useLinksData mutation helpers', () => {
     const original = makeLink({ id: 'link-1', url: 'https://old.com' });
     vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([original]));
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
     await waitFor(() => expect(result.current.links).toHaveLength(1));
 
     const updated = makeLink({ id: 'link-1', url: 'https://new.com' });
@@ -289,7 +289,7 @@ describe('useLinksData mutation helpers', () => {
       makePaginated([keep, remove]),
     );
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
     await waitFor(() => expect(result.current.links).toHaveLength(2));
 
     act(() => result.current.removeLink('remove'));
@@ -303,7 +303,7 @@ describe('useLinksData mutation helpers', () => {
       makePaginated([makeLink()]),
     );
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
     await waitFor(() => expect(result.current.links).toHaveLength(1));
 
     act(() => result.current.clearLinks());
@@ -316,7 +316,7 @@ describe('useLinksData mutation helpers', () => {
       makePaginated([makeLink()], { total: 10 }),
     );
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
     await waitFor(() => expect(result.current.pagination?.total).toBe(10));
 
     act(() => result.current.adjustTotal(-1));
@@ -329,7 +329,7 @@ describe('useLinksData mutation helpers', () => {
   it('adjustTotal is a no-op when pagination is null', async () => {
     vi.mocked(apiModule.getLinks).mockRejectedValue(new Error('fail'));
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
     await waitFor(() => expect(result.current.loadingLinks).toBe(false));
 
     expect(result.current.pagination).toBeNull();
@@ -343,7 +343,7 @@ describe('useLinksData mutation helpers', () => {
       makePaginated([makeLink()], { total: 5 }),
     );
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
     await waitFor(() => expect(result.current.pagination?.total).toBe(5));
 
     act(() => result.current.resetTotal());
@@ -353,7 +353,7 @@ describe('useLinksData mutation helpers', () => {
   it('resetTotal is a no-op when pagination is null', async () => {
     vi.mocked(apiModule.getLinks).mockRejectedValue(new Error('fail'));
 
-    const { result } = renderHook(() => useLinksData('active', ''));
+    const { result } = renderHook(() => useLinksData('unread', ''));
     await waitFor(() => expect(result.current.loadingLinks).toBe(false));
 
     act(() => result.current.resetTotal());

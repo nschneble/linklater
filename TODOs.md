@@ -23,15 +23,11 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 
 - Break up apps/web/src/lib/api.ts by core/token, user, and link endpoints
 - Ensure royalty-free assets for any Richard Linklater images
-- Fully remap "active" to "unread" and "archived" to "read"
+- Revamp all email flows: verify, change, forgot password
 - Review ./dev and ./flintest scripts
 - Review all api DTOs + specs
 - Review all apps/web/src/components + tests with a fine-toothed comb
-- Verify: Forgot password flow sends expiring reset email
-- Verify: Signup flow includes email verification
-- Verify: You can use arrow keys to navigate the tabs and user menu
 
 ## Bugfixes
 
-- Page may not refresh automatically after email verification (still showing banner)
-- Theme editor reset button works inconsistently
+_Bugs will be added here as they are reported or discovered_

@@ -7,7 +7,7 @@ import type { LinksFilter } from './useLinks';
  * filter/search changes & load-more increments can be handled atomically.
  */
 interface FetchParams {
-  /** The active tab — `'active'` or `'archived'`. */
+  /** The current tab — `'unread'` or `'read'`. */
   filter: LinksFilter;
   /** The current pagination page number, starting at 1. */
   page: number;
@@ -48,7 +48,7 @@ export function fetchParamsReducer(
 export interface UseLinksDataResult {
   /**
    * Nudges the cached `total` count by `delta`. Positive to increment,
-   * negative to decrement. Used after create/archive/delete to keep the
+   * negative to decrement. Used after create/update/delete to keep the
    * count accurate without a round-trip.
    */
   adjustTotal: (delta: number) => void;
@@ -86,7 +86,7 @@ export interface UseLinksDataResult {
  * is issued. A stale-request guard (`cancelled` flag) prevents
  * out-of-order responses from corrupting state.
  *
- * @param filter - `'active'` or `'archived'`.
+ * @param filter - `'unread'` or `'read'`.
  * @param search - Full-text search query, or empty string for no filter.
  *
  * @returns Data state and mutation helpers consumed by `useLinksActions`
@@ -123,7 +123,7 @@ export function useLinksData(
       try {
         const result = await getLinks({
           search: fetchParams.search || undefined,
-          archived: fetchParams.filter === 'archived',
+          read: fetchParams.filter === 'read',
           page: fetchParams.page,
         });
         if (!cancelled) {

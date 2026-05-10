@@ -1,4 +1,5 @@
 import TokenVerificationPage from './TokenVerificationPage';
+import { useAuth } from '../auth/AuthContext';
 import { verifyEmail } from '../lib/api';
 
 /**
@@ -11,6 +12,7 @@ import { verifyEmail } from '../lib/api';
  * links work even when the user is logged out or using a different device.
  */
 export default function VerifyEmailPage() {
+  const { refreshUser } = useAuth();
   return (
     <TokenVerificationPage
       title="Email Verification"
@@ -18,6 +20,7 @@ export default function VerifyEmailPage() {
       successText="Your email has been verified. You're good to go!"
       helpText="The link may have expired. Request a new verification email from the Settings page."
       verifyFn={verifyEmail}
+      onSuccess={refreshUser}
     />
   );
 }
