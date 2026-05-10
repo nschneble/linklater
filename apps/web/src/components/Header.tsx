@@ -51,8 +51,8 @@ export default function Header({
         >
           <img
             className="w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-4xl"
-            src="/linklater.svg"
-            alt=""
+            src="/assets/img/linklater.jpg"
+            alt="Photo of Richard Linklater by Sarah K Joyce"
             aria-hidden="true"
           />
           <div className="text-left">
