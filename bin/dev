@@ -5,18 +5,48 @@ set -uo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 ROOT_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
-cd "$ROOT_DIR"
+cd "$ROOT_DIR" || exit
 
-# ── Colors & symbols ─────────────────────────────────────────────────────────
-if [[ -t 1 ]]; then
-  RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m' CYN=$'\033[36m'
-  BLD=$'\033[1m'  DIM=$'\033[2m'  RST=$'\033[0m'
-else
-  RED='' GRN='' YLW='' CYN='' BLD='' DIM='' RST=''
+# ── Arguments ────────────────────────────────────────────────────────────────
+usage() {
+  cat <<'USAGE'
+Usage: bin/dev
+
+Starts the API and web development servers with a live status/log TUI.
+
+Keys:
+  0  Status
+  1  API logs
+  2  Web logs
+USAGE
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown option: %s\n\n' "$arg" >&2
+      usage >&2
+      exit 64
+      ;;
+  esac
+done
+
+# Fall back to the package script when stdout is redirected or /dev/tty is not
+# available. The interactive UI needs a controlling terminal for keypresses.
+if [[ ! -t 1 ]] || ! stty -g </dev/tty >/dev/null 2>&1; then
+  exec npm run dev
 fi
 
+# ── Colors & symbols ─────────────────────────────────────────────────────────
+RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m' CYN=$'\033[36m'
+BLD=$'\033[1m'  DIM=$'\033[2m'  RST=$'\033[0m'
+
 SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
-TICK=✓  CROSS=✗  CIRC=○
+TICK=✓  CROSS=✗
 
 # ── Temp files ────────────────────────────────────────────────────────────────
 API_LOG=$(mktemp)
@@ -39,8 +69,8 @@ VIEW="status"
 FRAME=0
 
 # ── Terminal setup ────────────────────────────────────────────────────────────
-OLD_STTY=$(stty -g </dev/tty 2>/dev/null || true)
-stty -echo -icanon </dev/tty 2>/dev/null || true
+OLD_STTY=$(stty -g </dev/tty)
+stty -echo -icanon </dev/tty
 
 hide_cursor() { printf '\033[?25l'; }
 show_cursor()  { printf '\033[?25h'; }
@@ -80,9 +110,9 @@ strip_ansi() {
 # ── Static header (lines 1–4, never redrawn) ─────────────────────────────────
 draw_header() {
   printf '\033[2J\033[H'
-  printf "  ${BLD}${CYN}╔═════════════════╗${RST}\n"
-  printf "  ${BLD}${CYN}║    Linklater    ║${RST}\n"
-  printf "  ${BLD}${CYN}╚═════════════════╝${RST}\n"
+  printf '  %s%s╔═════════════════╗%s\n' "$BLD" "$CYN" "$RST"
+  printf '  %s%s║    Linklater    ║%s\n' "$BLD" "$CYN" "$RST"
+  printf '  %s%s╚═════════════════╝%s\n' "$BLD" "$CYN" "$RST"
   printf '\n'
 }
 
@@ -130,9 +160,12 @@ render_log_view() {
   local rows; rows=${stty_size%% *}; rows=${rows:-24}
   local cols; cols=${stty_size##* }; cols=${cols:-80}
   local content_width=$(( cols - 4 ))
+  (( content_width < 20 )) && content_width=20
   # Lines above log content: 4 title + 3 service + 2 status + 3 options + 3 log labels = 15
   local available=$(( rows - 15 ))
-  local divider; divider=$(printf '─%.0s' $(seq 1 "$content_width"))
+  (( available < 1 )) && available=1
+  local divider; printf -v divider '%*s' "$content_width" ''
+  divider=${divider// /─}
 
   local out=''
   out+=$'\033[5;1H\033[0J'
@@ -157,12 +190,13 @@ render_log_view() {
   out+=$'\n'
 
   local prefix_len=$(( ${#label} + 8 ))
-  out+="  ${DIM}── ${label} ${divider:0:$(( content_width - prefix_len ))}${RST}"$'\n'$'\n'
+  local divider_width=$(( content_width - prefix_len ))
+  (( divider_width < 0 )) && divider_width=0
+  out+="  ${DIM}── ${label} ${divider:0:$divider_width}${RST}"$'\n'$'\n'
 
   local service_state
   [[ "$log_file" == "$API_LOG" ]] && service_state="$API_STATE" || service_state="$WEB_STATE"
 
-  local log_source
   if [[ "$service_state" == "error" ]]; then
     # Start from 2 lines before the first error so the full message is visible
     local error_line
@@ -170,17 +204,19 @@ render_log_view() {
                  "$log_file" 2>/dev/null | head -1 | cut -d: -f1)
     if [[ -n "$error_line" && "$error_line" -gt 2 ]]; then
       local start=$(( error_line - 2 ))
-      log_source="sed -n ${start},$((start + available - 1))p $log_file"
+      while IFS= read -r line; do
+        out+="  ${DIM}${line:0:$content_width}${RST}"$'\n'
+      done < <(sed -n "${start},$((start + available - 1))p" "$log_file" 2>/dev/null | strip_ansi || true)
     else
-      log_source="tail -n $available $log_file"
+      while IFS= read -r line; do
+        out+="  ${DIM}${line:0:$content_width}${RST}"$'\n'
+      done < <(tail -n "$available" "$log_file" 2>/dev/null | strip_ansi || true)
     fi
   else
-    log_source="tail -n $available $log_file"
+    while IFS= read -r line; do
+      out+="  ${DIM}${line:0:$content_width}${RST}"$'\n'
+    done < <(tail -n "$available" "$log_file" 2>/dev/null | strip_ansi || true)
   fi
-
-  while IFS= read -r line; do
-    out+="  ${DIM}${line:0:$content_width}${RST}"$'\n'
-  done < <($log_source 2>/dev/null | strip_ansi || true)
 
   printf '%s' "$out"
 }

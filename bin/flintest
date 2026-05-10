@@ -1,26 +1,59 @@
 #!/usr/bin/env bash
-# super — run format, lint, and test with a terminal UI
+# flintest — run install, format, lint, and test with optional updates
 
 set -uo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 ROOT_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
-cd "$ROOT_DIR"
+cd "$ROOT_DIR" || exit
 
 # ── Arguments ───────────────────────────────────────────────────────────────────
+usage() {
+  cat <<'USAGE'
+Usage: bin/flintest [--update]
+
+Runs the project quality gate in order:
+  npm install
+  npm run format
+  npm run lint
+  npm run test
+
+Options:
+  --update   Run npm update before npm install.
+  -h, --help Show this help.
+USAGE
+}
+
 RUN_UPDATE=false
 for arg in "$@"; do
   case "$arg" in
-    --update) RUN_UPDATE=true ;;
+    --update)
+      RUN_UPDATE=true
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown option: %s\n\n' "$arg" >&2
+      usage >&2
+      exit 64
+      ;;
   esac
 done
 
+# ── Terminal capability ─────────────────────────────────────────────────────────
+TTY_AVAILABLE=false
+if [[ -t 1 ]] && [[ -w /dev/tty ]]; then
+  TTY_AVAILABLE=true
+fi
+
 # ── Colors & symbols ────────────────────────────────────────────────────────────
-if [[ -t 1 ]]; then
-  RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m' CYN=$'\033[36m'
+if [[ "$TTY_AVAILABLE" == true ]]; then
+  RED=$'\033[31m' GRN=$'\033[32m' CYN=$'\033[36m'
   BLD=$'\033[1m'  DIM=$'\033[2m'  RST=$'\033[0m'
 else
-  RED='' GRN='' YLW='' CYN='' BLD='' DIM='' RST=''
+  RED='' GRN='' CYN='' BLD='' DIM='' RST=''
 fi
 
 SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
@@ -40,10 +73,12 @@ step_up() { echo $(( NS - $1 + 1 )); }
 _spinner_pid=""
 
 # ── Cursor helpers ──────────────────────────────────────────────────────────────
-hide_cursor() { printf '\033[?25l'; }
-show_cursor()  { printf '\033[?25h'; }
+hide_cursor() { [[ "$TTY_AVAILABLE" == true ]] && printf '\033[?25l'; }
+# shellcheck disable=SC2329 # Invoked by _cleanup, which is registered as a trap.
+show_cursor()  { [[ "$TTY_AVAILABLE" == true ]] && printf '\033[?25h'; }
 
 # ── Cleanup on exit ─────────────────────────────────────────────────────────────
+# shellcheck disable=SC2329 # Invoked by trap.
 _cleanup() {
   stop_spinner
   show_cursor
@@ -53,36 +88,55 @@ trap _cleanup EXIT INT TERM HUP
 
 # ── Draw initial UI ─────────────────────────────────────────────────────────────
 draw_ui() {
+  if [[ "$TTY_AVAILABLE" != true ]]; then
+    printf 'Running Linklater checks...\n'
+    return
+  fi
+
   printf '\033[2J\033[H'
-  printf "  ${BLD}${CYN}╔═════════════════╗${RST}\n"
-  printf "  ${BLD}${CYN}║    Linklater    ║${RST}\n"
-  printf "  ${BLD}${CYN}╚═════════════════╝${RST}\n"
+  printf '  %s%s╔═════════════════╗%s\n' "$BLD" "$CYN" "$RST"
+  printf '  %s%s║    Linklater    ║%s\n' "$BLD" "$CYN" "$RST"
+  printf '  %s%s╚═════════════════╝%s\n' "$BLD" "$CYN" "$RST"
   printf '\n'
   for name in "${STEPS[@]}"; do
     printf "  ${DIM}${CIRC} %s${RST}\n" "$name"
   done
   printf '\n'
-  printf "  ${DIM}Initializing…${RST}"
+  printf '  %sInitializing…%s' "$DIM" "$RST"
 }
 
 # Write text onto a step line then return cursor to status line.
 write_step() {
   local idx=$1; shift
+  if [[ "$TTY_AVAILABLE" != true ]]; then
+    printf '  %b\n' "$*"
+    return
+  fi
+
   local up; up=$(step_up "$idx")
   printf '\033[%dA\033[2K\r  %b\033[%dB\033[2K\r' "$up" "$*" "$up"
 }
 
 set_status() {
+  if [[ "$TTY_AVAILABLE" != true ]]; then
+    printf '%b\n' "$*"
+    return
+  fi
+
   printf '\033[2K\r  %b' "$*"
 }
 
-mark_run()  { write_step "$1" "${YLW}${SPIN[0]} ${STEPS[$1]}${RST}"; }
 mark_done() { write_step "$1" "${GRN}${TICK} ${STEPS[$1]}${RST}"; }
 mark_fail() { write_step "$1" "${RED}${CROSS} ${STEPS[$1]}${RST}"; }
 
 # ── Background spinner ──────────────────────────────────────────────────────────
 start_spinner() {
   local idx=$1
+  if [[ "$TTY_AVAILABLE" != true ]]; then
+    printf '  %s...\n' "${STEPS[$idx]}"
+    return
+  fi
+
   local up name
   up=$(step_up "$idx")
   name="${STEPS[$idx]}"
@@ -100,6 +154,8 @@ start_spinner() {
 }
 
 stop_spinner() {
+  [[ "$TTY_AVAILABLE" == true ]] || return
+
   if [[ -n "$_spinner_pid" ]]; then
     kill "$_spinner_pid" 2>/dev/null || true
     wait "$_spinner_pid" 2>/dev/null || true
@@ -175,11 +231,12 @@ fi
 
 if [[ -z "$FAILED_STEP" ]]; then
   set_status "${GRN}${BLD}All checks passed.${RST}"
-  printf '\n'
+  [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
   exit 0
 else
   set_status "${RED}${BLD}${FAILED_STEP} failed — see below.${RST}"
-  printf '\n\n'
+  [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
+  printf '\n'
   printf '%s\n' "$FAILED_OUTPUT" | sed 's/^/  /'
   printf '\n'
   exit 1

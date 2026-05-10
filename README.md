@@ -133,6 +133,7 @@ npm run dev
 
 # start the development server TUI
 bin/dev
+bin/dev --help
 ```
 
 Linklater uses `concurrently` to run NestJS on port 3000 and Vite on port 5173. **Open [https://localhost:5173](https://localhost:5173) in your web browser and you're good to go!**
@@ -154,6 +155,7 @@ npm run test
 
 # install, format, lint, and test in one TUI
 bin/flintest
+bin/flintest --help
 bin/flintest --update
 ```
 
