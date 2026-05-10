@@ -105,8 +105,8 @@ export default function AuthForm() {
         ) : (
           <form className="space-y-4" onSubmit={handleSubmit}>
             <label
-              htmlFor="forgot-email"
               className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+              htmlFor="forgot-email"
             >
               Email
             </label>
@@ -179,8 +179,8 @@ export default function AuthForm() {
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <label
-          htmlFor="auth-email"
           className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+          htmlFor="auth-email"
         >
           Email
         </label>
@@ -195,8 +195,8 @@ export default function AuthForm() {
         />
 
         <label
-          htmlFor="auth-password"
           className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+          htmlFor="auth-password"
         >
           Password
         </label>

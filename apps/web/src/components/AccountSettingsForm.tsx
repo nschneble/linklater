@@ -166,14 +166,18 @@ export default function AccountSettingsForm() {
           </Alert>
         )}
 
-        <label className="block text-[var(--text-muted)] text-xs font-medium">
+        <label
+          className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+          htmlFor="change-email"
+        >
           Change email
-          <FormInput
-            type="email"
-            value={emailInput}
-            onChange={(event) => setEmailInput(event.target.value)}
-          />
         </label>
+        <FormInput
+          id="change-email"
+          type="email"
+          value={emailInput}
+          onChange={(event) => setEmailInput(event.target.value)}
+        />
 
         {emailMessage && <Alert variant="success">{emailMessage}</Alert>}
         {emailError && <Alert variant="error">{emailError}</Alert>}
@@ -194,27 +198,37 @@ export default function AccountSettingsForm() {
         <form className="space-y-4" onSubmit={handlePasswordSave}>
           <h3 className="text-[var(--text)] text-sm font-semibold">Password</h3>
 
-          <label className="block text-[var(--text-muted)] text-xs font-medium">
+          <label
+            className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+            htmlFor="new-password"
+          >
             New password
-            <FormInput
-              type="password"
-              placeholder="Leave blank to keep current password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
           </label>
+          <FormInput
+            id="new-password"
+            type="password"
+            placeholder="Leave blank to keep current password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
 
           {password && (
-            <label className="block text-[var(--text-muted)] text-xs font-medium">
-              Current password
+            <>
+              <label
+                className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+                htmlFor="current-password"
+              >
+                Current password
+              </label>
               <FormInput
+                id="current-password"
                 type="password"
                 placeholder="Required to confirm password change"
                 value={currentPassword}
                 onChange={(event) => setCurrentPassword(event.target.value)}
                 required
               />
-            </label>
+            </>
           )}
 
           {passwordMessage && (
