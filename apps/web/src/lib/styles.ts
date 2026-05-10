@@ -1,7 +1,7 @@
 /**
  * Shared Tailwind CSS class strings for interactive element focus rings.
- * Consuming components spread this into their `className` prop so that the
- * focus style is consistent across the whole application.
+ * Consuming components spread this into their `className` prop so that
+ * the focus style is consistent across the whole application.
  *
  * Uses `focus-visible` (not `focus`) so that the ring only appears during
  * keyboard navigation, not on mouse clicks.

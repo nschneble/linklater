@@ -1,8 +1,6 @@
 @import 'tailwindcss';
-
 @import './theme/styles/default.css';
 @import './theme/styles/border-shadow.css';
-
 @import './theme/styles/before-midnight.css';
 @import './theme/styles/before-sunrise.css';
 @import './theme/styles/before-sunset.css';
@@ -11,6 +9,72 @@
 @import './theme/styles/hit-man.css';
 @import './theme/styles/scanner-darkly.css';
 @import './theme/styles/school-of-rock.css';
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes card-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-out-down {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@theme {
+  --animate-fade-in-up: fade-in-up 180ms ease-out both;
+  --animate-card-enter: card-enter 400ms ease-out both;
+  --animate-card-exit: card-exit 280ms ease-in forwards;
+  --animate-fade-out-down: fade-out-down 150ms ease-in forwards;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    transition-property: background-color, color, border-color;
+    transition-duration: var(--theme-transition-duration);
+    transition-timing-function: var(--theme-transition-easing);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,

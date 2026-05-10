@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { fireEvent } from '@testing-library/react';
-import { describe, expect, it, vi, afterEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import VerifyEmailChangePage from './VerifyEmailChangePage';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 vi.mock('../lib/api', () => ({
   verifyEmailChange: vi.fn(),

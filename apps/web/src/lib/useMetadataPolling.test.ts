@@ -1,5 +1,5 @@
-import { renderHook, act } from '@testing-library/react';
-import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
+import { act, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMetadataPolling } from './useMetadataPolling';
 import type { Link } from './api';
 
@@ -14,12 +14,12 @@ const LINK_URL = 'https://example.com/article';
 
 function makeLink(overrides: Partial<Link> = {}): Link {
   return {
-    createdAt: '2026-01-01T00:00:00.000Z',
     id: LINK_ID,
-    updatedAt: '2026-01-01T00:00:00.000Z',
     url: LINK_URL,
-    archivedAt: null,
     meta: null,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    archivedAt: null,
     ...overrides,
   };
 }
@@ -98,7 +98,7 @@ describe('useMetadataPolling', () => {
       .calls.length;
     expect(firstCallCount).toBeGreaterThanOrEqual(1);
 
-    // second poll at 2s + 4s = 6s total
+    // second poll at 2s + 4s = 6s
     await act(async () => {
       await vi.advanceTimersByTimeAsync(4000);
     });
@@ -151,7 +151,7 @@ describe('useMetadataPolling', () => {
 
     renderHook(() => useMetadataPolling(LINK_ID, vi.fn()));
 
-    // Advance well past the 60-second window
+    // advance well past the 60-second window
     await act(async () => {
       await vi.advanceTimersByTimeAsync(70000);
     });
@@ -159,7 +159,7 @@ describe('useMetadataPolling', () => {
     const countAfterWindow = (apiModule.getLink as ReturnType<typeof vi.fn>)
       .mock.calls.length;
 
-    // No additional polls should fire beyond this point
+    // no additional polls should fire beyond this point
     await act(async () => {
       await vi.advanceTimersByTimeAsync(60000);
     });

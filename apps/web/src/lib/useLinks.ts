@@ -52,8 +52,9 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     resetTotal: data.resetTotal,
     updateLink: data.updateLink,
   });
+
   // Paste detection is disabled on the archived tab because saving a new
-  // link while viewing read links would be confusing — the saved link would
+  // link while viewing read links would be confusing; the saved link would
   // appear on a different tab.
   const form = useLinksForm({
     enabled: filter !== 'archived',

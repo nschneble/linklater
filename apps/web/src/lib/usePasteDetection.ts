@@ -8,10 +8,9 @@ interface UsePasteDetectionOptions {
 }
 
 /**
- * Returns `true` when `text` looks like an HTTP or HTTPS URL.
- * Used as a quick pre-check before calling `onSave` — we do not fully
- * validate the URL here because `createLink` on the server will reject it
- * if it turns out to be invalid.
+ * Returns `true` when `text` looks like a URL. Used as a quick pre-check
+ * before calling `onSave`. We don't fully validate the URL here because
+ * `createLink` on the server will reject it if it turns out to be invalid.
  */
 function looksLikeUrl(text: string): boolean {
   return text.startsWith('http://') || text.startsWith('https://');
@@ -19,15 +18,11 @@ function looksLikeUrl(text: string): boolean {
 
 /**
  * Listens for `paste` events on the `window` and calls `onSave` whenever
- * the pasted text looks like a URL and the paste target is not a form field.
+ * the pasted text looks like a URL and the target isn't a form field.
  *
- * This allows users to save links from anywhere on the page without opening
- * the explicit link form — just copy a URL and paste it on the page.
- *
- * The listener is skipped when the paste target is an `INPUT` or `TEXTAREA`
- * so that normal text editing is not interrupted.
- *
- * Side effects: adds and removes a `paste` event listener on `window`.
+ * This allows users to save links from anywhere on the page without
+ * explicitly opening the link form. The listener is skipped when the paste
+ * target is an `INPUT` or `TEXTAREA` so normal text editing is unaffected.
  *
  * @param options.enabled - Disable the listener (e.g. on the archived tab).
  * @param options.onSave - Callback invoked with the URL string when a valid URL is pasted.

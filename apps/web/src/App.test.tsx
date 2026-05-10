@@ -1,8 +1,8 @@
 import App from './App';
 import { AuthProvider } from './auth/AuthContext';
-import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from './theme/ThemeContext';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 function renderWithProviders() {
   render(

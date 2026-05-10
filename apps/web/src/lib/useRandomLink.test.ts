@@ -1,5 +1,5 @@
-import { renderHook, act } from '@testing-library/react';
-import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
+import { act, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useRandomLink } from './useRandomLink';
 import type { Link } from './api';
 
@@ -14,6 +14,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
+
 afterEach(() => vi.restoreAllMocks());
 
 function makeLink(overrides: Partial<Link> = {}): Link {
@@ -28,7 +29,6 @@ function makeLink(overrides: Partial<Link> = {}): Link {
 }
 
 const defaultOptions = {
-  filter: 'active' as const,
   onDecrementTotal: vi.fn(),
   onRemoveLink: vi.fn(),
 };
@@ -44,7 +44,7 @@ describe('useRandomLink', () => {
     expect(result.current.randomError).toBeNull();
   });
 
-  it('opens the link in a new tab and removes it from the list', async () => {
+  it('opens the link in a new tab, archives it, and removes it from the list', async () => {
     const link = makeLink();
     vi.mocked(apiModule.getRandomLink).mockResolvedValue({ link });
     vi.mocked(apiModule.archiveLink).mockResolvedValue({
@@ -56,7 +56,7 @@ describe('useRandomLink', () => {
     const onDecrementTotal = vi.fn();
 
     const { result } = renderHook(() =>
-      useRandomLink({ filter: 'active', onDecrementTotal, onRemoveLink }),
+      useRandomLink({ onDecrementTotal, onRemoveLink }),
     );
 
     await act(() => result.current.handleRandom());
@@ -66,26 +66,9 @@ describe('useRandomLink', () => {
       '_blank',
       'noopener,noreferrer',
     );
+    expect(apiModule.archiveLink).toHaveBeenCalledWith(link.id);
     expect(onRemoveLink).toHaveBeenCalledWith(link.id);
     expect(onDecrementTotal).toHaveBeenCalledOnce();
-  });
-
-  it('does not archive link if it is already archived', async () => {
-    const link = makeLink({ archivedAt: '2026-01-01T00:00:00.000Z' });
-    vi.mocked(apiModule.getRandomLink).mockResolvedValue({ link });
-
-    const onRemoveLink = vi.fn();
-    const onDecrementTotal = vi.fn();
-
-    const { result } = renderHook(() =>
-      useRandomLink({ filter: 'archived', onDecrementTotal, onRemoveLink }),
-    );
-
-    await act(() => result.current.handleRandom());
-
-    expect(apiModule.archiveLink).not.toHaveBeenCalled();
-    expect(onRemoveLink).not.toHaveBeenCalled();
-    expect(onDecrementTotal).not.toHaveBeenCalled();
   });
 
   it('sets randomError when no link is returned', async () => {

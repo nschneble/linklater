@@ -13,7 +13,8 @@ import type { LinksFilter } from './useLinks';
 
 /**
  * The mutation helpers and list state that `useLinksActions` needs from
- * `useLinksData` in order to keep the rendered list in sync after each action.
+ * `useLinksData` in order to keep the rendered list in sync after each
+ * action.
  */
 interface UseLinksActionsOptions {
   /** See `UseLinksDataResult.adjustTotal`. */
@@ -41,10 +42,10 @@ export interface UseLinksActionsResult {
   /** Error message from the most recent "delete all archived" attempt, or `null`. */
   deleteError: string | null;
   /**
-   * Called by `LinkForm` / paste detection after a successful create. Prepends
-   * the new link, starts metadata polling, increments the total, and shows a
-   * toast. No-ops when the archived tab is active (newly created links should
-   * not appear there).
+   * Called by `LinkForm` / paste detection after a successful create.
+   * Prepends the new link, starts metadata polling, increments the total,
+   * and shows a toast. No-ops when the read tab is active, since newly
+   * created links should not appear there.
    */
   handleCreated: (link: Link) => void;
   /** Calls `DELETE /links/archived`, then clears the list and resets the total. */
@@ -52,13 +53,13 @@ export interface UseLinksActionsResult {
   /** Hides the success toast. */
   handleDismissToast: () => void;
   /**
-   * Saves a link directly from a URL string (bypasses the form). Used by paste
-   * detection. Calls `POST /links` and then delegates to `handleCreated`.
+   * Saves a link directly from a URL string. Used by paste detection.
+   * Calls `POST /links` and then delegates to `handleCreated`.
    */
   handleDirectSave: (url: string) => Promise<void>;
   /**
-   * Archives an unread link or unarchives a read link, then removes it from
-   * the list if it no longer belongs in the current filter.
+   * Archives an unread link or unarchives a read link, then removes it
+   * from the list if it no longer belongs in the current filter.
    */
   handleToggleArchive: (link: Link) => Promise<void>;
   /** Opens a random unread link in a new tab and archives it. */
@@ -74,12 +75,13 @@ export interface UseLinksActionsResult {
 }
 
 /**
- * Handles all user-initiated link mutations: create, archive/unarchive, delete
- * all archived, and random stumble. Coordinates with `useLinksData` mutation
- * helpers to keep the list in sync without a full refetch after each operation.
+ * Handles all user-initiated link mutations: create, archive/unarchive,
+ * delete all read, and stumble upon. Coordinates with `useLinksData`
+ * mutation helpers to keep the list in sync without a full refetch after
+ * each operation.
  *
- * Also drives the metadata polling cycle — when a link is created, polling
- * starts for that link's id and stops when the server reports that metadata
+ * Also drives the metadata polling cycle. When a link is created, polling
+ * starts for the link's id and stops when the server reports that metadata
  * has been fetched (`meta.fetchedAt` is set).
  *
  * @param options - Mutation helpers and current state from `useLinksData`.
@@ -170,7 +172,6 @@ export function useLinksActions({
   }, [clearLinks, resetTotal]);
 
   const { handleRandom, randomError, randomLoading } = useRandomLink({
-    filter,
     onDecrementTotal: () => adjustTotal(-1),
     onRemoveLink: removeLink,
   });

@@ -160,6 +160,10 @@ Follow three simple steps repeatedly:
 - Contexts use `createContext(undefined)` with a custom hook that throws if used outside provider
 - Form state sequence: clear error → set loading → attempt action → handle result
 - Extract errors with: `error instanceof Error ? error.message : 'Something went wrong'`
+- Organize your imports! Sort alphabetically both within individual imports and in the list of import statements as whole
+  - Good example: `import { afterEach, describe, vi } from 'vitest';`
+  - Bad example: `import { vi, afterEach, expect } from 'vitest';`
+- `import {}` before `import type {}`
 
 ## Testing Patterns
 

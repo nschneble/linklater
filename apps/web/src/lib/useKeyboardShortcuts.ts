@@ -5,14 +5,14 @@ interface UseKeyboardShortcutsOptions {
   enabled: boolean;
   /** Whether the keyboard shortcuts modal is currently open. Needed so `Z` can close it. */
   isShortcutsModalOpen: boolean;
-  onShowUnread: () => void;
-  onShowRead: () => void;
-  onSearch: () => void;
-  onToggleForm: () => void;
-  onStumble: () => void;
-  onToggleShortcuts: () => void;
-  /** Called when Escape is pressed. Optional — only used when a closeable element (e.g. the form) is open. */
+  /** Called when ESC is pressed. Only used when a close-able element (e.g. the form) is open. */
   onEscape?: () => void;
+  onSearch: () => void;
+  onShowRead: () => void;
+  onShowUnread: () => void;
+  onStumble: () => void;
+  onToggleForm: () => void;
+  onToggleShortcuts: () => void;
 }
 
 /**
@@ -21,53 +21,51 @@ interface UseKeyboardShortcutsOptions {
  * intercepting normal text entry.
  *
  * Shortcut map:
- * - `1` → Show unread links
- * - `2` → Show read links
- * - `Q` → Focus the search input
- * - `A` → Toggle the link form
- * - `D` → Stumble upon (random link)
- * - `Z` → Toggle the shortcuts modal
- * - `Escape` → Calls `onEscape` if provided (e.g. close the link form)
+ * - `1`   → Show unread links
+ * - `2`   → Show read links
+ * - `Q`   → Focus the search input
+ * - `A`   → Toggle the link form
+ * - `D`   → Stumble upon
+ * - `Z`   → Toggle the shortcuts modal
+ * - `ESC` → Calls `onEscape` if provided (e.g. closes the link form)
  *
- * When the shortcuts modal is open, only `Z` (close modal) and `Escape` are
- * handled — all other shortcuts are suppressed.
+ * When the shortcuts modal is open, only `Z` (close modal) and `ESC` are
+ * handled. All other shortcuts are suppressed.
  *
  * GOTCHA: All callbacks are stored in refs so the `keydown` listener only
- * needs to be attached once (when `enabled` changes). Without refs, the
+ * needs to be attached once, when `enabled` changes. Without refs, the
  * listener would need to be re-registered on every render to pick up fresh
  * callback references.
- *
- * Side effects: adds and removes a `keydown` event listener on `document`.
  */
 export function useKeyboardShortcuts({
   enabled,
   isShortcutsModalOpen,
-  onShowUnread,
-  onShowRead,
-  onSearch,
-  onToggleForm,
-  onStumble,
-  onToggleShortcuts,
   onEscape,
+  onSearch,
+  onShowRead,
+  onShowUnread,
+  onStumble,
+  onToggleForm,
+  onToggleShortcuts,
 }: UseKeyboardShortcutsOptions) {
   const isShortcutsModalOpenRef = useRef(isShortcutsModalOpen);
-  const onShowUnreadRef = useRef(onShowUnread);
-  const onShowReadRef = useRef(onShowRead);
-  const onSearchRef = useRef(onSearch);
-  const onToggleFormRef = useRef(onToggleForm);
-  const onStumbleRef = useRef(onStumble);
-  const onToggleShortcutsRef = useRef(onToggleShortcuts);
   const onEscapeRef = useRef(onEscape);
+  const onSearchRef = useRef(onSearch);
+  const onShowReadRef = useRef(onShowRead);
+  const onShowUnreadRef = useRef(onShowUnread);
+  const onStumbleRef = useRef(onStumble);
+  const onToggleFormRef = useRef(onToggleForm);
+  const onToggleShortcutsRef = useRef(onToggleShortcuts);
 
-  // Always keep refs current so the stable listener uses the latest callbacks.
+  // always keep refs current so the listener uses the latest callbacks
   isShortcutsModalOpenRef.current = isShortcutsModalOpen;
-  onShowUnreadRef.current = onShowUnread;
-  onShowReadRef.current = onShowRead;
-  onSearchRef.current = onSearch;
-  onToggleFormRef.current = onToggleForm;
-  onStumbleRef.current = onStumble;
-  onToggleShortcutsRef.current = onToggleShortcuts;
   onEscapeRef.current = onEscape;
+  onSearchRef.current = onSearch;
+  onShowReadRef.current = onShowRead;
+  onShowUnreadRef.current = onShowUnread;
+  onStumbleRef.current = onStumble;
+  onToggleFormRef.current = onToggleForm;
+  onToggleShortcutsRef.current = onToggleShortcuts;
 
   useEffect(() => {
     if (!enabled) return;

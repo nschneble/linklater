@@ -1,33 +1,31 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { useAuth } from './auth/AuthContext';
-import { useEffect } from 'react';
-import { useTheme, type BaseTheme } from './theme/ThemeContext';
-
 import AppShell from './AppShell';
 import AuthForm from './components/AuthForm';
 import ErrorBoundary from './components/ErrorBoundary';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import OAuthCallbackPage from './components/OAuthCallbackPage';
 import ResetPasswordPage from './components/ResetPasswordPage';
 import VerifyEmailChangePage from './components/VerifyEmailChangePage';
 import VerifyEmailPage from './components/VerifyEmailPage';
+import { useAuth } from './auth/AuthContext';
+import { useEffect } from 'react';
+import { useTheme, type BaseTheme } from './theme/ThemeContext';
 
 /**
- * Root application component. Handles top-level routing and auth-gating.
+ * Root app component. Handles top-level routing and authentication.
  *
  * Route structure:
- * - `/verify-email` and `/verify-email-change` are always accessible (no auth
- *   required) so that email links work even when the user is logged out.
+ * - `/verify-email` and `/verify-email-change` are always accessible so
+ *   that email links work even when the user is logged out.
  * - `/reset-password` is similarly public.
- * - Unauthenticated users are redirected to `/login` for all other routes. The
- *   originally-requested path is stored in route state so `AuthForm` can bounce
- *   the user back after a successful login.
- * - Authenticated users are redirected from `/` (and `/login`) to `/unread` and
- *   then rendered inside `AppShell`.
+ * - Unauthenticated users are redirected to `/login` for all other routes.
+ *   The originally-requested path is stored in route state so `AuthForm`
+ *   can bounce the user back after a successful login.
+ * - Authenticated users are redirected from `/` and `/login` to `/unread`.
  *
- * NOTE: The `useEffect` that syncs server preferences into `ThemeContext` runs
- * whenever `user` changes (i.e. on login). This ensures that the theme and
- * mode stored in the database override the `localStorage` defaults the user
- * may have set in a different browser session.
+ * NOTE: The `useEffect` that syncs server preferences into `ThemeContext`
+ * runs whenever `user` changes (i.e. on login). This ensures the theme and
+ * mode stored in the database override the `localStorage` defaults the
+ * user may have set in a different browser session.
  */
 function UnauthenticatedRedirect() {
   const location = useLocation();
@@ -38,9 +36,9 @@ export default function App() {
   const { user, loading } = useAuth();
   const { setBaseTheme, setMode } = useTheme();
 
-  // Sync server-side theme and mode preferences into ThemeContext after login
-  // or initial auth-check. Without this, a user who changed their theme on
-  // one device would see the old theme on another device until they changed it.
+  // Syncs server-side theme and mode preferences into ThemeContext after
+  // login. Without this, a user who changed their theme on one device
+  // would see the old theme on another device until they changed it.
   useEffect(() => {
     if (!user) return;
     setBaseTheme(user.theme as BaseTheme);
@@ -60,16 +58,21 @@ export default function App() {
   return (
     <ErrorBoundary>
       <Routes>
-        {/* Public routes — accessible without authentication */}
+        <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route
           path="/verify-email-change"
           element={<VerifyEmailChangePage />}
         />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
-        {!user ? (
+        {user ? (
+          <>
+            <Route path="/login" element={<Navigate to="/unread" replace />} />
+            <Route path="/" element={<Navigate to="/unread" replace />} />
+            <Route path="/*" element={<AppShell />} />
+          </>
+        ) : (
           <>
             <Route
               path="/login"
@@ -80,12 +83,6 @@ export default function App() {
               }
             />
             <Route path="*" element={<UnauthenticatedRedirect />} />
-          </>
-        ) : (
-          <>
-            <Route path="/login" element={<Navigate to="/unread" replace />} />
-            <Route path="/" element={<Navigate to="/unread" replace />} />
-            <Route path="/*" element={<AppShell />} />
           </>
         )}
       </Routes>

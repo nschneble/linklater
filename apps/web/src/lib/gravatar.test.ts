@@ -1,9 +1,9 @@
 /**
  * Tests for `gravatarUrl`.
  *
- * Gravatar URLs are deterministic: the email is normalized (trim + lowercase)
- * and MD5-hashed before being embedded in the URL. Tests verify correctness
- * of the URL structure and normalization behaviour.
+ * Gravatar URLs are deterministic: the email is normalized and MD5-hashed
+ * before being embedded in the URL. Tests verify correctness of the URL
+ * structure and normalization behavior.
  */
 
 import { describe, expect, it } from 'vitest';

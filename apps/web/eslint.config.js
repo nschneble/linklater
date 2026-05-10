@@ -41,12 +41,11 @@ export default tseslint.config(
     },
     rules: {
       ...jsxA11y.configs.recommended.rules,
-      'jsx-a11y/label-has-associated-control': ['error', {
-        controlComponents: ['FormInput'],
-        assert: 'either',
-        depth: 2,
-      }],
       ...vitest.configs.recommended.rules,
+      'jsx-a11y/label-has-associated-control': [
+        'error',
+        { controlComponents: ['FormInput'], assert: 'either', depth: 2 },
+      ],
       'react/react-in-jsx-scope': 'off',
       'react-hooks/exhaustive-deps': 'warn',
       'react-hooks/rules-of-hooks': 'error',

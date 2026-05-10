@@ -1,13 +1,13 @@
 /// <reference types="vite/client" />
 
 import { defineConfig } from 'vitest/config';
+import mkcert from 'vite-plugin-mkcert';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import mkcert from 'vite-plugin-mkcert';
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(), mkcert()],
+  plugins: [mkcert(), react(), tailwindcss()],
   test: {
     coverage: {
       include: ['src/**/*.{ts,tsx}'],

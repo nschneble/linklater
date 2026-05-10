@@ -1,5 +1,5 @@
-import { renderHook, act } from '@testing-library/react';
-import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
+import { act, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLinksActions } from './useLinksActions';
 import type { Link } from './api';
 
@@ -38,10 +38,10 @@ function makeLink(overrides: Partial<Link> = {}): Link {
   return {
     id: '1',
     url: 'https://example.com',
-    archivedAt: null,
+    meta: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    meta: null,
+    archivedAt: null,
     ...overrides,
   };
 }
@@ -247,9 +247,9 @@ describe('useLinksActions', () => {
     });
 
     it('updates link in place when it stays in the current filter', async () => {
-      // Archiving on the archived tab would never happen in normal use, but
-      // the branch handles: archived tab + archivedAt set → stays in view.
-      // Easier to test: active tab + unarchive (archivedAt=null) → stays.
+      // Archiving on the archived tab would never happen in normal use,
+      // but the branch handles: archived tab + archivedAt set → stays in
+      // view. Easier to test: active tab + unarchive → stays.
       const link = makeLink({
         id: 'link-1',
         archivedAt: new Date().toISOString(),

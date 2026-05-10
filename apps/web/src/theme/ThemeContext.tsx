@@ -10,9 +10,9 @@ import {
 
 /**
  * All valid theme identifiers, each mapping to a Richard Linklater film.
- * Adding a new theme requires updating this union, the `THEMES` array below,
- * `VALID_THEMES` in `apps/api/src/users/users.constants.ts`, and the matching
- * CSS variable file in `apps/web/src/theme/styles/`.
+ * Adding a new theme requires updating this union, the `THEMES` array,
+ * `VALID_THEMES` in `apps/api/src/users/users.constants.ts`, and the
+ * matching CSS variable file in `apps/web/src/theme/styles/`.
  */
 export type BaseTheme =
   | 'before-midnight'
@@ -28,9 +28,8 @@ export type BaseTheme =
 export type Mode = 'light' | 'dark';
 
 /**
- * All available themes with their display label and accent color swatch.
- * The accent color is used purely for the color dot shown in the theme submenu
- * — it does not need to be pixel-perfect; it just needs to be recognizable.
+ * All available themes with their display labels and accent colors. The
+ * accent color is used purely for the color dot in the theme submenu.
  */
 export const THEMES: Array<{ id: BaseTheme; label: string; accent: string }> = [
   { id: 'scanner-darkly', label: 'A Scanner Darkly', accent: '#a3e635' },
@@ -59,8 +58,8 @@ function readLocalStorage(key: string): string | null {
 }
 
 /**
- * The shape of the value provided by `ThemeContext`. All theme-related state
- * and actions are accessed through this interface via `useTheme`.
+ * The shape of the value provided by `ThemeContext`. All theme-related
+ * state and actions are accessed through this interface via `useTheme`.
  */
 interface ThemeContextValue {
   /** The currently active base theme. */
@@ -83,8 +82,8 @@ const THEME_STORAGE_KEY = 'linklater_theme';
 const MODE_STORAGE_KEY = 'linklater_mode';
 
 /**
- * Returns the theme that was last stored in `localStorage`, falling back to
- * `'scanner-darkly'` for first-time visitors.
+ * Returns the theme that was last stored in `localStorage`, falling back
+ * to `'scanner-darkly'` for first-time visitors.
  */
 function getInitialBaseTheme(): BaseTheme {
   const stored = readLocalStorage(THEME_STORAGE_KEY);
@@ -93,9 +92,9 @@ function getInitialBaseTheme(): BaseTheme {
 }
 
 /**
- * Returns the mode that was last stored in `localStorage`. Falls back to the
- * OS preference (`prefers-color-scheme`) for first-time visitors, defaulting
- * to `'dark'` when the media query is not available.
+ * Returns the mode that was last stored in `localStorage`. Falls back to
+ * the OS preference (`prefers-color-scheme`) for first-time visitors,
+ * defaulting to `'dark'` when the media query is not available.
  */
 function getInitialMode(): Mode {
   const stored = readLocalStorage(MODE_STORAGE_KEY);
@@ -115,7 +114,7 @@ function getInitialMode(): Mode {
  * `document.documentElement` so that CSS variables defined in the theme
  * stylesheets cascade to the entire page.
  *
- * Both values are persisted to `localStorage` so they survive page reloads.
+ * Both values are persisted to `localStorage` so they survive reloads.
  * Server-stored preferences (from `GET /auth/me`) are synced into this
  * context by `App.tsx` after login.
  *
@@ -126,7 +125,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     useState<BaseTheme>(getInitialBaseTheme);
   const [mode, setModeState] = useState<Mode>(getInitialMode);
 
-  // Apply theme and mode to the DOM and persist to localStorage whenever either changes.
+  // Applies theme and mode to the DOM and persist to localStorage whenever either changes
   useEffect(() => {
     if (typeof document === 'undefined') return;
     document.documentElement.dataset.theme = baseTheme;
@@ -158,8 +157,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 }
 
 /**
- * Provides access to theme state and actions from any component within
- * the `ThemeProvider` tree.
+ * Provides access to theme state and actions from any component within the
+ * `ThemeProvider` tree.
  *
  * @throws {Error} When called outside of a `ThemeProvider`.
  */

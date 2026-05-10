@@ -1,20 +1,22 @@
-import { verifyEmail } from '../lib/api';
 import TokenVerificationPage from './TokenVerificationPage';
+import { verifyEmail } from '../lib/api';
 
 /**
- * Handles the `/verify-email?token=...` route. Calls `GET /auth/verify-email`
- * with the token from the URL and delegates rendering to `TokenVerificationPage`.
+ * Handles the `/verify-email?token=…` route.
  *
- * This route is always accessible without authentication so that email links
- * work even when the user is logged out.
+ * Calls `GET /auth/verify-email` with the token from the URL and delegates
+ * rendering to `TokenVerificationPage`.
+ *
+ * This route is always accessible without authentication so that email
+ * links work even when the user is logged out or using a different device.
  */
 export default function VerifyEmailPage() {
   return (
     <TokenVerificationPage
       title="Email Verification"
       verifyingText="Verifying your email…"
-      successText="Your email has been verified. You're all set!"
-      helpText="The link may have expired. Request a new verification email from your account settings."
+      successText="Your email has been verified. You're good to go!"
+      helpText="The link may have expired. Request a new verification email from the Settings page."
       verifyFn={verifyEmail}
     />
   );

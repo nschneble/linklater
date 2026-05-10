@@ -1,5 +1,5 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { describe, expect, it, vi, afterEach } from 'vitest';
 import { useKeyboardShortcuts } from './useKeyboardShortcuts';
 
 afterEach(() => vi.restoreAllMocks());
@@ -8,11 +8,11 @@ function makeOptions(overrides: Record<string, unknown> = {}) {
   return {
     enabled: true,
     isShortcutsModalOpen: false,
-    onShowUnread: vi.fn(),
-    onShowRead: vi.fn(),
     onSearch: vi.fn(),
-    onToggleForm: vi.fn(),
+    onShowRead: vi.fn(),
+    onShowUnread: vi.fn(),
     onStumble: vi.fn(),
+    onToggleForm: vi.fn(),
     onToggleShortcuts: vi.fn(),
     ...overrides,
   };
