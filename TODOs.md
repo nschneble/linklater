@@ -28,7 +28,6 @@ This is a list of upcoming features, planned refactoring, and bugfixes.
 - Review all api DTOs + specs
 - Review all apps/web/src/components + tests with a fine-toothed comb
 - Verify: Forgot password flow sends expiring reset email
-- Verify: Signup flow includes email verification
 - Verify: You can use arrow keys to navigate the tabs and user menu
 
 ## Bugfixes

@@ -123,4 +123,16 @@ describe('TokenVerificationPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /back to linklater/i }));
   });
+
+  it('calls verifyFn only once even when the effect fires twice (StrictMode)', async () => {
+    const singleCallVerifyFn = vi.fn().mockResolvedValue(undefined);
+    const props = { ...DEFAULT_PROPS, verifyFn: singleCallVerifyFn };
+    renderPage(props);
+
+    await waitFor(() => {
+      expect(screen.getByText('All done!')).toBeInTheDocument();
+    });
+
+    expect(singleCallVerifyFn).toHaveBeenCalledTimes(1);
+  });
 });

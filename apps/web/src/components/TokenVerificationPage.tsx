@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getErrorMessage } from '../lib/errors';
 
@@ -47,8 +47,12 @@ export default function TokenVerificationPage({
   const navigate = useNavigate();
   const [status, setStatus] = useState<Status>('verifying');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const hasVerified = useRef(false);
 
   useEffect(() => {
+    if (hasVerified.current) return;
+    hasVerified.current = true;
+
     const token = searchParameters.get('token');
     if (!token) {
       setStatus('error');
