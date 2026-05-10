@@ -18,6 +18,7 @@ Keys:
   0  Status
   1  API logs
   2  Web logs
+  3  Mailpit logs
 USAGE
 }
 
@@ -51,20 +52,24 @@ TICK=✓  CROSS=✗
 # ── Temp files ────────────────────────────────────────────────────────────────
 API_LOG=$(mktemp)
 WEB_LOG=$(mktemp)
+MAILPIT_LOG=$(mktemp)
 KEY_FILE=$(mktemp)
 
 # ── Process state ─────────────────────────────────────────────────────────────
 # Values: starting | ready | error
 API_STATE="starting"
 WEB_STATE="starting"
+MAILPIT_STATE="starting"
 API_URL=""
 WEB_URL=""
+MAILPIT_URL=""
 API_PID=""
 WEB_PID=""
+MAILPIT_PID=""
 KEY_READER_PID=""
 
 # ── View state ────────────────────────────────────────────────────────────────
-# Values: status | api | web
+# Values: status | api | web | mailpit
 VIEW="status"
 FRAME=0
 
@@ -81,8 +86,9 @@ _cleanup() {
   [[ -n "$KEY_READER_PID" ]] && kill "$KEY_READER_PID" 2>/dev/null || true
   [[ -n "$API_PID" ]]        && kill "$API_PID"        2>/dev/null || true
   [[ -n "$WEB_PID" ]]        && kill "$WEB_PID"        2>/dev/null || true
+  [[ -n "$MAILPIT_PID" ]]    && kill "$MAILPIT_PID"    2>/dev/null || true
   wait 2>/dev/null || true
-  rm -f "$API_LOG" "$WEB_LOG" "$KEY_FILE"
+  rm -f "$API_LOG" "$WEB_LOG" "$MAILPIT_LOG" "$KEY_FILE"
   stty "$OLD_STTY" </dev/tty 2>/dev/null || true
   show_cursor
   printf '\n'
@@ -134,17 +140,20 @@ render_status_view() {
 
   out+="  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"$'\n'
   out+="  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"$'\n'
+  out+="  $(render_service_line "$MAILPIT_STATE" "$MAILPIT_URL" "$frame_char" "Mailpit")"$'\n'
   out+=$'\n'
 
-  if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" ]]; then
+  if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" && "$MAILPIT_STATE" == "ready" ]]; then
     out+="  ${GRN}${BLD}Ready.${RST}"$'\n'$'\n'
     out+="  ${DIM}1. API logs"$'\n'
-    out+="  2. Web logs${RST}"$'\n'$'\n'
+    out+="  2. Web logs"$'\n'
+    out+="  3. Mailpit logs${RST}"$'\n'$'\n'
     out+="  Press Control+C to stop"
-  elif [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" ]]; then
+  elif [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" || "$MAILPIT_STATE" == "error" ]]; then
     out+="  ${RED}${BLD}An error occurred.${RST}"$'\n'$'\n'
     out+="  ${DIM}1. API logs"$'\n'
-    out+="  2. Web logs${RST}"$'\n'$'\n'
+    out+="  2. Web logs"$'\n'
+    out+="  3. Mailpit logs${RST}"$'\n'$'\n'
     out+="  Press Control+C to stop"
   else
     out+="  ${DIM}Starting up…${RST}"
@@ -161,8 +170,8 @@ render_log_view() {
   local cols; cols=${stty_size##* }; cols=${cols:-80}
   local content_width=$(( cols - 4 ))
   (( content_width < 20 )) && content_width=20
-  # Lines above log content: 4 title + 3 service + 2 status + 3 options + 3 log labels = 15
-  local available=$(( rows - 15 ))
+  # Lines above log content: 4 title + 4 service + 2 status + 4 options + 3 log labels = 17
+  local available=$(( rows - 17 ))
   (( available < 1 )) && available=1
   local divider; printf -v divider '%*s' "$content_width" ''
   divider=${divider// /─}
@@ -172,6 +181,7 @@ render_log_view() {
 
   out+="  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"$'\n'
   out+="  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"$'\n'
+  out+="  $(render_service_line "$MAILPIT_STATE" "$MAILPIT_URL" "$frame_char" "Mailpit")"$'\n'
   out+=$'\n'
   out+="  ${DIM}0. (back to status)${RST}"$'\n'$'\n'
 
@@ -187,6 +197,12 @@ render_log_view() {
     out+="  ${DIM}2. Web logs${RST}"$'\n'
   fi
 
+  if [[ "$label" == "Mailpit" ]]; then
+    out+="  →  Mailpit logs"$'\n'
+  else
+    out+="  ${DIM}3. Mailpit logs${RST}"$'\n'
+  fi
+
   out+=$'\n'
 
   local prefix_len=$(( ${#label} + 8 ))
@@ -195,7 +211,13 @@ render_log_view() {
   out+="  ${DIM}── ${label} ${divider:0:$divider_width}${RST}"$'\n'$'\n'
 
   local service_state
-  [[ "$log_file" == "$API_LOG" ]] && service_state="$API_STATE" || service_state="$WEB_STATE"
+  if [[ "$log_file" == "$API_LOG" ]]; then
+    service_state="$API_STATE"
+  elif [[ "$log_file" == "$MAILPIT_LOG" ]]; then
+    service_state="$MAILPIT_STATE"
+  else
+    service_state="$WEB_STATE"
+  fi
 
   if [[ "$service_state" == "error" ]]; then
     # Start from 2 lines before the first error so the full message is visible
@@ -231,12 +253,16 @@ API_PID=$!
 npm run dev --workspace @linklater/web </dev/null >"$WEB_LOG" 2>&1 &
 WEB_PID=$!
 
+/opt/homebrew/opt/mailpit/bin/mailpit </dev/null >"$MAILPIT_LOG" 2>&1 &
+MAILPIT_PID=$!
+
 # ── Live update loop ──────────────────────────────────────────────────────────
 DIRTY=true  # always draw on first tick
 
 while true; do
   PREV_API_STATE="$API_STATE"
   PREV_WEB_STATE="$WEB_STATE"
+  PREV_MAILPIT_STATE="$MAILPIT_STATE"
   PREV_VIEW="$VIEW"
 
   # Poll for keypress written by background reader
@@ -250,6 +276,7 @@ while true; do
     0) VIEW="status" ;;
     1) VIEW="api" ;;
     2) VIEW="web" ;;
+    3) VIEW="mailpit" ;;
   esac
 
   # Detect ready signals
@@ -270,6 +297,12 @@ while true; do
     fi
   fi
 
+  if [[ "$MAILPIT_STATE" == "starting" ]] && \
+     grep -q "starting on" "$MAILPIT_LOG" 2>/dev/null; then
+    MAILPIT_URL="http://localhost:8025"
+    MAILPIT_STATE="ready"
+  fi
+
   # Detect crashes — process death or fatal error in log
   if [[ "$API_STATE" != "error" ]]; then
     if ! kill -0 "$API_PID" 2>/dev/null || \
@@ -285,11 +318,19 @@ while true; do
       VIEW="web"
     fi
   fi
+  if [[ "$MAILPIT_STATE" != "error" ]]; then
+    if ! kill -0 "$MAILPIT_PID" 2>/dev/null || \
+       grep -qE '(EADDRINUSE|EACCES)' "$MAILPIT_LOG" 2>/dev/null; then
+      MAILPIT_STATE="error"
+      VIEW="mailpit"
+    fi
+  fi
 
   # Mark dirty when state changed, key pressed, or spinner is animating
-  if [[ "$API_STATE" != "$PREV_API_STATE" || "$WEB_STATE" != "$PREV_WEB_STATE" || \
-        "$VIEW"      != "$PREV_VIEW"      || -n "$key" || \
-        "$API_STATE" == "starting"        || "$WEB_STATE" == "starting" ]]; then
+  if [[ "$API_STATE"  != "$PREV_API_STATE"  || "$WEB_STATE"  != "$PREV_WEB_STATE"  || \
+        "$MAILPIT_STATE" != "$PREV_MAILPIT_STATE" || "$VIEW" != "$PREV_VIEW"       || \
+        -n "$key" || "$API_STATE" == "starting" || "$WEB_STATE" == "starting" || \
+        "$MAILPIT_STATE" == "starting" ]]; then
     DIRTY=true
   fi
 
@@ -299,9 +340,10 @@ while true; do
     FRAME=$(( FRAME + 1 ))
     DIRTY=false
     case "$VIEW" in
-      status) render_status_view "$frame_char" ;;
-      api)    render_log_view "$frame_char" "API" "$API_LOG" ;;
-      web)    render_log_view "$frame_char" "Web" "$WEB_LOG" ;;
+      status)  render_status_view "$frame_char" ;;
+      api)     render_log_view "$frame_char" "API"  "$API_LOG"  ;;
+      web)     render_log_view "$frame_char" "Web"  "$WEB_LOG"  ;;
+      mailpit) render_log_view "$frame_char" "Mailpit" "$MAILPIT_LOG" ;;
     esac
   fi
 

@@ -2,17 +2,19 @@
 
 ## Environment Variables
 
-| Variable       | Required | Description                            |
-| -------------- | -------- | -------------------------------------- |
-| `DATABASE_URL` | Yes      | PostgreSQL connection string           |
-| `JWT_SECRET`   | Yes      | Used to sign and verify JWTs           |
-| `APP_URL`      | Yes      | Public URL of the web app              |
-| `SMTP_HOST`    | Yes      | SMTP server hostname                   |
-| `SMTP_PORT`    | Yes      | SMTP server port                       |
-| `SMTP_SECURE`  | Yes      | Set to `true` to use TLS               |
-| `SMTP_USER`    | Yes      | SMTP authentication username           |
-| `SMTP_PASS`    | Yes      | SMTP authentication password           |
-| `SMTP_FROM`    | Yes      | `From` address for all outbound emails |
+| Variable       | Required | Description                                     |
+| -------------- | -------- | ----------------------------------------------- |
+| `DATABASE_URL` | Yes      | PostgreSQL connection string                    |
+| `JWT_SECRET`   | Yes      | Used to sign and verify JWTs                    |
+| `APP_URL`      | Yes      | Public URL of the web app                       |
+| `SMTP_HOST`    | Yes      | SMTP server hostname                            |
+| `SMTP_PORT`    | Yes      | SMTP server port                                |
+| `SMTP_SECURE`  | Yes      | Set to `true` to use TLS                        |
+| `SMTP_USER`    | No       | SMTP authentication username (omit for Mailpit) |
+| `SMTP_PASS`    | No       | SMTP authentication password (omit for Mailpit) |
+| `SMTP_FROM`    | Yes      | `From` address for all outbound emails          |
+
+> **Local email testing:** `bin/dev` starts [Mailpit](https://mailpit.axllent.org/) automatically alongside the API and web servers. All outgoing emails are captured at `http://localhost:8025`. No real email is sent in development.
 
 ## Module Overview
 

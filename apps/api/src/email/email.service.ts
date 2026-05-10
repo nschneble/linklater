@@ -6,15 +6,16 @@ import {
 import * as nodemailer from 'nodemailer';
 
 /**
- * Sends transactional emails via SMTP. Configuration is read from environment
- * variables at startup (see `apps/api/README.md` for the full list).
+ * Sends transactional emails via SMTP. Configuration is read from
+ * environment variables at startup. See `apps/api/README.md` for the full
+ * list.
  *
  * All public methods follow the same pattern: build the email options and
  * delegate to the private `send` wrapper which handles errors uniformly.
  *
- * NOTE: When no SMTP credentials are configured (e.g. in local development),
- * nodemailer will still attempt to connect and will throw — run a local SMTP
- * server like Mailpit (`brew install mailpit`) to catch emails in development.
+ * NOTE: When no SMTP credentials are configured (e.g. in development),
+ * nodemailer will still attempt to connect and will throw errors. Run a
+ * local SMTP server like Mailpit to catch emails in development.
  */
 @Injectable()
 export class EmailService {
@@ -24,10 +25,12 @@ export class EmailService {
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT ?? 587),
     secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
+    ...(process.env.SMTP_USER && {
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    }),
   });
 
   /** The "From" address shown in outgoing emails. Defaults to `Linklater <noreply@linklater.app>`. */
