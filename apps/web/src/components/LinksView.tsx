@@ -122,7 +122,7 @@ export default function LinksView() {
         <h2 className="text-lg font-semibold">Your links</h2>
         <button
           type="button"
-          className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-pointer"
+          className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-help"
           onClick={() => setShowShortcuts((previous) => !previous)}
           aria-label="Show keyboard shortcuts"
           title="Keyboard shortcuts"
