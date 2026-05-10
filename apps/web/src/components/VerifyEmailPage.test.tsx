@@ -8,6 +8,10 @@ vi.mock('../lib/api', () => ({
   verifyEmail: vi.fn(),
 }));
 
+vi.mock('../auth/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ refreshUser: vi.fn() })),
+}));
+
 import * as apiModule from '../lib/api';
 
 afterEach(() => vi.restoreAllMocks());

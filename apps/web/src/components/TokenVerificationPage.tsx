@@ -25,6 +25,12 @@ interface TokenVerificationPageProps {
    * an error on failure.
    */
   verifyFn: (token: string) => Promise<void>;
+  /**
+   * Called immediately after a successful verification, before the user
+   * navigates away. Use to refresh stale auth state (e.g. re-fetch the
+   * user profile so email changes/verifications are reflected on return).
+   */
+  onSuccess?: () => void | Promise<void>;
 }
 
 /**
@@ -42,6 +48,7 @@ export default function TokenVerificationPage({
   successText,
   helpText,
   verifyFn,
+  onSuccess,
 }: TokenVerificationPageProps) {
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
@@ -61,12 +68,15 @@ export default function TokenVerificationPage({
     }
 
     verifyFn(token)
-      .then(() => setStatus('success'))
+      .then(() => {
+        setStatus('success');
+        onSuccess?.();
+      })
       .catch((error: unknown) => {
         setStatus('error');
         setErrorMessage(getErrorMessage(error, 'Verification failed.'));
       });
-  }, [searchParameters, verifyFn]);
+  }, [onSuccess, searchParameters, verifyFn]);
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">

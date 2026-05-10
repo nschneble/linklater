@@ -66,6 +66,8 @@ interface AuthContextValue {
    * after a successful `requestEmailChange` response.
    */
   setPendingEmail: (email: string) => void;
+  /** Re-fetches the current user profile from the server and updates auth state. */
+  refreshUser: () => Promise<void>;
   /** The authenticated user, or `null` when logged out. */
   user: User | null;
 }
@@ -182,12 +184,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const me = await getMe();
+      setUser({
+        userId: me.userId,
+        email: me.email,
+        emailVerifiedAt: me.emailVerifiedAt,
+        hasPassword: me.hasPassword,
+        pendingEmail: me.pendingEmail,
+        mode: me.mode,
+        theme: me.theme,
+      });
+    } catch (error) {
+      console.error('Failed to refresh user', error);
+    }
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       loading,
       login,
       loginWithToken,
       logout,
+      refreshUser,
       register,
       resendVerificationEmail,
       setPendingEmail,
@@ -198,6 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       loginWithToken,
       logout,
+      refreshUser,
       register,
       resendVerificationEmail,
       setPendingEmail,

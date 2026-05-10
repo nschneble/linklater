@@ -1,18 +1,14 @@
 /**
  * Tests for AuthContext / AuthProvider / useAuth.
  *
- * All API calls are mocked at the module boundary so no network traffic occurs.
- * localStorage is provided by the jsdom setup in test/setup.ts.
+ * All API calls are mocked at the module boundary so no network traffic
+ * occurs. localStorage is provided by the jsdom setup in test/setup.ts.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { fireEvent } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
-
-// ---------------------------------------------------------------------------
-// Mock the api module
-// ---------------------------------------------------------------------------
 
 vi.mock('../lib/api', () => ({
   clearStoredToken: vi.fn(),
@@ -26,10 +22,6 @@ vi.mock('../lib/api', () => ({
 }));
 
 import * as apiModule from '../lib/api';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 const makeUser = () => ({
   userId: 'user-1',
@@ -48,6 +40,7 @@ function AuthConsumer() {
     loading,
     login,
     logout,
+    refreshUser,
     register,
     resendVerificationEmail,
     setPendingEmail,
@@ -63,6 +56,9 @@ function AuthConsumer() {
       </button>
       <button type="button" onClick={() => logout()}>
         logout
+      </button>
+      <button type="button" onClick={() => refreshUser()}>
+        refresh
       </button>
       <button
         type="button"
@@ -97,10 +93,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
 });
-
-// ---------------------------------------------------------------------------
-// Initial load — no stored token
-// ---------------------------------------------------------------------------
 
 describe('AuthProvider initial state', () => {
   it('sets loading to false when there is no stored token', async () => {
@@ -141,10 +133,6 @@ describe('AuthProvider initial state', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// login
-// ---------------------------------------------------------------------------
-
 describe('login', () => {
   it('populates user state after successful login', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
@@ -170,7 +158,7 @@ describe('login', () => {
       new Error('Invalid credentials'),
     );
 
-    // A consumer that captures the rejection rather than leaving it unhandled.
+    // captures the rejection rather than leaving it unhandled
     let caughtError: Error | null = null;
 
     function CapturingConsumer() {
@@ -211,10 +199,6 @@ describe('login', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// logout
-// ---------------------------------------------------------------------------
-
 describe('logout', () => {
   it('clears user state and calls apiLogout', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
@@ -234,10 +218,6 @@ describe('logout', () => {
     expect(screen.getByTestId('email')).toHaveTextContent('none');
   });
 });
-
-// ---------------------------------------------------------------------------
-// register
-// ---------------------------------------------------------------------------
 
 describe('register', () => {
   it('calls apiRegister then logs in automatically', async () => {
@@ -261,10 +241,6 @@ describe('register', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// resendVerificationEmail
-// ---------------------------------------------------------------------------
-
 describe('resendVerificationEmail', () => {
   it('calls the API resend function', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
@@ -283,10 +259,6 @@ describe('resendVerificationEmail', () => {
     expect(apiModule.resendVerificationEmail).toHaveBeenCalled();
   });
 });
-
-// ---------------------------------------------------------------------------
-// setPendingEmail
-// ---------------------------------------------------------------------------
 
 describe('setPendingEmail', () => {
   it('updates pendingEmail in user state without a refetch', async () => {
@@ -315,7 +287,7 @@ describe('setPendingEmail', () => {
       expect(screen.getByTestId('loading')).toHaveTextContent('false'),
     );
 
-    // Should not throw
+    // should not throw
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'setPending' }));
     });
@@ -323,10 +295,6 @@ describe('setPendingEmail', () => {
     expect(screen.getByTestId('pending')).toHaveTextContent('none');
   });
 });
-
-// ---------------------------------------------------------------------------
-// loginWithToken
-// ---------------------------------------------------------------------------
 
 describe('loginWithToken', () => {
   it('stores the token, fetches user profile, and populates user state', async () => {
@@ -368,9 +336,55 @@ describe('loginWithToken', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// useAuth outside provider
-// ---------------------------------------------------------------------------
+describe('refreshUser', () => {
+  it('re-fetches user profile and updates auth state', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe)
+      .mockResolvedValueOnce(makeUser())
+      .mockResolvedValueOnce({
+        ...makeUser(),
+        email: 'refreshed@example.com',
+        emailVerifiedAt: '2025-01-01T00:00:00Z',
+      });
+
+    renderWithProvider();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('email')).toHaveTextContent('user@example.com'),
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'refresh' }));
+    });
+
+    expect(screen.getByTestId('email')).toHaveTextContent(
+      'refreshed@example.com',
+    );
+  });
+
+  it('logs an error and leaves user state unchanged when getMe fails', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe)
+      .mockResolvedValueOnce(makeUser())
+      .mockRejectedValueOnce(new Error('Network error'));
+
+    renderWithProvider();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('email')).toHaveTextContent('user@example.com'),
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'refresh' }));
+    });
+
+    expect(console.error).toHaveBeenCalledWith(
+      'Failed to refresh user',
+      expect.any(Error),
+    );
+    expect(screen.getByTestId('email')).toHaveTextContent('user@example.com');
+  });
+});
 
 describe('useAuth outside AuthProvider', () => {
   it('throws a descriptive error', () => {
