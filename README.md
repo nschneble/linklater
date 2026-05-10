@@ -33,19 +33,19 @@ Click on an image to open it full-size in a new browser tab:
   <tr>
     <td align="center">
       <a href="screenshots/log-in.jpg">
-        <img src="thumbnails/log-in.jpg" alt="Log In" />
+        <img src="screenshots/log-in-thumbnail.jpg" alt="Log In" />
       </a>
       <br><sub><em>Log In</em></sub>
     </td>
     <td align="center">
       <a href="screenshots/account-settings.jpg">
-        <img src="thumbnails/account-settings.jpg" alt="Account Settings" />
+        <img src="screenshots/account-settings-thumbnail.jpg" alt="Account Settings" />
       </a>
       <br><sub><em>Account Settings</em></sub>
     </td>
     <td align="center">
       <a href="screenshots/light-mode.jpg">
-        <img src="thumbnails/light-mode.jpg" alt="Themes" />
+        <img src="screenshots/light-mode-thumbnail.jpg" alt="Themes" />
       </a>
       <br><sub><em>Themes</em></sub>
     </td>
@@ -128,11 +128,16 @@ npm run migrate --workspace @linklater/api
 ```bash
 # cd /path/to/your/repo
 npm run dev
+
+# -OR-
+
+# start the development server TUI
+bin/dev
 ```
 
-This uses `concurrently` to run NestJS on [localhost:3000](http://localhost:3000) and Vite on [localhost:5173](http://localhost:5173).
+Linklater uses `concurrently` to run NestJS on port 3000 and Vite on port 5173. **Open [https://localhost:5173](https://localhost:5173) in your web browser and you're good to go!**
 
-**Open [localhost:5173](http://localhost:5173) in your web browser and you're good to go!**
+![dev](screenshots/dev.jpg)
 
 ### Linting, Tests, and CI
 
@@ -141,25 +146,33 @@ Both the front and back-end use ESLint and Prettier. Vitest is used to test the 
 ```bash
 # cd /path/to/your/repo
 
-# format, lint, and test everything
 npm run format
 npm run lint
 npm run test
+
+# -OR-
+
+# install, format, lint, and test in one TUI
+bin/flintest
+bin/flintest --update
 ```
 
-### Convenience Scripts
+### Versioning
 
-There are two helpful scripts which generate terminal user interfaces (TUIs) for use when developing and testing Linklater:
+Create a new version in four easy steps!
+
+1. Run the `version:bump` script
+2. Update the new CHANGELOG section
+3. Create a version tag
+4. [Create a new release](https://github.com/nschneble/linklater/releases/new) and paste in the new CHANGELOG section
 
 ```bash
 # cd /path/to/your/repo
+npm run version:bump -- 0.3.0
 
-# starts the dev server
-./dev
-
-# installs, formats, lints, and tests
-./flintest
-./flintest --update
+# create a version tag
+git commit -m "Bump version to 0.3.0"
+git tag -a v0.3.0 -m "v0.3.0"
+git push origin main
+git push origin v0.3.0
 ```
-
-![dev](screenshots/dev.jpg)
