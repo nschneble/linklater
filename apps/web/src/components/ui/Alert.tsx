@@ -1,14 +1,28 @@
 import type { ReactNode } from 'react';
 
+/**
+ * Inline alert banner used for form-level error and success messages.
+ *
+ * Renders a `<p>` element. The `role` attribute is set automatically:
+ * `'alert'` for errors (announced immediately by screen readers) and
+ * `'status'` for success (polite announcement).
+ *
+ * Use directly below the field or form section it relates to.
+ */
 interface AlertProps {
+  /** The message content. Can include inline elements. */
   children: ReactNode;
+  /** Additional Tailwind classes for layout overrides (e.g. `"sm:ml-2"`). */
   className?: string;
+  /** `'error'` renders red; `'success'` renders green. */
   variant: 'error' | 'success';
 }
 
 const variantClasses = {
-  error: 'bg-rose-950/40 border-rose-800 text-rose-400',
-  success: 'bg-emerald-950/40 border-emerald-700 text-emerald-300',
+  error:
+    "bg-rose-50 [[data-mode='dark']_&]:bg-rose-950/40 border-rose-200 [[data-mode='dark']_&]:border-rose-800 text-rose-700 [[data-mode='dark']_&]:text-rose-400",
+  success:
+    "bg-emerald-50 [[data-mode='dark']_&]:bg-emerald-950/40 border-emerald-200 [[data-mode='dark']_&]:border-emerald-700 text-emerald-700 [[data-mode='dark']_&]:text-emerald-300",
 };
 
 const variantRoles: Record<AlertProps['variant'], string> = {

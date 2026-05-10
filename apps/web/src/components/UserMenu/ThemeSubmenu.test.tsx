@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, vi } from 'vitest';
 import { THEMES, type BaseTheme } from '../../theme/ThemeContext';
 import ThemeSubmenu from './ThemeSubmenu';
+
+afterEach(() => vi.restoreAllMocks());
 
 const baseProps = {
   baseTheme: 'scanner-darkly' as BaseTheme,

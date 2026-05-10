@@ -1,27 +1,27 @@
-[data-theme='school-of-rock'][data-mode='light'] {
-  --bg: #fafafa;
-  --bg-surface: #ffffff;
-  --bg-elevated: #ffffff;
-  --bg-input: #f4f4f5;
-  --text: #1a0505;
-  --text-muted: #6b2222;
-  --text-subtle: #a05050;
-  --border: #e4c0c0;
-  --accent: #b91c1c;
-  --accent-hover: #991b1b;
-  --accent-fg: #fafafa;
+[data-theme='school-of-rock'][data-mode='dark'] {
+  --bg: #0a0a07;
+  --bg-surface: #4c310b;
+  --bg-elevated: #5f594f;
+  --bg-input: #4c310b;
+  --text: #e0d0c1;
+  --text-muted: #b89870;
+  --text-subtle: #7a7060;
+  --border: #935035;
+  --accent: #e02a15;
+  --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
+  --accent-fg: #ffffff;
 }
 
-[data-theme='school-of-rock'][data-mode='dark'] {
-  --bg: #1a0505;
-  --bg-surface: #2a0808;
-  --bg-elevated: #380c0c;
-  --bg-input: #2a0808;
-  --text: #fafafa;
-  --text-muted: #f87171;
-  --text-subtle: #b45454;
-  --border: #4a1010;
-  --accent: #ef4444;
-  --accent-hover: #f87171;
-  --accent-fg: #1a0505;
+[data-theme='school-of-rock'][data-mode='light'] {
+  --bg: #e0d0c1;
+  --bg-surface: #d4b07a;
+  --bg-elevated: #b08c30;
+  --bg-input: #e0d0c1;
+  --text: #0a0a07;
+  --text-muted: #4c310b;
+  --text-subtle: #6a4820;
+  --border: #8a5e28;
+  --accent: #e02a15;
+  --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
+  --accent-fg: #ffffff;
 }

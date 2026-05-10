@@ -1,151 +1,53 @@
-import {
-  archiveLink,
-  deleteLink,
-  getLinks,
-  getRandomLink,
-  unarchiveLink,
-  updateMe,
-  type Link,
-  type PaginatedLinks,
-} from './lib/api';
-
+import { lazy, Suspense } from 'react';
+import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
-import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme, type BaseTheme } from './theme/ThemeContext';
-import { useMetadataPolling } from './lib/useMetadataPolling';
 
 import Header from './components/Header';
 import LinksView from './components/LinksView';
 import SettingsView from './components/SettingsView';
+import LinkButton from './components/ui/LinkButton';
 
-type AppView = 'links' | 'settings';
-type LinksFilter = 'active' | 'archived';
+// ThemeEditor is lazy-loaded because it's rarely visited and its
+// color-math utilities add non-trivial weight to the bundle.
+const ThemeEditor = lazy(() => import('./components/ThemeEditor'));
 
+/** The three main views of the authenticated application shell. */
+type AppView = 'links' | 'settings' | 'theme-editor';
+
+/**
+ * Maps the current URL pathname to the active `AppView`. Defaults to
+ * `'links'` for unrecognized paths so unknown routes still show content.
+ */
+function viewFromPath(pathname: string): AppView {
+  if (pathname === '/settings') return 'settings';
+  if (pathname === '/editor') return 'theme-editor';
+  return 'links';
+}
+
+/**
+ * The main authenticated layout. Renders the `Header`, an optional
+ * verification banner for unverified users, and the active view
+ * (`LinksView`, `SettingsView`, or `ThemeEditor`) based on the URL.
+ *
+ * Theme and mode changes are applied optimistically to `ThemeContext`
+ * first, then persisted to the server via `PATCH /users/me` in the
+ * background. Failures are logged but do not roll back the UI.
+ *
+ * NOTE: Returns `null` when `user` is unexpectedly null. This is a safety
+ * guard; in practice `AppShell` is only rendered when `user` is non-null.
+ */
 export default function AppShell() {
   const { logout, user } = useAuth();
   const { setBaseTheme, toggleMode } = useTheme();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const [filter, setFilter] = useState<LinksFilter>('active');
-  const [links, setLinks] = useState<Link[]>([]);
-  const [loadingLinks, setLoadingLinks] = useState(true);
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState<Pick<
-    PaginatedLinks,
-    'total' | 'limit'
-  > | null>(null);
-  const [pendingMetaLinkId, setPendingMetaLinkId] = useState<string | null>(
-    null,
-  );
-  const [randomError, setRandomError] = useState<string | null>(null);
-  const [randomLoading, setRandomLoading] = useState(false);
-  const [search, setSearch] = useState('');
-  const [showLinkForm, setShowLinkForm] = useState(false);
-  const [view, setView] = useState<AppView>('links');
+  const view = viewFromPath(location.pathname);
 
-  useMetadataPolling(pendingMetaLinkId, (updatedLink) => {
-    setLinks((previous) =>
-      previous.map((link) => (link.id === updatedLink.id ? updatedLink : link)),
-    );
-    setPendingMetaLinkId(null);
-  });
-
-  // resets to page 1 when the search or filter changes
-  useEffect(() => {
-    setPage(1);
-  }, [search, filter]);
-
-  // loads links when the search, filter, or page changes
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      setLoadingLinks(true);
-      try {
-        const result = await getLinks({
-          search: search || undefined,
-          archived: filter === 'archived',
-          page,
-        });
-        if (!cancelled) {
-          if (page === 1) {
-            setLinks(result.data);
-          } else {
-            setLinks((prev) => [...prev, ...result.data]);
-          }
-          setPagination({ total: result.total, limit: result.limit });
-        }
-      } catch (error) {
-        console.error('Failed to load links', error);
-      } finally {
-        if (!cancelled) setLoadingLinks(false);
-      }
-    };
-
-    const timeout = setTimeout(load, 200);
-    return () => {
-      cancelled = true;
-      clearTimeout(timeout);
-    };
-  }, [search, filter, page]);
-
-  const handleCreated = (link: Link) => {
-    // only prepends when viewing active links
-    if (filter === 'archived') {
-      setShowLinkForm(false);
-      return;
-    }
-    setLinks((previous) => [link, ...previous]);
-    setShowLinkForm(false);
-    setPendingMetaLinkId(link.id);
-  };
-
-  const handleToggleArchive = async (link: Link) => {
-    try {
-      const updated = link.archivedAt
-        ? await unarchiveLink(link.id)
-        : await archiveLink(link.id);
-
-      setLinks((previous) => {
-        if (filter === 'active' && updated.archivedAt) {
-          return previous.filter((link) => link.id !== link.id);
-        }
-        if (filter === 'archived' && !updated.archivedAt) {
-          return previous.filter((link) => link.id !== link.id);
-        }
-        return previous.map((link) => (link.id === link.id ? updated : link));
-      });
-    } catch (error: unknown) {
-      console.error('Failed to toggle archive state', error);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteLink(id);
-      setLinks((previous) => previous.filter((link) => link.id !== id));
-    } catch (error: unknown) {
-      console.error('Failed to delete link', error);
-    }
-  };
-
-  const handleRandom = async () => {
-    setRandomError(null);
-    setRandomLoading(true);
-    try {
-      const { link } = await getRandomLink({ archived: filter === 'archived' });
-      if (!link) {
-        setRandomError('No links available');
-      } else {
-        window.open(link.url, '_blank', 'noopener,noreferrer');
-      }
-    } catch (error: unknown) {
-      setRandomError('Failed to get a random link');
-      console.error('Failed to get a random link', error);
-    } finally {
-      setRandomLoading(false);
-    }
-  };
-
+  // Optimistic update: the theme switches immediately without waiting for
+  // the server response.
   const handleThemeSelect = (theme: BaseTheme) => {
     setBaseTheme(theme);
     updateMe({ theme }).catch((error) =>
@@ -153,6 +55,8 @@ export default function AppShell() {
     );
   };
 
+  // The next mode is derived from user.mode (auth state) rather than from
+  // ThemeContext so the persisted value stays in sync with auth state.
   const handleModeToggle = () => {
     const nextMode = user?.mode === 'light' ? 'dark' : 'light';
     toggleMode();
@@ -163,40 +67,50 @@ export default function AppShell() {
 
   if (!user) return null;
 
+  const isEmailUnverified = !user.emailVerifiedAt;
+
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] select-none">
+      {isEmailUnverified && (
+        <div
+          className="px-4 py-2 bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/25 border-b border-amber-300 [[data-mode='dark']_&]:border-amber-800/50 text-center"
+          role="status"
+        >
+          <p className="text-amber-800 [[data-mode='dark']_&]:text-amber-300 text-xs font-medium">
+            <i
+              className="fa-solid fa-triangle-exclamation mr-1.5"
+              aria-hidden="true"
+            />
+            Please verify your email address.{' '}
+            <LinkButton onClick={() => navigate('/settings')}>
+              Need to resend the verification email?
+            </LinkButton>
+          </p>
+        </div>
+      )}
+
       <Header
         onLogout={logout}
         onModeToggle={handleModeToggle}
         onThemeSelect={handleThemeSelect}
-        onViewChange={setView}
+        onViewChange={(newView) => {
+          if (newView === 'settings') navigate('/settings');
+          else if (newView === 'theme-editor') navigate('/editor');
+          else navigate('/unread');
+        }}
         user={user}
         view={view}
       />
 
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        {view === 'links' ? (
-          <LinksView
-            filter={filter}
-            links={links}
-            loadingLinks={loadingLinks}
-            onArchiveToggle={handleToggleArchive}
-            onCreated={handleCreated}
-            onDelete={handleDelete}
-            onFilterChange={setFilter}
-            onLoadMore={() => setPage((page) => page + 1)}
-            onRandom={handleRandom}
-            onSearchChange={setSearch}
-            onToggleForm={() => setShowLinkForm((open) => !open)}
-            page={page}
-            pagination={pagination}
-            randomError={randomError}
-            randomLoading={randomLoading}
-            search={search}
-            showLinkForm={showLinkForm}
-          />
-        ) : (
+      <main className="max-w-3xl mx-auto px-4 py-12 space-y-6">
+        {view === 'settings' ? (
           <SettingsView />
+        ) : view === 'theme-editor' ? (
+          <Suspense>
+            <ThemeEditor />
+          </Suspense>
+        ) : (
+          <LinksView />
         )}
       </main>
     </div>

@@ -1,14 +1,20 @@
 import { gravatarUrl } from '../../lib/gravatar';
-import { useEffect, useRef, useState } from 'react';
+import { FOCUS_RING } from '../../lib/styles';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme, type BaseTheme } from '../../theme/ThemeContext';
+import MenuSection from './MenuSection';
 import MenuItem from './MenuItem';
 import ThemeSubmenu from './ThemeSubmenu';
+import { useMenuNavigation } from './useMenuNavigation';
 import type { User } from '../../auth/AuthContext';
 
-type AppView = 'links' | 'settings';
+/** The three main app sections navigable from the user menu. */
+type AppView = 'links' | 'settings' | 'theme-editor';
 
 interface UserMenuProps {
+  /** The authenticated user. Email is used for the Gravatar avatar and the "Logged in as" label. */
   user: User;
+  /** The currently active view — highlights the corresponding menu item. */
   view: AppView;
   onLogout: () => void;
   onModeToggle: () => void;
@@ -16,6 +22,25 @@ interface UserMenuProps {
   onViewChange: (view: AppView) => void;
 }
 
+/**
+ * Avatar button that opens a dropdown menu with navigation, theme/mode
+ * controls, and logout.
+ *
+ * State:
+ * - `showUserMenu` — whether the main dropdown is visible.
+ * - `showThemeSubmenu` — whether the theme flyout is visible.
+ * - `previewTheme` — the theme currently being previewed on hover.
+ * - `themeSubmenuOnLeft` — whether the flyout opens left (when near the right edge).
+ *
+ * The submenu uses a hover timeout (`hideSubmenuTimeout`) with an 80ms delay
+ * before hiding, so the user has time to move the cursor from the trigger row
+ * to the flyout panel without it disappearing.
+ *
+ * Keyboard navigation within the dropdown is handled by `useMenuNavigation`.
+ * Clicking outside the menu closes it via a `mousedown` listener on `document`.
+ *
+ * The Gravatar URL is memoized so it only recomputes when `user.email` changes.
+ */
 export default function UserMenu({
   user,
   view,
@@ -24,17 +49,25 @@ export default function UserMenu({
   onThemeSelect,
   onViewChange,
 }: UserMenuProps) {
-  const avatarUrl = gravatarUrl(user.email, 64);
+  const avatarUrl = useMemo(() => gravatarUrl(user.email, 64), [user.email]);
   const { baseTheme, mode } = useTheme();
 
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
   const [showThemeSubmenu, setShowThemeSubmenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [themeSubmenuOnLeft, setThemeSubmenuOnLeft] = useState(false);
+  const [themeSubmenuOnLeft, setThemeSubmenuOnLeft] = useState(true);
 
   const avatarRef = useRef<HTMLButtonElement | null>(null);
   const hideSubmenuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useMenuNavigation(menuRef, () => {
+    setShowUserMenu(false);
+    avatarRef.current?.focus();
+  });
   const themeRowRef = useRef<HTMLDivElement | null>(null);
 
   // resets submenu when main menu closes
@@ -62,6 +95,21 @@ export default function UserMenu({
     return () => document.removeEventListener('mousedown', handleOutsideClicks);
   }, [showUserMenu]);
 
+  // closes main menu on Escape (covers focus outside the menu container)
+  useEffect(() => {
+    if (!showUserMenu) return;
+
+    function handleEscapeKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setShowUserMenu(false);
+        avatarRef.current?.focus();
+      }
+    }
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [showUserMenu]);
+
   const cancelHide = () => {
     if (hideSubmenuTimeout.current) {
       clearTimeout(hideSubmenuTimeout.current);
@@ -69,15 +117,42 @@ export default function UserMenu({
     }
   };
 
-  const scheduleHide = (currentBaseTheme: string) => {
-    cancelHide();
-    setShowThemeSubmenu(false);
+  const resetPreview = (currentBaseTheme: string) => {
+    if (resetTransitionTimeout.current) {
+      clearTimeout(resetTransitionTimeout.current);
+    }
     setPreviewTheme(null);
-
     const root = document.documentElement;
-    root.style.setProperty('--theme-transition-duration', '250ms');
+    root.style.setProperty('--theme-transition-duration', '600ms');
     root.style.setProperty('--theme-transition-easing', 'ease-out');
     root.dataset.theme = currentBaseTheme;
+    resetTransitionTimeout.current = setTimeout(() => {
+      root.style.removeProperty('--theme-transition-duration');
+      root.style.removeProperty('--theme-transition-easing');
+      resetTransitionTimeout.current = null;
+    }, 650);
+  };
+
+  const handlePreviewChange = (theme: BaseTheme | null) => {
+    if (resetTransitionTimeout.current) {
+      clearTimeout(resetTransitionTimeout.current);
+      resetTransitionTimeout.current = null;
+    }
+    setPreviewTheme(theme);
+  };
+
+  const scheduleHide = (currentBaseTheme: string) => {
+    cancelHide();
+    hideSubmenuTimeout.current = setTimeout(() => {
+      setShowThemeSubmenu(false);
+      resetPreview(currentBaseTheme);
+      hideSubmenuTimeout.current = null;
+    }, 80);
+  };
+
+  const handleThemeRowItemEnter = () => {
+    cancelHide();
+    resetPreview(baseTheme);
   };
 
   const handleThemeRowEnter = () => {
@@ -98,36 +173,44 @@ export default function UserMenu({
   return (
     <div className="relative">
       <button
-        className="flex items-center gap-2 px-2 py-1.5 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full transition cursor-pointer"
+        className={`flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] border-shadow hover:border-shadow ${FOCUS_RING} rounded-4xl transition cursor-pointer`}
         ref={avatarRef}
         type="button"
         onClick={() => setShowUserMenu((open) => !open)}
         aria-expanded={showUserMenu}
-        aria-haspopup="true"
+        aria-haspopup="menu"
         aria-label="User menu"
       >
         <img
           src={avatarUrl}
           alt={user.email}
-          className="w-7 h-7 rounded-full"
+          className="w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-[26px]"
         />
-        <i className="fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem]" />
+        <i
+          className={`fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] transition-transform duration-200 ease-out ${showUserMenu ? '-rotate-180' : ''}`}
+          aria-hidden="true"
+        />
       </button>
 
-      {showUserMenu && (
-        <div
-          ref={menuRef}
-          className="absolute right-0 w-60 mt-2 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] text-xs shadow-black/40 shadow-lg rounded-xl animate-fade-in-up z-50"
-        >
-          <div className="mb-2 px-3 pb-2 border-b border-[var(--border)]">
-            <p className="text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-tight font-semibold">
-              Logged in as
-            </p>
-            <p className="mt-1 text-[var(--text)] text-xs font-medium truncate">
-              {user.email}
-            </p>
-          </div>
+      <div
+        ref={menuRef}
+        role="menu"
+        aria-hidden={!showUserMenu}
+        className="absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] border-shadow text-xs rounded-lg"
+        style={{
+          transition: `opacity ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}`,
+          opacity: showUserMenu ? 1 : 0,
+          transform: showUserMenu ? 'scale(1)' : 'scale(0.95)',
+          pointerEvents: showUserMenu ? 'auto' : 'none',
+        }}
+      >
+        <MenuSection label="Logged in as" className="px-3">
+          <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
+            {user.email}
+          </p>
+        </MenuSection>
 
+        <MenuSection>
           <MenuItem
             icon="fa-bookmark"
             label="Your links"
@@ -154,6 +237,18 @@ export default function UserMenu({
             onClick={onModeToggle}
           />
 
+          <MenuItem
+            icon="fa-palette"
+            label="Theme editor"
+            onClick={() => {
+              onViewChange('theme-editor');
+              setShowUserMenu(false);
+            }}
+            active={view === 'theme-editor'}
+          />
+        </MenuSection>
+
+        <MenuSection>
           <div
             ref={themeRowRef}
             className="relative"
@@ -167,21 +262,24 @@ export default function UserMenu({
               submenuOnLeft={themeSubmenuOnLeft}
               onFlyoutMouseEnter={cancelHide}
               onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
+              onThemeRowItemEnter={handleThemeRowItemEnter}
+              onTriggerClick={handleThemeRowEnter}
+              onPreviewChange={handlePreviewChange}
               onSelect={handleThemeSelect}
             />
           </div>
+        </MenuSection>
 
-          <MenuItem
-            icon="fa-right-from-bracket"
-            label="Log out"
-            onClick={() => {
-              setShowUserMenu(false);
-              onLogout();
-            }}
-            className="mt-1 border-t border-[var(--border)]"
-          />
-        </div>
-      )}
+        <MenuItem
+          icon="fa-right-from-bracket"
+          label="Log out"
+          onClick={() => {
+            setShowUserMenu(false);
+            onLogout();
+          }}
+          className="mt-2"
+        />
+      </div>
     </div>
   );
 }

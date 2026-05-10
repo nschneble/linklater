@@ -1,5 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, vi } from 'vitest';
 import MenuItem from './MenuItem';
+
+afterEach(() => vi.restoreAllMocks());
 
 describe('MenuItem', () => {
   it('renders the label', () => {
@@ -22,7 +25,7 @@ describe('MenuItem', () => {
     render(
       <MenuItem icon="fa-bookmark" label="Your links" onClick={onClick} />,
     );
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('menuitem'));
     expect(onClick).toHaveBeenCalledOnce();
   });
 
@@ -47,15 +50,15 @@ describe('MenuItem', () => {
     expect(icon?.className).toContain('text-[var(--text-muted)]');
   });
 
-  it('forwards extra className to the button', () => {
+  it('forwards extra classes to the button', () => {
     render(
       <MenuItem
         icon="fa-bookmark"
         label="Your links"
-        onClick={() => {}}
         className="border-t"
+        onClick={() => {}}
       />,
     );
-    expect(screen.getByRole('button')).toHaveClass('border-t');
+    expect(screen.getByRole('menuitem')).toHaveClass('border-t');
   });
 });

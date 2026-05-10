@@ -1,0 +1,269 @@
+#!/usr/bin/env bash
+# dev — start the Linklater development servers with a live status TUI
+
+set -uo pipefail
+
+# ── Colors & symbols ─────────────────────────────────────────────────────────
+if [[ -t 1 ]]; then
+  RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m' CYN=$'\033[36m'
+  BLD=$'\033[1m'  DIM=$'\033[2m'  RST=$'\033[0m'
+else
+  RED='' GRN='' YLW='' CYN='' BLD='' DIM='' RST=''
+fi
+
+SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
+TICK=✓  CROSS=✗  CIRC=○
+
+# ── Temp files ────────────────────────────────────────────────────────────────
+API_LOG=$(mktemp)
+WEB_LOG=$(mktemp)
+KEY_FILE=$(mktemp)
+
+# ── Process state ─────────────────────────────────────────────────────────────
+# Values: starting | ready | error
+API_STATE="starting"
+WEB_STATE="starting"
+API_URL=""
+WEB_URL=""
+API_PID=""
+WEB_PID=""
+KEY_READER_PID=""
+
+# ── View state ────────────────────────────────────────────────────────────────
+# Values: status | api | web
+VIEW="status"
+FRAME=0
+
+# ── Terminal setup ────────────────────────────────────────────────────────────
+OLD_STTY=$(stty -g </dev/tty 2>/dev/null || true)
+stty -echo -icanon </dev/tty 2>/dev/null || true
+
+hide_cursor() { printf '\033[?25l'; }
+show_cursor()  { printf '\033[?25h'; }
+
+# ── Cleanup ───────────────────────────────────────────────────────────────────
+_cleanup() {
+  trap '' EXIT INT TERM HUP
+  [[ -n "$KEY_READER_PID" ]] && kill "$KEY_READER_PID" 2>/dev/null || true
+  [[ -n "$API_PID" ]]        && kill "$API_PID"        2>/dev/null || true
+  [[ -n "$WEB_PID" ]]        && kill "$WEB_PID"        2>/dev/null || true
+  wait 2>/dev/null || true
+  rm -f "$API_LOG" "$WEB_LOG" "$KEY_FILE"
+  stty "$OLD_STTY" </dev/tty 2>/dev/null || true
+  show_cursor
+  printf '\n'
+  exit 0
+}
+trap _cleanup EXIT INT TERM HUP
+
+# ── Background key reader ─────────────────────────────────────────────────────
+# Blocking single-char reads from the terminal; writes each char to KEY_FILE.
+# Runs independently so the main loop can use plain sleep for animation timing.
+(
+  while true; do
+    char=''
+    IFS= read -r -n 1 char </dev/tty 2>/dev/null || break
+    [[ -n "$char" ]] && printf '%s' "$char" > "$KEY_FILE"
+  done
+) &
+KEY_READER_PID=$!
+
+# ── Strip ANSI escape codes (BSD sed compatible) ──────────────────────────────
+strip_ansi() {
+  sed $'s/\033\\[[0-9;]*[mGKHFJ]//g'
+}
+
+# ── Static header (lines 1–4, never redrawn) ─────────────────────────────────
+draw_header() {
+  printf '\033[2J\033[H'
+  printf "  ${BLD}${CYN}╔═════════════════╗${RST}\n"
+  printf "  ${BLD}${CYN}║    Linklater    ║${RST}\n"
+  printf "  ${BLD}${CYN}╚═════════════════╝${RST}\n"
+  printf '\n'
+}
+
+# ── Service row ───────────────────────────────────────────────────────────────
+render_service_line() {
+  local state=$1 url=$2 frame_char=$3 label=$4
+  case "$state" in
+    starting) printf "${YLW}%s${RST} %-4s  ${DIM}starting${RST}"  "$frame_char" "$label" ;;
+    ready)    printf "${GRN}%s${RST} %-4s  ${GRN}%s${RST}"        "$TICK"       "$label" "$url" ;;
+    error)    printf "${RED}%s${RST} %-4s  ${RED}error${RST}"     "$CROSS"      "$label" ;;
+  esac
+}
+
+# ── Status view ───────────────────────────────────────────────────────────────
+render_status_view() {
+  local frame_char=$1
+  local out=''
+  out+=$'\033[5;1H\033[0J'
+
+  out+="  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"$'\n'
+  out+="  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"$'\n'
+  out+=$'\n'
+
+  if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" ]]; then
+    out+="  ${GRN}${BLD}Ready.${RST}"$'\n'$'\n'
+    out+="  ${DIM}1. API logs"$'\n'
+    out+="  2. Web logs${RST}"$'\n'$'\n'
+    out+="  Press Control+C to stop"
+  elif [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" ]]; then
+    out+="  ${RED}${BLD}An error occurred.${RST}"$'\n'$'\n'
+    out+="  ${DIM}1. API logs"$'\n'
+    out+="  2. Web logs${RST}"$'\n'$'\n'
+    out+="  Press Control+C to stop"
+  else
+    out+="  ${DIM}Starting up…${RST}"
+  fi
+
+  printf '%s' "$out"
+}
+
+# ── Log view ──────────────────────────────────────────────────────────────────
+render_log_view() {
+  local frame_char=$1 label=$2 log_file=$3
+  local stty_size; stty_size=$(stty size </dev/tty 2>/dev/null)
+  local rows; rows=${stty_size%% *}; rows=${rows:-24}
+  local cols; cols=${stty_size##* }; cols=${cols:-80}
+  local content_width=$(( cols - 4 ))
+  # Lines above log content: 4 title + 3 service + 2 status + 3 options + 3 log labels = 15
+  local available=$(( rows - 15 ))
+  local divider; divider=$(printf '─%.0s' $(seq 1 "$content_width"))
+
+  local out=''
+  out+=$'\033[5;1H\033[0J'
+
+  out+="  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"$'\n'
+  out+="  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"$'\n'
+  out+=$'\n'
+  out+="  ${DIM}0. (back to status)${RST}"$'\n'$'\n'
+
+  if [[ "$label" == "API" ]]; then
+    out+="  →  API logs"$'\n'
+  else
+    out+="  ${DIM}1. API logs${RST}"$'\n'
+  fi
+
+  if [[ "$label" == "Web" ]]; then
+    out+="  →  Web logs"$'\n'
+  else
+    out+="  ${DIM}2. Web logs${RST}"$'\n'
+  fi
+
+  out+=$'\n'
+
+  local prefix_len=$(( ${#label} + 8 ))
+  out+="  ${DIM}── ${label} ${divider:0:$(( content_width - prefix_len ))}${RST}"$'\n'$'\n'
+
+  local service_state
+  [[ "$log_file" == "$API_LOG" ]] && service_state="$API_STATE" || service_state="$WEB_STATE"
+
+  local log_source
+  if [[ "$service_state" == "error" ]]; then
+    # Start from 2 lines before the first error so the full message is visible
+    local error_line
+    error_line=$(grep -n 'Error\|EADDR\|EACCES\|UnhandledPromise\|Cannot find module' \
+                 "$log_file" 2>/dev/null | head -1 | cut -d: -f1)
+    if [[ -n "$error_line" && "$error_line" -gt 2 ]]; then
+      local start=$(( error_line - 2 ))
+      log_source="sed -n ${start},$((start + available - 1))p $log_file"
+    else
+      log_source="tail -n $available $log_file"
+    fi
+  else
+    log_source="tail -n $available $log_file"
+  fi
+
+  while IFS= read -r line; do
+    out+="  ${DIM}${line:0:$content_width}${RST}"$'\n'
+  done < <($log_source 2>/dev/null | strip_ansi || true)
+
+  printf '%s' "$out"
+}
+
+# ── Launch services ───────────────────────────────────────────────────────────
+hide_cursor
+draw_header
+
+npm run dev --workspace @linklater/api </dev/null >"$API_LOG" 2>&1 &
+API_PID=$!
+
+npm run dev --workspace @linklater/web </dev/null >"$WEB_LOG" 2>&1 &
+WEB_PID=$!
+
+# ── Live update loop ──────────────────────────────────────────────────────────
+DIRTY=true  # always draw on first tick
+
+while true; do
+  PREV_API_STATE="$API_STATE"
+  PREV_WEB_STATE="$WEB_STATE"
+  PREV_VIEW="$VIEW"
+
+  # Poll for keypress written by background reader
+  key=''
+  if [[ -s "$KEY_FILE" ]]; then
+    key=$(< "$KEY_FILE")
+    : > "$KEY_FILE"
+  fi
+
+  case "$key" in
+    0) VIEW="status" ;;
+    1) VIEW="api" ;;
+    2) VIEW="web" ;;
+  esac
+
+  # Detect ready signals
+  if [[ "$API_STATE" == "starting" ]] && \
+     grep -q "Nest application successfully started" "$API_LOG" 2>/dev/null; then
+    PORT=$(grep -oE 'Listening on port [0-9]+' "$API_LOG" 2>/dev/null \
+           | grep -oE '[0-9]+$' | tail -1 || true)
+    API_URL="https://localhost:${PORT:-3000}"
+    API_STATE="ready"
+  fi
+
+  if [[ "$WEB_STATE" == "starting" ]]; then
+    EXTRACTED=$(grep 'Local:' "$WEB_LOG" 2>/dev/null \
+                | grep -oE 'https?://[^ ]+' | tail -1 || true)
+    if [[ -n "$EXTRACTED" ]]; then
+      WEB_URL="${EXTRACTED%/}"
+      WEB_STATE="ready"
+    fi
+  fi
+
+  # Detect crashes — process death or fatal error in log
+  if [[ "$API_STATE" != "error" ]]; then
+    if ! kill -0 "$API_PID" 2>/dev/null || \
+       grep -qE '(EADDRINUSE|EACCES|UnhandledPromiseRejection|Error:.*listen)' "$API_LOG" 2>/dev/null; then
+      API_STATE="error"
+      VIEW="api"
+    fi
+  fi
+  if [[ "$WEB_STATE" != "error" ]]; then
+    if ! kill -0 "$WEB_PID" 2>/dev/null || \
+       grep -qE '(EADDRINUSE|EACCES|error when starting dev server)' "$WEB_LOG" 2>/dev/null; then
+      WEB_STATE="error"
+      VIEW="web"
+    fi
+  fi
+
+  # Mark dirty when state changed, key pressed, or spinner is animating
+  if [[ "$API_STATE" != "$PREV_API_STATE" || "$WEB_STATE" != "$PREV_WEB_STATE" || \
+        "$VIEW"      != "$PREV_VIEW"      || -n "$key" || \
+        "$API_STATE" == "starting"        || "$WEB_STATE" == "starting" ]]; then
+    DIRTY=true
+  fi
+
+  # Render only when something changed
+  if [[ "$DIRTY" == true ]]; then
+    frame_char="${SPIN[$((FRAME % ${#SPIN[@]}))]}"
+    FRAME=$(( FRAME + 1 ))
+    DIRTY=false
+    case "$VIEW" in
+      status) render_status_view "$frame_char" ;;
+      api)    render_log_view "$frame_char" "API" "$API_LOG" ;;
+      web)    render_log_view "$frame_char" "Web" "$WEB_LOG" ;;
+    esac
+  fi
+
+  sleep 0.08
+done

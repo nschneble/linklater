@@ -4,16 +4,19 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
+const USER_EMAIL = 'email@addy.com';
+const USER_ID = 'user-1';
+
 describe('UsersController', () => {
   let controller: UsersController;
 
   const usersServiceMock = {
+    deleteById: jest.fn(),
     findById: jest.fn(),
     updateMe: jest.fn(),
-    deleteById: jest.fn(),
   } as unknown as UsersService;
 
-  const makeRequest = (userId = 'user-1') => ({ user: { userId } }) as never;
+  const makeRequest = (userId = USER_ID) => ({ user: { userId } }) as never;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -30,25 +33,25 @@ describe('UsersController', () => {
   });
 
   it('getMe delegates to UsersService.findById with userId from request', async () => {
-    const user = { id: 'user-1', email: 'a@b.com' };
+    const user = { email: USER_EMAIL, id: USER_ID };
     (usersServiceMock.findById as jest.Mock).mockResolvedValue(user);
 
     const result = await controller.getMe(makeRequest());
 
-    expect(usersServiceMock.findById).toHaveBeenCalledWith('user-1');
+    expect(usersServiceMock.findById).toHaveBeenCalledWith(USER_ID);
     expect(result).toBe(user);
   });
 
   it('updateMe delegates to UsersService.updateMe with userId from request', async () => {
-    const updated = { id: 'user-1', email: 'new@b.com' };
+    const updated = { email: USER_EMAIL, id: USER_ID };
     (usersServiceMock.updateMe as jest.Mock).mockResolvedValue(updated);
 
     const result = await controller.updateMe(makeRequest(), {
-      email: 'new@b.com',
+      email: USER_EMAIL,
     } as never);
 
-    expect(usersServiceMock.updateMe).toHaveBeenCalledWith('user-1', {
-      email: 'new@b.com',
+    expect(usersServiceMock.updateMe).toHaveBeenCalledWith(USER_ID, {
+      email: USER_EMAIL,
     });
     expect(result).toBe(updated);
   });
@@ -58,7 +61,7 @@ describe('UsersController', () => {
 
     const result = await controller.deleteMe(makeRequest());
 
-    expect(usersServiceMock.deleteById).toHaveBeenCalledWith('user-1');
+    expect(usersServiceMock.deleteById).toHaveBeenCalledWith(USER_ID);
     expect(result).toEqual({ success: true });
   });
 });

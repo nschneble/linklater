@@ -1,0 +1,30 @@
+.border-shadow {
+  box-shadow:
+    0px 0px 0px 1px
+      color-mix(in srgb, var(--border-shadow-color, #000000) 6%, transparent),
+    0px 1px 2px -1px
+      color-mix(in srgb, var(--border-shadow-color, #000000) 6%, transparent),
+    0px 2px 4px 0px
+      color-mix(in srgb, var(--border-shadow-color, #000000) 4%, transparent);
+}
+
+.hover\:border-shadow:hover {
+  box-shadow:
+    0px 0px 0px 1px
+      color-mix(in srgb, var(--border-shadow-color, #000000) 8%, transparent),
+    0px 1px 2px -1px
+      color-mix(in srgb, var(--border-shadow-color, #000000) 8%, transparent),
+    0px 2px 4px 0px
+      color-mix(in srgb, var(--border-shadow-color, #000000) 6%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .border-shadow,
+  .hover\:border-shadow:hover {
+    --border-shadow-color: #ffffff;
+  }
+}
+
+@utility border-shadow-* {
+  --border-shadow-color: --value([*]);
+}

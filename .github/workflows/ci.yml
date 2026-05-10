@@ -9,6 +9,22 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: linklater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/linklater_test?schema=public'
       JWT_SECRET: 'ci-jwt-secret'
@@ -30,6 +46,10 @@ jobs:
         working-directory: apps/api
         run: npx prisma generate
 
+      - name: Run migrations
+        working-directory: apps/api
+        run: npx prisma migrate deploy
+
       - name: Lint
         run: npm run lint
 
@@ -38,3 +58,6 @@ jobs:
 
       - name: Test Web
         run: npm run test --workspace @linklater/web
+
+      - name: Build
+        run: npm run build

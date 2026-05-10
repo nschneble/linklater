@@ -12,10 +12,14 @@
 
 ## Architecture
 
-```
+```txt
 apps
 ├─ api/          # NestJS back-end
+│  └─ README.md  # .env, modules, auth, jobs
+│
 ├─ web/          # React + Vite front-end
+│  └─ README.md  # .env, components, state, API, routes
+│
 ├─ package.json  # root workspace + scripts
 └─ README.md
 ```
@@ -23,30 +27,40 @@ apps
 ## Key Commands
 
 ```bash
+# Convenience Scripts
+./dev                                             # Start development server
+./flintest                                        # Install, format, lint, test
+./flintest --update                               # Update, install, format, lint, test
+
 # Setup
-npm install                              # Install dependencies
+npm install                                       # Install dependencies
 
 # Run
-npm run dev                              # Start development server
+npm run dev                                       # Start development server
 
 # Linting
-npm run lint                             # Lint code for consistent style
-npm run lint --workspace @linklater/web  # Lint front-end only
-npm run lint --workspace @linklater/api  # Lint back-end only
+npm run lint                                      # Lint code for consistent style
+npm run lint --workspace @linklater/web           # Lint front-end only
+npm run lint --workspace @linklater/api           # Lint back-end only
 
 # Testing
-npm run test                             # Run all tests
-npm run test --workspace @linklater/web  # Test front-end only
-npm run test --workspace @linklater/api  # Test back-end only
+npm run test                                      # Run all tests
+npm run test --workspace @linklater/web           # Test front-end only
+npm run test --workspace @linklater/api           # Test back-end only
 
 # Database
-npx prisma migrate dev --name init       # Run migrations (first time)
-npx prisma migrate dev                   # Run migrations
-npx prisma migrate reset                 # Wipe and re-run all migrations
-npx prisma generate                      # Regenerate client after migrations
+npm run migrate --workspace @linklater/api        # Run migrations + regenerate client
+npm run migrate:reset --workspace @linklater/api  # Wipe, re-run migrations + regenerate client
 ```
 
-> **Note:** Run `npx prisma generate` after any migration. The custom client output path in this project prevents `migrate dev` from triggering it automatically.
+> **Note:** The `migrate` and `migrate:reset` scripts chain `prisma migrate dev` with `prisma generate`. Prisma 7's `prisma-client` generator requires a custom `output` path, so `migrate dev` alone does not auto-regenerate the client.
+
+## Tool Versions
+
+- Always check the **actual installed version** of a tool before making suggestions. Don't assume based on training data or common defaults.
+  - Read `package.json` to confirm versions before referencing APIs, syntax, or behavior
+  - Example failure: assuming Tailwind v3 syntax (e.g. `@layer` behaviors) when v4 is installed
+- When **installing new packages**, always pick the latest stable version unless there's an explicit reason not to do so.
 
 ## Development Workflow
 
@@ -93,6 +107,7 @@ Follow three simple steps repeatedly:
 
 - Favor code clarity over "perfect" optimization
   - Use full `if` statements instead of one-liners with ternary operators
+  - Exception: in JSX, use `{condition && <Element />}` instead of `{condition ? <Element /> : null}`
 - Stay DRY (but not barren)
   - Extract common code into something reusable when it's used more than twice
 - Avoid complex monoliths or "god" files
@@ -114,6 +129,8 @@ Follow three simple steps repeatedly:
   - Refer to [Details That Make Interfaces Feel Better](https://jakub.kr/writing/details-that-make-interfaces-feel-better) for examples
 - Embrace the slow software movement
   - Refer to [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software) for a manifesto
+- Always clean up after yourself! Kill any listeners or temporary-running processes that are no longer necessary once the work is complete
+- Always run `./flintest` when you're done to ensure formatting, linting, and testing all execute successfully
 
 ## TypeScript Conventions
 
@@ -143,6 +160,10 @@ Follow three simple steps repeatedly:
 - Contexts use `createContext(undefined)` with a custom hook that throws if used outside provider
 - Form state sequence: clear error → set loading → attempt action → handle result
 - Extract errors with: `error instanceof Error ? error.message : 'Something went wrong'`
+- Organize your imports! Sort alphabetically both within individual imports and in the list of import statements as whole
+  - Good example: `import { afterEach, describe, vi } from 'vitest';`
+  - Bad example: `import { vi, afterEach, expect } from 'vitest';`
+- `import {}` before `import type {}`
 
 ## Testing Patterns
 

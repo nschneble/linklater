@@ -1,113 +1,156 @@
-import IconButton from './ui/IconButton';
-import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import LinkForm from './LinkForm';
-import PrimaryButton from './ui/PrimaryButton';
-import TabButton from './ui/TabButton';
-import type { Link, PaginatedLinks } from '../lib/api';
+import LinksList from './LinksList';
+import LinksToolbar from './LinksToolbar';
+import Toast from './ui/Toast';
+import { createPortal } from 'react-dom';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from 'react';
+import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts';
+import { useLinks } from '../lib/useLinks';
+import { useLocation, useNavigate } from 'react-router-dom';
+import type { LinksFilter } from '../lib/useLinks';
 
-type LinksFilter = 'active' | 'archived';
+/** How long to wait after the user stops typing before firing the search request. */
+const SEARCH_DEBOUNCE_MS = 300;
 
-interface LinksViewProps {
-  filter: LinksFilter;
-  links: Link[];
-  loadingLinks: boolean;
-  page: number;
-  pagination: Pick<PaginatedLinks, 'total' | 'limit'> | null;
-  randomError: string | null;
-  randomLoading: boolean;
-  search: string;
-  showLinkForm: boolean;
-  onArchiveToggle: (link: Link) => void;
-  onCreated: (link: Link) => void;
-  onDelete: (id: string) => void;
-  onFilterChange: (filter: LinksFilter) => void;
-  onLoadMore: () => void;
-  onRandom: () => void;
-  onSearchChange: (value: string) => void;
-  onToggleForm: () => void;
+// Lazy-loaded because the modal is rarely open and this keeps it out of the
+// initial bundle.
+const KeyboardShortcutsModal = lazy(() => import('./KeyboardShortcutsModal'));
+
+/**
+ * Maps the current URL pathname to the links filter.
+ * `/read` → `'archived'`, everything else → `'active'`.
+ */
+function filterFromPath(pathname: string): LinksFilter {
+  return pathname === '/read' ? 'archived' : 'active';
 }
 
-export default function LinksView({
-  filter,
-  links,
-  loadingLinks,
-  page,
-  pagination,
-  randomError,
-  randomLoading,
-  search,
-  showLinkForm,
-  onArchiveToggle,
-  onCreated,
-  onDelete,
-  onFilterChange,
-  onLoadMore,
-  onRandom,
-  onSearchChange,
-  onToggleForm,
-}: LinksViewProps) {
+/**
+ * The main links view, rendered inside `AppShell` for both `/unread` and `/read`.
+ *
+ * Responsibilities:
+ * - Reads the active filter from the URL (`/unread` vs `/read`).
+ * - Debounces the search input (300ms) and wraps the `setDebouncedSearch` call
+ *   in `startTransition` so that React can defer the expensive re-render.
+ * - Wires up keyboard shortcuts via `useKeyboardShortcuts`.
+ * - Renders `LinksToolbar`, `LinksList`, the inline `LinkForm`, and a success
+ *   `Toast`.
+ * - Portals a backdrop `<button>` when the link form is open so that clicking
+ *   outside the form closes it.
+ * - Resets search and the `isClearingArchived` flag whenever the filter changes.
+ */
+export default function LinksView() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const filter = filterFromPath(location.pathname);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [isClearingArchived, setIsClearingArchived] = useState(false);
+  const [, startTransition] = useTransition();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (search === '') {
+      startTransition(() => setDebouncedSearch(''));
+      return;
+    }
+    const timer = setTimeout(
+      () => startTransition(() => setDebouncedSearch(search)),
+      SEARCH_DEBOUNCE_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const {
+    archiveError,
+    deleteError,
+    handleCreated,
+    handleDeleteAllArchived,
+    handleDismissToast,
+    handleLoadMore,
+    handleRandom,
+    handleToggleArchive,
+    handleToggleForm,
+    links,
+    loadingLinks,
+    page,
+    pagination,
+    randomError,
+    randomLoading,
+    saveError,
+    showLinkForm,
+    toastMessage,
+  } = useLinks(filter, debouncedSearch);
+
+  useKeyboardShortcuts({
+    enabled: true,
+    isShortcutsModalOpen: showShortcuts,
+    onShowUnread: () => navigate('/unread'),
+    onShowRead: () => navigate('/read'),
+    onSearch: () => searchInputRef.current?.focus(),
+    onToggleForm: handleToggleForm,
+    onStumble: handleRandom,
+    onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
+    onEscape: showLinkForm ? handleToggleForm : undefined,
+  });
+
+  useEffect(() => {
+    setIsClearingArchived(false);
+    setSearch('');
+    setDebouncedSearch('');
+  }, [filter]);
+
+  async function handleClearArchived() {
+    setIsClearingArchived(true);
+    try {
+      await handleDeleteAllArchived();
+    } finally {
+      setIsClearingArchived(false);
+    }
+  }
+
   return (
     <>
-      <h2 className="text-lg font-semibold">
-        {filter === 'archived' ? 'Archived links' : 'Your links'}
-      </h2>
-      <p className="mt-1 text-[var(--text-muted)] text-xs">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-lg font-semibold">Your links</h2>
+        <button
+          type="button"
+          className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-pointer"
+          onClick={() => setShowShortcuts((previous) => !previous)}
+          aria-label="Show keyboard shortcuts"
+          title="Keyboard shortcuts"
+        >
+          <i className="fa-regular fa-keyboard text-sm" aria-hidden="true" />
+        </button>
+      </div>
+      <p className="text-[var(--text-muted)] text-xs">
         {filter === 'archived'
-          ? "Review you've already read or decided to move aside."
-          : 'Add links, search, archive, or stumble upon something random.'}
+          ? 'Read links are automatically removed after seven days.'
+          : 'Add, search, or stumble upon something random.'}
       </p>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
-        <div
-          className="inline-flex p-1 bg-[var(--bg-surface)] border border-[var(--border)] text-xs rounded-full"
-          role="tablist"
-          aria-label="Links filter"
-        >
-          <TabButton
-            className="px-3 py-1.5"
-            isActive={filter === 'active'}
-            onClick={() => onFilterChange('active')}
-          >
-            Your links
-          </TabButton>
-          <TabButton
-            className="px-3 py-1.5"
-            isActive={filter === 'archived'}
-            onClick={() => onFilterChange('archived')}
-          >
-            Archived
-          </TabButton>
-        </div>
-
-        <IconButton
-          variant="elevated"
-          disabled={randomLoading}
-          onClick={onRandom}
-        >
-          <i className="fa-solid fa-shuffle text-[0.7rem]" />
-          {randomLoading ? 'Stumbling…' : 'Stumble upon'}
-        </IconButton>
-      </div>
-
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
-        <input
-          className="w-full sm:max-w-sm px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
-          type="search"
-          placeholder="Search"
-          value={search}
-          onChange={(event) => onSearchChange(event.target.value)}
-          aria-label="Search through your links"
-        />
-        <PrimaryButton
-          className="gap-1.5 text-xs rounded-full cursor-pointer"
-          type="button"
-          onClick={onToggleForm}
-          aria-expanded={showLinkForm}
-        >
-          <i className="fa-solid fa-plus text-[0.7rem]" />
-          {showLinkForm ? 'Hide form' : 'Add link'}
-        </PrimaryButton>
-      </div>
+      <LinksToolbar
+        filter={filter}
+        isClearingArchived={isClearingArchived}
+        links={links}
+        randomLoading={randomLoading}
+        search={search}
+        searchInputRef={searchInputRef}
+        showLinkForm={showLinkForm}
+        onClearArchived={handleClearArchived}
+        onNavigateRead={() => navigate('/read')}
+        onNavigateUnread={() => navigate('/unread')}
+        onRandom={handleRandom}
+        onSearch={setSearch}
+        onToggleForm={handleToggleForm}
+      />
 
       {randomError && (
         <p
@@ -118,48 +161,72 @@ export default function LinksView({
         </p>
       )}
 
+      {saveError && (
+        <p
+          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
+          role="alert"
+        >
+          {saveError}
+        </p>
+      )}
+
+      {archiveError && (
+        <p
+          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
+          role="alert"
+        >
+          {archiveError}
+        </p>
+      )}
+
+      {deleteError && (
+        <p
+          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
+          role="alert"
+        >
+          {deleteError}
+        </p>
+      )}
+
+      {showShortcuts && (
+        <Suspense>
+          <KeyboardShortcutsModal onClose={() => setShowShortcuts(false)} />
+        </Suspense>
+      )}
+
+      {showLinkForm &&
+        createPortal(
+          <button
+            type="button"
+            aria-label="Close form"
+            className="fixed inset-0 z-20 w-full h-full bg-black/50 backdrop-blur-sm cursor-default"
+            onClick={handleToggleForm}
+          />,
+          document.body,
+        )}
+
       {showLinkForm && (
-        <div className="mt-4 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl animate-fade-in-up">
-          <LinkForm onCreated={onCreated} />
+        <div className="relative z-30 mt-0 animate-fade-in-up">
+          <LinkForm onCreated={handleCreated} />
         </div>
       )}
 
-      <div className="mt-6 space-y-3">
-        {loadingLinks && page === 1 ? (
-          Array.from({ length: 5 }).map((_, index) => (
-            <LinkCardSkeleton key={index} />
-          ))
-        ) : links.length === 0 ? (
-          <p className="text-[var(--text-muted)] text-sm">
-            No links yet. Click <span className="font-semibold">Add link</span>{' '}
-            to save something to read later.
-          </p>
-        ) : (
-          links.map((link) => (
-            <LinkCard
-              key={link.id}
-              link={link}
-              onArchiveToggle={() => onArchiveToggle(link)}
-              onDelete={() => onDelete(link.id)}
-            />
-          ))
-        )}
+      <LinksList
+        filter={filter}
+        isClearingArchived={isClearingArchived}
+        links={links}
+        loadingLinks={loadingLinks}
+        page={page}
+        pagination={pagination}
+        search={search}
+        debouncedSearch={debouncedSearch}
+        onArchiveToggle={handleToggleArchive}
+        onLoadMore={handleLoadMore}
+      />
 
-        {pagination && links.length < pagination.total && (
-          <div className="flex justify-center pt-2">
-            <button
-              className="px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text)] text-xs rounded-full cursor-pointer disabled:cursor-wait disabled:opacity-60"
-              type="button"
-              disabled={loadingLinks}
-              onClick={onLoadMore}
-            >
-              {loadingLinks
-                ? 'Loading…'
-                : `Load more (${pagination.total - links.length} remaining)`}
-            </button>
-          </div>
-        )}
-      </div>
+      {toastMessage && (
+        <Toast message={toastMessage} onDismiss={handleDismissToast} />
+      )}
     </>
   );
 }
