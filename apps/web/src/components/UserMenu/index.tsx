@@ -89,7 +89,8 @@ export default function UserMenu({
       setShowThemeSubmenu(false);
       return;
     }
-    const firstItem = menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
+    const firstItem =
+      menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
     firstItem?.focus();
   }, [showUserMenu]);
 
@@ -97,7 +98,9 @@ export default function UserMenu({
   useEffect(() => {
     if (!showThemeSubmenu || !submenuOpenedByKeyboard.current) return;
     submenuOpenedByKeyboard.current = false;
-    const firstItem = flyoutRef.current?.querySelector<HTMLElement>('[data-submenu-item]');
+    const firstItem = flyoutRef.current?.querySelector<HTMLElement>(
+      '[data-submenu-item]',
+    );
     firstItem?.focus();
   }, [showThemeSubmenu]);
 

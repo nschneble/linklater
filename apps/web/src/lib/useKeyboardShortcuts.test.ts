@@ -187,7 +187,9 @@ describe('useKeyboardShortcuts', () => {
 
     const button = document.createElement('button');
     document.body.appendChild(button);
-    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    button.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+    );
     document.body.removeChild(button);
 
     expect(options.onOpenSelectedLink).not.toHaveBeenCalled();
@@ -200,7 +202,9 @@ describe('useKeyboardShortcuts', () => {
     const element = document.createElement('div');
     element.setAttribute('role', 'link');
     document.body.appendChild(element);
-    element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    element.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+    );
     document.body.removeChild(element);
 
     expect(options.onOpenSelectedLink).not.toHaveBeenCalled();
@@ -212,10 +216,18 @@ describe('useKeyboardShortcuts', () => {
 
     const input = document.createElement('input');
     document.body.appendChild(input);
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+    );
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }),
+    );
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }),
+    );
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
+    );
     document.body.removeChild(input);
 
     expect(options.onNavigateNextLink).not.toHaveBeenCalled();
