@@ -61,6 +61,7 @@ export default function UserMenu({
   const flyoutRef = useRef<HTMLDivElement | null>(null);
   const hideSubmenuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const openedByKeyboard = useRef(false);
   const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -72,26 +73,33 @@ export default function UserMenu({
     avatarRef.current?.focus();
   });
 
-  useMenuNavigation(
-    flyoutRef,
-    () => {
-      setShowThemeSubmenu(false);
-      menuRef.current
-        ?.querySelector<HTMLElement>('[aria-haspopup="menu"]')
-        ?.focus();
-    },
-    '[data-submenu-item]',
-  );
+  const closeFlyout = () => {
+    setShowThemeSubmenu(false);
+    resetPreview(baseTheme);
+    menuRef.current
+      ?.querySelector<HTMLElement>('[aria-haspopup="menu"]')
+      ?.focus();
+  };
 
-  // resets submenu when main menu closes; auto-focuses first item on keyboard open
+  useMenuNavigation(flyoutRef, closeFlyout, '[data-submenu-item]', closeFlyout);
+
+  // resets submenu when main menu closes; moves focus into menu on open
   useEffect(() => {
     if (!showUserMenu) {
       setShowThemeSubmenu(false);
       return;
     }
-    const firstItem =
-      menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
-    firstItem?.focus();
+    if (openedByKeyboard.current) {
+      // Keyboard open: focus first item so arrow-key navigation starts
+      // immediately
+      const firstItem =
+        menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
+      firstItem?.focus();
+    } else {
+      // Mouse open: focus the container so keydown events reach
+      // useMenuNavigation without visually pre-selecting any item
+      menuRef.current?.focus();
+    }
   }, [showUserMenu]);
 
   // auto-focuses first flyout item when submenu opens via keyboard
@@ -206,7 +214,10 @@ export default function UserMenu({
         ref={avatarRef}
         type="button"
         data-usermenu-trigger
-        onClick={() => setShowUserMenu((open) => !open)}
+        onClick={(event) => {
+          openedByKeyboard.current = event.detail === 0;
+          setShowUserMenu((open) => !open);
+        }}
         aria-expanded={showUserMenu}
         aria-haspopup="menu"
         aria-label="User menu"
@@ -226,7 +237,8 @@ export default function UserMenu({
         ref={menuRef}
         role="menu"
         aria-hidden={!showUserMenu}
-        className="absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] border-shadow text-xs rounded-lg"
+        tabIndex={-1}
+        className="absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] border-shadow text-xs rounded-lg focus:outline-none"
         style={{
           transition: `opacity ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}`,
           opacity: showUserMenu ? 1 : 0,

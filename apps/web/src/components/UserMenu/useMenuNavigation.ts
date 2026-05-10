@@ -9,12 +9,19 @@ import { useEffect, type RefObject } from 'react';
  * - **Escape**: calls `onClose` to close the menu.
  * - **Tab**: calls `onClose` so focus can move naturally to the next element
  *   in the page's tab order (the menu does not trap Tab).
+ * - **Arrow Left** (when `onArrowLeft` is provided): calls `onArrowLeft`.
+ * - **Arrow Right** (when `onArrowLeft` is provided): swallowed so it
+ *   cannot leak to page-level navigation handlers.
  *
  * The handler is attached directly to the container element (not `document`)
  * so it only fires when focus is inside the menu.
  *
  * @param containerReference - Ref to the `role="menu"` element.
  * @param onClose - Called when Escape or Tab is pressed.
+ * @param itemSelector - CSS selector for focusable menu items.
+ * @param onArrowLeft - When provided, called on ArrowLeft (used by
+ *   submenus to return focus to their trigger). Also causes ArrowRight to
+ *   be swallowed.
  *
  * @sideEffects
  * Attaches a `keydown` listener to the container element. Cleaned up on
@@ -24,12 +31,26 @@ export function useMenuNavigation(
   containerReference: RefObject<HTMLElement | null>,
   onClose: () => void,
   itemSelector = '[role="menuitem"]',
+  onArrowLeft?: () => void,
 ) {
   useEffect(() => {
     const container = containerReference.current;
     if (!container) return;
 
     function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'ArrowLeft' && onArrowLeft) {
+        event.preventDefault();
+        event.stopPropagation();
+        onArrowLeft();
+        return;
+      }
+
+      if (event.key === 'ArrowRight' && onArrowLeft !== undefined) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
       if (
         event.key !== 'ArrowDown' &&
         event.key !== 'ArrowUp' &&
@@ -73,5 +94,5 @@ export function useMenuNavigation(
 
     container.addEventListener('keydown', handleKeyDown);
     return () => container.removeEventListener('keydown', handleKeyDown);
-  }, [containerReference, onClose, itemSelector]);
+  }, [containerReference, onClose, itemSelector, onArrowLeft]);
 }

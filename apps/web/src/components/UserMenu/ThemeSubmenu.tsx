@@ -1,4 +1,5 @@
 import { THEMES, type BaseTheme } from '../../theme/ThemeContext';
+import { useRef, useState } from 'react';
 import type { RefObject } from 'react';
 
 /**
@@ -70,6 +71,10 @@ export default function ThemeSubmenu({
   onSelect,
   flyoutRef,
 }: ThemeSubmenuProps) {
+  const mouseIsOver = useRef(false);
+  const [hoveredThemeId, setHoveredThemeId] = useState<string | null>(null);
+  const [triggerIsPointerOver, setTriggerIsPointerOver] = useState(false);
+
   const currentLabel =
     previewTheme && previewTheme !== baseTheme
       ? `Previewing ${THEMES.find((theme) => theme.id === previewTheme)?.label}`
@@ -82,24 +87,46 @@ export default function ThemeSubmenu({
         role="menuitem"
         aria-haspopup="menu"
         aria-expanded={showSubmenu}
-        className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:outline-none text-[var(--text)] text-left cursor-default ${
-          showSubmenu
-            ? 'bg-[var(--bg-surface)]'
-            : 'hover:bg-[var(--bg-surface)] focus:bg-[var(--bg-surface)]'
+        className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-default ${
+          showSubmenu || triggerIsPointerOver ? 'bg-[var(--bg-surface)]' : ''
         }`}
-        onMouseEnter={onThemeRowItemEnter}
+        onMouseEnter={(event) => {
+          mouseIsOver.current = true;
+          setTriggerIsPointerOver(true);
+          event.currentTarget.focus();
+          onThemeRowItemEnter();
+        }}
+        onMouseLeave={() => {
+          mouseIsOver.current = false;
+          setTriggerIsPointerOver(false);
+        }}
+        onBlur={() => setTriggerIsPointerOver(false)}
+        onFocus={() => {
+          if (!mouseIsOver.current && !showSubmenu) {
+            onTriggerClick();
+          }
+        }}
         onClick={onTriggerClick}
         onKeyDown={(event) => {
-          if (
-            event.key === 'Enter' ||
-            event.key === ' ' ||
-            event.key === 'ArrowRight'
-          ) {
-            if (event.key === 'ArrowRight') {
-              event.preventDefault();
+          if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            event.stopPropagation();
+            if (showSubmenu) {
+              flyoutRef?.current
+                ?.querySelector<HTMLElement>('[data-submenu-item]')
+                ?.focus();
+            } else {
               onTriggerClick();
+              onKeyboardOpen();
             }
-            onKeyboardOpen();
+          } else if (event.key === 'Enter' || event.key === ' ') {
+            if (showSubmenu) {
+              flyoutRef?.current
+                ?.querySelector<HTMLElement>('[data-submenu-item]')
+                ?.focus();
+            } else {
+              onKeyboardOpen();
+            }
           }
         }}
       >
@@ -133,7 +160,7 @@ export default function ThemeSubmenu({
       >
         {THEMES.map((theme) => (
           <button
-            className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[var(--bg-surface)] focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-pointer"
+            className={`flex items-center gap-2 w-full px-3 py-2 ${hoveredThemeId === theme.id ? 'bg-[var(--bg-surface)]' : ''} focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-pointer`}
             data-submenu-item
             style={{
               transitionDuration:
@@ -142,7 +169,13 @@ export default function ThemeSubmenu({
             key={theme.id}
             type="button"
             onClick={() => onSelect(theme.id)}
-            onMouseEnter={() => {
+            onMouseEnter={(event) => {
+              setHoveredThemeId(theme.id);
+              event.currentTarget.focus();
+            }}
+            onMouseLeave={() => setHoveredThemeId(null)}
+            onBlur={() => setHoveredThemeId(null)}
+            onFocus={() => {
               const root = document.documentElement;
               root.style.setProperty('--theme-transition-duration', '150ms');
               root.style.setProperty('--theme-transition-easing', 'ease-out');

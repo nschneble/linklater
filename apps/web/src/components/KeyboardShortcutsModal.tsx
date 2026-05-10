@@ -10,7 +10,7 @@ interface KeyboardShortcutsModalProps {
 const shortcuts = [
   { key: '↑ / ↓', description: 'Navigate links / user menu' },
   { key: '← / →', description: 'Switch tabs' },
-  { key: 'Enter', description: 'Open selected link / menu item' },
+  { key: 'Enter', description: 'Open link / menu item' },
   { key: '1', description: 'Show unread links' },
   { key: '2', description: 'Show read links' },
   { key: 'Q', description: 'Search' },
