@@ -1,13 +1,13 @@
-import { forgotPassword as apiForgotPassword } from '../lib/api';
-import { getErrorMessage } from '../lib/errors';
-import { useAuth } from '../auth/AuthContext';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useState, useRef, useEffect, type FormEvent } from 'react';
 import Alert from './ui/Alert';
 import FormInput from './ui/FormInput';
 import LinkButton from './ui/LinkButton';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
+import { forgotPassword as apiForgotPassword } from '../lib/api';
+import { getErrorMessage } from '../lib/errors';
+import { useAuth } from '../auth/AuthContext';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 const googleSsoEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true';
 const appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true';
@@ -19,12 +19,13 @@ type Mode = 'login' | 'register' | 'forgot-password';
  * Authentication form shown to unauthenticated users at the root route.
  *
  * Has three modes controlled by a local `mode` state:
- * - `'login'`: email + password, submits to `POST /auth/login`.
- * - `'register'`: same fields, submits to `POST /auth/register` then logs in.
- * - `'forgot-password'`: email only, submits to `POST /auth/forgot-password`.
+ * - `'login'`: email + password, submits `POST /auth/login`.
+ * - `'register'`: same fields, submits `POST /auth/register` then logs in.
+ * - `'forgot-password'`: email only, submits `POST /auth/forgot-password`.
  *
- * Switching modes resets password, error, and loading state. The email input
- * is auto-focused whenever the mode changes.
+ * Switching modes resets password, error, and loading state. The email
+ * input is auto-focused whenever the mode changes unless the email field
+ * already has text, in which case the password input is focused.
  *
  * After a successful forgot-password submission the form switches to a
  * confirmation state showing an `Alert` instead of the form fields.
@@ -35,6 +36,7 @@ export default function AuthForm() {
   const navigate = useNavigate();
 
   const emailReference = useRef<HTMLInputElement>(null);
+  const passwordReference = useRef<HTMLInputElement>(null);
 
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +46,13 @@ export default function AuthForm() {
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
 
   useEffect(() => {
+    const emailInputValue = emailReference.current?.value ?? '';
+
+    if (mode !== 'forgot-password' && emailInputValue.length > 0) {
+      passwordReference.current?.focus();
+      return;
+    }
+
     emailReference.current?.focus();
   }, [mode]);
 
@@ -96,9 +105,7 @@ export default function AuthForm() {
 
         {forgotPasswordSent ? (
           <div className="text-center space-y-4">
-            <Alert variant="success">
-              Check your email for a reset link. It expires in 1 hour.
-            </Alert>
+            <Alert variant="success">Check your email for a reset link!</Alert>
             <LinkButton onClick={() => handleModeChange('login')}>
               Back to login
             </LinkButton>
@@ -203,6 +210,7 @@ export default function AuthForm() {
         </label>
         <FormInput
           id="auth-password"
+          ref={passwordReference}
           type="password"
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           onChange={(event) => setPassword(event.target.value)}

@@ -132,6 +132,12 @@ describe('AuthForm', () => {
         screen.getByRole('button', { name: /literally have no idea/i }),
       ).toBeInTheDocument();
     });
+
+    it('focuses the email field by default', () => {
+      renderAuthForm();
+
+      expect(screen.getByLabelText(/email/i)).toHaveFocus();
+    });
   });
 
   describe('register mode', () => {
@@ -146,6 +152,14 @@ describe('AuthForm', () => {
       expect(
         screen.getByRole('button', { name: /create account/i }),
       ).toBeInTheDocument();
+    });
+
+    it('focuses the password field when switching modes after email is entered', () => {
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
+
+      expect(screen.getByLabelText(/password/i)).toHaveFocus();
     });
 
     it('calls register with email and password on submit', async () => {
