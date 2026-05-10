@@ -16,7 +16,7 @@ function makeLink(overrides: Partial<Link> = {}): Link {
     meta: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    archivedAt: null,
+    readAt: null,
     ...overrides,
   };
 }

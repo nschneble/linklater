@@ -69,7 +69,7 @@ export default function LinkCard({
     window.open(link.url, '_blank', 'noreferrer');
     // Only archive on open when the link is currently unread. Clicking an
     // already-archived card should just open it without changing its state.
-    if (!link.archivedAt) {
+    if (!link.readAt) {
       onArchiveToggle(link);
     }
   }

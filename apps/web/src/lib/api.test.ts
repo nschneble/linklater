@@ -432,7 +432,7 @@ describe('archiveLink', () => {
     const fetchMock = mockFetch({
       id: 'link-1',
       url: 'https://example.com',
-      archivedAt: new Date().toISOString(),
+      readAt: new Date().toISOString(),
     });
 
     await archiveLink('link-1');
@@ -448,7 +448,7 @@ describe('unarchiveLink', () => {
     const fetchMock = mockFetch({
       id: 'link-1',
       url: 'https://example.com',
-      archivedAt: null,
+      readAt: null,
     });
 
     await unarchiveLink('link-1');

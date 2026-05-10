@@ -139,13 +139,13 @@ export function useLinksActions({
     async (link: Link) => {
       setArchiveError(null);
       try {
-        const updated = link.archivedAt
+        const updated = link.readAt
           ? await unarchiveLink(link.id)
           : await archiveLink(link.id);
 
         const isFilteredOut =
-          (filter === 'active' && updated.archivedAt) ||
-          (filter === 'archived' && !updated.archivedAt);
+          (filter === 'active' && updated.readAt) ||
+          (filter === 'archived' && !updated.readAt);
 
         if (isFilteredOut) {
           removeLink(updated.id);

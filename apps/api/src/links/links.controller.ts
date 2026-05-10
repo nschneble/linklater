@@ -186,12 +186,12 @@ export class LinksController {
     return this.linksService.update(userId, id, body);
   }
 
-  /** Marks a link as archived (read) by setting `archivedAt` to the current timestamp. */
+  /** Marks a link as archived (read) by setting `readAt` to the current timestamp. */
   @ApiOperation({ summary: 'Archive a link (mark as read)' })
   @ApiParam({ name: 'id', description: 'UUID of the link.' })
   @ApiResponse({
     status: 201,
-    description: 'The updated link with `archivedAt` set.',
+    description: 'The updated link with `readAt` set.',
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
@@ -206,7 +206,7 @@ export class LinksController {
   @ApiParam({ name: 'id', description: 'UUID of the link.' })
   @ApiResponse({
     status: 201,
-    description: 'The updated link with `archivedAt` cleared.',
+    description: 'The updated link with `readAt` cleared.',
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })

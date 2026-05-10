@@ -35,7 +35,7 @@ export class ArchiveCleanupService implements OnModuleInit {
   }
 
   /**
-   * Deletes all archived links whose `archivedAt` timestamp is older than
+   * Deletes all archived links whose `readAt` timestamp is older than
    * seven days. Scoped across all users — this is a global cleanup, not
    * per-user.
    *
@@ -44,7 +44,7 @@ export class ArchiveCleanupService implements OnModuleInit {
   async deleteExpiredArchivedLinks(): Promise<void> {
     const sevenDaysAgo = new Date(Date.now() - SEVEN_DAYS_MS);
     const result = await this.prisma.link.deleteMany({
-      where: { archivedAt: { lt: sevenDaysAgo } },
+      where: { readAt: { lt: sevenDaysAgo } },
     });
     this.logger.log(`Deleted ${result.count} expired archived links`);
   }

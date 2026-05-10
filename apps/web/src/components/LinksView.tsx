@@ -113,7 +113,7 @@ export default function LinksView() {
     const link = links[selectedLinkIndex];
     if (!link) return;
     window.open(link.url, '_blank', 'noreferrer');
-    if (!link.archivedAt) {
+    if (!link.readAt) {
       handleToggleArchive(link);
     }
   }

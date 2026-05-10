@@ -80,7 +80,7 @@ export class LinksService {
       // Resurface the link at the top of the list by resetting its timestamps.
       const link = await this.prisma.link.update({
         where: { id: existing.id },
-        data: { archivedAt: null, createdAt: new Date() },
+        data: { readAt: null, createdAt: new Date() },
         include: { meta: true },
       });
 
@@ -135,9 +135,9 @@ export class LinksService {
     const where: Prisma.LinkWhereInput = { userId };
 
     if (archived === true) {
-      where.archivedAt = { not: null };
+      where.readAt = { not: null };
     } else if (archived === false) {
-      where.archivedAt = null;
+      where.readAt = null;
     }
 
     if (search && search.trim() !== '') {
@@ -190,10 +190,10 @@ export class LinksService {
     limit: number,
   ) {
     const archivedFilter =
-      where.archivedAt === null
-        ? Prisma.sql`AND l."archivedAt" IS NULL`
-        : where.archivedAt !== undefined
-          ? Prisma.sql`AND l."archivedAt" IS NOT NULL`
+      where.readAt === null
+        ? Prisma.sql`AND l."readAt" IS NULL`
+        : where.readAt !== undefined
+          ? Prisma.sql`AND l."readAt" IS NOT NULL`
           : Prisma.empty;
 
     const offset = (page - 1) * limit;
@@ -294,18 +294,18 @@ export class LinksService {
   }
 
   /**
-   * Archives a link by setting `archivedAt` to the current timestamp.
+   * Archives a link by setting `readAt` to the current timestamp.
    *
    * @param userId - The UUID of the authenticated user.
    * @param id - The UUID of the link.
-   * @returns The updated link with `archivedAt` set.
+   * @returns The updated link with `readAt` set.
    * @throws {NotFoundException} When the link does not exist for this user.
    */
   async archive(userId: string, id: string) {
     try {
       return await this.prisma.link.update({
         where: { id, userId },
-        data: { archivedAt: new Date() },
+        data: { readAt: new Date() },
         include: { meta: true },
       });
     } catch (error) {
@@ -318,14 +318,14 @@ export class LinksService {
    *
    * @param userId - The UUID of the authenticated user.
    * @param id - The UUID of the link.
-   * @returns The updated link with `archivedAt` cleared to `null`.
+   * @returns The updated link with `readAt` cleared to `null`.
    * @throws {NotFoundException} When the link does not exist for this user.
    */
   async unarchive(userId: string, id: string) {
     try {
       return await this.prisma.link.update({
         where: { id, userId },
-        data: { archivedAt: null },
+        data: { readAt: null },
         include: { meta: true },
       });
     } catch (error) {
@@ -360,7 +360,7 @@ export class LinksService {
    */
   async removeAllArchived(userId: string) {
     const result = await this.prisma.link.deleteMany({
-      where: { userId, archivedAt: { not: null } },
+      where: { userId, readAt: { not: null } },
     });
     return { count: result.count };
   }
@@ -380,13 +380,13 @@ export class LinksService {
     if (archived) {
       result = await this.prisma.$queryRaw<{ id: string }[]>`
         SELECT id FROM "Link"
-        WHERE "userId" = ${userId} AND "archivedAt" IS NOT NULL
+        WHERE "userId" = ${userId} AND "readAt" IS NOT NULL
         ORDER BY RANDOM() LIMIT 1
       `;
     } else {
       result = await this.prisma.$queryRaw<{ id: string }[]>`
         SELECT id FROM "Link"
-        WHERE "userId" = ${userId} AND "archivedAt" IS NULL
+        WHERE "userId" = ${userId} AND "readAt" IS NULL
         ORDER BY RANDOM() LIMIT 1
       `;
     }

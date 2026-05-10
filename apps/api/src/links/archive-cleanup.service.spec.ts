@@ -68,9 +68,9 @@ describe('ArchiveCleanupService', () => {
     await service.deleteExpiredArchivedLinks();
 
     const call = (prismaMock.link.deleteMany as jest.Mock).mock.calls[0][0] as {
-      where: { archivedAt: { lt: Date } };
+      where: { readAt: { lt: Date } };
     };
-    const cutoff = call.where.archivedAt.lt;
+    const cutoff = call.where.readAt.lt;
     const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
 
     expect(cutoff).toBeInstanceOf(Date);

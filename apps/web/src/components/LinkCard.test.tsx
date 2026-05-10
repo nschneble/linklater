@@ -7,7 +7,7 @@ const makeLink = (overrides: Partial<Link> = {}): Link => ({
   id: 'link-1',
   updatedAt: '2026-01-01T00:00:00.000Z',
   url: 'https://example.com/article',
-  archivedAt: null,
+  readAt: null,
   meta: {
     fetchedAt: '2026-01-01T00:01:00.000Z',
     title: 'Example Article',
@@ -45,7 +45,7 @@ describe('LinkCard', () => {
       const onArchiveToggle = vi.fn();
       render(
         <LinkCard
-          link={makeLink({ archivedAt: null })}
+          link={makeLink({ readAt: null })}
           onArchiveToggle={onArchiveToggle}
         />,
       );
@@ -59,7 +59,7 @@ describe('LinkCard', () => {
       const onArchiveToggle = vi.fn();
       render(
         <LinkCard
-          link={makeLink({ archivedAt: '2026-01-02T00:00:00.000Z' })}
+          link={makeLink({ readAt: '2026-01-02T00:00:00.000Z' })}
           onArchiveToggle={onArchiveToggle}
         />,
       );
@@ -237,7 +237,7 @@ describe('LinkCard', () => {
     it('shows Mark as unread button when link is archived', () => {
       render(
         <LinkCard
-          link={makeLink({ archivedAt: '2026-01-02T00:00:00.000Z' })}
+          link={makeLink({ readAt: '2026-01-02T00:00:00.000Z' })}
           onArchiveToggle={vi.fn()}
         />,
       );
@@ -250,7 +250,7 @@ describe('LinkCard', () => {
     it('does not show Mark as unread button when link is not archived', () => {
       render(
         <LinkCard
-          link={makeLink({ archivedAt: null })}
+          link={makeLink({ readAt: null })}
           onArchiveToggle={vi.fn()}
         />,
       );
@@ -264,7 +264,7 @@ describe('LinkCard', () => {
       const onArchiveToggle = vi.fn();
       render(
         <LinkCard
-          link={makeLink({ archivedAt: '2026-01-02T00:00:00.000Z' })}
+          link={makeLink({ readAt: '2026-01-02T00:00:00.000Z' })}
           onArchiveToggle={onArchiveToggle}
         />,
       );
@@ -277,7 +277,7 @@ describe('LinkCard', () => {
     it('does not open the link when Mark as unread is clicked', () => {
       render(
         <LinkCard
-          link={makeLink({ archivedAt: '2026-01-02T00:00:00.000Z' })}
+          link={makeLink({ readAt: '2026-01-02T00:00:00.000Z' })}
           onArchiveToggle={vi.fn()}
         />,
       );

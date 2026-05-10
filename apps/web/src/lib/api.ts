@@ -282,7 +282,7 @@ export interface Link {
   /** ISO timestamp of the last update. */
   updatedAt: string;
   /** ISO timestamp of when the link was archived. `null` means the link is active (unread). */
-  archivedAt?: string | null;
+  readAt?: string | null;
   /** The associated metadata. `null` while the fetch job is pending. */
   meta?: LinkMeta | null;
 }
@@ -369,7 +369,7 @@ export async function updateLink(id: string): Promise<Link> {
 
 /**
  * Endpoint: POST /links/:id/archive
- * Response: The link with `archivedAt` set to the current timestamp.
+ * Response: The link with `readAt` set to the current timestamp.
  */
 export async function archiveLink(id: string): Promise<Link> {
   return apiFetch<Link>(`/links/${id}/archive`, {
@@ -379,7 +379,7 @@ export async function archiveLink(id: string): Promise<Link> {
 
 /**
  * Endpoint: POST /links/:id/unarchive
- * Response: The link with `archivedAt` cleared to `null`.
+ * Response: The link with `readAt` cleared to `null`.
  */
 export async function unarchiveLink(id: string): Promise<Link> {
   return apiFetch<Link>(`/links/${id}/unarchive`, {

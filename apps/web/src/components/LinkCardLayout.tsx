@@ -171,7 +171,7 @@ export default function LinkCardLayout({
           </div>
         )}
 
-        {link.archivedAt && (
+        {link.readAt && (
           <div className="flex justify-end pt-1">
             <button
               type="button"

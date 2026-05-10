@@ -23,7 +23,7 @@ function makeLink(overrides: Partial<Link> = {}): Link {
     url: 'https://example.com',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    archivedAt: null,
+    readAt: null,
     ...overrides,
   };
 }
@@ -49,7 +49,7 @@ describe('useRandomLink', () => {
     vi.mocked(apiModule.getRandomLink).mockResolvedValue({ link });
     vi.mocked(apiModule.archiveLink).mockResolvedValue({
       ...link,
-      archivedAt: new Date().toISOString(),
+      readAt: new Date().toISOString(),
     });
 
     const onRemoveLink = vi.fn();

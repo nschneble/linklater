@@ -56,11 +56,11 @@ model Link {
 
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  archivedAt   DateTime?
+  readAt       DateTime?
 
   @@index([userId])
   @@index([userId, url])
-  @@index([userId, archivedAt])
+  @@index([userId, readAt])
   @@index([userId, createdAt])
 }
 

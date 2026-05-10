@@ -25,7 +25,7 @@ describe('LinksController', () => {
 
   const makeRequest = (userId = USER_ID) => ({ user: { userId } }) as never;
   const makeLink = (overrides = {}) => ({
-    archivedAt: null,
+    readAt: null,
     createdAt: new Date(),
     id: LINK_ID,
     meta: null,
@@ -190,7 +190,7 @@ describe('LinksController', () => {
 
   describe('archive', () => {
     it('delegates to LinksService.archive', async () => {
-      const link = makeLink({ archivedAt: new Date() });
+      const link = makeLink({ readAt: new Date() });
       (linksServiceMock.archive as jest.Mock).mockResolvedValue(link);
 
       const result = await controller.archive(makeRequest(), LINK_ID);

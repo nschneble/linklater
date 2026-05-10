@@ -41,7 +41,7 @@ function makeLink(overrides: Partial<Link> = {}): Link {
     meta: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    archivedAt: null,
+    readAt: null,
     ...overrides,
   };
 }
@@ -211,10 +211,10 @@ describe('useLinksActions', () => {
 
   describe('handleToggleArchive', () => {
     it('archives an active link and removes it from the active list', async () => {
-      const link = makeLink({ id: 'link-1', archivedAt: null });
+      const link = makeLink({ id: 'link-1', readAt: null });
       const archived = makeLink({
         id: 'link-1',
-        archivedAt: new Date().toISOString(),
+        readAt: new Date().toISOString(),
       });
       vi.mocked(apiModule.archiveLink).mockResolvedValue(archived);
 
@@ -231,9 +231,9 @@ describe('useLinksActions', () => {
     it('unarchives a link and removes it from the archived list', async () => {
       const link = makeLink({
         id: 'link-1',
-        archivedAt: new Date().toISOString(),
+        readAt: new Date().toISOString(),
       });
-      const unarchived = makeLink({ id: 'link-1', archivedAt: null });
+      const unarchived = makeLink({ id: 'link-1', readAt: null });
       vi.mocked(apiModule.unarchiveLink).mockResolvedValue(unarchived);
 
       const options = makeOptions({ filter: 'archived' });
@@ -248,13 +248,13 @@ describe('useLinksActions', () => {
 
     it('updates link in place when it stays in the current filter', async () => {
       // Archiving on the archived tab would never happen in normal use,
-      // but the branch handles: archived tab + archivedAt set → stays in
+      // but the branch handles: archived tab + readAt set → stays in
       // view. Easier to test: active tab + unarchive → stays.
       const link = makeLink({
         id: 'link-1',
-        archivedAt: new Date().toISOString(),
+        readAt: new Date().toISOString(),
       });
-      const unarchived = makeLink({ id: 'link-1', archivedAt: null });
+      const unarchived = makeLink({ id: 'link-1', readAt: null });
       vi.mocked(apiModule.unarchiveLink).mockResolvedValue(unarchived);
 
       const options = makeOptions({ filter: 'active' });
@@ -267,7 +267,7 @@ describe('useLinksActions', () => {
     });
 
     it('sets archiveError when the API call fails', async () => {
-      const link = makeLink({ id: 'link-1', archivedAt: null });
+      const link = makeLink({ id: 'link-1', readAt: null });
       vi.mocked(apiModule.archiveLink).mockRejectedValue(
         new Error('Server error'),
       );
@@ -280,7 +280,7 @@ describe('useLinksActions', () => {
     });
 
     it('sets a fallback archiveError for non-Error rejections', async () => {
-      const link = makeLink({ id: 'link-1', archivedAt: null });
+      const link = makeLink({ id: 'link-1', readAt: null });
       vi.mocked(apiModule.archiveLink).mockRejectedValue('boom');
 
       const { result } = renderHook(() => useLinksActions(makeOptions()));
