@@ -388,6 +388,15 @@ export async function unreadLink(id: string): Promise<Link> {
 }
 
 /**
+ * Endpoint: POST /links/stumble
+ * Response: `{ url: string }` when a random unread link was found and marked
+ * as read; `{ url: null }` when the user has no unread links.
+ */
+export async function stumbleLink(): Promise<{ url: string | null }> {
+  return apiFetch<{ url: string | null }>('/links/stumble', { method: 'POST' });
+}
+
+/**
  * Endpoint: DELETE /links/:id
  * Response: `{ success: true }`
  */

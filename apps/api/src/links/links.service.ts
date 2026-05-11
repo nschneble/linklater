@@ -367,6 +367,23 @@ export class LinksService {
   }
 
   /**
+   * Atomically selects a random unread link and marks it as read. Used by
+   * the `/stumble` route to replace the current browser tab with a random
+   * link from the user's unread backlog.
+   *
+   * @param userId - The UUID of the authenticated user.
+   *
+   * @returns `{ url }` when a link is found and marked read, or `null`
+   *   when the user has no unread links.
+   */
+  async stumble(userId: string): Promise<{ url: string } | null> {
+    const link = await this.getRandom(userId, false);
+    if (!link) return null;
+    await this.read(userId, link.id);
+    return { url: link.url };
+  }
+
+  /**
    * Returns a single randomly selected link from the user's collection.
    * Uses `ORDER BY RANDOM()` in a raw query for true randomness without
    * loading the full collection into memory.

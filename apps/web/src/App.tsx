@@ -4,6 +4,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import OAuthCallbackPage from './components/OAuthCallbackPage';
 import ResetPasswordPage from './components/ResetPasswordPage';
+import StumblePage from './components/StumblePage';
 import VerifyEmailChangePage from './components/VerifyEmailChangePage';
 import VerifyEmailPage from './components/VerifyEmailPage';
 import { useAuth } from './auth/AuthContext';
@@ -78,6 +79,7 @@ export default function App() {
               element={<Navigate to="/unread" replace />}
             />
             <Route path="/" element={<Navigate to="/unread" replace />} />
+            <Route path="/stumble" element={<StumblePage />} />
             <Route path="/*" element={<AppShell />} />
           </>
         ) : (

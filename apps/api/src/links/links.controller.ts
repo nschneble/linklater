@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -144,6 +145,32 @@ export class LinksController {
 
     const link = await this.linksService.getRandom(userId, readFlag);
     return { link };
+  }
+
+  /**
+   * Atomically picks a random unread link, marks it as read, and returns
+   * its URL so the client can replace the current browser tab. Always
+   * returns 200 with `{ url: string | null }`. A null value indicates an
+   * empty unread list.
+   *
+   * NOTE: Declared before `@Get(':id')` so NestJS does not interpret the
+   * literal string "stumble" as a link ID.
+   */
+  @ApiOperation({
+    summary: 'Pick a random unread link, mark it read, return its URL',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      '{ url: string } when a link is found; { url: null } when the unread list is empty.',
+  })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @HttpCode(200)
+  @Post('stumble')
+  async stumble(@Req() request: AuthRequest) {
+    const userId = request.user.userId;
+    const result = await this.linksService.stumble(userId);
+    return { url: result?.url ?? null };
   }
 
   /** Returns a single link by its UUID, scoped to the authenticated user. */

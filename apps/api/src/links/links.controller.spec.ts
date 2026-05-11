@@ -15,6 +15,7 @@ describe('LinksController', () => {
     create: jest.fn(),
     findAll: jest.fn(),
     getRandom: jest.fn(),
+    stumble: jest.fn(),
     findOne: jest.fn(),
     update: jest.fn(),
     read: jest.fn(),
@@ -153,6 +154,27 @@ describe('LinksController', () => {
       const result = await controller.random(makeRequest(), undefined);
 
       expect(result).toEqual({ link });
+    });
+  });
+
+  describe('stumble', () => {
+    it('returns { url } when an unread link is found', async () => {
+      (linksServiceMock.stumble as jest.Mock).mockResolvedValue({
+        url: LINK_URL,
+      });
+
+      const result = await controller.stumble(makeRequest());
+
+      expect(linksServiceMock.stumble).toHaveBeenCalledWith(USER_ID);
+      expect(result).toEqual({ url: LINK_URL });
+    });
+
+    it('returns { url: null } when no unread links exist', async () => {
+      (linksServiceMock.stumble as jest.Mock).mockResolvedValue(null);
+
+      const result = await controller.stumble(makeRequest());
+
+      expect(result).toEqual({ url: null });
     });
   });
 
