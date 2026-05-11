@@ -72,9 +72,9 @@ describe('AuthService', () => {
   } as unknown as JwtService;
 
   const emailServiceMock = {
-    sendEmailChangeVerificationEmail: jest.fn(),
-    sendPasswordResetEmail: jest.fn(),
-    sendVerificationEmail: jest.fn(),
+    sendEmailChangeVerification: jest.fn(),
+    sendPasswordReset: jest.fn(),
+    sendVerification: jest.fn(),
   } as unknown as EmailService;
 
   beforeEach(async () => {
@@ -103,7 +103,7 @@ describe('AuthService', () => {
       (usersServiceMock.updateVerificationToken as jest.Mock).mockResolvedValue(
         undefined,
       );
-      (emailServiceMock.sendVerificationEmail as jest.Mock).mockResolvedValue(
+      (emailServiceMock.sendVerification as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -113,7 +113,7 @@ describe('AuthService', () => {
         USER_EMAIL,
         KNOWN_PASSWORD,
       );
-      expect(emailServiceMock.sendVerificationEmail).toHaveBeenCalledWith(
+      expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
       );
@@ -360,7 +360,7 @@ describe('AuthService', () => {
       (usersServiceMock.updateVerificationToken as jest.Mock).mockResolvedValue(
         undefined,
       );
-      (emailServiceMock.sendVerificationEmail as jest.Mock).mockResolvedValue(
+      (emailServiceMock.sendVerification as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -371,7 +371,7 @@ describe('AuthService', () => {
         expect.any(String),
         expect.any(Date),
       );
-      expect(emailServiceMock.sendVerificationEmail).toHaveBeenCalledWith(
+      expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
       );
@@ -432,7 +432,7 @@ describe('AuthService', () => {
       (usersServiceMock.updateResetToken as jest.Mock).mockResolvedValue(
         undefined,
       );
-      (emailServiceMock.sendPasswordResetEmail as jest.Mock).mockResolvedValue(
+      (emailServiceMock.sendPasswordReset as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -443,7 +443,7 @@ describe('AuthService', () => {
         expect.any(String),
         expect.any(Date),
       );
-      expect(emailServiceMock.sendPasswordResetEmail).toHaveBeenCalledWith(
+      expect(emailServiceMock.sendPasswordReset).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
       );
@@ -456,7 +456,7 @@ describe('AuthService', () => {
         service.forgotPassword('unknown@example.com'),
       ).resolves.not.toThrow();
       expect(usersServiceMock.updateResetToken).not.toHaveBeenCalled();
-      expect(emailServiceMock.sendPasswordResetEmail).not.toHaveBeenCalled();
+      expect(emailServiceMock.sendPasswordReset).not.toHaveBeenCalled();
     });
   });
 
@@ -510,7 +510,7 @@ describe('AuthService', () => {
       (usersServiceMock.updateVerificationToken as jest.Mock).mockResolvedValue(
         undefined,
       );
-      (emailServiceMock.sendVerificationEmail as jest.Mock).mockResolvedValue(
+      (emailServiceMock.sendVerification as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -521,7 +521,7 @@ describe('AuthService', () => {
         expect.any(String),
         expect.any(Date),
       );
-      expect(emailServiceMock.sendVerificationEmail).toHaveBeenCalledWith(
+      expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
       );
@@ -547,7 +547,7 @@ describe('AuthService', () => {
         undefined,
       );
       (
-        emailServiceMock.sendEmailChangeVerificationEmail as jest.Mock
+        emailServiceMock.sendEmailChangeVerification as jest.Mock
       ).mockResolvedValue(undefined);
 
       await service.requestEmailChange(USER_ID, NEW_EMAIL);
@@ -558,9 +558,10 @@ describe('AuthService', () => {
         expect.any(String),
         expect.any(Date),
       );
-      expect(
-        emailServiceMock.sendEmailChangeVerificationEmail,
-      ).toHaveBeenCalledWith(NEW_EMAIL, expect.any(String));
+      expect(emailServiceMock.sendEmailChangeVerification).toHaveBeenCalledWith(
+        NEW_EMAIL,
+        expect.any(String),
+      );
     });
 
     it('throws ConflictException when the new email is already in use', async () => {

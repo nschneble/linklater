@@ -3,6 +3,9 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import * as EmailChangeTemplate from './templates/email-change.template.js';
+import * as PasswordResetTemplate from './templates/password-reset.template.js';
+import * as VerificationTemplate from './templates/verification.template.js';
 import * as nodemailer from 'nodemailer';
 
 /**
@@ -33,17 +36,22 @@ export class EmailService {
     }),
   });
 
-  /** The "From" address shown in outgoing emails. Defaults to `Linklater <noreply@linklater.app>`. */
+  /**
+   * The "From" address shown in outgoing emails. Defaults to
+   * `Linklater <noreply@linklater.app>`.
+   */
   private readonly from =
     process.env.SMTP_FROM ?? 'Linklater <noreply@linklater.app>';
 
   /**
-   * Internal helper that wraps nodemailer's `sendMail` with error handling.
+   * Internal helper that wraps nodemailer's `sendMail` w/ error handling.
    * Converts SMTP failures into a 503 Service Unavailable so the caller
    * receives a meaningful HTTP error rather than an uncaught exception.
    *
    * @param options - Standard nodemailer `SendMailOptions`.
-   * @throws {ServiceUnavailableException} When nodemailer fails to send the email.
+   *
+   * @throws {ServiceUnavailableException} When nodemailer fails to send
+             the email.
    */
   private async send(options: nodemailer.SendMailOptions) {
     try {
@@ -57,65 +65,66 @@ export class EmailService {
   }
 
   /**
-   * Sends an email verification link to a new or unverified user.
-   * The link contains a 64-character hex token and expires in 24 hours.
+   * Sends a verification email to a new (or unverified) user. The link
+   * contains a 64-character hex token that expires in 24 hours.
    *
-   * Endpoint consumed by the link: POST /auth/verify-email
+   * Endpoint(s) consumed by the link: POST /auth/verify-email
    *
    * @param email - The recipient's email address.
    * @param token - The 64-character hex verification token.
    */
-  async sendVerificationEmail(email: string, token: string) {
-    const verifyUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
+  async sendVerification(email: string, token: string) {
+    const url = `${process.env.APP_URL}/verify-email?token=${token}`;
 
     await this.send({
       from: this.from,
       to: email,
       subject: 'Verify your Linklater email',
-      text: `Verify your email by visiting: ${verifyUrl}\n\nThis link expires in 24 hours.`,
-      html: `<p>Verify your email by clicking <a href="${verifyUrl}">this link</a>.</p><p>This link expires in 24 hours.</p>`,
+      text: VerificationTemplate.text(url),
+      html: VerificationTemplate.html(url),
     });
   }
 
   /**
-   * Sends a password reset link to the given email address.
-   * The link contains a 64-character hex token and expires in 1 hour.
+   * Sends a password reset to the given email address. The link contains
+   * a 64-character hex token that expires in 1 hour.
    *
-   * Endpoint consumed by the link: POST /auth/reset-password
+   * Endpoint(s) consumed by the link: POST /auth/reset-password
    *
    * @param email - The recipient's email address.
    * @param token - The 64-character hex reset token.
    */
-  async sendPasswordResetEmail(email: string, token: string) {
-    const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
+  async sendPasswordReset(email: string, token: string) {
+    const url = `${process.env.APP_URL}/reset-password?token=${token}`;
 
     await this.send({
       from: this.from,
       to: email,
       subject: 'Reset your Linklater password',
-      text: `Reset your password by visiting: ${resetUrl}\n\nThis link expires in 1 hour.`,
-      html: `<p>Reset your password by clicking <a href="${resetUrl}">this link</a>.</p><p>This link expires in 1 hour.</p>`,
+      text: PasswordResetTemplate.text(url),
+      html: PasswordResetTemplate.html(url),
     });
   }
 
   /**
-   * Sends a verification link to a user's *new* email address to confirm an
-   * email change. The link contains a 64-character hex token and expires in 24 hours.
+   * Sends a verification to a user's *new* email address to confirm an
+   * email change. The link contains a 64-character hex token that expires
+   * in 24 hours.
    *
-   * Endpoint consumed by the link: POST /auth/verify-email-change
+   * Endpoint(s) consumed by the link: POST /auth/verify-email-change
    *
    * @param email - The new (pending) email address to send the link to.
    * @param token - The 64-character hex email-change verification token.
    */
-  async sendEmailChangeVerificationEmail(email: string, token: string) {
-    const verifyUrl = `${process.env.APP_URL}/verify-email-change?token=${token}`;
+  async sendEmailChangeVerification(email: string, token: string) {
+    const url = `${process.env.APP_URL}/verify-email-change?token=${token}`;
 
     await this.send({
       from: this.from,
       to: email,
       subject: 'Confirm your new Linklater email',
-      text: `Confirm your new email address by visiting: ${verifyUrl}\n\nThis link expires in 24 hours.`,
-      html: `<p>Confirm your new email address by clicking <a href="${verifyUrl}">this link</a>.</p><p>This link expires in 24 hours.</p>`,
+      text: EmailChangeTemplate.text(url),
+      html: EmailChangeTemplate.html(url),
     });
   }
 }

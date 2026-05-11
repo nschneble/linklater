@@ -170,7 +170,7 @@ export class AuthService {
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
 
     await this.usersService.updateVerificationToken(userId, token, expiresAt);
-    await this.emailService.sendVerificationEmail(user.email, token);
+    await this.emailService.sendVerification(user.email, token);
   }
 
   /**
@@ -214,7 +214,7 @@ export class AuthService {
     const expiresAt = expiresInMs(ONE_HOUR_MS);
 
     await this.usersService.updateResetToken(user.id, token, expiresAt);
-    await this.emailService.sendPasswordResetEmail(email, token);
+    await this.emailService.sendPasswordReset(email, token);
   }
 
   /**
@@ -259,7 +259,7 @@ export class AuthService {
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
 
     await this.usersService.updateVerificationToken(userId, token, expiresAt);
-    await this.emailService.sendVerificationEmail(user.email, token);
+    await this.emailService.sendVerification(user.email, token);
   }
 
   /**
@@ -286,7 +286,7 @@ export class AuthService {
       token,
       expiresAt,
     );
-    await this.emailService.sendEmailChangeVerificationEmail(newEmail, token);
+    await this.emailService.sendEmailChangeVerification(newEmail, token);
   }
 
   /**
