@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module.js';
+import { CompactLogger } from './compact-logger.js';
 import type { Request, Response, NextFunction } from 'express';
 import { existsSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -42,6 +43,7 @@ function loadHttpsOptions() {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     httpsOptions: loadHttpsOptions(),
+    logger: new CompactLogger(),
   });
   app.useGlobalPipes(
     new ValidationPipe({
