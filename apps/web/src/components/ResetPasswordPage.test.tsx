@@ -21,10 +21,10 @@ function renderResetPage(search = '?token=reset-abc') {
 }
 
 function fillForm(password: string, confirm: string) {
-  fireEvent.change(screen.getByLabelText(/new password/i), {
+  fireEvent.change(screen.getByLabelText('New password'), {
     target: { value: password },
   });
-  fireEvent.change(screen.getByLabelText(/confirm password/i), {
+  fireEvent.change(screen.getByLabelText('Confirm new password'), {
     target: { value: confirm },
   });
 }
@@ -65,7 +65,9 @@ describe('ResetPasswordPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /reset password/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/password updated/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: /your password has been reset/i }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -77,7 +79,7 @@ describe('ResetPasswordPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: /go to linklater/i }),
+        screen.getByRole('button', { name: /log in now/i }),
       ).toBeInTheDocument();
     });
   });
