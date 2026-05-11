@@ -36,7 +36,10 @@ export default function StumblePage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[var(--bg)] text-[var(--text-muted)] select-none">
-      <p className="text-sm animate-pulse">Hang on…</p>
+      <i
+        className="fa-regular fa-arrows-rotate fa-spin text-4xl opacity-50"
+        aria-hidden="true"
+      />
     </div>
   );
 }
