@@ -56,29 +56,42 @@ export default function ResetPasswordPage() {
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
       <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
+        {success && (
+          <i
+            className="block mb-4 fa-regular fa-circle-check text-4xl text-[var(--text-subtle)] animate-bounce text-center"
+            aria-hidden="true"
+          />
+        )}
         <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold">
-          Reset Password
+          {success ? (
+            <>
+              Your Password Has Been{' '}
+              <span className="underline underline-offset-3 decoration-[var(--accent)]">
+                Reset
+              </span>
+            </>
+          ) : (
+            'Reset Password'
+          )}
         </h1>
         <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
-          No one liked your old password, anyways.
+          {success
+            ? "I'm so proud of you."
+            : 'No one liked your old password, anyways.'}
         </p>
 
         {success ? (
           <div className="text-center space-y-4">
-            <p className="text-[var(--text-muted)]">
+            <PrimaryButton
+              className="w-full py-2.5"
+              onClick={() => navigate('/login')}
+            >
               <i
-                className="fa-solid fa-circle-check mr-2 text-emerald-500"
+                className="fa-solid fa-right-to-bracket text-xs"
                 aria-hidden="true"
               />
-              Password updated! You can now log in.
-            </p>
-            <button
-              type="button"
-              className="text-[var(--accent)] underline text-sm"
-              onClick={() => navigate('/')}
-            >
-              Go to Linklater
-            </button>
+              I'd like to log in now
+            </PrimaryButton>
           </div>
         ) : (
           <form className="space-y-4" onSubmit={handleSubmit}>

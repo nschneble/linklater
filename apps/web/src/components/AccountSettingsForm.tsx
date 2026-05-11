@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useState, type FormEvent } from 'react';
 import Alert from './ui/Alert';
 import FormInput from './ui/FormInput';
+import LinkButton from './ui/LinkButton';
 import PrimaryButton from './ui/PrimaryButton';
 
 /**
@@ -147,14 +148,9 @@ export default function AccountSettingsForm() {
           <div className="space-y-2">
             {resendMessage && <Alert variant="success">{resendMessage}</Alert>}
             {resendError && <Alert variant="error">{resendError}</Alert>}
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={resending}
-              className="text-[var(--accent)] text-xs underline disabled:opacity-50"
-            >
+            <LinkButton disabled={resending} onClick={handleResend}>
               {resending ? 'Sending…' : 'Resend verification email'}
-            </button>
+            </LinkButton>
           </div>
         )}
 
