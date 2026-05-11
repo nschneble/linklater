@@ -61,7 +61,7 @@ export default function OAuthCallbackPage() {
             <button
               type="button"
               className="text-[var(--accent)] underline text-sm"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/login')}
             >
               Back to login
             </button>
