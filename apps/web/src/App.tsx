@@ -72,19 +72,27 @@ export default function App() {
         {user ? (
           <>
             <Route path="/login" element={<Navigate to="/unread" replace />} />
+            <Route path="/signup" element={<Navigate to="/unread" replace />} />
+            <Route
+              path="/forgot-password"
+              element={<Navigate to="/unread" replace />}
+            />
             <Route path="/" element={<Navigate to="/unread" replace />} />
             <Route path="/*" element={<AppShell />} />
           </>
         ) : (
           <>
-            <Route
-              path="/login"
-              element={
-                <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
-                  <AuthForm />
-                </div>
-              }
-            />
+            {['/login', '/signup', '/forgot-password'].map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={
+                  <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
+                    <AuthForm />
+                  </div>
+                }
+              />
+            ))}
             <Route path="*" element={<UnauthenticatedRedirect />} />
           </>
         )}

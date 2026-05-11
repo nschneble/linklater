@@ -16,16 +16,21 @@ const appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true';
 type Mode = 'login' | 'register' | 'forgot-password';
 
 /**
- * Authentication form shown to unauthenticated users at the root route.
+ * Authentication form rendered for `/login`, `/signup`, and
+ * `/forgot-password` endpoints.
  *
- * Has three modes controlled by a local `mode` state:
- * - `'login'`: email + password, submits `POST /auth/login`.
- * - `'register'`: same fields, submits `POST /auth/register` then logs in.
- * - `'forgot-password'`: email only, submits `POST /auth/forgot-password`.
+ * Mode is derived from the current pathname:
+ * - `/login`           → `'login'`
+ *                        email + password, submits `POST /auth/login`
+ * - `/signup`          → `'register'`
+ *                        email + password, submits `POST /auth/register`
+ * - `/forgot-password` → `'forgot-password'`
+ *                        email, submits `POST /auth/forgot-password`
  *
- * Switching modes resets password, error, and loading state. The email
- * input is auto-focused whenever the mode changes unless the email field
- * already has text, in which case the password input is focused.
+ * Switching modes (via tab click or link) navigates to the corresponding
+ * route, which resets password, error, and loading state. The email input
+ * is auto-focused on mode change unless the email field already has text,
+ * in which case the password input is focused.
  *
  * After a successful forgot-password submission the form switches to a
  * confirmation state showing an `Alert` instead of the form fields.
@@ -41,11 +46,22 @@ export default function AuthForm() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<Mode>('login');
   const [password, setPassword] = useState('');
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
 
+  const mode: Mode =
+    location.pathname === '/signup'
+      ? 'register'
+      : location.pathname === '/forgot-password'
+        ? 'forgot-password'
+        : 'login';
+
   useEffect(() => {
+    setPassword('');
+    setError(null);
+    setLoading(false);
+    setForgotPasswordSent(false);
+
     const emailInputValue = emailReference.current?.value ?? '';
 
     if (mode !== 'forgot-password' && emailInputValue.length > 0) {
@@ -85,11 +101,14 @@ export default function AuthForm() {
   };
 
   const handleModeChange = (newMode: Mode) => {
-    setMode(newMode);
-    setPassword('');
-    setError(null);
-    setLoading(false);
-    setForgotPasswordSent(false);
+    const from = (location.state as { from?: string })?.from;
+    const path =
+      newMode === 'register'
+        ? '/signup'
+        : newMode === 'forgot-password'
+          ? '/forgot-password'
+          : '/login';
+    navigate(path, { state: { from }, replace: true });
   };
 
   if (mode === 'forgot-password') {
