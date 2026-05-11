@@ -18,7 +18,7 @@ Keys:
   0  Status
   1  API logs
   2  Web logs
-  3  Mailpit logs
+  3  Mailpit logs (when installed)
 USAGE
 }
 
@@ -49,6 +49,16 @@ BLD=$'\033[1m'  DIM=$'\033[2m'  RST=$'\033[0m'
 SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
 TICK=✓  CROSS=✗
 
+# ── Mailpit binary detection ──────────────────────────────────────────────────
+MAILPIT_BIN=""
+if command -v mailpit &>/dev/null; then
+  MAILPIT_BIN=$(command -v mailpit)
+elif [[ -x /opt/homebrew/opt/mailpit/bin/mailpit ]]; then
+  MAILPIT_BIN=/opt/homebrew/opt/mailpit/bin/mailpit
+elif [[ -x /usr/local/opt/mailpit/bin/mailpit ]]; then
+  MAILPIT_BIN=/usr/local/opt/mailpit/bin/mailpit
+fi
+
 # ── Temp files ────────────────────────────────────────────────────────────────
 API_LOG=$(mktemp)
 WEB_LOG=$(mktemp)
@@ -56,7 +66,7 @@ MAILPIT_LOG=$(mktemp)
 KEY_FILE=$(mktemp)
 
 # ── Process state ─────────────────────────────────────────────────────────────
-# Values: starting | ready | error
+# Values: starting | ready | error | skipped
 API_STATE="starting"
 WEB_STATE="starting"
 MAILPIT_STATE="starting"
@@ -126,9 +136,10 @@ draw_header() {
 render_service_line() {
   local state=$1 url=$2 frame_char=$3 label=$4
   case "$state" in
-    starting) printf "${YLW}%s${RST} %-4s  ${DIM}starting${RST}"  "$frame_char" "$label" ;;
-    ready)    printf "${GRN}%s${RST} %-4s  ${GRN}%s${RST}"        "$TICK"       "$label" "$url" ;;
-    error)    printf "${RED}%s${RST} %-4s  ${RED}error${RST}"     "$CROSS"      "$label" ;;
+    starting) printf "${YLW}%s${RST} %-7s  ${DIM}starting${RST}"      "$frame_char" "$label" ;;
+    ready)    printf "${GRN}%s${RST} %-7s  ${GRN}%s${RST}"          "$TICK"       "$label" "$url" ;;
+    error)    printf "${RED}%s${RST} %-7s  ${RED}error${RST}"       "$CROSS"      "$label" ;;
+    skipped)  printf "${DIM}– %-7s  not installed${RST}"             "$label" ;;
   esac
 }
 
@@ -143,17 +154,24 @@ render_status_view() {
   out+="  $(render_service_line "$MAILPIT_STATE" "$MAILPIT_URL" "$frame_char" "Mailpit")"$'\n'
   out+=$'\n'
 
-  if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" && "$MAILPIT_STATE" == "ready" ]]; then
+  if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" && \
+        ("$MAILPIT_STATE" == "ready" || "$MAILPIT_STATE" == "skipped") ]]; then
     out+="  ${GRN}${BLD}Ready.${RST}"$'\n'$'\n'
     out+="  ${DIM}1. API logs"$'\n'
     out+="  2. Web logs"$'\n'
-    out+="  3. Mailpit logs${RST}"$'\n'$'\n'
+    if [[ "$MAILPIT_STATE" == "ready" ]]; then
+      out+="  3. Mailpit logs"$'\n'
+    fi
+    out+="${RST}"$'\n'
     out+="  Press Control+C to stop"
   elif [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" || "$MAILPIT_STATE" == "error" ]]; then
     out+="  ${RED}${BLD}An error occurred.${RST}"$'\n'$'\n'
     out+="  ${DIM}1. API logs"$'\n'
     out+="  2. Web logs"$'\n'
-    out+="  3. Mailpit logs${RST}"$'\n'$'\n'
+    if [[ "$MAILPIT_STATE" != "skipped" ]]; then
+      out+="  3. Mailpit logs"$'\n'
+    fi
+    out+="${RST}"$'\n'
     out+="  Press Control+C to stop"
   else
     out+="  ${DIM}Starting up…${RST}"
@@ -170,8 +188,13 @@ render_log_view() {
   local cols; cols=${stty_size##* }; cols=${cols:-80}
   local content_width=$(( cols - 4 ))
   (( content_width < 20 )) && content_width=20
-  # Lines above log content: 4 title + 4 service + 2 status + 4 options + 3 log labels = 17
-  local available=$(( rows - 17 ))
+  # Lines above log content: 4 title + 4 service + 2 status + (3 or 4) options + 3 log labels
+  local available
+  if [[ "$MAILPIT_STATE" == "skipped" ]]; then
+    available=$(( rows - 16 ))
+  else
+    available=$(( rows - 17 ))
+  fi
   (( available < 1 )) && available=1
   local divider; printf -v divider '%*s' "$content_width" ''
   divider=${divider// /─}
@@ -197,10 +220,12 @@ render_log_view() {
     out+="  ${DIM}2. Web logs${RST}"$'\n'
   fi
 
-  if [[ "$label" == "Mailpit" ]]; then
-    out+="  →  Mailpit logs"$'\n'
-  else
-    out+="  ${DIM}3. Mailpit logs${RST}"$'\n'
+  if [[ "$MAILPIT_STATE" != "skipped" ]]; then
+    if [[ "$label" == "Mailpit" ]]; then
+      out+="  →  Mailpit logs"$'\n'
+    else
+      out+="  ${DIM}3. Mailpit logs${RST}"$'\n'
+    fi
   fi
 
   out+=$'\n'
@@ -253,8 +278,12 @@ API_PID=$!
 npm run dev --workspace @linklater/web </dev/null >"$WEB_LOG" 2>&1 &
 WEB_PID=$!
 
-/opt/homebrew/opt/mailpit/bin/mailpit </dev/null >"$MAILPIT_LOG" 2>&1 &
-MAILPIT_PID=$!
+if [[ -n "$MAILPIT_BIN" ]]; then
+  "$MAILPIT_BIN" </dev/null >"$MAILPIT_LOG" 2>&1 &
+  MAILPIT_PID=$!
+else
+  MAILPIT_STATE="skipped"
+fi
 
 # ── Live update loop ──────────────────────────────────────────────────────────
 DIRTY=true  # always draw on first tick
@@ -276,7 +305,7 @@ while true; do
     0) VIEW="status" ;;
     1) VIEW="api" ;;
     2) VIEW="web" ;;
-    3) VIEW="mailpit" ;;
+    3) [[ "$MAILPIT_STATE" != "skipped" ]] && VIEW="mailpit" ;;
   esac
 
   # Detect ready signals
@@ -318,7 +347,7 @@ while true; do
       VIEW="web"
     fi
   fi
-  if [[ "$MAILPIT_STATE" != "error" ]]; then
+  if [[ "$MAILPIT_STATE" != "error" && "$MAILPIT_STATE" != "skipped" ]]; then
     if ! kill -0 "$MAILPIT_PID" 2>/dev/null || \
        grep -qE '(EADDRINUSE|EACCES)' "$MAILPIT_LOG" 2>/dev/null; then
       MAILPIT_STATE="error"

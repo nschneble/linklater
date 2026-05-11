@@ -92,6 +92,7 @@ The embedded token expires after 90 days. If it stops working, revisit Settings 
 
 - Node 22.x
 - PostgreSQL 18
+- [Mailpit](https://mailpit.axllent.org/)
 
 ### Install Dependencies
 
