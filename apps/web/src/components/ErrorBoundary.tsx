@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import PrimaryButton from './ui/PrimaryButton';
 
 interface ErrorBoundaryProps {
   /** The subtree to protect from unhandled render errors. */
@@ -45,20 +46,22 @@ export default class ErrorBoundary extends Component<
       return (
         <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-[var(--bg)] text-[var(--text)] text-center">
           <i
-            className="fa-regular fa-circle-exclamation text-4xl text-[var(--text-subtle)] mb-4"
+            className="fa-regular fa-bug text-4xl text-[var(--text-subtle)] mb-4"
             aria-hidden="true"
           />
-          <h1 className="text-lg font-semibold mb-2">Something went wrong</h1>
-          <p className="text-[var(--text-muted)] text-sm mb-6">
-            An unexpected error occurred. Refreshing the page usually fixes it.
+          <h1 className="mb-2 text-lg font-semibold">Something went wrong</h1>
+          <p className="mb-6 text-[var(--text-muted)] text-sm">
+            An unexpected error occurred. Reloading the page{' '}
+            <span className="italic">usually</span> fixes it.
           </p>
-          <button
-            type="button"
-            className="px-4 py-2 bg-[var(--accent)] text-[var(--accent-fg)] text-sm font-medium rounded-full hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
-            onClick={() => window.location.reload()}
-          >
-            Retry
-          </button>
+
+          <PrimaryButton onClick={() => window.location.reload()}>
+            <i
+              className="fa-solid fa-arrow-rotate-right text-xs"
+              aria-hidden="true"
+            />
+            Reload page
+          </PrimaryButton>
         </div>
       );
     }
