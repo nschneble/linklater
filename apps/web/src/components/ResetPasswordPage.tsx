@@ -4,6 +4,7 @@ import { resetPassword } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
 import Alert from './ui/Alert';
 import FormInput from './ui/FormInput';
+import LinkButton from './ui/LinkButton';
 import PrimaryButton from './ui/PrimaryButton';
 
 /**
@@ -59,7 +60,7 @@ export default function ResetPasswordPage() {
           Reset Password
         </h1>
         <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
-          Choose a new password for your account.
+          No one liked your old password, anyways.
         </p>
 
         {success ? (
@@ -82,7 +83,7 @@ export default function ResetPasswordPage() {
         ) : (
           <form className="space-y-4" onSubmit={handleSubmit}>
             <label
-              className="block text-[var(--text-muted)] text-sm font-medium"
+              className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
               htmlFor="reset-password"
             >
               New password
@@ -98,10 +99,10 @@ export default function ResetPasswordPage() {
             />
 
             <label
-              className="block text-[var(--text-muted)] text-sm font-medium"
+              className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
               htmlFor="reset-confirm"
             >
-              Confirm password
+              Confirm new password
             </label>
             <FormInput
               id="reset-confirm"
@@ -120,13 +121,9 @@ export default function ResetPasswordPage() {
             </PrimaryButton>
 
             <p className="text-center">
-              <button
-                type="button"
-                className="text-[var(--text-muted)] text-xs underline"
-                onClick={() => navigate('/')}
-              >
+              <LinkButton onClick={() => navigate('/login')}>
                 Back to login
-              </button>
+              </LinkButton>
             </p>
           </form>
         )}
