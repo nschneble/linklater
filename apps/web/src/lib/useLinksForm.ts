@@ -44,7 +44,7 @@ export function useLinksForm({
   usePasteDetection({ enabled, onSave: onDirectSave });
 
   const handleToggleForm = useCallback(() => {
-    setShowLinkForm((open) => !open);
+    setShowLinkForm((previous) => !previous);
   }, []);
 
   return { handleToggleForm, showLinkForm };

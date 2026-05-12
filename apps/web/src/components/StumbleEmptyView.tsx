@@ -1,6 +1,6 @@
 import { FOCUS_RING } from '../lib/styles';
 import { Link } from 'react-router-dom';
-import LinkCard from './LinkCard';
+import { LinkCard, LinkCardSkeleton } from './LinkCard';
 import { useEffect, useState } from 'react';
 import type { Link as SavedLink } from '../lib/api';
 
@@ -90,31 +90,6 @@ function articleToLink(article: WikipediaArticle): SavedLink {
   };
 }
 
-function WikipediaCardSkeleton() {
-  return (
-    <div
-      role="status"
-      aria-label="Loading article"
-      className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] rounded-r-xl"
-    >
-      <div className="absolute left-0 top-4 -translate-x-1/2 w-8 h-8 rounded-2xl bg-[var(--accent)]" />
-      <div className="space-y-1 animate-pulse">
-        <div className="flex flex-row items-center">
-          <div className="w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] rounded-md bg-[var(--bg-elevated)] shrink-0" />
-          <div className="flex flex-col items-start min-w-0 ml-3 gap-1.5 w-full">
-            <div className="w-3/4 h-3.5 bg-[var(--bg-elevated)] rounded" />
-            <div className="w-24 h-3 bg-[var(--bg-elevated)] rounded" />
-          </div>
-        </div>
-        <div className="h-8 mt-2 space-y-1">
-          <div className="w-full h-3 bg-[var(--bg-elevated)] rounded" />
-          <div className="w-2/3 h-3 bg-[var(--bg-elevated)] rounded" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 async function fetchRandomWikipediaArticle(
   signal: AbortSignal,
 ): Promise<WikipediaArticle | null> {
@@ -146,6 +121,9 @@ async function fetchRandomWikipediaArticle(
  *
  * Wikipedia fetch failures are swallowed silently. The page degrades
  * gracefully to a static fallback message.
+ *
+ * The loading skeleton reuses `LinkCardSkeleton` from `LinkCard` to avoid
+ * duplicating the card-shaped placeholder markup.
  */
 export default function StumbleEmptyView() {
   const [articles, setArticles] = useState<WikipediaArticle[]>([]);
@@ -188,13 +166,13 @@ export default function StumbleEmptyView() {
         {loading ? (
           <>
             <li>
-              <WikipediaCardSkeleton />
+              <LinkCardSkeleton />
             </li>
             <li>
-              <WikipediaCardSkeleton />
+              <LinkCardSkeleton />
             </li>
             <li>
-              <WikipediaCardSkeleton />
+              <LinkCardSkeleton />
             </li>
           </>
         ) : articles.length > 0 ? (

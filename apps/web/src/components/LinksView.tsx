@@ -19,6 +19,19 @@ import type { LinksFilter } from '../lib/useLinks';
 /** How long to wait after the user stops typing before firing the search request. */
 const SEARCH_DEBOUNCE_MS = 300;
 
+/**
+ * Renders an inline error message when `message` is non-null. Used for the
+ * four separate error states in `LinksView` (save, read, random, delete).
+ */
+function ViewError({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <p className="mt-2 text-rose-300 text-xs animate-fade-in-up" role="alert">
+      {message}
+    </p>
+  );
+}
+
 // Lazy-loaded because the modal is rarely open and this keeps it out of the
 // initial bundle.
 const KeyboardShortcutsModal = lazy(() => import('./KeyboardShortcutsModal'));
@@ -197,41 +210,10 @@ export default function LinksView() {
         onToggleForm={handleToggleForm}
       />
 
-      {randomError && (
-        <p
-          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
-          role="alert"
-        >
-          {randomError}
-        </p>
-      )}
-
-      {saveError && (
-        <p
-          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
-          role="alert"
-        >
-          {saveError}
-        </p>
-      )}
-
-      {readError && (
-        <p
-          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
-          role="alert"
-        >
-          {readError}
-        </p>
-      )}
-
-      {deleteError && (
-        <p
-          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
-          role="alert"
-        >
-          {deleteError}
-        </p>
-      )}
+      <ViewError message={randomError} />
+      <ViewError message={saveError} />
+      <ViewError message={readError} />
+      <ViewError message={deleteError} />
 
       {showShortcuts && (
         <Suspense>

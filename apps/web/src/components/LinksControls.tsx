@@ -46,7 +46,7 @@ export default function LinksControls({
       <IconButton
         variant="elevated"
         disabled={isClearingRead}
-        hidden={filter === 'unread' || linksCount == 0}
+        hidden={filter === 'unread' || linksCount === 0}
         title="Permanently removes all read links."
         onClick={onClearRead}
       >

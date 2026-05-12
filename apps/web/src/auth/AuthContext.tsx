@@ -72,6 +72,23 @@ interface AuthContextValue {
   user: User | null;
 }
 
+/**
+ * Maps the raw `GET /auth/me` response shape to the `User` interface.
+ * Extracted to avoid repetition in every code path that calls `getMe`
+ * (e.g. mount, login, loginWithToken, refreshUser).
+ */
+function mapMeToUser(me: Awaited<ReturnType<typeof getMe>>): User {
+  return {
+    userId: me.userId,
+    email: me.email,
+    emailVerifiedAt: me.emailVerifiedAt,
+    hasPassword: me.hasPassword,
+    pendingEmail: me.pendingEmail,
+    mode: me.mode,
+    theme: me.theme,
+  };
+}
+
 // createContext with `undefined` forces consumers to check that they are
 // wrapped in `AuthProvider`. The custom `useAuth` hook throws a clear error
 // if the context value is still `undefined`.
@@ -101,15 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         const me = await getMe();
-        setUser({
-          userId: me.userId,
-          email: me.email,
-          emailVerifiedAt: me.emailVerifiedAt,
-          hasPassword: me.hasPassword,
-          pendingEmail: me.pendingEmail,
-          mode: me.mode,
-          theme: me.theme,
-        });
+        setUser(mapMeToUser(me));
       } catch (error) {
         console.error('Failed to fetch current user', error);
         clearStoredToken();
@@ -126,29 +135,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     await apiLogin(email, password);
     const me = await getMe();
-    setUser({
-      userId: me.userId,
-      email: me.email,
-      emailVerifiedAt: me.emailVerifiedAt,
-      hasPassword: me.hasPassword,
-      pendingEmail: me.pendingEmail,
-      mode: me.mode,
-      theme: me.theme,
-    });
+    setUser(mapMeToUser(me));
   }, []);
 
   const loginWithToken = useCallback(async (token: string) => {
     setStoredToken(token);
     const me = await getMe();
-    setUser({
-      userId: me.userId,
-      email: me.email,
-      emailVerifiedAt: me.emailVerifiedAt,
-      hasPassword: me.hasPassword,
-      pendingEmail: me.pendingEmail,
-      mode: me.mode,
-      theme: me.theme,
-    });
+    setUser(mapMeToUser(me));
   }, []);
 
   /**
@@ -187,15 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = useCallback(async () => {
     try {
       const me = await getMe();
-      setUser({
-        userId: me.userId,
-        email: me.email,
-        emailVerifiedAt: me.emailVerifiedAt,
-        hasPassword: me.hasPassword,
-        pendingEmail: me.pendingEmail,
-        mode: me.mode,
-        theme: me.theme,
-      });
+      setUser(mapMeToUser(me));
     } catch (error) {
       console.error('Failed to refresh user', error);
     }
