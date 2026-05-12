@@ -12,11 +12,16 @@ vi.mock('./api', () => ({
 
 import * as apiModule from './api';
 
+let capturedOnNoLinks: (() => void) | undefined;
+
 vi.mock('./useRandomLink', () => ({
-  useRandomLink: () => ({
-    handleRandom: vi.fn(),
-    randomError: null,
-    randomLoading: false,
+  useRandomLink: vi.fn((options: { onNoLinks?: () => void }) => {
+    capturedOnNoLinks = options.onNoLinks;
+    return {
+      handleRandom: vi.fn(),
+      randomError: null,
+      randomLoading: false,
+    };
   }),
 }));
 
@@ -107,6 +112,12 @@ describe('useLinksActions', () => {
 
     act(() => result.current.handleDismissToast());
     expect(result.current.toastMessage).toBeNull();
+  });
+
+  it('shows toast "No links to stumble upon" when onNoLinks is triggered', () => {
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+    act(() => capturedOnNoLinks?.());
+    expect(result.current.toastMessage).toBe('No links to stumble upon');
   });
 
   it('deleteError is null initially', () => {

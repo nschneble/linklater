@@ -6,6 +6,8 @@ interface UseRandomLinkOptions {
   onDecrementTotal: () => void;
   /** Called with the link ID to remove it from the in-memory list after it has been opened. */
   onRemoveLink: (linkId: string) => void;
+  /** Called when the API returns an empty list. The caller is responsible for notifying the user. */
+  onNoLinks?: () => void;
 }
 
 export interface UseRandomLinkResult {
@@ -30,6 +32,7 @@ export interface UseRandomLinkResult {
  */
 export function useRandomLink({
   onDecrementTotal,
+  onNoLinks,
   onRemoveLink,
 }: UseRandomLinkOptions): UseRandomLinkResult {
   const [randomError, setRandomError] = useState<string | null>(null);
@@ -41,7 +44,7 @@ export function useRandomLink({
     try {
       const { link } = await getRandomLink();
       if (!link) {
-        setRandomError('No links available');
+        onNoLinks?.();
       } else {
         window.open(link.url, '_blank', 'noopener,noreferrer');
         try {
@@ -58,7 +61,7 @@ export function useRandomLink({
     } finally {
       setRandomLoading(false);
     }
-  }, [onDecrementTotal, onRemoveLink]);
+  }, [onDecrementTotal, onNoLinks, onRemoveLink]);
 
   return { handleRandom, randomError, randomLoading };
 }
