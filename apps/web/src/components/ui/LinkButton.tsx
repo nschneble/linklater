@@ -17,7 +17,11 @@ interface LinkButtonProps {
   onClick: () => void;
 }
 
-export default function LinkButton({ children, disabled, onClick }: LinkButtonProps) {
+export default function LinkButton({
+  children,
+  disabled,
+  onClick,
+}: LinkButtonProps) {
   return (
     <button
       type="button"
