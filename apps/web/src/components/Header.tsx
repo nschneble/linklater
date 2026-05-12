@@ -1,9 +1,7 @@
 import UserMenu from './UserMenu';
+import type { AppView } from '../lib/navigation';
 import type { BaseTheme } from '../theme/ThemeContext';
 import type { User } from '../auth/AuthContext';
-
-/** The three main app sections navigable from the header. */
-type AppView = 'links' | 'settings' | 'theme-editor';
 
 interface HeaderProps {
   /** The authenticated user — displayed in the `UserMenu` avatar and email label. */

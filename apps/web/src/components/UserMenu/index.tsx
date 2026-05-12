@@ -6,10 +6,8 @@ import MenuSection from './MenuSection';
 import MenuItem from './MenuItem';
 import ThemeSubmenu from './ThemeSubmenu';
 import { useMenuNavigation } from './useMenuNavigation';
+import type { AppView } from '../../lib/navigation';
 import type { User } from '../../auth/AuthContext';
-
-/** The three main app sections navigable from the user menu. */
-type AppView = 'links' | 'settings' | 'theme-editor';
 
 interface UserMenuProps {
   /** The authenticated user. Email is used for the Gravatar avatar and the "Logged in as" label. */
