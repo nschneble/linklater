@@ -11,15 +11,22 @@ import { type ReactNode } from 'react';
 interface LinkButtonProps {
   /** The visible link text. */
   children: ReactNode;
+  /** When true, the button is non-interactive and visually dimmed. */
+  disabled?: boolean;
   /** Called when the button is clicked. */
   onClick: () => void;
 }
 
-export default function LinkButton({ children, onClick }: LinkButtonProps) {
+export default function LinkButton({
+  children,
+  disabled,
+  onClick,
+}: LinkButtonProps) {
   return (
     <button
       type="button"
-      className="text-[var(--text-muted)] hover:text-[var(--accent)] text-xs underline underline-offset-3 cursor-pointer"
+      className="text-[var(--text-muted)] hover:text-[var(--accent)] text-xs underline underline-offset-3 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+      disabled={disabled}
       onClick={onClick}
     >
       {children}

@@ -28,9 +28,9 @@ describe('EmailService', () => {
       .mockImplementation(() => undefined);
   });
 
-  describe('sendVerificationEmail', () => {
+  describe('sendVerification', () => {
     it('sends to the correct recipient with the verification subject', async () => {
-      await service.sendVerificationEmail(USER_EMAIL, VERIFICATION_TOKEN);
+      await service.sendVerification(USER_EMAIL, VERIFICATION_TOKEN);
 
       expect(sendMailMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -43,7 +43,7 @@ describe('EmailService', () => {
     it('includes the token in the email body', async () => {
       process.env.APP_URL = 'https://app.example.com';
 
-      await service.sendVerificationEmail(USER_EMAIL, VERIFICATION_TOKEN);
+      await service.sendVerification(USER_EMAIL, VERIFICATION_TOKEN);
 
       const [mailOptions] = sendMailMock.mock.calls[0] as [
         { text: string; html: string },
@@ -53,16 +53,16 @@ describe('EmailService', () => {
     });
 
     it('mentions the 24-hour expiry in the email body', async () => {
-      await service.sendVerificationEmail(USER_EMAIL, VERIFICATION_TOKEN);
+      await service.sendVerification(USER_EMAIL, VERIFICATION_TOKEN);
 
       const [mailOptions] = sendMailMock.mock.calls[0] as [{ text: string }];
       expect(mailOptions.text).toContain('24 hours');
     });
   });
 
-  describe('sendPasswordResetEmail', () => {
+  describe('sendPasswordReset', () => {
     it('sends to the correct recipient with the reset subject', async () => {
-      await service.sendPasswordResetEmail(USER_EMAIL, RESET_TOKEN);
+      await service.sendPasswordReset(USER_EMAIL, RESET_TOKEN);
 
       expect(sendMailMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -75,7 +75,7 @@ describe('EmailService', () => {
     it('includes the token in the email body', async () => {
       process.env.APP_URL = 'https://app.example.com';
 
-      await service.sendPasswordResetEmail(USER_EMAIL, RESET_TOKEN);
+      await service.sendPasswordReset(USER_EMAIL, RESET_TOKEN);
 
       const [mailOptions] = sendMailMock.mock.calls[0] as [
         { text: string; html: string },
@@ -85,7 +85,7 @@ describe('EmailService', () => {
     });
 
     it('mentions the 1-hour expiry in the email body', async () => {
-      await service.sendPasswordResetEmail(USER_EMAIL, RESET_TOKEN);
+      await service.sendPasswordReset(USER_EMAIL, RESET_TOKEN);
 
       const [mailOptions] = sendMailMock.mock.calls[0] as [{ text: string }];
       expect(mailOptions.text).toContain('1 hour');
@@ -96,28 +96,25 @@ describe('EmailService', () => {
       sendMailMock.mockRejectedValue(new Error('SMTP connection refused'));
 
       await expect(
-        service.sendPasswordResetEmail(USER_EMAIL, RESET_TOKEN),
+        service.sendPasswordReset(USER_EMAIL, RESET_TOKEN),
       ).rejects.toThrow(ServiceUnavailableException);
     });
   });
 
-  describe('sendVerificationEmail SMTP error', () => {
+  describe('sendVerification SMTP error', () => {
     it('throws ServiceUnavailableException when SMTP fails', async () => {
       const { ServiceUnavailableException } = await import('@nestjs/common');
       sendMailMock.mockRejectedValue(new Error('SMTP connection refused'));
 
       await expect(
-        service.sendVerificationEmail(USER_EMAIL, VERIFICATION_TOKEN),
+        service.sendVerification(USER_EMAIL, VERIFICATION_TOKEN),
       ).rejects.toThrow(ServiceUnavailableException);
     });
   });
 
-  describe('sendEmailChangeVerificationEmail', () => {
+  describe('sendEmailChangeVerification', () => {
     it('sends to the correct recipient with the email-change subject', async () => {
-      await service.sendEmailChangeVerificationEmail(
-        USER_EMAIL,
-        VERIFICATION_TOKEN,
-      );
+      await service.sendEmailChangeVerification(USER_EMAIL, VERIFICATION_TOKEN);
 
       expect(sendMailMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -130,10 +127,7 @@ describe('EmailService', () => {
     it('includes the token and the verify-email-change path in the body', async () => {
       process.env.APP_URL = 'https://app.example.com';
 
-      await service.sendEmailChangeVerificationEmail(
-        USER_EMAIL,
-        VERIFICATION_TOKEN,
-      );
+      await service.sendEmailChangeVerification(USER_EMAIL, VERIFICATION_TOKEN);
 
       const [mailOptions] = sendMailMock.mock.calls[0] as [
         { text: string; html: string },
@@ -144,10 +138,7 @@ describe('EmailService', () => {
     });
 
     it('mentions the 24-hour expiry in the email body', async () => {
-      await service.sendEmailChangeVerificationEmail(
-        USER_EMAIL,
-        VERIFICATION_TOKEN,
-      );
+      await service.sendEmailChangeVerification(USER_EMAIL, VERIFICATION_TOKEN);
 
       const [mailOptions] = sendMailMock.mock.calls[0] as [{ text: string }];
       expect(mailOptions.text).toContain('24 hours');
@@ -158,10 +149,7 @@ describe('EmailService', () => {
       sendMailMock.mockRejectedValue(new Error('SMTP connection refused'));
 
       await expect(
-        service.sendEmailChangeVerificationEmail(
-          USER_EMAIL,
-          VERIFICATION_TOKEN,
-        ),
+        service.sendEmailChangeVerification(USER_EMAIL, VERIFICATION_TOKEN),
       ).rejects.toThrow(ServiceUnavailableException);
     });
   });

@@ -1,6 +1,7 @@
 import AccountSettingsForm from './AccountSettingsForm';
 import BookmarkletSection from './BookmarkletSection';
 import DangerZone from './DangerZone';
+import StumbleSection from './StumbleSection';
 
 /**
  * The `/settings` page. A simple vertical stack of the three settings
@@ -10,9 +11,10 @@ import DangerZone from './DangerZone';
  */
 export default function SettingsView() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AccountSettingsForm />
       <BookmarkletSection />
+      <StumbleSection />
       <DangerZone />
     </div>
   );

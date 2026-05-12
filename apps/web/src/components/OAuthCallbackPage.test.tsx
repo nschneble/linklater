@@ -127,6 +127,6 @@ describe('OAuthCallbackPage', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /back to login/i }));
-    expect(mockNavigate).toHaveBeenCalledWith('/');
+    expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
 });

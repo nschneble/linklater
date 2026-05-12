@@ -57,7 +57,7 @@ export default function DangerZone() {
           Delete my account
         </IconButton>
       ) : (
-        <div className="flex gap-2 items-center text-xs">
+        <div className="flex gap-2 items-center mb-0.5 text-xs">
           <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300">
             Are you sure? This is permanent.
           </span>

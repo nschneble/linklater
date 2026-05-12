@@ -28,9 +28,9 @@ apps
 
 ```bash
 # Convenience Scripts
-./dev                                             # Start development server
-./flintest                                        # Install, format, lint, test
-./flintest --update                               # Update, install, format, lint, test
+bin/dev                                           # Start development server
+bin/flintest                                      # Install, format, lint, test
+bin/flintest --update                             # Update, install, format, lint, test
 
 # Setup
 npm install                                       # Install dependencies
@@ -130,7 +130,7 @@ Follow three simple steps repeatedly:
 - Embrace the slow software movement
   - Refer to [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software) for a manifesto
 - Always clean up after yourself! Kill any listeners or temporary-running processes that are no longer necessary once the work is complete
-- Always run `./flintest` when you're done to ensure formatting, linting, and testing all execute successfully
+- Always run `bin/flintest` when you're done to ensure formatting, linting, and testing all execute successfully
 
 ## TypeScript Conventions
 
@@ -160,10 +160,20 @@ Follow three simple steps repeatedly:
 - Contexts use `createContext(undefined)` with a custom hook that throws if used outside provider
 - Form state sequence: clear error → set loading → attempt action → handle result
 - Extract errors with: `error instanceof Error ? error.message : 'Something went wrong'`
-- Organize your imports! Sort alphabetically both within individual imports and in the list of import statements as whole
-  - Good example: `import { afterEach, describe, vi } from 'vitest';`
-  - Bad example: `import { vi, afterEach, expect } from 'vitest';`
-- `import {}` before `import type {}`
+- Organize your imports! Sort alphabetically both within individual imports and in the list of import statements as whole. Put `import {}` before `import type {}`.
+
+```typescript
+# Example of poor import organization
+import { useState, useEffect } from 'react';
+import { stumbleLink } from '../lib/api';
+import StumbleEmptyView from './StumbleEmptyView';
+
+# Example of good import organization
+import StumbleEmptyView from './StumbleEmptyView';
+import { stumbleLink } from '../lib/api';
+import { useEffect, useState } from 'react';
+```
+
 
 ## Testing Patterns
 

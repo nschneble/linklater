@@ -26,7 +26,9 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>,
     );
     expect(screen.getByRole('heading')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /reload page/i }),
+    ).toBeInTheDocument();
   });
 
   it('does not show the broken child when an error occurs', () => {

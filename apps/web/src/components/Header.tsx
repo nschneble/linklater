@@ -1,9 +1,7 @@
 import UserMenu from './UserMenu';
+import type { AppView } from '../lib/navigation';
 import type { BaseTheme } from '../theme/ThemeContext';
 import type { User } from '../auth/AuthContext';
-
-/** The three main app sections navigable from the header. */
-type AppView = 'links' | 'settings' | 'theme-editor';
 
 interface HeaderProps {
   /** The authenticated user — displayed in the `UserMenu` avatar and email label. */
@@ -51,8 +49,8 @@ export default function Header({
         >
           <img
             className="w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-4xl"
-            src="/linklater.svg"
-            alt=""
+            src="/assets/img/linklater.jpg"
+            alt="Photo of Richard Linklater by Sarah K Joyce"
             aria-hidden="true"
           />
           <div className="text-left">

@@ -71,14 +71,18 @@ describe('useRandomLink', () => {
     expect(onDecrementTotal).toHaveBeenCalledOnce();
   });
 
-  it('sets randomError when no link is returned', async () => {
+  it('calls onNoLinks when no link is returned and does not set randomError', async () => {
     vi.mocked(apiModule.getRandomLink).mockResolvedValue({ link: null });
 
-    const { result } = renderHook(() => useRandomLink(defaultOptions));
+    const onNoLinks = vi.fn();
+    const { result } = renderHook(() =>
+      useRandomLink({ ...defaultOptions, onNoLinks }),
+    );
 
     await act(() => result.current.handleRandom());
 
-    expect(result.current.randomError).toBe('No links available');
+    expect(onNoLinks).toHaveBeenCalledOnce();
+    expect(result.current.randomError).toBeNull();
   });
 
   it('sets randomError when the API call fails', async () => {

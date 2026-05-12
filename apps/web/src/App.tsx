@@ -4,6 +4,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import OAuthCallbackPage from './components/OAuthCallbackPage';
 import ResetPasswordPage from './components/ResetPasswordPage';
+import StumblePage from './components/StumblePage';
 import VerifyEmailChangePage from './components/VerifyEmailChangePage';
 import VerifyEmailPage from './components/VerifyEmailPage';
 import { useAuth } from './auth/AuthContext';
@@ -72,19 +73,28 @@ export default function App() {
         {user ? (
           <>
             <Route path="/login" element={<Navigate to="/unread" replace />} />
+            <Route path="/signup" element={<Navigate to="/unread" replace />} />
+            <Route
+              path="/forgot-password"
+              element={<Navigate to="/unread" replace />}
+            />
             <Route path="/" element={<Navigate to="/unread" replace />} />
+            <Route path="/stumble" element={<StumblePage />} />
             <Route path="/*" element={<AppShell />} />
           </>
         ) : (
           <>
-            <Route
-              path="/login"
-              element={
-                <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
-                  <AuthForm />
-                </div>
-              }
-            />
+            {['/login', '/signup', '/forgot-password'].map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={
+                  <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
+                    <AuthForm />
+                  </div>
+                }
+              />
+            ))}
             <Route path="*" element={<UnauthenticatedRedirect />} />
           </>
         )}

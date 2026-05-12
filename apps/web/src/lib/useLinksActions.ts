@@ -173,6 +173,7 @@ export function useLinksActions({
 
   const { handleRandom, randomError, randomLoading } = useRandomLink({
     onDecrementTotal: () => adjustTotal(-1),
+    onNoLinks: () => setToastMessage('No links to stumble upon'),
     onRemoveLink: removeLink,
   });
 

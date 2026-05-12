@@ -65,13 +65,13 @@ export default function BookmarkletSection() {
       </p>
       {/* eslint-disable-next-line jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <a
-        className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing transition`}
+        className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold ring-1 ring-[var(--border)] ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing active:scale-[0.96] transition duration-200`}
         ref={bookmarkletRef}
         onClick={(event) => event.preventDefault()}
         draggable
       >
         <i
-          className="fa-solid fa-bookmark text-[var(--accent)] text-[0.7rem]"
+          className="fa-solid fa-bookmark text-[var(--text-subtle)] text-[0.7rem]"
           aria-hidden="true"
         />
         Save to Linklater

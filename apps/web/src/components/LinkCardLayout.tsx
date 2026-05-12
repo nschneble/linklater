@@ -136,7 +136,7 @@ export default function LinkCardLayout({
               alt=""
               aria-hidden="true"
               style={childStyle(3)}
-              className={`w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
+              className={`w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] bg-white object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
               onError={(event) => {
                 (event.target as HTMLImageElement).src = placeholderUrl;
               }}

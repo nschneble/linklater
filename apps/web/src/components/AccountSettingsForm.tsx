@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useState, type FormEvent } from 'react';
 import Alert from './ui/Alert';
 import FormInput from './ui/FormInput';
+import LinkButton from './ui/LinkButton';
 import PrimaryButton from './ui/PrimaryButton';
 
 /**
@@ -147,14 +148,9 @@ export default function AccountSettingsForm() {
           <div className="space-y-2">
             {resendMessage && <Alert variant="success">{resendMessage}</Alert>}
             {resendError && <Alert variant="error">{resendError}</Alert>}
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={resending}
-              className="text-[var(--accent)] text-xs underline disabled:opacity-50"
-            >
+            <LinkButton disabled={resending} onClick={handleResend}>
               {resending ? 'Sending…' : 'Resend verification email'}
-            </button>
+            </LinkButton>
           </div>
         )}
 
@@ -166,14 +162,18 @@ export default function AccountSettingsForm() {
           </Alert>
         )}
 
-        <label className="block text-[var(--text-muted)] text-xs font-medium">
+        <label
+          className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+          htmlFor="change-email"
+        >
           Change email
-          <FormInput
-            type="email"
-            value={emailInput}
-            onChange={(event) => setEmailInput(event.target.value)}
-          />
         </label>
+        <FormInput
+          id="change-email"
+          type="email"
+          value={emailInput}
+          onChange={(event) => setEmailInput(event.target.value)}
+        />
 
         {emailMessage && <Alert variant="success">{emailMessage}</Alert>}
         {emailError && <Alert variant="error">{emailError}</Alert>}
@@ -194,27 +194,37 @@ export default function AccountSettingsForm() {
         <form className="space-y-4" onSubmit={handlePasswordSave}>
           <h3 className="text-[var(--text)] text-sm font-semibold">Password</h3>
 
-          <label className="block text-[var(--text-muted)] text-xs font-medium">
+          <label
+            className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+            htmlFor="new-password"
+          >
             New password
-            <FormInput
-              type="password"
-              placeholder="Leave blank to keep current password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
           </label>
+          <FormInput
+            id="new-password"
+            type="password"
+            placeholder="Leave blank to keep current password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
 
           {password && (
-            <label className="block text-[var(--text-muted)] text-xs font-medium">
-              Current password
+            <>
+              <label
+                className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+                htmlFor="current-password"
+              >
+                Current password
+              </label>
               <FormInput
+                id="current-password"
                 type="password"
                 placeholder="Required to confirm password change"
                 value={currentPassword}
                 onChange={(event) => setCurrentPassword(event.target.value)}
                 required
               />
-            </label>
+            </>
           )}
 
           {passwordMessage && (
