@@ -1,6 +1,8 @@
 import { FOCUS_RING } from '../lib/styles';
 import { Link } from 'react-router-dom';
+import LinkCard from './LinkCard';
 import { useEffect, useState } from 'react';
+import type { Link as SavedLink } from '../lib/api';
 
 interface WikipediaArticle {
   title: string;
@@ -65,10 +67,61 @@ function PixelArtGhost() {
   );
 }
 
-async function fetchRandomWikipediaArticle(): Promise<WikipediaArticle | null> {
+const WIKIPEDIA_IMAGE_URL =
+  'https://cdn.brandfetch.io/idAo3WRIoq/w/200/h/183/theme/light/symbol.png?c=1bxid64Mup7aczewSAYMX&t=1679406648240';
+const WIKIPEDIA_FAVICON_URL =
+  'https://cdn.brandfetch.io/idAo3WRIoq/w/64/h/64/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1679406640804';
+
+function articleToLink(article: WikipediaArticle): SavedLink {
+  const now = new Date().toISOString();
+  return {
+    id: article.url,
+    url: article.url,
+    createdAt: now,
+    updatedAt: now,
+    readAt: null,
+    meta: {
+      title: article.title,
+      description: article.extract,
+      imageUrl: WIKIPEDIA_IMAGE_URL,
+      faviconUrl: WIKIPEDIA_FAVICON_URL,
+      fetchedAt: now,
+    },
+  };
+}
+
+function WikipediaCardSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-label="Loading article"
+      className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] rounded-r-xl"
+    >
+      <div className="absolute left-0 top-4 -translate-x-1/2 w-8 h-8 rounded-2xl bg-[var(--accent)]" />
+      <div className="space-y-1 animate-pulse">
+        <div className="flex flex-row items-center">
+          <div className="w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] rounded-md bg-[var(--bg-elevated)] shrink-0" />
+          <div className="flex flex-col items-start min-w-0 ml-3 gap-1.5 w-full">
+            <div className="w-3/4 h-3.5 bg-[var(--bg-elevated)] rounded" />
+            <div className="w-24 h-3 bg-[var(--bg-elevated)] rounded" />
+          </div>
+        </div>
+        <div className="h-8 mt-2 space-y-1">
+          <div className="w-full h-3 bg-[var(--bg-elevated)] rounded" />
+          <div className="w-2/3 h-3 bg-[var(--bg-elevated)] rounded" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+async function fetchRandomWikipediaArticle(
+  signal: AbortSignal,
+): Promise<WikipediaArticle | null> {
   try {
     const response = await fetch(
       'https://en.wikipedia.org/api/rest_v1/page/random/summary',
+      { signal },
     );
     if (!response.ok) return null;
     const data = (await response.json()) as {
@@ -78,7 +131,7 @@ async function fetchRandomWikipediaArticle(): Promise<WikipediaArticle | null> {
     };
     return {
       title: data.title,
-      extract: data.extract.slice(0, 120),
+      extract: data.extract,
       url: data.content_urls.desktop.page,
     };
   } catch {
@@ -99,11 +152,14 @@ export default function StumbleEmptyView() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     Promise.all([
-      fetchRandomWikipediaArticle(),
-      fetchRandomWikipediaArticle(),
-      fetchRandomWikipediaArticle(),
+      fetchRandomWikipediaArticle(controller.signal),
+      fetchRandomWikipediaArticle(controller.signal),
+      fetchRandomWikipediaArticle(controller.signal),
     ]).then((results) => {
+      if (controller.signal.aborted) return;
       setArticles(
         results.filter(
           (article): article is WikipediaArticle => article !== null,
@@ -111,6 +167,8 @@ export default function StumbleEmptyView() {
       );
       setLoading(false);
     });
+
+    return () => controller.abort();
   }, []);
 
   return (
@@ -120,45 +178,39 @@ export default function StumbleEmptyView() {
       </div>
 
       <h1 className="mb-2 text-xl font-semibold">
-        Oops — your reading list is empty.
+        Boo. Your reading list is empty.
       </h1>
       <p className="mb-8 text-[var(--text-muted)] text-sm max-w-xs">
-        Caught up! Impressive. Here&rsquo;s something to tide you over:
+        {loading ? 'Fetching curiousities…' : 'How about one of these?'}
       </p>
 
-      {loading && (
-        <p className="text-[var(--text-subtle)] text-xs animate-pulse mb-8">
-          Fetching curiosities…
-        </p>
-      )}
-
-      {!loading && articles.length === 0 && (
-        <p className="text-[var(--text-subtle)] text-xs italic mb-8">
-          (Wikipedia seems to be napping too.)
-        </p>
-      )}
-
-      {!loading && articles.length > 0 && (
-        <ul className="w-full max-w-sm space-y-3 text-left mb-10">
-          {articles.map((article) => (
-            <li key={article.url}>
-              <a
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`block px-4 py-3 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow rounded-xl text-sm transition ${FOCUS_RING}`}
-              >
-                <div className="font-medium text-[var(--text)] mb-0.5">
-                  {article.title}
-                </div>
-                <div className="text-[var(--text-muted)] text-xs line-clamp-2">
-                  {article.extract}
-                </div>
-              </a>
+      <ul className="w-full max-w-md space-y-3 text-left mb-10">
+        {loading ? (
+          <>
+            <li>
+              <WikipediaCardSkeleton />
             </li>
-          ))}
-        </ul>
-      )}
+            <li>
+              <WikipediaCardSkeleton />
+            </li>
+            <li>
+              <WikipediaCardSkeleton />
+            </li>
+          </>
+        ) : articles.length > 0 ? (
+          articles.map((article) => (
+            <li key={article.url}>
+              <LinkCard link={articleToLink(article)} onReadToggle={() => {}} />
+            </li>
+          ))
+        ) : (
+          <li className="text-center">
+            <p className="text-[var(--text-subtle)] text-xs italic">
+              (Wikipedia seems to be napping too.)
+            </p>
+          </li>
+        )}
+      </ul>
 
       <Link
         to="/unread"

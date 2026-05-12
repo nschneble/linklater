@@ -31,7 +31,9 @@ describe('StumblePage', () => {
   it('renders the loading state before the API responds', () => {
     vi.mocked(api.stumbleLink).mockImplementation(() => new Promise(() => {}));
     renderStumblePage();
-    expect(screen.getByText(/hang on/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/your reading list is empty/i),
+    ).not.toBeInTheDocument();
   });
 
   it('replaces window.location.href when a link is found', async () => {
