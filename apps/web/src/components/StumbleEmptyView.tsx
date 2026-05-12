@@ -1,7 +1,7 @@
-import { FOCUS_RING } from '../lib/styles';
-import { Link } from 'react-router-dom';
-import { LinkCard, LinkCardSkeleton } from './LinkCard';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { FOCUS_RING } from '../lib/styles';
+import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import type { Link as SavedLink } from '../lib/api';
 
 interface WikipediaArticle {
@@ -149,6 +149,38 @@ export default function StumbleEmptyView() {
     return () => controller.abort();
   }, []);
 
+  function renderArticles() {
+    if (loading) {
+      return (
+        <>
+          <li>
+            <LinkCardSkeleton />
+          </li>
+          <li>
+            <LinkCardSkeleton />
+          </li>
+          <li>
+            <LinkCardSkeleton />
+          </li>
+        </>
+      );
+    }
+    if (articles.length > 0) {
+      return articles.map((article) => (
+        <li key={article.url}>
+          <LinkCard link={articleToLink(article)} onReadToggle={() => {}} />
+        </li>
+      ));
+    }
+    return (
+      <li className="text-center">
+        <p className="text-[var(--text-subtle)] text-xs italic">
+          (Wikipedia seems to be napping too.)
+        </p>
+      </li>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12 bg-[var(--bg)] text-[var(--text)] text-center select-none">
       <div className="mb-8">
@@ -163,31 +195,7 @@ export default function StumbleEmptyView() {
       </p>
 
       <ul className="w-full max-w-md space-y-3 text-left mb-10">
-        {loading ? (
-          <>
-            <li>
-              <LinkCardSkeleton />
-            </li>
-            <li>
-              <LinkCardSkeleton />
-            </li>
-            <li>
-              <LinkCardSkeleton />
-            </li>
-          </>
-        ) : articles.length > 0 ? (
-          articles.map((article) => (
-            <li key={article.url}>
-              <LinkCard link={articleToLink(article)} onReadToggle={() => {}} />
-            </li>
-          ))
-        ) : (
-          <li className="text-center">
-            <p className="text-[var(--text-subtle)] text-xs italic">
-              (Wikipedia seems to be napping too.)
-            </p>
-          </li>
-        )}
+        {renderArticles()}
       </ul>
 
       <Link

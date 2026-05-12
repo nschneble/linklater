@@ -1,8 +1,3 @@
-import LinkForm from './LinkForm';
-import LinksList from './LinksList';
-import LinksToolbar from './LinksToolbar';
-import Toast from './ui/Toast';
-import { createPortal } from 'react-dom';
 import {
   lazy,
   Suspense,
@@ -11,10 +6,14 @@ import {
   useState,
   useTransition,
 } from 'react';
-import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts';
-import { useLinks } from '../lib/useLinks';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type { LinksFilter } from '../lib/useLinks';
+import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts';
+import { useLinks, type LinksFilter } from '../lib/useLinks';
+import LinkForm from './LinkForm';
+import LinksList from './LinksList';
+import LinksToolbar from './LinksToolbar';
+import Toast from './ui/Toast';
 
 /** How long to wait after the user stops typing before firing the search request. */
 const SEARCH_DEBOUNCE_MS = 300;
