@@ -6,6 +6,7 @@ import { useTheme, type BaseTheme } from './theme/ThemeContext';
 
 import Header from './components/Header';
 import LinksView from './components/LinksView';
+import NotFoundView from './components/NotFoundView';
 import SettingsView from './components/SettingsView';
 import LinkButton from './components/ui/LinkButton';
 
@@ -13,17 +14,22 @@ import LinkButton from './components/ui/LinkButton';
 // color-math utilities add non-trivial weight to the bundle.
 const ThemeEditor = lazy(() => import('./components/ThemeEditor'));
 
-/** The three main views of the authenticated application shell. */
-type AppView = 'links' | 'settings' | 'theme-editor';
+/** The four main views of the authenticated application shell. */
+type AppView = 'links' | 'not-found' | 'settings' | 'theme-editor';
 
-/**
- * Maps the current URL pathname to the active `AppView`. Defaults to
- * `'links'` for unrecognized paths so unknown routes still show content.
- */
+/** Maps the current URL pathname to the active `AppView`. */
 function viewFromPath(pathname: string): AppView {
-  if (pathname === '/settings') return 'settings';
-  if (pathname === '/editor') return 'theme-editor';
-  return 'links';
+  switch (pathname) {
+    case '/unread':
+    case '/read':
+      return 'links';
+    case '/settings':
+      return 'settings';
+    case '/editor':
+      return 'theme-editor';
+    default:
+      return 'not-found';
+  }
 }
 
 /**
@@ -123,14 +129,16 @@ export default function AppShell() {
       />
 
       <main className="max-w-3xl mx-auto px-4 py-12 space-y-6">
-        {view === 'settings' ? (
+        {view === 'links' ? (
+          <LinksView />
+        ) : view === 'settings' ? (
           <SettingsView />
         ) : view === 'theme-editor' ? (
           <Suspense>
             <ThemeEditor />
           </Suspense>
         ) : (
-          <LinksView />
+          <NotFoundView />
         )}
       </main>
     </div>
