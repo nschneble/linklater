@@ -1,8 +1,16 @@
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import PrimaryButton from '../common/PrimaryButton';
 
 export default function NotFoundView() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname !== '/not-found') {
+      navigate('/not-found', { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-[var(--bg)] text-[var(--text)] text-center select-none">
