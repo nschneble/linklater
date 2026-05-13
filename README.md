@@ -160,6 +160,20 @@ bin/flintest --help
 bin/flintest --update
 ```
 
+### Ready to Merge?
+
+Nothing worse than putting a bow on your latest pull request only to have it fail unceremoniously because there was a build error in GitHub CI.
+
+Run `gitbuilt` and gain complete confidence that your PR will come back with a dopamine-filled green checkmark!
+
+```bash
+# cd /path/to/your/repo
+
+# format, lint, test, and build in one TUI
+bin/gitbuilt
+bin/gitbuilt --help
+```
+
 ### Versioning
 
 Create a new version in four easy steps!
