@@ -1,13 +1,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchParamsReducer, useLinksData } from './useLinksData';
-import type { Link, PaginatedLinks } from './api';
+import type { Link, PaginatedLinks } from '../api';
 
-vi.mock('./api', () => ({
+vi.mock('../api', () => ({
   getLinks: vi.fn(),
 }));
 
-import * as apiModule from './api';
+import * as apiModule from '../api';
 
 function makeLink(overrides: Partial<Link> = {}): Link {
   return {

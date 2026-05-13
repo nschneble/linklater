@@ -1,7 +1,7 @@
 import IconButton from './ui/IconButton';
 import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import type { Link, PaginatedLinks } from '../lib/api';
-import type { LinksFilter } from '../lib/useLinks';
+import type { LinksFilter } from '../lib/hooks/useLinks';
 
 /**
  * Stable `id` for the links list region, referenced by the search input's

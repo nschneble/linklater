@@ -1,13 +1,13 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMetadataPolling } from './useMetadataPolling';
-import type { Link } from './api';
+import type { Link } from '../api';
 
-vi.mock('./api', () => ({
+vi.mock('../api', () => ({
   getLink: vi.fn(),
 }));
 
-import * as apiModule from './api';
+import * as apiModule from '../api';
 
 const LINK_ID = 'link-1';
 const LINK_URL = 'https://example.com/article';

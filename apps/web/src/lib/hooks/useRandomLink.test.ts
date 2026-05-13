@@ -1,14 +1,14 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useRandomLink } from './useRandomLink';
-import type { Link } from './api';
+import type { Link } from '../api';
 
-vi.mock('./api', () => ({
+vi.mock('../api', () => ({
   readLink: vi.fn(),
   getRandomLink: vi.fn(),
 }));
 
-import * as apiModule from './api';
+import * as apiModule from '../api';
 
 beforeEach(() => {
   vi.clearAllMocks();

@@ -1,5 +1,5 @@
-import { getLinks, type Link, type PaginatedLinks } from './api';
-import { getErrorMessage } from './errors';
+import { getLinks, type Link, type PaginatedLinks } from '../api';
+import { getErrorMessage } from '../errors';
 import { useCallback, useEffect, useReducer, useState } from 'react';
 import type { LinksFilter } from './useLinks';
 

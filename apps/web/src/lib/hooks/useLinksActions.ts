@@ -4,8 +4,8 @@ import {
   readLink,
   unreadLink,
   type Link,
-} from './api';
-import { getErrorMessage } from './errors';
+} from '../api';
+import { getErrorMessage } from '../errors';
 import { useCallback, useRef, useState } from 'react';
 import { useMetadataPolling } from './useMetadataPolling';
 import { useRandomLink } from './useRandomLink';

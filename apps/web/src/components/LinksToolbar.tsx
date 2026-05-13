@@ -5,9 +5,9 @@ import { LINK_FORM_ID } from './LinksView';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
 import { useRef } from 'react';
-import { useTabNavigation } from '../lib/useTabNavigation';
+import { useTabNavigation } from '../lib/hooks/useTabNavigation';
 import type { Link } from '../lib/api';
-import type { LinksFilter } from '../lib/useLinks';
+import type { LinksFilter } from '../lib/hooks/useLinks';
 
 /** Props for `LinksToolbar`. All values come from `LinksView`. */
 interface LinksToolbarProps {

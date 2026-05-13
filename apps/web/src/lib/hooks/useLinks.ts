@@ -1,7 +1,7 @@
 import { useLinksActions } from './useLinksActions';
 import { useLinksData } from './useLinksData';
 import { useLinksForm } from './useLinksForm';
-import type { Link, PaginatedLinks } from './api';
+import type { Link, PaginatedLinks } from '../api';
 
 /** The two possible views of the links list. */
 export type LinksFilter = 'unread' | 'read';

@@ -1,6 +1,6 @@
-import { getLink } from './api';
+import { getLink } from '../api';
 import { useEffect, useRef } from 'react';
-import type { Link } from './api';
+import type { Link } from '../api';
 
 /** How long to wait before making the first metadata poll after a link is saved. */
 const INITIAL_INTERVAL_MS = 2_000;

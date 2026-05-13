@@ -1,7 +1,7 @@
 import IconButton from './ui/IconButton';
 import PrimaryButton from './ui/PrimaryButton';
 import { LINK_FORM_ID } from './LinksView';
-import type { LinksFilter } from '../lib/useLinks';
+import type { LinksFilter } from '../lib/hooks/useLinks';
 
 /**
  * Props for `LinksControls`. These are a subset of `LinksToolbarProps` —

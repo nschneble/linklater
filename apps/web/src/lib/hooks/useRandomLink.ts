@@ -1,4 +1,4 @@
-import { readLink, getRandomLink } from './api';
+import { readLink, getRandomLink } from '../api';
 import { useCallback, useState } from 'react';
 
 interface UseRandomLinkOptions {

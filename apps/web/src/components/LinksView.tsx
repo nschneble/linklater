@@ -8,8 +8,8 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts';
-import { useLinks, type LinksFilter } from '../lib/useLinks';
+import { useKeyboardShortcuts } from '../lib/hooks/useKeyboardShortcuts';
+import { useLinks, type LinksFilter } from '../lib/hooks/useLinks';
 import LinkForm from './LinkForm';
 import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';

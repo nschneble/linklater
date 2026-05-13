@@ -1,16 +1,16 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLinksActions } from './useLinksActions';
-import type { Link } from './api';
+import type { Link } from '../api';
 
-vi.mock('./api', () => ({
+vi.mock('../api', () => ({
   readLink: vi.fn(),
   createLink: vi.fn(),
   deleteAllReadLinks: vi.fn(),
   unreadLink: vi.fn(),
 }));
 
-import * as apiModule from './api';
+import * as apiModule from '../api';
 
 let capturedOnNoLinks: (() => void) | undefined;
 
