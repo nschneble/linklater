@@ -1,5 +1,6 @@
 import IconButton from './ui/IconButton';
 import PrimaryButton from './ui/PrimaryButton';
+import { LINK_FORM_ID } from './LinksView';
 import type { LinksFilter } from '../lib/useLinks';
 
 /**
@@ -71,6 +72,7 @@ export default function LinksControls({
           hidden={filter !== 'unread'}
           onClick={onToggleForm}
           aria-expanded={showLinkForm}
+          aria-controls={LINK_FORM_ID}
         >
           <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
           {showLinkForm ? 'Hide form' : 'Add link'}

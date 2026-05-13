@@ -190,11 +190,18 @@ export default function StumbleEmptyView() {
       <h1 className="mb-2 text-xl font-semibold">
         Boo. Your reading list is empty.
       </h1>
-      <p className="mb-8 text-[var(--text-muted)] text-sm max-w-xs">
+      <p
+        className="mb-8 text-[var(--text-muted)] text-sm max-w-xs"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {loading ? 'Fetching curiousities…' : 'How about one of these?'}
       </p>
 
-      <ul className="w-full max-w-md space-y-3 text-left mb-10">
+      <ul
+        className="w-full max-w-md space-y-3 text-left mb-10"
+        aria-label="Suggested reading from Wikipedia"
+      >
         {renderArticles()}
       </ul>
 

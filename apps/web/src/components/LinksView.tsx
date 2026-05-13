@@ -15,8 +15,17 @@ import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';
 import Toast from './ui/Toast';
 
-/** How long to wait after the user stops typing before firing the search request. */
+/**
+ * How long to wait after the user stops typing before firing the search
+ * request.
+ */
 const SEARCH_DEBOUNCE_MS = 300;
+
+/**
+ * Stable `id` for the link form container, referenced by the toggle
+ * button's `aria-controls`.
+ */
+export const LINK_FORM_ID = 'link-form-container';
 
 /**
  * Renders an inline error message when `message` is non-null. Used for the
@@ -176,7 +185,7 @@ export default function LinksView() {
   return (
     <>
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-lg font-semibold">Your links</h2>
+        <h1 className="text-lg font-semibold">Your links</h1>
         <button
           type="button"
           className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-help"
@@ -232,7 +241,10 @@ export default function LinksView() {
         )}
 
       {showLinkForm && (
-        <div className="relative z-30 mt-0 animate-fade-in-up">
+        <div
+          id={LINK_FORM_ID}
+          className="relative z-30 mt-0 animate-fade-in-up"
+        >
           <LinkForm onCreated={handleCreated} />
         </div>
       )}

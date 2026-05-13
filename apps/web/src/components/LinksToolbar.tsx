@@ -1,5 +1,7 @@
 import LinksControls from './LinksControls';
 import IconButton from './ui/IconButton';
+import { LINKS_LIST_ID } from './LinksList';
+import { LINK_FORM_ID } from './LinksView';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
 import { useRef } from 'react';
@@ -124,6 +126,7 @@ export default function LinksToolbar({
             }
           }}
           aria-label="Search through your links"
+          aria-controls={LINKS_LIST_ID}
         />
 
         <div className="flex sm:hidden shrink-0 gap-2">
@@ -163,6 +166,7 @@ export default function LinksToolbar({
                 type="button"
                 aria-label={showLinkForm ? 'Hide form' : 'Add link'}
                 aria-expanded={showLinkForm}
+                aria-controls={LINK_FORM_ID}
                 className="!px-2.5"
                 onClick={onToggleForm}
               >

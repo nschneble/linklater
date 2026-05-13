@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useRef } from 'react';
+import { FOCUS_RING } from '../lib/styles';
 
 interface KeyboardShortcutsModalProps {
   /** Called when the user presses Escape or clicks the close button or backdrop. */
@@ -119,7 +120,7 @@ export default function KeyboardShortcutsModal({
           </h2>
           <button
             type="button"
-            className="text-[var(--text-subtle)] hover:text-[var(--text)] focus:outline-none transition-colors cursor-pointer"
+            className={`text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-pointer rounded ${FOCUS_RING}`}
             onClick={onClose}
             aria-label="Close keyboard shortcuts"
           >
