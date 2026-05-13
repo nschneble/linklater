@@ -24,11 +24,31 @@ model User {
   resetTokenExpiresAt        DateTime?
   verificationTokenExpiresAt DateTime?
 
+  totpSecret                 String?
+  totpEnabledAt              DateTime?
+  totpVerifiedAt             DateTime?
+
+  phoneNumber                String?
+  smsEnabledAt               DateTime?
+
   createdAt                  DateTime  @default(now())
   updatedAt                  DateTime  @updatedAt
 
   links                      Link[]
   oauthAccounts              OAuthAccount[]
+  recoveryCodes              RecoveryCode[]
+}
+
+model RecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  usedAt    DateTime?
+
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model OAuthAccount {
