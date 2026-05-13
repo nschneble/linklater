@@ -22,7 +22,10 @@ export default function LandingPage() {
       </p>
 
       <PrimaryButton type="button" onClick={() => navigate('/login')}>
-        <i className="fa-solid fa-arrow-left text-xs" aria-hidden="true" />
+        <i
+          className="fa-solid fa-arrow-right-to-bracket text-xs"
+          aria-hidden="true"
+        />
         Log in
       </PrimaryButton>
     </div>
