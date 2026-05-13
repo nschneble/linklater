@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface UsePasteDetectionOptions {
   /** When `false`, the paste listener is not attached. Defaults to `true`. */
@@ -31,6 +31,13 @@ export function usePasteDetection({
   enabled = true,
   onSave,
 }: UsePasteDetectionOptions): void {
+  // GOTCHA: onSave is stored in a ref so the effect closure always calls the
+  // latest version without needing onSave in the dependency array. Including
+  // onSave would re-run the effect — and remove/re-add the listener — every
+  // time the links array changes, because onSave's identity is not stable.
+  const onSaveRef = useRef(onSave);
+  onSaveRef.current = onSave;
+
   useEffect(() => {
     if (!enabled) return;
 
@@ -42,7 +49,7 @@ export function usePasteDetection({
 
       const text = (event.clipboardData?.getData('text') ?? '').trim();
       if (looksLikeUrl(text)) {
-        onSave(text);
+        onSaveRef.current(text);
       }
     }
 
@@ -51,5 +58,5 @@ export function usePasteDetection({
     return () => {
       window.removeEventListener('paste', handlePaste);
     };
-  }, [enabled, onSave]);
+  }, [enabled]);
 }
