@@ -113,6 +113,10 @@ export default function LinksView() {
     toastMessage,
   } = useLinks(filter, debouncedSearch);
 
+  /**
+   * Moves keyboard selection one step down the link list, clamping at
+   * the last card. If nothing is selected yet, selects the first card.
+   */
   function handleNavigateNextLink() {
     if (links.length === 0) return;
     setSelectedLinkIndex((previous) => {
@@ -121,6 +125,10 @@ export default function LinksView() {
     });
   }
 
+  /**
+   * Moves keyboard selection one step up the link list, clamping at
+   * the first card. If nothing is selected yet, selects the last card.
+   */
   function handleNavigatePrevLink() {
     if (links.length === 0) return;
     setSelectedLinkIndex((previous) => {
@@ -129,6 +137,10 @@ export default function LinksView() {
     });
   }
 
+  /**
+   * Opens the keyboard-selected link in a new tab and marks it as read
+   * if it hasn't been read yet. A no-op when no card is selected.
+   */
   function handleOpenSelectedLink() {
     if (selectedLinkIndex === null) return;
     const link = links[selectedLinkIndex];
@@ -173,6 +185,12 @@ export default function LinksView() {
     setSelectedLinkIndex(null);
   }, [debouncedSearch]);
 
+  /**
+   * Triggers the card exit animation before calling `handleDeleteAllRead`.
+   * `isClearingRead` is set to `true` immediately so `LinksList` can start
+   * animating cards out, then cleared in `finally` regardless of success
+   * or failure so the UI never gets stuck in the animating state.
+   */
   async function handleClearRead() {
     setIsClearingRead(true);
     try {

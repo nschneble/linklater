@@ -18,8 +18,11 @@ interface LinksControlsProps {
   randomLoading: boolean;
   /** Drives the `aria-expanded` state and label of the "Add link" / "Hide form" button. */
   showLinkForm: boolean;
+  /** Called when the user clicks "Remove all read". */
   onClearRead: () => void;
+  /** Called when the user clicks "Stumble upon". */
   onRandom: () => Promise<void>;
+  /** Toggles the inline link creation form open or closed. */
   onToggleForm: () => void;
 }
 

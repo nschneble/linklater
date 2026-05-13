@@ -4,9 +4,13 @@ import { FOCUS_RING } from '../lib/styles';
 import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import type { Link as SavedLink } from '../lib/api';
 
+/** A minimal subset of the Wikipedia REST API summary response. */
 interface WikipediaArticle {
+  /** The article's display title. */
   title: string;
+  /** A short plain-text extract from the article's opening paragraph. */
   extract: string;
+  /** The canonical desktop URL for the article. */
   url: string;
 }
 
@@ -72,6 +76,15 @@ const WIKIPEDIA_IMAGE_URL =
 const WIKIPEDIA_FAVICON_URL =
   'https://cdn.brandfetch.io/idAo3WRIoq/w/64/h/64/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1679406640804';
 
+/**
+ * Converts a `WikipediaArticle` into the `Link` shape that `LinkCard`
+ * expects so the card component can be reused without modification.
+ *
+ * The link `id` is set to the article URL (always unique) to satisfy
+ * React's `key` requirement without needing a real UUID. The `readAt`
+ * and `userId` fields are not present in this context — `readAt` is
+ * `null` (unread appearance) and the card's `onReadToggle` is a no-op.
+ */
 function articleToLink(article: WikipediaArticle): SavedLink {
   const now = new Date().toISOString();
   return {
@@ -90,6 +103,17 @@ function articleToLink(article: WikipediaArticle): SavedLink {
   };
 }
 
+/**
+ * Fetches a random article summary from the Wikipedia REST API.
+ *
+ * Returns `null` on any failure (network error, non-OK status,
+ * or an aborted request) so callers can degrade gracefully without
+ * surfacing errors to the user.
+ *
+ * @param signal - An `AbortSignal` used to cancel the fetch when the
+ *   component unmounts.
+ * @returns A `WikipediaArticle` on success, or `null` on failure.
+ */
 async function fetchRandomWikipediaArticle(
   signal: AbortSignal,
 ): Promise<WikipediaArticle | null> {

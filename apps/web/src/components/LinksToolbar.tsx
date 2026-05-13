@@ -25,12 +25,17 @@ interface LinksToolbarProps {
   searchInputRef: React.RefObject<HTMLInputElement | null>;
   /** Whether the inline link form is open — drives button label and `aria-expanded`. */
   showLinkForm: boolean;
+  /** Called when the user clicks "Remove all read". */
   onClearRead: () => void;
+  /** Navigates to the `/read` route when the Read tab is clicked. */
   onNavigateRead: () => void;
+  /** Navigates to the `/unread` route when the Unread tab is clicked. */
   onNavigateUnread: () => void;
+  /** Called when the user clicks "Stumble upon". */
   onRandom: () => Promise<void>;
   /** Called with the new search string on every keystroke. */
   onSearch: (value: string) => void;
+  /** Toggles the inline link creation form open or closed. */
   onToggleForm: () => void;
 }
 

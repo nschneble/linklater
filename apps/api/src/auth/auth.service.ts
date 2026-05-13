@@ -91,6 +91,30 @@ export class AuthService {
     return withoutPasswordHash(user);
   }
 
+  /**
+   * Resolves an OAuth login to a Linklater user account using the
+   * following priority:
+   *
+   * 1. If an `OAuthAccount` already exists for this `provider` +
+   *    `providerId` pair, return its linked user.
+   * 2. If a Linklater account exists with the same email, link the
+   *    OAuth provider to it (auto-linking). When the existing account
+   *    is not yet email-verified, this call also marks it as verified
+   *    because the OAuth provider has implicitly confirmed ownership.
+   * 3. Otherwise, create a new Linklater user and link the OAuth
+   *    account to it.
+   *
+   * A P2002 (unique constraint) error during `createOAuthUser` is
+   * treated as a race condition (two concurrent OAuth logins for the
+   * same new user). The fallback attempts to find the already-created
+   * account via the OAuth pair first, then by email, before giving up.
+   *
+   * @param provider - The OAuth provider name (e.g. `'google'`).
+   * @param providerId - The provider-issued user ID.
+   * @param email - The email address returned by the provider.
+   * @returns `{ userId, email }` for the resolved Linklater account.
+   * @throws Any non-P2002 error propagated from the database layer.
+   */
   async findOrCreateOAuthUser(
     provider: string,
     providerId: string,
