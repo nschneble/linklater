@@ -140,7 +140,7 @@ export default function LinksToolbar({
               variant="elevated"
               disabled={isClearingRead}
               aria-label="Remove all read links"
-              title="Permanently removes all read links."
+              title="Permanently remove all read links"
               className="!px-2.5"
               onClick={onClearRead}
             >
@@ -155,10 +155,8 @@ export default function LinksToolbar({
               <IconButton
                 variant="elevated"
                 disabled={randomLoading}
-                aria-label={
-                  randomLoading ? 'Stumbling…' : 'Stumble upon a random link'
-                }
-                title="Opens a random unread link and marks it as read."
+                aria-label="Stumble upon a random link"
+                title="Open a random unread link and marksit as read"
                 className="!px-2.5"
                 onClick={onRandom}
               >

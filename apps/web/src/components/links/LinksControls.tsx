@@ -51,7 +51,7 @@ export default function LinksControls({
         variant="elevated"
         disabled={isClearingRead}
         hidden={filter === 'unread' || linksCount === 0}
-        title="Permanently removes all read links."
+        title="Permanently remove all read links"
         onClick={onClearRead}
       >
         <i className="fa-solid fa-trash text-[0.7rem]" aria-hidden="true" />
@@ -63,11 +63,11 @@ export default function LinksControls({
           variant="elevated"
           disabled={randomLoading}
           hidden={filter !== 'unread'}
-          title="Opens a random unread link and marks it as read."
+          title="Open a random unread link and mark it as read"
           onClick={onRandom}
         >
           <i className="fa-solid fa-shuffle text-[0.7rem]" aria-hidden="true" />
-          {randomLoading ? 'Stumbling…' : 'Stumble upon'}
+          Stumble upon
         </IconButton>
 
         <PrimaryButton
@@ -78,7 +78,7 @@ export default function LinksControls({
           aria-controls={LINK_FORM_ID}
         >
           <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
-          {showLinkForm ? 'Hide form' : 'Add link'}
+          Add link
         </PrimaryButton>
       </div>
     </div>

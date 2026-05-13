@@ -177,14 +177,6 @@ describe('LinksToolbar', () => {
       ).toBeInTheDocument();
     });
 
-    it('shows Stumbling… label on the shuffle button when randomLoading is true', () => {
-      renderToolbar({ filter: 'unread', randomLoading: true });
-      // Both the desktop and mobile shuffle buttons show "Stumbling…" — at least
-      // one (the mobile one, with aria-label="Stumbling…") must be present.
-      const buttons = screen.getAllByRole('button', { name: /stumbling/i });
-      expect(buttons.length).toBeGreaterThanOrEqual(1);
-    });
-
     it('calls onToggleForm when the mobile Add link button is clicked', () => {
       const onToggleForm = vi.fn();
       renderToolbar({ filter: 'unread', onToggleForm });

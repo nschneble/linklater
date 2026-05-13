@@ -151,7 +151,7 @@ export default function AuthForm() {
 
             <PrimaryButton disabled={loading} className="w-full py-2.5">
               <i className="fa-solid fa-envelope text-xs" aria-hidden="true" />
-              {loading ? 'Sending…' : 'Send password reset link'}
+              Send password reset link
             </PrimaryButton>
 
             <p className="text-center">

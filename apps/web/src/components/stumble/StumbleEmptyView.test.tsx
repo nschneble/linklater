@@ -106,7 +106,7 @@ describe('StumbleEmptyView', () => {
     vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
     renderView();
 
-    expect(screen.getByText('Fetching curiousities…')).toBeInTheDocument();
+    expect(screen.getByText('Fetching entries…')).toBeInTheDocument();
   });
 
   it('shows three skeleton cards while loading', () => {

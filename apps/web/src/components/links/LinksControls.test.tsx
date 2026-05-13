@@ -27,13 +27,6 @@ describe('LinksControls', () => {
       ).toBeInTheDocument();
     });
 
-    it('shows Hide form when showLinkForm is true', () => {
-      render(<LinksControls {...defaultUnreadProps} showLinkForm={true} />);
-      expect(
-        screen.getByRole('button', { name: /hide form/i }),
-      ).toBeInTheDocument();
-    });
-
     it('calls onToggleForm when Add link is clicked', () => {
       const onToggleForm = vi.fn();
       render(
@@ -52,7 +45,9 @@ describe('LinksControls', () => {
 
     it('disables Stumble upon button while randomLoading', () => {
       render(<LinksControls {...defaultUnreadProps} randomLoading={true} />);
-      expect(screen.getByRole('button', { name: /stumbling/i })).toBeDisabled();
+      expect(
+        screen.getByRole('button', { name: /stumble upon/i }),
+      ).toBeDisabled();
     });
   });
 
@@ -118,7 +113,7 @@ describe('LinksControls', () => {
 
     it('has aria-expanded=true when form is open', () => {
       render(<LinksControls {...defaultUnreadProps} showLinkForm={true} />);
-      const button = screen.getByRole('button', { name: /hide form/i });
+      const button = screen.getByRole('button', { name: /add link/i });
       expect(button).toHaveAttribute('aria-expanded', 'true');
     });
   });
@@ -127,7 +122,7 @@ describe('LinksControls', () => {
     it('shows Stumbling… label while randomLoading is true', () => {
       render(<LinksControls {...defaultUnreadProps} randomLoading={true} />);
       expect(
-        screen.getByRole('button', { name: /stumbling/i }),
+        screen.getByRole('button', { name: /stumble upon/i }),
       ).toBeInTheDocument();
     });
 

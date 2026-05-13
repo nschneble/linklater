@@ -53,7 +53,7 @@ export default function StumbleEmptyView() {
         aria-live="polite"
         aria-atomic="true"
       >
-        {loading ? 'Fetching curiousities…' : 'How about one of these?'}
+        {loading ? 'Fetching entries…' : 'How about one of these?'}
       </p>
 
       <WikipediaArticleList loading={loading} articles={articles} />

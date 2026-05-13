@@ -1,3 +1,4 @@
+import type { ButtonHTMLAttributes } from 'react';
 import { type ReactNode } from 'react';
 
 /**
@@ -8,7 +9,7 @@ import { type ReactNode } from 'react';
  * Renders as a `<button type="button">` so it does not accidentally submit
  * a form it is placed inside.
  */
-interface LinkButtonProps {
+interface LinkButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** The visible link text. */
   children: ReactNode;
   /** When true, the button is non-interactive and visually dimmed. */

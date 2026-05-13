@@ -130,7 +130,7 @@ export default function ResetPasswordPage() {
 
             <PrimaryButton disabled={loading} className="w-full py-2.5">
               <i className="fa-solid fa-lock text-xs" aria-hidden="true" />
-              {loading ? 'Resetting…' : 'Reset password'}
+              Reset password
             </PrimaryButton>
 
             <p className="text-center">
