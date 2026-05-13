@@ -8,6 +8,7 @@ import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { EmailService } from '../email/index.js';
 import { Prisma } from '../prisma/index.js';
+import { SmsService } from '../sms/sms.service.js';
 import { UsersService, withoutPasswordHash } from '../users/index.js';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -40,6 +41,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
+    private readonly smsService: SmsService,
   ) {}
 
   /**
@@ -173,10 +175,39 @@ export class AuthService {
   /**
    * Issues a signed JWT for an already-validated user.
    *
-   * @param user - A minimal user object with `userId` and `email`.
-   * @returns An object containing the signed `accessToken` string.
+   * When the user has 2FA enabled, a short-lived MFA challenge token is
+   * returned instead of a full session JWT. The caller must complete the
+   * OTP step via `POST /auth/verify-otp` to obtain the real access token.
+   *
+   * @param user - A validated user object. Includes optional 2FA status fields
+   *   when called from the local (email/password) login path.
+   * @returns `{ accessToken }` when no 2FA is enabled, or
+   *   `{ mfaToken, mfaMethod }` when a second factor is required.
    */
-  async login(user: { userId: string; email: string }) {
+  async login(user: {
+    userId: string;
+    email: string;
+    totpEnabledAt?: Date | null;
+    smsEnabledAt?: Date | null;
+    phoneNumber?: string | null;
+  }) {
+    if (user.totpEnabledAt) {
+      const mfaToken = this.jwtService.sign(
+        { subject: user.userId, mfaPending: true },
+        { expiresIn: '5m' },
+      );
+      return { mfaToken, mfaMethod: 'totp' as const };
+    }
+
+    if (user.smsEnabledAt && user.phoneNumber) {
+      const mfaToken = this.jwtService.sign(
+        { subject: user.userId, mfaPending: true },
+        { expiresIn: '5m' },
+      );
+      await this.smsService.sendVerification(user.phoneNumber);
+      return { mfaToken, mfaMethod: 'sms' as const };
+    }
+
     const payload = { subject: user.userId, email: user.email };
     return { accessToken: this.jwtService.sign(payload) };
   }

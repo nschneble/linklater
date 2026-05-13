@@ -21,6 +21,7 @@ import { Prisma } from '../prisma/generated/client';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../email/email.service';
+import { SmsService } from '../sms/sms.service';
 
 const makeP2002 = () =>
   new (
@@ -77,6 +78,10 @@ describe('AuthService', () => {
     sendVerification: jest.fn(),
   } as unknown as EmailService;
 
+  const smsServiceMock = {
+    sendVerification: jest.fn().mockResolvedValue(undefined),
+  } as unknown as SmsService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -84,6 +89,7 @@ describe('AuthService', () => {
         { provide: UsersService, useValue: usersServiceMock },
         { provide: JwtService, useValue: jwtServiceMock },
         { provide: EmailService, useValue: emailServiceMock },
+        { provide: SmsService, useValue: smsServiceMock },
       ],
     }).compile();
 
@@ -338,17 +344,45 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('returns an accessToken', async () => {
-      const result = await service.login({
-        email: USER_EMAIL,
-        userId: USER_ID,
-      });
+    it('returns an accessToken when 2FA is not enabled', async () => {
+      const result = await service.login({ email: USER_EMAIL, userId: USER_ID });
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith({
         email: USER_EMAIL,
         subject: USER_ID,
       });
-      expect(result.accessToken).toBe(SIGNED_TOKEN);
+      expect(result).toEqual({ accessToken: SIGNED_TOKEN });
+    });
+
+    it('returns mfaToken and mfaMethod totp when totpEnabledAt is set', async () => {
+      const result = await service.login({
+        email: USER_EMAIL,
+        userId: USER_ID,
+        totpEnabledAt: new Date(),
+      });
+
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith(
+        { subject: USER_ID, mfaPending: true },
+        { expiresIn: '5m' },
+      );
+      expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
+      expect(smsServiceMock.sendVerification).not.toHaveBeenCalled();
+    });
+
+    it('returns mfaToken and mfaMethod sms when smsEnabledAt is set', async () => {
+      const result = await service.login({
+        email: USER_EMAIL,
+        userId: USER_ID,
+        smsEnabledAt: new Date(),
+        phoneNumber: '+15555550100',
+      });
+
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith(
+        { subject: USER_ID, mfaPending: true },
+        { expiresIn: '5m' },
+      );
+      expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'sms' });
+      expect(smsServiceMock.sendVerification).toHaveBeenCalledWith('+15555550100');
     });
   });
 
