@@ -58,7 +58,9 @@ export default function BookmarkletSection() {
 
   return (
     <div className="max-w-md space-y-3">
-      <h3 className="text-[var(--text)] text-sm font-semibold">Bookmarklet</h3>
+      <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+        Bookmarklet
+      </h3>
       <p className="text-[var(--text-muted)] text-xs text-pretty">
         Drag this button to your bookmarks bar. Click it on any page to save the
         link directly to Linklater.

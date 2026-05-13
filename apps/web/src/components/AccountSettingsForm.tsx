@@ -54,16 +54,18 @@ export default function AccountSettingsForm() {
       return;
     }
 
+    const requestedEmail = emailInput;
+
     setEmailError(null);
     setEmailMessage(null);
     setEmailSaving(true);
 
     try {
-      await requestEmailChange(emailInput);
-      setPendingEmail(emailInput);
+      await requestEmailChange(requestedEmail);
+      setPendingEmail(requestedEmail);
       setEmailInput(user?.email ?? '');
       setEmailMessage(
-        `Verification email sent to ${emailInput}. Check your inbox to confirm the change.`,
+        `Verification email sent to ${requestedEmail}. Check your inbox to confirm the change.`,
       );
     } catch (error: unknown) {
       setEmailError(getErrorMessage(error, 'Failed to request email change'));
@@ -114,12 +116,14 @@ export default function AccountSettingsForm() {
 
   return (
     <div className="max-w-md space-y-8">
-      <h2 className="text-[var(--text)] text-xl font-semibold">
+      <h2 className="text-[var(--text)] text-xl font-semibold text-balance">
         Account settings
       </h2>
 
       <form className="space-y-4" onSubmit={handleEmailSave}>
-        <h3 className="text-[var(--text)] text-sm font-semibold">Email</h3>
+        <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+          Email
+        </h3>
 
         <div className="flex items-center gap-2">
           <span className="text-[var(--text-muted)] text-xs">
@@ -192,7 +196,9 @@ export default function AccountSettingsForm() {
 
       {hasPassword ? (
         <form className="space-y-4" onSubmit={handlePasswordSave}>
-          <h3 className="text-[var(--text)] text-sm font-semibold">Password</h3>
+          <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+            Password
+          </h3>
 
           <label
             className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
@@ -245,7 +251,9 @@ export default function AccountSettingsForm() {
         </form>
       ) : (
         <div className="space-y-2">
-          <h3 className="text-[var(--text)] text-sm font-semibold">Password</h3>
+          <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+            Password
+          </h3>
           <p className="text-[var(--text-muted)] text-xs">
             Your account uses social sign-in — no password is set.
           </p>

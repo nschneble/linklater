@@ -159,7 +159,7 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 429, description: 'Too many resend attempts.' })
   @UseGuards(JwtAuthGuard, ThrottlerGuard)
-  @Throttle({ 'auth-resend-verification': { ttl: 60000, limit: 5 } })
+  @Throttle({ 'auth-resend-verification': { ttl: 60000, limit: 3 } })
   @Post('resend-verification')
   @HttpCode(200)
   async resendVerification(@Req() request: AuthRequest) {
@@ -227,7 +227,7 @@ export class AuthController {
   async googleCallback(@Req() request: AuthRequest, @Res() response: Response) {
     const { accessToken } = await this.authService.login(request.user);
     response.redirect(
-      `${process.env.APP_URL}/oauth/callback?token=${accessToken}`,
+      `${process.env.APP_URL}/oauth/callback#token=${accessToken}`,
     );
   }
 
@@ -244,7 +244,7 @@ export class AuthController {
   async appleCallback(@Req() request: AuthRequest, @Res() response: Response) {
     const { accessToken } = await this.authService.login(request.user);
     response.redirect(
-      `${process.env.APP_URL}/oauth/callback?token=${accessToken}`,
+      `${process.env.APP_URL}/oauth/callback#token=${accessToken}`,
     );
   }
 }

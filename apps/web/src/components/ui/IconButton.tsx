@@ -64,6 +64,7 @@ export default function IconButton({
       className={`inline-flex items-center gap-1.5 ${variantClasses[variant]} text-xs rounded-full cursor-pointer transition duration-200 ${visibilityClasses} ${className}`}
       type="button"
       tabIndex={hidden ? -1 : undefined}
+      aria-hidden={hidden ? true : undefined}
       {...props}
     >
       {children}

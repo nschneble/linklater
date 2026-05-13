@@ -6,7 +6,7 @@ import {
   type Link,
 } from './api';
 import { getErrorMessage } from './errors';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useMetadataPolling } from './useMetadataPolling';
 import { useRandomLink } from './useRandomLink';
 import type { LinksFilter } from './useLinks';
@@ -97,6 +97,14 @@ export function useLinksActions({
   resetTotal,
   updateLink,
 }: UseLinksActionsOptions): UseLinksActionsResult {
+  // GOTCHA: links is stored in a ref so handleCreated always reads the latest
+  // list without including the array in its dependency array. Adding links
+  // would recreate handleCreated on every fetch/mutation, which in turn
+  // recreates handleDirectSave and unnecessarily re-registers the paste
+  // event listener in usePasteDetection.
+  const linksRef = useRef(links);
+  linksRef.current = links;
+
   const [pendingMetaLinkId, setPendingMetaLinkId] = useState<string | null>(
     null,
   );
@@ -113,13 +121,13 @@ export function useLinksActions({
   const handleCreated = useCallback(
     (link: Link) => {
       if (filter === 'read') return;
-      const isNew = !links.some((item) => item.id === link.id);
+      const isNew = !linksRef.current.some((item) => item.id === link.id);
       if (isNew) adjustTotal(1);
       prependLink(link);
       setPendingMetaLinkId(link.id);
       setToastMessage('Link saved!');
     },
-    [filter, links, adjustTotal, prependLink],
+    [filter, adjustTotal, prependLink],
   );
 
   const handleDirectSave = useCallback(

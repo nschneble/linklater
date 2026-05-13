@@ -1,13 +1,39 @@
-import { FOCUS_RING } from '../lib/styles';
-import { Link } from 'react-router-dom';
-import LinkCard from './LinkCard';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { FOCUS_RING } from '../lib/styles';
+import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import type { Link as SavedLink } from '../lib/api';
 
+/** A minimal subset of the Wikipedia REST API summary response. */
 interface WikipediaArticle {
+  /** The article's display title. */
   title: string;
+  /** A short plain-text extract from the article's opening paragraph. */
   extract: string;
+  /** The canonical desktop URL for the article. */
   url: string;
+}
+
+const GHOST_PIXEL = 16;
+const GHOST_BODY_COLOR = '#bae6fd';
+const GHOST_EYE_COLOR = '#0c4a6e';
+
+// 0 = transparent, 1 = body, 2 = eye
+const GHOST_GRID = [
+  [0, 0, 1, 1, 1, 1, 0, 0],
+  [0, 1, 1, 1, 1, 1, 1, 0],
+  [1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 2, 1, 1, 2, 1, 1],
+  [1, 1, 2, 1, 1, 2, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 1, 0, 1, 0, 0, 0],
+];
+
+function ghostColorOf(cell: number): string | null {
+  if (cell === 1) return GHOST_BODY_COLOR;
+  if (cell === 2) return GHOST_EYE_COLOR;
+  return null;
 }
 
 /**
@@ -16,48 +42,26 @@ interface WikipediaArticle {
  * (#0c4a6e).
  */
 function PixelArtGhost() {
-  const PIXEL = 16;
-  const body = '#bae6fd';
-  const eye = '#0c4a6e';
-
-  // 0 = transparent, 1 = body, 2 = eye
-  const grid = [
-    [0, 0, 1, 1, 1, 1, 0, 0],
-    [0, 1, 1, 1, 1, 1, 1, 0],
-    [1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 2, 1, 1, 2, 1, 1],
-    [1, 1, 2, 1, 1, 2, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 1, 0, 1, 0, 0, 0],
-  ];
-
-  const colorOf = (cell: number) => {
-    if (cell === 1) return body;
-    if (cell === 2) return eye;
-    return null;
-  };
-
   return (
     <svg
-      width={8 * PIXEL}
-      height={8 * PIXEL}
-      viewBox={`0 0 ${8 * PIXEL} ${8 * PIXEL}`}
+      width={8 * GHOST_PIXEL}
+      height={8 * GHOST_PIXEL}
+      viewBox={`0 0 ${8 * GHOST_PIXEL} ${8 * GHOST_PIXEL}`}
       aria-label="A friendly pixel-art ghost"
       role="img"
       style={{ imageRendering: 'pixelated' }}
     >
-      {grid.map((row, rowIndex) =>
+      {GHOST_GRID.map((row, rowIndex) =>
         row.map((cell, colIndex) => {
-          const fill = colorOf(cell);
+          const fill = ghostColorOf(cell);
           if (!fill) return null;
           return (
             <rect
               key={`${rowIndex}-${colIndex}`}
-              x={colIndex * PIXEL}
-              y={rowIndex * PIXEL}
-              width={PIXEL}
-              height={PIXEL}
+              x={colIndex * GHOST_PIXEL}
+              y={rowIndex * GHOST_PIXEL}
+              width={GHOST_PIXEL}
+              height={GHOST_PIXEL}
               fill={fill}
             />
           );
@@ -72,6 +76,15 @@ const WIKIPEDIA_IMAGE_URL =
 const WIKIPEDIA_FAVICON_URL =
   'https://cdn.brandfetch.io/idAo3WRIoq/w/64/h/64/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1679406640804';
 
+/**
+ * Converts a `WikipediaArticle` into the `Link` shape that `LinkCard`
+ * expects so the card component can be reused without modification.
+ *
+ * The link `id` is set to the article URL (always unique) to satisfy
+ * React's `key` requirement without needing a real UUID. The `readAt`
+ * and `userId` fields are not present in this context — `readAt` is
+ * `null` (unread appearance) and the card's `onReadToggle` is a no-op.
+ */
 function articleToLink(article: WikipediaArticle): SavedLink {
   const now = new Date().toISOString();
   return {
@@ -90,31 +103,17 @@ function articleToLink(article: WikipediaArticle): SavedLink {
   };
 }
 
-function WikipediaCardSkeleton() {
-  return (
-    <div
-      role="status"
-      aria-label="Loading article"
-      className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] rounded-r-xl"
-    >
-      <div className="absolute left-0 top-4 -translate-x-1/2 w-8 h-8 rounded-2xl bg-[var(--accent)]" />
-      <div className="space-y-1 animate-pulse">
-        <div className="flex flex-row items-center">
-          <div className="w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] rounded-md bg-[var(--bg-elevated)] shrink-0" />
-          <div className="flex flex-col items-start min-w-0 ml-3 gap-1.5 w-full">
-            <div className="w-3/4 h-3.5 bg-[var(--bg-elevated)] rounded" />
-            <div className="w-24 h-3 bg-[var(--bg-elevated)] rounded" />
-          </div>
-        </div>
-        <div className="h-8 mt-2 space-y-1">
-          <div className="w-full h-3 bg-[var(--bg-elevated)] rounded" />
-          <div className="w-2/3 h-3 bg-[var(--bg-elevated)] rounded" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
+/**
+ * Fetches a random article summary from the Wikipedia REST API.
+ *
+ * Returns `null` on any failure (network error, non-OK status,
+ * or an aborted request) so callers can degrade gracefully without
+ * surfacing errors to the user.
+ *
+ * @param signal - An `AbortSignal` used to cancel the fetch when the
+ *   component unmounts.
+ * @returns A `WikipediaArticle` on success, or `null` on failure.
+ */
 async function fetchRandomWikipediaArticle(
   signal: AbortSignal,
 ): Promise<WikipediaArticle | null> {
@@ -146,6 +145,9 @@ async function fetchRandomWikipediaArticle(
  *
  * Wikipedia fetch failures are swallowed silently. The page degrades
  * gracefully to a static fallback message.
+ *
+ * The loading skeleton reuses `LinkCardSkeleton` from `LinkCard` to avoid
+ * duplicating the card-shaped placeholder markup.
  */
 export default function StumbleEmptyView() {
   const [articles, setArticles] = useState<WikipediaArticle[]>([]);
@@ -171,45 +173,60 @@ export default function StumbleEmptyView() {
     return () => controller.abort();
   }, []);
 
+  function renderArticles() {
+    if (loading) {
+      return (
+        <>
+          <li>
+            <LinkCardSkeleton />
+          </li>
+          <li>
+            <LinkCardSkeleton />
+          </li>
+          <li>
+            <LinkCardSkeleton />
+          </li>
+        </>
+      );
+    }
+    if (articles.length > 0) {
+      return articles.map((article) => (
+        <li key={article.url}>
+          <LinkCard link={articleToLink(article)} onReadToggle={() => {}} />
+        </li>
+      ));
+    }
+    return (
+      <li className="text-center">
+        <p className="text-[var(--text-subtle)] text-xs italic">
+          (Wikipedia seems to be napping too.)
+        </p>
+      </li>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12 bg-[var(--bg)] text-[var(--text)] text-center select-none">
       <div className="mb-8">
         <PixelArtGhost />
       </div>
 
-      <h1 className="mb-2 text-xl font-semibold">
+      <h1 className="mb-2 text-xl font-semibold text-balance">
         Boo. Your reading list is empty.
       </h1>
-      <p className="mb-8 text-[var(--text-muted)] text-sm max-w-xs">
+      <p
+        className="mb-8 text-[var(--text-muted)] text-sm max-w-xs text-pretty"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {loading ? 'Fetching curiousities…' : 'How about one of these?'}
       </p>
 
-      <ul className="w-full max-w-md space-y-3 text-left mb-10">
-        {loading ? (
-          <>
-            <li>
-              <WikipediaCardSkeleton />
-            </li>
-            <li>
-              <WikipediaCardSkeleton />
-            </li>
-            <li>
-              <WikipediaCardSkeleton />
-            </li>
-          </>
-        ) : articles.length > 0 ? (
-          articles.map((article) => (
-            <li key={article.url}>
-              <LinkCard link={articleToLink(article)} onReadToggle={() => {}} />
-            </li>
-          ))
-        ) : (
-          <li className="text-center">
-            <p className="text-[var(--text-subtle)] text-xs italic">
-              (Wikipedia seems to be napping too.)
-            </p>
-          </li>
-        )}
+      <ul
+        className="w-full max-w-md space-y-3 text-left mb-10"
+        aria-label="Suggested reading from Wikipedia"
+      >
+        {renderArticles()}
       </ul>
 
       <Link

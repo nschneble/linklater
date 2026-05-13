@@ -4,6 +4,12 @@ import type { Link, PaginatedLinks } from '../lib/api';
 import type { LinksFilter } from '../lib/useLinks';
 
 /**
+ * Stable `id` for the links list region, referenced by the search input's
+ * `aria-controls`.
+ */
+export const LINKS_LIST_ID = 'links-list';
+
+/**
  * Props for `LinksList`. All data and callbacks are passed down from
  * `LinksView` via `useLinks`.
  */
@@ -60,7 +66,7 @@ export default function LinksList({
 }: LinksListProps) {
   if (loadingLinks && page === 1) {
     return (
-      <div className="mt-6 grid grid-cols-1 gap-6">
+      <div id={LINKS_LIST_ID} className="mt-6 grid grid-cols-1 gap-6">
         <LinkCardSkeleton />
       </div>
     );
@@ -68,7 +74,10 @@ export default function LinksList({
 
   if (links.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-9 text-center animate-fade-in-up">
+      <div
+        id={LINKS_LIST_ID}
+        className="flex flex-col items-center justify-center py-9 text-center animate-fade-in-up"
+      >
         <i
           className={`text-4xl text-[var(--text-subtle)] mb-[7px] fa-regular ${
             search !== '' || debouncedSearch !== ''
@@ -87,7 +96,7 @@ export default function LinksList({
   }
 
   return (
-    <div className="mt-6 mb-28 grid grid-cols-1 gap-6">
+    <div id={LINKS_LIST_ID} className="mt-6 mb-28 grid grid-cols-1 gap-6">
       {links.map((link, index) => (
         <div
           key={link.id}

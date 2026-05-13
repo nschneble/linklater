@@ -12,7 +12,9 @@ import { FOCUS_RING } from '../lib/styles';
 export default function StumbleSection() {
   return (
     <div className="max-w-md space-y-3">
-      <h3 className="text-[var(--text)] text-sm font-semibold">Stumble upon</h3>
+      <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+        Stumble upon
+      </h3>
       <p className="text-[var(--text-muted)] text-xs text-pretty">
         Drag this to your bookmarks bar. Click it to automatically open a random
         unread link from your collection!

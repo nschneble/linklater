@@ -20,20 +20,24 @@ export default function DangerZone() {
   const { logout } = useAuth();
 
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async () => {
+    setDeleting(true);
     try {
       await deleteMe();
       logout();
     } catch (error: unknown) {
       setError(getErrorMessage(error, 'Failed to delete account'));
+    } finally {
+      setDeleting(false);
     }
   };
 
   return (
     <div className="max-w-md p-4 bg-rose-50 [[data-mode='dark']_&]:bg-rose-950/20 border border-rose-200 [[data-mode='dark']_&]:border-rose-800/50 rounded-xl">
-      <h3 className="mb-1 text-rose-700 [[data-mode='dark']_&]:text-rose-400 text-sm font-semibold">
+      <h3 className="mb-1 text-rose-700 [[data-mode='dark']_&]:text-rose-400 text-sm font-semibold text-balance">
         Danger zone
       </h3>
       <p className="mb-3 text-rose-600/80 [[data-mode='dark']_&]:text-rose-300/80 text-xs text-pretty">
@@ -65,9 +69,10 @@ export default function DangerZone() {
             variant="danger-filled"
             className="px-3"
             type="button"
+            disabled={deleting}
             onClick={handleDelete}
           >
-            Yes, delete
+            {deleting ? 'Deleting…' : 'Yes, delete'}
           </IconButton>
           <IconButton
             variant="ghost"

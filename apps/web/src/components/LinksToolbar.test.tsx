@@ -102,4 +102,105 @@ describe('LinksToolbar', () => {
     renderToolbar({ search: 'hello' });
     expect(screen.getByRole('searchbox')).toHaveValue('hello');
   });
+
+  it('blurs the search input when Escape is pressed inside it', () => {
+    renderToolbar();
+    const input = screen.getByRole('searchbox');
+    input.focus();
+    expect(document.activeElement).toBe(input);
+
+    fireEvent.keyDown(input, { key: 'Escape' });
+
+    expect(document.activeElement).not.toBe(input);
+  });
+
+  describe('mobile filter controls', () => {
+    // The mobile icon strip uses explicit aria-label attributes that differ from
+    // the desktop button text — so we can target it precisely.
+
+    it('shows the mobile trash button when filter is read and links exist', () => {
+      renderToolbar({
+        filter: 'read',
+        links: [
+          {
+            id: 'link-1',
+            url: 'https://example.com',
+            createdAt: '2026-01-01T00:00:00Z',
+            updatedAt: '2026-01-01T00:00:00Z',
+            readAt: '2026-01-02T00:00:00Z',
+            meta: null,
+          },
+        ],
+      });
+      // Mobile trash uses aria-label="Remove all read links" (no "button" text)
+      expect(
+        screen.getByRole('button', { name: 'Remove all read links' }),
+      ).toBeInTheDocument();
+    });
+
+    it('does not show the mobile trash button when filter is read but links is empty', () => {
+      renderToolbar({ filter: 'read', links: [] });
+      expect(
+        screen.queryByRole('button', { name: 'Remove all read links' }),
+      ).toBeNull();
+    });
+
+    it('calls onClearRead when the mobile trash button is clicked', () => {
+      const onClearRead = vi.fn();
+      renderToolbar({
+        filter: 'read',
+        links: [
+          {
+            id: 'link-1',
+            url: 'https://example.com',
+            createdAt: '2026-01-01T00:00:00Z',
+            updatedAt: '2026-01-01T00:00:00Z',
+            readAt: '2026-01-02T00:00:00Z',
+            meta: null,
+          },
+        ],
+        onClearRead,
+      });
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Remove all read links' }),
+      );
+      expect(onClearRead).toHaveBeenCalledOnce();
+    });
+
+    it('shows the mobile shuffle button when filter is unread', () => {
+      renderToolbar({ filter: 'unread' });
+      // Mobile shuffle uses aria-label="Stumble upon a random link"
+      expect(
+        screen.getByRole('button', {
+          name: 'Stumble upon a random link',
+        }),
+      ).toBeInTheDocument();
+    });
+
+    it('shows Stumbling… label on the shuffle button when randomLoading is true', () => {
+      renderToolbar({ filter: 'unread', randomLoading: true });
+      // Both the desktop and mobile shuffle buttons show "Stumbling…" — at least
+      // one (the mobile one, with aria-label="Stumbling…") must be present.
+      const buttons = screen.getAllByRole('button', { name: /stumbling/i });
+      expect(buttons.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('calls onToggleForm when the mobile Add link button is clicked', () => {
+      const onToggleForm = vi.fn();
+      renderToolbar({ filter: 'unread', onToggleForm });
+      // The mobile button has a unique aria-label="Add link" (no icon text next to it)
+      // while the desktop button's accessible name comes from its text content.
+      // Both match "Add link" — clicking any of them should invoke onToggleForm.
+      const addButtons = screen.getAllByRole('button', { name: 'Add link' });
+      fireEvent.click(addButtons[addButtons.length - 1]);
+      expect(onToggleForm).toHaveBeenCalledOnce();
+    });
+
+    it('shows Hide form label when showLinkForm is true', () => {
+      renderToolbar({ filter: 'unread', showLinkForm: true });
+      // Both desktop ("Hide form" text) and mobile (aria-label="Hide form") are present
+      const hideButtons = screen.getAllByRole('button', { name: /hide form/i });
+      expect(hideButtons.length).toBeGreaterThanOrEqual(1);
+    });
+  });
 });

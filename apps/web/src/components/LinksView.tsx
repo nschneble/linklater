@@ -1,8 +1,3 @@
-import LinkForm from './LinkForm';
-import LinksList from './LinksList';
-import LinksToolbar from './LinksToolbar';
-import Toast from './ui/Toast';
-import { createPortal } from 'react-dom';
 import {
   lazy,
   Suspense,
@@ -11,13 +6,39 @@ import {
   useState,
   useTransition,
 } from 'react';
-import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts';
-import { useLinks } from '../lib/useLinks';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type { LinksFilter } from '../lib/useLinks';
+import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts';
+import { useLinks, type LinksFilter } from '../lib/useLinks';
+import LinkForm from './LinkForm';
+import LinksList from './LinksList';
+import LinksToolbar from './LinksToolbar';
+import Toast from './ui/Toast';
 
-/** How long to wait after the user stops typing before firing the search request. */
+/**
+ * How long to wait after the user stops typing before firing the search
+ * request.
+ */
 const SEARCH_DEBOUNCE_MS = 300;
+
+/**
+ * Stable `id` for the link form container, referenced by the toggle
+ * button's `aria-controls`.
+ */
+export const LINK_FORM_ID = 'link-form-container';
+
+/**
+ * Renders an inline error message when `message` is non-null. Used for the
+ * four separate error states in `LinksView` (save, read, random, delete).
+ */
+function ViewError({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <p className="mt-2 text-rose-300 text-xs animate-fade-in-up" role="alert">
+      {message}
+    </p>
+  );
+}
 
 // Lazy-loaded because the modal is rarely open and this keeps it out of the
 // initial bundle.
@@ -72,6 +93,7 @@ export default function LinksView() {
   }, [search]);
 
   const {
+    fetchError,
     readError,
     deleteError,
     handleCreated,
@@ -92,6 +114,10 @@ export default function LinksView() {
     toastMessage,
   } = useLinks(filter, debouncedSearch);
 
+  /**
+   * Moves keyboard selection one step down the link list, clamping at
+   * the last card. If nothing is selected yet, selects the first card.
+   */
   function handleNavigateNextLink() {
     if (links.length === 0) return;
     setSelectedLinkIndex((previous) => {
@@ -100,6 +126,10 @@ export default function LinksView() {
     });
   }
 
+  /**
+   * Moves keyboard selection one step up the link list, clamping at
+   * the first card. If nothing is selected yet, selects the last card.
+   */
   function handleNavigatePrevLink() {
     if (links.length === 0) return;
     setSelectedLinkIndex((previous) => {
@@ -108,6 +138,10 @@ export default function LinksView() {
     });
   }
 
+  /**
+   * Opens the keyboard-selected link in a new tab and marks it as read
+   * if it hasn't been read yet. A no-op when no card is selected.
+   */
   function handleOpenSelectedLink() {
     if (selectedLinkIndex === null) return;
     const link = links[selectedLinkIndex];
@@ -152,6 +186,12 @@ export default function LinksView() {
     setSelectedLinkIndex(null);
   }, [debouncedSearch]);
 
+  /**
+   * Triggers the card exit animation before calling `handleDeleteAllRead`.
+   * `isClearingRead` is set to `true` immediately so `LinksList` can start
+   * animating cards out, then cleared in `finally` regardless of success
+   * or failure so the UI never gets stuck in the animating state.
+   */
   async function handleClearRead() {
     setIsClearingRead(true);
     try {
@@ -164,7 +204,7 @@ export default function LinksView() {
   return (
     <>
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-lg font-semibold">Your links</h2>
+        <h1 className="text-lg font-semibold">Your links</h1>
         <button
           type="button"
           className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-help"
@@ -197,41 +237,11 @@ export default function LinksView() {
         onToggleForm={handleToggleForm}
       />
 
-      {randomError && (
-        <p
-          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
-          role="alert"
-        >
-          {randomError}
-        </p>
-      )}
-
-      {saveError && (
-        <p
-          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
-          role="alert"
-        >
-          {saveError}
-        </p>
-      )}
-
-      {readError && (
-        <p
-          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
-          role="alert"
-        >
-          {readError}
-        </p>
-      )}
-
-      {deleteError && (
-        <p
-          className="mt-2 text-rose-300 text-xs animate-fade-in-up"
-          role="alert"
-        >
-          {deleteError}
-        </p>
-      )}
+      <ViewError message={fetchError} />
+      <ViewError message={randomError} />
+      <ViewError message={saveError} />
+      <ViewError message={readError} />
+      <ViewError message={deleteError} />
 
       {showShortcuts && (
         <Suspense>
@@ -251,7 +261,10 @@ export default function LinksView() {
         )}
 
       {showLinkForm && (
-        <div className="relative z-30 mt-0 animate-fade-in-up">
+        <div
+          id={LINK_FORM_ID}
+          className="relative z-30 mt-0 animate-fade-in-up"
+        >
           <LinkForm onCreated={handleCreated} />
         </div>
       )}

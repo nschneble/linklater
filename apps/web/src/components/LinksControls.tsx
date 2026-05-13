@@ -1,5 +1,6 @@
 import IconButton from './ui/IconButton';
 import PrimaryButton from './ui/PrimaryButton';
+import { LINK_FORM_ID } from './LinksView';
 import type { LinksFilter } from '../lib/useLinks';
 
 /**
@@ -17,8 +18,11 @@ interface LinksControlsProps {
   randomLoading: boolean;
   /** Drives the `aria-expanded` state and label of the "Add link" / "Hide form" button. */
   showLinkForm: boolean;
+  /** Called when the user clicks "Remove all read". */
   onClearRead: () => void;
+  /** Called when the user clicks "Stumble upon". */
   onRandom: () => Promise<void>;
+  /** Toggles the inline link creation form open or closed. */
   onToggleForm: () => void;
 }
 
@@ -46,7 +50,7 @@ export default function LinksControls({
       <IconButton
         variant="elevated"
         disabled={isClearingRead}
-        hidden={filter === 'unread' || linksCount == 0}
+        hidden={filter === 'unread' || linksCount === 0}
         title="Permanently removes all read links."
         onClick={onClearRead}
       >
@@ -71,6 +75,7 @@ export default function LinksControls({
           hidden={filter !== 'unread'}
           onClick={onToggleForm}
           aria-expanded={showLinkForm}
+          aria-controls={LINK_FORM_ID}
         >
           <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
           {showLinkForm ? 'Hide form' : 'Add link'}

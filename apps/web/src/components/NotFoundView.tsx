@@ -7,8 +7,10 @@ export default function NotFoundView() {
       <p className="mb-1 text-[var(--text-muted)] text-xs font-medium uppercase tracking-widest">
         404
       </p>
-      <h1 className="mb-3 text-xl font-semibold">Page not found</h1>
-      <p className="mb-8 text-[var(--text-muted)] text-sm max-w-xs">
+      <h1 className="mb-3 text-xl font-semibold text-balance">
+        Page not found
+      </h1>
+      <p className="mb-8 text-[var(--text-muted)] text-sm max-w-xs text-pretty">
         That path doesn&rsquo;t exist. Maybe a typo?
       </p>
       <Link

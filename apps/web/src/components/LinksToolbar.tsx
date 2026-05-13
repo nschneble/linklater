@@ -1,5 +1,7 @@
 import LinksControls from './LinksControls';
 import IconButton from './ui/IconButton';
+import { LINKS_LIST_ID } from './LinksList';
+import { LINK_FORM_ID } from './LinksView';
 import PrimaryButton from './ui/PrimaryButton';
 import TabButton from './ui/TabButton';
 import { useRef } from 'react';
@@ -23,12 +25,17 @@ interface LinksToolbarProps {
   searchInputRef: React.RefObject<HTMLInputElement | null>;
   /** Whether the inline link form is open — drives button label and `aria-expanded`. */
   showLinkForm: boolean;
+  /** Called when the user clicks "Remove all read". */
   onClearRead: () => void;
+  /** Navigates to the `/read` route when the Read tab is clicked. */
   onNavigateRead: () => void;
+  /** Navigates to the `/unread` route when the Unread tab is clicked. */
   onNavigateUnread: () => void;
+  /** Called when the user clicks "Stumble upon". */
   onRandom: () => Promise<void>;
   /** Called with the new search string on every keystroke. */
   onSearch: (value: string) => void;
+  /** Toggles the inline link creation form open or closed. */
   onToggleForm: () => void;
 }
 
@@ -124,6 +131,7 @@ export default function LinksToolbar({
             }
           }}
           aria-label="Search through your links"
+          aria-controls={LINKS_LIST_ID}
         />
 
         <div className="flex sm:hidden shrink-0 gap-2">
@@ -163,6 +171,7 @@ export default function LinksToolbar({
                 type="button"
                 aria-label={showLinkForm ? 'Hide form' : 'Add link'}
                 aria-expanded={showLinkForm}
+                aria-controls={LINK_FORM_ID}
                 className="!px-2.5"
                 onClick={onToggleForm}
               >

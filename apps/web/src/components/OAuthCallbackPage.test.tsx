@@ -30,9 +30,9 @@ function makeAuthContext(overrides = {}) {
   };
 }
 
-function renderPage(search = '?token=oauth-jwt-123') {
+function renderPage() {
   return render(
-    <MemoryRouter initialEntries={[`/oauth/callback${search}`]}>
+    <MemoryRouter initialEntries={['/oauth/callback']}>
       <OAuthCallbackPage />
     </MemoryRouter>,
   );
@@ -41,9 +41,13 @@ function renderPage(search = '?token=oauth-jwt-123') {
 beforeEach(() => {
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
   mockNavigate.mockClear();
+  window.location.hash = '#token=oauth-jwt-123';
 });
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  window.location.hash = '';
+});
 
 describe('OAuthCallbackPage', () => {
   it('shows the signing in heading', () => {
@@ -62,11 +66,12 @@ describe('OAuthCallbackPage', () => {
     expect(screen.getByText(/just a moment/i)).toBeInTheDocument();
   });
 
-  it('calls loginWithToken with the token from the URL', async () => {
+  it('calls loginWithToken with the token from the URL hash', async () => {
     const loginWithToken = vi.fn().mockResolvedValue(undefined);
     vi.mocked(useAuth).mockReturnValue(makeAuthContext({ loginWithToken }));
 
-    renderPage('?token=my-oauth-token');
+    window.location.hash = '#token=my-oauth-token';
+    renderPage();
 
     await waitFor(() => {
       expect(loginWithToken).toHaveBeenCalledWith('my-oauth-token');
@@ -84,8 +89,9 @@ describe('OAuthCallbackPage', () => {
     });
   });
 
-  it('shows an error when no token is present in the URL', async () => {
-    renderPage('');
+  it('shows an error when no token is present in the hash', async () => {
+    window.location.hash = '';
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -108,7 +114,8 @@ describe('OAuthCallbackPage', () => {
   });
 
   it('shows a Back to login button on error', async () => {
-    renderPage('');
+    window.location.hash = '';
+    renderPage();
 
     await waitFor(() => {
       expect(
@@ -118,7 +125,8 @@ describe('OAuthCallbackPage', () => {
   });
 
   it('navigates to / when Back to login is clicked', async () => {
-    renderPage('');
+    window.location.hash = '';
+    renderPage();
 
     await waitFor(() => {
       expect(

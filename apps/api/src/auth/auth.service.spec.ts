@@ -421,6 +421,20 @@ describe('AuthService', () => {
         BadRequestException,
       );
     });
+
+    it('throws BadRequestException when verificationTokenExpiresAt is null', async () => {
+      (usersServiceMock.findByVerificationToken as jest.Mock).mockResolvedValue(
+        {
+          id: USER_ID,
+          verificationToken: VERIFICATION_TOKEN,
+          verificationTokenExpiresAt: null,
+        },
+      );
+
+      await expect(service.verifyEmail(VERIFICATION_TOKEN)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
   });
 
   describe('forgotPassword', () => {
@@ -492,6 +506,18 @@ describe('AuthService', () => {
         id: USER_ID,
         resetToken: RESET_TOKEN,
         resetTokenExpiresAt: new Date(Date.now() - 1000),
+      });
+
+      await expect(
+        service.resetPassword(RESET_TOKEN, NEW_PASSWORD),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when resetTokenExpiresAt is null', async () => {
+      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        resetToken: RESET_TOKEN,
+        resetTokenExpiresAt: null,
       });
 
       await expect(
@@ -574,6 +600,32 @@ describe('AuthService', () => {
         service.requestEmailChange(USER_ID, NEW_EMAIL),
       ).rejects.toThrow(ConflictException);
     });
+
+    it('allows the request when the new email belongs to the same user (re-verify)', async () => {
+      // Email already belongs to this user — not a conflict (e.g. re-requesting
+      // a pending change to the same address).
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: NEW_EMAIL,
+      });
+      (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (
+        emailServiceMock.sendEmailChangeVerification as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await expect(
+        service.requestEmailChange(USER_ID, NEW_EMAIL),
+      ).resolves.not.toThrow();
+
+      expect(usersServiceMock.updatePendingEmail).toHaveBeenCalledWith(
+        USER_ID,
+        NEW_EMAIL,
+        expect.any(String),
+        expect.any(Date),
+      );
+    });
   });
 
   describe('confirmEmailChange', () => {
@@ -630,6 +682,21 @@ describe('AuthService', () => {
           pendingEmail: null,
           pendingEmailToken: PENDING_EMAIL_TOKEN,
           pendingEmailTokenExpiresAt: new Date(Date.now() + 3600000),
+        },
+      );
+
+      await expect(
+        service.confirmEmailChange(PENDING_EMAIL_TOKEN),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when pendingEmailTokenExpiresAt is null', async () => {
+      (usersServiceMock.findByPendingEmailToken as jest.Mock).mockResolvedValue(
+        {
+          id: USER_ID,
+          pendingEmail: NEW_EMAIL,
+          pendingEmailToken: PENDING_EMAIL_TOKEN,
+          pendingEmailTokenExpiresAt: null,
         },
       );
 

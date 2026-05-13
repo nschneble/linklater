@@ -107,28 +107,53 @@ describe('useMetadataPolling', () => {
     expect(secondCallCount).toBeGreaterThan(firstCallCount);
   });
 
-  it('stops polling after an error from getLink', async () => {
+  it('continues polling with backoff after an error from getLink', async () => {
     vi.mocked(apiModule.getLink).mockRejectedValue(new Error('Not found'));
 
     renderHook(() => useMetadataPolling(LINK_ID, vi.fn()));
 
-    // allow first poll to fire and reject
+    // first poll fires at 2s
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2000);
     });
 
-    const callCountAfterError = (apiModule.getLink as ReturnType<typeof vi.fn>)
-      .mock.calls.length;
-    expect(callCountAfterError).toBeGreaterThanOrEqual(1);
+    const callCountAfterFirstError = (
+      apiModule.getLink as ReturnType<typeof vi.fn>
+    ).mock.calls.length;
+    expect(callCountAfterFirstError).toBeGreaterThanOrEqual(1);
 
-    // no more polls after a long wait
+    // second poll fires at 2s + 4s = 6s (doubled interval)
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(60000);
+      await vi.advanceTimersByTimeAsync(4000);
     });
 
     expect(
       (apiModule.getLink as ReturnType<typeof vi.fn>).mock.calls.length,
-    ).toBe(callCountAfterError);
+    ).toBeGreaterThan(callCountAfterFirstError);
+  });
+
+  it('stops polling after MAX_ELAPSED_MS of errors', async () => {
+    vi.mocked(apiModule.getLink).mockRejectedValue(new Error('Not found'));
+
+    renderHook(() => useMetadataPolling(LINK_ID, vi.fn()));
+
+    // advance past the 60s maximum
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(65000);
+    });
+
+    const finalCallCount = (apiModule.getLink as ReturnType<typeof vi.fn>).mock
+      .calls.length;
+    expect(finalCallCount).toBeGreaterThanOrEqual(1);
+
+    // no more polls after stopping
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30000);
+    });
+
+    expect(
+      (apiModule.getLink as ReturnType<typeof vi.fn>).mock.calls.length,
+    ).toBe(finalCallCount);
   });
 
   it('clears the timer when the hook unmounts before the first poll fires', async () => {

@@ -1,4 +1,5 @@
 import { getLinks, type Link, type PaginatedLinks } from './api';
+import { getErrorMessage } from './errors';
 import { useCallback, useEffect, useReducer, useState } from 'react';
 import type { LinksFilter } from './useLinks';
 
@@ -54,6 +55,8 @@ export interface UseLinksDataResult {
   adjustTotal: (delta: number) => void;
   /** Empties the links array in state. Used after "delete all read". */
   clearLinks: () => void;
+  /** Error message from the most recent failed fetch, or `null` when the last fetch succeeded. */
+  fetchError: string | null;
   /** Increments the page and triggers a fetch for the next batch. */
   handleLoadMore: () => void;
   /** The links currently loaded into state. */
@@ -98,6 +101,7 @@ export function useLinksData(
 ): UseLinksDataResult {
   const [links, setLinks] = useState<Link[]>([]);
   const [loadingLinks, setLoadingLinks] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pick<
     PaginatedLinks,
     'total' | 'limit'
@@ -120,6 +124,7 @@ export function useLinksData(
     setLoadingLinks(true);
 
     const load = async () => {
+      setFetchError(null);
       try {
         const result = await getLinks({
           search: fetchParams.search || undefined,
@@ -135,7 +140,9 @@ export function useLinksData(
           setPagination({ total: result.total, limit: result.limit });
         }
       } catch (error) {
-        console.error('Failed to load links', error);
+        if (!cancelled) {
+          setFetchError(getErrorMessage(error, 'Failed to load links'));
+        }
       } finally {
         if (!cancelled) {
           setLoadingLinks(false);
@@ -191,6 +198,7 @@ export function useLinksData(
   return {
     adjustTotal,
     clearLinks,
+    fetchError,
     handleLoadMore,
     links,
     loadingLinks,
