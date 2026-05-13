@@ -1,24 +1,24 @@
-import { Link } from 'react-router-dom';
-import { FOCUS_RING } from '../../lib/styles';
+import { useNavigate } from 'react-router-dom';
+import PrimaryButton from '../common/PrimaryButton';
 
 export default function NotFoundView() {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-center select-none">
-      <p className="mb-1 text-[var(--text-muted)] text-xs font-medium uppercase tracking-widest">
-        404
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-[var(--bg)] text-[var(--text)] text-center select-none">
+      <i
+        className="fa-solid fa-person-digging text-4xl text-[var(--text-subtle)] mb-4"
+        aria-hidden="true"
+      />
+      <h1 className="mb-2 text-lg font-semibold">Page not found</h1>
+      <p className="mb-6 text-[var(--text-muted)] text-sm">
+        That page doesn't exist. <span className="italic">Maybe a typo?</span>
       </p>
-      <h1 className="mb-3 text-xl font-semibold text-balance">
-        Page not found
-      </h1>
-      <p className="mb-8 text-[var(--text-muted)] text-sm max-w-xs text-pretty">
-        That path doesn&rsquo;t exist. Maybe a typo?
-      </p>
-      <Link
-        to="/unread"
-        className={`text-[var(--text-muted)] hover:text-[var(--text)] text-sm transition ${FOCUS_RING} rounded`}
-      >
-        ← Back to Linklater
-      </Link>
+
+      <PrimaryButton type="button" onClick={() => navigate('/unread')}>
+        <i className="fa-solid fa-arrow-left text-xs" aria-hidden="true" />
+        Back to Linklater
+      </PrimaryButton>
     </div>
   );
 }

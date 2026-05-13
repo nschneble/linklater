@@ -1,6 +1,7 @@
 import AppShell from './AppShell';
 import AuthForm from './components/auth/AuthForm';
 import ErrorBoundary from './components/errors/ErrorBoundary';
+import NotFoundView from './components/errors/NotFoundView';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import OAuthCallbackPage from './components/auth/OAuthCallbackPage';
 import ResetPasswordPage from './components/auth/ResetPasswordPage';
@@ -80,7 +81,11 @@ export default function App() {
             />
             <Route path="/" element={<Navigate to="/unread" replace />} />
             <Route path="/stumble" element={<StumblePage />} />
-            <Route path="/*" element={<AppShell />} />
+            <Route path="/unread" element={<AppShell />} />
+            <Route path="/read" element={<AppShell />} />
+            <Route path="/settings" element={<AppShell />} />
+            <Route path="/editor" element={<AppShell />} />
+            <Route path="*" element={<NotFoundView />} />
           </>
         ) : (
           <>

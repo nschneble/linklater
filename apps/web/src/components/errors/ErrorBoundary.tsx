@@ -44,7 +44,7 @@ export default class ErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-[var(--bg)] text-[var(--text)] text-center">
+        <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-[var(--bg)] text-[var(--text)] text-center select-none">
           <i
             className="fa-solid fa-bug text-4xl text-[var(--text-subtle)] mb-4"
             aria-hidden="true"

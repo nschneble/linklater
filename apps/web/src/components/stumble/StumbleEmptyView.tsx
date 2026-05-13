@@ -58,11 +58,7 @@ export default function StumbleEmptyView() {
 
       <WikipediaArticleList loading={loading} articles={articles} />
 
-      <PrimaryButton
-        className="py-2.5"
-        type="button"
-        onClick={() => navigate('/unread')}
-      >
+      <PrimaryButton type="button" onClick={() => navigate('/unread')}>
         <i className="fa-solid fa-arrow-left text-xs" aria-hidden="true" />
         Back to Linklater
       </PrimaryButton>

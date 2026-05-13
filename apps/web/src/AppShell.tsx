@@ -1,7 +1,6 @@
 import Header from './components/Header';
 import LinkButton from './components/common/LinkButton';
 import LinksView from './components/links/LinksView';
-import NotFoundView from './components/errors/NotFoundView';
 import SettingsView from './components/settings/SettingsView';
 import { Suspense, lazy, useEffect } from 'react';
 import { updateMe } from './lib/api';
@@ -17,15 +16,12 @@ const ThemeEditor = lazy(() => import('./components/settings/ThemeEditor'));
 /** Maps the current URL pathname to the active `AppView`. */
 function viewFromPath(pathname: string): AppView {
   switch (pathname) {
-    case '/unread':
-    case '/read':
-      return 'links';
     case '/settings':
       return 'settings';
     case '/editor':
       return 'theme-editor';
     default:
-      return 'not-found';
+      return 'links';
   }
 }
 
@@ -126,16 +122,14 @@ export default function AppShell() {
       />
 
       <main className="max-w-3xl mx-auto px-4 py-12 space-y-6">
-        {view === 'links' ? (
-          <LinksView />
-        ) : view === 'settings' ? (
+        {view === 'settings' ? (
           <SettingsView />
         ) : view === 'theme-editor' ? (
           <Suspense>
             <ThemeEditor />
           </Suspense>
         ) : (
-          <NotFoundView />
+          <LinksView />
         )}
       </main>
     </div>
