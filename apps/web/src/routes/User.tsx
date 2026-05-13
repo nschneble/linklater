@@ -9,10 +9,10 @@ function UnreadRedirect() {
 
 export function userRoutes() {
   return [
-    ...['forgot-password', 'login', 'root', 'signup'].map((key) => (
+    ...['forgot-password', 'login', 'signup'].map((key) => (
       <Route
         key={`${key}-redirect`}
-        path={`/${key.replace('root', '')}`}
+        path={`/${key}`}
         element={<UnreadRedirect />}
       />
     )),

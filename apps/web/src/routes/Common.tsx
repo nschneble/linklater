@@ -1,3 +1,4 @@
+import LandingPage from '../components/LandingPage';
 import OAuthCallbackPage from '../components/auth/OAuthCallbackPage';
 import ResetPasswordPage from '../components/auth/ResetPasswordPage';
 import VerifyEmailChangePage from '../components/verify/VerifyEmailChangePage';
@@ -6,6 +7,8 @@ import { Route } from 'react-router-dom';
 
 export function commonRoutes() {
   return [
+    <Route key="root" path="/" element={<LandingPage />} />,
+
     <Route
       key="oauth-callback"
       path="/oauth/callback"
