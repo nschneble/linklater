@@ -1,38 +1,11 @@
-import AppShell from './AppShell';
-import AuthForm from './components/auth/AuthForm';
 import ErrorBoundary from './components/errors/ErrorBoundary';
-import NotFoundView from './components/errors/NotFoundView';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import OAuthCallbackPage from './components/auth/OAuthCallbackPage';
-import ResetPasswordPage from './components/auth/ResetPasswordPage';
-import StumblePage from './components/stumble/StumblePage';
-import VerifyEmailChangePage from './components/verify/VerifyEmailChangePage';
-import VerifyEmailPage from './components/verify/VerifyEmailPage';
+import { commonRoutes } from './routes/Common';
+import { unauthenticatedRoutes } from './routes/Unauthenticated';
+import { userRoutes } from './routes/User';
 import { useAuth } from './auth/AuthContext';
 import { useEffect } from 'react';
 import { useTheme, type BaseTheme, type Mode } from './theme/ThemeContext';
-
-/**
- * Root app component. Handles top-level routing and authentication.
- *
- * Route structure:
- * - `/verify-email` and `/verify-email-change` are always accessible so
- *   that email links work even when the user is logged out.
- * - `/reset-password` is similarly public.
- * - Unauthenticated users are redirected to `/login` for all other routes.
- *   The originally-requested path is stored in route state so `AuthForm`
- *   can bounce the user back after a successful login.
- * - Authenticated users are redirected from `/` and `/login` to `/unread`.
- *
- * NOTE: The `useEffect` that syncs server preferences into `ThemeContext`
- * runs whenever `user` changes (i.e. on login). This ensures the theme and
- * mode stored in the database override the `localStorage` defaults the
- * user may have set in a different browser session.
- */
-function UnauthenticatedRedirect() {
-  const location = useLocation();
-  return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-}
+import { Routes } from 'react-router-dom';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -63,46 +36,8 @@ export default function App() {
   return (
     <ErrorBoundary>
       <Routes>
-        <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route
-          path="/verify-email-change"
-          element={<VerifyEmailChangePage />}
-        />
-
-        {user ? (
-          <>
-            <Route path="/login" element={<Navigate to="/unread" replace />} />
-            <Route path="/signup" element={<Navigate to="/unread" replace />} />
-            <Route
-              path="/forgot-password"
-              element={<Navigate to="/unread" replace />}
-            />
-            <Route path="/" element={<Navigate to="/unread" replace />} />
-            <Route path="/stumble" element={<StumblePage />} />
-            <Route path="/unread" element={<AppShell />} />
-            <Route path="/read" element={<AppShell />} />
-            <Route path="/settings" element={<AppShell />} />
-            <Route path="/editor" element={<AppShell />} />
-            <Route path="*" element={<NotFoundView />} />
-          </>
-        ) : (
-          <>
-            {['/login', '/signup', '/forgot-password'].map((path) => (
-              <Route
-                key={path}
-                path={path}
-                element={
-                  <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
-                    <AuthForm />
-                  </div>
-                }
-              />
-            ))}
-            <Route path="*" element={<UnauthenticatedRedirect />} />
-          </>
-        )}
+        {commonRoutes()}
+        {user ? userRoutes() : unauthenticatedRoutes()}
       </Routes>
     </ErrorBoundary>
   );
