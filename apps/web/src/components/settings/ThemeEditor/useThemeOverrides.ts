@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../../theme/ThemeContext';
 
 /**
  * The CSS custom properties that can be overridden in the theme editor.

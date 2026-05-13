@@ -3,7 +3,7 @@ import {
   useTheme,
   type BaseTheme,
   type Mode,
-} from '../../theme/ThemeContext';
+} from '../../../theme/ThemeContext';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import ContrastChecker from './ContrastChecker';
