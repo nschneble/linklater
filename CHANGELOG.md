@@ -8,11 +8,18 @@
 
 #### Features
 
-_Nothing here!_
+- email verification
+- password reset
+- full-text search
+- keyboard shortcuts
+- keyboard navigation
+- Google SSO
+- "Stumble upon" page
 
 #### Bugfixes
 
-_Nothing here!_
+- add missing accessibility tags
+- fix unusable layout on mobile devices
 
 ### Removed
 
