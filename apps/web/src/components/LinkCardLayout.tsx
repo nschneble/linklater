@@ -146,7 +146,7 @@ export default function LinkCardLayout({
           <div className="flex flex-col items-start min-w-0 ml-3">
             <p
               style={childStyle(1)}
-              className={`text-[var(--text)] text-sm font-semibold line-clamp-2 [text-wrap:balance] ${CARD_ENTER_CLASS}`}
+              className={`text-[var(--text)] text-sm font-semibold line-clamp-2 text-balance ${CARD_ENTER_CLASS}`}
             >
               {displayTitle}
             </p>

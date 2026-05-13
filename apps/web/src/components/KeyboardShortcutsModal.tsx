@@ -114,7 +114,7 @@ export default function KeyboardShortcutsModal({
         <div className="flex items-center justify-between mb-7.5">
           <h2
             id={HEADING_ID}
-            className="text-sm font-semibold text-[var(--text)] [text-wrap:balance]"
+            className="text-sm font-semibold text-[var(--text)] text-balance"
           >
             Keyboard shortcuts
           </h2>

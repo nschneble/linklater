@@ -58,7 +58,7 @@ export default function BookmarkletSection() {
 
   return (
     <div className="max-w-md space-y-3">
-      <h3 className="text-[var(--text)] text-sm font-semibold [text-wrap:balance]">
+      <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
         Bookmarklet
       </h3>
       <p className="text-[var(--text-muted)] text-xs text-pretty">

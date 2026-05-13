@@ -116,12 +116,12 @@ export default function AccountSettingsForm() {
 
   return (
     <div className="max-w-md space-y-8">
-      <h2 className="text-[var(--text)] text-xl font-semibold [text-wrap:balance]">
+      <h2 className="text-[var(--text)] text-xl font-semibold text-balance">
         Account settings
       </h2>
 
       <form className="space-y-4" onSubmit={handleEmailSave}>
-        <h3 className="text-[var(--text)] text-sm font-semibold [text-wrap:balance]">
+        <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
           Email
         </h3>
 
@@ -196,7 +196,7 @@ export default function AccountSettingsForm() {
 
       {hasPassword ? (
         <form className="space-y-4" onSubmit={handlePasswordSave}>
-          <h3 className="text-[var(--text)] text-sm font-semibold [text-wrap:balance]">
+          <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
             Password
           </h3>
 
@@ -251,7 +251,7 @@ export default function AccountSettingsForm() {
         </form>
       ) : (
         <div className="space-y-2">
-          <h3 className="text-[var(--text)] text-sm font-semibold [text-wrap:balance]">
+          <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
             Password
           </h3>
           <p className="text-[var(--text-muted)] text-xs">
