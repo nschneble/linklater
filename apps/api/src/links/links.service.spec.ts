@@ -464,4 +464,53 @@ describe('LinksService', () => {
     expect(prismaMock.$queryRaw).toHaveBeenCalled();
     expect(result.total).toBe(1);
   });
+
+  it('findAll with search uses read=true filter', async () => {
+    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
+      { id: LINK_ID, total: BigInt(1) },
+    ]);
+    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([
+      makeLink({ readAt: new Date() }),
+    ]);
+
+    const result = await service.findAll(USER_ID, {
+      search: 'duck',
+      read: true,
+    });
+
+    expect(prismaMock.$queryRaw).toHaveBeenCalled();
+    expect(result.total).toBe(1);
+    expect(result.data[0]).toHaveProperty('readAt');
+  });
+
+  it('findAll clamps limit to at least 1 when 0 is supplied', async () => {
+    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
+    (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
+
+    await service.findAll(USER_ID, { limit: 0 });
+
+    expect(prismaMock.link.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 1 }),
+    );
+  });
+
+  it('findAll re-sorts search results to match the raw rank order', async () => {
+    const LINK_ID_A = 'link-a';
+    const LINK_ID_B = 'link-b';
+    // Raw query returns B then A (by rank)
+    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
+      { id: LINK_ID_B, total: BigInt(2) },
+      { id: LINK_ID_A, total: BigInt(2) },
+    ]);
+    // Prisma returns them in the opposite order
+    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([
+      makeLink({ id: LINK_ID_A }),
+      makeLink({ id: LINK_ID_B }),
+    ]);
+
+    const result = await service.findAll(USER_ID, { search: 'test' });
+
+    expect(result.data[0].id).toBe(LINK_ID_B);
+    expect(result.data[1].id).toBe(LINK_ID_A);
+  });
 });

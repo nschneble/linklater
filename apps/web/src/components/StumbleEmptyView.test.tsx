@@ -100,4 +100,45 @@ describe('StumbleEmptyView', () => {
       screen.getByRole('link', { name: /back to linklater/i }),
     ).toHaveAttribute('href', '/unread');
   });
+
+  it('shows the loading text while fetching articles', () => {
+    // Never resolves so the component stays in loading state
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
+    renderView();
+
+    expect(screen.getByText('Fetching curiousities…')).toBeInTheDocument();
+  });
+
+  it('shows three skeleton cards while loading', () => {
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
+    const { container } = renderView();
+
+    const skeletons = container.querySelectorAll('.animate-pulse');
+    expect(skeletons.length).toBe(3);
+  });
+
+  it('shows "How about one of these?" after articles load', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(makeWikipediaResponse()));
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByText('How about one of these?')).toBeInTheDocument();
+    });
+  });
+
+  it('aborts pending fetches when unmounted', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((_url: string, options: RequestInit) => {
+        capturedSignal = options.signal;
+        return new Promise(() => {});
+      }),
+    );
+
+    const { unmount } = renderView();
+    unmount();
+
+    expect(capturedSignal?.aborted).toBe(true);
+  });
 });

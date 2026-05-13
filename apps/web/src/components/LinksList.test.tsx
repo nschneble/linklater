@@ -127,4 +127,59 @@ describe('LinksList', () => {
     expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
     expect(screen.queryByRole('link')).toBeInTheDocument();
   });
+
+  it('shows a search icon when debouncedSearch is non-empty but search is empty', () => {
+    const { container } = render(
+      <LinksList
+        {...defaultProps}
+        links={[]}
+        search=""
+        debouncedSearch="react"
+      />,
+    );
+    expect(container.querySelector('.fa-magnifying-glass')).toBeInTheDocument();
+  });
+
+  it('applies animate-card-exit class to cards while isClearingRead is true', () => {
+    const links = [makeLink({ id: 'link-1' }), makeLink({ id: 'link-2' })];
+    const { container } = render(
+      <LinksList {...defaultProps} links={links} isClearingRead={true} />,
+    );
+    const exitCards = container.querySelectorAll('.animate-card-exit');
+    expect(exitCards.length).toBe(2);
+  });
+
+  it('does not apply animate-card-exit class when isClearingRead is false', () => {
+    const links = [makeLink()];
+    const { container } = render(
+      <LinksList {...defaultProps} links={links} isClearingRead={false} />,
+    );
+    expect(container.querySelector('.animate-card-exit')).toBeNull();
+  });
+
+  it('does not show Load more while loading more pages', () => {
+    const links = [makeLink()];
+    render(
+      <LinksList
+        {...defaultProps}
+        links={links}
+        loadingLinks={true}
+        page={2}
+        pagination={makePagination({ total: 5 })}
+      />,
+    );
+    expect(screen.queryByText(/load more/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the remaining count in the Load more button label', () => {
+    const links = [makeLink({ id: 'link-1' }), makeLink({ id: 'link-2' })];
+    render(
+      <LinksList
+        {...defaultProps}
+        links={links}
+        pagination={makePagination({ total: 7, limit: 5 })}
+      />,
+    );
+    expect(screen.getByText(/5 remaining/i)).toBeInTheDocument();
+  });
 });

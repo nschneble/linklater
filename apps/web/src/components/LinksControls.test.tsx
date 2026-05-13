@@ -108,4 +108,37 @@ describe('LinksControls', () => {
       ).toBeDisabled();
     });
   });
+
+  describe('Add link / Hide form button', () => {
+    it('has aria-expanded=false when form is closed', () => {
+      render(<LinksControls {...defaultUnreadProps} showLinkForm={false} />);
+      const button = screen.getByRole('button', { name: /add link/i });
+      expect(button).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('has aria-expanded=true when form is open', () => {
+      render(<LinksControls {...defaultUnreadProps} showLinkForm={true} />);
+      const button = screen.getByRole('button', { name: /hide form/i });
+      expect(button).toHaveAttribute('aria-expanded', 'true');
+    });
+  });
+
+  describe('Stumble upon button', () => {
+    it('shows Stumbling… label while randomLoading is true', () => {
+      render(<LinksControls {...defaultUnreadProps} randomLoading={true} />);
+      expect(
+        screen.getByRole('button', { name: /stumbling/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('is hidden on the read filter', () => {
+      render(
+        <LinksControls {...defaultUnreadProps} filter="read" linksCount={3} />,
+      );
+      // Hidden buttons are removed from the accessibility tree via aria-hidden
+      expect(
+        screen.queryByRole('button', { name: /stumble upon/i }),
+      ).toBeNull();
+    });
+  });
 });

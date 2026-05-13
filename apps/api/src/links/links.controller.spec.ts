@@ -155,6 +155,22 @@ describe('LinksController', () => {
 
       expect(result).toEqual({ link });
     });
+
+    it('passes read=false when the query param is any value other than "true"', async () => {
+      (linksServiceMock.getRandom as jest.Mock).mockResolvedValue(null);
+
+      await controller.random(makeRequest(), 'false');
+
+      expect(linksServiceMock.getRandom).toHaveBeenCalledWith(USER_ID, false);
+    });
+
+    it('returns { link: null } when no link matches', async () => {
+      (linksServiceMock.getRandom as jest.Mock).mockResolvedValue(null);
+
+      const result = await controller.random(makeRequest(), undefined);
+
+      expect(result).toEqual({ link: null });
+    });
   });
 
   describe('stumble', () => {
