@@ -1,9 +1,10 @@
+import type { EmailPalette } from '../email-palette.js';
 import { baseHtml } from './base.html.js';
 
 export const text = (url: string) =>
   `Verify your Linklater email by visiting: ${url}\n\nThis link expires in 24 hours.`;
 
-export const html = (url: string) =>
+export const html = (url: string, palette: EmailPalette) =>
   baseHtml({
     heading: 'Verify your email.',
     bodyText:
@@ -12,4 +13,5 @@ export const html = (url: string) =>
     buttonUrl: url,
     footerNote:
       'This link expires in 24 hours. If you did not create a Linklater account, you can safely ignore this email.',
+    palette,
   });

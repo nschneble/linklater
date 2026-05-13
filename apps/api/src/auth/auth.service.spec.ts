@@ -97,7 +97,7 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('creates the user and sends a verification email', async () => {
-      const user = { id: USER_ID, email: USER_EMAIL };
+      const user = { id: USER_ID, email: USER_EMAIL, theme: 'scanner-darkly' };
       (usersServiceMock.create as jest.Mock).mockResolvedValue(user);
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(user);
       (usersServiceMock.updateVerificationToken as jest.Mock).mockResolvedValue(
@@ -116,6 +116,7 @@ describe('AuthService', () => {
       expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
+        'scanner-darkly',
       );
       expect(result).toBe(user);
     });
@@ -356,6 +357,7 @@ describe('AuthService', () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
+        theme: 'before-sunrise',
       });
       (usersServiceMock.updateVerificationToken as jest.Mock).mockResolvedValue(
         undefined,
@@ -374,6 +376,7 @@ describe('AuthService', () => {
       expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
+        'before-sunrise',
       );
     });
   });
@@ -442,6 +445,7 @@ describe('AuthService', () => {
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
+        theme: 'hit-man',
       });
       (usersServiceMock.updateResetToken as jest.Mock).mockResolvedValue(
         undefined,
@@ -460,6 +464,7 @@ describe('AuthService', () => {
       expect(emailServiceMock.sendPasswordReset).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
+        'hit-man',
       );
     });
 
@@ -532,6 +537,7 @@ describe('AuthService', () => {
         id: USER_ID,
         email: USER_EMAIL,
         emailVerifiedAt: null,
+        theme: 'boyhood',
       });
       (usersServiceMock.updateVerificationToken as jest.Mock).mockResolvedValue(
         undefined,
@@ -550,6 +556,7 @@ describe('AuthService', () => {
       expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
+        'boyhood',
       );
     });
 
@@ -569,6 +576,11 @@ describe('AuthService', () => {
   describe('requestEmailChange', () => {
     it('stores pending email and sends a verification email to the new address', async () => {
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        theme: 'dazed-and-confused',
+      });
       (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
         undefined,
       );
@@ -587,6 +599,7 @@ describe('AuthService', () => {
       expect(emailServiceMock.sendEmailChangeVerification).toHaveBeenCalledWith(
         NEW_EMAIL,
         expect.any(String),
+        'dazed-and-confused',
       );
     });
 
