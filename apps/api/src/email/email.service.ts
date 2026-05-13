@@ -3,6 +3,7 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { resolveEmailPalette } from './email-palette.js';
 import * as EmailChangeTemplate from './templates/email-change.template.js';
 import * as PasswordResetTemplate from './templates/password-reset.template.js';
 import * as VerificationTemplate from './templates/verification.template.js';
@@ -72,16 +73,18 @@ export class EmailService {
    *
    * @param email - The recipient's email address.
    * @param token - The 64-character hex verification token.
+   * @param theme - The user's saved theme name; falls back to scanner-darkly.
    */
-  async sendVerification(email: string, token: string) {
+  async sendVerification(email: string, token: string, theme?: string) {
     const url = `${process.env.APP_URL}/verify-email?token=${token}`;
+    const palette = resolveEmailPalette(theme ?? 'scanner-darkly');
 
     await this.send({
       from: this.from,
       to: email,
       subject: 'Verify your Linklater email',
       text: VerificationTemplate.text(url),
-      html: VerificationTemplate.html(url),
+      html: VerificationTemplate.html(url, palette),
     });
   }
 
@@ -93,16 +96,18 @@ export class EmailService {
    *
    * @param email - The recipient's email address.
    * @param token - The 64-character hex reset token.
+   * @param theme - The user's saved theme name; falls back to scanner-darkly.
    */
-  async sendPasswordReset(email: string, token: string) {
+  async sendPasswordReset(email: string, token: string, theme?: string) {
     const url = `${process.env.APP_URL}/reset-password?token=${token}`;
+    const palette = resolveEmailPalette(theme ?? 'scanner-darkly');
 
     await this.send({
       from: this.from,
       to: email,
       subject: 'Reset your Linklater password',
       text: PasswordResetTemplate.text(url),
-      html: PasswordResetTemplate.html(url),
+      html: PasswordResetTemplate.html(url, palette),
     });
   }
 
@@ -115,16 +120,22 @@ export class EmailService {
    *
    * @param email - The new (pending) email address to send the link to.
    * @param token - The 64-character hex email-change verification token.
+   * @param theme - The user's saved theme name; falls back to scanner-darkly.
    */
-  async sendEmailChangeVerification(email: string, token: string) {
+  async sendEmailChangeVerification(
+    email: string,
+    token: string,
+    theme?: string,
+  ) {
     const url = `${process.env.APP_URL}/verify-email-change?token=${token}`;
+    const palette = resolveEmailPalette(theme ?? 'scanner-darkly');
 
     await this.send({
       from: this.from,
       to: email,
       subject: 'Confirm your new Linklater email',
       text: EmailChangeTemplate.text(url),
-      html: EmailChangeTemplate.html(url),
+      html: EmailChangeTemplate.html(url, palette),
     });
   }
 }

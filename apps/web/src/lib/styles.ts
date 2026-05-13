@@ -15,3 +15,10 @@ export const FOCUS_RING =
  * consistently reduces opacity and shows a wait cursor.
  */
 export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';
+
+/**
+ * Variant of `FOCUS_RING` for destructive actions. Uses a rose ring instead
+ * of the accent color to stay visually consistent with danger-tinted buttons.
+ */
+export const FOCUS_RING_DANGER =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400';

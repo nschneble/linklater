@@ -154,7 +154,7 @@ npm run test
 
 # -OR-
 
-# install, format, lint, and test in one TUI
+# install, format, lint, test, and build in one TUI
 bin/flintest
 bin/flintest --help
 bin/flintest --update

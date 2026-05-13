@@ -1,1 +1,1 @@
-export type AppView = 'links' | 'not-found' | 'settings' | 'theme-editor';
+export type AppView = 'links' | 'settings' | 'theme-editor';

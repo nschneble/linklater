@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# dev — start the Linklater development servers with a live status TUI
+# dev – start the Linklater development servers with a live status TUI
 
 set -uo pipefail
 
@@ -332,7 +332,7 @@ while true; do
     MAILPIT_STATE="ready"
   fi
 
-  # Detect crashes — process death or fatal error in log
+  # Detect crashes – process death or fatal error in log
   if [[ "$API_STATE" != "error" ]]; then
     if ! kill -0 "$API_PID" 2>/dev/null || \
        grep -qE '(EADDRINUSE|EACCES|UnhandledPromiseRejection|Error:.*listen)' "$API_LOG" 2>/dev/null; then

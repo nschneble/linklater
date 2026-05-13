@@ -1,8 +1,7 @@
 import Header from './components/Header';
-import LinkButton from './components/ui/LinkButton';
-import LinksView from './components/LinksView';
-import NotFoundView from './components/NotFoundView';
-import SettingsView from './components/SettingsView';
+import LinkButton from './components/common/LinkButton';
+import LinksView from './components/links/LinksView';
+import SettingsView from './components/settings/SettingsView';
 import { Suspense, lazy, useEffect } from 'react';
 import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
@@ -12,20 +11,17 @@ import { type AppView } from './lib/navigation';
 
 // ThemeEditor is lazy-loaded because it's rarely visited and its
 // color-math utilities add non-trivial weight to the bundle.
-const ThemeEditor = lazy(() => import('./components/ThemeEditor'));
+const ThemeEditor = lazy(() => import('./components/settings/ThemeEditor'));
 
 /** Maps the current URL pathname to the active `AppView`. */
 function viewFromPath(pathname: string): AppView {
   switch (pathname) {
-    case '/unread':
-    case '/read':
-      return 'links';
     case '/settings':
       return 'settings';
     case '/editor':
       return 'theme-editor';
     default:
-      return 'not-found';
+      return 'links';
   }
 }
 
@@ -105,7 +101,10 @@ export default function AppShell() {
               aria-hidden="true"
             />
             Please verify your email address.{' '}
-            <LinkButton onClick={() => navigate('/settings')}>
+            <LinkButton
+              className="hidden sm:contents"
+              onClick={() => navigate('/settings')}
+            >
               Need to resend the verification email?
             </LinkButton>
           </p>
@@ -125,17 +124,15 @@ export default function AppShell() {
         view={view}
       />
 
-      <main className="max-w-3xl mx-auto px-4 py-12 space-y-6">
-        {view === 'links' ? (
-          <LinksView />
-        ) : view === 'settings' ? (
+      <main className="max-w-3xl mx-auto px-4 py-6 sm:py-12 space-y-6">
+        {view === 'settings' ? (
           <SettingsView />
         ) : view === 'theme-editor' ? (
           <Suspense>
             <ThemeEditor />
           </Suspense>
         ) : (
-          <NotFoundView />
+          <LinksView />
         )}
       </main>
     </div>

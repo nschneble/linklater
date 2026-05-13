@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# flintest — run install, format, lint, and test with optional updates
+# flintest – run install, format, lint, test, and build with optional updates
 
 set -uo pipefail
 
@@ -17,6 +17,7 @@ Runs the project quality gate in order:
   npm run format
   npm run lint
   npm run test
+  npm run build
 
 Options:
   --update   Run npm update before npm install.
@@ -61,9 +62,9 @@ TICK=✓  CROSS=✗  CIRC=○
 
 # ── Layout constants ────────────────────────────────────────────────────────────
 if [[ "$RUN_UPDATE" == true ]]; then
-  STEPS=(Update Install Format Lint Test)
+  STEPS=(Update Install Generate Format Lint Test Build)
 else
-  STEPS=(Install Format Lint Test)
+  STEPS=(Install Generate Format Lint Test Build)
 fi
 NS=${#STEPS[@]}
 
@@ -209,22 +210,36 @@ if [[ -z "$FAILED_STEP" ]]; then
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 1 )) npm run format; then
+  if ! run_step $(( STEP_OFFSET + 1 )) node scripts/generate-email-palette.mjs; then
+    FAILED_STEP="Generate"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step $(( STEP_OFFSET + 2 )) npm run format; then
     FAILED_STEP="Format"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 2 )) npm run lint; then
+  if ! run_step $(( STEP_OFFSET + 3 )) npm run lint; then
     FAILED_STEP="Lint"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 3 )) npm run test; then
+  if ! run_step $(( STEP_OFFSET + 4 )) npm run test; then
     FAILED_STEP="Test"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step $(( STEP_OFFSET + 5 )) npm run build; then
+    FAILED_STEP="Build"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
@@ -234,7 +249,7 @@ if [[ -z "$FAILED_STEP" ]]; then
   [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
   exit 0
 else
-  set_status "${RED}${BLD}${FAILED_STEP} failed — see below.${RST}"
+  set_status "${RED}${BLD}${FAILED_STEP} failed – see below.${RST}"
   [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
   printf '\n'
   printf '%s\n' "$FAILED_OUTPUT" | sed 's/^/  /'

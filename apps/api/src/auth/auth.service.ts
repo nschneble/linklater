@@ -194,7 +194,7 @@ export class AuthService {
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
 
     await this.usersService.updateVerificationToken(userId, token, expiresAt);
-    await this.emailService.sendVerification(user.email, token);
+    await this.emailService.sendVerification(user.email, token, user.theme);
   }
 
   /**
@@ -238,7 +238,7 @@ export class AuthService {
     const expiresAt = expiresInMs(ONE_HOUR_MS);
 
     await this.usersService.updateResetToken(user.id, token, expiresAt);
-    await this.emailService.sendPasswordReset(email, token);
+    await this.emailService.sendPasswordReset(email, token, user.theme);
   }
 
   /**
@@ -283,7 +283,7 @@ export class AuthService {
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
 
     await this.usersService.updateVerificationToken(userId, token, expiresAt);
-    await this.emailService.sendVerification(user.email, token);
+    await this.emailService.sendVerification(user.email, token, user.theme);
   }
 
   /**
@@ -301,6 +301,7 @@ export class AuthService {
       throw new ConflictException('Email already in use');
     }
 
+    const user = await this.usersService.findById(userId);
     const token = generateToken();
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
 
@@ -310,7 +311,11 @@ export class AuthService {
       token,
       expiresAt,
     );
-    await this.emailService.sendEmailChangeVerification(newEmail, token);
+    await this.emailService.sendEmailChangeVerification(
+      newEmail,
+      token,
+      user.theme,
+    );
   }
 
   /**

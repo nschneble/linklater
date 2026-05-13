@@ -1,0 +1,304 @@
+import { act, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useLinksActions } from './useLinksActions';
+import type { Link } from '../api';
+
+vi.mock('../api', () => ({
+  readLink: vi.fn(),
+  createLink: vi.fn(),
+  deleteAllReadLinks: vi.fn(),
+  unreadLink: vi.fn(),
+}));
+
+import * as apiModule from '../api';
+
+let capturedOnNoLinks: (() => void) | undefined;
+
+vi.mock('./useRandomLink', () => ({
+  useRandomLink: vi.fn((options: { onNoLinks?: () => void }) => {
+    capturedOnNoLinks = options.onNoLinks;
+    return {
+      handleRandom: vi.fn(),
+      randomError: null,
+      randomLoading: false,
+    };
+  }),
+}));
+
+/** Captured callback from the most recent useMetadataPolling call. */
+let capturedOnSettled: ((link: Link) => void) | null = null;
+
+vi.mock('./useMetadataPolling', () => ({
+  useMetadataPolling: vi.fn(
+    (_linkId: string | null, onSettled: (link: Link) => void) => {
+      capturedOnSettled = onSettled;
+    },
+  ),
+}));
+
+beforeEach(() => vi.clearAllMocks());
+afterEach(() => vi.restoreAllMocks());
+
+function makeLink(overrides: Partial<Link> = {}): Link {
+  return {
+    id: '1',
+    url: 'https://example.com',
+    meta: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    readAt: null,
+    ...overrides,
+  };
+}
+
+function makeOptions(overrides: object = {}) {
+  return {
+    adjustTotal: vi.fn(),
+    clearLinks: vi.fn(),
+    filter: 'unread' as const,
+    links: [],
+    prependLink: vi.fn(),
+    removeLink: vi.fn(),
+    resetTotal: vi.fn(),
+    updateLink: vi.fn(),
+    ...overrides,
+  };
+}
+
+describe('useLinksActions', () => {
+  it('toastMessage is null initially', () => {
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+    expect(result.current.toastMessage).toBeNull();
+  });
+
+  it('readError is null initially', () => {
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+    expect(result.current.readError).toBeNull();
+  });
+
+  it('saveError is null initially', () => {
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+    expect(result.current.saveError).toBeNull();
+  });
+
+  it('handleCreated sets toast message', () => {
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+    act(() => result.current.handleCreated(makeLink()));
+    expect(result.current.toastMessage).toBe('Link saved!');
+  });
+
+  it('handleCreated calls prependLink and adjustTotal for new link', () => {
+    const options = makeOptions({ links: [] });
+    const { result } = renderHook(() => useLinksActions(options));
+    act(() => result.current.handleCreated(makeLink()));
+    expect(options.prependLink).toHaveBeenCalled();
+    expect(options.adjustTotal).toHaveBeenCalledWith(1);
+  });
+
+  it('handleCreated does not adjustTotal for existing link', () => {
+    const link = makeLink();
+    const options = makeOptions({ links: [link] });
+    const { result } = renderHook(() => useLinksActions(options));
+    act(() => result.current.handleCreated(link));
+    expect(options.prependLink).toHaveBeenCalled();
+    expect(options.adjustTotal).not.toHaveBeenCalled();
+  });
+
+  it('handleDismissToast clears toastMessage', async () => {
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+
+    act(() => result.current.handleCreated(makeLink()));
+    expect(result.current.toastMessage).toBe('Link saved!');
+
+    act(() => result.current.handleDismissToast());
+    expect(result.current.toastMessage).toBeNull();
+  });
+
+  it('shows toast "No links to stumble upon" when onNoLinks is triggered', () => {
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+    act(() => capturedOnNoLinks?.());
+    expect(result.current.toastMessage).toBe('No links to stumble upon');
+  });
+
+  it('deleteError is null initially', () => {
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+    expect(result.current.deleteError).toBeNull();
+  });
+
+  it('handleDeleteAllRead clears links and resets total on success', async () => {
+    vi.mocked(apiModule.deleteAllReadLinks).mockResolvedValue({ count: 2 });
+    const options = makeOptions();
+    const { result } = renderHook(() => useLinksActions(options));
+
+    await act(() => result.current.handleDeleteAllRead());
+
+    expect(options.clearLinks).toHaveBeenCalled();
+    expect(options.resetTotal).toHaveBeenCalled();
+    expect(result.current.deleteError).toBeNull();
+  });
+
+  it('handleDeleteAllRead sets deleteError when the API call fails', async () => {
+    vi.mocked(apiModule.deleteAllReadLinks).mockRejectedValue(
+      new Error('Network error'),
+    );
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+
+    await act(() => result.current.handleDeleteAllRead());
+
+    expect(result.current.deleteError).toBe('Network error');
+  });
+
+  it('handleDeleteAllRead sets a fallback deleteError for non-Error rejections', async () => {
+    vi.mocked(apiModule.deleteAllReadLinks).mockRejectedValue('boom');
+    const { result } = renderHook(() => useLinksActions(makeOptions()));
+
+    await act(() => result.current.handleDeleteAllRead());
+
+    expect(result.current.deleteError).toBe('Failed to delete read links');
+  });
+
+  it('metadata polling callback updates the link and clears pendingMetaLinkId', () => {
+    const options = makeOptions();
+    renderHook(() => useLinksActions(options));
+
+    const updatedLink = makeLink({
+      id: 'link-meta',
+      url: 'https://updated.com',
+    });
+
+    act(() => {
+      expect(capturedOnSettled).not.toBeNull();
+      capturedOnSettled!(updatedLink);
+    });
+
+    expect(options.updateLink).toHaveBeenCalledWith(updatedLink);
+  });
+
+  it('handleCreated is a no-op when the read tab is active', () => {
+    const options = makeOptions({ filter: 'read' });
+    const { result } = renderHook(() => useLinksActions(options));
+
+    act(() => result.current.handleCreated(makeLink()));
+
+    expect(options.prependLink).not.toHaveBeenCalled();
+    expect(options.adjustTotal).not.toHaveBeenCalled();
+    expect(result.current.toastMessage).toBeNull();
+  });
+
+  describe('handleDirectSave', () => {
+    it('calls createLink and delegates to handleCreated on success', async () => {
+      const link = makeLink({ id: 'new-link' });
+      vi.mocked(apiModule.createLink).mockResolvedValue(link);
+      const options = makeOptions();
+      const { result } = renderHook(() => useLinksActions(options));
+
+      await act(() => result.current.handleDirectSave('https://example.com'));
+
+      expect(apiModule.createLink).toHaveBeenCalledWith({
+        url: 'https://example.com',
+      });
+      expect(options.prependLink).toHaveBeenCalledWith(link);
+      expect(result.current.saveError).toBeNull();
+    });
+
+    it('sets saveError when createLink fails', async () => {
+      vi.mocked(apiModule.createLink).mockRejectedValue(new Error('Bad URL'));
+      const { result } = renderHook(() => useLinksActions(makeOptions()));
+
+      await act(() => result.current.handleDirectSave('not-a-url'));
+
+      expect(result.current.saveError).toBe('Bad URL');
+    });
+
+    it('sets a fallback saveError for non-Error rejections', async () => {
+      vi.mocked(apiModule.createLink).mockRejectedValue('boom');
+      const { result } = renderHook(() => useLinksActions(makeOptions()));
+
+      await act(() => result.current.handleDirectSave('https://example.com'));
+
+      expect(result.current.saveError).toBe('Failed to save link');
+    });
+  });
+
+  describe('handleToggleRead', () => {
+    it('marks an unread link as read and removes it from the unread list', async () => {
+      const link = makeLink({ id: 'link-1', readAt: null });
+      const read = makeLink({
+        id: 'link-1',
+        readAt: new Date().toISOString(),
+      });
+      vi.mocked(apiModule.readLink).mockResolvedValue(read);
+
+      const options = makeOptions({ filter: 'unread' });
+      const { result } = renderHook(() => useLinksActions(options));
+
+      await act(() => result.current.handleToggleRead(link));
+
+      expect(apiModule.readLink).toHaveBeenCalledWith('link-1');
+      expect(options.removeLink).toHaveBeenCalledWith('link-1');
+      expect(options.adjustTotal).toHaveBeenCalledWith(-1);
+    });
+
+    it('marks a link as unread and removes it from the read list', async () => {
+      const link = makeLink({
+        id: 'link-1',
+        readAt: new Date().toISOString(),
+      });
+      const unread = makeLink({ id: 'link-1', readAt: null });
+      vi.mocked(apiModule.unreadLink).mockResolvedValue(unread);
+
+      const options = makeOptions({ filter: 'read' });
+      const { result } = renderHook(() => useLinksActions(options));
+
+      await act(() => result.current.handleToggleRead(link));
+
+      expect(apiModule.unreadLink).toHaveBeenCalledWith('link-1');
+      expect(options.removeLink).toHaveBeenCalledWith('link-1');
+      expect(options.adjustTotal).toHaveBeenCalledWith(-1);
+    });
+
+    it('updates link in place when it stays in the current filter', async () => {
+      // Marking as read on the read tab would never happen in normal use,
+      // but the branch handles: read tab + readAt set → stays in
+      // view. Easier to test: unread tab + mark as unread → stays.
+      const link = makeLink({
+        id: 'link-1',
+        readAt: new Date().toISOString(),
+      });
+      const unread = makeLink({ id: 'link-1', readAt: null });
+      vi.mocked(apiModule.unreadLink).mockResolvedValue(unread);
+
+      const options = makeOptions({ filter: 'unread' });
+      const { result } = renderHook(() => useLinksActions(options));
+
+      await act(() => result.current.handleToggleRead(link));
+
+      expect(options.updateLink).toHaveBeenCalledWith(unread);
+      expect(options.removeLink).not.toHaveBeenCalled();
+    });
+
+    it('sets readError when the API call fails', async () => {
+      const link = makeLink({ id: 'link-1', readAt: null });
+      vi.mocked(apiModule.readLink).mockRejectedValue(
+        new Error('Server error'),
+      );
+
+      const { result } = renderHook(() => useLinksActions(makeOptions()));
+
+      await act(() => result.current.handleToggleRead(link));
+
+      expect(result.current.readError).toBe('Server error');
+    });
+
+    it('sets a fallback readError for non-Error rejections', async () => {
+      const link = makeLink({ id: 'link-1', readAt: null });
+      vi.mocked(apiModule.readLink).mockRejectedValue('boom');
+
+      const { result } = renderHook(() => useLinksActions(makeOptions()));
+
+      await act(() => result.current.handleToggleRead(link));
+
+      expect(result.current.readError).toBe('Failed to update link');
+    });
+  });
+});
