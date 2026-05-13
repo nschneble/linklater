@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { FOCUS_RING } from '../../lib/styles';
+import { useNavigate } from 'react-router-dom';
 import { fetchRandomWikipediaArticle } from '../../lib/wikipedia';
 import type { WikipediaArticle } from '../../lib/wikipedia';
-import WikipediaArticleList from './WikipediaArticleList';
 import PixelArtGhost from './PixelArtGhost';
+import PrimaryButton from '../common/PrimaryButton';
+import WikipediaArticleList from './WikipediaArticleList';
 
 /**
  * Full-page empty state shown by `StumblePage` when the user has no unread
@@ -15,6 +15,7 @@ import PixelArtGhost from './PixelArtGhost';
  * gracefully to a static fallback message.
  */
 export default function StumbleEmptyView() {
+  const navigate = useNavigate();
   const [articles, setArticles] = useState<WikipediaArticle[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,12 +58,14 @@ export default function StumbleEmptyView() {
 
       <WikipediaArticleList loading={loading} articles={articles} />
 
-      <Link
-        to="/unread"
-        className={`text-[var(--text-muted)] hover:text-[var(--text)] text-sm transition ${FOCUS_RING} rounded`}
+      <PrimaryButton
+        className="py-2.5"
+        type="button"
+        onClick={() => navigate('/unread')}
       >
-        ← Back to Linklater
-      </Link>
+        <i className="fa-solid fa-arrow-left text-xs" aria-hidden="true" />
+        Back to Linklater
+      </PrimaryButton>
     </div>
   );
 }

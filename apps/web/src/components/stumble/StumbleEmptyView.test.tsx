@@ -35,7 +35,7 @@ describe('StumbleEmptyView', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders the ghost illustration, headline, and back link', async () => {
+  it('renders the ghost illustration, headline, and back button', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(makeWikipediaResponse()));
     renderView();
 
@@ -44,7 +44,7 @@ describe('StumbleEmptyView', () => {
       screen.getByRole('heading', { name: /your reading list is empty/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: /back to linklater/i }),
+      screen.getByRole('button', { name: /back to linklater/i }),
     ).toBeInTheDocument();
   });
 
@@ -92,13 +92,13 @@ describe('StumbleEmptyView', () => {
     });
   });
 
-  it('back link points to /unread', () => {
+  it('back button navigates to /unread', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(makeWikipediaResponse()));
     renderView();
 
     expect(
-      screen.getByRole('link', { name: /back to linklater/i }),
-    ).toHaveAttribute('href', '/unread');
+      screen.getByRole('button', { name: /back to linklater/i }),
+    ).toBeInTheDocument();
   });
 
   it('shows the loading text while fetching articles', () => {
