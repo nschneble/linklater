@@ -8,14 +8,7 @@ export interface CreateLinkInput {
   url: string;
 }
 
-/**
- * Input shape for `update`. Currently empty because no user-editable fields
- * exist yet — the type is declared as `object` so the route stays wired for
- * future additions without breaking the call site.
- *
- * // TODO: Add optional fields (e.g. `title`, `tags`) as the feature grows.
- */
-export interface UpdateLinkInput {}
+export type UpdateLinkInput = object;
 
 /** Maximum results per page regardless of what the caller requests. */
 const MAX_LIMIT = 100;
