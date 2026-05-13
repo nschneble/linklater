@@ -101,7 +101,10 @@ export default function AppShell() {
               aria-hidden="true"
             />
             Please verify your email address.{' '}
-            <LinkButton onClick={() => navigate('/settings')}>
+            <LinkButton
+              className="hidden sm:contents"
+              onClick={() => navigate('/settings')}
+            >
               Need to resend the verification email?
             </LinkButton>
           </p>
