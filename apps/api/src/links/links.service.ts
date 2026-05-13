@@ -15,7 +15,7 @@ export interface CreateLinkInput {
  *
  * // TODO: Add optional fields (e.g. `title`, `tags`) as the feature grows.
  */
-export type UpdateLinkInput = Record<string, never>;
+export interface UpdateLinkInput {}
 
 /** Maximum results per page regardless of what the caller requests. */
 const MAX_LIMIT = 100;
