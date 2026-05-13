@@ -50,7 +50,6 @@ export default function DangerZone() {
       {!confirmDelete ? (
         <IconButton
           variant="danger"
-          className="px-3"
           type="button"
           onClick={() => setConfirmDelete(true)}
         >
@@ -67,7 +66,6 @@ export default function DangerZone() {
           </span>
           <IconButton
             variant="danger-filled"
-            className="px-3"
             type="button"
             disabled={deleting}
             onClick={handleDelete}
@@ -76,7 +74,6 @@ export default function DangerZone() {
           </IconButton>
           <IconButton
             variant="ghost"
-            className="px-3"
             type="button"
             onClick={() => setConfirmDelete(false)}
           >
