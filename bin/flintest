@@ -62,9 +62,9 @@ TICK=✓  CROSS=✗  CIRC=○
 
 # ── Layout constants ────────────────────────────────────────────────────────────
 if [[ "$RUN_UPDATE" == true ]]; then
-  STEPS=(Update Install Format Lint Test Build)
+  STEPS=(Update Install Generate Format Lint Test Build)
 else
-  STEPS=(Install Format Lint Test Build)
+  STEPS=(Install Generate Format Lint Test Build)
 fi
 NS=${#STEPS[@]}
 
@@ -210,28 +210,35 @@ if [[ -z "$FAILED_STEP" ]]; then
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 1 )) npm run format; then
+  if ! run_step $(( STEP_OFFSET + 1 )) node scripts/generate-email-palette.mjs; then
+    FAILED_STEP="Generate"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step $(( STEP_OFFSET + 2 )) npm run format; then
     FAILED_STEP="Format"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 2 )) npm run lint; then
+  if ! run_step $(( STEP_OFFSET + 3 )) npm run lint; then
     FAILED_STEP="Lint"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 3 )) npm run test; then
+  if ! run_step $(( STEP_OFFSET + 4 )) npm run test; then
     FAILED_STEP="Test"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 4 )) npm run build; then
+  if ! run_step $(( STEP_OFFSET + 5 )) npm run build; then
     FAILED_STEP="Build"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi

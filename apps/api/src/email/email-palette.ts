@@ -1,3 +1,5 @@
+// @generated — do not edit by hand. Run: node scripts/generate-email-palette.mjs
+
 export interface EmailPalette {
   accent: string;
   accentFg: string;

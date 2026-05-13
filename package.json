@@ -12,6 +12,7 @@
     "lint": "npm run lint --workspace @linklater/api && npm run lint --workspace @linklater/web",
     "test": "npm run test --workspace @linklater/api && npm run test --workspace @linklater/web",
     "test:cov": "npm run test:cov --workspace @linklater/api && npm run test:cov --workspace @linklater/web",
+    "generate:email-palette": "node scripts/generate-email-palette.mjs",
     "version:bump": "node scripts/bump-version.mjs"
   },
   "workspaces": [
