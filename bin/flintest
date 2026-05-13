@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# flintest — run install, format, lint, and test with optional updates
+# flintest – run install, format, lint, and test with optional updates
 
 set -uo pipefail
 
@@ -234,7 +234,7 @@ if [[ -z "$FAILED_STEP" ]]; then
   [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
   exit 0
 else
-  set_status "${RED}${BLD}${FAILED_STEP} failed — see below.${RST}"
+  set_status "${RED}${BLD}${FAILED_STEP} failed – see below.${RST}"
   [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
   printf '\n'
   printf '%s\n' "$FAILED_OUTPUT" | sed 's/^/  /'
