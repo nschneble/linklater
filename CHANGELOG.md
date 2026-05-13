@@ -4,7 +4,35 @@
 
 ## [Unreleased]
 
+### Added
+
+#### Features
+
 _Nothing here!_
+
+#### Bugfixes
+
+_Nothing here!_
+
+### Removed
+
+#### Features
+
+_Nothing here!_
+
+## [0.2.0] - 2026-04-21
+
+### Added
+
+This is a development version bump. Most of the changes are related to refactoring and reorganizing files in the repository.
+
+#### Features
+
+_None_
+
+#### Bugfixes
+
+_None_
 
 ## [0.1.0] - 2026-04-20
 
@@ -24,5 +52,6 @@ _Nothing here!_
 
 _None_
 
-[Unreleased]: https://github.com/nschneble/linklater/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/nschneble/linklater/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/nschneble/linklater/releases/tag/v0.2.0
 [0.1.0]: https://github.com/nschneble/linklater/releases/tag/v0.1.0
