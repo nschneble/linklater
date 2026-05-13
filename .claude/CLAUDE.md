@@ -31,7 +31,6 @@ apps
 bin/dev                                           # Start development server
 bin/flintest                                      # Install, format, lint, test
 bin/flintest --update                             # Update, install, format, lint, test
-bin/gitbuilt                                      # Format, lint, test, build
 
 # Setup
 npm install                                       # Install dependencies
@@ -131,7 +130,7 @@ Follow three simple steps repeatedly:
 - Embrace the slow software movement
   - Refer to [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software) for a manifesto
 - Always clean up after yourself! Kill any listeners or temporary-running processes that are no longer necessary once the work is complete
-- Always run `bin/gitbuilt` when you're done to ensure formatting, linting, testing, and building all execute successfully
+- Always run `bin/flintest` when you're done to ensure formatting, linting, testing, and building all execute successfully
 
 ## TypeScript Conventions
 
@@ -174,7 +173,6 @@ import StumbleEmptyView from './StumbleEmptyView';
 import { stumbleLink } from '../lib/api';
 import { useEffect, useState } from 'react';
 ```
-
 
 ## Testing Patterns
 
