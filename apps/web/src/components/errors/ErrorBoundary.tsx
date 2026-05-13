@@ -46,7 +46,7 @@ export default class ErrorBoundary extends Component<
       return (
         <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-[var(--bg)] text-[var(--text)] text-center">
           <i
-            className="fa-regular fa-bug text-4xl text-[var(--text-subtle)] mb-4"
+            className="fa-solid fa-bug text-4xl text-[var(--text-subtle)] mb-4"
             aria-hidden="true"
           />
           <h1 className="mb-2 text-lg font-semibold">Something went wrong</h1>
