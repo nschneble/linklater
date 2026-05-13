@@ -51,6 +51,7 @@ export default function LinksControls({
         variant="elevated"
         disabled={isClearingRead}
         hidden={filter === 'unread' || linksCount === 0}
+        aria-label="Remove all read links"
         title="Permanently remove all read links"
         onClick={onClearRead}
       >

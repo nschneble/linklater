@@ -1,8 +1,6 @@
-import LinksControls from './LinksControls';
-import IconButton from '../common/IconButton';
 import { LINKS_LIST_ID } from './LinksList';
-import { LINK_FORM_ID } from './LinksView';
-import PrimaryButton from '../common/PrimaryButton';
+import LinksControls from './LinksControls';
+import LinksMobileControls from './LinksMobileControls';
 import TabButton from '../common/TabButton';
 import { useRef } from 'react';
 import { useTabNavigation } from '../../lib/hooks/useTabNavigation';
@@ -134,53 +132,16 @@ export default function LinksToolbar({
           aria-controls={LINKS_LIST_ID}
         />
 
-        <div className="flex sm:hidden shrink-0 gap-2">
-          {filter === 'read' && links.length > 0 && (
-            <IconButton
-              variant="elevated"
-              disabled={isClearingRead}
-              aria-label="Remove all read links"
-              title="Permanently remove all read links"
-              className="!px-2.5"
-              onClick={onClearRead}
-            >
-              <i
-                className="fa-solid fa-trash text-[0.7rem]"
-                aria-hidden="true"
-              />
-            </IconButton>
-          )}
-          {filter === 'unread' && (
-            <>
-              <IconButton
-                variant="elevated"
-                disabled={randomLoading}
-                aria-label="Stumble upon a random link"
-                title="Open a random unread link and marksit as read"
-                className="!px-2.5"
-                onClick={onRandom}
-              >
-                <i
-                  className="fa-solid fa-shuffle text-[0.7rem]"
-                  aria-hidden="true"
-                />
-              </IconButton>
-              <PrimaryButton
-                type="button"
-                aria-label={showLinkForm ? 'Hide form' : 'Add link'}
-                aria-expanded={showLinkForm}
-                aria-controls={LINK_FORM_ID}
-                className="!px-2.5"
-                onClick={onToggleForm}
-              >
-                <i
-                  className="fa-solid fa-plus text-[0.7rem]"
-                  aria-hidden="true"
-                />
-              </PrimaryButton>
-            </>
-          )}
-        </div>
+        <LinksMobileControls
+          filter={filter}
+          isClearingRead={isClearingRead}
+          linksCount={links.length}
+          randomLoading={randomLoading}
+          showLinkForm={showLinkForm}
+          onClearRead={onClearRead}
+          onRandom={onRandom}
+          onToggleForm={onToggleForm}
+        />
       </div>
     </>
   );
