@@ -29,7 +29,9 @@ describe('LinksMobileControls', () => {
 
     it('calls onRandom when the shuffle button is clicked', () => {
       const onRandom = vi.fn();
-      render(<LinksMobileControls {...defaultUnreadProps} onRandom={onRandom} />);
+      render(
+        <LinksMobileControls {...defaultUnreadProps} onRandom={onRandom} />,
+      );
       fireEvent.click(
         screen.getByRole('button', { name: 'Stumble upon a random link' }),
       );
@@ -39,45 +41,62 @@ describe('LinksMobileControls', () => {
     it('calls onToggleForm when the add link button is clicked', () => {
       const onToggleForm = vi.fn();
       render(
-        <LinksMobileControls {...defaultUnreadProps} onToggleForm={onToggleForm} />,
+        <LinksMobileControls
+          {...defaultUnreadProps}
+          onToggleForm={onToggleForm}
+        />,
       );
       fireEvent.click(screen.getByRole('button', { name: 'Add link' }));
       expect(onToggleForm).toHaveBeenCalledOnce();
     });
 
     it('disables the shuffle button while randomLoading', () => {
-      render(<LinksMobileControls {...defaultUnreadProps} randomLoading={true} />);
+      render(
+        <LinksMobileControls {...defaultUnreadProps} randomLoading={true} />,
+      );
       expect(
         screen.getByRole('button', { name: 'Stumble upon a random link' }),
       ).toBeDisabled();
     });
 
     it('sets aria-label to "Hide form" when showLinkForm is true', () => {
-      render(<LinksMobileControls {...defaultUnreadProps} showLinkForm={true} />);
+      render(
+        <LinksMobileControls {...defaultUnreadProps} showLinkForm={true} />,
+      );
       expect(
         screen.getByRole('button', { name: 'Hide form' }),
       ).toBeInTheDocument();
     });
 
     it('sets aria-expanded=true on the toggle button when showLinkForm is true', () => {
-      render(<LinksMobileControls {...defaultUnreadProps} showLinkForm={true} />);
-      expect(
-        screen.getByRole('button', { name: 'Hide form' }),
-      ).toHaveAttribute('aria-expanded', 'true');
+      render(
+        <LinksMobileControls {...defaultUnreadProps} showLinkForm={true} />,
+      );
+      expect(screen.getByRole('button', { name: 'Hide form' })).toHaveAttribute(
+        'aria-expanded',
+        'true',
+      );
     });
 
     it('sets aria-expanded=false on the toggle button when showLinkForm is false', () => {
-      render(<LinksMobileControls {...defaultUnreadProps} showLinkForm={false} />);
-      expect(
-        screen.getByRole('button', { name: 'Add link' }),
-      ).toHaveAttribute('aria-expanded', 'false');
+      render(
+        <LinksMobileControls {...defaultUnreadProps} showLinkForm={false} />,
+      );
+      expect(screen.getByRole('button', { name: 'Add link' })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+      );
     });
   });
 
   describe('read filter', () => {
     it('shows the trash button when links exist', () => {
       render(
-        <LinksMobileControls {...defaultUnreadProps} filter="read" linksCount={3} />,
+        <LinksMobileControls
+          {...defaultUnreadProps}
+          filter="read"
+          linksCount={3}
+        />,
       );
       expect(
         screen.getByRole('button', { name: 'Remove all read links' }),
@@ -86,7 +105,11 @@ describe('LinksMobileControls', () => {
 
     it('does not show the trash button when no links exist', () => {
       render(
-        <LinksMobileControls {...defaultUnreadProps} filter="read" linksCount={0} />,
+        <LinksMobileControls
+          {...defaultUnreadProps}
+          filter="read"
+          linksCount={0}
+        />,
       );
       expect(
         screen.queryByRole('button', { name: 'Remove all read links' }),
@@ -103,7 +126,9 @@ describe('LinksMobileControls', () => {
           onClearRead={onClearRead}
         />,
       );
-      fireEvent.click(screen.getByRole('button', { name: 'Remove all read links' }));
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Remove all read links' }),
+      );
       expect(onClearRead).toHaveBeenCalledOnce();
     });
 
