@@ -1,8 +1,8 @@
 import Header from './components/Header';
 import LinkButton from './components/ui/LinkButton';
-import LinksView from './components/LinksView';
+import LinksView from './components/links/LinksView';
 import NotFoundView from './components/NotFoundView';
-import SettingsView from './components/SettingsView';
+import SettingsView from './components/settings/SettingsView';
 import { Suspense, lazy, useEffect } from 'react';
 import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
@@ -12,7 +12,7 @@ import { type AppView } from './lib/navigation';
 
 // ThemeEditor is lazy-loaded because it's rarely visited and its
 // color-math utilities add non-trivial weight to the bundle.
-const ThemeEditor = lazy(() => import('./components/ThemeEditor'));
+const ThemeEditor = lazy(() => import('./components/settings/ThemeEditor'));
 
 /** Maps the current URL pathname to the active `AppView`. */
 function viewFromPath(pathname: string): AppView {

@@ -1,0 +1,254 @@
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import AccountSettingsForm from './AccountSettingsForm';
+import type { User } from '../../auth/AuthContext';
+
+vi.mock('../../lib/api', () => ({
+  requestEmailChange: vi.fn(),
+  updateMe: vi.fn(),
+}));
+
+vi.mock('../../auth/AuthContext', () => ({
+  useAuth: vi.fn(),
+}));
+
+import * as apiModule from '../../lib/api';
+import { useAuth } from '../../auth/AuthContext';
+
+const USER_EMAIL = 'email@example.com';
+const USER_ID = 'user-1';
+
+function makeUser(overrides: Partial<User> = {}): User {
+  return {
+    email: USER_EMAIL,
+    emailVerifiedAt: '2026-01-01T00:00:00.000Z',
+    hasPassword: true,
+    mode: 'light',
+    pendingEmail: null,
+    theme: 'scanner-darkly',
+    userId: USER_ID,
+    ...overrides,
+  };
+}
+
+function makeAuthContext(overrides = {}) {
+  return {
+    loading: false,
+    login: vi.fn(),
+    loginWithToken: vi.fn(),
+    logout: vi.fn(),
+    register: vi.fn(),
+    resendVerificationEmail: vi.fn(),
+    setPendingEmail: vi.fn(),
+    user: makeUser(),
+    ...overrides,
+  };
+}
+
+beforeEach(() => {
+  vi.mocked(useAuth).mockReturnValue(makeAuthContext());
+});
+
+afterEach(() => vi.restoreAllMocks());
+
+describe('AccountSettingsForm', () => {
+  describe('email section', () => {
+    it('shows the current email address', () => {
+      render(<AccountSettingsForm />);
+      expect(screen.getByText(USER_EMAIL)).toBeInTheDocument();
+    });
+
+    it('shows Verified badge when email is verified', () => {
+      render(<AccountSettingsForm />);
+      expect(screen.getByText('Verified')).toBeInTheDocument();
+    });
+
+    it('shows Unverified badge when email is not verified', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ emailVerifiedAt: null }) }),
+      );
+      render(<AccountSettingsForm />);
+      expect(screen.getByText('Unverified')).toBeInTheDocument();
+    });
+
+    it('shows the resend verification email button when unverified', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ emailVerifiedAt: null }) }),
+      );
+      render(<AccountSettingsForm />);
+      expect(
+        screen.getByRole('button', { name: /resend verification email/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('does not show the resend button when email is verified', () => {
+      render(<AccountSettingsForm />);
+      expect(
+        screen.queryByRole('button', { name: /resend verification email/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows pending email alert when a pending email change exists', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({ pendingEmail: 'new@example.com' }),
+        }),
+      );
+      render(<AccountSettingsForm />);
+      expect(screen.getByText(/new@example.com/i)).toBeInTheDocument();
+    });
+
+    it('sends email change request and shows success message', async () => {
+      vi.mocked(apiModule.requestEmailChange).mockResolvedValue(undefined);
+      const setPendingEmail = vi.fn();
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ setPendingEmail }));
+
+      render(<AccountSettingsForm />);
+      const emailInput = screen.getByLabelText(/change email/i);
+      fireEvent.change(emailInput, { target: { value: 'new@example.com' } });
+      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+
+      await waitFor(() => {
+        expect(apiModule.requestEmailChange).toHaveBeenCalledWith(
+          'new@example.com',
+        );
+        expect(setPendingEmail).toHaveBeenCalledWith('new@example.com');
+        expect(screen.getByRole('status')).toBeInTheDocument();
+      });
+    });
+
+    it('shows an error when email change request fails', async () => {
+      vi.mocked(apiModule.requestEmailChange).mockRejectedValue(
+        new Error('Email already in use'),
+      );
+
+      render(<AccountSettingsForm />);
+      const emailInput = screen.getByLabelText(/change email/i);
+      fireEvent.change(emailInput, {
+        target: { value: 'taken@example.com' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(screen.getByText('Email already in use')).toBeInTheDocument();
+      });
+    });
+
+    it('shows resend success message when resend email is clicked', async () => {
+      const resendVerificationEmail = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          resendVerificationEmail,
+          user: makeUser({ emailVerifiedAt: null }),
+        }),
+      );
+
+      render(<AccountSettingsForm />);
+      fireEvent.click(
+        screen.getByRole('button', { name: /resend verification email/i }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('status')).toBeInTheDocument();
+        expect(
+          screen.getByText(/verification email sent/i),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('shows an error when resend verification email fails', async () => {
+      const resendVerificationEmail = vi
+        .fn()
+        .mockRejectedValue(new Error('Too many requests'));
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          resendVerificationEmail,
+          user: makeUser({ emailVerifiedAt: null }),
+        }),
+      );
+
+      render(<AccountSettingsForm />);
+      fireEvent.click(
+        screen.getByRole('button', { name: /resend verification email/i }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(screen.getByText('Too many requests')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('password section', () => {
+    it('does not show the current password field until new password is typed', () => {
+      render(<AccountSettingsForm />);
+      expect(
+        screen.queryByLabelText(/current password/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows the current password field when a new password is entered', () => {
+      render(<AccountSettingsForm />);
+      fireEvent.change(screen.getByLabelText(/new password/i), {
+        target: { value: 'my-new-password' },
+      });
+
+      expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
+    });
+
+    it('updates the password and shows success message', async () => {
+      vi.mocked(apiModule.updateMe).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+      });
+
+      render(<AccountSettingsForm />);
+      fireEvent.change(screen.getByLabelText(/new password/i), {
+        target: { value: 'new-strong-password-123' },
+      });
+      fireEvent.change(screen.getByLabelText(/current password/i), {
+        target: { value: 'current-password' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /update password/i }));
+
+      await waitFor(() => {
+        expect(apiModule.updateMe).toHaveBeenCalledWith({
+          password: 'new-strong-password-123',
+          currentPassword: 'current-password',
+        });
+        expect(screen.getByRole('status')).toBeInTheDocument();
+        expect(screen.getByText('Password updated')).toBeInTheDocument();
+      });
+    });
+
+    it('shows an error when the password update fails', async () => {
+      vi.mocked(apiModule.updateMe).mockRejectedValue(
+        new Error('Current password is incorrect'),
+      );
+
+      render(<AccountSettingsForm />);
+      fireEvent.change(screen.getByLabelText(/new password/i), {
+        target: { value: 'new-strong-password-123' },
+      });
+      fireEvent.change(screen.getByLabelText(/current password/i), {
+        target: { value: 'wrong-password' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /update password/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(
+          screen.getByText('Current password is incorrect'),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('the Update password button is disabled when new password is empty', () => {
+      render(<AccountSettingsForm />);
+      expect(
+        screen.getByRole('button', { name: /update password/i }),
+      ).toBeDisabled();
+    });
+  });
+});

@@ -1,12 +1,12 @@
 import AppShell from './AppShell';
-import AuthForm from './components/AuthForm';
+import AuthForm from './components/auth/AuthForm';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import OAuthCallbackPage from './components/OAuthCallbackPage';
-import ResetPasswordPage from './components/ResetPasswordPage';
-import StumblePage from './components/StumblePage';
-import VerifyEmailChangePage from './components/VerifyEmailChangePage';
-import VerifyEmailPage from './components/VerifyEmailPage';
+import OAuthCallbackPage from './components/auth/OAuthCallbackPage';
+import ResetPasswordPage from './components/auth/ResetPasswordPage';
+import StumblePage from './components/stumble/StumblePage';
+import VerifyEmailChangePage from './components/verify/VerifyEmailChangePage';
+import VerifyEmailPage from './components/verify/VerifyEmailPage';
 import { useAuth } from './auth/AuthContext';
 import { useEffect } from 'react';
 import { useTheme, type BaseTheme, type Mode } from './theme/ThemeContext';
