@@ -164,6 +164,37 @@ describe('useLinksData initial fetch', () => {
 
     expect(result.current.links).toEqual([]);
   });
+
+  it('sets fetchError when the fetch rejects', async () => {
+    vi.mocked(apiModule.getLinks).mockRejectedValue(new Error('Network error'));
+
+    const { result } = renderHook(() => useLinksData('unread', ''));
+
+    await waitFor(() =>
+      expect(result.current.fetchError).toBe('Network error'),
+    );
+  });
+
+  it('clears fetchError on a subsequent successful fetch', async () => {
+    const link = makeLink();
+    vi.mocked(apiModule.getLinks)
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValue(makePaginated([link]));
+
+    const { result, rerender } = renderHook(
+      ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
+        useLinksData(filter, search),
+      { initialProps: { filter: 'unread' as const, search: '' } },
+    );
+
+    await waitFor(() =>
+      expect(result.current.fetchError).toBe('Network error'),
+    );
+
+    rerender({ filter: 'read', search: '' });
+
+    await waitFor(() => expect(result.current.fetchError).toBeNull());
+  });
 });
 
 describe('useLinksData stale request guard', () => {

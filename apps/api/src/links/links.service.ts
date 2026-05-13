@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { PrismaService, Prisma } from '../prisma/index.js';
 import { QueueService, QUEUES } from '../queue/index.js';
@@ -20,7 +15,7 @@ export interface CreateLinkInput {
  *
  * // TODO: Add optional fields (e.g. `title`, `tags`) as the feature grows.
  */
-export type UpdateLinkInput = object;
+export type UpdateLinkInput = Record<string, never>;
 
 /** Maximum results per page regardless of what the caller requests. */
 const MAX_LIMIT = 100;
@@ -63,15 +58,8 @@ export class LinksService {
    * @param userId - The UUID of the authenticated user.
    * @param input - Contains the URL to save.
    * @returns The created or resurfaced link with its `meta` relation included.
-   * @throws {BadRequestException} When the URL cannot be parsed by the `URL` constructor.
    */
   async create(userId: string, input: CreateLinkInput) {
-    try {
-      new URL(input.url);
-    } catch {
-      throw new BadRequestException('Invalid url');
-    }
-
     const existing = await this.prisma.link.findFirst({
       where: { userId, url: input.url },
       include: { meta: true },
@@ -377,10 +365,19 @@ export class LinksService {
    *   when the user has no unread links.
    */
   async stumble(userId: string): Promise<{ url: string } | null> {
-    const link = await this.getRandom(userId, false);
-    if (!link) return null;
-    await this.read(userId, link.id);
-    return { url: link.url };
+    const result = await this.prisma.$queryRaw<{ id: string; url: string }[]>`
+      UPDATE "Link"
+      SET "readAt" = NOW()
+      WHERE id = (
+        SELECT id FROM "Link"
+        WHERE "userId" = ${userId} AND "readAt" IS NULL
+        ORDER BY RANDOM() LIMIT 1
+        FOR UPDATE SKIP LOCKED
+      )
+      RETURNING id, url
+    `;
+    if (result.length === 0) return null;
+    return { url: result[0].url };
   }
 
   /**
@@ -393,21 +390,13 @@ export class LinksService {
    * @returns The randomly selected link with metadata, or `null` if no matching links exist.
    */
   async getRandom(userId: string, read = false) {
-    let result: { id: string }[];
+    const readFilter = read ? Prisma.sql`IS NOT NULL` : Prisma.sql`IS NULL`;
 
-    if (read) {
-      result = await this.prisma.$queryRaw<{ id: string }[]>`
-        SELECT id FROM "Link"
-        WHERE "userId" = ${userId} AND "readAt" IS NOT NULL
-        ORDER BY RANDOM() LIMIT 1
-      `;
-    } else {
-      result = await this.prisma.$queryRaw<{ id: string }[]>`
-        SELECT id FROM "Link"
-        WHERE "userId" = ${userId} AND "readAt" IS NULL
-        ORDER BY RANDOM() LIMIT 1
-      `;
-    }
+    const result = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "Link"
+      WHERE "userId" = ${userId} AND "readAt" ${readFilter}
+      ORDER BY RANDOM() LIMIT 1
+    `;
 
     if (result.length === 0) return null;
 

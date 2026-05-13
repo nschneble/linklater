@@ -25,7 +25,6 @@ import { QueueService } from '../queue/queue.service';
 import { QUEUES } from '../queue/queue.constants';
 import { Prisma } from '../prisma/generated/client';
 
-const INVALID_LINK_URL = 'Hello, world!';
 const JOB_ID = 'job-1';
 const LINK_ID = 'link-1';
 const LINK_URL = 'https://example.com/page';
@@ -103,12 +102,6 @@ describe('LinksService', () => {
       linkId: LINK_ID,
       url: LINK_URL,
     });
-  });
-
-  it('throws on invalid url', async () => {
-    await expect(
-      service.create(USER_ID, { url: INVALID_LINK_URL }),
-    ).rejects.toThrow('Invalid url');
   });
 
   it('upserts existing link: clears readAt, moves to top, re-enqueues metadata when not fetched', async () => {
@@ -431,21 +424,16 @@ describe('LinksService', () => {
       expect(prismaMock.link.update).not.toHaveBeenCalled();
     });
 
-    it('marks link as read and returns its url when unread link exists', async () => {
-      const link = makeLink();
-      const readLink = makeLink({ readAt: new Date() });
-      (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([{ id: LINK_ID }]);
-      (prismaMock.link.findFirst as jest.Mock).mockResolvedValue(link);
-      (prismaMock.link.update as jest.Mock).mockResolvedValue(readLink);
+    it('atomically marks link as read and returns its url', async () => {
+      (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
+        { id: LINK_ID, url: LINK_URL },
+      ]);
 
       const result = await service.stumble(USER_ID);
 
-      expect(prismaMock.link.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: LINK_ID, userId: USER_ID },
-          data: expect.objectContaining({ readAt: expect.any(Date) }),
-        }),
-      );
+      expect(prismaMock.$queryRaw).toHaveBeenCalled();
+      expect(prismaMock.link.update).not.toHaveBeenCalled();
+      expect(prismaMock.link.findFirst).not.toHaveBeenCalled();
       expect(result).toEqual({ url: LINK_URL });
     });
   });

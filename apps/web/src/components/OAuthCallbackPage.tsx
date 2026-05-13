@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getErrorMessage } from '../lib/errors';
 import { useAuth } from '../auth/AuthContext';
 
@@ -8,20 +8,22 @@ type Status = 'loading' | 'error';
 /**
  * Handles the OAuth redirect back from the API after Google or Apple sign-in.
  *
- * The API redirects here with `?token=<jwt>` after successfully authenticating
- * the user via the OAuth provider. This page stores the JWT, fetches the user
- * profile, and navigates to the app. On failure it shows an error state with
- * a link back to the login form.
+ * The API redirects here with `#token=<jwt>` (URL fragment) after successfully
+ * authenticating the user via the OAuth provider. The fragment is never sent
+ * to the server or included in the Referer header, which prevents the JWT from
+ * leaking into server access logs or browser history. This page extracts the
+ * token from the hash, stores it, fetches the user profile, and navigates to
+ * the app. On failure it shows an error state with a link back to the login form.
  */
 export default function OAuthCallbackPage() {
   const { loginWithToken } = useAuth();
   const navigate = useNavigate();
-  const [searchParameters] = useSearchParams();
   const [status, setStatus] = useState<Status>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = searchParameters.get('token');
+    const hash = window.location.hash.slice(1);
+    const token = new URLSearchParams(hash).get('token');
 
     if (!token) {
       setStatus('error');
@@ -35,7 +37,7 @@ export default function OAuthCallbackPage() {
         setStatus('error');
         setErrorMessage(getErrorMessage(error, 'Failed to complete sign in.'));
       });
-  }, [searchParameters, loginWithToken, navigate]);
+  }, [loginWithToken, navigate]);
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">

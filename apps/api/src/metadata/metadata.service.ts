@@ -191,7 +191,7 @@ export class MetadataService implements OnModuleInit {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10_000);
 
-    let response: Response;
+    let response: Response | undefined;
     try {
       response = await fetch(url, {
         signal: controller.signal,
@@ -207,7 +207,7 @@ export class MetadataService implements OnModuleInit {
       clearTimeout(timeout);
     }
 
-    if (!response.ok) return null;
+    if (!response || !response.ok) return null;
 
     const contentType = response.headers.get('content-type') ?? '';
     if (!contentType.includes('text/html')) return null;

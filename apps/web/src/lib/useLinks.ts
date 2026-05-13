@@ -8,6 +8,7 @@ export type LinksFilter = 'unread' | 'read';
 
 /** The full public interface returned by `useLinks`. */
 export interface UseLinksResult {
+  fetchError: string | null;
   readError: string | null;
   deleteError: string | null;
   handleCreated: (link: Link) => void;
@@ -62,6 +63,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
   });
 
   return {
+    fetchError: data.fetchError,
     readError: actions.readError,
     deleteError: actions.deleteError,
     handleCreated: actions.handleCreated,

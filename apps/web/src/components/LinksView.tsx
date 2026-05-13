@@ -93,6 +93,7 @@ export default function LinksView() {
   }, [search]);
 
   const {
+    fetchError,
     readError,
     deleteError,
     handleCreated,
@@ -236,6 +237,7 @@ export default function LinksView() {
         onToggleForm={handleToggleForm}
       />
 
+      <ViewError message={fetchError} />
       <ViewError message={randomError} />
       <ViewError message={saveError} />
       <ViewError message={readError} />

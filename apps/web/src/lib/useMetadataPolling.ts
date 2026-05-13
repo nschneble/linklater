@@ -60,7 +60,11 @@ export function useMetadataPolling(
           }
         })
         .catch(() => {
-          // Stop polling silently on any network or server error.
+          elapsed += intervalMs;
+          if (elapsed < MAX_ELAPSED_MS) {
+            intervalMs = Math.min(intervalMs * 2, MAX_INTERVAL_MS);
+            timeoutId = setTimeout(poll, intervalMs);
+          }
         });
     }
 

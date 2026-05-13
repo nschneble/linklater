@@ -54,16 +54,18 @@ export default function AccountSettingsForm() {
       return;
     }
 
+    const requestedEmail = emailInput;
+
     setEmailError(null);
     setEmailMessage(null);
     setEmailSaving(true);
 
     try {
-      await requestEmailChange(emailInput);
-      setPendingEmail(emailInput);
+      await requestEmailChange(requestedEmail);
+      setPendingEmail(requestedEmail);
       setEmailInput(user?.email ?? '');
       setEmailMessage(
-        `Verification email sent to ${emailInput}. Check your inbox to confirm the change.`,
+        `Verification email sent to ${requestedEmail}. Check your inbox to confirm the change.`,
       );
     } catch (error: unknown) {
       setEmailError(getErrorMessage(error, 'Failed to request email change'));
