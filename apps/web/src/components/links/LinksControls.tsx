@@ -1,5 +1,5 @@
-import IconButton from '../ui/IconButton';
-import PrimaryButton from '../ui/PrimaryButton';
+import IconButton from '../common/IconButton';
+import PrimaryButton from '../common/PrimaryButton';
 import { LINK_FORM_ID } from './LinksView';
 import type { LinksFilter } from '../../lib/hooks/useLinks';
 

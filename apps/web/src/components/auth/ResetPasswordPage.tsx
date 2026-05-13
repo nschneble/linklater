@@ -2,10 +2,10 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { resetPassword } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import Alert from '../ui/Alert';
-import FormInput from '../ui/FormInput';
-import LinkButton from '../ui/LinkButton';
-import PrimaryButton from '../ui/PrimaryButton';
+import Alert from '../common/Alert';
+import FormInput from '../common/FormInput';
+import LinkButton from '../common/LinkButton';
+import PrimaryButton from '../common/PrimaryButton';
 
 /**
  * Handles the `/reset-password?token=...` route. Renders a form for the user

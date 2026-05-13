@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import PrimaryButton from './ui/PrimaryButton';
+import PrimaryButton from '../common/PrimaryButton';
 
 interface ErrorBoundaryProps {
   /** The subtree to protect from unhandled render errors. */

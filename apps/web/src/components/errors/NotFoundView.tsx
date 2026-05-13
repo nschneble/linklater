@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FOCUS_RING } from '../lib/styles';
+import { FOCUS_RING } from '../../lib/styles';
 
 export default function NotFoundView() {
   return (

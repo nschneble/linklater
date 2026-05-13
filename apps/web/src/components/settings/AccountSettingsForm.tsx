@@ -2,10 +2,10 @@ import { requestEmailChange, updateMe } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
 import { useState, type FormEvent } from 'react';
-import Alert from '../ui/Alert';
-import FormInput from '../ui/FormInput';
-import LinkButton from '../ui/LinkButton';
-import PrimaryButton from '../ui/PrimaryButton';
+import Alert from '../common/Alert';
+import FormInput from '../common/FormInput';
+import LinkButton from '../common/LinkButton';
+import PrimaryButton from '../common/PrimaryButton';
 
 /**
  * Settings section for updating email address and password.

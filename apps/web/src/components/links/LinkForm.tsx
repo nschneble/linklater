@@ -1,9 +1,9 @@
 import { createLink, type Link } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import Alert from '../ui/Alert';
-import FormInput from '../ui/FormInput';
-import PrimaryButton from '../ui/PrimaryButton';
+import Alert from '../common/Alert';
+import FormInput from '../common/FormInput';
+import PrimaryButton from '../common/PrimaryButton';
 
 interface LinkFormProps {
   /**

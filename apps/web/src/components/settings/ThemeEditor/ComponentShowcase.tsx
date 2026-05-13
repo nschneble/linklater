@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import Alert from '../ui/Alert';
-import FormInput from '../ui/FormInput';
-import IconButton from '../ui/IconButton';
-import PrimaryButton from '../ui/PrimaryButton';
-import TabButton from '../ui/TabButton';
+import Alert from '../../common/Alert';
+import FormInput from '../../common/FormInput';
+import IconButton from '../../common/IconButton';
+import PrimaryButton from '../../common/PrimaryButton';
+import TabButton from '../../common/TabButton';
 
 /**
  * A labeled section within `ComponentShowcase`. Renders a small-caps title

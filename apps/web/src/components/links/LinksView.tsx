@@ -13,7 +13,7 @@ import { useLinks, type LinksFilter } from '../../lib/hooks/useLinks';
 import LinkForm from './LinkForm';
 import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';
-import Toast from '../ui/Toast';
+import Toast from '../common/Toast';
 
 /**
  * How long to wait after the user stops typing before firing the search

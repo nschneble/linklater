@@ -1,6 +1,6 @@
 import AppShell from './AppShell';
 import AuthForm from './components/auth/AuthForm';
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from './components/errors/ErrorBoundary';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import OAuthCallbackPage from './components/auth/OAuthCallbackPage';
 import ResetPasswordPage from './components/auth/ResetPasswordPage';

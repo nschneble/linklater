@@ -1,4 +1,4 @@
-import IconButton from '../ui/IconButton';
+import IconButton from '../common/IconButton';
 import LinkCard, { LinkCardSkeleton } from './LinkCard';
 import type { Link, PaginatedLinks } from '../../lib/api';
 import type { LinksFilter } from '../../lib/hooks/useLinks';

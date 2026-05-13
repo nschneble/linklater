@@ -1,7 +1,7 @@
 import Header from './components/Header';
-import LinkButton from './components/ui/LinkButton';
+import LinkButton from './components/common/LinkButton';
 import LinksView from './components/links/LinksView';
-import NotFoundView from './components/NotFoundView';
+import NotFoundView from './components/errors/NotFoundView';
 import SettingsView from './components/settings/SettingsView';
 import { Suspense, lazy, useEffect } from 'react';
 import { updateMe } from './lib/api';

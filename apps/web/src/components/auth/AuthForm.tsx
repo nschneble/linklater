@@ -1,8 +1,8 @@
-import Alert from '../ui/Alert';
-import FormInput from '../ui/FormInput';
-import LinkButton from '../ui/LinkButton';
-import PrimaryButton from '../ui/PrimaryButton';
-import TabButton from '../ui/TabButton';
+import Alert from '../common/Alert';
+import FormInput from '../common/FormInput';
+import LinkButton from '../common/LinkButton';
+import PrimaryButton from '../common/PrimaryButton';
+import TabButton from '../common/TabButton';
 import { forgotPassword as apiForgotPassword } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';

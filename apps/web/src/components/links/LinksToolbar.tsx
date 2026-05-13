@@ -1,9 +1,9 @@
 import LinksControls from './LinksControls';
-import IconButton from '../ui/IconButton';
+import IconButton from '../common/IconButton';
 import { LINKS_LIST_ID } from './LinksList';
 import { LINK_FORM_ID } from './LinksView';
-import PrimaryButton from '../ui/PrimaryButton';
-import TabButton from '../ui/TabButton';
+import PrimaryButton from '../common/PrimaryButton';
+import TabButton from '../common/TabButton';
 import { useRef } from 'react';
 import { useTabNavigation } from '../../lib/hooks/useTabNavigation';
 import type { Link } from '../../lib/api';

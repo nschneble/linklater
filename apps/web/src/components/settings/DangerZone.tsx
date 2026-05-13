@@ -2,8 +2,8 @@ import { deleteMe } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
 import { useState } from 'react';
-import Alert from '../ui/Alert';
-import IconButton from '../ui/IconButton';
+import Alert from '../common/Alert';
+import IconButton from '../common/IconButton';
 
 /**
  * Settings section for permanently deleting the account.
