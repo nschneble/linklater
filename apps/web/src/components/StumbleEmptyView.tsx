@@ -211,11 +211,11 @@ export default function StumbleEmptyView() {
         <PixelArtGhost />
       </div>
 
-      <h1 className="mb-2 text-xl font-semibold">
+      <h1 className="mb-2 text-xl font-semibold [text-wrap:balance]">
         Boo. Your reading list is empty.
       </h1>
       <p
-        className="mb-8 text-[var(--text-muted)] text-sm max-w-xs"
+        className="mb-8 text-[var(--text-muted)] text-sm max-w-xs text-pretty"
         aria-live="polite"
         aria-atomic="true"
       >

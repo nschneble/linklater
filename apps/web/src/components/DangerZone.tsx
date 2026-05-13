@@ -37,7 +37,7 @@ export default function DangerZone() {
 
   return (
     <div className="max-w-md p-4 bg-rose-50 [[data-mode='dark']_&]:bg-rose-950/20 border border-rose-200 [[data-mode='dark']_&]:border-rose-800/50 rounded-xl">
-      <h3 className="mb-1 text-rose-700 [[data-mode='dark']_&]:text-rose-400 text-sm font-semibold">
+      <h3 className="mb-1 text-rose-700 [[data-mode='dark']_&]:text-rose-400 text-sm font-semibold [text-wrap:balance]">
         Danger zone
       </h3>
       <p className="mb-3 text-rose-600/80 [[data-mode='dark']_&]:text-rose-300/80 text-xs text-pretty">

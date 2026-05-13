@@ -116,12 +116,14 @@ export default function AccountSettingsForm() {
 
   return (
     <div className="max-w-md space-y-8">
-      <h2 className="text-[var(--text)] text-xl font-semibold">
+      <h2 className="text-[var(--text)] text-xl font-semibold [text-wrap:balance]">
         Account settings
       </h2>
 
       <form className="space-y-4" onSubmit={handleEmailSave}>
-        <h3 className="text-[var(--text)] text-sm font-semibold">Email</h3>
+        <h3 className="text-[var(--text)] text-sm font-semibold [text-wrap:balance]">
+          Email
+        </h3>
 
         <div className="flex items-center gap-2">
           <span className="text-[var(--text-muted)] text-xs">
@@ -194,7 +196,9 @@ export default function AccountSettingsForm() {
 
       {hasPassword ? (
         <form className="space-y-4" onSubmit={handlePasswordSave}>
-          <h3 className="text-[var(--text)] text-sm font-semibold">Password</h3>
+          <h3 className="text-[var(--text)] text-sm font-semibold [text-wrap:balance]">
+            Password
+          </h3>
 
           <label
             className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
@@ -247,7 +251,9 @@ export default function AccountSettingsForm() {
         </form>
       ) : (
         <div className="space-y-2">
-          <h3 className="text-[var(--text)] text-sm font-semibold">Password</h3>
+          <h3 className="text-[var(--text)] text-sm font-semibold [text-wrap:balance]">
+            Password
+          </h3>
           <p className="text-[var(--text-muted)] text-xs">
             Your account uses social sign-in — no password is set.
           </p>

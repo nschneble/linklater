@@ -42,7 +42,7 @@ export default function Header({
         <button
           type="button"
           aria-label="Go to your links"
-          className="flex items-center gap-2 cursor-pointer"
+          className="flex items-center gap-2 cursor-pointer active:scale-[0.96] transition-transform duration-200"
           onClick={() => {
             onViewChange('links');
           }}

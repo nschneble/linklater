@@ -114,20 +114,17 @@ export default function KeyboardShortcutsModal({
         <div className="flex items-center justify-between mb-7.5">
           <h2
             id={HEADING_ID}
-            className="text-sm font-semibold text-[var(--text)]"
+            className="text-sm font-semibold text-[var(--text)] [text-wrap:balance]"
           >
             Keyboard shortcuts
           </h2>
           <button
             type="button"
-            className={`text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-pointer rounded ${FOCUS_RING}`}
+            className={`flex items-center justify-center w-8 h-8 -mr-1 text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors active:scale-[0.96] transition-transform cursor-pointer rounded-full ${FOCUS_RING}`}
             onClick={onClose}
             aria-label="Close keyboard shortcuts"
           >
-            <i
-              className="pr-[6px] fa-solid fa-xmark text-sm"
-              aria-hidden="true"
-            />
+            <i className="fa-solid fa-xmark text-sm" aria-hidden="true" />
           </button>
         </div>
         <ul className="space-y-3">
