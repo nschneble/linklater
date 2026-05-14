@@ -121,8 +121,11 @@ export default function AuthForm() {
           (location.state as { from?: string })?.from ?? '/unread';
         navigate(destination, { replace: true });
       }
-    } catch (error: unknown) {
-      const message = getErrorMessage(error, 'Something went dreadfully wrong');
+    } catch (caught: unknown) {
+      const message = getErrorMessage(
+        caught,
+        'Something went dreadfully wrong',
+      );
       setError(message.charAt(0).toUpperCase() + message.slice(1));
     } finally {
       setLoading(false);

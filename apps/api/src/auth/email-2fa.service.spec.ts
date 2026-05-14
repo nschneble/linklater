@@ -65,12 +65,19 @@ describe('EmailTwoFactorService', () => {
   });
 
   describe('sendCode', () => {
-    it('saves the hashed code and sends an email', async () => {
-      (usersServiceMock.saveEmailTwoFactorCode as jest.Mock).mockResolvedValue(
-        undefined,
+    it('saves a hash that verifies against the sent plaintext code', async () => {
+      let capturedHash = '';
+      let capturedCode = '';
+
+      (usersServiceMock.saveEmailTwoFactorCode as jest.Mock).mockImplementation(
+        async (_id: string, hash: string) => {
+          capturedHash = hash;
+        },
       );
-      (emailServiceMock.sendTwoFactorCode as jest.Mock).mockResolvedValue(
-        undefined,
+      (emailServiceMock.sendTwoFactorCode as jest.Mock).mockImplementation(
+        async (_email: string, code: string) => {
+          capturedCode = code;
+        },
       );
 
       await service.sendCode({
@@ -89,9 +96,12 @@ describe('EmailTwoFactorService', () => {
         expect.stringMatching(/^\d{6}$/),
         'scanner-darkly',
       );
+
+      const bcrypt = await import('bcryptjs');
+      expect(await bcrypt.compare(capturedCode, capturedHash)).toBe(true);
     });
 
-    it('does not save the code when email send throws', async () => {
+    it('saves the code hash then throws when email send fails', async () => {
       (usersServiceMock.saveEmailTwoFactorCode as jest.Mock).mockResolvedValue(
         undefined,
       );
@@ -102,6 +112,12 @@ describe('EmailTwoFactorService', () => {
       await expect(
         service.sendCode({ id: USER_ID, email: USER_EMAIL }),
       ).rejects.toThrow('SMTP error');
+
+      expect(usersServiceMock.saveEmailTwoFactorCode).toHaveBeenCalledWith(
+        USER_ID,
+        expect.any(String),
+        expect.any(Date),
+      );
     });
   });
 
@@ -191,6 +207,24 @@ describe('EmailTwoFactorService', () => {
 
     it('throws BadRequestException when no code is pending', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(makeUser());
+
+      await expect(service.verifySetup(USER_ID, CODE)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('throws BadRequestException when emailTwoFactorEnabledAt is already set', async () => {
+      const futureExpiry = new Date(Date.now() + 10 * 60 * 1000);
+      const bcrypt = await import('bcryptjs');
+      const hash = await bcrypt.hash(CODE, 8);
+
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUser({
+          emailTwoFactorCodeHash: hash,
+          emailTwoFactorExpiresAt: futureExpiry,
+          emailTwoFactorEnabledAt: new Date(),
+        }),
+      );
 
       await expect(service.verifySetup(USER_ID, CODE)).rejects.toThrow(
         BadRequestException,

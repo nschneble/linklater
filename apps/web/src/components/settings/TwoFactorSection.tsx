@@ -1,10 +1,5 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
 import Alert from '../common/Alert';
 import EmailTwoFactorSetupView from './EmailTwoFactorSetupView';
 import LinkButton from '../common/LinkButton';

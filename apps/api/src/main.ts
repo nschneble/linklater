@@ -35,18 +35,20 @@ function loadHttpsOptions() {
  * startup than to discover a missing key during a live request.
  */
 function validateRequiredEnvVars() {
-  const required = [
-    'DATABASE_URL',
-    'JWT_SECRET',
-    'TOTP_ENCRYPTION_KEY',
-    'PHONE_ENCRYPTION_KEY',
-  ];
+  const required = ['DATABASE_URL', 'JWT_SECRET', 'TOTP_ENCRYPTION_KEY'];
 
   const missing = required.filter((name) => !process.env[name]);
 
   if (missing.length > 0) {
     console.error(
       `[startup] Missing required environment variables: ${missing.join(', ')}`,
+    );
+    process.exit(1);
+  }
+
+  if (!/^[0-9a-fA-F]{64}$/.test(process.env.TOTP_ENCRYPTION_KEY ?? '')) {
+    console.error(
+      '[startup] TOTP_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)',
     );
     process.exit(1);
   }

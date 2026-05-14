@@ -1,4 +1,4 @@
-import { type FormEvent } from 'react';
+import type { FormEvent } from 'react';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';

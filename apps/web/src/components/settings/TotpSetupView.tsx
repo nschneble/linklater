@@ -1,4 +1,4 @@
-import { type FormEvent, type RefObject } from 'react';
+import type { FormEvent, RefObject } from 'react';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import PrimaryButton from '../common/PrimaryButton';

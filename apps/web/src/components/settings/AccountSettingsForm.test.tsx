@@ -152,7 +152,7 @@ describe('AccountSettingsForm', () => {
       );
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
-          user: makeUser({ twoFactorMethod: 'sms' }),
+          user: makeUser({ twoFactorMethod: 'email' }),
         }),
       );
 

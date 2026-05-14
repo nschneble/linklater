@@ -9,7 +9,7 @@ export class Disable2faDto {
 
   @ApiPropertyOptional({
     description:
-      'Valid TOTP or SMS OTP, or a recovery code (xxxxx-xxxxx-xxxxx).',
+      'Valid TOTP or email OTP, or a recovery code (xxxxx-xxxxx-xxxxx).',
   })
   @IsOptional()
   @IsString()

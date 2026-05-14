@@ -31,7 +31,7 @@ const makeUser = () => ({
   pendingEmail: null,
   mode: 'dark',
   theme: 'scanner-darkly',
-  twoFactorMethod: null as 'totp' | 'sms' | null,
+  twoFactorMethod: null as 'totp' | 'email' | null,
   twoFactorPending: false,
 });
 
@@ -161,7 +161,7 @@ describe('login', () => {
       mfaMethod: 'totp',
     });
 
-    let mfaResult: { mfaToken: string; mfaMethod: 'totp' | 'sms' } | void;
+    let mfaResult: { mfaToken: string; mfaMethod: 'totp' | 'email' } | void;
 
     function MfaCapturingConsumer() {
       const { login: doLogin, user } = useAuth();

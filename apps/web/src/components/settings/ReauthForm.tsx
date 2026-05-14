@@ -114,7 +114,9 @@ export default function ReauthForm({
       <div className="flex gap-3">
         <PrimaryButton
           disabled={
-            loading || (twoFactorMethod === 'email' && !emailSent && !password)
+            loading ||
+            (twoFactorMethod === 'email' && !emailSent && !password) ||
+            (twoFactorMethod === 'email' && emailSent && !code && !password)
           }
           className="py-2.5"
         >

@@ -5,6 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import { randomInt } from 'crypto';
 import {
   generateRecoveryCodes,
   hashRecoveryCodes,
@@ -14,10 +15,9 @@ import { UsersService } from '../users/users.service.js';
 
 const TEN_MINUTES_MS = 10 * 60 * 1000;
 
-/** Generates a random 6-digit numeric code as a zero-padded string. */
+/** Generates a cryptographically random 6-digit numeric code as a zero-padded string. */
 function generateSixDigitCode(): string {
-  const number = Math.floor(Math.random() * 1_000_000);
-  return number.toString().padStart(6, '0');
+  return randomInt(0, 1_000_000).toString().padStart(6, '0');
 }
 
 /**

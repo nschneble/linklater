@@ -291,7 +291,9 @@ export class AuthController {
     description: 'No pending setup or invalid code.',
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
-  @UseGuards(JwtAuthGuard)
+  @ApiResponse({ status: 429, description: 'Too many verify attempts.' })
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({ 'auth-2fa-totp-verify': { ttl: 900000, limit: 5 } })
   @Post('2fa/totp/verify')
   @HttpCode(200)
   async totpVerifySetup(

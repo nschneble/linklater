@@ -415,7 +415,7 @@ export class AuthService {
       }
       const recoveryCodes =
         await this.usersService.findUnusedRecoveryCodes(userId);
-      const hashes = recoveryCodes.map((rc) => rc.codeHash);
+      const hashes = recoveryCodes.map((recoveryCode) => recoveryCode.codeHash);
       const matchIndex = await findMatchingRecoveryCode(code, hashes);
 
       if (matchIndex === null) {
@@ -449,6 +449,11 @@ export class AuthService {
   async requestEmailChange(userId: string, newEmail: string, code?: string) {
     const user = await this.usersService.findById(userId);
 
+    const existing = await this.usersService.findByEmail(newEmail);
+    if (existing && existing.id !== userId) {
+      throw new ConflictException('Email already in use');
+    }
+
     if (user.totpEnabledAt || user.emailTwoFactorEnabledAt) {
       if (!code) {
         throw new ForbiddenException(
@@ -461,7 +466,9 @@ export class AuthService {
       if (isRecoveryCode) {
         const recoveryCodes =
           await this.usersService.findUnusedRecoveryCodes(userId);
-        const hashes = recoveryCodes.map((rc) => rc.codeHash);
+        const hashes = recoveryCodes.map(
+          (recoveryCode) => recoveryCode.codeHash,
+        );
         const matchIndex = await findMatchingRecoveryCode(code, hashes);
         if (matchIndex === null)
           throw new UnauthorizedException('Invalid OTP code');
@@ -475,11 +482,6 @@ export class AuthService {
         const isValid = await this.emailTwoFactorService.verifyCode(user, code);
         if (!isValid) throw new UnauthorizedException('Invalid OTP code');
       }
-    }
-
-    const existing = await this.usersService.findByEmail(newEmail);
-    if (existing && existing.id !== userId) {
-      throw new ConflictException('Email already in use');
     }
 
     const token = generateToken();
@@ -615,7 +617,9 @@ export class AuthService {
         }
         const recoveryCodes =
           await this.usersService.findUnusedRecoveryCodes(userId);
-        const hashes = recoveryCodes.map((rc) => rc.codeHash);
+        const hashes = recoveryCodes.map(
+          (recoveryCode) => recoveryCode.codeHash,
+        );
         const matchIndex = await findMatchingRecoveryCode(code, hashes);
         if (matchIndex === null) {
           throw new UnauthorizedException('Invalid recovery code');
