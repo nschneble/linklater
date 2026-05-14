@@ -30,6 +30,7 @@ const makeUser = (overrides = {}) => ({
   emailVerifiedAt: new Date(),
   hasPassword: true,
   smsEnabledAt: null,
+  totpEnabledAt: null,
   phoneNumber: null,
   ...overrides,
 });
@@ -122,6 +123,16 @@ describe('SmsSetupService', () => {
     it('throws ConflictException when SMS 2FA is already enabled', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
         makeUser({ smsEnabledAt: new Date() }),
+      );
+
+      await expect(
+        service.initiateSetup(USER_ID, PHONE_NUMBER),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('throws ConflictException when TOTP is already enabled', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUser({ totpEnabledAt: new Date() }),
       );
 
       await expect(

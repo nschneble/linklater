@@ -6,7 +6,7 @@ import {
   act,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import AuthForm from './AuthForm';
 
 vi.mock('../../lib/api', () => ({
@@ -56,10 +56,9 @@ function makeAuthContext(overrides = {}) {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks();
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
 });
-
-afterEach(() => vi.restoreAllMocks());
 
 function fillEmail(email: string) {
   fireEvent.change(screen.getByLabelText(/email/i), {

@@ -372,4 +372,66 @@ describe('AuthController', () => {
       expect(smsSetupServiceMock.smsResend).toHaveBeenCalledWith(USER_ID);
     });
   });
+
+  describe('googleCallback', () => {
+    it('redirects to oauth callback with the access token on success', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      const response = { redirect: jest.fn() } as never;
+      (authServiceMock.login as jest.Mock).mockResolvedValue({
+        accessToken: ACCESS_TOKEN,
+      });
+
+      await controller.googleCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        expect.stringContaining(`#token=${ACCESS_TOKEN}`),
+      );
+    });
+
+    it('redirects to login error page when login returns an MFA challenge', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      const response = { redirect: jest.fn() } as never;
+      (authServiceMock.login as jest.Mock).mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+
+      await controller.googleCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('error=mfa_required'),
+      );
+    });
+  });
+
+  describe('appleCallback', () => {
+    it('redirects to oauth callback with the access token on success', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      const response = { redirect: jest.fn() } as never;
+      (authServiceMock.login as jest.Mock).mockResolvedValue({
+        accessToken: ACCESS_TOKEN,
+      });
+
+      await controller.appleCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        expect.stringContaining(`#token=${ACCESS_TOKEN}`),
+      );
+    });
+
+    it('redirects to login error page when login returns an MFA challenge', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      const response = { redirect: jest.fn() } as never;
+      (authServiceMock.login as jest.Mock).mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'sms',
+      });
+
+      await controller.appleCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('error=mfa_required'),
+      );
+    });
+  });
 });

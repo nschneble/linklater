@@ -270,7 +270,9 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 403, description: 'Email not yet verified.' })
   @ApiResponse({ status: 409, description: 'TOTP is already active.' })
-  @UseGuards(JwtAuthGuard)
+  @ApiResponse({ status: 429, description: 'Too many setup attempts.' })
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({ 'auth-2fa-totp-setup': { ttl: 60000, limit: 5 } })
   @Post('2fa/totp/setup')
   @HttpCode(200)
   async totpSetup(@Req() request: AuthRequest) {
@@ -428,9 +430,13 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   @Get('google/callback')
   async googleCallback(@Req() request: AuthRequest, @Res() response: Response) {
-    const { accessToken } = await this.authService.login(request.user);
+    const result = await this.authService.login(request.user);
+    if (!('accessToken' in result)) {
+      response.redirect(`${process.env.APP_URL}/login?error=mfa_required`);
+      return;
+    }
     response.redirect(
-      `${process.env.APP_URL}/oauth/callback#token=${accessToken}`,
+      `${process.env.APP_URL}/oauth/callback#token=${result.accessToken}`,
     );
   }
 
@@ -445,9 +451,13 @@ export class AuthController {
   @UseGuards(AuthGuard('apple'))
   @Post('apple/callback')
   async appleCallback(@Req() request: AuthRequest, @Res() response: Response) {
-    const { accessToken } = await this.authService.login(request.user);
+    const result = await this.authService.login(request.user);
+    if (!('accessToken' in result)) {
+      response.redirect(`${process.env.APP_URL}/login?error=mfa_required`);
+      return;
+    }
     response.redirect(
-      `${process.env.APP_URL}/oauth/callback#token=${accessToken}`,
+      `${process.env.APP_URL}/oauth/callback#token=${result.accessToken}`,
     );
   }
 }

@@ -6,14 +6,13 @@ import {
 } from '@nestjs/common';
 
 import { decrypt, encrypt } from '../common/crypto.js';
+import { E164_REGEX } from '../common/phone.constants.js';
 import {
   generateRecoveryCodes,
   hashRecoveryCodes,
 } from '../common/recovery-codes.js';
 import { UsersService } from '../users/users.service.js';
 import { SmsService } from './sms.service.js';
-
-const E164_REGEX = /^\+[1-9]\d{7,14}$/;
 
 /**
  * Handles the SMS 2FA enrollment flow: verifying phone ownership via a
@@ -52,6 +51,12 @@ export class SmsSetupService {
     if (!user.emailVerifiedAt) {
       throw new ForbiddenException(
         'Email must be verified before enabling SMS 2FA',
+      );
+    }
+
+    if (user.totpEnabledAt) {
+      throw new ConflictException(
+        'TOTP 2FA is already enabled — disable it before enrolling SMS',
       );
     }
 

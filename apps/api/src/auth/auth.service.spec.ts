@@ -1170,6 +1170,9 @@ describe('AuthService', () => {
 
   describe('disable2fa', () => {
     it('disables 2FA when currentPassword is valid', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        hasPassword: true,
+      });
       (usersServiceMock.verifyCurrentPassword as jest.Mock).mockResolvedValue(
         true,
       );
@@ -1214,12 +1217,25 @@ describe('AuthService', () => {
     });
 
     it('throws UnauthorizedException when password is invalid', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        hasPassword: true,
+      });
       (usersServiceMock.verifyCurrentPassword as jest.Mock).mockResolvedValue(
         false,
       );
 
       await expect(
         service.disable2fa(USER_ID, UNKNOWN_PASSWORD),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException when the account has no password', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        hasPassword: false,
+      });
+
+      await expect(
+        service.disable2fa(USER_ID, KNOWN_PASSWORD),
       ).rejects.toThrow(UnauthorizedException);
     });
 
@@ -1240,6 +1256,9 @@ describe('AuthService', () => {
 
   describe('regenerateRecoveryCodes', () => {
     it('returns new recovery codes when password is valid', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        hasPassword: true,
+      });
       (usersServiceMock.verifyCurrentPassword as jest.Mock).mockResolvedValue(
         true,
       );
@@ -1267,6 +1286,9 @@ describe('AuthService', () => {
     });
 
     it('throws UnauthorizedException when password is invalid', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        hasPassword: true,
+      });
       (usersServiceMock.verifyCurrentPassword as jest.Mock).mockResolvedValue(
         false,
       );

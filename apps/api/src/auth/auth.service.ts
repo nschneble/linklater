@@ -576,6 +576,12 @@ export class AuthService {
     }
 
     if (currentPassword) {
+      const user = await this.usersService.findById(userId);
+      if (!user.hasPassword) {
+        throw new UnauthorizedException(
+          'Password authentication is not available for this account',
+        );
+      }
       const valid = await this.usersService.verifyCurrentPassword(
         userId,
         currentPassword,
