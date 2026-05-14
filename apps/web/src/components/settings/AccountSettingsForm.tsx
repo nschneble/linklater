@@ -1,4 +1,4 @@
-import { requestEmailChange, updateMe } from '../../lib/api';
+import { ApiError, requestEmailChange, updateMe } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
 import { useState, type FormEvent } from 'react';
@@ -74,7 +74,11 @@ export default function AccountSettingsForm() {
         `Verification email sent to ${requestedEmail}. Check your inbox to confirm the change.`,
       );
     } catch (error: unknown) {
-      setEmailError(getErrorMessage(error, 'Failed to request email change'));
+      if (error instanceof ApiError && error.status === 403) {
+        setEmailMessage(getErrorMessage(error, 'SMS code sent to your phone'));
+      } else {
+        setEmailError(getErrorMessage(error, 'Failed to request email change'));
+      }
     } finally {
       setEmailSaving(false);
     }

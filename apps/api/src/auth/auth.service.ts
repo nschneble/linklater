@@ -525,6 +525,15 @@ export class AuthService {
     await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
   }
 
+  async sendReauthSmsCode(userId: string): Promise<void> {
+    const user = await this.usersService.findById(userId);
+    if (!user.smsEnabledAt || !user.phoneNumber) {
+      throw new BadRequestException('SMS 2FA is not enabled for this account');
+    }
+    const phone = decrypt(user.phoneNumber, process.env.PHONE_ENCRYPTION_KEY!);
+    await this.smsService.sendVerification(phone);
+  }
+
   /**
    * Verifies the caller's identity via password or OTP, then clears all 2FA
    * data. Exactly one of `currentPassword` or `code` must be supplied.

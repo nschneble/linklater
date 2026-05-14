@@ -3,10 +3,16 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import AccountSettingsForm from './AccountSettingsForm';
 import type { User } from '../../auth/AuthContext';
 
-vi.mock('../../lib/api', () => ({
-  requestEmailChange: vi.fn(),
-  updateMe: vi.fn(),
-}));
+import { ApiError } from '../../lib/api';
+
+vi.mock('../../lib/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../lib/api')>();
+  return {
+    ...actual,
+    requestEmailChange: vi.fn(),
+    updateMe: vi.fn(),
+  };
+});
 
 vi.mock('../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
@@ -134,6 +140,32 @@ describe('AccountSettingsForm', () => {
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
         expect(screen.getByText('Email already in use')).toBeInTheDocument();
+      });
+    });
+
+    it('shows a success message when the server returns 403 (SMS code sent)', async () => {
+      vi.mocked(apiModule.requestEmailChange).mockRejectedValue(
+        new ApiError(
+          '2FA is enabled — an SMS code has been sent to your phone',
+          403,
+        ),
+      );
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({ twoFactorMethod: 'sms' }),
+        }),
+      );
+
+      render(<AccountSettingsForm />);
+      const emailInput = screen.getByLabelText(/change email/i);
+      fireEvent.change(emailInput, {
+        target: { value: 'new@example.com' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('status')).toBeInTheDocument();
+        expect(screen.getByText(/sms code has been sent/i)).toBeInTheDocument();
       });
     });
 

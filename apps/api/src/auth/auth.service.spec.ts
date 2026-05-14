@@ -1247,9 +1247,9 @@ describe('AuthService', () => {
         hasPassword: false,
       });
 
-      await expect(
-        service.disable2fa(USER_ID, KNOWN_PASSWORD),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.disable2fa(USER_ID, KNOWN_PASSWORD)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('throws UnauthorizedException when TOTP code is invalid', async () => {
@@ -1309,6 +1309,39 @@ describe('AuthService', () => {
       await expect(
         service.regenerateRecoveryCodes(USER_ID, UNKNOWN_PASSWORD),
       ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('sendReauthSmsCode', () => {
+    it('sends SMS to enrolled phone number', async () => {
+      process.env.PHONE_ENCRYPTION_KEY = 'b'.repeat(64);
+      const { encrypt } = await import('../common/crypto.js');
+      const encryptedPhone = encrypt(
+        '+15555550100',
+        process.env.PHONE_ENCRYPTION_KEY,
+      );
+
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        smsEnabledAt: new Date(),
+        phoneNumber: encryptedPhone,
+      });
+
+      await service.sendReauthSmsCode(USER_ID);
+
+      expect(smsServiceMock.sendVerification).toHaveBeenCalledWith(
+        '+15555550100',
+      );
+    });
+
+    it('throws BadRequestException when SMS 2FA is not enabled', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        smsEnabledAt: null,
+        phoneNumber: null,
+      });
+
+      await expect(service.sendReauthSmsCode(USER_ID)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

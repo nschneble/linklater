@@ -248,9 +248,8 @@ export class AuthController {
     description: 'Invalid or expired MFA token or code.',
   })
   @ApiResponse({ status: 429, description: 'Too many OTP attempts.' })
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(ThrottlerGuard, MfaAuthGuard)
   @Throttle({ 'auth-verify-otp': { ttl: 900000, limit: 5 } })
-  @UseGuards(MfaAuthGuard)
   @Post('verify-otp')
   @HttpCode(200)
   async verifyOtp(@Req() request: AuthRequest, @Body() body: VerifyOtpDto) {
@@ -357,13 +356,28 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'New verification code sent.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired MFA token.' })
   @ApiResponse({ status: 429, description: 'Too many resend attempts.' })
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(ThrottlerGuard, MfaAuthGuard)
   @Throttle({ 'auth-sms-resend': { ttl: 60000, limit: 3 } })
-  @UseGuards(MfaAuthGuard)
   @Post('2fa/sms/resend')
   @HttpCode(200)
   async smsResend(@Req() request: AuthRequest): Promise<void> {
     await this.smsSetupService.smsResend(request.user.userId);
+  }
+
+  @ApiOperation({
+    summary: 'Send SMS code for settings re-authentication',
+  })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'SMS code sent.' })
+  @ApiResponse({ status: 400, description: 'SMS 2FA not enabled.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({ status: 429, description: 'Too many requests.' })
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({ 'auth-2fa-sms-reauth-send': { ttl: 60000, limit: 3 } })
+  @Post('2fa/sms/reauth-send')
+  @HttpCode(200)
+  async smsReauthSend(@Req() request: AuthRequest): Promise<void> {
+    await this.authService.sendReauthSmsCode(request.user.userId);
   }
 
   @ApiOperation({

@@ -34,6 +34,7 @@ describe('AuthController', () => {
     requestEmailChange: jest.fn(),
     resendVerificationEmail: jest.fn(),
     resetPassword: jest.fn(),
+    sendReauthSmsCode: jest.fn(),
     sendVerificationEmail: jest.fn(),
     verifyEmail: jest.fn(),
     verifyOtp: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
@@ -370,6 +371,19 @@ describe('AuthController', () => {
       await controller.smsResend(request);
 
       expect(smsSetupServiceMock.smsResend).toHaveBeenCalledWith(USER_ID);
+    });
+  });
+
+  describe('smsReauthSend', () => {
+    it('delegates to AuthService.sendReauthSmsCode with userId', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      (authServiceMock.sendReauthSmsCode as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.smsReauthSend(request);
+
+      expect(authServiceMock.sendReauthSmsCode).toHaveBeenCalledWith(USER_ID);
     });
   });
 

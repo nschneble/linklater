@@ -18,6 +18,7 @@ import {
 } from 'vitest';
 
 import {
+  ApiError,
   apiFetch,
   disable2fa,
   readLink,
@@ -40,6 +41,7 @@ import {
   resendSmsCode,
   resendVerificationEmail,
   resetPassword,
+  sendReauthSmsCode,
   setStoredToken,
   setupSms,
   setupTotp,
@@ -164,30 +166,39 @@ describe('apiFetch', () => {
     expect(headers['Authorization']).toBeUndefined();
   });
 
-  it('throws with server JSON error message on non-2xx response', async () => {
+  it('throws ApiError with server JSON error message on non-2xx response', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 400,
       text: () => Promise.resolve(JSON.stringify({ message: 'Invalid input' })),
     }) as unknown as typeof fetch;
 
-    await expect(apiFetch('/test')).rejects.toThrow('Invalid input');
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).message).toBe('Invalid input');
+    expect((error as ApiError).status).toBe(400);
   });
 
-  it('throws with raw text when response body is not JSON', async () => {
+  it('throws ApiError with raw text when response body is not JSON', async () => {
     mockFetchText('Bad gateway', 502);
 
-    await expect(apiFetch('/test')).rejects.toThrow('Bad gateway');
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).message).toBe('Bad gateway');
+    expect((error as ApiError).status).toBe(502);
   });
 
-  it('throws a fallback message when response body is empty', async () => {
+  it('throws ApiError with fallback message when response body is empty', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 503,
       text: () => Promise.resolve(''),
     }) as unknown as typeof fetch;
 
-    await expect(apiFetch('/test')).rejects.toThrow('Request failed with 503');
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).message).toBe('Request failed with 503');
+    expect((error as ApiError).status).toBe(503);
   });
 
   it('returns parsed JSON on a 2xx response', async () => {
@@ -668,6 +679,21 @@ describe('resendSmsCode', () => {
       mfaToken: string;
     };
     expect(body.mfaToken).toBe('mfa-pending-token');
+  });
+});
+
+describe('sendReauthSmsCode', () => {
+  it('POSTs to /auth/2fa/sms/reauth-send with Authorization header', async () => {
+    setStoredToken('stored-jwt');
+    const fetchMock = mockFetch({});
+
+    await sendReauthSmsCode();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/sms/reauth-send');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBe('Bearer stored-jwt');
+    expect((options as { method: string }).method).toBe('POST');
   });
 });
 

@@ -69,14 +69,14 @@ describe('TotpService', () => {
       expect(result.secret.length).toBeGreaterThan(0);
     });
 
-    it('throws ConflictException when totpVerifiedAt is already set', async () => {
+    it('allows setup when only totpVerifiedAt is set but totpEnabledAt is null', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUser({ totpVerifiedAt: new Date() }),
+        makeUser({ totpVerifiedAt: new Date(), totpEnabledAt: null }),
       );
 
-      await expect(service.generateSetup(USER_ID, USER_EMAIL)).rejects.toThrow(
-        ConflictException,
-      );
+      const result = await service.generateSetup(USER_ID, USER_EMAIL);
+
+      expect(result.qrCodeDataUrl).toMatch(/^data:image/);
     });
 
     it('throws ConflictException when totpEnabledAt is set (prevents silent secret rotation)', async () => {

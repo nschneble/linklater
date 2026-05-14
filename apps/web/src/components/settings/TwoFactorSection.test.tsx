@@ -12,6 +12,7 @@ import type { User } from '../../auth/AuthContext';
 vi.mock('../../lib/api', () => ({
   disable2fa: vi.fn(),
   regenerateRecoveryCodes: vi.fn(),
+  sendReauthSmsCode: vi.fn(),
   setupSms: vi.fn(),
   setupTotp: vi.fn(),
   verifySmsSetup: vi.fn(),
@@ -24,6 +25,7 @@ vi.mock('../../auth/AuthContext', () => ({
 
 import * as apiModule from '../../lib/api';
 import { useAuth } from '../../auth/AuthContext';
+import type { Mock } from 'vitest';
 
 const USER_ID = 'user-1';
 const USER_EMAIL = 'user@example.com';
@@ -59,8 +61,8 @@ function makeAuthContext(overrides = {}) {
 }
 
 beforeEach(() => {
-  vi.mocked(useAuth).mockReturnValue(makeAuthContext());
   vi.clearAllMocks();
+  vi.mocked(useAuth).mockReturnValue(makeAuthContext());
 });
 
 describe('TwoFactorSection', () => {
@@ -230,6 +232,53 @@ describe('TwoFactorSection', () => {
       render(<TwoFactorSection />);
 
       expect(screen.getByText(/enabled/i)).toBeInTheDocument();
+    });
+
+    it('shows a "Send me a code" button in the re-auth form for SMS users', async () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'sms' }) }),
+      );
+      (apiModule.sendReauthSmsCode as Mock).mockResolvedValue(undefined);
+
+      render(<TwoFactorSection />);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /disable two-factor/i }),
+        );
+      });
+
+      expect(
+        screen.getByRole('button', { name: /send me a code/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('sends SMS and shows confirmation when "Send me a code" is clicked', async () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'sms' }) }),
+      );
+      (apiModule.sendReauthSmsCode as Mock).mockResolvedValue(undefined);
+
+      render(<TwoFactorSection />);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /disable two-factor/i }),
+        );
+      });
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /send me a code/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(apiModule.sendReauthSmsCode).toHaveBeenCalled();
+        expect(
+          screen.getByText(/code sent to your enrolled number/i),
+        ).toBeInTheDocument();
+      });
     });
   });
 

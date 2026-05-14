@@ -50,6 +50,17 @@ export type LoginResponse =
   | { accessToken: string }
   | { mfaToken: string; mfaMethod: 'totp' | 'sms' };
 
+/** Error thrown by `apiFetch` on non-2xx responses. Includes the HTTP status code. */
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 /**
  * Core HTTP helper used by every API function in this module.
  *
@@ -61,7 +72,7 @@ export type LoginResponse =
  * @param options - Standard `RequestInit` options (method, body, etc.).
  * @param includeAuth - When `false`, the Authorization header is omitted. Use for public endpoints like login and register.
  * @returns The parsed JSON response body.
- * @throws {Error} When the response is not OK, with the server's error message as the message.
+ * @throws {ApiError} When the response is not OK, with the server's error message and HTTP status.
  */
 export async function apiFetch<T>(
   path: string,
@@ -96,7 +107,7 @@ export async function apiFetch<T>(
     } catch {
       // Body is not JSON — use the raw text as the error message.
     }
-    throw new Error(message);
+    throw new ApiError(message, response.status);
   }
 
   const text = await response.text();
@@ -307,6 +318,10 @@ export async function resendSmsCode(mfaToken: string): Promise<void> {
     { body: JSON.stringify({ mfaToken }), method: 'POST' },
     false,
   );
+}
+
+export async function sendReauthSmsCode(): Promise<void> {
+  await apiFetch('/auth/2fa/sms/reauth-send', { method: 'POST' });
 }
 
 export async function verifyOtp(

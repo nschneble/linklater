@@ -6,9 +6,12 @@ import {
   type FormEvent,
 } from 'react';
 import Alert from '../common/Alert';
-import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
+import ReauthForm from './ReauthForm';
+import RecoveryCodesModal from './RecoveryCodesModal';
+import SmsSetupView from './SmsSetupView';
+import TotpSetupView from './TotpSetupView';
 import {
   disable2fa,
   regenerateRecoveryCodes,
@@ -22,68 +25,6 @@ import { useAuth } from '../../auth/AuthContext';
 
 type SmsFlow = 'phone' | 'code';
 type ReauthAction = 'disable' | 'regenerate';
-
-function RecoveryCodesModal({
-  codes,
-  onConfirm,
-}: {
-  codes: string[];
-  onConfirm: () => void;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = useCallback(async () => {
-    await navigator.clipboard.writeText(codes.join('\n'));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [codes]);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="recovery-codes-title"
-    >
-      <div className="w-full max-w-md mx-4 p-6 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl space-y-4">
-        <h3
-          id="recovery-codes-title"
-          className="text-[var(--text)] text-lg font-semibold"
-        >
-          Save your recovery codes
-        </h3>
-        <p className="text-[var(--text-muted)] text-sm">
-          Store these codes somewhere safe. Each can be used once to access your
-          account if you lose your 2FA device.
-        </p>
-        <ul className="grid grid-cols-2 gap-2">
-          {codes.map((code) => (
-            <li
-              key={code}
-              className="px-3 py-1.5 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-xs font-mono rounded"
-            >
-              {code}
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="flex items-center gap-1.5 text-[var(--text-muted)] text-xs hover:text-[var(--text)] transition"
-        >
-          <i
-            className={`fa-solid ${copied ? 'fa-check' : 'fa-copy'} text-[0.65rem]`}
-            aria-hidden="true"
-          />
-          {copied ? 'Copied!' : 'Copy all codes'}
-        </button>
-        <PrimaryButton className="w-full py-2.5" onClick={onConfirm}>
-          I&apos;ve saved these codes
-        </PrimaryButton>
-      </div>
-    </div>
-  );
-}
 
 function EnabledBadge() {
   return (
@@ -223,10 +164,15 @@ export default function TwoFactorSection() {
     }
   };
 
-  const handleRecoveryCodesConfirmed = async () => {
+  const handleRecoveryCodesConfirmed = useCallback(async () => {
     setRecoveryCodes(null);
     await refreshUser();
-  };
+  }, [refreshUser]);
+
+  const handleCancelReauth = useCallback(() => {
+    setReauthAction(null);
+    setError(null);
+  }, []);
 
   const twoFactorMethod = user?.twoFactorMethod ?? null;
   const twoFactorPending = user?.twoFactorPending ?? false;
@@ -246,62 +192,19 @@ export default function TwoFactorSection() {
 
       {/* Re-authentication form for disable / regenerate */}
       {reauthAction && (
-        <form className="space-y-4" onSubmit={handleReauth}>
-          <p className="text-[var(--text-muted)] text-sm">
-            {reauthAction === 'disable'
-              ? 'Confirm your identity to disable two-factor authentication.'
-              : 'Confirm your identity to regenerate recovery codes.'}
-          </p>
-
-          {user?.hasPassword && (
-            <>
-              <label
-                className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
-                htmlFor="reauth-password"
-              >
-                Current password
-              </label>
-              <FormInput
-                id="reauth-password"
-                type="password"
-                value={reauthPassword}
-                onChange={(event) => setReauthPassword(event.target.value)}
-              />
-            </>
-          )}
-
-          <label
-            className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
-            htmlFor="reauth-code"
-          >
-            {user?.hasPassword ? 'Or enter your ' : 'Enter your '}
-            {twoFactorMethod === 'sms' ? 'SMS' : 'authenticator'} code
-          </label>
-          <FormInput
-            id="reauth-code"
-            type="text"
-            inputMode="numeric"
-            maxLength={6}
-            value={reauthCode}
-            onChange={(event) => setReauthCode(event.target.value)}
-          />
-
-          {error && <Alert variant="error">{error}</Alert>}
-
-          <div className="flex gap-3">
-            <PrimaryButton disabled={loading} className="py-2.5">
-              {loading ? 'Working…' : 'Confirm'}
-            </PrimaryButton>
-            <LinkButton
-              onClick={() => {
-                setReauthAction(null);
-                setError(null);
-              }}
-            >
-              Cancel
-            </LinkButton>
-          </div>
-        </form>
+        <ReauthForm
+          action={reauthAction}
+          code={reauthCode}
+          error={error}
+          hasPassword={user?.hasPassword ?? false}
+          loading={loading}
+          onCancel={handleCancelReauth}
+          onCodeChange={setReauthCode}
+          onPasswordChange={setReauthPassword}
+          onSubmit={handleReauth}
+          password={reauthPassword}
+          twoFactorMethod={twoFactorMethod}
+        />
       )}
 
       {/* State C / E — 2FA enabled */}
@@ -338,47 +241,16 @@ export default function TwoFactorSection() {
 
       {/* State B — TOTP setup: verify QR */}
       {!reauthAction && !twoFactorMethod && totpSetup && (
-        <div className="space-y-4">
-          <p className="text-[var(--text-muted)] text-sm">
-            Scan the QR code with your authenticator app, then enter the 6-digit
-            code to confirm.
-          </p>
-          <img
-            src={totpSetup.qrCodeDataUrl}
-            alt="TOTP QR code"
-            className="w-40 h-40 rounded border border-[var(--border)]"
-          />
-          <div>
-            <p className="text-[var(--text-muted)] text-xs mb-1">
-              Or enter this secret manually:
-            </p>
-            <code className="block px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-xs font-mono rounded select-all">
-              {totpSetup.secret}
-            </code>
-          </div>
-          <form className="space-y-3" onSubmit={handleVerifyTotp}>
-            <label
-              className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
-              htmlFor="totp-code"
-            >
-              Verification code
-            </label>
-            <FormInput
-              id="totp-code"
-              ref={totpCodeInputReference}
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              value={totpCode}
-              onChange={(event) => setTotpCode(event.target.value)}
-              required
-            />
-            {error && <Alert variant="error">{error}</Alert>}
-            <PrimaryButton disabled={loading} className="py-2.5">
-              {loading ? 'Verifying…' : 'Verify'}
-            </PrimaryButton>
-          </form>
-        </div>
+        <TotpSetupView
+          code={totpCode}
+          codeInputReference={totpCodeInputReference}
+          error={error}
+          loading={loading}
+          onCodeChange={setTotpCode}
+          onSubmit={handleVerifyTotp}
+          qrCodeDataUrl={totpSetup.qrCodeDataUrl}
+          secret={totpSetup.secret}
+        />
       )}
 
       {/* State B — TOTP pending from server (setup started in prior session) */}
@@ -403,69 +275,22 @@ export default function TwoFactorSection() {
         !twoFactorMethod &&
         !totpSetup &&
         !twoFactorPending &&
-        smsFlow === 'phone' && (
-          <form className="space-y-4" onSubmit={handleSendSmsCode}>
-            <label
-              className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
-              htmlFor="sms-phone"
-            >
-              Phone number
-            </label>
-            <FormInput
-              id="sms-phone"
-              type="tel"
-              placeholder="+1 555 555 0100"
-              value={phoneNumber}
-              onChange={(event) => setPhoneNumber(event.target.value)}
-              required
-            />
-            {error && <Alert variant="error">{error}</Alert>}
-            <div className="flex gap-3">
-              <PrimaryButton disabled={loading} className="py-2.5">
-                {loading ? 'Sending…' : 'Send code'}
-              </PrimaryButton>
-              <LinkButton
-                onClick={() => {
-                  setSmsFlow(null);
-                  setError(null);
-                }}
-              >
-                Cancel
-              </LinkButton>
-            </div>
-          </form>
-        )}
-
-      {!reauthAction &&
-        !twoFactorMethod &&
-        !totpSetup &&
-        !twoFactorPending &&
-        smsFlow === 'code' && (
-          <form className="space-y-4" onSubmit={handleVerifySms}>
-            <p className="text-[var(--text-muted)] text-sm">
-              Enter the code we sent to{' '}
-              <span className="font-medium">{phoneNumber}</span>.
-            </p>
-            <label
-              className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
-              htmlFor="sms-code"
-            >
-              SMS code
-            </label>
-            <FormInput
-              id="sms-code"
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              value={smsCode}
-              onChange={(event) => setSmsCode(event.target.value)}
-              required
-            />
-            {error && <Alert variant="error">{error}</Alert>}
-            <PrimaryButton disabled={loading} className="py-2.5">
-              {loading ? 'Verifying…' : 'Verify'}
-            </PrimaryButton>
-          </form>
+        smsFlow && (
+          <SmsSetupView
+            error={error}
+            loading={loading}
+            onCancel={() => {
+              setSmsFlow(null);
+              setError(null);
+            }}
+            onPhoneChange={setPhoneNumber}
+            onSendCode={handleSendSmsCode}
+            onSmsCodeChange={setSmsCode}
+            onVerify={handleVerifySms}
+            phoneNumber={phoneNumber}
+            smsCode={smsCode}
+            smsFlow={smsFlow}
+          />
         )}
 
       {/* State A — 2FA not enabled */}
