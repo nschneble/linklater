@@ -400,39 +400,12 @@ export class AuthController {
     status: 401,
     description: 'Invalid credential or missing JWT.',
   })
-  @UseGuards(JwtAuthGuard)
+  @ApiResponse({ status: 429, description: 'Too many re-auth attempts.' })
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({ 'auth-reauth': { ttl: 900000, limit: 5 } })
   @Post('2fa/recovery-codes/regenerate')
   @HttpCode(200)
   async regenerateRecoveryCodes(
-    @Req() request: AuthRequest,
-    @Body() body: RegenerateRecoveryCodesDto,
-  ) {
-    const recoveryCodes = await this.authService.regenerateRecoveryCodes(
-      request.user.userId,
-      body.currentPassword,
-      body.code,
-    );
-    return { recoveryCodes };
-  }
-
-  @ApiOperation({
-    summary:
-      'Get recovery codes — regenerates a new set (requires re-authentication)',
-  })
-  @ApiBearerAuth()
-  @ApiResponse({
-    status: 200,
-    description: 'Returns 10 new plaintext recovery codes.',
-  })
-  @ApiResponse({ status: 400, description: 'No credential provided.' })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid credential or missing JWT.',
-  })
-  @UseGuards(JwtAuthGuard)
-  @Post('2fa/recovery-codes')
-  @HttpCode(200)
-  async getRecoveryCodes(
     @Req() request: AuthRequest,
     @Body() body: RegenerateRecoveryCodesDto,
   ) {

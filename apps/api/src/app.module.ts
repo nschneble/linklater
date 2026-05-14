@@ -24,6 +24,10 @@ import { UsersModule } from './users/users.module.js';
       { name: 'auth-2fa-sms-setup', ttl: 60000, limit: 3 },
       { name: 'auth-2fa-sms-verify', ttl: 60000, limit: 5 },
       { name: 'auth-sms-resend', ttl: 60000, limit: 3 },
+      // 2FA disable — most sensitive action; matches verify-otp window
+      { name: 'auth-disable-2fa', ttl: 900000, limit: 5 },
+      // Re-auth gate for recovery code operations
+      { name: 'auth-reauth', ttl: 900000, limit: 5 },
     ]),
     AuthModule,
     LinksModule,

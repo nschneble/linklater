@@ -100,13 +100,9 @@ export class SmsSetupService {
       throw new BadRequestException('Invalid or expired code');
     }
 
-    await this.usersService.enableSms(userId);
-
     const plainCodes = generateRecoveryCodes();
     const codeHashes = await hashRecoveryCodes(plainCodes);
-
-    await this.usersService.deleteRecoveryCodes(userId);
-    await this.usersService.createRecoveryCodes(userId, codeHashes);
+    await this.usersService.enableSmsWithRecoveryCodes(userId, codeHashes);
 
     return plainCodes;
   }

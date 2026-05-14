@@ -1,4 +1,10 @@
-import { useCallback, useState, type FormEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from 'react';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
@@ -96,6 +102,13 @@ export default function TwoFactorSection() {
     secret: string;
   } | null>(null);
   const [totpCode, setTotpCode] = useState('');
+  const totpCodeInputReference = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (totpSetup) {
+      totpCodeInputReference.current?.focus();
+    }
+  }, [totpSetup]);
 
   // SMS setup state
   const [smsFlow, setSmsFlow] = useState<SmsFlow | null>(null);
@@ -343,9 +356,9 @@ export default function TwoFactorSection() {
             </label>
             <FormInput
               id="totp-code"
+              ref={totpCodeInputReference}
               type="text"
               inputMode="numeric"
-              autoFocus
               maxLength={6}
               value={totpCode}
               onChange={(event) => setTotpCode(event.target.value)}

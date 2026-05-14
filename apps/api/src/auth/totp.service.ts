@@ -76,12 +76,15 @@ export class TotpService {
       throw new BadRequestException('Invalid code');
     }
 
-    await this.usersService.enableTotp(userId);
+    const usedStep = Math.floor(Date.now() / 1000 / 30) + result.delta;
 
     const codes = generateRecoveryCodes();
     const hashes = await hashRecoveryCodes(codes);
-    await this.usersService.deleteRecoveryCodes(userId);
-    await this.usersService.createRecoveryCodes(userId, hashes);
+    await this.usersService.enableTotpWithRecoveryCodes(
+      userId,
+      hashes,
+      usedStep,
+    );
 
     return codes;
   }
@@ -94,7 +97,17 @@ export class TotpService {
     }
 
     const secret = decrypt(user.totpSecret, process.env.TOTP_ENCRYPTION_KEY!);
-    const result = await verify({ token: code, secret, epochTolerance: 30 });
+    const result = await verify({
+      token: code,
+      secret,
+      epochTolerance: 30,
+      afterTimeStep: user.totpLastUsedStep ?? undefined,
+    });
+
+    if (result.valid) {
+      const usedStep = Math.floor(Date.now() / 1000 / 30) + result.delta;
+      await this.usersService.updateTotpLastUsedStep(userId, usedStep);
+    }
 
     return result.valid;
   }

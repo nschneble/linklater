@@ -60,8 +60,6 @@ describe('AuthService', () => {
     confirmPendingEmail: jest.fn(),
     create: jest.fn(),
     createOAuthUser: jest.fn(),
-    createRecoveryCodes: jest.fn(),
-    deleteRecoveryCodes: jest.fn(),
     disableTwoFactor: jest.fn(),
     findByEmail: jest.fn(),
     findByPendingEmailToken: jest.fn(),
@@ -73,6 +71,7 @@ describe('AuthService', () => {
     linkOAuthAccount: jest.fn(),
     markEmailVerified: jest.fn(),
     markRecoveryCodeUsed: jest.fn(),
+    reissueRecoveryCodes: jest.fn(),
     resetPasswordWithToken: jest.fn(),
     updatePendingEmail: jest.fn(),
     updateResetToken: jest.fn(),
@@ -453,7 +452,10 @@ describe('AuthService', () => {
     it('returns mfaToken and mfaMethod sms when smsEnabledAt is set, decrypting before send', async () => {
       process.env.PHONE_ENCRYPTION_KEY = 'b'.repeat(64);
       const { encrypt } = await import('../common/crypto.js');
-      const encryptedPhone = encrypt('+15555550100', process.env.PHONE_ENCRYPTION_KEY);
+      const encryptedPhone = encrypt(
+        '+15555550100',
+        process.env.PHONE_ENCRYPTION_KEY,
+      );
 
       const result = await service.login({
         email: USER_EMAIL,
@@ -930,6 +932,7 @@ describe('AuthService', () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
+          smsEnabledAt: new Date(),
           phoneNumber: encryptedPhone,
         });
         (smsServiceMock.checkVerification as jest.Mock).mockResolvedValue(true);
@@ -943,10 +946,11 @@ describe('AuthService', () => {
         expect(result).toHaveProperty('accessToken');
       });
 
-      it('throws UnauthorizedException when phone is not configured', async () => {
+      it('throws UnauthorizedException when smsEnabledAt is not set', async () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
+          smsEnabledAt: null,
           phoneNumber: null,
         });
 
@@ -966,6 +970,7 @@ describe('AuthService', () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
+          smsEnabledAt: new Date(),
           phoneNumber: encryptedPhone,
         });
         (smsServiceMock.checkVerification as jest.Mock).mockResolvedValue(
@@ -1111,10 +1116,7 @@ describe('AuthService', () => {
       (usersServiceMock.verifyCurrentPassword as jest.Mock).mockResolvedValue(
         true,
       );
-      (usersServiceMock.deleteRecoveryCodes as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (usersServiceMock.createRecoveryCodes as jest.Mock).mockResolvedValue(
+      (usersServiceMock.reissueRecoveryCodes as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -1125,10 +1127,7 @@ describe('AuthService', () => {
 
       expect(Array.isArray(result)).toBe(true);
       expect(result).toHaveLength(10);
-      expect(usersServiceMock.deleteRecoveryCodes).toHaveBeenCalledWith(
-        USER_ID,
-      );
-      expect(usersServiceMock.createRecoveryCodes).toHaveBeenCalledWith(
+      expect(usersServiceMock.reissueRecoveryCodes).toHaveBeenCalledWith(
         USER_ID,
         expect.arrayContaining([expect.any(String)]),
       );

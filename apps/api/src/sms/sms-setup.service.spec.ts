@@ -38,9 +38,7 @@ describe('SmsSetupService', () => {
   let service: SmsSetupService;
 
   const usersServiceMock = {
-    deleteRecoveryCodes: jest.fn(),
-    createRecoveryCodes: jest.fn(),
-    enableSms: jest.fn(),
+    enableSmsWithRecoveryCodes: jest.fn(),
     findById: jest.fn(),
     savePhoneNumber: jest.fn(),
   } as unknown as UsersService;
@@ -145,13 +143,9 @@ describe('SmsSetupService', () => {
         makeUser({ phoneNumber: encrypted }),
       );
       (smsServiceMock.checkVerification as jest.Mock).mockResolvedValue(true);
-      (usersServiceMock.enableSms as jest.Mock).mockResolvedValue(undefined);
-      (usersServiceMock.deleteRecoveryCodes as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (usersServiceMock.createRecoveryCodes as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        usersServiceMock.enableSmsWithRecoveryCodes as jest.Mock
+      ).mockResolvedValue(undefined);
 
       const result = await service.verifySetup(USER_ID, CODE);
 
@@ -160,11 +154,7 @@ describe('SmsSetupService', () => {
         PHONE_NUMBER,
         CODE,
       );
-      expect(usersServiceMock.enableSms).toHaveBeenCalledWith(USER_ID);
-      expect(usersServiceMock.deleteRecoveryCodes).toHaveBeenCalledWith(
-        USER_ID,
-      );
-      expect(usersServiceMock.createRecoveryCodes).toHaveBeenCalledWith(
+      expect(usersServiceMock.enableSmsWithRecoveryCodes).toHaveBeenCalledWith(
         USER_ID,
         expect.arrayContaining([expect.any(String)]),
       );

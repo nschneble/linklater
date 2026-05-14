@@ -24,6 +24,7 @@ const makeUser = (overrides = {}) => ({
   totpSecret: null,
   totpVerifiedAt: null,
   totpEnabledAt: null,
+  totpLastUsedStep: null,
   ...overrides,
 });
 
@@ -31,11 +32,10 @@ describe('TotpService', () => {
   let service: TotpService;
 
   const usersServiceMock = {
-    createRecoveryCodes: jest.fn(),
-    deleteRecoveryCodes: jest.fn(),
-    enableTotp: jest.fn(),
+    enableTotpWithRecoveryCodes: jest.fn(),
     findById: jest.fn(),
     saveTotpSecret: jest.fn(),
+    updateTotpLastUsedStep: jest.fn(),
   } as unknown as UsersService;
 
   beforeEach(async () => {
@@ -100,7 +100,7 @@ describe('TotpService', () => {
   });
 
   describe('verifySetup', () => {
-    it('enables TOTP, generates 10 recovery codes, and returns them', async () => {
+    it('enables TOTP atomically, generates 10 recovery codes, and returns them', async () => {
       const secret = generateSecret();
       const { encrypt } = await import('../common/crypto.js');
       const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
@@ -108,24 +108,17 @@ describe('TotpService', () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
         makeUser({ totpSecret: encryptedSecret }),
       );
-      (usersServiceMock.enableTotp as jest.Mock).mockResolvedValue(undefined);
-      (usersServiceMock.deleteRecoveryCodes as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (usersServiceMock.createRecoveryCodes as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        usersServiceMock.enableTotpWithRecoveryCodes as jest.Mock
+      ).mockResolvedValue(undefined);
 
       const code = await generate({ secret });
       const result = await service.verifySetup(USER_ID, code);
 
-      expect(usersServiceMock.enableTotp).toHaveBeenCalledWith(USER_ID);
-      expect(usersServiceMock.deleteRecoveryCodes).toHaveBeenCalledWith(
-        USER_ID,
-      );
-      expect(usersServiceMock.createRecoveryCodes).toHaveBeenCalledWith(
+      expect(usersServiceMock.enableTotpWithRecoveryCodes).toHaveBeenCalledWith(
         USER_ID,
         expect.any(Array),
+        expect.any(Number),
       );
       expect(result).toHaveLength(10);
     });
@@ -154,7 +147,7 @@ describe('TotpService', () => {
   });
 
   describe('verifyCode', () => {
-    it('returns true for a valid TOTP code', async () => {
+    it('returns true for a valid TOTP code and records the used time step', async () => {
       const secret = generateSecret();
       const { encrypt } = await import('../common/crypto.js');
       const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
@@ -162,12 +155,19 @@ describe('TotpService', () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
         makeUser({ totpSecret: encryptedSecret }),
       );
+      (usersServiceMock.updateTotpLastUsedStep as jest.Mock).mockResolvedValue(
+        undefined,
+      );
 
       const code = await generate({ secret });
       expect(await service.verifyCode(USER_ID, code)).toBe(true);
+      expect(usersServiceMock.updateTotpLastUsedStep).toHaveBeenCalledWith(
+        USER_ID,
+        expect.any(Number),
+      );
     });
 
-    it('returns false for an invalid TOTP code', async () => {
+    it('returns false for an invalid TOTP code and does not update the step', async () => {
       const secret = generateSecret();
       const { encrypt } = await import('../common/crypto.js');
       const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
@@ -177,6 +177,26 @@ describe('TotpService', () => {
       );
 
       expect(await service.verifyCode(USER_ID, '000000')).toBe(false);
+      expect(usersServiceMock.updateTotpLastUsedStep).not.toHaveBeenCalled();
+    });
+
+    it('rejects a valid code whose time step was already used (replay prevention)', async () => {
+      const secret = generateSecret();
+      const { encrypt } = await import('../common/crypto.js');
+      const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
+
+      // Simulate the current 30-second window having already been consumed
+      const currentStep = Math.floor(Date.now() / 1000 / 30);
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUser({
+          totpSecret: encryptedSecret,
+          totpLastUsedStep: currentStep,
+        }),
+      );
+
+      const code = await generate({ secret });
+      expect(await service.verifyCode(USER_ID, code)).toBe(false);
+      expect(usersServiceMock.updateTotpLastUsedStep).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when no totpSecret is set', async () => {

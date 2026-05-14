@@ -343,13 +343,6 @@ export class UsersService {
     });
   }
 
-  async enableSms(id: string) {
-    await this.prisma.user.update({
-      where: { id },
-      data: { smsEnabledAt: new Date() },
-    });
-  }
-
   async saveTotpSecret(userId: string, encryptedSecret: string) {
     await this.prisma.user.update({
       where: { id: userId },
@@ -361,11 +354,65 @@ export class UsersService {
     });
   }
 
-  async enableTotp(userId: string) {
+  async updateTotpLastUsedStep(id: string, step: number) {
     await this.prisma.user.update({
-      where: { id: userId },
-      data: { totpEnabledAt: new Date(), totpVerifiedAt: new Date() },
+      where: { id },
+      data: { totpLastUsedStep: step },
     });
+  }
+
+  /**
+   * Atomically enables TOTP, records the verified time step (replay prevention),
+   * and replaces any existing recovery codes with the provided set.
+   */
+  async enableTotpWithRecoveryCodes(
+    userId: string,
+    codeHashes: string[],
+    lastUsedStep: number,
+  ) {
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          totpEnabledAt: new Date(),
+          totpVerifiedAt: new Date(),
+          totpLastUsedStep: lastUsedStep,
+        },
+      }),
+      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
+      this.prisma.recoveryCode.createMany({
+        data: codeHashes.map((codeHash) => ({ userId, codeHash })),
+      }),
+    ]);
+  }
+
+  /**
+   * Atomically enables SMS 2FA and replaces any existing recovery codes
+   * with the provided set.
+   */
+  async enableSmsWithRecoveryCodes(userId: string, codeHashes: string[]) {
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { smsEnabledAt: new Date() },
+      }),
+      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
+      this.prisma.recoveryCode.createMany({
+        data: codeHashes.map((codeHash) => ({ userId, codeHash })),
+      }),
+    ]);
+  }
+
+  /**
+   * Atomically invalidates all existing recovery codes and stores a fresh set.
+   */
+  async reissueRecoveryCodes(userId: string, codeHashes: string[]) {
+    await this.prisma.$transaction([
+      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
+      this.prisma.recoveryCode.createMany({
+        data: codeHashes.map((codeHash) => ({ userId, codeHash })),
+      }),
+    ]);
   }
 
   async findUnusedRecoveryCodes(userId: string) {
@@ -381,16 +428,6 @@ export class UsersService {
     });
   }
 
-  async createRecoveryCodes(userId: string, codeHashes: string[]) {
-    await this.prisma.recoveryCode.createMany({
-      data: codeHashes.map((codeHash) => ({ userId, codeHash })),
-    });
-  }
-
-  async deleteRecoveryCodes(userId: string) {
-    await this.prisma.recoveryCode.deleteMany({ where: { userId } });
-  }
-
   async verifyCurrentPassword(id: string, password: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user || !user.passwordHash) return false;
@@ -398,16 +435,19 @@ export class UsersService {
   }
 
   async disableTwoFactor(id: string) {
-    await this.prisma.user.update({
-      where: { id },
-      data: {
-        totpSecret: null,
-        totpEnabledAt: null,
-        totpVerifiedAt: null,
-        phoneNumber: null,
-        smsEnabledAt: null,
-      },
-    });
-    await this.prisma.recoveryCode.deleteMany({ where: { userId: id } });
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id },
+        data: {
+          totpSecret: null,
+          totpEnabledAt: null,
+          totpVerifiedAt: null,
+          totpLastUsedStep: null,
+          phoneNumber: null,
+          smsEnabledAt: null,
+        },
+      }),
+      this.prisma.recoveryCode.deleteMany({ where: { userId: id } }),
+    ]);
   }
 }

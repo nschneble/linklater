@@ -27,6 +27,7 @@ model User {
   totpSecret                 String?
   totpEnabledAt              DateTime?
   totpVerifiedAt             DateTime?
+  totpLastUsedStep           Int?
 
   phoneNumber                String?
   smsEnabledAt               DateTime?

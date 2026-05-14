@@ -9,9 +9,9 @@ describe('generateRecoveryCodes', () => {
     expect(generateRecoveryCodes()).toHaveLength(10);
   });
 
-  it('each code has format xxxxx-xxxxx (two 5-char groups)', () => {
+  it('each code has format xxxxx-xxxxx-xxxxx (three 5-char groups)', () => {
     for (const code of generateRecoveryCodes()) {
-      expect(code).toMatch(/^[^01IOl]{5}-[^01IOl]{5}$/);
+      expect(code).toMatch(/^[^01IOl]{5}-[^01IOl]{5}-[^01IOl]{5}$/);
     }
   });
 

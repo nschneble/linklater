@@ -48,6 +48,7 @@ export default function AuthForm() {
   const navigate = useNavigate();
 
   const emailReference = useRef<HTMLInputElement>(null);
+  const mfaInputReference = useRef<HTMLInputElement>(null);
   const passwordReference = useRef<HTMLInputElement>(null);
 
   const [email, setEmail] = useState('');
@@ -86,6 +87,12 @@ export default function AuthForm() {
 
     emailReference.current?.focus();
   }, [mode]);
+
+  useEffect(() => {
+    if (mfaChallenge) {
+      mfaInputReference.current?.focus();
+    }
+  }, [mfaChallenge]);
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
@@ -259,10 +266,10 @@ export default function AuthForm() {
           </label>
           <FormInput
             id={labelId}
+            ref={mfaInputReference}
             type="text"
             inputMode={isRecovery ? 'text' : 'numeric'}
             autoComplete="one-time-code"
-            autoFocus
             maxLength={isRecovery ? undefined : 6}
             onChange={(event) => setMfaCode(event.target.value)}
             value={mfaCode}

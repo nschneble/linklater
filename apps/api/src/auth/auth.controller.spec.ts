@@ -328,27 +328,6 @@ describe('AuthController', () => {
     });
   });
 
-  describe('getRecoveryCodes', () => {
-    it('delegates to AuthService.regenerateRecoveryCodes and wraps result', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      const recoveryCodes = ['aaaaa-bbbbb'];
-      (authServiceMock.regenerateRecoveryCodes as jest.Mock).mockResolvedValue(
-        recoveryCodes,
-      );
-
-      const result = await controller.getRecoveryCodes(request, {
-        currentPassword: 'open-sesame',
-      });
-
-      expect(authServiceMock.regenerateRecoveryCodes).toHaveBeenCalledWith(
-        USER_ID,
-        'open-sesame',
-        undefined,
-      );
-      expect(result).toEqual({ recoveryCodes });
-    });
-  });
-
   describe('smsSetup', () => {
     it('delegates to SmsSetupService.initiateSetup with userId and phoneNumber', async () => {
       const request = { user: { userId: USER_ID } } as never;

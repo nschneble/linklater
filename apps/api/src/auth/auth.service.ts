@@ -235,7 +235,10 @@ export class AuthService {
         { subject: user.userId, mfaPending: true },
         { expiresIn: '5m' },
       );
-      const phone = decrypt(user.phoneNumber, process.env.PHONE_ENCRYPTION_KEY!);
+      const phone = decrypt(
+        user.phoneNumber,
+        process.env.PHONE_ENCRYPTION_KEY!,
+      );
       await this.smsService.sendVerification(phone);
       return { mfaToken, mfaMethod: 'sms' as const };
     }
@@ -382,7 +385,7 @@ export class AuthService {
 
     if (method === 'sms') {
       const user = await this.usersService.findById(userId);
-      if (!user.phoneNumber) {
+      if (!user.smsEnabledAt || !user.phoneNumber) {
         throw new UnauthorizedException('SMS 2FA not configured');
       }
       const phone = decrypt(
@@ -601,8 +604,7 @@ export class AuthService {
   private async issueRecoveryCodes(userId: string): Promise<string[]> {
     const codes = generateRecoveryCodes();
     const hashes = await hashRecoveryCodes(codes);
-    await this.usersService.deleteRecoveryCodes(userId);
-    await this.usersService.createRecoveryCodes(userId, hashes);
+    await this.usersService.reissueRecoveryCodes(userId, hashes);
     return codes;
   }
 }
