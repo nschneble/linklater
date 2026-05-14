@@ -23,10 +23,9 @@ describe('generateRecoveryCodes', () => {
     }
   });
 
-  it('generates unique codes each call', () => {
-    const setA = new Set(generateRecoveryCodes());
-    const setB = new Set(generateRecoveryCodes());
-    expect([...setA].some((code) => setB.has(code))).toBe(false);
+  it('generates unique codes within a single call', () => {
+    const codes = generateRecoveryCodes();
+    expect(new Set(codes).size).toBe(codes.length);
   });
 });
 

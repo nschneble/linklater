@@ -1110,7 +1110,7 @@ describe('AuthService', () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
-          totpEnabledAt: null,
+          totpEnabledAt: new Date(),
           smsEnabledAt: null,
         });
         (
@@ -1160,6 +1160,19 @@ describe('AuthService', () => {
         (
           usersServiceMock.findUnusedRecoveryCodes as jest.Mock
         ).mockResolvedValue([{ id: 'rc-1', codeHash: differentHash }]);
+
+        await expect(
+          service.verifyOtp(USER_ID, RECOVERY_CODE, 'recovery'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('throws UnauthorizedException when no 2FA method is enrolled', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          totpEnabledAt: null,
+          smsEnabledAt: null,
+        });
 
         await expect(
           service.verifyOtp(USER_ID, RECOVERY_CODE, 'recovery'),

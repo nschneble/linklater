@@ -135,8 +135,7 @@ export default function AuthForm() {
     setError(null);
     setLoading(true);
     try {
-      const method = mfaChallenge === 'recovery' ? 'recovery' : mfaChallenge;
-      await verifyOtp(mfaToken, mfaCode, method);
+      await verifyOtp(mfaToken, mfaCode, mfaChallenge);
       await refreshUser();
       const destination =
         (location.state as { from?: string })?.from ?? '/unread';

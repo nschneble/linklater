@@ -413,6 +413,9 @@ export class AuthService {
     }
 
     if (method === 'recovery') {
+      if (!enrolledMethod) {
+        throw new UnauthorizedException('No 2FA method enrolled');
+      }
       const recoveryCodes =
         await this.usersService.findUnusedRecoveryCodes(userId);
       const hashes = recoveryCodes.map((rc) => rc.codeHash);
