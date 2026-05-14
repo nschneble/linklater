@@ -10,6 +10,7 @@ import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { decrypt } from '../common/crypto.js';
 import {
+  RECOVERY_CODE_REGEX,
   findMatchingRecoveryCode,
   generateRecoveryCodes,
   hashRecoveryCodes,
@@ -459,7 +460,7 @@ export class AuthService {
         );
       }
 
-      const isRecoveryCode = /^[^01IOl]{5}-[^01IOl]{5}-[^01IOl]{5}$/.test(code);
+      const isRecoveryCode = RECOVERY_CODE_REGEX.test(code);
 
       if (isRecoveryCode) {
         const recoveryCodes =
@@ -613,7 +614,7 @@ export class AuthService {
     }
 
     if (code) {
-      const isRecoveryCode = /^[^01IOl]{5}-[^01IOl]{5}-[^01IOl]{5}$/.test(code);
+      const isRecoveryCode = RECOVERY_CODE_REGEX.test(code);
 
       if (isRecoveryCode) {
         if (!user.totpEnabledAt && !user.smsEnabledAt) {

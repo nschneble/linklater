@@ -82,7 +82,7 @@ export default function ReauthForm({
         htmlFor="reauth-code"
       >
         {hasPassword ? 'Or enter your ' : 'Enter your '}
-        {twoFactorMethod === 'sms' ? 'SMS' : 'authenticator'} code
+        {twoFactorMethod === 'sms' ? 'SMS' : 'authenticator'} or recovery code
       </label>
 
       {twoFactorMethod === 'sms' && !smsSent && (
@@ -103,8 +103,7 @@ export default function ReauthForm({
       <FormInput
         id="reauth-code"
         type="text"
-        inputMode="numeric"
-        maxLength={6}
+        maxLength={17}
         value={code}
         onChange={(event) => onCodeChange(event.target.value)}
       />

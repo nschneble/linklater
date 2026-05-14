@@ -77,7 +77,6 @@ describe('AuthService', () => {
     updatePendingEmail: jest.fn(),
     updateResetToken: jest.fn(),
     updateVerificationToken: jest.fn(),
-    verifyCurrentPassword: jest.fn(),
   } as unknown as UsersService;
 
   const jwtServiceMock = {
@@ -1000,7 +999,7 @@ describe('AuthService', () => {
   });
 
   describe('verifyOtp', () => {
-    const RECOVERY_CODE = 'aaaaa-bbbbb';
+    const RECOVERY_CODE_STUB = 'aaaaa-bbbbb';
 
     describe('totp method', () => {
       it('returns accessToken when TOTP code is valid', async () => {
@@ -1135,7 +1134,7 @@ describe('AuthService', () => {
         const codeId = 'rc-1';
 
         const bcrypt = await import('bcryptjs');
-        const realHash = await bcrypt.hash(RECOVERY_CODE, 1);
+        const realHash = await bcrypt.hash(RECOVERY_CODE_STUB, 1);
 
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
@@ -1152,7 +1151,7 @@ describe('AuthService', () => {
 
         const result = await service.verifyOtp(
           USER_ID,
-          RECOVERY_CODE,
+          RECOVERY_CODE_STUB,
           'recovery',
         );
 
@@ -1174,7 +1173,7 @@ describe('AuthService', () => {
         ).mockResolvedValue([]);
 
         await expect(
-          service.verifyOtp(USER_ID, RECOVERY_CODE, 'recovery'),
+          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery'),
         ).rejects.toThrow(UnauthorizedException);
       });
 
@@ -1192,7 +1191,7 @@ describe('AuthService', () => {
         ).mockResolvedValue([{ id: 'rc-1', codeHash: differentHash }]);
 
         await expect(
-          service.verifyOtp(USER_ID, RECOVERY_CODE, 'recovery'),
+          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery'),
         ).rejects.toThrow(UnauthorizedException);
       });
 
@@ -1205,7 +1204,7 @@ describe('AuthService', () => {
         });
 
         await expect(
-          service.verifyOtp(USER_ID, RECOVERY_CODE, 'recovery'),
+          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery'),
         ).rejects.toThrow(UnauthorizedException);
       });
     });

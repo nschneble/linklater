@@ -6,6 +6,8 @@ const GROUP_COUNT = 3;
 const GROUP_LENGTH = 5;
 const BCRYPT_COST = 10;
 
+export const RECOVERY_CODE_REGEX = /^[^01IOl]{5}-[^01IOl]{5}-[^01IOl]{5}$/;
+
 /** Characters that are unambiguous to read and type (no 0, O, I, l, 1). */
 const CHARSET = 'abcdefghjkmnpqrstuvwxyz23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 /** Largest multiple of CHARSET.length that fits in a uint16 — eliminates modulo bias. */

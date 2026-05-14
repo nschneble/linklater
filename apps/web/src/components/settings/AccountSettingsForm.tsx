@@ -75,7 +75,12 @@ export default function AccountSettingsForm() {
       );
     } catch (error: unknown) {
       if (error instanceof ApiError && error.status === 403) {
-        setEmailMessage(getErrorMessage(error, 'SMS code sent to your phone'));
+        setEmailError(
+          getErrorMessage(
+            error,
+            'A verification code is required to change your email',
+          ),
+        );
       } else {
         setEmailError(getErrorMessage(error, 'Failed to request email change'));
       }
@@ -195,20 +200,14 @@ export default function AccountSettingsForm() {
               className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
               htmlFor="email-change-mfa"
             >
-              {user.twoFactorMethod === 'sms'
-                ? 'SMS code'
-                : 'Authenticator code'}
+              {user.twoFactorMethod === 'sms' ? 'SMS' : 'Authenticator'} or
+              recovery code
             </label>
             <FormInput
               id="email-change-mfa"
               type="text"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder={
-                user.twoFactorMethod === 'sms'
-                  ? 'Submit once to receive an SMS code'
-                  : 'Required to confirm email change'
-              }
+              maxLength={17}
+              placeholder="Required to confirm email change"
               value={mfaEmailCode}
               onChange={(event) => setMfaEmailCode(event.target.value)}
             />

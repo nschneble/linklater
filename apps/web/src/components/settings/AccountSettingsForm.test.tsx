@@ -143,10 +143,10 @@ describe('AccountSettingsForm', () => {
       });
     });
 
-    it('shows a success message when the server returns 403 (SMS code sent)', async () => {
+    it('shows an error when the server returns 403 (verification code required)', async () => {
       vi.mocked(apiModule.requestEmailChange).mockRejectedValue(
         new ApiError(
-          '2FA is enabled — an SMS code has been sent to your phone',
+          '2FA is enabled — provide a verification code to change your email',
           403,
         ),
       );
@@ -164,8 +164,10 @@ describe('AccountSettingsForm', () => {
       fireEvent.click(screen.getByRole('button', { name: /change email/i }));
 
       await waitFor(() => {
-        expect(screen.getByRole('status')).toBeInTheDocument();
-        expect(screen.getByText(/sms code has been sent/i)).toBeInTheDocument();
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(
+          screen.getByText(/provide a verification code/i),
+        ).toBeInTheDocument();
       });
     });
 
@@ -198,7 +200,9 @@ describe('AccountSettingsForm', () => {
 
       render(<AccountSettingsForm />);
 
-      expect(screen.getByLabelText(/authenticator code/i)).toBeInTheDocument();
+      expect(
+        screen.getByLabelText(/authenticator or recovery code/i),
+      ).toBeInTheDocument();
     });
 
     it('includes the 2FA code when requesting an email change with 2FA enabled', async () => {
@@ -215,9 +219,12 @@ describe('AccountSettingsForm', () => {
       fireEvent.change(screen.getByLabelText(/change email/i), {
         target: { value: 'new@example.com' },
       });
-      fireEvent.change(screen.getByLabelText(/authenticator code/i), {
-        target: { value: '123456' },
-      });
+      fireEvent.change(
+        screen.getByLabelText(/authenticator or recovery code/i),
+        {
+          target: { value: '123456' },
+        },
+      );
       fireEvent.click(screen.getByRole('button', { name: /change email/i }));
 
       await waitFor(() => {
