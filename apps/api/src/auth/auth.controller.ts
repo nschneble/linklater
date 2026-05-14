@@ -374,7 +374,9 @@ export class AuthController {
     status: 401,
     description: 'Invalid credential or missing JWT.',
   })
-  @UseGuards(JwtAuthGuard)
+  @ApiResponse({ status: 429, description: 'Too many disable attempts.' })
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({ 'auth-disable-2fa': { ttl: 900000, limit: 5 } })
   @Delete('2fa')
   @HttpCode(200)
   async disable2fa(@Req() request: AuthRequest, @Body() body: Disable2faDto) {
