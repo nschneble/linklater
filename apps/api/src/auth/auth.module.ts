@@ -10,6 +10,7 @@ import { JwtStrategy } from './jwt.strategy.js';
 import { LocalStrategy } from './local.strategy.js';
 import { EmailModule } from '../email/email.module.js';
 import { SmsService } from '../sms/sms.service.js';
+import { TotpService } from './totp.service.js';
 import { UsersModule } from '../users/users.module.js';
 
 const googleEnabled = !!(
@@ -41,7 +42,7 @@ const oauthProviders: Provider[] = [
     PassportModule,
     UsersModule,
   ],
-  providers: [AuthService, JwtStrategy, LocalStrategy, SmsService, ...oauthProviders],
+  providers: [AuthService, JwtStrategy, LocalStrategy, SmsService, TotpService, ...oauthProviders],
   controllers: [AuthController],
 })
 export class AuthModule {}

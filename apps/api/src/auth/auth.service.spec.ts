@@ -19,6 +19,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '../prisma/generated/client';
 
 import { AuthService } from './auth.service';
+import { TotpService } from './totp.service';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../email/email.service';
 import { SmsService } from '../sms/sms.service';
@@ -86,6 +87,10 @@ describe('AuthService', () => {
     sendVerification: jest.fn().mockResolvedValue(undefined),
   } as unknown as SmsService;
 
+  const totpServiceMock = {
+    verifyCode: jest.fn(),
+  } as unknown as TotpService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -94,6 +99,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: jwtServiceMock },
         { provide: EmailService, useValue: emailServiceMock },
         { provide: SmsService, useValue: smsServiceMock },
+        { provide: TotpService, useValue: totpServiceMock },
       ],
     }).compile();
 
@@ -759,6 +765,29 @@ describe('AuthService', () => {
 
   describe('verifyOtp', () => {
     const RECOVERY_CODE = 'aaaaa-bbbbb';
+
+    describe('totp method', () => {
+      it('returns accessToken when TOTP code is valid', async () => {
+        (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+        });
+
+        const result = await service.verifyOtp(USER_ID, '123456', 'totp');
+
+        expect(totpServiceMock.verifyCode).toHaveBeenCalledWith(USER_ID, '123456');
+        expect(result).toHaveProperty('accessToken');
+      });
+
+      it('throws UnauthorizedException when TOTP code is invalid', async () => {
+        (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(false);
+
+        await expect(
+          service.verifyOtp(USER_ID, '000000', 'totp'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+    });
 
     describe('recovery method', () => {
       it('marks the matching code used and returns accessToken', async () => {

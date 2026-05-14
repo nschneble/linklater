@@ -11,6 +11,7 @@ import { findMatchingRecoveryCode } from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
 import { Prisma } from '../prisma/index.js';
 import { SmsService } from '../sms/sms.service.js';
+import { TotpService } from './totp.service.js';
 import { UsersService, withoutPasswordHash } from '../users/index.js';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -44,6 +45,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
     private readonly smsService: SmsService,
+    private readonly totpService: TotpService,
   ) {}
 
   /**
@@ -336,6 +338,17 @@ export class AuthService {
     code: string,
     method: 'totp' | 'sms' | 'recovery',
   ) {
+    if (method === 'totp') {
+      const isValid = await this.totpService.verifyCode(userId, code);
+      if (!isValid) {
+        throw new UnauthorizedException('Invalid TOTP code');
+      }
+      const user = await this.usersService.findById(userId);
+      return {
+        accessToken: this.jwtService.sign({ subject: userId, email: user.email }),
+      };
+    }
+
     if (method === 'recovery') {
       const recoveryCodes =
         await this.usersService.findUnusedRecoveryCodes(userId);

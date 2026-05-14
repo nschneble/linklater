@@ -336,6 +336,20 @@ export class UsersService {
     });
   }
 
+  async saveTotpSecret(userId: string, encryptedSecret: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { totpSecret: encryptedSecret, totpEnabledAt: null, totpVerifiedAt: null },
+    });
+  }
+
+  async enableTotp(userId: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { totpEnabledAt: new Date(), totpVerifiedAt: new Date() },
+    });
+  }
+
   async findUnusedRecoveryCodes(userId: string) {
     return this.prisma.recoveryCode.findMany({
       where: { userId, usedAt: null },

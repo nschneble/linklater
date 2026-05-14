@@ -6,6 +6,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { MfaAuthGuard } from './mfa-auth.guard';
+import { TotpService } from './totp.service';
 
 const ACCESS_TOKEN = 'token';
 const NEW_EMAIL = 'new.email@addy.com';
@@ -35,10 +36,18 @@ describe('AuthController', () => {
     verifyOtp: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
   } as unknown as AuthService;
 
+  const totpServiceMock = {
+    generateSetup: jest.fn(),
+    verifySetup: jest.fn(),
+  } as unknown as TotpService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: authServiceMock }],
+      providers: [
+        { provide: AuthService, useValue: authServiceMock },
+        { provide: TotpService, useValue: totpServiceMock },
+      ],
     })
       .overrideGuard(ThrottlerGuard)
       .useValue({ canActivate: () => true })
@@ -221,6 +230,32 @@ describe('AuthController', () => {
         'totp',
       );
       expect(result).toEqual({ accessToken: ACCESS_TOKEN });
+    });
+  });
+
+  describe('totpSetup', () => {
+    it('delegates to TotpService.generateSetup with userId and email', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      const setupResult = { qrCodeDataUrl: 'data:image/png;base64,...', secret: 'ABCDEF' };
+      (totpServiceMock.generateSetup as jest.Mock).mockResolvedValue(setupResult);
+
+      const result = await controller.totpSetup(request);
+
+      expect(totpServiceMock.generateSetup).toHaveBeenCalledWith(USER_ID, USER_EMAIL);
+      expect(result).toBe(setupResult);
+    });
+  });
+
+  describe('totpVerifySetup', () => {
+    it('delegates to TotpService.verifySetup and wraps recovery codes in object', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      const recoveryCodes = ['aaaaa-bbbbb', 'ccccc-ddddd'];
+      (totpServiceMock.verifySetup as jest.Mock).mockResolvedValue(recoveryCodes);
+
+      const result = await controller.totpVerifySetup(request, { code: '123456' });
+
+      expect(totpServiceMock.verifySetup).toHaveBeenCalledWith(USER_ID, '123456');
+      expect(result).toEqual({ recoveryCodes });
     });
   });
 });

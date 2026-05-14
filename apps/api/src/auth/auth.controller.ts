@@ -22,10 +22,12 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { LocalAuthGuard } from './local-auth.guard.js';
 import { MfaAuthGuard } from './mfa-auth.guard.js';
+import { TotpService } from './totp.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { RequestEmailChangeDto } from './dto/request-email-change.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { VerifyEmailDto } from './dto/verify-email.dto.js';
+import { TotpVerifySetupDto } from './dto/totp-verify-setup.dto.js';
 import { VerifyOtpDto } from './dto/verify-otp.dto.js';
 import type { AuthRequest } from './auth-request.type.js';
 
@@ -38,7 +40,10 @@ import type { AuthRequest } from './auth-request.type.js';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly totpService: TotpService,
+  ) {}
 
   /**
    * Registers a new account and sends an email verification message.
@@ -231,6 +236,38 @@ export class AuthController {
   @HttpCode(200)
   async verifyOtp(@Req() request: AuthRequest, @Body() body: VerifyOtpDto) {
     return this.authService.verifyOtp(request.user.userId, body.code, body.method);
+  }
+
+  @ApiOperation({ summary: 'Generate a TOTP setup QR code and secret' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Returns qrCodeDataUrl and plaintext secret.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({ status: 403, description: 'Email not yet verified.' })
+  @ApiResponse({ status: 409, description: 'TOTP is already active.' })
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/totp/setup')
+  @HttpCode(200)
+  async totpSetup(@Req() request: AuthRequest) {
+    return this.totpService.generateSetup(request.user.userId, request.user.email);
+  }
+
+  @ApiOperation({ summary: 'Verify TOTP setup and receive recovery codes' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'TOTP enabled. Returns recovery codes.' })
+  @ApiResponse({ status: 400, description: 'No pending setup or invalid code.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/totp/verify')
+  @HttpCode(200)
+  async totpVerifySetup(
+    @Req() request: AuthRequest,
+    @Body() body: TotpVerifySetupDto,
+  ) {
+    const recoveryCodes = await this.totpService.verifySetup(
+      request.user.userId,
+      body.code,
+    );
+    return { recoveryCodes };
   }
 
   @ApiOperation({ summary: 'Initiate Google OAuth sign-in' })
