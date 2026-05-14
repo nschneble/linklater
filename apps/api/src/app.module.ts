@@ -15,9 +15,15 @@ import { UsersModule } from './users/users.module.js';
       { name: 'auth-forgot-password', ttl: 60000, limit: 3 },
       { name: 'auth-reset-password', ttl: 60000, limit: 5 },
       { name: 'auth-verify-email', ttl: 60000, limit: 10 },
-      { name: 'auth-resend-verification', ttl: 60000, limit: 5 },
+      { name: 'auth-resend-verification', ttl: 60000, limit: 3 },
       { name: 'auth-request-email-change', ttl: 60000, limit: 3 },
       { name: 'auth-verify-email-change', ttl: 60000, limit: 10 },
+      // 2FA login step 2 — tighter window to slow brute-force on OTP codes
+      { name: 'auth-verify-otp', ttl: 900000, limit: 5 },
+      // 2FA setup — SMS rate limited to prevent Twilio billing abuse
+      { name: 'auth-2fa-sms-setup', ttl: 60000, limit: 3 },
+      { name: 'auth-2fa-sms-verify', ttl: 60000, limit: 5 },
+      { name: 'auth-sms-resend', ttl: 60000, limit: 3 },
     ]),
     AuthModule,
     LinksModule,

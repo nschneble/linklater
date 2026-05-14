@@ -312,7 +312,8 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 403, description: 'Email not verified.' })
   @ApiResponse({ status: 409, description: 'SMS 2FA already enabled.' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({ 'auth-2fa-sms-setup': { ttl: 60000, limit: 3 } })
   @Post('2fa/sms/setup')
   @HttpCode(200)
   async smsSetup(
@@ -333,7 +334,8 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: 'Invalid or expired code.' })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({ 'auth-2fa-sms-verify': { ttl: 60000, limit: 5 } })
   @Post('2fa/sms/verify')
   @HttpCode(200)
   async smsVerify(
