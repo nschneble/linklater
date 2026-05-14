@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useCallback, useState, type FormEvent } from 'react';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
@@ -24,6 +24,14 @@ function RecoveryCodesModal({
   codes: string[];
   onConfirm: () => void;
 }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(async () => {
+    await navigator.clipboard.writeText(codes.join('\n'));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [codes]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-md mx-4 p-6 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl space-y-4">
@@ -44,6 +52,17 @@ function RecoveryCodesModal({
             </li>
           ))}
         </ul>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 text-[var(--text-muted)] text-xs hover:text-[var(--text)] transition"
+        >
+          <i
+            className={`fa-solid ${copied ? 'fa-check' : 'fa-copy'} text-[0.65rem]`}
+            aria-hidden="true"
+          />
+          {copied ? 'Copied!' : 'Copy all codes'}
+        </button>
         <PrimaryButton className="w-full py-2.5" onClick={onConfirm}>
           I&apos;ve saved these codes
         </PrimaryButton>
