@@ -7,7 +7,9 @@ export class RegenerateRecoveryCodesDto {
   @IsString()
   currentPassword?: string;
 
-  @ApiPropertyOptional({ description: 'Valid TOTP or SMS OTP for re-authentication.' })
+  @ApiPropertyOptional({
+    description: 'Valid TOTP or SMS OTP for re-authentication.',
+  })
   @IsOptional()
   @IsString()
   code?: string;

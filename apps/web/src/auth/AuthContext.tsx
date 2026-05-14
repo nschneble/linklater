@@ -39,6 +39,10 @@ export interface User {
   mode: string;
   /** The current theme identifier (e.g. `'scanner-darkly'`). */
   theme: string;
+  /** The active 2FA method, or `null` when 2FA is disabled. */
+  twoFactorMethod: 'totp' | 'sms' | null;
+  /** `true` when the user has started TOTP setup but not yet verified it. */
+  twoFactorPending: boolean;
   /** The user's UUID (renamed from `id` to `userId` by `GET /auth/me`). */
   userId: string;
 }
@@ -50,8 +54,15 @@ export interface User {
 interface AuthContextValue {
   /** `true` while the initial `/auth/me` check is in progress on page load. */
   loading: boolean;
-  /** Authenticates the user. Resolves on success, rejects with an error on failure. */
-  login: (email: string, password: string) => Promise<void>;
+  /**
+   * Authenticates the user. On success, populates `user` and resolves to `void`.
+   * When the account has 2FA enabled, resolves to `{ mfaToken, mfaMethod }` instead
+   * and leaves `user` unpopulated — the caller must present the OTP challenge.
+   */
+  login: (
+    email: string,
+    password: string,
+  ) => Promise<{ mfaToken: string; mfaMethod: 'totp' | 'sms' } | void>;
   /** Stores an OAuth-issued JWT and fetches the user profile. Used by `OAuthCallbackPage`. */
   loginWithToken: (token: string) => Promise<void>;
   /** Clears the stored JWT and sets `user` to `null`. */
@@ -86,6 +97,8 @@ function mapMeToUser(me: Awaited<ReturnType<typeof getMe>>): User {
     pendingEmail: me.pendingEmail,
     mode: me.mode,
     theme: me.theme,
+    twoFactorMethod: me.twoFactorMethod,
+    twoFactorPending: me.twoFactorPending,
   };
 }
 
@@ -132,11 +145,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * Calls the API login endpoint, then fetches the user profile to populate
    * state. The JWT is stored automatically by `apiLogin` via `setStoredToken`.
    */
-  const login = useCallback(async (email: string, password: string) => {
-    await apiLogin(email, password);
-    const me = await getMe();
-    setUser(mapMeToUser(me));
-  }, []);
+  const login = useCallback(
+    async (
+      email: string,
+      password: string,
+    ): Promise<{ mfaToken: string; mfaMethod: 'totp' | 'sms' } | void> => {
+      const result = await apiLogin(email, password);
+      if ('mfaToken' in result) {
+        return { mfaToken: result.mfaToken, mfaMethod: result.mfaMethod };
+      }
+      const me = await getMe();
+      setUser(mapMeToUser(me));
+    },
+    [],
+  );
 
   const loginWithToken = useCallback(async (token: string) => {
     setStoredToken(token);

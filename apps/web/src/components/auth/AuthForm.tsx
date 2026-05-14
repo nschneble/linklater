@@ -3,7 +3,11 @@ import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import TabButton from '../common/TabButton';
-import { forgotPassword as apiForgotPassword } from '../../lib/api';
+import {
+  forgotPassword as apiForgotPassword,
+  resendSmsCode,
+  verifyOtp,
+} from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -14,6 +18,9 @@ const appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true';
 
 /** The three sub-views rendered by `AuthForm`. */
 type Mode = 'login' | 'register' | 'forgot-password';
+
+/** The MFA challenge method currently being shown to the user. */
+type MfaChallenge = 'totp' | 'sms' | 'recovery';
 
 /**
  * Authentication form rendered for `/login`, `/signup`, and
@@ -36,7 +43,7 @@ type Mode = 'login' | 'register' | 'forgot-password';
  * confirmation state showing an `Alert` instead of the form fields.
  */
 export default function AuthForm() {
-  const { login, register } = useAuth();
+  const { login, refreshUser, register } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -48,6 +55,14 @@ export default function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
+
+  // MFA state — held only in component memory, never persisted
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
+  const [mfaOriginalMethod, setMfaOriginalMethod] = useState<
+    'totp' | 'sms' | null
+  >(null);
+  const [mfaCode, setMfaCode] = useState('');
 
   const mode: Mode =
     location.pathname === '/signup'
@@ -79,7 +94,13 @@ export default function AuthForm() {
 
     try {
       if (mode === 'login') {
-        await login(email, password);
+        const result = await login(email, password);
+        if (result && 'mfaToken' in result) {
+          setMfaToken(result.mfaToken);
+          setMfaChallenge(result.mfaMethod);
+          setMfaOriginalMethod(result.mfaMethod);
+          return;
+        }
       } else if (mode === 'register') {
         await register(email, password);
       } else {
@@ -95,6 +116,39 @@ export default function AuthForm() {
     } catch (error: unknown) {
       const message = getErrorMessage(error, 'Something went dreadfully wrong');
       setError(message.charAt(0).toUpperCase() + message.slice(1));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (formEvent: FormEvent) => {
+    formEvent.preventDefault();
+    if (!mfaToken || !mfaChallenge) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const method = mfaChallenge === 'recovery' ? 'recovery' : mfaChallenge;
+      await verifyOtp(mfaToken, mfaCode, method);
+      await refreshUser();
+      const destination =
+        (location.state as { from?: string })?.from ?? '/unread';
+      navigate(destination, { replace: true });
+    } catch (caught: unknown) {
+      const message = getErrorMessage(caught, 'Invalid code');
+      setError(message.charAt(0).toUpperCase() + message.slice(1));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendSms = async () => {
+    if (!mfaToken) return;
+    setError(null);
+    setLoading(true);
+    try {
+      await resendSmsCode(mfaToken);
+    } catch (caught: unknown) {
+      setError(getErrorMessage(caught, 'Failed to resend code'));
     } finally {
       setLoading(false);
     }
@@ -161,6 +215,95 @@ export default function AuthForm() {
             </p>
           </form>
         )}
+      </div>
+    );
+  }
+
+  if (mfaChallenge) {
+    const isRecovery = mfaChallenge === 'recovery';
+    const isSms = mfaChallenge === 'sms';
+    const labelId = isRecovery
+      ? 'mfa-recovery-code'
+      : isSms
+        ? 'mfa-sms-code'
+        : 'mfa-totp-code';
+    const labelText = isRecovery
+      ? 'Recovery code'
+      : isSms
+        ? 'SMS code'
+        : 'Authenticator code';
+
+    return (
+      <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
+        <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold text-balance">
+          {isRecovery
+            ? 'Enter a recovery code'
+            : isSms
+              ? 'Check your phone'
+              : 'Two-factor authentication'}
+        </h1>
+        <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
+          {isRecovery
+            ? 'Enter one of your saved recovery codes.'
+            : isSms
+              ? 'Enter the code we sent to your phone.'
+              : 'Enter the code from your authenticator app.'}
+        </p>
+
+        <form className="space-y-4" onSubmit={handleVerifyOtp}>
+          <label
+            className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+            htmlFor={labelId}
+          >
+            {labelText}
+          </label>
+          <FormInput
+            id={labelId}
+            type="text"
+            inputMode={isRecovery ? 'text' : 'numeric'}
+            autoComplete="one-time-code"
+            maxLength={isRecovery ? undefined : 6}
+            onChange={(event) => setMfaCode(event.target.value)}
+            value={mfaCode}
+            required
+          />
+
+          {error && <Alert variant="error">{error}</Alert>}
+
+          <PrimaryButton disabled={loading} className="w-full py-2.5">
+            {loading ? 'Verifying…' : 'Verify'}
+          </PrimaryButton>
+        </form>
+
+        <div className="mt-4 flex flex-col items-center gap-2 text-center">
+          {isSms && (
+            <LinkButton disabled={loading} onClick={handleResendSms}>
+              Resend code
+            </LinkButton>
+          )}
+          {!isRecovery && (
+            <LinkButton
+              onClick={() => {
+                setMfaChallenge('recovery');
+                setMfaCode('');
+                setError(null);
+              }}
+            >
+              Use a recovery code
+            </LinkButton>
+          )}
+          {isRecovery && (
+            <LinkButton
+              onClick={() => {
+                setMfaChallenge(mfaOriginalMethod ?? 'totp');
+                setMfaCode('');
+                setError(null);
+              }}
+            >
+              Use a different method
+            </LinkButton>
+          )}
+        </div>
       </div>
     );
   }

@@ -9,7 +9,11 @@ import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { decrypt } from '../common/crypto.js';
-import { findMatchingRecoveryCode, generateRecoveryCodes, hashRecoveryCodes } from '../common/recovery-codes.js';
+import {
+  findMatchingRecoveryCode,
+  generateRecoveryCodes,
+  hashRecoveryCodes,
+} from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
 import { Prisma } from '../prisma/index.js';
 import { SmsService } from '../sms/sms.service.js';
@@ -77,9 +81,9 @@ export class AuthService {
       id,
       totpSecret,
       totpEnabledAt,
-      totpVerifiedAt,
+      totpVerifiedAt: _totpVerifiedAt,
       smsEnabledAt,
-      phoneNumber,
+      phoneNumber: _phoneNumber,
       ...rest
     } = await this.usersService.findById(userId);
 
@@ -368,7 +372,10 @@ export class AuthService {
       }
       const user = await this.usersService.findById(userId);
       return {
-        accessToken: this.jwtService.sign({ subject: userId, email: user.email }),
+        accessToken: this.jwtService.sign({
+          subject: userId,
+          email: user.email,
+        }),
       };
     }
 
@@ -377,13 +384,19 @@ export class AuthService {
       if (!user.phoneNumber) {
         throw new UnauthorizedException('SMS 2FA not configured');
       }
-      const phone = decrypt(user.phoneNumber, process.env.PHONE_ENCRYPTION_KEY!);
+      const phone = decrypt(
+        user.phoneNumber,
+        process.env.PHONE_ENCRYPTION_KEY!,
+      );
       const isValid = await this.smsService.checkVerification(phone, code);
       if (!isValid) {
         throw new UnauthorizedException('Invalid SMS code');
       }
       return {
-        accessToken: this.jwtService.sign({ subject: userId, email: user.email }),
+        accessToken: this.jwtService.sign({
+          subject: userId,
+          email: user.email,
+        }),
       };
     }
 
@@ -397,7 +410,9 @@ export class AuthService {
         throw new UnauthorizedException('Invalid recovery code');
       }
 
-      await this.usersService.markRecoveryCodeUsed(recoveryCodes[matchIndex].id);
+      await this.usersService.markRecoveryCodeUsed(
+        recoveryCodes[matchIndex].id,
+      );
 
       const user = await this.usersService.findById(userId);
       return {
@@ -434,7 +449,10 @@ export class AuthService {
         const isValid = await this.totpService.verifyCode(userId, code);
         if (!isValid) throw new UnauthorizedException('Invalid OTP code');
       } else if (user.smsEnabledAt && user.phoneNumber) {
-        const phone = decrypt(user.phoneNumber, process.env.PHONE_ENCRYPTION_KEY!);
+        const phone = decrypt(
+          user.phoneNumber,
+          process.env.PHONE_ENCRYPTION_KEY!,
+        );
         const isValid = await this.smsService.checkVerification(phone, code);
         if (!isValid) throw new UnauthorizedException('Invalid OTP code');
       }
@@ -500,11 +518,7 @@ export class AuthService {
    * @throws {BadRequestException} When neither credential is supplied.
    * @throws {UnauthorizedException} When the supplied credential is invalid.
    */
-  async disable2fa(
-    userId: string,
-    currentPassword?: string,
-    code?: string,
-  ) {
+  async disable2fa(userId: string, currentPassword?: string, code?: string) {
     await this.reauthenticate(userId, currentPassword, code);
     await this.usersService.disableTwoFactor(userId);
   }
@@ -566,7 +580,10 @@ export class AuthService {
       }
 
       if (user.smsEnabledAt && user.phoneNumber) {
-        const phone = decrypt(user.phoneNumber, process.env.PHONE_ENCRYPTION_KEY!);
+        const phone = decrypt(
+          user.phoneNumber,
+          process.env.PHONE_ENCRYPTION_KEY!,
+        );
         const valid = await this.smsService.checkVerification(phone, code);
         if (!valid) throw new UnauthorizedException('Invalid OTP code');
         return;

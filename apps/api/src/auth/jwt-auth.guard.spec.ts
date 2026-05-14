@@ -14,7 +14,11 @@ describe('JwtAuthGuard', () => {
   });
 
   it('throws UnauthorizedException when token has mfaPending: true', () => {
-    const user = { userId: 'user-1', email: 'user@example.com', mfaPending: true };
+    const user = {
+      userId: 'user-1',
+      email: 'user@example.com',
+      mfaPending: true,
+    };
     expect(() => guard.handleRequest(null, user, null)).toThrow(
       UnauthorizedException,
     );

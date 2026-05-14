@@ -45,10 +45,10 @@ export function clearStoredToken(): void {
   localStorage.removeItem('linklater_token');
 }
 
-/** The shape of a successful POST /auth/login response. */
-export interface LoginResponse {
-  accessToken: string;
-}
+/** The shape of a successful POST /auth/login response — either a full session or an MFA challenge. */
+export type LoginResponse =
+  | { accessToken: string }
+  | { mfaToken: string; mfaMethod: 'totp' | 'sms' };
 
 /**
  * Core HTTP helper used by every API function in this module.
@@ -66,16 +66,21 @@ export interface LoginResponse {
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
-  includeAuth = true,
+  includeAuth: boolean | string = true,
 ): Promise<T> {
-  const token = includeAuth ? storedToken : null;
+  let token: string | null = null;
+  if (typeof includeAuth === 'string') {
+    token = includeAuth;
+  } else if (includeAuth) {
+    token = storedToken;
+  }
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((options.headers as Record<string, string>) || {}),
   };
 
-  if (token && includeAuth) headers['Authorization'] = `Bearer ${token}`;
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -126,7 +131,10 @@ export async function register(email: string, password: string) {
  *
  * Stores the returned JWT automatically via `setStoredToken`.
  */
-export async function login(email: string, password: string) {
+export async function login(
+  email: string,
+  password: string,
+): Promise<LoginResponse> {
   const data = await apiFetch<LoginResponse>(
     '/auth/login',
     {
@@ -136,7 +144,9 @@ export async function login(email: string, password: string) {
     false,
   );
 
-  setStoredToken(data.accessToken);
+  if ('accessToken' in data) {
+    setStoredToken(data.accessToken);
+  }
   return data;
 }
 
@@ -164,6 +174,8 @@ export async function getMe() {
     pendingEmail: string | null;
     mode: string;
     theme: string;
+    twoFactorMethod: 'totp' | 'sms' | null;
+    twoFactorPending: boolean;
     userId: string;
   }>('/auth/me', {
     method: 'GET',
@@ -212,9 +224,14 @@ export async function resendVerificationEmail(): Promise<void> {
  * Payload: `{ email }` — the desired new email address.
  * Response: 200 on success. A verification link is sent to the new address.
  */
-export async function requestEmailChange(email: string): Promise<void> {
+export async function requestEmailChange(
+  email: string,
+  code?: string,
+): Promise<void> {
+  const body: Record<string, string> = { email };
+  if (code !== undefined) body['code'] = code;
   await apiFetch('/auth/request-email-change', {
-    body: JSON.stringify({ email }),
+    body: JSON.stringify(body),
     method: 'POST',
   });
 }
@@ -246,6 +263,80 @@ export async function resetPassword(
     { body: JSON.stringify({ token, password }), method: 'POST' },
     false,
   );
+}
+
+// ---------------------------------------------------------------------------
+// 2FA endpoints
+// ---------------------------------------------------------------------------
+
+export async function setupTotp(): Promise<{
+  qrCodeDataUrl: string;
+  secret: string;
+}> {
+  return apiFetch('/auth/2fa/totp/setup', { method: 'POST' });
+}
+
+export async function verifyTotpSetup(
+  code: string,
+): Promise<{ recoveryCodes: string[] }> {
+  return apiFetch('/auth/2fa/totp/verify', {
+    body: JSON.stringify({ code }),
+    method: 'POST',
+  });
+}
+
+export async function setupSms(phoneNumber: string): Promise<void> {
+  await apiFetch('/auth/2fa/sms/setup', {
+    body: JSON.stringify({ phoneNumber }),
+    method: 'POST',
+  });
+}
+
+export async function verifySmsSetup(
+  code: string,
+): Promise<{ recoveryCodes: string[] }> {
+  return apiFetch('/auth/2fa/sms/verify', {
+    body: JSON.stringify({ code }),
+    method: 'POST',
+  });
+}
+
+export async function resendSmsCode(mfaToken: string): Promise<void> {
+  await apiFetch('/auth/2fa/sms/resend', { method: 'POST' }, mfaToken);
+}
+
+export async function verifyOtp(
+  mfaToken: string,
+  code: string,
+  method: 'totp' | 'sms' | 'recovery',
+): Promise<{ accessToken: string }> {
+  const data = await apiFetch<{ accessToken: string }>(
+    '/auth/2fa/verify',
+    { body: JSON.stringify({ code, method }), method: 'POST' },
+    mfaToken,
+  );
+  setStoredToken(data.accessToken);
+  return data;
+}
+
+export async function disable2fa(credentials: {
+  currentPassword?: string;
+  code?: string;
+}): Promise<void> {
+  await apiFetch('/auth/2fa', {
+    body: JSON.stringify(credentials),
+    method: 'DELETE',
+  });
+}
+
+export async function regenerateRecoveryCodes(credentials: {
+  currentPassword?: string;
+  code?: string;
+}): Promise<{ recoveryCodes: string[] }> {
+  return apiFetch('/auth/2fa/recovery-codes/regenerate', {
+    body: JSON.stringify(credentials),
+    method: 'POST',
+  });
 }
 
 // ---------------------------------------------------------------------------

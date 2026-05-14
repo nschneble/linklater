@@ -19,6 +19,7 @@ import {
 
 import {
   apiFetch,
+  disable2fa,
   readLink,
   clearStoredToken,
   createLink,
@@ -33,16 +34,23 @@ import {
   getStoredToken,
   login,
   logout,
+  regenerateRecoveryCodes,
   register,
   requestEmailChange,
+  resendSmsCode,
   resendVerificationEmail,
   resetPassword,
   setStoredToken,
+  setupSms,
+  setupTotp,
   unreadLink,
   updateLink,
   updateMe,
   verifyEmail,
   verifyEmailChange,
+  verifyOtp,
+  verifySmsSetup,
+  verifyTotpSetup,
 } from './api';
 
 // ---------------------------------------------------------------------------
@@ -139,6 +147,15 @@ describe('apiFetch', () => {
     expect(headers['Authorization']).toBeUndefined();
   });
 
+  it('uses a custom string token when includeAuth is a string', async () => {
+    setStoredToken('stored-token');
+    const fetchMock = mockFetch({ ok: true });
+    await apiFetch('/test', {}, 'custom-mfa-token');
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = options.headers as Record<string, string>;
+    expect(headers['Authorization']).toBe('Bearer custom-mfa-token');
+  });
+
   it('omits Authorization header when no token is stored', async () => {
     const fetchMock = mockFetch({ ok: true });
     await apiFetch('/test');
@@ -227,6 +244,22 @@ describe('login', () => {
 
     expect(result).toEqual({ accessToken: 'fresh-jwt' });
   });
+
+  it('does not store a token when the server returns mfaToken', async () => {
+    mockFetch({ mfaToken: 'mfa-tok', mfaMethod: 'totp' });
+
+    await login('user@example.com', 'password123');
+
+    expect(getStoredToken()).toBeNull();
+  });
+
+  it('returns mfaToken and mfaMethod when 2FA is required', async () => {
+    mockFetch({ mfaToken: 'mfa-tok', mfaMethod: 'sms' });
+
+    const result = await login('user@example.com', 'password123');
+
+    expect(result).toEqual({ mfaToken: 'mfa-tok', mfaMethod: 'sms' });
+  });
 });
 
 describe('logout', () => {
@@ -303,6 +336,34 @@ describe('requestEmailChange', () => {
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/auth/request-email-change');
     expect((options as { body: string }).body).toContain('new@example.com');
+  });
+
+  it('includes the code in the request body when provided', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await requestEmailChange('new@example.com', '123456');
+
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse((options as { body: string }).body) as {
+      email: string;
+      code: string;
+    };
+    expect(body.code).toBe('123456');
+  });
+
+  it('omits the code field when not provided', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await requestEmailChange('new@example.com');
+
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse((options as { body: string }).body) as Record<
+      string,
+      unknown
+    >;
+    expect(body['code']).toBeUndefined();
   });
 });
 
@@ -523,5 +584,142 @@ describe('deleteMe', () => {
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/users/me');
     expect((options as { method: string }).method).toBe('DELETE');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 2FA endpoints
+// ---------------------------------------------------------------------------
+
+describe('setupTotp', () => {
+  it('POSTs to /auth/2fa/totp/setup with auth', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ qrCodeDataUrl: 'data:...', secret: 'ABC' });
+
+    await setupTotp();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/totp/setup');
+    expect((options as { method: string }).method).toBe('POST');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBe('Bearer my-jwt');
+  });
+});
+
+describe('verifyTotpSetup', () => {
+  it('POSTs to /auth/2fa/totp/verify with the 6-digit code', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
+
+    await verifyTotpSetup('123456');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/totp/verify');
+    const body = JSON.parse((options as { body: string }).body) as {
+      code: string;
+    };
+    expect(body.code).toBe('123456');
+  });
+});
+
+describe('setupSms', () => {
+  it('POSTs to /auth/2fa/sms/setup with the phone number', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await setupSms('+15555550100');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/sms/setup');
+    const body = JSON.parse((options as { body: string }).body) as {
+      phoneNumber: string;
+    };
+    expect(body.phoneNumber).toBe('+15555550100');
+  });
+});
+
+describe('verifySmsSetup', () => {
+  it('POSTs to /auth/2fa/sms/verify with the 6-digit code', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
+
+    await verifySmsSetup('123456');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/sms/verify');
+    const body = JSON.parse((options as { body: string }).body) as {
+      code: string;
+    };
+    expect(body.code).toBe('123456');
+  });
+});
+
+describe('resendSmsCode', () => {
+  it('POSTs to /auth/2fa/sms/resend using the mfaToken as Authorization', async () => {
+    const fetchMock = mockFetch({});
+
+    await resendSmsCode('mfa-pending-token');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/sms/resend');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBe('Bearer mfa-pending-token');
+  });
+});
+
+describe('verifyOtp', () => {
+  it('POSTs to /auth/2fa/verify using the mfaToken as Authorization', async () => {
+    const fetchMock = mockFetch({ accessToken: 'full-jwt' });
+
+    await verifyOtp('mfa-pending-token', '123456', 'totp');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/verify');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBe('Bearer mfa-pending-token');
+    const body = JSON.parse((options as { body: string }).body) as {
+      code: string;
+      method: string;
+    };
+    expect(body.code).toBe('123456');
+    expect(body.method).toBe('totp');
+  });
+
+  it('stores the access token on success', async () => {
+    mockFetch({ accessToken: 'full-jwt' });
+
+    await verifyOtp('mfa-pending-token', '123456', 'totp');
+
+    expect(getStoredToken()).toBe('full-jwt');
+  });
+});
+
+describe('disable2fa', () => {
+  it('DELETEs /auth/2fa with the provided credentials', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await disable2fa({ currentPassword: 'open-sesame' });
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa');
+    expect((options as { method: string }).method).toBe('DELETE');
+    const body = JSON.parse((options as { body: string }).body) as {
+      currentPassword: string;
+    };
+    expect(body.currentPassword).toBe('open-sesame');
+  });
+});
+
+describe('regenerateRecoveryCodes', () => {
+  it('POSTs to /auth/2fa/recovery-codes/regenerate with credentials', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
+
+    await regenerateRecoveryCodes({ currentPassword: 'open-sesame' });
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/recovery-codes/regenerate');
+    expect((options as { method: string }).method).toBe('POST');
   });
 });

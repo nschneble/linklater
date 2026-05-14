@@ -206,7 +206,11 @@ export class AuthController {
     @Req() request: AuthRequest,
     @Body() body: RequestEmailChangeDto,
   ) {
-    await this.authService.requestEmailChange(request.user.userId, body.email, body.code);
+    await this.authService.requestEmailChange(
+      request.user.userId,
+      body.email,
+      body.code,
+    );
   }
 
   /**
@@ -232,9 +236,17 @@ export class AuthController {
    * Step 2 of 2FA login. Validates the OTP or recovery code and issues the
    * full session JWT. Rate-limited to 5 attempts per 15 minutes per IP.
    */
-  @ApiOperation({ summary: 'Verify an OTP or recovery code to complete 2FA login' })
-  @ApiResponse({ status: 200, description: 'Returns a signed JWT accessToken.' })
-  @ApiResponse({ status: 401, description: 'Invalid or expired MFA token or code.' })
+  @ApiOperation({
+    summary: 'Verify an OTP or recovery code to complete 2FA login',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a signed JWT accessToken.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid or expired MFA token or code.',
+  })
   @ApiResponse({ status: 429, description: 'Too many OTP attempts.' })
   @UseGuards(ThrottlerGuard)
   @Throttle({ 'auth-verify-otp': { ttl: 900000, limit: 5 } })
@@ -242,12 +254,19 @@ export class AuthController {
   @Post('verify-otp')
   @HttpCode(200)
   async verifyOtp(@Req() request: AuthRequest, @Body() body: VerifyOtpDto) {
-    return this.authService.verifyOtp(request.user.userId, body.code, body.method);
+    return this.authService.verifyOtp(
+      request.user.userId,
+      body.code,
+      body.method,
+    );
   }
 
   @ApiOperation({ summary: 'Generate a TOTP setup QR code and secret' })
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'Returns qrCodeDataUrl and plaintext secret.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns qrCodeDataUrl and plaintext secret.',
+  })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 403, description: 'Email not yet verified.' })
   @ApiResponse({ status: 409, description: 'TOTP is already active.' })
@@ -255,13 +274,22 @@ export class AuthController {
   @Post('2fa/totp/setup')
   @HttpCode(200)
   async totpSetup(@Req() request: AuthRequest) {
-    return this.totpService.generateSetup(request.user.userId, request.user.email);
+    return this.totpService.generateSetup(
+      request.user.userId,
+      request.user.email,
+    );
   }
 
   @ApiOperation({ summary: 'Verify TOTP setup and receive recovery codes' })
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'TOTP enabled. Returns recovery codes.' })
-  @ApiResponse({ status: 400, description: 'No pending setup or invalid code.' })
+  @ApiResponse({
+    status: 200,
+    description: 'TOTP enabled. Returns recovery codes.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'No pending setup or invalid code.',
+  })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @UseGuards(JwtAuthGuard)
   @Post('2fa/totp/verify')
@@ -291,12 +319,18 @@ export class AuthController {
     @Req() request: AuthRequest,
     @Body() body: SmsSetupDto,
   ): Promise<void> {
-    await this.smsSetupService.initiateSetup(request.user.userId, body.phoneNumber);
+    await this.smsSetupService.initiateSetup(
+      request.user.userId,
+      body.phoneNumber,
+    );
   }
 
   @ApiOperation({ summary: 'Verify and complete SMS 2FA setup' })
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'SMS 2FA enabled. Returns one-time recovery codes.' })
+  @ApiResponse({
+    status: 200,
+    description: 'SMS 2FA enabled. Returns one-time recovery codes.',
+  })
   @ApiResponse({ status: 400, description: 'Invalid or expired code.' })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @UseGuards(JwtAuthGuard)
@@ -313,7 +347,9 @@ export class AuthController {
     return { recoveryCodes };
   }
 
-  @ApiOperation({ summary: 'Resend SMS verification code during MFA challenge' })
+  @ApiOperation({
+    summary: 'Resend SMS verification code during MFA challenge',
+  })
   @ApiResponse({ status: 200, description: 'New verification code sent.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired MFA token.' })
   @ApiResponse({ status: 429, description: 'Too many resend attempts.' })
@@ -326,11 +362,16 @@ export class AuthController {
     await this.smsSetupService.smsResend(request.user.userId);
   }
 
-  @ApiOperation({ summary: 'Disable 2FA (requires password or OTP re-authentication)' })
+  @ApiOperation({
+    summary: 'Disable 2FA (requires password or OTP re-authentication)',
+  })
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: '2FA disabled successfully.' })
   @ApiResponse({ status: 400, description: 'No credential provided.' })
-  @ApiResponse({ status: 401, description: 'Invalid credential or missing JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credential or missing JWT.',
+  })
   @UseGuards(JwtAuthGuard)
   @Delete('2fa')
   @HttpCode(200)
@@ -342,11 +383,19 @@ export class AuthController {
     );
   }
 
-  @ApiOperation({ summary: 'Regenerate recovery codes (requires re-authentication)' })
+  @ApiOperation({
+    summary: 'Regenerate recovery codes (requires re-authentication)',
+  })
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'Returns 10 new plaintext recovery codes.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns 10 new plaintext recovery codes.',
+  })
   @ApiResponse({ status: 400, description: 'No credential provided.' })
-  @ApiResponse({ status: 401, description: 'Invalid credential or missing JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credential or missing JWT.',
+  })
   @UseGuards(JwtAuthGuard)
   @Post('2fa/recovery-codes/regenerate')
   @HttpCode(200)
@@ -362,11 +411,20 @@ export class AuthController {
     return { recoveryCodes };
   }
 
-  @ApiOperation({ summary: 'Get recovery codes — regenerates a new set (requires re-authentication)' })
+  @ApiOperation({
+    summary:
+      'Get recovery codes — regenerates a new set (requires re-authentication)',
+  })
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'Returns 10 new plaintext recovery codes.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns 10 new plaintext recovery codes.',
+  })
   @ApiResponse({ status: 400, description: 'No credential provided.' })
-  @ApiResponse({ status: 401, description: 'Invalid credential or missing JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credential or missing JWT.',
+  })
   @UseGuards(JwtAuthGuard)
   @Get('2fa/recovery-codes')
   async getRecoveryCodes(

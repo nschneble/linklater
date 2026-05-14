@@ -44,7 +44,16 @@ const oauthProviders: Provider[] = [
     PassportModule,
     UsersModule,
   ],
-  providers: [AuthService, JwtStrategy, LocalStrategy, MfaAuthGuard, SmsService, SmsSetupService, TotpService, ...oauthProviders],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    LocalStrategy,
+    MfaAuthGuard,
+    SmsService,
+    SmsSetupService,
+    TotpService,
+    ...oauthProviders,
+  ],
   controllers: [AuthController],
 })
 export class AuthModule {}

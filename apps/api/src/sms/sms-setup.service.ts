@@ -44,7 +44,9 @@ export class SmsSetupService {
     const user = await this.usersService.findById(userId);
 
     if (!user.emailVerifiedAt) {
-      throw new ForbiddenException('Email must be verified before enabling SMS 2FA');
+      throw new ForbiddenException(
+        'Email must be verified before enabling SMS 2FA',
+      );
     }
 
     if (user.smsEnabledAt) {

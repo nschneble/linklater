@@ -1,4 +1,8 @@
-import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 /**
@@ -22,11 +26,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   override handleRequest<TUser extends { mfaPending?: boolean }>(
     error: Error | null,
     user: TUser | null,
-    info: unknown,
+    _info: unknown,
   ): TUser {
     if (error) throw error;
     if (!user) throw new UnauthorizedException();
-    if (user.mfaPending) throw new UnauthorizedException('MFA challenge required');
+    if (user.mfaPending)
+      throw new UnauthorizedException('MFA challenge required');
     return user;
   }
 }

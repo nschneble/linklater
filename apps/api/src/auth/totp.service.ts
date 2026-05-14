@@ -36,7 +36,9 @@ export class TotpService {
     }
 
     if (!user.emailVerifiedAt) {
-      throw new ForbiddenException('Email must be verified before enabling 2FA');
+      throw new ForbiddenException(
+        'Email must be verified before enabling 2FA',
+      );
     }
 
     const secret = generateSecret();

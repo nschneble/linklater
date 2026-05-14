@@ -204,7 +204,10 @@ describe('AuthController', () => {
         undefined,
       );
 
-      await controller.requestEmailChange(request, { email: NEW_EMAIL, code: '123456' });
+      await controller.requestEmailChange(request, {
+        email: NEW_EMAIL,
+        code: '123456',
+      });
 
       expect(authServiceMock.requestEmailChange).toHaveBeenCalledWith(
         USER_ID,
@@ -231,7 +234,11 @@ describe('AuthController', () => {
   describe('verifyOtp', () => {
     it('delegates to AuthService.verifyOtp with userId, code, and method', async () => {
       const request = { user: { userId: USER_ID } } as never;
-      const body = { mfaToken: 'mfa-tok', code: '123456', method: 'totp' as const };
+      const body = {
+        mfaToken: 'mfa-tok',
+        code: '123456',
+        method: 'totp' as const,
+      };
 
       const result = await controller.verifyOtp(request, body);
 
@@ -247,12 +254,20 @@ describe('AuthController', () => {
   describe('totpSetup', () => {
     it('delegates to TotpService.generateSetup with userId and email', async () => {
       const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
-      const setupResult = { qrCodeDataUrl: 'data:image/png;base64,...', secret: 'ABCDEF' };
-      (totpServiceMock.generateSetup as jest.Mock).mockResolvedValue(setupResult);
+      const setupResult = {
+        qrCodeDataUrl: 'data:image/png;base64,...',
+        secret: 'ABCDEF',
+      };
+      (totpServiceMock.generateSetup as jest.Mock).mockResolvedValue(
+        setupResult,
+      );
 
       const result = await controller.totpSetup(request);
 
-      expect(totpServiceMock.generateSetup).toHaveBeenCalledWith(USER_ID, USER_EMAIL);
+      expect(totpServiceMock.generateSetup).toHaveBeenCalledWith(
+        USER_ID,
+        USER_EMAIL,
+      );
       expect(result).toBe(setupResult);
     });
   });
@@ -261,11 +276,18 @@ describe('AuthController', () => {
     it('delegates to TotpService.verifySetup and wraps recovery codes in object', async () => {
       const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
       const recoveryCodes = ['aaaaa-bbbbb', 'ccccc-ddddd'];
-      (totpServiceMock.verifySetup as jest.Mock).mockResolvedValue(recoveryCodes);
+      (totpServiceMock.verifySetup as jest.Mock).mockResolvedValue(
+        recoveryCodes,
+      );
 
-      const result = await controller.totpVerifySetup(request, { code: '123456' });
+      const result = await controller.totpVerifySetup(request, {
+        code: '123456',
+      });
 
-      expect(totpServiceMock.verifySetup).toHaveBeenCalledWith(USER_ID, '123456');
+      expect(totpServiceMock.verifySetup).toHaveBeenCalledWith(
+        USER_ID,
+        '123456',
+      );
       expect(result).toEqual({ recoveryCodes });
     });
   });
@@ -289,9 +311,13 @@ describe('AuthController', () => {
     it('delegates to AuthService.regenerateRecoveryCodes and wraps result', async () => {
       const request = { user: { userId: USER_ID } } as never;
       const recoveryCodes = ['aaaaa-bbbbb'];
-      (authServiceMock.regenerateRecoveryCodes as jest.Mock).mockResolvedValue(recoveryCodes);
+      (authServiceMock.regenerateRecoveryCodes as jest.Mock).mockResolvedValue(
+        recoveryCodes,
+      );
 
-      const result = await controller.regenerateRecoveryCodes(request, { currentPassword: 'open-sesame' });
+      const result = await controller.regenerateRecoveryCodes(request, {
+        currentPassword: 'open-sesame',
+      });
 
       expect(authServiceMock.regenerateRecoveryCodes).toHaveBeenCalledWith(
         USER_ID,
@@ -306,9 +332,13 @@ describe('AuthController', () => {
     it('delegates to AuthService.regenerateRecoveryCodes and wraps result', async () => {
       const request = { user: { userId: USER_ID } } as never;
       const recoveryCodes = ['aaaaa-bbbbb'];
-      (authServiceMock.regenerateRecoveryCodes as jest.Mock).mockResolvedValue(recoveryCodes);
+      (authServiceMock.regenerateRecoveryCodes as jest.Mock).mockResolvedValue(
+        recoveryCodes,
+      );
 
-      const result = await controller.getRecoveryCodes(request, { currentPassword: 'open-sesame' });
+      const result = await controller.getRecoveryCodes(request, {
+        currentPassword: 'open-sesame',
+      });
 
       expect(authServiceMock.regenerateRecoveryCodes).toHaveBeenCalledWith(
         USER_ID,
@@ -322,7 +352,9 @@ describe('AuthController', () => {
   describe('smsSetup', () => {
     it('delegates to SmsSetupService.initiateSetup with userId and phoneNumber', async () => {
       const request = { user: { userId: USER_ID } } as never;
-      (smsSetupServiceMock.initiateSetup as jest.Mock).mockResolvedValue(undefined);
+      (smsSetupServiceMock.initiateSetup as jest.Mock).mockResolvedValue(
+        undefined,
+      );
 
       await controller.smsSetup(request, { phoneNumber: '+15555550100' });
 
@@ -337,11 +369,16 @@ describe('AuthController', () => {
     it('delegates to SmsSetupService.verifySetup and wraps recovery codes', async () => {
       const request = { user: { userId: USER_ID } } as never;
       const recoveryCodes = ['aaaaa-bbbbb'];
-      (smsSetupServiceMock.verifySetup as jest.Mock).mockResolvedValue(recoveryCodes);
+      (smsSetupServiceMock.verifySetup as jest.Mock).mockResolvedValue(
+        recoveryCodes,
+      );
 
       const result = await controller.smsVerify(request, { code: '123456' });
 
-      expect(smsSetupServiceMock.verifySetup).toHaveBeenCalledWith(USER_ID, '123456');
+      expect(smsSetupServiceMock.verifySetup).toHaveBeenCalledWith(
+        USER_ID,
+        '123456',
+      );
       expect(result).toEqual({ recoveryCodes });
     });
   });

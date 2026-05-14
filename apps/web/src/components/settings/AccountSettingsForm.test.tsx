@@ -26,6 +26,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     mode: 'light',
     pendingEmail: null,
     theme: 'scanner-darkly',
+    twoFactorMethod: null,
+    twoFactorPending: false,
     userId: USER_ID,
     ...overrides,
   };
@@ -154,6 +156,43 @@ describe('AccountSettingsForm', () => {
         expect(
           screen.getByText(/verification email sent/i),
         ).toBeInTheDocument();
+      });
+    });
+
+    it('shows a 2FA code input when the user has 2FA enabled', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+      );
+
+      render(<AccountSettingsForm />);
+
+      expect(screen.getByLabelText(/authenticator code/i)).toBeInTheDocument();
+    });
+
+    it('includes the 2FA code when requesting an email change with 2FA enabled', async () => {
+      vi.mocked(apiModule.requestEmailChange).mockResolvedValue(undefined);
+      const setPendingEmail = vi.fn();
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          setPendingEmail,
+          user: makeUser({ twoFactorMethod: 'totp' }),
+        }),
+      );
+
+      render(<AccountSettingsForm />);
+      fireEvent.change(screen.getByLabelText(/change email/i), {
+        target: { value: 'new@example.com' },
+      });
+      fireEvent.change(screen.getByLabelText(/authenticator code/i), {
+        target: { value: '123456' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+
+      await waitFor(() => {
+        expect(apiModule.requestEmailChange).toHaveBeenCalledWith(
+          'new@example.com',
+          '123456',
+        );
       });
     });
 

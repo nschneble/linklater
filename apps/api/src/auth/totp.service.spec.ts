@@ -56,7 +56,9 @@ describe('TotpService', () => {
   describe('generateSetup', () => {
     it('returns qrCodeDataUrl and plaintext secret', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(makeUser());
-      (usersServiceMock.saveTotpSecret as jest.Mock).mockResolvedValue(undefined);
+      (usersServiceMock.saveTotpSecret as jest.Mock).mockResolvedValue(
+        undefined,
+      );
 
       const result = await service.generateSetup(USER_ID, USER_EMAIL);
 
@@ -96,14 +98,20 @@ describe('TotpService', () => {
         makeUser({ totpSecret: encryptedSecret }),
       );
       (usersServiceMock.enableTotp as jest.Mock).mockResolvedValue(undefined);
-      (usersServiceMock.deleteRecoveryCodes as jest.Mock).mockResolvedValue(undefined);
-      (usersServiceMock.createRecoveryCodes as jest.Mock).mockResolvedValue(undefined);
+      (usersServiceMock.deleteRecoveryCodes as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (usersServiceMock.createRecoveryCodes as jest.Mock).mockResolvedValue(
+        undefined,
+      );
 
       const code = await generate({ secret });
       const result = await service.verifySetup(USER_ID, code);
 
       expect(usersServiceMock.enableTotp).toHaveBeenCalledWith(USER_ID);
-      expect(usersServiceMock.deleteRecoveryCodes).toHaveBeenCalledWith(USER_ID);
+      expect(usersServiceMock.deleteRecoveryCodes).toHaveBeenCalledWith(
+        USER_ID,
+      );
       expect(usersServiceMock.createRecoveryCodes).toHaveBeenCalledWith(
         USER_ID,
         expect.any(Array),

@@ -2,7 +2,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsString } from 'class-validator';
 
 export class VerifyOtpDto {
-  @ApiProperty({ description: 'Short-lived MFA challenge token from POST /auth/login.' })
+  @ApiProperty({
+    description: 'Short-lived MFA challenge token from POST /auth/login.',
+  })
   @IsString()
   mfaToken: string;
 

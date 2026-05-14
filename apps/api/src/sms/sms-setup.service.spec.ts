@@ -123,10 +123,12 @@ describe('SmsSetupService', () => {
 
   describe('verifySetup', () => {
     it('verifies the code, enables SMS, and returns 10 recovery codes', async () => {
-      const encryptedPhone = 'fakeciphertext';
       // Use the actual encrypt to make a valid ciphertext
       const { encrypt } = await import('../common/crypto.js');
-      const encrypted = encrypt(PHONE_NUMBER, process.env.PHONE_ENCRYPTION_KEY!);
+      const encrypted = encrypt(
+        PHONE_NUMBER,
+        process.env.PHONE_ENCRYPTION_KEY!,
+      );
 
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
         makeUser({ phoneNumber: encrypted }),
@@ -171,7 +173,10 @@ describe('SmsSetupService', () => {
 
     it('throws BadRequestException when the verification code is invalid', async () => {
       const { encrypt } = await import('../common/crypto.js');
-      const encrypted = encrypt(PHONE_NUMBER, process.env.PHONE_ENCRYPTION_KEY!);
+      const encrypted = encrypt(
+        PHONE_NUMBER,
+        process.env.PHONE_ENCRYPTION_KEY!,
+      );
 
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
         makeUser({ phoneNumber: encrypted }),
@@ -187,7 +192,10 @@ describe('SmsSetupService', () => {
   describe('smsResend', () => {
     it('decrypts the stored phone and sends a new verification', async () => {
       const { encrypt } = await import('../common/crypto.js');
-      const encrypted = encrypt(PHONE_NUMBER, process.env.PHONE_ENCRYPTION_KEY!);
+      const encrypted = encrypt(
+        PHONE_NUMBER,
+        process.env.PHONE_ENCRYPTION_KEY!,
+      );
 
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
         makeUser({ phoneNumber: encrypted }),

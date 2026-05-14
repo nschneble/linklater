@@ -33,6 +33,7 @@ export default function AccountSettingsForm() {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailMessage, setEmailMessage] = useState<string | null>(null);
   const [emailSaving, setEmailSaving] = useState(false);
+  const [mfaEmailCode, setMfaEmailCode] = useState('');
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [resendError, setResendError] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
@@ -61,9 +62,14 @@ export default function AccountSettingsForm() {
     setEmailSaving(true);
 
     try {
-      await requestEmailChange(requestedEmail);
+      if (user?.twoFactorMethod) {
+        await requestEmailChange(requestedEmail, mfaEmailCode);
+      } else {
+        await requestEmailChange(requestedEmail);
+      }
       setPendingEmail(requestedEmail);
       setEmailInput(user?.email ?? '');
+      setMfaEmailCode('');
       setEmailMessage(
         `Verification email sent to ${requestedEmail}. Check your inbox to confirm the change.`,
       );
@@ -178,6 +184,26 @@ export default function AccountSettingsForm() {
           value={emailInput}
           onChange={(event) => setEmailInput(event.target.value)}
         />
+
+        {user?.twoFactorMethod && (
+          <>
+            <label
+              className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+              htmlFor="email-change-mfa"
+            >
+              Authenticator code
+            </label>
+            <FormInput
+              id="email-change-mfa"
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="Required to confirm email change"
+              value={mfaEmailCode}
+              onChange={(event) => setMfaEmailCode(event.target.value)}
+            />
+          </>
+        )}
 
         {emailMessage && <Alert variant="success">{emailMessage}</Alert>}
         {emailError && <Alert variant="error">{emailError}</Alert>}

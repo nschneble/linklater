@@ -36,18 +36,14 @@ export function decrypt(ciphertext: string, hexKey: string): string {
   const authTag = Buffer.from(authTagHex, 'hex');
   const encrypted = Buffer.from(encryptedHex, 'hex');
 
-  if (
-    iv.length !== IV_BYTES ||
-    authTag.length !== AUTH_TAG_BYTES
-  ) {
+  if (iv.length !== IV_BYTES || authTag.length !== AUTH_TAG_BYTES) {
     throw new Error('Invalid ciphertext format');
   }
 
   const decipher = createDecipheriv(ALGORITHM, key, iv);
   decipher.setAuthTag(authTag);
 
-  return Buffer.concat([
-    decipher.update(encrypted),
-    decipher.final(),
-  ]).toString('utf8');
+  return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString(
+    'utf8',
+  );
 }

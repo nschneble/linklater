@@ -11,7 +11,9 @@ export class RequestEmailChangeDto {
   @IsEmail()
   email: string;
 
-  @ApiPropertyOptional({ description: 'Valid TOTP or SMS OTP — required when 2FA is enabled.' })
+  @ApiPropertyOptional({
+    description: 'Valid TOTP or SMS OTP — required when 2FA is enabled.',
+  })
   @IsOptional()
   @IsString()
   code?: string;

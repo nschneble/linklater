@@ -353,7 +353,11 @@ export class UsersService {
   async saveTotpSecret(userId: string, encryptedSecret: string) {
     await this.prisma.user.update({
       where: { id: userId },
-      data: { totpSecret: encryptedSecret, totpEnabledAt: null, totpVerifiedAt: null },
+      data: {
+        totpSecret: encryptedSecret,
+        totpEnabledAt: null,
+        totpVerifiedAt: null,
+      },
     });
   }
 

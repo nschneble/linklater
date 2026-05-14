@@ -31,6 +31,8 @@ const makeUser = () => ({
   pendingEmail: null,
   mode: 'dark',
   theme: 'scanner-darkly',
+  twoFactorMethod: null as 'totp' | 'sms' | null,
+  twoFactorPending: false,
 });
 
 /** Tiny consumer that surfaces auth state into the DOM for assertions. */
@@ -150,6 +152,54 @@ describe('login', () => {
     });
 
     expect(screen.getByTestId('email')).toHaveTextContent('user@example.com');
+  });
+
+  it('returns mfaToken and mfaMethod without populating user when 2FA is required', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
+    vi.mocked(apiModule.login).mockResolvedValue({
+      mfaToken: 'mfa-tok',
+      mfaMethod: 'totp',
+    });
+
+    let mfaResult: { mfaToken: string; mfaMethod: 'totp' | 'sms' } | void;
+
+    function MfaCapturingConsumer() {
+      const { login: doLogin, user } = useAuth();
+      return (
+        <div>
+          <span data-testid="email">{user?.email ?? 'none'}</span>
+          <button
+            type="button"
+            onClick={() => {
+              doLogin('user@example.com', 'pass').then((result) => {
+                mfaResult = result;
+              });
+            }}
+          >
+            login-mfa
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <AuthProvider>
+        <MfaCapturingConsumer />
+      </AuthProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('email')).toHaveTextContent('none'),
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'login-mfa' }));
+    });
+
+    await waitFor(() => expect(mfaResult).toBeDefined());
+    expect(mfaResult).toEqual({ mfaToken: 'mfa-tok', mfaMethod: 'totp' });
+    expect(screen.getByTestId('email')).toHaveTextContent('none');
+    expect(apiModule.getMe).not.toHaveBeenCalled();
   });
 
   it('propagates errors thrown by the API', async () => {
