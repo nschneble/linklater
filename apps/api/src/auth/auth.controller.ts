@@ -19,6 +19,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
+import { EmailTwoFactorService } from './email-2fa.service.js';
+import { EmailTwoFactorVerifyDto } from './dto/email-2fa-verify.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { LocalAuthGuard } from './local-auth.guard.js';
@@ -30,11 +32,8 @@ import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { VerifyEmailDto } from './dto/verify-email.dto.js';
 import { Disable2faDto } from './dto/disable-2fa.dto.js';
 import { RegenerateRecoveryCodesDto } from './dto/regenerate-recovery-codes.dto.js';
-import { SmsSetupDto } from './dto/sms-setup.dto.js';
-import { SmsVerifySetupDto } from './dto/sms-verify-setup.dto.js';
 import { TotpVerifySetupDto } from './dto/totp-verify-setup.dto.js';
 import { VerifyOtpDto } from './dto/verify-otp.dto.js';
-import { SmsSetupService } from '../sms/sms-setup.service.js';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**
@@ -48,7 +47,7 @@ import type { AuthRequest } from './auth-request.type.js';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly smsSetupService: SmsSetupService,
+    private readonly emailTwoFactorService: EmailTwoFactorService,
     private readonly totpService: TotpService,
   ) {}
 
@@ -306,78 +305,76 @@ export class AuthController {
     return { recoveryCodes };
   }
 
-  @ApiOperation({ summary: 'Initiate SMS 2FA setup' })
+  @ApiOperation({
+    summary: 'Initiate Email 2FA setup — sends a code to the verified email',
+  })
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Verification code sent.' })
-  @ApiResponse({ status: 400, description: 'Invalid phone number format.' })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
-  @ApiResponse({ status: 403, description: 'Email not verified.' })
-  @ApiResponse({ status: 409, description: 'SMS 2FA already enabled.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Email not verified or social login account.',
+  })
+  @ApiResponse({ status: 409, description: 'Email 2FA already enabled.' })
+  @ApiResponse({ status: 429, description: 'Too many setup attempts.' })
   @UseGuards(JwtAuthGuard, ThrottlerGuard)
-  @Throttle({ 'auth-2fa-sms-setup': { ttl: 60000, limit: 3 } })
-  @Post('2fa/sms/setup')
+  @Throttle({ 'auth-2fa-email-setup': { ttl: 60000, limit: 3 } })
+  @Post('2fa/email/setup')
   @HttpCode(200)
-  async smsSetup(
-    @Req() request: AuthRequest,
-    @Body() body: SmsSetupDto,
-  ): Promise<void> {
-    await this.smsSetupService.initiateSetup(
-      request.user.userId,
-      body.phoneNumber,
-    );
+  async emailTwoFactorSetup(@Req() request: AuthRequest): Promise<void> {
+    await this.emailTwoFactorService.initiateSetup(request.user.userId);
   }
 
-  @ApiOperation({ summary: 'Verify and complete SMS 2FA setup' })
+  @ApiOperation({ summary: 'Verify Email 2FA setup code and enable Email 2FA' })
   @ApiBearerAuth()
   @ApiResponse({
     status: 200,
-    description: 'SMS 2FA enabled. Returns one-time recovery codes.',
+    description: 'Email 2FA enabled. Returns one-time recovery codes.',
   })
   @ApiResponse({ status: 400, description: 'Invalid or expired code.' })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({ status: 429, description: 'Too many verify attempts.' })
   @UseGuards(JwtAuthGuard, ThrottlerGuard)
-  @Throttle({ 'auth-2fa-sms-verify': { ttl: 60000, limit: 5 } })
-  @Post('2fa/sms/verify')
+  @Throttle({ 'auth-2fa-email-verify': { ttl: 60000, limit: 5 } })
+  @Post('2fa/email/verify')
   @HttpCode(200)
-  async smsVerify(
+  async emailTwoFactorVerify(
     @Req() request: AuthRequest,
-    @Body() body: SmsVerifySetupDto,
+    @Body() body: EmailTwoFactorVerifyDto,
   ): Promise<{ recoveryCodes: string[] }> {
-    const recoveryCodes = await this.smsSetupService.verifySetup(
+    const recoveryCodes = await this.emailTwoFactorService.verifySetup(
       request.user.userId,
       body.code,
     );
     return { recoveryCodes };
   }
 
-  @ApiOperation({
-    summary: 'Resend SMS verification code during MFA challenge',
-  })
-  @ApiResponse({ status: 200, description: 'New verification code sent.' })
+  @ApiOperation({ summary: 'Resend Email 2FA code during MFA challenge' })
+  @ApiResponse({ status: 200, description: 'New code sent.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired MFA token.' })
   @ApiResponse({ status: 429, description: 'Too many resend attempts.' })
   @UseGuards(ThrottlerGuard, MfaAuthGuard)
-  @Throttle({ 'auth-sms-resend': { ttl: 60000, limit: 3 } })
-  @Post('2fa/sms/resend')
+  @Throttle({ 'auth-email-resend': { ttl: 60000, limit: 3 } })
+  @Post('2fa/email/resend')
   @HttpCode(200)
-  async smsResend(@Req() request: AuthRequest): Promise<void> {
-    await this.smsSetupService.smsResend(request.user.userId);
+  async emailTwoFactorResend(@Req() request: AuthRequest): Promise<void> {
+    await this.authService.sendReauthEmailCode(request.user.userId);
   }
 
   @ApiOperation({
-    summary: 'Send SMS code for settings re-authentication',
+    summary: 'Send Email 2FA code for settings re-authentication',
   })
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'SMS code sent.' })
-  @ApiResponse({ status: 400, description: 'SMS 2FA not enabled.' })
+  @ApiResponse({ status: 200, description: 'Code sent.' })
+  @ApiResponse({ status: 400, description: 'Email 2FA not enabled.' })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 429, description: 'Too many requests.' })
   @UseGuards(JwtAuthGuard, ThrottlerGuard)
-  @Throttle({ 'auth-2fa-sms-reauth-send': { ttl: 60000, limit: 3 } })
-  @Post('2fa/sms/reauth-send')
+  @Throttle({ 'auth-2fa-email-reauth-send': { ttl: 60000, limit: 3 } })
+  @Post('2fa/email/reauth-send')
   @HttpCode(200)
-  async smsReauthSend(@Req() request: AuthRequest): Promise<void> {
-    await this.authService.sendReauthSmsCode(request.user.userId);
+  async emailTwoFactorReauthSend(@Req() request: AuthRequest): Promise<void> {
+    await this.authService.sendReauthEmailCode(request.user.userId);
   }
 
   @ApiOperation({

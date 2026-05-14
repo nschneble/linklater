@@ -6,24 +6,24 @@ import {
   type FormEvent,
 } from 'react';
 import Alert from '../common/Alert';
+import EmailTwoFactorSetupView from './EmailTwoFactorSetupView';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import ReauthForm from './ReauthForm';
 import RecoveryCodesModal from './RecoveryCodesModal';
-import SmsSetupView from './SmsSetupView';
 import TotpSetupView from './TotpSetupView';
 import {
   disable2fa,
   regenerateRecoveryCodes,
-  setupSms,
+  setupEmailTwoFactor,
   setupTotp,
-  verifySmsSetup,
+  verifyEmailTwoFactorSetup,
   verifyTotpSetup,
 } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
 
-type SmsFlow = 'phone' | 'code';
+type EmailTwoFactorFlow = 'send' | 'verify';
 type ReauthAction = 'disable' | 'regenerate';
 
 function EnabledBadge() {
@@ -59,10 +59,10 @@ export default function TwoFactorSection() {
     }
   }, [totpSetup]);
 
-  // SMS setup state
-  const [smsFlow, setSmsFlow] = useState<SmsFlow | null>(null);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [smsCode, setSmsCode] = useState('');
+  // Email 2FA setup state
+  const [emailTwoFactorFlow, setEmailTwoFactorFlow] =
+    useState<EmailTwoFactorFlow | null>(null);
+  const [emailTwoFactorCode, setEmailTwoFactorCode] = useState('');
 
   // Re-authentication state (for disable / regenerate)
   const [reauthAction, setReauthAction] = useState<ReauthAction | null>(null);
@@ -98,34 +98,34 @@ export default function TwoFactorSection() {
     }
   };
 
-  const handleStartSmsSetup = () => {
+  const handleStartEmailTwoFactorSetup = () => {
     setError(null);
-    setSmsFlow('phone');
+    setEmailTwoFactorFlow('send');
   };
 
-  const handleSendSmsCode = async (formEvent: FormEvent) => {
+  const handleSendEmailTwoFactorCode = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      await setupSms(phoneNumber);
-      setSmsFlow('code');
+      await setupEmailTwoFactor();
+      setEmailTwoFactorFlow('verify');
     } catch (caught: unknown) {
-      setError(getErrorMessage(caught, 'Failed to send SMS code'));
+      setError(getErrorMessage(caught, 'Failed to send code'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifySms = async (formEvent: FormEvent) => {
+  const handleVerifyEmailTwoFactor = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const { recoveryCodes: codes } = await verifySmsSetup(smsCode);
-      setSmsFlow(null);
-      setPhoneNumber('');
-      setSmsCode('');
+      const { recoveryCodes: codes } =
+        await verifyEmailTwoFactorSetup(emailTwoFactorCode);
+      setEmailTwoFactorFlow(null);
+      setEmailTwoFactorCode('');
       setRecoveryCodes(codes);
     } catch (caught: unknown) {
       setError(getErrorMessage(caught, 'Invalid code'));
@@ -212,9 +212,7 @@ export default function TwoFactorSection() {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)] text-sm">
-              {twoFactorMethod === 'totp'
-                ? 'Authenticator app'
-                : 'SMS text message'}
+              {twoFactorMethod === 'totp' ? 'Authenticator app' : 'Email code'}
             </span>
             <EnabledBadge />
           </div>
@@ -270,26 +268,25 @@ export default function TwoFactorSection() {
         </div>
       )}
 
-      {/* State D — SMS setup: phone or code */}
+      {/* State D — Email 2FA setup: send or verify */}
       {!reauthAction &&
         !twoFactorMethod &&
         !totpSetup &&
         !twoFactorPending &&
-        smsFlow && (
-          <SmsSetupView
+        emailTwoFactorFlow && (
+          <EmailTwoFactorSetupView
+            code={emailTwoFactorCode}
+            emailTwoFactorFlow={emailTwoFactorFlow}
             error={error}
             loading={loading}
             onCancel={() => {
-              setSmsFlow(null);
+              setEmailTwoFactorFlow(null);
               setError(null);
             }}
-            onPhoneChange={setPhoneNumber}
-            onSendCode={handleSendSmsCode}
-            onSmsCodeChange={setSmsCode}
-            onVerify={handleVerifySms}
-            phoneNumber={phoneNumber}
-            smsCode={smsCode}
-            smsFlow={smsFlow}
+            onCodeChange={setEmailTwoFactorCode}
+            onSendCode={handleSendEmailTwoFactorCode}
+            onVerify={handleVerifyEmailTwoFactor}
+            userEmail={user?.email ?? ''}
           />
         )}
 
@@ -298,7 +295,7 @@ export default function TwoFactorSection() {
         !twoFactorMethod &&
         !totpSetup &&
         !twoFactorPending &&
-        !smsFlow && (
+        !emailTwoFactorFlow && (
           <div className="space-y-3">
             <p className="text-[var(--text-muted)] text-sm">
               Add a second layer of security to your account.
@@ -324,13 +321,13 @@ export default function TwoFactorSection() {
               <PrimaryButton
                 disabled={loading}
                 className="py-2.5"
-                onClick={handleStartSmsSetup}
+                onClick={handleStartEmailTwoFactorSetup}
               >
                 <i
-                  className="fa-solid fa-comment-sms text-xs"
+                  className="fa-solid fa-envelope text-xs"
                   aria-hidden="true"
                 />
-                Set up SMS
+                Set up email code
               </PrimaryButton>
             </div>
           </div>

@@ -4,50 +4,38 @@ import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 
-type SmsFlow = 'phone' | 'code';
+type EmailTwoFactorFlow = 'send' | 'verify';
 
-interface SmsSetupViewProps {
-  smsFlow: SmsFlow;
-  phoneNumber: string;
-  smsCode: string;
+interface EmailTwoFactorSetupViewProps {
+  emailTwoFactorFlow: EmailTwoFactorFlow;
+  userEmail: string;
+  code: string;
   loading: boolean;
   error: string | null;
-  onPhoneChange: (value: string) => void;
-  onSmsCodeChange: (value: string) => void;
+  onCodeChange: (value: string) => void;
   onSendCode: (formEvent: FormEvent) => void;
   onVerify: (formEvent: FormEvent) => void;
   onCancel: () => void;
 }
 
-export default function SmsSetupView({
+export default function EmailTwoFactorSetupView({
+  code,
+  emailTwoFactorFlow,
   error,
   loading,
   onCancel,
-  onPhoneChange,
+  onCodeChange,
   onSendCode,
-  onSmsCodeChange,
   onVerify,
-  phoneNumber,
-  smsCode,
-  smsFlow,
-}: SmsSetupViewProps) {
-  if (smsFlow === 'phone') {
+  userEmail,
+}: EmailTwoFactorSetupViewProps) {
+  if (emailTwoFactorFlow === 'send') {
     return (
       <form className="space-y-4" onSubmit={onSendCode}>
-        <label
-          className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
-          htmlFor="sms-phone"
-        >
-          Phone number
-        </label>
-        <FormInput
-          id="sms-phone"
-          type="tel"
-          placeholder="+1 555 555 0100"
-          value={phoneNumber}
-          onChange={(event) => onPhoneChange(event.target.value)}
-          required
-        />
+        <p className="text-[var(--text-muted)] text-sm">
+          We'll send a one-time code to{' '}
+          <span className="font-medium">{userEmail}</span>.
+        </p>
         {error && <Alert variant="error">{error}</Alert>}
         <div className="flex gap-3">
           <PrimaryButton disabled={loading} className="py-2.5">
@@ -62,22 +50,22 @@ export default function SmsSetupView({
   return (
     <form className="space-y-4" onSubmit={onVerify}>
       <p className="text-[var(--text-muted)] text-sm">
-        Enter the code we sent to{' '}
-        <span className="font-medium">{phoneNumber}</span>.
+        Enter the 6-digit code we sent to{' '}
+        <span className="font-medium">{userEmail}</span>.
       </p>
       <label
         className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
-        htmlFor="sms-code"
+        htmlFor="email-2fa-code"
       >
-        SMS code
+        Email code
       </label>
       <FormInput
-        id="sms-code"
+        id="email-2fa-code"
         type="text"
         inputMode="numeric"
         maxLength={6}
-        value={smsCode}
-        onChange={(event) => onSmsCodeChange(event.target.value)}
+        value={code}
+        onChange={(event) => onCodeChange(event.target.value)}
         required
       />
       {error && <Alert variant="error">{error}</Alert>}

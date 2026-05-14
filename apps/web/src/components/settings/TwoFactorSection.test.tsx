@@ -12,10 +12,10 @@ import type { User } from '../../auth/AuthContext';
 vi.mock('../../lib/api', () => ({
   disable2fa: vi.fn(),
   regenerateRecoveryCodes: vi.fn(),
-  sendReauthSmsCode: vi.fn(),
-  setupSms: vi.fn(),
+  sendReauthEmailCode: vi.fn(),
+  setupEmailTwoFactor: vi.fn(),
   setupTotp: vi.fn(),
-  verifySmsSetup: vi.fn(),
+  verifyEmailTwoFactorSetup: vi.fn(),
   verifyTotpSetup: vi.fn(),
 }));
 
@@ -74,7 +74,7 @@ describe('TwoFactorSection', () => {
         screen.getByRole('button', { name: /set up authenticator app/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: /set up sms/i }),
+        screen.getByRole('button', { name: /set up email code/i }),
       ).toBeInTheDocument();
     });
 
@@ -190,43 +190,44 @@ describe('TwoFactorSection', () => {
     });
   });
 
-  describe('State D — SMS setup in progress', () => {
-    it('shows phone number input when SMS setup is initiated', async () => {
+  describe('State D — Email 2FA setup in progress', () => {
+    it('shows confirmation text when Email 2FA setup is initiated', async () => {
       render(<TwoFactorSection />);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /set up sms/i }));
+        fireEvent.click(
+          screen.getByRole('button', { name: /set up email code/i }),
+        );
       });
 
-      expect(screen.getByLabelText(/phone number/i)).toBeInTheDocument();
+      expect(screen.getByText(new RegExp(USER_EMAIL, 'i'))).toBeInTheDocument();
     });
 
-    it('sends SMS and shows code input after phone is submitted', async () => {
-      vi.mocked(apiModule.setupSms).mockResolvedValue(undefined);
+    it('sends code and shows code input after send is clicked', async () => {
+      vi.mocked(apiModule.setupEmailTwoFactor).mockResolvedValue(undefined);
 
       render(<TwoFactorSection />);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /set up sms/i }));
+        fireEvent.click(
+          screen.getByRole('button', { name: /set up email code/i }),
+        );
       });
-
-      const phoneInput = screen.getByLabelText(/phone number/i);
-      fireEvent.change(phoneInput, { target: { value: '+15555550100' } });
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /send code/i }));
       });
 
       await waitFor(() => {
-        expect(screen.getByLabelText(/sms code/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/email code/i)).toBeInTheDocument();
       });
     });
   });
 
-  describe('State E — SMS enabled', () => {
-    it('shows enabled status when SMS is active', () => {
+  describe('State E — Email 2FA enabled', () => {
+    it('shows enabled status when Email 2FA is active', () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'sms' }) }),
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'email' }) }),
       );
 
       render(<TwoFactorSection />);
@@ -234,11 +235,11 @@ describe('TwoFactorSection', () => {
       expect(screen.getByText(/enabled/i)).toBeInTheDocument();
     });
 
-    it('shows a "Send me a code" button in the re-auth form for SMS users', async () => {
+    it('shows a "Send me a code" button in the re-auth form for Email 2FA users', async () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'sms' }) }),
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'email' }) }),
       );
-      (apiModule.sendReauthSmsCode as Mock).mockResolvedValue(undefined);
+      (apiModule.sendReauthEmailCode as Mock).mockResolvedValue(undefined);
 
       render(<TwoFactorSection />);
 
@@ -253,11 +254,11 @@ describe('TwoFactorSection', () => {
       ).toBeInTheDocument();
     });
 
-    it('sends SMS and shows confirmation when "Send me a code" is clicked', async () => {
+    it('sends email code and shows confirmation when "Send me a code" is clicked', async () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'sms' }) }),
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'email' }) }),
       );
-      (apiModule.sendReauthSmsCode as Mock).mockResolvedValue(undefined);
+      (apiModule.sendReauthEmailCode as Mock).mockResolvedValue(undefined);
 
       render(<TwoFactorSection />);
 
@@ -274,9 +275,9 @@ describe('TwoFactorSection', () => {
       });
 
       await waitFor(() => {
-        expect(apiModule.sendReauthSmsCode).toHaveBeenCalled();
+        expect(apiModule.sendReauthEmailCode).toHaveBeenCalled();
         expect(
-          screen.getByText(/code sent to your enrolled number/i),
+          screen.getByText(/code sent to your email/i),
         ).toBeInTheDocument();
       });
     });

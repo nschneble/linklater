@@ -200,7 +200,7 @@ export default function AccountSettingsForm() {
               className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
               htmlFor="email-change-mfa"
             >
-              {user.twoFactorMethod === 'sms' ? 'SMS' : 'Authenticator'} or
+              {user.twoFactorMethod === 'email' ? 'Email' : 'Authenticator'} or
               recovery code
             </label>
             <FormInput

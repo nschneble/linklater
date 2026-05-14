@@ -20,12 +20,12 @@ import { UsersModule } from './users/users.module.js';
       { name: 'auth-verify-email-change', ttl: 60000, limit: 10 },
       // 2FA login step 2 — tighter window to slow brute-force on OTP codes
       { name: 'auth-verify-otp', ttl: 900000, limit: 5 },
-      // 2FA setup — SMS rate limited to prevent Twilio billing abuse
+      // 2FA setup
       { name: 'auth-2fa-totp-setup', ttl: 60000, limit: 5 },
-      { name: 'auth-2fa-sms-setup', ttl: 60000, limit: 3 },
-      { name: 'auth-2fa-sms-verify', ttl: 60000, limit: 5 },
-      { name: 'auth-sms-resend', ttl: 60000, limit: 3 },
-      { name: 'auth-2fa-sms-reauth-send', ttl: 60000, limit: 3 },
+      { name: 'auth-2fa-email-setup', ttl: 60000, limit: 3 },
+      { name: 'auth-2fa-email-verify', ttl: 60000, limit: 5 },
+      { name: 'auth-email-resend', ttl: 60000, limit: 3 },
+      { name: 'auth-2fa-email-reauth-send', ttl: 60000, limit: 3 },
       // 2FA disable — most sensitive action; matches verify-otp window
       { name: 'auth-disable-2fa', ttl: 900000, limit: 5 },
       // Re-auth gate for recovery code operations

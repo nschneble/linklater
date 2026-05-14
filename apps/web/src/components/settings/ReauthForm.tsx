@@ -3,7 +3,7 @@ import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
-import { sendReauthSmsCode } from '../../lib/api';
+import { sendReauthEmailCode } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 
 type ReauthAction = 'disable' | 'regenerate';
@@ -11,7 +11,7 @@ type ReauthAction = 'disable' | 'regenerate';
 interface ReauthFormProps {
   action: ReauthAction;
   hasPassword: boolean;
-  twoFactorMethod: 'totp' | 'sms' | null;
+  twoFactorMethod: 'totp' | 'email' | null;
   loading: boolean;
   error: string | null;
   password: string;
@@ -35,20 +35,20 @@ export default function ReauthForm({
   password,
   twoFactorMethod,
 }: ReauthFormProps) {
-  const [smsSending, setSmsSending] = useState(false);
-  const [smsSent, setSmsSent] = useState(false);
-  const [smsSendError, setSmsSendError] = useState<string | null>(null);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailSendError, setEmailSendError] = useState<string | null>(null);
 
-  const handleSendSmsCode = async () => {
-    setSmsSendError(null);
-    setSmsSending(true);
+  const handleSendEmailCode = async () => {
+    setEmailSendError(null);
+    setEmailSending(true);
     try {
-      await sendReauthSmsCode();
-      setSmsSent(true);
+      await sendReauthEmailCode();
+      setEmailSent(true);
     } catch (caught: unknown) {
-      setSmsSendError(getErrorMessage(caught, 'Failed to send SMS code'));
+      setEmailSendError(getErrorMessage(caught, 'Failed to send code'));
     } finally {
-      setSmsSending(false);
+      setEmailSending(false);
     }
   };
 
@@ -82,21 +82,22 @@ export default function ReauthForm({
         htmlFor="reauth-code"
       >
         {hasPassword ? 'Or enter your ' : 'Enter your '}
-        {twoFactorMethod === 'sms' ? 'SMS' : 'authenticator'} or recovery code
+        {twoFactorMethod === 'email' ? 'email' : 'authenticator'} or recovery
+        code
       </label>
 
-      {twoFactorMethod === 'sms' && !smsSent && (
+      {twoFactorMethod === 'email' && !emailSent && (
         <div className="space-y-2">
-          {smsSendError && <Alert variant="error">{smsSendError}</Alert>}
-          <LinkButton disabled={smsSending} onClick={handleSendSmsCode}>
-            {smsSending ? 'Sending…' : 'Send me a code'}
+          {emailSendError && <Alert variant="error">{emailSendError}</Alert>}
+          <LinkButton disabled={emailSending} onClick={handleSendEmailCode}>
+            {emailSending ? 'Sending…' : 'Send me a code'}
           </LinkButton>
         </div>
       )}
 
-      {twoFactorMethod === 'sms' && smsSent && (
+      {twoFactorMethod === 'email' && emailSent && (
         <p className="text-[var(--text-muted)] text-xs">
-          Code sent to your enrolled number.
+          Code sent to your email.
         </p>
       )}
 
@@ -113,7 +114,7 @@ export default function ReauthForm({
       <div className="flex gap-3">
         <PrimaryButton
           disabled={
-            loading || (twoFactorMethod === 'sms' && !smsSent && !password)
+            loading || (twoFactorMethod === 'email' && !emailSent && !password)
           }
           className="py-2.5"
         >

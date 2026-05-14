@@ -10,7 +10,7 @@ export class VerifyOtpDto {
 
   @ApiProperty({
     description:
-      '6-digit OTP or SMS code, or a 17-character recovery code (xxxxx-xxxxx-xxxxx).',
+      '6-digit OTP or email code, or a 17-character recovery code (xxxxx-xxxxx-xxxxx).',
   })
   @IsString()
   @Matches(/^\d{6}$|^[^01IOl]{5}-[^01IOl]{5}-[^01IOl]{5}$/, {
@@ -19,7 +19,7 @@ export class VerifyOtpDto {
   })
   code: string;
 
-  @ApiProperty({ enum: ['totp', 'sms', 'recovery'] })
-  @IsIn(['totp', 'sms', 'recovery'])
-  method: 'totp' | 'sms' | 'recovery';
+  @ApiProperty({ enum: ['totp', 'email', 'recovery'] })
+  @IsIn(['totp', 'email', 'recovery'])
+  method: 'totp' | 'email' | 'recovery';
 }

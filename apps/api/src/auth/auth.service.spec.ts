@@ -24,10 +24,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '../prisma/generated/client';
 
 import { AuthService } from './auth.service';
+import { EmailTwoFactorService } from './email-2fa.service';
 import { TotpService } from './totp.service';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../email/email.service';
-import { SmsService } from '../sms/sms.service';
 
 const makeP2002 = () =>
   new (
@@ -89,10 +89,10 @@ describe('AuthService', () => {
     sendVerification: jest.fn(),
   } as unknown as EmailService;
 
-  const smsServiceMock = {
-    checkVerification: jest.fn(),
-    sendVerification: jest.fn().mockResolvedValue(undefined),
-  } as unknown as SmsService;
+  const emailTwoFactorServiceMock = {
+    sendCode: jest.fn().mockResolvedValue(undefined),
+    verifyCode: jest.fn(),
+  } as unknown as EmailTwoFactorService;
 
   const totpServiceMock = {
     verifyCode: jest.fn(),
@@ -105,7 +105,7 @@ describe('AuthService', () => {
         { provide: UsersService, useValue: usersServiceMock },
         { provide: JwtService, useValue: jwtServiceMock },
         { provide: EmailService, useValue: emailServiceMock },
-        { provide: SmsService, useValue: smsServiceMock },
+        { provide: EmailTwoFactorService, useValue: emailTwoFactorServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
       ],
     }).compile();
@@ -155,8 +155,7 @@ describe('AuthService', () => {
         totpSecret: null,
         totpEnabledAt: null,
         totpVerifiedAt: null,
-        smsEnabledAt: null,
-        phoneNumber: null,
+        emailTwoFactorEnabledAt: null,
       });
 
       const result = await service.me(USER_ID);
@@ -168,7 +167,6 @@ describe('AuthService', () => {
       expect(result.twoFactorMethod).toBeNull();
       expect(result.twoFactorPending).toBe(false);
       expect(result).not.toHaveProperty('totpSecret');
-      expect(result).not.toHaveProperty('phoneNumber');
     });
 
     it('returns twoFactorMethod totp when totpEnabledAt is set', async () => {
@@ -178,8 +176,7 @@ describe('AuthService', () => {
         totpSecret: 'encrypted-secret',
         totpEnabledAt: new Date(),
         totpVerifiedAt: new Date(),
-        smsEnabledAt: null,
-        phoneNumber: null,
+        emailTwoFactorEnabledAt: null,
       });
 
       const result = await service.me(USER_ID);
@@ -195,8 +192,7 @@ describe('AuthService', () => {
         totpSecret: 'encrypted-secret',
         totpEnabledAt: null,
         totpVerifiedAt: null,
-        smsEnabledAt: null,
-        phoneNumber: null,
+        emailTwoFactorEnabledAt: null,
       });
 
       const result = await service.me(USER_ID);
@@ -205,20 +201,19 @@ describe('AuthService', () => {
       expect(result.twoFactorPending).toBe(true);
     });
 
-    it('returns twoFactorMethod sms when smsEnabledAt is set', async () => {
+    it('returns twoFactorMethod email when emailTwoFactorEnabledAt is set', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
         totpSecret: null,
         totpEnabledAt: null,
         totpVerifiedAt: null,
-        smsEnabledAt: new Date(),
-        phoneNumber: 'encrypted-phone',
+        emailTwoFactorEnabledAt: new Date(),
       });
 
       const result = await service.me(USER_ID);
 
-      expect(result.twoFactorMethod).toBe('sms');
+      expect(result.twoFactorMethod).toBe('email');
       expect(result.twoFactorPending).toBe(false);
     });
   });
@@ -446,31 +441,23 @@ describe('AuthService', () => {
         { expiresIn: '5m' },
       );
       expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
-      expect(smsServiceMock.sendVerification).not.toHaveBeenCalled();
+      expect(emailTwoFactorServiceMock.sendCode).not.toHaveBeenCalled();
     });
 
-    it('returns mfaToken and mfaMethod sms when smsEnabledAt is set, decrypting before send', async () => {
-      process.env.PHONE_ENCRYPTION_KEY = 'b'.repeat(64);
-      const { encrypt } = await import('../common/crypto.js');
-      const encryptedPhone = encrypt(
-        '+15555550100',
-        process.env.PHONE_ENCRYPTION_KEY,
-      );
-
+    it('returns mfaToken and mfaMethod email when emailTwoFactorEnabledAt is set and sends code', async () => {
       const result = await service.login({
         email: USER_EMAIL,
         userId: USER_ID,
-        smsEnabledAt: new Date(),
-        phoneNumber: encryptedPhone,
+        emailTwoFactorEnabledAt: new Date(),
       });
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith(
         { subject: USER_ID, mfaPending: true },
         { expiresIn: '5m' },
       );
-      expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'sms' });
-      expect(smsServiceMock.sendVerification).toHaveBeenCalledWith(
-        '+15555550100',
+      expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'email' });
+      expect(emailTwoFactorServiceMock.sendCode).toHaveBeenCalledWith(
+        expect.objectContaining({ id: USER_ID, email: USER_EMAIL }),
       );
     });
   });
@@ -702,8 +689,7 @@ describe('AuthService', () => {
       email: USER_EMAIL,
       theme: 'dazed-and-confused',
       totpEnabledAt: null,
-      smsEnabledAt: null,
-      phoneNumber: null,
+      emailTwoFactorEnabledAt: null,
       ...overrides,
     });
 
@@ -812,43 +798,23 @@ describe('AuthService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('throws ForbiddenException when SMS 2FA is enabled and no code is provided', async () => {
-      process.env.PHONE_ENCRYPTION_KEY = 'b'.repeat(64);
-      const { encrypt } = await import('../common/crypto.js');
-      const encryptedPhone = encrypt(
-        '+15555550100',
-        process.env.PHONE_ENCRYPTION_KEY,
-      );
-
+    it('throws ForbiddenException when Email 2FA is enabled and no code is provided', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({
-          smsEnabledAt: new Date(),
-          phoneNumber: encryptedPhone,
-        }),
+        makeUserNoTwoFactor({ emailTwoFactorEnabledAt: new Date() }),
       );
 
       await expect(
         service.requestEmailChange(USER_ID, NEW_EMAIL),
       ).rejects.toThrow(ForbiddenException);
-
-      expect(smsServiceMock.sendVerification).not.toHaveBeenCalled();
     });
 
-    it('allows email change when SMS 2FA is enabled and valid SMS code is provided', async () => {
-      process.env.PHONE_ENCRYPTION_KEY = 'b'.repeat(64);
-      const { encrypt } = await import('../common/crypto.js');
-      const encryptedPhone = encrypt(
-        '+15555550100',
-        process.env.PHONE_ENCRYPTION_KEY,
-      );
-
+    it('allows email change when Email 2FA is enabled and valid email code is provided', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({
-          smsEnabledAt: new Date(),
-          phoneNumber: encryptedPhone,
-        }),
+        makeUserNoTwoFactor({ emailTwoFactorEnabledAt: new Date() }),
       );
-      (smsServiceMock.checkVerification as jest.Mock).mockResolvedValue(true);
+      (emailTwoFactorServiceMock.verifyCode as jest.Mock).mockResolvedValue(
+        true,
+      );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
       (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
         undefined,
@@ -861,27 +827,19 @@ describe('AuthService', () => {
         service.requestEmailChange(USER_ID, NEW_EMAIL, '123456'),
       ).resolves.not.toThrow();
 
-      expect(smsServiceMock.checkVerification).toHaveBeenCalledWith(
-        '+15555550100',
+      expect(emailTwoFactorServiceMock.verifyCode).toHaveBeenCalledWith(
+        expect.objectContaining({ id: USER_ID }),
         '123456',
       );
     });
 
-    it('throws UnauthorizedException when SMS 2FA is enabled and SMS code is invalid', async () => {
-      process.env.PHONE_ENCRYPTION_KEY = 'b'.repeat(64);
-      const { encrypt } = await import('../common/crypto.js');
-      const encryptedPhone = encrypt(
-        '+15555550100',
-        process.env.PHONE_ENCRYPTION_KEY,
-      );
-
+    it('throws UnauthorizedException when Email 2FA is enabled and email code is invalid', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({
-          smsEnabledAt: new Date(),
-          phoneNumber: encryptedPhone,
-        }),
+        makeUserNoTwoFactor({ emailTwoFactorEnabledAt: new Date() }),
       );
-      (smsServiceMock.checkVerification as jest.Mock).mockResolvedValue(false);
+      (emailTwoFactorServiceMock.verifyCode as jest.Mock).mockResolvedValue(
+        false,
+      );
 
       await expect(
         service.requestEmailChange(USER_ID, NEW_EMAIL, '000000'),
@@ -1007,7 +965,7 @@ describe('AuthService', () => {
           id: USER_ID,
           email: USER_EMAIL,
           totpEnabledAt: new Date(),
-          smsEnabledAt: null,
+          emailTwoFactorEnabledAt: null,
         });
         (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
 
@@ -1025,7 +983,7 @@ describe('AuthService', () => {
           id: USER_ID,
           email: USER_EMAIL,
           totpEnabledAt: new Date(),
-          smsEnabledAt: null,
+          emailTwoFactorEnabledAt: null,
         });
         (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(false);
 
@@ -1034,12 +992,12 @@ describe('AuthService', () => {
         ).rejects.toThrow(UnauthorizedException);
       });
 
-      it('throws UnauthorizedException when SMS user submits totp method', async () => {
+      it('throws UnauthorizedException when email 2FA user submits totp method', async () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
           totpEnabledAt: null,
-          smsEnabledAt: new Date(),
+          emailTwoFactorEnabledAt: new Date(),
         });
 
         await expect(
@@ -1050,81 +1008,66 @@ describe('AuthService', () => {
       });
     });
 
-    describe('sms method', () => {
-      it('returns accessToken when SMS code is valid', async () => {
-        process.env.PHONE_ENCRYPTION_KEY = 'b'.repeat(64);
-        const { encrypt } = await import('../common/crypto.js');
-        const encryptedPhone = encrypt(
-          '+15555550100',
-          process.env.PHONE_ENCRYPTION_KEY,
-        );
-
+    describe('email method', () => {
+      it('returns accessToken when email code is valid', async () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
-          smsEnabledAt: new Date(),
-          phoneNumber: encryptedPhone,
+          emailTwoFactorEnabledAt: new Date(),
         });
-        (smsServiceMock.checkVerification as jest.Mock).mockResolvedValue(true);
+        (emailTwoFactorServiceMock.verifyCode as jest.Mock).mockResolvedValue(
+          true,
+        );
 
-        const result = await service.verifyOtp(USER_ID, '123456', 'sms');
+        const result = await service.verifyOtp(USER_ID, '123456', 'email');
 
-        expect(smsServiceMock.checkVerification).toHaveBeenCalledWith(
-          '+15555550100',
+        expect(emailTwoFactorServiceMock.verifyCode).toHaveBeenCalledWith(
+          expect.objectContaining({ id: USER_ID }),
           '123456',
         );
         expect(result).toHaveProperty('accessToken');
       });
 
-      it('throws UnauthorizedException when smsEnabledAt is not set', async () => {
+      it('throws UnauthorizedException when emailTwoFactorEnabledAt is not set', async () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
           totpEnabledAt: null,
-          smsEnabledAt: null,
-          phoneNumber: null,
+          emailTwoFactorEnabledAt: null,
         });
 
         await expect(
-          service.verifyOtp(USER_ID, '123456', 'sms'),
+          service.verifyOtp(USER_ID, '123456', 'email'),
         ).rejects.toThrow(UnauthorizedException);
       });
 
-      it('throws UnauthorizedException when TOTP user submits sms method', async () => {
+      it('throws UnauthorizedException when TOTP user submits email method', async () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
           totpEnabledAt: new Date(),
-          smsEnabledAt: null,
+          emailTwoFactorEnabledAt: null,
         });
 
         await expect(
-          service.verifyOtp(USER_ID, '123456', 'sms'),
+          service.verifyOtp(USER_ID, '123456', 'email'),
         ).rejects.toThrow(UnauthorizedException);
 
-        expect(smsServiceMock.checkVerification).not.toHaveBeenCalled();
+        expect(emailTwoFactorServiceMock.verifyCode).not.toHaveBeenCalled();
       });
 
-      it('throws UnauthorizedException when SMS code is invalid', async () => {
-        process.env.PHONE_ENCRYPTION_KEY = 'b'.repeat(64);
-        const { encrypt } = await import('../common/crypto.js');
-        const encryptedPhone = encrypt(
-          '+15555550100',
-          process.env.PHONE_ENCRYPTION_KEY,
-        );
-
+      it('throws UnauthorizedException when email code is invalid', async () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
-          smsEnabledAt: new Date(),
-          phoneNumber: encryptedPhone,
+          emailTwoFactorEnabledAt: new Date(),
         });
-        (smsServiceMock.checkVerification as jest.Mock).mockResolvedValue(
+        (emailTwoFactorServiceMock.verifyCode as jest.Mock).mockResolvedValue(
           false,
         );
 
         await expect(
-          service.verifyOtp(USER_ID, '000000', 'sms'),
+          service.verifyOtp(USER_ID, '000000', 'email'),
         ).rejects.toThrow(UnauthorizedException);
       });
     });
@@ -1140,7 +1083,7 @@ describe('AuthService', () => {
           id: USER_ID,
           email: USER_EMAIL,
           totpEnabledAt: new Date(),
-          smsEnabledAt: null,
+          emailTwoFactorEnabledAt: null,
         });
         (
           usersServiceMock.findUnusedRecoveryCodes as jest.Mock
@@ -1166,7 +1109,7 @@ describe('AuthService', () => {
           id: USER_ID,
           email: USER_EMAIL,
           totpEnabledAt: new Date(),
-          smsEnabledAt: null,
+          emailTwoFactorEnabledAt: null,
         });
         (
           usersServiceMock.findUnusedRecoveryCodes as jest.Mock
@@ -1184,7 +1127,7 @@ describe('AuthService', () => {
           id: USER_ID,
           email: USER_EMAIL,
           totpEnabledAt: new Date(),
-          smsEnabledAt: null,
+          emailTwoFactorEnabledAt: null,
         });
         (
           usersServiceMock.findUnusedRecoveryCodes as jest.Mock
@@ -1200,7 +1143,7 @@ describe('AuthService', () => {
           id: USER_ID,
           email: USER_EMAIL,
           totpEnabledAt: null,
-          smsEnabledAt: null,
+          emailTwoFactorEnabledAt: null,
         });
 
         await expect(
@@ -1218,7 +1161,7 @@ describe('AuthService', () => {
         hasPassword: true,
         passwordHash: KNOWN_PASSWORD_HASH,
         totpEnabledAt: null,
-        smsEnabledAt: null,
+        emailTwoFactorEnabledAt: null,
       });
       (usersServiceMock.disableTwoFactor as jest.Mock).mockResolvedValue(
         undefined,
@@ -1238,8 +1181,7 @@ describe('AuthService', () => {
         hasPassword: false,
         passwordHash: null,
         totpEnabledAt: new Date(),
-        smsEnabledAt: null,
-        phoneNumber: null,
+        emailTwoFactorEnabledAt: null,
       });
       (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
       (usersServiceMock.disableTwoFactor as jest.Mock).mockResolvedValue(
@@ -1267,8 +1209,7 @@ describe('AuthService', () => {
         hasPassword: false,
         passwordHash: null,
         totpEnabledAt: new Date(),
-        smsEnabledAt: null,
-        phoneNumber: null,
+        emailTwoFactorEnabledAt: null,
       });
       (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
         [{ id: codeId, codeHash: realHash }],
@@ -1301,7 +1242,7 @@ describe('AuthService', () => {
         hasPassword: true,
         passwordHash: KNOWN_PASSWORD_HASH,
         totpEnabledAt: null,
-        smsEnabledAt: null,
+        emailTwoFactorEnabledAt: null,
       });
 
       await expect(
@@ -1316,7 +1257,7 @@ describe('AuthService', () => {
         hasPassword: false,
         passwordHash: null,
         totpEnabledAt: null,
-        smsEnabledAt: null,
+        emailTwoFactorEnabledAt: null,
       });
 
       await expect(service.disable2fa(USER_ID, KNOWN_PASSWORD)).rejects.toThrow(
@@ -1333,8 +1274,7 @@ describe('AuthService', () => {
         hasPassword: false,
         passwordHash: null,
         totpEnabledAt: new Date(),
-        smsEnabledAt: null,
-        phoneNumber: null,
+        emailTwoFactorEnabledAt: null,
       });
       (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(false);
 
@@ -1354,8 +1294,7 @@ describe('AuthService', () => {
         hasPassword: false,
         passwordHash: null,
         totpEnabledAt: new Date(),
-        smsEnabledAt: null,
-        phoneNumber: null,
+        emailTwoFactorEnabledAt: null,
       });
       (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
         [{ id: 'rc-1', codeHash: differentHash }],
@@ -1375,7 +1314,7 @@ describe('AuthService', () => {
         hasPassword: true,
         passwordHash: KNOWN_PASSWORD_HASH,
         totpEnabledAt: null,
-        smsEnabledAt: null,
+        emailTwoFactorEnabledAt: null,
       });
       (usersServiceMock.reissueRecoveryCodes as jest.Mock).mockResolvedValue(
         undefined,
@@ -1407,7 +1346,7 @@ describe('AuthService', () => {
         hasPassword: true,
         passwordHash: KNOWN_PASSWORD_HASH,
         totpEnabledAt: null,
-        smsEnabledAt: null,
+        emailTwoFactorEnabledAt: null,
       });
 
       await expect(
@@ -1416,34 +1355,29 @@ describe('AuthService', () => {
     });
   });
 
-  describe('sendReauthSmsCode', () => {
-    it('sends SMS to enrolled phone number', async () => {
-      process.env.PHONE_ENCRYPTION_KEY = 'b'.repeat(64);
-      const { encrypt } = await import('../common/crypto.js');
-      const encryptedPhone = encrypt(
-        '+15555550100',
-        process.env.PHONE_ENCRYPTION_KEY,
-      );
-
+  describe('sendReauthEmailCode', () => {
+    it('sends email code to the enrolled email address', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        smsEnabledAt: new Date(),
-        phoneNumber: encryptedPhone,
+        id: USER_ID,
+        email: USER_EMAIL,
+        emailTwoFactorEnabledAt: new Date(),
       });
 
-      await service.sendReauthSmsCode(USER_ID);
+      await service.sendReauthEmailCode(USER_ID);
 
-      expect(smsServiceMock.sendVerification).toHaveBeenCalledWith(
-        '+15555550100',
+      expect(emailTwoFactorServiceMock.sendCode).toHaveBeenCalledWith(
+        expect.objectContaining({ email: USER_EMAIL }),
       );
     });
 
-    it('throws BadRequestException when SMS 2FA is not enabled', async () => {
+    it('throws BadRequestException when Email 2FA is not enabled', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        smsEnabledAt: null,
-        phoneNumber: null,
+        id: USER_ID,
+        email: USER_EMAIL,
+        emailTwoFactorEnabledAt: null,
       });
 
-      await expect(service.sendReauthSmsCode(USER_ID)).rejects.toThrow(
+      await expect(service.sendReauthEmailCode(USER_ID)).rejects.toThrow(
         BadRequestException,
       );
     });

@@ -16,7 +16,7 @@ vi.mock('../../lib/api', () => ({
   getMe: vi.fn(),
   getStoredToken: vi.fn().mockReturnValue(null),
   verifyOtp: vi.fn(),
-  resendSmsCode: vi.fn(),
+  resendEmailTwoFactorCode: vi.fn(),
 }));
 
 vi.mock('../../auth/AuthContext', () => ({
@@ -26,8 +26,8 @@ vi.mock('../../auth/AuthContext', () => ({
 import * as apiModule from '../../lib/api';
 import { useAuth } from '../../auth/AuthContext';
 
-// Re-export the mocked verifyOtp for convenience
-const { verifyOtp, resendSmsCode } = apiModule;
+// Re-export the mocked functions for convenience
+const { verifyOtp, resendEmailTwoFactorCode } = apiModule;
 
 const USER_EMAIL = 'email@example.com';
 const USER_PASSWORD = 'strong-password-123';
@@ -390,11 +390,11 @@ describe('AuthForm', () => {
     });
   });
 
-  describe('MFA challenge — SMS', () => {
-    it('shows SMS code input when login returns mfaToken with method sms', async () => {
+  describe('MFA challenge — Email', () => {
+    it('shows email code input when login returns mfaToken with method email', async () => {
       const loginMock = vi.fn().mockResolvedValue({
         mfaToken: 'mfa-tok',
-        mfaMethod: 'sms',
+        mfaMethod: 'email',
       });
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
 
@@ -407,14 +407,14 @@ describe('AuthForm', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByLabelText(/sms code/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/email code/i)).toBeInTheDocument();
       });
     });
 
-    it('shows a Resend code link for SMS', async () => {
+    it('shows a Resend code link for Email 2FA', async () => {
       const loginMock = vi.fn().mockResolvedValue({
         mfaToken: 'mfa-tok',
-        mfaMethod: 'sms',
+        mfaMethod: 'email',
       });
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
 
@@ -433,13 +433,13 @@ describe('AuthForm', () => {
       });
     });
 
-    it('calls resendSmsCode with the mfaToken when Resend is clicked', async () => {
+    it('calls resendEmailTwoFactorCode with the mfaToken when Resend is clicked', async () => {
       const loginMock = vi.fn().mockResolvedValue({
         mfaToken: 'mfa-tok',
-        mfaMethod: 'sms',
+        mfaMethod: 'email',
       });
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
-      vi.mocked(resendSmsCode).mockResolvedValue(undefined);
+      vi.mocked(resendEmailTwoFactorCode).mockResolvedValue(undefined);
 
       renderAuthForm();
       fillEmail(USER_EMAIL);
@@ -459,7 +459,7 @@ describe('AuthForm', () => {
         fireEvent.click(screen.getByRole('button', { name: /resend code/i }));
       });
 
-      expect(resendSmsCode).toHaveBeenCalledWith('mfa-tok');
+      expect(resendEmailTwoFactorCode).toHaveBeenCalledWith('mfa-tok');
     });
   });
 

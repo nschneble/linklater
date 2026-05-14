@@ -8,7 +8,6 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
-import { decrypt } from '../common/crypto.js';
 import {
   RECOVERY_CODE_REGEX,
   findMatchingRecoveryCode,
@@ -17,7 +16,7 @@ import {
 } from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
 import { Prisma } from '../prisma/index.js';
-import { SmsService } from '../sms/sms.service.js';
+import { EmailTwoFactorService } from './email-2fa.service.js';
 import { TotpService } from './totp.service.js';
 import { UsersService, withoutPasswordHash } from '../users/index.js';
 
@@ -51,7 +50,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
-    private readonly smsService: SmsService,
+    private readonly emailTwoFactorService: EmailTwoFactorService,
     private readonly totpService: TotpService,
   ) {}
 
@@ -83,16 +82,17 @@ export class AuthService {
       totpSecret,
       totpEnabledAt,
       totpVerifiedAt: _totpVerifiedAt,
-      smsEnabledAt,
-      phoneNumber: _phoneNumber,
+      emailTwoFactorEnabledAt,
+      emailTwoFactorCodeHash: _emailTwoFactorCodeHash,
+      emailTwoFactorExpiresAt: _emailTwoFactorExpiresAt,
       ...rest
     } = await this.usersService.findById(userId);
 
-    let twoFactorMethod: 'totp' | 'sms' | null = null;
+    let twoFactorMethod: 'totp' | 'email' | null = null;
     if (totpEnabledAt) {
       twoFactorMethod = 'totp';
-    } else if (smsEnabledAt) {
-      twoFactorMethod = 'sms';
+    } else if (emailTwoFactorEnabledAt) {
+      twoFactorMethod = 'email';
     }
 
     return {
@@ -219,9 +219,9 @@ export class AuthService {
   async login(user: {
     userId: string;
     email: string;
+    theme?: string;
     totpEnabledAt?: Date | null;
-    smsEnabledAt?: Date | null;
-    phoneNumber?: string | null;
+    emailTwoFactorEnabledAt?: Date | null;
   }) {
     if (user.totpEnabledAt) {
       const mfaToken = this.jwtService.sign(
@@ -231,17 +231,17 @@ export class AuthService {
       return { mfaToken, mfaMethod: 'totp' as const };
     }
 
-    if (user.smsEnabledAt && user.phoneNumber) {
+    if (user.emailTwoFactorEnabledAt) {
       const mfaToken = this.jwtService.sign(
         { subject: user.userId, mfaPending: true },
         { expiresIn: '5m' },
       );
-      const phone = decrypt(
-        user.phoneNumber,
-        process.env.PHONE_ENCRYPTION_KEY!,
-      );
-      await this.smsService.sendVerification(phone);
-      return { mfaToken, mfaMethod: 'sms' as const };
+      await this.emailTwoFactorService.sendCode({
+        id: user.userId,
+        email: user.email,
+        theme: user.theme,
+      });
+      return { mfaToken, mfaMethod: 'email' as const };
     }
 
     const payload = { subject: user.userId, email: user.email };
@@ -366,14 +366,14 @@ export class AuthService {
   async verifyOtp(
     userId: string,
     code: string,
-    method: 'totp' | 'sms' | 'recovery',
+    method: 'totp' | 'email' | 'recovery',
   ) {
     const user = await this.usersService.findById(userId);
 
     const enrolledMethod = user.totpEnabledAt
       ? 'totp'
-      : user.smsEnabledAt
-        ? 'sms'
+      : user.emailTwoFactorEnabledAt
+        ? 'email'
         : null;
 
     if (method !== 'recovery' && enrolledMethod !== method) {
@@ -393,17 +393,13 @@ export class AuthService {
       };
     }
 
-    if (method === 'sms') {
-      if (!user.smsEnabledAt || !user.phoneNumber) {
-        throw new UnauthorizedException('SMS 2FA not configured');
+    if (method === 'email') {
+      if (!user.emailTwoFactorEnabledAt) {
+        throw new UnauthorizedException('Email 2FA not configured');
       }
-      const phone = decrypt(
-        user.phoneNumber,
-        process.env.PHONE_ENCRYPTION_KEY!,
-      );
-      const isValid = await this.smsService.checkVerification(phone, code);
+      const isValid = await this.emailTwoFactorService.verifyCode(user, code);
       if (!isValid) {
-        throw new UnauthorizedException('Invalid SMS code');
+        throw new UnauthorizedException('Invalid or expired email code');
       }
       return {
         accessToken: this.jwtService.sign({
@@ -453,7 +449,7 @@ export class AuthService {
   async requestEmailChange(userId: string, newEmail: string, code?: string) {
     const user = await this.usersService.findById(userId);
 
-    if (user.totpEnabledAt || user.smsEnabledAt) {
+    if (user.totpEnabledAt || user.emailTwoFactorEnabledAt) {
       if (!code) {
         throw new ForbiddenException(
           '2FA is enabled — provide a verification code to change your email',
@@ -475,12 +471,8 @@ export class AuthService {
       } else if (user.totpEnabledAt) {
         const isValid = await this.totpService.verifyCode(user, code);
         if (!isValid) throw new UnauthorizedException('Invalid OTP code');
-      } else if (user.smsEnabledAt && user.phoneNumber) {
-        const phone = decrypt(
-          user.phoneNumber,
-          process.env.PHONE_ENCRYPTION_KEY!,
-        );
-        const isValid = await this.smsService.checkVerification(phone, code);
+      } else if (user.emailTwoFactorEnabledAt) {
+        const isValid = await this.emailTwoFactorService.verifyCode(user, code);
         if (!isValid) throw new UnauthorizedException('Invalid OTP code');
       }
     }
@@ -535,13 +527,14 @@ export class AuthService {
     await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
   }
 
-  async sendReauthSmsCode(userId: string): Promise<void> {
+  async sendReauthEmailCode(userId: string): Promise<void> {
     const user = await this.usersService.findById(userId);
-    if (!user.smsEnabledAt || !user.phoneNumber) {
-      throw new BadRequestException('SMS 2FA is not enabled for this account');
+    if (!user.emailTwoFactorEnabledAt) {
+      throw new BadRequestException(
+        'Email 2FA is not enabled for this account',
+      );
     }
-    const phone = decrypt(user.phoneNumber, process.env.PHONE_ENCRYPTION_KEY!);
-    await this.smsService.sendVerification(phone);
+    await this.emailTwoFactorService.sendCode(user);
   }
 
   /**
@@ -617,7 +610,7 @@ export class AuthService {
       const isRecoveryCode = RECOVERY_CODE_REGEX.test(code);
 
       if (isRecoveryCode) {
-        if (!user.totpEnabledAt && !user.smsEnabledAt) {
+        if (!user.totpEnabledAt && !user.emailTwoFactorEnabledAt) {
           throw new UnauthorizedException('No 2FA method enrolled');
         }
         const recoveryCodes =
@@ -639,12 +632,8 @@ export class AuthService {
         return;
       }
 
-      if (user.smsEnabledAt && user.phoneNumber) {
-        const phone = decrypt(
-          user.phoneNumber,
-          process.env.PHONE_ENCRYPTION_KEY!,
-        );
-        const valid = await this.smsService.checkVerification(phone, code);
+      if (user.emailTwoFactorEnabledAt) {
+        const valid = await this.emailTwoFactorService.verifyCode(user, code);
         if (!valid) throw new UnauthorizedException('Invalid OTP code');
         return;
       }

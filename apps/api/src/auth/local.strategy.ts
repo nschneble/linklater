@@ -36,9 +36,9 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     return {
       userId: user.id,
       email: user.email,
+      theme: user.theme,
       totpEnabledAt: user.totpEnabledAt,
-      smsEnabledAt: user.smsEnabledAt,
-      phoneNumber: user.phoneNumber,
+      emailTwoFactorEnabledAt: user.emailTwoFactorEnabledAt,
     };
   }
 }

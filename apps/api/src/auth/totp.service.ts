@@ -35,9 +35,9 @@ export class TotpService {
       throw new ConflictException('TOTP is already active for this account');
     }
 
-    if (user.smsEnabledAt) {
+    if (user.emailTwoFactorEnabledAt) {
       throw new ConflictException(
-        'SMS 2FA is already enabled — disable it before enrolling TOTP',
+        'Email 2FA is already enabled — disable it before enrolling TOTP',
       );
     }
 

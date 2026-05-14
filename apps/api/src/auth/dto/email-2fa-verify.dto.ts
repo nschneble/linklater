@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, Length } from 'class-validator';
 
-/** Request body for POST /auth/2fa/sms/verify */
-export class SmsVerifySetupDto {
+/** Request body for POST /auth/2fa/email/verify */
+export class EmailTwoFactorVerifyDto {
   @ApiProperty({
-    description: 'The 6-digit verification code sent via SMS.',
+    description: "The 6-digit verification code sent to the user's email.",
     example: '123456',
   })
   @IsString()

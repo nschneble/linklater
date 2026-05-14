@@ -38,20 +38,20 @@ import {
   regenerateRecoveryCodes,
   register,
   requestEmailChange,
-  resendSmsCode,
+  resendEmailTwoFactorCode,
   resendVerificationEmail,
   resetPassword,
-  sendReauthSmsCode,
+  sendReauthEmailCode,
   setStoredToken,
-  setupSms,
+  setupEmailTwoFactor,
   setupTotp,
   unreadLink,
   updateLink,
   updateMe,
   verifyEmail,
   verifyEmailChange,
+  verifyEmailTwoFactorSetup,
   verifyOtp,
-  verifySmsSetup,
   verifyTotpSetup,
 } from './api';
 
@@ -265,11 +265,11 @@ describe('login', () => {
   });
 
   it('returns mfaToken and mfaMethod when 2FA is required', async () => {
-    mockFetch({ mfaToken: 'mfa-tok', mfaMethod: 'sms' });
+    mockFetch({ mfaToken: 'mfa-tok', mfaMethod: 'email' });
 
     const result = await login('user@example.com', 'password123');
 
-    expect(result).toEqual({ mfaToken: 'mfa-tok', mfaMethod: 'sms' });
+    expect(result).toEqual({ mfaToken: 'mfa-tok', mfaMethod: 'email' });
   });
 });
 
@@ -633,31 +633,29 @@ describe('verifyTotpSetup', () => {
   });
 });
 
-describe('setupSms', () => {
-  it('POSTs to /auth/2fa/sms/setup with the phone number', async () => {
+describe('setupEmailTwoFactor', () => {
+  it('POSTs to /auth/2fa/email/setup with Authorization header', async () => {
     setStoredToken('my-jwt');
     const fetchMock = mockFetch({});
 
-    await setupSms('+15555550100');
+    await setupEmailTwoFactor();
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/sms/setup');
-    const body = JSON.parse((options as { body: string }).body) as {
-      phoneNumber: string;
-    };
-    expect(body.phoneNumber).toBe('+15555550100');
+    expect(url).toContain('/auth/2fa/email/setup');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBe('Bearer my-jwt');
   });
 });
 
-describe('verifySmsSetup', () => {
-  it('POSTs to /auth/2fa/sms/verify with the 6-digit code', async () => {
+describe('verifyEmailTwoFactorSetup', () => {
+  it('POSTs to /auth/2fa/email/verify with the 6-digit code', async () => {
     setStoredToken('my-jwt');
     const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
 
-    await verifySmsSetup('123456');
+    await verifyEmailTwoFactorSetup('123456');
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/sms/verify');
+    expect(url).toContain('/auth/2fa/email/verify');
     const body = JSON.parse((options as { body: string }).body) as {
       code: string;
     };
@@ -665,14 +663,14 @@ describe('verifySmsSetup', () => {
   });
 });
 
-describe('resendSmsCode', () => {
-  it('POSTs to /auth/2fa/sms/resend with mfaToken in body and no Authorization header', async () => {
+describe('resendEmailTwoFactorCode', () => {
+  it('POSTs to /auth/2fa/email/resend with mfaToken in body and no Authorization header', async () => {
     const fetchMock = mockFetch({});
 
-    await resendSmsCode('mfa-pending-token');
+    await resendEmailTwoFactorCode('mfa-pending-token');
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/sms/resend');
+    expect(url).toContain('/auth/2fa/email/resend');
     const headers = (options as { headers: Record<string, string> }).headers;
     expect(headers['Authorization']).toBeUndefined();
     const body = JSON.parse((options as { body: string }).body) as {
@@ -682,15 +680,15 @@ describe('resendSmsCode', () => {
   });
 });
 
-describe('sendReauthSmsCode', () => {
-  it('POSTs to /auth/2fa/sms/reauth-send with Authorization header', async () => {
+describe('sendReauthEmailCode', () => {
+  it('POSTs to /auth/2fa/email/reauth-send with Authorization header', async () => {
     setStoredToken('stored-jwt');
     const fetchMock = mockFetch({});
 
-    await sendReauthSmsCode();
+    await sendReauthEmailCode();
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/sms/reauth-send');
+    expect(url).toContain('/auth/2fa/email/reauth-send');
     const headers = (options as { headers: Record<string, string> }).headers;
     expect(headers['Authorization']).toBe('Bearer stored-jwt');
     expect((options as { method: string }).method).toBe('POST');

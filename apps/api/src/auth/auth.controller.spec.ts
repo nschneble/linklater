@@ -5,9 +5,9 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { EmailTwoFactorService } from './email-2fa.service';
 import { MfaAuthGuard } from './mfa-auth.guard';
 import { TotpService } from './totp.service';
-import { SmsSetupService } from '../sms/sms-setup.service';
 
 const ACCESS_TOKEN = 'token';
 const NEW_EMAIL = 'new.email@addy.com';
@@ -34,7 +34,7 @@ describe('AuthController', () => {
     requestEmailChange: jest.fn(),
     resendVerificationEmail: jest.fn(),
     resetPassword: jest.fn(),
-    sendReauthSmsCode: jest.fn(),
+    sendReauthEmailCode: jest.fn(),
     sendVerificationEmail: jest.fn(),
     verifyEmail: jest.fn(),
     verifyOtp: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
@@ -45,18 +45,18 @@ describe('AuthController', () => {
     verifySetup: jest.fn(),
   } as unknown as TotpService;
 
-  const smsSetupServiceMock = {
+  const emailTwoFactorServiceMock = {
     initiateSetup: jest.fn(),
-    smsResend: jest.fn(),
+    sendCode: jest.fn(),
     verifySetup: jest.fn(),
-  } as unknown as SmsSetupService;
+  } as unknown as EmailTwoFactorService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
-        { provide: SmsSetupService, useValue: smsSetupServiceMock },
+        { provide: EmailTwoFactorService, useValue: emailTwoFactorServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
       ],
     })
@@ -293,6 +293,67 @@ describe('AuthController', () => {
     });
   });
 
+  describe('emailTwoFactorSetup', () => {
+    it('delegates to EmailTwoFactorService.initiateSetup with userId', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      (emailTwoFactorServiceMock.initiateSetup as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.emailTwoFactorSetup(request);
+
+      expect(emailTwoFactorServiceMock.initiateSetup).toHaveBeenCalledWith(
+        USER_ID,
+      );
+    });
+  });
+
+  describe('emailTwoFactorVerify', () => {
+    it('delegates to EmailTwoFactorService.verifySetup and wraps recovery codes', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      const recoveryCodes = ['aaaaa-bbbbb'];
+      (emailTwoFactorServiceMock.verifySetup as jest.Mock).mockResolvedValue(
+        recoveryCodes,
+      );
+
+      const result = await controller.emailTwoFactorVerify(request, {
+        code: '123456',
+      });
+
+      expect(emailTwoFactorServiceMock.verifySetup).toHaveBeenCalledWith(
+        USER_ID,
+        '123456',
+      );
+      expect(result).toEqual({ recoveryCodes });
+    });
+  });
+
+  describe('emailTwoFactorResend', () => {
+    it('delegates to AuthService.sendReauthEmailCode with userId', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      (authServiceMock.sendReauthEmailCode as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.emailTwoFactorResend(request);
+
+      expect(authServiceMock.sendReauthEmailCode).toHaveBeenCalledWith(USER_ID);
+    });
+  });
+
+  describe('emailTwoFactorReauthSend', () => {
+    it('delegates to AuthService.sendReauthEmailCode with userId', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      (authServiceMock.sendReauthEmailCode as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.emailTwoFactorReauthSend(request);
+
+      expect(authServiceMock.sendReauthEmailCode).toHaveBeenCalledWith(USER_ID);
+    });
+  });
+
   describe('disable2fa', () => {
     it('delegates to AuthService.disable2fa with userId and credentials', async () => {
       const request = { user: { userId: USER_ID } } as never;
@@ -326,64 +387,6 @@ describe('AuthController', () => {
         undefined,
       );
       expect(result).toEqual({ recoveryCodes });
-    });
-  });
-
-  describe('smsSetup', () => {
-    it('delegates to SmsSetupService.initiateSetup with userId and phoneNumber', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      (smsSetupServiceMock.initiateSetup as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await controller.smsSetup(request, { phoneNumber: '+15555550100' });
-
-      expect(smsSetupServiceMock.initiateSetup).toHaveBeenCalledWith(
-        USER_ID,
-        '+15555550100',
-      );
-    });
-  });
-
-  describe('smsVerify', () => {
-    it('delegates to SmsSetupService.verifySetup and wraps recovery codes', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      const recoveryCodes = ['aaaaa-bbbbb'];
-      (smsSetupServiceMock.verifySetup as jest.Mock).mockResolvedValue(
-        recoveryCodes,
-      );
-
-      const result = await controller.smsVerify(request, { code: '123456' });
-
-      expect(smsSetupServiceMock.verifySetup).toHaveBeenCalledWith(
-        USER_ID,
-        '123456',
-      );
-      expect(result).toEqual({ recoveryCodes });
-    });
-  });
-
-  describe('smsResend', () => {
-    it('delegates to SmsSetupService.smsResend with userId', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      (smsSetupServiceMock.smsResend as jest.Mock).mockResolvedValue(undefined);
-
-      await controller.smsResend(request);
-
-      expect(smsSetupServiceMock.smsResend).toHaveBeenCalledWith(USER_ID);
-    });
-  });
-
-  describe('smsReauthSend', () => {
-    it('delegates to AuthService.sendReauthSmsCode with userId', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      (authServiceMock.sendReauthSmsCode as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await controller.smsReauthSend(request);
-
-      expect(authServiceMock.sendReauthSmsCode).toHaveBeenCalledWith(USER_ID);
     });
   });
 
@@ -438,7 +441,7 @@ describe('AuthController', () => {
       const response = { redirect: jest.fn() } as never;
       (authServiceMock.login as jest.Mock).mockResolvedValue({
         mfaToken: 'mfa-tok',
-        mfaMethod: 'sms',
+        mfaMethod: 'email',
       });
 
       await controller.appleCallback(request, response);

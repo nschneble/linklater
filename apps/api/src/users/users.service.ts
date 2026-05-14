@@ -342,11 +342,45 @@ export class UsersService {
     });
   }
 
-  async savePhoneNumber(id: string, encryptedPhone: string) {
+  async saveEmailTwoFactorCode(id: string, codeHash: string, expiresAt: Date) {
     await this.prisma.user.update({
       where: { id },
-      data: { phoneNumber: encryptedPhone, smsEnabledAt: null },
+      data: {
+        emailTwoFactorCodeHash: codeHash,
+        emailTwoFactorExpiresAt: expiresAt,
+      },
     });
+  }
+
+  async clearEmailTwoFactorCode(id: string) {
+    await this.prisma.user.update({
+      where: { id },
+      data: { emailTwoFactorCodeHash: null, emailTwoFactorExpiresAt: null },
+    });
+  }
+
+  /**
+   * Atomically enables Email 2FA and replaces any existing recovery codes
+   * with the provided set.
+   */
+  async enableEmailTwoFactorWithRecoveryCodes(
+    userId: string,
+    codeHashes: string[],
+  ) {
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          emailTwoFactorEnabledAt: new Date(),
+          emailTwoFactorCodeHash: null,
+          emailTwoFactorExpiresAt: null,
+        },
+      }),
+      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
+      this.prisma.recoveryCode.createMany({
+        data: codeHashes.map((codeHash) => ({ userId, codeHash })),
+      }),
+    ]);
   }
 
   async saveTotpSecret(userId: string, encryptedSecret: string) {
@@ -393,23 +427,6 @@ export class UsersService {
   }
 
   /**
-   * Atomically enables SMS 2FA and replaces any existing recovery codes
-   * with the provided set.
-   */
-  async enableSmsWithRecoveryCodes(userId: string, codeHashes: string[]) {
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id: userId },
-        data: { smsEnabledAt: new Date() },
-      }),
-      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
-      this.prisma.recoveryCode.createMany({
-        data: codeHashes.map((codeHash) => ({ userId, codeHash })),
-      }),
-    ]);
-  }
-
-  /**
    * Atomically invalidates all existing recovery codes and stores a fresh set.
    */
   async reissueRecoveryCodes(userId: string, codeHashes: string[]) {
@@ -443,8 +460,9 @@ export class UsersService {
           totpEnabledAt: null,
           totpVerifiedAt: null,
           totpLastUsedStep: null,
-          phoneNumber: null,
-          smsEnabledAt: null,
+          emailTwoFactorCodeHash: null,
+          emailTwoFactorExpiresAt: null,
+          emailTwoFactorEnabledAt: null,
         },
       }),
       this.prisma.recoveryCode.deleteMany({ where: { userId: id } }),

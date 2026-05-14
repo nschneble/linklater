@@ -40,7 +40,7 @@ export interface User {
   /** The current theme identifier (e.g. `'scanner-darkly'`). */
   theme: string;
   /** The active 2FA method, or `null` when 2FA is disabled. */
-  twoFactorMethod: 'totp' | 'sms' | null;
+  twoFactorMethod: 'totp' | 'email' | null;
   /** `true` when the user has started TOTP setup but not yet verified it. */
   twoFactorPending: boolean;
   /** The user's UUID (renamed from `id` to `userId` by `GET /auth/me`). */
@@ -62,7 +62,7 @@ interface AuthContextValue {
   login: (
     email: string,
     password: string,
-  ) => Promise<{ mfaToken: string; mfaMethod: 'totp' | 'sms' } | void>;
+  ) => Promise<{ mfaToken: string; mfaMethod: 'totp' | 'email' } | void>;
   /** Stores an OAuth-issued JWT and fetches the user profile. Used by `OAuthCallbackPage`. */
   loginWithToken: (token: string) => Promise<void>;
   /** Clears the stored JWT and sets `user` to `null`. */
@@ -149,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (
       email: string,
       password: string,
-    ): Promise<{ mfaToken: string; mfaMethod: 'totp' | 'sms' } | void> => {
+    ): Promise<{ mfaToken: string; mfaMethod: 'totp' | 'email' } | void> => {
       const result = await apiLogin(email, password);
       if ('mfaToken' in result) {
         return { mfaToken: result.mfaToken, mfaMethod: result.mfaMethod };

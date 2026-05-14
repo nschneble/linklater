@@ -5,7 +5,7 @@ import PrimaryButton from '../common/PrimaryButton';
 import TabButton from '../common/TabButton';
 import {
   forgotPassword as apiForgotPassword,
-  resendSmsCode,
+  resendEmailTwoFactorCode,
   verifyOtp,
 } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
@@ -20,7 +20,7 @@ const appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true';
 type Mode = 'login' | 'register' | 'forgot-password';
 
 /** The MFA challenge method currently being shown to the user. */
-type MfaChallenge = 'totp' | 'sms' | 'recovery';
+type MfaChallenge = 'totp' | 'email' | 'recovery';
 
 /**
  * Authentication form rendered for `/login`, `/signup`, and
@@ -61,7 +61,7 @@ export default function AuthForm() {
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaOriginalMethod, setMfaOriginalMethod] = useState<
-    'totp' | 'sms' | null
+    'totp' | 'email' | null
   >(null);
   const [mfaCode, setMfaCode] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
@@ -148,12 +148,12 @@ export default function AuthForm() {
     }
   };
 
-  const handleResendSms = async () => {
+  const handleResendEmailCode = async () => {
     if (!mfaToken) return;
     setError(null);
     setResendLoading(true);
     try {
-      await resendSmsCode(mfaToken);
+      await resendEmailTwoFactorCode(mfaToken);
     } catch (caught: unknown) {
       setError(getErrorMessage(caught, 'Failed to resend code'));
     } finally {
@@ -228,16 +228,16 @@ export default function AuthForm() {
 
   if (mfaChallenge) {
     const isRecovery = mfaChallenge === 'recovery';
-    const isSms = mfaChallenge === 'sms';
+    const isEmail = mfaChallenge === 'email';
     const labelId = isRecovery
       ? 'mfa-recovery-code'
-      : isSms
-        ? 'mfa-sms-code'
+      : isEmail
+        ? 'mfa-email-code'
         : 'mfa-totp-code';
     const labelText = isRecovery
       ? 'Recovery code'
-      : isSms
-        ? 'SMS code'
+      : isEmail
+        ? 'Email code'
         : 'Authenticator code';
 
     return (
@@ -245,15 +245,15 @@ export default function AuthForm() {
         <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold text-balance">
           {isRecovery
             ? 'Enter a recovery code'
-            : isSms
-              ? 'Check your phone'
+            : isEmail
+              ? 'Check your email'
               : 'Two-factor authentication'}
         </h1>
         <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
           {isRecovery
             ? 'Enter one of your saved recovery codes.'
-            : isSms
-              ? 'Enter the code we sent to your phone.'
+            : isEmail
+              ? 'Enter the code we sent to your email.'
               : 'Enter the code from your authenticator app.'}
         </p>
 
@@ -269,7 +269,7 @@ export default function AuthForm() {
             ref={mfaInputReference}
             type="text"
             inputMode={isRecovery ? 'text' : 'numeric'}
-            autoComplete="one-time-code"
+            autoComplete={isRecovery ? 'off' : 'one-time-code'}
             maxLength={isRecovery ? undefined : 6}
             onChange={(event) => setMfaCode(event.target.value)}
             value={mfaCode}
@@ -284,8 +284,11 @@ export default function AuthForm() {
         </form>
 
         <div className="mt-4 flex flex-col items-center gap-2 text-center">
-          {isSms && (
-            <LinkButton disabled={resendLoading} onClick={handleResendSms}>
+          {isEmail && (
+            <LinkButton
+              disabled={resendLoading}
+              onClick={handleResendEmailCode}
+            >
               {resendLoading ? 'Sending…' : 'Resend code'}
             </LinkButton>
           )}

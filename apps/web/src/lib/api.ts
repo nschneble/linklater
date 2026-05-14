@@ -48,7 +48,7 @@ export function clearStoredToken(): void {
 /** The shape of a successful POST /auth/login response — either a full session or an MFA challenge. */
 export type LoginResponse =
   | { accessToken: string }
-  | { mfaToken: string; mfaMethod: 'totp' | 'sms' };
+  | { mfaToken: string; mfaMethod: 'totp' | 'email' };
 
 /** Error thrown by `apiFetch` on non-2xx responses. Includes the HTTP status code. */
 export class ApiError extends Error {
@@ -185,7 +185,7 @@ export async function getMe() {
     pendingEmail: string | null;
     mode: string;
     theme: string;
-    twoFactorMethod: 'totp' | 'sms' | null;
+    twoFactorMethod: 'totp' | 'email' | null;
     twoFactorPending: boolean;
     userId: string;
   }>('/auth/me', {
@@ -296,38 +296,37 @@ export async function verifyTotpSetup(
   });
 }
 
-export async function setupSms(phoneNumber: string): Promise<void> {
-  await apiFetch('/auth/2fa/sms/setup', {
-    body: JSON.stringify({ phoneNumber }),
-    method: 'POST',
-  });
+export async function setupEmailTwoFactor(): Promise<void> {
+  await apiFetch('/auth/2fa/email/setup', { method: 'POST' });
 }
 
-export async function verifySmsSetup(
+export async function verifyEmailTwoFactorSetup(
   code: string,
 ): Promise<{ recoveryCodes: string[] }> {
-  return apiFetch('/auth/2fa/sms/verify', {
+  return apiFetch('/auth/2fa/email/verify', {
     body: JSON.stringify({ code }),
     method: 'POST',
   });
 }
 
-export async function resendSmsCode(mfaToken: string): Promise<void> {
+export async function resendEmailTwoFactorCode(
+  mfaToken: string,
+): Promise<void> {
   await apiFetch(
-    '/auth/2fa/sms/resend',
+    '/auth/2fa/email/resend',
     { body: JSON.stringify({ mfaToken }), method: 'POST' },
     false,
   );
 }
 
-export async function sendReauthSmsCode(): Promise<void> {
-  await apiFetch('/auth/2fa/sms/reauth-send', { method: 'POST' });
+export async function sendReauthEmailCode(): Promise<void> {
+  await apiFetch('/auth/2fa/email/reauth-send', { method: 'POST' });
 }
 
 export async function verifyOtp(
   mfaToken: string,
   code: string,
-  method: 'totp' | 'sms' | 'recovery',
+  method: 'totp' | 'email' | 'recovery',
 ): Promise<{ accessToken: string }> {
   const data = await apiFetch<{ accessToken: string }>(
     '/auth/verify-otp',
