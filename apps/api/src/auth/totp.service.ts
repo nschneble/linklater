@@ -31,7 +31,7 @@ export class TotpService {
   ): Promise<{ qrCodeDataUrl: string; secret: string }> {
     const user = await this.usersService.findById(userId);
 
-    if (user.totpVerifiedAt) {
+    if (user.totpEnabledAt || user.totpVerifiedAt) {
       throw new ConflictException('TOTP is already active for this account');
     }
 

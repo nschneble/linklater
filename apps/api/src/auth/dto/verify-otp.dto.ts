@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsString } from 'class-validator';
+import { IsIn, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class VerifyOtpDto {
   @ApiProperty({
@@ -8,8 +8,13 @@ export class VerifyOtpDto {
   @IsString()
   mfaToken: string;
 
-  @ApiProperty({ description: '6-digit OTP code or a recovery code.' })
+  @ApiProperty({
+    description:
+      '6-digit OTP or SMS code, or a 17-character recovery code (xxxxx-xxxxx-xxxxx).',
+  })
   @IsString()
+  @MinLength(6)
+  @MaxLength(17)
   code: string;
 
   @ApiProperty({ enum: ['totp', 'sms', 'recovery'] })

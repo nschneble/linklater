@@ -191,14 +191,20 @@ export default function AccountSettingsForm() {
               className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
               htmlFor="email-change-mfa"
             >
-              Authenticator code
+              {user.twoFactorMethod === 'sms'
+                ? 'SMS code'
+                : 'Authenticator code'}
             </label>
             <FormInput
               id="email-change-mfa"
               type="text"
               inputMode="numeric"
               maxLength={6}
-              placeholder="Required to confirm email change"
+              placeholder={
+                user.twoFactorMethod === 'sms'
+                  ? 'Submit once to receive an SMS code'
+                  : 'Required to confirm email change'
+              }
               value={mfaEmailCode}
               onChange={(event) => setMfaEmailCode(event.target.value)}
             />

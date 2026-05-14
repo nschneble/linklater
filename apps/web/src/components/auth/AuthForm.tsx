@@ -64,6 +64,7 @@ export default function AuthForm() {
     'totp' | 'sms' | null
   >(null);
   const [mfaCode, setMfaCode] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
 
   const mode: Mode =
     location.pathname === '/signup'
@@ -151,13 +152,13 @@ export default function AuthForm() {
   const handleResendSms = async () => {
     if (!mfaToken) return;
     setError(null);
-    setLoading(true);
+    setResendLoading(true);
     try {
       await resendSmsCode(mfaToken);
     } catch (caught: unknown) {
       setError(getErrorMessage(caught, 'Failed to resend code'));
     } finally {
-      setLoading(false);
+      setResendLoading(false);
     }
   };
 
@@ -285,8 +286,8 @@ export default function AuthForm() {
 
         <div className="mt-4 flex flex-col items-center gap-2 text-center">
           {isSms && (
-            <LinkButton disabled={loading} onClick={handleResendSms}>
-              Resend code
+            <LinkButton disabled={resendLoading} onClick={handleResendSms}>
+              {resendLoading ? 'Sending…' : 'Resend code'}
             </LinkButton>
           )}
           {!isRecovery && (

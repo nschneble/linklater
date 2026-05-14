@@ -117,10 +117,8 @@ export class SmsSetupService {
   async smsResend(userId: string): Promise<void> {
     const user = await this.usersService.findById(userId);
 
-    if (!user.phoneNumber) {
-      throw new BadRequestException(
-        'No phone number found — initiate SMS setup first',
-      );
+    if (!user.smsEnabledAt || !user.phoneNumber) {
+      throw new BadRequestException('SMS 2FA is not enabled for this account');
     }
 
     const decryptedPhone = decrypt(

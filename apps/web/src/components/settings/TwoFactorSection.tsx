@@ -39,9 +39,17 @@ function RecoveryCodesModal({
   }, [codes]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="recovery-codes-title"
+    >
       <div className="w-full max-w-md mx-4 p-6 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl space-y-4">
-        <h3 className="text-[var(--text)] text-lg font-semibold">
+        <h3
+          id="recovery-codes-title"
+          className="text-[var(--text)] text-lg font-semibold"
+        >
           Save your recovery codes
         </h3>
         <p className="text-[var(--text-muted)] text-sm">
@@ -266,7 +274,8 @@ export default function TwoFactorSection() {
             className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
             htmlFor="reauth-code"
           >
-            Or enter your authenticator code
+            {user?.hasPassword ? 'Or enter your ' : 'Enter your '}
+            {twoFactorMethod === 'sms' ? 'SMS' : 'authenticator'} code
           </label>
           <FormInput
             id="reauth-code"

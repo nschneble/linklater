@@ -78,6 +78,16 @@ describe('TotpService', () => {
       );
     });
 
+    it('throws ConflictException when totpEnabledAt is set (prevents silent secret rotation)', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUser({ totpEnabledAt: new Date() }),
+      );
+
+      await expect(service.generateSetup(USER_ID, USER_EMAIL)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
     it('throws ForbiddenException when the account has no password (OAuth-only)', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
         makeUser({ hasPassword: false }),

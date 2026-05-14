@@ -199,7 +199,7 @@ describe('SmsSetupService', () => {
       );
 
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUser({ phoneNumber: encrypted }),
+        makeUser({ smsEnabledAt: new Date(), phoneNumber: encrypted }),
       );
       (smsServiceMock.sendVerification as jest.Mock).mockResolvedValue(
         undefined,
@@ -212,9 +212,9 @@ describe('SmsSetupService', () => {
       );
     });
 
-    it('throws BadRequestException when no phone number is stored', async () => {
+    it('throws BadRequestException when SMS 2FA is not enabled', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUser({ phoneNumber: null }),
+        makeUser({ smsEnabledAt: null, phoneNumber: null }),
       );
 
       await expect(service.smsResend(USER_ID)).rejects.toThrow(

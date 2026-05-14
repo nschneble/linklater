@@ -1,8 +1,4 @@
-import {
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 /**
@@ -19,10 +15,6 @@ import { AuthGuard } from '@nestjs/passport';
  */
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  override canActivate(context: ExecutionContext) {
-    return super.canActivate(context);
-  }
-
   override handleRequest<TUser extends { mfaPending?: boolean }>(
     error: Error | null,
     user: TUser | null,

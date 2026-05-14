@@ -356,25 +356,34 @@ export class AuthService {
    * Step 2 of the 2FA login flow. Validates the OTP or recovery code and
    * issues the full session JWT on success.
    *
-   * TOTP and SMS paths are wired in Tasks 11 and 15 respectively. Recovery
-   * codes are fully handled here.
-   *
    * @param userId - Extracted from the validated `mfaToken`.
    * @param code - The OTP or recovery code submitted by the user.
    * @param method - Which factor to verify against.
-   * @throws {UnauthorizedException} When the code is invalid.
+   * @throws {UnauthorizedException} When the code is invalid or the method
+   *   does not match the enrolled factor (generic error to prevent enumeration).
    */
   async verifyOtp(
     userId: string,
     code: string,
     method: 'totp' | 'sms' | 'recovery',
   ) {
+    const user = await this.usersService.findById(userId);
+
+    const enrolledMethod = user.totpEnabledAt
+      ? 'totp'
+      : user.smsEnabledAt
+        ? 'sms'
+        : null;
+
+    if (enrolledMethod && method !== 'recovery' && method !== enrolledMethod) {
+      throw new UnauthorizedException('Invalid OTP method');
+    }
+
     if (method === 'totp') {
       const isValid = await this.totpService.verifyCode(userId, code);
       if (!isValid) {
         throw new UnauthorizedException('Invalid TOTP code');
       }
-      const user = await this.usersService.findById(userId);
       return {
         accessToken: this.jwtService.sign({
           subject: userId,
@@ -384,7 +393,6 @@ export class AuthService {
     }
 
     if (method === 'sms') {
-      const user = await this.usersService.findById(userId);
       if (!user.smsEnabledAt || !user.phoneNumber) {
         throw new UnauthorizedException('SMS 2FA not configured');
       }
@@ -418,7 +426,6 @@ export class AuthService {
         recoveryCodes[matchIndex].id,
       );
 
-      const user = await this.usersService.findById(userId);
       return {
         accessToken: this.jwtService.sign({
           subject: userId,
@@ -442,24 +449,27 @@ export class AuthService {
   async requestEmailChange(userId: string, newEmail: string, code?: string) {
     const user = await this.usersService.findById(userId);
 
-    if (user.totpEnabledAt || user.smsEnabledAt) {
+    if (user.totpEnabledAt) {
       if (!code) {
         throw new ForbiddenException(
-          '2FA is enabled — provide a valid OTP code to change your email',
+          '2FA is enabled — provide your authenticator code to change your email',
         );
       }
-
-      if (user.totpEnabledAt) {
-        const isValid = await this.totpService.verifyCode(userId, code);
-        if (!isValid) throw new UnauthorizedException('Invalid OTP code');
-      } else if (user.smsEnabledAt && user.phoneNumber) {
-        const phone = decrypt(
-          user.phoneNumber,
-          process.env.PHONE_ENCRYPTION_KEY!,
+      const isValid = await this.totpService.verifyCode(userId, code);
+      if (!isValid) throw new UnauthorizedException('Invalid OTP code');
+    } else if (user.smsEnabledAt && user.phoneNumber) {
+      const phone = decrypt(
+        user.phoneNumber,
+        process.env.PHONE_ENCRYPTION_KEY!,
+      );
+      if (!code) {
+        await this.smsService.sendVerification(phone);
+        throw new ForbiddenException(
+          '2FA is enabled — an SMS code has been sent to your phone',
         );
-        const isValid = await this.smsService.checkVerification(phone, code);
-        if (!isValid) throw new UnauthorizedException('Invalid OTP code');
       }
+      const isValid = await this.smsService.checkVerification(phone, code);
+      if (!isValid) throw new UnauthorizedException('Invalid OTP code');
     }
 
     const existing = await this.usersService.findByEmail(newEmail);

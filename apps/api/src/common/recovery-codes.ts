@@ -37,10 +37,10 @@ export async function findMatchingRecoveryCode(
   code: string,
   hashes: string[],
 ): Promise<number | null> {
-  for (let index = 0; index < hashes.length; index++) {
-    if (await bcrypt.compare(code, hashes[index])) {
-      return index;
-    }
-  }
-  return null;
+  const results = await Promise.all(
+    hashes.map((hash, index) =>
+      bcrypt.compare(code, hash).then((match) => (match ? index : null)),
+    ),
+  );
+  return results.find((result) => result !== null) ?? null;
 }
