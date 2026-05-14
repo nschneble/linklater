@@ -345,6 +345,7 @@ export default function TwoFactorSection() {
               id="totp-code"
               type="text"
               inputMode="numeric"
+              autoFocus
               maxLength={6}
               value={totpCode}
               onChange={(event) => setTotpCode(event.target.value)}

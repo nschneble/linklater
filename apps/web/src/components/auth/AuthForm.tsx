@@ -262,6 +262,7 @@ export default function AuthForm() {
             type="text"
             inputMode={isRecovery ? 'text' : 'numeric'}
             autoComplete="one-time-code"
+            autoFocus
             maxLength={isRecovery ? undefined : 6}
             onChange={(event) => setMfaCode(event.target.value)}
             value={mfaCode}
