@@ -655,7 +655,7 @@ describe('verifySmsSetup', () => {
 });
 
 describe('resendSmsCode', () => {
-  it('POSTs to /auth/2fa/sms/resend using the mfaToken as Authorization', async () => {
+  it('POSTs to /auth/2fa/sms/resend with mfaToken in body and no Authorization header', async () => {
     const fetchMock = mockFetch({});
 
     await resendSmsCode('mfa-pending-token');
@@ -663,24 +663,30 @@ describe('resendSmsCode', () => {
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/auth/2fa/sms/resend');
     const headers = (options as { headers: Record<string, string> }).headers;
-    expect(headers['Authorization']).toBe('Bearer mfa-pending-token');
+    expect(headers['Authorization']).toBeUndefined();
+    const body = JSON.parse((options as { body: string }).body) as {
+      mfaToken: string;
+    };
+    expect(body.mfaToken).toBe('mfa-pending-token');
   });
 });
 
 describe('verifyOtp', () => {
-  it('POSTs to /auth/2fa/verify using the mfaToken as Authorization', async () => {
+  it('POSTs to /auth/verify-otp with mfaToken in body and no Authorization header', async () => {
     const fetchMock = mockFetch({ accessToken: 'full-jwt' });
 
     await verifyOtp('mfa-pending-token', '123456', 'totp');
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/verify');
+    expect(url).toContain('/auth/verify-otp');
     const headers = (options as { headers: Record<string, string> }).headers;
-    expect(headers['Authorization']).toBe('Bearer mfa-pending-token');
+    expect(headers['Authorization']).toBeUndefined();
     const body = JSON.parse((options as { body: string }).body) as {
+      mfaToken: string;
       code: string;
       method: string;
     };
+    expect(body.mfaToken).toBe('mfa-pending-token');
     expect(body.code).toBe('123456');
     expect(body.method).toBe('totp');
   });

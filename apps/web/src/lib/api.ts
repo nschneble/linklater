@@ -302,7 +302,11 @@ export async function verifySmsSetup(
 }
 
 export async function resendSmsCode(mfaToken: string): Promise<void> {
-  await apiFetch('/auth/2fa/sms/resend', { method: 'POST' }, mfaToken);
+  await apiFetch(
+    '/auth/2fa/sms/resend',
+    { body: JSON.stringify({ mfaToken }), method: 'POST' },
+    false,
+  );
 }
 
 export async function verifyOtp(
@@ -311,9 +315,9 @@ export async function verifyOtp(
   method: 'totp' | 'sms' | 'recovery',
 ): Promise<{ accessToken: string }> {
   const data = await apiFetch<{ accessToken: string }>(
-    '/auth/2fa/verify',
-    { body: JSON.stringify({ code, method }), method: 'POST' },
-    mfaToken,
+    '/auth/verify-otp',
+    { body: JSON.stringify({ mfaToken, code, method }), method: 'POST' },
+    false,
   );
   setStoredToken(data.accessToken);
   return data;
