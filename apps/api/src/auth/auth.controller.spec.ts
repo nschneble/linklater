@@ -24,9 +24,11 @@ describe('AuthController', () => {
 
   const authServiceMock = {
     confirmEmailChange: jest.fn(),
+    disable2fa: jest.fn(),
     forgotPassword: jest.fn(),
     login: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
     me: jest.fn(),
+    regenerateRecoveryCodes: jest.fn(),
     register: jest.fn(),
     requestEmailChange: jest.fn(),
     resendVerificationEmail: jest.fn(),
@@ -255,6 +257,55 @@ describe('AuthController', () => {
       const result = await controller.totpVerifySetup(request, { code: '123456' });
 
       expect(totpServiceMock.verifySetup).toHaveBeenCalledWith(USER_ID, '123456');
+      expect(result).toEqual({ recoveryCodes });
+    });
+  });
+
+  describe('disable2fa', () => {
+    it('delegates to AuthService.disable2fa with userId and credentials', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      (authServiceMock.disable2fa as jest.Mock).mockResolvedValue(undefined);
+
+      await controller.disable2fa(request, { currentPassword: 'open-sesame' });
+
+      expect(authServiceMock.disable2fa).toHaveBeenCalledWith(
+        USER_ID,
+        'open-sesame',
+        undefined,
+      );
+    });
+  });
+
+  describe('regenerateRecoveryCodes', () => {
+    it('delegates to AuthService.regenerateRecoveryCodes and wraps result', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      const recoveryCodes = ['aaaaa-bbbbb'];
+      (authServiceMock.regenerateRecoveryCodes as jest.Mock).mockResolvedValue(recoveryCodes);
+
+      const result = await controller.regenerateRecoveryCodes(request, { currentPassword: 'open-sesame' });
+
+      expect(authServiceMock.regenerateRecoveryCodes).toHaveBeenCalledWith(
+        USER_ID,
+        'open-sesame',
+        undefined,
+      );
+      expect(result).toEqual({ recoveryCodes });
+    });
+  });
+
+  describe('getRecoveryCodes', () => {
+    it('delegates to AuthService.regenerateRecoveryCodes and wraps result', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      const recoveryCodes = ['aaaaa-bbbbb'];
+      (authServiceMock.regenerateRecoveryCodes as jest.Mock).mockResolvedValue(recoveryCodes);
+
+      const result = await controller.getRecoveryCodes(request, { currentPassword: 'open-sesame' });
+
+      expect(authServiceMock.regenerateRecoveryCodes).toHaveBeenCalledWith(
+        USER_ID,
+        'open-sesame',
+        undefined,
+      );
       expect(result).toEqual({ recoveryCodes });
     });
   });

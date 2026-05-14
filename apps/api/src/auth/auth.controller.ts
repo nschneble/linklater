@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Post,
@@ -27,6 +28,8 @@ import { RegisterDto } from './dto/register.dto.js';
 import { RequestEmailChangeDto } from './dto/request-email-change.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { VerifyEmailDto } from './dto/verify-email.dto.js';
+import { Disable2faDto } from './dto/disable-2fa.dto.js';
+import { RegenerateRecoveryCodesDto } from './dto/regenerate-recovery-codes.dto.js';
 import { TotpVerifySetupDto } from './dto/totp-verify-setup.dto.js';
 import { VerifyOtpDto } from './dto/verify-otp.dto.js';
 import type { AuthRequest } from './auth-request.type.js';
@@ -265,6 +268,61 @@ export class AuthController {
   ) {
     const recoveryCodes = await this.totpService.verifySetup(
       request.user.userId,
+      body.code,
+    );
+    return { recoveryCodes };
+  }
+
+  @ApiOperation({ summary: 'Disable 2FA (requires password or OTP re-authentication)' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: '2FA disabled successfully.' })
+  @ApiResponse({ status: 400, description: 'No credential provided.' })
+  @ApiResponse({ status: 401, description: 'Invalid credential or missing JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Delete('2fa')
+  @HttpCode(200)
+  async disable2fa(@Req() request: AuthRequest, @Body() body: Disable2faDto) {
+    await this.authService.disable2fa(
+      request.user.userId,
+      body.currentPassword,
+      body.code,
+    );
+  }
+
+  @ApiOperation({ summary: 'Regenerate recovery codes (requires re-authentication)' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Returns 10 new plaintext recovery codes.' })
+  @ApiResponse({ status: 400, description: 'No credential provided.' })
+  @ApiResponse({ status: 401, description: 'Invalid credential or missing JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/recovery-codes/regenerate')
+  @HttpCode(200)
+  async regenerateRecoveryCodes(
+    @Req() request: AuthRequest,
+    @Body() body: RegenerateRecoveryCodesDto,
+  ) {
+    const recoveryCodes = await this.authService.regenerateRecoveryCodes(
+      request.user.userId,
+      body.currentPassword,
+      body.code,
+    );
+    return { recoveryCodes };
+  }
+
+  @ApiOperation({ summary: 'Get recovery codes — regenerates a new set (requires re-authentication)' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Returns 10 new plaintext recovery codes.' })
+  @ApiResponse({ status: 400, description: 'No credential provided.' })
+  @ApiResponse({ status: 401, description: 'Invalid credential or missing JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Get('2fa/recovery-codes')
+  async getRecoveryCodes(
+    @Req() request: AuthRequest,
+    @Body() body: RegenerateRecoveryCodesDto,
+  ) {
+    const recoveryCodes = await this.authService.regenerateRecoveryCodes(
+      request.user.userId,
+      body.currentPassword,
       body.code,
     );
     return { recoveryCodes };

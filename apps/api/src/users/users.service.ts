@@ -372,4 +372,24 @@ export class UsersService {
   async deleteRecoveryCodes(userId: string) {
     await this.prisma.recoveryCode.deleteMany({ where: { userId } });
   }
+
+  async verifyCurrentPassword(id: string, password: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user || !user.passwordHash) return false;
+    return bcrypt.compare(password, user.passwordHash);
+  }
+
+  async disableTwoFactor(id: string) {
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        totpSecret: null,
+        totpEnabledAt: null,
+        totpVerifiedAt: null,
+        phoneNumber: null,
+        smsEnabledAt: null,
+      },
+    });
+    await this.prisma.recoveryCode.deleteMany({ where: { userId: id } });
+  }
 }

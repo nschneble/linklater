@@ -7,7 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
-import { findMatchingRecoveryCode } from '../common/recovery-codes.js';
+import { findMatchingRecoveryCode, generateRecoveryCodes, hashRecoveryCodes } from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
 import { Prisma } from '../prisma/index.js';
 import { SmsService } from '../sms/sms.service.js';
@@ -432,5 +432,105 @@ export class AuthService {
     }
 
     await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
+  }
+
+  /**
+   * Verifies the caller's identity via password or OTP, then clears all 2FA
+   * data. Exactly one of `currentPassword` or `code` must be supplied.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param currentPassword - The user's current plain-text password.
+   * @param code - A valid TOTP or SMS OTP from the enrolled method.
+   * @throws {BadRequestException} When neither credential is supplied.
+   * @throws {UnauthorizedException} When the supplied credential is invalid.
+   */
+  async disable2fa(
+    userId: string,
+    currentPassword?: string,
+    code?: string,
+  ) {
+    await this.reauthenticate(userId, currentPassword, code);
+    await this.usersService.disableTwoFactor(userId);
+  }
+
+  /**
+   * Verifies the caller's identity via password or OTP, then invalidates all
+   * existing recovery codes and issues a fresh set of 10.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param currentPassword - The user's current plain-text password.
+   * @param code - A valid TOTP or SMS OTP from the enrolled method.
+   * @returns An array of 10 plaintext recovery codes (shown once only).
+   * @throws {BadRequestException} When neither credential is supplied.
+   * @throws {UnauthorizedException} When the supplied credential is invalid.
+   */
+  async regenerateRecoveryCodes(
+    userId: string,
+    currentPassword?: string,
+    code?: string,
+  ) {
+    await this.reauthenticate(userId, currentPassword, code);
+    return this.issueRecoveryCodes(userId);
+  }
+
+  /**
+   * Shared re-authentication guard used by disable2fa and regenerateRecoveryCodes.
+   * Verifies the user by password (local accounts) or OTP (TOTP/SMS enrolled).
+   *
+   * @throws {BadRequestException} When neither `currentPassword` nor `code` is provided.
+   * @throws {UnauthorizedException} When the provided credential does not match.
+   */
+  private async reauthenticate(
+    userId: string,
+    currentPassword?: string,
+    code?: string,
+  ) {
+    if (!currentPassword && !code) {
+      throw new BadRequestException(
+        'Provide either currentPassword or a valid OTP code',
+      );
+    }
+
+    if (currentPassword) {
+      const valid = await this.usersService.verifyCurrentPassword(
+        userId,
+        currentPassword,
+      );
+      if (!valid) throw new UnauthorizedException('Invalid password');
+      return;
+    }
+
+    if (code) {
+      const user = await this.usersService.findById(userId);
+
+      if (user.totpEnabledAt) {
+        const valid = await this.totpService.verifyCode(userId, code);
+        if (!valid) throw new UnauthorizedException('Invalid OTP code');
+        return;
+      }
+
+      if (user.smsEnabledAt && user.phoneNumber) {
+        const valid = await this.smsService.checkVerification(
+          user.phoneNumber,
+          code,
+        );
+        if (!valid) throw new UnauthorizedException('Invalid OTP code');
+        return;
+      }
+
+      throw new UnauthorizedException('No 2FA method enrolled');
+    }
+  }
+
+  /**
+   * Deletes all existing recovery codes for the user and generates a fresh set.
+   * Returns the plaintext codes — they are never stored or returned again.
+   */
+  private async issueRecoveryCodes(userId: string): Promise<string[]> {
+    const codes = generateRecoveryCodes();
+    const hashes = await hashRecoveryCodes(codes);
+    await this.usersService.deleteRecoveryCodes(userId);
+    await this.usersService.createRecoveryCodes(userId, hashes);
+    return codes;
   }
 }
