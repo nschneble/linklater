@@ -43,6 +43,12 @@ export class SmsSetupService {
 
     const user = await this.usersService.findById(userId);
 
+    if (!user.hasPassword) {
+      throw new ForbiddenException(
+        '2FA is not available for accounts created via social login',
+      );
+    }
+
     if (!user.emailVerifiedAt) {
       throw new ForbiddenException(
         'Email must be verified before enabling SMS 2FA',

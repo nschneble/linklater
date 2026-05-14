@@ -28,6 +28,7 @@ const makeUser = (overrides = {}) => ({
   id: USER_ID,
   email: USER_EMAIL,
   emailVerifiedAt: new Date(),
+  hasPassword: true,
   smsEnabledAt: null,
   phoneNumber: null,
   ...overrides,
@@ -98,6 +99,16 @@ describe('SmsSetupService', () => {
       await expect(service.initiateSetup(USER_ID, '+1234567')).rejects.toThrow(
         BadRequestException,
       );
+    });
+
+    it('throws ForbiddenException when the account has no password (OAuth-only)', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUser({ hasPassword: false }),
+      );
+
+      await expect(
+        service.initiateSetup(USER_ID, PHONE_NUMBER),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('throws ForbiddenException when email is not verified', async () => {

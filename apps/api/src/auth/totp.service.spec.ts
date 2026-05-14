@@ -20,6 +20,7 @@ const makeUser = (overrides = {}) => ({
   id: USER_ID,
   email: USER_EMAIL,
   emailVerifiedAt: new Date(),
+  hasPassword: true,
   totpSecret: null,
   totpVerifiedAt: null,
   totpEnabledAt: null,
@@ -74,6 +75,16 @@ describe('TotpService', () => {
 
       await expect(service.generateSetup(USER_ID, USER_EMAIL)).rejects.toThrow(
         ConflictException,
+      );
+    });
+
+    it('throws ForbiddenException when the account has no password (OAuth-only)', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUser({ hasPassword: false }),
+      );
+
+      await expect(service.generateSetup(USER_ID, USER_EMAIL)).rejects.toThrow(
+        ForbiddenException,
       );
     });
 
