@@ -792,6 +792,55 @@ describe('AuthService', () => {
       });
     });
 
+    describe('sms method', () => {
+      it('returns accessToken when SMS code is valid', async () => {
+        process.env.PHONE_ENCRYPTION_KEY = 'b'.repeat(64);
+        const { encrypt } = await import('../common/crypto.js');
+        const encryptedPhone = encrypt('+15555550100', process.env.PHONE_ENCRYPTION_KEY);
+
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          phoneNumber: encryptedPhone,
+        });
+        (smsServiceMock.checkVerification as jest.Mock).mockResolvedValue(true);
+
+        const result = await service.verifyOtp(USER_ID, '123456', 'sms');
+
+        expect(smsServiceMock.checkVerification).toHaveBeenCalledWith('+15555550100', '123456');
+        expect(result).toHaveProperty('accessToken');
+      });
+
+      it('throws UnauthorizedException when phone is not configured', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          phoneNumber: null,
+        });
+
+        await expect(
+          service.verifyOtp(USER_ID, '123456', 'sms'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('throws UnauthorizedException when SMS code is invalid', async () => {
+        process.env.PHONE_ENCRYPTION_KEY = 'b'.repeat(64);
+        const { encrypt } = await import('../common/crypto.js');
+        const encryptedPhone = encrypt('+15555550100', process.env.PHONE_ENCRYPTION_KEY);
+
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          phoneNumber: encryptedPhone,
+        });
+        (smsServiceMock.checkVerification as jest.Mock).mockResolvedValue(false);
+
+        await expect(
+          service.verifyOtp(USER_ID, '000000', 'sms'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+    });
+
     describe('recovery method', () => {
       it('marks the matching code used and returns accessToken', async () => {
         const codeHash = '$2a$10$placeholder-hash';

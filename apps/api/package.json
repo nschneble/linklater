@@ -101,7 +101,8 @@
     ],
     "moduleNameMapper": {
       "^(\\.\\.?/.*)\\.js$": "$1",
-      "^@nestjs/swagger$": "<rootDir>/__mocks__/@nestjs/swagger.ts"
+      "^@nestjs/swagger$": "<rootDir>/__mocks__/@nestjs/swagger.ts",
+      "^twilio$": "<rootDir>/__mocks__/twilio.ts"
     },
     "rootDir": "src",
     "testEnvironment": "node",

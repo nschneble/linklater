@@ -7,6 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
+import { decrypt } from '../common/crypto.js';
 import { findMatchingRecoveryCode, generateRecoveryCodes, hashRecoveryCodes } from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
 import { Prisma } from '../prisma/index.js';
@@ -349,6 +350,21 @@ export class AuthService {
       };
     }
 
+    if (method === 'sms') {
+      const user = await this.usersService.findById(userId);
+      if (!user.phoneNumber) {
+        throw new UnauthorizedException('SMS 2FA not configured');
+      }
+      const phone = decrypt(user.phoneNumber, process.env.PHONE_ENCRYPTION_KEY!);
+      const isValid = await this.smsService.checkVerification(phone, code);
+      if (!isValid) {
+        throw new UnauthorizedException('Invalid SMS code');
+      }
+      return {
+        accessToken: this.jwtService.sign({ subject: userId, email: user.email }),
+      };
+    }
+
     if (method === 'recovery') {
       const recoveryCodes =
         await this.usersService.findUnusedRecoveryCodes(userId);
@@ -510,10 +526,8 @@ export class AuthService {
       }
 
       if (user.smsEnabledAt && user.phoneNumber) {
-        const valid = await this.smsService.checkVerification(
-          user.phoneNumber,
-          code,
-        );
+        const phone = decrypt(user.phoneNumber, process.env.PHONE_ENCRYPTION_KEY!);
+        const valid = await this.smsService.checkVerification(phone, code);
         if (!valid) throw new UnauthorizedException('Invalid OTP code');
         return;
       }

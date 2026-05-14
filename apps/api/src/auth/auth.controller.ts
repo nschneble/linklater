@@ -30,8 +30,11 @@ import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { VerifyEmailDto } from './dto/verify-email.dto.js';
 import { Disable2faDto } from './dto/disable-2fa.dto.js';
 import { RegenerateRecoveryCodesDto } from './dto/regenerate-recovery-codes.dto.js';
+import { SmsSetupDto } from './dto/sms-setup.dto.js';
+import { SmsVerifySetupDto } from './dto/sms-verify-setup.dto.js';
 import { TotpVerifySetupDto } from './dto/totp-verify-setup.dto.js';
 import { VerifyOtpDto } from './dto/verify-otp.dto.js';
+import { SmsSetupService } from '../sms/sms-setup.service.js';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**
@@ -45,6 +48,7 @@ import type { AuthRequest } from './auth-request.type.js';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly smsSetupService: SmsSetupService,
     private readonly totpService: TotpService,
   ) {}
 
@@ -271,6 +275,55 @@ export class AuthController {
       body.code,
     );
     return { recoveryCodes };
+  }
+
+  @ApiOperation({ summary: 'Initiate SMS 2FA setup' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Verification code sent.' })
+  @ApiResponse({ status: 400, description: 'Invalid phone number format.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({ status: 403, description: 'Email not verified.' })
+  @ApiResponse({ status: 409, description: 'SMS 2FA already enabled.' })
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/sms/setup')
+  @HttpCode(200)
+  async smsSetup(
+    @Req() request: AuthRequest,
+    @Body() body: SmsSetupDto,
+  ): Promise<void> {
+    await this.smsSetupService.initiateSetup(request.user.userId, body.phoneNumber);
+  }
+
+  @ApiOperation({ summary: 'Verify and complete SMS 2FA setup' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'SMS 2FA enabled. Returns one-time recovery codes.' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired code.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/sms/verify')
+  @HttpCode(200)
+  async smsVerify(
+    @Req() request: AuthRequest,
+    @Body() body: SmsVerifySetupDto,
+  ): Promise<{ recoveryCodes: string[] }> {
+    const recoveryCodes = await this.smsSetupService.verifySetup(
+      request.user.userId,
+      body.code,
+    );
+    return { recoveryCodes };
+  }
+
+  @ApiOperation({ summary: 'Resend SMS verification code during MFA challenge' })
+  @ApiResponse({ status: 200, description: 'New verification code sent.' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired MFA token.' })
+  @ApiResponse({ status: 429, description: 'Too many resend attempts.' })
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-sms-resend': { ttl: 60000, limit: 3 } })
+  @UseGuards(MfaAuthGuard)
+  @Post('2fa/sms/resend')
+  @HttpCode(200)
+  async smsResend(@Req() request: AuthRequest): Promise<void> {
+    await this.smsSetupService.smsResend(request.user.userId);
   }
 
   @ApiOperation({ summary: 'Disable 2FA (requires password or OTP re-authentication)' })

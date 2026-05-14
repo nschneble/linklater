@@ -336,6 +336,20 @@ export class UsersService {
     });
   }
 
+  async savePhoneNumber(id: string, encryptedPhone: string) {
+    await this.prisma.user.update({
+      where: { id },
+      data: { phoneNumber: encryptedPhone, smsEnabledAt: null },
+    });
+  }
+
+  async enableSms(id: string) {
+    await this.prisma.user.update({
+      where: { id },
+      data: { smsEnabledAt: new Date() },
+    });
+  }
+
   async saveTotpSecret(userId: string, encryptedSecret: string) {
     await this.prisma.user.update({
       where: { id: userId },

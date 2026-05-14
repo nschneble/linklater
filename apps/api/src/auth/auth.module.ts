@@ -8,9 +8,11 @@ import { AuthService } from './auth.service.js';
 import { GoogleStrategy } from './google.strategy.js';
 import { JwtStrategy } from './jwt.strategy.js';
 import { LocalStrategy } from './local.strategy.js';
-import { EmailModule } from '../email/email.module.js';
-import { SmsService } from '../sms/sms.service.js';
+import { MfaAuthGuard } from './mfa-auth.guard.js';
 import { TotpService } from './totp.service.js';
+import { EmailModule } from '../email/email.module.js';
+import { SmsSetupService } from '../sms/sms-setup.service.js';
+import { SmsService } from '../sms/sms.service.js';
 import { UsersModule } from '../users/users.module.js';
 
 const googleEnabled = !!(
@@ -42,7 +44,7 @@ const oauthProviders: Provider[] = [
     PassportModule,
     UsersModule,
   ],
-  providers: [AuthService, JwtStrategy, LocalStrategy, SmsService, TotpService, ...oauthProviders],
+  providers: [AuthService, JwtStrategy, LocalStrategy, MfaAuthGuard, SmsService, SmsSetupService, TotpService, ...oauthProviders],
   controllers: [AuthController],
 })
 export class AuthModule {}

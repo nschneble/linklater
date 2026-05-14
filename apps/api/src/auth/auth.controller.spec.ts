@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { MfaAuthGuard } from './mfa-auth.guard';
 import { TotpService } from './totp.service';
+import { SmsSetupService } from '../sms/sms-setup.service';
 
 const ACCESS_TOKEN = 'token';
 const NEW_EMAIL = 'new.email@addy.com';
@@ -43,11 +44,18 @@ describe('AuthController', () => {
     verifySetup: jest.fn(),
   } as unknown as TotpService;
 
+  const smsSetupServiceMock = {
+    initiateSetup: jest.fn(),
+    smsResend: jest.fn(),
+    verifySetup: jest.fn(),
+  } as unknown as SmsSetupService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
+        { provide: SmsSetupService, useValue: smsSetupServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
       ],
     })
@@ -307,6 +315,44 @@ describe('AuthController', () => {
         undefined,
       );
       expect(result).toEqual({ recoveryCodes });
+    });
+  });
+
+  describe('smsSetup', () => {
+    it('delegates to SmsSetupService.initiateSetup with userId and phoneNumber', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      (smsSetupServiceMock.initiateSetup as jest.Mock).mockResolvedValue(undefined);
+
+      await controller.smsSetup(request, { phoneNumber: '+15555550100' });
+
+      expect(smsSetupServiceMock.initiateSetup).toHaveBeenCalledWith(
+        USER_ID,
+        '+15555550100',
+      );
+    });
+  });
+
+  describe('smsVerify', () => {
+    it('delegates to SmsSetupService.verifySetup and wraps recovery codes', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      const recoveryCodes = ['aaaaa-bbbbb'];
+      (smsSetupServiceMock.verifySetup as jest.Mock).mockResolvedValue(recoveryCodes);
+
+      const result = await controller.smsVerify(request, { code: '123456' });
+
+      expect(smsSetupServiceMock.verifySetup).toHaveBeenCalledWith(USER_ID, '123456');
+      expect(result).toEqual({ recoveryCodes });
+    });
+  });
+
+  describe('smsResend', () => {
+    it('delegates to SmsSetupService.smsResend with userId', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      (smsSetupServiceMock.smsResend as jest.Mock).mockResolvedValue(undefined);
+
+      await controller.smsResend(request);
+
+      expect(smsSetupServiceMock.smsResend).toHaveBeenCalledWith(USER_ID);
     });
   });
 });
