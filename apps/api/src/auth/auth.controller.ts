@@ -428,7 +428,8 @@ export class AuthController {
     description: 'Invalid credential or missing JWT.',
   })
   @UseGuards(JwtAuthGuard)
-  @Get('2fa/recovery-codes')
+  @Post('2fa/recovery-codes')
+  @HttpCode(200)
   async getRecoveryCodes(
     @Req() request: AuthRequest,
     @Body() body: RegenerateRecoveryCodesDto,
