@@ -2,10 +2,12 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
+import { findMatchingRecoveryCode } from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
 import { Prisma } from '../prisma/index.js';
 import { SmsService } from '../sms/sms.service.js';
@@ -315,6 +317,47 @@ export class AuthService {
 
     await this.usersService.updateVerificationToken(userId, token, expiresAt);
     await this.emailService.sendVerification(user.email, token, user.theme);
+  }
+
+  /**
+   * Step 2 of the 2FA login flow. Validates the OTP or recovery code and
+   * issues the full session JWT on success.
+   *
+   * TOTP and SMS paths are wired in Tasks 11 and 15 respectively. Recovery
+   * codes are fully handled here.
+   *
+   * @param userId - Extracted from the validated `mfaToken`.
+   * @param code - The OTP or recovery code submitted by the user.
+   * @param method - Which factor to verify against.
+   * @throws {UnauthorizedException} When the code is invalid.
+   */
+  async verifyOtp(
+    userId: string,
+    code: string,
+    method: 'totp' | 'sms' | 'recovery',
+  ) {
+    if (method === 'recovery') {
+      const recoveryCodes =
+        await this.usersService.findUnusedRecoveryCodes(userId);
+      const hashes = recoveryCodes.map((rc) => rc.codeHash);
+      const matchIndex = await findMatchingRecoveryCode(code, hashes);
+
+      if (matchIndex === null) {
+        throw new UnauthorizedException('Invalid recovery code');
+      }
+
+      await this.usersService.markRecoveryCodeUsed(recoveryCodes[matchIndex].id);
+
+      const user = await this.usersService.findById(userId);
+      return {
+        accessToken: this.jwtService.sign({
+          subject: userId,
+          email: user.email,
+        }),
+      };
+    }
+
+    throw new UnauthorizedException('Invalid OTP');
   }
 
   /**

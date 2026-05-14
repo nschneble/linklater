@@ -5,6 +5,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { MfaAuthGuard } from './mfa-auth.guard';
 
 const ACCESS_TOKEN = 'token';
 const NEW_EMAIL = 'new.email@addy.com';
@@ -31,6 +32,7 @@ describe('AuthController', () => {
     resetPassword: jest.fn(),
     sendVerificationEmail: jest.fn(),
     verifyEmail: jest.fn(),
+    verifyOtp: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
   } as unknown as AuthService;
 
   beforeEach(async () => {
@@ -39,6 +41,8 @@ describe('AuthController', () => {
       providers: [{ provide: AuthService, useValue: authServiceMock }],
     })
       .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(MfaAuthGuard)
       .useValue({ canActivate: () => true })
       .compile();
 
@@ -201,6 +205,22 @@ describe('AuthController', () => {
       expect(authServiceMock.confirmEmailChange).toHaveBeenCalledWith(
         PENDING_EMAIL_TOKEN,
       );
+    });
+  });
+
+  describe('verifyOtp', () => {
+    it('delegates to AuthService.verifyOtp with userId, code, and method', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      const body = { mfaToken: 'mfa-tok', code: '123456', method: 'totp' as const };
+
+      const result = await controller.verifyOtp(request, body);
+
+      expect(authServiceMock.verifyOtp).toHaveBeenCalledWith(
+        USER_ID,
+        '123456',
+        'totp',
+      );
+      expect(result).toEqual({ accessToken: ACCESS_TOKEN });
     });
   });
 });

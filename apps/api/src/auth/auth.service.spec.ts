@@ -13,7 +13,7 @@ jest.mock('../prisma/generated/client', () => ({
   Prisma: { PrismaClientKnownRequestError: MockPrismaClientKnownRequestError },
 }));
 
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '../prisma/generated/client';
@@ -54,14 +54,18 @@ describe('AuthService', () => {
     confirmPendingEmail: jest.fn(),
     create: jest.fn(),
     createOAuthUser: jest.fn(),
+    createRecoveryCodes: jest.fn(),
+    deleteRecoveryCodes: jest.fn(),
     findByEmail: jest.fn(),
     findByPendingEmailToken: jest.fn(),
     findByResetToken: jest.fn(),
     findByVerificationToken: jest.fn(),
     findById: jest.fn(),
     findOAuthAccount: jest.fn(),
+    findUnusedRecoveryCodes: jest.fn(),
     linkOAuthAccount: jest.fn(),
     markEmailVerified: jest.fn(),
+    markRecoveryCodeUsed: jest.fn(),
     resetPasswordWithToken: jest.fn(),
     updatePendingEmail: jest.fn(),
     updateResetToken: jest.fn(),
@@ -750,6 +754,57 @@ describe('AuthService', () => {
       await expect(
         service.confirmEmailChange(PENDING_EMAIL_TOKEN),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('verifyOtp', () => {
+    const RECOVERY_CODE = 'aaaaa-bbbbb';
+
+    describe('recovery method', () => {
+      it('marks the matching code used and returns accessToken', async () => {
+        const codeHash = '$2a$10$placeholder-hash';
+        const codeId = 'rc-1';
+
+        (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue([
+          { id: codeId, codeHash },
+        ]);
+        (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(undefined);
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+        });
+
+        const bcrypt = await import('bcryptjs');
+        const realHash = await bcrypt.hash(RECOVERY_CODE, 1);
+        (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue([
+          { id: codeId, codeHash: realHash },
+        ]);
+
+        const result = await service.verifyOtp(USER_ID, RECOVERY_CODE, 'recovery');
+
+        expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(codeId);
+        expect(result).toHaveProperty('accessToken');
+      });
+
+      it('throws UnauthorizedException when no code matches', async () => {
+        (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue([]);
+
+        await expect(
+          service.verifyOtp(USER_ID, RECOVERY_CODE, 'recovery'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('throws UnauthorizedException when code does not match any hash', async () => {
+        const bcrypt = await import('bcryptjs');
+        const differentHash = await bcrypt.hash('zzzzz-zzzzz', 1);
+        (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue([
+          { id: 'rc-1', codeHash: differentHash },
+        ]);
+
+        await expect(
+          service.verifyOtp(USER_ID, RECOVERY_CODE, 'recovery'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
     });
   });
 });

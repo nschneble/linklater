@@ -21,10 +21,12 @@ import { AuthService } from './auth.service.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { LocalAuthGuard } from './local-auth.guard.js';
+import { MfaAuthGuard } from './mfa-auth.guard.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { RequestEmailChangeDto } from './dto/request-email-change.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { VerifyEmailDto } from './dto/verify-email.dto.js';
+import { VerifyOtpDto } from './dto/verify-otp.dto.js';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**
@@ -212,6 +214,23 @@ export class AuthController {
   @HttpCode(200)
   async verifyEmailChange(@Body() body: VerifyEmailDto) {
     await this.authService.confirmEmailChange(body.token);
+  }
+
+  /**
+   * Step 2 of 2FA login. Validates the OTP or recovery code and issues the
+   * full session JWT. Rate-limited to 5 attempts per 15 minutes per IP.
+   */
+  @ApiOperation({ summary: 'Verify an OTP or recovery code to complete 2FA login' })
+  @ApiResponse({ status: 200, description: 'Returns a signed JWT accessToken.' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired MFA token or code.' })
+  @ApiResponse({ status: 429, description: 'Too many OTP attempts.' })
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-verify-otp': { ttl: 900000, limit: 5 } })
+  @UseGuards(MfaAuthGuard)
+  @Post('verify-otp')
+  @HttpCode(200)
+  async verifyOtp(@Req() request: AuthRequest, @Body() body: VerifyOtpDto) {
+    return this.authService.verifyOtp(request.user.userId, body.code, body.method);
   }
 
   @ApiOperation({ summary: 'Initiate Google OAuth sign-in' })

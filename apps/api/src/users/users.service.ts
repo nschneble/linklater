@@ -335,4 +335,27 @@ export class UsersService {
       data: { emailVerifiedAt: new Date() },
     });
   }
+
+  async findUnusedRecoveryCodes(userId: string) {
+    return this.prisma.recoveryCode.findMany({
+      where: { userId, usedAt: null },
+    });
+  }
+
+  async markRecoveryCodeUsed(id: string) {
+    await this.prisma.recoveryCode.update({
+      where: { id },
+      data: { usedAt: new Date() },
+    });
+  }
+
+  async createRecoveryCodes(userId: string, codeHashes: string[]) {
+    await this.prisma.recoveryCode.createMany({
+      data: codeHashes.map((codeHash) => ({ userId, codeHash })),
+    });
+  }
+
+  async deleteRecoveryCodes(userId: string) {
+    await this.prisma.recoveryCode.deleteMany({ where: { userId } });
+  }
 }
