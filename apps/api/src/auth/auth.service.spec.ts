@@ -450,12 +450,16 @@ describe('AuthService', () => {
       expect(smsServiceMock.sendVerification).not.toHaveBeenCalled();
     });
 
-    it('returns mfaToken and mfaMethod sms when smsEnabledAt is set', async () => {
+    it('returns mfaToken and mfaMethod sms when smsEnabledAt is set, decrypting before send', async () => {
+      process.env.PHONE_ENCRYPTION_KEY = 'b'.repeat(64);
+      const { encrypt } = await import('../common/crypto.js');
+      const encryptedPhone = encrypt('+15555550100', process.env.PHONE_ENCRYPTION_KEY);
+
       const result = await service.login({
         email: USER_EMAIL,
         userId: USER_ID,
         smsEnabledAt: new Date(),
-        phoneNumber: '+15555550100',
+        phoneNumber: encryptedPhone,
       });
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith(

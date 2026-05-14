@@ -235,7 +235,8 @@ export class AuthService {
         { subject: user.userId, mfaPending: true },
         { expiresIn: '5m' },
       );
-      await this.smsService.sendVerification(user.phoneNumber);
+      const phone = decrypt(user.phoneNumber, process.env.PHONE_ENCRYPTION_KEY!);
+      await this.smsService.sendVerification(phone);
       return { mfaToken, mfaMethod: 'sms' as const };
     }
 
