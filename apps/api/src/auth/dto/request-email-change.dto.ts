@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 /** Request body for POST /auth/request-email-change */
 export class RequestEmailChangeDto {
@@ -10,4 +10,9 @@ export class RequestEmailChangeDto {
   })
   @IsEmail()
   email: string;
+
+  @ApiPropertyOptional({ description: 'Valid TOTP or SMS OTP — required when 2FA is enabled.' })
+  @IsOptional()
+  @IsString()
+  code?: string;
 }

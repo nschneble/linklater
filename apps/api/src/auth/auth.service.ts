@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -72,8 +73,29 @@ export class AuthService {
    * @throws {NotFoundException} When no user exists with the given ID.
    */
   async me(userId: string) {
-    const { id, ...rest } = await this.usersService.findById(userId);
-    return { userId: id, ...rest };
+    const {
+      id,
+      totpSecret,
+      totpEnabledAt,
+      totpVerifiedAt,
+      smsEnabledAt,
+      phoneNumber,
+      ...rest
+    } = await this.usersService.findById(userId);
+
+    let twoFactorMethod: 'totp' | 'sms' | null = null;
+    if (totpEnabledAt) {
+      twoFactorMethod = 'totp';
+    } else if (smsEnabledAt) {
+      twoFactorMethod = 'sms';
+    }
+
+    return {
+      userId: id,
+      ...rest,
+      twoFactorMethod,
+      twoFactorPending: !!totpSecret && !totpEnabledAt,
+    };
   }
 
   /**
@@ -398,13 +420,31 @@ export class AuthService {
    * @param newEmail - The email address the user wants to switch to.
    * @throws {ConflictException} When `newEmail` is already registered to a different account.
    */
-  async requestEmailChange(userId: string, newEmail: string) {
+  async requestEmailChange(userId: string, newEmail: string, code?: string) {
+    const user = await this.usersService.findById(userId);
+
+    if (user.totpEnabledAt || user.smsEnabledAt) {
+      if (!code) {
+        throw new ForbiddenException(
+          '2FA is enabled — provide a valid OTP code to change your email',
+        );
+      }
+
+      if (user.totpEnabledAt) {
+        const isValid = await this.totpService.verifyCode(userId, code);
+        if (!isValid) throw new UnauthorizedException('Invalid OTP code');
+      } else if (user.smsEnabledAt && user.phoneNumber) {
+        const phone = decrypt(user.phoneNumber, process.env.PHONE_ENCRYPTION_KEY!);
+        const isValid = await this.smsService.checkVerification(phone, code);
+        if (!isValid) throw new UnauthorizedException('Invalid OTP code');
+      }
+    }
+
     const existing = await this.usersService.findByEmail(newEmail);
     if (existing && existing.id !== userId) {
       throw new ConflictException('Email already in use');
     }
 
-    const user = await this.usersService.findById(userId);
     const token = generateToken();
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
 

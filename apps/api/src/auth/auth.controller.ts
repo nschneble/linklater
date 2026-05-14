@@ -206,7 +206,7 @@ export class AuthController {
     @Req() request: AuthRequest,
     @Body() body: RequestEmailChangeDto,
   ) {
-    await this.authService.requestEmailChange(request.user.userId, body.email);
+    await this.authService.requestEmailChange(request.user.userId, body.email, body.code);
   }
 
   /**

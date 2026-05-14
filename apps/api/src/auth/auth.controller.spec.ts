@@ -198,17 +198,18 @@ describe('AuthController', () => {
   });
 
   describe('requestEmailChange', () => {
-    it('delegates to AuthService.requestEmailChange with userId and new email', async () => {
+    it('delegates to AuthService.requestEmailChange with userId, new email, and optional code', async () => {
       const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
       (authServiceMock.requestEmailChange as jest.Mock).mockResolvedValue(
         undefined,
       );
 
-      await controller.requestEmailChange(request, { email: NEW_EMAIL });
+      await controller.requestEmailChange(request, { email: NEW_EMAIL, code: '123456' });
 
       expect(authServiceMock.requestEmailChange).toHaveBeenCalledWith(
         USER_ID,
         NEW_EMAIL,
+        '123456',
       );
     });
   });
