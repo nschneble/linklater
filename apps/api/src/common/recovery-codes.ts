@@ -9,7 +9,7 @@ const BCRYPT_COST = 10;
 const CHARSET = 'abcdefghjkmnpqrstuvwxyz23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
 function randomChar(): string {
-  return CHARSET[randomBytes(1)[0] % CHARSET.length];
+  return CHARSET[randomBytes(2).readUInt16BE(0) % CHARSET.length];
 }
 
 function randomGroup(): string {
