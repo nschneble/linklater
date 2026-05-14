@@ -112,7 +112,12 @@ export default function ReauthForm({
       {error && <Alert variant="error">{error}</Alert>}
 
       <div className="flex gap-3">
-        <PrimaryButton disabled={loading} className="py-2.5">
+        <PrimaryButton
+          disabled={
+            loading || (twoFactorMethod === 'sms' && !smsSent && !password)
+          }
+          className="py-2.5"
+        >
           {loading ? 'Working…' : 'Confirm'}
         </PrimaryButton>
         <LinkButton onClick={onCancel}>Cancel</LinkButton>

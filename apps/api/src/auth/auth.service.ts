@@ -375,12 +375,12 @@ export class AuthService {
         ? 'sms'
         : null;
 
-    if (enrolledMethod && method !== 'recovery' && method !== enrolledMethod) {
+    if (method !== 'recovery' && enrolledMethod !== method) {
       throw new UnauthorizedException('Invalid OTP method');
     }
 
     if (method === 'totp') {
-      const isValid = await this.totpService.verifyCode(userId, code);
+      const isValid = await this.totpService.verifyCode(user, code);
       if (!isValid) {
         throw new UnauthorizedException('Invalid TOTP code');
       }
@@ -452,27 +452,36 @@ export class AuthService {
   async requestEmailChange(userId: string, newEmail: string, code?: string) {
     const user = await this.usersService.findById(userId);
 
-    if (user.totpEnabledAt) {
+    if (user.totpEnabledAt || user.smsEnabledAt) {
       if (!code) {
         throw new ForbiddenException(
-          '2FA is enabled — provide your authenticator code to change your email',
+          '2FA is enabled — provide a verification code to change your email',
         );
       }
-      const isValid = await this.totpService.verifyCode(userId, code);
-      if (!isValid) throw new UnauthorizedException('Invalid OTP code');
-    } else if (user.smsEnabledAt && user.phoneNumber) {
-      const phone = decrypt(
-        user.phoneNumber,
-        process.env.PHONE_ENCRYPTION_KEY!,
-      );
-      if (!code) {
-        await this.smsService.sendVerification(phone);
-        throw new ForbiddenException(
-          '2FA is enabled — an SMS code has been sent to your phone',
+
+      const isRecoveryCode = /^[^01IOl]{5}-[^01IOl]{5}-[^01IOl]{5}$/.test(code);
+
+      if (isRecoveryCode) {
+        const recoveryCodes =
+          await this.usersService.findUnusedRecoveryCodes(userId);
+        const hashes = recoveryCodes.map((rc) => rc.codeHash);
+        const matchIndex = await findMatchingRecoveryCode(code, hashes);
+        if (matchIndex === null)
+          throw new UnauthorizedException('Invalid OTP code');
+        await this.usersService.markRecoveryCodeUsed(
+          recoveryCodes[matchIndex].id,
         );
+      } else if (user.totpEnabledAt) {
+        const isValid = await this.totpService.verifyCode(user, code);
+        if (!isValid) throw new UnauthorizedException('Invalid OTP code');
+      } else if (user.smsEnabledAt && user.phoneNumber) {
+        const phone = decrypt(
+          user.phoneNumber,
+          process.env.PHONE_ENCRYPTION_KEY!,
+        );
+        const isValid = await this.smsService.checkVerification(phone, code);
+        if (!isValid) throw new UnauthorizedException('Invalid OTP code');
       }
-      const isValid = await this.smsService.checkVerification(phone, code);
-      if (!isValid) throw new UnauthorizedException('Invalid OTP code');
     }
 
     const existing = await this.usersService.findByEmail(newEmail);
@@ -571,7 +580,10 @@ export class AuthService {
 
   /**
    * Shared re-authentication guard used by disable2fa and regenerateRecoveryCodes.
-   * Verifies the user by password (local accounts) or OTP (TOTP/SMS enrolled).
+   * Verifies the user by password (local accounts), OTP (TOTP/SMS), or recovery code.
+   *
+   * Fetches the user once and inlines the password comparison to avoid a second
+   * round-trip through verifyCurrentPassword.
    *
    * @throws {BadRequestException} When neither `currentPassword` nor `code` is provided.
    * @throws {UnauthorizedException} When the provided credential does not match.
@@ -587,26 +599,41 @@ export class AuthService {
       );
     }
 
+    const user = await this.usersService.findByIdWithPasswordHash(userId);
+
     if (currentPassword) {
-      const user = await this.usersService.findById(userId);
       if (!user.hasPassword) {
         throw new UnauthorizedException(
           'Password authentication is not available for this account',
         );
       }
-      const valid = await this.usersService.verifyCurrentPassword(
-        userId,
-        currentPassword,
-      );
+      const valid = await bcrypt.compare(currentPassword, user.passwordHash!);
       if (!valid) throw new UnauthorizedException('Invalid password');
       return;
     }
 
     if (code) {
-      const user = await this.usersService.findById(userId);
+      const isRecoveryCode = /^[^01IOl]{5}-[^01IOl]{5}-[^01IOl]{5}$/.test(code);
+
+      if (isRecoveryCode) {
+        if (!user.totpEnabledAt && !user.smsEnabledAt) {
+          throw new UnauthorizedException('No 2FA method enrolled');
+        }
+        const recoveryCodes =
+          await this.usersService.findUnusedRecoveryCodes(userId);
+        const hashes = recoveryCodes.map((rc) => rc.codeHash);
+        const matchIndex = await findMatchingRecoveryCode(code, hashes);
+        if (matchIndex === null) {
+          throw new UnauthorizedException('Invalid recovery code');
+        }
+        await this.usersService.markRecoveryCodeUsed(
+          recoveryCodes[matchIndex].id,
+        );
+        return;
+      }
 
       if (user.totpEnabledAt) {
-        const valid = await this.totpService.verifyCode(userId, code);
+        const valid = await this.totpService.verifyCode(user, code);
         if (!valid) throw new UnauthorizedException('Invalid OTP code');
         return;
       }

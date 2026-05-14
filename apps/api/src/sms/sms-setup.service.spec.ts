@@ -67,7 +67,7 @@ describe('SmsSetupService', () => {
   });
 
   describe('initiateSetup', () => {
-    it('encrypts the phone number, saves it, and sends a verification', async () => {
+    it('sends verification first, then encrypts and saves the phone number', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(makeUser());
       (usersServiceMock.savePhoneNumber as jest.Mock).mockResolvedValue(
         undefined,
@@ -86,6 +86,19 @@ describe('SmsSetupService', () => {
       expect(smsServiceMock.sendVerification).toHaveBeenCalledWith(
         PHONE_NUMBER,
       );
+    });
+
+    it('does not save the phone number when Twilio sendVerification throws', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(makeUser());
+      (smsServiceMock.sendVerification as jest.Mock).mockRejectedValue(
+        new Error('Twilio error'),
+      );
+
+      await expect(
+        service.initiateSetup(USER_ID, PHONE_NUMBER),
+      ).rejects.toThrow('Twilio error');
+
+      expect(usersServiceMock.savePhoneNumber).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when phone number is invalid E.164 format', async () => {

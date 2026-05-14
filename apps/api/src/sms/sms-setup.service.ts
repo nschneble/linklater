@@ -69,8 +69,8 @@ export class SmsSetupService {
       process.env.PHONE_ENCRYPTION_KEY!,
     );
 
-    await this.usersService.savePhoneNumber(userId, encryptedPhone);
     await this.smsService.sendVerification(phoneNumber);
+    await this.usersService.savePhoneNumber(userId, encryptedPhone);
   }
 
   /**

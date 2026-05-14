@@ -118,6 +118,22 @@ describe('TotpService', () => {
         ConflictException,
       );
     });
+
+    it('returns the same QR code when setup is already pending (idempotent)', async () => {
+      const secret = generateSecret();
+      const { encrypt } = await import('../common/crypto.js');
+      const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
+
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUser({ totpSecret: encryptedSecret, totpEnabledAt: null }),
+      );
+
+      const result = await service.generateSetup(USER_ID, USER_EMAIL);
+
+      expect(result.qrCodeDataUrl).toMatch(/^data:image/);
+      expect(result.secret).toBe(secret);
+      expect(usersServiceMock.saveTotpSecret).not.toHaveBeenCalled();
+    });
   });
 
   describe('verifySetup', () => {
@@ -173,15 +189,13 @@ describe('TotpService', () => {
       const { encrypt } = await import('../common/crypto.js');
       const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
 
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUser({ totpSecret: encryptedSecret }),
-      );
       (usersServiceMock.updateTotpLastUsedStep as jest.Mock).mockResolvedValue(
         undefined,
       );
 
+      const user = makeUser({ totpSecret: encryptedSecret });
       const code = await generate({ secret });
-      expect(await service.verifyCode(USER_ID, code)).toBe(true);
+      expect(await service.verifyCode(user, code)).toBe(true);
       expect(usersServiceMock.updateTotpLastUsedStep).toHaveBeenCalledWith(
         USER_ID,
         expect.any(Number),
@@ -193,11 +207,8 @@ describe('TotpService', () => {
       const { encrypt } = await import('../common/crypto.js');
       const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
 
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUser({ totpSecret: encryptedSecret }),
-      );
-
-      expect(await service.verifyCode(USER_ID, '000000')).toBe(false);
+      const user = makeUser({ totpSecret: encryptedSecret });
+      expect(await service.verifyCode(user, '000000')).toBe(false);
       expect(usersServiceMock.updateTotpLastUsedStep).not.toHaveBeenCalled();
     });
 
@@ -208,22 +219,17 @@ describe('TotpService', () => {
 
       // Simulate the current 30-second window having already been consumed
       const currentStep = Math.floor(Date.now() / 1000 / 30);
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUser({
-          totpSecret: encryptedSecret,
-          totpLastUsedStep: currentStep,
-        }),
-      );
-
+      const user = makeUser({
+        totpSecret: encryptedSecret,
+        totpLastUsedStep: currentStep,
+      });
       const code = await generate({ secret });
-      expect(await service.verifyCode(USER_ID, code)).toBe(false);
+      expect(await service.verifyCode(user, code)).toBe(false);
       expect(usersServiceMock.updateTotpLastUsedStep).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when no totpSecret is set', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(makeUser());
-
-      await expect(service.verifyCode(USER_ID, '123456')).rejects.toThrow(
+      await expect(service.verifyCode(makeUser(), '123456')).rejects.toThrow(
         BadRequestException,
       );
     });

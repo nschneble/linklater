@@ -153,6 +153,12 @@ export class UsersService {
     return { ...safe, hasPassword: passwordHash !== null };
   }
 
+  async findByIdWithPasswordHash(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+    return { ...user, hasPassword: user.passwordHash !== null };
+  }
+
   /**
    * Permanently deletes a user account and all associated records (links,
    * metadata) via database cascades.

@@ -53,6 +53,25 @@ export class TotpService {
       );
     }
 
+    // If setup is already pending (secret stored but not yet verified), return
+    // the same QR code so concurrent calls don't invalidate a scan in progress.
+    if (user.totpSecret && !user.totpEnabledAt) {
+      const existingSecret = decrypt(
+        user.totpSecret,
+        process.env.TOTP_ENCRYPTION_KEY!,
+      );
+      const existingUri = generateURI({
+        secret: existingSecret,
+        label: userEmail,
+        issuer: 'Linklater',
+        strategy: 'totp',
+      });
+      return {
+        qrCodeDataUrl: await QRCode.toDataURL(existingUri),
+        secret: existingSecret,
+      };
+    }
+
     const secret = generateSecret();
     const uri = generateURI({
       secret,
@@ -95,9 +114,14 @@ export class TotpService {
     return codes;
   }
 
-  async verifyCode(userId: string, code: string): Promise<boolean> {
-    const user = await this.usersService.findById(userId);
-
+  async verifyCode(
+    user: {
+      id: string;
+      totpSecret: string | null;
+      totpLastUsedStep: number | null;
+    },
+    code: string,
+  ): Promise<boolean> {
     if (!user.totpSecret) {
       throw new BadRequestException('TOTP is not configured for this account');
     }
@@ -112,7 +136,7 @@ export class TotpService {
 
     if (result.valid) {
       const usedStep = Math.floor(Date.now() / 1000 / 30) + result.delta;
-      await this.usersService.updateTotpLastUsedStep(userId, usedStep);
+      await this.usersService.updateTotpLastUsedStep(user.id, usedStep);
     }
 
     return result.valid;
