@@ -8,18 +8,21 @@
 
 #### Features
 
-- email verification
-- password reset
+- account security
+  - email verification
+  - password reset
+  - Google SSO
+  - multi-factor authentication
+- accessibility
+  - full keyboard navigation
+  - keyboard shortcuts
 - full-text search
-- keyboard shortcuts
-- keyboard navigation
-- Google SSO
 - "Stumble upon" page
 
 #### Bugfixes
 
-- add missing accessibility tags
-- fix unusable layout on mobile devices
+- added missing accessibility tags
+- fixed unusable layout on mobile devices
 
 ### Removed
 
