@@ -6,10 +6,12 @@ interface FeatureTileProps {
 
 function FeatureTile({ description, icon, title }: FeatureTileProps) {
   return (
-    <div className="flex flex-col gap-3 p-6 bg-[#1a1530] border border-[#2e2855] rounded-2xl animate-fade-in-up">
-      <i className={`${icon} text-2xl text-[#c03812]`} aria-hidden="true" />
-      <h3 className="text-[#eeeede] text-sm font-semibold">{title}</h3>
-      <p className="text-[#9b92c8] text-xs leading-relaxed">{description}</p>
+    <div className="flex flex-col gap-3 p-6 bg-midnight border border-boyhood rounded-2xl animate-fade-in-up">
+      <i className={`${icon} text-2xl text-sunrise`} aria-hidden="true" />
+      <h3 className="text-dazed text-sm font-semibold">{title}</h3>
+      <p className="text-confused text-xs text-balance leading-relaxed">
+        {description}
+      </p>
     </div>
   );
 }
@@ -17,26 +19,27 @@ function FeatureTile({ description, icon, title }: FeatureTileProps) {
 const FEATURES: FeatureTileProps[] = [
   {
     description:
-      'Paste a URL, use the bookmarklet, or type it in — your choice.',
-    icon: 'fa-solid fa-bolt',
-    title: 'Save in a flash',
-  },
-  {
-    description: 'Why make choices when you can just roll the wheels of fate?',
-    icon: 'fa-solid fa-shuffle',
-    title: 'Stumble',
+      'Save links from literally anywhere. A New York Times recipe on your laptop. A Reddit thread on your phone. A Facebook post your mom emailed you, again.',
+    icon: 'fa-solid fa-bookmark',
+    title: 'Save',
   },
   {
     description:
-      'Full keyboard navigation. Add, search, stumble without a mouse.',
-    icon: 'fa-solid fa-keyboard',
-    title: 'Keyboard-first',
+      'Decision fatigue is real. We can serve up a random unread link from your collection, and all you gotta do is read it. Bringing back the best of the 2000s!',
+    icon: 'fa-brands fa-stumbleupon',
+    title: 'Stumble!',
+  },
+  {
+    description:
+      'Half the fun of learning something new is sharing it with those around you. Be the annoying person at the metaphorical water cooler with a fun fact.',
+    icon: 'fa-solid fa-share',
+    title: 'Share',
   },
 ];
 
 export default function FeaturesSection() {
   return (
-    <section className="px-6 pb-24 max-w-3xl mx-auto">
+    <section className="px-6 pb-24 max-w-3xl mx-auto select-none">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {FEATURES.map((feature) => (
           <FeatureTile key={feature.title} {...feature} />

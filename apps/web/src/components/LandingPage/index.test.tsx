@@ -43,9 +43,9 @@ describe('LandingPage', () => {
 
   it('renders all three feature tiles', () => {
     renderLandingPage();
-    expect(screen.getByText('Save in a flash')).toBeInTheDocument();
-    expect(screen.getByText('Stumble')).toBeInTheDocument();
-    expect(screen.getByText('Keyboard-first')).toBeInTheDocument();
+    expect(screen.getByText('Save')).toBeInTheDocument();
+    expect(screen.getByText('Stumble!')).toBeInTheDocument();
+    expect(screen.getByText('Share')).toBeInTheDocument();
   });
 
   it('renders footer links with correct hrefs', () => {

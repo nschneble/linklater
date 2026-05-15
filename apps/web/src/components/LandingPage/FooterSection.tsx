@@ -6,7 +6,7 @@ interface FooterLinkProps {
 function FooterLink({ href, label }: FooterLinkProps) {
   return (
     <a
-      className="text-[#9b92c8] hover:text-[#eeeede] text-xs transition duration-200"
+      className="text-confused hover:text-dazed text-xs transition duration-200"
       href={href}
       rel="noreferrer"
       target="_blank"
@@ -18,7 +18,7 @@ function FooterLink({ href, label }: FooterLinkProps) {
 
 export default function FooterSection() {
   return (
-    <footer className="flex items-center justify-center gap-6 py-8 px-6">
+    <footer className="flex items-center justify-center gap-6 py-8 px-6 select-none">
       <FooterLink href="https://nickschneble.xyz/" label="About" />
       <FooterLink
         href="https://github.com/nschneble/linklater"

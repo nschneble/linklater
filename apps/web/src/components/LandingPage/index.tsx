@@ -4,13 +4,7 @@ import HeroSection from './HeroSection';
 
 export default function LandingPage() {
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        background:
-          'radial-gradient(ellipse at 50% 0%, #14103a 0%, #0a0812 70%)',
-      }}
-    >
+    <div className="min-h-screen bg-hit-man">
       <HeroSection />
       <FeaturesSection />
       <FooterSection />
