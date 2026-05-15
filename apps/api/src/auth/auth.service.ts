@@ -1,13 +1,23 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
+import {
+  RECOVERY_CODE_REGEX,
+  findMatchingRecoveryCode,
+  generateRecoveryCodes,
+  hashRecoveryCodes,
+} from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
 import { Prisma } from '../prisma/index.js';
+import { EmailTwoFactorService } from './email-2fa.service.js';
+import { TotpService } from './totp.service.js';
 import { UsersService, withoutPasswordHash } from '../users/index.js';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -40,6 +50,8 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
+    private readonly emailTwoFactorService: EmailTwoFactorService,
+    private readonly totpService: TotpService,
   ) {}
 
   /**
@@ -65,8 +77,30 @@ export class AuthService {
    * @throws {NotFoundException} When no user exists with the given ID.
    */
   async me(userId: string) {
-    const { id, ...rest } = await this.usersService.findById(userId);
-    return { userId: id, ...rest };
+    const {
+      id,
+      totpSecret,
+      totpEnabledAt,
+      totpVerifiedAt: _totpVerifiedAt,
+      emailTwoFactorEnabledAt,
+      emailTwoFactorCodeHash: _emailTwoFactorCodeHash,
+      emailTwoFactorExpiresAt: _emailTwoFactorExpiresAt,
+      ...rest
+    } = await this.usersService.findById(userId);
+
+    let twoFactorMethod: 'totp' | 'email' | null = null;
+    if (totpEnabledAt) {
+      twoFactorMethod = 'totp';
+    } else if (emailTwoFactorEnabledAt) {
+      twoFactorMethod = 'email';
+    }
+
+    return {
+      userId: id,
+      ...rest,
+      twoFactorMethod,
+      twoFactorPending: !!totpSecret && !totpEnabledAt,
+    };
   }
 
   /**
@@ -173,10 +207,43 @@ export class AuthService {
   /**
    * Issues a signed JWT for an already-validated user.
    *
-   * @param user - A minimal user object with `userId` and `email`.
-   * @returns An object containing the signed `accessToken` string.
+   * When the user has 2FA enabled, a short-lived MFA challenge token is
+   * returned instead of a full session JWT. The caller must complete the
+   * OTP step via `POST /auth/verify-otp` to obtain the real access token.
+   *
+   * @param user - A validated user object. Includes optional 2FA status fields
+   *   when called from the local (email/password) login path.
+   * @returns `{ accessToken }` when no 2FA is enabled, or
+   *   `{ mfaToken, mfaMethod }` when a second factor is required.
    */
-  async login(user: { userId: string; email: string }) {
+  async login(user: {
+    userId: string;
+    email: string;
+    theme?: string;
+    totpEnabledAt?: Date | null;
+    emailTwoFactorEnabledAt?: Date | null;
+  }) {
+    if (user.totpEnabledAt) {
+      const mfaToken = this.jwtService.sign(
+        { subject: user.userId, mfaPending: true },
+        { expiresIn: '5m' },
+      );
+      return { mfaToken, mfaMethod: 'totp' as const };
+    }
+
+    if (user.emailTwoFactorEnabledAt) {
+      const mfaToken = this.jwtService.sign(
+        { subject: user.userId, mfaPending: true },
+        { expiresIn: '5m' },
+      );
+      await this.emailTwoFactorService.sendCode({
+        id: user.userId,
+        email: user.email,
+        theme: user.theme,
+      });
+      return { mfaToken, mfaMethod: 'email' as const };
+    }
+
     const payload = { subject: user.userId, email: user.email };
     return { accessToken: this.jwtService.sign(payload) };
   }
@@ -287,6 +354,90 @@ export class AuthService {
   }
 
   /**
+   * Step 2 of the 2FA login flow. Validates the OTP or recovery code and
+   * issues the full session JWT on success.
+   *
+   * @param userId - Extracted from the validated `mfaToken`.
+   * @param code - The OTP or recovery code submitted by the user.
+   * @param method - Which factor to verify against.
+   * @throws {UnauthorizedException} When the code is invalid or the method
+   *   does not match the enrolled factor (generic error to prevent enumeration).
+   */
+  async verifyOtp(
+    userId: string,
+    code: string,
+    method: 'totp' | 'email' | 'recovery',
+  ) {
+    const user = await this.usersService.findById(userId);
+
+    const enrolledMethod = user.totpEnabledAt
+      ? 'totp'
+      : user.emailTwoFactorEnabledAt
+        ? 'email'
+        : null;
+
+    if (method !== 'recovery' && enrolledMethod !== method) {
+      throw new UnauthorizedException('Invalid OTP method');
+    }
+
+    if (method === 'totp') {
+      const isValid = await this.totpService.verifyCode(user, code);
+      if (!isValid) {
+        throw new UnauthorizedException('Invalid TOTP code');
+      }
+      return {
+        accessToken: this.jwtService.sign({
+          subject: userId,
+          email: user.email,
+        }),
+      };
+    }
+
+    if (method === 'email') {
+      if (!user.emailTwoFactorEnabledAt) {
+        throw new UnauthorizedException('Email 2FA not configured');
+      }
+      const isValid = await this.emailTwoFactorService.verifyCode(user, code);
+      if (!isValid) {
+        throw new UnauthorizedException('Invalid or expired email code');
+      }
+      return {
+        accessToken: this.jwtService.sign({
+          subject: userId,
+          email: user.email,
+        }),
+      };
+    }
+
+    if (method === 'recovery') {
+      if (!enrolledMethod) {
+        throw new UnauthorizedException('No 2FA method enrolled');
+      }
+      const recoveryCodes =
+        await this.usersService.findUnusedRecoveryCodes(userId);
+      const hashes = recoveryCodes.map((recoveryCode) => recoveryCode.codeHash);
+      const matchIndex = await findMatchingRecoveryCode(code, hashes);
+
+      if (matchIndex === null) {
+        throw new UnauthorizedException('Invalid recovery code');
+      }
+
+      await this.usersService.markRecoveryCodeUsed(
+        recoveryCodes[matchIndex].id,
+      );
+
+      return {
+        accessToken: this.jwtService.sign({
+          subject: userId,
+          email: user.email,
+        }),
+      };
+    }
+
+    throw new UnauthorizedException('Invalid OTP');
+  }
+
+  /**
    * Begins an email change by storing the new address in `pendingEmail` and
    * sending a verification link to that new address. The user's current email
    * stays active until `confirmEmailChange` is called.
@@ -295,13 +446,44 @@ export class AuthService {
    * @param newEmail - The email address the user wants to switch to.
    * @throws {ConflictException} When `newEmail` is already registered to a different account.
    */
-  async requestEmailChange(userId: string, newEmail: string) {
+  async requestEmailChange(userId: string, newEmail: string, code?: string) {
+    const user = await this.usersService.findById(userId);
+
     const existing = await this.usersService.findByEmail(newEmail);
     if (existing && existing.id !== userId) {
       throw new ConflictException('Email already in use');
     }
 
-    const user = await this.usersService.findById(userId);
+    if (user.totpEnabledAt || user.emailTwoFactorEnabledAt) {
+      if (!code) {
+        throw new ForbiddenException(
+          '2FA is enabled — provide a verification code to change your email',
+        );
+      }
+
+      const isRecoveryCode = RECOVERY_CODE_REGEX.test(code);
+
+      if (isRecoveryCode) {
+        const recoveryCodes =
+          await this.usersService.findUnusedRecoveryCodes(userId);
+        const hashes = recoveryCodes.map(
+          (recoveryCode) => recoveryCode.codeHash,
+        );
+        const matchIndex = await findMatchingRecoveryCode(code, hashes);
+        if (matchIndex === null)
+          throw new UnauthorizedException('Invalid OTP code');
+        await this.usersService.markRecoveryCodeUsed(
+          recoveryCodes[matchIndex].id,
+        );
+      } else if (user.totpEnabledAt) {
+        const isValid = await this.totpService.verifyCode(user, code);
+        if (!isValid) throw new UnauthorizedException('Invalid OTP code');
+      } else if (user.emailTwoFactorEnabledAt) {
+        const isValid = await this.emailTwoFactorService.verifyCode(user, code);
+        if (!isValid) throw new UnauthorizedException('Invalid OTP code');
+      }
+    }
+
     const token = generateToken();
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
 
@@ -345,5 +527,133 @@ export class AuthService {
     }
 
     await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
+  }
+
+  async sendReauthEmailCode(userId: string): Promise<void> {
+    const user = await this.usersService.findById(userId);
+    if (!user.emailTwoFactorEnabledAt) {
+      throw new BadRequestException(
+        'Email 2FA is not enabled for this account',
+      );
+    }
+    await this.emailTwoFactorService.sendCode(user);
+  }
+
+  /**
+   * Verifies the caller's identity via password or OTP, then clears all 2FA
+   * data. Exactly one of `currentPassword` or `code` must be supplied.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param currentPassword - The user's current plain-text password.
+   * @param code - A valid TOTP or SMS OTP from the enrolled method.
+   * @throws {BadRequestException} When neither credential is supplied.
+   * @throws {UnauthorizedException} When the supplied credential is invalid.
+   */
+  async disable2fa(userId: string, currentPassword?: string, code?: string) {
+    await this.reauthenticate(userId, currentPassword, code);
+    await this.usersService.disableTwoFactor(userId);
+  }
+
+  /**
+   * Verifies the caller's identity via password or OTP, then invalidates all
+   * existing recovery codes and issues a fresh set of 10.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param currentPassword - The user's current plain-text password.
+   * @param code - A valid TOTP or SMS OTP from the enrolled method.
+   * @returns An array of 10 plaintext recovery codes (shown once only).
+   * @throws {BadRequestException} When neither credential is supplied.
+   * @throws {UnauthorizedException} When the supplied credential is invalid.
+   */
+  async regenerateRecoveryCodes(
+    userId: string,
+    currentPassword?: string,
+    code?: string,
+  ) {
+    await this.reauthenticate(userId, currentPassword, code);
+    return this.issueRecoveryCodes(userId);
+  }
+
+  /**
+   * Shared re-authentication guard used by disable2fa and regenerateRecoveryCodes.
+   * Verifies the user by password (local accounts), OTP (TOTP/SMS), or recovery code.
+   *
+   * Fetches the user once and inlines the password comparison to avoid a second
+   * round-trip through verifyCurrentPassword.
+   *
+   * @throws {BadRequestException} When neither `currentPassword` nor `code` is provided.
+   * @throws {UnauthorizedException} When the provided credential does not match.
+   */
+  private async reauthenticate(
+    userId: string,
+    currentPassword?: string,
+    code?: string,
+  ) {
+    if (!currentPassword && !code) {
+      throw new BadRequestException(
+        'Provide either currentPassword or a valid OTP code',
+      );
+    }
+
+    const user = await this.usersService.findByIdWithPasswordHash(userId);
+
+    if (currentPassword) {
+      if (!user.hasPassword) {
+        throw new UnauthorizedException(
+          'Password authentication is not available for this account',
+        );
+      }
+      const valid = await bcrypt.compare(currentPassword, user.passwordHash!);
+      if (!valid) throw new UnauthorizedException('Invalid password');
+      return;
+    }
+
+    if (code) {
+      const isRecoveryCode = RECOVERY_CODE_REGEX.test(code);
+
+      if (isRecoveryCode) {
+        if (!user.totpEnabledAt && !user.emailTwoFactorEnabledAt) {
+          throw new UnauthorizedException('No 2FA method enrolled');
+        }
+        const recoveryCodes =
+          await this.usersService.findUnusedRecoveryCodes(userId);
+        const hashes = recoveryCodes.map(
+          (recoveryCode) => recoveryCode.codeHash,
+        );
+        const matchIndex = await findMatchingRecoveryCode(code, hashes);
+        if (matchIndex === null) {
+          throw new UnauthorizedException('Invalid recovery code');
+        }
+        await this.usersService.markRecoveryCodeUsed(
+          recoveryCodes[matchIndex].id,
+        );
+        return;
+      }
+
+      if (user.totpEnabledAt) {
+        const valid = await this.totpService.verifyCode(user, code);
+        if (!valid) throw new UnauthorizedException('Invalid OTP code');
+        return;
+      }
+
+      if (user.emailTwoFactorEnabledAt) {
+        const valid = await this.emailTwoFactorService.verifyCode(user, code);
+        if (!valid) throw new UnauthorizedException('Invalid OTP code');
+        return;
+      }
+
+      throw new UnauthorizedException('No 2FA method enrolled');
+    }
+  }
+
+  /**
+   * Deletes all existing recovery codes for the user and generates a fresh set.
+   * Returns the plaintext codes — they are never stored or returned again.
+   */
+  private async issueRecoveryCodes(userId: string): Promise<string[]> {
+    const codes = generateRecoveryCodes();
+    const hashes = await hashRecoveryCodes(codes);
+    await this.usersService.reissueRecoveryCodes(userId, hashes);
+    return codes;
   }
 }

@@ -8,55 +8,77 @@ datasource db {
 }
 
 model User {
-  id                         String    @id @default(cuid())
-  email                      String    @unique
-  mode                       String    @default("dark")
-  theme                      String    @default("scanner-darkly")
+  id    String @id @default(cuid())
+  email String @unique
+  mode  String @default("dark")
+  theme String @default("scanner-darkly")
 
-  passwordHash               String?
-  pendingEmail               String?
-  pendingEmailToken          String?   @unique
-  resetToken                 String?   @unique
-  verificationToken          String?   @unique
+  passwordHash      String?
+  pendingEmail      String?
+  pendingEmailToken String? @unique
+  resetToken        String? @unique
+  verificationToken String? @unique
 
   emailVerifiedAt            DateTime?
   pendingEmailTokenExpiresAt DateTime?
   resetTokenExpiresAt        DateTime?
   verificationTokenExpiresAt DateTime?
 
-  createdAt                  DateTime  @default(now())
-  updatedAt                  DateTime  @updatedAt
+  totpSecret       String?
+  totpEnabledAt    DateTime?
+  totpVerifiedAt   DateTime?
+  totpLastUsedStep Int?
 
-  links                      Link[]
-  oauthAccounts              OAuthAccount[]
+  emailTwoFactorCodeHash  String?
+  emailTwoFactorExpiresAt DateTime?
+  emailTwoFactorEnabledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  links         Link[]
+  oauthAccounts OAuthAccount[]
+  recoveryCodes RecoveryCode[]
+}
+
+model RecoveryCode {
+  id       String    @id @default(cuid())
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash String
+  usedAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model OAuthAccount {
-  id         String   @id @default(cuid())
+  id         String @id @default(cuid())
   provider   String
   providerId String
   userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([provider, providerId])
   @@index([userId])
 }
 
 model Link {
-  id           String    @id @default(cuid())
-  meta         Meta?
-  url          String
-  userId       String
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  meta   Meta?
+  url    String
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   searchVector Unsupported("tsvector")?
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  readAt       DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  readAt    DateTime?
 
   @@index([userId])
   @@index([userId, url])
@@ -65,9 +87,9 @@ model Link {
 }
 
 model Meta {
-  id          String    @id @default(cuid())
-  linkId      String    @unique
-  link        Link      @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  linkId String @unique
+  link   Link   @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
   description String?
   faviconUrl  String?
@@ -76,7 +98,7 @@ model Meta {
   source      String?
   title       String?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  fetchedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  fetchedAt DateTime?
 }

@@ -10,6 +10,8 @@ export interface AuthUser {
   email: string;
   /** The UUID of the authenticated user. */
   userId: string;
+  /** Present and true only on short-lived MFA challenge tokens. */
+  mfaPending?: boolean;
 }
 
 /**

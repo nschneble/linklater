@@ -1,7 +1,8 @@
-ALTER TABLE "Link" ADD COLUMN IF NOT EXISTS "searchVector" tsvector;
+-- AlterTable
+ALTER TABLE "Link" ADD COLUMN     "searchVector" TSVECTOR;
 
-CREATE INDEX IF NOT EXISTS "Link_searchVector_idx"
-  ON "Link" USING GIN ("searchVector");
+-- CreateIndex
+CREATE INDEX "Link_searchVector_idx" ON "Link" USING GIN ("searchVector");
 
 UPDATE "Link" l
 SET "searchVector" = to_tsvector('english',

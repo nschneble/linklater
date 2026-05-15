@@ -18,7 +18,9 @@ import {
 } from 'vitest';
 
 import {
+  ApiError,
   apiFetch,
+  disable2fa,
   readLink,
   clearStoredToken,
   createLink,
@@ -33,16 +35,24 @@ import {
   getStoredToken,
   login,
   logout,
+  regenerateRecoveryCodes,
   register,
   requestEmailChange,
+  resendEmailTwoFactorCode,
   resendVerificationEmail,
   resetPassword,
+  sendReauthEmailCode,
   setStoredToken,
+  setupEmailTwoFactor,
+  setupTotp,
   unreadLink,
   updateLink,
   updateMe,
   verifyEmail,
   verifyEmailChange,
+  verifyEmailTwoFactorSetup,
+  verifyOtp,
+  verifyTotpSetup,
 } from './api';
 
 // ---------------------------------------------------------------------------
@@ -139,6 +149,15 @@ describe('apiFetch', () => {
     expect(headers['Authorization']).toBeUndefined();
   });
 
+  it('uses a custom string token when includeAuth is a string', async () => {
+    setStoredToken('stored-token');
+    const fetchMock = mockFetch({ ok: true });
+    await apiFetch('/test', {}, 'custom-mfa-token');
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = options.headers as Record<string, string>;
+    expect(headers['Authorization']).toBe('Bearer custom-mfa-token');
+  });
+
   it('omits Authorization header when no token is stored', async () => {
     const fetchMock = mockFetch({ ok: true });
     await apiFetch('/test');
@@ -147,30 +166,39 @@ describe('apiFetch', () => {
     expect(headers['Authorization']).toBeUndefined();
   });
 
-  it('throws with server JSON error message on non-2xx response', async () => {
+  it('throws ApiError with server JSON error message on non-2xx response', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 400,
       text: () => Promise.resolve(JSON.stringify({ message: 'Invalid input' })),
     }) as unknown as typeof fetch;
 
-    await expect(apiFetch('/test')).rejects.toThrow('Invalid input');
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).message).toBe('Invalid input');
+    expect((error as ApiError).status).toBe(400);
   });
 
-  it('throws with raw text when response body is not JSON', async () => {
+  it('throws ApiError with raw text when response body is not JSON', async () => {
     mockFetchText('Bad gateway', 502);
 
-    await expect(apiFetch('/test')).rejects.toThrow('Bad gateway');
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).message).toBe('Bad gateway');
+    expect((error as ApiError).status).toBe(502);
   });
 
-  it('throws a fallback message when response body is empty', async () => {
+  it('throws ApiError with fallback message when response body is empty', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 503,
       text: () => Promise.resolve(''),
     }) as unknown as typeof fetch;
 
-    await expect(apiFetch('/test')).rejects.toThrow('Request failed with 503');
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).message).toBe('Request failed with 503');
+    expect((error as ApiError).status).toBe(503);
   });
 
   it('returns parsed JSON on a 2xx response', async () => {
@@ -226,6 +254,22 @@ describe('login', () => {
     const result = await login('user@example.com', 'password123');
 
     expect(result).toEqual({ accessToken: 'fresh-jwt' });
+  });
+
+  it('does not store a token when the server returns mfaToken', async () => {
+    mockFetch({ mfaToken: 'mfa-tok', mfaMethod: 'totp' });
+
+    await login('user@example.com', 'password123');
+
+    expect(getStoredToken()).toBeNull();
+  });
+
+  it('returns mfaToken and mfaMethod when 2FA is required', async () => {
+    mockFetch({ mfaToken: 'mfa-tok', mfaMethod: 'email' });
+
+    const result = await login('user@example.com', 'password123');
+
+    expect(result).toEqual({ mfaToken: 'mfa-tok', mfaMethod: 'email' });
   });
 });
 
@@ -303,6 +347,34 @@ describe('requestEmailChange', () => {
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/auth/request-email-change');
     expect((options as { body: string }).body).toContain('new@example.com');
+  });
+
+  it('includes the code in the request body when provided', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await requestEmailChange('new@example.com', '123456');
+
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse((options as { body: string }).body) as {
+      email: string;
+      code: string;
+    };
+    expect(body.code).toBe('123456');
+  });
+
+  it('omits the code field when not provided', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await requestEmailChange('new@example.com');
+
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse((options as { body: string }).body) as Record<
+      string,
+      unknown
+    >;
+    expect(body['code']).toBeUndefined();
   });
 });
 
@@ -523,5 +595,161 @@ describe('deleteMe', () => {
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/users/me');
     expect((options as { method: string }).method).toBe('DELETE');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 2FA endpoints
+// ---------------------------------------------------------------------------
+
+describe('setupTotp', () => {
+  it('POSTs to /auth/2fa/totp/setup with auth', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ qrCodeDataUrl: 'data:...', secret: 'ABC' });
+
+    await setupTotp();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/totp/setup');
+    expect((options as { method: string }).method).toBe('POST');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBe('Bearer my-jwt');
+  });
+});
+
+describe('verifyTotpSetup', () => {
+  it('POSTs to /auth/2fa/totp/verify with the 6-digit code', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
+
+    await verifyTotpSetup('123456');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/totp/verify');
+    const body = JSON.parse((options as { body: string }).body) as {
+      code: string;
+    };
+    expect(body.code).toBe('123456');
+  });
+});
+
+describe('setupEmailTwoFactor', () => {
+  it('POSTs to /auth/2fa/email/setup with Authorization header', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await setupEmailTwoFactor();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/email/setup');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBe('Bearer my-jwt');
+  });
+});
+
+describe('verifyEmailTwoFactorSetup', () => {
+  it('POSTs to /auth/2fa/email/verify with the 6-digit code', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
+
+    await verifyEmailTwoFactorSetup('123456');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/email/verify');
+    const body = JSON.parse((options as { body: string }).body) as {
+      code: string;
+    };
+    expect(body.code).toBe('123456');
+  });
+});
+
+describe('resendEmailTwoFactorCode', () => {
+  it('POSTs to /auth/2fa/email/resend with mfaToken in body and no Authorization header', async () => {
+    const fetchMock = mockFetch({});
+
+    await resendEmailTwoFactorCode('mfa-pending-token');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/email/resend');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBeUndefined();
+    const body = JSON.parse((options as { body: string }).body) as {
+      mfaToken: string;
+    };
+    expect(body.mfaToken).toBe('mfa-pending-token');
+  });
+});
+
+describe('sendReauthEmailCode', () => {
+  it('POSTs to /auth/2fa/email/reauth-send with Authorization header', async () => {
+    setStoredToken('stored-jwt');
+    const fetchMock = mockFetch({});
+
+    await sendReauthEmailCode();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/email/reauth-send');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBe('Bearer stored-jwt');
+    expect((options as { method: string }).method).toBe('POST');
+  });
+});
+
+describe('verifyOtp', () => {
+  it('POSTs to /auth/verify-otp with mfaToken in body and no Authorization header', async () => {
+    const fetchMock = mockFetch({ accessToken: 'full-jwt' });
+
+    await verifyOtp('mfa-pending-token', '123456', 'totp');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/verify-otp');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBeUndefined();
+    const body = JSON.parse((options as { body: string }).body) as {
+      mfaToken: string;
+      code: string;
+      method: string;
+    };
+    expect(body.mfaToken).toBe('mfa-pending-token');
+    expect(body.code).toBe('123456');
+    expect(body.method).toBe('totp');
+  });
+
+  it('stores the access token on success', async () => {
+    mockFetch({ accessToken: 'full-jwt' });
+
+    await verifyOtp('mfa-pending-token', '123456', 'totp');
+
+    expect(getStoredToken()).toBe('full-jwt');
+  });
+});
+
+describe('disable2fa', () => {
+  it('DELETEs /auth/2fa with the provided credentials', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await disable2fa({ currentPassword: 'open-sesame' });
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa');
+    expect((options as { method: string }).method).toBe('DELETE');
+    const body = JSON.parse((options as { body: string }).body) as {
+      currentPassword: string;
+    };
+    expect(body.currentPassword).toBe('open-sesame');
+  });
+});
+
+describe('regenerateRecoveryCodes', () => {
+  it('POSTs to /auth/2fa/recovery-codes/regenerate with credentials', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
+
+    await regenerateRecoveryCodes({ currentPassword: 'open-sesame' });
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/2fa/recovery-codes/regenerate');
+    expect((options as { method: string }).method).toBe('POST');
   });
 });

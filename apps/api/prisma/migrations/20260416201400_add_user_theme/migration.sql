@@ -1,1 +1,2 @@
-ALTER TABLE "User" ADD COLUMN "theme" TEXT NOT NULL DEFAULT 'dark';
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "theme" TEXT NOT NULL DEFAULT 'dark';

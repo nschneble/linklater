@@ -20,6 +20,7 @@
     "sourceMap": true,
     "strictBindCallApply": false,
     "strictNullChecks": true,
+    "strictPropertyInitialization": false,
     "target": "ES2023",
     "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },

@@ -42,12 +42,14 @@
     "class-validator": "^0.15.1",
     "dotenv": "^16.6.1",
     "nodemailer": "^8.0.7",
+    "otplib": "^13.4.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "pg": "^8.16.3",
     "pg-boss": "^12.15.0",
+    "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -65,6 +67,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/pg": "^8.15.6",
+    "@types/qrcode": "^1.5.6",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
@@ -97,7 +100,8 @@
     ],
     "moduleNameMapper": {
       "^(\\.\\.?/.*)\\.js$": "$1",
-      "^@nestjs/swagger$": "<rootDir>/__mocks__/@nestjs/swagger.ts"
+      "^@nestjs/swagger$": "<rootDir>/__mocks__/@nestjs/swagger.ts",
+      "^twilio$": "<rootDir>/__mocks__/twilio.ts"
     },
     "rootDir": "src",
     "testEnvironment": "node",

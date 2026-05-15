@@ -13,12 +13,19 @@ jest.mock('../prisma/generated/client', () => ({
   Prisma: { PrismaClientKnownRequestError: MockPrismaClientKnownRequestError },
 }));
 
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '../prisma/generated/client';
 
 import { AuthService } from './auth.service';
+import { EmailTwoFactorService } from './email-2fa.service';
+import { TotpService } from './totp.service';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../email/email.service';
 
@@ -53,14 +60,19 @@ describe('AuthService', () => {
     confirmPendingEmail: jest.fn(),
     create: jest.fn(),
     createOAuthUser: jest.fn(),
+    disableTwoFactor: jest.fn(),
     findByEmail: jest.fn(),
+    findByIdWithPasswordHash: jest.fn(),
     findByPendingEmailToken: jest.fn(),
     findByResetToken: jest.fn(),
     findByVerificationToken: jest.fn(),
     findById: jest.fn(),
     findOAuthAccount: jest.fn(),
+    findUnusedRecoveryCodes: jest.fn(),
     linkOAuthAccount: jest.fn(),
     markEmailVerified: jest.fn(),
+    markRecoveryCodeUsed: jest.fn(),
+    reissueRecoveryCodes: jest.fn(),
     resetPasswordWithToken: jest.fn(),
     updatePendingEmail: jest.fn(),
     updateResetToken: jest.fn(),
@@ -77,6 +89,15 @@ describe('AuthService', () => {
     sendVerification: jest.fn(),
   } as unknown as EmailService;
 
+  const emailTwoFactorServiceMock = {
+    sendCode: jest.fn().mockResolvedValue(undefined),
+    verifyCode: jest.fn(),
+  } as unknown as EmailTwoFactorService;
+
+  const totpServiceMock = {
+    verifyCode: jest.fn(),
+  } as unknown as TotpService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -84,6 +105,8 @@ describe('AuthService', () => {
         { provide: UsersService, useValue: usersServiceMock },
         { provide: JwtService, useValue: jwtServiceMock },
         { provide: EmailService, useValue: emailServiceMock },
+        { provide: EmailTwoFactorService, useValue: emailTwoFactorServiceMock },
+        { provide: TotpService, useValue: totpServiceMock },
       ],
     }).compile();
 
@@ -123,12 +146,16 @@ describe('AuthService', () => {
   });
 
   describe('me', () => {
-    it('returns user with id remapped to userId', async () => {
+    it('returns user with id remapped to userId and 2FA status fields', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
         createdAt: new Date(),
         updatedAt: new Date(),
+        totpSecret: null,
+        totpEnabledAt: null,
+        totpVerifiedAt: null,
+        emailTwoFactorEnabledAt: null,
       });
 
       const result = await service.me(USER_ID);
@@ -137,6 +164,57 @@ describe('AuthService', () => {
       expect(result).not.toHaveProperty('id');
       expect(result.userId).toBe(USER_ID);
       expect(result.email).toBe(USER_EMAIL);
+      expect(result.twoFactorMethod).toBeNull();
+      expect(result.twoFactorPending).toBe(false);
+      expect(result).not.toHaveProperty('totpSecret');
+    });
+
+    it('returns twoFactorMethod totp when totpEnabledAt is set', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpSecret: 'encrypted-secret',
+        totpEnabledAt: new Date(),
+        totpVerifiedAt: new Date(),
+        emailTwoFactorEnabledAt: null,
+      });
+
+      const result = await service.me(USER_ID);
+
+      expect(result.twoFactorMethod).toBe('totp');
+      expect(result.twoFactorPending).toBe(false);
+    });
+
+    it('returns twoFactorPending true when totpSecret is set but totpEnabledAt is null', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpSecret: 'encrypted-secret',
+        totpEnabledAt: null,
+        totpVerifiedAt: null,
+        emailTwoFactorEnabledAt: null,
+      });
+
+      const result = await service.me(USER_ID);
+
+      expect(result.twoFactorMethod).toBeNull();
+      expect(result.twoFactorPending).toBe(true);
+    });
+
+    it('returns twoFactorMethod email when emailTwoFactorEnabledAt is set', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpSecret: null,
+        totpEnabledAt: null,
+        totpVerifiedAt: null,
+        emailTwoFactorEnabledAt: new Date(),
+      });
+
+      const result = await service.me(USER_ID);
+
+      expect(result.twoFactorMethod).toBe('email');
+      expect(result.twoFactorPending).toBe(false);
     });
   });
 
@@ -338,7 +416,7 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('returns an accessToken', async () => {
+    it('returns an accessToken when 2FA is not enabled', async () => {
       const result = await service.login({
         email: USER_EMAIL,
         userId: USER_ID,
@@ -348,7 +426,39 @@ describe('AuthService', () => {
         email: USER_EMAIL,
         subject: USER_ID,
       });
-      expect(result.accessToken).toBe(SIGNED_TOKEN);
+      expect(result).toEqual({ accessToken: SIGNED_TOKEN });
+    });
+
+    it('returns mfaToken and mfaMethod totp when totpEnabledAt is set', async () => {
+      const result = await service.login({
+        email: USER_EMAIL,
+        userId: USER_ID,
+        totpEnabledAt: new Date(),
+      });
+
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith(
+        { subject: USER_ID, mfaPending: true },
+        { expiresIn: '5m' },
+      );
+      expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
+      expect(emailTwoFactorServiceMock.sendCode).not.toHaveBeenCalled();
+    });
+
+    it('returns mfaToken and mfaMethod email when emailTwoFactorEnabledAt is set and sends code', async () => {
+      const result = await service.login({
+        email: USER_EMAIL,
+        userId: USER_ID,
+        emailTwoFactorEnabledAt: new Date(),
+      });
+
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith(
+        { subject: USER_ID, mfaPending: true },
+        { expiresIn: '5m' },
+      );
+      expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'email' });
+      expect(emailTwoFactorServiceMock.sendCode).toHaveBeenCalledWith(
+        expect.objectContaining({ id: USER_ID, email: USER_EMAIL }),
+      );
     });
   });
 
@@ -574,13 +684,20 @@ describe('AuthService', () => {
   });
 
   describe('requestEmailChange', () => {
+    const makeUserNoTwoFactor = (overrides = {}) => ({
+      id: USER_ID,
+      email: USER_EMAIL,
+      theme: 'dazed-and-confused',
+      totpEnabledAt: null,
+      emailTwoFactorEnabledAt: null,
+      ...overrides,
+    });
+
     it('stores pending email and sends a verification email to the new address', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUserNoTwoFactor(),
+      );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        theme: 'dazed-and-confused',
-      });
       (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
         undefined,
       );
@@ -604,6 +721,9 @@ describe('AuthService', () => {
     });
 
     it('throws ConflictException when the new email is already in use', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUserNoTwoFactor(),
+      );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         id: 'other-user',
         email: NEW_EMAIL,
@@ -615,8 +735,9 @@ describe('AuthService', () => {
     });
 
     it('allows the request when the new email belongs to the same user (re-verify)', async () => {
-      // Email already belongs to this user — not a conflict (e.g. re-requesting
-      // a pending change to the same address).
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUserNoTwoFactor(),
+      );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: NEW_EMAIL,
@@ -631,12 +752,145 @@ describe('AuthService', () => {
       await expect(
         service.requestEmailChange(USER_ID, NEW_EMAIL),
       ).resolves.not.toThrow();
+    });
 
-      expect(usersServiceMock.updatePendingEmail).toHaveBeenCalledWith(
-        USER_ID,
-        NEW_EMAIL,
-        expect.any(String),
-        expect.any(Date),
+    it('throws ConflictException before consuming a 2FA credential when the new email is taken', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+      );
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
+        id: 'other-user',
+        email: NEW_EMAIL,
+      });
+
+      await expect(
+        service.requestEmailChange(USER_ID, NEW_EMAIL, '123456'),
+      ).rejects.toThrow(ConflictException);
+
+      expect(totpServiceMock.verifyCode).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when 2FA is enabled and no code is provided', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+      );
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.requestEmailChange(USER_ID, NEW_EMAIL),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('allows email change when 2FA is enabled and valid TOTP code is provided', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+      );
+      (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
+      (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (
+        emailServiceMock.sendEmailChangeVerification as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await expect(
+        service.requestEmailChange(USER_ID, NEW_EMAIL, '123456'),
+      ).resolves.not.toThrow();
+
+      expect(totpServiceMock.verifyCode).toHaveBeenCalledWith(
+        expect.objectContaining({ id: USER_ID }),
+        '123456',
+      );
+    });
+
+    it('throws UnauthorizedException when 2FA is enabled and TOTP code is invalid', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+      );
+      (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        service.requestEmailChange(USER_ID, NEW_EMAIL, '000000'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws ForbiddenException when Email 2FA is enabled and no code is provided', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUserNoTwoFactor({ emailTwoFactorEnabledAt: new Date() }),
+      );
+
+      await expect(
+        service.requestEmailChange(USER_ID, NEW_EMAIL),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('allows email change when Email 2FA is enabled and valid email code is provided', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUserNoTwoFactor({ emailTwoFactorEnabledAt: new Date() }),
+      );
+      (emailTwoFactorServiceMock.verifyCode as jest.Mock).mockResolvedValue(
+        true,
+      );
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
+      (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (
+        emailServiceMock.sendEmailChangeVerification as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await expect(
+        service.requestEmailChange(USER_ID, NEW_EMAIL, '123456'),
+      ).resolves.not.toThrow();
+
+      expect(emailTwoFactorServiceMock.verifyCode).toHaveBeenCalledWith(
+        expect.objectContaining({ id: USER_ID }),
+        '123456',
+      );
+    });
+
+    it('throws UnauthorizedException when Email 2FA is enabled and email code is invalid', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUserNoTwoFactor({ emailTwoFactorEnabledAt: new Date() }),
+      );
+      (emailTwoFactorServiceMock.verifyCode as jest.Mock).mockResolvedValue(
+        false,
+      );
+
+      await expect(
+        service.requestEmailChange(USER_ID, NEW_EMAIL, '000000'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('allows email change using a recovery code when 2FA is enabled', async () => {
+      const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
+      const realHash = await bcrypt.hash(REAUTH_RECOVERY_CODE, 1);
+      const codeId = 'rc-email-1';
+
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+      );
+      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
+        [{ id: codeId, codeHash: realHash }],
+      );
+      (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
+      (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (
+        emailServiceMock.sendEmailChangeVerification as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await expect(
+        service.requestEmailChange(USER_ID, NEW_EMAIL, REAUTH_RECOVERY_CODE),
+      ).resolves.not.toThrow();
+
+      expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
+        codeId,
       );
     });
   });
@@ -716,6 +970,593 @@ describe('AuthService', () => {
       await expect(
         service.confirmEmailChange(PENDING_EMAIL_TOKEN),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('verifyOtp', () => {
+    const RECOVERY_CODE_STUB = 'aaaaa-bbbbb';
+
+    describe('totp method', () => {
+      it('returns accessToken when TOTP code is valid', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          totpEnabledAt: new Date(),
+          emailTwoFactorEnabledAt: null,
+        });
+        (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
+
+        const result = await service.verifyOtp(USER_ID, '123456', 'totp');
+
+        expect(totpServiceMock.verifyCode).toHaveBeenCalledWith(
+          expect.objectContaining({ id: USER_ID }),
+          '123456',
+        );
+        expect(result).toHaveProperty('accessToken');
+      });
+
+      it('throws UnauthorizedException when TOTP code is invalid', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          totpEnabledAt: new Date(),
+          emailTwoFactorEnabledAt: null,
+        });
+        (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(false);
+
+        await expect(
+          service.verifyOtp(USER_ID, '000000', 'totp'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('throws UnauthorizedException when email 2FA user submits totp method', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          totpEnabledAt: null,
+          emailTwoFactorEnabledAt: new Date(),
+        });
+
+        await expect(
+          service.verifyOtp(USER_ID, '123456', 'totp'),
+        ).rejects.toThrow(UnauthorizedException);
+
+        expect(totpServiceMock.verifyCode).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('email method', () => {
+      it('returns accessToken when email code is valid', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          emailTwoFactorEnabledAt: new Date(),
+        });
+        (emailTwoFactorServiceMock.verifyCode as jest.Mock).mockResolvedValue(
+          true,
+        );
+
+        const result = await service.verifyOtp(USER_ID, '123456', 'email');
+
+        expect(emailTwoFactorServiceMock.verifyCode).toHaveBeenCalledWith(
+          expect.objectContaining({ id: USER_ID }),
+          '123456',
+        );
+        expect(result).toHaveProperty('accessToken');
+      });
+
+      it('throws UnauthorizedException when emailTwoFactorEnabledAt is not set', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          totpEnabledAt: null,
+          emailTwoFactorEnabledAt: null,
+        });
+
+        await expect(
+          service.verifyOtp(USER_ID, '123456', 'email'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('throws UnauthorizedException when TOTP user submits email method', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          totpEnabledAt: new Date(),
+          emailTwoFactorEnabledAt: null,
+        });
+
+        await expect(
+          service.verifyOtp(USER_ID, '123456', 'email'),
+        ).rejects.toThrow(UnauthorizedException);
+
+        expect(emailTwoFactorServiceMock.verifyCode).not.toHaveBeenCalled();
+      });
+
+      it('throws UnauthorizedException when email code is invalid', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          emailTwoFactorEnabledAt: new Date(),
+        });
+        (emailTwoFactorServiceMock.verifyCode as jest.Mock).mockResolvedValue(
+          false,
+        );
+
+        await expect(
+          service.verifyOtp(USER_ID, '000000', 'email'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+    });
+
+    describe('recovery method', () => {
+      it('marks the matching code used and returns accessToken', async () => {
+        const codeId = 'rc-1';
+
+        const bcrypt = await import('bcryptjs');
+        const realHash = await bcrypt.hash(RECOVERY_CODE_STUB, 1);
+
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          totpEnabledAt: new Date(),
+          emailTwoFactorEnabledAt: null,
+        });
+        (
+          usersServiceMock.findUnusedRecoveryCodes as jest.Mock
+        ).mockResolvedValue([{ id: codeId, codeHash: realHash }]);
+        (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
+          undefined,
+        );
+
+        const result = await service.verifyOtp(
+          USER_ID,
+          RECOVERY_CODE_STUB,
+          'recovery',
+        );
+
+        expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
+          codeId,
+        );
+        expect(result).toHaveProperty('accessToken');
+      });
+
+      it('throws UnauthorizedException when no code matches', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          totpEnabledAt: new Date(),
+          emailTwoFactorEnabledAt: null,
+        });
+        (
+          usersServiceMock.findUnusedRecoveryCodes as jest.Mock
+        ).mockResolvedValue([]);
+
+        await expect(
+          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('throws UnauthorizedException when code does not match any hash', async () => {
+        const bcrypt = await import('bcryptjs');
+        const differentHash = await bcrypt.hash('zzzzz-zzzzz', 1);
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          totpEnabledAt: new Date(),
+          emailTwoFactorEnabledAt: null,
+        });
+        (
+          usersServiceMock.findUnusedRecoveryCodes as jest.Mock
+        ).mockResolvedValue([{ id: 'rc-1', codeHash: differentHash }]);
+
+        await expect(
+          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('throws UnauthorizedException when no 2FA method is enrolled', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          totpEnabledAt: null,
+          emailTwoFactorEnabledAt: null,
+        });
+
+        await expect(
+          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+    });
+  });
+
+  describe('disable2fa', () => {
+    it('disables 2FA when currentPassword is valid', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        hasPassword: true,
+        passwordHash: KNOWN_PASSWORD_HASH,
+        totpEnabledAt: null,
+        emailTwoFactorEnabledAt: null,
+      });
+      (usersServiceMock.disableTwoFactor as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.disable2fa(USER_ID, KNOWN_PASSWORD);
+
+      expect(usersServiceMock.disableTwoFactor).toHaveBeenCalledWith(USER_ID);
+    });
+
+    it('disables 2FA when TOTP code is valid', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: new Date(),
+        emailTwoFactorEnabledAt: null,
+      });
+      (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
+      (usersServiceMock.disableTwoFactor as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.disable2fa(USER_ID, undefined, '123456');
+
+      expect(totpServiceMock.verifyCode).toHaveBeenCalledWith(
+        expect.objectContaining({ id: USER_ID }),
+        '123456',
+      );
+      expect(usersServiceMock.disableTwoFactor).toHaveBeenCalledWith(USER_ID);
+    });
+
+    it('disables 2FA using a recovery code', async () => {
+      const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
+      const realHash = await bcrypt.hash(REAUTH_RECOVERY_CODE, 1);
+      const codeId = 'rc-reauth-1';
+
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: new Date(),
+        emailTwoFactorEnabledAt: null,
+      });
+      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
+        [{ id: codeId, codeHash: realHash }],
+      );
+      (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (usersServiceMock.disableTwoFactor as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.disable2fa(USER_ID, undefined, REAUTH_RECOVERY_CODE);
+
+      expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
+        codeId,
+      );
+      expect(usersServiceMock.disableTwoFactor).toHaveBeenCalledWith(USER_ID);
+    });
+
+    it('throws BadRequestException when neither credential is provided', async () => {
+      await expect(service.disable2fa(USER_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('throws UnauthorizedException when password is invalid', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        hasPassword: true,
+        passwordHash: KNOWN_PASSWORD_HASH,
+        totpEnabledAt: null,
+        emailTwoFactorEnabledAt: null,
+      });
+
+      await expect(
+        service.disable2fa(USER_ID, UNKNOWN_PASSWORD),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException when the account has no password', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: null,
+        emailTwoFactorEnabledAt: null,
+      });
+
+      await expect(service.disable2fa(USER_ID, KNOWN_PASSWORD)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('disables 2FA when Email 2FA code is valid', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: null,
+        emailTwoFactorEnabledAt: new Date(),
+        emailTwoFactorCodeHash: 'some-hash',
+        emailTwoFactorExpiresAt: new Date(Date.now() + 600_000),
+      });
+      (emailTwoFactorServiceMock.verifyCode as jest.Mock).mockResolvedValue(
+        true,
+      );
+      (usersServiceMock.disableTwoFactor as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.disable2fa(USER_ID, undefined, '123456');
+
+      expect(emailTwoFactorServiceMock.verifyCode).toHaveBeenCalledWith(
+        expect.objectContaining({ id: USER_ID }),
+        '123456',
+      );
+      expect(usersServiceMock.disableTwoFactor).toHaveBeenCalledWith(USER_ID);
+    });
+
+    it('throws UnauthorizedException when Email 2FA code is invalid', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: null,
+        emailTwoFactorEnabledAt: new Date(),
+        emailTwoFactorCodeHash: 'some-hash',
+        emailTwoFactorExpiresAt: new Date(Date.now() + 600_000),
+      });
+      (emailTwoFactorServiceMock.verifyCode as jest.Mock).mockResolvedValue(
+        false,
+      );
+
+      await expect(
+        service.disable2fa(USER_ID, undefined, '000000'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException when TOTP code is invalid', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: new Date(),
+        emailTwoFactorEnabledAt: null,
+      });
+      (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        service.disable2fa(USER_ID, undefined, '000000'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException when recovery code does not match', async () => {
+      const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
+      const differentHash = await bcrypt.hash('zzzzz-zzzzz-zzzzz', 1);
+
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: new Date(),
+        emailTwoFactorEnabledAt: null,
+      });
+      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
+        [{ id: 'rc-1', codeHash: differentHash }],
+      );
+
+      await expect(
+        service.disable2fa(USER_ID, undefined, REAUTH_RECOVERY_CODE),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('regenerateRecoveryCodes', () => {
+    it('returns new recovery codes when password is valid', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        hasPassword: true,
+        passwordHash: KNOWN_PASSWORD_HASH,
+        totpEnabledAt: null,
+        emailTwoFactorEnabledAt: null,
+      });
+      (usersServiceMock.reissueRecoveryCodes as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await service.regenerateRecoveryCodes(
+        USER_ID,
+        KNOWN_PASSWORD,
+      );
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveLength(10);
+      expect(usersServiceMock.reissueRecoveryCodes).toHaveBeenCalledWith(
+        USER_ID,
+        expect.arrayContaining([expect.any(String)]),
+      );
+    });
+
+    it('throws BadRequestException when neither credential is provided', async () => {
+      await expect(service.regenerateRecoveryCodes(USER_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('throws UnauthorizedException when password is invalid', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        hasPassword: true,
+        passwordHash: KNOWN_PASSWORD_HASH,
+        totpEnabledAt: null,
+        emailTwoFactorEnabledAt: null,
+      });
+
+      await expect(
+        service.regenerateRecoveryCodes(USER_ID, UNKNOWN_PASSWORD),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('returns new recovery codes when TOTP code is valid', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: new Date(),
+        emailTwoFactorEnabledAt: null,
+      });
+      (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
+      (usersServiceMock.reissueRecoveryCodes as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await service.regenerateRecoveryCodes(
+        USER_ID,
+        undefined,
+        '123456',
+      );
+
+      expect(totpServiceMock.verifyCode).toHaveBeenCalledWith(
+        expect.objectContaining({ id: USER_ID }),
+        '123456',
+      );
+      expect(result).toHaveLength(10);
+    });
+
+    it('throws UnauthorizedException when TOTP code is invalid', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: new Date(),
+        emailTwoFactorEnabledAt: null,
+      });
+      (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        service.regenerateRecoveryCodes(USER_ID, undefined, '000000'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('returns new recovery codes when a valid recovery code is provided', async () => {
+      const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
+      const realHash = await bcrypt.hash(REAUTH_RECOVERY_CODE, 1);
+      const codeId = 'rc-regen-1';
+
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: new Date(),
+        emailTwoFactorEnabledAt: null,
+      });
+      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
+        [{ id: codeId, codeHash: realHash }],
+      );
+      (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (usersServiceMock.reissueRecoveryCodes as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await service.regenerateRecoveryCodes(
+        USER_ID,
+        undefined,
+        REAUTH_RECOVERY_CODE,
+      );
+
+      expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
+        codeId,
+      );
+      expect(result).toHaveLength(10);
+    });
+
+    it('throws UnauthorizedException when the recovery code does not match', async () => {
+      const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
+      const differentHash = await bcrypt.hash('zzzzz-zzzzz-zzzzz', 1);
+
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: new Date(),
+        emailTwoFactorEnabledAt: null,
+      });
+      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
+        [{ id: 'rc-1', codeHash: differentHash }],
+      );
+
+      await expect(
+        service.regenerateRecoveryCodes(
+          USER_ID,
+          undefined,
+          REAUTH_RECOVERY_CODE,
+        ),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('sendReauthEmailCode', () => {
+    it('sends email code to the enrolled email address', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        emailTwoFactorEnabledAt: new Date(),
+      });
+
+      await service.sendReauthEmailCode(USER_ID);
+
+      expect(emailTwoFactorServiceMock.sendCode).toHaveBeenCalledWith(
+        expect.objectContaining({ email: USER_EMAIL }),
+      );
+    });
+
+    it('throws BadRequestException when Email 2FA is not enabled', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        emailTwoFactorEnabledAt: null,
+      });
+
+      await expect(service.sendReauthEmailCode(USER_ID)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

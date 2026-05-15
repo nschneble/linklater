@@ -5,6 +5,9 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { EmailTwoFactorService } from './email-2fa.service';
+import { MfaAuthGuard } from './mfa-auth.guard';
+import { TotpService } from './totp.service';
 
 const ACCESS_TOKEN = 'token';
 const NEW_EMAIL = 'new.email@addy.com';
@@ -22,23 +25,44 @@ describe('AuthController', () => {
 
   const authServiceMock = {
     confirmEmailChange: jest.fn(),
+    disable2fa: jest.fn(),
     forgotPassword: jest.fn(),
     login: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
     me: jest.fn(),
+    regenerateRecoveryCodes: jest.fn(),
     register: jest.fn(),
     requestEmailChange: jest.fn(),
     resendVerificationEmail: jest.fn(),
     resetPassword: jest.fn(),
+    sendReauthEmailCode: jest.fn(),
     sendVerificationEmail: jest.fn(),
     verifyEmail: jest.fn(),
+    verifyOtp: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
   } as unknown as AuthService;
+
+  const totpServiceMock = {
+    generateSetup: jest.fn(),
+    verifySetup: jest.fn(),
+  } as unknown as TotpService;
+
+  const emailTwoFactorServiceMock = {
+    initiateSetup: jest.fn(),
+    sendCode: jest.fn(),
+    verifySetup: jest.fn(),
+  } as unknown as EmailTwoFactorService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: authServiceMock }],
+      providers: [
+        { provide: AuthService, useValue: authServiceMock },
+        { provide: EmailTwoFactorService, useValue: emailTwoFactorServiceMock },
+        { provide: TotpService, useValue: totpServiceMock },
+      ],
     })
       .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(MfaAuthGuard)
       .useValue({ canActivate: () => true })
       .compile();
 
@@ -175,17 +199,21 @@ describe('AuthController', () => {
   });
 
   describe('requestEmailChange', () => {
-    it('delegates to AuthService.requestEmailChange with userId and new email', async () => {
+    it('delegates to AuthService.requestEmailChange with userId, new email, and optional code', async () => {
       const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
       (authServiceMock.requestEmailChange as jest.Mock).mockResolvedValue(
         undefined,
       );
 
-      await controller.requestEmailChange(request, { email: NEW_EMAIL });
+      await controller.requestEmailChange(request, {
+        email: NEW_EMAIL,
+        code: '123456',
+      });
 
       expect(authServiceMock.requestEmailChange).toHaveBeenCalledWith(
         USER_ID,
         NEW_EMAIL,
+        '123456',
       );
     });
   });
@@ -200,6 +228,226 @@ describe('AuthController', () => {
 
       expect(authServiceMock.confirmEmailChange).toHaveBeenCalledWith(
         PENDING_EMAIL_TOKEN,
+      );
+    });
+  });
+
+  describe('verifyOtp', () => {
+    it('delegates to AuthService.verifyOtp with userId, code, and method', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      const body = {
+        mfaToken: 'mfa-tok',
+        code: '123456',
+        method: 'totp' as const,
+      };
+
+      const result = await controller.verifyOtp(request, body);
+
+      expect(authServiceMock.verifyOtp).toHaveBeenCalledWith(
+        USER_ID,
+        '123456',
+        'totp',
+      );
+      expect(result).toEqual({ accessToken: ACCESS_TOKEN });
+    });
+  });
+
+  describe('totpSetup', () => {
+    it('delegates to TotpService.generateSetup with userId and email', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      const setupResult = {
+        qrCodeDataUrl: 'data:image/png;base64,...',
+        secret: 'ABCDEF',
+      };
+      (totpServiceMock.generateSetup as jest.Mock).mockResolvedValue(
+        setupResult,
+      );
+
+      const result = await controller.totpSetup(request);
+
+      expect(totpServiceMock.generateSetup).toHaveBeenCalledWith(
+        USER_ID,
+        USER_EMAIL,
+      );
+      expect(result).toBe(setupResult);
+    });
+  });
+
+  describe('totpVerifySetup', () => {
+    it('delegates to TotpService.verifySetup and wraps recovery codes in object', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      const recoveryCodes = ['aaaaa-bbbbb', 'ccccc-ddddd'];
+      (totpServiceMock.verifySetup as jest.Mock).mockResolvedValue(
+        recoveryCodes,
+      );
+
+      const result = await controller.totpVerifySetup(request, {
+        code: '123456',
+      });
+
+      expect(totpServiceMock.verifySetup).toHaveBeenCalledWith(
+        USER_ID,
+        '123456',
+      );
+      expect(result).toEqual({ recoveryCodes });
+    });
+  });
+
+  describe('emailTwoFactorSetup', () => {
+    it('delegates to EmailTwoFactorService.initiateSetup with userId', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      (emailTwoFactorServiceMock.initiateSetup as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.emailTwoFactorSetup(request);
+
+      expect(emailTwoFactorServiceMock.initiateSetup).toHaveBeenCalledWith(
+        USER_ID,
+      );
+    });
+  });
+
+  describe('emailTwoFactorVerify', () => {
+    it('delegates to EmailTwoFactorService.verifySetup and wraps recovery codes', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      const recoveryCodes = ['aaaaa-bbbbb'];
+      (emailTwoFactorServiceMock.verifySetup as jest.Mock).mockResolvedValue(
+        recoveryCodes,
+      );
+
+      const result = await controller.emailTwoFactorVerify(request, {
+        code: '123456',
+      });
+
+      expect(emailTwoFactorServiceMock.verifySetup).toHaveBeenCalledWith(
+        USER_ID,
+        '123456',
+      );
+      expect(result).toEqual({ recoveryCodes });
+    });
+  });
+
+  describe('emailTwoFactorResend', () => {
+    it('delegates to AuthService.sendReauthEmailCode with userId', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      (authServiceMock.sendReauthEmailCode as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.emailTwoFactorResend(request);
+
+      expect(authServiceMock.sendReauthEmailCode).toHaveBeenCalledWith(USER_ID);
+    });
+  });
+
+  describe('emailTwoFactorReauthSend', () => {
+    it('delegates to AuthService.sendReauthEmailCode with userId', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      (authServiceMock.sendReauthEmailCode as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.emailTwoFactorReauthSend(request);
+
+      expect(authServiceMock.sendReauthEmailCode).toHaveBeenCalledWith(USER_ID);
+    });
+  });
+
+  describe('disable2fa', () => {
+    it('delegates to AuthService.disable2fa with userId and credentials', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      (authServiceMock.disable2fa as jest.Mock).mockResolvedValue(undefined);
+
+      await controller.disable2fa(request, { currentPassword: 'open-sesame' });
+
+      expect(authServiceMock.disable2fa).toHaveBeenCalledWith(
+        USER_ID,
+        'open-sesame',
+        undefined,
+      );
+    });
+  });
+
+  describe('regenerateRecoveryCodes', () => {
+    it('delegates to AuthService.regenerateRecoveryCodes and wraps result', async () => {
+      const request = { user: { userId: USER_ID } } as never;
+      const recoveryCodes = ['aaaaa-bbbbb'];
+      (authServiceMock.regenerateRecoveryCodes as jest.Mock).mockResolvedValue(
+        recoveryCodes,
+      );
+
+      const result = await controller.regenerateRecoveryCodes(request, {
+        currentPassword: 'open-sesame',
+      });
+
+      expect(authServiceMock.regenerateRecoveryCodes).toHaveBeenCalledWith(
+        USER_ID,
+        'open-sesame',
+        undefined,
+      );
+      expect(result).toEqual({ recoveryCodes });
+    });
+  });
+
+  describe('googleCallback', () => {
+    it('redirects to oauth callback with the access token on success', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      const response = { redirect: jest.fn() } as never;
+      (authServiceMock.login as jest.Mock).mockResolvedValue({
+        accessToken: ACCESS_TOKEN,
+      });
+
+      await controller.googleCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        expect.stringContaining(`#token=${ACCESS_TOKEN}`),
+      );
+    });
+
+    it('redirects to login error page when login returns an MFA challenge', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      const response = { redirect: jest.fn() } as never;
+      (authServiceMock.login as jest.Mock).mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+
+      await controller.googleCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('error=mfa_required'),
+      );
+    });
+  });
+
+  describe('appleCallback', () => {
+    it('redirects to oauth callback with the access token on success', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      const response = { redirect: jest.fn() } as never;
+      (authServiceMock.login as jest.Mock).mockResolvedValue({
+        accessToken: ACCESS_TOKEN,
+      });
+
+      await controller.appleCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        expect.stringContaining(`#token=${ACCESS_TOKEN}`),
+      );
+    });
+
+    it('redirects to login error page when login returns an MFA challenge', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      const response = { redirect: jest.fn() } as never;
+      (authServiceMock.login as jest.Mock).mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'email',
+      });
+
+      await controller.appleCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('error=mfa_required'),
       );
     });
   });

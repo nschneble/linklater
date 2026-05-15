@@ -14,6 +14,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 interface JwtPayload {
   email: string;
   subject: string;
+  mfaPending?: boolean;
 }
 
 /**
@@ -44,6 +45,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * @returns An `AuthUser` object with `userId` and `email`.
    */
   async validate(payload: JwtPayload) {
-    return { userId: payload.subject, email: payload.email };
+    return {
+      userId: payload.subject,
+      email: payload.email,
+      mfaPending: payload.mfaPending,
+    };
   }
 }

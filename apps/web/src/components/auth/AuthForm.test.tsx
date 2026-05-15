@@ -6,7 +6,7 @@ import {
   act,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import AuthForm from './AuthForm';
 
 vi.mock('../../lib/api', () => ({
@@ -15,6 +15,8 @@ vi.mock('../../lib/api', () => ({
   register: vi.fn(),
   getMe: vi.fn(),
   getStoredToken: vi.fn().mockReturnValue(null),
+  verifyOtp: vi.fn(),
+  resendEmailTwoFactorCode: vi.fn(),
 }));
 
 vi.mock('../../auth/AuthContext', () => ({
@@ -23,6 +25,9 @@ vi.mock('../../auth/AuthContext', () => ({
 
 import * as apiModule from '../../lib/api';
 import { useAuth } from '../../auth/AuthContext';
+
+// Re-export the mocked functions for convenience
+const { verifyOtp, resendEmailTwoFactorCode } = apiModule;
 
 const USER_EMAIL = 'email@example.com';
 const USER_PASSWORD = 'strong-password-123';
@@ -41,6 +46,7 @@ function makeAuthContext(overrides = {}) {
     login: vi.fn(),
     loginWithToken: vi.fn(),
     logout: vi.fn(),
+    refreshUser: vi.fn().mockResolvedValue(undefined),
     register: vi.fn(),
     resendVerificationEmail: vi.fn(),
     setPendingEmail: vi.fn(),
@@ -50,10 +56,9 @@ function makeAuthContext(overrides = {}) {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks();
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
 });
-
-afterEach(() => vi.restoreAllMocks());
 
 function fillEmail(email: string) {
   fireEvent.change(screen.getByLabelText(/email/i), {
@@ -297,6 +302,194 @@ describe('AuthForm', () => {
       fireEvent.click(screen.getByRole('button', { name: /back to login/i }));
 
       expect(screen.getByRole('tab', { name: /log in/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('MFA challenge — TOTP', () => {
+    it('shows TOTP code input when login returns mfaToken with method totp', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByLabelText(/authenticator code/i),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('verifies TOTP code and completes login on success', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      const refreshUser = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ login: loginMock, refreshUser }),
+      );
+      vi.mocked(verifyOtp).mockResolvedValue({ accessToken: 'full-jwt' });
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByLabelText(/authenticator code/i),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByLabelText(/authenticator code/i), {
+        target: { value: '123456' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+      });
+
+      await waitFor(() => {
+        expect(verifyOtp).toHaveBeenCalledWith('mfa-tok', '123456', 'totp');
+        expect(refreshUser).toHaveBeenCalled();
+      });
+    });
+
+    it('shows a Use recovery code link for TOTP', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /use a recovery code/i }),
+        ).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('MFA challenge — Email', () => {
+    it('shows email code input when login returns mfaToken with method email', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'email',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/email code/i)).toBeInTheDocument();
+      });
+    });
+
+    it('shows a Resend code link for Email 2FA', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'email',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /resend code/i }),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('calls resendEmailTwoFactorCode with the mfaToken when Resend is clicked', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'email',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+      vi.mocked(resendEmailTwoFactorCode).mockResolvedValue(undefined);
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /resend code/i }),
+        ).toBeInTheDocument();
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /resend code/i }));
+      });
+
+      expect(resendEmailTwoFactorCode).toHaveBeenCalledWith('mfa-tok');
+    });
+  });
+
+  describe('MFA challenge — recovery code', () => {
+    it('switches to recovery code input when Use a recovery code is clicked', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /use a recovery code/i }),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /use a recovery code/i }),
+      );
+
+      expect(screen.getByLabelText(/recovery code/i)).toBeInTheDocument();
     });
   });
 });

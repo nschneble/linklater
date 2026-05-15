@@ -3,10 +3,16 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import AccountSettingsForm from './AccountSettingsForm';
 import type { User } from '../../auth/AuthContext';
 
-vi.mock('../../lib/api', () => ({
-  requestEmailChange: vi.fn(),
-  updateMe: vi.fn(),
-}));
+import { ApiError } from '../../lib/api';
+
+vi.mock('../../lib/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../lib/api')>();
+  return {
+    ...actual,
+    requestEmailChange: vi.fn(),
+    updateMe: vi.fn(),
+  };
+});
 
 vi.mock('../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
@@ -26,6 +32,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     mode: 'light',
     pendingEmail: null,
     theme: 'scanner-darkly',
+    twoFactorMethod: null,
+    twoFactorPending: false,
     userId: USER_ID,
     ...overrides,
   };
@@ -135,6 +143,34 @@ describe('AccountSettingsForm', () => {
       });
     });
 
+    it('shows an error when the server returns 403 (verification code required)', async () => {
+      vi.mocked(apiModule.requestEmailChange).mockRejectedValue(
+        new ApiError(
+          '2FA is enabled — provide a verification code to change your email',
+          403,
+        ),
+      );
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({ twoFactorMethod: 'email' }),
+        }),
+      );
+
+      render(<AccountSettingsForm />);
+      const emailInput = screen.getByLabelText(/change email/i);
+      fireEvent.change(emailInput, {
+        target: { value: 'new@example.com' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(
+          screen.getByText(/provide a verification code/i),
+        ).toBeInTheDocument();
+      });
+    });
+
     it('shows resend success message when resend email is clicked', async () => {
       const resendVerificationEmail = vi.fn().mockResolvedValue(undefined);
       vi.mocked(useAuth).mockReturnValue(
@@ -154,6 +190,48 @@ describe('AccountSettingsForm', () => {
         expect(
           screen.getByText(/verification email sent/i),
         ).toBeInTheDocument();
+      });
+    });
+
+    it('shows a 2FA code input when the user has 2FA enabled', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+      );
+
+      render(<AccountSettingsForm />);
+
+      expect(
+        screen.getByLabelText(/authenticator or recovery code/i),
+      ).toBeInTheDocument();
+    });
+
+    it('includes the 2FA code when requesting an email change with 2FA enabled', async () => {
+      vi.mocked(apiModule.requestEmailChange).mockResolvedValue(undefined);
+      const setPendingEmail = vi.fn();
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          setPendingEmail,
+          user: makeUser({ twoFactorMethod: 'totp' }),
+        }),
+      );
+
+      render(<AccountSettingsForm />);
+      fireEvent.change(screen.getByLabelText(/change email/i), {
+        target: { value: 'new@example.com' },
+      });
+      fireEvent.change(
+        screen.getByLabelText(/authenticator or recovery code/i),
+        {
+          target: { value: '123456' },
+        },
+      );
+      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+
+      await waitFor(() => {
+        expect(apiModule.requestEmailChange).toHaveBeenCalledWith(
+          'new@example.com',
+          '123456',
+        );
       });
     });
 

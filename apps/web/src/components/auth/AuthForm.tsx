@@ -3,7 +3,11 @@ import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import TabButton from '../common/TabButton';
-import { forgotPassword as apiForgotPassword } from '../../lib/api';
+import {
+  forgotPassword as apiForgotPassword,
+  resendEmailTwoFactorCode,
+  verifyOtp,
+} from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -14,6 +18,9 @@ const appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true';
 
 /** The three sub-views rendered by `AuthForm`. */
 type Mode = 'login' | 'register' | 'forgot-password';
+
+/** The MFA challenge method currently being shown to the user. */
+type MfaChallenge = 'totp' | 'email' | 'recovery';
 
 /**
  * Authentication form rendered for `/login`, `/signup`, and
@@ -36,11 +43,12 @@ type Mode = 'login' | 'register' | 'forgot-password';
  * confirmation state showing an `Alert` instead of the form fields.
  */
 export default function AuthForm() {
-  const { login, register } = useAuth();
+  const { login, refreshUser, register } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   const emailReference = useRef<HTMLInputElement>(null);
+  const mfaInputReference = useRef<HTMLInputElement>(null);
   const passwordReference = useRef<HTMLInputElement>(null);
 
   const [email, setEmail] = useState('');
@@ -48,6 +56,15 @@ export default function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
+
+  // MFA state — held only in component memory, never persisted
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
+  const [mfaOriginalMethod, setMfaOriginalMethod] = useState<
+    'totp' | 'email' | null
+  >(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
 
   const mode: Mode =
     location.pathname === '/signup'
@@ -72,6 +89,12 @@ export default function AuthForm() {
     emailReference.current?.focus();
   }, [mode]);
 
+  useEffect(() => {
+    if (mfaChallenge) {
+      mfaInputReference.current?.focus();
+    }
+  }, [mfaChallenge]);
+
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
     setError(null);
@@ -79,7 +102,13 @@ export default function AuthForm() {
 
     try {
       if (mode === 'login') {
-        await login(email, password);
+        const result = await login(email, password);
+        if (result && 'mfaToken' in result) {
+          setMfaToken(result.mfaToken);
+          setMfaChallenge(result.mfaMethod);
+          setMfaOriginalMethod(result.mfaMethod);
+          return;
+        }
       } else if (mode === 'register') {
         await register(email, password);
       } else {
@@ -92,11 +121,46 @@ export default function AuthForm() {
           (location.state as { from?: string })?.from ?? '/unread';
         navigate(destination, { replace: true });
       }
-    } catch (error: unknown) {
-      const message = getErrorMessage(error, 'Something went dreadfully wrong');
+    } catch (caught: unknown) {
+      const message = getErrorMessage(
+        caught,
+        'Something went dreadfully wrong',
+      );
       setError(message.charAt(0).toUpperCase() + message.slice(1));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (formEvent: FormEvent) => {
+    formEvent.preventDefault();
+    if (!mfaToken || !mfaChallenge) return;
+    setError(null);
+    setLoading(true);
+    try {
+      await verifyOtp(mfaToken, mfaCode, mfaChallenge);
+      await refreshUser();
+      const destination =
+        (location.state as { from?: string })?.from ?? '/unread';
+      navigate(destination, { replace: true });
+    } catch (caught: unknown) {
+      const message = getErrorMessage(caught, 'Invalid code');
+      setError(message.charAt(0).toUpperCase() + message.slice(1));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendEmailCode = async () => {
+    if (!mfaToken) return;
+    setError(null);
+    setResendLoading(true);
+    try {
+      await resendEmailTwoFactorCode(mfaToken);
+    } catch (caught: unknown) {
+      setError(getErrorMessage(caught, 'Failed to resend code'));
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -161,6 +225,99 @@ export default function AuthForm() {
             </p>
           </form>
         )}
+      </div>
+    );
+  }
+
+  if (mfaChallenge) {
+    const isRecovery = mfaChallenge === 'recovery';
+    const isEmail = mfaChallenge === 'email';
+    const labelId = isRecovery
+      ? 'mfa-recovery-code'
+      : isEmail
+        ? 'mfa-email-code'
+        : 'mfa-totp-code';
+    const labelText = isRecovery
+      ? 'Recovery code'
+      : isEmail
+        ? 'Email code'
+        : 'Authenticator code';
+
+    return (
+      <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
+        <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold text-balance">
+          {isRecovery
+            ? 'Enter a recovery code'
+            : isEmail
+              ? 'Check your email'
+              : 'Two-factor authentication'}
+        </h1>
+        <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
+          {isRecovery
+            ? 'Enter one of your saved recovery codes.'
+            : isEmail
+              ? 'Enter the code we sent to your email.'
+              : 'Enter the code from your authenticator app.'}
+        </p>
+
+        <form className="space-y-4" onSubmit={handleVerifyOtp}>
+          <label
+            className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+            htmlFor={labelId}
+          >
+            {labelText}
+          </label>
+          <FormInput
+            id={labelId}
+            ref={mfaInputReference}
+            type="text"
+            inputMode={isRecovery ? 'text' : 'numeric'}
+            autoComplete={isRecovery ? 'off' : 'one-time-code'}
+            maxLength={isRecovery ? undefined : 6}
+            onChange={(event) => setMfaCode(event.target.value)}
+            value={mfaCode}
+            required
+          />
+
+          {error && <Alert variant="error">{error}</Alert>}
+
+          <PrimaryButton disabled={loading} className="w-full py-2.5">
+            {loading ? 'Verifying…' : 'Verify'}
+          </PrimaryButton>
+        </form>
+
+        <div className="mt-4 flex flex-col items-center gap-2 text-center">
+          {isEmail && (
+            <LinkButton
+              disabled={resendLoading}
+              onClick={handleResendEmailCode}
+            >
+              {resendLoading ? 'Sending…' : 'Resend code'}
+            </LinkButton>
+          )}
+          {!isRecovery && (
+            <LinkButton
+              onClick={() => {
+                setMfaChallenge('recovery');
+                setMfaCode('');
+                setError(null);
+              }}
+            >
+              Use a recovery code
+            </LinkButton>
+          )}
+          {isRecovery && (
+            <LinkButton
+              onClick={() => {
+                setMfaChallenge(mfaOriginalMethod ?? 'totp');
+                setMfaCode('');
+                setError(null);
+              }}
+            >
+              Use a different method
+            </LinkButton>
+          )}
+        </div>
       </div>
     );
   }
