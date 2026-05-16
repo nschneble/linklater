@@ -58,6 +58,38 @@ export class MagicLinkService {
     }
 
     await this.usersService.clearMagicLinkToken(user.id);
+    if (!user.emailVerifiedAt) {
+      await this.usersService.markEmailVerified(user.id);
+    }
     return user;
+  }
+
+  /**
+   * Creates an account (if none exists) and sends a magic link. When the
+   * email is already registered, silently sends a login magic link so the
+   * caller always gets a 200 response regardless of whether the address exists.
+   *
+   * @param email - The email address to register and send a magic link to.
+   */
+  async requestSignup(email: string): Promise<void> {
+    const existingUser = await this.usersService.findByEmail(email);
+
+    let userId: string;
+    let theme: string;
+
+    if (existingUser) {
+      userId = existingUser.id;
+      theme = existingUser.theme;
+    } else {
+      const created = await this.usersService.createWithoutPassword(email);
+      if (!created) return; // race-condition guard
+      userId = created.id;
+      theme = created.theme;
+    }
+
+    const token = generateToken();
+    const expiresAt = new Date(Date.now() + FIFTEEN_MINUTES_MS);
+    await this.usersService.updateMagicLinkToken(userId, token, expiresAt);
+    await this.emailService.sendMagicLink(email, token, theme);
   }
 }

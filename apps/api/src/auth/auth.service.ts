@@ -249,6 +249,16 @@ export class AuthService {
   }
 
   /**
+   * Creates a new account (if none exists) and sends a magic link.
+   * When the email is already registered, silently sends a login magic link.
+   *
+   * @param email - The email address to register with a magic link.
+   */
+  async registerMagicLink(email: string): Promise<void> {
+    await this.magicLinkService.requestSignup(email);
+  }
+
+  /**
    * Validates a magic link token and issues a full session JWT.
    *
    * @param token - The 64-character hex token from the login link.
@@ -346,6 +356,9 @@ export class AuthService {
 
     const newPasswordHash = await bcrypt.hash(newPassword, 12);
     await this.usersService.resetPasswordWithToken(user.id, newPasswordHash);
+    if (!user.emailVerifiedAt) {
+      await this.usersService.markEmailVerified(user.id);
+    }
   }
 
   /**

@@ -15,6 +15,7 @@ vi.mock('../../lib/api', () => ({
   register: vi.fn(),
   getMe: vi.fn(),
   getStoredToken: vi.fn().mockReturnValue(null),
+  registerMagicLink: vi.fn(),
   requestMagicLink: vi.fn(),
   verifyOtp: vi.fn(),
 }));
@@ -26,7 +27,7 @@ vi.mock('../../auth/AuthContext', () => ({
 import * as apiModule from '../../lib/api';
 import { useAuth } from '../../auth/AuthContext';
 
-const { requestMagicLink, verifyOtp } = apiModule;
+const { registerMagicLink, requestMagicLink, verifyOtp } = apiModule;
 
 const USER_EMAIL = 'email@example.com';
 const USER_PASSWORD = 'strong-password-123';
@@ -153,6 +154,17 @@ describe('AuthForm', () => {
         'aria-selected',
         'true',
       );
+      // With no password entered, the button defaults to magic link sign-up
+      expect(
+        screen.getByRole('button', { name: /sign up with magic link/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('shows "Create account" button when a password is typed in register mode', () => {
+      renderAuthForm();
+      fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
+      fillPassword(USER_PASSWORD);
+
       expect(
         screen.getByRole('button', { name: /create account/i }),
       ).toBeInTheDocument();
@@ -456,6 +468,68 @@ describe('AuthForm', () => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
         expect(screen.getByText(/service unavailable/i)).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('register mode — magic link (no password)', () => {
+    it('shows "Sign up with magic link" button in register mode when password field is empty', () => {
+      renderAuthForm();
+      fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
+
+      expect(
+        screen.getByRole('button', { name: /sign up with magic link/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('calls registerMagicLink with email when submitted with no password in register mode', async () => {
+      vi.mocked(registerMagicLink).mockResolvedValue(undefined);
+
+      renderAuthForm();
+      fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
+      fillEmail(USER_EMAIL);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /sign up with magic link/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(registerMagicLink).toHaveBeenCalledWith(USER_EMAIL);
+      });
+    });
+
+    it('shows "Check your email to finish signing up!" after successful registerMagicLink', async () => {
+      vi.mocked(registerMagicLink).mockResolvedValue(undefined);
+
+      renderAuthForm();
+      fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
+      fillEmail(USER_EMAIL);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /sign up with magic link/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('status')).toBeInTheDocument();
+        expect(
+          screen.getByText(/check your email to finish signing up/i),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('shows "Log in with magic link" (not "Sign up") when in login mode with no password', () => {
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+
+      expect(
+        screen.getByRole('button', { name: /log in with magic link/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /sign up with magic link/i }),
+      ).not.toBeInTheDocument();
     });
   });
 

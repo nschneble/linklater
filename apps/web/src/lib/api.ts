@@ -297,6 +297,14 @@ export async function verifyTotpSetup(
   });
 }
 
+export async function registerMagicLink(email: string): Promise<void> {
+  await apiFetch(
+    '/auth/register-magic-link',
+    { body: JSON.stringify({ email }), method: 'POST' },
+    false,
+  );
+}
+
 export async function requestMagicLink(email: string): Promise<void> {
   await apiFetch(
     '/auth/request-magic-link',

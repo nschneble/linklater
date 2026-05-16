@@ -6,6 +6,7 @@ import PrimaryButton from '../common/PrimaryButton';
 import TabButton from '../common/TabButton';
 import {
   forgotPassword as apiForgotPassword,
+  registerMagicLink,
   requestMagicLink,
   verifyOtp,
 } from '../../lib/api';
@@ -101,8 +102,12 @@ export default function AuthForm() {
     setLoading(true);
 
     try {
-      if (mode === 'login' && password.length === 0) {
-        await requestMagicLink(email);
+      if ((mode === 'login' || mode === 'register') && password.length === 0) {
+        if (mode === 'login') {
+          await requestMagicLink(email);
+        } else {
+          await registerMagicLink(email);
+        }
         setMagicLinkSent(true);
         return;
       }
@@ -357,28 +362,38 @@ export default function AuthForm() {
           type="password"
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           onChange={(event) => setPassword(event.target.value)}
-          placeholder={mode === 'login' ? 'Leave blank to use magic link' : ''}
+          placeholder={
+            mode === 'login'
+              ? 'Leave blank to use magic link'
+              : 'Leave blank to sign up with magic link'
+          }
           value={password}
-          required={mode === 'register'}
+          required={false}
         />
 
         {error && <Alert variant="error">{error}</Alert>}
         {magicLinkSent && (
-          <Alert variant="success">Check your email for a login link!</Alert>
+          <Alert variant="success">
+            {mode === 'login'
+              ? 'Check your email for a login link!'
+              : 'Check your email to finish signing up!'}
+          </Alert>
         )}
 
         <PrimaryButton disabled={loading} className="w-full py-2.5">
           <i
-            className={`fa-solid ${mode === 'login' && password.length === 0 ? 'fa-wand-magic-sparkles' : 'fa-right-to-bracket'} text-xs`}
+            className={`fa-solid ${password.length === 0 ? 'fa-wand-magic-sparkles' : 'fa-right-to-bracket'} text-xs`}
             aria-hidden="true"
           />
           {loading
             ? 'Working…'
-            : mode === 'login'
-              ? password.length === 0
+            : password.length === 0
+              ? mode === 'login'
                 ? 'Log in with magic link'
-                : 'Log in'
-              : 'Create account'}
+                : 'Sign up with magic link'
+              : mode === 'login'
+                ? 'Log in'
+                : 'Create account'}
         </PrimaryButton>
       </form>
 

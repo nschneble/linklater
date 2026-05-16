@@ -34,6 +34,7 @@ describe('AuthController', () => {
     me: jest.fn(),
     regenerateRecoveryCodes: jest.fn(),
     register: jest.fn(),
+    registerMagicLink: jest.fn(),
     requestEmailChange: jest.fn(),
     requestMagicLink: jest.fn(),
     resendVerificationEmail: jest.fn(),
@@ -301,6 +302,20 @@ describe('AuthController', () => {
       await controller.requestMagicLink({ email: USER_EMAIL });
 
       expect(authServiceMock.requestMagicLink).toHaveBeenCalledWith(USER_EMAIL);
+    });
+  });
+
+  describe('registerMagicLink', () => {
+    it('delegates to AuthService.registerMagicLink with the email from the request body', async () => {
+      (authServiceMock.registerMagicLink as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.registerMagicLink({ email: USER_EMAIL });
+
+      expect(authServiceMock.registerMagicLink).toHaveBeenCalledWith(
+        USER_EMAIL,
+      );
     });
   });
 

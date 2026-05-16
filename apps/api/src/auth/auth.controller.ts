@@ -325,6 +325,22 @@ export class AuthController {
   }
 
   @ApiOperation({
+    summary: 'Register with a magic link (passwordless sign-up)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Magic link sent (account created if new).',
+  })
+  @ApiResponse({ status: 429, description: 'Too many registration attempts.' })
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-register': { ttl: 60000, limit: 5 } })
+  @Post('register-magic-link')
+  @HttpCode(200)
+  async registerMagicLink(@Body() body: ForgotPasswordDto): Promise<void> {
+    await this.authService.registerMagicLink(body.email);
+  }
+
+  @ApiOperation({
     summary: 'Verify a magic link token and issue a session JWT',
   })
   @ApiResponse({

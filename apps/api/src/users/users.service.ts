@@ -315,6 +315,23 @@ export class UsersService {
     });
   }
 
+  /**
+   * Creates a new user without a password (for magic-link sign-ups).
+   * Returns `null` when the email is already registered so callers can
+   * still send a login magic link to the existing account.
+   *
+   * @param email - The email address for the new account.
+   * @returns The newly created user without the password hash, or `null` if the email is already taken.
+   */
+  async createWithoutPassword(email: string) {
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) return null;
+    const user = await this.prisma.user.create({
+      data: { email, passwordHash: null },
+    });
+    return withoutPasswordHash(user);
+  }
+
   async createOAuthUser(email: string) {
     const user = await this.prisma.user.create({
       data: { email, passwordHash: null, emailVerifiedAt: new Date() },

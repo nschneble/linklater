@@ -611,4 +611,35 @@ describe('UsersService', () => {
       });
     });
   });
+
+  describe('createWithoutPassword', () => {
+    it('creates a user with passwordHash null and returns user without passwordHash when email is new', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
+      (prismaMock.user.create as jest.Mock).mockResolvedValue(
+        makeUser({ passwordHash: null }),
+      );
+
+      const result = await service.createWithoutPassword(USER_EMAIL);
+
+      expect(prismaMock.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: USER_EMAIL,
+            passwordHash: null,
+          }),
+        }),
+      );
+      expect(result).not.toBeNull();
+      expect(result).not.toHaveProperty('passwordHash');
+    });
+
+    it('returns null when the email is already registered', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+
+      const result = await service.createWithoutPassword(USER_EMAIL);
+
+      expect(result).toBeNull();
+      expect(prismaMock.user.create).not.toHaveBeenCalled();
+    });
+  });
 });

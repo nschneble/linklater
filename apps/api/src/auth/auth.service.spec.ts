@@ -94,6 +94,7 @@ describe('AuthService', () => {
 
   const magicLinkServiceMock = {
     requestLogin: jest.fn().mockResolvedValue(undefined),
+    requestSignup: jest.fn().mockResolvedValue(undefined),
     verifyToken: jest.fn(),
   } as unknown as MagicLinkService;
 
@@ -654,6 +655,41 @@ describe('AuthService', () => {
       await expect(
         service.resetPassword(RESET_TOKEN, NEW_PASSWORD),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('calls markEmailVerified when the user email is not yet verified', async () => {
+      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        emailVerifiedAt: null,
+        resetToken: RESET_TOKEN,
+        resetTokenExpiresAt: new Date(Date.now() + 3600000),
+      });
+      (usersServiceMock.resetPasswordWithToken as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (usersServiceMock.markEmailVerified as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.resetPassword(RESET_TOKEN, NEW_PASSWORD);
+
+      expect(usersServiceMock.markEmailVerified).toHaveBeenCalledWith(USER_ID);
+    });
+
+    it('does not call markEmailVerified when the email is already verified', async () => {
+      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        emailVerifiedAt: new Date(),
+        resetToken: RESET_TOKEN,
+        resetTokenExpiresAt: new Date(Date.now() + 3600000),
+      });
+      (usersServiceMock.resetPasswordWithToken as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.resetPassword(RESET_TOKEN, NEW_PASSWORD);
+
+      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
     });
   });
 
@@ -1369,6 +1405,16 @@ describe('AuthService', () => {
       await service.requestMagicLink(USER_EMAIL);
 
       expect(magicLinkServiceMock.requestLogin).toHaveBeenCalledWith(
+        USER_EMAIL,
+      );
+    });
+  });
+
+  describe('registerMagicLink', () => {
+    it('delegates to magicLinkService.requestSignup', async () => {
+      await service.registerMagicLink(USER_EMAIL);
+
+      expect(magicLinkServiceMock.requestSignup).toHaveBeenCalledWith(
         USER_EMAIL,
       );
     });

@@ -37,6 +37,7 @@ import {
   logout,
   regenerateRecoveryCodes,
   register,
+  registerMagicLink,
   requestEmailChange,
   requestMagicLink,
   resendVerificationEmail,
@@ -639,6 +640,24 @@ describe('requestMagicLink', () => {
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/auth/request-magic-link');
+    expect((options as { method: string }).method).toBe('POST');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBeUndefined();
+    const body = JSON.parse((options as { body: string }).body) as {
+      email: string;
+    };
+    expect(body.email).toBe('user@example.com');
+  });
+});
+
+describe('registerMagicLink', () => {
+  it('POSTs to /auth/register-magic-link with email and no Authorization header', async () => {
+    const fetchMock = mockFetch({});
+
+    await registerMagicLink('user@example.com');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/register-magic-link');
     expect((options as { method: string }).method).toBe('POST');
     const headers = (options as { headers: Record<string, string> }).headers;
     expect(headers['Authorization']).toBeUndefined();
