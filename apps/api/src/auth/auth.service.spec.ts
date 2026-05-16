@@ -28,6 +28,7 @@ import { MagicLinkService } from './magic-link.service';
 import { TotpService } from './totp.service';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../email/email.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 const makeP2002 = () =>
   new (
@@ -102,6 +103,20 @@ describe('AuthService', () => {
     verifyCode: jest.fn(),
   } as unknown as TotpService;
 
+  const prismaServiceMock = {
+    refreshToken: {
+      create: jest.fn().mockResolvedValue({}),
+      delete: jest.fn().mockResolvedValue({}),
+      deleteMany: jest.fn().mockResolvedValue({}),
+      findUnique: jest.fn(),
+    },
+    extensionAuthCode: {
+      create: jest.fn().mockResolvedValue({}),
+      delete: jest.fn().mockResolvedValue({}),
+      findUnique: jest.fn(),
+    },
+  } as unknown as PrismaService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -111,6 +126,7 @@ describe('AuthService', () => {
         { provide: EmailService, useValue: emailServiceMock },
         { provide: MagicLinkService, useValue: magicLinkServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
+        { provide: PrismaService, useValue: prismaServiceMock },
       ],
     }).compile();
 
@@ -451,7 +467,7 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('returns an accessToken when 2FA is not enabled', async () => {
+    it('returns an accessToken and refreshToken when 2FA is not enabled', async () => {
       const result = await service.login({
         email: USER_EMAIL,
         userId: USER_ID,
@@ -461,7 +477,16 @@ describe('AuthService', () => {
         email: USER_EMAIL,
         subject: USER_ID,
       });
-      expect(result).toEqual({ accessToken: SIGNED_TOKEN });
+      expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
+      expect(result).toHaveProperty('refreshToken');
+      expect(typeof (result as { refreshToken: string }).refreshToken).toBe(
+        'string',
+      );
+      expect(prismaServiceMock.refreshToken.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: USER_ID }),
+        }),
+      );
     });
 
     it('returns mfaToken and mfaMethod totp when totpEnabledAt is set', async () => {
@@ -476,6 +501,65 @@ describe('AuthService', () => {
         { expiresIn: '5m' },
       );
       expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
+      expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('refresh', () => {
+    const RAW_REFRESH_TOKEN = 'a'.repeat(64);
+
+    it('returns a new token pair when the refresh token is valid', async () => {
+      (
+        prismaServiceMock.refreshToken.findUnique as jest.Mock
+      ).mockResolvedValue({
+        id: 'rt-1',
+        userId: USER_ID,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+        user: { id: USER_ID, email: USER_EMAIL },
+      });
+
+      const result = await service.refresh(RAW_REFRESH_TOKEN);
+
+      expect(prismaServiceMock.refreshToken.delete).toHaveBeenCalledWith({
+        where: { id: 'rt-1' },
+      });
+      expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
+      expect(result).toHaveProperty('refreshToken');
+    });
+
+    it('throws UnauthorizedException when the refresh token is not found', async () => {
+      (
+        prismaServiceMock.refreshToken.findUnique as jest.Mock
+      ).mockResolvedValue(null);
+
+      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('throws UnauthorizedException when the refresh token is expired', async () => {
+      (
+        prismaServiceMock.refreshToken.findUnique as jest.Mock
+      ).mockResolvedValue({
+        id: 'rt-1',
+        userId: USER_ID,
+        expiresAt: new Date(Date.now() - 1000),
+        user: { id: USER_ID, email: USER_EMAIL },
+      });
+
+      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('revokeAllRefreshTokens', () => {
+    it('deletes all refresh tokens for the user', async () => {
+      await service.revokeAllRefreshTokens(USER_ID);
+
+      expect(prismaServiceMock.refreshToken.deleteMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID },
+      });
     });
   });
 
@@ -980,7 +1064,7 @@ describe('AuthService', () => {
     const RECOVERY_CODE_STUB = 'aaaaa-bbbbb';
 
     describe('totp method', () => {
-      it('returns accessToken when TOTP code is valid', async () => {
+      it('returns accessToken and refreshToken when TOTP code is valid', async () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
@@ -995,6 +1079,7 @@ describe('AuthService', () => {
           '123456',
         );
         expect(result).toHaveProperty('accessToken');
+        expect(result).toHaveProperty('refreshToken');
       });
 
       it('throws UnauthorizedException when TOTP code is invalid', async () => {
@@ -1054,6 +1139,7 @@ describe('AuthService', () => {
           codeId,
         );
         expect(result).toHaveProperty('accessToken');
+        expect(result).toHaveProperty('refreshToken');
       });
 
       it('throws UnauthorizedException when no code matches', async () => {
@@ -1421,7 +1507,7 @@ describe('AuthService', () => {
   });
 
   describe('verifyMagicLink', () => {
-    it('returns accessToken when the token is valid', async () => {
+    it('returns accessToken and refreshToken when the token is valid', async () => {
       (magicLinkServiceMock.verifyToken as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
@@ -1433,6 +1519,7 @@ describe('AuthService', () => {
         'valid-token',
       );
       expect(result).toHaveProperty('accessToken');
+      expect(result).toHaveProperty('refreshToken');
     });
 
     it('throws BadRequestException when the token is invalid', async () => {
@@ -1630,6 +1717,103 @@ describe('AuthService', () => {
           USER_EMAIL,
         ),
       ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('createExtensionAuthCode', () => {
+    it('stores a hashed code and returns the raw code', async () => {
+      const rawCode = await service.createExtensionAuthCode(
+        USER_ID,
+        'abc_challenge',
+      );
+
+      expect(typeof rawCode).toBe('string');
+      expect(rawCode.length).toBeGreaterThan(0);
+      expect(prismaServiceMock.extensionAuthCode.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            userId: USER_ID,
+            codeChallenge: 'abc_challenge',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('exchangeExtensionCode', () => {
+    it('issues a token pair when code and PKCE verifier are valid', async () => {
+      const rawCode = 'a'.repeat(64);
+      const codeVerifier = 'valid-verifier';
+
+      const { createHash } = await import('node:crypto');
+      const codeChallenge = createHash('sha256')
+        .update(codeVerifier)
+        .digest('base64url');
+
+      (
+        prismaServiceMock.extensionAuthCode.findUnique as jest.Mock
+      ).mockResolvedValue({
+        id: 'eac-1',
+        userId: USER_ID,
+        codeChallenge,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        user: { id: USER_ID, email: USER_EMAIL },
+      });
+
+      const result = await service.exchangeExtensionCode(rawCode, codeVerifier);
+
+      expect(prismaServiceMock.extensionAuthCode.delete).toHaveBeenCalledWith({
+        where: { id: 'eac-1' },
+      });
+      expect(result).toHaveProperty('accessToken');
+      expect(result).toHaveProperty('refreshToken');
+    });
+
+    it('throws UnauthorizedException when the code is not found', async () => {
+      (
+        prismaServiceMock.extensionAuthCode.findUnique as jest.Mock
+      ).mockResolvedValue(null);
+
+      await expect(
+        service.exchangeExtensionCode('bad-code', 'verifier'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException when the code is expired', async () => {
+      (
+        prismaServiceMock.extensionAuthCode.findUnique as jest.Mock
+      ).mockResolvedValue({
+        id: 'eac-1',
+        userId: USER_ID,
+        codeChallenge: 'challenge',
+        expiresAt: new Date(Date.now() - 1000),
+        user: { id: USER_ID, email: USER_EMAIL },
+      });
+
+      await expect(
+        service.exchangeExtensionCode('any-code', 'any-verifier'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException when the PKCE verifier does not match', async () => {
+      const { createHash } = await import('node:crypto');
+      const realChallenge = createHash('sha256')
+        .update('correct-verifier')
+        .digest('base64url');
+
+      (
+        prismaServiceMock.extensionAuthCode.findUnique as jest.Mock
+      ).mockResolvedValue({
+        id: 'eac-1',
+        userId: USER_ID,
+        codeChallenge: realChallenge,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        user: { id: USER_ID, email: USER_EMAIL },
+      });
+
+      await expect(
+        service.exchangeExtensionCode('any-code', 'wrong-verifier'),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 });

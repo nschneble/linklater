@@ -8,6 +8,7 @@ import {
   HttpCode,
   Param,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -37,6 +38,8 @@ import { Disable2faDto } from './dto/disable-2fa.dto.js';
 import { RegenerateRecoveryCodesDto } from './dto/regenerate-recovery-codes.dto.js';
 import { TotpVerifySetupDto } from './dto/totp-verify-setup.dto.js';
 import { VerifyOtpDto } from './dto/verify-otp.dto.js';
+import { RefreshTokenDto } from './dto/refresh-token.dto.js';
+import { ExtensionTokenDto } from './dto/extension-token.dto.js';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**
@@ -428,7 +431,7 @@ export class AuthController {
       return;
     }
     response.redirect(
-      `${process.env.APP_URL}/oauth/callback#token=${result.accessToken}`,
+      `${process.env.APP_URL}/oauth/callback#token=${result.accessToken}&refresh=${result.refreshToken}`,
     );
   }
 
@@ -449,7 +452,7 @@ export class AuthController {
       return;
     }
     response.redirect(
-      `${process.env.APP_URL}/oauth/callback#token=${result.accessToken}`,
+      `${process.env.APP_URL}/oauth/callback#token=${result.accessToken}&refresh=${result.refreshToken}`,
     );
   }
 
@@ -545,5 +548,93 @@ export class AuthController {
   async setPassword(@Req() request: AuthRequest, @Body() body: SetPasswordDto) {
     await this.authService.setFirstPassword(request.user.userId, body.password);
     return { success: true };
+  }
+
+  @ApiOperation({ summary: 'Exchange a refresh token for a new token pair' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a new accessToken and rotated refreshToken.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Refresh token is invalid or expired.',
+  })
+  @ApiResponse({ status: 429, description: 'Too many refresh attempts.' })
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-refresh': { ttl: 60000, limit: 10 } })
+  @Post('refresh')
+  @HttpCode(200)
+  async refreshToken(@Body() body: RefreshTokenDto) {
+    return this.authService.refresh(body.refreshToken);
+  }
+
+  @ApiOperation({ summary: 'Revoke all refresh tokens (log out everywhere)' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'All sessions revoked.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Delete('sessions')
+  @HttpCode(200)
+  async revokeAllSessions(@Req() request: AuthRequest) {
+    await this.authService.revokeAllRefreshTokens(request.user.userId);
+    return { success: true };
+  }
+
+  @ApiOperation({ summary: 'Authorize a browser extension (PKCE flow)' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to redirect_uri with auth code.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid redirect_uri or missing parameters.',
+  })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Get('extension/authorize')
+  async extensionAuthorize(
+    @Req() request: AuthRequest,
+    @Res() response: Response,
+    @Query('code_challenge') codeChallenge: string,
+    @Query('redirect_uri') redirectUri: string,
+  ) {
+    if (!codeChallenge || !redirectUri) {
+      throw new BadRequestException(
+        'code_challenge and redirect_uri are required',
+      );
+    }
+
+    const allowedUris = process.env.EXTENSION_REDIRECT_URIS
+      ? process.env.EXTENSION_REDIRECT_URIS.split(',').map((uri) => uri.trim())
+      : [];
+
+    if (!allowedUris.includes(redirectUri)) {
+      throw new BadRequestException('Invalid redirect_uri');
+    }
+
+    const code = await this.authService.createExtensionAuthCode(
+      request.user.userId,
+      codeChallenge,
+    );
+
+    const callbackUrl = new URL(redirectUri);
+    callbackUrl.searchParams.set('code', code);
+    response.redirect(callbackUrl.toString());
+  }
+
+  @ApiOperation({ summary: 'Exchange extension auth code for token pair' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns accessToken and refreshToken.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid code or PKCE verifier.',
+  })
+  @Post('extension/token')
+  @HttpCode(200)
+  async extensionToken(@Body() body: ExtensionTokenDto) {
+    return this.authService.exchangeExtensionCode(body.code, body.codeVerifier);
   }
 }

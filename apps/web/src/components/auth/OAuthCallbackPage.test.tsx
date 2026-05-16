@@ -74,7 +74,7 @@ describe('OAuthCallbackPage', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(loginWithToken).toHaveBeenCalledWith('my-oauth-token');
+      expect(loginWithToken).toHaveBeenCalledWith('my-oauth-token', undefined);
     });
   });
 

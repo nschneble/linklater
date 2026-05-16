@@ -65,9 +65,9 @@ interface AuthContextValue {
     email: string,
     password: string,
   ) => Promise<{ mfaToken: string; mfaMethod: 'totp' } | void>;
-  /** Stores an OAuth-issued JWT and fetches the user profile. Used by `OAuthCallbackPage`. */
-  loginWithToken: (token: string) => Promise<void>;
-  /** Clears the stored JWT and sets `user` to `null`. */
+  /** Stores OAuth-issued tokens and fetches the user profile. Used by `OAuthCallbackPage`. */
+  loginWithToken: (accessToken: string, refreshToken?: string) => Promise<void>;
+  /** Revokes all server sessions, clears stored tokens, and sets `user` to `null`. */
   logout: () => void;
   /** Creates a new account and immediately logs in. */
   register: (email: string, password: string) => Promise<void>;
@@ -163,11 +163,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const loginWithToken = useCallback(async (token: string) => {
-    setStoredToken(token);
-    const me = await getMe();
-    setUser(mapMeToUser(me));
-  }, []);
+  const loginWithToken = useCallback(
+    async (accessToken: string, refreshToken?: string) => {
+      setStoredToken(accessToken, refreshToken);
+      const me = await getMe();
+      setUser(mapMeToUser(me));
+    },
+    [],
+  );
 
   /**
    * Creates an account then immediately logs in so the user lands on the
@@ -181,9 +184,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [login],
   );
 
-  /** Clears the stored JWT and removes `user` from state. */
   const logout = useCallback(() => {
-    apiLogout();
+    void apiLogout();
     setUser(null);
   }, []);
 

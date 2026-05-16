@@ -23,15 +23,17 @@ export default function OAuthCallbackPage() {
 
   useEffect(() => {
     const hash = window.location.hash.slice(1);
-    const token = new URLSearchParams(hash).get('token');
+    const parameters = new URLSearchParams(hash);
+    const accessToken = parameters.get('token');
+    const refreshToken = parameters.get('refresh') ?? undefined;
 
-    if (!token) {
+    if (!accessToken) {
       setStatus('error');
       setErrorMessage('Invalid authentication response. Please try again.');
       return;
     }
 
-    loginWithToken(token)
+    loginWithToken(accessToken, refreshToken)
       .then(() => navigate('/unread', { replace: true }))
       .catch((error: unknown) => {
         setStatus('error');

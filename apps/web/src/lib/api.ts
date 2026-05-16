@@ -1,12 +1,17 @@
 /**
  * Central API client for all communication with the Linklater back-end.
  *
- * Token management: the JWT is stored in `localStorage` under the key
- * `linklater_token` AND in the module-level `storedToken` variable. The
- * in-memory copy avoids a `localStorage` read on every request.
+ * Token management: the access token (JWT) and refresh token are stored in
+ * `localStorage` and in module-level variables. The in-memory copies avoid
+ * `localStorage` reads on every request.
+ *
+ * When a request returns 401 and a refresh token is stored, `apiFetch`
+ * automatically calls `POST /auth/refresh`, stores the new token pair, and
+ * retries the original request once. If the retry also fails, both tokens are
+ * cleared and the error is re-thrown so the caller can redirect to login.
  *
  * All requests go through `apiFetch`, which handles auth headers, JSON
- * parsing, and converting non-2xx responses into `Error` instances with
+ * parsing, and converting non-2xx responses into `ApiError` instances with
  * the server's message.
  */
 
@@ -16,38 +21,55 @@ if (!API_BASE_URL) {
   console.warn('VITE_API_BASE_URL is not set');
 }
 
-// In-memory cache of the JWT so we do not hit localStorage on every request.
+// In-memory caches so we do not hit localStorage on every request.
 let storedToken: string | null = localStorage.getItem('linklater_token');
+let storedRefreshToken: string | null = localStorage.getItem(
+  'linklater_refresh_token',
+);
 
-/** Returns the currently stored JWT, or `null` if the user is not logged in. */
+/** Returns the currently stored access token (JWT), or `null` if not logged in. */
 export function getStoredToken(): string | null {
   return storedToken;
 }
 
-/**
- * Persists a JWT to both the in-memory cache and `localStorage`.
- * Called automatically by `login` after a successful authentication response.
- *
- * @param token - The JWT string to store.
- */
-export function setStoredToken(token: string): void {
-  storedToken = token;
-  localStorage.setItem('linklater_token', token);
+/** Returns the currently stored refresh token, or `null` if not available. */
+export function getStoredRefreshToken(): string | null {
+  return storedRefreshToken;
 }
 
 /**
- * Clears the JWT from the in-memory cache and `localStorage`.
- * Called by `logout` and by `AuthContext` when the stored token fails
- * the `/auth/me` check on page load (e.g. expired token).
+ * Persists access and refresh tokens to in-memory cache and `localStorage`.
+ *
+ * @param accessToken - The JWT access token.
+ * @param refreshToken - The refresh token (optional — omit to leave unchanged).
+ */
+export function setStoredToken(
+  accessToken: string,
+  refreshToken?: string,
+): void {
+  storedToken = accessToken;
+  localStorage.setItem('linklater_token', accessToken);
+
+  if (refreshToken !== undefined) {
+    storedRefreshToken = refreshToken;
+    localStorage.setItem('linklater_refresh_token', refreshToken);
+  }
+}
+
+/**
+ * Clears both the access token and refresh token from cache and `localStorage`.
+ * Called by `logout` and when token refresh fails.
  */
 export function clearStoredToken(): void {
   storedToken = null;
+  storedRefreshToken = null;
   localStorage.removeItem('linklater_token');
+  localStorage.removeItem('linklater_refresh_token');
 }
 
 /** The shape of a successful POST /auth/login response — either a full session or an MFA challenge. */
 export type LoginResponse =
-  | { accessToken: string }
+  | { accessToken: string; refreshToken: string }
   | { mfaToken: string; mfaMethod: 'totp' };
 
 /** Error thrown by `apiFetch` on non-2xx responses. Includes the HTTP status code. */
@@ -61,12 +83,58 @@ export class ApiError extends Error {
   }
 }
 
+async function parseResponse<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  if (!text) return undefined as T;
+  return JSON.parse(text) as T;
+}
+
+async function parseError(response: Response): Promise<ApiError> {
+  const text = await response.text();
+  let message = text || `Request failed with ${response.status}`;
+  try {
+    const body = JSON.parse(text) as { message?: string };
+    if (body.message) message = body.message;
+  } catch {
+    // Body is not JSON — use the raw text as the error message.
+  }
+  return new ApiError(message, response.status);
+}
+
+async function attemptTokenRefresh(): Promise<boolean> {
+  if (!storedRefreshToken) return false;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: storedRefreshToken }),
+    });
+
+    if (!response.ok) {
+      clearStoredToken();
+      return false;
+    }
+
+    const data = (await response.json()) as {
+      accessToken: string;
+      refreshToken: string;
+    };
+    setStoredToken(data.accessToken, data.refreshToken);
+    return true;
+  } catch {
+    clearStoredToken();
+    return false;
+  }
+}
+
 /**
  * Core HTTP helper used by every API function in this module.
  *
  * Automatically attaches the `Authorization: Bearer` header when
- * `includeAuth` is `true` (the default). Throws an `Error` with the
- * server's error message when the response status is not 2xx.
+ * `includeAuth` is `true` (the default). On a 401 response, attempts a token
+ * refresh and retries the request once before throwing. Throws an `ApiError`
+ * with the server's message on non-2xx responses.
  *
  * @param path - The API path relative to `VITE_API_BASE_URL` (e.g. `'/links'`).
  * @param options - Standard `RequestInit` options (method, body, etc.).
@@ -99,20 +167,32 @@ export async function apiFetch<T>(
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    let message = text || `Request failed with ${response.status}`;
-    try {
-      const body = JSON.parse(text) as { message?: string };
-      if (body.message) message = body.message;
-    } catch {
-      // Body is not JSON — use the raw text as the error message.
+    if (
+      response.status === 401 &&
+      includeAuth === true &&
+      path !== '/auth/refresh'
+    ) {
+      const refreshed = await attemptTokenRefresh();
+      if (refreshed) {
+        const retryHeaders = {
+          ...headers,
+          Authorization: `Bearer ${storedToken}`,
+        };
+        const retryResponse = await fetch(`${API_BASE_URL}${path}`, {
+          ...options,
+          headers: retryHeaders,
+        });
+        if (retryResponse.ok) {
+          return parseResponse<T>(retryResponse);
+        }
+        throw await parseError(retryResponse);
+      }
     }
-    throw new ApiError(message, response.status);
+
+    throw await parseError(response);
   }
 
-  const text = await response.text();
-  if (!text) return undefined as T;
-  return JSON.parse(text) as T;
+  return parseResponse<T>(response);
 }
 
 // ---------------------------------------------------------------------------
@@ -156,17 +236,30 @@ export async function login(
   );
 
   if ('accessToken' in data) {
-    setStoredToken(data.accessToken);
+    setStoredToken(data.accessToken, data.refreshToken);
   }
   return data;
 }
 
 /**
- * Endpoint: (none — client-side only)
- * Clears the stored JWT. The server has no logout endpoint because JWTs are
- * stateless — the front-end simply discards the token.
+ * Endpoint: DELETE /auth/sessions
+ * Revokes all refresh tokens for the current user (server-side logout).
+ * Best-effort — if the request fails, the local tokens are still cleared.
  */
-export function logout() {
+export async function revokeAllSessions(): Promise<void> {
+  try {
+    await apiFetch('/auth/sessions', { method: 'DELETE' });
+  } catch {
+    // Best-effort — clear local tokens regardless.
+  }
+}
+
+/**
+ * Endpoint: (none — client-side only)
+ * Revokes all server-side refresh tokens and clears both tokens locally.
+ */
+export async function logout(): Promise<void> {
+  await revokeAllSessions();
   clearStoredToken();
 }
 
@@ -315,13 +408,13 @@ export async function requestMagicLink(email: string): Promise<void> {
 
 export async function verifyMagicLink(
   token: string,
-): Promise<{ accessToken: string }> {
-  const data = await apiFetch<{ accessToken: string }>(
+): Promise<{ accessToken: string; refreshToken: string }> {
+  const data = await apiFetch<{ accessToken: string; refreshToken: string }>(
     '/auth/verify-magic-link',
     { body: JSON.stringify({ token }), method: 'POST' },
     false,
   );
-  setStoredToken(data.accessToken);
+  setStoredToken(data.accessToken, data.refreshToken);
   return data;
 }
 
@@ -329,13 +422,13 @@ export async function verifyOtp(
   mfaToken: string,
   code: string,
   method: 'totp' | 'recovery',
-): Promise<{ accessToken: string }> {
-  const data = await apiFetch<{ accessToken: string }>(
+): Promise<{ accessToken: string; refreshToken: string }> {
+  const data = await apiFetch<{ accessToken: string; refreshToken: string }>(
     '/auth/verify-otp',
     { body: JSON.stringify({ mfaToken, code, method }), method: 'POST' },
     false,
   );
-  setStoredToken(data.accessToken);
+  setStoredToken(data.accessToken, data.refreshToken);
   return data;
 }
 

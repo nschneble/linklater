@@ -61,13 +61,14 @@ describe('VerifyLoginPage', () => {
     vi.mocked(useAuth).mockReturnValue(makeAuthContext({ loginWithToken }));
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-tok',
+      refreshToken: 'refresh-tok',
     });
 
     renderPage('valid-token');
 
     await waitFor(() => {
       expect(apiModule.verifyMagicLink).toHaveBeenCalledWith('valid-token');
-      expect(loginWithToken).toHaveBeenCalledWith('jwt-tok');
+      expect(loginWithToken).toHaveBeenCalledWith('jwt-tok', 'refresh-tok');
       expect(screen.getByText(/unread page/i)).toBeInTheDocument();
     });
   });

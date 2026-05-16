@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { randomBytes } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import {
   RECOVERY_CODE_REGEX,
@@ -16,12 +16,15 @@ import {
 } from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
 import { Prisma } from '../prisma/index.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 import { MagicLinkService } from './magic-link.service.js';
 import { TotpService } from './totp.service.js';
 import { UsersService, withoutPasswordHash } from '../users/index.js';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const TWENTY_FOUR_HOURS_MS = 24 * ONE_HOUR_MS;
+const ONE_YEAR_MS = 365 * 24 * ONE_HOUR_MS;
+const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
 /** Returns a cryptographically random 64-character hex string for use as a one-time token. */
 function generateToken() {
@@ -52,6 +55,7 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly magicLinkService: MagicLinkService,
     private readonly totpService: TotpService,
+    private readonly prisma: PrismaService,
   ) {}
 
   /**
@@ -234,8 +238,80 @@ export class AuthService {
       return { mfaToken, mfaMethod: 'totp' as const };
     }
 
-    const payload = { subject: user.userId, email: user.email };
-    return { accessToken: this.jwtService.sign(payload) };
+    return this.issueTokenPair(user.userId, user.email);
+  }
+
+  async refresh(rawRefreshToken: string) {
+    const tokenHash = createHash('sha256')
+      .update(rawRefreshToken)
+      .digest('hex');
+    const stored = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+
+    if (!stored || stored.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    await this.prisma.refreshToken.delete({ where: { id: stored.id } });
+    return this.issueTokenPair(stored.userId, stored.user.email);
+  }
+
+  async revokeAllRefreshTokens(userId: string) {
+    await this.prisma.refreshToken.deleteMany({ where: { userId } });
+  }
+
+  async createExtensionAuthCode(
+    userId: string,
+    codeChallenge: string,
+  ): Promise<string> {
+    const rawCode = randomBytes(32).toString('hex');
+    const codeHash = createHash('sha256').update(rawCode).digest('hex');
+    const expiresAt = new Date(Date.now() + FIVE_MINUTES_MS);
+
+    await this.prisma.extensionAuthCode.create({
+      data: { codeHash, codeChallenge, userId, expiresAt },
+    });
+
+    return rawCode;
+  }
+
+  async exchangeExtensionCode(rawCode: string, codeVerifier: string) {
+    const codeHash = createHash('sha256').update(rawCode).digest('hex');
+    const stored = await this.prisma.extensionAuthCode.findUnique({
+      where: { codeHash },
+      include: { user: true },
+    });
+
+    if (!stored || stored.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired authorization code');
+    }
+
+    const computedChallenge = createHash('sha256')
+      .update(codeVerifier)
+      .digest('base64url');
+    if (computedChallenge !== stored.codeChallenge) {
+      throw new UnauthorizedException('Invalid code verifier');
+    }
+
+    await this.prisma.extensionAuthCode.delete({ where: { id: stored.id } });
+    return this.issueTokenPair(stored.userId, stored.user.email);
+  }
+
+  private async issueTokenPair(userId: string, email: string) {
+    const rawRefreshToken = randomBytes(32).toString('hex');
+    const tokenHash = createHash('sha256')
+      .update(rawRefreshToken)
+      .digest('hex');
+    const expiresAt = new Date(Date.now() + ONE_YEAR_MS);
+
+    await this.prisma.refreshToken.create({
+      data: { tokenHash, userId, expiresAt },
+    });
+
+    const accessToken = this.jwtService.sign({ subject: userId, email });
+    return { accessToken, refreshToken: rawRefreshToken };
   }
 
   /**
@@ -267,12 +343,7 @@ export class AuthService {
    */
   async verifyMagicLink(token: string) {
     const user = await this.magicLinkService.verifyToken(token);
-    return {
-      accessToken: this.jwtService.sign({
-        subject: user.id,
-        email: user.email,
-      }),
-    };
+    return this.issueTokenPair(user.id, user.email);
   }
 
   /**
@@ -407,12 +478,7 @@ export class AuthService {
       if (!isValid) {
         throw new UnauthorizedException('Invalid TOTP code');
       }
-      return {
-        accessToken: this.jwtService.sign({
-          subject: userId,
-          email: user.email,
-        }),
-      };
+      return this.issueTokenPair(userId, user.email);
     }
 
     if (method === 'recovery') {
@@ -432,12 +498,7 @@ export class AuthService {
         recoveryCodes[matchIndex].id,
       );
 
-      return {
-        accessToken: this.jwtService.sign({
-          subject: userId,
-          email: user.email,
-        }),
-      };
+      return this.issueTokenPair(userId, user.email);
     }
 
     throw new UnauthorizedException('Invalid OTP');

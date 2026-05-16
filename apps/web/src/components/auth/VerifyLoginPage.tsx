@@ -32,8 +32,8 @@ export default function VerifyLoginPage() {
     }
 
     verifyMagicLink(token)
-      .then(async ({ accessToken }) => {
-        await loginWithToken(accessToken);
+      .then(async ({ accessToken, refreshToken }) => {
+        await loginWithToken(accessToken, refreshToken);
         setStatus('success');
         navigate('/unread', { replace: true });
       })

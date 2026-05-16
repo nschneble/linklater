@@ -34,6 +34,7 @@ import {
   getLinks,
   getMe,
   getRandomLink,
+  getStoredRefreshToken,
   getStoredToken,
   login,
   logout,
@@ -44,6 +45,7 @@ import {
   requestMagicLink,
   resendVerificationEmail,
   resetPassword,
+  revokeAllSessions,
   revokeApiToken,
   setStoredToken,
   setupTotp,
@@ -106,17 +108,32 @@ describe('token helpers', () => {
     expect(getStoredToken()).toBeNull();
   });
 
-  it('setStoredToken persists the token in memory and localStorage', () => {
+  it('setStoredToken persists the access token in memory and localStorage', () => {
     setStoredToken('my-jwt');
     expect(getStoredToken()).toBe('my-jwt');
     expect(localStorage.getItem('linklater_token')).toBe('my-jwt');
   });
 
-  it('clearStoredToken removes the token from memory and localStorage', () => {
-    setStoredToken('my-jwt');
+  it('setStoredToken also persists the refresh token when provided', () => {
+    setStoredToken('my-jwt', 'my-refresh');
+    expect(getStoredToken()).toBe('my-jwt');
+    expect(getStoredRefreshToken()).toBe('my-refresh');
+    expect(localStorage.getItem('linklater_refresh_token')).toBe('my-refresh');
+  });
+
+  it('setStoredToken leaves the refresh token unchanged when not provided', () => {
+    setStoredToken('my-jwt', 'existing-refresh');
+    setStoredToken('new-jwt');
+    expect(getStoredRefreshToken()).toBe('existing-refresh');
+  });
+
+  it('clearStoredToken removes both tokens from memory and localStorage', () => {
+    setStoredToken('my-jwt', 'my-refresh');
     clearStoredToken();
     expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
     expect(localStorage.getItem('linklater_token')).toBeNull();
+    expect(localStorage.getItem('linklater_refresh_token')).toBeNull();
   });
 });
 
@@ -221,6 +238,100 @@ describe('apiFetch', () => {
 
     expect(result).toBeUndefined();
   });
+
+  it('retries with new token after 401 when a refresh token is stored', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        // First attempt → 401
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        // Token refresh → 200
+        ok: true,
+        status: 200,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              accessToken: 'new-jwt',
+              refreshToken: 'new-refresh',
+            }),
+          ),
+        json: () =>
+          Promise.resolve({
+            accessToken: 'new-jwt',
+            refreshToken: 'new-refresh',
+          }),
+      })
+      .mockResolvedValueOnce({
+        // Retry → 200
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ id: 'result' })),
+      }) as unknown as typeof fetch;
+
+    const result = await apiFetch<{ id: string }>('/test');
+
+    expect(result).toEqual({ id: 'result' });
+    expect(getStoredToken()).toBe('new-jwt');
+    expect(getStoredRefreshToken()).toBe('new-refresh');
+  });
+
+  it('clears tokens and throws when refresh token is expired', async () => {
+    setStoredToken('expired-jwt', 'expired-refresh');
+
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Invalid refresh token' })),
+      }) as unknown as typeof fetch;
+
+    await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
+    expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
+  });
+
+  it('does not retry when no refresh token is stored', async () => {
+    setStoredToken('expired-jwt');
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: () => Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+    }) as unknown as typeof fetch;
+    globalThis.fetch = fetchMock;
+
+    await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
+    expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
+  });
+
+  it('does not retry when path is /auth/refresh', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: () => Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+    }) as unknown as typeof fetch;
+    globalThis.fetch = fetchMock;
+
+    await expect(apiFetch('/auth/refresh', {}, false)).rejects.toBeInstanceOf(
+      ApiError,
+    );
+    expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -242,20 +353,24 @@ describe('register', () => {
 });
 
 describe('login', () => {
-  it('POSTs to /auth/login and stores the returned access token', async () => {
-    mockFetch({ accessToken: 'fresh-jwt' });
+  it('POSTs to /auth/login and stores the returned access and refresh tokens', async () => {
+    mockFetch({ accessToken: 'fresh-jwt', refreshToken: 'fresh-refresh' });
 
     await login('user@example.com', 'password123');
 
     expect(getStoredToken()).toBe('fresh-jwt');
+    expect(getStoredRefreshToken()).toBe('fresh-refresh');
   });
 
   it('returns the login response', async () => {
-    mockFetch({ accessToken: 'fresh-jwt' });
+    mockFetch({ accessToken: 'fresh-jwt', refreshToken: 'fresh-refresh' });
 
     const result = await login('user@example.com', 'password123');
 
-    expect(result).toEqual({ accessToken: 'fresh-jwt' });
+    expect(result).toEqual({
+      accessToken: 'fresh-jwt',
+      refreshToken: 'fresh-refresh',
+    });
   });
 
   it('does not store a token when the server returns mfaToken', async () => {
@@ -276,10 +391,34 @@ describe('login', () => {
 });
 
 describe('logout', () => {
-  it('clears the stored token', () => {
-    setStoredToken('some-jwt');
-    logout();
+  it('clears both stored tokens', async () => {
+    mockFetch({ success: true });
+    setStoredToken('some-jwt', 'some-refresh');
+
+    await logout();
+
     expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
+  });
+});
+
+describe('revokeAllSessions', () => {
+  it('DELETEs /auth/sessions with auth header', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ success: true });
+
+    await revokeAllSessions();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/sessions');
+    expect((options as { method: string }).method).toBe('DELETE');
+  });
+
+  it('does not throw when the server returns an error', async () => {
+    setStoredToken('my-jwt');
+    mockFetchText('Unauthorized', 401);
+
+    await expect(revokeAllSessions()).resolves.toBeUndefined();
   });
 });
 

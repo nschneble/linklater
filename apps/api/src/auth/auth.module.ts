@@ -49,7 +49,7 @@ const oauthProviders: Provider[] = [
     EmailModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '90d' },
+      signOptions: { expiresIn: '1h' },
     }),
     PassportModule,
     TokensModule,

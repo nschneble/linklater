@@ -1,3 +1,4 @@
+import ExtensionAuthorizePage from '../components/auth/ExtensionAuthorizePage';
 import LandingPage from '../components/LandingPage';
 import LogoutPage from '../components/auth/LogoutPage';
 import OAuthCallbackPage from '../components/auth/OAuthCallbackPage';
@@ -36,6 +37,11 @@ export function commonRoutes() {
       key="verify-login"
       path="/verify-login"
       element={<VerifyLoginPage />}
+    />,
+    <Route
+      key="extension-authorize"
+      path="/extension/authorize"
+      element={<ExtensionAuthorizePage />}
     />,
   ];
 }
