@@ -162,5 +162,15 @@ describe('SettingsView', () => {
         /already linked/i,
       );
     });
+
+    it('passes link_error=email_mismatch as a linkError to SocialLoginsSection', () => {
+      renderSettingsView({
+        route: '/settings?link_error=email_mismatch',
+        googleEnabled: true,
+      });
+      expect(screen.getByTestId('link-error')).toHaveTextContent(
+        /different email/i,
+      );
+    });
   });
 });

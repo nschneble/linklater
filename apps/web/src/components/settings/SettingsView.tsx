@@ -20,6 +20,8 @@ const LINKED_MESSAGES: Record<string, string> = {
 const LINK_ERROR_MESSAGES: Record<string, string> = {
   already_linked:
     'That account is already linked to another user. Try a different one.',
+  email_mismatch:
+    'That Google account uses a different email address. Use the Google account that matches your Linklater email.',
 };
 
 export default function SettingsView({

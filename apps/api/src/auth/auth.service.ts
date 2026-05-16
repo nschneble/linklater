@@ -662,8 +662,16 @@ export class AuthService {
     userId: string,
     provider: string,
     providerId: string,
-    _providerEmail: string,
+    providerEmail: string,
   ): Promise<void> {
+    const user = await this.usersService.findById(userId);
+
+    if (providerEmail !== user.email) {
+      throw new BadRequestException(
+        'This Google account uses a different email address than your Linklater account.',
+      );
+    }
+
     const existing = await this.usersService.findOAuthAccount(
       provider,
       providerId,
@@ -674,6 +682,11 @@ export class AuthService {
         'This provider account is already linked to a different user',
       );
     }
+
     await this.usersService.linkOAuthAccount(userId, provider, providerId);
+
+    if (!user.emailVerifiedAt) {
+      await this.usersService.markEmailVerified(userId);
+    }
   }
 }

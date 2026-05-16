@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
@@ -487,7 +487,7 @@ describe('AuthController', () => {
       );
     });
 
-    it('redirects with link_error when ConflictException is thrown', async () => {
+    it('redirects with link_error=already_linked when ConflictException is thrown', async () => {
       process.env.APP_URL = 'https://app.example.com';
       const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
       const response = { redirect: jest.fn() } as unknown as Response;
@@ -499,6 +499,21 @@ describe('AuthController', () => {
 
       expect(response.redirect).toHaveBeenCalledWith(
         'https://app.example.com/settings?link_error=already_linked',
+      );
+    });
+
+    it('redirects with link_error=email_mismatch when BadRequestException is thrown', async () => {
+      process.env.APP_URL = 'https://app.example.com';
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+      (authServiceMock.linkOAuthAccountToUser as jest.Mock).mockRejectedValue(
+        new BadRequestException('Email mismatch'),
+      );
+
+      await controller.googleLinkCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        'https://app.example.com/settings?link_error=email_mismatch',
       );
     });
   });
