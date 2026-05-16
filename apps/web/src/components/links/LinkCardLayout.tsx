@@ -41,7 +41,7 @@ function getPlaceholderUrl(url: string) {
     .trim()
     .replace('#', '');
   const text = new URL(url).hostname.replace(/^www\./, '');
-  return `https://placehold.co/284x160/${accent}/${accentFg}?text=${text}`;
+  return `https://placehold.co/240x126/${accent}/${accentFg}?text=${text}`;
 }
 
 /**
