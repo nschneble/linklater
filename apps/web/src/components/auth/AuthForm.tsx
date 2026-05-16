@@ -18,7 +18,7 @@ const googleSsoEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true';
 const appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true';
 
 /** The sub-views rendered by `AuthForm`. */
-type Mode = 'login' | 'register' | 'forgot-password' | 'magic-link';
+type Mode = 'login' | 'register' | 'forgot-password';
 
 /** The MFA challenge method currently being shown to the user. */
 type MfaChallenge = 'totp' | 'recovery';
@@ -58,7 +58,6 @@ export default function AuthForm() {
   const [password, setPassword] = useState('');
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
 
-  const [magicLinkMode, setMagicLinkMode] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
 
   // MFA state — held only in component memory, never persisted
@@ -66,32 +65,29 @@ export default function AuthForm() {
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
 
-  const routeMode: 'login' | 'register' | 'forgot-password' =
+  const mode: Mode =
     location.pathname === '/signup'
       ? 'register'
       : location.pathname === '/forgot-password'
         ? 'forgot-password'
         : 'login';
 
-  const mode: Mode = magicLinkMode ? 'magic-link' : routeMode;
-
   useEffect(() => {
     setPassword('');
     setError(null);
     setLoading(false);
     setForgotPasswordSent(false);
-    setMagicLinkMode(false);
     setMagicLinkSent(false);
 
     const emailInputValue = emailReference.current?.value ?? '';
 
-    if (routeMode !== 'forgot-password' && emailInputValue.length > 0) {
+    if (mode !== 'forgot-password' && emailInputValue.length > 0) {
       passwordReference.current?.focus();
       return;
     }
 
     emailReference.current?.focus();
-  }, [routeMode]);
+  }, [mode]);
 
   useEffect(() => {
     if (mfaChallenge) {
@@ -105,7 +101,7 @@ export default function AuthForm() {
     setLoading(true);
 
     try {
-      if (mode === 'magic-link') {
+      if (mode === 'login' && password.length === 0) {
         await requestMagicLink(email);
         setMagicLinkSent(true);
         return;
@@ -161,12 +157,6 @@ export default function AuthForm() {
   };
 
   const handleModeChange = (newMode: Mode) => {
-    if (newMode === 'magic-link') {
-      setMagicLinkMode(true);
-      setError(null);
-      return;
-    }
-    setMagicLinkMode(false);
     const from = (location.state as { from?: string })?.from;
     const path =
       newMode === 'register'
@@ -176,59 +166,6 @@ export default function AuthForm() {
           : '/login';
     navigate(path, { state: { from }, replace: true });
   };
-
-  if (mode === 'magic-link') {
-    return (
-      <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
-        <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold text-balance">
-          Log in by email
-        </h1>
-        <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
-          We'll send you a login link. No password needed.
-        </p>
-
-        {magicLinkSent ? (
-          <div className="text-center space-y-4">
-            <Alert variant="success">Check your email for a login link!</Alert>
-            <LinkButton onClick={() => handleModeChange('login')}>
-              Back to login
-            </LinkButton>
-          </div>
-        ) : (
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <label
-              className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
-              htmlFor="magic-link-email"
-            >
-              Email
-            </label>
-            <FormInput
-              id="magic-link-email"
-              ref={emailReference}
-              type="email"
-              autoComplete="email"
-              onChange={(event) => setEmail(event.target.value)}
-              value={email}
-              required
-            />
-
-            {error && <Alert variant="error">{error}</Alert>}
-
-            <PrimaryButton disabled={loading} className="w-full py-2.5">
-              <i className="fa-solid fa-envelope text-xs" aria-hidden="true" />
-              {loading ? 'Sending…' : 'Send login link'}
-            </PrimaryButton>
-
-            <p className="text-center">
-              <LinkButton onClick={() => handleModeChange('login')}>
-                Back to login
-              </LinkButton>
-            </p>
-          </form>
-        )}
-      </div>
-    );
-  }
 
   if (mode === 'forgot-password') {
     return (
@@ -422,10 +359,13 @@ export default function AuthForm() {
           onChange={(event) => setPassword(event.target.value)}
           placeholder={mode === 'login' ? 'Leave blank to use magic link' : ''}
           value={password}
-          required
+          required={mode === 'register'}
         />
 
         {error && <Alert variant="error">{error}</Alert>}
+        {magicLinkSent && (
+          <Alert variant="success">Check your email for a login link!</Alert>
+        )}
 
         <PrimaryButton disabled={loading} className="w-full py-2.5">
           <i
@@ -464,9 +404,9 @@ export default function AuthForm() {
                 variant="elevated"
                 title="Continue with Google"
                 className="w-full py-2.5 rounded-lg"
-                onClick={() =>
-                  navigate(`${import.meta.env.VITE_API_BASE_URL}/auth/google`)
-                }
+                onClick={() => {
+                  window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
+                }}
               >
                 <i
                   className="fa-brands fa-google text-[0.7rem]"
@@ -500,13 +440,10 @@ export default function AuthForm() {
       )}
 
       <div
-        className={`mt-4 flex flex-col items-center gap-2 text-center transition-opacity duration-200 ${routeMode === 'login' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`mt-4 flex flex-col items-center gap-2 text-center transition-opacity duration-200 ${mode === 'login' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
         <LinkButton onClick={() => handleModeChange('forgot-password')}>
           I literally have no idea what my password is
-        </LinkButton>
-        <LinkButton onClick={() => handleModeChange('magic-link')}>
-          Log in by email instead
         </LinkButton>
       </div>
     </div>

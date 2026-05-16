@@ -13,6 +13,7 @@
   - password reset
   - Google SSO
   - multi-factor authentication
+  - magic link login
 - accessibility
   - full keyboard navigation
   - keyboard shortcuts

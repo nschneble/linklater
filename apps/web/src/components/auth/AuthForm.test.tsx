@@ -389,43 +389,52 @@ describe('AuthForm', () => {
     });
   });
 
-  describe('magic-link mode', () => {
-    it('shows the magic link form when "Log in by email instead" is clicked', () => {
+  describe('magic link (no password)', () => {
+    it('shows "Log in with magic link" button when password field is empty', () => {
       renderAuthForm();
+      fillEmail(USER_EMAIL);
 
-      fireEvent.click(
-        screen.getByRole('button', { name: /log in by email instead/i }),
-      );
-
-      expect(screen.getByText(/no password needed/i)).toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: /send login link/i }),
+        screen.getByRole('button', { name: /log in with magic link/i }),
       ).toBeInTheDocument();
     });
 
-    it('calls requestMagicLink with email and shows success message', async () => {
+    it('calls requestMagicLink with email when submitted with no password', async () => {
       vi.mocked(requestMagicLink).mockResolvedValue(undefined);
 
       renderAuthForm();
-      fireEvent.click(
-        screen.getByRole('button', { name: /log in by email instead/i }),
-      );
-      fireEvent.change(screen.getByLabelText(/email/i), {
-        target: { value: USER_EMAIL },
-      });
+      fillEmail(USER_EMAIL);
 
       await act(async () => {
         fireEvent.click(
-          screen.getByRole('button', { name: /send login link/i }),
+          screen.getByRole('button', { name: /log in with magic link/i }),
         );
       });
 
       await waitFor(() => {
         expect(requestMagicLink).toHaveBeenCalledWith(USER_EMAIL);
+      });
+    });
+
+    it('shows an inline success alert while keeping the form visible', async () => {
+      vi.mocked(requestMagicLink).mockResolvedValue(undefined);
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /log in with magic link/i }),
+        );
+      });
+
+      await waitFor(() => {
         expect(screen.getByRole('status')).toBeInTheDocument();
         expect(
           screen.getByText(/check your email for a login link/i),
         ).toBeInTheDocument();
+        expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
       });
     });
 
@@ -435,16 +444,11 @@ describe('AuthForm', () => {
       );
 
       renderAuthForm();
-      fireEvent.click(
-        screen.getByRole('button', { name: /log in by email instead/i }),
-      );
-      fireEvent.change(screen.getByLabelText(/email/i), {
-        target: { value: USER_EMAIL },
-      });
+      fillEmail(USER_EMAIL);
 
       await act(async () => {
         fireEvent.click(
-          screen.getByRole('button', { name: /send login link/i }),
+          screen.getByRole('button', { name: /log in with magic link/i }),
         );
       });
 
@@ -452,19 +456,6 @@ describe('AuthForm', () => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
         expect(screen.getByText(/service unavailable/i)).toBeInTheDocument();
       });
-    });
-
-    it('returns to login when Back to login is clicked', () => {
-      renderAuthForm();
-
-      fireEvent.click(
-        screen.getByRole('button', { name: /log in by email instead/i }),
-      );
-      expect(screen.getByText(/no password needed/i)).toBeInTheDocument();
-
-      fireEvent.click(screen.getByRole('button', { name: /back to login/i }));
-
-      expect(screen.getByRole('tab', { name: /log in/i })).toBeInTheDocument();
     });
   });
 
