@@ -1,0 +1,11 @@
+pg_version = "16.0"
+
+excluded_rules = [
+  # Prisma generates TIMESTAMP(3) by default — use @db.Timestamptz in schema to opt in per-field
+  "prefer-timestamptz",
+  # Prisma wraps every migration in a transaction; CONCURRENTLY cannot run inside a transaction
+  "require-concurrent-index-creation",
+  "require-concurrent-index-deletion",
+  # Prisma manages migration idempotency via its own state tracking, not IF NOT EXISTS guards
+  "prefer-robust-stmts",
+]

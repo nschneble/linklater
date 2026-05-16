@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Use Node.js 22.x
         uses: actions/setup-node@v4
@@ -49,6 +51,22 @@ jobs:
       - name: Run migrations
         working-directory: apps/api
         run: npx prisma migrate deploy
+
+      - name: Lint new migrations
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="origin/${{ github.base_ref }}"
+          else
+            BASE="HEAD~1"
+          fi
+          CHANGED=$(git diff --name-only --diff-filter=A "$BASE"...HEAD | grep 'migration\.sql$' || true)
+          if [ -n "$CHANGED" ]; then
+            echo "Linting new migrations:"
+            echo "$CHANGED"
+            echo "$CHANGED" | xargs npx squawk
+          else
+            echo "No new migrations to lint"
+          fi
 
       - name: Lint
         run: npm run lint
