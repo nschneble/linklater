@@ -9,7 +9,7 @@ interface KeyboardShortcutsModalProps {
 
 /** The shortcuts displayed in the modal. Must stay in sync with `useKeyboardShortcuts`. */
 const shortcuts = [
-  { key: '↑ / ↓', description: 'Navigate links / user menu' },
+  { key: '↑ / ↓', description: 'Navigate links / menu' },
   { key: '← / →', description: 'Switch tabs' },
   { key: 'Enter', description: 'Open link / menu item' },
   { key: '1', description: 'Show unread links' },

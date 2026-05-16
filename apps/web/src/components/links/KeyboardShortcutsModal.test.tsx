@@ -9,7 +9,7 @@ describe('KeyboardShortcutsModal', () => {
   it('renders all keyboard shortcuts', () => {
     render(<KeyboardShortcutsModal onClose={vi.fn()} />);
 
-    expect(screen.getByText('Navigate links / user menu')).toBeInTheDocument();
+    expect(screen.getByText('Navigate links / menu')).toBeInTheDocument();
     expect(screen.getByText('Switch tabs')).toBeInTheDocument();
     expect(screen.getByText('Open link / menu item')).toBeInTheDocument();
     expect(screen.getByText('Show unread links')).toBeInTheDocument();
