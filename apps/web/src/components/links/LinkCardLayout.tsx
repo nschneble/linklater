@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import PrimaryButton from '../common/PrimaryButton';
 import type { Link } from '../../lib/api';
 
 /**
@@ -173,13 +174,7 @@ export default function LinkCardLayout({
 
         {link.readAt && (
           <div className="flex justify-end pt-1">
-            <button
-              type="button"
-              onClick={onUnreadClick}
-              className="py-1.5 px-2 -mx-2 -my-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] text-xs transition-colors active:scale-[0.96] cursor-pointer"
-            >
-              Mark as unread
-            </button>
+            <PrimaryButton onClick={onUnreadClick}>Mark unread</PrimaryButton>
           </div>
         )}
       </div>
