@@ -420,6 +420,7 @@ export default function AuthForm() {
           type="password"
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           onChange={(event) => setPassword(event.target.value)}
+          placeholder={mode === 'login' ? 'Leave blank to use magic link' : ''}
           value={password}
           required
         />
@@ -428,13 +429,15 @@ export default function AuthForm() {
 
         <PrimaryButton disabled={loading} className="w-full py-2.5">
           <i
-            className="fa-solid fa-right-to-bracket text-xs"
+            className={`fa-solid ${mode === 'login' && password.length === 0 ? 'fa-wand-magic-sparkles' : 'fa-right-to-bracket'} text-xs`}
             aria-hidden="true"
           />
           {loading
             ? 'Working…'
             : mode === 'login'
-              ? 'Log in'
+              ? password.length === 0
+                ? 'Log in with magic link'
+                : 'Log in'
               : 'Create account'}
         </PrimaryButton>
       </form>
