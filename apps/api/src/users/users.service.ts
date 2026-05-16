@@ -342,45 +342,22 @@ export class UsersService {
     });
   }
 
-  async saveEmailTwoFactorCode(id: string, codeHash: string, expiresAt: Date) {
+  async findByMagicLinkToken(token: string) {
+    return this.prisma.user.findUnique({ where: { magicLinkToken: token } });
+  }
+
+  async updateMagicLinkToken(userId: string, token: string, expiresAt: Date) {
     await this.prisma.user.update({
-      where: { id },
-      data: {
-        emailTwoFactorCodeHash: codeHash,
-        emailTwoFactorExpiresAt: expiresAt,
-      },
+      where: { id: userId },
+      data: { magicLinkToken: token, magicLinkTokenExpiresAt: expiresAt },
     });
   }
 
-  async clearEmailTwoFactorCode(id: string) {
+  async clearMagicLinkToken(userId: string) {
     await this.prisma.user.update({
-      where: { id },
-      data: { emailTwoFactorCodeHash: null, emailTwoFactorExpiresAt: null },
+      where: { id: userId },
+      data: { magicLinkToken: null, magicLinkTokenExpiresAt: null },
     });
-  }
-
-  /**
-   * Atomically enables Email 2FA and replaces any existing recovery codes
-   * with the provided set.
-   */
-  async enableEmailTwoFactorWithRecoveryCodes(
-    userId: string,
-    codeHashes: string[],
-  ) {
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          emailTwoFactorEnabledAt: new Date(),
-          emailTwoFactorCodeHash: null,
-          emailTwoFactorExpiresAt: null,
-        },
-      }),
-      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
-      this.prisma.recoveryCode.createMany({
-        data: codeHashes.map((codeHash) => ({ userId, codeHash })),
-      }),
-    ]);
   }
 
   async saveTotpSecret(userId: string, encryptedSecret: string) {
@@ -460,9 +437,6 @@ export class UsersService {
           totpEnabledAt: null,
           totpVerifiedAt: null,
           totpLastUsedStep: null,
-          emailTwoFactorCodeHash: null,
-          emailTwoFactorExpiresAt: null,
-          emailTwoFactorEnabledAt: null,
         },
       }),
       this.prisma.recoveryCode.deleteMany({ where: { userId: id } }),

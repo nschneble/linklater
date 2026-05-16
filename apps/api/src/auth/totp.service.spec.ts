@@ -21,7 +21,6 @@ const makeUser = (overrides = {}) => ({
   email: USER_EMAIL,
   emailVerifiedAt: new Date(),
   hasPassword: true,
-  emailTwoFactorEnabledAt: null,
   totpSecret: null,
   totpVerifiedAt: null,
   totpEnabledAt: null,
@@ -106,16 +105,6 @@ describe('TotpService', () => {
 
       await expect(service.generateSetup(USER_ID, USER_EMAIL)).rejects.toThrow(
         ForbiddenException,
-      );
-    });
-
-    it('throws ConflictException when Email 2FA is already enabled', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUser({ emailTwoFactorEnabledAt: new Date() }),
-      );
-
-      await expect(service.generateSetup(USER_ID, USER_EMAIL)).rejects.toThrow(
-        ConflictException,
       );
     });
 

@@ -29,9 +29,8 @@ model User {
   totpVerifiedAt   DateTime?
   totpLastUsedStep Int?
 
-  emailTwoFactorCodeHash  String?
-  emailTwoFactorExpiresAt DateTime?
-  emailTwoFactorEnabledAt DateTime?
+  magicLinkToken          String?   @unique
+  magicLinkTokenExpiresAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

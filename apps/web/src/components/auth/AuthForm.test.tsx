@@ -15,8 +15,8 @@ vi.mock('../../lib/api', () => ({
   register: vi.fn(),
   getMe: vi.fn(),
   getStoredToken: vi.fn().mockReturnValue(null),
+  requestMagicLink: vi.fn(),
   verifyOtp: vi.fn(),
-  resendEmailTwoFactorCode: vi.fn(),
 }));
 
 vi.mock('../../auth/AuthContext', () => ({
@@ -26,8 +26,7 @@ vi.mock('../../auth/AuthContext', () => ({
 import * as apiModule from '../../lib/api';
 import { useAuth } from '../../auth/AuthContext';
 
-// Re-export the mocked functions for convenience
-const { verifyOtp, resendEmailTwoFactorCode } = apiModule;
+const { requestMagicLink, verifyOtp } = apiModule;
 
 const USER_EMAIL = 'email@example.com';
 const USER_PASSWORD = 'strong-password-123';
@@ -89,7 +88,7 @@ describe('AuthForm', () => {
       renderAuthForm();
       fillEmail(USER_EMAIL);
       fillPassword(USER_PASSWORD);
-      fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
 
       await waitFor(() => {
         expect(loginMock).toHaveBeenCalledWith(USER_EMAIL, USER_PASSWORD);
@@ -105,7 +104,7 @@ describe('AuthForm', () => {
       renderAuthForm();
       fillEmail(USER_EMAIL);
       fillPassword(USER_PASSWORD);
-      fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -122,7 +121,7 @@ describe('AuthForm', () => {
       renderAuthForm();
       fillEmail(USER_EMAIL);
       fillPassword(USER_PASSWORD);
-      fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
 
       await waitFor(() => {
         expect(
@@ -318,7 +317,7 @@ describe('AuthForm', () => {
       fillPassword(USER_PASSWORD);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
       });
 
       await waitFor(() => {
@@ -344,7 +343,7 @@ describe('AuthForm', () => {
       fillPassword(USER_PASSWORD);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
       });
 
       await waitFor(() => {
@@ -379,7 +378,7 @@ describe('AuthForm', () => {
       fillPassword(USER_PASSWORD);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
       });
 
       await waitFor(() => {
@@ -390,76 +389,82 @@ describe('AuthForm', () => {
     });
   });
 
-  describe('MFA challenge — Email', () => {
-    it('shows email code input when login returns mfaToken with method email', async () => {
-      const loginMock = vi.fn().mockResolvedValue({
-        mfaToken: 'mfa-tok',
-        mfaMethod: 'email',
-      });
-      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
-
+  describe('magic-link mode', () => {
+    it('shows the magic link form when "Log in by email instead" is clicked', () => {
       renderAuthForm();
-      fillEmail(USER_EMAIL);
-      fillPassword(USER_PASSWORD);
 
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
-      });
+      fireEvent.click(
+        screen.getByRole('button', { name: /log in by email instead/i }),
+      );
 
-      await waitFor(() => {
-        expect(screen.getByLabelText(/email code/i)).toBeInTheDocument();
-      });
+      expect(screen.getByText(/no password needed/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /send login link/i }),
+      ).toBeInTheDocument();
     });
 
-    it('shows a Resend code link for Email 2FA', async () => {
-      const loginMock = vi.fn().mockResolvedValue({
-        mfaToken: 'mfa-tok',
-        mfaMethod: 'email',
-      });
-      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+    it('calls requestMagicLink with email and shows success message', async () => {
+      vi.mocked(requestMagicLink).mockResolvedValue(undefined);
 
       renderAuthForm();
-      fillEmail(USER_EMAIL);
-      fillPassword(USER_PASSWORD);
+      fireEvent.click(
+        screen.getByRole('button', { name: /log in by email instead/i }),
+      );
+      fireEvent.change(screen.getByLabelText(/email/i), {
+        target: { value: USER_EMAIL },
+      });
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+        fireEvent.click(
+          screen.getByRole('button', { name: /send login link/i }),
+        );
       });
 
       await waitFor(() => {
+        expect(requestMagicLink).toHaveBeenCalledWith(USER_EMAIL);
+        expect(screen.getByRole('status')).toBeInTheDocument();
         expect(
-          screen.getByRole('button', { name: /resend code/i }),
+          screen.getByText(/check your email for a login link/i),
         ).toBeInTheDocument();
       });
     });
 
-    it('calls resendEmailTwoFactorCode with the mfaToken when Resend is clicked', async () => {
-      const loginMock = vi.fn().mockResolvedValue({
-        mfaToken: 'mfa-tok',
-        mfaMethod: 'email',
-      });
-      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
-      vi.mocked(resendEmailTwoFactorCode).mockResolvedValue(undefined);
+    it('shows an error when requestMagicLink fails', async () => {
+      vi.mocked(requestMagicLink).mockRejectedValue(
+        new Error('Service unavailable'),
+      );
 
       renderAuthForm();
-      fillEmail(USER_EMAIL);
-      fillPassword(USER_PASSWORD);
+      fireEvent.click(
+        screen.getByRole('button', { name: /log in by email instead/i }),
+      );
+      fireEvent.change(screen.getByLabelText(/email/i), {
+        target: { value: USER_EMAIL },
+      });
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+        fireEvent.click(
+          screen.getByRole('button', { name: /send login link/i }),
+        );
       });
 
       await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /resend code/i }),
-        ).toBeInTheDocument();
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(screen.getByText(/service unavailable/i)).toBeInTheDocument();
       });
+    });
 
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /resend code/i }));
-      });
+    it('returns to login when Back to login is clicked', () => {
+      renderAuthForm();
 
-      expect(resendEmailTwoFactorCode).toHaveBeenCalledWith('mfa-tok');
+      fireEvent.click(
+        screen.getByRole('button', { name: /log in by email instead/i }),
+      );
+      expect(screen.getByText(/no password needed/i)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /back to login/i }));
+
+      expect(screen.getByRole('tab', { name: /log in/i })).toBeInTheDocument();
     });
   });
 
@@ -476,7 +481,7 @@ describe('AuthForm', () => {
       fillPassword(USER_PASSWORD);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
       });
 
       await waitFor(() => {

@@ -5,7 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AppleStrategy } from './apple.strategy.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
-import { EmailTwoFactorService } from './email-2fa.service.js';
+import { MagicLinkService } from './magic-link.service.js';
 import { GoogleStrategy } from './google.strategy.js';
 import { JwtStrategy } from './jwt.strategy.js';
 import { LocalStrategy } from './local.strategy.js';
@@ -45,7 +45,7 @@ const oauthProviders: Provider[] = [
   ],
   providers: [
     AuthService,
-    EmailTwoFactorService,
+    MagicLinkService,
     JwtStrategy,
     LocalStrategy,
     MfaAuthGuard,

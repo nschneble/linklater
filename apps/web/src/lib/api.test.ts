@@ -38,19 +38,17 @@ import {
   regenerateRecoveryCodes,
   register,
   requestEmailChange,
-  resendEmailTwoFactorCode,
+  requestMagicLink,
   resendVerificationEmail,
   resetPassword,
-  sendReauthEmailCode,
   setStoredToken,
-  setupEmailTwoFactor,
   setupTotp,
   unreadLink,
   updateLink,
   updateMe,
   verifyEmail,
   verifyEmailChange,
-  verifyEmailTwoFactorSetup,
+  verifyMagicLink,
   verifyOtp,
   verifyTotpSetup,
 } from './api';
@@ -633,65 +631,38 @@ describe('verifyTotpSetup', () => {
   });
 });
 
-describe('setupEmailTwoFactor', () => {
-  it('POSTs to /auth/2fa/email/setup with Authorization header', async () => {
-    setStoredToken('my-jwt');
+describe('requestMagicLink', () => {
+  it('POSTs to /auth/request-magic-link with email and no Authorization header', async () => {
     const fetchMock = mockFetch({});
 
-    await setupEmailTwoFactor();
+    await requestMagicLink('user@example.com');
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/email/setup');
-    const headers = (options as { headers: Record<string, string> }).headers;
-    expect(headers['Authorization']).toBe('Bearer my-jwt');
-  });
-});
-
-describe('verifyEmailTwoFactorSetup', () => {
-  it('POSTs to /auth/2fa/email/verify with the 6-digit code', async () => {
-    setStoredToken('my-jwt');
-    const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
-
-    await verifyEmailTwoFactorSetup('123456');
-
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/email/verify');
-    const body = JSON.parse((options as { body: string }).body) as {
-      code: string;
-    };
-    expect(body.code).toBe('123456');
-  });
-});
-
-describe('resendEmailTwoFactorCode', () => {
-  it('POSTs to /auth/2fa/email/resend with mfaToken in body and no Authorization header', async () => {
-    const fetchMock = mockFetch({});
-
-    await resendEmailTwoFactorCode('mfa-pending-token');
-
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/email/resend');
+    expect(url).toContain('/auth/request-magic-link');
+    expect((options as { method: string }).method).toBe('POST');
     const headers = (options as { headers: Record<string, string> }).headers;
     expect(headers['Authorization']).toBeUndefined();
     const body = JSON.parse((options as { body: string }).body) as {
-      mfaToken: string;
+      email: string;
     };
-    expect(body.mfaToken).toBe('mfa-pending-token');
+    expect(body.email).toBe('user@example.com');
   });
 });
 
-describe('sendReauthEmailCode', () => {
-  it('POSTs to /auth/2fa/email/reauth-send with Authorization header', async () => {
-    setStoredToken('stored-jwt');
-    const fetchMock = mockFetch({});
+describe('verifyMagicLink', () => {
+  it('POSTs to /auth/verify-magic-link with token and stores the access token', async () => {
+    const fetchMock = mockFetch({ accessToken: 'ml-jwt' });
 
-    await sendReauthEmailCode();
+    const result = await verifyMagicLink('my-token');
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/email/reauth-send');
-    const headers = (options as { headers: Record<string, string> }).headers;
-    expect(headers['Authorization']).toBe('Bearer stored-jwt');
-    expect((options as { method: string }).method).toBe('POST');
+    expect(url).toContain('/auth/verify-magic-link');
+    const body = JSON.parse((options as { body: string }).body) as {
+      token: string;
+    };
+    expect(body.token).toBe('my-token');
+    expect(result).toEqual({ accessToken: 'ml-jwt' });
+    expect(getStoredToken()).toBe('ml-jwt');
   });
 });
 

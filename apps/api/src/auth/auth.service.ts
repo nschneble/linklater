@@ -16,7 +16,7 @@ import {
 } from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
 import { Prisma } from '../prisma/index.js';
-import { EmailTwoFactorService } from './email-2fa.service.js';
+import { MagicLinkService } from './magic-link.service.js';
 import { TotpService } from './totp.service.js';
 import { UsersService, withoutPasswordHash } from '../users/index.js';
 
@@ -50,7 +50,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
-    private readonly emailTwoFactorService: EmailTwoFactorService,
+    private readonly magicLinkService: MagicLinkService,
     private readonly totpService: TotpService,
   ) {}
 
@@ -82,18 +82,12 @@ export class AuthService {
       totpSecret,
       totpEnabledAt,
       totpVerifiedAt: _totpVerifiedAt,
-      emailTwoFactorEnabledAt,
-      emailTwoFactorCodeHash: _emailTwoFactorCodeHash,
-      emailTwoFactorExpiresAt: _emailTwoFactorExpiresAt,
+      magicLinkToken: _magicLinkToken,
+      magicLinkTokenExpiresAt: _magicLinkTokenExpiresAt,
       ...rest
     } = await this.usersService.findById(userId);
 
-    let twoFactorMethod: 'totp' | 'email' | null = null;
-    if (totpEnabledAt) {
-      twoFactorMethod = 'totp';
-    } else if (emailTwoFactorEnabledAt) {
-      twoFactorMethod = 'email';
-    }
+    const twoFactorMethod: 'totp' | null = totpEnabledAt ? 'totp' : null;
 
     return {
       userId: id,
@@ -219,9 +213,7 @@ export class AuthService {
   async login(user: {
     userId: string;
     email: string;
-    theme?: string;
     totpEnabledAt?: Date | null;
-    emailTwoFactorEnabledAt?: Date | null;
   }) {
     if (user.totpEnabledAt) {
       const mfaToken = this.jwtService.sign(
@@ -231,21 +223,35 @@ export class AuthService {
       return { mfaToken, mfaMethod: 'totp' as const };
     }
 
-    if (user.emailTwoFactorEnabledAt) {
-      const mfaToken = this.jwtService.sign(
-        { subject: user.userId, mfaPending: true },
-        { expiresIn: '5m' },
-      );
-      await this.emailTwoFactorService.sendCode({
-        id: user.userId,
-        email: user.email,
-        theme: user.theme,
-      });
-      return { mfaToken, mfaMethod: 'email' as const };
-    }
-
     const payload = { subject: user.userId, email: user.email };
     return { accessToken: this.jwtService.sign(payload) };
+  }
+
+  /**
+   * Initiates magic link login. Silently returns when no account exists for
+   * the given email to prevent user enumeration.
+   *
+   * @param email - The email address to send the login link to.
+   */
+  async requestMagicLink(email: string): Promise<void> {
+    await this.magicLinkService.requestLogin(email);
+  }
+
+  /**
+   * Validates a magic link token and issues a full session JWT.
+   *
+   * @param token - The 64-character hex token from the login link.
+   * @returns A signed JWT access token.
+   * @throws {BadRequestException} When the token is invalid or expired.
+   */
+  async verifyMagicLink(token: string) {
+    const user = await this.magicLinkService.verifyToken(token);
+    return {
+      accessToken: this.jwtService.sign({
+        subject: user.id,
+        email: user.email,
+      }),
+    };
   }
 
   /**
@@ -363,18 +369,10 @@ export class AuthService {
    * @throws {UnauthorizedException} When the code is invalid or the method
    *   does not match the enrolled factor (generic error to prevent enumeration).
    */
-  async verifyOtp(
-    userId: string,
-    code: string,
-    method: 'totp' | 'email' | 'recovery',
-  ) {
+  async verifyOtp(userId: string, code: string, method: 'totp' | 'recovery') {
     const user = await this.usersService.findById(userId);
 
-    const enrolledMethod = user.totpEnabledAt
-      ? 'totp'
-      : user.emailTwoFactorEnabledAt
-        ? 'email'
-        : null;
+    const enrolledMethod = user.totpEnabledAt ? 'totp' : null;
 
     if (method !== 'recovery' && enrolledMethod !== method) {
       throw new UnauthorizedException('Invalid OTP method');
@@ -384,22 +382,6 @@ export class AuthService {
       const isValid = await this.totpService.verifyCode(user, code);
       if (!isValid) {
         throw new UnauthorizedException('Invalid TOTP code');
-      }
-      return {
-        accessToken: this.jwtService.sign({
-          subject: userId,
-          email: user.email,
-        }),
-      };
-    }
-
-    if (method === 'email') {
-      if (!user.emailTwoFactorEnabledAt) {
-        throw new UnauthorizedException('Email 2FA not configured');
-      }
-      const isValid = await this.emailTwoFactorService.verifyCode(user, code);
-      if (!isValid) {
-        throw new UnauthorizedException('Invalid or expired email code');
       }
       return {
         accessToken: this.jwtService.sign({
@@ -454,7 +436,7 @@ export class AuthService {
       throw new ConflictException('Email already in use');
     }
 
-    if (user.totpEnabledAt || user.emailTwoFactorEnabledAt) {
+    if (user.totpEnabledAt) {
       if (!code) {
         throw new ForbiddenException(
           '2FA is enabled — provide a verification code to change your email',
@@ -475,11 +457,8 @@ export class AuthService {
         await this.usersService.markRecoveryCodeUsed(
           recoveryCodes[matchIndex].id,
         );
-      } else if (user.totpEnabledAt) {
+      } else {
         const isValid = await this.totpService.verifyCode(user, code);
-        if (!isValid) throw new UnauthorizedException('Invalid OTP code');
-      } else if (user.emailTwoFactorEnabledAt) {
-        const isValid = await this.emailTwoFactorService.verifyCode(user, code);
         if (!isValid) throw new UnauthorizedException('Invalid OTP code');
       }
     }
@@ -527,16 +506,6 @@ export class AuthService {
     }
 
     await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
-  }
-
-  async sendReauthEmailCode(userId: string): Promise<void> {
-    const user = await this.usersService.findById(userId);
-    if (!user.emailTwoFactorEnabledAt) {
-      throw new BadRequestException(
-        'Email 2FA is not enabled for this account',
-      );
-    }
-    await this.emailTwoFactorService.sendCode(user);
   }
 
   /**
@@ -612,7 +581,7 @@ export class AuthService {
       const isRecoveryCode = RECOVERY_CODE_REGEX.test(code);
 
       if (isRecoveryCode) {
-        if (!user.totpEnabledAt && !user.emailTwoFactorEnabledAt) {
+        if (!user.totpEnabledAt) {
           throw new UnauthorizedException('No 2FA method enrolled');
         }
         const recoveryCodes =
@@ -632,12 +601,6 @@ export class AuthService {
 
       if (user.totpEnabledAt) {
         const valid = await this.totpService.verifyCode(user, code);
-        if (!valid) throw new UnauthorizedException('Invalid OTP code');
-        return;
-      }
-
-      if (user.emailTwoFactorEnabledAt) {
-        const valid = await this.emailTwoFactorService.verifyCode(user, code);
         if (!valid) throw new UnauthorizedException('Invalid OTP code');
         return;
       }

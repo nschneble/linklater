@@ -19,8 +19,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
-import { EmailTwoFactorService } from './email-2fa.service.js';
-import { EmailTwoFactorVerifyDto } from './dto/email-2fa-verify.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { LocalAuthGuard } from './local-auth.guard.js';
@@ -47,7 +45,6 @@ import type { AuthRequest } from './auth-request.type.js';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly emailTwoFactorService: EmailTwoFactorService,
     private readonly totpService: TotpService,
   ) {}
 
@@ -308,75 +305,36 @@ export class AuthController {
   }
 
   @ApiOperation({
-    summary: 'Initiate Email 2FA setup — sends a code to the verified email',
+    summary: 'Request a magic link login email',
   })
-  @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'Verification code sent.' })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
-  @ApiResponse({
-    status: 403,
-    description: 'Email not verified or social login account.',
-  })
-  @ApiResponse({ status: 409, description: 'Email 2FA already enabled.' })
-  @ApiResponse({ status: 429, description: 'Too many setup attempts.' })
-  @UseGuards(JwtAuthGuard, ThrottlerGuard)
-  @Throttle({ 'auth-2fa-email-setup': { ttl: 60000, limit: 3 } })
-  @Post('2fa/email/setup')
-  @HttpCode(200)
-  async emailTwoFactorSetup(@Req() request: AuthRequest): Promise<void> {
-    await this.emailTwoFactorService.initiateSetup(request.user.userId);
-  }
-
-  @ApiOperation({ summary: 'Verify Email 2FA setup code and enable Email 2FA' })
-  @ApiBearerAuth()
   @ApiResponse({
     status: 200,
-    description: 'Email 2FA enabled. Returns one-time recovery codes.',
+    description: 'Magic link sent (or silently skipped if address not found).',
   })
-  @ApiResponse({ status: 400, description: 'Invalid or expired code.' })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
-  @ApiResponse({ status: 429, description: 'Too many verify attempts.' })
-  @UseGuards(JwtAuthGuard, ThrottlerGuard)
-  @Throttle({ 'auth-2fa-email-verify': { ttl: 60000, limit: 5 } })
-  @Post('2fa/email/verify')
+  @ApiResponse({ status: 429, description: 'Too many magic link requests.' })
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-request-magic-link': { ttl: 60000, limit: 3 } })
+  @Post('request-magic-link')
   @HttpCode(200)
-  async emailTwoFactorVerify(
-    @Req() request: AuthRequest,
-    @Body() body: EmailTwoFactorVerifyDto,
-  ): Promise<{ recoveryCodes: string[] }> {
-    const recoveryCodes = await this.emailTwoFactorService.verifySetup(
-      request.user.userId,
-      body.code,
-    );
-    return { recoveryCodes };
-  }
-
-  @ApiOperation({ summary: 'Resend Email 2FA code during MFA challenge' })
-  @ApiResponse({ status: 200, description: 'New code sent.' })
-  @ApiResponse({ status: 401, description: 'Invalid or expired MFA token.' })
-  @ApiResponse({ status: 429, description: 'Too many resend attempts.' })
-  @UseGuards(ThrottlerGuard, MfaAuthGuard)
-  @Throttle({ 'auth-email-resend': { ttl: 60000, limit: 3 } })
-  @Post('2fa/email/resend')
-  @HttpCode(200)
-  async emailTwoFactorResend(@Req() request: AuthRequest): Promise<void> {
-    await this.authService.sendReauthEmailCode(request.user.userId);
+  async requestMagicLink(@Body() body: ForgotPasswordDto): Promise<void> {
+    await this.authService.requestMagicLink(body.email);
   }
 
   @ApiOperation({
-    summary: 'Send Email 2FA code for settings re-authentication',
+    summary: 'Verify a magic link token and issue a session JWT',
   })
-  @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'Code sent.' })
-  @ApiResponse({ status: 400, description: 'Email 2FA not enabled.' })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
-  @ApiResponse({ status: 429, description: 'Too many requests.' })
-  @UseGuards(JwtAuthGuard, ThrottlerGuard)
-  @Throttle({ 'auth-2fa-email-reauth-send': { ttl: 60000, limit: 3 } })
-  @Post('2fa/email/reauth-send')
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a signed JWT accessToken.',
+  })
+  @ApiResponse({ status: 400, description: 'Token is invalid or expired.' })
+  @ApiResponse({ status: 429, description: 'Too many verification attempts.' })
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-verify-magic-link': { ttl: 60000, limit: 10 } })
+  @Post('verify-magic-link')
   @HttpCode(200)
-  async emailTwoFactorReauthSend(@Req() request: AuthRequest): Promise<void> {
-    await this.authService.sendReauthEmailCode(request.user.userId);
+  async verifyMagicLink(@Body() body: VerifyEmailDto) {
+    return this.authService.verifyMagicLink(body.token);
   }
 
   @ApiOperation({

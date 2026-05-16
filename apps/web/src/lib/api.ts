@@ -48,7 +48,7 @@ export function clearStoredToken(): void {
 /** The shape of a successful POST /auth/login response — either a full session or an MFA challenge. */
 export type LoginResponse =
   | { accessToken: string }
-  | { mfaToken: string; mfaMethod: 'totp' | 'email' };
+  | { mfaToken: string; mfaMethod: 'totp' };
 
 /** Error thrown by `apiFetch` on non-2xx responses. Includes the HTTP status code. */
 export class ApiError extends Error {
@@ -185,7 +185,7 @@ export async function getMe() {
     pendingEmail: string | null;
     mode: string;
     theme: string;
-    twoFactorMethod: 'totp' | 'email' | null;
+    twoFactorMethod: 'totp' | null;
     twoFactorPending: boolean;
     userId: string;
   }>('/auth/me', {
@@ -296,37 +296,30 @@ export async function verifyTotpSetup(
   });
 }
 
-export async function setupEmailTwoFactor(): Promise<void> {
-  await apiFetch('/auth/2fa/email/setup', { method: 'POST' });
-}
-
-export async function verifyEmailTwoFactorSetup(
-  code: string,
-): Promise<{ recoveryCodes: string[] }> {
-  return apiFetch('/auth/2fa/email/verify', {
-    body: JSON.stringify({ code }),
-    method: 'POST',
-  });
-}
-
-export async function resendEmailTwoFactorCode(
-  mfaToken: string,
-): Promise<void> {
+export async function requestMagicLink(email: string): Promise<void> {
   await apiFetch(
-    '/auth/2fa/email/resend',
-    { body: JSON.stringify({ mfaToken }), method: 'POST' },
+    '/auth/request-magic-link',
+    { body: JSON.stringify({ email }), method: 'POST' },
     false,
   );
 }
 
-export async function sendReauthEmailCode(): Promise<void> {
-  await apiFetch('/auth/2fa/email/reauth-send', { method: 'POST' });
+export async function verifyMagicLink(
+  token: string,
+): Promise<{ accessToken: string }> {
+  const data = await apiFetch<{ accessToken: string }>(
+    '/auth/verify-magic-link',
+    { body: JSON.stringify({ token }), method: 'POST' },
+    false,
+  );
+  setStoredToken(data.accessToken);
+  return data;
 }
 
 export async function verifyOtp(
   mfaToken: string,
   code: string,
-  method: 'totp' | 'email' | 'recovery',
+  method: 'totp' | 'recovery',
 ): Promise<{ accessToken: string }> {
   const data = await apiFetch<{ accessToken: string }>(
     '/auth/verify-otp',

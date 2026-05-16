@@ -38,7 +38,6 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       email: user.email,
       theme: user.theme,
       totpEnabledAt: user.totpEnabledAt,
-      emailTwoFactorEnabledAt: user.emailTwoFactorEnabledAt,
     };
   }
 }

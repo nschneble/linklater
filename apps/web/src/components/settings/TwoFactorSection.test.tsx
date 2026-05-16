@@ -12,10 +12,7 @@ import type { User } from '../../auth/AuthContext';
 vi.mock('../../lib/api', () => ({
   disable2fa: vi.fn(),
   regenerateRecoveryCodes: vi.fn(),
-  sendReauthEmailCode: vi.fn(),
-  setupEmailTwoFactor: vi.fn(),
   setupTotp: vi.fn(),
-  verifyEmailTwoFactorSetup: vi.fn(),
   verifyTotpSetup: vi.fn(),
 }));
 
@@ -25,7 +22,6 @@ vi.mock('../../auth/AuthContext', () => ({
 
 import * as apiModule from '../../lib/api';
 import { useAuth } from '../../auth/AuthContext';
-import type { Mock } from 'vitest';
 
 const USER_ID = 'user-1';
 const USER_EMAIL = 'user@example.com';
@@ -67,14 +63,11 @@ beforeEach(() => {
 
 describe('TwoFactorSection', () => {
   describe('State A — 2FA not enabled', () => {
-    it('shows setup buttons when 2FA is not enabled', () => {
+    it('shows the authenticator app setup button when 2FA is not enabled', () => {
       render(<TwoFactorSection />);
 
       expect(
         screen.getByRole('button', { name: /set up authenticator app/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: /set up email code/i }),
       ).toBeInTheDocument();
     });
 
@@ -187,99 +180,6 @@ describe('TwoFactorSection', () => {
       expect(
         screen.getByRole('button', { name: /disable two-factor/i }),
       ).toBeInTheDocument();
-    });
-  });
-
-  describe('State D — Email 2FA setup in progress', () => {
-    it('shows confirmation text when Email 2FA setup is initiated', async () => {
-      render(<TwoFactorSection />);
-
-      await act(async () => {
-        fireEvent.click(
-          screen.getByRole('button', { name: /set up email code/i }),
-        );
-      });
-
-      expect(screen.getByText(new RegExp(USER_EMAIL, 'i'))).toBeInTheDocument();
-    });
-
-    it('sends code and shows code input after send is clicked', async () => {
-      vi.mocked(apiModule.setupEmailTwoFactor).mockResolvedValue(undefined);
-
-      render(<TwoFactorSection />);
-
-      await act(async () => {
-        fireEvent.click(
-          screen.getByRole('button', { name: /set up email code/i }),
-        );
-      });
-
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /send code/i }));
-      });
-
-      await waitFor(() => {
-        expect(screen.getByLabelText(/email code/i)).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('State E — Email 2FA enabled', () => {
-    it('shows enabled status when Email 2FA is active', () => {
-      vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'email' }) }),
-      );
-
-      render(<TwoFactorSection />);
-
-      expect(screen.getByText(/enabled/i)).toBeInTheDocument();
-    });
-
-    it('shows a "Send me a code" button in the re-auth form for Email 2FA users', async () => {
-      vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'email' }) }),
-      );
-      (apiModule.sendReauthEmailCode as Mock).mockResolvedValue(undefined);
-
-      render(<TwoFactorSection />);
-
-      await act(async () => {
-        fireEvent.click(
-          screen.getByRole('button', { name: /disable two-factor/i }),
-        );
-      });
-
-      expect(
-        screen.getByRole('button', { name: /send me a code/i }),
-      ).toBeInTheDocument();
-    });
-
-    it('sends email code and shows confirmation when "Send me a code" is clicked', async () => {
-      vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'email' }) }),
-      );
-      (apiModule.sendReauthEmailCode as Mock).mockResolvedValue(undefined);
-
-      render(<TwoFactorSection />);
-
-      await act(async () => {
-        fireEvent.click(
-          screen.getByRole('button', { name: /disable two-factor/i }),
-        );
-      });
-
-      await act(async () => {
-        fireEvent.click(
-          screen.getByRole('button', { name: /send me a code/i }),
-        );
-      });
-
-      await waitFor(() => {
-        expect(apiModule.sendReauthEmailCode).toHaveBeenCalled();
-        expect(
-          screen.getByText(/code sent to your email/i),
-        ).toBeInTheDocument();
-      });
     });
   });
 

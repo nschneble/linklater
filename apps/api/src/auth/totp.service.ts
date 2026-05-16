@@ -35,12 +35,6 @@ export class TotpService {
       throw new ConflictException('TOTP is already active for this account');
     }
 
-    if (user.emailTwoFactorEnabledAt) {
-      throw new ConflictException(
-        'Email 2FA is already enabled — disable it before enrolling TOTP',
-      );
-    }
-
     if (!user.hasPassword) {
       throw new ForbiddenException(
         '2FA is not available for accounts created via social login',

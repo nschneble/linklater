@@ -5,7 +5,6 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { EmailTwoFactorService } from './email-2fa.service';
 import { MfaAuthGuard } from './mfa-auth.guard';
 import { TotpService } from './totp.service';
 
@@ -32,10 +31,11 @@ describe('AuthController', () => {
     regenerateRecoveryCodes: jest.fn(),
     register: jest.fn(),
     requestEmailChange: jest.fn(),
+    requestMagicLink: jest.fn(),
     resendVerificationEmail: jest.fn(),
     resetPassword: jest.fn(),
-    sendReauthEmailCode: jest.fn(),
     sendVerificationEmail: jest.fn(),
+    verifyMagicLink: jest.fn(),
     verifyEmail: jest.fn(),
     verifyOtp: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
   } as unknown as AuthService;
@@ -45,18 +45,11 @@ describe('AuthController', () => {
     verifySetup: jest.fn(),
   } as unknown as TotpService;
 
-  const emailTwoFactorServiceMock = {
-    initiateSetup: jest.fn(),
-    sendCode: jest.fn(),
-    verifySetup: jest.fn(),
-  } as unknown as EmailTwoFactorService;
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
-        { provide: EmailTwoFactorService, useValue: emailTwoFactorServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
       ],
     })
@@ -293,64 +286,33 @@ describe('AuthController', () => {
     });
   });
 
-  describe('emailTwoFactorSetup', () => {
-    it('delegates to EmailTwoFactorService.initiateSetup with userId', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      (emailTwoFactorServiceMock.initiateSetup as jest.Mock).mockResolvedValue(
+  describe('requestMagicLink', () => {
+    it('delegates to AuthService.requestMagicLink with the provided email', async () => {
+      (authServiceMock.requestMagicLink as jest.Mock).mockResolvedValue(
         undefined,
       );
 
-      await controller.emailTwoFactorSetup(request);
+      await controller.requestMagicLink({ email: USER_EMAIL });
 
-      expect(emailTwoFactorServiceMock.initiateSetup).toHaveBeenCalledWith(
-        USER_ID,
-      );
+      expect(authServiceMock.requestMagicLink).toHaveBeenCalledWith(USER_EMAIL);
     });
   });
 
-  describe('emailTwoFactorVerify', () => {
-    it('delegates to EmailTwoFactorService.verifySetup and wraps recovery codes', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      const recoveryCodes = ['aaaaa-bbbbb'];
-      (emailTwoFactorServiceMock.verifySetup as jest.Mock).mockResolvedValue(
-        recoveryCodes,
-      );
-
-      const result = await controller.emailTwoFactorVerify(request, {
-        code: '123456',
+  describe('verifyMagicLink', () => {
+    it('delegates to AuthService.verifyMagicLink and returns the access token', async () => {
+      const ACCESS_TOKEN_VALUE = 'magic-access-token';
+      (authServiceMock.verifyMagicLink as jest.Mock).mockResolvedValue({
+        accessToken: ACCESS_TOKEN_VALUE,
       });
 
-      expect(emailTwoFactorServiceMock.verifySetup).toHaveBeenCalledWith(
-        USER_ID,
-        '123456',
+      const result = await controller.verifyMagicLink({
+        token: 'valid-token',
+      });
+
+      expect(authServiceMock.verifyMagicLink).toHaveBeenCalledWith(
+        'valid-token',
       );
-      expect(result).toEqual({ recoveryCodes });
-    });
-  });
-
-  describe('emailTwoFactorResend', () => {
-    it('delegates to AuthService.sendReauthEmailCode with userId', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      (authServiceMock.sendReauthEmailCode as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await controller.emailTwoFactorResend(request);
-
-      expect(authServiceMock.sendReauthEmailCode).toHaveBeenCalledWith(USER_ID);
-    });
-  });
-
-  describe('emailTwoFactorReauthSend', () => {
-    it('delegates to AuthService.sendReauthEmailCode with userId', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      (authServiceMock.sendReauthEmailCode as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await controller.emailTwoFactorReauthSend(request);
-
-      expect(authServiceMock.sendReauthEmailCode).toHaveBeenCalledWith(USER_ID);
+      expect(result).toEqual({ accessToken: ACCESS_TOKEN_VALUE });
     });
   });
 
