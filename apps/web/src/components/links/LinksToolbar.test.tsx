@@ -169,10 +169,10 @@ describe('LinksToolbar', () => {
 
     it('shows the mobile shuffle button when filter is unread', () => {
       renderToolbar({ filter: 'unread' });
-      // Mobile shuffle uses aria-label="Stumble upon a random link"
+      // Mobile shuffle uses aria-label="Stumble!
       expect(
         screen.getByRole('button', {
-          name: 'Stumble upon a random link',
+          name: 'Stumble!',
         }),
       ).toBeInTheDocument();
     });

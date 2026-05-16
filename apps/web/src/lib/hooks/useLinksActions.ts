@@ -76,7 +76,7 @@ export interface UseLinksActionsResult {
 
 /**
  * Handles all user-initiated link mutations: create, read/unread, delete
- * all read, and stumble upon. Coordinates with `useLinksData` mutation
+ * all read, and stumble! Coordinates with `useLinksData` mutation
  * helpers to keep the list in sync without a full refetch after each
  * operation.
  *

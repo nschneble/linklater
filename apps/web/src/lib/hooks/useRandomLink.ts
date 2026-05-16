@@ -20,7 +20,7 @@ export interface UseRandomLinkResult {
 }
 
 /**
- * Manages the "Stumble upon" feature. Fetches a random unread link, opens
+ * Manages the "Stumble!" feature. Fetches a random unread link, opens
  * it in a new tab, and immediately marks it as read.
  *
  * Note: Opening a new tab requires being called from inside a user-gesture

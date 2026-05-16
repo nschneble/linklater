@@ -20,7 +20,7 @@ describe('LinksMobileControls', () => {
     it('shows the shuffle and add link buttons', () => {
       render(<LinksMobileControls {...defaultUnreadProps} />);
       expect(
-        screen.getByRole('button', { name: 'Stumble upon a random link' }),
+        screen.getByRole('button', { name: 'Stumble!' }),
       ).toBeInTheDocument();
       expect(
         screen.getByRole('button', { name: 'Add link' }),
@@ -32,9 +32,7 @@ describe('LinksMobileControls', () => {
       render(
         <LinksMobileControls {...defaultUnreadProps} onRandom={onRandom} />,
       );
-      fireEvent.click(
-        screen.getByRole('button', { name: 'Stumble upon a random link' }),
-      );
+      fireEvent.click(screen.getByRole('button', { name: 'Stumble!' }));
       expect(onRandom).toHaveBeenCalledOnce();
     });
 
@@ -54,9 +52,7 @@ describe('LinksMobileControls', () => {
       render(
         <LinksMobileControls {...defaultUnreadProps} randomLoading={true} />,
       );
-      expect(
-        screen.getByRole('button', { name: 'Stumble upon a random link' }),
-      ).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Stumble!' })).toBeDisabled();
     });
 
     it('sets aria-label to "Hide form" when showLinkForm is true', () => {

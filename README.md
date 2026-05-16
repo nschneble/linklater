@@ -20,7 +20,7 @@ As a user, you can:
 
 - Create an account
 - Save links in-app or using the handy [bookmarklet](#bookmarklet)
-- Search and [stumble upon](https://en.wikipedia.org/wiki/StumbleUpon)
+- Search and [stumble!](https://en.wikipedia.org/wiki/StumbleUpon)
 - Preview themes based on Richard Linklater's filmography
 - Toggle between light and dark mode
 - Delete your account and burn it to the ground

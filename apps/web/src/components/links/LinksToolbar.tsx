@@ -15,7 +15,7 @@ interface LinksToolbarProps {
   isClearingRead: boolean;
   /** Passed to `LinksControls` to conditionally hide the "Remove all" button. */
   links: Link[];
-  /** Passed to `LinksControls` to disable/relabel the "Stumble upon" button. */
+  /** Passed to `LinksControls` to disable the "Stumble!" button. */
   randomLoading: boolean;
   /** The controlled value of the search input. */
   search: string;
@@ -29,7 +29,7 @@ interface LinksToolbarProps {
   onNavigateRead: () => void;
   /** Navigates to the `/unread` route when the Unread tab is clicked. */
   onNavigateUnread: () => void;
-  /** Called when the user clicks "Stumble upon". */
+  /** Called when the user clicks "Stumble!" */
   onRandom: () => Promise<void>;
   /** Called with the new search string on every keystroke. */
   onSearch: (value: string) => void;

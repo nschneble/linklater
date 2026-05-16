@@ -60,13 +60,13 @@ export default function LinksMobileControls({
           <IconButton
             variant="elevated"
             disabled={randomLoading}
-            aria-label="Stumble upon a random link"
+            aria-label="Stumble!"
             title="Open a random unread link and marks it as read"
             className="px-2.5!"
             onClick={onRandom}
           >
             <i
-              className="fa-solid fa-shuffle text-[0.7rem]"
+              className="fa-brands fa-stumbleupon text-[0.7rem]"
               aria-hidden="true"
             />
           </IconButton>

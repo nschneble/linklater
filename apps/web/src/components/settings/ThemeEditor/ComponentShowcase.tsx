@@ -86,10 +86,10 @@ export default function ComponentShowcase() {
           </PrimaryButton>
           <IconButton variant="elevated">
             <i
-              className="fa-solid fa-shuffle text-[0.7rem]"
+              className="fa-brands fa-stumbleupon text-[0.7rem]"
               aria-hidden="true"
             />
-            Stumble upon
+            Stumble!
           </IconButton>
           <IconButton variant="default">
             <i

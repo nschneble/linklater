@@ -17,7 +17,7 @@
   - full keyboard navigation
   - keyboard shortcuts
 - full-text search
-- "Stumble upon" page
+- "Stumble!" page
 
 #### Bugfixes
 

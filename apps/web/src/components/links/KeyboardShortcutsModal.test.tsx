@@ -16,7 +16,7 @@ describe('KeyboardShortcutsModal', () => {
     expect(screen.getByText('Show read links')).toBeInTheDocument();
     expect(screen.getByText('Search')).toBeInTheDocument();
     expect(screen.getByText('Add link')).toBeInTheDocument();
-    expect(screen.getByText('Stumble upon')).toBeInTheDocument();
+    expect(screen.getByText('Stumble!')).toBeInTheDocument();
     expect(screen.getByText('Show shortcuts')).toBeInTheDocument();
     expect(screen.getByText('Show user menu')).toBeInTheDocument();
   });

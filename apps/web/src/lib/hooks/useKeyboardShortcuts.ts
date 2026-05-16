@@ -34,7 +34,7 @@ interface UseKeyboardShortcutsOptions {
  * - `2`      → Show read links
  * - `Q`      → Focus the search input
  * - `A`      → Toggle the link form
- * - `D`      → Stumble upon
+ * - `D`      → Stumble!
  * - `Z`      → Toggle the shortcuts modal
  * - `X`      → Toggle the user menu
  * - `ESC`    → Calls `onEscape` if provided

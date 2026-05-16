@@ -16,7 +16,7 @@ const shortcuts = [
   { key: '2', description: 'Show read links' },
   { key: 'Q', description: 'Search' },
   { key: 'A', description: 'Add link' },
-  { key: 'D', description: 'Stumble upon' },
+  { key: 'D', description: 'Stumble!' },
   { key: 'Z', description: 'Show shortcuts' },
   { key: 'X', description: 'Show user menu' },
 ];
