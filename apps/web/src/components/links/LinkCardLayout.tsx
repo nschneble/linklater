@@ -161,20 +161,24 @@ export default function LinkCardLayout({
           </div>
         </div>
 
-        {displayDescription && (
+        {(displayDescription || link.readAt) && (
           <div
             style={childStyle(2)}
-            className={`overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS}`}
+            className={`flex items-center gap-3 overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS}`}
           >
-            <p className="text-[var(--text-muted)] text-xs text-pretty line-clamp-2">
-              {displayDescription}
-            </p>
-          </div>
-        )}
+            {displayDescription && (
+              <p className="flex-1 min-w-0 text-[var(--text-muted)] text-xs text-pretty line-clamp-2">
+                {displayDescription}
+              </p>
+            )}
 
-        {link.readAt && (
-          <div className="flex justify-end pt-1">
-            <PrimaryButton onClick={onUnreadClick}>Mark unread</PrimaryButton>
+            {link.readAt && (
+              <div className="shrink-0">
+                <PrimaryButton onClick={onUnreadClick}>
+                  Mark unread
+                </PrimaryButton>
+              </div>
+            )}
           </div>
         )}
       </div>
