@@ -55,6 +55,13 @@ npm run migrate:reset --workspace @linklater/api  # Wipe, re-run migrations + re
 
 > **Note:** The `migrate` and `migrate:reset` scripts chain `prisma migrate dev` with `prisma generate`. Prisma 7's `prisma-client` generator requires a custom `output` path, so `migrate dev` alone does not auto-regenerate the client.
 
+## Third-Party Integrations
+
+- Always prefer **free and open-source** (FOSS) solutions over paid or proprietary ones
+  - Choose self-hostable or MIT/Apache/BSD-licensed libraries whenever a viable option exists
+  - If a paid solution is the only realistic path, propose an alternate design approach that avoids the dependency entirely before suggesting the paid option
+  - Document the tradeoff explicitly when recommending a FOSS solution that has meaningful limitations compared to a paid alternative
+
 ## Tool Versions
 
 - Always check the **actual installed version** of a tool before making suggestions. Don't assume based on training data or common defaults.
