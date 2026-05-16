@@ -17,6 +17,7 @@
   - full keyboard navigation
   - keyboard shortcuts
 - full-text search
+- marketing / landing page
 - "Stumble!" page
 
 #### Bugfixes
