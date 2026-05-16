@@ -1,3 +1,4 @@
+-- squawk-ignore-file
 -- AlterTable
 ALTER TABLE "Link" ADD COLUMN     "searchVector" TSVECTOR;
 

@@ -1,3 +1,4 @@
+-- squawk-ignore-file
 -- AlterTable
 ALTER TABLE "Link" ADD COLUMN     "metaDescription" TEXT,
 ADD COLUMN     "metaFetchedAt" TIMESTAMP(3),

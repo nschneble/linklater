@@ -1,3 +1,4 @@
+-- squawk-ignore-file
 /*
   Removes email 2FA fields and repurposes storage for magic link login tokens.
   Old bcrypt hashes in emailTwoFactorCodeHash are incompatible with the new

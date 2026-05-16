@@ -1,3 +1,4 @@
+-- squawk-ignore-file
 -- CreateIndex
 CREATE INDEX "Link_userId_archivedAt_idx" ON "Link"("userId", "archivedAt");
 

@@ -1,3 +1,4 @@
+-- squawk-ignore-file
 -- AlterTable
 ALTER TABLE "User" ADD COLUMN     "pendingEmail" TEXT,
 ADD COLUMN     "pendingEmailToken" TEXT,

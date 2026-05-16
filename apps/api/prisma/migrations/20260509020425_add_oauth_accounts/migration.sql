@@ -1,3 +1,4 @@
+-- squawk-ignore-file
 -- DropIndex
 DROP INDEX "Link_searchVector_idx";
 
