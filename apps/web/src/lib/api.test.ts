@@ -20,7 +20,9 @@ import {
 import {
   ApiError,
   apiFetch,
+  createApiToken,
   disable2fa,
+  listApiTokens,
   readLink,
   clearStoredToken,
   createLink,
@@ -42,6 +44,7 @@ import {
   requestMagicLink,
   resendVerificationEmail,
   resetPassword,
+  revokeApiToken,
   setStoredToken,
   setupTotp,
   unreadLink,
@@ -741,5 +744,70 @@ describe('regenerateRecoveryCodes', () => {
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/auth/2fa/recovery-codes/regenerate');
     expect((options as { method: string }).method).toBe('POST');
+  });
+});
+
+describe('listApiTokens', () => {
+  it('GETs /tokens with Authorization header', async () => {
+    setStoredToken('my-jwt');
+    const tokens = [
+      {
+        id: 'tok-1',
+        name: 'Chrome',
+        prefix: 'ltk_aBcDeFgH',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        lastUsedAt: null,
+      },
+    ];
+    const fetchMock = mockFetch(tokens);
+
+    const result = await listApiTokens();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/tokens');
+    expect((options as { method?: string }).method).toBeUndefined();
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBe('Bearer my-jwt');
+    expect(result).toEqual(tokens);
+  });
+});
+
+describe('createApiToken', () => {
+  it('POSTs to /tokens with name in body', async () => {
+    setStoredToken('my-jwt');
+    const created = {
+      id: 'tok-1',
+      name: 'Chrome',
+      prefix: 'ltk_aBcDeFgH',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      lastUsedAt: null,
+      rawToken: 'ltk_aBcDeFgHiJkLmNoPqRsTuVwXyZ12',
+    };
+    const fetchMock = mockFetch(created, 201);
+
+    const result = await createApiToken('Chrome');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/tokens');
+    expect((options as { method: string }).method).toBe('POST');
+    const body = JSON.parse((options as { body: string }).body) as {
+      name: string;
+    };
+    expect(body.name).toBe('Chrome');
+    expect(result.rawToken).toBe(created.rawToken);
+  });
+});
+
+describe('revokeApiToken', () => {
+  it('DELETEs /tokens/:id with Authorization header', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ success: true });
+
+    const result = await revokeApiToken('tok-1');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/tokens/tok-1');
+    expect((options as { method: string }).method).toBe('DELETE');
+    expect(result).toEqual({ success: true });
   });
 });

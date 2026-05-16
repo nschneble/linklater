@@ -587,3 +587,57 @@ export async function deleteMe() {
     method: 'DELETE',
   });
 }
+
+// API Tokens endpoints
+
+/** A personal access token summary (no raw token value). */
+export interface ApiToken {
+  /** Unique identifier. */
+  id: string;
+  /** User-provided label (e.g. "Chrome Extension"). */
+  name: string;
+  /** First 12 chars of the raw token for display (e.g. `ltk_aBcDeFgH`). */
+  prefix: string;
+  /** ISO 8601 creation timestamp. */
+  createdAt: string;
+  /** ISO 8601 timestamp of the last API call made with this token, or null. */
+  lastUsedAt: string | null;
+}
+
+/** Returned only at creation time — includes the raw token shown once. */
+export interface CreatedApiToken extends ApiToken {
+  /** The full raw token. Store it now — it cannot be retrieved again. */
+  rawToken: string;
+}
+
+/**
+ * Endpoint: GET /tokens
+ * Response: Array of personal access token summaries for the current user.
+ */
+export async function listApiTokens(): Promise<ApiToken[]> {
+  return apiFetch<ApiToken[]>('/tokens');
+}
+
+/**
+ * Endpoint: POST /tokens
+ * Payload: `{ name }`
+ * Response: The created token including `rawToken` (shown only once).
+ */
+export async function createApiToken(name: string): Promise<CreatedApiToken> {
+  return apiFetch<CreatedApiToken>('/tokens', {
+    body: JSON.stringify({ name }),
+    method: 'POST',
+  });
+}
+
+/**
+ * Endpoint: DELETE /tokens/:id
+ * Response: `{ success: true }` — the token is permanently revoked.
+ */
+export async function revokeApiToken(
+  id: string,
+): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>(`/tokens/${id}`, {
+    method: 'DELETE',
+  });
+}

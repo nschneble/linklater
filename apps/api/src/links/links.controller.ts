@@ -20,21 +20,21 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
-import { JwtAuthGuard, type AuthRequest } from '../auth/index.js';
+import { AnyAuthGuard, type AuthRequest } from '../auth/index.js';
 import { LinksService } from './links.service.js';
 
 import { CreateLinkDto } from './dto/create-link.dto.js';
 import { UpdateLinkDto } from './dto/update-link.dto.js';
 
 /**
- * CRUD endpoints for a user's saved links. Every route requires a valid JWT.
- * All data is scoped to the authenticated user — no route can read or modify
- * another user's links.
+ * CRUD endpoints for a user's saved links. Every route requires a valid JWT
+ * or personal access token (PAT). All data is scoped to the authenticated
+ * user — no route can read or modify another user's links.
  */
 @ApiTags('links')
 @ApiBearerAuth()
 @Controller('links')
-@UseGuards(JwtAuthGuard)
+@UseGuards(AnyAuthGuard)
 export class LinksController {
   constructor(private readonly linksService: LinksService) {}
 
@@ -50,7 +50,10 @@ export class LinksController {
       'Link created or re-added to the unread list. Metadata fetch queued.',
   })
   @ApiResponse({ status: 400, description: 'URL is not a valid URL.' })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token (JWT or PAT).',
+  })
   @Post()
   async create(@Req() request: AuthRequest, @Body() body: CreateLinkDto) {
     const userId = request.user.userId;
@@ -91,7 +94,10 @@ export class LinksController {
     status: 200,
     description: 'Paginated result set: { data, total, page, limit }.',
   })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token (JWT or PAT).',
+  })
   @Get()
   async findAll(
     @Req() request: AuthRequest,
@@ -135,7 +141,10 @@ export class LinksController {
     status: 200,
     description: '{ link: Link | null } — null when no links match the filter.',
   })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token (JWT or PAT).',
+  })
   @Get('random')
   async random(@Req() request: AuthRequest, @Query('read') read?: string) {
     const userId = request.user.userId;
@@ -164,7 +173,10 @@ export class LinksController {
     description:
       '{ url: string } when a link is found; { url: null } when the unread list is empty.',
   })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token (JWT or PAT).',
+  })
   @HttpCode(200)
   @Post('stumble')
   async stumble(@Req() request: AuthRequest) {
@@ -180,7 +192,10 @@ export class LinksController {
     status: 200,
     description: 'The requested link with its metadata.',
   })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token (JWT or PAT).',
+  })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @Get(':id')
   async findOne(@Req() request: AuthRequest, @Param('id') id: string) {
@@ -198,7 +213,10 @@ export class LinksController {
     status: 200,
     description: 'The link unchanged (no editable fields defined yet).',
   })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token (JWT or PAT).',
+  })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @Patch(':id')
   async update(
@@ -217,7 +235,10 @@ export class LinksController {
     status: 201,
     description: 'The updated link with `readAt` set.',
   })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token (JWT or PAT).',
+  })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @Post(':id/read')
   async read(@Req() request: AuthRequest, @Param('id') id: string) {
@@ -232,7 +253,10 @@ export class LinksController {
     status: 201,
     description: 'The updated link with `readAt` cleared.',
   })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token (JWT or PAT).',
+  })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @Post(':id/unread')
   async unread(@Req() request: AuthRequest, @Param('id') id: string) {
@@ -252,7 +276,10 @@ export class LinksController {
     status: 200,
     description: '{ count: number } — the number of links deleted.',
   })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token (JWT or PAT).',
+  })
   @Delete('read')
   async removeAllRead(@Req() request: AuthRequest) {
     const userId = request.user.userId;
@@ -263,7 +290,10 @@ export class LinksController {
   @ApiOperation({ summary: 'Permanently delete a single link' })
   @ApiParam({ name: 'id', description: 'UUID of the link.' })
   @ApiResponse({ status: 200, description: '{ success: true }' })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token (JWT or PAT).',
+  })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @Delete(':id')
   async remove(@Req() request: AuthRequest, @Param('id') id: string) {

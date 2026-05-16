@@ -38,6 +38,7 @@ model User {
   links         Link[]
   oauthAccounts OAuthAccount[]
   recoveryCodes RecoveryCode[]
+  apiTokens     ApiToken[]
 }
 
 model RecoveryCode {
@@ -83,6 +84,19 @@ model Link {
   @@index([userId, url])
   @@index([userId, readAt])
   @@index([userId, createdAt])
+}
+
+model ApiToken {
+  id         String    @id @default(cuid())
+  name       String
+  tokenHash  String    @unique
+  prefix     String
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model Meta {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import AccountSettingsForm from './AccountSettingsForm';
+import ApiTokensSection from './ApiTokensSection';
 import BookmarkletSection from './BookmarkletSection';
 import DangerZone from './DangerZone';
 import SocialLoginsSection from './SocialLoginsSection';
@@ -68,6 +69,7 @@ export default function SettingsView({
       )}
       {user?.hasPassword && <TwoFactorSection />}
       <BookmarkletSection />
+      <ApiTokensSection />
       <StumbleSection />
       <DangerZone />
     </div>

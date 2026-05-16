@@ -12,6 +12,10 @@ vi.mock('./AccountSettingsForm', () => ({
   default: () => <div data-testid="account-settings-form" />,
 }));
 
+vi.mock('./ApiTokensSection', () => ({
+  default: () => <div data-testid="api-tokens-section" />,
+}));
+
 vi.mock('./BookmarkletSection', () => ({
   default: () => <div data-testid="bookmarklet-section" />,
 }));
@@ -106,6 +110,11 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('SettingsView', () => {
+  it('always renders the API Tokens section', () => {
+    renderSettingsView();
+    expect(screen.getByTestId('api-tokens-section')).toBeInTheDocument();
+  });
+
   describe('2FA section', () => {
     it('shows the TwoFactor section when the user has a password', () => {
       renderSettingsView();

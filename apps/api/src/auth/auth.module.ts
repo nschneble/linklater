@@ -2,6 +2,8 @@ import { Module, type Provider } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
+import { ApiKeyStrategy } from './api-key.strategy.js';
+import { AnyAuthGuard } from './any-auth.guard.js';
 import { AppleStrategy } from './apple.strategy.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
@@ -13,6 +15,7 @@ import { LocalStrategy } from './local.strategy.js';
 import { MfaAuthGuard } from './mfa-auth.guard.js';
 import { TotpService } from './totp.service.js';
 import { EmailModule } from '../email/email.module.js';
+import { TokensModule } from '../tokens/tokens.module.js';
 import { UsersModule } from '../users/users.module.js';
 
 const googleEnabled = !!(
@@ -49,9 +52,12 @@ const oauthProviders: Provider[] = [
       signOptions: { expiresIn: '90d' },
     }),
     PassportModule,
+    TokensModule,
     UsersModule,
   ],
   providers: [
+    ApiKeyStrategy,
+    AnyAuthGuard,
     AuthService,
     MagicLinkService,
     JwtStrategy,
@@ -61,5 +67,6 @@ const oauthProviders: Provider[] = [
     ...oauthProviders,
   ],
   controllers: [AuthController],
+  exports: [AnyAuthGuard],
 })
 export class AuthModule {}
