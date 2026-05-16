@@ -77,23 +77,34 @@ export class AuthService {
    * @throws {NotFoundException} When no user exists with the given ID.
    */
   async me(userId: string) {
-    const {
-      id,
-      totpSecret,
-      totpEnabledAt,
-      totpVerifiedAt: _totpVerifiedAt,
-      magicLinkToken: _magicLinkToken,
-      magicLinkTokenExpiresAt: _magicLinkTokenExpiresAt,
-      ...rest
-    } = await this.usersService.findById(userId);
+    const [
+      {
+        id,
+        totpSecret,
+        totpEnabledAt,
+        totpVerifiedAt: _totpVerifiedAt,
+        magicLinkToken: _magicLinkToken,
+        magicLinkTokenExpiresAt: _magicLinkTokenExpiresAt,
+        ...rest
+      },
+      oauthAccounts,
+    ] = await Promise.all([
+      this.usersService.findById(userId),
+      this.usersService.listOAuthAccounts(userId),
+    ]);
 
     const twoFactorMethod: 'totp' | null = totpEnabledAt ? 'totp' : null;
+    const connectedProviders = oauthAccounts.map((account) => ({
+      provider: account.provider,
+      connectedAt: account.connectedAt,
+    }));
 
     return {
       userId: id,
       ...rest,
       twoFactorMethod,
       twoFactorPending: !!totpSecret && !totpEnabledAt,
+      connectedProviders,
     };
   }
 
@@ -618,5 +629,38 @@ export class AuthService {
     const hashes = await hashRecoveryCodes(codes);
     await this.usersService.reissueRecoveryCodes(userId, hashes);
     return codes;
+  }
+
+  async setFirstPassword(userId: string, password: string): Promise<void> {
+    await this.usersService.setFirstPassword(userId, password);
+  }
+
+  async unlinkOAuthProvider(userId: string, provider: string): Promise<void> {
+    const user = await this.usersService.findByIdWithPasswordHash(userId);
+    if (!user.hasPassword) {
+      throw new BadRequestException(
+        'Add a password before disconnecting all social providers',
+      );
+    }
+    await this.usersService.unlinkOAuthAccount(userId, provider);
+  }
+
+  async linkOAuthAccountToUser(
+    userId: string,
+    provider: string,
+    providerId: string,
+    _providerEmail: string,
+  ): Promise<void> {
+    const existing = await this.usersService.findOAuthAccount(
+      provider,
+      providerId,
+    );
+    if (existing) {
+      if (existing.userId === userId) return;
+      throw new ConflictException(
+        'This provider account is already linked to a different user',
+      );
+    }
+    await this.usersService.linkOAuthAccount(userId, provider, providerId);
   }
 }

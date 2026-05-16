@@ -24,6 +24,8 @@ import {
  * after login or after page load when a stored JWT is found.
  */
 export interface User {
+  /** The OAuth providers connected to this account. */
+  connectedProviders: Array<{ provider: string; connectedAt: string }>;
   /** The user's current email address. */
   email: string;
   /** ISO timestamp of when the email was verified, or `null` if unverified. */
@@ -90,6 +92,7 @@ interface AuthContextValue {
  */
 function mapMeToUser(me: Awaited<ReturnType<typeof getMe>>): User {
   return {
+    connectedProviders: me.connectedProviders,
     userId: me.userId,
     email: me.email,
     emailVerifiedAt: me.emailVerifiedAt,

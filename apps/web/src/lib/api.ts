@@ -179,6 +179,7 @@ export function logout() {
  */
 export async function getMe() {
   return apiFetch<{
+    connectedProviders: Array<{ provider: string; connectedAt: string }>;
     email: string;
     emailVerifiedAt: string | null;
     hasPassword: boolean;
@@ -347,6 +348,27 @@ export async function regenerateRecoveryCodes(credentials: {
   return apiFetch('/auth/2fa/recovery-codes/regenerate', {
     body: JSON.stringify(credentials),
     method: 'POST',
+  });
+}
+
+/**
+ * Endpoint: POST /auth/set-password
+ * Sets a password for an SSO-only account (no current password required).
+ */
+export async function setPassword(password: string): Promise<void> {
+  await apiFetch('/auth/set-password', {
+    body: JSON.stringify({ password }),
+    method: 'POST',
+  });
+}
+
+/**
+ * Endpoint: DELETE /auth/providers/:provider
+ * Disconnects an OAuth provider from the user's account.
+ */
+export async function unlinkOAuthProvider(provider: string): Promise<void> {
+  await apiFetch(`/auth/providers/${encodeURIComponent(provider)}`, {
+    method: 'DELETE',
   });
 }
 

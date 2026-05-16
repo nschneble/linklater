@@ -1,10 +1,13 @@
 import { jest } from '@jest/globals';
 
+import { ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import type { Response } from 'express';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import type { AuthRequest } from './auth-request.type';
 import { MfaAuthGuard } from './mfa-auth.guard';
 import { TotpService } from './totp.service';
 
@@ -26,6 +29,7 @@ describe('AuthController', () => {
     confirmEmailChange: jest.fn(),
     disable2fa: jest.fn(),
     forgotPassword: jest.fn(),
+    linkOAuthAccountToUser: jest.fn(),
     login: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
     me: jest.fn(),
     regenerateRecoveryCodes: jest.fn(),
@@ -35,6 +39,8 @@ describe('AuthController', () => {
     resendVerificationEmail: jest.fn(),
     resetPassword: jest.fn(),
     sendVerificationEmail: jest.fn(),
+    setFirstPassword: jest.fn(),
+    unlinkOAuthProvider: jest.fn(),
     verifyMagicLink: jest.fn(),
     verifyEmail: jest.fn(),
     verifyOtp: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
@@ -410,6 +416,74 @@ describe('AuthController', () => {
 
       expect(response.redirect).toHaveBeenCalledWith(
         expect.stringContaining('error=mfa_required'),
+      );
+    });
+  });
+
+  describe('setPassword', () => {
+    it('delegates to authService.setFirstPassword with userId and password', async () => {
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      (authServiceMock.setFirstPassword as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await controller.setPassword(request, {
+        password: USER_PASSWORD,
+      });
+
+      expect(authServiceMock.setFirstPassword).toHaveBeenCalledWith(
+        USER_ID,
+        USER_PASSWORD,
+      );
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe('unlinkProvider', () => {
+    it('delegates to authService.unlinkOAuthProvider with userId and provider', async () => {
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      (authServiceMock.unlinkOAuthProvider as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await controller.unlinkProvider(request, 'google');
+
+      expect(authServiceMock.unlinkOAuthProvider).toHaveBeenCalledWith(
+        USER_ID,
+        'google',
+      );
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe('googleLinkCallback', () => {
+    it('redirects to settings with linked=google on success', async () => {
+      process.env.APP_URL = 'https://app.example.com';
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+      (authServiceMock.linkOAuthAccountToUser as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.googleLinkCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        'https://app.example.com/settings?linked=google',
+      );
+    });
+
+    it('redirects with link_error when ConflictException is thrown', async () => {
+      process.env.APP_URL = 'https://app.example.com';
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+      (authServiceMock.linkOAuthAccountToUser as jest.Mock).mockRejectedValue(
+        new ConflictException('Already linked'),
+      );
+
+      await controller.googleLinkCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        'https://app.example.com/settings?link_error=already_linked',
       );
     });
   });

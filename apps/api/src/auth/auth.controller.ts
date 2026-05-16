@@ -1,9 +1,11 @@
 import {
   Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
   HttpCode,
+  Param,
   Post,
   Req,
   Res,
@@ -20,6 +22,8 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
+import { SetPasswordDto } from './dto/set-password.dto.js';
+import { generateLinkState } from './oauth-link-state.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { LocalAuthGuard } from './local-auth.guard.js';
 import { MfaAuthGuard } from './mfa-auth.guard.js';
@@ -430,5 +434,93 @@ export class AuthController {
     response.redirect(
       `${process.env.APP_URL}/oauth/callback#token=${result.accessToken}`,
     );
+  }
+
+  @ApiOperation({ summary: 'Initiate Google OAuth account linking' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 302, description: 'Redirects to Google OAuth.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Get('google/link')
+  async googleLink(@Req() request: AuthRequest, @Res() response: Response) {
+    const linkState = generateLinkState(
+      request.user.userId,
+      process.env.JWT_SECRET!,
+    );
+    const parameters = new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID!,
+      redirect_uri: process.env.GOOGLE_LINK_CALLBACK_URL!,
+      response_type: 'code',
+      scope: 'email profile',
+      state: linkState,
+    });
+    response.redirect(
+      `https://accounts.google.com/o/oauth2/v2/auth?${parameters.toString()}`,
+    );
+  }
+
+  @ApiOperation({ summary: 'Google OAuth account linking callback' })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to settings on success or failure.',
+  })
+  @UseGuards(AuthGuard('google-link'))
+  @Get('google/link/callback')
+  async googleLinkCallback(
+    @Req()
+    request: {
+      user: { userId: string; providerId: string; providerEmail: string };
+    },
+    @Res() response: Response,
+  ) {
+    try {
+      await this.authService.linkOAuthAccountToUser(
+        request.user.userId,
+        'google',
+        request.user.providerId,
+        request.user.providerEmail,
+      );
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        response.redirect(
+          `${process.env.APP_URL}/settings?link_error=already_linked`,
+        );
+        return;
+      }
+      throw error;
+    }
+    response.redirect(`${process.env.APP_URL}/settings?linked=google`);
+  }
+
+  @ApiOperation({ summary: 'Disconnect an OAuth provider' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Provider disconnected.' })
+  @ApiResponse({
+    status: 400,
+    description: 'No password set — cannot disconnect.',
+  })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Delete('providers/:provider')
+  @HttpCode(200)
+  async unlinkProvider(
+    @Req() request: AuthRequest,
+    @Param('provider') provider: string,
+  ) {
+    await this.authService.unlinkOAuthProvider(request.user.userId, provider);
+    return { success: true };
+  }
+
+  @ApiOperation({ summary: 'Set a password for an SSO-only account' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Password set.' })
+  @ApiResponse({ status: 400, description: 'Account already has a password.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Post('set-password')
+  @HttpCode(200)
+  async setPassword(@Req() request: AuthRequest, @Body() body: SetPasswordDto) {
+    await this.authService.setFirstPassword(request.user.userId, body.password);
+    return { success: true };
   }
 }

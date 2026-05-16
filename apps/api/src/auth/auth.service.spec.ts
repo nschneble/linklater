@@ -70,10 +70,13 @@ describe('AuthService', () => {
     findOAuthAccount: jest.fn(),
     findUnusedRecoveryCodes: jest.fn(),
     linkOAuthAccount: jest.fn(),
+    listOAuthAccounts: jest.fn(),
     markEmailVerified: jest.fn(),
     markRecoveryCodeUsed: jest.fn(),
     reissueRecoveryCodes: jest.fn(),
     resetPasswordWithToken: jest.fn(),
+    setFirstPassword: jest.fn(),
+    unlinkOAuthAccount: jest.fn(),
     updatePendingEmail: jest.fn(),
     updateResetToken: jest.fn(),
     updateVerificationToken: jest.fn(),
@@ -146,6 +149,10 @@ describe('AuthService', () => {
   });
 
   describe('me', () => {
+    beforeEach(() => {
+      (usersServiceMock.listOAuthAccounts as jest.Mock).mockResolvedValue([]);
+    });
+
     it('returns user with id remapped to userId and 2FA status fields', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
@@ -203,6 +210,45 @@ describe('AuthService', () => {
 
       expect(result.twoFactorMethod).toBeNull();
       expect(result.twoFactorPending).toBe(true);
+    });
+
+    it('includes connectedProviders from listOAuthAccounts', async () => {
+      const connectedAt = new Date();
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpSecret: null,
+        totpEnabledAt: null,
+        totpVerifiedAt: null,
+        magicLinkToken: null,
+        magicLinkTokenExpiresAt: null,
+      });
+      (usersServiceMock.listOAuthAccounts as jest.Mock).mockResolvedValue([
+        { provider: OAUTH_PROVIDER, connectedAt },
+      ]);
+
+      const result = await service.me(USER_ID);
+
+      expect(result.connectedProviders).toEqual([
+        { provider: OAUTH_PROVIDER, connectedAt },
+      ]);
+    });
+
+    it('returns empty connectedProviders when no OAuth accounts are linked', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpSecret: null,
+        totpEnabledAt: null,
+        totpVerifiedAt: null,
+        magicLinkToken: null,
+        magicLinkTokenExpiresAt: null,
+      });
+      (usersServiceMock.listOAuthAccounts as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.me(USER_ID);
+
+      expect(result.connectedProviders).toEqual([]);
     });
   });
 
@@ -1351,6 +1397,115 @@ describe('AuthService', () => {
       await expect(service.verifyMagicLink('bad-token')).rejects.toThrow(
         BadRequestException,
       );
+    });
+  });
+
+  describe('setFirstPassword', () => {
+    it('delegates to usersService.setFirstPassword', async () => {
+      (usersServiceMock.setFirstPassword as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.setFirstPassword(USER_ID, NEW_PASSWORD);
+
+      expect(usersServiceMock.setFirstPassword).toHaveBeenCalledWith(
+        USER_ID,
+        NEW_PASSWORD,
+      );
+    });
+  });
+
+  describe('unlinkOAuthProvider', () => {
+    it('throws BadRequestException when the user has no password', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        hasPassword: false,
+        passwordHash: null,
+      });
+
+      await expect(
+        service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('calls unlinkOAuthAccount when the user has a password', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        hasPassword: true,
+        passwordHash: KNOWN_PASSWORD_HASH,
+      });
+      (usersServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER);
+
+      expect(usersServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
+        USER_ID,
+        OAUTH_PROVIDER,
+      );
+    });
+  });
+
+  describe('linkOAuthAccountToUser', () => {
+    it('links the provider when no existing account is found', async () => {
+      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
+      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.linkOAuthAccountToUser(
+        USER_ID,
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        USER_EMAIL,
+      );
+
+      expect(usersServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
+        USER_ID,
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+      );
+    });
+
+    it('is idempotent when the provider is already linked to the same user', async () => {
+      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
+        userId: USER_ID,
+        provider: OAUTH_PROVIDER,
+        providerId: OAUTH_PROVIDER_ID,
+      });
+
+      await service.linkOAuthAccountToUser(
+        USER_ID,
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        USER_EMAIL,
+      );
+
+      expect(usersServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
+    });
+
+    it('throws ConflictException when the provider is linked to a different user', async () => {
+      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
+        userId: 'different-user-id',
+        provider: OAUTH_PROVIDER,
+        providerId: OAUTH_PROVIDER_ID,
+      });
+
+      await expect(
+        service.linkOAuthAccountToUser(
+          USER_ID,
+          OAUTH_PROVIDER,
+          OAUTH_PROVIDER_ID,
+          USER_EMAIL,
+        ),
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

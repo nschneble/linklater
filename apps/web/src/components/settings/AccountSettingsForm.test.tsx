@@ -10,6 +10,7 @@ vi.mock('../../lib/api', async (importOriginal) => {
   return {
     ...actual,
     requestEmailChange: vi.fn(),
+    setPassword: vi.fn(),
     updateMe: vi.fn(),
   };
 });
@@ -21,11 +22,14 @@ vi.mock('../../auth/AuthContext', () => ({
 import * as apiModule from '../../lib/api';
 import { useAuth } from '../../auth/AuthContext';
 
+const NEW_PASSWORD = 'super-secret-password-123';
+
 const USER_EMAIL = 'email@example.com';
 const USER_ID = 'user-1';
 
 function makeUser(overrides: Partial<User> = {}): User {
   return {
+    connectedProviders: [],
     email: USER_EMAIL,
     emailVerifiedAt: '2026-01-01T00:00:00.000Z',
     hasPassword: true,
@@ -45,6 +49,7 @@ function makeAuthContext(overrides = {}) {
     login: vi.fn(),
     loginWithToken: vi.fn(),
     logout: vi.fn(),
+    refreshUser: vi.fn(),
     register: vi.fn(),
     resendVerificationEmail: vi.fn(),
     setPendingEmail: vi.fn(),
@@ -327,6 +332,70 @@ describe('AccountSettingsForm', () => {
       expect(
         screen.getByRole('button', { name: /update password/i }),
       ).toBeDisabled();
+    });
+  });
+
+  describe('add password section (SSO-only account)', () => {
+    beforeEach(() => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ hasPassword: false }) }),
+      );
+    });
+
+    it('shows the add password form when hasPassword is false', () => {
+      render(<AccountSettingsForm />);
+      expect(
+        screen.getByRole('button', { name: /add password/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('does not show the update password form when hasPassword is false', () => {
+      render(<AccountSettingsForm />);
+      expect(
+        screen.queryByRole('button', { name: /update password/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('calls setPassword and refreshUser on successful submission', async () => {
+      const refreshUser = vi.fn();
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({ hasPassword: false }),
+          refreshUser,
+        }),
+      );
+      vi.mocked(apiModule.setPassword).mockResolvedValue(undefined);
+
+      render(<AccountSettingsForm />);
+      fireEvent.change(screen.getByLabelText(/new password/i), {
+        target: { value: NEW_PASSWORD },
+      });
+      await screen.findByDisplayValue(NEW_PASSWORD);
+      fireEvent.click(screen.getByRole('button', { name: /add password/i }));
+
+      await waitFor(() => {
+        expect(apiModule.setPassword).toHaveBeenCalledWith(NEW_PASSWORD);
+        expect(refreshUser).toHaveBeenCalled();
+      });
+    });
+
+    it('shows an error alert when setPassword fails', async () => {
+      vi.mocked(apiModule.setPassword).mockRejectedValue(
+        new Error('Account already has a password'),
+      );
+
+      render(<AccountSettingsForm />);
+      fireEvent.change(screen.getByLabelText(/new password/i), {
+        target: { value: NEW_PASSWORD },
+      });
+      await screen.findByDisplayValue(NEW_PASSWORD);
+      fireEvent.click(screen.getByRole('button', { name: /add password/i }));
+
+      await waitFor(() => {
+        expect(
+          screen.getByText('Account already has a password'),
+        ).toBeInTheDocument();
+      });
     });
   });
 });

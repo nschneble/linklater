@@ -88,7 +88,7 @@ export class UsersService {
       if (!user) throw new NotFoundException('User not found');
       if (!user.passwordHash) {
         throw new BadRequestException(
-          'Password cannot be changed for accounts created via social login',
+          'Use the set-password endpoint to add a password to a social login account',
         );
       }
       const isValid = await bcrypt.compare(
@@ -332,6 +332,36 @@ export class UsersService {
   async linkOAuthAccount(userId: string, provider: string, providerId: string) {
     await this.prisma.oAuthAccount.create({
       data: { userId, provider, providerId },
+    });
+  }
+
+  async listOAuthAccounts(
+    userId: string,
+  ): Promise<{ provider: string; connectedAt: Date }[]> {
+    const accounts = await this.prisma.oAuthAccount.findMany({
+      where: { userId },
+      select: { provider: true, createdAt: true },
+    });
+    return accounts.map((account) => ({
+      provider: account.provider,
+      connectedAt: account.createdAt,
+    }));
+  }
+
+  async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
+    await this.prisma.oAuthAccount.deleteMany({ where: { userId, provider } });
+  }
+
+  async setFirstPassword(userId: string, password: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.passwordHash !== null) {
+      throw new BadRequestException('Account already has a password');
+    }
+    const passwordHash = await bcrypt.hash(password, 12);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
     });
   }
 

@@ -1,4 +1,9 @@
-import { ApiError, requestEmailChange, updateMe } from '../../lib/api';
+import {
+  ApiError,
+  requestEmailChange,
+  setPassword as apiSetPassword,
+  updateMe,
+} from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
 import { useState, type FormEvent } from 'react';
@@ -27,7 +32,8 @@ import PrimaryButton from '../common/PrimaryButton';
  * → attempt action → handle result.
  */
 export default function AccountSettingsForm() {
-  const { resendVerificationEmail, setPendingEmail, user } = useAuth();
+  const { refreshUser, resendVerificationEmail, setPendingEmail, user } =
+    useAuth();
 
   const [emailInput, setEmailInput] = useState(user?.email ?? '');
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -43,6 +49,10 @@ export default function AccountSettingsForm() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [passwordSaving, setPasswordSaving] = useState(false);
+
+  const [newPassword, setNewPassword] = useState('');
+  const [addPasswordError, setAddPasswordError] = useState<string | null>(null);
+  const [addPasswordSaving, setAddPasswordSaving] = useState(false);
 
   const isVerified = Boolean(user?.emailVerifiedAt);
   const hasPendingEmail = Boolean(user?.pendingEmail);
@@ -126,6 +136,23 @@ export default function AccountSettingsForm() {
       setPasswordError(getErrorMessage(error, 'Failed to update password'));
     } finally {
       setPasswordSaving(false);
+    }
+  };
+
+  const handleAddPassword = async (event: FormEvent) => {
+    event.preventDefault();
+
+    setAddPasswordError(null);
+    setAddPasswordSaving(true);
+
+    try {
+      await apiSetPassword(newPassword);
+      setNewPassword('');
+      await refreshUser();
+    } catch (error: unknown) {
+      setAddPasswordError(getErrorMessage(error, 'Failed to set password'));
+    } finally {
+      setAddPasswordSaving(false);
     }
   };
 
@@ -284,14 +311,39 @@ export default function AccountSettingsForm() {
           </PrimaryButton>
         </form>
       ) : (
-        <div className="space-y-2">
+        <form className="space-y-4" onSubmit={handleAddPassword}>
           <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
             Password
           </h3>
           <p className="text-[var(--text-muted)] text-xs">
-            Your account uses social sign-in — no password is set.
+            Add a password for backup access alongside social sign-in.
           </p>
-        </div>
+
+          <label
+            className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+            htmlFor="add-password-input"
+          >
+            New password
+          </label>
+          <FormInput
+            id="add-password-input"
+            type="password"
+            value={newPassword}
+            onChange={(event) => setNewPassword(event.target.value)}
+          />
+
+          {addPasswordError && (
+            <Alert variant="error">{addPasswordError}</Alert>
+          )}
+
+          <PrimaryButton
+            disabled={addPasswordSaving || !newPassword}
+            className="py-2.5"
+          >
+            <i className="fa-solid fa-key text-[0.7rem]" aria-hidden="true" />
+            {addPasswordSaving ? 'Saving…' : 'Add password'}
+          </PrimaryButton>
+        </form>
       )}
     </div>
   );

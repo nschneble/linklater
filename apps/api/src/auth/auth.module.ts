@@ -6,6 +6,7 @@ import { AppleStrategy } from './apple.strategy.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { MagicLinkService } from './magic-link.service.js';
+import { GoogleLinkStrategy } from './google-link.strategy.js';
 import { GoogleStrategy } from './google.strategy.js';
 import { JwtStrategy } from './jwt.strategy.js';
 import { LocalStrategy } from './local.strategy.js';
@@ -20,6 +21,12 @@ const googleEnabled = !!(
   process.env.GOOGLE_CALLBACK_URL
 );
 
+const googleLinkEnabled = !!(
+  process.env.GOOGLE_CLIENT_ID &&
+  process.env.GOOGLE_CLIENT_SECRET &&
+  process.env.GOOGLE_LINK_CALLBACK_URL
+);
+
 const appleEnabled = !!(
   process.env.APPLE_CLIENT_ID &&
   process.env.APPLE_TEAM_ID &&
@@ -30,6 +37,7 @@ const appleEnabled = !!(
 
 const oauthProviders: Provider[] = [
   ...(googleEnabled ? [GoogleStrategy] : []),
+  ...(googleLinkEnabled ? [GoogleLinkStrategy] : []),
   ...(appleEnabled ? [AppleStrategy] : []),
 ];
 

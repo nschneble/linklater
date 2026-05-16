@@ -55,6 +55,8 @@ describe('UsersService', () => {
   const prismaMock = {
     oAuthAccount: {
       create: jest.fn(),
+      deleteMany: jest.fn(),
+      findMany: jest.fn(),
       findUnique: jest.fn(),
     },
     user: {
@@ -434,6 +436,80 @@ describe('UsersService', () => {
           currentPassword: KNOWN_PASSWORD,
           password: NEW_PASSWORD,
         }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('listOAuthAccounts', () => {
+    it('returns provider and connectedAt for each linked account', async () => {
+      const now = new Date();
+      (prismaMock.oAuthAccount.findMany as jest.Mock).mockResolvedValue([
+        { provider: OAUTH_PROVIDER, createdAt: now },
+      ]);
+
+      const result = await service.listOAuthAccounts(USER_ID);
+
+      expect(prismaMock.oAuthAccount.findMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID },
+        select: { provider: true, createdAt: true },
+      });
+      expect(result).toEqual([{ provider: OAUTH_PROVIDER, connectedAt: now }]);
+    });
+
+    it('returns an empty array when no providers are linked', async () => {
+      (prismaMock.oAuthAccount.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.listOAuthAccounts(USER_ID);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('unlinkOAuthAccount', () => {
+    it('calls oAuthAccount.deleteMany with the correct where clause', async () => {
+      (prismaMock.oAuthAccount.deleteMany as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.unlinkOAuthAccount(USER_ID, OAUTH_PROVIDER);
+
+      expect(prismaMock.oAuthAccount.deleteMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID, provider: OAUTH_PROVIDER },
+      });
+    });
+  });
+
+  describe('setFirstPassword', () => {
+    it('hashes the password and updates the user record', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(
+        makeUser({ passwordHash: null }),
+      );
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.setFirstPassword(USER_ID, USER_PASSWORD);
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            passwordHash: expect.not.stringMatching(USER_PASSWORD),
+          }),
+        }),
+      );
+    });
+
+    it('throws NotFoundException when user does not exist', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.setFirstPassword(USER_ID, USER_PASSWORD),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException when the user already has a password', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+
+      await expect(
+        service.setFirstPassword(USER_ID, USER_PASSWORD),
       ).rejects.toThrow(BadRequestException);
     });
   });
