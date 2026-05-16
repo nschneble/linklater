@@ -1,5 +1,6 @@
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
+import IconButton from '../common/IconButton';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import TabButton from '../common/TabButton';
@@ -456,19 +457,20 @@ export default function AuthForm() {
 
           <div className="flex flex-col gap-2">
             {googleSsoEnabled && (
-              <a
-                href={`${import.meta.env.VITE_API_BASE_URL}/auth/google`}
-                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-sm font-medium rounded-lg transition hover:opacity-80"
-                aria-label="Continue with Google"
+              <IconButton
+                variant="elevated"
+                title="Continue with Google"
+                className="w-full py-2.5 rounded-lg"
+                onClick={() =>
+                  navigate(`${import.meta.env.VITE_API_BASE_URL}/auth/google`)
+                }
               >
-                <img
-                  className="w-4 h-4"
-                  src="/assets/img/google.png"
-                  alt="Google Logo"
+                <i
+                  className="fa-brands fa-google text-[0.7rem]"
                   aria-hidden="true"
                 />
                 Continue with Google
-              </a>
+              </IconButton>
             )}
 
             {appleSsoEnabled && (
