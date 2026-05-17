@@ -2,27 +2,27 @@
 
 ## Environment Variables
 
-| Variable                    | Required | Description                                                              |
-| --------------------------- | -------- | ------------------------------------------------------------------------ |
-| `DATABASE_URL`              | Yes      | PostgreSQL connection string                                             |
-| `JWT_SECRET`                | Yes      | Used to sign and verify JWTs and HMAC state tokens for OAuth linking     |
-| `APP_URL`                   | Yes      | Public URL of the web app (e.g. `https://linklater.app`)                |
-| `SMTP_HOST`                 | Yes      | SMTP server hostname                                                     |
-| `SMTP_PORT`                 | Yes      | SMTP server port                                                         |
-| `SMTP_SECURE`               | Yes      | Set to `true` to use TLS                                                 |
-| `SMTP_USER`                 | No       | SMTP authentication username (omit for Mailpit)                          |
-| `SMTP_PASS`                 | No       | SMTP authentication password (omit for Mailpit)                          |
-| `SMTP_FROM`                 | Yes      | `From` address for all outbound emails                                   |
-| `GOOGLE_CLIENT_ID`          | No       | Google OAuth app client ID — omit to disable Google sign-in              |
-| `GOOGLE_CLIENT_SECRET`      | No       | Google OAuth app client secret                                           |
-| `GOOGLE_CALLBACK_URL`       | No       | Absolute URL of the Google sign-in callback (e.g. `.../auth/google/callback`) |
-| `GOOGLE_LINK_CALLBACK_URL`  | No       | Absolute URL for the Google account-linking callback (e.g. `.../auth/google/link/callback`) |
-| `APPLE_CLIENT_ID`           | No       | Apple Sign In service ID — omit to disable Apple sign-in                 |
-| `APPLE_TEAM_ID`             | No       | Apple developer team ID                                                  |
-| `APPLE_KEY_ID`              | No       | Apple Sign In key ID                                                     |
-| `APPLE_PRIVATE_KEY`         | No       | Apple Sign In private key (PEM string)                                   |
-| `APPLE_CALLBACK_URL`        | No       | Absolute URL of the Apple Sign In callback                               |
-| `EXTENSION_REDIRECT_URIS`   | No       | Comma-separated allowlist of redirect URIs accepted by the extension auth flow |
+| Variable                   | Required | Description                                                                                 |
+| -------------------------- | -------- | ------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`             | Yes      | PostgreSQL connection string                                                                |
+| `JWT_SECRET`               | Yes      | Used to sign and verify JWTs and HMAC state tokens for OAuth linking                        |
+| `APP_URL`                  | Yes      | Public URL of the web app (e.g. `https://linklater.app`)                                    |
+| `SMTP_HOST`                | Yes      | SMTP server hostname                                                                        |
+| `SMTP_PORT`                | Yes      | SMTP server port                                                                            |
+| `SMTP_SECURE`              | Yes      | Set to `true` to use TLS                                                                    |
+| `SMTP_USER`                | No       | SMTP authentication username (omit for Mailpit)                                             |
+| `SMTP_PASS`                | No       | SMTP authentication password (omit for Mailpit)                                             |
+| `SMTP_FROM`                | Yes      | `From` address for all outbound emails                                                      |
+| `GOOGLE_CLIENT_ID`         | No       | Google OAuth app client ID — omit to disable Google sign-in                                 |
+| `GOOGLE_CLIENT_SECRET`     | No       | Google OAuth app client secret                                                              |
+| `GOOGLE_CALLBACK_URL`      | No       | Absolute URL of the Google sign-in callback (e.g. `.../auth/google/callback`)               |
+| `GOOGLE_LINK_CALLBACK_URL` | No       | Absolute URL for the Google account-linking callback (e.g. `.../auth/google/link/callback`) |
+| `APPLE_CLIENT_ID`          | No       | Apple Sign In service ID — omit to disable Apple sign-in                                    |
+| `APPLE_TEAM_ID`            | No       | Apple developer team ID                                                                     |
+| `APPLE_KEY_ID`             | No       | Apple Sign In key ID                                                                        |
+| `APPLE_PRIVATE_KEY`        | No       | Apple Sign In private key (PEM string)                                                      |
+| `APPLE_CALLBACK_URL`       | No       | Absolute URL of the Apple Sign In callback                                                  |
+| `EXTENSION_REDIRECT_URIS`  | No       | Comma-separated allowlist of redirect URIs accepted by the extension auth flow              |
 
 > **OAuth providers are loaded conditionally.** If the required environment
 > variables for a provider are absent, that Passport strategy is never
@@ -34,16 +34,16 @@
 
 ## Module Overview
 
-| Module     | Path           | Responsibility                                                       |
-| ---------- | -------------- | -------------------------------------------------------------------- |
-| `Auth`     | `src/auth`     | All auth flows: login, registration, JWTs, email tokens, OAuth, PATs |
-| `Email`    | `src/email`    | Send transactional emails via SMTP                                   |
-| `Links`    | `src/links`    | Link CRUD, search, mark as read                                      |
-| `Metadata` | `src/metadata` | Fetch Open Graph metadata tags                                       |
-| `Prisma`   | `src/prisma`   | Prisma client wrapper                                                |
-| `Queue`    | `src/queue`    | Enqueue and process background jobs via pg-boss                      |
+| Module     | Path           | Responsibility                                                        |
+| ---------- | -------------- | --------------------------------------------------------------------- |
+| `Auth`     | `src/auth`     | All auth flows: login, registration, JWTs, email tokens, OAuth, PATs  |
+| `Email`    | `src/email`    | Send transactional emails via SMTP                                    |
+| `Links`    | `src/links`    | Link CRUD, search, mark as read                                       |
+| `Metadata` | `src/metadata` | Fetch Open Graph metadata tags                                        |
+| `Prisma`   | `src/prisma`   | Prisma client wrapper                                                 |
+| `Queue`    | `src/queue`    | Enqueue and process background jobs via pg-boss                       |
 | `Tokens`   | `src/tokens`   | Personal access token (PAT) lifecycle: create, list, revoke, validate |
-| `Users`    | `src/users`    | Profile management, account deletion                                 |
+| `Users`    | `src/users`    | Profile management, account deletion                                  |
 
 ## Authentication Strategy
 
@@ -155,11 +155,11 @@ Recovery codes are also accepted at `verify-otp` as `method: 'recovery'`.
 
 ### Tokens (`/tokens`) — requires JWT
 
-| Method   | Path           | Auth | Request Body        | Response                                              |
-| -------- | -------------- | ---- | ------------------- | ----------------------------------------------------- |
-| `POST`   | `/tokens`      | JWT  | `{ name: string }`  | Created token including one-time `rawToken`           |
-| `GET`    | `/tokens`      | JWT  | —                   | Array of token summaries (no `rawToken`)              |
-| `DELETE` | `/tokens/:id`  | JWT  | —                   | `{ success: true }`                                   |
+| Method   | Path          | Auth | Request Body       | Response                                    |
+| -------- | ------------- | ---- | ------------------ | ------------------------------------------- |
+| `POST`   | `/tokens`     | JWT  | `{ name: string }` | Created token including one-time `rawToken` |
+| `GET`    | `/tokens`     | JWT  | —                  | Array of token summaries (no `rawToken`)    |
+| `DELETE` | `/tokens/:id` | JWT  | —                  | `{ success: true }`                         |
 
 **Created token response shape:**
 
@@ -179,19 +179,19 @@ the same shape minus `rawToken`.
 
 ### New Auth Endpoints (`/auth`)
 
-| Method   | Path                              | Auth           | Request Body                             | Response                                             |
-| -------- | --------------------------------- | -------------- | ---------------------------------------- | ---------------------------------------------------- |
-| `POST`   | `/auth/request-magic-link`        | Public         | `{ email }`                              | 200 (always, even if email not found)                |
-| `POST`   | `/auth/register-magic-link`       | Public         | `{ email }`                              | 200 (creates account if new, sends magic link)       |
-| `POST`   | `/auth/verify-magic-link`         | Public         | `{ token }`                              | `{ accessToken, refreshToken }`                      |
-| `POST`   | `/auth/refresh`                   | Public         | `{ refreshToken }`                       | `{ accessToken, refreshToken }` (rotated pair)       |
-| `DELETE` | `/auth/sessions`                  | JWT            | —                                        | `{ success: true }` (all refresh tokens revoked)     |
-| `GET`    | `/auth/extension/authorize`       | JWT + query    | `code_challenge`, `redirect_uri`         | 302 to `redirect_uri?code=<rawCode>`                 |
-| `POST`   | `/auth/extension/token`           | Public         | `{ code, codeVerifier }`                 | `{ accessToken, refreshToken }`                      |
-| `GET`    | `/auth/google/link`               | JWT            | —                                        | 302 to Google OAuth                                  |
-| `GET`    | `/auth/google/link/callback`      | google-link    | —                                        | 302 to `/settings?linked=google` or `link_error=…`   |
-| `DELETE` | `/auth/providers/:provider`       | JWT            | —                                        | `{ success: true }`                                  |
-| `POST`   | `/auth/set-password`              | JWT            | `{ password }` (min 12 characters)       | `{ success: true }`                                  |
+| Method   | Path                         | Auth        | Request Body                       | Response                                           |
+| -------- | ---------------------------- | ----------- | ---------------------------------- | -------------------------------------------------- |
+| `POST`   | `/auth/request-magic-link`   | Public      | `{ email }`                        | 200 (always, even if email not found)              |
+| `POST`   | `/auth/register-magic-link`  | Public      | `{ email }`                        | 200 (creates account if new, sends magic link)     |
+| `POST`   | `/auth/verify-magic-link`    | Public      | `{ token }`                        | `{ accessToken, refreshToken }`                    |
+| `POST`   | `/auth/refresh`              | Public      | `{ refreshToken }`                 | `{ accessToken, refreshToken }` (rotated pair)     |
+| `DELETE` | `/auth/sessions`             | JWT         | —                                  | `{ success: true }` (all refresh tokens revoked)   |
+| `GET`    | `/auth/extension/authorize`  | JWT + query | `code_challenge`, `redirect_uri`   | 302 to `redirect_uri?code=<rawCode>`               |
+| `POST`   | `/auth/extension/token`      | Public      | `{ code, codeVerifier }`           | `{ accessToken, refreshToken }`                    |
+| `GET`    | `/auth/google/link`          | JWT         | —                                  | 302 to Google OAuth                                |
+| `GET`    | `/auth/google/link/callback` | google-link | —                                  | 302 to `/settings?linked=google` or `link_error=…` |
+| `DELETE` | `/auth/providers/:provider`  | JWT         | —                                  | `{ success: true }`                                |
+| `POST`   | `/auth/set-password`         | JWT         | `{ password }` (min 12 characters) | `{ success: true }`                                |
 
 > The `GET /auth/google` and `GET /auth/apple` (plus their `/callback`
 > variants) existed before this branch and are unchanged.

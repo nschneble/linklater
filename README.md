@@ -121,6 +121,7 @@ cp apps/web/.env.example apps/web/.env
 
 ```bash
 # cd /path/to/your/repo
+npm run migrate:reset --workspace @linklater/api
 npm run migrate --workspace @linklater/api
 ```
 

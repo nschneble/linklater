@@ -29,14 +29,17 @@ apps
 ```bash
 # TUIs
 bin/dev                                           # Start development server
-bin/flintest                                      # Install, format, lint, test
-bin/flintest --update                             # Update, install, format, lint, test
+bin/flintest                                      # Install, format, lint, test, build
+bin/flintest --update                             # Update, install, format, lint, test, build
 
 # Setup
 npm install                                       # Install dependencies
 
 # Run
 npm run dev                                       # Start development server
+
+# Formatting
+npm run format                                    # Format code using Prettier
 
 # Linting
 npm run lint                                      # Lint code for consistent style
@@ -46,6 +49,7 @@ npm run lint --workspace @linklater/api           # Lint back-end only
 
 # Testing
 npm run test                                      # Run all tests
+npm run test:cov                                  # Run all tests with code coverage
 npm run test --workspace @linklater/web           # Test front-end only
 npm run test --workspace @linklater/api           # Test back-end only
 
