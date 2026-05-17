@@ -13,14 +13,15 @@
 ## Architecture
 
 ```txt
-apps
-├─ api/          # NestJS back-end
-│  └─ README.md  # .env, modules, auth, jobs
+linklater/
+├─ apps/
+│  ├─ api/          # NestJS back-end
+│  │  └─ README.md  # .env, modules, auth, jobs
+│  │
+│  └─ web/          # React + Vite front-end
+│     └─ README.md  # .env, components, state, API, routes
 │
-├─ web/          # React + Vite front-end
-│  └─ README.md  # .env, components, state, API, routes
-│
-├─ package.json  # root workspace + scripts
+├─ package.json     # root workspace + scripts
 └─ README.md
 ```
 
@@ -28,7 +29,7 @@ apps
 
 ```bash
 # TUIs
-bin/dev                                           # Start development server
+bin/dev                                           # Start development server + Mailpit at http://localhost:8025 (captures all outgoing dev email)
 bin/flintest                                      # Install, format, lint, test, build
 bin/flintest --update                             # Update, install, format, lint, test, build
 
@@ -168,7 +169,8 @@ Follow three simple steps repeatedly:
   - `UnauthorizedException:` auth failure
 - Extract `userId` from `@Req() request: AuthRequest`
   - `AuthRequest` is a custom type extending Express `Request`
-- Place `@UseGuards(JwtAuthGuard)` at class level to protect entire resource
+- Use `@UseGuards(JwtAuthGuard)` at class level to protect endpoints that only web sessions access
+- Use `@UseGuards(AnyAuthGuard)` when an endpoint must accept both JWT sessions **and** PAT tokens (`ltk_`-prefixed bearer tokens used by browser extensions and API clients) — `AnyAuthGuard` selects the strategy based on the prefix
 - Service inputs use `Input` suffix (e.g. `CreateLinkInput`, `UpdateLinkInput`)
 - Each module exposes a barrel `index.ts` controlling its public API
 
@@ -182,12 +184,12 @@ Follow three simple steps repeatedly:
 - Organize your imports! Sort alphabetically both within individual imports and in the list of import statements as whole. Put `import {}` before `import type {}`.
 
 ```typescript
-# Example of poor import organization
+// Example of poor import organization
 import { useState, useEffect } from 'react';
 import { stumbleLink } from '../lib/api';
 import StumbleEmptyView from './StumbleEmptyView';
 
-# Example of good import organization
+// Example of good import organization
 import StumbleEmptyView from './StumbleEmptyView';
 import { stumbleLink } from '../lib/api';
 import { useEffect, useState } from 'react';
@@ -232,3 +234,9 @@ import { useEffect, useState } from 'react';
 - Always end with transitions
 - Always primary before states (border, hover:border, focus:border)
 - Always primary before sizes (mx-auto, sm:mx-0)
+
+## Gotchas
+
+- **TypeScript build errors on the frontend**: pre-existing `tsc` errors exist in `apps/web`. The `tsc -b` step in `npm run build` may report them. `vite build` (not `tsc`) is the true correctness check for the frontend — use it to determine if frontend code is valid.
+- **ESM Jest on the backend**: the API test runner uses `--experimental-vm-modules`. Don't mock `bcryptjs` — use real low-round hashes (`bcrypt.hash('password', 1)`) instead to avoid ESM interop issues.
+- **Prisma `P2025` in tests**: Prisma throws a typed error class, not a plain object. Mock it with `Object.assign(new Error('...'), { code: 'P2025' })` so `instanceof` checks in services work correctly.
