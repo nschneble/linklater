@@ -243,7 +243,7 @@ describe('LinkCard', () => {
       );
 
       expect(
-        screen.getByRole('button', { name: /mark as unread/i }),
+        screen.getByRole('button', { name: /mark unread/i }),
       ).toBeInTheDocument();
     });
 
@@ -253,7 +253,7 @@ describe('LinkCard', () => {
       );
 
       expect(
-        screen.queryByRole('button', { name: /mark as unread/i }),
+        screen.queryByRole('button', { name: /mark unread/i }),
       ).not.toBeInTheDocument();
     });
 
@@ -266,7 +266,7 @@ describe('LinkCard', () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole('button', { name: /mark as unread/i }));
+      fireEvent.click(screen.getByRole('button', { name: /mark unread/i }));
 
       expect(onReadToggle).toHaveBeenCalledOnce();
     });
@@ -279,7 +279,7 @@ describe('LinkCard', () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole('button', { name: /mark as unread/i }));
+      fireEvent.click(screen.getByRole('button', { name: /mark unread/i }));
 
       expect(window.open).not.toHaveBeenCalled();
     });

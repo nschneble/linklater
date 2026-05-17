@@ -18,7 +18,7 @@ import { useEffect, useRef } from 'react';
  * return to this page to reinstall the bookmarklet when it expires.
  */
 export default function BookmarkletSection() {
-  const bookmarkletRef = useRef<HTMLAnchorElement>(null);
+  const bookmarkletReference = useRef<HTMLAnchorElement>(null);
 
   // NOTE: React sanitizes `javascript:` URLs that are set declaratively via
   // the `href` prop (it replaces them with `about:blank`). Setting the href
@@ -27,7 +27,7 @@ export default function BookmarkletSection() {
   // See: https://github.com/facebook/react/issues/16382
 
   useEffect(() => {
-    if (!bookmarkletRef.current) return;
+    if (!bookmarkletReference.current) return;
 
     const token = getStoredToken() ?? '';
     const apiUrl = import.meta.env.VITE_API_BASE_URL as string;
@@ -53,7 +53,7 @@ export default function BookmarkletSection() {
       ":r.text().then(function(m){n(m||'Error saving link',false)})})" +
       ".catch(function(){n('Could not reach Linklater',false)})" +
       '})();';
-    bookmarkletRef.current.setAttribute('href', code);
+    bookmarkletReference.current.setAttribute('href', code);
   }, []);
 
   return (
@@ -68,7 +68,7 @@ export default function BookmarkletSection() {
       {/* eslint-disable-next-line jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <a
         className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold ring-1 ring-[var(--border)] ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing active:scale-[0.96] transition duration-200`}
-        ref={bookmarkletRef}
+        ref={bookmarkletReference}
         onClick={(event) => event.preventDefault()}
         draggable
       >

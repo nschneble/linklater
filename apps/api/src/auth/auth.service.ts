@@ -1,120 +1,92 @@
 import {
   BadRequestException,
-  ConflictException,
-  ForbiddenException,
   Injectable,
+  Logger,
+  OnModuleInit,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
+import { createHash } from 'node:crypto';
+import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import {
   RECOVERY_CODE_REGEX,
   findMatchingRecoveryCode,
   generateRecoveryCodes,
   hashRecoveryCodes,
 } from '../common/recovery-codes.js';
-import { EmailService } from '../email/index.js';
-import { Prisma } from '../prisma/index.js';
-import { EmailTwoFactorService } from './email-2fa.service.js';
-import { TotpService } from './totp.service.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 import { UsersService, withoutPasswordHash } from '../users/index.js';
+import { EmailVerificationService } from './email-verification.service.js';
+import { MagicLinkService } from './magic-link.service.js';
+import { TotpService } from './totp.service.js';
 
-const ONE_HOUR_MS = 60 * 60 * 1000;
-const TWENTY_FOUR_HOURS_MS = 24 * ONE_HOUR_MS;
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
-/** Returns a cryptographically random 64-character hex string for use as a one-time token. */
-function generateToken() {
-  return randomBytes(32).toString('hex');
-}
-
-/**
- * Returns a `Date` that is `ms` milliseconds in the future.
- * Used to compute token expiry timestamps consistently.
- */
 function expiresInMs(ms: number) {
   return new Date(Date.now() + ms);
 }
 
-/**
- * Handles all authentication flows: credential validation, JWT issuance,
- * email verification, password reset, and email change confirmation.
- *
- * Tokens (verification, reset, pending-email) are 32-byte random hex strings
- * stored directly on the User record. Each token type has its own expiry
- * column so the expiry check is always co-located with the lookup.
- */
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly emailService: EmailService,
-    private readonly emailTwoFactorService: EmailTwoFactorService,
+    private readonly emailVerificationService: EmailVerificationService,
+    private readonly magicLinkService: MagicLinkService,
     private readonly totpService: TotpService,
+    private readonly prisma: PrismaService,
   ) {}
 
-  /**
-   * Creates a new user account and sends an email verification message.
-   *
-   * @param email - The email address to register.
-   * @param password - The plain-text password (hashed by UsersService).
-   * @returns The newly created user without the password hash.
-   * @throws {ConflictException} When the email is already taken.
-   */
+  onModuleInit() {
+    if (!process.env.EXTENSION_REDIRECT_URIS) {
+      this.logger.warn(
+        'EXTENSION_REDIRECT_URIS is not set — the browser extension authorization flow will reject all redirect URIs. Set this to a comma-separated list of allowed extension callback URIs.',
+      );
+    }
+  }
+
   async register(email: string, password: string) {
     const user = await this.usersService.create(email, password);
-    await this.sendVerificationEmail(user.id);
+    await this.emailVerificationService.sendVerificationEmail(user.id);
     return user;
   }
 
-  /**
-   * Returns the current authenticated user's profile, remapping `id` to
-   * `userId` so the response shape is consistent with the JWT payload.
-   *
-   * @param userId - The UUID from the JWT.
-   * @returns The user record without `passwordHash`, with `userId` instead of `id`.
-   * @throws {NotFoundException} When no user exists with the given ID.
-   */
   async me(userId: string) {
-    const {
-      id,
-      totpSecret,
-      totpEnabledAt,
-      totpVerifiedAt: _totpVerifiedAt,
-      emailTwoFactorEnabledAt,
-      emailTwoFactorCodeHash: _emailTwoFactorCodeHash,
-      emailTwoFactorExpiresAt: _emailTwoFactorExpiresAt,
-      ...rest
-    } = await this.usersService.findById(userId);
+    const [
+      {
+        id,
+        totpSecret,
+        totpEnabledAt,
+        totpVerifiedAt: _totpVerifiedAt,
+        magicLinkToken: _magicLinkToken,
+        magicLinkTokenExpiresAt: _magicLinkTokenExpiresAt,
+        ...rest
+      },
+      oauthAccounts,
+    ] = await Promise.all([
+      this.usersService.findById(userId),
+      this.usersService.listOAuthAccounts(userId),
+    ]);
 
-    let twoFactorMethod: 'totp' | 'email' | null = null;
-    if (totpEnabledAt) {
-      twoFactorMethod = 'totp';
-    } else if (emailTwoFactorEnabledAt) {
-      twoFactorMethod = 'email';
-    }
+    const twoFactorMethod: 'totp' | null = totpEnabledAt ? 'totp' : null;
+    const connectedProviders = oauthAccounts.map((account) => ({
+      provider: account.provider,
+      connectedAt: account.connectedAt,
+    }));
 
     return {
       userId: id,
       ...rest,
       twoFactorMethod,
       twoFactorPending: !!totpSecret && !totpEnabledAt,
+      connectedProviders,
     };
   }
 
-  /**
-   * Checks whether the given email/password pair matches a stored account.
-   * Returns the user without the password hash on success, or `null` if
-   * the account does not exist or the password is wrong.
-   *
-   * NOTE: Returning `null` for both "no account" and "wrong password" is
-   * intentional — it prevents user enumeration via different error messages.
-   *
-   * @param email - The email address to look up.
-   * @param password - The plain-text password to compare against the bcrypt hash.
-   * @returns The user record without `passwordHash`, or `null` on failure.
-   */
   async validateUser(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user || !user.passwordHash) return null;
@@ -125,103 +97,10 @@ export class AuthService {
     return withoutPasswordHash(user);
   }
 
-  /**
-   * Resolves an OAuth login to a Linklater user account using the
-   * following priority:
-   *
-   * 1. If an `OAuthAccount` already exists for this `provider` +
-   *    `providerId` pair, return its linked user.
-   * 2. If a Linklater account exists with the same email, link the
-   *    OAuth provider to it (auto-linking). When the existing account
-   *    is not yet email-verified, this call also marks it as verified
-   *    because the OAuth provider has implicitly confirmed ownership.
-   * 3. Otherwise, create a new Linklater user and link the OAuth
-   *    account to it.
-   *
-   * A P2002 (unique constraint) error during `createOAuthUser` is
-   * treated as a race condition (two concurrent OAuth logins for the
-   * same new user). The fallback attempts to find the already-created
-   * account via the OAuth pair first, then by email, before giving up.
-   *
-   * @param provider - The OAuth provider name (e.g. `'google'`).
-   * @param providerId - The provider-issued user ID.
-   * @param email - The email address returned by the provider.
-   * @returns `{ userId, email }` for the resolved Linklater account.
-   * @throws Any non-P2002 error propagated from the database layer.
-   */
-  async findOrCreateOAuthUser(
-    provider: string,
-    providerId: string,
-    email: string,
-  ): Promise<{ userId: string; email: string }> {
-    const account = await this.usersService.findOAuthAccount(
-      provider,
-      providerId,
-    );
-    if (account) {
-      return { userId: account.userId, email: account.user.email };
-    }
-
-    const existingUser = await this.usersService.findByEmail(email);
-    if (existingUser) {
-      await this.usersService.linkOAuthAccount(
-        existingUser.id,
-        provider,
-        providerId,
-      );
-      if (!existingUser.emailVerifiedAt) {
-        await this.usersService.markEmailVerified(existingUser.id);
-      }
-      return { userId: existingUser.id, email: existingUser.email };
-    }
-
-    try {
-      const newUser = await this.usersService.createOAuthUser(email);
-      await this.usersService.linkOAuthAccount(
-        newUser.id,
-        provider,
-        providerId,
-      );
-      return { userId: newUser.id, email };
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        const raceAccount = await this.usersService.findOAuthAccount(
-          provider,
-          providerId,
-        );
-        if (raceAccount) {
-          return { userId: raceAccount.userId, email: raceAccount.user.email };
-        }
-        const raceUser = await this.usersService.findByEmail(email);
-        if (raceUser) {
-          return { userId: raceUser.id, email: raceUser.email };
-        }
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Issues a signed JWT for an already-validated user.
-   *
-   * When the user has 2FA enabled, a short-lived MFA challenge token is
-   * returned instead of a full session JWT. The caller must complete the
-   * OTP step via `POST /auth/verify-otp` to obtain the real access token.
-   *
-   * @param user - A validated user object. Includes optional 2FA status fields
-   *   when called from the local (email/password) login path.
-   * @returns `{ accessToken }` when no 2FA is enabled, or
-   *   `{ mfaToken, mfaMethod }` when a second factor is required.
-   */
   async login(user: {
     userId: string;
     email: string;
-    theme?: string;
     totpEnabledAt?: Date | null;
-    emailTwoFactorEnabledAt?: Date | null;
   }) {
     if (user.totpEnabledAt) {
       const mfaToken = this.jwtService.sign(
@@ -230,151 +109,107 @@ export class AuthService {
       );
       return { mfaToken, mfaMethod: 'totp' as const };
     }
-
-    if (user.emailTwoFactorEnabledAt) {
-      const mfaToken = this.jwtService.sign(
-        { subject: user.userId, mfaPending: true },
-        { expiresIn: '5m' },
-      );
-      await this.emailTwoFactorService.sendCode({
-        id: user.userId,
-        email: user.email,
-        theme: user.theme,
-      });
-      return { mfaToken, mfaMethod: 'email' as const };
-    }
-
-    const payload = { subject: user.userId, email: user.email };
-    return { accessToken: this.jwtService.sign(payload) };
+    return this.issueTokenPair(user.userId, user.email);
   }
 
-  /**
-   * Generates a 24-hour verification token and emails it to the user.
-   * Called after registration and when the user manually requests a resend.
-   *
-   * @param userId - The UUID of the user whose email should be verified.
-   * @throws {NotFoundException} When no user exists with the given ID.
-   */
-  async sendVerificationEmail(userId: string) {
-    const user = await this.usersService.findById(userId);
-    const token = generateToken();
-    const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
+  async refresh(rawRefreshToken: string) {
+    const tokenHash = sha256Hex(rawRefreshToken);
+    const stored = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
 
-    await this.usersService.updateVerificationToken(userId, token, expiresAt);
-    await this.emailService.sendVerification(user.email, token, user.theme);
-  }
-
-  /**
-   * Marks a user's email as verified by consuming the one-time token stored
-   * in the database. Clears the token after successful use to prevent replay.
-   *
-   * @param token - The 64-character hex token from the verification link.
-   * @throws {BadRequestException} When the token is not found or has expired.
-   */
-  async verifyEmail(token: string) {
-    const user = await this.usersService.findByVerificationToken(token);
-
-    if (!user) {
-      throw new BadRequestException('Invalid or expired verification link');
+    if (!stored || stored.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    if (
-      !user.verificationTokenExpiresAt ||
-      user.verificationTokenExpiresAt < new Date()
-    ) {
-      throw new BadRequestException('Verification link has expired');
-    }
-
-    await this.usersService.clearVerificationToken(user.id);
+    await this.prisma.refreshToken.delete({ where: { id: stored.id } });
+    return this.issueTokenPair(stored.userId, stored.user.email);
   }
 
-  /**
-   * Initiates the password reset flow. Silently returns when the email is not
-   * found to prevent user enumeration — the caller always gets a 200 response.
-   *
-   * The reset token expires in 1 hour (shorter than verification tokens because
-   * reset links are higher-risk: they bypass password knowledge entirely).
-   *
-   * @param email - The email address to send the reset link to.
-   */
-  async forgotPassword(email: string) {
-    const user = await this.usersService.findByEmail(email);
-    if (!user) return;
-
-    const token = generateToken();
-    const expiresAt = expiresInMs(ONE_HOUR_MS);
-
-    await this.usersService.updateResetToken(user.id, token, expiresAt);
-    await this.emailService.sendPasswordReset(email, token, user.theme);
+  async revokeAllRefreshTokens(userId: string) {
+    await Promise.all([
+      this.prisma.refreshToken.deleteMany({ where: { userId } }),
+      this.prisma.extensionAuthCode.deleteMany({ where: { userId } }),
+    ]);
   }
 
-  /**
-   * Completes the password reset flow by validating the token and replacing
-   * the user's password hash. Clears the reset token after use.
-   *
-   * @param token - The 64-character hex token from the reset email link.
-   * @param newPassword - The new plain-text password (hashed here at cost 12).
-   * @throws {BadRequestException} When the token is invalid or has expired.
-   */
-  async resetPassword(token: string, newPassword: string) {
-    const user = await this.usersService.findByResetToken(token);
-
-    if (!user) {
-      throw new BadRequestException('Invalid or expired reset link');
-    }
-
-    if (!user.resetTokenExpiresAt || user.resetTokenExpiresAt < new Date()) {
-      throw new BadRequestException('Password reset link has expired');
-    }
-
-    const newPasswordHash = await bcrypt.hash(newPassword, 12);
-    await this.usersService.resetPasswordWithToken(user.id, newPasswordHash);
-  }
-
-  /**
-   * Re-sends the verification email to an already-authenticated but unverified user.
-   * Issues a fresh 24-hour token, replacing any previously issued one.
-   *
-   * @param userId - The UUID of the requesting user (from JWT).
-   * @throws {BadRequestException} When the email is already verified.
-   * @throws {NotFoundException} When no user exists with the given ID.
-   */
-  async resendVerificationEmail(userId: string) {
-    const user = await this.usersService.findById(userId);
-
-    if (user.emailVerifiedAt) {
-      throw new BadRequestException('Email is already verified');
-    }
-
-    const token = generateToken();
-    const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
-
-    await this.usersService.updateVerificationToken(userId, token, expiresAt);
-    await this.emailService.sendVerification(user.email, token, user.theme);
-  }
-
-  /**
-   * Step 2 of the 2FA login flow. Validates the OTP or recovery code and
-   * issues the full session JWT on success.
-   *
-   * @param userId - Extracted from the validated `mfaToken`.
-   * @param code - The OTP or recovery code submitted by the user.
-   * @param method - Which factor to verify against.
-   * @throws {UnauthorizedException} When the code is invalid or the method
-   *   does not match the enrolled factor (generic error to prevent enumeration).
-   */
-  async verifyOtp(
+  async authorizeExtension(
     userId: string,
-    code: string,
-    method: 'totp' | 'email' | 'recovery',
-  ) {
-    const user = await this.usersService.findById(userId);
+    codeChallenge: string,
+    redirectUri: string,
+  ): Promise<{ code: string; callbackUrl: string }> {
+    if (!codeChallenge || !redirectUri) {
+      throw new BadRequestException(
+        'code_challenge and redirect_uri are required',
+      );
+    }
 
-    const enrolledMethod = user.totpEnabledAt
-      ? 'totp'
-      : user.emailTwoFactorEnabledAt
-        ? 'email'
-        : null;
+    const allowedUris = process.env.EXTENSION_REDIRECT_URIS
+      ? process.env.EXTENSION_REDIRECT_URIS.split(',').map((uri) => uri.trim())
+      : [];
+
+    if (!allowedUris.includes(redirectUri)) {
+      throw new BadRequestException('Invalid redirect_uri');
+    }
+
+    const code = await this.createExtensionAuthCode(userId, codeChallenge);
+    return { code, callbackUrl: redirectUri };
+  }
+
+  async createExtensionAuthCode(
+    userId: string,
+    codeChallenge: string,
+  ): Promise<string> {
+    const rawCode = generateHexToken();
+    const codeHash = sha256Hex(rawCode);
+    const expiresAt = expiresInMs(FIVE_MINUTES_MS);
+
+    await this.prisma.extensionAuthCode.create({
+      data: { codeHash, codeChallenge, userId, expiresAt },
+    });
+
+    return rawCode;
+  }
+
+  async exchangeExtensionCode(rawCode: string, codeVerifier: string) {
+    const codeHash = sha256Hex(rawCode);
+    const stored = await this.prisma.extensionAuthCode.findUnique({
+      where: { codeHash },
+      include: { user: true },
+    });
+
+    if (!stored || stored.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired authorization code');
+    }
+
+    const computedChallenge = createHash('sha256')
+      .update(codeVerifier)
+      .digest('base64url');
+    if (computedChallenge !== stored.codeChallenge) {
+      throw new UnauthorizedException('Invalid code verifier');
+    }
+
+    await this.prisma.extensionAuthCode.delete({ where: { id: stored.id } });
+    return this.issueTokenPair(stored.userId, stored.user.email);
+  }
+
+  async requestMagicLink(email: string): Promise<void> {
+    await this.magicLinkService.requestLogin(email);
+  }
+
+  async registerMagicLink(email: string): Promise<void> {
+    await this.magicLinkService.requestSignup(email);
+  }
+
+  async verifyMagicLink(token: string) {
+    const user = await this.magicLinkService.verifyToken(token);
+    return this.issueTokenPair(user.id, user.email);
+  }
+
+  async verifyOtp(userId: string, code: string, method: 'totp' | 'recovery') {
+    const user = await this.usersService.findById(userId);
+    const enrolledMethod = user.totpEnabledAt ? 'totp' : null;
 
     if (method !== 'recovery' && enrolledMethod !== method) {
       throw new UnauthorizedException('Invalid OTP method');
@@ -382,189 +217,36 @@ export class AuthService {
 
     if (method === 'totp') {
       const isValid = await this.totpService.verifyCode(user, code);
-      if (!isValid) {
-        throw new UnauthorizedException('Invalid TOTP code');
-      }
-      return {
-        accessToken: this.jwtService.sign({
-          subject: userId,
-          email: user.email,
-        }),
-      };
-    }
-
-    if (method === 'email') {
-      if (!user.emailTwoFactorEnabledAt) {
-        throw new UnauthorizedException('Email 2FA not configured');
-      }
-      const isValid = await this.emailTwoFactorService.verifyCode(user, code);
-      if (!isValid) {
-        throw new UnauthorizedException('Invalid or expired email code');
-      }
-      return {
-        accessToken: this.jwtService.sign({
-          subject: userId,
-          email: user.email,
-        }),
-      };
+      if (!isValid) throw new UnauthorizedException('Invalid TOTP code');
+      return this.issueTokenPair(userId, user.email);
     }
 
     if (method === 'recovery') {
-      if (!enrolledMethod) {
+      if (!enrolledMethod)
         throw new UnauthorizedException('No 2FA method enrolled');
-      }
+
       const recoveryCodes =
         await this.usersService.findUnusedRecoveryCodes(userId);
       const hashes = recoveryCodes.map((recoveryCode) => recoveryCode.codeHash);
       const matchIndex = await findMatchingRecoveryCode(code, hashes);
 
-      if (matchIndex === null) {
+      if (matchIndex === null)
         throw new UnauthorizedException('Invalid recovery code');
-      }
 
       await this.usersService.markRecoveryCodeUsed(
         recoveryCodes[matchIndex].id,
       );
-
-      return {
-        accessToken: this.jwtService.sign({
-          subject: userId,
-          email: user.email,
-        }),
-      };
+      return this.issueTokenPair(userId, user.email);
     }
 
     throw new UnauthorizedException('Invalid OTP');
   }
 
-  /**
-   * Begins an email change by storing the new address in `pendingEmail` and
-   * sending a verification link to that new address. The user's current email
-   * stays active until `confirmEmailChange` is called.
-   *
-   * @param userId - The UUID of the authenticated user.
-   * @param newEmail - The email address the user wants to switch to.
-   * @throws {ConflictException} When `newEmail` is already registered to a different account.
-   */
-  async requestEmailChange(userId: string, newEmail: string, code?: string) {
-    const user = await this.usersService.findById(userId);
-
-    const existing = await this.usersService.findByEmail(newEmail);
-    if (existing && existing.id !== userId) {
-      throw new ConflictException('Email already in use');
-    }
-
-    if (user.totpEnabledAt || user.emailTwoFactorEnabledAt) {
-      if (!code) {
-        throw new ForbiddenException(
-          '2FA is enabled — provide a verification code to change your email',
-        );
-      }
-
-      const isRecoveryCode = RECOVERY_CODE_REGEX.test(code);
-
-      if (isRecoveryCode) {
-        const recoveryCodes =
-          await this.usersService.findUnusedRecoveryCodes(userId);
-        const hashes = recoveryCodes.map(
-          (recoveryCode) => recoveryCode.codeHash,
-        );
-        const matchIndex = await findMatchingRecoveryCode(code, hashes);
-        if (matchIndex === null)
-          throw new UnauthorizedException('Invalid OTP code');
-        await this.usersService.markRecoveryCodeUsed(
-          recoveryCodes[matchIndex].id,
-        );
-      } else if (user.totpEnabledAt) {
-        const isValid = await this.totpService.verifyCode(user, code);
-        if (!isValid) throw new UnauthorizedException('Invalid OTP code');
-      } else if (user.emailTwoFactorEnabledAt) {
-        const isValid = await this.emailTwoFactorService.verifyCode(user, code);
-        if (!isValid) throw new UnauthorizedException('Invalid OTP code');
-      }
-    }
-
-    const token = generateToken();
-    const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
-
-    await this.usersService.updatePendingEmail(
-      userId,
-      newEmail,
-      token,
-      expiresAt,
-    );
-    await this.emailService.sendEmailChangeVerification(
-      newEmail,
-      token,
-      user.theme,
-    );
-  }
-
-  /**
-   * Completes the email change flow by promoting `pendingEmail` to the
-   * user's primary email. Also marks the email as verified and clears all
-   * related token fields.
-   *
-   * @param token - The 64-character hex token from the email change link.
-   * @throws {BadRequestException} When the token is invalid, expired, or `pendingEmail` is missing.
-   */
-  async confirmEmailChange(token: string) {
-    const user = await this.usersService.findByPendingEmailToken(token);
-
-    if (!user) {
-      throw new BadRequestException('Invalid or expired email change link');
-    }
-
-    if (
-      !user.pendingEmailTokenExpiresAt ||
-      user.pendingEmailTokenExpiresAt < new Date()
-    ) {
-      throw new BadRequestException('Email change link has expired');
-    }
-
-    if (!user.pendingEmail) {
-      throw new BadRequestException('Invalid or expired email change link');
-    }
-
-    await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
-  }
-
-  async sendReauthEmailCode(userId: string): Promise<void> {
-    const user = await this.usersService.findById(userId);
-    if (!user.emailTwoFactorEnabledAt) {
-      throw new BadRequestException(
-        'Email 2FA is not enabled for this account',
-      );
-    }
-    await this.emailTwoFactorService.sendCode(user);
-  }
-
-  /**
-   * Verifies the caller's identity via password or OTP, then clears all 2FA
-   * data. Exactly one of `currentPassword` or `code` must be supplied.
-   *
-   * @param userId - The UUID of the authenticated user.
-   * @param currentPassword - The user's current plain-text password.
-   * @param code - A valid TOTP or SMS OTP from the enrolled method.
-   * @throws {BadRequestException} When neither credential is supplied.
-   * @throws {UnauthorizedException} When the supplied credential is invalid.
-   */
   async disable2fa(userId: string, currentPassword?: string, code?: string) {
     await this.reauthenticate(userId, currentPassword, code);
     await this.usersService.disableTwoFactor(userId);
   }
 
-  /**
-   * Verifies the caller's identity via password or OTP, then invalidates all
-   * existing recovery codes and issues a fresh set of 10.
-   *
-   * @param userId - The UUID of the authenticated user.
-   * @param currentPassword - The user's current plain-text password.
-   * @param code - A valid TOTP or SMS OTP from the enrolled method.
-   * @returns An array of 10 plaintext recovery codes (shown once only).
-   * @throws {BadRequestException} When neither credential is supplied.
-   * @throws {UnauthorizedException} When the supplied credential is invalid.
-   */
   async regenerateRecoveryCodes(
     userId: string,
     currentPassword?: string,
@@ -574,16 +256,12 @@ export class AuthService {
     return this.issueRecoveryCodes(userId);
   }
 
-  /**
-   * Shared re-authentication guard used by disable2fa and regenerateRecoveryCodes.
-   * Verifies the user by password (local accounts), OTP (TOTP/SMS), or recovery code.
-   *
-   * Fetches the user once and inlines the password comparison to avoid a second
-   * round-trip through verifyCurrentPassword.
-   *
-   * @throws {BadRequestException} When neither `currentPassword` nor `code` is provided.
-   * @throws {UnauthorizedException} When the provided credential does not match.
-   */
+  async setFirstPassword(userId: string, password: string): Promise<void> {
+    await this.usersService.setFirstPassword(userId, password);
+  }
+
+  // Shared re-auth guard used by disable2fa and regenerateRecoveryCodes.
+  // Accepts password OR OTP/recovery code — verifies exactly one.
   private async reauthenticate(
     userId: string,
     currentPassword?: string,
@@ -612,18 +290,18 @@ export class AuthService {
       const isRecoveryCode = RECOVERY_CODE_REGEX.test(code);
 
       if (isRecoveryCode) {
-        if (!user.totpEnabledAt && !user.emailTwoFactorEnabledAt) {
+        if (!user.totpEnabledAt)
           throw new UnauthorizedException('No 2FA method enrolled');
-        }
+
         const recoveryCodes =
           await this.usersService.findUnusedRecoveryCodes(userId);
         const hashes = recoveryCodes.map(
           (recoveryCode) => recoveryCode.codeHash,
         );
         const matchIndex = await findMatchingRecoveryCode(code, hashes);
-        if (matchIndex === null) {
+        if (matchIndex === null)
           throw new UnauthorizedException('Invalid recovery code');
-        }
+
         await this.usersService.markRecoveryCodeUsed(
           recoveryCodes[matchIndex].id,
         );
@@ -636,24 +314,27 @@ export class AuthService {
         return;
       }
 
-      if (user.emailTwoFactorEnabledAt) {
-        const valid = await this.emailTwoFactorService.verifyCode(user, code);
-        if (!valid) throw new UnauthorizedException('Invalid OTP code');
-        return;
-      }
-
       throw new UnauthorizedException('No 2FA method enrolled');
     }
   }
 
-  /**
-   * Deletes all existing recovery codes for the user and generates a fresh set.
-   * Returns the plaintext codes — they are never stored or returned again.
-   */
   private async issueRecoveryCodes(userId: string): Promise<string[]> {
     const codes = generateRecoveryCodes();
     const hashes = await hashRecoveryCodes(codes);
     await this.usersService.reissueRecoveryCodes(userId, hashes);
     return codes;
+  }
+
+  private async issueTokenPair(userId: string, email: string) {
+    const rawRefreshToken = generateHexToken();
+    const tokenHash = sha256Hex(rawRefreshToken);
+    const expiresAt = new Date(Date.now() + ONE_YEAR_MS);
+
+    await this.prisma.refreshToken.create({
+      data: { tokenHash, userId, expiresAt },
+    });
+
+    const accessToken = this.jwtService.sign({ subject: userId, email });
+    return { accessToken, refreshToken: rawRefreshToken };
   }
 }

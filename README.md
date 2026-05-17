@@ -18,11 +18,13 @@ Most curious adults come across dozens of interesting articles on any given day.
 
 As a user, you can:
 
-- Create an account
+- Create an account (email/password, magic link, or Google/Apple SSO)
 - Save links in-app or using the handy [bookmarklet](#bookmarklet)
-- Search and [stumble upon](https://en.wikipedia.org/wiki/StumbleUpon)
+- Search and [stumble!](https://en.wikipedia.org/wiki/StumbleUpon)
 - Preview themes based on Richard Linklater's filmography
 - Toggle between light and dark mode
+- Secure your account with TOTP two-factor authentication
+- Generate personal access tokens (PATs) for browser extensions
 - Delete your account and burn it to the ground
 
 ## Screenshots
@@ -119,6 +121,7 @@ cp apps/web/.env.example apps/web/.env
 
 ```bash
 # cd /path/to/your/repo
+npm run migrate:reset --workspace @linklater/api
 npm run migrate --workspace @linklater/api
 ```
 

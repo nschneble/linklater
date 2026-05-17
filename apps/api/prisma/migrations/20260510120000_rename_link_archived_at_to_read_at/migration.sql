@@ -1,3 +1,6 @@
+set lock_timeout = '1s';
+set statement_timeout = '5s';
+
 -- DropIndex
 DROP INDEX "Link_userId_archivedAt_idx";
 

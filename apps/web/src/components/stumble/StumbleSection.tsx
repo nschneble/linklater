@@ -13,7 +13,7 @@ export default function StumbleSection() {
   return (
     <div className="max-w-md space-y-3">
       <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
-        Stumble upon
+        Stumble!
       </h3>
       <p className="text-[var(--text-muted)] text-xs text-pretty">
         Drag this to your bookmarks bar. Click it to automatically open a random
@@ -25,10 +25,10 @@ export default function StumbleSection() {
         draggable
       >
         <i
-          className="fa-solid fa-shuffle text-[var(--text-subtle)] text-[0.7rem]"
+          className="fa-brands fa-stumbleupon text-[var(--text-subtle)] text-[0.7rem]"
           aria-hidden="true"
         />
-        Stumble upon
+        Stumble!
       </a>
     </div>
   );

@@ -2,43 +2,231 @@
 
 ## Environment Variables
 
-| Variable       | Required | Description                                     |
-| -------------- | -------- | ----------------------------------------------- |
-| `DATABASE_URL` | Yes      | PostgreSQL connection string                    |
-| `JWT_SECRET`   | Yes      | Used to sign and verify JWTs                    |
-| `APP_URL`      | Yes      | Public URL of the web app                       |
-| `SMTP_HOST`    | Yes      | SMTP server hostname                            |
-| `SMTP_PORT`    | Yes      | SMTP server port                                |
-| `SMTP_SECURE`  | Yes      | Set to `true` to use TLS                        |
-| `SMTP_USER`    | No       | SMTP authentication username (omit for Mailpit) |
-| `SMTP_PASS`    | No       | SMTP authentication password (omit for Mailpit) |
-| `SMTP_FROM`    | Yes      | `From` address for all outbound emails          |
+| Variable                   | Required | Description                                                                                 |
+| -------------------------- | -------- | ------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`             | Yes      | PostgreSQL connection string                                                                |
+| `JWT_SECRET`               | Yes      | Used to sign and verify JWTs and HMAC state tokens for OAuth linking                        |
+| `APP_URL`                  | Yes      | Public URL of the web app (e.g. `https://linklater.app`)                                    |
+| `SMTP_HOST`                | Yes      | SMTP server hostname                                                                        |
+| `SMTP_PORT`                | Yes      | SMTP server port                                                                            |
+| `SMTP_SECURE`              | Yes      | Set to `true` to use TLS                                                                    |
+| `SMTP_USER`                | No       | SMTP authentication username (omit for Mailpit)                                             |
+| `SMTP_PASS`                | No       | SMTP authentication password (omit for Mailpit)                                             |
+| `SMTP_FROM`                | Yes      | `From` address for all outbound emails                                                      |
+| `GOOGLE_CLIENT_ID`         | No       | Google OAuth app client ID — omit to disable Google sign-in                                 |
+| `GOOGLE_CLIENT_SECRET`     | No       | Google OAuth app client secret                                                              |
+| `GOOGLE_CALLBACK_URL`      | No       | Absolute URL of the Google sign-in callback (e.g. `.../auth/google/callback`)               |
+| `GOOGLE_LINK_CALLBACK_URL` | No       | Absolute URL for the Google account-linking callback (e.g. `.../auth/google/link/callback`) |
+| `APPLE_CLIENT_ID`          | No       | Apple Sign In service ID — omit to disable Apple sign-in                                    |
+| `APPLE_TEAM_ID`            | No       | Apple developer team ID                                                                     |
+| `APPLE_KEY_ID`             | No       | Apple Sign In key ID                                                                        |
+| `APPLE_PRIVATE_KEY`        | No       | Apple Sign In private key (PEM string)                                                      |
+| `APPLE_CALLBACK_URL`       | No       | Absolute URL of the Apple Sign In callback                                                  |
+| `EXTENSION_REDIRECT_URIS`  | No       | Comma-separated allowlist of redirect URIs accepted by the extension auth flow              |
 
-> **Local email testing:** `bin/dev` starts [Mailpit](https://mailpit.axllent.org/) automatically alongside the API and web servers. All outgoing emails are captured at `http://localhost:8025`. No real email is sent in development.
+> **OAuth providers are loaded conditionally.** If the required environment
+> variables for a provider are absent, that Passport strategy is never
+> registered. The server starts normally without them.
+
+> **Local email testing:** `bin/dev` starts [Mailpit](https://mailpit.axllent.org/)
+> automatically alongside the API and web servers. All outgoing emails are
+> captured at `http://localhost:8025`. No real email is sent in development.
 
 ## Module Overview
 
-| Module     | Path           | Responsibility                              |
-| ---------- | -------------- | ------------------------------------------- |
-| `Auth`     | `src/auth`     | Signup, login, JWTs, emails, password reset |
-| `Email`    | `src/email`    | Send transactional emails                   |
-| `Links`    | `src/links`    | Link CRUD, search, mark as read             |
-| `Metadata` | `src/metadata` | Fetch Open Graph metadata tags              |
-| `Prisma`   | `src/prisma`   | Prisma client                               |
-| `Queue`    | `src/queue`    | Enqueue and process background jobs         |
-| `Users`    | `src/users`    | Profile management, account deletion        |
+| Module     | Path           | Responsibility                                                        |
+| ---------- | -------------- | --------------------------------------------------------------------- |
+| `Auth`     | `src/auth`     | All auth flows: login, registration, JWTs, email tokens, OAuth, PATs  |
+| `Email`    | `src/email`    | Send transactional emails via SMTP                                    |
+| `Links`    | `src/links`    | Link CRUD, search, mark as read                                       |
+| `Metadata` | `src/metadata` | Fetch Open Graph metadata tags                                        |
+| `Prisma`   | `src/prisma`   | Prisma client wrapper                                                 |
+| `Queue`    | `src/queue`    | Enqueue and process background jobs via pg-boss                       |
+| `Tokens`   | `src/tokens`   | Personal access token (PAT) lifecycle: create, list, revoke, validate |
+| `Users`    | `src/users`    | Profile management, account deletion                                  |
 
 ## Authentication Strategy
 
-Linklater uses **JWT authentication** via Passport.
+Linklater supports multiple authentication paths. All protected endpoints
+require an `Authorization: Bearer <token>` header.
 
-1. `POST /auth/register` hashes the password with bcrypt and creates the user
-2. `POST /auth/login` validates credentials and issues a signed JWT
-3. All protected endpoints require an `Authorization: Bearer <token>` header
-4. Tokens are validated by `JwtStrategy`
-5. JWTs expire after **90 days**
+### JWT (web app)
 
-Email verification is required for full access. Unverified users can still log in and use the app.
+1. `POST /auth/register` hashes the password with bcrypt and creates the
+   user, then sends an email verification link.
+2. `POST /auth/login` validates credentials and issues a signed JWT access
+   token **and** a refresh token. The access token expires in **1 hour**.
+   The refresh token expires in **1 year** and is stored hashed in the
+   database.
+3. `POST /auth/refresh` exchanges a still-valid refresh token for a new
+   access token and a rotated refresh token (the old one is deleted).
+4. JWT validation is performed by `JwtStrategy`. The `JwtAuthGuard` is used
+   on routes that require a full session; `MfaAuthGuard` is used on the OTP
+   verification step.
+
+> **GOTCHA:** The JWT TTL changed from 90 days to 1 hour when refresh tokens
+> were introduced. Access tokens are now short-lived; long-lived sessions are
+> maintained by refresh token rotation. Bookmarklets embed the JWT directly and
+> are unaffected by refresh — they must be reinstalled when their embedded token
+> expires.
+
+### Passwordless / Magic Links
+
+`POST /auth/request-magic-link` sends a one-time login URL to the user's
+email. The token expires in **15 minutes**. `POST /auth/verify-magic-link`
+validates the token and returns an access + refresh token pair.
+
+`POST /auth/register-magic-link` creates an account (if none exists) and
+sends a magic link. When the email is already registered, it silently sends
+a login link — the response is always 200 to prevent user enumeration.
+
+### Personal Access Tokens (PATs)
+
+PATs let browser extensions and other headless clients authenticate without
+the browser-based OAuth or login flow.
+
+- Tokens are prefixed with `ltk_` (e.g. `ltk_aBcDeFgHiJkL…`).
+- The full raw token is shown **once** at creation time and then never again;
+  only a SHA-256 hash is stored.
+- The `AnyAuthGuard` (used on `LinksController`) accepts either a JWT or a
+  PAT — it detects the `ltk_` prefix and routes accordingly.
+- Endpoints are at `POST /tokens`, `GET /tokens`, and `DELETE /tokens/:id`.
+
+### Google SSO / Apple Sign In
+
+OAuth sign-in is handled by Passport strategies registered from environment
+variables. Strategies are only registered when all required credentials are
+present.
+
+- `GET /auth/google` → redirects to Google. `GET /auth/google/callback` →
+  handles the callback and redirects the browser to
+  `/oauth/callback#token=<jwt>&refresh=<refreshToken>`.
+- Apple uses the same pattern with a `POST` callback instead of `GET`.
+- `mfa_required` is passed as an error query parameter when the user has
+  2FA enabled and Google/Apple login cannot complete the second factor.
+
+### Google Account Linking
+
+An already-authenticated user can link their Google account from Settings.
+
+1. `GET /auth/google/link` — redirects to Google with a signed, time-limited
+   HMAC state token encoding the user's ID. The state expires in 5 minutes.
+2. `GET /auth/google/link/callback` — validated by `GoogleLinkStrategy`, which
+   verifies the HMAC before extracting the user ID. The controller then calls
+   `AuthService.linkOAuthAccountToUser`. On success it redirects to
+   `/settings?linked=google`. On email mismatch it redirects to
+   `/settings?link_error=email_mismatch`. On an already-linked conflict it
+   redirects to `/settings?link_error=already_linked`.
+
+> **GOTCHA:** Google account linking requires that the Google account's email
+> match the Linklater account's email exactly. The check is enforced in
+> `AuthService.linkOAuthAccountToUser`. Mismatches result in a
+> `BadRequestException` and a redirect with `link_error=email_mismatch`.
+
+### Browser Extension OAuth (PKCE Flow)
+
+Extensions cannot use a full browser redirect flow, so a PKCE-based
+authorization code exchange is used instead.
+
+1. The extension generates a `code_verifier` and derives a `code_challenge`
+   (SHA-256 of the verifier, base64url-encoded).
+2. `GET /auth/extension/authorize?code_challenge=<>&redirect_uri=<>` — the
+   user must be authenticated (JWT). The API creates a short-lived auth code
+   (hashed in the database, expires in 5 minutes) and redirects to
+   `redirect_uri?code=<rawCode>`.
+3. `POST /auth/extension/token` — the extension exchanges the raw code and
+   the `code_verifier`. The API re-derives the challenge from the verifier and
+   compares it to the stored challenge. On match, the code is deleted and an
+   access + refresh token pair is returned.
+
+The allowed `redirect_uri` values are controlled by the
+`EXTENSION_REDIRECT_URIS` environment variable (comma-separated). Unlisted
+URIs are rejected with `400 Bad Request`.
+
+### Two-Factor Authentication (TOTP)
+
+After `POST /auth/login`, when a user has TOTP enabled, the response is
+`{ mfaToken, mfaMethod: 'totp' }` instead of `{ accessToken, refreshToken }`.
+The caller must present this `mfaToken` (valid for 5 minutes) plus the
+6-digit TOTP code to `POST /auth/verify-otp` to receive the real token pair.
+Recovery codes are also accepted at `verify-otp` as `method: 'recovery'`.
+
+## API Endpoint Contracts
+
+### Tokens (`/tokens`) — requires JWT
+
+| Method   | Path          | Auth | Request Body       | Response                                    |
+| -------- | ------------- | ---- | ------------------ | ------------------------------------------- |
+| `POST`   | `/tokens`     | JWT  | `{ name: string }` | Created token including one-time `rawToken` |
+| `GET`    | `/tokens`     | JWT  | —                  | Array of token summaries (no `rawToken`)    |
+| `DELETE` | `/tokens/:id` | JWT  | —                  | `{ success: true }`                         |
+
+**Created token response shape:**
+
+```json
+{
+  "id": "uuid",
+  "name": "Chrome Extension",
+  "prefix": "ltk_aBcDeFgH",
+  "createdAt": "2026-05-16T00:00:00.000Z",
+  "lastUsedAt": null,
+  "rawToken": "ltk_aBcDeFgH..."
+}
+```
+
+`rawToken` is returned **only at creation time**. The list endpoint returns
+the same shape minus `rawToken`.
+
+### New Auth Endpoints (`/auth`)
+
+| Method   | Path                         | Auth        | Request Body                       | Response                                           |
+| -------- | ---------------------------- | ----------- | ---------------------------------- | -------------------------------------------------- |
+| `POST`   | `/auth/request-magic-link`   | Public      | `{ email }`                        | 200 (always, even if email not found)              |
+| `POST`   | `/auth/register-magic-link`  | Public      | `{ email }`                        | 200 (creates account if new, sends magic link)     |
+| `POST`   | `/auth/verify-magic-link`    | Public      | `{ token }`                        | `{ accessToken, refreshToken }`                    |
+| `POST`   | `/auth/refresh`              | Public      | `{ refreshToken }`                 | `{ accessToken, refreshToken }` (rotated pair)     |
+| `DELETE` | `/auth/sessions`             | JWT         | —                                  | `{ success: true }` (all refresh tokens revoked)   |
+| `GET`    | `/auth/extension/authorize`  | JWT + query | `code_challenge`, `redirect_uri`   | 302 to `redirect_uri?code=<rawCode>`               |
+| `POST`   | `/auth/extension/token`      | Public      | `{ code, codeVerifier }`           | `{ accessToken, refreshToken }`                    |
+| `GET`    | `/auth/google/link`          | JWT         | —                                  | 302 to Google OAuth                                |
+| `GET`    | `/auth/google/link/callback` | google-link | —                                  | 302 to `/settings?linked=google` or `link_error=…` |
+| `DELETE` | `/auth/providers/:provider`  | JWT         | —                                  | `{ success: true }`                                |
+| `POST`   | `/auth/set-password`         | JWT         | `{ password }` (min 12 characters) | `{ success: true }`                                |
+
+> The `GET /auth/google` and `GET /auth/apple` (plus their `/callback`
+> variants) existed before this branch and are unchanged.
+
+> **KNOWN ISSUE:** Three throttler names used in `@Throttle()` decorators on
+> the controller — `auth-request-magic-link`, `auth-verify-magic-link`, and
+> `auth-refresh` — are not declared in the `ThrottlerModule.forRoot` array
+> in `AppModule`. NestJS falls back to the first globally declared throttler
+> when a named throttler is not found, which means these three endpoints are
+> effectively rate-limited by the `auth-register` config (5 req / 60s) rather
+> than the intended per-route limits. To fix, add matching entries to the
+> `ThrottlerModule.forRoot` array in `src/app.module.ts`.
+
+## SQL Migration Linting
+
+All SQL migrations are linted with [Squawk](https://squawkhq.com) as part of
+the standard lint pipeline.
+
+```bash
+npm run lint:migrations  # runs Squawk on all migrations
+```
+
+The Squawk configuration lives in `.squawk.toml` at the repository root.
+Several rules are excluded project-wide; each exclusion is annotated with the
+reason in that file.
+
+**Every migration must:**
+
+1. Begin with `set lock_timeout = '1s';` and `set statement_timeout = '5s';`
+2. Add foreign key constraints with `NOT VALID`, immediately followed by
+   `VALIDATE CONSTRAINT` on the next line
+
+Never add `-- squawk-ignore-file` or `-- squawk-ignore-next-statement`.
+If a new rule fires that should be excluded, add it to `.squawk.toml` with
+a clear comment explaining why.
 
 ## Background Jobs
 

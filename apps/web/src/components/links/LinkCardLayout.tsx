@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import PrimaryButton from '../common/PrimaryButton';
 import type { Link } from '../../lib/api';
 
 /**
@@ -41,7 +42,7 @@ function getPlaceholderUrl(url: string) {
     .trim()
     .replace('#', '');
   const text = new URL(url).hostname.replace(/^www\./, '');
-  return `https://placehold.co/284x160/${accent}/${accentFg}?text=${text}`;
+  return `https://placehold.co/240x126/${accent}/${accentFg}?text=${text}`;
 }
 
 /**
@@ -62,12 +63,15 @@ export default function LinkCardLayout({
   onCardClick,
   onUnreadClick,
 }: LinkCardLayoutProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardReference = useRef<HTMLDivElement>(null);
   const placeholderUrl = useMemo(() => getPlaceholderUrl(link.url), [link.url]);
 
   useEffect(() => {
     if (isSelected) {
-      cardRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      cardReference.current?.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth',
+      });
     }
   }, [isSelected]);
 
@@ -87,12 +91,15 @@ export default function LinkCardLayout({
 
   return (
     <div
-      ref={cardRef}
+      ref={cardReference}
       role="link"
       aria-label={cardAriaLabel}
       onClick={onCardClick}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') onCardClick();
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onCardClick();
+        }
       }}
       tabIndex={0}
       className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-transparent'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--accent)]/60' : ''} focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none cursor-pointer`}
@@ -160,26 +167,24 @@ export default function LinkCardLayout({
           </div>
         </div>
 
-        {displayDescription && (
+        {(displayDescription || link.readAt) && (
           <div
             style={childStyle(2)}
-            className={`overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS}`}
+            className={`flex items-center gap-3 overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS}`}
           >
-            <p className="text-[var(--text-muted)] text-xs text-pretty line-clamp-2">
-              {displayDescription}
-            </p>
-          </div>
-        )}
+            {displayDescription && (
+              <p className="flex-1 min-w-0 text-[var(--text-muted)] text-xs text-pretty line-clamp-2">
+                {displayDescription}
+              </p>
+            )}
 
-        {link.readAt && (
-          <div className="flex justify-end pt-1">
-            <button
-              type="button"
-              onClick={onUnreadClick}
-              className="py-1.5 px-2 -mx-2 -my-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] text-xs transition-colors active:scale-[0.96] cursor-pointer"
-            >
-              Mark as unread
-            </button>
+            {link.readAt && (
+              <div className="shrink-0">
+                <PrimaryButton onClick={onUnreadClick}>
+                  Mark unread
+                </PrimaryButton>
+              </div>
+            )}
           </div>
         )}
       </div>

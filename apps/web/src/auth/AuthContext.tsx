@@ -24,6 +24,8 @@ import {
  * after login or after page load when a stored JWT is found.
  */
 export interface User {
+  /** The OAuth providers connected to this account. */
+  connectedProviders: Array<{ provider: string; connectedAt: string }>;
   /** The user's current email address. */
   email: string;
   /** ISO timestamp of when the email was verified, or `null` if unverified. */
@@ -40,7 +42,7 @@ export interface User {
   /** The current theme identifier (e.g. `'scanner-darkly'`). */
   theme: string;
   /** The active 2FA method, or `null` when 2FA is disabled. */
-  twoFactorMethod: 'totp' | 'email' | null;
+  twoFactorMethod: 'totp' | null;
   /** `true` when the user has started TOTP setup but not yet verified it. */
   twoFactorPending: boolean;
   /** The user's UUID (renamed from `id` to `userId` by `GET /auth/me`). */
@@ -62,10 +64,10 @@ interface AuthContextValue {
   login: (
     email: string,
     password: string,
-  ) => Promise<{ mfaToken: string; mfaMethod: 'totp' | 'email' } | void>;
-  /** Stores an OAuth-issued JWT and fetches the user profile. Used by `OAuthCallbackPage`. */
-  loginWithToken: (token: string) => Promise<void>;
-  /** Clears the stored JWT and sets `user` to `null`. */
+  ) => Promise<{ mfaToken: string; mfaMethod: 'totp' } | void>;
+  /** Stores OAuth-issued tokens and fetches the user profile. Used by `OAuthCallbackPage`. */
+  loginWithToken: (accessToken: string, refreshToken?: string) => Promise<void>;
+  /** Revokes all server sessions, clears stored tokens, and sets `user` to `null`. */
   logout: () => void;
   /** Creates a new account and immediately logs in. */
   register: (email: string, password: string) => Promise<void>;
@@ -90,6 +92,7 @@ interface AuthContextValue {
  */
 function mapMeToUser(me: Awaited<ReturnType<typeof getMe>>): User {
   return {
+    connectedProviders: me.connectedProviders,
     userId: me.userId,
     email: me.email,
     emailVerifiedAt: me.emailVerifiedAt,
@@ -149,7 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (
       email: string,
       password: string,
-    ): Promise<{ mfaToken: string; mfaMethod: 'totp' | 'email' } | void> => {
+    ): Promise<{ mfaToken: string; mfaMethod: 'totp' } | void> => {
       const result = await apiLogin(email, password);
       if ('mfaToken' in result) {
         return { mfaToken: result.mfaToken, mfaMethod: result.mfaMethod };
@@ -160,11 +163,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const loginWithToken = useCallback(async (token: string) => {
-    setStoredToken(token);
-    const me = await getMe();
-    setUser(mapMeToUser(me));
-  }, []);
+  const loginWithToken = useCallback(
+    async (accessToken: string, refreshToken?: string) => {
+      setStoredToken(accessToken, refreshToken);
+      const me = await getMe();
+      setUser(mapMeToUser(me));
+    },
+    [],
+  );
 
   /**
    * Creates an account then immediately logs in so the user lands on the
@@ -178,9 +184,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [login],
   );
 
-  /** Clears the stored JWT and removes `user` from state. */
   const logout = useCallback(() => {
-    apiLogout();
+    void apiLogout();
     setUser(null);
   }, []);
 

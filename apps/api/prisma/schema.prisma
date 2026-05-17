@@ -29,16 +29,18 @@ model User {
   totpVerifiedAt   DateTime?
   totpLastUsedStep Int?
 
-  emailTwoFactorCodeHash  String?
-  emailTwoFactorExpiresAt DateTime?
-  emailTwoFactorEnabledAt DateTime?
+  magicLinkToken          String?   @unique
+  magicLinkTokenExpiresAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  links         Link[]
-  oauthAccounts OAuthAccount[]
-  recoveryCodes RecoveryCode[]
+  links              Link[]
+  oauthAccounts      OAuthAccount[]
+  recoveryCodes      RecoveryCode[]
+  apiTokens          ApiToken[]
+  refreshTokens      RefreshToken[]
+  extensionAuthCodes ExtensionAuthCode[]
 }
 
 model RecoveryCode {
@@ -84,6 +86,42 @@ model Link {
   @@index([userId, url])
   @@index([userId, readAt])
   @@index([userId, createdAt])
+}
+
+model ApiToken {
+  id         String    @id @default(cuid())
+  name       String
+  tokenHash  String    @unique
+  prefix     String
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model ExtensionAuthCode {
+  id            String   @id @default(cuid())
+  codeHash      String   @unique
+  codeChallenge String
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Meta {

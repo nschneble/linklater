@@ -1,37 +1,24 @@
 import { createLink, type Link } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import PrimaryButton from '../common/PrimaryButton';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 interface LinkFormProps {
-  /**
-   * Called with the newly created `Link` after a successful `POST /links`.
-   * The parent (`LinksView`) uses this to prepend the link and start metadata
-   * polling without a full list refetch.
-   */
   onCreated: (link: Link) => void;
 }
 
-/**
- * Inline form for manually saving a link by URL. Auto-focuses its input on
- * mount and pre-fills from the `?url=` query parameter (used by the bookmarklet
- * fallback when the direct API call fails).
- *
- * Calls `POST /links` on submit. On success calls `onCreated` and clears the
- * input. On failure shows an inline error.
- */
 export default function LinkForm({ onCreated }: LinkFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [url, setUrl] = useState(
     () => new URLSearchParams(window.location.search).get('url') ?? '',
   );
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputReference = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    inputReference.current?.focus();
   }, []);
 
   const handleSubmit = async (event: FormEvent) => {
@@ -61,7 +48,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
         </label>
         <FormInput
           id="link-url"
-          ref={inputRef}
+          ref={inputReference}
           type="url"
           placeholder="https://example.com/article"
           value={url}

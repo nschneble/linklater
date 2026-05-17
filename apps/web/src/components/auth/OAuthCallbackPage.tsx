@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getErrorMessage } from '../../lib/errors';
+import { FOCUS_RING } from '../../lib/styles';
 import { useAuth } from '../../auth/AuthContext';
 
 type Status = 'loading' | 'error';
@@ -23,15 +24,17 @@ export default function OAuthCallbackPage() {
 
   useEffect(() => {
     const hash = window.location.hash.slice(1);
-    const token = new URLSearchParams(hash).get('token');
+    const parameters = new URLSearchParams(hash);
+    const accessToken = parameters.get('token');
+    const refreshToken = parameters.get('refresh') ?? undefined;
 
-    if (!token) {
+    if (!accessToken) {
       setStatus('error');
       setErrorMessage('Invalid authentication response. Please try again.');
       return;
     }
 
-    loginWithToken(token)
+    loginWithToken(accessToken, refreshToken)
       .then(() => navigate('/unread', { replace: true }))
       .catch((error: unknown) => {
         setStatus('error');
@@ -62,7 +65,7 @@ export default function OAuthCallbackPage() {
             </p>
             <button
               type="button"
-              className="text-[var(--accent)] underline text-sm"
+              className={`text-[var(--accent)] underline text-sm rounded ${FOCUS_RING}`}
               onClick={() => navigate('/login')}
             >
               Back to login

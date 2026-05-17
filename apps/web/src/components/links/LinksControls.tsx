@@ -14,13 +14,13 @@ interface LinksControlsProps {
   isClearingRead: boolean;
   /** Hides the "Remove all" button when there are no read links to delete. */
   linksCount: number;
-  /** Disables and relabels the "Stumble upon" button while a random fetch is in flight. */
+  /** Disables the "Stumble!" button while a random fetch is in flight. */
   randomLoading: boolean;
   /** Drives the `aria-expanded` state and label of the "Add link" / "Hide form" button. */
   showLinkForm: boolean;
   /** Called when the user clicks "Remove all read". */
   onClearRead: () => void;
-  /** Called when the user clicks "Stumble upon". */
+  /** Called when the user clicks "Stumble!". */
   onRandom: () => Promise<void>;
   /** Toggles the inline link creation form open or closed. */
   onToggleForm: () => void;
@@ -29,7 +29,7 @@ interface LinksControlsProps {
 /**
  * The desktop action buttons shown to the right of the tab switcher in `LinksToolbar`.
  *
- * On the unread tab: "Stumble upon" + "Add link / Hide form".
+ * On the unread tab: "Stumble!" + "Add link / Hide form".
  * On the read tab: "Remove all read" (hidden when the list is empty).
  *
  * This component is hidden on mobile (`hidden sm:contents` in `LinksToolbar`)
@@ -66,8 +66,11 @@ export default function LinksControls({
           title="Open a random unread link and mark it as read"
           onClick={onRandom}
         >
-          <i className="fa-solid fa-shuffle text-[0.7rem]" aria-hidden="true" />
-          Stumble upon
+          <i
+            className="fa-brands fa-stumbleupon text-[0.7rem]"
+            aria-hidden="true"
+          />
+          Stumble!
         </IconButton>
 
         <PrimaryButton

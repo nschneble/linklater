@@ -1,11 +1,17 @@
-import { ApiError, requestEmailChange, updateMe } from '../../lib/api';
-import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
-import { useState, type FormEvent } from 'react';
+import {
+  ApiError,
+  requestEmailChange,
+  setPassword as apiSetPassword,
+  updateMe,
+} from '../../lib/api';
+import { getErrorMessage } from '../../lib/errors';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
+import StatusBadge from '../common/StatusBadge';
+import { useState, type FormEvent } from 'react';
 
 /**
  * Settings section for updating email address and password.
@@ -27,7 +33,8 @@ import PrimaryButton from '../common/PrimaryButton';
  * → attempt action → handle result.
  */
 export default function AccountSettingsForm() {
-  const { resendVerificationEmail, setPendingEmail, user } = useAuth();
+  const { refreshUser, resendVerificationEmail, setPendingEmail, user } =
+    useAuth();
 
   const [emailInput, setEmailInput] = useState(user?.email ?? '');
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -43,6 +50,10 @@ export default function AccountSettingsForm() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [passwordSaving, setPasswordSaving] = useState(false);
+
+  const [newPassword, setNewPassword] = useState('');
+  const [addPasswordError, setAddPasswordError] = useState<string | null>(null);
+  const [addPasswordSaving, setAddPasswordSaving] = useState(false);
 
   const isVerified = Boolean(user?.emailVerifiedAt);
   const hasPendingEmail = Boolean(user?.pendingEmail);
@@ -129,37 +140,49 @@ export default function AccountSettingsForm() {
     }
   };
 
+  const handleAddPassword = async (event: FormEvent) => {
+    event.preventDefault();
+
+    setAddPasswordError(null);
+    setAddPasswordSaving(true);
+
+    try {
+      await apiSetPassword(newPassword);
+      setNewPassword('');
+      await refreshUser();
+    } catch (error: unknown) {
+      setAddPasswordError(getErrorMessage(error, 'Failed to set password'));
+    } finally {
+      setAddPasswordSaving(false);
+    }
+  };
+
   return (
     <div className="max-w-md space-y-8">
-      <h2 className="text-[var(--text)] text-xl font-semibold text-balance">
+      <h1 className="text-[var(--text)] text-xl font-semibold text-balance">
         Account settings
-      </h2>
+      </h1>
 
       <form className="space-y-4" onSubmit={handleEmailSave}>
-        <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+        <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
           Email
-        </h3>
+        </h2>
 
         <div className="flex items-center gap-2">
           <span className="text-[var(--text-muted)] text-xs">
             {user?.email}
           </span>
           {isVerified ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 [[data-mode='dark']_&]:bg-emerald-950/20 border border-emerald-300 [[data-mode='dark']_&]:border-emerald-800/40 text-emerald-700 [[data-mode='dark']_&]:text-emerald-400 text-xs rounded-full">
-              <i
-                className="fa-solid fa-circle-check text-[0.6rem]"
-                aria-hidden="true"
-              />
+            <StatusBadge variant="success" icon="fa-solid fa-circle-check">
               Verified
-            </span>
+            </StatusBadge>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/20 border border-amber-300 [[data-mode='dark']_&]:border-amber-800/40 text-amber-700 [[data-mode='dark']_&]:text-amber-300 text-xs rounded-full">
-              <i
-                className="fa-solid fa-circle-exclamation text-[0.6rem]"
-                aria-hidden="true"
-              />
+            <StatusBadge
+              variant="warning"
+              icon="fa-solid fa-circle-exclamation"
+            >
               Unverified
-            </span>
+            </StatusBadge>
           )}
         </div>
 
@@ -200,8 +223,7 @@ export default function AccountSettingsForm() {
               className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
               htmlFor="email-change-mfa"
             >
-              {user.twoFactorMethod === 'email' ? 'Email' : 'Authenticator'} or
-              recovery code
+              Authenticator or recovery code
             </label>
             <FormInput
               id="email-change-mfa"
@@ -231,9 +253,9 @@ export default function AccountSettingsForm() {
 
       {hasPassword ? (
         <form className="space-y-4" onSubmit={handlePasswordSave}>
-          <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+          <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
             Password
-          </h3>
+          </h2>
 
           <label
             className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
@@ -285,14 +307,39 @@ export default function AccountSettingsForm() {
           </PrimaryButton>
         </form>
       ) : (
-        <div className="space-y-2">
-          <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+        <form className="space-y-4" onSubmit={handleAddPassword}>
+          <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
             Password
-          </h3>
+          </h2>
           <p className="text-[var(--text-muted)] text-xs">
-            Your account uses social sign-in — no password is set.
+            Add a password for backup access alongside social sign-in.
           </p>
-        </div>
+
+          <label
+            className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+            htmlFor="add-password-input"
+          >
+            New password
+          </label>
+          <FormInput
+            id="add-password-input"
+            type="password"
+            value={newPassword}
+            onChange={(event) => setNewPassword(event.target.value)}
+          />
+
+          {addPasswordError && (
+            <Alert variant="error">{addPasswordError}</Alert>
+          )}
+
+          <PrimaryButton
+            disabled={addPasswordSaving || !newPassword}
+            className="py-2.5"
+          >
+            <i className="fa-solid fa-key text-[0.7rem]" aria-hidden="true" />
+            {addPasswordSaving ? 'Saving…' : 'Add password'}
+          </PrimaryButton>
+        </form>
       )}
     </div>
   );

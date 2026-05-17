@@ -15,8 +15,9 @@ vi.mock('../../lib/api', () => ({
   register: vi.fn(),
   getMe: vi.fn(),
   getStoredToken: vi.fn().mockReturnValue(null),
+  registerMagicLink: vi.fn(),
+  requestMagicLink: vi.fn(),
   verifyOtp: vi.fn(),
-  resendEmailTwoFactorCode: vi.fn(),
 }));
 
 vi.mock('../../auth/AuthContext', () => ({
@@ -26,8 +27,7 @@ vi.mock('../../auth/AuthContext', () => ({
 import * as apiModule from '../../lib/api';
 import { useAuth } from '../../auth/AuthContext';
 
-// Re-export the mocked functions for convenience
-const { verifyOtp, resendEmailTwoFactorCode } = apiModule;
+const { registerMagicLink, requestMagicLink, verifyOtp } = apiModule;
 
 const USER_EMAIL = 'email@example.com';
 const USER_PASSWORD = 'strong-password-123';
@@ -89,7 +89,7 @@ describe('AuthForm', () => {
       renderAuthForm();
       fillEmail(USER_EMAIL);
       fillPassword(USER_PASSWORD);
-      fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
 
       await waitFor(() => {
         expect(loginMock).toHaveBeenCalledWith(USER_EMAIL, USER_PASSWORD);
@@ -105,7 +105,7 @@ describe('AuthForm', () => {
       renderAuthForm();
       fillEmail(USER_EMAIL);
       fillPassword(USER_PASSWORD);
-      fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -122,7 +122,7 @@ describe('AuthForm', () => {
       renderAuthForm();
       fillEmail(USER_EMAIL);
       fillPassword(USER_PASSWORD);
-      fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
 
       await waitFor(() => {
         expect(
@@ -154,6 +154,17 @@ describe('AuthForm', () => {
         'aria-selected',
         'true',
       );
+      // With no password entered, the button defaults to magic link sign-up
+      expect(
+        screen.getByRole('button', { name: /sign up with magic link/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('shows "Create account" button when a password is typed in register mode', () => {
+      renderAuthForm();
+      fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
+      fillPassword(USER_PASSWORD);
+
       expect(
         screen.getByRole('button', { name: /create account/i }),
       ).toBeInTheDocument();
@@ -318,7 +329,7 @@ describe('AuthForm', () => {
       fillPassword(USER_PASSWORD);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
       });
 
       await waitFor(() => {
@@ -344,7 +355,7 @@ describe('AuthForm', () => {
       fillPassword(USER_PASSWORD);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
       });
 
       await waitFor(() => {
@@ -379,7 +390,7 @@ describe('AuthForm', () => {
       fillPassword(USER_PASSWORD);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
       });
 
       await waitFor(() => {
@@ -390,76 +401,135 @@ describe('AuthForm', () => {
     });
   });
 
-  describe('MFA challenge — Email', () => {
-    it('shows email code input when login returns mfaToken with method email', async () => {
-      const loginMock = vi.fn().mockResolvedValue({
-        mfaToken: 'mfa-tok',
-        mfaMethod: 'email',
-      });
-      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+  describe('magic link (no password)', () => {
+    it('shows "Log in with magic link" button when password field is empty', () => {
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+
+      expect(
+        screen.getByRole('button', { name: /log in with magic link/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('calls requestMagicLink with email when submitted with no password', async () => {
+      vi.mocked(requestMagicLink).mockResolvedValue(undefined);
 
       renderAuthForm();
       fillEmail(USER_EMAIL);
-      fillPassword(USER_PASSWORD);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+        fireEvent.click(
+          screen.getByRole('button', { name: /log in with magic link/i }),
+        );
       });
 
       await waitFor(() => {
-        expect(screen.getByLabelText(/email code/i)).toBeInTheDocument();
+        expect(requestMagicLink).toHaveBeenCalledWith(USER_EMAIL);
       });
     });
 
-    it('shows a Resend code link for Email 2FA', async () => {
-      const loginMock = vi.fn().mockResolvedValue({
-        mfaToken: 'mfa-tok',
-        mfaMethod: 'email',
-      });
-      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+    it('shows an inline success alert while keeping the form visible', async () => {
+      vi.mocked(requestMagicLink).mockResolvedValue(undefined);
 
       renderAuthForm();
       fillEmail(USER_EMAIL);
-      fillPassword(USER_PASSWORD);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+        fireEvent.click(
+          screen.getByRole('button', { name: /log in with magic link/i }),
+        );
       });
 
       await waitFor(() => {
+        expect(screen.getByRole('status')).toBeInTheDocument();
         expect(
-          screen.getByRole('button', { name: /resend code/i }),
+          screen.getByText(/check your email for a login link/i),
+        ).toBeInTheDocument();
+        expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+      });
+    });
+
+    it('shows an error when requestMagicLink fails', async () => {
+      vi.mocked(requestMagicLink).mockRejectedValue(
+        new Error('Service unavailable'),
+      );
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /log in with magic link/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(screen.getByText(/service unavailable/i)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('register mode — magic link (no password)', () => {
+    it('shows "Sign up with magic link" button in register mode when password field is empty', () => {
+      renderAuthForm();
+      fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
+
+      expect(
+        screen.getByRole('button', { name: /sign up with magic link/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('calls registerMagicLink with email when submitted with no password in register mode', async () => {
+      vi.mocked(registerMagicLink).mockResolvedValue(undefined);
+
+      renderAuthForm();
+      fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
+      fillEmail(USER_EMAIL);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /sign up with magic link/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(registerMagicLink).toHaveBeenCalledWith(USER_EMAIL);
+      });
+    });
+
+    it('shows "Check your email to finish signing up!" after successful registerMagicLink', async () => {
+      vi.mocked(registerMagicLink).mockResolvedValue(undefined);
+
+      renderAuthForm();
+      fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
+      fillEmail(USER_EMAIL);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /sign up with magic link/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('status')).toBeInTheDocument();
+        expect(
+          screen.getByText(/check your email to finish signing up/i),
         ).toBeInTheDocument();
       });
     });
 
-    it('calls resendEmailTwoFactorCode with the mfaToken when Resend is clicked', async () => {
-      const loginMock = vi.fn().mockResolvedValue({
-        mfaToken: 'mfa-tok',
-        mfaMethod: 'email',
-      });
-      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
-      vi.mocked(resendEmailTwoFactorCode).mockResolvedValue(undefined);
-
+    it('shows "Log in with magic link" (not "Sign up") when in login mode with no password', () => {
       renderAuthForm();
       fillEmail(USER_EMAIL);
-      fillPassword(USER_PASSWORD);
 
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
-      });
-
-      await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /resend code/i }),
-        ).toBeInTheDocument();
-      });
-
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /resend code/i }));
-      });
-
-      expect(resendEmailTwoFactorCode).toHaveBeenCalledWith('mfa-tok');
+      expect(
+        screen.getByRole('button', { name: /log in with magic link/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /sign up with magic link/i }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -476,7 +546,7 @@ describe('AuthForm', () => {
       fillPassword(USER_PASSWORD);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
       });
 
       await waitFor(() => {

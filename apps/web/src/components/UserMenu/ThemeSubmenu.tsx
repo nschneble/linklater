@@ -38,7 +38,7 @@ interface ThemeSubmenuProps {
    * Forwarded ref attached to the flyout panel, used by `UserMenu` for
    * keyboard navigation.
    */
-  flyoutRef?: RefObject<HTMLDivElement | null>;
+  flyoutReference?: RefObject<HTMLDivElement | null>;
   /** Called with the hovered theme id while hovering, or `null` when leaving the flyout. */
   onPreviewChange: (theme: BaseTheme | null) => void;
   /** Called when the user clicks a theme option. Closes the menu. */
@@ -69,7 +69,7 @@ export default function ThemeSubmenu({
   onKeyboardOpen,
   onPreviewChange,
   onSelect,
-  flyoutRef,
+  flyoutReference,
 }: ThemeSubmenuProps) {
   const mouseIsOver = useRef(false);
   const [hoveredThemeId, setHoveredThemeId] = useState<string | null>(null);
@@ -112,7 +112,7 @@ export default function ThemeSubmenu({
             event.preventDefault();
             event.stopPropagation();
             if (showSubmenu) {
-              flyoutRef?.current
+              flyoutReference?.current
                 ?.querySelector<HTMLElement>('[data-submenu-item]')
                 ?.focus();
             } else {
@@ -121,7 +121,7 @@ export default function ThemeSubmenu({
             }
           } else if (event.key === 'Enter' || event.key === ' ') {
             if (showSubmenu) {
-              flyoutRef?.current
+              flyoutReference?.current
                 ?.querySelector<HTMLElement>('[data-submenu-item]')
                 ?.focus();
             } else {
@@ -147,7 +147,7 @@ export default function ThemeSubmenu({
       </button>
 
       <div
-        ref={flyoutRef}
+        ref={flyoutReference}
         className={`absolute top-0 z-50 w-56 py-2 bg-[var(--bg-elevated)] border-shadow rounded-lg ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
         style={{
           transition: `opacity ${showSubmenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showSubmenu ? '150ms ease-out' : '100ms ease-in'}`,

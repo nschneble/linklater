@@ -78,7 +78,7 @@ export default function LinksView() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isClearingRead, setIsClearingRead] = useState(false);
   const [, startTransition] = useTransition();
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchInputReference = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (search === '') {
@@ -157,9 +157,9 @@ export default function LinksView() {
     isShortcutsModalOpen: showShortcuts,
     onShowUnread: () => navigate('/unread'),
     onShowRead: () => navigate('/read'),
-    onSearch: () => searchInputRef.current?.focus(),
-    onToggleForm: handleToggleForm,
-    onStumble: handleRandom,
+    onSearch: () => searchInputReference.current?.focus(),
+    onToggleForm: filter === 'unread' ? handleToggleForm : () => {},
+    onStumble: filter === 'unread' ? handleRandom : () => {},
     onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
     onEscape: showLinkForm ? handleToggleForm : undefined,
     onNavigateNextLink: handleNavigateNextLink,
@@ -227,7 +227,7 @@ export default function LinksView() {
         links={links}
         randomLoading={randomLoading}
         search={search}
-        searchInputRef={searchInputRef}
+        searchInputReference={searchInputReference}
         showLinkForm={showLinkForm}
         onClearRead={handleClearRead}
         onNavigateRead={() => navigate('/read')}

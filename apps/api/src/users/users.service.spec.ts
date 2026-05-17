@@ -55,6 +55,8 @@ describe('UsersService', () => {
   const prismaMock = {
     oAuthAccount: {
       create: jest.fn(),
+      deleteMany: jest.fn(),
+      findMany: jest.fn(),
       findUnique: jest.fn(),
     },
     user: {
@@ -365,6 +367,23 @@ describe('UsersService', () => {
         },
       });
     });
+
+    it('includes emailVerifiedAt when markVerified is true', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+      const newHash = 'hashed-new-password';
+
+      await service.resetPasswordWithToken(USER_ID, newHash, true);
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          passwordHash: newHash,
+          resetToken: null,
+          resetTokenExpiresAt: null,
+          emailVerifiedAt: expect.any(Date),
+        },
+      });
+    });
   });
 
   describe('updatePendingEmail', () => {
@@ -434,6 +453,80 @@ describe('UsersService', () => {
           currentPassword: KNOWN_PASSWORD,
           password: NEW_PASSWORD,
         }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('listOAuthAccounts', () => {
+    it('returns provider and connectedAt for each linked account', async () => {
+      const now = new Date();
+      (prismaMock.oAuthAccount.findMany as jest.Mock).mockResolvedValue([
+        { provider: OAUTH_PROVIDER, createdAt: now },
+      ]);
+
+      const result = await service.listOAuthAccounts(USER_ID);
+
+      expect(prismaMock.oAuthAccount.findMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID },
+        select: { provider: true, createdAt: true },
+      });
+      expect(result).toEqual([{ provider: OAUTH_PROVIDER, connectedAt: now }]);
+    });
+
+    it('returns an empty array when no providers are linked', async () => {
+      (prismaMock.oAuthAccount.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.listOAuthAccounts(USER_ID);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('unlinkOAuthAccount', () => {
+    it('calls oAuthAccount.deleteMany with the correct where clause', async () => {
+      (prismaMock.oAuthAccount.deleteMany as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.unlinkOAuthAccount(USER_ID, OAUTH_PROVIDER);
+
+      expect(prismaMock.oAuthAccount.deleteMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID, provider: OAUTH_PROVIDER },
+      });
+    });
+  });
+
+  describe('setFirstPassword', () => {
+    it('hashes the password and updates the user record', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(
+        makeUser({ passwordHash: null }),
+      );
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.setFirstPassword(USER_ID, USER_PASSWORD);
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            passwordHash: expect.not.stringMatching(USER_PASSWORD),
+          }),
+        }),
+      );
+    });
+
+    it('throws NotFoundException when user does not exist', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.setFirstPassword(USER_ID, USER_PASSWORD),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException when the user already has a password', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+
+      await expect(
+        service.setFirstPassword(USER_ID, USER_PASSWORD),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -533,6 +626,331 @@ describe('UsersService', () => {
         where: { id: USER_ID },
         data: { emailVerifiedAt: expect.any(Date) },
       });
+    });
+  });
+
+  describe('findByIdWithPasswordHash', () => {
+    it('returns the user with hasPassword: true when passwordHash is set', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+
+      const result = await service.findByIdWithPasswordHash(USER_ID);
+
+      expect(result.hasPassword).toBe(true);
+      expect(result.passwordHash).toBeDefined();
+    });
+
+    it('returns the user with hasPassword: false when passwordHash is null', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(
+        makeUser({ passwordHash: null }),
+      );
+
+      const result = await service.findByIdWithPasswordHash(USER_ID);
+
+      expect(result.hasPassword).toBe(false);
+    });
+
+    it('throws NotFoundException when user does not exist', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.findByIdWithPasswordHash(MISSING_USER_ID),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findByMagicLinkToken', () => {
+    it('looks up user by magicLinkToken field', async () => {
+      const token = 'magic-link-token-abc';
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.findByMagicLinkToken(token);
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { magicLinkToken: token },
+      });
+    });
+  });
+
+  describe('updateMagicLinkToken', () => {
+    it('stores magic link token and expiry on the user', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+      const token = 'magic-link-token-abc';
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+      await service.updateMagicLinkToken(USER_ID, token, expiresAt);
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: { magicLinkToken: token, magicLinkTokenExpiresAt: expiresAt },
+      });
+    });
+  });
+
+  describe('clearMagicLinkToken', () => {
+    it('nullifies the magic link token and expiry on the user', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.clearMagicLinkToken(USER_ID);
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: { magicLinkToken: null, magicLinkTokenExpiresAt: null },
+      });
+    });
+  });
+
+  describe('saveTotpSecret', () => {
+    it('stores the encrypted TOTP secret and clears enable/verify timestamps', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.saveTotpSecret(USER_ID, 'encrypted-secret-xyz');
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          totpSecret: 'encrypted-secret-xyz',
+          totpEnabledAt: null,
+          totpVerifiedAt: null,
+        },
+      });
+    });
+  });
+
+  describe('updateTotpLastUsedStep', () => {
+    it('stores the time step used for replay prevention', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+      const step = Math.floor(Date.now() / 1000 / 30);
+
+      await service.updateTotpLastUsedStep(USER_ID, step);
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: { totpLastUsedStep: step },
+      });
+    });
+  });
+
+  describe('findUnusedRecoveryCodes', () => {
+    it('queries recovery codes where usedAt is null', async () => {
+      const prismaMockExtended = prismaMock as unknown as {
+        recoveryCode: { findMany: jest.Mock };
+      };
+      prismaMockExtended.recoveryCode = {
+        findMany: jest.fn().mockResolvedValue([]),
+      };
+
+      const result = await service.findUnusedRecoveryCodes(USER_ID);
+
+      expect(prismaMockExtended.recoveryCode.findMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID, usedAt: null },
+      });
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('markRecoveryCodeUsed', () => {
+    it('sets usedAt on the recovery code record', async () => {
+      const CODE_ID = 'rc-1';
+      const prismaMockExtended = prismaMock as unknown as {
+        recoveryCode: { update: jest.Mock };
+      };
+      prismaMockExtended.recoveryCode = {
+        update: jest.fn().mockResolvedValue({}),
+      };
+
+      await service.markRecoveryCodeUsed(CODE_ID);
+
+      expect(prismaMockExtended.recoveryCode.update).toHaveBeenCalledWith({
+        where: { id: CODE_ID },
+        data: { usedAt: expect.any(Date) },
+      });
+    });
+  });
+
+  describe('createOAuthUserAndLink', () => {
+    it('creates user and OAuth account in a transaction and returns user without passwordHash', async () => {
+      const createdUser = makeUser({ id: USER_ID, passwordHash: null });
+      const transactionMock = {
+        user: { create: jest.fn().mockResolvedValue(createdUser) },
+        oAuthAccount: { create: jest.fn().mockResolvedValue({}) },
+      };
+      const prismaMockExtended = prismaMock as unknown as {
+        $transaction: jest.Mock;
+      };
+      prismaMockExtended.$transaction = jest
+        .fn()
+        .mockImplementation(
+          (
+            callback: (transaction: typeof transactionMock) => Promise<unknown>,
+          ) => callback(transactionMock),
+        );
+
+      const result = await service.createOAuthUserAndLink(
+        USER_EMAIL,
+        'google',
+        'google-uid-123',
+      );
+
+      expect(transactionMock.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: USER_EMAIL,
+            passwordHash: null,
+          }),
+        }),
+      );
+      expect(transactionMock.oAuthAccount.create).toHaveBeenCalledWith({
+        data: {
+          userId: USER_ID,
+          provider: 'google',
+          providerId: 'google-uid-123',
+        },
+      });
+      expect(result).not.toHaveProperty('passwordHash');
+    });
+  });
+
+  describe('enableTotpWithRecoveryCodes', () => {
+    it('runs a transaction that enables TOTP and replaces recovery codes', async () => {
+      const prismaMockExtended = prismaMock as unknown as {
+        $transaction: jest.Mock;
+        recoveryCode: { deleteMany: jest.Mock; createMany: jest.Mock };
+      };
+      prismaMockExtended.$transaction = jest
+        .fn()
+        .mockImplementation((operations: Promise<unknown>[]) =>
+          Promise.all(operations),
+        );
+      prismaMockExtended.recoveryCode = {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        createMany: jest.fn().mockResolvedValue({ count: 2 }),
+      };
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      const step = Math.floor(Date.now() / 1000 / 30);
+      await service.enableTotpWithRecoveryCodes(
+        USER_ID,
+        ['hash-a', 'hash-b'],
+        step,
+      );
+
+      expect(prismaMockExtended.$transaction).toHaveBeenCalled();
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: USER_ID },
+          data: expect.objectContaining({
+            totpEnabledAt: expect.any(Date),
+            totpLastUsedStep: step,
+          }),
+        }),
+      );
+      expect(prismaMockExtended.recoveryCode.deleteMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID },
+      });
+      expect(prismaMockExtended.recoveryCode.createMany).toHaveBeenCalledWith({
+        data: [
+          { userId: USER_ID, codeHash: 'hash-a' },
+          { userId: USER_ID, codeHash: 'hash-b' },
+        ],
+      });
+    });
+  });
+
+  describe('reissueRecoveryCodes', () => {
+    it('runs a transaction that deletes existing codes and creates new ones', async () => {
+      const prismaMockExtended = prismaMock as unknown as {
+        $transaction: jest.Mock;
+        recoveryCode: { deleteMany: jest.Mock; createMany: jest.Mock };
+      };
+      prismaMockExtended.$transaction = jest
+        .fn()
+        .mockImplementation((operations: Promise<unknown>[]) =>
+          Promise.all(operations),
+        );
+      prismaMockExtended.recoveryCode = {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        createMany: jest.fn().mockResolvedValue({ count: 2 }),
+      };
+
+      await service.reissueRecoveryCodes(USER_ID, ['hash-x', 'hash-y']);
+
+      expect(prismaMockExtended.$transaction).toHaveBeenCalled();
+      expect(prismaMockExtended.recoveryCode.deleteMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID },
+      });
+      expect(prismaMockExtended.recoveryCode.createMany).toHaveBeenCalledWith({
+        data: [
+          { userId: USER_ID, codeHash: 'hash-x' },
+          { userId: USER_ID, codeHash: 'hash-y' },
+        ],
+      });
+    });
+  });
+
+  describe('disableTwoFactor', () => {
+    it('runs a transaction that nullifies TOTP fields and deletes recovery codes', async () => {
+      const prismaMockExtended = prismaMock as unknown as {
+        $transaction: jest.Mock;
+        recoveryCode: { deleteMany: jest.Mock };
+      };
+      prismaMockExtended.$transaction = jest
+        .fn()
+        .mockImplementation((operations: Promise<unknown>[]) =>
+          Promise.all(operations),
+        );
+      prismaMockExtended.recoveryCode = {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+      };
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.disableTwoFactor(USER_ID);
+
+      expect(prismaMockExtended.$transaction).toHaveBeenCalled();
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: USER_ID },
+          data: {
+            totpSecret: null,
+            totpEnabledAt: null,
+            totpVerifiedAt: null,
+            totpLastUsedStep: null,
+          },
+        }),
+      );
+      expect(prismaMockExtended.recoveryCode.deleteMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID },
+      });
+    });
+  });
+
+  describe('createWithoutPassword', () => {
+    it('creates a user with passwordHash null and returns user without passwordHash when email is new', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
+      (prismaMock.user.create as jest.Mock).mockResolvedValue(
+        makeUser({ passwordHash: null }),
+      );
+
+      const result = await service.createWithoutPassword(USER_EMAIL);
+
+      expect(prismaMock.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: USER_EMAIL,
+            passwordHash: null,
+          }),
+        }),
+      );
+      expect(result).not.toBeNull();
+      expect(result).not.toHaveProperty('passwordHash');
+    });
+
+    it('returns null when the email is already registered', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+
+      const result = await service.createWithoutPassword(USER_EMAIL);
+
+      expect(result).toBeNull();
+      expect(prismaMock.user.create).not.toHaveBeenCalled();
     });
   });
 });

@@ -74,7 +74,19 @@ describe('OAuthCallbackPage', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(loginWithToken).toHaveBeenCalledWith('my-oauth-token');
+      expect(loginWithToken).toHaveBeenCalledWith('my-oauth-token', undefined);
+    });
+  });
+
+  it('passes the refresh token from the hash to loginWithToken', async () => {
+    const loginWithToken = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useAuth).mockReturnValue(makeAuthContext({ loginWithToken }));
+
+    window.location.hash = '#token=access-tok&refresh=refresh-tok';
+    renderPage();
+
+    await waitFor(() => {
+      expect(loginWithToken).toHaveBeenCalledWith('access-tok', 'refresh-tok');
     });
   });
 

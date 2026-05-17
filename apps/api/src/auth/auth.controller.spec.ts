@@ -1,12 +1,16 @@
 import { jest } from '@jest/globals';
 
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import type { Response } from 'express';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { EmailTwoFactorService } from './email-2fa.service';
+import type { AuthRequest } from './auth-request.type';
+import { EmailVerificationService } from './email-verification.service';
 import { MfaAuthGuard } from './mfa-auth.guard';
+import { OAuthAccountService } from './oauth-account.service';
 import { TotpService } from './totp.service';
 
 const ACCESS_TOKEN = 'token';
@@ -23,40 +27,70 @@ const VERIFICATION_TOKEN = 'verification-token-xyz';
 describe('AuthController', () => {
   let controller: AuthController;
 
+  const REFRESH_TOKEN = 'refresh-token';
+
   const authServiceMock = {
-    confirmEmailChange: jest.fn(),
+    authorizeExtension: jest.fn().mockResolvedValue({
+      code: 'auth-code-123',
+      callbackUrl: 'chrome-extension://allowed/callback',
+    }),
+    createExtensionAuthCode: jest.fn().mockResolvedValue('auth-code-123'),
     disable2fa: jest.fn(),
-    forgotPassword: jest.fn(),
-    login: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
+    exchangeExtensionCode: jest.fn().mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    }),
+    login: jest.fn().mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    }),
     me: jest.fn(),
+    refresh: jest.fn().mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    }),
     regenerateRecoveryCodes: jest.fn(),
     register: jest.fn(),
+    registerMagicLink: jest.fn(),
+    requestMagicLink: jest.fn(),
+    revokeAllRefreshTokens: jest.fn().mockResolvedValue(undefined),
+    setFirstPassword: jest.fn(),
+    verifyMagicLink: jest.fn(),
+    verifyOtp: jest.fn().mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    }),
+  } as unknown as AuthService;
+
+  const emailVerificationServiceMock = {
+    confirmEmailChange: jest.fn(),
+    forgotPassword: jest.fn(),
     requestEmailChange: jest.fn(),
     resendVerificationEmail: jest.fn(),
     resetPassword: jest.fn(),
-    sendReauthEmailCode: jest.fn(),
-    sendVerificationEmail: jest.fn(),
     verifyEmail: jest.fn(),
-    verifyOtp: jest.fn().mockResolvedValue({ accessToken: ACCESS_TOKEN }),
-  } as unknown as AuthService;
+  } as unknown as EmailVerificationService;
+
+  const oauthAccountServiceMock = {
+    linkOAuthAccountToUser: jest.fn(),
+    unlinkOAuthProvider: jest.fn(),
+  } as unknown as OAuthAccountService;
 
   const totpServiceMock = {
     generateSetup: jest.fn(),
     verifySetup: jest.fn(),
   } as unknown as TotpService;
 
-  const emailTwoFactorServiceMock = {
-    initiateSetup: jest.fn(),
-    sendCode: jest.fn(),
-    verifySetup: jest.fn(),
-  } as unknown as EmailTwoFactorService;
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
-        { provide: EmailTwoFactorService, useValue: emailTwoFactorServiceMock },
+        {
+          provide: EmailVerificationService,
+          useValue: emailVerificationServiceMock,
+        },
+        { provide: OAuthAccountService, useValue: oauthAccountServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
       ],
     })
@@ -144,39 +178,45 @@ describe('AuthController', () => {
   });
 
   describe('verifyEmail', () => {
-    it('delegates to AuthService.verifyEmail with the token', async () => {
-      (authServiceMock.verifyEmail as jest.Mock).mockResolvedValue(undefined);
+    it('delegates to EmailVerificationService.verifyEmail with the token', async () => {
+      (emailVerificationServiceMock.verifyEmail as jest.Mock).mockResolvedValue(
+        undefined,
+      );
 
       await controller.verifyEmail({ token: VERIFICATION_TOKEN });
 
-      expect(authServiceMock.verifyEmail).toHaveBeenCalledWith(
+      expect(emailVerificationServiceMock.verifyEmail).toHaveBeenCalledWith(
         VERIFICATION_TOKEN,
       );
     });
   });
 
   describe('forgotPassword', () => {
-    it('delegates to AuthService.forgotPassword with the email', async () => {
-      (authServiceMock.forgotPassword as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+    it('delegates to EmailVerificationService.forgotPassword with the email', async () => {
+      (
+        emailVerificationServiceMock.forgotPassword as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await controller.forgotPassword({ email: USER_EMAIL });
 
-      expect(authServiceMock.forgotPassword).toHaveBeenCalledWith(USER_EMAIL);
+      expect(emailVerificationServiceMock.forgotPassword).toHaveBeenCalledWith(
+        USER_EMAIL,
+      );
     });
   });
 
   describe('resetPassword', () => {
-    it('delegates to AuthService.resetPassword with token and password', async () => {
-      (authServiceMock.resetPassword as jest.Mock).mockResolvedValue(undefined);
+    it('delegates to EmailVerificationService.resetPassword with token and password', async () => {
+      (
+        emailVerificationServiceMock.resetPassword as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await controller.resetPassword({
         token: RESET_TOKEN,
         password: 'new-password-123',
       });
 
-      expect(authServiceMock.resetPassword).toHaveBeenCalledWith(
+      expect(emailVerificationServiceMock.resetPassword).toHaveBeenCalledWith(
         RESET_TOKEN,
         'new-password-123',
       );
@@ -184,51 +224,49 @@ describe('AuthController', () => {
   });
 
   describe('resendVerification', () => {
-    it('delegates to AuthService.resendVerificationEmail with the userId', async () => {
+    it('delegates to EmailVerificationService.resendVerificationEmail with the userId', async () => {
       const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
-      (authServiceMock.resendVerificationEmail as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        emailVerificationServiceMock.resendVerificationEmail as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await controller.resendVerification(request);
 
-      expect(authServiceMock.resendVerificationEmail).toHaveBeenCalledWith(
-        USER_ID,
-      );
+      expect(
+        emailVerificationServiceMock.resendVerificationEmail,
+      ).toHaveBeenCalledWith(USER_ID);
     });
   });
 
   describe('requestEmailChange', () => {
-    it('delegates to AuthService.requestEmailChange with userId, new email, and optional code', async () => {
+    it('delegates to EmailVerificationService.requestEmailChange with userId, new email, and optional code', async () => {
       const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
-      (authServiceMock.requestEmailChange as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        emailVerificationServiceMock.requestEmailChange as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await controller.requestEmailChange(request, {
         email: NEW_EMAIL,
         code: '123456',
       });
 
-      expect(authServiceMock.requestEmailChange).toHaveBeenCalledWith(
-        USER_ID,
-        NEW_EMAIL,
-        '123456',
-      );
+      expect(
+        emailVerificationServiceMock.requestEmailChange,
+      ).toHaveBeenCalledWith(USER_ID, NEW_EMAIL, '123456');
     });
   });
 
   describe('verifyEmailChange', () => {
-    it('delegates to AuthService.confirmEmailChange with the token', async () => {
-      (authServiceMock.confirmEmailChange as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+    it('delegates to EmailVerificationService.confirmEmailChange with the token', async () => {
+      (
+        emailVerificationServiceMock.confirmEmailChange as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await controller.verifyEmailChange({ token: PENDING_EMAIL_TOKEN });
 
-      expect(authServiceMock.confirmEmailChange).toHaveBeenCalledWith(
-        PENDING_EMAIL_TOKEN,
-      );
+      expect(
+        emailVerificationServiceMock.confirmEmailChange,
+      ).toHaveBeenCalledWith(PENDING_EMAIL_TOKEN);
     });
   });
 
@@ -248,7 +286,10 @@ describe('AuthController', () => {
         '123456',
         'totp',
       );
-      expect(result).toEqual({ accessToken: ACCESS_TOKEN });
+      expect(result).toEqual({
+        accessToken: ACCESS_TOKEN,
+        refreshToken: REFRESH_TOKEN,
+      });
     });
   });
 
@@ -293,64 +334,47 @@ describe('AuthController', () => {
     });
   });
 
-  describe('emailTwoFactorSetup', () => {
-    it('delegates to EmailTwoFactorService.initiateSetup with userId', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      (emailTwoFactorServiceMock.initiateSetup as jest.Mock).mockResolvedValue(
+  describe('requestMagicLink', () => {
+    it('delegates to AuthService.requestMagicLink with the provided email', async () => {
+      (authServiceMock.requestMagicLink as jest.Mock).mockResolvedValue(
         undefined,
       );
 
-      await controller.emailTwoFactorSetup(request);
+      await controller.requestMagicLink({ email: USER_EMAIL });
 
-      expect(emailTwoFactorServiceMock.initiateSetup).toHaveBeenCalledWith(
-        USER_ID,
+      expect(authServiceMock.requestMagicLink).toHaveBeenCalledWith(USER_EMAIL);
+    });
+  });
+
+  describe('registerMagicLink', () => {
+    it('delegates to AuthService.registerMagicLink with the email from the request body', async () => {
+      (authServiceMock.registerMagicLink as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await controller.registerMagicLink({ email: USER_EMAIL });
+
+      expect(authServiceMock.registerMagicLink).toHaveBeenCalledWith(
+        USER_EMAIL,
       );
     });
   });
 
-  describe('emailTwoFactorVerify', () => {
-    it('delegates to EmailTwoFactorService.verifySetup and wraps recovery codes', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      const recoveryCodes = ['aaaaa-bbbbb'];
-      (emailTwoFactorServiceMock.verifySetup as jest.Mock).mockResolvedValue(
-        recoveryCodes,
-      );
-
-      const result = await controller.emailTwoFactorVerify(request, {
-        code: '123456',
+  describe('verifyMagicLink', () => {
+    it('delegates to AuthService.verifyMagicLink and returns the access token', async () => {
+      const ACCESS_TOKEN_VALUE = 'magic-access-token';
+      (authServiceMock.verifyMagicLink as jest.Mock).mockResolvedValue({
+        accessToken: ACCESS_TOKEN_VALUE,
       });
 
-      expect(emailTwoFactorServiceMock.verifySetup).toHaveBeenCalledWith(
-        USER_ID,
-        '123456',
+      const result = await controller.verifyMagicLink({
+        token: 'valid-token',
+      });
+
+      expect(authServiceMock.verifyMagicLink).toHaveBeenCalledWith(
+        'valid-token',
       );
-      expect(result).toEqual({ recoveryCodes });
-    });
-  });
-
-  describe('emailTwoFactorResend', () => {
-    it('delegates to AuthService.sendReauthEmailCode with userId', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      (authServiceMock.sendReauthEmailCode as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await controller.emailTwoFactorResend(request);
-
-      expect(authServiceMock.sendReauthEmailCode).toHaveBeenCalledWith(USER_ID);
-    });
-  });
-
-  describe('emailTwoFactorReauthSend', () => {
-    it('delegates to AuthService.sendReauthEmailCode with userId', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      (authServiceMock.sendReauthEmailCode as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await controller.emailTwoFactorReauthSend(request);
-
-      expect(authServiceMock.sendReauthEmailCode).toHaveBeenCalledWith(USER_ID);
+      expect(result).toEqual({ accessToken: ACCESS_TOKEN_VALUE });
     });
   });
 
@@ -391,17 +415,20 @@ describe('AuthController', () => {
   });
 
   describe('googleCallback', () => {
-    it('redirects to oauth callback with the access token on success', async () => {
+    it('redirects to oauth callback with the access token and refresh token on success', async () => {
       const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
       const response = { redirect: jest.fn() } as never;
       (authServiceMock.login as jest.Mock).mockResolvedValue({
         accessToken: ACCESS_TOKEN,
+        refreshToken: REFRESH_TOKEN,
       });
 
       await controller.googleCallback(request, response);
 
       expect(response.redirect).toHaveBeenCalledWith(
-        expect.stringContaining(`#token=${ACCESS_TOKEN}`),
+        expect.stringContaining(
+          `#token=${ACCESS_TOKEN}&refresh=${REFRESH_TOKEN}`,
+        ),
       );
     });
 
@@ -422,17 +449,20 @@ describe('AuthController', () => {
   });
 
   describe('appleCallback', () => {
-    it('redirects to oauth callback with the access token on success', async () => {
+    it('redirects to oauth callback with the access token and refresh token on success', async () => {
       const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
       const response = { redirect: jest.fn() } as never;
       (authServiceMock.login as jest.Mock).mockResolvedValue({
         accessToken: ACCESS_TOKEN,
+        refreshToken: REFRESH_TOKEN,
       });
 
       await controller.appleCallback(request, response);
 
       expect(response.redirect).toHaveBeenCalledWith(
-        expect.stringContaining(`#token=${ACCESS_TOKEN}`),
+        expect.stringContaining(
+          `#token=${ACCESS_TOKEN}&refresh=${REFRESH_TOKEN}`,
+        ),
       );
     });
 
@@ -449,6 +479,210 @@ describe('AuthController', () => {
       expect(response.redirect).toHaveBeenCalledWith(
         expect.stringContaining('error=mfa_required'),
       );
+    });
+  });
+
+  describe('setPassword', () => {
+    it('delegates to authService.setFirstPassword with userId and password', async () => {
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      (authServiceMock.setFirstPassword as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await controller.setPassword(request, {
+        password: USER_PASSWORD,
+      });
+
+      expect(authServiceMock.setFirstPassword).toHaveBeenCalledWith(
+        USER_ID,
+        USER_PASSWORD,
+      );
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe('unlinkProvider', () => {
+    it('delegates to oauthAccountService.unlinkOAuthProvider with userId and provider', async () => {
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      (
+        oauthAccountServiceMock.unlinkOAuthProvider as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      const result = await controller.unlinkProvider(request, 'google');
+
+      expect(oauthAccountServiceMock.unlinkOAuthProvider).toHaveBeenCalledWith(
+        USER_ID,
+        'google',
+      );
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe('googleLink', () => {
+    it('redirects to the Google OAuth authorization URL', () => {
+      process.env.GOOGLE_CLIENT_ID = 'test-client-id';
+      process.env.GOOGLE_LINK_CALLBACK_URL =
+        'https://api.example.com/auth/google/link/callback';
+      process.env.JWT_SECRET = 'test-secret';
+
+      const request = {
+        user: { userId: USER_ID },
+      } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+
+      controller.googleLink(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('https://accounts.google.com/o/oauth2/v2/auth'),
+      );
+    });
+  });
+
+  describe('googleLinkCallback', () => {
+    it('redirects to settings with linked=google on success', async () => {
+      process.env.APP_URL = 'https://app.example.com';
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+      (
+        oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await controller.googleLinkCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        'https://app.example.com/settings?linked=google',
+      );
+    });
+
+    it('redirects with link_error=already_linked when ConflictException is thrown', async () => {
+      process.env.APP_URL = 'https://app.example.com';
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+      (
+        oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
+      ).mockRejectedValue(new ConflictException('Already linked'));
+
+      await controller.googleLinkCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        'https://app.example.com/settings?link_error=already_linked',
+      );
+    });
+
+    it('redirects with link_error=email_mismatch when BadRequestException is thrown', async () => {
+      process.env.APP_URL = 'https://app.example.com';
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+      (
+        oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
+      ).mockRejectedValue(new BadRequestException('Email mismatch'));
+
+      await controller.googleLinkCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        'https://app.example.com/settings?link_error=email_mismatch',
+      );
+    });
+
+    it('re-throws unexpected errors from linkOAuthAccountToUser', async () => {
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+      (
+        oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
+      ).mockRejectedValue(new Error('Database connection lost'));
+
+      await expect(
+        controller.googleLinkCallback(request, response),
+      ).rejects.toThrow('Database connection lost');
+    });
+  });
+
+  describe('refreshToken', () => {
+    it('delegates to authService.refresh and returns the token pair', async () => {
+      const result = await controller.refreshToken({
+        refreshToken: REFRESH_TOKEN,
+      });
+
+      expect(authServiceMock.refresh).toHaveBeenCalledWith(REFRESH_TOKEN);
+      expect(result).toEqual({
+        accessToken: ACCESS_TOKEN,
+        refreshToken: REFRESH_TOKEN,
+      });
+    });
+  });
+
+  describe('revokeAllSessions', () => {
+    it('delegates to authService.revokeAllRefreshTokens and returns success', async () => {
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+
+      const result = await controller.revokeAllSessions(request);
+
+      expect(authServiceMock.revokeAllRefreshTokens).toHaveBeenCalledWith(
+        USER_ID,
+      );
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe('extensionAuthorize', () => {
+    it('delegates to authService.authorizeExtension with userId, codeChallenge, and redirectUri', async () => {
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+      (authServiceMock.authorizeExtension as jest.Mock).mockResolvedValue({
+        code: 'auth-code-123',
+        callbackUrl: 'chrome-extension://allowed/callback',
+      });
+
+      await controller.extensionAuthorize(
+        request,
+        response,
+        'challenge123',
+        'chrome-extension://allowed/callback',
+      );
+
+      expect(authServiceMock.authorizeExtension).toHaveBeenCalledWith(
+        USER_ID,
+        'challenge123',
+        'chrome-extension://allowed/callback',
+      );
+      expect(response.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('code=auth-code-123'),
+      );
+    });
+
+    it('propagates exceptions thrown by authService.authorizeExtension', async () => {
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+      (authServiceMock.authorizeExtension as jest.Mock).mockRejectedValue(
+        new BadRequestException('Invalid redirect_uri'),
+      );
+
+      await expect(
+        controller.extensionAuthorize(
+          request,
+          response,
+          'challenge123',
+          'chrome-extension://not-allowed/callback',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('extensionToken', () => {
+    it('delegates to authService.exchangeExtensionCode and returns token pair', async () => {
+      const result = await controller.extensionToken({
+        code: 'auth-code-123',
+        codeVerifier: 'verifier-xyz',
+      });
+
+      expect(authServiceMock.exchangeExtensionCode).toHaveBeenCalledWith(
+        'auth-code-123',
+        'verifier-xyz',
+      );
+      expect(result).toEqual({
+        accessToken: ACCESS_TOKEN,
+        refreshToken: REFRESH_TOKEN,
+      });
     });
   });
 });

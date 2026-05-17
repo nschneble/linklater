@@ -46,6 +46,11 @@ jobs:
         working-directory: apps/api
         run: npx prisma generate
 
+      - name: Lint migrations
+        run: |
+          npm install -g squawk-cli@2.52.1
+          find apps/api/prisma/migrations -name '*.sql' | xargs squawk
+
       - name: Run migrations
         working-directory: apps/api
         run: npx prisma migrate deploy
@@ -53,11 +58,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test API
-        run: npm run test --workspace @linklater/api
-
-      - name: Test Web
-        run: npm run test --workspace @linklater/web
+      - name: Test
+        run: npm run test
 
       - name: Build
         run: npm run build

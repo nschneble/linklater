@@ -23,6 +23,7 @@ export default function LinkButton({
   className = '',
   disabled,
   onClick,
+  ...props
 }: LinkButtonProps) {
   return (
     <button
@@ -30,6 +31,7 @@ export default function LinkButton({
       className={`text-[var(--text-muted)] hover:text-[var(--accent)] text-xs underline underline-offset-3 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
       disabled={disabled}
       onClick={onClick}
+      {...props}
     >
       {children}
     </button>

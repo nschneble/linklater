@@ -169,11 +169,10 @@ describe('LinksToolbar', () => {
 
     it('shows the mobile shuffle button when filter is unread', () => {
       renderToolbar({ filter: 'unread' });
-      // Mobile shuffle uses aria-label="Stumble upon a random link"
+      // Both the desktop and mobile Stumble! buttons share the same accessible
+      // name, so getAllByRole is used to avoid a "multiple elements" error.
       expect(
-        screen.getByRole('button', {
-          name: 'Stumble upon a random link',
-        }),
+        screen.getAllByRole('button', { name: 'Stumble!' })[0],
       ).toBeInTheDocument();
     });
 

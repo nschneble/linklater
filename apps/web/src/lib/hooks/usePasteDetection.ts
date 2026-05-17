@@ -35,8 +35,8 @@ export function usePasteDetection({
   // latest version without needing onSave in the dependency array. Including
   // onSave would re-run the effect — and remove/re-add the listener — every
   // time the links array changes, because onSave's identity is not stable.
-  const onSaveRef = useRef(onSave);
-  onSaveRef.current = onSave;
+  const onSaveReference = useRef(onSave);
+  onSaveReference.current = onSave;
 
   useEffect(() => {
     if (!enabled) return;
@@ -49,7 +49,7 @@ export function usePasteDetection({
 
       const text = (event.clipboardData?.getData('text') ?? '').trim();
       if (looksLikeUrl(text)) {
-        onSaveRef.current(text);
+        onSaveReference.current(text);
       }
     }
 

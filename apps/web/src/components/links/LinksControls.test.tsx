@@ -17,10 +17,10 @@ const defaultUnreadProps = {
 
 describe('LinksControls', () => {
   describe('unread filter', () => {
-    it('shows Stumble upon and Add link buttons', () => {
+    it('shows Stumble!and Add link buttons', () => {
       render(<LinksControls {...defaultUnreadProps} />);
       expect(
-        screen.getByRole('button', { name: /stumble upon/i }),
+        screen.getByRole('button', { name: /stumble!/i }),
       ).toBeInTheDocument();
       expect(
         screen.getByRole('button', { name: /add link/i }),
@@ -36,18 +36,16 @@ describe('LinksControls', () => {
       expect(onToggleForm).toHaveBeenCalledOnce();
     });
 
-    it('calls onRandom when Stumble upon is clicked', () => {
+    it('calls onRandom when Stumble! is clicked', () => {
       const onRandom = vi.fn();
       render(<LinksControls {...defaultUnreadProps} onRandom={onRandom} />);
-      fireEvent.click(screen.getByRole('button', { name: /stumble upon/i }));
+      fireEvent.click(screen.getByRole('button', { name: /stumble!/i }));
       expect(onRandom).toHaveBeenCalledOnce();
     });
 
-    it('disables Stumble upon button while randomLoading', () => {
+    it('disables Stumble! button while randomLoading', () => {
       render(<LinksControls {...defaultUnreadProps} randomLoading={true} />);
-      expect(
-        screen.getByRole('button', { name: /stumble upon/i }),
-      ).toBeDisabled();
+      expect(screen.getByRole('button', { name: /stumble!/i })).toBeDisabled();
     });
   });
 
@@ -118,22 +116,13 @@ describe('LinksControls', () => {
     });
   });
 
-  describe('Stumble upon button', () => {
-    it('shows Stumbling… label while randomLoading is true', () => {
-      render(<LinksControls {...defaultUnreadProps} randomLoading={true} />);
-      expect(
-        screen.getByRole('button', { name: /stumble upon/i }),
-      ).toBeInTheDocument();
-    });
-
+  describe('Stumble! button', () => {
     it('is hidden on the read filter', () => {
       render(
         <LinksControls {...defaultUnreadProps} filter="read" linksCount={3} />,
       );
       // Hidden buttons are removed from the accessibility tree via aria-hidden
-      expect(
-        screen.queryByRole('button', { name: /stumble upon/i }),
-      ).toBeNull();
+      expect(screen.queryByRole('button', { name: /stumble!/i })).toBeNull();
     });
   });
 });

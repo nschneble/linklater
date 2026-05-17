@@ -19,7 +19,7 @@ export class VerifyOtpDto {
   })
   code: string;
 
-  @ApiProperty({ enum: ['totp', 'email', 'recovery'] })
-  @IsIn(['totp', 'email', 'recovery'])
-  method: 'totp' | 'email' | 'recovery';
+  @ApiProperty({ enum: ['totp', 'recovery'] })
+  @IsIn(['totp', 'recovery'])
+  method: 'totp' | 'recovery';
 }

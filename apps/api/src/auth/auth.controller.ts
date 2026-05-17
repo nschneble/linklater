@@ -1,10 +1,14 @@
 import {
+  BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
   HttpCode,
+  Param,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -19,9 +23,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
-import { EmailTwoFactorService } from './email-2fa.service.js';
-import { EmailTwoFactorVerifyDto } from './dto/email-2fa-verify.dto.js';
+import { EmailVerificationService } from './email-verification.service.js';
+import { OAuthAccountService } from './oauth-account.service.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
+import { SetPasswordDto } from './dto/set-password.dto.js';
+import { generateLinkState } from './oauth-link-state.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { LocalAuthGuard } from './local-auth.guard.js';
 import { MfaAuthGuard } from './mfa-auth.guard.js';
@@ -34,6 +40,8 @@ import { Disable2faDto } from './dto/disable-2fa.dto.js';
 import { RegenerateRecoveryCodesDto } from './dto/regenerate-recovery-codes.dto.js';
 import { TotpVerifySetupDto } from './dto/totp-verify-setup.dto.js';
 import { VerifyOtpDto } from './dto/verify-otp.dto.js';
+import { RefreshTokenDto } from './dto/refresh-token.dto.js';
+import { ExtensionTokenDto } from './dto/extension-token.dto.js';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**
@@ -47,7 +55,8 @@ import type { AuthRequest } from './auth-request.type.js';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly emailTwoFactorService: EmailTwoFactorService,
+    private readonly emailVerificationService: EmailVerificationService,
+    private readonly oauthAccountService: OAuthAccountService,
     private readonly totpService: TotpService,
   ) {}
 
@@ -120,7 +129,7 @@ export class AuthController {
   @Post('verify-email')
   @HttpCode(200)
   async verifyEmail(@Body() body: VerifyEmailDto) {
-    await this.authService.verifyEmail(body.token);
+    await this.emailVerificationService.verifyEmail(body.token);
   }
 
   /**
@@ -142,7 +151,7 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(200)
   async forgotPassword(@Body() body: ForgotPasswordDto) {
-    await this.authService.forgotPassword(body.email);
+    await this.emailVerificationService.forgotPassword(body.email);
   }
 
   /**
@@ -158,7 +167,10 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(200)
   async resetPassword(@Body() body: ResetPasswordDto) {
-    await this.authService.resetPassword(body.token, body.password);
+    await this.emailVerificationService.resetPassword(
+      body.token,
+      body.password,
+    );
   }
 
   /**
@@ -176,7 +188,9 @@ export class AuthController {
   @Post('resend-verification')
   @HttpCode(200)
   async resendVerification(@Req() request: AuthRequest) {
-    await this.authService.resendVerificationEmail(request.user.userId);
+    await this.emailVerificationService.resendVerificationEmail(
+      request.user.userId,
+    );
   }
 
   /**
@@ -205,7 +219,7 @@ export class AuthController {
     @Req() request: AuthRequest,
     @Body() body: RequestEmailChangeDto,
   ) {
-    await this.authService.requestEmailChange(
+    await this.emailVerificationService.requestEmailChange(
       request.user.userId,
       body.email,
       body.code,
@@ -228,7 +242,7 @@ export class AuthController {
   @Post('verify-email-change')
   @HttpCode(200)
   async verifyEmailChange(@Body() body: VerifyEmailDto) {
-    await this.authService.confirmEmailChange(body.token);
+    await this.emailVerificationService.confirmEmailChange(body.token);
   }
 
   /**
@@ -308,75 +322,52 @@ export class AuthController {
   }
 
   @ApiOperation({
-    summary: 'Initiate Email 2FA setup — sends a code to the verified email',
+    summary: 'Request a magic link login email',
   })
-  @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'Verification code sent.' })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
-  @ApiResponse({
-    status: 403,
-    description: 'Email not verified or social login account.',
-  })
-  @ApiResponse({ status: 409, description: 'Email 2FA already enabled.' })
-  @ApiResponse({ status: 429, description: 'Too many setup attempts.' })
-  @UseGuards(JwtAuthGuard, ThrottlerGuard)
-  @Throttle({ 'auth-2fa-email-setup': { ttl: 60000, limit: 3 } })
-  @Post('2fa/email/setup')
-  @HttpCode(200)
-  async emailTwoFactorSetup(@Req() request: AuthRequest): Promise<void> {
-    await this.emailTwoFactorService.initiateSetup(request.user.userId);
-  }
-
-  @ApiOperation({ summary: 'Verify Email 2FA setup code and enable Email 2FA' })
-  @ApiBearerAuth()
   @ApiResponse({
     status: 200,
-    description: 'Email 2FA enabled. Returns one-time recovery codes.',
+    description: 'Magic link sent (or silently skipped if address not found).',
   })
-  @ApiResponse({ status: 400, description: 'Invalid or expired code.' })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
-  @ApiResponse({ status: 429, description: 'Too many verify attempts.' })
-  @UseGuards(JwtAuthGuard, ThrottlerGuard)
-  @Throttle({ 'auth-2fa-email-verify': { ttl: 60000, limit: 5 } })
-  @Post('2fa/email/verify')
+  @ApiResponse({ status: 429, description: 'Too many magic link requests.' })
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-request-magic-link': { ttl: 60000, limit: 3 } })
+  @Post('request-magic-link')
   @HttpCode(200)
-  async emailTwoFactorVerify(
-    @Req() request: AuthRequest,
-    @Body() body: EmailTwoFactorVerifyDto,
-  ): Promise<{ recoveryCodes: string[] }> {
-    const recoveryCodes = await this.emailTwoFactorService.verifySetup(
-      request.user.userId,
-      body.code,
-    );
-    return { recoveryCodes };
-  }
-
-  @ApiOperation({ summary: 'Resend Email 2FA code during MFA challenge' })
-  @ApiResponse({ status: 200, description: 'New code sent.' })
-  @ApiResponse({ status: 401, description: 'Invalid or expired MFA token.' })
-  @ApiResponse({ status: 429, description: 'Too many resend attempts.' })
-  @UseGuards(ThrottlerGuard, MfaAuthGuard)
-  @Throttle({ 'auth-email-resend': { ttl: 60000, limit: 3 } })
-  @Post('2fa/email/resend')
-  @HttpCode(200)
-  async emailTwoFactorResend(@Req() request: AuthRequest): Promise<void> {
-    await this.authService.sendReauthEmailCode(request.user.userId);
+  async requestMagicLink(@Body() body: ForgotPasswordDto): Promise<void> {
+    await this.authService.requestMagicLink(body.email);
   }
 
   @ApiOperation({
-    summary: 'Send Email 2FA code for settings re-authentication',
+    summary: 'Register with a magic link (passwordless sign-up)',
   })
-  @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'Code sent.' })
-  @ApiResponse({ status: 400, description: 'Email 2FA not enabled.' })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
-  @ApiResponse({ status: 429, description: 'Too many requests.' })
-  @UseGuards(JwtAuthGuard, ThrottlerGuard)
-  @Throttle({ 'auth-2fa-email-reauth-send': { ttl: 60000, limit: 3 } })
-  @Post('2fa/email/reauth-send')
+  @ApiResponse({
+    status: 200,
+    description: 'Magic link sent (account created if new).',
+  })
+  @ApiResponse({ status: 429, description: 'Too many registration attempts.' })
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-register': { ttl: 60000, limit: 5 } })
+  @Post('register-magic-link')
   @HttpCode(200)
-  async emailTwoFactorReauthSend(@Req() request: AuthRequest): Promise<void> {
-    await this.authService.sendReauthEmailCode(request.user.userId);
+  async registerMagicLink(@Body() body: ForgotPasswordDto): Promise<void> {
+    await this.authService.registerMagicLink(body.email);
+  }
+
+  @ApiOperation({
+    summary: 'Verify a magic link token and issue a session JWT',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a signed JWT accessToken.',
+  })
+  @ApiResponse({ status: 400, description: 'Token is invalid or expired.' })
+  @ApiResponse({ status: 429, description: 'Too many verification attempts.' })
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-verify-magic-link': { ttl: 60000, limit: 10 } })
+  @Post('verify-magic-link')
+  @HttpCode(200)
+  async verifyMagicLink(@Body() body: VerifyEmailDto) {
+    return this.authService.verifyMagicLink(body.token);
   }
 
   @ApiOperation({
@@ -443,14 +434,7 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   @Get('google/callback')
   async googleCallback(@Req() request: AuthRequest, @Res() response: Response) {
-    const result = await this.authService.login(request.user);
-    if (!('accessToken' in result)) {
-      response.redirect(`${process.env.APP_URL}/login?error=mfa_required`);
-      return;
-    }
-    response.redirect(
-      `${process.env.APP_URL}/oauth/callback#token=${result.accessToken}`,
-    );
+    await this.completeOAuthLogin(request, response);
   }
 
   @ApiOperation({ summary: 'Initiate Apple Sign In' })
@@ -464,13 +448,199 @@ export class AuthController {
   @UseGuards(AuthGuard('apple'))
   @Post('apple/callback')
   async appleCallback(@Req() request: AuthRequest, @Res() response: Response) {
+    await this.completeOAuthLogin(request, response);
+  }
+
+  /**
+   * Shared OAuth post-login handler. Issues a session for the authenticated
+   * user and redirects the browser to the SPA's `/oauth/callback` route with
+   * the tokens in the URL fragment (fragments are never sent to servers or
+   * logged in Referer headers). When 2FA is enabled, redirects to `/login`
+   * with an error code instead, since OAuth callbacks can't show an OTP form.
+   */
+  private async completeOAuthLogin(
+    request: AuthRequest,
+    response: Response,
+  ): Promise<void> {
     const result = await this.authService.login(request.user);
     if (!('accessToken' in result)) {
       response.redirect(`${process.env.APP_URL}/login?error=mfa_required`);
       return;
     }
     response.redirect(
-      `${process.env.APP_URL}/oauth/callback#token=${result.accessToken}`,
+      `${process.env.APP_URL}/oauth/callback#token=${result.accessToken}&refresh=${result.refreshToken}`,
     );
+  }
+
+  @ApiOperation({ summary: 'Initiate Google OAuth account linking' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 302, description: 'Redirects to Google OAuth.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Get('google/link')
+  async googleLink(@Req() request: AuthRequest, @Res() response: Response) {
+    const linkState = generateLinkState(
+      request.user.userId,
+      process.env.JWT_SECRET!,
+    );
+    const parameters = new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID!,
+      redirect_uri: process.env.GOOGLE_LINK_CALLBACK_URL!,
+      response_type: 'code',
+      scope: 'email profile',
+      state: linkState,
+    });
+    response.redirect(
+      `https://accounts.google.com/o/oauth2/v2/auth?${parameters.toString()}`,
+    );
+  }
+
+  @ApiOperation({ summary: 'Google OAuth account linking callback' })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to settings on success or failure.',
+  })
+  @UseGuards(AuthGuard('google-link'))
+  @Get('google/link/callback')
+  async googleLinkCallback(
+    @Req()
+    request: {
+      user: { userId: string; providerId: string; providerEmail: string };
+    },
+    @Res() response: Response,
+  ) {
+    try {
+      await this.oauthAccountService.linkOAuthAccountToUser(
+        request.user.userId,
+        'google',
+        request.user.providerId,
+        request.user.providerEmail,
+      );
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        response.redirect(
+          `${process.env.APP_URL}/settings?link_error=already_linked`,
+        );
+        return;
+      }
+      if (error instanceof BadRequestException) {
+        response.redirect(
+          `${process.env.APP_URL}/settings?link_error=email_mismatch`,
+        );
+        return;
+      }
+      throw error;
+    }
+    response.redirect(`${process.env.APP_URL}/settings?linked=google`);
+  }
+
+  @ApiOperation({ summary: 'Disconnect an OAuth provider' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Provider disconnected.' })
+  @ApiResponse({
+    status: 400,
+    description: 'No password set — cannot disconnect.',
+  })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Delete('providers/:provider')
+  @HttpCode(200)
+  async unlinkProvider(
+    @Req() request: AuthRequest,
+    @Param('provider') provider: string,
+  ) {
+    await this.oauthAccountService.unlinkOAuthProvider(
+      request.user.userId,
+      provider,
+    );
+    return { success: true };
+  }
+
+  @ApiOperation({ summary: 'Set a password for an SSO-only account' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Password set.' })
+  @ApiResponse({ status: 400, description: 'Account already has a password.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Post('set-password')
+  @HttpCode(200)
+  async setPassword(@Req() request: AuthRequest, @Body() body: SetPasswordDto) {
+    await this.authService.setFirstPassword(request.user.userId, body.password);
+    return { success: true };
+  }
+
+  @ApiOperation({ summary: 'Exchange a refresh token for a new token pair' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a new accessToken and rotated refreshToken.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Refresh token is invalid or expired.',
+  })
+  @ApiResponse({ status: 429, description: 'Too many refresh attempts.' })
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ 'auth-refresh': { ttl: 60000, limit: 10 } })
+  @Post('refresh')
+  @HttpCode(200)
+  async refreshToken(@Body() body: RefreshTokenDto) {
+    return this.authService.refresh(body.refreshToken);
+  }
+
+  @ApiOperation({ summary: 'Revoke all refresh tokens (log out everywhere)' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'All sessions revoked.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Delete('sessions')
+  @HttpCode(200)
+  async revokeAllSessions(@Req() request: AuthRequest) {
+    await this.authService.revokeAllRefreshTokens(request.user.userId);
+    return { success: true };
+  }
+
+  @ApiOperation({ summary: 'Authorize a browser extension (PKCE flow)' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to redirect_uri with auth code.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid redirect_uri or missing parameters.',
+  })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Get('extension/authorize')
+  async extensionAuthorize(
+    @Req() request: AuthRequest,
+    @Res() response: Response,
+    @Query('code_challenge') codeChallenge: string,
+    @Query('redirect_uri') redirectUri: string,
+  ) {
+    const { code, callbackUrl } = await this.authService.authorizeExtension(
+      request.user.userId,
+      codeChallenge,
+      redirectUri,
+    );
+
+    const destination = new URL(callbackUrl);
+    destination.searchParams.set('code', code);
+    response.redirect(destination.toString());
+  }
+
+  @ApiOperation({ summary: 'Exchange extension auth code for token pair' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns accessToken and refreshToken.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid code or PKCE verifier.',
+  })
+  @Post('extension/token')
+  @HttpCode(200)
+  async extensionToken(@Body() body: ExtensionTokenDto) {
+    return this.authService.exchangeExtensionCode(body.code, body.codeVerifier);
   }
 }

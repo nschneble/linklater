@@ -16,7 +16,8 @@ Runs the project quality gate in order:
   npm install
   npm run format
   npm run lint
-  npm run test
+  npm run lint:migrations
+  npm run test:cov
   npm run build
 
 Options:
@@ -62,9 +63,9 @@ TICK=✓  CROSS=✗  CIRC=○
 
 # ── Layout constants ────────────────────────────────────────────────────────────
 if [[ "$RUN_UPDATE" == true ]]; then
-  STEPS=(Update Install Generate Format Lint Test Build)
+  STEPS=(Update Install Generate Format Lint Lint\ Migrations Test Build)
 else
-  STEPS=(Install Generate Format Lint Test Build)
+  STEPS=(Install Generate Format Lint Lint\ Migrations Test Build)
 fi
 NS=${#STEPS[@]}
 
@@ -231,14 +232,21 @@ if [[ -z "$FAILED_STEP" ]]; then
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 4 )) npm run test; then
+  if ! run_step $(( STEP_OFFSET + 4 )) npm run lint:migrations; then
+    FAILED_STEP="Lint Migrations"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step $(( STEP_OFFSET + 5 )) npm run test:cov; then
     FAILED_STEP="Test"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 5 )) npm run build; then
+  if ! run_step $(( STEP_OFFSET + 6 )) npm run build; then
     FAILED_STEP="Build"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi

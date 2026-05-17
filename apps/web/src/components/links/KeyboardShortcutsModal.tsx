@@ -9,14 +9,14 @@ interface KeyboardShortcutsModalProps {
 
 /** The shortcuts displayed in the modal. Must stay in sync with `useKeyboardShortcuts`. */
 const shortcuts = [
-  { key: '↑ / ↓', description: 'Navigate links / user menu' },
+  { key: '↑ / ↓', description: 'Navigate links / menu' },
   { key: '← / →', description: 'Switch tabs' },
   { key: 'Enter', description: 'Open link / menu item' },
   { key: '1', description: 'Show unread links' },
   { key: '2', description: 'Show read links' },
   { key: 'Q', description: 'Search' },
   { key: 'A', description: 'Add link' },
-  { key: 'D', description: 'Stumble upon' },
+  { key: 'D', description: 'Stumble!' },
   { key: 'Z', description: 'Show shortcuts' },
   { key: 'X', description: 'Show user menu' },
 ];
@@ -40,13 +40,13 @@ const HEADING_ID = 'keyboard-shortcuts-heading';
 export default function KeyboardShortcutsModal({
   onClose,
 }: KeyboardShortcutsModalProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogReference = useRef<HTMLDivElement>(null);
   const previouslyFocusedElement = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     previouslyFocusedElement.current = document.activeElement as HTMLElement;
 
-    const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
+    const firstFocusable = dialogReference.current?.querySelector<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
     firstFocusable?.focus();
@@ -64,7 +64,7 @@ export default function KeyboardShortcutsModal({
       }
 
       if (event.key === 'Tab') {
-        const dialog = dialogRef.current;
+        const dialog = dialogReference.current;
         if (!dialog) return;
 
         const focusableElements = Array.from(
@@ -105,7 +105,7 @@ export default function KeyboardShortcutsModal({
         onClick={onClose}
       />
       <div
-        ref={dialogRef}
+        ref={dialogReference}
         className="fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs p-6 bg-[var(--bg-surface)] border-shadow rounded-xl select-none animate-fade-in-up"
         role="dialog"
         aria-modal="true"

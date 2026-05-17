@@ -55,31 +55,36 @@ export default function UserMenu({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [themeSubmenuOnLeft, setThemeSubmenuOnLeft] = useState(true);
 
-  const avatarRef = useRef<HTMLButtonElement | null>(null);
-  const flyoutRef = useRef<HTMLDivElement | null>(null);
+  const avatarReference = useRef<HTMLButtonElement | null>(null);
+  const flyoutReference = useRef<HTMLDivElement | null>(null);
   const hideSubmenuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
+  const menuReference = useRef<HTMLDivElement | null>(null);
   const openedByKeyboard = useRef(false);
   const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
   const submenuOpenedByKeyboard = useRef(false);
-  const themeRowRef = useRef<HTMLDivElement | null>(null);
+  const themeRowReference = useRef<HTMLDivElement | null>(null);
 
-  useMenuNavigation(menuRef, () => {
+  useMenuNavigation(menuReference, () => {
     setShowUserMenu(false);
-    avatarRef.current?.focus();
+    avatarReference.current?.focus();
   });
 
   const closeFlyout = () => {
     setShowThemeSubmenu(false);
     resetPreview(baseTheme);
-    menuRef.current
+    menuReference.current
       ?.querySelector<HTMLElement>('[aria-haspopup="menu"]')
       ?.focus();
   };
 
-  useMenuNavigation(flyoutRef, closeFlyout, '[data-submenu-item]', closeFlyout);
+  useMenuNavigation(
+    flyoutReference,
+    closeFlyout,
+    '[data-submenu-item]',
+    closeFlyout,
+  );
 
   // resets submenu when main menu closes; moves focus into menu on open
   useEffect(() => {
@@ -91,12 +96,12 @@ export default function UserMenu({
       // Keyboard open: focus first item so arrow-key navigation starts
       // immediately
       const firstItem =
-        menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
+        menuReference.current?.querySelector<HTMLElement>('[role="menuitem"]');
       firstItem?.focus();
     } else {
       // Mouse open: focus the container so keydown events reach
       // useMenuNavigation without visually pre-selecting any item
-      menuRef.current?.focus();
+      menuReference.current?.focus();
     }
   }, [showUserMenu]);
 
@@ -104,7 +109,7 @@ export default function UserMenu({
   useEffect(() => {
     if (!showThemeSubmenu || !submenuOpenedByKeyboard.current) return;
     submenuOpenedByKeyboard.current = false;
-    const firstItem = flyoutRef.current?.querySelector<HTMLElement>(
+    const firstItem = flyoutReference.current?.querySelector<HTMLElement>(
       '[data-submenu-item]',
     );
     firstItem?.focus();
@@ -117,10 +122,10 @@ export default function UserMenu({
     function handleOutsideClicks(event: MouseEvent) {
       const target = event.target as Node;
       if (
-        menuRef.current &&
-        !menuRef.current.contains(target) &&
-        avatarRef.current &&
-        !avatarRef.current.contains(target)
+        menuReference.current &&
+        !menuReference.current.contains(target) &&
+        avatarReference.current &&
+        !avatarReference.current.contains(target)
       ) {
         setShowUserMenu(false);
       }
@@ -137,7 +142,7 @@ export default function UserMenu({
     function handleEscapeKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setShowUserMenu(false);
-        avatarRef.current?.focus();
+        avatarReference.current?.focus();
       }
     }
 
@@ -192,8 +197,8 @@ export default function UserMenu({
 
   const handleThemeRowEnter = () => {
     cancelHide();
-    if (themeRowRef.current) {
-      const rect = themeRowRef.current.getBoundingClientRect();
+    if (themeRowReference.current) {
+      const rect = themeRowReference.current.getBoundingClientRect();
       // submenu is w-56 (224px) + an 8px safety margin
       setThemeSubmenuOnLeft(rect.right + 224 + 8 > window.innerWidth);
     }
@@ -209,7 +214,7 @@ export default function UserMenu({
     <div className="relative">
       <button
         className={`flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] border-shadow hover:border-shadow ${FOCUS_RING} rounded-4xl transition cursor-pointer`}
-        ref={avatarRef}
+        ref={avatarReference}
         type="button"
         data-usermenu-trigger
         onClick={(event) => {
@@ -232,7 +237,7 @@ export default function UserMenu({
       </button>
 
       <div
-        ref={menuRef}
+        ref={menuReference}
         role="menu"
         aria-hidden={!showUserMenu}
         tabIndex={-1}
@@ -290,7 +295,7 @@ export default function UserMenu({
 
         <MenuSection>
           <div
-            ref={themeRowRef}
+            ref={themeRowReference}
             className="relative"
             onMouseEnter={handleThemeRowEnter}
             onMouseLeave={() => scheduleHide(baseTheme)}
@@ -300,7 +305,7 @@ export default function UserMenu({
               previewTheme={previewTheme}
               showSubmenu={showThemeSubmenu}
               submenuOnLeft={themeSubmenuOnLeft}
-              flyoutRef={flyoutRef}
+              flyoutReference={flyoutReference}
               onFlyoutMouseEnter={cancelHide}
               onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
               onThemeRowItemEnter={handleThemeRowItemEnter}

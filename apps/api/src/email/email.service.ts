@@ -6,7 +6,7 @@ import {
 import { resolveEmailPalette } from './email-palette.js';
 import * as EmailChangeTemplate from './templates/email-change.template.js';
 import * as PasswordResetTemplate from './templates/password-reset.template.js';
-import * as TwoFaCodeTemplate from './templates/two-fa-code.template.js';
+import * as MagicLinkTemplate from './templates/magic-link.template.js';
 import * as VerificationTemplate from './templates/verification.template.js';
 import * as nodemailer from 'nodemailer';
 
@@ -141,22 +141,23 @@ export class EmailService {
   }
 
   /**
-   * Sends a 6-digit two-factor authentication code to the user's email
-   * address. The code expires in 10 minutes.
+   * Sends a magic link login email. The link contains a 64-character hex token
+   * that expires in 15 minutes.
    *
    * @param email - The recipient's email address.
-   * @param code - The 6-digit numeric code.
+   * @param token - The 64-character hex magic link token.
    * @param theme - The user's saved theme name; falls back to scanner-darkly.
    */
-  async sendTwoFactorCode(email: string, code: string, theme?: string) {
+  async sendMagicLink(email: string, token: string, theme?: string) {
+    const url = `${process.env.APP_URL}/verify-login?token=${token}`;
     const palette = resolveEmailPalette(theme ?? 'scanner-darkly');
 
     await this.send({
       from: this.from,
       to: email,
-      subject: 'Your Linklater login code',
-      text: TwoFaCodeTemplate.text(code),
-      html: TwoFaCodeTemplate.html(code, palette),
+      subject: 'Your Linklater login link',
+      text: MagicLinkTemplate.text(url),
+      html: MagicLinkTemplate.html(url, palette),
     });
   }
 }

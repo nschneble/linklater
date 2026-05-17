@@ -60,7 +60,7 @@ export default function IconButton({
 
   return (
     <button
-      className={`inline-flex items-center gap-1.5 text-xs rounded-full cursor-pointer ${DISABLED} active:scale-[0.96] transition duration-200 ${variantClasses[variant]} ${visibilityClasses} ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 text-xs rounded-full cursor-pointer ${DISABLED} active:scale-[0.96] transition duration-200 ${variantClasses[variant]} ${visibilityClasses} ${className}`}
       type="button"
       tabIndex={hidden ? -1 : undefined}
       aria-hidden={hidden ? true : undefined}

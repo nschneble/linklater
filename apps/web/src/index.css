@@ -1,9 +1,9 @@
 @import 'tailwindcss';
 @import './theme/styles/default.css';
 @import './theme/styles/border-shadow.css';
-@import './theme/styles/before-midnight.css';
 @import './theme/styles/before-sunrise.css';
 @import './theme/styles/before-sunset.css';
+@import './theme/styles/before-midnight.css';
 @import './theme/styles/boyhood.css';
 @import './theme/styles/dazed-and-confused.css';
 @import './theme/styles/hit-man.css';
@@ -64,6 +64,18 @@ body {
   --animate-card-enter: card-enter 400ms ease-out both;
   --animate-card-exit: card-exit 280ms ease-in forwards;
   --animate-fade-out-down: fade-out-down 150ms ease-in forwards;
+
+  /* marketing page colors */
+  --color-midnight: #1a1530; /* Very dark (mostly black) blue */
+  --color-boyhood: #2e2855; /* Very dark desaturated blue */
+  --color-sunrise: #c03812; /* Strong red */
+  --color-sunset: #7c2510; /* Dark red */
+  --color-dazed: #eeeede; /* Light grayish yellow */
+  --color-confused: #9b92c8; /* Slightly desaturated blue */
+}
+
+@utility bg-hit-man {
+  background: radial-gradient(ellipse at 50% 0%, #14103a 0%, #0a0812 70%);
 }
 
 @layer base {

@@ -88,7 +88,7 @@ export class UsersService {
       if (!user) throw new NotFoundException('User not found');
       if (!user.passwordHash) {
         throw new BadRequestException(
-          'Password cannot be changed for accounts created via social login',
+          'Use the set-password endpoint to add a password to a social login account',
         );
       }
       const isValid = await bcrypt.compare(
@@ -245,13 +245,18 @@ export class UsersService {
    * @param id - The UUID of the user.
    * @param newPasswordHash - The bcrypt hash of the new password.
    */
-  async resetPasswordWithToken(id: string, newPasswordHash: string) {
+  async resetPasswordWithToken(
+    id: string,
+    newPasswordHash: string,
+    markVerified = false,
+  ) {
     await this.prisma.user.update({
       where: { id },
       data: {
         passwordHash: newPasswordHash,
         resetToken: null,
         resetTokenExpiresAt: null,
+        ...(markVerified ? { emailVerifiedAt: new Date() } : {}),
       },
     });
   }
@@ -315,11 +320,44 @@ export class UsersService {
     });
   }
 
+  /**
+   * Creates a new user without a password (for magic-link sign-ups).
+   * Returns `null` when the email is already registered so callers can
+   * still send a login magic link to the existing account.
+   *
+   * @param email - The email address for the new account.
+   * @returns The newly created user without the password hash, or `null` if the email is already taken.
+   */
+  async createWithoutPassword(email: string) {
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) return null;
+    const user = await this.prisma.user.create({
+      data: { email, passwordHash: null },
+    });
+    return withoutPasswordHash(user);
+  }
+
   async createOAuthUser(email: string) {
     const user = await this.prisma.user.create({
       data: { email, passwordHash: null, emailVerifiedAt: new Date() },
     });
     return withoutPasswordHash(user);
+  }
+
+  async createOAuthUserAndLink(
+    email: string,
+    provider: string,
+    providerId: string,
+  ) {
+    return this.prisma.$transaction(async (transaction) => {
+      const user = await transaction.user.create({
+        data: { email, passwordHash: null, emailVerifiedAt: new Date() },
+      });
+      await transaction.oAuthAccount.create({
+        data: { userId: user.id, provider, providerId },
+      });
+      return withoutPasswordHash(user);
+    });
   }
 
   async findOAuthAccount(provider: string, providerId: string) {
@@ -335,6 +373,36 @@ export class UsersService {
     });
   }
 
+  async listOAuthAccounts(
+    userId: string,
+  ): Promise<{ provider: string; connectedAt: Date }[]> {
+    const accounts = await this.prisma.oAuthAccount.findMany({
+      where: { userId },
+      select: { provider: true, createdAt: true },
+    });
+    return accounts.map((account) => ({
+      provider: account.provider,
+      connectedAt: account.createdAt,
+    }));
+  }
+
+  async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
+    await this.prisma.oAuthAccount.deleteMany({ where: { userId, provider } });
+  }
+
+  async setFirstPassword(userId: string, password: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.passwordHash !== null) {
+      throw new BadRequestException('Account already has a password');
+    }
+    const passwordHash = await bcrypt.hash(password, 12);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+  }
+
   async markEmailVerified(id: string) {
     await this.prisma.user.update({
       where: { id },
@@ -342,45 +410,22 @@ export class UsersService {
     });
   }
 
-  async saveEmailTwoFactorCode(id: string, codeHash: string, expiresAt: Date) {
+  async findByMagicLinkToken(token: string) {
+    return this.prisma.user.findUnique({ where: { magicLinkToken: token } });
+  }
+
+  async updateMagicLinkToken(userId: string, token: string, expiresAt: Date) {
     await this.prisma.user.update({
-      where: { id },
-      data: {
-        emailTwoFactorCodeHash: codeHash,
-        emailTwoFactorExpiresAt: expiresAt,
-      },
+      where: { id: userId },
+      data: { magicLinkToken: token, magicLinkTokenExpiresAt: expiresAt },
     });
   }
 
-  async clearEmailTwoFactorCode(id: string) {
+  async clearMagicLinkToken(userId: string) {
     await this.prisma.user.update({
-      where: { id },
-      data: { emailTwoFactorCodeHash: null, emailTwoFactorExpiresAt: null },
+      where: { id: userId },
+      data: { magicLinkToken: null, magicLinkTokenExpiresAt: null },
     });
-  }
-
-  /**
-   * Atomically enables Email 2FA and replaces any existing recovery codes
-   * with the provided set.
-   */
-  async enableEmailTwoFactorWithRecoveryCodes(
-    userId: string,
-    codeHashes: string[],
-  ) {
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          emailTwoFactorEnabledAt: new Date(),
-          emailTwoFactorCodeHash: null,
-          emailTwoFactorExpiresAt: null,
-        },
-      }),
-      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
-      this.prisma.recoveryCode.createMany({
-        data: codeHashes.map((codeHash) => ({ userId, codeHash })),
-      }),
-    ]);
   }
 
   async saveTotpSecret(userId: string, encryptedSecret: string) {
@@ -460,9 +505,6 @@ export class UsersService {
           totpEnabledAt: null,
           totpVerifiedAt: null,
           totpLastUsedStep: null,
-          emailTwoFactorCodeHash: null,
-          emailTwoFactorExpiresAt: null,
-          emailTwoFactorEnabledAt: null,
         },
       }),
       this.prisma.recoveryCode.deleteMany({ where: { userId: id } }),

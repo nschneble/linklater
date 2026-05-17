@@ -1,9 +1,11 @@
+import ExtensionAuthorizePage from '../components/auth/ExtensionAuthorizePage';
 import LandingPage from '../components/LandingPage';
 import LogoutPage from '../components/auth/LogoutPage';
 import OAuthCallbackPage from '../components/auth/OAuthCallbackPage';
 import ResetPasswordPage from '../components/auth/ResetPasswordPage';
 import VerifyEmailChangePage from '../components/verify/VerifyEmailChangePage';
 import VerifyEmailPage from '../components/verify/VerifyEmailPage';
+import VerifyLoginPage from '../components/auth/VerifyLoginPage';
 import { Route } from 'react-router-dom';
 
 export function commonRoutes() {
@@ -30,6 +32,16 @@ export function commonRoutes() {
       key="verify-email-change"
       path="/verify-email-change"
       element={<VerifyEmailChangePage />}
+    />,
+    <Route
+      key="verify-login"
+      path="/verify-login"
+      element={<VerifyLoginPage />}
+    />,
+    <Route
+      key="extension-authorize"
+      path="/extension/authorize"
+      element={<ExtensionAuthorizePage />}
     />,
   ];
 }

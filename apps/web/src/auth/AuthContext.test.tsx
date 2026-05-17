@@ -381,7 +381,10 @@ describe('loginWithToken', () => {
       fireEvent.click(screen.getByRole('button', { name: 'loginWithToken' }));
     });
 
-    expect(apiModule.setStoredToken).toHaveBeenCalledWith('oauth-jwt-token');
+    expect(apiModule.setStoredToken).toHaveBeenCalledWith(
+      'oauth-jwt-token',
+      undefined,
+    );
     expect(screen.getByTestId('email')).toHaveTextContent('user@example.com');
   });
 });

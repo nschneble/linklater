@@ -20,7 +20,9 @@ import {
 import {
   ApiError,
   apiFetch,
+  createApiToken,
   disable2fa,
+  listApiTokens,
   readLink,
   clearStoredToken,
   createLink,
@@ -32,25 +34,30 @@ import {
   getLinks,
   getMe,
   getRandomLink,
+  getStoredRefreshToken,
   getStoredToken,
   login,
   logout,
   regenerateRecoveryCodes,
   register,
+  registerMagicLink,
   requestEmailChange,
-  resendEmailTwoFactorCode,
+  requestMagicLink,
   resendVerificationEmail,
   resetPassword,
-  sendReauthEmailCode,
+  revokeAllSessions,
+  revokeApiToken,
+  setPassword,
   setStoredToken,
-  setupEmailTwoFactor,
   setupTotp,
+  stumbleLink,
   unreadLink,
+  unlinkOAuthProvider,
   updateLink,
   updateMe,
   verifyEmail,
   verifyEmailChange,
-  verifyEmailTwoFactorSetup,
+  verifyMagicLink,
   verifyOtp,
   verifyTotpSetup,
 } from './api';
@@ -104,17 +111,32 @@ describe('token helpers', () => {
     expect(getStoredToken()).toBeNull();
   });
 
-  it('setStoredToken persists the token in memory and localStorage', () => {
+  it('setStoredToken persists the access token in memory and localStorage', () => {
     setStoredToken('my-jwt');
     expect(getStoredToken()).toBe('my-jwt');
     expect(localStorage.getItem('linklater_token')).toBe('my-jwt');
   });
 
-  it('clearStoredToken removes the token from memory and localStorage', () => {
-    setStoredToken('my-jwt');
+  it('setStoredToken also persists the refresh token when provided', () => {
+    setStoredToken('my-jwt', 'my-refresh');
+    expect(getStoredToken()).toBe('my-jwt');
+    expect(getStoredRefreshToken()).toBe('my-refresh');
+    expect(localStorage.getItem('linklater_refresh_token')).toBe('my-refresh');
+  });
+
+  it('setStoredToken leaves the refresh token unchanged when not provided', () => {
+    setStoredToken('my-jwt', 'existing-refresh');
+    setStoredToken('new-jwt');
+    expect(getStoredRefreshToken()).toBe('existing-refresh');
+  });
+
+  it('clearStoredToken removes both tokens from memory and localStorage', () => {
+    setStoredToken('my-jwt', 'my-refresh');
     clearStoredToken();
     expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
     expect(localStorage.getItem('linklater_token')).toBeNull();
+    expect(localStorage.getItem('linklater_refresh_token')).toBeNull();
   });
 });
 
@@ -219,6 +241,100 @@ describe('apiFetch', () => {
 
     expect(result).toBeUndefined();
   });
+
+  it('retries with new token after 401 when a refresh token is stored', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        // First attempt → 401
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        // Token refresh → 200
+        ok: true,
+        status: 200,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              accessToken: 'new-jwt',
+              refreshToken: 'new-refresh',
+            }),
+          ),
+        json: () =>
+          Promise.resolve({
+            accessToken: 'new-jwt',
+            refreshToken: 'new-refresh',
+          }),
+      })
+      .mockResolvedValueOnce({
+        // Retry → 200
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ id: 'result' })),
+      }) as unknown as typeof fetch;
+
+    const result = await apiFetch<{ id: string }>('/test');
+
+    expect(result).toEqual({ id: 'result' });
+    expect(getStoredToken()).toBe('new-jwt');
+    expect(getStoredRefreshToken()).toBe('new-refresh');
+  });
+
+  it('clears tokens and throws when refresh token is expired', async () => {
+    setStoredToken('expired-jwt', 'expired-refresh');
+
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Invalid refresh token' })),
+      }) as unknown as typeof fetch;
+
+    await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
+    expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
+  });
+
+  it('does not retry when no refresh token is stored', async () => {
+    setStoredToken('expired-jwt');
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: () => Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+    }) as unknown as typeof fetch;
+    globalThis.fetch = fetchMock;
+
+    await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
+    expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
+  });
+
+  it('does not retry when path is /auth/refresh', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: () => Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+    }) as unknown as typeof fetch;
+    globalThis.fetch = fetchMock;
+
+    await expect(apiFetch('/auth/refresh', {}, false)).rejects.toBeInstanceOf(
+      ApiError,
+    );
+    expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -240,20 +356,24 @@ describe('register', () => {
 });
 
 describe('login', () => {
-  it('POSTs to /auth/login and stores the returned access token', async () => {
-    mockFetch({ accessToken: 'fresh-jwt' });
+  it('POSTs to /auth/login and stores the returned access and refresh tokens', async () => {
+    mockFetch({ accessToken: 'fresh-jwt', refreshToken: 'fresh-refresh' });
 
     await login('user@example.com', 'password123');
 
     expect(getStoredToken()).toBe('fresh-jwt');
+    expect(getStoredRefreshToken()).toBe('fresh-refresh');
   });
 
   it('returns the login response', async () => {
-    mockFetch({ accessToken: 'fresh-jwt' });
+    mockFetch({ accessToken: 'fresh-jwt', refreshToken: 'fresh-refresh' });
 
     const result = await login('user@example.com', 'password123');
 
-    expect(result).toEqual({ accessToken: 'fresh-jwt' });
+    expect(result).toEqual({
+      accessToken: 'fresh-jwt',
+      refreshToken: 'fresh-refresh',
+    });
   });
 
   it('does not store a token when the server returns mfaToken', async () => {
@@ -274,10 +394,34 @@ describe('login', () => {
 });
 
 describe('logout', () => {
-  it('clears the stored token', () => {
-    setStoredToken('some-jwt');
-    logout();
+  it('clears both stored tokens', async () => {
+    mockFetch({ success: true });
+    setStoredToken('some-jwt', 'some-refresh');
+
+    await logout();
+
     expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
+  });
+});
+
+describe('revokeAllSessions', () => {
+  it('DELETEs /auth/sessions with auth header', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ success: true });
+
+    await revokeAllSessions();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/sessions');
+    expect((options as { method: string }).method).toBe('DELETE');
+  });
+
+  it('does not throw when the server returns an error', async () => {
+    setStoredToken('my-jwt');
+    mockFetchText('Unauthorized', 401);
+
+    await expect(revokeAllSessions()).resolves.toBeUndefined();
   });
 });
 
@@ -633,65 +777,56 @@ describe('verifyTotpSetup', () => {
   });
 });
 
-describe('setupEmailTwoFactor', () => {
-  it('POSTs to /auth/2fa/email/setup with Authorization header', async () => {
-    setStoredToken('my-jwt');
+describe('requestMagicLink', () => {
+  it('POSTs to /auth/request-magic-link with email and no Authorization header', async () => {
     const fetchMock = mockFetch({});
 
-    await setupEmailTwoFactor();
+    await requestMagicLink('user@example.com');
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/email/setup');
-    const headers = (options as { headers: Record<string, string> }).headers;
-    expect(headers['Authorization']).toBe('Bearer my-jwt');
-  });
-});
-
-describe('verifyEmailTwoFactorSetup', () => {
-  it('POSTs to /auth/2fa/email/verify with the 6-digit code', async () => {
-    setStoredToken('my-jwt');
-    const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
-
-    await verifyEmailTwoFactorSetup('123456');
-
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/email/verify');
-    const body = JSON.parse((options as { body: string }).body) as {
-      code: string;
-    };
-    expect(body.code).toBe('123456');
-  });
-});
-
-describe('resendEmailTwoFactorCode', () => {
-  it('POSTs to /auth/2fa/email/resend with mfaToken in body and no Authorization header', async () => {
-    const fetchMock = mockFetch({});
-
-    await resendEmailTwoFactorCode('mfa-pending-token');
-
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/email/resend');
+    expect(url).toContain('/auth/request-magic-link');
+    expect((options as { method: string }).method).toBe('POST');
     const headers = (options as { headers: Record<string, string> }).headers;
     expect(headers['Authorization']).toBeUndefined();
     const body = JSON.parse((options as { body: string }).body) as {
-      mfaToken: string;
+      email: string;
     };
-    expect(body.mfaToken).toBe('mfa-pending-token');
+    expect(body.email).toBe('user@example.com');
   });
 });
 
-describe('sendReauthEmailCode', () => {
-  it('POSTs to /auth/2fa/email/reauth-send with Authorization header', async () => {
-    setStoredToken('stored-jwt');
+describe('registerMagicLink', () => {
+  it('POSTs to /auth/register-magic-link with email and no Authorization header', async () => {
     const fetchMock = mockFetch({});
 
-    await sendReauthEmailCode();
+    await registerMagicLink('user@example.com');
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/email/reauth-send');
-    const headers = (options as { headers: Record<string, string> }).headers;
-    expect(headers['Authorization']).toBe('Bearer stored-jwt');
+    expect(url).toContain('/auth/register-magic-link');
     expect((options as { method: string }).method).toBe('POST');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBeUndefined();
+    const body = JSON.parse((options as { body: string }).body) as {
+      email: string;
+    };
+    expect(body.email).toBe('user@example.com');
+  });
+});
+
+describe('verifyMagicLink', () => {
+  it('POSTs to /auth/verify-magic-link with token and stores the access token', async () => {
+    const fetchMock = mockFetch({ accessToken: 'ml-jwt' });
+
+    const result = await verifyMagicLink('my-token');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/verify-magic-link');
+    const body = JSON.parse((options as { body: string }).body) as {
+      token: string;
+    };
+    expect(body.token).toBe('my-token');
+    expect(result).toEqual({ accessToken: 'ml-jwt' });
+    expect(getStoredToken()).toBe('ml-jwt');
   });
 });
 
@@ -724,6 +859,71 @@ describe('verifyOtp', () => {
   });
 });
 
+describe('setPassword', () => {
+  it('POSTs to /auth/set-password with password in body', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await setPassword('new-secure-password');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/set-password');
+    expect((options as { method: string }).method).toBe('POST');
+    const body = JSON.parse((options as { body: string }).body) as {
+      password: string;
+    };
+    expect(body.password).toBe('new-secure-password');
+  });
+});
+
+describe('unlinkOAuthProvider', () => {
+  it('DELETEs /auth/providers/:provider with auth header', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await unlinkOAuthProvider('google');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/providers/google');
+    expect((options as { method: string }).method).toBe('DELETE');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBe('Bearer my-jwt');
+  });
+
+  it('encodes special characters in the provider name', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await unlinkOAuthProvider('some provider');
+
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toContain('/auth/providers/some%20provider');
+  });
+});
+
+describe('stumbleLink', () => {
+  it('POSTs to /links/stumble with auth header', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ url: 'https://example.com' });
+
+    const result = await stumbleLink();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/links/stumble');
+    expect((options as { method: string }).method).toBe('POST');
+    expect(result).toEqual({ url: 'https://example.com' });
+  });
+
+  it('returns null url when no unread links exist', async () => {
+    setStoredToken('my-jwt');
+    mockFetch({ url: null });
+
+    const result = await stumbleLink();
+
+    expect(result).toEqual({ url: null });
+  });
+});
+
 describe('disable2fa', () => {
   it('DELETEs /auth/2fa with the provided credentials', async () => {
     setStoredToken('my-jwt');
@@ -751,5 +951,70 @@ describe('regenerateRecoveryCodes', () => {
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/auth/2fa/recovery-codes/regenerate');
     expect((options as { method: string }).method).toBe('POST');
+  });
+});
+
+describe('listApiTokens', () => {
+  it('GETs /tokens with Authorization header', async () => {
+    setStoredToken('my-jwt');
+    const tokens = [
+      {
+        id: 'tok-1',
+        name: 'Chrome',
+        prefix: 'ltk_aBcDeFgH',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        lastUsedAt: null,
+      },
+    ];
+    const fetchMock = mockFetch(tokens);
+
+    const result = await listApiTokens();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/tokens');
+    expect((options as { method?: string }).method).toBeUndefined();
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBe('Bearer my-jwt');
+    expect(result).toEqual(tokens);
+  });
+});
+
+describe('createApiToken', () => {
+  it('POSTs to /tokens with name in body', async () => {
+    setStoredToken('my-jwt');
+    const created = {
+      id: 'tok-1',
+      name: 'Chrome',
+      prefix: 'ltk_aBcDeFgH',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      lastUsedAt: null,
+      rawToken: 'ltk_aBcDeFgHiJkLmNoPqRsTuVwXyZ12',
+    };
+    const fetchMock = mockFetch(created, 201);
+
+    const result = await createApiToken('Chrome');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/tokens');
+    expect((options as { method: string }).method).toBe('POST');
+    const body = JSON.parse((options as { body: string }).body) as {
+      name: string;
+    };
+    expect(body.name).toBe('Chrome');
+    expect(result.rawToken).toBe(created.rawToken);
+  });
+});
+
+describe('revokeApiToken', () => {
+  it('DELETEs /tokens/:id with Authorization header', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ success: true });
+
+    const result = await revokeApiToken('tok-1');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/tokens/tok-1');
+    expect((options as { method: string }).method).toBe('DELETE');
+    expect(result).toEqual({ success: true });
   });
 });

@@ -13,11 +13,13 @@
   - password reset
   - Google SSO
   - multi-factor authentication
+  - magic link login
 - accessibility
   - full keyboard navigation
   - keyboard shortcuts
 - full-text search
-- "Stumble upon" page
+- marketing / landing page
+- "Stumble!" page
 
 #### Bugfixes
 

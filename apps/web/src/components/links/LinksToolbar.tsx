@@ -15,12 +15,12 @@ interface LinksToolbarProps {
   isClearingRead: boolean;
   /** Passed to `LinksControls` to conditionally hide the "Remove all" button. */
   links: Link[];
-  /** Passed to `LinksControls` to disable/relabel the "Stumble upon" button. */
+  /** Passed to `LinksControls` to disable the "Stumble!" button. */
   randomLoading: boolean;
   /** The controlled value of the search input. */
   search: string;
   /** Ref forwarded to the search input so `LinksView` can imperatively focus it on shortcut press. */
-  searchInputRef: React.RefObject<HTMLInputElement | null>;
+  searchInputReference: React.RefObject<HTMLInputElement | null>;
   /** Whether the inline link form is open — drives button label and `aria-expanded`. */
   showLinkForm: boolean;
   /** Called when the user clicks "Remove all read". */
@@ -29,7 +29,7 @@ interface LinksToolbarProps {
   onNavigateRead: () => void;
   /** Navigates to the `/unread` route when the Unread tab is clicked. */
   onNavigateUnread: () => void;
-  /** Called when the user clicks "Stumble upon". */
+  /** Called when the user clicks "Stumble!" */
   onRandom: () => Promise<void>;
   /** Called with the new search string on every keystroke. */
   onSearch: (value: string) => void;
@@ -53,7 +53,7 @@ export default function LinksToolbar({
   links,
   randomLoading,
   search,
-  searchInputRef,
+  searchInputReference,
   showLinkForm,
   onClearRead,
   onNavigateRead,
@@ -62,14 +62,14 @@ export default function LinksToolbar({
   onSearch,
   onToggleForm,
 }: LinksToolbarProps) {
-  const tablistRef = useRef<HTMLDivElement>(null);
-  useTabNavigation(tablistRef);
+  const tablistReference = useRef<HTMLDivElement>(null);
+  useTabNavigation(tablistReference);
 
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-4">
         <div
-          ref={tablistRef}
+          ref={tablistReference}
           className="relative grid grid-cols-2 shrink-0 p-1 bg-[var(--bg-surface)] border-shadow hover:border-shadow text-xs rounded-full"
           role="tablist"
           aria-label="Links filter"
@@ -115,7 +115,7 @@ export default function LinksToolbar({
 
       <div className="flex items-center gap-2 mt-3 sm:mt-4 mb-3">
         <input
-          ref={searchInputRef}
+          ref={searchInputReference}
           className="flex-1 min-w-0 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring focus:ring-[var(--accent)] focus:border-[var(--accent)] rounded-lg"
           type="search"
           placeholder={

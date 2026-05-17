@@ -76,7 +76,7 @@ export interface UseLinksActionsResult {
 
 /**
  * Handles all user-initiated link mutations: create, read/unread, delete
- * all read, and stumble upon. Coordinates with `useLinksData` mutation
+ * all read, and stumble! Coordinates with `useLinksData` mutation
  * helpers to keep the list in sync without a full refetch after each
  * operation.
  *
@@ -102,8 +102,8 @@ export function useLinksActions({
   // would recreate handleCreated on every fetch/mutation, which in turn
   // recreates handleDirectSave and unnecessarily re-registers the paste
   // event listener in usePasteDetection.
-  const linksRef = useRef(links);
-  linksRef.current = links;
+  const linksReference = useRef(links);
+  linksReference.current = links;
 
   const [pendingMetaLinkId, setPendingMetaLinkId] = useState<string | null>(
     null,
@@ -121,7 +121,7 @@ export function useLinksActions({
   const handleCreated = useCallback(
     (link: Link) => {
       if (filter === 'read') return;
-      const isNew = !linksRef.current.some((item) => item.id === link.id);
+      const isNew = !linksReference.current.some((item) => item.id === link.id);
       if (isNew) adjustTotal(1);
       prependLink(link);
       setPendingMetaLinkId(link.id);
