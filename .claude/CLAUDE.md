@@ -59,40 +59,38 @@ npm run migrate --workspace @linklater/api        # Run migrations + regenerate 
 npm run migrate:reset --workspace @linklater/api  # Wipe, re-run migrations + regenerate client
 ```
 
-> **Note:** The `migrate` and `migrate:reset` scripts chain `prisma migrate dev` with `prisma generate`. Prisma 7's `prisma-client` generator requires a custom `output` path, so `migrate dev` alone does not auto-regenerate the client.
+> **Note:** `migrate` and `migrate:reset` chain `prisma migrate dev` with `prisma generate`. Prisma 7's `prisma-client` generator needs custom `output` path — `migrate dev` alone won't auto-regenerate client.
 
 ## Third-Party Integrations
 
-- Always prefer **free and open-source** (FOSS) solutions over paid or proprietary ones
-  - Choose self-hostable or MIT/Apache/BSD-licensed libraries whenever a viable option exists
-  - If a paid solution is the only realistic path, propose an alternate design approach that avoids the dependency entirely before suggesting the paid option
-  - Document the tradeoff explicitly when recommending a FOSS solution that has meaningful limitations compared to a paid alternative
+- Prefer **free and open-source** (FOSS) over paid/proprietary
+  - Choose self-hostable or MIT/Apache/BSD-licensed libs when viable
+  - If paid only realistic path, propose alternate design avoiding dependency first
+  - Document tradeoff explicitly when FOSS option has meaningful limitations vs paid
 
 ## Tool Versions
 
-- Always check the **actual installed version** of a tool before making suggestions. Don't assume based on training data or common defaults.
-  - Read `package.json` to confirm versions before referencing APIs, syntax, or behavior
-  - Example failure: assuming Tailwind v3 syntax (e.g. `@layer` behaviors) when v4 is installed
-- When **installing new packages**, always pick the latest stable version unless there's an explicit reason not to do so.
+- Check **actual installed version** before suggesting. No assumption from training data.
+  - Read `package.json` to confirm versions before referencing APIs, syntax, behavior
+  - Example failure: assuming Tailwind v3 syntax (e.g. `@layer` behaviors) when v4 installed
+- When **installing new packages**, pick latest stable unless explicit reason not to.
 
 ## Development Workflow
 
-Use the [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopment.html) (TDD) technique.
+Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopment.html) (TDD). Three steps, repeat:
 
-Follow three simple steps repeatedly:
-
-1. **RED:** Write a failing test describing the desired behavior
-2. **GREEN:** Write minimal code to pass the test
-3. **REFACTOR:** Improve code structure while keeping tests green
+1. **RED:** Write failing test describing desired behavior
+2. **GREEN:** Write minimal code to pass test
+3. **REFACTOR:** Improve structure, keep tests green
 
 ## Core Conventions
 
-- Always organize code into modules
-  - Refer to [Organizing Your React App Into Modules](https://dev.to/jack/organizing-your-react-app-into-modules-d6n) for examples
-- Use self-explanatory folder, file, method, and variable names
+- Organize code into modules
+  - See [Organizing Your React App Into Modules](https://dev.to/jack/organizing-your-react-app-into-modules-d6n)
+- Self-explanatory folder, file, method, variable names
   - Keep React conventions like `prop` and `props`
-  - Never, ever use one-character variables (e.g. `e` or `i`)
-  - Common shortenings to avoid:
+  - No single-character variables (e.g. `e` or `i`)
+  - Shortenings to avoid:
 
   | Avoid             | Use instead               |
   | ----------------- | ------------------------- |
@@ -118,70 +116,66 @@ Follow three simple steps repeatedly:
   | `tmp`             | `temp`                    |
   | `val`             | `value`                   |
 
-- Favor code clarity over "perfect" optimization
-  - Use full `if` statements instead of one-liners with ternary operators
-  - Exception: in JSX, use `{condition && <Element />}` instead of `{condition ? <Element /> : null}`
-- Stay DRY (but not barren)
-  - Extract common code into something reusable when it's used more than twice
-- Avoid complex monoliths or "god" files
-  - Look for ways to refactor files over 100 lines
-- Don't optimize prematurely
-  - Don't worry if the homepage takes 1-2 seconds to load
-  - Do worry if the homepage load time increases exponentially based on link count
-- Keep database calls lean
-  - Avoid too many joins
+- Clarity over "perfect" optimization
+  - Full `if` statements over ternary one-liners
+  - Exception: in JSX, use `{condition && <Element />}` not `{condition ? <Element /> : null}`
+- Stay DRY (not barren)
+  - Extract common code when used 3+ times
+- No god files
+  - Refactor files over 100 lines
+- No premature optimization
+  - 1-2s homepage load fine
+  - Worry when load time scales exponentially with link count
+- Lean DB calls
+  - Avoid excess joins
   - Avoid n+1 queries
-- Keep in mind the three important response time limits
-  - 0.1 second is the limit for having the user feel that the app is reacting instantaneously
-  - 1.0 second is the limit for the user's flow of thought to stay uninterrupted
-  - No special feedback is necessary during delays of more than 0.1 but less than 1.0 second
-  - 10 seconds is about the limit for keeping the user's attention focused on the dialogue
-  - For longer delays, users should be given feedback indicating when the app expects to be done
-  - Refer to [Response Time Limits](https://www.nngroup.com/articles/response-times-3-important-limits/) for more information
-- Always incorporate details that make user interfaces feel better
-  - Refer to [Details That Make Interfaces Feel Better](https://jakub.kr/writing/details-that-make-interfaces-feel-better) for examples
-- Embrace the slow software movement
-  - Refer to [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software) for a manifesto
-- Always clean up after yourself! Kill any listeners or temporary-running processes that are no longer necessary once the work is complete
-- Always run `bin/flintest` when you're done to ensure formatting, linting, testing, and building all execute successfully
+- Three response time limits:
+  - 0.1s — feels instantaneous
+  - 1.0s — flow uninterrupted, no feedback needed between 0.1–1.0s
+  - 10s — attention limit; give progress feedback beyond this
+  - See [Response Time Limits](https://www.nngroup.com/articles/response-times-3-important-limits/)
+- Polish UI details — see [Details That Make Interfaces Feel Better](https://jakub.kr/writing/details-that-make-interfaces-feel-better)
+- Embrace slow software — see [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software)
+- Clean up — kill listeners and temp processes when done
+- Run `bin/flintest` when done to verify format, lint, test, build
 
 ## Database Conventions
 
-- Always write migrations that pass `npx squawk` with zero issues — never add `-- squawk-ignore-file` or `-- squawk-ignore-next-statement`
+- Migrations must pass `npx squawk` with zero issues — no `-- squawk-ignore-file` or `-- squawk-ignore-next-statement`
   - Start every migration with `set lock_timeout = '1s';` and `set statement_timeout = '5s';`
-  - Add foreign key constraints with `NOT VALID`, then immediately `VALIDATE CONSTRAINT` on the next line
-  - See `.squawk.toml` for the rules excluded at the project level and why
+  - Add foreign key constraints with `NOT VALID`, then immediately `VALIDATE CONSTRAINT` next line
+  - See `.squawk.toml` for project-level excluded rules and reasons
 
 ## TypeScript Conventions
 
-- Use `class` for DTOs (required for class-validator decorators)
-- Use `interface` for request/response shapes and component props
-- Use `type` for unions and aliases
+- `class` for DTOs (class-validator decorators require it)
+- `interface` for request/response shapes and component props
+- `type` for unions and aliases
 - Props interfaces end in `Props` (e.g. `FormInputProps`, `LinkCardProps`)
 
 ## Nest.JS Patterns
 
-- Controllers delegate 100% to services (no business logic in controllers)
+- Controllers delegate 100% to services — no business logic in controllers
 - Services throw NestJS HTTP exceptions:
   - `BadRequestException:` invalid input
   - `ConflictException:` duplicate/constraint violation
   - `NotFoundException:` record not found (map Prisma `P2025`)
   - `UnauthorizedException:` auth failure
 - Extract `userId` from `@Req() request: AuthRequest`
-  - `AuthRequest` is a custom type extending Express `Request`
-- Use `@UseGuards(JwtAuthGuard)` at class level to protect endpoints that only web sessions access
-- Use `@UseGuards(AnyAuthGuard)` when an endpoint must accept both JWT sessions **and** PAT tokens (`ltk_`-prefixed bearer tokens used by browser extensions and API clients) — `AnyAuthGuard` selects the strategy based on the prefix
+  - `AuthRequest` extends Express `Request`
+- `@UseGuards(JwtAuthGuard)` at class level for web-session-only endpoints
+- `@UseGuards(AnyAuthGuard)` when endpoint must accept both JWT sessions **and** PAT tokens (`ltk_`-prefixed bearer tokens for browser extensions and API clients) — selects strategy by prefix
 - Service inputs use `Input` suffix (e.g. `CreateLinkInput`, `UpdateLinkInput`)
-- Each module exposes a barrel `index.ts` controlling its public API
+- Each module exposes barrel `index.ts` controlling public API
 
 ## React Patterns
 
-- Name event handlers `handle*` (e.g. `handleDelete`, `handleSubmit`)
-- Name callback props `on*` (e.g. `onCreated`, `onDelete`)
-- Contexts use `createContext(undefined)` with a custom hook that throws if used outside provider
+- Event handlers: `handle*` (e.g. `handleDelete`, `handleSubmit`)
+- Callback props: `on*` (e.g. `onCreated`, `onDelete`)
+- Contexts: `createContext(undefined)` with custom hook that throws outside provider
 - Form state sequence: clear error → set loading → attempt action → handle result
-- Extract errors with: `error instanceof Error ? error.message : 'Something went wrong'`
-- Organize your imports! Sort alphabetically both within individual imports and in the list of import statements as whole. Put `import {}` before `import type {}`.
+- Extract errors: `error instanceof Error ? error.message : 'Something went wrong'`
+- Sort imports alphabetically — within individual imports and across import list. Put `import {}` before `import type {}`.
 
 ```typescript
 // Example of poor import organization
@@ -198,20 +192,20 @@ import { useEffect, useState } from 'react';
 ## Testing Patterns
 
 - Backend mock services typed as: `jest.fn() as unknown as ServiceType`
-- Use mock factories (e.g. `makeLink()`, `makeUser()`) returning consistent data with spread overrides
+- Mock factories (e.g. `makeLink()`, `makeUser()`) return consistent data with spread overrides
 - Call `jest.clearAllMocks()` in `beforeEach`
-- Back-end test files: `*.spec.ts` co-located with source
-- Front-end test files: `*.test.tsx` co-located with source
+- Back-end: `*.spec.ts` co-located with source
+- Front-end: `*.test.tsx` co-located with source
 
 ## Accessibility
 
 - Decorative icons: `aria-hidden="true"`
 - Error messages: `role="alert"`
-- Interactive elements: explicit `role`, `aria-selected`, and `aria-label` where needed
+- Interactive elements: explicit `role`, `aria-selected`, `aria-label` where needed
 
 ## Tailwind Styling
 
-- Favor adding Tailwind CSS styles in this order:
+- Order styles:
   - layouts (flex, block, relative, absolute)
   - sizes (w, max-w, h, max-h)
   - margins (mx, my)
@@ -225,18 +219,10 @@ import { useEffect, useState } from 'react';
   - shadows (shadow, shadow-size)
   - transitions
   - pointers (cursor-pointer)
-- Always start with layouts
-- Always widths before heights
-- Always x before y
-- Always margins before padding
-- Always backgrounds before borders before text
-- Always colors before sizes
-- Always end with transitions
-- Always primary before states (border, hover:border, focus:border)
-- Always primary before sizes (mx-auto, sm:mx-0)
+- Layouts first. Widths before heights. x before y. Margins before padding. Backgrounds before borders before text. Colors before sizes. Transitions last. Primary before states (border, hover:border, focus:border). Primary before sizes (mx-auto, sm:mx-0).
 
 ## Gotchas
 
-- **TypeScript build errors on the frontend**: pre-existing `tsc` errors exist in `apps/web`. The `tsc -b` step in `npm run build` may report them. `vite build` (not `tsc`) is the true correctness check for the frontend — use it to determine if frontend code is valid.
-- **ESM Jest on the backend**: the API test runner uses `--experimental-vm-modules`. Don't mock `bcryptjs` — use real low-round hashes (`bcrypt.hash('password', 1)`) instead to avoid ESM interop issues.
-- **Prisma `P2025` in tests**: Prisma throws a typed error class, not a plain object. Mock it with `Object.assign(new Error('...'), { code: 'P2025' })` so `instanceof` checks in services work correctly.
+- **TypeScript build errors on the frontend**: pre-existing `tsc` errors exist in `apps/web`. `vite build` (not `tsc`) is true correctness check — use it to validate frontend code.
+- **ESM Jest on the backend**: API test runner uses `--experimental-vm-modules`. Don't mock `bcryptjs` — use real low-round hashes (`bcrypt.hash('password', 1)`) to avoid ESM interop issues.
+- **Prisma `P2025` in tests**: Prisma throws typed error class, not plain object. Mock with `Object.assign(new Error('...'), { code: 'P2025' })` so `instanceof` checks work correctly.

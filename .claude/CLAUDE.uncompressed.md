@@ -1,0 +1,242 @@
+# Project Configuration
+
+## Tech Stack
+
+- **Front-end**: React + [Vite](https://vite.dev) + [Tailwind](https://tailwindcss.com) + [Font Awesome](https://fontawesome.com)
+- **Back-end**: [NestJS](https://nestjs.com)
+- **Database**: Prisma + PostgreSQL
+- **Authentication**: [Passport](https://www.passportjs.org)
+- **Jobs:** [pg-boss](https://timgit.github.io/pg-boss/#/)
+- **Linting**: ESLint + Prettier
+- **Testing**: Vitest (front-end) + Jest (back-end)
+
+## Architecture
+
+```txt
+linklater/
+├─ apps/
+│  ├─ api/          # NestJS back-end
+│  │  └─ README.md  # .env, modules, auth, jobs
+│  │
+│  └─ web/          # React + Vite front-end
+│     └─ README.md  # .env, components, state, API, routes
+│
+├─ package.json     # root workspace + scripts
+└─ README.md
+```
+
+## Key Commands
+
+```bash
+# TUIs
+bin/dev                                           # Start development server + Mailpit at http://localhost:8025 (captures all outgoing dev email)
+bin/flintest                                      # Install, format, lint, test, build
+bin/flintest --update                             # Update, install, format, lint, test, build
+
+# Setup
+npm install                                       # Install dependencies
+
+# Run
+npm run dev                                       # Start development server
+
+# Formatting
+npm run format                                    # Format code using Prettier
+
+# Linting
+npm run lint                                      # Lint code for consistent style
+npm run lint:migrations                           # Lint migrations using Squawk
+npm run lint --workspace @linklater/web           # Lint front-end only
+npm run lint --workspace @linklater/api           # Lint back-end only
+
+# Testing
+npm run test                                      # Run all tests
+npm run test:cov                                  # Run all tests with code coverage
+npm run test --workspace @linklater/web           # Test front-end only
+npm run test --workspace @linklater/api           # Test back-end only
+
+# Database
+npm run migrate --workspace @linklater/api        # Run migrations + regenerate client
+npm run migrate:reset --workspace @linklater/api  # Wipe, re-run migrations + regenerate client
+```
+
+> **Note:** The `migrate` and `migrate:reset` scripts chain `prisma migrate dev` with `prisma generate`. Prisma 7's `prisma-client` generator requires a custom `output` path, so `migrate dev` alone does not auto-regenerate the client.
+
+## Third-Party Integrations
+
+- Always prefer **free and open-source** (FOSS) solutions over paid or proprietary ones
+  - Choose self-hostable or MIT/Apache/BSD-licensed libraries whenever a viable option exists
+  - If a paid solution is the only realistic path, propose an alternate design approach that avoids the dependency entirely before suggesting the paid option
+  - Document the tradeoff explicitly when recommending a FOSS solution that has meaningful limitations compared to a paid alternative
+
+## Tool Versions
+
+- Always check the **actual installed version** of a tool before making suggestions. Don't assume based on training data or common defaults.
+  - Read `package.json` to confirm versions before referencing APIs, syntax, or behavior
+  - Example failure: assuming Tailwind v3 syntax (e.g. `@layer` behaviors) when v4 is installed
+- When **installing new packages**, always pick the latest stable version unless there's an explicit reason not to do so.
+
+## Development Workflow
+
+Use the [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopment.html) (TDD) technique.
+
+Follow three simple steps repeatedly:
+
+1. **RED:** Write a failing test describing the desired behavior
+2. **GREEN:** Write minimal code to pass the test
+3. **REFACTOR:** Improve code structure while keeping tests green
+
+## Core Conventions
+
+- Always organize code into modules
+  - Refer to [Organizing Your React App Into Modules](https://dev.to/jack/organizing-your-react-app-into-modules-d6n) for examples
+- Use self-explanatory folder, file, method, and variable names
+  - Keep React conventions like `prop` and `props`
+  - Never, ever use one-character variables (e.g. `e` or `i`)
+  - Common shortenings to avoid:
+
+  | Avoid             | Use instead               |
+  | ----------------- | ------------------------- |
+  | `arg`, `args`     | `argument`, `arguments`   |
+  | `arr`             | `array`                   |
+  | `btn`             | `button`                  |
+  | `cb`              | `callback`                |
+  | `ctx`             | `context`                 |
+  | `e`, `err`        | `error`                   |
+  | `e`, `evt`        | `event`                   |
+  | `el`, `elem`      | `element`                 |
+  | `fn`              | `function`                |
+  | `idx`             | `index`                   |
+  | `msg`             | `message`                 |
+  | `num`             | `number`                  |
+  | `obj`             | `object`                  |
+  | `param`, `params` | `parameter`, `parameters` |
+  | `ref`             | `reference`               |
+  | `req`             | `request`                 |
+  | `res`             | `response`                |
+  | `str`             | `string`                  |
+  | `sub`             | `subject`                 |
+  | `tmp`             | `temp`                    |
+  | `val`             | `value`                   |
+
+- Favor code clarity over "perfect" optimization
+  - Use full `if` statements instead of one-liners with ternary operators
+  - Exception: in JSX, use `{condition && <Element />}` instead of `{condition ? <Element /> : null}`
+- Stay DRY (but not barren)
+  - Extract common code into something reusable when it's used more than twice
+- Avoid complex monoliths or "god" files
+  - Look for ways to refactor files over 100 lines
+- Don't optimize prematurely
+  - Don't worry if the homepage takes 1-2 seconds to load
+  - Do worry if the homepage load time increases exponentially based on link count
+- Keep database calls lean
+  - Avoid too many joins
+  - Avoid n+1 queries
+- Keep in mind the three important response time limits
+  - 0.1 second is the limit for having the user feel that the app is reacting instantaneously
+  - 1.0 second is the limit for the user's flow of thought to stay uninterrupted
+  - No special feedback is necessary during delays of more than 0.1 but less than 1.0 second
+  - 10 seconds is about the limit for keeping the user's attention focused on the dialogue
+  - For longer delays, users should be given feedback indicating when the app expects to be done
+  - Refer to [Response Time Limits](https://www.nngroup.com/articles/response-times-3-important-limits/) for more information
+- Always incorporate details that make user interfaces feel better
+  - Refer to [Details That Make Interfaces Feel Better](https://jakub.kr/writing/details-that-make-interfaces-feel-better) for examples
+- Embrace the slow software movement
+  - Refer to [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software) for a manifesto
+- Always clean up after yourself! Kill any listeners or temporary-running processes that are no longer necessary once the work is complete
+- Always run `bin/flintest` when you're done to ensure formatting, linting, testing, and building all execute successfully
+
+## Database Conventions
+
+- Always write migrations that pass `npx squawk` with zero issues — never add `-- squawk-ignore-file` or `-- squawk-ignore-next-statement`
+  - Start every migration with `set lock_timeout = '1s';` and `set statement_timeout = '5s';`
+  - Add foreign key constraints with `NOT VALID`, then immediately `VALIDATE CONSTRAINT` on the next line
+  - See `.squawk.toml` for the rules excluded at the project level and why
+
+## TypeScript Conventions
+
+- Use `class` for DTOs (required for class-validator decorators)
+- Use `interface` for request/response shapes and component props
+- Use `type` for unions and aliases
+- Props interfaces end in `Props` (e.g. `FormInputProps`, `LinkCardProps`)
+
+## Nest.JS Patterns
+
+- Controllers delegate 100% to services (no business logic in controllers)
+- Services throw NestJS HTTP exceptions:
+  - `BadRequestException:` invalid input
+  - `ConflictException:` duplicate/constraint violation
+  - `NotFoundException:` record not found (map Prisma `P2025`)
+  - `UnauthorizedException:` auth failure
+- Extract `userId` from `@Req() request: AuthRequest`
+  - `AuthRequest` is a custom type extending Express `Request`
+- Use `@UseGuards(JwtAuthGuard)` at class level to protect endpoints that only web sessions access
+- Use `@UseGuards(AnyAuthGuard)` when an endpoint must accept both JWT sessions **and** PAT tokens (`ltk_`-prefixed bearer tokens used by browser extensions and API clients) — `AnyAuthGuard` selects the strategy based on the prefix
+- Service inputs use `Input` suffix (e.g. `CreateLinkInput`, `UpdateLinkInput`)
+- Each module exposes a barrel `index.ts` controlling its public API
+
+## React Patterns
+
+- Name event handlers `handle*` (e.g. `handleDelete`, `handleSubmit`)
+- Name callback props `on*` (e.g. `onCreated`, `onDelete`)
+- Contexts use `createContext(undefined)` with a custom hook that throws if used outside provider
+- Form state sequence: clear error → set loading → attempt action → handle result
+- Extract errors with: `error instanceof Error ? error.message : 'Something went wrong'`
+- Organize your imports! Sort alphabetically both within individual imports and in the list of import statements as whole. Put `import {}` before `import type {}`.
+
+```typescript
+// Example of poor import organization
+import { useState, useEffect } from 'react';
+import { stumbleLink } from '../lib/api';
+import StumbleEmptyView from './StumbleEmptyView';
+
+// Example of good import organization
+import StumbleEmptyView from './StumbleEmptyView';
+import { stumbleLink } from '../lib/api';
+import { useEffect, useState } from 'react';
+```
+
+## Testing Patterns
+
+- Backend mock services typed as: `jest.fn() as unknown as ServiceType`
+- Use mock factories (e.g. `makeLink()`, `makeUser()`) returning consistent data with spread overrides
+- Call `jest.clearAllMocks()` in `beforeEach`
+- Back-end test files: `*.spec.ts` co-located with source
+- Front-end test files: `*.test.tsx` co-located with source
+
+## Accessibility
+
+- Decorative icons: `aria-hidden="true"`
+- Error messages: `role="alert"`
+- Interactive elements: explicit `role`, `aria-selected`, and `aria-label` where needed
+
+## Tailwind Styling
+
+- Favor adding Tailwind CSS styles in this order:
+  - layouts (flex, block, relative, absolute)
+  - sizes (w, max-w, h, max-h)
+  - margins (mx, my)
+  - paddings (px, py)
+  - backgrounds (bg, bg-color)
+  - borders (border, border-color)
+  - text (text-color, text-size)
+  - fonts (font-weight)
+  - focus/outline/ring
+  - rounded borders (rounded, rounded-size)
+  - shadows (shadow, shadow-size)
+  - transitions
+  - pointers (cursor-pointer)
+- Always start with layouts
+- Always widths before heights
+- Always x before y
+- Always margins before padding
+- Always backgrounds before borders before text
+- Always colors before sizes
+- Always end with transitions
+- Always primary before states (border, hover:border, focus:border)
+- Always primary before sizes (mx-auto, sm:mx-0)
+
+## Gotchas
+
+- **TypeScript build errors on the frontend**: pre-existing `tsc` errors exist in `apps/web`. The `tsc -b` step in `npm run build` may report them. `vite build` (not `tsc`) is the true correctness check for the frontend — use it to determine if frontend code is valid.
+- **ESM Jest on the backend**: the API test runner uses `--experimental-vm-modules`. Don't mock `bcryptjs` — use real low-round hashes (`bcrypt.hash('password', 1)`) instead to avoid ESM interop issues.
+- **Prisma `P2025` in tests**: Prisma throws a typed error class, not a plain object. Mock it with `Object.assign(new Error('...'), { code: 'P2025' })` so `instanceof` checks in services work correctly.
