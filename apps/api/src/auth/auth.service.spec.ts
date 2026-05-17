@@ -61,9 +61,11 @@ describe('AuthService', () => {
     confirmPendingEmail: jest.fn(),
     create: jest.fn(),
     createOAuthUser: jest.fn(),
+    createOAuthUserAndLink: jest.fn(),
     disableTwoFactor: jest.fn(),
     findByEmail: jest.fn(),
     findByIdWithPasswordHash: jest.fn(),
+    findByMagicLinkToken: jest.fn(),
     findByPendingEmailToken: jest.fn(),
     findByResetToken: jest.fn(),
     findByVerificationToken: jest.fn(),
@@ -76,10 +78,13 @@ describe('AuthService', () => {
     markRecoveryCodeUsed: jest.fn(),
     reissueRecoveryCodes: jest.fn(),
     resetPasswordWithToken: jest.fn(),
+    saveTotpSecret: jest.fn(),
     setFirstPassword: jest.fn(),
     unlinkOAuthAccount: jest.fn(),
+    updateMagicLinkToken: jest.fn(),
     updatePendingEmail: jest.fn(),
     updateResetToken: jest.fn(),
+    updateTotpLastUsedStep: jest.fn(),
     updateVerificationToken: jest.fn(),
   } as unknown as UsersService;
 
@@ -113,6 +118,7 @@ describe('AuthService', () => {
     extensionAuthCode: {
       create: jest.fn().mockResolvedValue({}),
       delete: jest.fn().mockResolvedValue({}),
+      deleteMany: jest.fn().mockResolvedValue({}),
       findUnique: jest.fn(),
     },
   } as unknown as PrismaService;
@@ -329,7 +335,7 @@ describe('AuthService', () => {
 
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
       expect(usersServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
-      expect(usersServiceMock.createOAuthUser).not.toHaveBeenCalled();
+      expect(usersServiceMock.createOAuthUserAndLink).not.toHaveBeenCalled();
     });
 
     it('auto-links OAuth account to existing user with same email', async () => {
@@ -354,7 +360,7 @@ describe('AuthService', () => {
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
       );
-      expect(usersServiceMock.createOAuthUser).not.toHaveBeenCalled();
+      expect(usersServiceMock.createOAuthUserAndLink).not.toHaveBeenCalled();
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
     });
 
@@ -381,16 +387,13 @@ describe('AuthService', () => {
       expect(usersServiceMock.markEmailVerified).toHaveBeenCalledWith(USER_ID);
     });
 
-    it('creates a new user and OAuth account when no match exists', async () => {
+    it('creates a new user and OAuth account atomically when no match exists', async () => {
       (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.createOAuthUser as jest.Mock).mockResolvedValue({
+      (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
       });
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
-        undefined,
-      );
 
       const result = await service.findOrCreateOAuthUser(
         OAUTH_PROVIDER,
@@ -398,9 +401,8 @@ describe('AuthService', () => {
         USER_EMAIL,
       );
 
-      expect(usersServiceMock.createOAuthUser).toHaveBeenCalledWith(USER_EMAIL);
-      expect(usersServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
-        USER_ID,
+      expect(usersServiceMock.createOAuthUserAndLink).toHaveBeenCalledWith(
+        USER_EMAIL,
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
       );
@@ -415,7 +417,7 @@ describe('AuthService', () => {
           user: { id: USER_ID, email: USER_EMAIL },
         });
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.createOAuthUser as jest.Mock).mockRejectedValue(
+      (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockRejectedValue(
         makeP2002(),
       );
 
@@ -432,11 +434,12 @@ describe('AuthService', () => {
       (usersServiceMock.findOAuthAccount as jest.Mock)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-      });
-      (usersServiceMock.createOAuthUser as jest.Mock).mockRejectedValue(
+      // First call: no existing user (so createOAuthUserAndLink is attempted).
+      // Second call: the race-winner's account is now findable by email.
+      (usersServiceMock.findByEmail as jest.Mock)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: USER_ID, email: USER_EMAIL });
+      (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockRejectedValue(
         makeP2002(),
       );
 
@@ -449,10 +452,10 @@ describe('AuthService', () => {
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
     });
 
-    it('re-throws non-P2002 errors from createOAuthUser', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.createOAuthUser as jest.Mock).mockRejectedValue(
+    it('re-throws non-P2002 errors from createOAuthUserAndLink', async () => {
+      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValueOnce(null);
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValueOnce(null);
+      (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockRejectedValue(
         new Error('unexpected database error'),
       );
 
@@ -706,6 +709,7 @@ describe('AuthService', () => {
       expect(usersServiceMock.resetPasswordWithToken).toHaveBeenCalledWith(
         USER_ID,
         expect.any(String),
+        expect.any(Boolean),
       );
     });
 
@@ -741,7 +745,7 @@ describe('AuthService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('calls markEmailVerified when the user email is not yet verified', async () => {
+    it('passes markVerified=true to resetPasswordWithToken when email is not yet verified', async () => {
       (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
         id: USER_ID,
         emailVerifiedAt: null,
@@ -751,13 +755,14 @@ describe('AuthService', () => {
       (usersServiceMock.resetPasswordWithToken as jest.Mock).mockResolvedValue(
         undefined,
       );
-      (usersServiceMock.markEmailVerified as jest.Mock).mockResolvedValue(
-        undefined,
-      );
 
       await service.resetPassword(RESET_TOKEN, NEW_PASSWORD);
 
-      expect(usersServiceMock.markEmailVerified).toHaveBeenCalledWith(USER_ID);
+      expect(usersServiceMock.resetPasswordWithToken).toHaveBeenCalledWith(
+        USER_ID,
+        expect.any(String),
+        true,
+      );
     });
 
     it('does not call markEmailVerified when the email is already verified', async () => {
@@ -979,6 +984,24 @@ describe('AuthService', () => {
       expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
         codeId,
       );
+    });
+
+    it('throws UnauthorizedException when recovery code does not match any stored hash', async () => {
+      const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
+      const bcryptModule = await import('bcryptjs');
+      const differentHash = await bcryptModule.hash('zzzzz-zzzzz-zzzzz', 1);
+
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+      );
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
+      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
+        [{ id: 'rc-1', codeHash: differentHash }],
+      );
+
+      await expect(
+        service.requestEmailChange(USER_ID, NEW_EMAIL, REAUTH_RECOVERY_CODE),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -1486,6 +1509,68 @@ describe('AuthService', () => {
     });
   });
 
+  describe('verifyOtp (edge: exhaustion guard)', () => {
+    it('throws UnauthorizedException when method bypasses both totp and recovery branches at runtime', async () => {
+      // The TypeScript type constrains callers to 'totp' | 'recovery', but the
+      // final throw is a runtime exhaustion guard. To reach it, we need a value
+      // where enrolledMethod === method (so line 578 passes) but the value is
+      // neither 'totp' nor 'recovery'. When totpEnabledAt is null, enrolledMethod
+      // is null. Passing null as method satisfies enrolledMethod === method,
+      // skipping line 578's guard, then falling through both if blocks to line 610.
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpEnabledAt: null,
+      });
+
+      await expect(
+        service.verifyOtp(
+          USER_ID,
+          '123456',
+          null as unknown as 'totp' | 'recovery',
+        ),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('reauthenticate (via disable2fa / regenerateRecoveryCodes)', () => {
+    it('throws UnauthorizedException when a recovery-code-shaped string is provided but no 2FA is enrolled', async () => {
+      // A recovery code matches the regex (e.g. "aaaaa-bbbbb") but totpEnabledAt
+      // is null — the guard at line 669-670 must fire.
+      const RECOVERY_CODE_STUB = 'aaaaa-bbbbb-ccccc';
+
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: null,
+      });
+
+      await expect(
+        service.disable2fa(USER_ID, undefined, RECOVERY_CODE_STUB),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException when a plain OTP code is provided but no 2FA is enrolled', async () => {
+      // A 6-digit string does not match the recovery-code regex; the guard at
+      // line 693 must fire when totpEnabledAt is null.
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: null,
+      });
+
+      await expect(
+        service.disable2fa(USER_ID, undefined, '123456'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
   describe('requestMagicLink', () => {
     it('delegates to magicLinkService.requestLogin', async () => {
       await service.requestMagicLink(USER_EMAIL);
@@ -1717,6 +1802,61 @@ describe('AuthService', () => {
           USER_EMAIL,
         ),
       ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('authorizeExtension', () => {
+    const ALLOWED_URI = 'chrome-extension://abc/callback';
+
+    beforeEach(() => {
+      process.env.EXTENSION_REDIRECT_URIS = ALLOWED_URI;
+    });
+
+    afterEach(() => {
+      delete process.env.EXTENSION_REDIRECT_URIS;
+    });
+
+    it('returns a code and callbackUrl when challenge and redirect URI are valid', async () => {
+      const result = await service.authorizeExtension(
+        USER_ID,
+        'sha256-challenge-abc',
+        ALLOWED_URI,
+      );
+
+      expect(typeof result.code).toBe('string');
+      expect(result.code.length).toBeGreaterThan(0);
+      expect(result.callbackUrl).toBe(ALLOWED_URI);
+      expect(prismaServiceMock.extensionAuthCode.create).toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when codeChallenge is empty', async () => {
+      await expect(
+        service.authorizeExtension(USER_ID, '', ALLOWED_URI),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when redirectUri is empty', async () => {
+      await expect(
+        service.authorizeExtension(USER_ID, 'sha256-challenge-abc', ''),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when redirectUri is not in the allowed list', async () => {
+      await expect(
+        service.authorizeExtension(
+          USER_ID,
+          'sha256-challenge-abc',
+          'https://evil.example.com/callback',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when EXTENSION_REDIRECT_URIS is not set', async () => {
+      delete process.env.EXTENSION_REDIRECT_URIS;
+
+      await expect(
+        service.authorizeExtension(USER_ID, 'sha256-challenge-abc', ALLOWED_URI),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

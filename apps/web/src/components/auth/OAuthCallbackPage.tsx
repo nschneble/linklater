@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getErrorMessage } from '../../lib/errors';
+import { FOCUS_RING } from '../../lib/styles';
 import { useAuth } from '../../auth/AuthContext';
 
 type Status = 'loading' | 'error';
@@ -64,7 +65,7 @@ export default function OAuthCallbackPage() {
             </p>
             <button
               type="button"
-              className="text-[var(--accent)] underline text-sm"
+              className={`text-[var(--accent)] underline text-sm rounded ${FOCUS_RING}`}
               onClick={() => navigate('/login')}
             >
               Back to login

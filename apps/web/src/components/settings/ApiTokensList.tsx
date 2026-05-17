@@ -5,11 +5,18 @@ import { getErrorMessage } from '../../lib/errors';
 import Alert from '../common/Alert';
 import IconButton from '../common/IconButton';
 
+/** Props for a single row in the PAT list. */
 interface ApiTokenRowProps {
+  /**
+   * Called when the user confirms revocation. The parent is responsible
+   * for issuing the API call and refreshing the list on completion.
+   */
   onRevoke: (id: string) => Promise<void>;
+  /** The token summary to display. No raw token value is available here. */
   token: ApiToken;
 }
 
+/** Formats an ISO 8601 timestamp as a locale-aware short date string. */
 function formatDate(isoString: string): string {
   return new Date(isoString).toLocaleDateString(undefined, {
     month: 'short',
@@ -18,6 +25,11 @@ function formatDate(isoString: string): string {
   });
 }
 
+/**
+ * A single row in the PAT list. Shows the token name, display prefix,
+ * creation date, and last-used date. Includes a two-step revoke flow:
+ * the user first clicks "Revoke", then confirms with "Yes, revoke".
+ */
 function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
   const [confirming, setConfirming] = useState(false);
   const [revoking, setRevoking] = useState(false);
@@ -62,11 +74,12 @@ function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
               Revoke
             </IconButton>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" role="alert">
               <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 text-xs">
                 Sure?
               </span>
               <IconButton
+                aria-label={`Confirm revoke ${token.name}`}
                 disabled={revoking}
                 type="button"
                 variant="danger-filled"
@@ -75,6 +88,7 @@ function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
                 {revoking ? 'Revoking…' : 'Yes, revoke'}
               </IconButton>
               <IconButton
+                aria-label={`Cancel revoke ${token.name}`}
                 type="button"
                 variant="ghost"
                 onClick={() => setConfirming(false)}
@@ -96,11 +110,22 @@ function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
   );
 }
 
+/** Props for the full PAT list component. */
 interface ApiTokensListProps {
+  /**
+   * Passed through to each `ApiTokenRow`. Called with the token ID when
+   * the user confirms revocation.
+   */
   onRevoke: (id: string) => Promise<void>;
+  /** The list of token summaries to render. */
   tokens: ApiToken[];
 }
 
+/**
+ * Renders the user's personal access tokens as a vertical list of
+ * `ApiTokenRow` items. Shows a "No tokens yet." message when the array
+ * is empty.
+ */
 export default function ApiTokensList({
   onRevoke,
   tokens,

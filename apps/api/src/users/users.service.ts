@@ -245,13 +245,18 @@ export class UsersService {
    * @param id - The UUID of the user.
    * @param newPasswordHash - The bcrypt hash of the new password.
    */
-  async resetPasswordWithToken(id: string, newPasswordHash: string) {
+  async resetPasswordWithToken(
+    id: string,
+    newPasswordHash: string,
+    markVerified = false,
+  ) {
     await this.prisma.user.update({
       where: { id },
       data: {
         passwordHash: newPasswordHash,
         resetToken: null,
         resetTokenExpiresAt: null,
+        ...(markVerified ? { emailVerifiedAt: new Date() } : {}),
       },
     });
   }
@@ -337,6 +342,22 @@ export class UsersService {
       data: { email, passwordHash: null, emailVerifiedAt: new Date() },
     });
     return withoutPasswordHash(user);
+  }
+
+  async createOAuthUserAndLink(
+    email: string,
+    provider: string,
+    providerId: string,
+  ) {
+    return this.prisma.$transaction(async (transaction) => {
+      const user = await transaction.user.create({
+        data: { email, passwordHash: null, emailVerifiedAt: new Date() },
+      });
+      await transaction.oAuthAccount.create({
+        data: { userId: user.id, provider, providerId },
+      });
+      return withoutPasswordHash(user);
+    });
   }
 
   async findOAuthAccount(provider: string, providerId: string) {

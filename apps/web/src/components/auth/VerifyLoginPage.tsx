@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { verifyMagicLink } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
+import { FOCUS_RING } from '../../lib/styles';
 import { useAuth } from '../../auth/AuthContext';
 
 type Status = 'verifying' | 'success' | 'error';
@@ -67,7 +68,7 @@ export default function VerifyLoginPage() {
             </p>
             <button
               type="button"
-              className="text-[var(--accent)] underline text-sm"
+              className={`text-[var(--accent)] underline text-sm rounded ${FOCUS_RING}`}
               onClick={() => navigate('/login')}
             >
               Back to login

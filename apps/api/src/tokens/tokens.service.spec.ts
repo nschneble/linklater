@@ -1,13 +1,33 @@
 import { jest } from '@jest/globals';
 
+class MockPrismaClientKnownRequestError extends Error {
+  code: string;
+  constructor(message: string, { code }: { code: string }) {
+    super(message);
+    this.code = code;
+  }
+}
+
+jest.mock('../prisma/generated/client', () => ({
+  Prisma: { PrismaClientKnownRequestError: MockPrismaClientKnownRequestError },
+}));
+
 jest.mock('../prisma/prisma.service', () => ({
   PrismaService: jest.fn().mockImplementation(() => ({})),
 }));
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
+import { Prisma } from '../prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokensService } from './tokens.service';
+
+const makeP2025 = () =>
+  new (
+    Prisma as {
+      PrismaClientKnownRequestError: typeof MockPrismaClientKnownRequestError;
+    }
+  ).PrismaClientKnownRequestError('Record not found', { code: 'P2025' });
 
 const TOKEN_ID = 'token-1';
 const USER_ID = 'user-1';
@@ -138,12 +158,20 @@ describe('TokensService', () => {
     });
 
     it('throws NotFoundException when token does not exist', async () => {
-      (prismaMock.apiToken.delete as jest.Mock).mockRejectedValue(
-        new Error('Record not found'),
-      );
+      (prismaMock.apiToken.delete as jest.Mock).mockRejectedValue(makeP2025());
 
       await expect(service.revoke(USER_ID, 'missing-id')).rejects.toThrow(
         NotFoundException,
+      );
+    });
+
+    it('re-throws non-P2025 errors from delete', async () => {
+      (prismaMock.apiToken.delete as jest.Mock).mockRejectedValue(
+        new Error('Connection timeout'),
+      );
+
+      await expect(service.revoke(USER_ID, TOKEN_ID)).rejects.toThrow(
+        'Connection timeout',
       );
     });
   });

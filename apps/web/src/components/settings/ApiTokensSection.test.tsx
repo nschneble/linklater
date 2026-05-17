@@ -140,6 +140,52 @@ describe('ApiTokensSection', () => {
     });
   });
 
+  it('shows an error when token creation fails', async () => {
+    vi.mocked(apiModule.createApiToken).mockRejectedValue(
+      new Error('Name already taken'),
+    );
+
+    render(<ApiTokensSection />);
+    await waitFor(() => screen.getByRole('button', { name: /create token/i }));
+
+    fireEvent.click(screen.getByRole('button', { name: /create token/i }));
+    fireEvent.change(screen.getByLabelText(/token name/i), {
+      target: { value: 'Chrome Extension' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.getByText('Name already taken')).toBeInTheDocument();
+    });
+  });
+
+  it('hides the create form and clears the name when Cancel is clicked', async () => {
+    render(<ApiTokensSection />);
+    await waitFor(() => screen.getByRole('button', { name: /create token/i }));
+
+    fireEvent.click(screen.getByRole('button', { name: /create token/i }));
+    fireEvent.change(screen.getByLabelText(/token name/i), {
+      target: { value: 'My Token' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+    expect(screen.queryByLabelText(/token name/i)).not.toBeInTheDocument();
+  });
+
+  it('shows an error when the token list fails to load', async () => {
+    vi.mocked(apiModule.listApiTokens).mockRejectedValue(
+      new Error('Unauthorized'),
+    );
+
+    render(<ApiTokensSection />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.getByText('Unauthorized')).toBeInTheDocument();
+    });
+  });
+
   it('calls revokeApiToken when a token is revoked', async () => {
     const token = makeApiToken();
     vi.mocked(apiModule.listApiTokens).mockResolvedValue([token]);

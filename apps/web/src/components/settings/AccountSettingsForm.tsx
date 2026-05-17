@@ -158,14 +158,14 @@ export default function AccountSettingsForm() {
 
   return (
     <div className="max-w-md space-y-8">
-      <h2 className="text-[var(--text)] text-xl font-semibold text-balance">
+      <h1 className="text-[var(--text)] text-xl font-semibold text-balance">
         Account settings
-      </h2>
+      </h1>
 
       <form className="space-y-4" onSubmit={handleEmailSave}>
-        <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+        <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
           Email
-        </h3>
+        </h2>
 
         <div className="flex items-center gap-2">
           <span className="text-[var(--text-muted)] text-xs">
@@ -257,9 +257,9 @@ export default function AccountSettingsForm() {
 
       {hasPassword ? (
         <form className="space-y-4" onSubmit={handlePasswordSave}>
-          <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+          <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
             Password
-          </h3>
+          </h2>
 
           <label
             className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
@@ -312,9 +312,9 @@ export default function AccountSettingsForm() {
         </form>
       ) : (
         <form className="space-y-4" onSubmit={handleAddPassword}>
-          <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+          <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
             Password
-          </h3>
+          </h2>
           <p className="text-[var(--text-muted)] text-xs">
             Add a password for backup access alongside social sign-in.
           </p>

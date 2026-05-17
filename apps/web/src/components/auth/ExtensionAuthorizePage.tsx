@@ -1,10 +1,9 @@
-import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
 import { FOCUS_RING } from '../../lib/styles';
+import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
-type Status = 'idle' | 'authorizing' | 'error';
+type Status = 'idle' | 'authorizing';
 
 /**
  * Handles the `/extension/authorize` route for the browser extension OAuth flow.
@@ -22,30 +21,23 @@ export default function ExtensionAuthorizePage() {
   const { user } = useAuth();
   const [searchParameters] = useSearchParams();
   const [status, setStatus] = useState<Status>('idle');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const codeChallenge = searchParameters.get('code_challenge') ?? '';
   const redirectUri = searchParameters.get('redirect_uri') ?? '';
 
-  const handleAuthorize = async () => {
+  const handleAuthorize = () => {
     setStatus('authorizing');
-    setErrorMessage(null);
-    try {
-      const parameters = new URLSearchParams({
-        code_challenge: codeChallenge,
-        redirect_uri: redirectUri,
-      });
-      window.location.href = `${import.meta.env.VITE_API_BASE_URL as string}/auth/extension/authorize?${parameters.toString()}`;
-    } catch (error: unknown) {
-      setStatus('error');
-      setErrorMessage(getErrorMessage(error, 'Authorization failed.'));
-    }
+    const parameters = new URLSearchParams({
+      code_challenge: codeChallenge,
+      redirect_uri: redirectUri,
+    });
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL as string}/auth/extension/authorize?${parameters.toString()}`;
   };
 
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
-        <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl text-center">
+        <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow text-center rounded-2xl">
           <h1 className="mb-2 text-[var(--text)] text-2xl font-bold">
             Sign in to authorize
           </h1>
@@ -65,7 +57,7 @@ export default function ExtensionAuthorizePage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
-      <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl text-center space-y-4">
+      <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow text-center space-y-4 rounded-2xl">
         <h1 className="text-[var(--text)] text-2xl font-bold">
           Authorize Linklater Extension?
         </h1>
@@ -76,12 +68,6 @@ export default function ExtensionAuthorizePage() {
         <p className="text-[var(--text-muted)] text-xs">
           The extension will be able to save and manage your links.
         </p>
-
-        {status === 'error' && errorMessage && (
-          <p className="text-rose-400 text-sm" role="alert">
-            {errorMessage}
-          </p>
-        )}
 
         <div className="flex gap-3 justify-center">
           <button

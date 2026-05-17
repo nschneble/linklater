@@ -28,6 +28,7 @@ const USER_EMAIL = 'user@example.com';
 
 function makeUser(overrides: Partial<User> = {}): User {
   return {
+    connectedProviders: [],
     email: USER_EMAIL,
     emailVerifiedAt: '2026-01-01T00:00:00.000Z',
     hasPassword: true,
@@ -180,6 +181,201 @@ describe('TwoFactorSection', () => {
       expect(
         screen.getByRole('button', { name: /disable two-factor/i }),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe('State D — pending TOTP setup (totpSecret set, not yet enabled)', () => {
+    it('shows a Continue setup button when setup is pending from a prior session', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorPending: true }) }),
+      );
+
+      render(<TwoFactorSection />);
+
+      expect(
+        screen.getByRole('button', { name: /continue setup/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('resumes TOTP setup when Continue setup is clicked', async () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorPending: true }) }),
+      );
+      vi.mocked(apiModule.setupTotp).mockResolvedValue({
+        qrCodeDataUrl: 'data:image/png;base64,abc',
+        secret: 'SECRETABC',
+      });
+
+      render(<TwoFactorSection />);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /continue setup/i }));
+      });
+
+      expect(apiModule.setupTotp).toHaveBeenCalled();
+      expect(screen.getByText('SECRETABC')).toBeInTheDocument();
+    });
+  });
+
+  describe('State C — disable 2FA flow', () => {
+    it('shows the reauth form when Disable two-factor is clicked', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+      );
+
+      render(<TwoFactorSection />);
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /disable two-factor/i }),
+      );
+
+      expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument();
+    });
+
+    it('calls disable2fa and refreshUser when reauth form is submitted with valid password', async () => {
+      const refreshUser = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({ twoFactorMethod: 'totp' }),
+          refreshUser,
+        }),
+      );
+      vi.mocked(apiModule.disable2fa).mockResolvedValue(undefined);
+
+      render(<TwoFactorSection />);
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /disable two-factor/i }),
+      );
+
+      fireEvent.change(screen.getByLabelText(/current password/i), {
+        target: { value: 'my-password' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
+      });
+
+      await waitFor(() => {
+        expect(apiModule.disable2fa).toHaveBeenCalledWith({
+          currentPassword: 'my-password',
+          code: undefined,
+        });
+        expect(refreshUser).toHaveBeenCalled();
+      });
+    });
+
+    it('shows an error when disable2fa fails', async () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+      );
+      vi.mocked(apiModule.disable2fa).mockRejectedValue(
+        new Error('Invalid password'),
+      );
+
+      render(<TwoFactorSection />);
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /disable two-factor/i }),
+      );
+      fireEvent.change(screen.getByLabelText(/current password/i), {
+        target: { value: 'wrong-password' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Invalid password');
+      });
+    });
+
+    it('hides the reauth form when Cancel is clicked', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+      );
+
+      render(<TwoFactorSection />);
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /disable two-factor/i }),
+      );
+      fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+      expect(
+        screen.queryByRole('button', { name: /confirm/i }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  describe('State C — regenerate recovery codes flow', () => {
+    it('shows the reauth form when Regenerate recovery codes is clicked', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+      );
+
+      render(<TwoFactorSection />);
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /regenerate recovery codes/i }),
+      );
+
+      expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument();
+    });
+
+    it('calls regenerateRecoveryCodes and shows new codes on success', async () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+      );
+      vi.mocked(apiModule.regenerateRecoveryCodes).mockResolvedValue({
+        recoveryCodes: ['new-code-1', 'new-code-2'],
+      });
+
+      render(<TwoFactorSection />);
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /regenerate recovery codes/i }),
+      );
+      fireEvent.change(screen.getByLabelText(/current password/i), {
+        target: { value: 'my-password' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('new-code-1')).toBeInTheDocument();
+      });
+    });
+
+    it('shows an error when regenerateRecoveryCodes fails', async () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+      );
+      vi.mocked(apiModule.regenerateRecoveryCodes).mockRejectedValue(
+        new Error('Authentication failed'),
+      );
+
+      render(<TwoFactorSection />);
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /regenerate recovery codes/i }),
+      );
+      fireEvent.change(screen.getByLabelText(/current password/i), {
+        target: { value: 'wrong-pass' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          'Authentication failed',
+        );
+      });
     });
   });
 

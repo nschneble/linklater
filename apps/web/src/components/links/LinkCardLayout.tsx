@@ -93,7 +93,10 @@ export default function LinkCardLayout({
       aria-label={cardAriaLabel}
       onClick={onCardClick}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') onCardClick();
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onCardClick();
+        }
       }}
       tabIndex={0}
       className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-transparent'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--accent)]/60' : ''} focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none cursor-pointer`}

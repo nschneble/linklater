@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import VerifyLoginPage from './VerifyLoginPage';
@@ -105,6 +105,26 @@ describe('VerifyLoginPage', () => {
       expect(
         screen.getByRole('button', { name: /back to login/i }),
       ).toBeInTheDocument();
+    });
+  });
+
+  it('navigates to /login when Back to login is clicked', async () => {
+    vi.mocked(apiModule.verifyMagicLink).mockRejectedValue(
+      new Error('Token expired'),
+    );
+
+    renderPage('bad-token');
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /back to login/i }),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /back to login/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/login page/i)).toBeInTheDocument();
     });
   });
 });

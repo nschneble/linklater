@@ -28,6 +28,10 @@ describe('AuthController', () => {
   const REFRESH_TOKEN = 'refresh-token';
 
   const authServiceMock = {
+    authorizeExtension: jest.fn().mockResolvedValue({
+      code: 'auth-code-123',
+      callbackUrl: 'chrome-extension://allowed/callback',
+    }),
     confirmEmailChange: jest.fn(),
     createExtensionAuthCode: jest.fn().mockResolvedValue('auth-code-123'),
     disable2fa: jest.fn(),
@@ -498,6 +502,26 @@ describe('AuthController', () => {
     });
   });
 
+  describe('googleLink', () => {
+    it('redirects to the Google OAuth authorization URL', () => {
+      process.env.GOOGLE_CLIENT_ID = 'test-client-id';
+      process.env.GOOGLE_LINK_CALLBACK_URL =
+        'https://api.example.com/auth/google/link/callback';
+      process.env.JWT_SECRET = 'test-secret';
+
+      const request = {
+        user: { userId: USER_ID },
+      } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+
+      controller.googleLink(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('https://accounts.google.com/o/oauth2/v2/auth'),
+      );
+    });
+  });
+
   describe('googleLinkCallback', () => {
     it('redirects to settings with linked=google on success', async () => {
       process.env.APP_URL = 'https://app.example.com';
@@ -543,6 +567,18 @@ describe('AuthController', () => {
         'https://app.example.com/settings?link_error=email_mismatch',
       );
     });
+
+    it('re-throws unexpected errors from linkOAuthAccountToUser', async () => {
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+      (authServiceMock.linkOAuthAccountToUser as jest.Mock).mockRejectedValue(
+        new Error('Database connection lost'),
+      );
+
+      await expect(
+        controller.googleLinkCallback(request, response),
+      ).rejects.toThrow('Database connection lost');
+    });
   });
 
   describe('refreshToken', () => {
@@ -573,11 +609,37 @@ describe('AuthController', () => {
   });
 
   describe('extensionAuthorize', () => {
-    it('throws BadRequestException when redirect_uri is not in allowlist', async () => {
-      process.env.EXTENSION_REDIRECT_URIS =
-        'chrome-extension://allowed/callback';
+    it('delegates to authService.authorizeExtension with userId, codeChallenge, and redirectUri', async () => {
       const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
       const response = { redirect: jest.fn() } as unknown as Response;
+      (authServiceMock.authorizeExtension as jest.Mock).mockResolvedValue({
+        code: 'auth-code-123',
+        callbackUrl: 'chrome-extension://allowed/callback',
+      });
+
+      await controller.extensionAuthorize(
+        request,
+        response,
+        'challenge123',
+        'chrome-extension://allowed/callback',
+      );
+
+      expect(authServiceMock.authorizeExtension).toHaveBeenCalledWith(
+        USER_ID,
+        'challenge123',
+        'chrome-extension://allowed/callback',
+      );
+      expect(response.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('code=auth-code-123'),
+      );
+    });
+
+    it('propagates exceptions thrown by authService.authorizeExtension', async () => {
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+      const response = { redirect: jest.fn() } as unknown as Response;
+      (authServiceMock.authorizeExtension as jest.Mock).mockRejectedValue(
+        new BadRequestException('Invalid redirect_uri'),
+      );
 
       await expect(
         controller.extensionAuthorize(
@@ -587,46 +649,6 @@ describe('AuthController', () => {
           'chrome-extension://not-allowed/callback',
         ),
       ).rejects.toThrow(BadRequestException);
-    });
-
-    it('throws BadRequestException when EXTENSION_REDIRECT_URIS is not configured', async () => {
-      delete process.env.EXTENSION_REDIRECT_URIS;
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-      const response = { redirect: jest.fn() } as unknown as Response;
-
-      await expect(
-        controller.extensionAuthorize(
-          request,
-          response,
-          'challenge123',
-          'chrome-extension://any/callback',
-        ),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('redirects with auth code when redirect_uri is in allowlist', async () => {
-      process.env.EXTENSION_REDIRECT_URIS =
-        'chrome-extension://allowed/callback';
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-      const response = { redirect: jest.fn() } as unknown as Response;
-      (authServiceMock.createExtensionAuthCode as jest.Mock).mockResolvedValue(
-        'auth-code-123',
-      );
-
-      await controller.extensionAuthorize(
-        request,
-        response,
-        'challenge123',
-        'chrome-extension://allowed/callback',
-      );
-
-      expect(authServiceMock.createExtensionAuthCode).toHaveBeenCalledWith(
-        USER_ID,
-        'challenge123',
-      );
-      expect(response.redirect).toHaveBeenCalledWith(
-        expect.stringContaining('code=auth-code-123'),
-      );
     });
   });
 

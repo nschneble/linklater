@@ -1,11 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
-import Alert from '../common/Alert';
-import LinkButton from '../common/LinkButton';
-import PrimaryButton from '../common/PrimaryButton';
-import ReauthForm from './ReauthForm';
-import RecoveryCodesModal from './RecoveryCodesModal';
-import TotpSetupView from './TotpSetupView';
+import { useAuth } from '../../auth/AuthContext';
 import {
   disable2fa,
   regenerateRecoveryCodes,
@@ -13,7 +6,13 @@ import {
   verifyTotpSetup,
 } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import { useAuth } from '../../auth/AuthContext';
+import Alert from '../common/Alert';
+import LinkButton from '../common/LinkButton';
+import PrimaryButton from '../common/PrimaryButton';
+import ReauthForm from './ReauthForm';
+import RecoveryCodesModal from './RecoveryCodesModal';
+import TotpSetupView from './TotpSetupView';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 
 type ReauthAction = 'disable' | 'regenerate';
 

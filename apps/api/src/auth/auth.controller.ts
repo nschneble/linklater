@@ -599,28 +599,16 @@ export class AuthController {
     @Query('code_challenge') codeChallenge: string,
     @Query('redirect_uri') redirectUri: string,
   ) {
-    if (!codeChallenge || !redirectUri) {
-      throw new BadRequestException(
-        'code_challenge and redirect_uri are required',
+    const { code, callbackUrl } =
+      await this.authService.authorizeExtension(
+        request.user.userId,
+        codeChallenge,
+        redirectUri,
       );
-    }
 
-    const allowedUris = process.env.EXTENSION_REDIRECT_URIS
-      ? process.env.EXTENSION_REDIRECT_URIS.split(',').map((uri) => uri.trim())
-      : [];
-
-    if (!allowedUris.includes(redirectUri)) {
-      throw new BadRequestException('Invalid redirect_uri');
-    }
-
-    const code = await this.authService.createExtensionAuthCode(
-      request.user.userId,
-      codeChallenge,
-    );
-
-    const callbackUrl = new URL(redirectUri);
-    callbackUrl.searchParams.set('code', code);
-    response.redirect(callbackUrl.toString());
+    const destination = new URL(callbackUrl);
+    destination.searchParams.set('code', code);
+    response.redirect(destination.toString());
   }
 
   @ApiOperation({ summary: 'Exchange extension auth code for token pair' })

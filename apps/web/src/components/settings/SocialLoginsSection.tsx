@@ -1,17 +1,49 @@
-import { unlinkOAuthProvider } from '../../lib/api';
-import { getErrorMessage } from '../../lib/errors';
-import { useAuth } from '../../auth/AuthContext';
-import { useState } from 'react';
 import Alert from '../common/Alert';
 import IconButton from '../common/IconButton';
+import { useAuth } from '../../auth/AuthContext';
+import { unlinkOAuthProvider } from '../../lib/api';
+import { getErrorMessage } from '../../lib/errors';
+import { useState } from 'react';
 
+/** Props for the social logins settings section. */
 interface SocialLoginsSectionProps {
+  /**
+   * When `true`, the Apple row is shown. Defaults to the value of
+   * `VITE_APPLE_SSO_ENABLED`. Overridable in tests.
+   */
   appleEnabled?: boolean;
+  /**
+   * When `true`, the Google row is shown. Defaults to the value of
+   * `VITE_GOOGLE_SSO_ENABLED`. Overridable in tests.
+   */
   googleEnabled?: boolean;
+  /**
+   * Error message to display when an account-linking redirect returned
+   * a `link_error` query parameter (e.g. `'email_mismatch'` or
+   * `'already_linked'`). Null when no error.
+   */
   linkError?: string | null;
+  /**
+   * Success message to display when the OAuth linking flow completed
+   * (e.g. the `linked=google` query parameter is present). Null when absent.
+   */
   linkedMessage?: string | null;
 }
 
+/**
+ * Settings section for linking and disconnecting OAuth social accounts.
+ *
+ * Renders a row per enabled provider (Google, Apple). When the provider
+ * is already connected, a "Disconnect" button with a two-step confirmation
+ * is shown. When not connected, a "Connect" button navigates to
+ * `GET /auth/<provider>/link` to start the OAuth linking flow.
+ *
+ * The disconnect button is disabled for accounts without a password —
+ * disconnecting would otherwise leave the user with no way to log in.
+ * A tooltip explains why the button is disabled in that case.
+ *
+ * Returns `null` when both providers are disabled (no env vars set).
+ */
 export default function SocialLoginsSection({
   appleEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true',
   googleEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
@@ -42,10 +74,12 @@ export default function SocialLoginsSection({
   };
 
   const handleConfirmDisconnect = async () => {
-    if (!confirmDisconnect) return;
+    if (!confirmDisconnect) {
+      return;
+    }
 
-    setDisconnecting(true);
     setDisconnectError(null);
+    setDisconnecting(true);
 
     try {
       await unlinkOAuthProvider(confirmDisconnect);
@@ -115,20 +149,44 @@ export default function SocialLoginsSection({
   );
 }
 
+/** Props for a single OAuth provider row. */
 interface ProviderRowProps {
+  /**
+   * The provider key currently awaiting confirmation, or `null`. This row
+   * renders its confirmation UI when `confirmDisconnect === provider`.
+   */
   confirmDisconnect: string | null;
+  /** Whether this provider is currently linked to the user's account. */
   connected: boolean;
+  /** Whether a disconnect request is in flight (disables buttons). */
   disconnecting: boolean;
+  /**
+   * When `false`, the disconnect button is disabled to prevent the user
+   * from losing their only way to log in.
+   */
   hasPassword: boolean;
+  /** Display name shown next to the controls (e.g. `'Google'`). */
   label: string;
+  /** Internal provider key used for the confirmation check (e.g. `'google'`). */
   provider: string;
+  /**
+   * Whether to show a "Connect" button when not connected. Apple omits
+   * the connect button because web-initiated Apple linking is not supported.
+   */
   showConnect: boolean;
+  /** Called when the user cancels the disconnect confirmation step. */
   onCancelDisconnect: () => void;
+  /** Called when the user confirms the disconnect. */
   onConfirmDisconnect: () => void;
+  /** Called to start the OAuth linking flow for this provider. */
   onConnect: () => void;
+  /** Called to enter the disconnect confirmation step. */
   onDisconnect: () => void;
 }
 
+/**
+ * A single row showing connect/disconnect controls for one OAuth provider.
+ */
 function ProviderRow({
   confirmDisconnect,
   connected,
@@ -159,18 +217,23 @@ function ProviderRow({
           </span>
 
           {isConfirming ? (
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-2 text-xs" role="alert">
               <span className="text-[var(--text-muted)]">
                 Disconnect {label}?
               </span>
               <IconButton
+                aria-label={`Confirm disconnect ${label}`}
                 variant="danger-filled"
                 disabled={disconnecting}
                 onClick={onConfirmDisconnect}
               >
                 {disconnecting ? 'Disconnecting…' : 'Yes, disconnect'}
               </IconButton>
-              <IconButton variant="ghost" onClick={onCancelDisconnect}>
+              <IconButton
+                aria-label={`Cancel disconnect ${label}`}
+                variant="ghost"
+                onClick={onCancelDisconnect}
+              >
                 Cancel
               </IconButton>
             </div>

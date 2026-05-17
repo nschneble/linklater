@@ -124,10 +124,10 @@ describe('SocialLoginsSection', () => {
       );
 
       expect(
-        screen.getByRole('button', { name: /yes, disconnect/i }),
+        screen.getByRole('button', { name: /confirm disconnect google/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: /cancel/i }),
+        screen.getByRole('button', { name: /cancel disconnect google/i }),
       ).toBeInTheDocument();
     });
 
@@ -146,10 +146,12 @@ describe('SocialLoginsSection', () => {
       fireEvent.click(
         screen.getByRole('button', { name: /disconnect google/i }),
       );
-      fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /cancel disconnect google/i }),
+      );
 
       expect(
-        screen.queryByRole('button', { name: /yes, disconnect/i }),
+        screen.queryByRole('button', { name: /confirm disconnect google/i }),
       ).not.toBeInTheDocument();
     });
 
@@ -171,7 +173,9 @@ describe('SocialLoginsSection', () => {
       fireEvent.click(
         screen.getByRole('button', { name: /disconnect google/i }),
       );
-      fireEvent.click(screen.getByRole('button', { name: /yes, disconnect/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /confirm disconnect google/i }),
+      );
 
       await waitFor(() => {
         expect(apiModule.unlinkOAuthProvider).toHaveBeenCalledWith('google');
@@ -197,10 +201,11 @@ describe('SocialLoginsSection', () => {
       fireEvent.click(
         screen.getByRole('button', { name: /disconnect google/i }),
       );
-      fireEvent.click(screen.getByRole('button', { name: /yes, disconnect/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /confirm disconnect google/i }),
+      );
 
       await waitFor(() => {
-        expect(screen.getByRole('alert')).toBeInTheDocument();
         expect(screen.getByText('Disconnect failed')).toBeInTheDocument();
       });
     });
@@ -212,6 +217,34 @@ describe('SocialLoginsSection', () => {
   });
 
   describe('Apple', () => {
+    it('calls unlinkOAuthProvider and refreshUser when Apple disconnect is confirmed', async () => {
+      const refreshUser = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          refreshUser,
+          user: makeUser({
+            connectedProviders: [
+              { provider: 'apple', connectedAt: '2026-01-01T00:00:00.000Z' },
+            ],
+          }),
+        }),
+      );
+      vi.mocked(apiModule.unlinkOAuthProvider).mockResolvedValue(undefined);
+
+      render(<SocialLoginsSection appleEnabled />);
+      fireEvent.click(
+        screen.getByRole('button', { name: /disconnect apple/i }),
+      );
+      fireEvent.click(
+        screen.getByRole('button', { name: /confirm disconnect apple/i }),
+      );
+
+      await waitFor(() => {
+        expect(apiModule.unlinkOAuthProvider).toHaveBeenCalledWith('apple');
+        expect(refreshUser).toHaveBeenCalled();
+      });
+    });
+
     it('shows Apple connected state when Apple is in connectedProviders', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({

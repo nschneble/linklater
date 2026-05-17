@@ -1,17 +1,23 @@
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
+/**
+ * Full-height hero section for the public landing page.
+ *
+ * Renders the Linklater logo icon, headline, tagline, a one-sentence
+ * pitch, and two call-to-action links: "Get started free" (goes to
+ * `/signup`) and "Log in" (goes to `/login`). Uses `react-router-dom`
+ * `Link` components so navigation stays within the SPA.
+ */
 export default function HeroSection() {
-  const navigate = useNavigate();
-
   return (
-    <section className="flex flex-col items-center justify-center min-h-[85vh] px-6 py-24 text-center animate-fade-in-up">
+    <section aria-labelledby="hero-heading" className="flex flex-col items-center justify-center min-h-[85vh] px-6 py-24 text-center animate-fade-in-up">
       <div className="flex items-center justify-center w-16 h-16 mb-6 bg-midnight border border-boyhood rounded-2xl">
         <i
           className="fa-solid fa-link text-2xl text-sunrise"
           aria-hidden="true"
         />
       </div>
-      <h1 className="mb-3 text-5xl sm:text-6xl font-bold tracking-tight select-none bg-gradient-to-br from-dazed to-sunrise bg-clip-text text-transparent">
+      <h1 id="hero-heading" className="mb-3 text-5xl sm:text-6xl font-bold tracking-tight select-none bg-gradient-to-br from-dazed to-sunrise bg-clip-text text-transparent">
         Linklater
       </h1>
       <p className="mb-5 text-lg sm:text-xl font-medium text-confused select-none">
@@ -23,21 +29,19 @@ export default function HeroSection() {
         forget about them? Totally.
       </p>
       <div className="flex items-center gap-3 select-none">
-        <button
-          type="button"
+        <Link
+          to="/signup"
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-sunrise hover:bg-sunset text-dazed text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sunrise rounded-full transition duration-200 active:scale-[0.96] cursor-pointer"
-          onClick={() => navigate('/signup')}
         >
           <i className="fa-solid fa-arrow-right text-xs" aria-hidden="true" />
           Get started free
-        </button>
-        <button
-          type="button"
+        </Link>
+        <Link
+          to="/login"
           className="inline-flex items-center gap-2 px-5 py-2.5 border border-boyhood hover:border-confused text-confused hover:text-dazed text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-confused rounded-full transition duration-200 active:scale-[0.96] cursor-pointer"
-          onClick={() => navigate('/login')}
         >
           Log in
-        </button>
+        </Link>
       </div>
     </section>
   );

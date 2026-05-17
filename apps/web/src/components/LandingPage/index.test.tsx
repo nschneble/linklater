@@ -1,13 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import LandingPage from './index';
 import { MemoryRouter } from 'react-router-dom';
-
-const mockNavigate = vi.fn();
-
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
-  return { ...actual, useNavigate: () => mockNavigate };
-});
 
 function renderLandingPage() {
   render(
@@ -29,16 +22,19 @@ describe('LandingPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('navigates to /signup when Get started free is clicked', () => {
+  it('links to /signup for Get started free', () => {
     renderLandingPage();
-    fireEvent.click(screen.getByRole('button', { name: /get started free/i }));
-    expect(mockNavigate).toHaveBeenCalledWith('/signup');
+    expect(
+      screen.getByRole('link', { name: /get started free/i }),
+    ).toHaveAttribute('href', '/signup');
   });
 
-  it('navigates to /login when Log in is clicked', () => {
+  it('links to /login for Log in', () => {
     renderLandingPage();
-    fireEvent.click(screen.getByRole('button', { name: /log in/i }));
-    expect(mockNavigate).toHaveBeenCalledWith('/login');
+    expect(screen.getByRole('link', { name: /^log in$/i })).toHaveAttribute(
+      'href',
+      '/login',
+    );
   });
 
   it('renders all three feature tiles', () => {

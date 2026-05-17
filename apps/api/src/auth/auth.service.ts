@@ -3,6 +3,8 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
+  OnModuleInit,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -48,7 +50,9 @@ function expiresInMs(ms: number) {
  * column so the expiry check is always co-located with the lookup.
  */
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -57,6 +61,14 @@ export class AuthService {
     private readonly totpService: TotpService,
     private readonly prisma: PrismaService,
   ) {}
+
+  onModuleInit() {
+    if (!process.env.EXTENSION_REDIRECT_URIS) {
+      this.logger.warn(
+        'EXTENSION_REDIRECT_URIS is not set — the browser extension authorization flow will reject all redirect URIs. Set this to a comma-separated list of allowed extension callback URIs.',
+      );
+    }
+  }
 
   /**
    * Creates a new user account and sends an email verification message.
@@ -97,7 +109,10 @@ export class AuthService {
       this.usersService.listOAuthAccounts(userId),
     ]);
 
-    const twoFactorMethod: 'totp' | null = totpEnabledAt ? 'totp' : null;
+    let twoFactorMethod: 'totp' | null = null;
+    if (totpEnabledAt) {
+      twoFactorMethod = 'totp';
+    }
     const connectedProviders = oauthAccounts.map((account) => ({
       provider: account.provider,
       connectedAt: account.connectedAt,
@@ -126,10 +141,14 @@ export class AuthService {
    */
   async validateUser(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
-    if (!user || !user.passwordHash) return null;
+    if (!user || !user.passwordHash) {
+      return null;
+    }
 
     const isValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isValid) return null;
+    if (!isValid) {
+      return null;
+    }
 
     return withoutPasswordHash(user);
   }
@@ -185,9 +204,8 @@ export class AuthService {
     }
 
     try {
-      const newUser = await this.usersService.createOAuthUser(email);
-      await this.usersService.linkOAuthAccount(
-        newUser.id,
+      const newUser = await this.usersService.createOAuthUserAndLink(
+        email,
         provider,
         providerId,
       );
@@ -241,6 +259,15 @@ export class AuthService {
     return this.issueTokenPair(user.userId, user.email);
   }
 
+  /**
+   * Validates a refresh token, deletes it, and issues a new access token
+   * and rotated refresh token. Each refresh token is single-use — presenting
+   * it here consumes it and produces a fresh pair.
+   *
+   * @param rawRefreshToken - The raw (un-hashed) refresh token from the client.
+   * @returns A new `{ accessToken, refreshToken }` pair.
+   * @throws {UnauthorizedException} When the token is invalid or expired.
+   */
   async refresh(rawRefreshToken: string) {
     const tokenHash = createHash('sha256')
       .update(rawRefreshToken)
@@ -258,10 +285,63 @@ export class AuthService {
     return this.issueTokenPair(stored.userId, stored.user.email);
   }
 
+  /**
+   * Deletes every refresh token for the given user, effectively logging
+   * them out of all devices. The current access token remains valid until
+   * it expires (at most 1 hour) — there is no server-side JWT blocklist.
+   *
+   * @param userId - The UUID of the user whose sessions should be revoked.
+   */
   async revokeAllRefreshTokens(userId: string) {
-    await this.prisma.refreshToken.deleteMany({ where: { userId } });
+    await Promise.all([
+      this.prisma.refreshToken.deleteMany({ where: { userId } }),
+      this.prisma.extensionAuthCode.deleteMany({ where: { userId } }),
+    ]);
   }
 
+  /**
+   * Validates the PKCE redirect URI against the environment allowlist, then
+   * generates and stores an extension auth code.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param codeChallenge - The PKCE S256 code challenge from the extension.
+   * @param redirectUri - The extension callback URI.
+   * @returns The raw auth code and the validated redirect URI.
+   * @throws {BadRequestException} When required parameters are missing or the redirect URI is not allowed.
+   */
+  async authorizeExtension(
+    userId: string,
+    codeChallenge: string,
+    redirectUri: string,
+  ): Promise<{ code: string; callbackUrl: string }> {
+    if (!codeChallenge || !redirectUri) {
+      throw new BadRequestException(
+        'code_challenge and redirect_uri are required',
+      );
+    }
+
+    const allowedUris = process.env.EXTENSION_REDIRECT_URIS
+      ? process.env.EXTENSION_REDIRECT_URIS.split(',').map((uri) => uri.trim())
+      : [];
+
+    if (!allowedUris.includes(redirectUri)) {
+      throw new BadRequestException('Invalid redirect_uri');
+    }
+
+    const code = await this.createExtensionAuthCode(userId, codeChallenge);
+    return { code, callbackUrl: redirectUri };
+  }
+
+  /**
+   * Generates a short-lived PKCE authorization code for the browser extension
+   * flow. The raw code is returned to the caller; only its SHA-256 hash is
+   * stored. The code expires in 5 minutes.
+   *
+   * @param userId - The UUID of the user authorizing the extension.
+   * @param codeChallenge - The SHA-256 / base64url PKCE challenge from the
+   *   extension (derived from the extension's `code_verifier`).
+   * @returns The raw authorization code to pass back to the extension via redirect.
+   */
   async createExtensionAuthCode(
     userId: string,
     codeChallenge: string,
@@ -277,6 +357,18 @@ export class AuthService {
     return rawCode;
   }
 
+  /**
+   * Completes the browser extension PKCE flow by validating the auth code and
+   * the code verifier, then issuing a token pair. The code is deleted on use
+   * to prevent replay.
+   *
+   * @param rawCode - The raw authorization code received by the extension.
+   * @param codeVerifier - The PKCE verifier generated by the extension. Must
+   *   SHA-256 hash (base64url) to the challenge stored at code creation time.
+   * @returns `{ accessToken, refreshToken }` on success.
+   * @throws {UnauthorizedException} When the code is invalid, expired, or the
+   *   verifier does not match the stored challenge.
+   */
   async exchangeExtensionCode(rawCode: string, codeVerifier: string) {
     const codeHash = createHash('sha256').update(rawCode).digest('hex');
     const stored = await this.prisma.extensionAuthCode.findUnique({
@@ -299,6 +391,17 @@ export class AuthService {
     return this.issueTokenPair(stored.userId, stored.user.email);
   }
 
+  /**
+   * Creates a new refresh token, stores its hash in the database, signs a
+   * short-lived access token, and returns both. Called from every code path
+   * that completes a successful authentication (login, magic link, OTP, OAuth,
+   * extension token exchange, and refresh rotation).
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param email - The user's email address (embedded in the JWT payload).
+   * @returns `{ accessToken, refreshToken }` where `refreshToken` is the raw
+   *   token (stored only as a hash).
+   */
   private async issueTokenPair(userId: string, email: string) {
     const rawRefreshToken = randomBytes(32).toString('hex');
     const tokenHash = createHash('sha256')
@@ -397,7 +500,9 @@ export class AuthService {
    */
   async forgotPassword(email: string) {
     const user = await this.usersService.findByEmail(email);
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     const token = generateToken();
     const expiresAt = expiresInMs(ONE_HOUR_MS);
@@ -426,10 +531,11 @@ export class AuthService {
     }
 
     const newPasswordHash = await bcrypt.hash(newPassword, 12);
-    await this.usersService.resetPasswordWithToken(user.id, newPasswordHash);
-    if (!user.emailVerifiedAt) {
-      await this.usersService.markEmailVerified(user.id);
-    }
+    await this.usersService.resetPasswordWithToken(
+      user.id,
+      newPasswordHash,
+      !user.emailVerifiedAt,
+    );
   }
 
   /**
@@ -537,14 +643,17 @@ export class AuthService {
           (recoveryCode) => recoveryCode.codeHash,
         );
         const matchIndex = await findMatchingRecoveryCode(code, hashes);
-        if (matchIndex === null)
+        if (matchIndex === null) {
           throw new UnauthorizedException('Invalid OTP code');
+        }
         await this.usersService.markRecoveryCodeUsed(
           recoveryCodes[matchIndex].id,
         );
       } else {
         const isValid = await this.totpService.verifyCode(user, code);
-        if (!isValid) throw new UnauthorizedException('Invalid OTP code');
+        if (!isValid) {
+          throw new UnauthorizedException('Invalid OTP code');
+        }
       }
     }
 
@@ -658,7 +767,9 @@ export class AuthService {
         );
       }
       const valid = await bcrypt.compare(currentPassword, user.passwordHash!);
-      if (!valid) throw new UnauthorizedException('Invalid password');
+      if (!valid) {
+        throw new UnauthorizedException('Invalid password');
+      }
       return;
     }
 
@@ -686,7 +797,9 @@ export class AuthService {
 
       if (user.totpEnabledAt) {
         const valid = await this.totpService.verifyCode(user, code);
-        if (!valid) throw new UnauthorizedException('Invalid OTP code');
+        if (!valid) {
+          throw new UnauthorizedException('Invalid OTP code');
+        }
         return;
       }
 
@@ -705,10 +818,27 @@ export class AuthService {
     return codes;
   }
 
+  /**
+   * Sets a password for an account that was created via OAuth and has no
+   * password yet. Delegates to `UsersService.setFirstPassword`, which throws
+   * `BadRequestException` if the account already has a password.
+   *
+   * @param userId - The UUID of the SSO-only account.
+   * @param password - The plain-text password to set (hashed by UsersService).
+   * @throws {BadRequestException} When the account already has a password.
+   */
   async setFirstPassword(userId: string, password: string): Promise<void> {
     await this.usersService.setFirstPassword(userId, password);
   }
 
+  /**
+   * Disconnects an OAuth provider from the user's account. Requires the user
+   * to have a password set first — otherwise they would be locked out.
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param provider - The provider name (e.g. `'google'`).
+   * @throws {BadRequestException} When the user has no password set.
+   */
   async unlinkOAuthProvider(userId: string, provider: string): Promise<void> {
     const user = await this.usersService.findByIdWithPasswordHash(userId);
     if (!user.hasPassword) {
@@ -719,6 +849,26 @@ export class AuthService {
     await this.usersService.unlinkOAuthAccount(userId, provider);
   }
 
+  /**
+   * Links an OAuth provider to an existing Linklater account. Called from
+   * `AuthController.googleLinkCallback` after `GoogleLinkStrategy` validates
+   * the HMAC state and extracts the provider profile.
+   *
+   * The provider email must exactly match the Linklater account's email.
+   * This prevents one person from linking another user's Google account to
+   * their Linklater account. If the provider account is already linked to
+   * the same user, this is a no-op. If linked to a different user, a
+   * `ConflictException` is thrown.
+   *
+   * @param userId - The UUID of the authenticated Linklater user.
+   * @param provider - The provider name (e.g. `'google'`).
+   * @param providerId - The provider-issued user ID.
+   * @param providerEmail - The email returned by the provider.
+   * @throws {BadRequestException} When `providerEmail` does not match the
+   *   Linklater account's email.
+   * @throws {ConflictException} When the provider account is already linked
+   *   to a different Linklater user.
+   */
   async linkOAuthAccountToUser(
     userId: string,
     provider: string,
@@ -738,7 +888,9 @@ export class AuthService {
       providerId,
     );
     if (existing) {
-      if (existing.userId === userId) return;
+      if (existing.userId === userId) {
+        return;
+      }
       throw new ConflictException(
         'This provider account is already linked to a different user',
       );

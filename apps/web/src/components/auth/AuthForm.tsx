@@ -1,9 +1,4 @@
-import Alert from '../common/Alert';
-import FormInput from '../common/FormInput';
-import IconButton from '../common/IconButton';
-import LinkButton from '../common/LinkButton';
-import PrimaryButton from '../common/PrimaryButton';
-import TabButton from '../common/TabButton';
+import { useAuth } from '../../auth/AuthContext';
 import {
   forgotPassword as apiForgotPassword,
   registerMagicLink,
@@ -11,7 +6,12 @@ import {
   verifyOtp,
 } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import { useAuth } from '../../auth/AuthContext';
+import Alert from '../common/Alert';
+import FormInput from '../common/FormInput';
+import IconButton from '../common/IconButton';
+import LinkButton from '../common/LinkButton';
+import PrimaryButton from '../common/PrimaryButton';
+import TabButton from '../common/TabButton';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 
@@ -23,6 +23,22 @@ type Mode = 'login' | 'register' | 'forgot-password';
 
 /** The MFA challenge method currently being shown to the user. */
 type MfaChallenge = 'totp' | 'recovery';
+
+function submitLabel(loading: boolean, isMagicLink: boolean, mode: Mode): string {
+  if (loading) {
+    return 'Working…';
+  }
+  if (isMagicLink) {
+    if (mode === 'login') {
+      return 'Log in with magic link';
+    }
+    return 'Sign up with magic link';
+  }
+  if (mode === 'login') {
+    return 'Log in';
+  }
+  return 'Create account';
+}
 
 /**
  * Authentication form rendered for `/login`, `/signup`, and
@@ -66,12 +82,16 @@ export default function AuthForm() {
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
 
-  const mode: Mode =
-    location.pathname === '/signup'
-      ? 'register'
-      : location.pathname === '/forgot-password'
-        ? 'forgot-password'
-        : 'login';
+  function resolveMode(): Mode {
+    if (location.pathname === '/signup') {
+      return 'register';
+    }
+    if (location.pathname === '/forgot-password') {
+      return 'forgot-password';
+    }
+    return 'login';
+  }
+  const mode = resolveMode();
 
   useEffect(() => {
     setPassword('');
@@ -144,7 +164,9 @@ export default function AuthForm() {
 
   const handleVerifyOtp = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
-    if (!mfaToken || !mfaChallenge) return;
+    if (!mfaToken || !mfaChallenge) {
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -163,12 +185,12 @@ export default function AuthForm() {
 
   const handleModeChange = (newMode: Mode) => {
     const from = (location.state as { from?: string })?.from;
-    const path =
-      newMode === 'register'
-        ? '/signup'
-        : newMode === 'forgot-password'
-          ? '/forgot-password'
-          : '/login';
+    let path = '/login';
+    if (newMode === 'register') {
+      path = '/signup';
+    } else if (newMode === 'forgot-password') {
+      path = '/forgot-password';
+    }
     navigate(path, { state: { from }, replace: true });
   };
 
@@ -318,22 +340,30 @@ export default function AuthForm() {
           }}
         />
         <TabButton
+          aria-controls="auth-form-panel"
           className="flex-1 py-2 text-sm"
           isActive={mode === 'login'}
           onClick={() => handleModeChange('login')}
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowRight') handleModeChange('register');
+          }}
         >
           Log in
         </TabButton>
         <TabButton
+          aria-controls="auth-form-panel"
           className="flex-1 py-2 text-sm"
           isActive={mode === 'register'}
           onClick={() => handleModeChange('register')}
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowLeft') handleModeChange('login');
+          }}
         >
           Sign up
         </TabButton>
       </div>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form id="auth-form-panel" className="space-y-4" onSubmit={handleSubmit}>
         <label
           className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
           htmlFor="auth-email"
@@ -385,15 +415,7 @@ export default function AuthForm() {
             className={`fa-solid ${password.length === 0 ? 'fa-wand-magic-sparkles' : 'fa-right-to-bracket'} text-xs`}
             aria-hidden="true"
           />
-          {loading
-            ? 'Working…'
-            : password.length === 0
-              ? mode === 'login'
-                ? 'Log in with magic link'
-                : 'Sign up with magic link'
-              : mode === 'login'
-                ? 'Log in'
-                : 'Create account'}
+          {submitLabel(loading, password.length === 0, mode)}
         </PrimaryButton>
       </form>
 
@@ -455,9 +477,13 @@ export default function AuthForm() {
       )}
 
       <div
+        aria-hidden={mode !== 'login' ? true : undefined}
         className={`mt-4 flex flex-col items-center gap-2 text-center transition-opacity duration-200 ${mode === 'login' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
-        <LinkButton onClick={() => handleModeChange('forgot-password')}>
+        <LinkButton
+          tabIndex={mode !== 'login' ? -1 : undefined}
+          onClick={() => handleModeChange('forgot-password')}
+        >
           I literally have no idea what my password is
         </LinkButton>
       </div>

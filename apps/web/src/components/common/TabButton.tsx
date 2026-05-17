@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { FOCUS_RING } from '../../lib/styles';
 
 /**
@@ -9,9 +9,12 @@ import { FOCUS_RING } from '../../lib/styles';
  * by the parent using an `aria-hidden` `<div>` so that the text color
  * transitions correctly over the highlight.
  *
+ * Accepts all native `<button>` attributes (e.g. `aria-controls`) so the
+ * parent tablist can wire up proper panel associations.
+ *
  * Used in `LinksToolbar` (Unread/Read tabs) and `AuthForm` (Log in/Sign up).
  */
-interface TabButtonProps {
+interface TabButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Tab label content. */
   children: ReactNode;
   /** Whether this tab is currently selected. Drives `aria-selected`. */
@@ -27,6 +30,7 @@ export default function TabButton({
   isActive,
   onClick,
   className = '',
+  ...props
 }: TabButtonProps) {
   return (
     <button
@@ -40,6 +44,7 @@ export default function TabButton({
       tabIndex={isActive ? 0 : -1}
       onClick={onClick}
       aria-selected={isActive}
+      {...props}
     >
       {children}
     </button>

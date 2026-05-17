@@ -47,9 +47,12 @@ import {
   resetPassword,
   revokeAllSessions,
   revokeApiToken,
+  setPassword,
   setStoredToken,
   setupTotp,
+  stumbleLink,
   unreadLink,
+  unlinkOAuthProvider,
   updateLink,
   updateMe,
   verifyEmail,
@@ -853,6 +856,71 @@ describe('verifyOtp', () => {
     await verifyOtp('mfa-pending-token', '123456', 'totp');
 
     expect(getStoredToken()).toBe('full-jwt');
+  });
+});
+
+describe('setPassword', () => {
+  it('POSTs to /auth/set-password with password in body', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await setPassword('new-secure-password');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/set-password');
+    expect((options as { method: string }).method).toBe('POST');
+    const body = JSON.parse((options as { body: string }).body) as {
+      password: string;
+    };
+    expect(body.password).toBe('new-secure-password');
+  });
+});
+
+describe('unlinkOAuthProvider', () => {
+  it('DELETEs /auth/providers/:provider with auth header', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await unlinkOAuthProvider('google');
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/providers/google');
+    expect((options as { method: string }).method).toBe('DELETE');
+    const headers = (options as { headers: Record<string, string> }).headers;
+    expect(headers['Authorization']).toBe('Bearer my-jwt');
+  });
+
+  it('encodes special characters in the provider name', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await unlinkOAuthProvider('some provider');
+
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toContain('/auth/providers/some%20provider');
+  });
+});
+
+describe('stumbleLink', () => {
+  it('POSTs to /links/stumble with auth header', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ url: 'https://example.com' });
+
+    const result = await stumbleLink();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/links/stumble');
+    expect((options as { method: string }).method).toBe('POST');
+    expect(result).toEqual({ url: 'https://example.com' });
+  });
+
+  it('returns null url when no unread links exist', async () => {
+    setStoredToken('my-jwt');
+    mockFetch({ url: null });
+
+    const result = await stumbleLink();
+
+    expect(result).toEqual({ url: null });
   });
 });
 

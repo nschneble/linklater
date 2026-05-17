@@ -1,7 +1,7 @@
-import AppleStrategyLib from '@nicokaiser/passport-apple';
-import { AuthService } from './auth.service.js';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
+import AppleStrategyLib from '@nicokaiser/passport-apple';
+import { AuthService } from './auth.service.js';
 
 const APPLE_PARAMS = [
   'CALLBACK_URL',

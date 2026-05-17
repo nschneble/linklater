@@ -30,7 +30,9 @@ export class MagicLinkService {
    */
   async requestLogin(email: string): Promise<void> {
     const user = await this.usersService.findByEmail(email);
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     const token = generateToken();
     const expiresAt = new Date(Date.now() + FIFTEEN_MINUTES_MS);
@@ -82,7 +84,9 @@ export class MagicLinkService {
       theme = existingUser.theme;
     } else {
       const created = await this.usersService.createWithoutPassword(email);
-      if (!created) return; // race-condition guard
+      if (!created) {
+        return; // race-condition guard
+      }
       userId = created.id;
       theme = created.theme;
     }

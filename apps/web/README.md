@@ -2,46 +2,61 @@
 
 ## Environment Variables
 
-| Variable            | Required | Description                      |
-| ------------------- | -------- | -------------------------------- |
-| `VITE_API_BASE_URL` | Yes      | Base API URL (no trailing slash) |
+| Variable                  | Required | Description                                                              |
+| ------------------------- | -------- | ------------------------------------------------------------------------ |
+| `VITE_API_BASE_URL`       | Yes      | Base API URL (no trailing slash)                                         |
+| `VITE_GOOGLE_SSO_ENABLED` | No       | Set to `'true'` to show the Google sign-in button and linking controls   |
+| `VITE_APPLE_SSO_ENABLED`  | No       | Set to `'true'` to show the Apple Sign In button and linking controls    |
+
+> **SSO feature flags:** the Google and Apple sign-in UI is hidden unless the
+> corresponding `VITE_*_SSO_ENABLED` variable equals the string `'true'`.
+> The API checks its own environment variables independently — both sides must
+> be configured for SSO to work end-to-end.
 
 ## Component Overview
 
 ### Pages and Views
 
-| Component               | Path                         | Description          |
-| ----------------------- | ---------------------------- | -------------------- |
-| `App`                   | `src`                        | Root component       |
-| `AppShell`              | `src`                        | Auth'd layout shell  |
-| `AuthForm`              | `src/components`             | Login form           |
-| `LinksView`             | `src/components`             | Main links page      |
-| `ResetPasswordPage`     | `src/components`             | Password reset       |
-| `SettingsView`          | `src/components`             | Settings             |
-| `ThemeEditor`           | `src/components/ThemeEditor` | Theme editor         |
-| `VerifyEmailChangePage` | `src/components`             | Verify email changes |
-| `VerifyEmailPage`       | `src/components`             | Verify email         |
+| Component                 | Path                         | Description                                         |
+| ------------------------- | ---------------------------- | --------------------------------------------------- |
+| `App`                     | `src`                        | Root component; sets up routing and providers       |
+| `AppShell`                | `src`                        | Authenticated layout shell with theme/mode controls |
+| `AuthForm`                | `src/components/auth`        | Login, sign-up, and forgot-password form            |
+| `ExtensionAuthorizePage`  | `src/components/auth`        | Browser extension PKCE authorization page           |
+| `LandingPage`             | `src/components/LandingPage` | Public-facing marketing page                        |
+| `LinksView`               | `src/components/links`       | Main links page (unread and read tabs)              |
+| `OAuthCallbackPage`       | `src/components/auth`        | Handles OAuth redirect from the API                 |
+| `ResetPasswordPage`       | `src/components/auth`        | Password reset (token from email)                   |
+| `SettingsView`            | `src/components/settings`    | Settings page                                       |
+| `ThemeEditor`             | `src/components/ThemeEditor` | Live theme customization                            |
+| `VerifyEmailChangePage`   | `src/components/verify`      | Confirm an email address change                     |
+| `VerifyEmailPage`         | `src/components/verify`      | Confirm a new account's email address               |
+| `VerifyLoginPage`         | `src/components/auth`        | Handles the magic-link login callback               |
 
 ### Feature Components
 
-| Component                | Path                      | Description             |
-| ------------------------ | ------------------------- | ----------------------- |
-| `AccountSettingsForm`    | `src/components`          | Change email + password |
-| `BookmarkletSection`     | `src/components`          | Generates bookmarklet   |
-| `DangerZone`             | `src/components`          | Account deletion        |
-| `ErrorBoundary`          | `src/components`          | React error boundary    |
-| `Header`                 | `src/components`          | Top navigation bar      |
-| `KeyboardShortcutsModal` | `src/components`          | List shortcut keys      |
-| `LinkCard`               | `src/components`          | Link renderer           |
-| `LinkCardLayout`         | `src/components`          | Link card structure     |
-| `LinkForm`               | `src/components`          | Add link form           |
-| `LinksControls`          | `src/components`          | Link actions            |
-| `LinksList`              | `src/components`          | Paginated list of cards |
-| `LinksToolbar`           | `src/components`          | Link tabs, search       |
-| `TokenVerificationPage`  | `src/components`          | Verify token flow       |
-| `UserMenu`               | `src/components/UserMenu` | Site nav + theme picker |
+| Component                | Path                         | Description                                           |
+| ------------------------ | ---------------------------- | ----------------------------------------------------- |
+| `AccountSettingsForm`    | `src/components/settings`    | Change email + password                               |
+| `ApiTokensList`          | `src/components/settings`    | Renders PAT rows with revoke confirmation             |
+| `ApiTokensSection`       | `src/components/settings`    | Create, list, and revoke personal access tokens       |
+| `BookmarkletSection`     | `src/components/settings`    | Generates the installable bookmarklet                 |
+| `DangerZone`             | `src/components/settings`    | Account deletion                                      |
+| `ErrorBoundary`          | `src/components/common`      | React error boundary                                  |
+| `Header`                 | `src/components`             | Top navigation bar                                    |
+| `KeyboardShortcutsModal` | `src/components/links`       | List shortcut keys                                    |
+| `LinkCard`               | `src/components/links`       | Link renderer                                         |
+| `LinkCardLayout`         | `src/components/links`       | Link card structure                                   |
+| `LinkForm`               | `src/components/links`       | Add link form                                         |
+| `LinksControls`          | `src/components/links`       | Link actions (mobile)                                 |
+| `LinksList`              | `src/components/links`       | Paginated list of cards                               |
+| `LinksToolbar`           | `src/components/links`       | Link tabs and search                                  |
+| `SocialLoginsSection`    | `src/components/settings`    | Connect / disconnect Google and Apple accounts        |
+| `TokenVerificationPage`  | `src/components/auth`        | Verify token flow                                     |
+| `TwoFactorSection`       | `src/components/settings`    | TOTP setup and management                             |
+| `UserMenu`               | `src/components/UserMenu`    | Site nav and theme picker                             |
 
-### UI Primitives (`src/components/ui`)
+### UI Primitives (`src/components/common`)
 
 | Component       | Description                  |
 | --------------- | ---------------------------- |
@@ -53,52 +68,81 @@
 | `TabButton`     | Single tab                   |
 | `Toast`         | Auto-dismissing notification |
 
+### Landing Page (`src/components/LandingPage`)
+
+| Component        | Description                                                    |
+| ---------------- | -------------------------------------------------------------- |
+| `LandingPage`    | Top-level wrapper rendered at the public `/` route             |
+| `HeroSection`    | Full-height hero with tagline and "Get started" / "Log in" CTA |
+| `FeaturesSection`| Three-column grid of feature tiles (Save, Stumble!, Share)     |
+| `FooterSection`  | Links to About, GitHub, and Contact                            |
+
 ## State Management
 
 ### Contexts
 
-| Context        | File        | What it holds                 |
-| -------------- | ----------- | ----------------------------- |
-| `AuthContext`  | `src/auth`  | The authenticated user object |
-| `ThemeContext` | `src/theme` | The active theme and mode     |
+| Context        | File        | What it holds                                        |
+| -------------- | ----------- | ---------------------------------------------------- |
+| `AuthContext`  | `src/auth`  | The authenticated user object, auth actions          |
+| `ThemeContext` | `src/theme` | The active theme name and mode (`'light'` / `'dark'`)|
 
 ### Custom Hooks
 
-| Hook                   | File                         | Purpose                |
-| ---------------------- | ---------------------------- | ---------------------- |
-| `useKeyboardShortcuts` | `src/lib`                    | Registers shortcuts    |
-| `useLinks`             | `src/lib`                    | Facade for link data   |
-| `useLinksActions`      | `src/lib`                    | Handles link CRUD      |
-| `useLinksData`         | `src/lib`                    | Fetch + paginate links |
-| `useLinksForm`         | `src/lib`                    | Link form              |
-| `useMenuNavigation`    | `src/components/UserMenu`    | Arrow-key navigation   |
-| `useMetadataPolling`   | `src/lib`                    | Polls for metadata     |
-| `usePasteDetection`    | `src/lib`                    | `paste` event listener |
-| `useRandomLink`        | `src/lib`                    | Fetch random links     |
-| `useTabNavigation`     | `src/lib`                    | Arrow-key navigation   |
-| `useThemeOverrides`    | `src/components/ThemeEditor` | Live theme overrides   |
+| Hook                   | File                         | Purpose                              |
+| ---------------------- | ---------------------------- | ------------------------------------ |
+| `useKeyboardShortcuts` | `src/lib/hooks`              | Registers keyboard shortcuts         |
+| `useLinks`             | `src/lib/hooks`              | Facade composing the three hooks below |
+| `useLinksActions`      | `src/lib/hooks`              | Handles link CRUD mutations          |
+| `useLinksData`         | `src/lib/hooks`              | Fetch and paginate links             |
+| `useLinksForm`         | `src/lib/hooks`              | Link creation form state             |
+| `useMenuNavigation`    | `src/components/UserMenu`    | Arrow-key navigation in the menu     |
+| `useMetadataPolling`   | `src/lib/hooks`              | Polls `GET /links/:id` for metadata  |
+| `usePasteDetection`    | `src/lib/hooks`              | Listens for `paste` events           |
+| `useRandomLink`        | `src/lib/hooks`              | Fetch random unread links            |
+| `useTabNavigation`     | `src/lib/hooks`              | Arrow-key navigation between tabs    |
+| `useThemeOverrides`    | `src/components/ThemeEditor` | Applies live theme CSS overrides     |
 
 ## API Patterns
 
-All API calls are centrally stored in a `src/lib` module.
+All API calls live in `src/lib/api.ts`. Key behaviors:
 
-The module:
-
-- Reads `VITE_API_BASE_URL` from the Vite environment
-- Caches the JWT in memory after reading from `localStorage`
-- Attaches `Authorization: Bearer <token>` to every authenticated request
-- Throws `Error` with the server's error message on non-2xx responses
+- Reads `VITE_API_BASE_URL` from the Vite environment.
+- Caches both the **access token** (JWT) and the **refresh token** in memory
+  after reading from `localStorage`. The keys are `linklater_token` and
+  `linklater_refresh_token`.
+- Attaches `Authorization: Bearer <token>` to every authenticated request.
+- On a `401` response, automatically calls `POST /auth/refresh` with the
+  stored refresh token, updates both stored tokens, and **retries the
+  original request once**. If the retry also fails, both tokens are cleared.
+- Throws `ApiError` (a subclass of `Error`) with the server's message and
+  HTTP status on non-2xx responses.
+- `logout()` calls `DELETE /auth/sessions` (best-effort) to revoke all
+  server-side refresh tokens, then clears the local token cache.
 
 ## Routing
 
-| Path                   | Access        | Component                |
-| ---------------------- | ------------- | ------------------------ |
-| `/`                    | Authenticated | _Redirects to_ `/unread` |
-| `/editor`              | Authenticated | `ThemeEditor`            |
-| `/read`                | Authenticated | `LinksView` (read)       |
-| `/reset-password`      | Public        | `ResetPasswordPage`      |
-| `/settings`            | Authenticated | `SettingsView`           |
-| `/unread`              | Authenticated | `LinksView` (unread)     |
-| `/verify-email`        | Public        | `VerifyEmailPage`        |
-| `/verify-email-change` | Public        | `VerifyEmailChangePage`  |
-| `*` (unauthenticated)  | Public        | `AuthForm`               |
+| Path                   | Access        | Component                 |
+| ---------------------- | ------------- | ------------------------- |
+| `/`                    | Public        | `LandingPage`             |
+| `/extension/authorize` | Public        | `ExtensionAuthorizePage`  |
+| `/forgot-password`     | Public        | `AuthForm` (forgot mode)  |
+| `/login`               | Public        | `AuthForm` (login mode)   |
+| `/logout`              | Public        | `LogoutPage`              |
+| `/oauth/callback`      | Public        | `OAuthCallbackPage`       |
+| `/reset-password`      | Public        | `ResetPasswordPage`       |
+| `/signup`              | Public        | `AuthForm` (register mode)|
+| `/verify-email`        | Public        | `VerifyEmailPage`         |
+| `/verify-email-change` | Public        | `VerifyEmailChangePage`   |
+| `/verify-login`        | Public        | `VerifyLoginPage`         |
+| `/editor`              | Authenticated | `ThemeEditor`             |
+| `/read`                | Authenticated | `LinksView` (read)        |
+| `/settings`            | Authenticated | `SettingsView`            |
+| `/unread`              | Authenticated | `LinksView` (unread)      |
+
+> **Note:** `/` is now the public landing page. Authenticated users who
+> visit `/` are not redirected automatically — they see the landing page.
+> The authenticated root (`/unread`) is reached after login.
+
+> **Note:** `/extension/authorize` renders differently depending on auth state:
+> if the user is not logged in, it shows a prompt to sign in; if they are
+> logged in, it shows a confirmation dialog before triggering the PKCE flow.

@@ -1,6 +1,3 @@
-import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
-
 import {
   createApiToken,
   listApiTokens,
@@ -14,7 +11,21 @@ import Alert from '../common/Alert';
 import IconButton from '../common/IconButton';
 import PrimaryButton from '../common/PrimaryButton';
 import ApiTokensList from './ApiTokensList';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 
+/**
+ * Settings section for managing personal access tokens (PATs).
+ *
+ * Loads the token list on mount via `GET /tokens`. Provides a form to
+ * create a named token and a per-token revoke button. The raw token value
+ * is shown once immediately after creation (before dismissing the panel)
+ * and is never retrievable again — the UI makes this explicit.
+ *
+ * API calls:
+ * - `GET /tokens` — load the list on mount
+ * - `POST /tokens` — create a new token
+ * - `DELETE /tokens/:id` — revoke a token
+ */
 export default function ApiTokensSection() {
   const [tokens, setTokens] = useState<ApiToken[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -70,7 +81,9 @@ export default function ApiTokensSection() {
   };
 
   const handleCopy = async () => {
-    if (!newToken) return;
+    if (!newToken) {
+      return;
+    }
     try {
       await navigator.clipboard.writeText(newToken.rawToken);
       setCopied(true);
@@ -87,9 +100,9 @@ export default function ApiTokensSection() {
   return (
     <div className="max-w-md space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+        <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
           API Tokens
-        </h3>
+        </h2>
         {!showCreate && !newToken && (
           <IconButton
             type="button"

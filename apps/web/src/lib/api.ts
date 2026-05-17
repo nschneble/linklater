@@ -556,15 +556,18 @@ export async function getLinks(options?: {
       queryParameters.set('read', 'false');
     }
   }
-  if (options?.limit !== undefined)
+  if (options?.limit !== undefined) {
     queryParameters.set('limit', String(options.limit));
-  if (options?.page !== undefined)
+  }
+  if (options?.page !== undefined) {
     queryParameters.set('page', String(options.page));
-  if (options?.search) queryParameters.set('search', options.search);
+  }
+  if (options?.search) {
+    queryParameters.set('search', options.search);
+  }
 
   const query = queryParameters.toString();
   const path = query ? `/links?${query}` : '/links';
-
   return apiFetch<PaginatedLinks>(path);
 }
 
