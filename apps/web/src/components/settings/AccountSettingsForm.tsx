@@ -11,6 +11,7 @@ import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
+import StatusBadge from '../common/StatusBadge';
 
 /**
  * Settings section for updating email address and password.
@@ -172,21 +173,16 @@ export default function AccountSettingsForm() {
             {user?.email}
           </span>
           {isVerified ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 [[data-mode='dark']_&]:bg-emerald-950/20 border border-emerald-300 [[data-mode='dark']_&]:border-emerald-800/40 text-emerald-700 [[data-mode='dark']_&]:text-emerald-400 text-xs rounded-full">
-              <i
-                className="fa-solid fa-circle-check text-[0.6rem]"
-                aria-hidden="true"
-              />
+            <StatusBadge variant="success" icon="fa-solid fa-circle-check">
               Verified
-            </span>
+            </StatusBadge>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/20 border border-amber-300 [[data-mode='dark']_&]:border-amber-800/40 text-amber-700 [[data-mode='dark']_&]:text-amber-300 text-xs rounded-full">
-              <i
-                className="fa-solid fa-circle-exclamation text-[0.6rem]"
-                aria-hidden="true"
-              />
+            <StatusBadge
+              variant="warning"
+              icon="fa-solid fa-circle-exclamation"
+            >
               Unverified
-            </span>
+            </StatusBadge>
           )}
         </div>
 

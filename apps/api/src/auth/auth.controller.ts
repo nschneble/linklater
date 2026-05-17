@@ -425,14 +425,7 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   @Get('google/callback')
   async googleCallback(@Req() request: AuthRequest, @Res() response: Response) {
-    const result = await this.authService.login(request.user);
-    if (!('accessToken' in result)) {
-      response.redirect(`${process.env.APP_URL}/login?error=mfa_required`);
-      return;
-    }
-    response.redirect(
-      `${process.env.APP_URL}/oauth/callback#token=${result.accessToken}&refresh=${result.refreshToken}`,
-    );
+    await this.completeOAuthLogin(request, response);
   }
 
   @ApiOperation({ summary: 'Initiate Apple Sign In' })
@@ -446,6 +439,20 @@ export class AuthController {
   @UseGuards(AuthGuard('apple'))
   @Post('apple/callback')
   async appleCallback(@Req() request: AuthRequest, @Res() response: Response) {
+    await this.completeOAuthLogin(request, response);
+  }
+
+  /**
+   * Shared OAuth post-login handler. Issues a session for the authenticated
+   * user and redirects the browser to the SPA's `/oauth/callback` route with
+   * the tokens in the URL fragment (fragments are never sent to servers or
+   * logged in Referer headers). When 2FA is enabled, redirects to `/login`
+   * with an error code instead, since OAuth callbacks can't show an OTP form.
+   */
+  private async completeOAuthLogin(
+    request: AuthRequest,
+    response: Response,
+  ): Promise<void> {
     const result = await this.authService.login(request.user);
     if (!('accessToken' in result)) {
       response.redirect(`${process.env.APP_URL}/login?error=mfa_required`);

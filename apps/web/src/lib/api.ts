@@ -550,11 +550,7 @@ export async function getLinks(options?: {
   const queryParameters = new URLSearchParams();
 
   if (options?.read !== undefined) {
-    if (options.read) {
-      queryParameters.set('read', 'true');
-    } else {
-      queryParameters.set('read', 'false');
-    }
+    queryParameters.set('read', String(options.read));
   }
   if (options?.limit !== undefined) {
     queryParameters.set('limit', String(options.limit));

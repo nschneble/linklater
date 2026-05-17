@@ -1,13 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { randomBytes } from 'crypto';
+import { generateHexToken } from '../common/crypto-tokens.js';
 import { EmailService } from '../email/index.js';
 import { UsersService } from '../users/users.service.js';
 
 const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
-
-function generateToken(): string {
-  return randomBytes(32).toString('hex');
-}
 
 /**
  * Manages password-less email login via one-time magic link tokens.
@@ -34,7 +30,7 @@ export class MagicLinkService {
       return;
     }
 
-    const token = generateToken();
+    const token = generateHexToken();
     const expiresAt = new Date(Date.now() + FIFTEEN_MINUTES_MS);
 
     await this.usersService.updateMagicLinkToken(user.id, token, expiresAt);
@@ -75,25 +71,15 @@ export class MagicLinkService {
    */
   async requestSignup(email: string): Promise<void> {
     const existingUser = await this.usersService.findByEmail(email);
-
-    let userId: string;
-    let theme: string;
-
-    if (existingUser) {
-      userId = existingUser.id;
-      theme = existingUser.theme;
-    } else {
-      const created = await this.usersService.createWithoutPassword(email);
-      if (!created) {
-        return; // race-condition guard
-      }
-      userId = created.id;
-      theme = created.theme;
+    const user =
+      existingUser ?? (await this.usersService.createWithoutPassword(email));
+    if (!user) {
+      return; // race-condition guard when createWithoutPassword loses the race
     }
 
-    const token = generateToken();
+    const token = generateHexToken();
     const expiresAt = new Date(Date.now() + FIFTEEN_MINUTES_MS);
-    await this.usersService.updateMagicLinkToken(userId, token, expiresAt);
-    await this.emailService.sendMagicLink(email, token, theme);
+    await this.usersService.updateMagicLinkToken(user.id, token, expiresAt);
+    await this.emailService.sendMagicLink(email, token, user.theme);
   }
 }

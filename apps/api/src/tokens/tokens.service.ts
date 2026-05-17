@@ -1,7 +1,8 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 
+import { sha256Hex } from '../common/crypto-tokens.js';
 import { Prisma } from '../prisma/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -39,7 +40,7 @@ export class TokensService {
    */
   async create(userId: string, name: string) {
     const rawToken = TOKEN_PREFIX + randomBytes(24).toString('base64url');
-    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const tokenHash = sha256Hex(rawToken);
     const prefix = rawToken.slice(0, DISPLAY_PREFIX_LENGTH);
 
     const stored = await this.prisma.apiToken.create({
@@ -111,7 +112,7 @@ export class TokensService {
    * @returns The owning `User` record, or `null` if no token matches.
    */
   async validateToken(rawToken: string) {
-    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const tokenHash = sha256Hex(rawToken);
 
     const stored = await this.prisma.apiToken.findUnique({
       where: { tokenHash },

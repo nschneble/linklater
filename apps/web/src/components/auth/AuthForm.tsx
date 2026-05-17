@@ -44,6 +44,12 @@ function submitLabel(
   return 'Create account';
 }
 
+/** Capitalize the first letter so server error messages display nicely. */
+function capitalizeFirst(message: string): string {
+  if (!message) return message;
+  return message.charAt(0).toUpperCase() + message.slice(1);
+}
+
 /**
  * Authentication form rendered for `/login`, `/signup`, and
  * `/forgot-password` endpoints.
@@ -96,6 +102,11 @@ export default function AuthForm() {
     return 'login';
   }
   const mode = resolveMode();
+
+  /** Resolves where to send the user after a successful authentication. */
+  function postLoginDestination(): string {
+    return (location.state as { from?: string })?.from ?? '/unread';
+  }
 
   useEffect(() => {
     setPassword('');
@@ -151,16 +162,14 @@ export default function AuthForm() {
       }
 
       if (mode !== 'forgot-password') {
-        const destination =
-          (location.state as { from?: string })?.from ?? '/unread';
-        navigate(destination, { replace: true });
+        navigate(postLoginDestination(), { replace: true });
       }
     } catch (caught: unknown) {
       const message = getErrorMessage(
         caught,
         'Something went dreadfully wrong',
       );
-      setError(message.charAt(0).toUpperCase() + message.slice(1));
+      setError(capitalizeFirst(message));
     } finally {
       setLoading(false);
     }
@@ -176,12 +185,10 @@ export default function AuthForm() {
     try {
       await verifyOtp(mfaToken, mfaCode, mfaChallenge);
       await refreshUser();
-      const destination =
-        (location.state as { from?: string })?.from ?? '/unread';
-      navigate(destination, { replace: true });
+      navigate(postLoginDestination(), { replace: true });
     } catch (caught: unknown) {
       const message = getErrorMessage(caught, 'Invalid code');
-      setError(message.charAt(0).toUpperCase() + message.slice(1));
+      setError(capitalizeFirst(message));
     } finally {
       setLoading(false);
     }

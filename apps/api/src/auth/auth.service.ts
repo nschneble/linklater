@@ -8,8 +8,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { createHash, randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
+import { createHash } from 'node:crypto';
+import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import {
   RECOVERY_CODE_REGEX,
   findMatchingRecoveryCode,
@@ -27,11 +28,6 @@ const ONE_HOUR_MS = 60 * 60 * 1000;
 const TWENTY_FOUR_HOURS_MS = 24 * ONE_HOUR_MS;
 const ONE_YEAR_MS = 365 * 24 * ONE_HOUR_MS;
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
-
-/** Returns a cryptographically random 64-character hex string for use as a one-time token. */
-function generateToken() {
-  return randomBytes(32).toString('hex');
-}
 
 /**
  * Returns a `Date` that is `ms` milliseconds in the future.
@@ -269,9 +265,7 @@ export class AuthService implements OnModuleInit {
    * @throws {UnauthorizedException} When the token is invalid or expired.
    */
   async refresh(rawRefreshToken: string) {
-    const tokenHash = createHash('sha256')
-      .update(rawRefreshToken)
-      .digest('hex');
+    const tokenHash = sha256Hex(rawRefreshToken);
     const stored = await this.prisma.refreshToken.findUnique({
       where: { tokenHash },
       include: { user: true },
@@ -346,8 +340,8 @@ export class AuthService implements OnModuleInit {
     userId: string,
     codeChallenge: string,
   ): Promise<string> {
-    const rawCode = randomBytes(32).toString('hex');
-    const codeHash = createHash('sha256').update(rawCode).digest('hex');
+    const rawCode = generateHexToken();
+    const codeHash = sha256Hex(rawCode);
     const expiresAt = new Date(Date.now() + FIVE_MINUTES_MS);
 
     await this.prisma.extensionAuthCode.create({
@@ -370,7 +364,7 @@ export class AuthService implements OnModuleInit {
    *   verifier does not match the stored challenge.
    */
   async exchangeExtensionCode(rawCode: string, codeVerifier: string) {
-    const codeHash = createHash('sha256').update(rawCode).digest('hex');
+    const codeHash = sha256Hex(rawCode);
     const stored = await this.prisma.extensionAuthCode.findUnique({
       where: { codeHash },
       include: { user: true },
@@ -403,10 +397,8 @@ export class AuthService implements OnModuleInit {
    *   token (stored only as a hash).
    */
   private async issueTokenPair(userId: string, email: string) {
-    const rawRefreshToken = randomBytes(32).toString('hex');
-    const tokenHash = createHash('sha256')
-      .update(rawRefreshToken)
-      .digest('hex');
+    const rawRefreshToken = generateHexToken();
+    const tokenHash = sha256Hex(rawRefreshToken);
     const expiresAt = new Date(Date.now() + ONE_YEAR_MS);
 
     await this.prisma.refreshToken.create({
@@ -458,7 +450,7 @@ export class AuthService implements OnModuleInit {
    */
   async sendVerificationEmail(userId: string) {
     const user = await this.usersService.findById(userId);
-    const token = generateToken();
+    const token = generateHexToken();
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
 
     await this.usersService.updateVerificationToken(userId, token, expiresAt);
@@ -504,7 +496,7 @@ export class AuthService implements OnModuleInit {
       return;
     }
 
-    const token = generateToken();
+    const token = generateHexToken();
     const expiresAt = expiresInMs(ONE_HOUR_MS);
 
     await this.usersService.updateResetToken(user.id, token, expiresAt);
@@ -553,7 +545,7 @@ export class AuthService implements OnModuleInit {
       throw new BadRequestException('Email is already verified');
     }
 
-    const token = generateToken();
+    const token = generateHexToken();
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
 
     await this.usersService.updateVerificationToken(userId, token, expiresAt);
@@ -657,7 +649,7 @@ export class AuthService implements OnModuleInit {
       }
     }
 
-    const token = generateToken();
+    const token = generateHexToken();
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
 
     await this.usersService.updatePendingEmail(

@@ -1,5 +1,6 @@
 import Alert from '../common/Alert';
 import IconButton from '../common/IconButton';
+import StatusBadge from '../common/StatusBadge';
 import { useAuth } from '../../auth/AuthContext';
 import { unlinkOAuthProvider } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
@@ -208,13 +209,9 @@ function ProviderRow({
 
       {connected ? (
         <>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 [[data-mode='dark']_&]:bg-emerald-950/20 border border-emerald-300 [[data-mode='dark']_&]:border-emerald-800/40 text-emerald-700 [[data-mode='dark']_&]:text-emerald-400 text-xs rounded-full">
-            <i
-              className="fa-solid fa-circle-check text-[0.6rem]"
-              aria-hidden="true"
-            />
+          <StatusBadge variant="success" icon="fa-solid fa-circle-check">
             Connected
-          </span>
+          </StatusBadge>
 
           {isConfirming ? (
             <div className="flex items-center gap-2 text-xs" role="alert">

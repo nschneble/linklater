@@ -9,6 +9,7 @@ import { getErrorMessage } from '../../lib/errors';
 import Alert from '../common/Alert';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
+import StatusBadge from '../common/StatusBadge';
 import ReauthForm from './ReauthForm';
 import RecoveryCodesModal from './RecoveryCodesModal';
 import TotpSetupView from './TotpSetupView';
@@ -21,18 +22,6 @@ import {
 } from 'react';
 
 type ReauthAction = 'disable' | 'regenerate';
-
-function EnabledBadge() {
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 [[data-mode='dark']_&]:bg-emerald-950/20 border border-emerald-300 [[data-mode='dark']_&]:border-emerald-800/40 text-emerald-700 [[data-mode='dark']_&]:text-emerald-400 text-xs rounded-full">
-      <i
-        className="fa-solid fa-circle-check text-[0.6rem]"
-        aria-hidden="true"
-      />
-      Enabled
-    </span>
-  );
-}
 
 export default function TwoFactorSection() {
   const { refreshUser, user } = useAuth();
@@ -169,7 +158,9 @@ export default function TwoFactorSection() {
             <span className="text-[var(--text-muted)] text-sm">
               Authenticator app
             </span>
-            <EnabledBadge />
+            <StatusBadge variant="success" icon="fa-solid fa-circle-check">
+              Enabled
+            </StatusBadge>
           </div>
           <div className="flex flex-col gap-2">
             <LinkButton
@@ -242,9 +233,7 @@ export default function TwoFactorSection() {
               />
               Set up authenticator app
             </PrimaryButton>
-            <span className="px-2 py-0.5 bg-blue-100 [[data-mode='dark']_&]:bg-blue-950/20 border border-blue-300 [[data-mode='dark']_&]:border-blue-800/40 text-blue-700 [[data-mode='dark']_&]:text-blue-400 text-xs rounded-full">
-              Recommended
-            </span>
+            <StatusBadge variant="info">Recommended</StatusBadge>
           </div>
         </div>
       )}
