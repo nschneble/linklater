@@ -1,57 +1,24 @@
 import { jest } from '@jest/globals';
 import * as bcrypt from 'bcryptjs';
 
-class MockPrismaClientKnownRequestError extends Error {
-  code: string;
-  constructor(message: string, { code }: { code: string }) {
-    super(message);
-    this.code = code;
-  }
-}
-
-jest.mock('../prisma/generated/client', () => ({
-  Prisma: { PrismaClientKnownRequestError: MockPrismaClientKnownRequestError },
-}));
-
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma } from '../prisma/generated/client';
 
 import { AuthService } from './auth.service';
+import { EmailVerificationService } from './email-verification.service';
 import { MagicLinkService } from './magic-link.service';
 import { TotpService } from './totp.service';
 import { UsersService } from '../users/users.service';
-import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
-
-const makeP2002 = () =>
-  new (
-    Prisma as {
-      PrismaClientKnownRequestError: typeof MockPrismaClientKnownRequestError;
-    }
-  ).PrismaClientKnownRequestError('Unique constraint failed', {
-    code: 'P2002',
-  });
 
 const KNOWN_PASSWORD = 'open-sesame';
 const KNOWN_PASSWORD_HASH = bcrypt.hashSync(KNOWN_PASSWORD, 1);
-const OAUTH_PROVIDER = 'google';
-const OAUTH_PROVIDER_ID = 'google-uid-123';
-const NEW_EMAIL = 'new.email@addy.com';
 const NEW_PASSWORD = 'new-secure-password-123';
-const PENDING_EMAIL_TOKEN = 'pending-email-token-abc';
-const RESET_TOKEN = 'reset-token-abc';
 const SIGNED_TOKEN = 'signed-token';
 const UNKNOWN_PASSWORD = 'open-poppy-seed';
 const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';
-const VERIFICATION_TOKEN = 'verification-token-xyz';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -92,11 +59,9 @@ describe('AuthService', () => {
     sign: jest.fn().mockReturnValue(SIGNED_TOKEN),
   } as unknown as JwtService;
 
-  const emailServiceMock = {
-    sendEmailChangeVerification: jest.fn(),
-    sendPasswordReset: jest.fn(),
-    sendVerification: jest.fn(),
-  } as unknown as EmailService;
+  const emailVerificationServiceMock = {
+    sendVerificationEmail: jest.fn(),
+  } as unknown as EmailVerificationService;
 
   const magicLinkServiceMock = {
     requestLogin: jest.fn().mockResolvedValue(undefined),
@@ -129,7 +94,10 @@ describe('AuthService', () => {
         AuthService,
         { provide: UsersService, useValue: usersServiceMock },
         { provide: JwtService, useValue: jwtServiceMock },
-        { provide: EmailService, useValue: emailServiceMock },
+        {
+          provide: EmailVerificationService,
+          useValue: emailVerificationServiceMock,
+        },
         { provide: MagicLinkService, useValue: magicLinkServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
         { provide: PrismaService, useValue: prismaServiceMock },
@@ -148,13 +116,9 @@ describe('AuthService', () => {
     it('creates the user and sends a verification email', async () => {
       const user = { id: USER_ID, email: USER_EMAIL, theme: 'scanner-darkly' };
       (usersServiceMock.create as jest.Mock).mockResolvedValue(user);
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(user);
-      (usersServiceMock.updateVerificationToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (emailServiceMock.sendVerification as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        emailVerificationServiceMock.sendVerificationEmail as jest.Mock
+      ).mockResolvedValue(undefined);
 
       const result = await service.register(USER_EMAIL, KNOWN_PASSWORD);
 
@@ -162,11 +126,9 @@ describe('AuthService', () => {
         USER_EMAIL,
         KNOWN_PASSWORD,
       );
-      expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
-        USER_EMAIL,
-        expect.any(String),
-        'scanner-darkly',
-      );
+      expect(
+        emailVerificationServiceMock.sendVerificationEmail,
+      ).toHaveBeenCalledWith(USER_ID);
       expect(result).toBe(user);
     });
   });
@@ -247,13 +209,13 @@ describe('AuthService', () => {
         magicLinkTokenExpiresAt: null,
       });
       (usersServiceMock.listOAuthAccounts as jest.Mock).mockResolvedValue([
-        { provider: OAUTH_PROVIDER, connectedAt },
+        { provider: 'google', connectedAt },
       ]);
 
       const result = await service.me(USER_ID);
 
       expect(result.connectedProviders).toEqual([
-        { provider: OAUTH_PROVIDER, connectedAt },
+        { provider: 'google', connectedAt },
       ]);
     });
 
@@ -317,157 +279,6 @@ describe('AuthService', () => {
 
       const result = await service.validateUser(USER_EMAIL, KNOWN_PASSWORD);
       expect(result).toBeNull();
-    });
-  });
-
-  describe('findOrCreateOAuthUser', () => {
-    it('returns existing user when OAuth account already exists', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
-        userId: USER_ID,
-        user: { id: USER_ID, email: USER_EMAIL },
-      });
-
-      const result = await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-      expect(usersServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
-      expect(usersServiceMock.createOAuthUserAndLink).not.toHaveBeenCalled();
-    });
-
-    it('auto-links OAuth account to existing user with same email', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        emailVerifiedAt: new Date(),
-      });
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      const result = await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(usersServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
-        USER_ID,
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-      );
-      expect(usersServiceMock.createOAuthUserAndLink).not.toHaveBeenCalled();
-      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-    });
-
-    it('sets emailVerifiedAt when auto-linking an unverified account', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        emailVerifiedAt: null,
-      });
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (usersServiceMock.markEmailVerified as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(usersServiceMock.markEmailVerified).toHaveBeenCalledWith(USER_ID);
-    });
-
-    it('creates a new user and OAuth account atomically when no match exists', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-      });
-
-      const result = await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(usersServiceMock.createOAuthUserAndLink).toHaveBeenCalledWith(
-        USER_EMAIL,
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-      );
-      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-    });
-
-    it('recovers via OAuth account lookup when concurrent creation causes P2002', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({
-          userId: USER_ID,
-          user: { id: USER_ID, email: USER_EMAIL },
-        });
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockRejectedValue(
-        makeP2002(),
-      );
-
-      const result = await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-    });
-
-    it('recovers via email lookup when OAuth account not yet linked after P2002', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null);
-      // First call: no existing user (so createOAuthUserAndLink is attempted).
-      // Second call: the race-winner's account is now findable by email.
-      (usersServiceMock.findByEmail as jest.Mock)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ id: USER_ID, email: USER_EMAIL });
-      (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockRejectedValue(
-        makeP2002(),
-      );
-
-      const result = await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-    });
-
-    it('re-throws non-P2002 errors from createOAuthUserAndLink', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValueOnce(
-        null,
-      );
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValueOnce(null);
-      (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockRejectedValue(
-        new Error('unexpected database error'),
-      );
-
-      await expect(
-        service.findOrCreateOAuthUser(
-          OAUTH_PROVIDER,
-          OAUTH_PROVIDER_ID,
-          USER_EMAIL,
-        ),
-      ).rejects.toThrow('unexpected database error');
     });
   });
 
@@ -568,523 +379,6 @@ describe('AuthService', () => {
     });
   });
 
-  describe('sendVerificationEmail', () => {
-    it('stores a verification token and sends an email', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        theme: 'before-sunrise',
-      });
-      (usersServiceMock.updateVerificationToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (emailServiceMock.sendVerification as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.sendVerificationEmail(USER_ID);
-
-      expect(usersServiceMock.updateVerificationToken).toHaveBeenCalledWith(
-        USER_ID,
-        expect.any(String),
-        expect.any(Date),
-      );
-      expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
-        USER_EMAIL,
-        expect.any(String),
-        'before-sunrise',
-      );
-    });
-  });
-
-  describe('verifyEmail', () => {
-    it('clears the token when it is valid and not expired', async () => {
-      (usersServiceMock.findByVerificationToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          verificationToken: VERIFICATION_TOKEN,
-          verificationTokenExpiresAt: new Date(Date.now() + 3600000),
-        },
-      );
-      (usersServiceMock.clearVerificationToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.verifyEmail(VERIFICATION_TOKEN);
-
-      expect(usersServiceMock.clearVerificationToken).toHaveBeenCalledWith(
-        USER_ID,
-      );
-    });
-
-    it('throws BadRequestException when the token is not found', async () => {
-      (usersServiceMock.findByVerificationToken as jest.Mock).mockResolvedValue(
-        null,
-      );
-
-      await expect(service.verifyEmail('unknown-token')).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-
-    it('throws BadRequestException when the token has expired', async () => {
-      (usersServiceMock.findByVerificationToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          verificationToken: VERIFICATION_TOKEN,
-          verificationTokenExpiresAt: new Date(Date.now() - 1000),
-        },
-      );
-
-      await expect(service.verifyEmail(VERIFICATION_TOKEN)).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-
-    it('throws BadRequestException when verificationTokenExpiresAt is null', async () => {
-      (usersServiceMock.findByVerificationToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          verificationToken: VERIFICATION_TOKEN,
-          verificationTokenExpiresAt: null,
-        },
-      );
-
-      await expect(service.verifyEmail(VERIFICATION_TOKEN)).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-  });
-
-  describe('forgotPassword', () => {
-    it('stores a reset token and sends an email when the user exists', async () => {
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        theme: 'hit-man',
-      });
-      (usersServiceMock.updateResetToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (emailServiceMock.sendPasswordReset as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.forgotPassword(USER_EMAIL);
-
-      expect(usersServiceMock.updateResetToken).toHaveBeenCalledWith(
-        USER_ID,
-        expect.any(String),
-        expect.any(Date),
-      );
-      expect(emailServiceMock.sendPasswordReset).toHaveBeenCalledWith(
-        USER_EMAIL,
-        expect.any(String),
-        'hit-man',
-      );
-    });
-
-    it('does nothing silently when the user is not found (prevents email enumeration)', async () => {
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-
-      await expect(
-        service.forgotPassword('unknown@example.com'),
-      ).resolves.not.toThrow();
-      expect(usersServiceMock.updateResetToken).not.toHaveBeenCalled();
-      expect(emailServiceMock.sendPasswordReset).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('resetPassword', () => {
-    it('updates the password and clears the reset token when valid', async () => {
-      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        resetToken: RESET_TOKEN,
-        resetTokenExpiresAt: new Date(Date.now() + 3600000),
-      });
-      (usersServiceMock.resetPasswordWithToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.resetPassword(RESET_TOKEN, NEW_PASSWORD);
-
-      expect(usersServiceMock.resetPasswordWithToken).toHaveBeenCalledWith(
-        USER_ID,
-        expect.any(String),
-        expect.any(Boolean),
-      );
-    });
-
-    it('throws BadRequestException when the reset token is not found', async () => {
-      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue(null);
-
-      await expect(
-        service.resetPassword('unknown-token', NEW_PASSWORD),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('throws BadRequestException when the reset token has expired', async () => {
-      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        resetToken: RESET_TOKEN,
-        resetTokenExpiresAt: new Date(Date.now() - 1000),
-      });
-
-      await expect(
-        service.resetPassword(RESET_TOKEN, NEW_PASSWORD),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('throws BadRequestException when resetTokenExpiresAt is null', async () => {
-      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        resetToken: RESET_TOKEN,
-        resetTokenExpiresAt: null,
-      });
-
-      await expect(
-        service.resetPassword(RESET_TOKEN, NEW_PASSWORD),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('passes markVerified=true to resetPasswordWithToken when email is not yet verified', async () => {
-      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        emailVerifiedAt: null,
-        resetToken: RESET_TOKEN,
-        resetTokenExpiresAt: new Date(Date.now() + 3600000),
-      });
-      (usersServiceMock.resetPasswordWithToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.resetPassword(RESET_TOKEN, NEW_PASSWORD);
-
-      expect(usersServiceMock.resetPasswordWithToken).toHaveBeenCalledWith(
-        USER_ID,
-        expect.any(String),
-        true,
-      );
-    });
-
-    it('does not call markEmailVerified when the email is already verified', async () => {
-      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        emailVerifiedAt: new Date(),
-        resetToken: RESET_TOKEN,
-        resetTokenExpiresAt: new Date(Date.now() + 3600000),
-      });
-      (usersServiceMock.resetPasswordWithToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.resetPassword(RESET_TOKEN, NEW_PASSWORD);
-
-      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('resendVerificationEmail', () => {
-    it('stores a new token and sends an email when the user is not yet verified', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        emailVerifiedAt: null,
-        theme: 'boyhood',
-      });
-      (usersServiceMock.updateVerificationToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (emailServiceMock.sendVerification as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.resendVerificationEmail(USER_ID);
-
-      expect(usersServiceMock.updateVerificationToken).toHaveBeenCalledWith(
-        USER_ID,
-        expect.any(String),
-        expect.any(Date),
-      );
-      expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
-        USER_EMAIL,
-        expect.any(String),
-        'boyhood',
-      );
-    });
-
-    it('throws BadRequestException when the user is already verified', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        emailVerifiedAt: new Date(),
-      });
-
-      await expect(service.resendVerificationEmail(USER_ID)).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-  });
-
-  describe('requestEmailChange', () => {
-    const makeUserNoTwoFactor = (overrides = {}) => ({
-      id: USER_ID,
-      email: USER_EMAIL,
-      theme: 'dazed-and-confused',
-      totpEnabledAt: null,
-      ...overrides,
-    });
-
-    it('stores pending email and sends a verification email to the new address', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor(),
-      );
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (
-        emailServiceMock.sendEmailChangeVerification as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      await service.requestEmailChange(USER_ID, NEW_EMAIL);
-
-      expect(usersServiceMock.updatePendingEmail).toHaveBeenCalledWith(
-        USER_ID,
-        NEW_EMAIL,
-        expect.any(String),
-        expect.any(Date),
-      );
-      expect(emailServiceMock.sendEmailChangeVerification).toHaveBeenCalledWith(
-        NEW_EMAIL,
-        expect.any(String),
-        'dazed-and-confused',
-      );
-    });
-
-    it('throws ConflictException when the new email is already in use', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor(),
-      );
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: 'other-user',
-        email: NEW_EMAIL,
-      });
-
-      await expect(
-        service.requestEmailChange(USER_ID, NEW_EMAIL),
-      ).rejects.toThrow(ConflictException);
-    });
-
-    it('allows the request when the new email belongs to the same user (re-verify)', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor(),
-      );
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: NEW_EMAIL,
-      });
-      (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (
-        emailServiceMock.sendEmailChangeVerification as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      await expect(
-        service.requestEmailChange(USER_ID, NEW_EMAIL),
-      ).resolves.not.toThrow();
-    });
-
-    it('throws ConflictException before consuming a 2FA credential when the new email is taken', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
-      );
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: 'other-user',
-        email: NEW_EMAIL,
-      });
-
-      await expect(
-        service.requestEmailChange(USER_ID, NEW_EMAIL, '123456'),
-      ).rejects.toThrow(ConflictException);
-
-      expect(totpServiceMock.verifyCode).not.toHaveBeenCalled();
-    });
-
-    it('throws ForbiddenException when 2FA is enabled and no code is provided', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
-      );
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-
-      await expect(
-        service.requestEmailChange(USER_ID, NEW_EMAIL),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
-    it('allows email change when 2FA is enabled and valid TOTP code is provided', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
-      );
-      (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (
-        emailServiceMock.sendEmailChangeVerification as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      await expect(
-        service.requestEmailChange(USER_ID, NEW_EMAIL, '123456'),
-      ).resolves.not.toThrow();
-
-      expect(totpServiceMock.verifyCode).toHaveBeenCalledWith(
-        expect.objectContaining({ id: USER_ID }),
-        '123456',
-      );
-    });
-
-    it('throws UnauthorizedException when 2FA is enabled and TOTP code is invalid', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
-      );
-      (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(false);
-
-      await expect(
-        service.requestEmailChange(USER_ID, NEW_EMAIL, '000000'),
-      ).rejects.toThrow(UnauthorizedException);
-    });
-
-    it('allows email change using a recovery code when 2FA is enabled', async () => {
-      const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
-      const realHash = await bcrypt.hash(REAUTH_RECOVERY_CODE, 1);
-      const codeId = 'rc-email-1';
-
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
-      );
-      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
-        [{ id: codeId, codeHash: realHash }],
-      );
-      (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (
-        emailServiceMock.sendEmailChangeVerification as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      await expect(
-        service.requestEmailChange(USER_ID, NEW_EMAIL, REAUTH_RECOVERY_CODE),
-      ).resolves.not.toThrow();
-
-      expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
-        codeId,
-      );
-    });
-
-    it('throws UnauthorizedException when recovery code does not match any stored hash', async () => {
-      const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
-      const bcryptModule = await import('bcryptjs');
-      const differentHash = await bcryptModule.hash('zzzzz-zzzzz-zzzzz', 1);
-
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
-      );
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
-        [{ id: 'rc-1', codeHash: differentHash }],
-      );
-
-      await expect(
-        service.requestEmailChange(USER_ID, NEW_EMAIL, REAUTH_RECOVERY_CODE),
-      ).rejects.toThrow(UnauthorizedException);
-    });
-  });
-
-  describe('confirmEmailChange', () => {
-    it('confirms the email change when the token is valid and not expired', async () => {
-      (usersServiceMock.findByPendingEmailToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          pendingEmail: NEW_EMAIL,
-          pendingEmailToken: PENDING_EMAIL_TOKEN,
-          pendingEmailTokenExpiresAt: new Date(Date.now() + 3600000),
-        },
-      );
-      (usersServiceMock.confirmPendingEmail as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.confirmEmailChange(PENDING_EMAIL_TOKEN);
-
-      expect(usersServiceMock.confirmPendingEmail).toHaveBeenCalledWith(
-        USER_ID,
-        NEW_EMAIL,
-      );
-    });
-
-    it('throws BadRequestException when the token is not found', async () => {
-      (usersServiceMock.findByPendingEmailToken as jest.Mock).mockResolvedValue(
-        null,
-      );
-
-      await expect(service.confirmEmailChange('unknown-token')).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-
-    it('throws BadRequestException when the token has expired', async () => {
-      (usersServiceMock.findByPendingEmailToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          pendingEmail: NEW_EMAIL,
-          pendingEmailToken: PENDING_EMAIL_TOKEN,
-          pendingEmailTokenExpiresAt: new Date(Date.now() - 1000),
-        },
-      );
-
-      await expect(
-        service.confirmEmailChange(PENDING_EMAIL_TOKEN),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('throws BadRequestException when pendingEmail is missing', async () => {
-      (usersServiceMock.findByPendingEmailToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          pendingEmail: null,
-          pendingEmailToken: PENDING_EMAIL_TOKEN,
-          pendingEmailTokenExpiresAt: new Date(Date.now() + 3600000),
-        },
-      );
-
-      await expect(
-        service.confirmEmailChange(PENDING_EMAIL_TOKEN),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('throws BadRequestException when pendingEmailTokenExpiresAt is null', async () => {
-      (usersServiceMock.findByPendingEmailToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          pendingEmail: NEW_EMAIL,
-          pendingEmailToken: PENDING_EMAIL_TOKEN,
-          pendingEmailTokenExpiresAt: null,
-        },
-      );
-
-      await expect(
-        service.confirmEmailChange(PENDING_EMAIL_TOKEN),
-      ).rejects.toThrow(BadRequestException);
-    });
-  });
-
   describe('verifyOtp', () => {
     const RECOVERY_CODE_STUB = 'aaaaa-bbbbb';
 
@@ -1139,8 +433,8 @@ describe('AuthService', () => {
       it('marks the matching code used and returns accessToken', async () => {
         const codeId = 'rc-1';
 
-        const bcrypt = await import('bcryptjs');
-        const realHash = await bcrypt.hash(RECOVERY_CODE_STUB, 1);
+        const bcryptModule = await import('bcryptjs');
+        const realHash = await bcryptModule.hash(RECOVERY_CODE_STUB, 1);
 
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
@@ -1183,8 +477,8 @@ describe('AuthService', () => {
       });
 
       it('throws UnauthorizedException when code does not match any hash', async () => {
-        const bcrypt = await import('bcryptjs');
-        const differentHash = await bcrypt.hash('zzzzz-zzzzz', 1);
+        const bcryptModule = await import('bcryptjs');
+        const differentHash = await bcryptModule.hash('zzzzz-zzzzz', 1);
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
@@ -1513,12 +807,6 @@ describe('AuthService', () => {
 
   describe('verifyOtp (edge: exhaustion guard)', () => {
     it('throws UnauthorizedException when method bypasses both totp and recovery branches at runtime', async () => {
-      // The TypeScript type constrains callers to 'totp' | 'recovery', but the
-      // final throw is a runtime exhaustion guard. To reach it, we need a value
-      // where enrolledMethod === method (so line 578 passes) but the value is
-      // neither 'totp' nor 'recovery'. When totpEnabledAt is null, enrolledMethod
-      // is null. Passing null as method satisfies enrolledMethod === method,
-      // skipping line 578's guard, then falling through both if blocks to line 610.
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
@@ -1537,8 +825,6 @@ describe('AuthService', () => {
 
   describe('reauthenticate (via disable2fa / regenerateRecoveryCodes)', () => {
     it('throws UnauthorizedException when a recovery-code-shaped string is provided but no 2FA is enrolled', async () => {
-      // A recovery code matches the regex (e.g. "aaaaa-bbbbb") but totpEnabledAt
-      // is null — the guard at line 669-670 must fire.
       const RECOVERY_CODE_STUB = 'aaaaa-bbbbb-ccccc';
 
       (
@@ -1556,8 +842,6 @@ describe('AuthService', () => {
     });
 
     it('throws UnauthorizedException when a plain OTP code is provided but no 2FA is enrolled', async () => {
-      // A 6-digit string does not match the recovery-code regex; the guard at
-      // line 693 must fire when totpEnabledAt is null.
       (
         usersServiceMock.findByIdWithPasswordHash as jest.Mock
       ).mockResolvedValue({
@@ -1632,178 +916,6 @@ describe('AuthService', () => {
         USER_ID,
         NEW_PASSWORD,
       );
-    });
-  });
-
-  describe('unlinkOAuthProvider', () => {
-    it('throws BadRequestException when the user has no password', async () => {
-      (
-        usersServiceMock.findByIdWithPasswordHash as jest.Mock
-      ).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        hasPassword: false,
-        passwordHash: null,
-      });
-
-      await expect(
-        service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('calls unlinkOAuthAccount when the user has a password', async () => {
-      (
-        usersServiceMock.findByIdWithPasswordHash as jest.Mock
-      ).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        hasPassword: true,
-        passwordHash: KNOWN_PASSWORD_HASH,
-      });
-      (usersServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER);
-
-      expect(usersServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
-        USER_ID,
-        OAUTH_PROVIDER,
-      );
-    });
-  });
-
-  describe('linkOAuthAccountToUser', () => {
-    it('throws BadRequestException when the provider email does not match the user email', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        emailVerifiedAt: null,
-      });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-
-      await expect(
-        service.linkOAuthAccountToUser(
-          USER_ID,
-          OAUTH_PROVIDER,
-          OAUTH_PROVIDER_ID,
-          'other@example.com',
-        ),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('links the provider when no existing account is found', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        emailVerifiedAt: new Date(),
-      });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.linkOAuthAccountToUser(
-        USER_ID,
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(usersServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
-        USER_ID,
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-      );
-    });
-
-    it('marks email verified when linking and email was not yet verified', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        emailVerifiedAt: null,
-      });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (usersServiceMock.markEmailVerified as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.linkOAuthAccountToUser(
-        USER_ID,
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(usersServiceMock.markEmailVerified).toHaveBeenCalledWith(USER_ID);
-    });
-
-    it('does not mark email verified when it is already verified', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        emailVerifiedAt: new Date(),
-      });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.linkOAuthAccountToUser(
-        USER_ID,
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
-    });
-
-    it('is idempotent when the provider is already linked to the same user', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        emailVerifiedAt: new Date(),
-      });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
-        userId: USER_ID,
-        provider: OAUTH_PROVIDER,
-        providerId: OAUTH_PROVIDER_ID,
-      });
-
-      await service.linkOAuthAccountToUser(
-        USER_ID,
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(usersServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
-    });
-
-    it('throws ConflictException when the provider is linked to a different user', async () => {
-      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        emailVerifiedAt: new Date(),
-      });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
-        userId: 'different-user-id',
-        provider: OAUTH_PROVIDER,
-        providerId: OAUTH_PROVIDER_ID,
-      });
-
-      await expect(
-        service.linkOAuthAccountToUser(
-          USER_ID,
-          OAUTH_PROVIDER,
-          OAUTH_PROVIDER_ID,
-          USER_EMAIL,
-        ),
-      ).rejects.toThrow(ConflictException);
     });
   });
 

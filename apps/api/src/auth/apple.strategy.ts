@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import AppleStrategyLib from '@nicokaiser/passport-apple';
-import { AuthService } from './auth.service.js';
+import { OAuthAccountService } from './oauth-account.service.js';
 
 const APPLE_PARAMS = [
   'CALLBACK_URL',
@@ -22,7 +22,7 @@ export class AppleStrategy extends PassportStrategy(
   AppleStrategyLib.Strategy,
   'apple',
 ) {
-  constructor(private readonly authService: AuthService) {
+  constructor(private readonly oauthAccountService: OAuthAccountService) {
     for (const key of APPLE_PARAMS) {
       if (!process.env[`APPLE_${key}`])
         throw new Error(`APPLE_${key} must be set`);
@@ -45,6 +45,10 @@ export class AppleStrategy extends PassportStrategy(
   ) {
     const email = profile.email;
     if (!email) throw new Error('No email returned from Apple');
-    return this.authService.findOrCreateOAuthUser('apple', profile.id, email);
+    return this.oauthAccountService.findOrCreateOAuthUser(
+      'apple',
+      profile.id,
+      email,
+    );
   }
 }

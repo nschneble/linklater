@@ -23,6 +23,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
+import { EmailVerificationService } from './email-verification.service.js';
+import { OAuthAccountService } from './oauth-account.service.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { SetPasswordDto } from './dto/set-password.dto.js';
 import { generateLinkState } from './oauth-link-state.js';
@@ -53,6 +55,8 @@ import type { AuthRequest } from './auth-request.type.js';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly emailVerificationService: EmailVerificationService,
+    private readonly oauthAccountService: OAuthAccountService,
     private readonly totpService: TotpService,
   ) {}
 
@@ -125,7 +129,7 @@ export class AuthController {
   @Post('verify-email')
   @HttpCode(200)
   async verifyEmail(@Body() body: VerifyEmailDto) {
-    await this.authService.verifyEmail(body.token);
+    await this.emailVerificationService.verifyEmail(body.token);
   }
 
   /**
@@ -147,7 +151,7 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(200)
   async forgotPassword(@Body() body: ForgotPasswordDto) {
-    await this.authService.forgotPassword(body.email);
+    await this.emailVerificationService.forgotPassword(body.email);
   }
 
   /**
@@ -163,7 +167,10 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(200)
   async resetPassword(@Body() body: ResetPasswordDto) {
-    await this.authService.resetPassword(body.token, body.password);
+    await this.emailVerificationService.resetPassword(
+      body.token,
+      body.password,
+    );
   }
 
   /**
@@ -181,7 +188,9 @@ export class AuthController {
   @Post('resend-verification')
   @HttpCode(200)
   async resendVerification(@Req() request: AuthRequest) {
-    await this.authService.resendVerificationEmail(request.user.userId);
+    await this.emailVerificationService.resendVerificationEmail(
+      request.user.userId,
+    );
   }
 
   /**
@@ -210,7 +219,7 @@ export class AuthController {
     @Req() request: AuthRequest,
     @Body() body: RequestEmailChangeDto,
   ) {
-    await this.authService.requestEmailChange(
+    await this.emailVerificationService.requestEmailChange(
       request.user.userId,
       body.email,
       body.code,
@@ -233,7 +242,7 @@ export class AuthController {
   @Post('verify-email-change')
   @HttpCode(200)
   async verifyEmailChange(@Body() body: VerifyEmailDto) {
-    await this.authService.confirmEmailChange(body.token);
+    await this.emailVerificationService.confirmEmailChange(body.token);
   }
 
   /**
@@ -501,7 +510,7 @@ export class AuthController {
     @Res() response: Response,
   ) {
     try {
-      await this.authService.linkOAuthAccountToUser(
+      await this.oauthAccountService.linkOAuthAccountToUser(
         request.user.userId,
         'google',
         request.user.providerId,
@@ -540,7 +549,10 @@ export class AuthController {
     @Req() request: AuthRequest,
     @Param('provider') provider: string,
   ) {
-    await this.authService.unlinkOAuthProvider(request.user.userId, provider);
+    await this.oauthAccountService.unlinkOAuthProvider(
+      request.user.userId,
+      provider,
+    );
     return { success: true };
   }
 

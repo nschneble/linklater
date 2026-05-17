@@ -36,8 +36,8 @@ export function useMetadataPolling(
   linkId: string | null,
   onSettled: (link: Link) => void,
 ): void {
-  const onSettledRef = useRef(onSettled);
-  onSettledRef.current = onSettled;
+  const onSettledReference = useRef(onSettled);
+  onSettledReference.current = onSettled;
 
   useEffect(() => {
     if (!linkId) return;
@@ -50,7 +50,7 @@ export function useMetadataPolling(
       getLink(linkId as string)
         .then((link) => {
           if (link.meta?.fetchedAt) {
-            onSettledRef.current(link);
+            onSettledReference.current(link);
             return;
           }
           elapsed += intervalMs;

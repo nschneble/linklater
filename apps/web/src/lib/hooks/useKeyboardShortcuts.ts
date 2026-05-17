@@ -61,30 +61,30 @@ export function useKeyboardShortcuts({
   onToggleForm,
   onToggleShortcuts,
 }: UseKeyboardShortcutsOptions) {
-  const isShortcutsModalOpenRef = useRef(isShortcutsModalOpen);
-  const onEscapeRef = useRef(onEscape);
-  const onNavigateNextLinkRef = useRef(onNavigateNextLink);
-  const onNavigatePrevLinkRef = useRef(onNavigatePrevLink);
-  const onOpenSelectedLinkRef = useRef(onOpenSelectedLink);
-  const onSearchRef = useRef(onSearch);
-  const onShowReadRef = useRef(onShowRead);
-  const onShowUnreadRef = useRef(onShowUnread);
-  const onStumbleRef = useRef(onStumble);
-  const onToggleFormRef = useRef(onToggleForm);
-  const onToggleShortcutsRef = useRef(onToggleShortcuts);
+  const isShortcutsModalOpenReference = useRef(isShortcutsModalOpen);
+  const onEscapeReference = useRef(onEscape);
+  const onNavigateNextLinkReference = useRef(onNavigateNextLink);
+  const onNavigatePrevLinkReference = useRef(onNavigatePrevLink);
+  const onOpenSelectedLinkReference = useRef(onOpenSelectedLink);
+  const onSearchReference = useRef(onSearch);
+  const onShowReadReference = useRef(onShowRead);
+  const onShowUnreadReference = useRef(onShowUnread);
+  const onStumbleReference = useRef(onStumble);
+  const onToggleFormReference = useRef(onToggleForm);
+  const onToggleShortcutsReference = useRef(onToggleShortcuts);
 
   // always keep refs current so the listener uses the latest callbacks
-  isShortcutsModalOpenRef.current = isShortcutsModalOpen;
-  onEscapeRef.current = onEscape;
-  onNavigateNextLinkRef.current = onNavigateNextLink;
-  onNavigatePrevLinkRef.current = onNavigatePrevLink;
-  onOpenSelectedLinkRef.current = onOpenSelectedLink;
-  onSearchRef.current = onSearch;
-  onShowReadRef.current = onShowRead;
-  onShowUnreadRef.current = onShowUnread;
-  onStumbleRef.current = onStumble;
-  onToggleFormRef.current = onToggleForm;
-  onToggleShortcutsRef.current = onToggleShortcuts;
+  isShortcutsModalOpenReference.current = isShortcutsModalOpen;
+  onEscapeReference.current = onEscape;
+  onNavigateNextLinkReference.current = onNavigateNextLink;
+  onNavigatePrevLinkReference.current = onNavigatePrevLink;
+  onOpenSelectedLinkReference.current = onOpenSelectedLink;
+  onSearchReference.current = onSearch;
+  onShowReadReference.current = onShowRead;
+  onShowUnreadReference.current = onShowUnread;
+  onStumbleReference.current = onStumble;
+  onToggleFormReference.current = onToggleForm;
+  onToggleShortcutsReference.current = onToggleShortcuts;
 
   useEffect(() => {
     if (!enabled) return;
@@ -92,9 +92,9 @@ export function useKeyboardShortcuts({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
-      if (event.key === 'Escape' && onEscapeRef.current) {
+      if (event.key === 'Escape' && onEscapeReference.current) {
         event.preventDefault();
-        onEscapeRef.current();
+        onEscapeReference.current();
         return;
       }
 
@@ -106,10 +106,10 @@ export function useKeyboardShortcuts({
 
       if (isTypingField) return;
 
-      if (isShortcutsModalOpenRef.current) {
+      if (isShortcutsModalOpenReference.current) {
         if (event.key.toLowerCase() === 'z') {
           event.preventDefault();
-          onToggleShortcutsRef.current();
+          onToggleShortcutsReference.current();
         }
         return;
       }
@@ -119,19 +119,19 @@ export function useKeyboardShortcuts({
       switch (event.key) {
         case 'ArrowUp':
           event.preventDefault();
-          onNavigatePrevLinkRef.current();
+          onNavigatePrevLinkReference.current();
           return;
         case 'ArrowDown':
           event.preventDefault();
-          onNavigateNextLinkRef.current();
+          onNavigateNextLinkReference.current();
           return;
         case 'ArrowLeft':
           event.preventDefault();
-          onShowUnreadRef.current();
+          onShowUnreadReference.current();
           return;
         case 'ArrowRight':
           event.preventDefault();
-          onShowReadRef.current();
+          onShowReadReference.current();
           return;
         case 'Enter': {
           const role =
@@ -143,7 +143,7 @@ export function useKeyboardShortcuts({
             role === 'menuitem';
           if (!isInteractive) {
             event.preventDefault();
-            onOpenSelectedLinkRef.current();
+            onOpenSelectedLinkReference.current();
           }
           return;
         }
@@ -152,27 +152,27 @@ export function useKeyboardShortcuts({
       switch (event.key.toLowerCase()) {
         case '1':
           event.preventDefault();
-          onShowUnreadRef.current();
+          onShowUnreadReference.current();
           break;
         case '2':
           event.preventDefault();
-          onShowReadRef.current();
+          onShowReadReference.current();
           break;
         case 'q':
           event.preventDefault();
-          onSearchRef.current();
+          onSearchReference.current();
           break;
         case 'a':
           event.preventDefault();
-          onToggleFormRef.current();
+          onToggleFormReference.current();
           break;
         case 'd':
           event.preventDefault();
-          onStumbleRef.current();
+          onStumbleReference.current();
           break;
         case 'z':
           event.preventDefault();
-          onToggleShortcutsRef.current();
+          onToggleShortcutsReference.current();
           break;
       }
     }

@@ -1,3 +1,4 @@
+import { useAuth } from '../../auth/AuthContext';
 import {
   ApiError,
   requestEmailChange,
@@ -5,13 +6,12 @@ import {
   updateMe,
 } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import { useAuth } from '../../auth/AuthContext';
-import { useState, type FormEvent } from 'react';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import StatusBadge from '../common/StatusBadge';
+import { useState, type FormEvent } from 'react';
 
 /**
  * Settings section for updating email address and password.

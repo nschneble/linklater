@@ -7,7 +7,9 @@ import { AnyAuthGuard } from './any-auth.guard.js';
 import { AppleStrategy } from './apple.strategy.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
+import { EmailVerificationService } from './email-verification.service.js';
 import { MagicLinkService } from './magic-link.service.js';
+import { OAuthAccountService } from './oauth-account.service.js';
 import { GoogleLinkStrategy } from './google-link.strategy.js';
 import { GoogleStrategy } from './google.strategy.js';
 import { JwtStrategy } from './jwt.strategy.js';
@@ -59,7 +61,9 @@ const oauthProviders: Provider[] = [
     ApiKeyStrategy,
     AnyAuthGuard,
     AuthService,
+    EmailVerificationService,
     MagicLinkService,
+    OAuthAccountService,
     JwtStrategy,
     LocalStrategy,
     MfaAuthGuard,

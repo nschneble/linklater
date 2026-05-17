@@ -63,12 +63,15 @@ export default function LinkCardLayout({
   onCardClick,
   onUnreadClick,
 }: LinkCardLayoutProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardReference = useRef<HTMLDivElement>(null);
   const placeholderUrl = useMemo(() => getPlaceholderUrl(link.url), [link.url]);
 
   useEffect(() => {
     if (isSelected) {
-      cardRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      cardReference.current?.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth',
+      });
     }
   }, [isSelected]);
 
@@ -88,7 +91,7 @@ export default function LinkCardLayout({
 
   return (
     <div
-      ref={cardRef}
+      ref={cardReference}
       role="link"
       aria-label={cardAriaLabel}
       onClick={onCardClick}

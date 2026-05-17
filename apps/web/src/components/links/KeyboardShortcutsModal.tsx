@@ -40,13 +40,13 @@ const HEADING_ID = 'keyboard-shortcuts-heading';
 export default function KeyboardShortcutsModal({
   onClose,
 }: KeyboardShortcutsModalProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogReference = useRef<HTMLDivElement>(null);
   const previouslyFocusedElement = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     previouslyFocusedElement.current = document.activeElement as HTMLElement;
 
-    const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
+    const firstFocusable = dialogReference.current?.querySelector<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
     firstFocusable?.focus();
@@ -64,7 +64,7 @@ export default function KeyboardShortcutsModal({
       }
 
       if (event.key === 'Tab') {
-        const dialog = dialogRef.current;
+        const dialog = dialogReference.current;
         if (!dialog) return;
 
         const focusableElements = Array.from(
@@ -105,7 +105,7 @@ export default function KeyboardShortcutsModal({
         onClick={onClose}
       />
       <div
-        ref={dialogRef}
+        ref={dialogReference}
         className="fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs p-6 bg-[var(--bg-surface)] border-shadow rounded-xl select-none animate-fade-in-up"
         role="dialog"
         aria-modal="true"
