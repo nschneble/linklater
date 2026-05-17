@@ -780,8 +780,9 @@ describe('UsersService', () => {
       prismaMockExtended.$transaction = jest
         .fn()
         .mockImplementation(
-          (callback: (transaction: typeof transactionMock) => Promise<unknown>) =>
-            callback(transactionMock),
+          (
+            callback: (transaction: typeof transactionMock) => Promise<unknown>,
+          ) => callback(transactionMock),
         );
 
       const result = await service.createOAuthUserAndLink(
@@ -799,7 +800,11 @@ describe('UsersService', () => {
         }),
       );
       expect(transactionMock.oAuthAccount.create).toHaveBeenCalledWith({
-        data: { userId: USER_ID, provider: 'google', providerId: 'google-uid-123' },
+        data: {
+          userId: USER_ID,
+          provider: 'google',
+          providerId: 'google-uid-123',
+        },
       });
       expect(result).not.toHaveProperty('passwordHash');
     });

@@ -51,7 +51,10 @@ const FEATURES: FeatureTileProps[] = [
  */
 export default function FeaturesSection() {
   return (
-    <section aria-label="Features" className="px-6 pb-24 max-w-3xl mx-auto select-none">
+    <section
+      aria-label="Features"
+      className="px-6 pb-24 max-w-3xl mx-auto select-none"
+    >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {FEATURES.map((feature) => (
           <FeatureTile key={feature.title} {...feature} />

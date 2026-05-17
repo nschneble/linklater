@@ -8,8 +8,8 @@ import { IsString, MaxLength, MinLength } from 'class-validator';
 export class CreateTokenDto {
   @ApiProperty({
     description:
-      'A human-readable label for the token so the user can identify'
-      + ' it in the token list.',
+      'A human-readable label for the token so the user can identify' +
+      ' it in the token list.',
     example: 'Chrome Extension',
     maxLength: 100,
     minLength: 1,

@@ -599,12 +599,11 @@ export class AuthController {
     @Query('code_challenge') codeChallenge: string,
     @Query('redirect_uri') redirectUri: string,
   ) {
-    const { code, callbackUrl } =
-      await this.authService.authorizeExtension(
-        request.user.userId,
-        codeChallenge,
-        redirectUri,
-      );
+    const { code, callbackUrl } = await this.authService.authorizeExtension(
+      request.user.userId,
+      codeChallenge,
+      redirectUri,
+    );
 
     const destination = new URL(callbackUrl);
     destination.searchParams.set('code', code);

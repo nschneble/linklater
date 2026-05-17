@@ -12,8 +12,8 @@ import { IsString, MinLength } from 'class-validator';
 export class SetPasswordDto {
   @ApiProperty({
     description:
-      'The new password. Must be at least 12 characters long. No other'
-      + ' complexity rules are enforced — length is the primary defense.',
+      'The new password. Must be at least 12 characters long. No other' +
+      ' complexity rules are enforced — length is the primary defense.',
     example: 'correct-horse-battery-staple',
     minLength: 12,
   })

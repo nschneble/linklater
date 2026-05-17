@@ -209,7 +209,9 @@ describe('TwoFactorSection', () => {
       render(<TwoFactorSection />);
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /continue setup/i }));
+        fireEvent.click(
+          screen.getByRole('button', { name: /continue setup/i }),
+        );
       });
 
       expect(apiModule.setupTotp).toHaveBeenCalled();
@@ -229,7 +231,9 @@ describe('TwoFactorSection', () => {
         screen.getByRole('button', { name: /disable two-factor/i }),
       );
 
-      expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /confirm/i }),
+      ).toBeInTheDocument();
     });
 
     it('calls disable2fa and refreshUser when reauth form is submitted with valid password', async () => {
@@ -321,7 +325,9 @@ describe('TwoFactorSection', () => {
         screen.getByRole('button', { name: /regenerate recovery codes/i }),
       );
 
-      expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /confirm/i }),
+      ).toBeInTheDocument();
     });
 
     it('calls regenerateRecoveryCodes and shows new codes on success', async () => {

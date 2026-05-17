@@ -12,7 +12,13 @@ import PrimaryButton from '../common/PrimaryButton';
 import ReauthForm from './ReauthForm';
 import RecoveryCodesModal from './RecoveryCodesModal';
 import TotpSetupView from './TotpSetupView';
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from 'react';
 
 type ReauthAction = 'disable' | 'regenerate';
 

@@ -24,7 +24,11 @@ type Mode = 'login' | 'register' | 'forgot-password';
 /** The MFA challenge method currently being shown to the user. */
 type MfaChallenge = 'totp' | 'recovery';
 
-function submitLabel(loading: boolean, isMagicLink: boolean, mode: Mode): string {
+function submitLabel(
+  loading: boolean,
+  isMagicLink: boolean,
+  mode: Mode,
+): string {
   if (loading) {
     return 'Working…';
   }

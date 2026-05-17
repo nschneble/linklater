@@ -453,7 +453,9 @@ describe('AuthService', () => {
     });
 
     it('re-throws non-P2002 errors from createOAuthUserAndLink', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValueOnce(null);
+      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValueOnce(
+        null,
+      );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValueOnce(null);
       (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockRejectedValue(
         new Error('unexpected database error'),
@@ -1855,7 +1857,11 @@ describe('AuthService', () => {
       delete process.env.EXTENSION_REDIRECT_URIS;
 
       await expect(
-        service.authorizeExtension(USER_ID, 'sha256-challenge-abc', ALLOWED_URI),
+        service.authorizeExtension(
+          USER_ID,
+          'sha256-challenge-abc',
+          ALLOWED_URI,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
   });
