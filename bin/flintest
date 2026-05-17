@@ -233,7 +233,7 @@ fi
 
 if [[ -z "$FAILED_STEP" ]]; then
   if ! run_step $(( STEP_OFFSET + 4 )) npm run lint:migrations; then
-    FAILED_STEP="Lint"
+    FAILED_STEP="Lint Migrations"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
