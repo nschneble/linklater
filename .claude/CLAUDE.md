@@ -40,6 +40,7 @@ npm run dev                                       # Start development server
 
 # Linting
 npm run lint                                      # Lint code for consistent style
+npm run lint:migrations                           # Lint migrations using Squawk
 npm run lint --workspace @linklater/web           # Lint front-end only
 npm run lint --workspace @linklater/api           # Lint back-end only
 

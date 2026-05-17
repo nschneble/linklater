@@ -211,7 +211,7 @@ All SQL migrations are linted with [Squawk](https://squawkhq.com) as part of
 the standard lint pipeline.
 
 ```bash
-npm run lint  # lints code AND runs squawk on all migrations
+npm run lint:migrations  # runs Squawk on all migrations
 ```
 
 The Squawk configuration lives in `.squawk.toml` at the repository root.
