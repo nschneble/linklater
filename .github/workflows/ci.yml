@@ -47,10 +47,9 @@ jobs:
         run: npx prisma generate
 
       - name: Lint migrations
-        working-directory: apps/api/prisma/migrations
         uses: sbdchd/squawk-action@v2
         with:
-          pattern: '**/*.sql'
+          pattern: 'apps/api/prisma/migrations/**/*.sql'
           version: 'latest'
 
       - name: Run migrations
