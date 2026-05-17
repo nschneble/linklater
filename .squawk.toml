@@ -8,4 +8,13 @@ excluded_rules = [
   "require-concurrent-index-deletion",
   # Prisma manages migration idempotency via its own state tracking, not IF NOT EXISTS guards
   "prefer-robust-stmts",
+  # This app deploys as a single instance with a maintenance window for migrations, not rolling
+  # deployments — column drops, NOT NULL drops, and renames run atomically and are safe
+  "ban-drop-column",
+  "ban-drop-not-null",
+  "renaming-column",
+  # totpLastUsedStep is a TOTP time-step counter (unix_time / 30 ≈ 58M today) — it won't
+  # approach the 32-bit INTEGER limit (~2.1B) until ~year 4000; BigInt would change the
+  # TypeScript types throughout the TOTP service for no practical benefit
+  "prefer-bigint-over-int",
 ]

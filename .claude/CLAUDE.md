@@ -139,6 +139,13 @@ Follow three simple steps repeatedly:
 - Always clean up after yourself! Kill any listeners or temporary-running processes that are no longer necessary once the work is complete
 - Always run `bin/flintest` when you're done to ensure formatting, linting, testing, and building all execute successfully
 
+## Database Conventions
+
+- Always write migrations that pass `npx squawk` with zero issues — never add `-- squawk-ignore-file` or `-- squawk-ignore-next-statement`
+  - Start every migration with `set lock_timeout = '1s';` and `set statement_timeout = '5s';`
+  - Add foreign key constraints with `NOT VALID`, then immediately `VALIDATE CONSTRAINT` on the next line
+  - See `.squawk.toml` for the rules excluded at the project level and why
+
 ## TypeScript Conventions
 
 - Use `class` for DTOs (required for class-validator decorators)

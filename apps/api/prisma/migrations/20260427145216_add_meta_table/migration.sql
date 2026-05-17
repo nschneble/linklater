@@ -1,4 +1,6 @@
--- squawk-ignore-file
+set lock_timeout = '1s';
+set statement_timeout = '5s';
+
 /*
   Warnings:
 
@@ -39,4 +41,5 @@ CREATE TABLE "Meta" (
 CREATE UNIQUE INDEX "Meta_linkId_key" ON "Meta"("linkId");
 
 -- AddForeignKey
-ALTER TABLE "Meta" ADD CONSTRAINT "Meta_linkId_fkey" FOREIGN KEY ("linkId") REFERENCES "Link"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Meta" ADD CONSTRAINT "Meta_linkId_fkey" FOREIGN KEY ("linkId") REFERENCES "Link"("id") ON DELETE CASCADE ON UPDATE CASCADE NOT VALID;
+ALTER TABLE "Meta" VALIDATE CONSTRAINT "Meta_linkId_fkey";

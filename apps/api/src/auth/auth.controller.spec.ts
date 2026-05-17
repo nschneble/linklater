@@ -31,27 +31,21 @@ describe('AuthController', () => {
     confirmEmailChange: jest.fn(),
     createExtensionAuthCode: jest.fn().mockResolvedValue('auth-code-123'),
     disable2fa: jest.fn(),
-    exchangeExtensionCode: jest
-      .fn()
-      .mockResolvedValue({
-        accessToken: ACCESS_TOKEN,
-        refreshToken: REFRESH_TOKEN,
-      }),
+    exchangeExtensionCode: jest.fn().mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    }),
     forgotPassword: jest.fn(),
     linkOAuthAccountToUser: jest.fn(),
-    login: jest
-      .fn()
-      .mockResolvedValue({
-        accessToken: ACCESS_TOKEN,
-        refreshToken: REFRESH_TOKEN,
-      }),
+    login: jest.fn().mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    }),
     me: jest.fn(),
-    refresh: jest
-      .fn()
-      .mockResolvedValue({
-        accessToken: ACCESS_TOKEN,
-        refreshToken: REFRESH_TOKEN,
-      }),
+    refresh: jest.fn().mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    }),
     regenerateRecoveryCodes: jest.fn(),
     register: jest.fn(),
     registerMagicLink: jest.fn(),
@@ -65,12 +59,10 @@ describe('AuthController', () => {
     unlinkOAuthProvider: jest.fn(),
     verifyMagicLink: jest.fn(),
     verifyEmail: jest.fn(),
-    verifyOtp: jest
-      .fn()
-      .mockResolvedValue({
-        accessToken: ACCESS_TOKEN,
-        refreshToken: REFRESH_TOKEN,
-      }),
+    verifyOtp: jest.fn().mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    }),
   } as unknown as AuthService;
 
   const totpServiceMock = {

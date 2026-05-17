@@ -1,4 +1,6 @@
--- squawk-ignore-file
+set lock_timeout = '1s';
+set statement_timeout = '5s';
+
 -- AlterTable
 ALTER TABLE "User" ADD COLUMN     "phoneNumber" TEXT,
 ADD COLUMN     "smsEnabledAt" TIMESTAMP(3),
@@ -21,4 +23,5 @@ CREATE TABLE "RecoveryCode" (
 CREATE INDEX "RecoveryCode_userId_idx" ON "RecoveryCode"("userId");
 
 -- AddForeignKey
-ALTER TABLE "RecoveryCode" ADD CONSTRAINT "RecoveryCode_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "RecoveryCode" ADD CONSTRAINT "RecoveryCode_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE NOT VALID;
+ALTER TABLE "RecoveryCode" VALIDATE CONSTRAINT "RecoveryCode_userId_fkey";

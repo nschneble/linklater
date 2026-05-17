@@ -1,4 +1,6 @@
--- squawk-ignore-file
+set lock_timeout = '1s';
+set statement_timeout = '5s';
+
 -- CreateTable
 CREATE TABLE "RefreshToken" (
     "id" TEXT NOT NULL,
@@ -35,7 +37,9 @@ CREATE UNIQUE INDEX "ExtensionAuthCode_codeHash_key" ON "ExtensionAuthCode"("cod
 CREATE INDEX "ExtensionAuthCode_userId_idx" ON "ExtensionAuthCode"("userId");
 
 -- AddForeignKey
-ALTER TABLE "RefreshToken" ADD CONSTRAINT "RefreshToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "RefreshToken" ADD CONSTRAINT "RefreshToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE NOT VALID;
+ALTER TABLE "RefreshToken" VALIDATE CONSTRAINT "RefreshToken_userId_fkey";
 
 -- AddForeignKey
-ALTER TABLE "ExtensionAuthCode" ADD CONSTRAINT "ExtensionAuthCode_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ExtensionAuthCode" ADD CONSTRAINT "ExtensionAuthCode_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE NOT VALID;
+ALTER TABLE "ExtensionAuthCode" VALIDATE CONSTRAINT "ExtensionAuthCode_userId_fkey";

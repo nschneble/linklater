@@ -1,4 +1,6 @@
--- squawk-ignore-file
+set lock_timeout = '1s';
+set statement_timeout = '5s';
+
 -- DropIndex
 DROP INDEX "Link_searchVector_idx";
 
@@ -24,4 +26,5 @@ CREATE INDEX "OAuthAccount_userId_idx" ON "OAuthAccount"("userId");
 CREATE UNIQUE INDEX "OAuthAccount_provider_providerId_key" ON "OAuthAccount"("provider", "providerId");
 
 -- AddForeignKey
-ALTER TABLE "OAuthAccount" ADD CONSTRAINT "OAuthAccount_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "OAuthAccount" ADD CONSTRAINT "OAuthAccount_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE NOT VALID;
+ALTER TABLE "OAuthAccount" VALIDATE CONSTRAINT "OAuthAccount_userId_fkey";
