@@ -90,9 +90,8 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials.' })
   @ApiResponse({ status: 429, description: 'Too many login attempts.' })
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(ThrottlerGuard, LocalAuthGuard)
   @Throttle({ 'auth-login': { ttl: 60000, limit: 10 } })
-  @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(200)
   async login(@Req() request: AuthRequest) {
