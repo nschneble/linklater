@@ -428,7 +428,7 @@ describe('AuthForm', () => {
       });
     });
 
-    it('shows an inline success alert while keeping the form visible', async () => {
+    it('hides form and shows success state after magic link sent', async () => {
       vi.mocked(requestMagicLink).mockResolvedValue(undefined);
 
       renderAuthForm();
@@ -445,9 +445,34 @@ describe('AuthForm', () => {
         expect(
           screen.getByText(/check your email for a login link/i),
         ).toBeInTheDocument();
-        expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+        expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: /back to login/i }),
+        ).toBeInTheDocument();
       });
+    });
+
+    it('returns to login form when Back to login is clicked from success state', async () => {
+      vi.mocked(requestMagicLink).mockResolvedValue(undefined);
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /log in with magic link/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(/check your email for a login link/i)).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /back to login/i }));
+
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /log in/i })).toBeInTheDocument();
     });
 
     it('shows an error when requestMagicLink fails', async () => {
@@ -499,7 +524,7 @@ describe('AuthForm', () => {
       });
     });
 
-    it('shows "Check your email to finish signing up!" after successful registerMagicLink', async () => {
+    it('shows "Check your email to complete signup" after successful registerMagicLink', async () => {
       vi.mocked(registerMagicLink).mockResolvedValue(undefined);
 
       renderAuthForm();
@@ -515,7 +540,7 @@ describe('AuthForm', () => {
       await waitFor(() => {
         expect(screen.getByRole('status')).toBeInTheDocument();
         expect(
-          screen.getByText(/check your email to finish signing up/i),
+          screen.getByText(/check your email to complete signup/i),
         ).toBeInTheDocument();
       });
     });

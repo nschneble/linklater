@@ -37,7 +37,13 @@ export default function ForgotPasswordView({
 
       {forgotPasswordSent ? (
         <div className="text-center space-y-4">
-          <Alert variant="success">Check your email for a reset link!</Alert>
+          <Alert
+            className="flex items-center justify-center gap-2"
+            variant="success"
+          >
+            <i className="fa-solid fa-envelope text-xs" aria-hidden="true" />
+            Check your email for a reset link
+          </Alert>
           <LinkButton onClick={onBack}>Back to login</LinkButton>
         </div>
       ) : (

@@ -188,6 +188,12 @@ export default function AuthForm() {
       mode={mode}
       onEmailChange={setEmail}
       onForgotPassword={() => handleModeChange('forgot-password')}
+      onMagicLinkBack={() => {
+        setMagicLinkSent(false);
+        if (mode === 'register') {
+          handleModeChange('login');
+        }
+      }}
       onModeChange={handleModeChange}
       onPasswordChange={setPassword}
       onSubmit={handleSubmit}
