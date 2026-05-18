@@ -2,7 +2,7 @@ import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
-import { type FormEvent, type RefObject } from 'react';
+import { type FormEvent, type RefObject, useEffect, useRef } from 'react';
 
 interface MfaViewProps {
   error: string | null;
@@ -28,6 +28,13 @@ export default function MfaView({
   onSwitchToTotp,
 }: MfaViewProps) {
   const isRecovery = mfaChallenge === 'recovery';
+  const formReference = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (!isRecovery && /^\d{6}$/.test(mfaCode)) {
+      formReference.current?.requestSubmit();
+    }
+  }, [mfaCode, isRecovery]);
 
   return (
     <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
@@ -40,7 +47,7 @@ export default function MfaView({
           : 'Enter the code from your authenticator app.'}
       </p>
 
-      <form className="space-y-4" onSubmit={onSubmit}>
+      <form ref={formReference} className="space-y-4" onSubmit={onSubmit}>
         <label
           className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
           htmlFor={isRecovery ? 'mfa-recovery-code' : 'mfa-totp-code'}

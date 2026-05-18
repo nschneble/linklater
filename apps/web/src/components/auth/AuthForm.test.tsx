@@ -560,6 +560,104 @@ describe('AuthForm', () => {
     });
   });
 
+  describe('MFA challenge — TOTP auto-submit', () => {
+    it('auto-submits TOTP code when 6 digits are entered without clicking Verify', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      const refreshUser = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ login: loginMock, refreshUser }),
+      );
+      vi.mocked(verifyOtp).mockResolvedValue({ accessToken: 'full-jwt' });
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByLabelText(/authenticator code/i),
+        ).toBeInTheDocument();
+      });
+
+      await act(async () => {
+        fireEvent.change(screen.getByLabelText(/authenticator code/i), {
+          target: { value: '123456' },
+        });
+      });
+
+      await waitFor(() => {
+        expect(verifyOtp).toHaveBeenCalledWith('mfa-tok', '123456', 'totp');
+      });
+    });
+
+    it('does not auto-submit TOTP code when fewer than 6 digits are entered', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByLabelText(/authenticator code/i),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByLabelText(/authenticator code/i), {
+        target: { value: '12345' },
+      });
+
+      expect(verifyOtp).not.toHaveBeenCalled();
+    });
+
+    it('does not auto-submit in recovery code mode when 6 chars are entered', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /use a recovery code/i }),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /use a recovery code/i }),
+      );
+
+      fireEvent.change(screen.getByLabelText(/recovery code/i), {
+        target: { value: 'abcdef' },
+      });
+
+      expect(verifyOtp).not.toHaveBeenCalled();
+    });
+  });
+
   describe('MFA challenge — recovery code', () => {
     it('switches to recovery code input when Use a recovery code is clicked', async () => {
       const loginMock = vi.fn().mockResolvedValue({

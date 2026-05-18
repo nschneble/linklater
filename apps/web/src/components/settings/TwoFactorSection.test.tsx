@@ -127,6 +127,34 @@ describe('TwoFactorSection', () => {
       });
     });
 
+    it('auto-submits TOTP verification code when 6 digits are entered without clicking Verify', async () => {
+      vi.mocked(apiModule.setupTotp).mockResolvedValue({
+        qrCodeDataUrl: 'data:image/png;base64,abc',
+        secret: 'SECRETABC',
+      });
+      vi.mocked(apiModule.verifyTotpSetup).mockResolvedValue({
+        recoveryCodes: ['aaaaa-bbbbb'],
+      });
+
+      render(<TwoFactorSection />);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /set up authenticator app/i }),
+        );
+      });
+
+      await act(async () => {
+        fireEvent.change(screen.getByLabelText(/verification code/i), {
+          target: { value: '123456' },
+        });
+      });
+
+      await waitFor(() => {
+        expect(apiModule.verifyTotpSetup).toHaveBeenCalledWith('123456');
+      });
+    });
+
     it('shows an error when TOTP verification fails', async () => {
       vi.mocked(apiModule.setupTotp).mockResolvedValue({
         qrCodeDataUrl: 'data:image/png;base64,abc',
