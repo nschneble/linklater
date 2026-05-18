@@ -12,5 +12,9 @@ export function getErrorMessage(
   error: unknown,
   fallback = 'Something went wrong',
 ): string {
-  return error instanceof Error ? error.message : fallback;
+  if (!(error instanceof Error)) {
+    return fallback;
+  }
+
+  return error.message.replace(/^[A-Z][a-zA-Z]*Exception:\s*/, '');
 }

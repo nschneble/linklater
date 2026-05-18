@@ -466,7 +466,9 @@ describe('AuthForm', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText(/check your email for a login link/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/check your email for a login link/i),
+        ).toBeInTheDocument();
       });
 
       fireEvent.click(screen.getByRole('button', { name: /back to login/i }));
