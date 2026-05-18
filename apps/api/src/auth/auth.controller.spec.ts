@@ -8,6 +8,7 @@ import type { Response } from 'express';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import type { AuthRequest } from './auth-request.type';
+import { LocalAuthGuard } from './local-auth.guard';
 import { EmailVerificationService } from './email-verification.service';
 import { MfaAuthGuard } from './mfa-auth.guard';
 import { OAuthAccountService } from './oauth-account.service';
@@ -134,6 +135,18 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
+    it('applies ThrottlerGuard before LocalAuthGuard to prevent bypass via credential failure', () => {
+      const guards: unknown[] = Reflect.getMetadata(
+        '__guards__',
+        AuthController.prototype.login,
+      );
+      expect(guards).toContain(ThrottlerGuard);
+      expect(guards).toContain(LocalAuthGuard);
+      expect(guards.indexOf(ThrottlerGuard)).toBeLessThan(
+        guards.indexOf(LocalAuthGuard),
+      );
+    });
+
     it('delegates to AuthService.login with the request user', async () => {
       const request = {
         user: {
