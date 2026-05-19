@@ -156,7 +156,18 @@ export default function LoginRegisterView({
               required={false}
             />
 
-            {error && <Alert variant="error">{error}</Alert>}
+            {error && (
+              <Alert
+                className="flex items-center justify-center gap-2"
+                variant="error"
+              >
+                <i
+                  className="fa-solid fa-triangle-exclamation text-xs"
+                  aria-hidden="true"
+                />
+                {error}
+              </Alert>
+            )}
 
             <PrimaryButton disabled={loading} className="w-full py-2.5">
               <i
