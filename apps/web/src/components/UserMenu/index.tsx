@@ -229,7 +229,11 @@ export default function UserMenu({
           transform: showUserMenu ? 'scale(1)' : 'scale(0.95)',
           pointerEvents: showUserMenu ? 'auto' : 'none',
         }}
-        onMouseLeave={() => menuReference.current?.focus()}
+        onMouseLeave={() => {
+          if (!themeRowReference.current?.contains(document.activeElement)) {
+            menuReference.current?.focus();
+          }
+        }}
       >
         <div onMouseEnter={() => menuReference.current?.focus()}>
           <MenuSection label="Logged in as" className="px-3">
@@ -267,7 +271,7 @@ export default function UserMenu({
           />
 
           <MenuItem
-            icon="fa-palette"
+            icon="fa-paintbrush"
             label="Theme editor"
             onClick={() => {
               onViewChange('theme-editor');
@@ -285,14 +289,27 @@ export default function UserMenu({
               setIsThemeAreaPointerOver(true);
               handleThemeRowEnter();
             }}
-            onMouseLeave={() => setIsThemeAreaPointerOver(false)}
+            onMouseLeave={(event) => {
+              setIsThemeAreaPointerOver(false);
+              if (previewTheme !== null) {
+                resetPreview(baseTheme);
+              }
+              if (menuReference.current?.contains(event.relatedTarget as Node)) {
+                setShowThemeSubmenu(false);
+              } else if (
+                !flyoutReference.current?.contains(document.activeElement)
+              ) {
+                setShowThemeSubmenu(false);
+                menuReference.current?.focus();
+              }
+            }}
           >
             <ThemeSubmenu
               baseTheme={baseTheme}
               previewTheme={previewTheme}
               showSubmenu={showThemeSubmenu}
               submenuOnLeft={themeSubmenuOnLeft}
-              isPointerOver={isThemeAreaPointerOver}
+              isPointerOver={isThemeAreaPointerOver || showThemeSubmenu}
               flyoutReference={flyoutReference}
               onTriggerBlur={() => {
                 setShowThemeSubmenu(false);

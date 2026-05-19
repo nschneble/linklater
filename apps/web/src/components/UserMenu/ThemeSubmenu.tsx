@@ -95,7 +95,7 @@ export default function ThemeSubmenu({
         role="menuitem"
         aria-haspopup="menu"
         aria-expanded={showSubmenu}
-        className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-default ${
+        className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus-visible:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-default ${
           isPointerOver ? 'bg-[var(--bg-surface)]' : ''
         }`}
         onMouseEnter={(event) => {
@@ -103,9 +103,7 @@ export default function ThemeSubmenu({
         }}
         onBlur={(event) => {
           if (
-            !flyoutReference?.current?.contains(
-              event.relatedTarget as Node,
-            )
+            !flyoutReference?.current?.contains(event.relatedTarget as Node)
           ) {
             onTriggerBlur?.();
           }
@@ -166,7 +164,7 @@ export default function ThemeSubmenu({
       >
         {THEMES.map((theme) => (
           <button
-            className={`flex items-center gap-2 w-full px-3 py-2 ${hoveredThemeId === theme.id ? 'bg-[var(--bg-surface)]' : ''} focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-pointer`}
+            className={`flex items-center gap-2 w-full px-3 py-2 ${hoveredThemeId === theme.id ? 'bg-[var(--bg-surface)]' : ''} focus:outline-none text-[var(--text)] text-left cursor-pointer`}
             data-submenu-item
             style={{
               transitionDuration:
@@ -177,11 +175,17 @@ export default function ThemeSubmenu({
             onClick={() => onSelect(theme.id)}
             onMouseEnter={(event) => {
               setHoveredThemeId(theme.id);
+              const root = document.documentElement;
+              root.style.setProperty('--theme-transition-duration', '150ms');
+              root.style.setProperty('--theme-transition-easing', 'ease-out');
+              root.dataset.theme = theme.id;
+              onPreviewChange(theme.id);
               event.currentTarget.focus();
             }}
             onMouseLeave={() => setHoveredThemeId(null)}
             onBlur={() => setHoveredThemeId(null)}
             onFocus={() => {
+              setHoveredThemeId(theme.id);
               const root = document.documentElement;
               root.style.setProperty('--theme-transition-duration', '150ms');
               root.style.setProperty('--theme-transition-easing', 'ease-out');
