@@ -15,6 +15,12 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+@media (max-width: 767px) {
+  body.menu-open {
+    overflow: hidden;
+  }
+}
+
 @keyframes card-enter {
   from {
     opacity: 0;

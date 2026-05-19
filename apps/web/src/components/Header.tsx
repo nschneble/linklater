@@ -1,4 +1,4 @@
-import MobileMenuPanel from './UserMenu/MobileMenuPanel';
+import MobileBottomSheet from './UserMenu/MobileBottomSheet';
 import UserMenu from './UserMenu';
 import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../theme/ThemeContext';
@@ -131,7 +131,7 @@ export default function Header({
         </div>
       </div>
 
-      <MobileMenuPanel
+      <MobileBottomSheet
         user={user}
         view={view}
         isOpen={showUserMenu}

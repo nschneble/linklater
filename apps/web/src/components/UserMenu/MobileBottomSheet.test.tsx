@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import MobileMenuPanel from './MobileMenuPanel';
+import MobileBottomSheet from './MobileBottomSheet';
 import { THEMES } from '../../theme/ThemeContext';
 import type { User } from '../../auth/AuthContext';
 
@@ -33,23 +33,21 @@ const defaultProps = {
   onViewChange: vi.fn(),
 };
 
-describe('MobileMenuPanel', () => {
-  it('has aria-hidden="true" when closed', () => {
-    const { container } = render(
-      <MobileMenuPanel {...defaultProps} isOpen={false} />,
-    );
-    expect(container.firstChild).toHaveAttribute('aria-hidden', 'true');
+describe('MobileBottomSheet', () => {
+  it('sheet is inert when closed', () => {
+    render(<MobileBottomSheet {...defaultProps} isOpen={false} />);
+    const sheet = document.querySelector('[role="dialog"]');
+    expect(sheet).toHaveAttribute('inert');
   });
 
-  it('has aria-hidden="false" when open', () => {
-    const { container } = render(
-      <MobileMenuPanel {...defaultProps} isOpen={true} />,
-    );
-    expect(container.firstChild).toHaveAttribute('aria-hidden', 'false');
+  it('sheet is not inert when open', () => {
+    render(<MobileBottomSheet {...defaultProps} isOpen={true} />);
+    const sheet = screen.getByRole('dialog');
+    expect(sheet).not.toHaveAttribute('inert');
   });
 
   it('renders the user email', () => {
-    render(<MobileMenuPanel {...defaultProps} isOpen={true} />);
+    render(<MobileBottomSheet {...defaultProps} isOpen={true} />);
     expect(screen.getByText('test@example.com')).toBeInTheDocument();
   });
 
@@ -57,7 +55,7 @@ describe('MobileMenuPanel', () => {
     const onViewChange = vi.fn();
     const onClose = vi.fn();
     render(
-      <MobileMenuPanel
+      <MobileBottomSheet
         {...defaultProps}
         isOpen={true}
         onViewChange={onViewChange}
@@ -73,7 +71,7 @@ describe('MobileMenuPanel', () => {
     const onViewChange = vi.fn();
     const onClose = vi.fn();
     render(
-      <MobileMenuPanel
+      <MobileBottomSheet
         {...defaultProps}
         isOpen={true}
         onViewChange={onViewChange}
@@ -89,7 +87,7 @@ describe('MobileMenuPanel', () => {
     const onViewChange = vi.fn();
     const onClose = vi.fn();
     render(
-      <MobileMenuPanel
+      <MobileBottomSheet
         {...defaultProps}
         isOpen={true}
         onViewChange={onViewChange}
@@ -104,7 +102,7 @@ describe('MobileMenuPanel', () => {
   it('clicking the mode toggle calls onModeToggle', () => {
     const onModeToggle = vi.fn();
     render(
-      <MobileMenuPanel
+      <MobileBottomSheet
         {...defaultProps}
         isOpen={true}
         onModeToggle={onModeToggle}
@@ -118,7 +116,7 @@ describe('MobileMenuPanel', () => {
     const onLogout = vi.fn();
     const onClose = vi.fn();
     render(
-      <MobileMenuPanel
+      <MobileBottomSheet
         {...defaultProps}
         isOpen={true}
         onLogout={onLogout}
@@ -134,7 +132,7 @@ describe('MobileMenuPanel', () => {
     const onThemeSelect = vi.fn();
     const onClose = vi.fn();
     render(
-      <MobileMenuPanel
+      <MobileBottomSheet
         {...defaultProps}
         isOpen={true}
         onThemeSelect={onThemeSelect}
@@ -144,6 +142,16 @@ describe('MobileMenuPanel', () => {
     fireEvent.click(screen.getByText('Theme').closest('button')!);
     fireEvent.click(screen.getByText(THEMES[1].label));
     expect(onThemeSelect).toHaveBeenCalledWith(THEMES[1].id);
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('clicking the scrim calls onClose', () => {
+    const onClose = vi.fn();
+    render(
+      <MobileBottomSheet {...defaultProps} isOpen={true} onClose={onClose} />,
+    );
+    const scrim = document.querySelector('[aria-hidden="true"]');
+    fireEvent.click(scrim!);
     expect(onClose).toHaveBeenCalled();
   });
 });
