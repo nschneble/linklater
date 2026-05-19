@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { verifyMagicLink } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { FOCUS_RING } from '../../lib/styles';
 import { useAuth } from '../../auth/AuthContext';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 type Status = 'verifying' | 'success' | 'error';
 

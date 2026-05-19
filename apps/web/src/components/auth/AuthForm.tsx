@@ -130,9 +130,11 @@ export default function AuthForm() {
     try {
       await verifyOtp(mfaToken, mfaCode, mfaChallenge);
       await refreshUser();
+      setMfaCode('');
       navigate(postLoginDestination(), { replace: true });
     } catch (caught: unknown) {
       setError(capitalizeFirst(getErrorMessage(caught, 'Invalid code')));
+      setMfaCode('');
     } finally {
       setLoading(false);
     }

@@ -23,7 +23,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
 import { CustomThrottlerGuard } from './custom-throttler.guard.js';
 import { ThrottleMessage } from './throttle-message.decorator.js';
-import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { EmailVerificationService } from './email-verification.service.js';
 import { OAuthAccountService } from './oauth-account.service.js';
@@ -44,6 +43,7 @@ import { TotpVerifySetupDto } from './dto/totp-verify-setup.dto.js';
 import { VerifyOtpDto } from './dto/verify-otp.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
 import { ExtensionTokenDto } from './dto/extension-token.dto.js';
+import type { Response } from 'express';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**

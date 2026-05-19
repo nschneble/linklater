@@ -9,23 +9,23 @@ interface InlineThemeListProps {
  * Flat list of theme buttons for the mobile menu. Does not implement live
  * preview on hover because mobile devices have no reliable hover state and the
  * mobile menu closes immediately on selection anyway.
+ *
+ * The "Theme" label and ARIA grouping (`role="group"` + `aria-labelledby`) are
+ * provided by the enclosing `MenuSection` in `MobileMenuPanel`.
  */
 export default function InlineThemeList({
   baseTheme,
   onSelect,
 }: InlineThemeListProps) {
   return (
-    <div>
-      <p className="px-4 pt-3 pb-1 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-tight font-semibold">
-        Theme
-      </p>
+    <>
       {THEMES.map((theme) => (
         <button
           key={theme.id}
           type="button"
           role="menuitemradio"
           aria-checked={baseTheme === theme.id}
-          className="flex items-center gap-3 w-full px-4 py-3 text-[var(--text)] text-sm text-left cursor-pointer active:bg-[var(--bg-surface)]"
+          className="flex items-center gap-3 w-full px-4 py-3 text-[var(--text)] text-sm text-left cursor-pointer active:bg-[var(--bg-surface)] focus-visible:bg-[var(--bg-surface)] focus:outline-none"
           onClick={() => onSelect(theme.id)}
         >
           <span
@@ -41,6 +41,6 @@ export default function InlineThemeList({
           )}
         </button>
       ))}
-    </div>
+    </>
   );
 }

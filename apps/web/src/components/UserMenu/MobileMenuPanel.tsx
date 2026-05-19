@@ -90,7 +90,7 @@ export default function MobileMenuPanel({
           onViewChange={onViewChange}
         />
 
-        <MenuSection>
+        <MenuSection label="Theme" labelClassName="px-4 pt-3 pb-1">
           <InlineThemeList
             baseTheme={baseTheme}
             onSelect={(theme) => {

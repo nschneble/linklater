@@ -1,7 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import InlineThemeList from './InlineThemeList';
 import { THEMES } from '../../theme/ThemeContext';
+
+beforeEach(() => vi.clearAllMocks());
 
 describe('InlineThemeList', () => {
   it('renders one button per theme', () => {
@@ -29,6 +31,20 @@ describe('InlineThemeList', () => {
     for (const theme of inactiveThemes) {
       const button = screen.getByText(theme.label).closest('button');
       expect(button?.querySelector('.fa-check')).toBeNull();
+    }
+  });
+
+  it('active theme button has aria-checked true', () => {
+    render(<InlineThemeList baseTheme={THEMES[0].id} onSelect={vi.fn()} />);
+    const activeButton = screen.getByText(THEMES[0].label).closest('button');
+    expect(activeButton).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('inactive theme buttons have aria-checked false', () => {
+    render(<InlineThemeList baseTheme={THEMES[0].id} onSelect={vi.fn()} />);
+    for (const theme of THEMES.slice(1)) {
+      const button = screen.getByText(theme.label).closest('button');
+      expect(button).toHaveAttribute('aria-checked', 'false');
     }
   });
 });

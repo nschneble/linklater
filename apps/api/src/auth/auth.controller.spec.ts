@@ -3,17 +3,16 @@ import { jest } from '@jest/globals';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CustomThrottlerGuard } from './custom-throttler.guard';
-import type { Response } from 'express';
-
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import type { AuthRequest } from './auth-request.type';
 import { LocalAuthGuard } from './local-auth.guard';
 import { EmailVerificationService } from './email-verification.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { MfaAuthGuard } from './mfa-auth.guard';
 import { OAuthAccountService } from './oauth-account.service';
 import { TotpService } from './totp.service';
+import type { Response } from 'express';
+import type { AuthRequest } from './auth-request.type';
 
 const ACCESS_TOKEN = 'token';
 const NEW_EMAIL = 'new.email@addy.com';
@@ -585,6 +584,30 @@ describe('AuthController', () => {
       expect(response.redirect).toHaveBeenCalledWith(
         expect.stringContaining('https://accounts.google.com/o/oauth2/v2/auth'),
       );
+    });
+
+    it('redirect URL contains required OAuth query parameters', () => {
+      process.env.GOOGLE_CLIENT_ID = 'test-client-id';
+      process.env.GOOGLE_LINK_CALLBACK_URL =
+        'https://api.example.com/auth/google/link/callback';
+      process.env.JWT_SECRET = 'test-secret';
+
+      const request = {
+        user: { userId: USER_ID },
+      } as unknown as AuthRequest;
+      const redirectMock = jest.fn();
+      const response = { redirect: redirectMock } as unknown as Response;
+
+      controller.googleLink(request, response);
+
+      const redirectUrl = redirectMock.mock.calls[0][0] as string;
+      const url = new URL(redirectUrl);
+      expect(url.searchParams.get('client_id')).toBe('test-client-id');
+      expect(url.searchParams.get('redirect_uri')).toBe(
+        'https://api.example.com/auth/google/link/callback',
+      );
+      expect(url.searchParams.get('response_type')).toBe('code');
+      expect(url.searchParams.get('scope')).toBeTruthy();
     });
   });
 

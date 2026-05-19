@@ -79,4 +79,22 @@ describe('Header', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(avatarButton).toHaveAttribute('aria-expanded', 'false');
   });
+
+  it('touchstart outside the header closes the menu', () => {
+    renderHeader();
+    const avatarButton = screen.getByLabelText(`User menu (${mockUser.email})`);
+    fireEvent.click(avatarButton);
+    expect(avatarButton).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.touchStart(document.body);
+    expect(avatarButton).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('clicking inside the header does not close the menu', () => {
+    renderHeader();
+    const avatarButton = screen.getByLabelText(`User menu (${mockUser.email})`);
+    fireEvent.click(avatarButton);
+    expect(avatarButton).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.mouseDown(avatarButton);
+    expect(avatarButton).toHaveAttribute('aria-expanded', 'true');
+  });
 });

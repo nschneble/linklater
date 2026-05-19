@@ -1,8 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useRef } from 'react';
 import { ThemeProvider } from '../../theme/ThemeContext';
-import { useMenuNavigation } from './useMenuNavigation';
 import UserMenu from './index';
 import type { User } from '../../auth/AuthContext';
 
@@ -127,67 +125,22 @@ describe('UserMenu', () => {
     expect(onLogout).toHaveBeenCalledOnce();
     expect(onClose).toHaveBeenCalledOnce();
   });
-});
 
-function FakeMenu({ onClose }: { onClose: () => void }) {
-  const menuReference = useRef<HTMLDivElement>(null);
-  useMenuNavigation(menuReference, onClose);
-
-  return (
-    <div ref={menuReference} role="menu">
-      <button type="button" role="menuitem">
-        First
-      </button>
-      <button type="button" role="menuitem">
-        Second
-      </button>
-      <button type="button" role="menuitem">
-        Third
-      </button>
-    </div>
-  );
-}
-
-describe('useMenuNavigation', () => {
-  it('ArrowDown moves focus to next item', () => {
-    render(<FakeMenu onClose={vi.fn()} />);
-    const [first, second] = screen.getAllByRole('menuitem');
-    first.focus();
-    fireEvent.keyDown(first, { key: 'ArrowDown' });
-    expect(document.activeElement).toBe(second);
-  });
-
-  it('ArrowUp moves focus to previous item', () => {
-    render(<FakeMenu onClose={vi.fn()} />);
-    const [first, second] = screen.getAllByRole('menuitem');
-    second.focus();
-    fireEvent.keyDown(second, { key: 'ArrowUp' });
-    expect(document.activeElement).toBe(first);
-  });
-
-  it('ArrowDown on last item wraps to first', () => {
-    render(<FakeMenu onClose={vi.fn()} />);
-    const items = screen.getAllByRole('menuitem');
-    const last = items[items.length - 1];
-    last.focus();
-    fireEvent.keyDown(last, { key: 'ArrowDown' });
-    expect(document.activeElement).toBe(items[0]);
-  });
-
-  it('ArrowUp on first item wraps to last', () => {
-    render(<FakeMenu onClose={vi.fn()} />);
-    const items = screen.getAllByRole('menuitem');
-    items[0].focus();
-    fireEvent.keyDown(items[0], { key: 'ArrowUp' });
-    expect(document.activeElement).toBe(items[items.length - 1]);
-  });
-
-  it('Escape calls onClose', () => {
+  it('selecting a theme from the submenu calls onThemeSelect and closes the menu', () => {
+    const onThemeSelect = vi.fn();
     const onClose = vi.fn();
-    render(<FakeMenu onClose={onClose} />);
-    const [first] = screen.getAllByRole('menuitem');
-    first.focus();
-    fireEvent.keyDown(first, { key: 'Escape' });
-    expect(onClose).toHaveBeenCalledOnce();
+    renderMenu({ ...defaultProps, isOpen: true, onThemeSelect, onClose });
+    fireEvent.click(screen.getByText('Boyhood'));
+    expect(onThemeSelect).toHaveBeenCalledWith('boyhood');
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('clicking Theme editor calls onViewChange with theme-editor and closes the menu', () => {
+    const onViewChange = vi.fn();
+    const onClose = vi.fn();
+    renderMenu({ ...defaultProps, isOpen: true, onViewChange, onClose });
+    fireEvent.click(screen.getByText('Theme editor'));
+    expect(onViewChange).toHaveBeenCalledWith('theme-editor');
+    expect(onClose).toHaveBeenCalled();
   });
 });

@@ -148,4 +148,64 @@ describe('ThemeSubmenu', () => {
       .find((button) => button.textContent?.includes('Boyhood'));
     expect(inactiveButton?.getAttribute('aria-checked')).toBe('false');
   });
+
+  it('calls onTriggerClick and onKeyboardOpen when Space is pressed on a closed submenu', () => {
+    const onTriggerClick = vi.fn();
+    const onKeyboardOpen = vi.fn();
+    render(
+      <ThemeSubmenu
+        {...baseProps}
+        showSubmenu={false}
+        onTriggerClick={onTriggerClick}
+        onKeyboardOpen={onKeyboardOpen}
+      />,
+    );
+    const trigger = screen.getByRole('menuitem');
+    fireEvent.keyDown(trigger, { key: ' ' });
+    expect(onTriggerClick).toHaveBeenCalledTimes(1);
+    expect(onKeyboardOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onTriggerClick when ArrowRight is pressed on an already open submenu', () => {
+    const onTriggerClick = vi.fn();
+    render(
+      <ThemeSubmenu
+        {...baseProps}
+        showSubmenu={true}
+        onTriggerClick={onTriggerClick}
+      />,
+    );
+    const trigger = screen.getByRole('menuitem');
+    fireEvent.keyDown(trigger, { key: 'ArrowRight' });
+    expect(onTriggerClick).not.toHaveBeenCalled();
+  });
+
+  it('calls onTriggerBlur when trigger button loses focus to an element outside the flyout', () => {
+    const onTriggerBlur = vi.fn();
+    render(
+      <ThemeSubmenu
+        {...baseProps}
+        showSubmenu={true}
+        onTriggerBlur={onTriggerBlur}
+      />,
+    );
+    const trigger = screen.getByRole('menuitem');
+    // blur to document.body (outside flyout)
+    fireEvent.blur(trigger, { relatedTarget: document.body });
+    expect(onTriggerBlur).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onFlyoutBlur with the related target when focus leaves the flyout panel', () => {
+    const onFlyoutBlur = vi.fn();
+    const { container } = render(
+      <ThemeSubmenu
+        {...baseProps}
+        showSubmenu={true}
+        onFlyoutBlur={onFlyoutBlur}
+      />,
+    );
+    const flyout = container.querySelector('[role="menu"][aria-label="Theme"]');
+    fireEvent.blur(flyout!, { relatedTarget: document.body });
+    expect(onFlyoutBlur).toHaveBeenCalledWith(document.body);
+  });
 });

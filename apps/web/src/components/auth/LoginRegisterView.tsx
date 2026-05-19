@@ -79,6 +79,8 @@ export default function LoginRegisterView({
         </div>
       ) : (
         <>
+          {/* mb-[24.5px] reserves the exact height of an Alert row so the layout
+              does not shift when an error appears below the form. */}
           <div
             className="relative flex mb-[24.5px] p-1 bg-[var(--bg-elevated)] rounded-full"
             role="tablist"
@@ -118,7 +120,7 @@ export default function LoginRegisterView({
 
           <form id="auth-form-panel" className="space-y-4" onSubmit={onSubmit}>
             <label
-              className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+              className="block text-[var(--text-muted)] text-sm font-medium"
               htmlFor="auth-email"
             >
               Email
@@ -134,7 +136,7 @@ export default function LoginRegisterView({
             />
 
             <label
-              className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+              className="block text-[var(--text-muted)] text-sm font-medium"
               htmlFor="auth-password"
             >
               Password
@@ -202,10 +204,13 @@ export default function LoginRegisterView({
                 )}
 
                 {appleSsoEnabled && (
-                  <a
-                    href={`${import.meta.env.VITE_API_BASE_URL}/auth/apple`}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-sm font-medium rounded-lg transition hover:opacity-80"
-                    aria-label="Continue with Apple"
+                  <IconButton
+                    variant="elevated"
+                    title="Continue with Apple"
+                    className="w-full py-2.5 rounded-lg"
+                    onClick={() => {
+                      window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/apple`;
+                    }}
                   >
                     <svg
                       aria-hidden="true"
@@ -218,7 +223,7 @@ export default function LoginRegisterView({
                       <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 405.1 45 281.9 77.2 207.3c21.6-49.9 68.3-82.9 120.4-82.9 46.1 0 91.1 25 100.2 51.3 8.8 25.2 9.8 57.7 9.8 75.5 0 47.8-4.3 91.1-12.2 127.4 54.7-16.5 88.4-80.9 88.4-150.5 0-73.3-21.3-130.6-63.7-162.8C288.8 40.5 241.2 15 185.1 15 89.8 15 45 72.9 45 107.1 0 107.1 0 113 0 118.8c0 73.2 46.5 204.4 99.4 253.2 5.8 5.5 13.2 10.5 21.6 14.9C79.5 436.9 46 534.5 46 563.8 46 658 94 788.1 167.6 852c61.6 53 125.5 85.9 196.2 85.9 91.9 0 124.2-47 209.4-47 85.5 0 126.7 47 212.8 47 105 0 185.9-93.5 244.3-220.6 32.4-70.3 46.5-100.3 46.5-100.3z" />
                     </svg>
                     Continue with Apple
-                  </a>
+                  </IconButton>
                 )}
               </div>
             </>
@@ -226,6 +231,7 @@ export default function LoginRegisterView({
 
           <div
             aria-hidden={mode !== 'login' ? true : undefined}
+            inert={mode !== 'login' ? true : undefined}
             className={`mt-4 flex flex-col items-center gap-2 text-center transition-opacity duration-200 ${mode === 'login' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           >
             <LinkButton

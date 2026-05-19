@@ -94,6 +94,17 @@ export default function ThemeSubmenu({
     onPreviewChange(themeId);
   }
 
+  function handleOpenOrFocusFlyout() {
+    if (showSubmenu) {
+      flyoutReference?.current
+        ?.querySelector<HTMLElement>('[data-submenu-item]')
+        ?.focus();
+    } else {
+      onTriggerClick();
+      onKeyboardOpen();
+    }
+  }
+
   const currentLabel =
     previewTheme && previewTheme !== baseTheme
       ? `Previewing ${THEMES.find((theme) => theme.id === previewTheme)?.label}`
@@ -121,28 +132,14 @@ export default function ThemeSubmenu({
         }}
         onClick={onTriggerClick}
         onKeyDown={(event) => {
-          if (event.key === 'ArrowRight') {
+          if (
+            event.key === 'ArrowRight' ||
+            event.key === 'Enter' ||
+            event.key === ' '
+          ) {
             event.preventDefault();
             event.stopPropagation();
-            if (showSubmenu) {
-              flyoutReference?.current
-                ?.querySelector<HTMLElement>('[data-submenu-item]')
-                ?.focus();
-            } else {
-              onTriggerClick();
-              onKeyboardOpen();
-            }
-          } else if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            event.stopPropagation();
-            if (showSubmenu) {
-              flyoutReference?.current
-                ?.querySelector<HTMLElement>('[data-submenu-item]')
-                ?.focus();
-            } else {
-              onTriggerClick();
-              onKeyboardOpen();
-            }
+            handleOpenOrFocusFlyout();
           }
         }}
       >
@@ -164,6 +161,8 @@ export default function ThemeSubmenu({
 
       <div
         ref={flyoutReference}
+        role="menu"
+        aria-label="Theme"
         className={`absolute top-0 z-50 w-56 py-2 bg-[var(--bg-elevated)] border-shadow rounded-lg ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
         inert={!showSubmenu ? true : undefined}
         style={menuRevealStyle(showSubmenu)}

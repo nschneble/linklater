@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import type { ExecutionContext } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import type { ThrottlerLimitDetail } from '@nestjs/throttler';
 import { THROTTLE_MESSAGE_KEY } from './throttle-message.decorator.js';
+import type { ExecutionContext } from '@nestjs/common';
+import type { ThrottlerLimitDetail } from '@nestjs/throttler';
 
 /**
  * Extends ThrottlerGuard to surface per-route 429 messages set via

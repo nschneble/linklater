@@ -34,10 +34,10 @@ export default function MfaView({
 
   useEffect(() => {
     // Auto-submit only for TOTP (6-digit numeric) — recovery codes have no fixed length.
-    if (!isRecovery && /^\d{6}$/.test(mfaCode)) {
+    if (!isRecovery && !loading && /^\d{6}$/.test(mfaCode)) {
       formReference.current?.requestSubmit();
     }
-  }, [mfaCode, isRecovery]);
+  }, [mfaCode, isRecovery, loading]);
 
   return (
     <AuthCard>
@@ -69,7 +69,11 @@ export default function MfaView({
           required
         />
 
-        {error && <Alert variant="error">{error}</Alert>}
+        {error && (
+          <Alert icon="fa-triangle-exclamation" variant="error">
+            {error}
+          </Alert>
+        )}
 
         <PrimaryButton disabled={loading} className="w-full py-2.5">
           {loading ? 'Verifying…' : 'Verify'}

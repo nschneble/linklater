@@ -203,9 +203,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
             }}
             onMouseLeave={(event) => {
               setIsThemeAreaPointerOver(false);
-              if (previewTheme !== null) {
-                resetPreview(baseTheme);
-              }
+              resetPreview(baseTheme);
               if (
                 menuReference.current?.contains(event.relatedTarget as Node)
               ) {
@@ -227,16 +225,12 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
               flyoutReference={flyoutReference}
               onTriggerBlur={() => {
                 setShowThemeSubmenu(false);
-                if (previewTheme !== null) {
-                  resetPreview(baseTheme);
-                }
+                resetPreview(baseTheme);
               }}
               onFlyoutBlur={(relatedTarget) => {
                 if (!themeRowReference.current?.contains(relatedTarget)) {
                   setShowThemeSubmenu(false);
-                  if (previewTheme !== null) {
-                    resetPreview(baseTheme);
-                  }
+                  resetPreview(baseTheme);
                 }
               }}
               onTriggerClick={handleThemeRowEnter}

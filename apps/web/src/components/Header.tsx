@@ -68,17 +68,6 @@ export default function Header({
       }
     }
 
-    document.addEventListener('mousedown', handleOutsideInteraction);
-    document.addEventListener('touchstart', handleOutsideInteraction);
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideInteraction);
-      document.removeEventListener('touchstart', handleOutsideInteraction);
-    };
-  }, [showUserMenu]);
-
-  useEffect(() => {
-    if (!showUserMenu) return;
-
     function handleEscapeKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setShowUserMenu(false);
@@ -86,8 +75,14 @@ export default function Header({
       }
     }
 
+    document.addEventListener('mousedown', handleOutsideInteraction);
+    document.addEventListener('touchstart', handleOutsideInteraction);
     document.addEventListener('keydown', handleEscapeKey);
-    return () => document.removeEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideInteraction);
+      document.removeEventListener('touchstart', handleOutsideInteraction);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
   }, [showUserMenu]);
 
   return (

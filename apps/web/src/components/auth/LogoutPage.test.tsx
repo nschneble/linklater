@@ -40,7 +40,7 @@ function renderPage() {
 
 beforeEach(() => {
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
-  mockNavigate.mockClear();
+  vi.clearAllMocks();
 });
 
 describe('LogoutPage', () => {

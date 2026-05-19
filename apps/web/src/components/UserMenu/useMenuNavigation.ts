@@ -30,7 +30,7 @@ import { useEffect, type RefObject } from 'react';
 export function useMenuNavigation(
   containerReference: RefObject<HTMLElement | null>,
   onClose: () => void,
-  itemSelector = '[role="menuitem"]',
+  itemSelector = '[role="menuitem"],[role="menuitemradio"]',
   onArrowLeft?: () => void,
 ) {
   useEffect(() => {

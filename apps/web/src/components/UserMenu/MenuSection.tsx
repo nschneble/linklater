@@ -13,6 +13,8 @@ interface MenuSectionProps {
   label?: string;
   /** Additional Tailwind classes, typically for horizontal padding overrides. */
   className?: string;
+  /** Additional Tailwind classes applied to the label element only. */
+  labelClassName?: string;
 }
 
 /**
@@ -26,6 +28,7 @@ export default function MenuSection({
   children,
   label,
   className = '',
+  labelClassName = '',
 }: MenuSectionProps) {
   const labelId = useId();
 
@@ -38,7 +41,7 @@ export default function MenuSection({
       {label && (
         <p
           id={labelId}
-          className="text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-tight font-semibold"
+          className={`text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-tight font-semibold ${labelClassName}`}
         >
           {label}
         </p>
