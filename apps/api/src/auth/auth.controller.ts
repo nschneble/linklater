@@ -20,7 +20,9 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
+import { CustomThrottlerGuard } from './custom-throttler.guard.js';
+import { ThrottleMessage } from './throttle-message.decorator.js';
 import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { EmailVerificationService } from './email-verification.service.js';
@@ -71,8 +73,9 @@ export class AuthController {
   })
   @ApiResponse({ status: 409, description: 'Email is already registered.' })
   @ApiResponse({ status: 429, description: 'Too many registration attempts.' })
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(CustomThrottlerGuard)
   @Throttle({ 'auth-register': { ttl: 60000, limit: 5 } })
+  @ThrottleMessage('Too many registration attempts.')
   @Post('register')
   async register(@Body() body: RegisterDto) {
     return this.authService.register(body.email, body.password);
@@ -90,8 +93,9 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials.' })
   @ApiResponse({ status: 429, description: 'Too many login attempts.' })
-  @UseGuards(ThrottlerGuard, LocalAuthGuard)
+  @UseGuards(CustomThrottlerGuard, LocalAuthGuard)
   @Throttle({ 'auth-login': { ttl: 60000, limit: 10 } })
+  @ThrottleMessage('Too many login attempts.')
   @Post('login')
   @HttpCode(200)
   async login(@Req() request: AuthRequest) {
@@ -123,8 +127,9 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Email verified successfully.' })
   @ApiResponse({ status: 400, description: 'Token is invalid or expired.' })
   @ApiResponse({ status: 429, description: 'Too many verification attempts.' })
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(CustomThrottlerGuard)
   @Throttle({ 'auth-verify-email': { ttl: 60000, limit: 10 } })
+  @ThrottleMessage('Too many verification attempts.')
   @Post('verify-email')
   @HttpCode(200)
   async verifyEmail(@Body() body: VerifyEmailDto) {
@@ -145,8 +150,9 @@ export class AuthController {
     status: 429,
     description: 'Too many forgot-password attempts.',
   })
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(CustomThrottlerGuard)
   @Throttle({ 'auth-forgot-password': { ttl: 60000, limit: 3 } })
+  @ThrottleMessage('Too many forgot-password attempts.')
   @Post('forgot-password')
   @HttpCode(200)
   async forgotPassword(@Body() body: ForgotPasswordDto) {
@@ -161,8 +167,9 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Password updated successfully.' })
   @ApiResponse({ status: 400, description: 'Token is invalid or expired.' })
   @ApiResponse({ status: 429, description: 'Too many reset attempts.' })
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(CustomThrottlerGuard)
   @Throttle({ 'auth-reset-password': { ttl: 60000, limit: 5 } })
+  @ThrottleMessage('Too many reset attempts.')
   @Post('reset-password')
   @HttpCode(200)
   async resetPassword(@Body() body: ResetPasswordDto) {
@@ -182,8 +189,9 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Email is already verified.' })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 429, description: 'Too many resend attempts.' })
-  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
   @Throttle({ 'auth-resend-verification': { ttl: 60000, limit: 3 } })
+  @ThrottleMessage('Too many resend attempts.')
   @Post('resend-verification')
   @HttpCode(200)
   async resendVerification(@Req() request: AuthRequest) {
@@ -210,8 +218,9 @@ export class AuthController {
     description: 'New email is already registered to another account.',
   })
   @ApiResponse({ status: 429, description: 'Too many email-change requests.' })
-  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
   @Throttle({ 'auth-request-email-change': { ttl: 60000, limit: 3 } })
+  @ThrottleMessage('Too many email-change requests.')
   @Post('request-email-change')
   @HttpCode(200)
   async requestEmailChange(
@@ -236,8 +245,9 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Email updated successfully.' })
   @ApiResponse({ status: 400, description: 'Token is invalid or expired.' })
   @ApiResponse({ status: 429, description: 'Too many verification attempts.' })
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(CustomThrottlerGuard)
   @Throttle({ 'auth-verify-email-change': { ttl: 60000, limit: 10 } })
+  @ThrottleMessage('Too many verification attempts.')
   @Post('verify-email-change')
   @HttpCode(200)
   async verifyEmailChange(@Body() body: VerifyEmailDto) {
@@ -260,8 +270,9 @@ export class AuthController {
     description: 'Invalid or expired MFA token or code.',
   })
   @ApiResponse({ status: 429, description: 'Too many OTP attempts.' })
-  @UseGuards(ThrottlerGuard, MfaAuthGuard)
+  @UseGuards(CustomThrottlerGuard, MfaAuthGuard)
   @Throttle({ 'auth-verify-otp': { ttl: 900000, limit: 5 } })
+  @ThrottleMessage('Too many OTP attempts.')
   @Post('verify-otp')
   @HttpCode(200)
   async verifyOtp(@Req() request: AuthRequest, @Body() body: VerifyOtpDto) {
@@ -282,8 +293,9 @@ export class AuthController {
   @ApiResponse({ status: 403, description: 'Email not yet verified.' })
   @ApiResponse({ status: 409, description: 'TOTP is already active.' })
   @ApiResponse({ status: 429, description: 'Too many setup attempts.' })
-  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
   @Throttle({ 'auth-2fa-totp-setup': { ttl: 60000, limit: 5 } })
+  @ThrottleMessage('Too many setup attempts.')
   @Post('2fa/totp/setup')
   @HttpCode(200)
   async totpSetup(@Req() request: AuthRequest) {
@@ -305,8 +317,9 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 429, description: 'Too many verify attempts.' })
-  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
   @Throttle({ 'auth-2fa-totp-verify': { ttl: 900000, limit: 5 } })
+  @ThrottleMessage('Too many verify attempts.')
   @Post('2fa/totp/verify')
   @HttpCode(200)
   async totpVerifySetup(
@@ -328,8 +341,9 @@ export class AuthController {
     description: 'Magic link sent (or silently skipped if address not found).',
   })
   @ApiResponse({ status: 429, description: 'Too many magic link requests.' })
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(CustomThrottlerGuard)
   @Throttle({ 'auth-request-magic-link': { ttl: 60000, limit: 3 } })
+  @ThrottleMessage('Too many magic link requests.')
   @Post('request-magic-link')
   @HttpCode(200)
   async requestMagicLink(@Body() body: ForgotPasswordDto): Promise<void> {
@@ -344,8 +358,9 @@ export class AuthController {
     description: 'Magic link sent (account created if new).',
   })
   @ApiResponse({ status: 429, description: 'Too many registration attempts.' })
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(CustomThrottlerGuard)
   @Throttle({ 'auth-register': { ttl: 60000, limit: 5 } })
+  @ThrottleMessage('Too many registration attempts.')
   @Post('register-magic-link')
   @HttpCode(200)
   async registerMagicLink(@Body() body: ForgotPasswordDto): Promise<void> {
@@ -361,8 +376,9 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: 'Token is invalid or expired.' })
   @ApiResponse({ status: 429, description: 'Too many verification attempts.' })
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(CustomThrottlerGuard)
   @Throttle({ 'auth-verify-magic-link': { ttl: 60000, limit: 10 } })
+  @ThrottleMessage('Too many verification attempts.')
   @Post('verify-magic-link')
   @HttpCode(200)
   async verifyMagicLink(@Body() body: VerifyEmailDto) {
@@ -380,8 +396,9 @@ export class AuthController {
     description: 'Invalid credential or missing JWT.',
   })
   @ApiResponse({ status: 429, description: 'Too many disable attempts.' })
-  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
   @Throttle({ 'auth-disable-2fa': { ttl: 900000, limit: 5 } })
+  @ThrottleMessage('Too many disable attempts.')
   @Delete('2fa')
   @HttpCode(200)
   async disable2fa(@Req() request: AuthRequest, @Body() body: Disable2faDto) {
@@ -406,8 +423,9 @@ export class AuthController {
     description: 'Invalid credential or missing JWT.',
   })
   @ApiResponse({ status: 429, description: 'Too many re-auth attempts.' })
-  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
   @Throttle({ 'auth-reauth': { ttl: 900000, limit: 5 } })
+  @ThrottleMessage('Too many re-auth attempts.')
   @Post('2fa/recovery-codes/regenerate')
   @HttpCode(200)
   async regenerateRecoveryCodes(
@@ -578,8 +596,9 @@ export class AuthController {
     description: 'Refresh token is invalid or expired.',
   })
   @ApiResponse({ status: 429, description: 'Too many refresh attempts.' })
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(CustomThrottlerGuard)
   @Throttle({ 'auth-refresh': { ttl: 60000, limit: 10 } })
+  @ThrottleMessage('Too many refresh attempts.')
   @Post('refresh')
   @HttpCode(200)
   async refreshToken(@Body() body: RefreshTokenDto) {

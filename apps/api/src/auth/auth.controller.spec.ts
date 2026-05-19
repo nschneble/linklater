@@ -2,7 +2,7 @@ import { jest } from '@jest/globals';
 
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { CustomThrottlerGuard } from './custom-throttler.guard';
 import type { Response } from 'express';
 
 import { AuthController } from './auth.controller';
@@ -95,7 +95,7 @@ describe('AuthController', () => {
         { provide: TotpService, useValue: totpServiceMock },
       ],
     })
-      .overrideGuard(ThrottlerGuard)
+      .overrideGuard(CustomThrottlerGuard)
       .useValue({ canActivate: () => true })
       .overrideGuard(MfaAuthGuard)
       .useValue({ canActivate: () => true })
@@ -140,9 +140,9 @@ describe('AuthController', () => {
         '__guards__',
         AuthController.prototype.login,
       );
-      expect(guards).toContain(ThrottlerGuard);
+      expect(guards).toContain(CustomThrottlerGuard);
       expect(guards).toContain(LocalAuthGuard);
-      expect(guards.indexOf(ThrottlerGuard)).toBeLessThan(
+      expect(guards.indexOf(CustomThrottlerGuard)).toBeLessThan(
         guards.indexOf(LocalAuthGuard),
       );
     });
