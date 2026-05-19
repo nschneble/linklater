@@ -141,6 +141,7 @@ describe('MobileMenuPanel', () => {
         onClose={onClose}
       />,
     );
+    fireEvent.click(screen.getByText('Theme').closest('button')!);
     fireEvent.click(screen.getByText(THEMES[1].label));
     expect(onThemeSelect).toHaveBeenCalledWith(THEMES[1].id);
     expect(onClose).toHaveBeenCalled();

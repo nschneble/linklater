@@ -184,6 +184,8 @@ export default function ThemeSubmenu({
             type="button"
             onClick={() => onSelect(theme.id)}
             onMouseEnter={(event) => {
+              setHoveredThemeId(theme.id);
+              applyPreview(theme.id);
               event.currentTarget.focus();
             }}
             onMouseLeave={() => setHoveredThemeId(null)}

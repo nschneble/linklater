@@ -91,7 +91,9 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
 
   const closeFlyout = () => {
     setShowThemeSubmenu(false);
-    resetPreview(baseTheme);
+    if (previewTheme !== null) {
+      resetPreview(baseTheme);
+    }
     menuReference.current
       ?.querySelector<HTMLElement>('[aria-haspopup="menu"]')
       ?.focus();
@@ -169,7 +171,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
         aria-hidden={!isOpen}
         tabIndex={-1}
         inert={!isOpen ? true : undefined}
-        className="absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] border-shadow text-xs rounded-lg focus:outline-none"
+        className="hidden md:block absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] border-shadow text-xs rounded-lg focus:outline-none"
         style={menuRevealStyle(isOpen)}
         onMouseLeave={() => {
           if (!themeRowReference.current?.contains(document.activeElement)) {
@@ -203,7 +205,9 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
             }}
             onMouseLeave={(event) => {
               setIsThemeAreaPointerOver(false);
-              resetPreview(baseTheme);
+              if (previewTheme !== null) {
+                resetPreview(baseTheme);
+              }
               if (
                 menuReference.current?.contains(event.relatedTarget as Node)
               ) {
@@ -225,12 +229,16 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
               flyoutReference={flyoutReference}
               onTriggerBlur={() => {
                 setShowThemeSubmenu(false);
-                resetPreview(baseTheme);
+                if (previewTheme !== null) {
+                  resetPreview(baseTheme);
+                }
               }}
               onFlyoutBlur={(relatedTarget) => {
                 if (!themeRowReference.current?.contains(relatedTarget)) {
                   setShowThemeSubmenu(false);
-                  resetPreview(baseTheme);
+                  if (previewTheme !== null) {
+                    resetPreview(baseTheme);
+                  }
                 }
               }}
               onTriggerClick={handleThemeRowEnter}

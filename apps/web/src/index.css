@@ -86,6 +86,14 @@ body {
     transition-duration: var(--theme-transition-duration);
     transition-timing-function: var(--theme-transition-easing);
   }
+
+  /* Menu item hover highlights must stay fast regardless of theme preview state */
+  [role='menu'] *,
+  [role='menu'] *::before,
+  [role='menu'] *::after {
+    transition-duration: 80ms;
+    transition-timing-function: ease;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

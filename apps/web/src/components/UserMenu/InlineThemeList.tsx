@@ -25,7 +25,7 @@ export default function InlineThemeList({
           type="button"
           role="menuitemradio"
           aria-checked={baseTheme === theme.id}
-          className="flex items-center gap-3 w-full px-4 py-3 text-[var(--text)] text-sm text-left cursor-pointer active:bg-[var(--bg-surface)] focus-visible:bg-[var(--bg-surface)] focus:outline-none"
+          className="flex items-center gap-3 w-full px-4 py-3 text-[var(--text)] text-sm text-left cursor-pointer focus:bg-[var(--bg-surface)] focus:outline-none"
           onClick={() => onSelect(theme.id)}
         >
           <span
