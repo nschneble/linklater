@@ -82,7 +82,9 @@ export default function MobileBottomSheet({
       return;
     }
     const firstItem =
-      mainViewReference.current?.querySelector<HTMLElement>('[role="menuitem"]');
+      mainViewReference.current?.querySelector<HTMLElement>(
+        '[role="menuitem"]',
+      );
     (firstItem ?? mainViewReference.current)?.focus();
   }, [isOpen]);
 
@@ -90,7 +92,9 @@ export default function MobileBottomSheet({
     if (!showThemeSubview) return;
     requestAnimationFrame(() => {
       const firstItem =
-        themeViewReference.current?.querySelector<HTMLElement>('[role="menuitem"]');
+        themeViewReference.current?.querySelector<HTMLElement>(
+          '[role="menuitem"]',
+        );
       (firstItem ?? themeViewReference.current)?.focus({ preventScroll: true });
     });
   }, [showThemeSubview]);
@@ -122,7 +126,6 @@ export default function MobileBottomSheet({
 
   return (
     <div className="md:hidden">
-      {/* Scrim */}
       <div
         className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -131,7 +134,6 @@ export default function MobileBottomSheet({
         onClick={onClose}
       />
 
-      {/* Sheet */}
       <div
         className="fixed bottom-0 inset-x-0 z-50 max-h-[85svh] overflow-y-auto bg-[var(--bg-elevated)] rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
         style={{
@@ -145,7 +147,6 @@ export default function MobileBottomSheet({
         aria-label="User menu"
         inert={!isOpen ? true : undefined}
       >
-        {/* Drag handle — sticky so it stays visible while the sheet scrolls */}
         <div
           className="sticky top-0 z-10 flex justify-center pt-3 pb-2 bg-[var(--bg-elevated)] cursor-grab active:cursor-grabbing"
           onTouchStart={handleDragHandleTouchStart}
@@ -157,21 +158,19 @@ export default function MobileBottomSheet({
           />
         </div>
 
-        {/* Slider — both panels sit side by side; translateX switches between them.
-            clip-path: inset(0) clips painted output (post-transform), unlike overflow-x: hidden
-            which clips based on layout position, causing the off-screen panel to stay invisible. */}
         <div style={{ clipPath: 'inset(0)' }}>
           <div
             style={{
               display: 'flex',
               width: '200%',
-              transform: showThemeSubview ? 'translateX(-50%)' : 'translateX(0)',
+              transform: showThemeSubview
+                ? 'translateX(-50%)'
+                : 'translateX(0)',
               transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
               alignItems: 'flex-start',
               willChange: 'transform',
             }}
           >
-            {/* Main view */}
             <div
               style={{ width: '50%' }}
               role="menu"
@@ -181,7 +180,7 @@ export default function MobileBottomSheet({
               className="pb-4"
               inert={showThemeSubview ? true : undefined}
             >
-              <MenuSection label="Logged in as" className="px-4 pt-1">
+              <MenuSection label="Logged in as" className="px-4 pt-2">
                 <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
                   {user.email}
                 </p>
@@ -202,7 +201,7 @@ export default function MobileBottomSheet({
                   role="menuitem"
                   aria-haspopup="menu"
                   aria-expanded={showThemeSubview}
-                  className="flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-pointer"
+                  className="flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:outline-none text-[var(--text)] text-left cursor-pointer"
                   onMouseEnter={(event) => event.currentTarget.focus()}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => setShowThemeSubview(true)}
@@ -227,15 +226,14 @@ export default function MobileBottomSheet({
               <MenuItem
                 icon="fa-right-from-bracket"
                 label="Log out"
+                className="mt-2 focus:bg-transparent!"
                 onClick={() => {
                   onLogout();
                   onClose();
                 }}
-                className="mt-2"
               />
             </div>
 
-            {/* Theme subview */}
             <div
               style={{ width: '50%' }}
               role="menu"
@@ -249,7 +247,7 @@ export default function MobileBottomSheet({
                 <button
                   type="button"
                   role="menuitem"
-                  className="flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-pointer"
+                  className="flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:outline-none text-[var(--text)] text-left cursor-pointer"
                   onMouseEnter={(event) => event.currentTarget.focus()}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={handleBackToMain}
@@ -262,7 +260,10 @@ export default function MobileBottomSheet({
                 </button>
               </MenuSection>
 
-              <InlineThemeList baseTheme={baseTheme} onSelect={handleThemeSelect} />
+              <InlineThemeList
+                baseTheme={baseTheme}
+                onSelect={handleThemeSelect}
+              />
             </div>
           </div>
         </div>
