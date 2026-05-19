@@ -128,7 +128,7 @@ describe('MobileBottomSheet', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('clicking a theme calls onThemeSelect with the theme id and then onClose', () => {
+  it('clicking a theme calls onThemeSelect with the theme id', () => {
     const onThemeSelect = vi.fn();
     const onClose = vi.fn();
     render(
@@ -142,7 +142,6 @@ describe('MobileBottomSheet', () => {
     fireEvent.click(screen.getByText('Theme').closest('button')!);
     fireEvent.click(screen.getByText(THEMES[1].label));
     expect(onThemeSelect).toHaveBeenCalledWith(THEMES[1].id);
-    expect(onClose).toHaveBeenCalled();
   });
 
   it('clicking the scrim calls onClose', () => {

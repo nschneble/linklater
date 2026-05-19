@@ -109,6 +109,10 @@ export default function MobileBottomSheet({
     requestAnimationFrame(() => themeButtonReference.current?.focus());
   }
 
+  function handleTrojanHorse() {
+    // does nothing… for now
+  }
+
   function handleThemeSelect(theme: BaseTheme) {
     onThemeSelect(theme);
   }
@@ -251,11 +255,17 @@ export default function MobileBottomSheet({
               <MenuSection className="flex items-center justify-between">
                 <MenuItem
                   icon="fa-chevron-left"
+                  label=""
                   className="flex-0 focus:bg-transparent!"
                   onClick={handleBackToMain}
                 />
                 <p className="font-semibold">Themes</p>
-                <MenuItem className="flex-0 not:visible bg-transparent! cursor-default!" />
+                <MenuItem
+                  icon=""
+                  label=""
+                  className="flex-0 not:visible bg-transparent! cursor-default!"
+                  onClick={handleTrojanHorse}
+                />
               </MenuSection>
 
               <InlineThemeList

@@ -60,7 +60,6 @@ export default function NavMenuItems({
       <MenuItem
         icon="fa-paintbrush"
         label="Theme editor"
-        className="focus:bg-transparent!"
         className="focus:bg-transparent! sm:focus:bg-[var(--bg-surface)]!"
         onClick={() => {
           onViewChange('theme-editor');
