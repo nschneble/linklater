@@ -32,8 +32,8 @@ interface LinksControlsProps {
  * On the unread tab: "Stumble!" + "Add link / Hide form".
  * On the read tab: "Remove all read" (hidden when the list is empty).
  *
- * This component is hidden on mobile (`hidden sm:contents` in `LinksToolbar`)
- * — mobile has its own icon-only equivalents rendered inline in `LinksToolbar`.
+ * This component is hidden on mobile, which has its own icon-only
+ * equivalents rendered inline in `LinksToolbar`.
  */
 export default function LinksControls({
   filter,
