@@ -88,9 +88,11 @@ export default function MobileBottomSheet({
 
   useEffect(() => {
     if (!showThemeSubview) return;
-    const firstItem =
-      themeViewReference.current?.querySelector<HTMLElement>('[role="menuitem"]');
-    (firstItem ?? themeViewReference.current)?.focus();
+    requestAnimationFrame(() => {
+      const firstItem =
+        themeViewReference.current?.querySelector<HTMLElement>('[role="menuitem"]');
+      (firstItem ?? themeViewReference.current)?.focus({ preventScroll: true });
+    });
   }, [showThemeSubview]);
 
   function handleBackToMain() {
@@ -155,22 +157,29 @@ export default function MobileBottomSheet({
           />
         </div>
 
-        {/* Main view */}
-        <div
-          className="grid"
-          style={{
-            gridTemplateRows: showThemeSubview ? '0fr' : '1fr',
-            transition: `grid-template-rows ${showThemeSubview ? '150ms ease-in' : '150ms ease-out 150ms'}`,
-          }}
-          inert={showThemeSubview ? true : undefined}
-        >
-          <div className="overflow-hidden">
+        {/* Slider — both panels sit side by side; translateX switches between them.
+            clip-path: inset(0) clips painted output (post-transform), unlike overflow-x: hidden
+            which clips based on layout position, causing the off-screen panel to stay invisible. */}
+        <div style={{ clipPath: 'inset(0)' }}>
+          <div
+            style={{
+              display: 'flex',
+              width: '200%',
+              transform: showThemeSubview ? 'translateX(-50%)' : 'translateX(0)',
+              transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+              alignItems: 'flex-start',
+              willChange: 'transform',
+            }}
+          >
+            {/* Main view */}
             <div
+              style={{ width: '50%' }}
               role="menu"
               aria-label="User menu"
               tabIndex={-1}
               ref={mainViewReference}
               className="pb-4"
+              inert={showThemeSubview ? true : undefined}
             >
               <MenuSection label="Logged in as" className="px-4 pt-1">
                 <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
@@ -225,25 +234,16 @@ export default function MobileBottomSheet({
                 className="mt-2"
               />
             </div>
-          </div>
-        </div>
 
-        {/* Theme subview */}
-        <div
-          className="grid"
-          style={{
-            gridTemplateRows: showThemeSubview ? '1fr' : '0fr',
-            transition: `grid-template-rows ${showThemeSubview ? '150ms ease-out 150ms' : '150ms ease-in'}`,
-          }}
-          inert={!showThemeSubview ? true : undefined}
-        >
-          <div className="overflow-hidden">
+            {/* Theme subview */}
             <div
+              style={{ width: '50%' }}
               role="menu"
               aria-label="Theme"
               tabIndex={-1}
               ref={themeViewReference}
               className="pb-4"
+              inert={!showThemeSubview ? true : undefined}
             >
               <MenuSection>
                 <button
