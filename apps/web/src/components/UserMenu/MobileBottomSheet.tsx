@@ -244,20 +244,12 @@ export default function MobileBottomSheet({
               inert={!showThemeSubview ? true : undefined}
             >
               <MenuSection>
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:outline-none text-[var(--text)] text-left cursor-pointer"
-                  onMouseEnter={(event) => event.currentTarget.focus()}
-                  onMouseDown={(event) => event.preventDefault()}
+                <MenuItem
+                  icon="fa-chevron-left"
+                  label="Back"
+                  className="focus:bg-transparent!"
                   onClick={handleBackToMain}
-                >
-                  <i
-                    className="fa-solid fa-chevron-left text-[var(--text-muted)] text-[0.6rem]"
-                    aria-hidden="true"
-                  />
-                  <span>Back</span>
-                </button>
+                />
               </MenuSection>
 
               <InlineThemeList
