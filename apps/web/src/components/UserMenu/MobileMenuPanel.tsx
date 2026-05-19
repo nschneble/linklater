@@ -69,7 +69,13 @@ export default function MobileMenuPanel({
       inert={!isOpen ? true : undefined}
       style={menuRevealStyle(isOpen, 'translateY(0)', 'translateY(-8px)')}
     >
-      <div role="menu" aria-label="User menu" tabIndex={-1} ref={panelReference} className="pb-2">
+      <div
+        role="menu"
+        aria-label="User menu"
+        tabIndex={-1}
+        ref={panelReference}
+        className="pb-2"
+      >
         <MenuSection label="Logged in as" className="px-4 pt-2">
           <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
             {user.email}

@@ -725,7 +725,11 @@ describe('AuthForm', () => {
       });
 
       await waitFor(() => {
-        expect(verifyOtp).toHaveBeenCalledWith('mfa-tok', 'aaaaa-bbbbb', 'recovery');
+        expect(verifyOtp).toHaveBeenCalledWith(
+          'mfa-tok',
+          'aaaaa-bbbbb',
+          'recovery',
+        );
         expect(refreshUser).toHaveBeenCalled();
       });
     });
@@ -736,7 +740,9 @@ describe('AuthForm', () => {
         mfaMethod: 'totp',
       });
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
-      vi.mocked(verifyOtp).mockRejectedValue(new Error('invalid recovery code'));
+      vi.mocked(verifyOtp).mockRejectedValue(
+        new Error('invalid recovery code'),
+      );
 
       renderAuthForm();
       fillEmail(USER_EMAIL);
@@ -901,7 +907,9 @@ describe('AuthForm', () => {
       fireEvent.click(screen.getByRole('button', { name: /back to login/i }));
 
       await waitFor(() => {
-        expect(screen.getByRole('tab', { name: /log in/i })).toBeInTheDocument();
+        expect(
+          screen.getByRole('tab', { name: /log in/i }),
+        ).toBeInTheDocument();
       });
     });
   });

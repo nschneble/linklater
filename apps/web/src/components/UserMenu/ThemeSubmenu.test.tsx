@@ -65,9 +65,7 @@ describe('ThemeSubmenu', () => {
 
   it('shows active theme label when previewTheme matches baseTheme', () => {
     const scannerDarkly = THEMES.find((theme) => theme.id === 'scanner-darkly');
-    render(
-      <ThemeSubmenu {...baseProps} previewTheme="scanner-darkly" />,
-    );
+    render(<ThemeSubmenu {...baseProps} previewTheme="scanner-darkly" />);
     expect(screen.getAllByText(scannerDarkly!.label).length).toBeGreaterThan(0);
   });
 
@@ -75,10 +73,9 @@ describe('ThemeSubmenu', () => {
     const { container } = render(
       <ThemeSubmenu {...baseProps} submenuOnLeft={false} />,
     );
-    const flyout = container.querySelector('[role="menuitemradio"]')?.closest(
-      'div[style]',
-    ) ?? container.querySelector('.left-\\[calc\\(100\\%-1px\\)\\]');
-    const flyoutPanel = container.querySelector('.left-\\[calc\\(100\\%-1px\\)\\]');
+    const flyoutPanel = container.querySelector(
+      '.left-\\[calc\\(100\\%-1px\\)\\]',
+    );
     expect(flyoutPanel).not.toBeNull();
   });
 
@@ -86,7 +83,9 @@ describe('ThemeSubmenu', () => {
     const { container } = render(
       <ThemeSubmenu {...baseProps} submenuOnLeft={true} />,
     );
-    const flyoutPanel = container.querySelector('.right-\\[calc\\(100\\%-1px\\)\\]');
+    const flyoutPanel = container.querySelector(
+      '.right-\\[calc\\(100\\%-1px\\)\\]',
+    );
     expect(flyoutPanel).not.toBeNull();
   });
 

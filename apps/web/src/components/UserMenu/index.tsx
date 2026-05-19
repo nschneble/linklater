@@ -122,7 +122,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
       // useMenuNavigation without visually pre-selecting any item
       menuReference.current?.focus();
     }
-  }, [isOpen]);
+  }, [isOpen, setIsThemeAreaPointerOver, setShowThemeSubmenu]);
 
   const handleThemeSelect = (theme: BaseTheme) => {
     onThemeSelect(theme);

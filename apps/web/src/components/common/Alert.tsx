@@ -46,9 +46,7 @@ export default function Alert({
       className={`px-3 py-2 border text-xs rounded-lg ${icon ? 'flex items-center justify-center gap-2' : ''} ${variantClasses[variant]} ${className}`}
       role={variantRoles[variant]}
     >
-      {icon && (
-        <i className={`fa-solid ${icon} text-xs`} aria-hidden="true" />
-      )}
+      {icon && <i className={`fa-solid ${icon} text-xs`} aria-hidden="true" />}
       {children}
     </p>
   );

@@ -83,6 +83,7 @@ export default function LoginRegisterView({
             className="relative flex mb-[24.5px] p-1 bg-[var(--bg-elevated)] rounded-full"
             role="tablist"
             aria-label="Authentication mode"
+            tabIndex={0}
             onKeyDown={(event) => {
               if (event.key === 'ArrowRight') onModeChange('register');
               else if (event.key === 'ArrowLeft') onModeChange('login');

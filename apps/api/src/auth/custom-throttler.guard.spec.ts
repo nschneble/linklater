@@ -1,7 +1,10 @@
 import { jest } from '@jest/globals';
 import { Reflector } from '@nestjs/core';
 import { CustomThrottlerGuard } from './custom-throttler.guard.js';
-import { ThrottleMessage, THROTTLE_MESSAGE_KEY } from './throttle-message.decorator.js';
+import {
+  ThrottleMessage,
+  THROTTLE_MESSAGE_KEY,
+} from './throttle-message.decorator.js';
 import type { ExecutionContext } from '@nestjs/common';
 import type { ThrottlerLimitDetail } from '@nestjs/throttler';
 
@@ -13,7 +16,9 @@ function makeGuard(reflector: Reflector) {
   return guard;
 }
 
-function makeContext(handler: (...args: unknown[]) => unknown): ExecutionContext {
+function makeContext(
+  handler: (...args: unknown[]) => unknown,
+): ExecutionContext {
   return {
     getHandler: () => handler,
     getClass: () => null,
@@ -36,7 +41,14 @@ describe('CustomThrottlerGuard', () => {
 
     const guard = makeGuard(reflector);
     const context = makeContext(FakeController.prototype.login);
-    const message = await (guard as unknown as { getErrorMessage: (context: ExecutionContext, detail: ThrottlerLimitDetail) => Promise<string> }).getErrorMessage(context, {} as ThrottlerLimitDetail);
+    const message = await (
+      guard as unknown as {
+        getErrorMessage: (
+          context: ExecutionContext,
+          detail: ThrottlerLimitDetail,
+        ) => Promise<string>;
+      }
+    ).getErrorMessage(context, {} as ThrottlerLimitDetail);
 
     expect(message).toBe('Too many login attempts');
   });
@@ -48,7 +60,14 @@ describe('CustomThrottlerGuard', () => {
 
     const guard = makeGuard(reflector);
     const context = makeContext(FakeController.prototype.undecorated);
-    const message = await (guard as unknown as { getErrorMessage: (context: ExecutionContext, detail: ThrottlerLimitDetail) => Promise<string> }).getErrorMessage(context, {} as ThrottlerLimitDetail);
+    const message = await (
+      guard as unknown as {
+        getErrorMessage: (
+          context: ExecutionContext,
+          detail: ThrottlerLimitDetail,
+        ) => Promise<string>;
+      }
+    ).getErrorMessage(context, {} as ThrottlerLimitDetail);
 
     expect(message).toBe('Too many requests');
   });
