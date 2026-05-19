@@ -207,7 +207,7 @@ export default function LinksView() {
         <h1 className="text-lg font-semibold">Your links</h1>
         <button
           type="button"
-          className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-help"
+          className="hidden sm:inline-flex text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-help"
           onClick={() => setShowShortcuts((previous) => !previous)}
           aria-label="Show keyboard shortcuts"
           title="Keyboard shortcuts"
@@ -216,9 +216,16 @@ export default function LinksView() {
         </button>
       </div>
       <p className="text-[var(--text-muted)] text-xs">
-        {filter === 'read'
-          ? 'Read links are automatically removed after seven days.'
-          : 'Add, search, or stumble upon something random.'}
+        <span className="hidden sm:inline-flex">
+          {filter === 'read'
+            ? 'Read links are automatically removed after seven days.'
+            : 'Add, search, or stumble upon something random.'}
+        </span>
+        <span className="inline-flex sm:hidden">
+          {filter === 'read'
+            ? 'Read links are removed after 7 days.'
+            : 'Add, search, or stumble!'}
+        </span>
       </p>
 
       <LinksToolbar

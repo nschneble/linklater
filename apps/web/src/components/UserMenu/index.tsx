@@ -159,10 +159,12 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
           aria-hidden="true"
           className="w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-[26px]"
         />
-        <i
-          className={`fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] transition-transform duration-200 ease-out ${isOpen ? '-rotate-180' : ''}`}
-          aria-hidden="true"
-        />
+        <span className="hidden sm:inline-flex">
+          <i
+            className={`fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] transition-transform duration-200 ease-out ${isOpen ? '-rotate-180' : ''}`}
+            aria-hidden="true"
+          />
+        </span>
       </button>
 
       <div

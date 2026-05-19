@@ -43,10 +43,10 @@ export default function LinksMobileControls({
 }: LinksMobileControlsProps) {
   return (
     <div className="sm:hidden flex shrink-0 gap-2">
-      {filter === 'read' && linksCount > 0 && (
+      {filter === 'read' && (
         <IconButton
           variant="elevated"
-          disabled={isClearingRead}
+          disabled={isClearingRead || linksCount === 0}
           aria-label="Remove all read links"
           title="Permanently remove all read links"
           className="px-2.5!"

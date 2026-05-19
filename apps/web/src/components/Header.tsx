@@ -100,7 +100,7 @@ export default function Header({
           }}
         >
           <img
-            className="w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-4xl"
+            className="hidden sm:inline-flex w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-4xl"
             src="/assets/img/linklater.jpg"
             alt=""
             aria-hidden="true"
