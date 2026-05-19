@@ -17,7 +17,7 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
   ): Promise<string> {
     return (
       this.reflector.get<string>(THROTTLE_MESSAGE_KEY, context.getHandler()) ??
-      'Too Many Requests'
+      'Too many requests'
     );
   }
 }
