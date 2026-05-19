@@ -77,10 +77,7 @@ export default function MobileBottomSheet({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) {
-      setShowThemeSubview(false);
-      return;
-    }
+    if (!isOpen) return;
     const firstItem =
       mainViewReference.current?.querySelector<HTMLElement>(
         '[role="menuitem"]',
@@ -98,6 +95,14 @@ export default function MobileBottomSheet({
       (firstItem ?? themeViewReference.current)?.focus({ preventScroll: true });
     });
   }, [showThemeSubview]);
+
+  function handleSheetTransitionEnd(
+    event: React.TransitionEvent<HTMLDivElement>,
+  ) {
+    if (event.propertyName === 'transform' && !isOpen) {
+      setShowThemeSubview(false);
+    }
+  }
 
   function handleBackToMain() {
     setShowThemeSubview(false);
@@ -145,6 +150,7 @@ export default function MobileBottomSheet({
         aria-modal="true"
         aria-label="User menu"
         inert={!isOpen ? true : undefined}
+        onTransitionEnd={handleSheetTransitionEnd}
       >
         <div
           className="sticky top-0 z-10 flex justify-center pt-3 pb-2 bg-[var(--bg-elevated)] cursor-grab active:cursor-grabbing"
