@@ -29,10 +29,12 @@ interface UserMenuProps {
  * - `showThemeSubmenu` — whether the theme flyout is visible.
  * - `previewTheme` — the theme currently being previewed on hover.
  * - `themeSubmenuOnLeft` — whether the flyout opens left (when near the right edge).
+ * - `isThemeAreaPointerOver` — whether the mouse is over the theme row + flyout area.
  *
- * The submenu uses a hover timeout (`hideSubmenuTimeout`) with an 80ms delay
- * before hiding, so the user has time to move the cursor from the trigger row
- * to the flyout panel without it disappearing.
+ * The theme submenu stays open until the user mouses over another menu item or
+ * closes the main menu. Hover tracking uses the `themeRowReference` wrapper div
+ * (which contains both the trigger row and the flyout panel) so the submenu does
+ * not close when moving between the two.
  *
  * Keyboard navigation within the dropdown is handled by `useMenuNavigation`.
  * Clicking outside the menu closes it via a `mousedown` listener on `document`.
@@ -50,6 +52,7 @@ export default function UserMenu({
   const avatarUrl = useMemo(() => gravatarUrl(user.email, 64), [user.email]);
   const { baseTheme, mode } = useTheme();
 
+  const [isThemeAreaPointerOver, setIsThemeAreaPointerOver] = useState(false);
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
   const [showThemeSubmenu, setShowThemeSubmenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -57,7 +60,6 @@ export default function UserMenu({
 
   const avatarReference = useRef<HTMLButtonElement | null>(null);
   const flyoutReference = useRef<HTMLDivElement | null>(null);
-  const hideSubmenuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuReference = useRef<HTMLDivElement | null>(null);
   const openedByKeyboard = useRef(false);
   const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
@@ -90,6 +92,7 @@ export default function UserMenu({
   useEffect(() => {
     if (!showUserMenu) {
       setShowThemeSubmenu(false);
+      setIsThemeAreaPointerOver(false);
       return;
     }
     if (openedByKeyboard.current) {
@@ -150,13 +153,6 @@ export default function UserMenu({
     return () => document.removeEventListener('keydown', handleEscapeKey);
   }, [showUserMenu]);
 
-  const cancelHide = () => {
-    if (hideSubmenuTimeout.current) {
-      clearTimeout(hideSubmenuTimeout.current);
-      hideSubmenuTimeout.current = null;
-    }
-  };
-
   const resetPreview = (currentBaseTheme: string) => {
     if (resetTransitionTimeout.current) {
       clearTimeout(resetTransitionTimeout.current);
@@ -181,22 +177,7 @@ export default function UserMenu({
     setPreviewTheme(theme);
   };
 
-  const scheduleHide = (currentBaseTheme: string) => {
-    cancelHide();
-    hideSubmenuTimeout.current = setTimeout(() => {
-      setShowThemeSubmenu(false);
-      resetPreview(currentBaseTheme);
-      hideSubmenuTimeout.current = null;
-    }, 80);
-  };
-
-  const handleThemeRowItemEnter = () => {
-    cancelHide();
-    resetPreview(baseTheme);
-  };
-
   const handleThemeRowEnter = () => {
-    cancelHide();
     if (themeRowReference.current) {
       const rect = themeRowReference.current.getBoundingClientRect();
       // submenu is w-56 (224px) + an 8px safety margin
@@ -248,12 +229,15 @@ export default function UserMenu({
           transform: showUserMenu ? 'scale(1)' : 'scale(0.95)',
           pointerEvents: showUserMenu ? 'auto' : 'none',
         }}
+        onMouseLeave={() => menuReference.current?.focus()}
       >
-        <MenuSection label="Logged in as" className="px-3">
-          <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
-            {user.email}
-          </p>
-        </MenuSection>
+        <div onMouseEnter={() => menuReference.current?.focus()}>
+          <MenuSection label="Logged in as" className="px-3">
+            <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
+              {user.email}
+            </p>
+          </MenuSection>
+        </div>
 
         <MenuSection>
           <MenuItem
@@ -297,18 +281,33 @@ export default function UserMenu({
           <div
             ref={themeRowReference}
             className="relative"
-            onMouseEnter={handleThemeRowEnter}
-            onMouseLeave={() => scheduleHide(baseTheme)}
+            onMouseEnter={() => {
+              setIsThemeAreaPointerOver(true);
+              handleThemeRowEnter();
+            }}
+            onMouseLeave={() => setIsThemeAreaPointerOver(false)}
           >
             <ThemeSubmenu
               baseTheme={baseTheme}
               previewTheme={previewTheme}
               showSubmenu={showThemeSubmenu}
               submenuOnLeft={themeSubmenuOnLeft}
+              isPointerOver={isThemeAreaPointerOver}
               flyoutReference={flyoutReference}
-              onFlyoutMouseEnter={cancelHide}
-              onFlyoutMouseLeave={() => scheduleHide(baseTheme)}
-              onThemeRowItemEnter={handleThemeRowItemEnter}
+              onTriggerBlur={() => {
+                setShowThemeSubmenu(false);
+                if (previewTheme !== null) {
+                  resetPreview(baseTheme);
+                }
+              }}
+              onFlyoutBlur={(relatedTarget) => {
+                if (!themeRowReference.current?.contains(relatedTarget)) {
+                  setShowThemeSubmenu(false);
+                  if (previewTheme !== null) {
+                    resetPreview(baseTheme);
+                  }
+                }
+              }}
               onTriggerClick={handleThemeRowEnter}
               onKeyboardOpen={() => {
                 submenuOpenedByKeyboard.current = true;

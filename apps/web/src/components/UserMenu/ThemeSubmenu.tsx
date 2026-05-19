@@ -1,5 +1,5 @@
 import { THEMES, type BaseTheme } from '../../theme/ThemeContext';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import type { RefObject } from 'react';
 
 /**
@@ -21,14 +21,24 @@ interface ThemeSubmenuProps {
    * the right. Computed by `UserMenu` by checking remaining viewport width.
    */
   submenuOnLeft: boolean;
-  /** Called when the mouse enters the flyout panel — cancels any pending hide timeout. */
-  onFlyoutMouseEnter: () => void;
-  /** Called when the mouse leaves the flyout panel — schedules a hide. */
-  onFlyoutMouseLeave: () => void;
-  /** Called when the mouse enters the trigger row item — cancels any pending hide timeout. */
-  onThemeRowItemEnter: () => void;
+  /**
+   * When `true`, the trigger row is highlighted. Driven by whether the mouse
+   * is anywhere within the theme row + flyout area.
+   */
+  isPointerOver: boolean;
   /** Called when the trigger row is clicked (on mobile / keyboard). */
   onTriggerClick: () => void;
+  /**
+   * Called when the trigger button loses focus to an element outside the
+   * flyout panel. Lets `UserMenu` close the submenu when keyboard navigation
+   * moves past the Theme row.
+   */
+  onTriggerBlur?: () => void;
+  /**
+   * Called when focus leaves the flyout panel. `relatedTarget` is the element
+   * that received focus, so `UserMenu` can decide whether to close the submenu.
+   */
+  onFlyoutBlur?: (relatedTarget: Element | null) => void;
   /**
    * Called when the trigger is activated via keyboard. Lets `UserMenu` set
    * a flag so the submenu auto-focuses its first item on open.
@@ -53,27 +63,25 @@ interface ThemeSubmenuProps {
  *
  * Live preview on hover: hovering a theme option immediately sets the
  * `data-theme` attribute on `document.documentElement` with a 150ms CSS
- * transition so the user can see the theme before committing. Moving the mouse
- * away (with an 80ms grace period via a setTimeout in `UserMenu`) resets the
- * preview back to the active theme with a 600ms ease-out transition.
+ * transition so the user can see the theme before committing. Mousing away
+ * from the theme area resets the preview back to the active theme with a
+ * 600ms ease-out transition.
  */
 export default function ThemeSubmenu({
   baseTheme,
   previewTheme,
   showSubmenu,
   submenuOnLeft,
-  onFlyoutMouseEnter,
-  onFlyoutMouseLeave,
-  onThemeRowItemEnter,
+  isPointerOver,
   onTriggerClick,
   onKeyboardOpen,
   onPreviewChange,
   onSelect,
+  onTriggerBlur,
+  onFlyoutBlur,
   flyoutReference,
 }: ThemeSubmenuProps) {
-  const mouseIsOver = useRef(false);
   const [hoveredThemeId, setHoveredThemeId] = useState<string | null>(null);
-  const [triggerIsPointerOver, setTriggerIsPointerOver] = useState(false);
 
   const currentLabel =
     previewTheme && previewTheme !== baseTheme
@@ -88,22 +96,18 @@ export default function ThemeSubmenu({
         aria-haspopup="menu"
         aria-expanded={showSubmenu}
         className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-default ${
-          showSubmenu || triggerIsPointerOver ? 'bg-[var(--bg-surface)]' : ''
+          isPointerOver ? 'bg-[var(--bg-surface)]' : ''
         }`}
         onMouseEnter={(event) => {
-          mouseIsOver.current = true;
-          setTriggerIsPointerOver(true);
           event.currentTarget.focus();
-          onThemeRowItemEnter();
         }}
-        onMouseLeave={() => {
-          mouseIsOver.current = false;
-          setTriggerIsPointerOver(false);
-        }}
-        onBlur={() => setTriggerIsPointerOver(false)}
-        onFocus={() => {
-          if (!mouseIsOver.current && !showSubmenu) {
-            onTriggerClick();
+        onBlur={(event) => {
+          if (
+            !flyoutReference?.current?.contains(
+              event.relatedTarget as Node,
+            )
+          ) {
+            onTriggerBlur?.();
           }
         }}
         onClick={onTriggerClick}
@@ -125,6 +129,7 @@ export default function ThemeSubmenu({
                 ?.querySelector<HTMLElement>('[data-submenu-item]')
                 ?.focus();
             } else {
+              onTriggerClick();
               onKeyboardOpen();
             }
           }
@@ -155,8 +160,9 @@ export default function ThemeSubmenu({
           transform: showSubmenu ? 'scale(1)' : 'scale(0.95)',
           pointerEvents: showSubmenu ? 'auto' : 'none',
         }}
-        onMouseEnter={onFlyoutMouseEnter}
-        onMouseLeave={onFlyoutMouseLeave}
+        onBlur={(event) => {
+          onFlyoutBlur?.(event.relatedTarget as Element | null);
+        }}
       >
         {THEMES.map((theme) => (
           <button
