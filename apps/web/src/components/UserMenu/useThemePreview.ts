@@ -79,7 +79,7 @@ export function useThemePreview(): UseThemePreviewResult {
     firstItem?.focus();
   }, [showThemeSubmenu]);
 
-  const resetPreview = (currentBaseTheme: string) => {
+  function clearResetHandles() {
     if (resetTransitionTimeout.current) {
       clearTimeout(resetTransitionTimeout.current);
       resetTransitionTimeout.current = null;
@@ -88,6 +88,10 @@ export function useThemePreview(): UseThemePreviewResult {
       cancelAnimationFrame(resetRafHandle.current);
       resetRafHandle.current = null;
     }
+  }
+
+  const resetPreview = (currentBaseTheme: string) => {
+    clearResetHandles();
     setPreviewTheme(null);
     const root = document.documentElement;
     // Defer CSS var mutations to rAF so React re-renders first (removing the
@@ -106,22 +110,12 @@ export function useThemePreview(): UseThemePreviewResult {
   };
 
   const handlePreviewChange = (theme: BaseTheme | null) => {
-    if (resetTransitionTimeout.current) {
-      clearTimeout(resetTransitionTimeout.current);
-      resetTransitionTimeout.current = null;
-    }
-    if (resetRafHandle.current) {
-      cancelAnimationFrame(resetRafHandle.current);
-      resetRafHandle.current = null;
-    }
+    clearResetHandles();
     setPreviewTheme(theme);
   };
 
   const handleThemeRowEnter = () => {
-    if (resetRafHandle.current) {
-      cancelAnimationFrame(resetRafHandle.current);
-      resetRafHandle.current = null;
-    }
+    clearResetHandles();
     if (themeRowReference.current) {
       const rect = themeRowReference.current.getBoundingClientRect();
       // submenu is w-56 (224px) + an 8px safety margin
