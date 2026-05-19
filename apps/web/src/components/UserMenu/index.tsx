@@ -1,6 +1,6 @@
 import { gravatarUrl } from '../../lib/gravatar';
 import { FOCUS_RING } from '../../lib/styles';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme, type BaseTheme } from '../../theme/ThemeContext';
 import MenuSection from './MenuSection';
 import MenuItem from './MenuItem';
@@ -10,10 +10,14 @@ import type { AppView } from '../../lib/navigation';
 import type { User } from '../../auth/AuthContext';
 
 interface UserMenuProps {
-  /** The authenticated user. Email is used for the Gravatar avatar and the "Logged in as" label. */
   user: User;
-  /** The currently active view — highlights the corresponding menu item. */
   view: AppView;
+  /** Whether the menu is open. Controlled by Header. */
+  isOpen: boolean;
+  /** Called when the avatar button is clicked. */
+  onToggle: () => void;
+  /** Called to imperatively close the menu (e.g. after nav item selection). */
+  onClose: () => void;
   onLogout: () => void;
   onModeToggle: () => void;
   onThemeSelect: (theme: BaseTheme) => void;
@@ -25,11 +29,13 @@ interface UserMenuProps {
  * controls, and logout.
  *
  * State:
- * - `showUserMenu` — whether the main dropdown is visible.
  * - `showThemeSubmenu` — whether the theme flyout is visible.
  * - `previewTheme` — the theme currently being previewed on hover.
  * - `themeSubmenuOnLeft` — whether the flyout opens left (when near the right edge).
  * - `isThemeAreaPointerOver` — whether the mouse is over the theme row + flyout area.
+ *
+ * Open/close state (`isOpen`) is owned by `Header` and passed as a prop.
+ * `Header` also owns the outside-click and Escape listeners that close the menu.
  *
  * The theme submenu stays open until the user mouses over another menu item or
  * closes the main menu. Hover tracking uses the `themeRowReference` wrapper div
@@ -37,25 +43,29 @@ interface UserMenuProps {
  * not close when moving between the two.
  *
  * Keyboard navigation within the dropdown is handled by `useMenuNavigation`.
- * Clicking outside the menu closes it via a `mousedown` listener on `document`.
  *
  * The Gravatar URL is memoized so it only recomputes when `user.email` changes.
  */
-export default function UserMenu({
-  user,
-  view,
-  onLogout,
-  onModeToggle,
-  onThemeSelect,
-  onViewChange,
-}: UserMenuProps) {
+const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
+  {
+    user,
+    view,
+    isOpen,
+    onToggle,
+    onClose,
+    onLogout,
+    onModeToggle,
+    onThemeSelect,
+    onViewChange,
+  },
+  forwardedReference,
+) {
   const avatarUrl = useMemo(() => gravatarUrl(user.email, 64), [user.email]);
   const { baseTheme, mode } = useTheme();
 
   const [isThemeAreaPointerOver, setIsThemeAreaPointerOver] = useState(false);
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
   const [showThemeSubmenu, setShowThemeSubmenu] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [themeSubmenuOnLeft, setThemeSubmenuOnLeft] = useState(true);
 
   const avatarReference = useRef<HTMLButtonElement | null>(null);
@@ -70,7 +80,7 @@ export default function UserMenu({
   const themeRowReference = useRef<HTMLDivElement | null>(null);
 
   useMenuNavigation(menuReference, () => {
-    setShowUserMenu(false);
+    onClose();
     avatarReference.current?.focus();
   });
 
@@ -91,7 +101,7 @@ export default function UserMenu({
 
   // resets submenu when main menu closes; moves focus into menu on open
   useEffect(() => {
-    if (!showUserMenu) {
+    if (!isOpen) {
       setShowThemeSubmenu(false);
       setIsThemeAreaPointerOver(false);
       return;
@@ -107,7 +117,7 @@ export default function UserMenu({
       // useMenuNavigation without visually pre-selecting any item
       menuReference.current?.focus();
     }
-  }, [showUserMenu]);
+  }, [isOpen]);
 
   // auto-focuses first flyout item when submenu opens via keyboard
   useEffect(() => {
@@ -118,41 +128,6 @@ export default function UserMenu({
     );
     firstItem?.focus();
   }, [showThemeSubmenu]);
-
-  // closes main menu on outside clicks
-  useEffect(() => {
-    if (!showUserMenu) return;
-
-    function handleOutsideClicks(event: MouseEvent) {
-      const target = event.target as Node;
-      if (
-        menuReference.current &&
-        !menuReference.current.contains(target) &&
-        avatarReference.current &&
-        !avatarReference.current.contains(target)
-      ) {
-        setShowUserMenu(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleOutsideClicks);
-    return () => document.removeEventListener('mousedown', handleOutsideClicks);
-  }, [showUserMenu]);
-
-  // closes main menu on Escape (covers focus outside the menu container)
-  useEffect(() => {
-    if (!showUserMenu) return;
-
-    function handleEscapeKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setShowUserMenu(false);
-        avatarReference.current?.focus();
-      }
-    }
-
-    document.addEventListener('keydown', handleEscapeKey);
-    return () => document.removeEventListener('keydown', handleEscapeKey);
-  }, [showUserMenu]);
 
   const resetPreview = (currentBaseTheme: string) => {
     if (resetTransitionTimeout.current) {
@@ -206,21 +181,28 @@ export default function UserMenu({
 
   const handleThemeSelect = (theme: BaseTheme) => {
     onThemeSelect(theme);
-    setShowUserMenu(false);
+    onClose();
   };
 
   return (
     <div className="relative">
       <button
         className={`flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] border-shadow hover:border-shadow ${FOCUS_RING} rounded-4xl transition cursor-pointer`}
-        ref={avatarReference}
+        ref={(node) => {
+          avatarReference.current = node;
+          if (typeof forwardedReference === 'function') {
+            forwardedReference(node);
+          } else if (forwardedReference) {
+            forwardedReference.current = node;
+          }
+        }}
         type="button"
         data-usermenu-trigger
         onClick={(event) => {
           openedByKeyboard.current = event.detail === 0;
-          setShowUserMenu((open) => !open);
+          onToggle();
         }}
-        aria-expanded={showUserMenu}
+        aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-label="User menu"
       >
@@ -230,7 +212,7 @@ export default function UserMenu({
           className="w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-[26px]"
         />
         <i
-          className={`fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] transition-transform duration-200 ease-out ${showUserMenu ? '-rotate-180' : ''}`}
+          className={`fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] transition-transform duration-200 ease-out ${isOpen ? '-rotate-180' : ''}`}
           aria-hidden="true"
         />
       </button>
@@ -238,14 +220,14 @@ export default function UserMenu({
       <div
         ref={menuReference}
         role="menu"
-        aria-hidden={!showUserMenu}
+        aria-hidden={!isOpen}
         tabIndex={-1}
         className="absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] border-shadow text-xs rounded-lg focus:outline-none"
         style={{
-          transition: `opacity ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showUserMenu ? '150ms ease-out' : '100ms ease-in'}`,
-          opacity: showUserMenu ? 1 : 0,
-          transform: showUserMenu ? 'scale(1)' : 'scale(0.95)',
-          pointerEvents: showUserMenu ? 'auto' : 'none',
+          transition: `opacity ${isOpen ? '150ms ease-out' : '100ms ease-in'}, transform ${isOpen ? '150ms ease-out' : '100ms ease-in'}`,
+          opacity: isOpen ? 1 : 0,
+          transform: isOpen ? 'scale(1)' : 'scale(0.95)',
+          pointerEvents: isOpen ? 'auto' : 'none',
         }}
         onMouseLeave={() => {
           if (!themeRowReference.current?.contains(document.activeElement)) {
@@ -267,7 +249,7 @@ export default function UserMenu({
             label="Your links"
             onClick={() => {
               onViewChange('links');
-              setShowUserMenu(false);
+              onClose();
             }}
             active={view === 'links'}
           />
@@ -277,7 +259,7 @@ export default function UserMenu({
             label="Settings"
             onClick={() => {
               onViewChange('settings');
-              setShowUserMenu(false);
+              onClose();
             }}
             active={view === 'settings'}
           />
@@ -293,7 +275,7 @@ export default function UserMenu({
             label="Theme editor"
             onClick={() => {
               onViewChange('theme-editor');
-              setShowUserMenu(false);
+              onClose();
             }}
             active={view === 'theme-editor'}
           />
@@ -312,7 +294,9 @@ export default function UserMenu({
               if (previewTheme !== null) {
                 resetPreview(baseTheme);
               }
-              if (menuReference.current?.contains(event.relatedTarget as Node)) {
+              if (
+                menuReference.current?.contains(event.relatedTarget as Node)
+              ) {
                 setShowThemeSubmenu(false);
               } else if (
                 !flyoutReference.current?.contains(document.activeElement)
@@ -357,7 +341,7 @@ export default function UserMenu({
           icon="fa-right-from-bracket"
           label="Log out"
           onClick={() => {
-            setShowUserMenu(false);
+            onClose();
             onLogout();
           }}
           className="mt-2"
@@ -365,4 +349,6 @@ export default function UserMenu({
       </div>
     </div>
   );
-}
+});
+
+export default UserMenu;

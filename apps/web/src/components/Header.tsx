@@ -1,4 +1,7 @@
+import MobileMenuPanel from './UserMenu/MobileMenuPanel';
 import UserMenu from './UserMenu';
+import { useEffect, useRef, useState } from 'react';
+import { useTheme } from '../theme/ThemeContext';
 import type { AppView } from '../lib/navigation';
 import type { BaseTheme } from '../theme/ThemeContext';
 import type { User } from '../auth/AuthContext';
@@ -24,9 +27,12 @@ interface HeaderProps {
  * Contains:
  * - A logo/title button that navigates to the links view.
  * - A `UserMenu` with avatar, navigation, theme, and mode controls.
+ * - A `MobileMenuPanel` that renders below the header row on mobile viewports.
  *
- * All navigation and action handling is delegated upward to `AppShell` via
- * callback props so this component remains stateless.
+ * Owns `showUserMenu` state and delegates it to both `UserMenu` (via `isOpen`
+ * / `onToggle` / `onClose`) and `MobileMenuPanel` (via `isOpen`). Document-level
+ * listeners for outside clicks and Escape live here so they cover both the
+ * desktop dropdown and the mobile panel in a single place.
  */
 export default function Header({
   user,
@@ -36,8 +42,59 @@ export default function Header({
   onThemeSelect,
   onViewChange,
 }: HeaderProps) {
+  const { baseTheme, mode } = useTheme();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const avatarButtonReference = useRef<HTMLButtonElement | null>(null);
+  const headerReference = useRef<HTMLElement | null>(null);
+
+  function handleUserMenuToggle() {
+    setShowUserMenu((open) => !open);
+  }
+
+  function handleUserMenuClose() {
+    setShowUserMenu(false);
+  }
+
+  useEffect(() => {
+    if (!showUserMenu) return;
+
+    function handleOutsideInteraction(event: MouseEvent | TouchEvent) {
+      const target = event.target as Node;
+      if (
+        headerReference.current &&
+        !headerReference.current.contains(target)
+      ) {
+        setShowUserMenu(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideInteraction);
+    document.addEventListener('touchstart', handleOutsideInteraction);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideInteraction);
+      document.removeEventListener('touchstart', handleOutsideInteraction);
+    };
+  }, [showUserMenu]);
+
+  useEffect(() => {
+    if (!showUserMenu) return;
+
+    function handleEscapeKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setShowUserMenu(false);
+        avatarButtonReference.current?.focus();
+      }
+    }
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [showUserMenu]);
+
   return (
-    <header className="bg-[var(--bg-elevated)] border-b border-[var(--border)]">
+    <header
+      ref={headerReference}
+      className="bg-[var(--bg-elevated)] border-b border-[var(--border)]"
+    >
       <div className="flex items-center justify-between max-w-4xl mx-auto px-4 py-3">
         <button
           type="button"
@@ -65,8 +122,12 @@ export default function Header({
 
         <div className="flex items-center gap-3">
           <UserMenu
+            ref={avatarButtonReference}
             user={user}
             view={view}
+            isOpen={showUserMenu}
+            onToggle={handleUserMenuToggle}
+            onClose={handleUserMenuClose}
             onLogout={onLogout}
             onModeToggle={onModeToggle}
             onThemeSelect={onThemeSelect}
@@ -74,6 +135,19 @@ export default function Header({
           />
         </div>
       </div>
+
+      <MobileMenuPanel
+        user={user}
+        view={view}
+        isOpen={showUserMenu}
+        baseTheme={baseTheme}
+        mode={mode}
+        onClose={handleUserMenuClose}
+        onLogout={onLogout}
+        onModeToggle={onModeToggle}
+        onThemeSelect={onThemeSelect}
+        onViewChange={onViewChange}
+      />
     </header>
   );
 }
