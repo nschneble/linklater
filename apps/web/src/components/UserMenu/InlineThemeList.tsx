@@ -25,12 +25,13 @@ export default function InlineThemeList({
           type="button"
           role="menuitemradio"
           aria-checked={baseTheme === theme.id}
-          className="flex items-center gap-3 w-full px-4 py-3 text-[var(--text)] text-sm text-left cursor-pointer focus:bg-[var(--bg-surface)] focus:outline-none"
+          className="flex items-center gap-3 w-full px-4 py-3 text-[var(--text)] text-sm text-left focus:bg-[var(--bg-surface)] focus:outline-none cursor-pointer"
           onClick={() => onSelect(theme.id)}
         >
-          <span
-            className="shrink-0 inline-block w-3 h-3 rounded-full"
-            style={{ backgroundColor: theme.accent }}
+          <i
+            className="fa-solid fa-circle text-[0.75rem]"
+            style={{ color: theme.accent }}
+            aria-hidden="true"
           />
           <span className="flex-1">{theme.label}</span>
           {baseTheme === theme.id && (
