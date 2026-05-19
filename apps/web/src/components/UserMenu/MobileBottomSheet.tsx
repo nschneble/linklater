@@ -106,7 +106,6 @@ export default function MobileBottomSheet({
 
   function handleThemeSelect(theme: BaseTheme) {
     onThemeSelect(theme);
-    onClose();
   }
 
   function handleDragHandleTouchStart(event: React.TouchEvent) {
@@ -243,13 +242,14 @@ export default function MobileBottomSheet({
               className="pb-4"
               inert={!showThemeSubview ? true : undefined}
             >
-              <MenuSection>
+              <MenuSection className="flex items-center justify-between">
                 <MenuItem
                   icon="fa-chevron-left"
-                  label="Back"
-                  className="focus:bg-transparent!"
+                  className="flex-0 focus:bg-transparent!"
                   onClick={handleBackToMain}
                 />
+                <p className="font-semibold">Themes</p>
+                <MenuItem className="flex-0 not:visible bg-transparent! cursor-default!" />
               </MenuSection>
 
               <InlineThemeList
