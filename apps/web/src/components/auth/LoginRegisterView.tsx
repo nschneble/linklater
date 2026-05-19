@@ -5,6 +5,8 @@ import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import TabButton from '../common/TabButton';
 import AuthCard from './AuthCard';
+import { useRef } from 'react';
+import { useTabNavigation } from '../../lib/hooks/useTabNavigation';
 import type { FormEvent, RefObject } from 'react';
 
 const googleSsoEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true';
@@ -59,6 +61,9 @@ export default function LoginRegisterView({
   password,
   passwordReference,
 }: LoginRegisterViewProps) {
+  const tablistReference = useRef<HTMLDivElement>(null);
+  useTabNavigation(tablistReference);
+
   return (
     <AuthCard>
       <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold text-balance">
@@ -82,14 +87,10 @@ export default function LoginRegisterView({
           {/* mb-[24.5px] reserves the exact height of an Alert row so the layout
               does not shift when an error appears below the form. */}
           <div
+            ref={tablistReference}
             className="relative flex mb-[24.5px] p-1 bg-[var(--bg-elevated)] rounded-full"
             role="tablist"
             aria-label="Authentication mode"
-            tabIndex={0}
-            onKeyDown={(event) => {
-              if (event.key === 'ArrowRight') onModeChange('register');
-              else if (event.key === 'ArrowLeft') onModeChange('login');
-            }}
           >
             <div
               aria-hidden="true"
