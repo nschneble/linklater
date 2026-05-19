@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 import type { AuthRequest } from './auth-request.type';
 import { LocalAuthGuard } from './local-auth.guard';
 import { EmailVerificationService } from './email-verification.service';
+import { JwtAuthGuard } from './jwt-auth.guard';
 import { MfaAuthGuard } from './mfa-auth.guard';
 import { OAuthAccountService } from './oauth-account.service';
 import { TotpService } from './totp.service';
@@ -237,6 +238,18 @@ describe('AuthController', () => {
   });
 
   describe('resendVerification', () => {
+    it('applies JwtAuthGuard before CustomThrottlerGuard so only authenticated users can trigger the send', () => {
+      const guards: unknown[] = Reflect.getMetadata(
+        '__guards__',
+        AuthController.prototype.resendVerification,
+      );
+      expect(guards).toContain(JwtAuthGuard);
+      expect(guards).toContain(CustomThrottlerGuard);
+      expect(guards.indexOf(JwtAuthGuard)).toBeLessThan(
+        guards.indexOf(CustomThrottlerGuard),
+      );
+    });
+
     it('delegates to EmailVerificationService.resendVerificationEmail with the userId', async () => {
       const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
       (
@@ -252,6 +265,18 @@ describe('AuthController', () => {
   });
 
   describe('requestEmailChange', () => {
+    it('applies JwtAuthGuard before CustomThrottlerGuard so only authenticated users can trigger the change', () => {
+      const guards: unknown[] = Reflect.getMetadata(
+        '__guards__',
+        AuthController.prototype.requestEmailChange,
+      );
+      expect(guards).toContain(JwtAuthGuard);
+      expect(guards).toContain(CustomThrottlerGuard);
+      expect(guards.indexOf(JwtAuthGuard)).toBeLessThan(
+        guards.indexOf(CustomThrottlerGuard),
+      );
+    });
+
     it('delegates to EmailVerificationService.requestEmailChange with userId, new email, and optional code', async () => {
       const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
       (
@@ -284,6 +309,18 @@ describe('AuthController', () => {
   });
 
   describe('verifyOtp', () => {
+    it('applies CustomThrottlerGuard before MfaAuthGuard to rate-limit before auth processing', () => {
+      const guards: unknown[] = Reflect.getMetadata(
+        '__guards__',
+        AuthController.prototype.verifyOtp,
+      );
+      expect(guards).toContain(CustomThrottlerGuard);
+      expect(guards).toContain(MfaAuthGuard);
+      expect(guards.indexOf(CustomThrottlerGuard)).toBeLessThan(
+        guards.indexOf(MfaAuthGuard),
+      );
+    });
+
     it('delegates to AuthService.verifyOtp with userId, code, and method', async () => {
       const request = { user: { userId: USER_ID } } as never;
       const body = {

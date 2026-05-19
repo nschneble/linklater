@@ -1,4 +1,6 @@
-import { useAuth } from '../../auth/AuthContext';
+import ForgotPasswordView from './ForgotPasswordView';
+import LoginRegisterView from './LoginRegisterView';
+import MfaView from './MfaView';
 import {
   forgotPassword as apiForgotPassword,
   registerMagicLink,
@@ -6,20 +8,25 @@ import {
   verifyOtp,
 } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import ForgotPasswordView from './ForgotPasswordView';
-import LoginRegisterView from './LoginRegisterView';
-import MfaView from './MfaView';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { capitalizeFirst } from '../../lib/strings';
+import { useAuth } from '../../auth/AuthContext';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import type { FormEvent } from 'react';
 
 type Mode = 'login' | 'register' | 'forgot-password';
 type MfaChallenge = 'totp' | 'recovery';
 
-function capitalizeFirst(message: string): string {
-  if (!message) return message;
-  return message.charAt(0).toUpperCase() + message.slice(1);
-}
-
+/**
+ * Top-level authentication form. Drives login, register, forgot-password, and
+ * MFA challenge flows from a single component by deriving `mode` from the
+ * current URL pathname (`/login`, `/signup`, `/forgot-password`).
+ *
+ * After a successful credential check, if the server returns a `mfaToken`
+ * the form transitions to an `MfaView` where the user enters their TOTP or
+ * recovery code. The `mfaToken` is a short-lived server-issued token that
+ * identifies the pending MFA session — it is not a full JWT.
+ */
 export default function AuthForm() {
   const { login, refreshUser, register } = useAuth();
   const location = useLocation();

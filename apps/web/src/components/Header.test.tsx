@@ -1,10 +1,11 @@
-import { describe, expect, it, vi, afterEach } from 'vitest';
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import Header from './Header';
 import { ThemeProvider } from '../theme/ThemeContext';
 import type { AppView } from '../lib/navigation';
 import type { User } from '../auth/AuthContext';
 
+beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.restoreAllMocks());
 
 const mockUser: User = {
@@ -41,7 +42,9 @@ describe('Header', () => {
   it('renders the logo and avatar button', () => {
     renderHeader();
     expect(screen.getByLabelText('Go to your links')).toBeInTheDocument();
-    expect(screen.getByLabelText('User menu')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(`User menu (${mockUser.email})`),
+    ).toBeInTheDocument();
   });
 
   it('clicking the logo button calls onViewChange with links', () => {
@@ -53,7 +56,7 @@ describe('Header', () => {
 
   it('clicking the avatar button sets aria-expanded to true', () => {
     renderHeader();
-    const avatarButton = screen.getByLabelText('User menu');
+    const avatarButton = screen.getByLabelText(`User menu (${mockUser.email})`);
     expect(avatarButton).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(avatarButton);
     expect(avatarButton).toHaveAttribute('aria-expanded', 'true');
@@ -61,7 +64,7 @@ describe('Header', () => {
 
   it('clicking outside the header closes the menu', () => {
     renderHeader();
-    const avatarButton = screen.getByLabelText('User menu');
+    const avatarButton = screen.getByLabelText(`User menu (${mockUser.email})`);
     fireEvent.click(avatarButton);
     expect(avatarButton).toHaveAttribute('aria-expanded', 'true');
     fireEvent.mouseDown(document.body);
@@ -70,7 +73,7 @@ describe('Header', () => {
 
   it('pressing Escape closes the menu', () => {
     renderHeader();
-    const avatarButton = screen.getByLabelText('User menu');
+    const avatarButton = screen.getByLabelText(`User menu (${mockUser.email})`);
     fireEvent.click(avatarButton);
     expect(avatarButton).toHaveAttribute('aria-expanded', 'true');
     fireEvent.keyDown(document, { key: 'Escape' });

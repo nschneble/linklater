@@ -107,7 +107,7 @@ export default function Header({
           <img
             className="w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-4xl"
             src="/assets/img/linklater.jpg"
-            alt="Richard Linklater at Nouvelle Vague screening (Sundance 2026) by Sarah K Joyce – Own work, CC BY-SA 4.0, https://commons.wikimedia.org/w/index.php?curid=187236114"
+            alt=""
             aria-hidden="true"
           />
           <div className="text-left">

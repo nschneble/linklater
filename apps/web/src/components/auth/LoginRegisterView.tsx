@@ -4,7 +4,8 @@ import IconButton from '../common/IconButton';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import TabButton from '../common/TabButton';
-import { type FormEvent, type RefObject } from 'react';
+import AuthCard from './AuthCard';
+import type { FormEvent, RefObject } from 'react';
 
 const googleSsoEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true';
 const appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true';
@@ -59,7 +60,7 @@ export default function LoginRegisterView({
   passwordReference,
 }: LoginRegisterViewProps) {
   return (
-    <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
+    <AuthCard>
       <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold text-balance">
         Linklater
       </h1>
@@ -69,11 +70,7 @@ export default function LoginRegisterView({
 
       {magicLinkSent ? (
         <div className="text-center space-y-4">
-          <Alert
-            className="flex items-center justify-center gap-2"
-            variant="success"
-          >
-            <i className="fa-solid fa-envelope text-xs" aria-hidden="true" />
+          <Alert icon="fa-envelope" variant="success">
             {mode === 'login'
               ? 'Check your email for a login link'
               : 'Check your email to complete signup'}
@@ -86,6 +83,10 @@ export default function LoginRegisterView({
             className="relative flex mb-[24.5px] p-1 bg-[var(--bg-elevated)] rounded-full"
             role="tablist"
             aria-label="Authentication mode"
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowRight') onModeChange('register');
+              else if (event.key === 'ArrowLeft') onModeChange('login');
+            }}
           >
             <div
               aria-hidden="true"
@@ -101,9 +102,6 @@ export default function LoginRegisterView({
               className="flex-1 py-2 text-sm"
               isActive={mode === 'login'}
               onClick={() => onModeChange('login')}
-              onKeyDown={(event) => {
-                if (event.key === 'ArrowRight') onModeChange('register');
-              }}
             >
               Log in
             </TabButton>
@@ -112,9 +110,6 @@ export default function LoginRegisterView({
               className="flex-1 py-2 text-sm"
               isActive={mode === 'register'}
               onClick={() => onModeChange('register')}
-              onKeyDown={(event) => {
-                if (event.key === 'ArrowLeft') onModeChange('login');
-              }}
             >
               Sign up
             </TabButton>
@@ -157,14 +152,7 @@ export default function LoginRegisterView({
             />
 
             {error && (
-              <Alert
-                className="flex items-center justify-center gap-2"
-                variant="error"
-              >
-                <i
-                  className="fa-solid fa-triangle-exclamation text-xs"
-                  aria-hidden="true"
-                />
+              <Alert icon="fa-triangle-exclamation" variant="error">
                 {error}
               </Alert>
             )}
@@ -215,7 +203,7 @@ export default function LoginRegisterView({
                 {appleSsoEnabled && (
                   <a
                     href={`${import.meta.env.VITE_API_BASE_URL}/auth/apple`}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-sm font-medium rounded-lg transition hover:opacity-80"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-sm font-medium rounded-lg transition hover:opacity-80"
                     aria-label="Continue with Apple"
                   >
                     <svg
@@ -248,6 +236,6 @@ export default function LoginRegisterView({
           </div>
         </>
       )}
-    </div>
+    </AuthCard>
   );
 }

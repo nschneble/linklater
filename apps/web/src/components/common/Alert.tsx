@@ -14,6 +14,11 @@ interface AlertProps {
   children: ReactNode;
   /** Additional Tailwind classes for layout overrides (e.g. `"sm:ml-2"`). */
   className?: string;
+  /**
+   * Font Awesome icon class to render before the children (without `fa-solid`
+   * prefix, e.g. `'fa-triangle-exclamation'`). Omit for icon-less alerts.
+   */
+  icon?: string;
   /** `'error'` renders red; `'success'` renders green. */
   variant: 'error' | 'success';
 }
@@ -33,13 +38,17 @@ const variantRoles: Record<AlertProps['variant'], string> = {
 export default function Alert({
   children,
   className = '',
+  icon,
   variant,
 }: AlertProps) {
   return (
     <p
-      className={`px-3 py-2 border text-xs rounded-lg ${variantClasses[variant]} ${className}`}
+      className={`px-3 py-2 border text-xs rounded-lg ${icon ? 'flex items-center justify-center gap-2' : ''} ${variantClasses[variant]} ${className}`}
       role={variantRoles[variant]}
     >
+      {icon && (
+        <i className={`fa-solid ${icon} text-xs`} aria-hidden="true" />
+      )}
       {children}
     </p>
   );

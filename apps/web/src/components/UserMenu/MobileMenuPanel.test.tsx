@@ -1,9 +1,10 @@
-import { describe, expect, it, vi, afterEach } from 'vitest';
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import MobileMenuPanel from './MobileMenuPanel';
 import { THEMES } from '../../theme/ThemeContext';
 import type { User } from '../../auth/AuthContext';
 
+beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.restoreAllMocks());
 
 const mockUser: User = {

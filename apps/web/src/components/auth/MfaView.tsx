@@ -2,7 +2,9 @@ import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
-import { type FormEvent, type RefObject, useEffect, useRef } from 'react';
+import AuthCard from './AuthCard';
+import { useEffect, useRef } from 'react';
+import type { FormEvent, RefObject } from 'react';
 
 interface MfaViewProps {
   error: string | null;
@@ -31,13 +33,14 @@ export default function MfaView({
   const formReference = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
+    // Auto-submit only for TOTP (6-digit numeric) — recovery codes have no fixed length.
     if (!isRecovery && /^\d{6}$/.test(mfaCode)) {
       formReference.current?.requestSubmit();
     }
   }, [mfaCode, isRecovery]);
 
   return (
-    <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
+    <AuthCard>
       <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold text-balance">
         {isRecovery ? 'Enter a recovery code' : 'Two-factor authentication'}
       </h1>
@@ -85,6 +88,6 @@ export default function MfaView({
           </LinkButton>
         )}
       </div>
-    </div>
+    </AuthCard>
   );
 }

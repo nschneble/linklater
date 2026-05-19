@@ -1,11 +1,13 @@
 import { gravatarUrl } from '../../lib/gravatar';
-import { FOCUS_RING } from '../../lib/styles';
-import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
+import { FOCUS_RING, menuRevealStyle } from '../../lib/styles';
+import { forwardRef, useEffect, useMemo, useRef } from 'react';
 import { useTheme, type BaseTheme } from '../../theme/ThemeContext';
 import MenuSection from './MenuSection';
 import MenuItem from './MenuItem';
+import NavMenuItems from './NavMenuItems';
 import ThemeSubmenu from './ThemeSubmenu';
 import { useMenuNavigation } from './useMenuNavigation';
+import { useThemePreview } from './useThemePreview';
 import type { AppView } from '../../lib/navigation';
 import type { User } from '../../auth/AuthContext';
 
@@ -63,21 +65,24 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
   const avatarUrl = useMemo(() => gravatarUrl(user.email, 64), [user.email]);
   const { baseTheme, mode } = useTheme();
 
-  const [isThemeAreaPointerOver, setIsThemeAreaPointerOver] = useState(false);
-  const [previewTheme, setPreviewTheme] = useState<string | null>(null);
-  const [showThemeSubmenu, setShowThemeSubmenu] = useState(false);
-  const [themeSubmenuOnLeft, setThemeSubmenuOnLeft] = useState(true);
+  const {
+    flyoutReference,
+    handlePreviewChange,
+    handleThemeRowEnter,
+    isThemeAreaPointerOver,
+    previewTheme,
+    setIsThemeAreaPointerOver,
+    setShowThemeSubmenu,
+    showThemeSubmenu,
+    submenuOpenedByKeyboard,
+    themeRowReference,
+    themeSubmenuOnLeft,
+    resetPreview,
+  } = useThemePreview();
 
   const avatarReference = useRef<HTMLButtonElement | null>(null);
-  const flyoutReference = useRef<HTMLDivElement | null>(null);
   const menuReference = useRef<HTMLDivElement | null>(null);
   const openedByKeyboard = useRef(false);
-  const resetRafHandle = useRef<number | null>(null);
-  const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-  const submenuOpenedByKeyboard = useRef(false);
-  const themeRowReference = useRef<HTMLDivElement | null>(null);
 
   useMenuNavigation(menuReference, () => {
     onClose();
@@ -119,66 +124,6 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
     }
   }, [isOpen]);
 
-  // auto-focuses first flyout item when submenu opens via keyboard
-  useEffect(() => {
-    if (!showThemeSubmenu || !submenuOpenedByKeyboard.current) return;
-    submenuOpenedByKeyboard.current = false;
-    const firstItem = flyoutReference.current?.querySelector<HTMLElement>(
-      '[data-submenu-item]',
-    );
-    firstItem?.focus();
-  }, [showThemeSubmenu]);
-
-  const resetPreview = (currentBaseTheme: string) => {
-    if (resetTransitionTimeout.current) {
-      clearTimeout(resetTransitionTimeout.current);
-      resetTransitionTimeout.current = null;
-    }
-    if (resetRafHandle.current) {
-      cancelAnimationFrame(resetRafHandle.current);
-    }
-    setPreviewTheme(null);
-    const root = document.documentElement;
-    // Defer CSS var mutations to rAF so React re-renders first (removing the
-    // Theme row highlight instantly) before the 600ms transition is applied.
-    resetRafHandle.current = requestAnimationFrame(() => {
-      resetRafHandle.current = null;
-      root.style.setProperty('--theme-transition-duration', '600ms');
-      root.style.setProperty('--theme-transition-easing', 'ease-out');
-      root.dataset.theme = currentBaseTheme;
-      resetTransitionTimeout.current = setTimeout(() => {
-        root.style.removeProperty('--theme-transition-duration');
-        root.style.removeProperty('--theme-transition-easing');
-        resetTransitionTimeout.current = null;
-      }, 650);
-    });
-  };
-
-  const handlePreviewChange = (theme: BaseTheme | null) => {
-    if (resetTransitionTimeout.current) {
-      clearTimeout(resetTransitionTimeout.current);
-      resetTransitionTimeout.current = null;
-    }
-    if (resetRafHandle.current) {
-      cancelAnimationFrame(resetRafHandle.current);
-      resetRafHandle.current = null;
-    }
-    setPreviewTheme(theme);
-  };
-
-  const handleThemeRowEnter = () => {
-    if (resetRafHandle.current) {
-      cancelAnimationFrame(resetRafHandle.current);
-      resetRafHandle.current = null;
-    }
-    if (themeRowReference.current) {
-      const rect = themeRowReference.current.getBoundingClientRect();
-      // submenu is w-56 (224px) + an 8px safety margin
-      setThemeSubmenuOnLeft(rect.right + 224 + 8 > window.innerWidth);
-    }
-    setShowThemeSubmenu(true);
-  };
-
   const handleThemeSelect = (theme: BaseTheme) => {
     onThemeSelect(theme);
     onClose();
@@ -204,11 +149,12 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
         }}
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        aria-label="User menu"
+        aria-label={`User menu (${user.email})`}
       >
         <img
           src={avatarUrl}
-          alt={user.email}
+          alt=""
+          aria-hidden="true"
           className="w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-[26px]"
         />
         <i
@@ -222,13 +168,9 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
         role="menu"
         aria-hidden={!isOpen}
         tabIndex={-1}
+        inert={!isOpen ? true : undefined}
         className="absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] border-shadow text-xs rounded-lg focus:outline-none"
-        style={{
-          transition: `opacity ${isOpen ? '150ms ease-out' : '100ms ease-in'}, transform ${isOpen ? '150ms ease-out' : '100ms ease-in'}`,
-          opacity: isOpen ? 1 : 0,
-          transform: isOpen ? 'scale(1)' : 'scale(0.95)',
-          pointerEvents: isOpen ? 'auto' : 'none',
-        }}
+        style={menuRevealStyle(isOpen)}
         onMouseLeave={() => {
           if (!themeRowReference.current?.contains(document.activeElement)) {
             menuReference.current?.focus();
@@ -243,43 +185,13 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
           </MenuSection>
         </div>
 
-        <MenuSection>
-          <MenuItem
-            icon="fa-bookmark"
-            label="Your links"
-            onClick={() => {
-              onViewChange('links');
-              onClose();
-            }}
-            active={view === 'links'}
-          />
-
-          <MenuItem
-            icon="fa-gear"
-            label="Settings"
-            onClick={() => {
-              onViewChange('settings');
-              onClose();
-            }}
-            active={view === 'settings'}
-          />
-
-          <MenuItem
-            icon={mode === 'light' ? 'fa-moon' : 'fa-sun'}
-            label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
-            onClick={onModeToggle}
-          />
-
-          <MenuItem
-            icon="fa-paintbrush"
-            label="Theme editor"
-            onClick={() => {
-              onViewChange('theme-editor');
-              onClose();
-            }}
-            active={view === 'theme-editor'}
-          />
-        </MenuSection>
+        <NavMenuItems
+          mode={mode}
+          view={view}
+          onClose={onClose}
+          onModeToggle={onModeToggle}
+          onViewChange={onViewChange}
+        />
 
         <MenuSection>
           <div
@@ -341,8 +253,8 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
           icon="fa-right-from-bracket"
           label="Log out"
           onClick={() => {
-            onClose();
             onLogout();
+            onClose();
           }}
           className="mt-2"
         />

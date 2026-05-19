@@ -6,7 +6,7 @@ import { THEMES } from '../../theme/ThemeContext';
 describe('InlineThemeList', () => {
   it('renders one button per theme', () => {
     render(<InlineThemeList baseTheme="scanner-darkly" onSelect={vi.fn()} />);
-    expect(screen.getAllByRole('menuitem')).toHaveLength(THEMES.length);
+    expect(screen.getAllByRole('menuitemradio')).toHaveLength(THEMES.length);
   });
 
   it('calls onSelect with the correct theme id when a theme button is clicked', () => {

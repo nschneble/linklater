@@ -5,6 +5,11 @@ interface InlineThemeListProps {
   onSelect: (theme: BaseTheme) => void;
 }
 
+/**
+ * Flat list of theme buttons for the mobile menu. Does not implement live
+ * preview on hover because mobile devices have no reliable hover state and the
+ * mobile menu closes immediately on selection anyway.
+ */
 export default function InlineThemeList({
   baseTheme,
   onSelect,
@@ -18,7 +23,8 @@ export default function InlineThemeList({
         <button
           key={theme.id}
           type="button"
-          role="menuitem"
+          role="menuitemradio"
+          aria-checked={baseTheme === theme.id}
           className="flex items-center gap-3 w-full px-4 py-3 text-[var(--text)] text-sm text-left cursor-pointer active:bg-[var(--bg-surface)]"
           onClick={() => onSelect(theme.id)}
         >

@@ -1,7 +1,10 @@
 import InlineThemeList from './InlineThemeList';
 import MenuItem from './MenuItem';
 import MenuSection from './MenuSection';
+import NavMenuItems from './NavMenuItems';
+import { menuRevealStyle } from '../../lib/styles';
 import { useEffect, useRef } from 'react';
+import { useMenuNavigation } from './useMenuNavigation';
 import type { AppView } from '../../lib/navigation';
 import type { BaseTheme, Mode } from '../../theme/ThemeContext';
 import type { User } from '../../auth/AuthContext';
@@ -19,6 +22,18 @@ interface MobileMenuPanelProps {
   onViewChange: (view: AppView) => void;
 }
 
+/**
+ * Full-width menu panel that slides down below the header on mobile.
+ *
+ * The panel is always mounted and hidden via `aria-hidden` + `inert` rather
+ * than conditionally rendered. This lets the CSS transition play on open and
+ * close without requiring an unmount/remount cycle. The outer `div` carries
+ * `aria-hidden` so screen readers skip the panel when it is closed; `inert`
+ * prevents keyboard focus from reaching its children.
+ *
+ * Theme selection uses `InlineThemeList` (a flat list) instead of the desktop
+ * flyout because mobile has no reliable hover state for live preview.
+ */
 export default function MobileMenuPanel({
   user,
   view,
@@ -33,9 +48,17 @@ export default function MobileMenuPanel({
 }: MobileMenuPanelProps) {
   const panelReference = useRef<HTMLDivElement | null>(null);
 
+  useMenuNavigation(panelReference, onClose);
+
   useEffect(() => {
     if (isOpen) {
-      panelReference.current?.focus();
+      const firstItem =
+        panelReference.current?.querySelector<HTMLElement>('[role="menuitem"]');
+      if (firstItem) {
+        firstItem.focus();
+      } else {
+        panelReference.current?.focus();
+      }
     }
   }, [isOpen]);
 
@@ -43,57 +66,23 @@ export default function MobileMenuPanel({
     <div
       className="md:hidden border-b border-[var(--border)]"
       aria-hidden={!isOpen}
-      style={{
-        transition: `opacity ${isOpen ? '150ms ease-out' : '100ms ease-in'}, transform ${isOpen ? '150ms ease-out' : '100ms ease-in'}`,
-        opacity: isOpen ? 1 : 0,
-        transform: isOpen ? 'translateY(0)' : 'translateY(-8px)',
-        pointerEvents: isOpen ? 'auto' : 'none',
-      }}
+      inert={!isOpen ? true : undefined}
+      style={menuRevealStyle(isOpen, 'translateY(0)', 'translateY(-8px)')}
     >
-      <div role="menu" tabIndex={-1} ref={panelReference} className="pb-2">
+      <div role="menu" aria-label="User menu" tabIndex={-1} ref={panelReference} className="pb-2">
         <MenuSection label="Logged in as" className="px-4 pt-2">
           <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
             {user.email}
           </p>
         </MenuSection>
 
-        <MenuSection>
-          <MenuItem
-            icon="fa-bookmark"
-            label="Your links"
-            onClick={() => {
-              onViewChange('links');
-              onClose();
-            }}
-            active={view === 'links'}
-          />
-
-          <MenuItem
-            icon="fa-gear"
-            label="Settings"
-            onClick={() => {
-              onViewChange('settings');
-              onClose();
-            }}
-            active={view === 'settings'}
-          />
-
-          <MenuItem
-            icon={mode === 'light' ? 'fa-moon' : 'fa-sun'}
-            label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
-            onClick={onModeToggle}
-          />
-
-          <MenuItem
-            icon="fa-paintbrush"
-            label="Theme editor"
-            onClick={() => {
-              onViewChange('theme-editor');
-              onClose();
-            }}
-            active={view === 'theme-editor'}
-          />
-        </MenuSection>
+        <NavMenuItems
+          mode={mode}
+          view={view}
+          onClose={onClose}
+          onModeToggle={onModeToggle}
+          onViewChange={onViewChange}
+        />
 
         <MenuSection>
           <InlineThemeList

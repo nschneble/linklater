@@ -1,10 +1,13 @@
-import { THEMES, type BaseTheme } from '../../theme/ThemeContext';
+import { menuRevealStyle } from '../../lib/styles';
+import { THEMES } from '../../theme/ThemeContext';
 import { useState } from 'react';
+import type { BaseTheme } from '../../theme/ThemeContext';
 import type { RefObject } from 'react';
 
 /**
  * Props for `ThemeSubmenu`. All hover/mouse coordination state is owned by
- * `UserMenu` and passed down so that `ThemeSubmenu` remains stateless.
+ * `UserMenu` and passed down. `ThemeSubmenu` only owns local hover highlight
+ * state (`hoveredThemeId`) for the flyout buttons.
  */
 interface ThemeSubmenuProps {
   /** The currently active base theme. */
@@ -83,6 +86,14 @@ export default function ThemeSubmenu({
 }: ThemeSubmenuProps) {
   const [hoveredThemeId, setHoveredThemeId] = useState<string | null>(null);
 
+  function applyPreview(themeId: BaseTheme) {
+    const root = document.documentElement;
+    root.style.setProperty('--theme-transition-duration', '150ms');
+    root.style.setProperty('--theme-transition-easing', 'ease-out');
+    root.dataset.theme = themeId;
+    onPreviewChange(themeId);
+  }
+
   const currentLabel =
     previewTheme && previewTheme !== baseTheme
       ? `Previewing ${THEMES.find((theme) => theme.id === previewTheme)?.label}`
@@ -122,6 +133,8 @@ export default function ThemeSubmenu({
               onKeyboardOpen();
             }
           } else if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            event.stopPropagation();
             if (showSubmenu) {
               flyoutReference?.current
                 ?.querySelector<HTMLElement>('[data-submenu-item]')
@@ -152,12 +165,8 @@ export default function ThemeSubmenu({
       <div
         ref={flyoutReference}
         className={`absolute top-0 z-50 w-56 py-2 bg-[var(--bg-elevated)] border-shadow rounded-lg ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
-        style={{
-          transition: `opacity ${showSubmenu ? '150ms ease-out' : '100ms ease-in'}, transform ${showSubmenu ? '150ms ease-out' : '100ms ease-in'}`,
-          opacity: showSubmenu ? 1 : 0,
-          transform: showSubmenu ? 'scale(1)' : 'scale(0.95)',
-          pointerEvents: showSubmenu ? 'auto' : 'none',
-        }}
+        inert={!showSubmenu ? true : undefined}
+        style={menuRevealStyle(showSubmenu)}
         onBlur={(event) => {
           onFlyoutBlur?.(event.relatedTarget as Element | null);
         }}
@@ -166,6 +175,8 @@ export default function ThemeSubmenu({
           <button
             className={`flex items-center gap-2 w-full px-3 py-2 ${hoveredThemeId === theme.id ? 'bg-[var(--bg-surface)]' : ''} focus:outline-none text-[var(--text)] text-left cursor-pointer`}
             data-submenu-item
+            role="menuitemradio"
+            aria-checked={baseTheme === theme.id}
             style={{
               transitionDuration:
                 '150ms, var(--theme-transition-duration), var(--theme-transition-duration)',
@@ -174,23 +185,13 @@ export default function ThemeSubmenu({
             type="button"
             onClick={() => onSelect(theme.id)}
             onMouseEnter={(event) => {
-              setHoveredThemeId(theme.id);
-              const root = document.documentElement;
-              root.style.setProperty('--theme-transition-duration', '150ms');
-              root.style.setProperty('--theme-transition-easing', 'ease-out');
-              root.dataset.theme = theme.id;
-              onPreviewChange(theme.id);
               event.currentTarget.focus();
             }}
             onMouseLeave={() => setHoveredThemeId(null)}
             onBlur={() => setHoveredThemeId(null)}
             onFocus={() => {
               setHoveredThemeId(theme.id);
-              const root = document.documentElement;
-              root.style.setProperty('--theme-transition-duration', '150ms');
-              root.style.setProperty('--theme-transition-easing', 'ease-out');
-              root.dataset.theme = theme.id;
-              onPreviewChange(theme.id);
+              applyPreview(theme.id);
             }}
           >
             <span
