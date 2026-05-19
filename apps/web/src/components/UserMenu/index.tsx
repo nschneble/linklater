@@ -62,6 +62,7 @@ export default function UserMenu({
   const flyoutReference = useRef<HTMLDivElement | null>(null);
   const menuReference = useRef<HTMLDivElement | null>(null);
   const openedByKeyboard = useRef(false);
+  const resetRafHandle = useRef<number | null>(null);
   const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -156,17 +157,26 @@ export default function UserMenu({
   const resetPreview = (currentBaseTheme: string) => {
     if (resetTransitionTimeout.current) {
       clearTimeout(resetTransitionTimeout.current);
+      resetTransitionTimeout.current = null;
+    }
+    if (resetRafHandle.current) {
+      cancelAnimationFrame(resetRafHandle.current);
     }
     setPreviewTheme(null);
     const root = document.documentElement;
-    root.style.setProperty('--theme-transition-duration', '600ms');
-    root.style.setProperty('--theme-transition-easing', 'ease-out');
-    root.dataset.theme = currentBaseTheme;
-    resetTransitionTimeout.current = setTimeout(() => {
-      root.style.removeProperty('--theme-transition-duration');
-      root.style.removeProperty('--theme-transition-easing');
-      resetTransitionTimeout.current = null;
-    }, 650);
+    // Defer CSS var mutations to rAF so React re-renders first (removing the
+    // Theme row highlight instantly) before the 600ms transition is applied.
+    resetRafHandle.current = requestAnimationFrame(() => {
+      resetRafHandle.current = null;
+      root.style.setProperty('--theme-transition-duration', '600ms');
+      root.style.setProperty('--theme-transition-easing', 'ease-out');
+      root.dataset.theme = currentBaseTheme;
+      resetTransitionTimeout.current = setTimeout(() => {
+        root.style.removeProperty('--theme-transition-duration');
+        root.style.removeProperty('--theme-transition-easing');
+        resetTransitionTimeout.current = null;
+      }, 650);
+    });
   };
 
   const handlePreviewChange = (theme: BaseTheme | null) => {
@@ -174,10 +184,18 @@ export default function UserMenu({
       clearTimeout(resetTransitionTimeout.current);
       resetTransitionTimeout.current = null;
     }
+    if (resetRafHandle.current) {
+      cancelAnimationFrame(resetRafHandle.current);
+      resetRafHandle.current = null;
+    }
     setPreviewTheme(theme);
   };
 
   const handleThemeRowEnter = () => {
+    if (resetRafHandle.current) {
+      cancelAnimationFrame(resetRafHandle.current);
+      resetRafHandle.current = null;
+    }
     if (themeRowReference.current) {
       const rect = themeRowReference.current.getBoundingClientRect();
       // submenu is w-56 (224px) + an 8px safety margin
