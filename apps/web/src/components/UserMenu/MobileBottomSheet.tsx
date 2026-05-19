@@ -131,7 +131,7 @@ export default function MobileBottomSheet({
 
       {/* Sheet */}
       <div
-        className="fixed bottom-0 inset-x-0 z-50 max-h-[85svh] overflow-y-auto bg-[var(--bg-elevated)] rounded-t-2xl"
+        className="fixed bottom-0 inset-x-0 z-50 max-h-[85svh] overflow-y-auto bg-[var(--bg-elevated)] rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
         style={{
           transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
           transition: `transform ${isOpen ? '300ms ease-out' : '250ms ease-in'}`,
