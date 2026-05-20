@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import PrimaryButton from '../common/PrimaryButton';
 import type { Link } from '../../lib/api';
+import { stripHtml } from '../../lib/strings';
 
 /**
  * Pure presentation props for `LinkCardLayout`. Interaction callbacks are
@@ -83,7 +84,8 @@ export default function LinkCardLayout({
 
   const hasTitle = Boolean(link.meta?.title);
   const displayTitle = link.meta?.title ?? '(No title)';
-  const displayDescription = hasTitle ? link.meta?.description : link.url;
+  const rawDescription = hasTitle ? link.meta?.description : link.url;
+  const displayDescription = rawDescription ? stripHtml(rawDescription) : rawDescription;
   const rawSiteName = link.meta?.siteName ?? new URL(link.url).hostname;
   const displaySiteName = rawSiteName.replace(/^www\./, '');
 

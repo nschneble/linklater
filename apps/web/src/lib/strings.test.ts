@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { capitalizeFirst } from './strings';
+import { capitalizeFirst, stripHtml } from './strings';
 
 describe('capitalizeFirst', () => {
   it('capitalizes the first letter of a lowercase string', () => {
@@ -16,5 +16,23 @@ describe('capitalizeFirst', () => {
 
   it('handles a single character', () => {
     expect(capitalizeFirst('x')).toBe('X');
+  });
+});
+
+describe('stripHtml', () => {
+  it('removes html tags', () => {
+    expect(stripHtml('<p>Hello <b>world</b></p>')).toBe('Hello world');
+  });
+
+  it('decodes html entities', () => {
+    expect(stripHtml('AT&amp;T &mdash; &lt;great&gt;')).toBe('AT&T — <great>');
+  });
+
+  it('returns plain text unchanged', () => {
+    expect(stripHtml('No tags here')).toBe('No tags here');
+  });
+
+  it('returns empty string for empty input', () => {
+    expect(stripHtml('')).toBe('');
   });
 });

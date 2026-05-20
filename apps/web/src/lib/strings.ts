@@ -6,3 +6,11 @@ export function capitalizeFirst(message: string): string {
   if (!message) return message;
   return message.charAt(0).toUpperCase() + message.slice(1);
 }
+
+/**
+ * Extracts plain text from an HTML string. Some sites embed HTML tags in
+ * their meta description, so this strips them before display.
+ */
+export function stripHtml(html: string): string {
+  return new DOMParser().parseFromString(html, 'text/html').body.textContent ?? '';
+}
