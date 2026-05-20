@@ -34,8 +34,27 @@ describe('PrimaryButton', () => {
 
   describe('hidden prop', () => {
     it('disables the button when hidden is true so it is not interactive', () => {
-      render(<PrimaryButton hidden>Hidden</PrimaryButton>);
-      expect(screen.getByRole('button', { name: 'Hidden' })).toBeDisabled();
+      const { container } = render(
+        <PrimaryButton hidden>Hidden</PrimaryButton>,
+      );
+      expect(container.querySelector('button')).toBeDisabled();
+    });
+
+    it('sets aria-hidden="true" when hidden so screen readers skip it in browse mode', () => {
+      const { container } = render(
+        <PrimaryButton hidden>Hidden</PrimaryButton>,
+      );
+      expect(container.querySelector('button')).toHaveAttribute(
+        'aria-hidden',
+        'true',
+      );
+    });
+
+    it('does not set aria-hidden when visible', () => {
+      render(<PrimaryButton hidden={false}>Visible</PrimaryButton>);
+      expect(
+        screen.getByRole('button', { name: 'Visible' }),
+      ).not.toHaveAttribute('aria-hidden');
     });
 
     it('sets tabIndex to -1 when hidden so it is not keyboard reachable', () => {

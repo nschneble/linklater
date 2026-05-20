@@ -29,8 +29,23 @@ describe('IconButton', () => {
 
   describe('hidden prop', () => {
     it('disables the button when hidden is true so it is not interactive', () => {
-      render(<IconButton hidden>Hidden</IconButton>);
-      expect(screen.getByRole('button', { name: 'Hidden' })).toBeDisabled();
+      const { container } = render(<IconButton hidden>Hidden</IconButton>);
+      expect(container.querySelector('button')).toBeDisabled();
+    });
+
+    it('sets aria-hidden="true" when hidden so screen readers skip it in browse mode', () => {
+      const { container } = render(<IconButton hidden>Hidden</IconButton>);
+      expect(container.querySelector('button')).toHaveAttribute(
+        'aria-hidden',
+        'true',
+      );
+    });
+
+    it('does not set aria-hidden when visible', () => {
+      render(<IconButton hidden={false}>Visible</IconButton>);
+      expect(
+        screen.getByRole('button', { name: 'Visible' }),
+      ).not.toHaveAttribute('aria-hidden');
     });
 
     it('sets tabIndex to -1 when hidden so it is not keyboard reachable', () => {
@@ -42,13 +57,6 @@ describe('IconButton', () => {
     it('applies opacity-0 class when hidden', () => {
       const { container } = render(<IconButton hidden>Gone</IconButton>);
       expect(container.querySelector('button')).toHaveClass('opacity-0');
-    });
-
-    it('does not set aria-hidden when hidden is false', () => {
-      render(<IconButton hidden={false}>Visible</IconButton>);
-      expect(
-        screen.getByRole('button', { name: 'Visible' }),
-      ).toBeInTheDocument();
     });
   });
 
