@@ -21,6 +21,7 @@ export type BaseTheme =
   | 'boyhood'
   | 'dazed-and-confused'
   | 'hit-man'
+  | 'nouvelle-vague'
   | 'scanner-darkly'
   | 'school-of-rock';
 
@@ -39,6 +40,7 @@ export const THEMES: Array<{ id: BaseTheme; label: string; accent: string }> = [
   { id: 'boyhood', label: 'Boyhood', accent: '#86efac' },
   { id: 'dazed-and-confused', label: 'Dazed and Confused', accent: '#dc2626' },
   { id: 'hit-man', label: 'Hit Man', accent: '#f59e0b' },
+  { id: 'nouvelle-vague', label: 'Nouvelle Vague (Noir)', accent: '#555555' },
   { id: 'school-of-rock', label: 'School of Rock', accent: '#b91c1c' },
 ];
 

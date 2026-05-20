@@ -27,9 +27,9 @@ interface AlertProps {
 
 const variantClasses = {
   error:
-    "bg-rose-50 [[data-mode='dark']_&]:bg-rose-950/40 border-rose-200 [[data-mode='dark']_&]:border-rose-800 text-rose-700 [[data-mode='dark']_&]:text-rose-400",
+    "bg-rose-50 [[data-mode='dark']_&]:bg-rose-950/40 [[data-theme='nouvelle-vague']_&]:bg-gray-100 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-gray-900/40 border-rose-200 [[data-mode='dark']_&]:border-rose-800 [[data-theme='nouvelle-vague']_&]:border-gray-300 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-gray-700 text-rose-700 [[data-mode='dark']_&]:text-rose-400 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400",
   success:
-    "bg-emerald-50 [[data-mode='dark']_&]:bg-emerald-950/40 border-emerald-200 [[data-mode='dark']_&]:border-emerald-700 text-emerald-700 [[data-mode='dark']_&]:text-emerald-300",
+    "bg-emerald-50 [[data-mode='dark']_&]:bg-emerald-950/40 [[data-theme='nouvelle-vague']_&]:bg-gray-100 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-gray-900/40 border-emerald-200 [[data-mode='dark']_&]:border-emerald-700 [[data-theme='nouvelle-vague']_&]:border-gray-300 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-gray-700 text-emerald-700 [[data-mode='dark']_&]:text-emerald-300 [[data-theme='nouvelle-vague']_&]:text-gray-600 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400",
 };
 
 const variantRoles: Record<AlertProps['variant'], string> = {

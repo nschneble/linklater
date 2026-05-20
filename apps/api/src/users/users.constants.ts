@@ -11,6 +11,7 @@ export const VALID_THEMES = [
   'boyhood',
   'dazed-and-confused',
   'hit-man',
+  'nouvelle-vague',
   'scanner-darkly',
   'school-of-rock',
 ] as const;

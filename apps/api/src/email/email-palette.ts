@@ -81,6 +81,17 @@ const palettes: Record<string, EmailPalette> = {
     textMuted: '#4e2c14',
     textSubtle: '#543818',
   },
+  'nouvelle-vague': {
+    accent: '#1f1f1f',
+    accentFg: '#f8f8f8',
+    bg: '#f8f8f8',
+    bgElevated: '#ebebeb',
+    bgSurface: '#ffffff',
+    border: '#d0d0d0',
+    text: '#0f0f0f',
+    textMuted: '#4a4a4a',
+    textSubtle: '#656565',
+  },
   'scanner-darkly': {
     accent: '#a73210',
     accentFg: '#eeeedf',

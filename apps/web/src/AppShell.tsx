@@ -136,10 +136,10 @@ export default function AppShell() {
       </a>
       {isEmailUnverified && (
         <div
-          className="px-4 py-2 bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/25 border-b border-amber-300 [[data-mode='dark']_&]:border-amber-800/50 text-center"
+          className="px-4 py-2 bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/25 [[data-theme='nouvelle-vague']_&]:bg-gray-100 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-gray-900/30 border-b border-amber-300 [[data-mode='dark']_&]:border-amber-800/50 [[data-theme='nouvelle-vague']_&]:border-gray-300 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-gray-700/50 text-center"
           role="status"
         >
-          <p className="text-amber-800 [[data-mode='dark']_&]:text-amber-300 text-xs font-medium">
+          <p className="text-amber-800 [[data-mode='dark']_&]:text-amber-300 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400 text-xs font-medium">
             <i
               className="fa-solid fa-triangle-exclamation mr-1.5"
               aria-hidden="true"
