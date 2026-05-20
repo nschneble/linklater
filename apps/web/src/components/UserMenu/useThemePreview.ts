@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MutableRefObject, RefObject } from 'react';
 import type { BaseTheme } from '../../theme/ThemeContext';
 
@@ -40,6 +40,10 @@ interface UseThemePreviewResult {
    * 600ms ease-out CSS transition before restoring the original
    * theme data-attribute. */
   resetPreview: (currentBaseTheme: string) => void;
+  /** cancels any in-flight preview reset rAF/timeout — call in a
+   * `useLayoutEffect([baseTheme])` to prevent a stale reset from
+   * overwriting the freshly committed theme. */
+  clearResetHandles: () => void;
 }
 
 /**
@@ -79,7 +83,7 @@ export function useThemePreview(): UseThemePreviewResult {
     firstItem?.focus();
   }, [showThemeSubmenu]);
 
-  function clearResetHandles() {
+  const clearResetHandles = useCallback(() => {
     if (resetTransitionTimeout.current) {
       clearTimeout(resetTransitionTimeout.current);
       resetTransitionTimeout.current = null;
@@ -88,7 +92,7 @@ export function useThemePreview(): UseThemePreviewResult {
       cancelAnimationFrame(resetRafHandle.current);
       resetRafHandle.current = null;
     }
-  }
+  }, []);
 
   const resetPreview = (currentBaseTheme: string) => {
     clearResetHandles();
@@ -136,6 +140,7 @@ export function useThemePreview(): UseThemePreviewResult {
   }, []);
 
   return {
+    clearResetHandles,
     flyoutReference,
     handlePreviewChange,
     handleThemeRowEnter,

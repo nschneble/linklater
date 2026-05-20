@@ -182,6 +182,7 @@ export default function ThemeSubmenu({
             }}
             key={theme.id}
             type="button"
+            onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelect(theme.id)}
             onMouseEnter={(event) => {
               setHoveredThemeId(theme.id);
