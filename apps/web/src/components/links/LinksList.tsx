@@ -64,9 +64,16 @@ export default function LinksList({
   onReadToggle,
   onLoadMore,
 }: LinksListProps) {
+  const tabPanelLabelId = filter === 'read' ? 'tab-read' : 'tab-unread';
+
   if (loadingLinks && page === 1) {
     return (
-      <div id={LINKS_LIST_ID} className="mt-6 grid grid-cols-1 gap-6">
+      <div
+        id={LINKS_LIST_ID}
+        role="tabpanel"
+        aria-labelledby={tabPanelLabelId}
+        className="mt-6 grid grid-cols-1 gap-6"
+      >
         <LinkCardSkeleton />
       </div>
     );
@@ -76,6 +83,8 @@ export default function LinksList({
     return (
       <div
         id={LINKS_LIST_ID}
+        role="tabpanel"
+        aria-labelledby={tabPanelLabelId}
         className="flex flex-col items-center justify-center py-9 text-center animate-fade-in-up"
       >
         <i
@@ -96,7 +105,12 @@ export default function LinksList({
   }
 
   return (
-    <div id={LINKS_LIST_ID} className="mt-6 mb-28 grid grid-cols-1 gap-6">
+    <div
+      id={LINKS_LIST_ID}
+      role="tabpanel"
+      aria-labelledby={tabPanelLabelId}
+      className="mt-6 mb-28 grid grid-cols-1 gap-6"
+    >
       {links.map((link, index) => (
         <div
           key={link.id}

@@ -51,7 +51,6 @@ export default function LinksControls({
         variant="elevated"
         disabled={isClearingRead}
         hidden={filter === 'unread' || linksCount === 0}
-        title="Permanently remove all read links"
         onClick={onClearRead}
       >
         <i className="fa-solid fa-trash text-[0.7rem]" aria-hidden="true" />
@@ -63,7 +62,6 @@ export default function LinksControls({
           variant="elevated"
           disabled={randomLoading}
           hidden={filter !== 'unread'}
-          title="Open a random unread link and mark it as read"
           onClick={onRandom}
         >
           <i

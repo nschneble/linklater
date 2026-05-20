@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { ApiToken } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
@@ -34,6 +34,13 @@ function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
   const [confirming, setConfirming] = useState(false);
   const [revoking, setRevoking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const confirmRowReference = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (confirming) {
+      confirmRowReference.current?.querySelector('button')?.focus();
+    }
+  }, [confirming]);
 
   const handleRevoke = async () => {
     setError(null);
@@ -74,7 +81,7 @@ function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
               Revoke
             </IconButton>
           ) : (
-            <div className="flex items-center gap-2" role="alert">
+            <div className="flex items-center gap-2" ref={confirmRowReference}>
               <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 text-xs">
                 Sure?
               </span>

@@ -4,8 +4,8 @@
   --bg-elevated: #4a3818;
   --bg-input: #2f221a;
   --text: #e8e5d7;
-  --text-muted: #bb903a;
-  --text-subtle: #9a7840;
+  --text-muted: #cfa048;
+  --text-subtle: #b08e50;
   --border: #5e4227;
   --accent: #c07828;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);

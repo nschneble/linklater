@@ -54,6 +54,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
           value={url}
           onChange={(event) => setUrl(event.target.value)}
           required
+          aria-describedby={error ? 'link-form-error' : undefined}
         />
         <p className="hidden sm:inline-flex mt-1.5 text-[var(--text-subtle)] text-xs">
           Tip: Paste a link anywhere on the page to save it instantly
@@ -67,7 +68,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
         {saving ? 'Saving…' : 'Save link'}
       </PrimaryButton>
       {error && (
-        <Alert variant="error" className="sm:ml-2">
+        <Alert id="link-form-error" variant="error" className="sm:ml-2">
           {error}
         </Alert>
       )}

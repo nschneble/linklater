@@ -19,7 +19,7 @@ function FooterLink({ href, label, newTab = false }: FooterLinkProps) {
       href={href}
       rel={newTab ? 'noreferrer' : undefined}
       target={newTab ? '_blank' : undefined}
-      aria-label={newTab ? `${label} (opens in new tab)` : label}
+      aria-label={newTab ? `${label} (opens in new tab)` : undefined}
     >
       {label}
     </a>

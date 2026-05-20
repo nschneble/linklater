@@ -19,6 +19,8 @@ interface AlertProps {
    * prefix, e.g. `'fa-triangle-exclamation'`). Omit for icon-less alerts.
    */
   icon?: string;
+  /** Stable `id` so inputs can reference this alert via `aria-describedby`. */
+  id?: string;
   /** `'error'` renders red; `'success'` renders green. */
   variant: 'error' | 'success';
 }
@@ -39,10 +41,12 @@ export default function Alert({
   children,
   className = '',
   icon,
+  id,
   variant,
 }: AlertProps) {
   return (
     <p
+      id={id}
       className={`px-3 py-2 border text-xs rounded-lg ${icon ? 'flex items-center justify-center gap-2' : ''} ${variantClasses[variant]} ${className}`}
       role={variantRoles[variant]}
     >

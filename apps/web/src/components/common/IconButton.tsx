@@ -50,6 +50,7 @@ const variantClasses: Record<
 export default function IconButton({
   className = '',
   children,
+  disabled,
   hidden = false,
   variant = 'default',
   ...props
@@ -62,8 +63,8 @@ export default function IconButton({
     <button
       className={`inline-flex items-center justify-center gap-1.5 text-xs rounded-full cursor-pointer ${DISABLED} active:scale-[0.96] transition duration-200 ${variantClasses[variant]} ${visibilityClasses} ${className}`}
       type="button"
+      disabled={hidden || disabled}
       tabIndex={hidden ? -1 : undefined}
-      aria-hidden={hidden ? true : undefined}
       {...props}
     >
       {children}

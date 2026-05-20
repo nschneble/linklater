@@ -4,8 +4,8 @@
   --bg-elevated: #5f594f;
   --bg-input: #4c310b;
   --text: #e0d0c1;
-  --text-muted: #b89870;
-  --text-subtle: #7a7060;
+  --text-muted: #f0d4a0;
+  --text-subtle: #b89c84;
   --border: #935035;
   --accent: #e02a15;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
@@ -18,8 +18,8 @@
   --bg-elevated: #b08c30;
   --bg-input: #e0d0c1;
   --text: #0a0a07;
-  --text-muted: #4c310b;
-  --text-subtle: #6a4820;
+  --text-muted: #3c2408;
+  --text-subtle: #5a3c18;
   --border: #8a5e28;
   --accent: #e02a15;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);

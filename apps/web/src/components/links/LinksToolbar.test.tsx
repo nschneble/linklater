@@ -140,9 +140,10 @@ describe('LinksToolbar', () => {
 
     it('does not show the mobile trash button when filter is read but links is empty', () => {
       renderToolbar({ filter: 'read', links: [] });
-      expect(
-        screen.queryByRole('button', { name: 'Remove all read links' }),
-      ).toBeNull();
+      // Mobile trash uses disabled (not the hidden prop), so it stays visible
+      // but non-interactive when the list is empty.
+      const button = screen.getByRole('button', { name: 'Remove all read links' });
+      expect(button).toBeDisabled();
     });
 
     it('calls onClearRead when the mobile trash button is clicked', () => {

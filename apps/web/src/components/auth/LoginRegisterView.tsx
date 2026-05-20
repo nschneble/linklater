@@ -134,6 +134,7 @@ export default function LoginRegisterView({
               onChange={(event) => onEmailChange(event.target.value)}
               value={email}
               required
+              aria-describedby={error ? 'auth-form-error' : undefined}
             />
 
             <label
@@ -153,10 +154,15 @@ export default function LoginRegisterView({
               placeholder="Leave blank to use magic link"
               value={password}
               required={false}
+              aria-describedby={error ? 'auth-form-error' : undefined}
             />
 
             {error && (
-              <Alert icon="fa-triangle-exclamation" variant="error">
+              <Alert
+                id="auth-form-error"
+                icon="fa-triangle-exclamation"
+                variant="error"
+              >
                 {error}
               </Alert>
             )}

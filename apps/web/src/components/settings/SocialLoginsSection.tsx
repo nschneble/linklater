@@ -4,7 +4,7 @@ import StatusBadge from '../common/StatusBadge';
 import { useAuth } from '../../auth/AuthContext';
 import { unlinkOAuthProvider } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /** Props for the social logins settings section. */
 interface SocialLoginsSectionProps {
@@ -202,6 +202,13 @@ function ProviderRow({
   onDisconnect,
 }: ProviderRowProps) {
   const isConfirming = confirmDisconnect === provider;
+  const confirmRowReference = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isConfirming) {
+      confirmRowReference.current?.querySelector('button')?.focus();
+    }
+  }, [isConfirming]);
 
   return (
     <div className="flex items-center gap-3">
@@ -214,7 +221,7 @@ function ProviderRow({
           </StatusBadge>
 
           {isConfirming ? (
-            <div className="flex items-center gap-2 text-xs" role="alert">
+            <div className="flex items-center gap-2 text-xs" ref={confirmRowReference}>
               <span className="text-[var(--text-muted)]">
                 Disconnect {label}?
               </span>

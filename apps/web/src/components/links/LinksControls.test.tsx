@@ -60,16 +60,13 @@ describe('LinksControls', () => {
     });
 
     it('hides Remove all read button when no links exist', () => {
-      const { container } = render(
+      render(
         <LinksControls {...defaultUnreadProps} filter="read" linksCount={0} />,
       );
-      // When hidden, the button is removed from the accessibility tree via
-      // aria-hidden="true", so getByRole cannot find it. Query the DOM
-      // directly to assert the visual hidden state.
-      expect(
-        screen.queryByRole('button', { name: /remove all read/i }),
-      ).toBeNull();
-      const button = container.querySelector('button[aria-hidden="true"]');
+      // When hidden, the button is disabled and visually hidden but stays in
+      // the accessibility tree (no aria-hidden) so AT users know it exists.
+      const button = screen.getByRole('button', { name: /remove all read/i });
+      expect(button).toBeDisabled();
       expect(button).toHaveClass('opacity-0');
     });
 
@@ -121,8 +118,11 @@ describe('LinksControls', () => {
       render(
         <LinksControls {...defaultUnreadProps} filter="read" linksCount={3} />,
       );
-      // Hidden buttons are removed from the accessibility tree via aria-hidden
-      expect(screen.queryByRole('button', { name: /stumble!/i })).toBeNull();
+      // Hidden buttons are disabled and visually hidden, but remain in the
+      // accessibility tree (no aria-hidden).
+      const button = screen.getByRole('button', { name: /stumble!/i });
+      expect(button).toBeDisabled();
+      expect(button).toHaveClass('opacity-0');
     });
   });
 });

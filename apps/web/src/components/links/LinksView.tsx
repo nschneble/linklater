@@ -268,9 +268,34 @@ export default function LinksView() {
         )}
 
       {showLinkForm && (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- role="dialog" is interactive per ARIA spec; jsx-a11y incorrectly classifies it as non-interactive
         <div
           id={LINK_FORM_ID}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Save a link"
           className="relative z-30 mt-0 animate-fade-in-up"
+          onKeyDown={(event) => {
+            if (event.key !== 'Tab') return;
+            const dialog = event.currentTarget;
+            const focusable = dialog.querySelectorAll<HTMLElement>(
+              'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            );
+            if (focusable.length === 0) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey) {
+              if (document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+              }
+            } else {
+              if (document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+              }
+            }
+          }}
         >
           <LinkForm onCreated={handleCreated} />
         </div>

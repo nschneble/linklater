@@ -12,5 +12,7 @@ export function capitalizeFirst(message: string): string {
  * their meta description, so this strips them before display.
  */
 export function stripHtml(html: string): string {
-  return new DOMParser().parseFromString(html, 'text/html').body.textContent ?? '';
+  return (
+    new DOMParser().parseFromString(html, 'text/html').body.textContent ?? ''
+  );
 }

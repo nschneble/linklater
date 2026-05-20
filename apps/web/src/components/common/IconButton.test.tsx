@@ -28,10 +28,9 @@ describe('IconButton', () => {
   });
 
   describe('hidden prop', () => {
-    it('hides button from the accessibility tree when hidden is true', () => {
+    it('disables the button when hidden is true so it is not interactive', () => {
       render(<IconButton hidden>Hidden</IconButton>);
-      // aria-hidden removes it from the role tree
-      expect(screen.queryByRole('button', { name: 'Hidden' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Hidden' })).toBeDisabled();
     });
 
     it('sets tabIndex to -1 when hidden so it is not keyboard reachable', () => {

@@ -68,17 +68,17 @@ export default function RecoveryCodesModal({
   }, [codes]);
 
   return (
-    /* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- role="dialog" is interactive per ARIA spec; jsx-a11y incorrectly classifies it as non-interactive */
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="recovery-codes-title"
-      ref={dialogReference}
-      tabIndex={-1}
-      onKeyDown={handleKeyDown}
-    >
-      <div className="w-full max-w-md mx-4 p-6 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- role="dialog" is interactive per ARIA spec; jsx-a11y incorrectly classifies it as non-interactive */}
+      <div
+        className="w-full max-w-md mx-4 p-6 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl space-y-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="recovery-codes-title"
+        ref={dialogReference}
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
+      >
         <h3
           id="recovery-codes-title"
           className="text-[var(--text)] text-lg font-semibold"

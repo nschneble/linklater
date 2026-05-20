@@ -29,9 +29,11 @@ describe('NavMenuItems', () => {
   });
 
   it('marks Your links as active when view is links', () => {
-    renderNavMenuItems({ view: 'links' });
+    const { container } = renderNavMenuItems({ view: 'links' });
     const button = screen.getByText('Your links').closest('button');
-    expect(button).toHaveAttribute('aria-current', 'page');
+    const icon = button?.querySelector('i');
+    expect(icon).toHaveClass('text-[var(--accent)]');
+    expect(container.querySelector('button[aria-current]')).toBeNull();
   });
 
   it('does not mark Your links as active when view is settings', () => {
@@ -41,9 +43,11 @@ describe('NavMenuItems', () => {
   });
 
   it('marks Settings as active when view is settings', () => {
-    renderNavMenuItems({ view: 'settings' });
+    const { container } = renderNavMenuItems({ view: 'settings' });
     const button = screen.getByText('Settings').closest('button');
-    expect(button).toHaveAttribute('aria-current', 'page');
+    const icon = button?.querySelector('i');
+    expect(icon).toHaveClass('text-[var(--accent)]');
+    expect(container.querySelector('button[aria-current]')).toBeNull();
   });
 
   it('does not mark Settings as active when view is links', () => {
@@ -53,9 +57,11 @@ describe('NavMenuItems', () => {
   });
 
   it('marks Theme editor as active when view is theme-editor', () => {
-    renderNavMenuItems({ view: 'theme-editor' });
+    const { container } = renderNavMenuItems({ view: 'theme-editor' });
     const button = screen.getByText('Theme editor').closest('button');
-    expect(button).toHaveAttribute('aria-current', 'page');
+    const icon = button?.querySelector('i');
+    expect(icon).toHaveClass('text-[var(--accent)]');
+    expect(container.querySelector('button[aria-current]')).toBeNull();
   });
 
   it('does not mark Theme editor as active when view is links', () => {

@@ -99,7 +99,7 @@ describe('LinksMobileControls', () => {
       ).toBeInTheDocument();
     });
 
-    it('does not show the trash button when no links exist', () => {
+    it('disables the trash button when no links exist', () => {
       render(
         <LinksMobileControls
           {...defaultUnreadProps}
@@ -107,9 +107,10 @@ describe('LinksMobileControls', () => {
           linksCount={0}
         />,
       );
-      expect(
-        screen.queryByRole('button', { name: 'Remove all read links' }),
-      ).toBeNull();
+      // Mobile trash uses disabled (not the hidden prop), so it stays visible
+      // but non-interactive when the list is empty.
+      const button = screen.getByRole('button', { name: 'Remove all read links' });
+      expect(button).toBeDisabled();
     });
 
     it('calls onClearRead when the trash button is clicked', () => {

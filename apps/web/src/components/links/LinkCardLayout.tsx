@@ -91,7 +91,7 @@ export default function LinkCardLayout({
   const rawSiteName = link.meta?.siteName ?? new URL(link.url).hostname;
   const displaySiteName = rawSiteName.replace(/^www\./, '');
 
-  const cardAriaLabel = `${displayTitle} — ${displaySiteName}`;
+  const cardAriaLabel = `${displayTitle} — ${displaySiteName}, opens in new tab`;
 
   return (
     <div
