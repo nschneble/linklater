@@ -110,10 +110,11 @@ function PassBadge({ label, threshold, ratio }: PassBadgeProps) {
   const passes = ratio >= threshold;
   return (
     <span
+      aria-label={passes ? `${label}: pass` : `${label}: fail`}
       className={`inline-flex items-center px-1.5 py-0.5 text-[0.6rem] font-semibold rounded ${
         passes
-          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-          : 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400'
+          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 [[data-theme='nouvelle-vague']_&]:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague']_&]:text-[var(--text-muted)]"
+          : "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400 [[data-theme='nouvelle-vague']_&]:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague']_&]:text-[var(--text)]"
       }`}
     >
       {label}

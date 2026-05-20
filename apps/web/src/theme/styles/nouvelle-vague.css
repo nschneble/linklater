@@ -26,6 +26,7 @@
   --accent-fg: #f8f8f8;
 }
 
-[data-theme='nouvelle-vague'] img {
+[data-theme='nouvelle-vague'] img,
+[data-theme='nouvelle-vague'] .theme-color-dot {
   filter: grayscale(100%);
 }

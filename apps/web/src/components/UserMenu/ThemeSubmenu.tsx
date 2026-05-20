@@ -196,7 +196,7 @@ export default function ThemeSubmenu({
             }}
           >
             <span
-              className="shrink-0 inline-block w-3 h-3 rounded-full"
+              className="shrink-0 inline-block w-3 h-3 rounded-full theme-color-dot"
               style={{ backgroundColor: theme.accent }}
             />
             <span className="flex-1">{theme.label}</span>

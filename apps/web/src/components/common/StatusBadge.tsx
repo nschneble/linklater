@@ -17,8 +17,8 @@ const variantClasses = {
   success:
     "bg-emerald-100 [[data-mode='dark']_&]:bg-emerald-950/20 border-emerald-300 [[data-mode='dark']_&]:border-emerald-800/40 text-emerald-700 [[data-mode='dark']_&]:text-emerald-400",
   warning:
-    "bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/20 border-amber-300 [[data-mode='dark']_&]:border-amber-800/40 text-amber-700 [[data-mode='dark']_&]:text-amber-300",
-  info: "bg-blue-100 [[data-mode='dark']_&]:bg-blue-950/20 border-blue-300 [[data-mode='dark']_&]:border-blue-800/40 text-blue-700 [[data-mode='dark']_&]:text-blue-400",
+    "bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/20 border-amber-300 [[data-mode='dark']_&]:border-amber-800/40 text-amber-700 [[data-mode='dark']_&]:text-amber-300 [[data-theme='nouvelle-vague']_&]:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague']_&]:border-[var(--border)] [[data-theme='nouvelle-vague']_&]:text-[var(--text-muted)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-[var(--border)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-[var(--text-muted)]",
+  info: "bg-blue-100 [[data-mode='dark']_&]:bg-blue-950/20 border-blue-300 [[data-mode='dark']_&]:border-blue-800/40 text-blue-700 [[data-mode='dark']_&]:text-blue-400 [[data-theme='nouvelle-vague']_&]:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague']_&]:border-[var(--border)] [[data-theme='nouvelle-vague']_&]:text-[var(--text-muted)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-[var(--border)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-[var(--text-muted)]",
 };
 
 /**
