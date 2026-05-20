@@ -24,6 +24,9 @@ const mockUser: User = {
 const defaultProps = {
   user: mockUser,
   view: 'links' as AppView,
+  isUserMenuOpen: false,
+  onUserMenuToggle: vi.fn(),
+  onUserMenuClose: vi.fn(),
   onLogout: vi.fn(),
   onModeToggle: vi.fn(),
   onThemeSelect: vi.fn(),
@@ -54,47 +57,52 @@ describe('Header', () => {
     expect(onViewChange).toHaveBeenCalledWith('links');
   });
 
-  it('clicking the avatar button sets aria-expanded to true', () => {
-    renderHeader();
-    const avatarButton = screen.getByLabelText(`User menu (${mockUser.email})`);
-    expect(avatarButton).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(avatarButton);
-    expect(avatarButton).toHaveAttribute('aria-expanded', 'true');
+  it('avatar button reflects isUserMenuOpen=false via aria-expanded', () => {
+    renderHeader({ ...defaultProps, isUserMenuOpen: false });
+    expect(
+      screen.getByLabelText(`User menu (${mockUser.email})`),
+    ).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('clicking outside the header closes the menu', () => {
-    renderHeader();
-    const avatarButton = screen.getByLabelText(`User menu (${mockUser.email})`);
-    fireEvent.click(avatarButton);
-    expect(avatarButton).toHaveAttribute('aria-expanded', 'true');
+  it('avatar button reflects isUserMenuOpen=true via aria-expanded', () => {
+    renderHeader({ ...defaultProps, isUserMenuOpen: true });
+    expect(
+      screen.getByLabelText(`User menu (${mockUser.email})`),
+    ).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('clicking the avatar button calls onUserMenuToggle', () => {
+    const onUserMenuToggle = vi.fn();
+    renderHeader({ ...defaultProps, onUserMenuToggle });
+    fireEvent.click(screen.getByLabelText(`User menu (${mockUser.email})`));
+    expect(onUserMenuToggle).toHaveBeenCalledOnce();
+  });
+
+  it('clicking outside the header calls onUserMenuClose when menu is open', () => {
+    const onUserMenuClose = vi.fn();
+    renderHeader({ ...defaultProps, isUserMenuOpen: true, onUserMenuClose });
     fireEvent.mouseDown(document.body);
-    expect(avatarButton).toHaveAttribute('aria-expanded', 'false');
+    expect(onUserMenuClose).toHaveBeenCalledOnce();
   });
 
-  it('pressing Escape closes the menu', () => {
-    renderHeader();
-    const avatarButton = screen.getByLabelText(`User menu (${mockUser.email})`);
-    fireEvent.click(avatarButton);
-    expect(avatarButton).toHaveAttribute('aria-expanded', 'true');
+  it('pressing Escape calls onUserMenuClose when menu is open', () => {
+    const onUserMenuClose = vi.fn();
+    renderHeader({ ...defaultProps, isUserMenuOpen: true, onUserMenuClose });
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(avatarButton).toHaveAttribute('aria-expanded', 'false');
+    expect(onUserMenuClose).toHaveBeenCalledOnce();
   });
 
-  it('touchstart outside the header closes the menu', () => {
-    renderHeader();
-    const avatarButton = screen.getByLabelText(`User menu (${mockUser.email})`);
-    fireEvent.click(avatarButton);
-    expect(avatarButton).toHaveAttribute('aria-expanded', 'true');
+  it('touchstart outside the header calls onUserMenuClose when menu is open', () => {
+    const onUserMenuClose = vi.fn();
+    renderHeader({ ...defaultProps, isUserMenuOpen: true, onUserMenuClose });
     fireEvent.touchStart(document.body);
-    expect(avatarButton).toHaveAttribute('aria-expanded', 'false');
+    expect(onUserMenuClose).toHaveBeenCalledOnce();
   });
 
-  it('clicking inside the header does not close the menu', () => {
-    renderHeader();
-    const avatarButton = screen.getByLabelText(`User menu (${mockUser.email})`);
-    fireEvent.click(avatarButton);
-    expect(avatarButton).toHaveAttribute('aria-expanded', 'true');
-    fireEvent.mouseDown(avatarButton);
-    expect(avatarButton).toHaveAttribute('aria-expanded', 'true');
+  it('clicking inside the header does not call onUserMenuClose', () => {
+    const onUserMenuClose = vi.fn();
+    renderHeader({ ...defaultProps, isUserMenuOpen: true, onUserMenuClose });
+    fireEvent.mouseDown(screen.getByLabelText(`User menu (${mockUser.email})`));
+    expect(onUserMenuClose).not.toHaveBeenCalled();
   });
 });

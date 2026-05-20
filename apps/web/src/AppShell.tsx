@@ -2,7 +2,14 @@ import Header from './components/Header';
 import LinkButton from './components/common/LinkButton';
 import LinksView from './components/links/LinksView';
 import SettingsView from './components/settings/SettingsView';
-import { lazy, Suspense, useEffect, useRef } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -46,6 +53,13 @@ export default function AppShell() {
   const view = viewFromPath(location.pathname);
   const mainReference = useRef<HTMLElement>(null);
   const isFirstRender = useRef(true);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const handleUserMenuToggle = useCallback(
+    () => setShowUserMenu((open) => !open),
+    [],
+  );
+  const handleUserMenuClose = useCallback(() => setShowUserMenu(false), []);
 
   // Optimistic update: the theme switches immediately without waiting for
   // the server response.
@@ -142,6 +156,9 @@ export default function AppShell() {
       )}
 
       <Header
+        isUserMenuOpen={showUserMenu}
+        onUserMenuToggle={handleUserMenuToggle}
+        onUserMenuClose={handleUserMenuClose}
         onLogout={logout}
         onModeToggle={handleModeToggle}
         onThemeSelect={handleThemeSelect}
@@ -167,7 +184,7 @@ export default function AppShell() {
             <ThemeEditor />
           </Suspense>
         ) : (
-          <LinksView />
+          <LinksView onCloseUserMenu={handleUserMenuClose} />
         )}
       </main>
     </div>

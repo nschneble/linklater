@@ -36,6 +36,7 @@ function makeUseLinksResult(): ReturnType<typeof useLinks> {
 function renderOnRoute(
   path: string,
   linksOverrides: Partial<ReturnType<typeof useLinks>> = {},
+  onCloseUserMenu?: () => void,
 ) {
   vi.mocked(useLinks).mockReturnValue({
     ...makeUseLinksResult(),
@@ -43,7 +44,7 @@ function renderOnRoute(
   });
   render(
     <MemoryRouter initialEntries={[path]}>
-      <LinksView />
+      <LinksView onCloseUserMenu={onCloseUserMenu} />
     </MemoryRouter>,
   );
 }
@@ -152,5 +153,47 @@ describe('LinksView keyboard shortcuts', () => {
       fireKey('d');
       expect(mockHandleRandom).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('LinksView — shortcuts modal closes user menu', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('calls onCloseUserMenu when the shortcuts modal opens via keyboard shortcut', async () => {
+    const onCloseUserMenu = vi.fn();
+    renderOnRoute('/unread', {}, onCloseUserMenu);
+
+    await act(async () => {
+      fireKey('z');
+    });
+
+    expect(onCloseUserMenu).toHaveBeenCalledOnce();
+  });
+
+  it('does not call onCloseUserMenu when the shortcuts modal closes via keyboard shortcut', async () => {
+    const onCloseUserMenu = vi.fn();
+    renderOnRoute('/unread', {}, onCloseUserMenu);
+
+    await act(async () => {
+      fireKey('z');
+    });
+    onCloseUserMenu.mockClear();
+
+    await act(async () => {
+      fireKey('z');
+    });
+
+    expect(onCloseUserMenu).not.toHaveBeenCalled();
+  });
+
+  it('calls onCloseUserMenu when the shortcuts modal opens via button click', async () => {
+    const onCloseUserMenu = vi.fn();
+    renderOnRoute('/unread', {}, onCloseUserMenu);
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Show keyboard shortcuts'));
+    });
+
+    expect(onCloseUserMenu).toHaveBeenCalledOnce();
   });
 });
