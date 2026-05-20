@@ -155,8 +155,8 @@ describe('ApiTokensList', () => {
           onRevoke={vi.fn()}
         />,
       );
-      // The exact format is locale-dependent; just verify the year appears.
-      expect(screen.getByText(/2026/)).toBeInTheDocument();
+      // The exact format is locale-dependent; match "Last used" + year.
+      expect(screen.getByText(/last used.*2026/i)).toBeInTheDocument();
     });
   });
 });
