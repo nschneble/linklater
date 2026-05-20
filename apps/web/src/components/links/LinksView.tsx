@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import { useKeyboardShortcuts } from '../../lib/hooks/useKeyboardShortcuts';
 import { useLinks, type LinksFilter } from '../../lib/hooks/useLinks';
 import LinkForm from './LinkForm';
@@ -78,6 +79,7 @@ export default function LinksView() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isClearingRead, setIsClearingRead] = useState(false);
   const [, startTransition] = useTransition();
+  const dialogReference = useRef<HTMLDivElement>(null);
   const searchInputReference = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -166,6 +168,8 @@ export default function LinksView() {
     onNavigatePrevLink: handleNavigatePrevLink,
     onOpenSelectedLink: handleOpenSelectedLink,
   });
+
+  useFocusTrap(dialogReference);
 
   useEffect(() => {
     setIsClearingRead(false);
@@ -268,43 +272,14 @@ export default function LinksView() {
         )}
 
       {showLinkForm && (
-        // NOTE: a <div role="dialog"> with a manual focus trap is used
-        // here rather than the native <dialog> element because <dialog>
-        // requires an imperative showModal() / close() call and does not
-        // integrate cleanly with React's conditional-render pattern. The
-        // manual Tab-wrap below replicates the behavior required by the
-        // ARIA dialog pattern: Tab wraps forward to the first focusable
-        // element, Shift+Tab wraps back to the last.
-        //
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- role="dialog" is interactive per ARIA spec; jsx-a11y incorrectly classifies it as non-interactive
         <div
           id={LINK_FORM_ID}
+          ref={dialogReference}
           role="dialog"
           aria-modal="true"
           aria-label="Save a link"
           tabIndex={-1}
           className="relative z-30 mt-0 animate-fade-in-up"
-          onKeyDown={(event) => {
-            if (event.key !== 'Tab') return;
-            const dialog = event.currentTarget;
-            const focusable = dialog.querySelectorAll<HTMLElement>(
-              'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
-            );
-            if (focusable.length === 0) return;
-            const first = focusable[0];
-            const last = focusable[focusable.length - 1];
-            if (event.shiftKey) {
-              if (document.activeElement === first) {
-                event.preventDefault();
-                last.focus();
-              }
-            } else {
-              if (document.activeElement === last) {
-                event.preventDefault();
-                first.focus();
-              }
-            }
-          }}
         >
           <LinkForm onCreated={handleCreated} />
         </div>

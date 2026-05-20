@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FOCUS_RING } from '../../lib/styles';
+import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import PrimaryButton from '../common/PrimaryButton';
 
 /**
@@ -44,39 +45,7 @@ export default function RecoveryCodesModal({
     dialogReference.current?.focus();
   }, []);
 
-  // Trap focus inside the modal.
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onConfirm();
-        return;
-      }
-
-      if (event.key !== 'Tab') return;
-
-      const focusable = dialogReference.current?.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      if (!focusable || focusable.length === 0) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey) {
-        if (document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
-      }
-    },
-    [onConfirm],
-  );
+  useFocusTrap(dialogReference, { onEscape: onConfirm });
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(codes.join('\n'));
@@ -86,7 +55,6 @@ export default function RecoveryCodesModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- role="dialog" is interactive per ARIA spec; jsx-a11y incorrectly classifies it as non-interactive */}
       <div
         className="w-full max-w-md mx-4 p-6 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl space-y-4"
         role="dialog"
@@ -94,7 +62,6 @@ export default function RecoveryCodesModal({
         aria-labelledby="recovery-codes-title"
         ref={dialogReference}
         tabIndex={-1}
-        onKeyDown={handleKeyDown}
       >
         <h3
           id="recovery-codes-title"

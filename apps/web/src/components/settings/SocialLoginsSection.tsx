@@ -4,7 +4,8 @@ import StatusBadge from '../common/StatusBadge';
 import { useAuth } from '../../auth/AuthContext';
 import { unlinkOAuthProvider } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import { useEffect, useRef, useState } from 'react';
+import { useFocusFirstButton } from '../../lib/hooks/useFocusFirstButton';
+import { useRef, useState } from 'react';
 
 /** Props for the social logins settings section. */
 interface SocialLoginsSectionProps {
@@ -204,17 +205,7 @@ function ProviderRow({
   const isConfirming = confirmDisconnect === provider;
   const confirmRowReference = useRef<HTMLDivElement>(null);
 
-  // When the confirmation row replaces the Disconnect button, move
-  // focus to its first button. Without this, keyboard and screen-reader
-  // users lose their position: the button they activated disappears and
-  // focus falls back to the body.
-  useEffect(() => {
-    if (isConfirming) {
-      const button =
-        confirmRowReference.current?.querySelector<HTMLButtonElement>('button');
-      requestAnimationFrame(() => button?.focus());
-    }
-  }, [isConfirming]);
+  useFocusFirstButton(confirmRowReference, isConfirming);
 
   return (
     <div className="flex items-center gap-3">

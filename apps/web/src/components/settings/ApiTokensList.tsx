@@ -1,8 +1,9 @@
 import type { ApiToken } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
+import { useFocusFirstButton } from '../../lib/hooks/useFocusFirstButton';
 import Alert from '../common/Alert';
 import IconButton from '../common/IconButton';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 /** Props for a single row in the PAT list. */
 interface ApiTokenRowProps {
@@ -35,17 +36,7 @@ function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
   const [error, setError] = useState<string | null>(null);
   const confirmRowReference = useRef<HTMLDivElement>(null);
 
-  // When the confirmation row replaces the Revoke button, move focus
-  // to its first button. Without this, keyboard and screen-reader users
-  // lose their position: the button they activated disappears and focus
-  // falls back to the body.
-  useEffect(() => {
-    if (confirming) {
-      const button =
-        confirmRowReference.current?.querySelector<HTMLButtonElement>('button');
-      requestAnimationFrame(() => button?.focus());
-    }
-  }, [confirming]);
+  useFocusFirstButton(confirmRowReference, confirming);
 
   const handleRevoke = async () => {
     setError(null);

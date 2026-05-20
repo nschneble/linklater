@@ -32,7 +32,7 @@ describe('KeyboardShortcutsModal', () => {
     const onClose = vi.fn();
     render(<KeyboardShortcutsModal onClose={onClose} />);
 
-    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
 
     expect(onClose).toHaveBeenCalledOnce();
   });
@@ -63,7 +63,7 @@ describe('KeyboardShortcutsModal', () => {
     const closeButton = screen.getByLabelText('Close keyboard shortcuts');
     closeButton.focus();
 
-    fireEvent.keyDown(document, { key: 'Tab', shiftKey: false });
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Tab', shiftKey: false });
 
     // Focus should cycle back to the close button itself (only focusable element)
     expect(document.activeElement).toBe(closeButton);
@@ -75,7 +75,7 @@ describe('KeyboardShortcutsModal', () => {
     const closeButton = screen.getByLabelText('Close keyboard shortcuts');
     closeButton.focus();
 
-    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Tab', shiftKey: true });
 
     expect(document.activeElement).toBe(closeButton);
   });
@@ -84,7 +84,7 @@ describe('KeyboardShortcutsModal', () => {
     const onClose = vi.fn();
     render(<KeyboardShortcutsModal onClose={onClose} />);
 
-    fireEvent.keyDown(document, { key: 'Enter' });
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter' });
 
     expect(onClose).not.toHaveBeenCalled();
   });

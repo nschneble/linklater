@@ -1,5 +1,5 @@
 import { act, render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import ApiTokensList from './ApiTokensList';
 import type { ApiToken } from '../../lib/api';
 

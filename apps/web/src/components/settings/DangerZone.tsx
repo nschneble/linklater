@@ -1,7 +1,8 @@
 import { deleteMe } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import { useFocusFirstButton } from '../../lib/hooks/useFocusFirstButton';
 import Alert from '../common/Alert';
 import IconButton from '../common/IconButton';
 
@@ -24,12 +25,7 @@ export default function DangerZone() {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!confirmDelete) return;
-    const button =
-      confirmRowReference.current?.querySelector<HTMLButtonElement>('button');
-    requestAnimationFrame(() => button?.focus());
-  }, [confirmDelete]);
+  useFocusFirstButton(confirmRowReference, confirmDelete);
 
   const handleDelete = async () => {
     setDeleting(true);
