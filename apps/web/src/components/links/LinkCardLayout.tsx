@@ -85,7 +85,9 @@ export default function LinkCardLayout({
   const hasTitle = Boolean(link.meta?.title);
   const displayTitle = link.meta?.title ?? '(No title)';
   const rawDescription = hasTitle ? link.meta?.description : link.url;
-  const displayDescription = rawDescription ? stripHtml(rawDescription) : rawDescription;
+  const displayDescription = rawDescription
+    ? stripHtml(rawDescription)
+    : rawDescription;
   const rawSiteName = link.meta?.siteName ?? new URL(link.url).hostname;
   const displaySiteName = rawSiteName.replace(/^www\./, '');
 
@@ -153,14 +155,14 @@ export default function LinkCardLayout({
           ) : (
             <div
               aria-hidden="true"
-              className="w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0 rounded-md bg-[var(--bg-elevated)]"
+              className="w-[60px] sm:w-[120px] h-[31.5px] sm:h-[63px] shrink-0 rounded-md bg-[var(--bg-elevated)]"
             />
           )}
 
           <div className="flex flex-col items-start min-w-0 ml-3">
             <p
               style={childStyle(1)}
-              className={`text-[var(--text)] text-sm font-semibold line-clamp-2 text-balance ${CARD_ENTER_CLASS}`}
+              className={`text-[var(--text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
             >
               {displayTitle}
             </p>
@@ -180,7 +182,7 @@ export default function LinkCardLayout({
             className={`flex items-start gap-3 overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS}`}
           >
             {displayDescription && (
-              <p className="flex-1 min-w-0 text-[var(--text-muted)] text-xs text-pretty line-clamp-2">
+              <p className="flex-1 min-w-0 text-[var(--text-muted)] text-xs text-pretty tracking-tight sm:tracking-normal line-clamp-2">
                 {displayDescription}
               </p>
             )}
@@ -188,7 +190,13 @@ export default function LinkCardLayout({
             {link.readAt && (
               <div className="shrink-0">
                 <PrimaryButton onClick={onUnreadClick}>
-                  Mark unread
+                  <span className="hidden sm:inline-flex">Mark unread</span>
+                  <span className="inline-flex sm:hidden">
+                    <i
+                      className="fa-solid fa-rotate-left text-xs"
+                      aria-hidden="true"
+                    />
+                  </span>
                 </PrimaryButton>
               </div>
             )}
