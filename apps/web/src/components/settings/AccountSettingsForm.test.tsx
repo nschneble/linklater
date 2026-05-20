@@ -352,7 +352,10 @@ describe('AccountSettingsForm', () => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
       });
 
-      expect(emailInput).toHaveAttribute('aria-describedby', 'account-email-error');
+      expect(emailInput).toHaveAttribute(
+        'aria-describedby',
+        'account-email-error',
+      );
       expect(document.getElementById('account-email-error')).toHaveTextContent(
         'Email already in use',
       );
@@ -380,9 +383,9 @@ describe('AccountSettingsForm', () => {
         'aria-describedby',
         'account-password-error',
       );
-      expect(document.getElementById('account-password-error')).toHaveTextContent(
-        'Current password is incorrect',
-      );
+      expect(
+        document.getElementById('account-password-error'),
+      ).toHaveTextContent('Current password is incorrect');
     });
 
     it('email input does not have aria-describedby when there is no error', () => {

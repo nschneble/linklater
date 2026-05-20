@@ -63,7 +63,10 @@ describe('KeyboardShortcutsModal', () => {
     const closeButton = screen.getByLabelText('Close keyboard shortcuts');
     closeButton.focus();
 
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Tab', shiftKey: false });
+    fireEvent.keyDown(screen.getByRole('dialog'), {
+      key: 'Tab',
+      shiftKey: false,
+    });
 
     // Focus should cycle back to the close button itself (only focusable element)
     expect(document.activeElement).toBe(closeButton);
@@ -75,7 +78,10 @@ describe('KeyboardShortcutsModal', () => {
     const closeButton = screen.getByLabelText('Close keyboard shortcuts');
     closeButton.focus();
 
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Tab', shiftKey: true });
+    fireEvent.keyDown(screen.getByRole('dialog'), {
+      key: 'Tab',
+      shiftKey: true,
+    });
 
     expect(document.activeElement).toBe(closeButton);
   });

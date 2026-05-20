@@ -218,7 +218,10 @@ function ProviderRow({
           </StatusBadge>
 
           {isConfirming ? (
-            <div className="flex items-center gap-2 text-xs" ref={confirmRowReference}>
+            <div
+              className="flex items-center gap-2 text-xs"
+              ref={confirmRowReference}
+            >
               <span className="text-[var(--text-muted)]">
                 Disconnect {label}?
               </span>

@@ -93,7 +93,9 @@ afterEach(() => vi.restoreAllMocks());
 describe('AppShell — skip link', () => {
   it('renders a skip link that points to #main-content', () => {
     renderOnRoute('/unread');
-    const skipLink = screen.getByRole('link', { name: /skip to main content/i });
+    const skipLink = screen.getByRole('link', {
+      name: /skip to main content/i,
+    });
     expect(skipLink).toBeInTheDocument();
     expect(skipLink).toHaveAttribute('href', '#main-content');
   });
@@ -216,7 +218,11 @@ describe('AppShell — x keyboard shortcut', () => {
 
     await act(async () => {
       document.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'x', metaKey: true, bubbles: true }),
+        new KeyboardEvent('keydown', {
+          key: 'x',
+          metaKey: true,
+          bubbles: true,
+        }),
       );
     });
 

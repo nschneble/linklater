@@ -48,14 +48,18 @@ describe('LandingPage', () => {
     renderLandingPage();
     // The heading is sr-only but still in the DOM and accessible to screen
     // readers. getByRole finds it regardless of visibility class.
-    const featuresHeading = screen.getByRole('heading', { name: /^features$/i });
+    const featuresHeading = screen.getByRole('heading', {
+      name: /^features$/i,
+    });
     expect(featuresHeading).toBeInTheDocument();
     expect(featuresHeading).toHaveClass('sr-only');
   });
 
   it('features section has aria-label="Features"', () => {
     renderLandingPage();
-    expect(screen.getByRole('region', { name: /^features$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: /^features$/i }),
+    ).toBeInTheDocument();
   });
 
   it('renders footer links with correct hrefs', () => {

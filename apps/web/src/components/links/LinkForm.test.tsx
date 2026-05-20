@@ -112,7 +112,9 @@ describe('LinkForm', () => {
 
   describe('aria-describedby on URL input', () => {
     it('URL input gets aria-describedby pointing to the error element when save fails', async () => {
-      vi.mocked(apiModule.createLink).mockRejectedValue(new Error('Invalid url'));
+      vi.mocked(apiModule.createLink).mockRejectedValue(
+        new Error('Invalid url'),
+      );
 
       render(<LinkForm onCreated={vi.fn()} />);
       fireEvent.change(screen.getByRole('textbox'), {
@@ -135,7 +137,9 @@ describe('LinkForm', () => {
 
     it('URL input does not have aria-describedby when there is no error', () => {
       render(<LinkForm onCreated={vi.fn()} />);
-      expect(screen.getByRole('textbox')).not.toHaveAttribute('aria-describedby');
+      expect(screen.getByRole('textbox')).not.toHaveAttribute(
+        'aria-describedby',
+      );
     });
   });
 });

@@ -16,7 +16,7 @@ const FALLBACK_THEME = 'scanner-darkly';
 
 const palettes: Record<string, EmailPalette> = {
   'before-midnight': {
-    accent: '#b75638',
+    accent: '#a84c30',
     accentFg: '#ffffff',
     bg: '#ccc095',
     bgElevated: '#a0c8b0',
@@ -34,8 +34,8 @@ const palettes: Record<string, EmailPalette> = {
     bgSurface: '#dcc8a4',
     border: '#d5b886',
     text: '#5a2e1a',
-    textMuted: '#7a5020',
-    textSubtle: '#9a6840',
+    textMuted: '#553a10',
+    textSubtle: '#6e4828',
   },
   'before-sunset': {
     accent: '#874b1d',
@@ -49,14 +49,14 @@ const palettes: Record<string, EmailPalette> = {
     textSubtle: '#5a3a18',
   },
   boyhood: {
-    accent: '#b25e59',
+    accent: '#a85450',
     accentFg: '#ffffff',
     bg: '#d0cf93',
     bgElevated: '#a8bc48',
     bgSurface: '#bcd068',
     border: '#637628',
     text: '#0d150d',
-    textMuted: '#335215',
+    textMuted: '#2e4a12',
     textSubtle: '#385028',
   },
   'dazed-and-confused': {
@@ -67,19 +67,19 @@ const palettes: Record<string, EmailPalette> = {
     bgSurface: '#e79d7f',
     border: '#c07818',
     text: '#2a201d',
-    textMuted: '#a15144',
-    textSubtle: '#596f78',
+    textMuted: '#6a2820',
+    textSubtle: '#2a3c48',
   },
   'hit-man': {
     accent: '#cc310d',
     accentFg: '#ffffff',
     bg: '#f0c870',
-    bgElevated: '#a07830',
+    bgElevated: '#d09848',
     bgSurface: '#c4a860',
     border: '#7c421d',
     text: '#1a150e',
     textMuted: '#4e2c14',
-    textSubtle: '#5a3c20',
+    textSubtle: '#543818',
   },
   'scanner-darkly': {
     accent: '#a73210',
@@ -100,8 +100,8 @@ const palettes: Record<string, EmailPalette> = {
     bgSurface: '#d4b07a',
     border: '#8a5e28',
     text: '#0a0a07',
-    textMuted: '#4c310b',
-    textSubtle: '#6a4820',
+    textMuted: '#3c2408',
+    textSubtle: '#5a3c18',
   },
 };
 

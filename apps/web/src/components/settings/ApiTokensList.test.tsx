@@ -1,4 +1,10 @@
-import { act, render, screen, waitFor, fireEvent } from '@testing-library/react';
+import {
+  act,
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ApiTokensList from './ApiTokensList';
 import type { ApiToken } from '../../lib/api';
@@ -31,9 +37,7 @@ describe('ApiTokensList', () => {
   });
 
   it('shows the token prefix', () => {
-    render(
-      <ApiTokensList tokens={[makeToken()]} onRevoke={vi.fn()} />,
-    );
+    render(<ApiTokensList tokens={[makeToken()]} onRevoke={vi.fn()} />);
     expect(screen.getByText('ltk_aBcDeFgH…')).toBeInTheDocument();
   });
 

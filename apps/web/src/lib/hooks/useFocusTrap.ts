@@ -32,7 +32,8 @@ export function useFocusTrap(
 
       if (event.key !== 'Tab') return;
 
-      const focusable = element!.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+      const focusable =
+        element!.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
       if (focusable.length === 0) return;
 
       const first = focusable[0];

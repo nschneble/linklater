@@ -36,18 +36,29 @@ describe('LinksToolbar — tab panel wiring', () => {
     // Both desktop and mobile tabs carry the same id — use getAllByRole and
     // check that at least one Unread tab has the aria-controls attribute.
     const unreadTabs = screen.getAllByRole('tab', { name: 'Unread' });
-    expect(unreadTabs.some((tab) => tab.getAttribute('aria-controls') === 'links-list')).toBe(true);
+    expect(
+      unreadTabs.some(
+        (tab) => tab.getAttribute('aria-controls') === 'links-list',
+      ),
+    ).toBe(true);
   });
 
   it('Read tab has aria-controls pointing to the links list', () => {
     renderToolbar({ filter: 'read' });
     const readTabs = screen.getAllByRole('tab', { name: 'Read' });
-    expect(readTabs.some((tab) => tab.getAttribute('aria-controls') === 'links-list')).toBe(true);
+    expect(
+      readTabs.some(
+        (tab) => tab.getAttribute('aria-controls') === 'links-list',
+      ),
+    ).toBe(true);
   });
 
   it('tablist has aria-label "Links filter"', () => {
     renderToolbar();
-    expect(screen.getByRole('tablist')).toHaveAttribute('aria-label', 'Links filter');
+    expect(screen.getByRole('tablist')).toHaveAttribute(
+      'aria-label',
+      'Links filter',
+    );
   });
 });
 
@@ -163,7 +174,9 @@ describe('LinksToolbar', () => {
       renderToolbar({ filter: 'read', links: [] });
       // Mobile trash uses disabled (not the hidden prop), so it stays visible
       // but non-interactive when the list is empty.
-      const button = screen.getByRole('button', { name: 'Remove all read links' });
+      const button = screen.getByRole('button', {
+        name: 'Remove all read links',
+      });
       expect(button).toBeDisabled();
     });
 

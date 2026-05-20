@@ -51,18 +51,18 @@ describe('LinksList — tab panel wiring', () => {
     const { container } = render(
       <LinksList {...defaultProps} filter="unread" />,
     );
-    expect(
-      container.querySelector('[role="tabpanel"]'),
-    ).toHaveAttribute('aria-labelledby', 'tab-unread');
+    expect(container.querySelector('[role="tabpanel"]')).toHaveAttribute(
+      'aria-labelledby',
+      'tab-unread',
+    );
   });
 
   it('has aria-labelledby="tab-read" when filter is read', () => {
-    const { container } = render(
-      <LinksList {...defaultProps} filter="read" />,
+    const { container } = render(<LinksList {...defaultProps} filter="read" />);
+    expect(container.querySelector('[role="tabpanel"]')).toHaveAttribute(
+      'aria-labelledby',
+      'tab-read',
     );
-    expect(
-      container.querySelector('[role="tabpanel"]'),
-    ).toHaveAttribute('aria-labelledby', 'tab-read');
   });
 
   it('has id matching LINKS_LIST_ID', () => {

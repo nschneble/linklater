@@ -109,7 +109,9 @@ describe('LinksMobileControls', () => {
       );
       // Mobile trash uses disabled (not the hidden prop), so it stays visible
       // but non-interactive when the list is empty.
-      const button = screen.getByRole('button', { name: 'Remove all read links' });
+      const button = screen.getByRole('button', {
+        name: 'Remove all read links',
+      });
       expect(button).toBeDisabled();
     });
 

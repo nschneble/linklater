@@ -1,4 +1,10 @@
-import { act, render, screen, waitFor, fireEvent } from '@testing-library/react';
+import {
+  act,
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+} from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import SocialLoginsSection from './SocialLoginsSection';
 import type { User } from '../../auth/AuthContext';

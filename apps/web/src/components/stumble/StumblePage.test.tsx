@@ -77,7 +77,9 @@ describe('StumblePage', () => {
 
   describe('live region', () => {
     it('renders a role="status" paragraph with aria-live="polite" while loading', () => {
-      vi.mocked(api.stumbleLink).mockImplementation(() => new Promise(() => {}));
+      vi.mocked(api.stumbleLink).mockImplementation(
+        () => new Promise(() => {}),
+      );
       renderStumblePage();
 
       const status = screen.getByRole('status');
@@ -86,7 +88,9 @@ describe('StumblePage', () => {
     });
 
     it('shows "Finding a random link…" status text during the loading state', () => {
-      vi.mocked(api.stumbleLink).mockImplementation(() => new Promise(() => {}));
+      vi.mocked(api.stumbleLink).mockImplementation(
+        () => new Promise(() => {}),
+      );
       renderStumblePage();
 
       expect(screen.getByRole('status')).toHaveTextContent(
