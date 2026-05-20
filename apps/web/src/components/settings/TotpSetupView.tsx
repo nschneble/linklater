@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { FormEvent, RefObject } from 'react';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
@@ -24,6 +25,14 @@ export default function TotpSetupView({
   qrCodeDataUrl,
   secret,
 }: TotpSetupViewProps) {
+  const formReference = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (/^\d{6}$/.test(code)) {
+      formReference.current?.requestSubmit();
+    }
+  }, [code]);
+
   return (
     <div className="space-y-4">
       <p className="text-[var(--text-muted)] text-sm">
@@ -43,7 +52,7 @@ export default function TotpSetupView({
           {secret}
         </code>
       </div>
-      <form className="space-y-3" onSubmit={onSubmit}>
+      <form ref={formReference} className="space-y-3" onSubmit={onSubmit}>
         <label
           className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
           htmlFor="totp-code"
@@ -55,6 +64,7 @@ export default function TotpSetupView({
           ref={codeInputReference}
           type="text"
           inputMode="numeric"
+          autoComplete="one-time-code"
           maxLength={6}
           value={code}
           onChange={(event) => onCodeChange(event.target.value)}

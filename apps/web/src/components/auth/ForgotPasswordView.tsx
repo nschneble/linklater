@@ -2,7 +2,8 @@ import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
-import { type FormEvent, type RefObject } from 'react';
+import AuthCard from './AuthCard';
+import type { FormEvent, RefObject } from 'react';
 
 interface ForgotPasswordViewProps {
   email: string;
@@ -26,7 +27,7 @@ export default function ForgotPasswordView({
   onSubmit,
 }: ForgotPasswordViewProps) {
   return (
-    <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
+    <AuthCard>
       <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold text-balance">
         You forgot?
       </h1>
@@ -37,7 +38,9 @@ export default function ForgotPasswordView({
 
       {forgotPasswordSent ? (
         <div className="text-center space-y-4">
-          <Alert variant="success">Check your email for a reset link!</Alert>
+          <Alert icon="fa-envelope" variant="success">
+            Check your email for a reset link
+          </Alert>
           <LinkButton onClick={onBack}>Back to login</LinkButton>
         </div>
       ) : (
@@ -58,7 +61,11 @@ export default function ForgotPasswordView({
             required
           />
 
-          {error && <Alert variant="error">{error}</Alert>}
+          {error && (
+            <Alert icon="fa-triangle-exclamation" variant="error">
+              {error}
+            </Alert>
+          )}
 
           <PrimaryButton disabled={loading} className="w-full py-2.5">
             <i className="fa-solid fa-envelope text-xs" aria-hidden="true" />
@@ -70,6 +77,6 @@ export default function ForgotPasswordView({
           </p>
         </form>
       )}
-    </div>
+    </AuthCard>
   );
 }

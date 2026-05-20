@@ -84,6 +84,8 @@ export default function LinksToolbar({
             }}
           />
           <TabButton
+            id="tab-unread"
+            aria-controls={LINKS_LIST_ID}
             className="px-3 py-1.5"
             isActive={filter === 'unread'}
             onClick={onNavigateUnread}
@@ -91,6 +93,8 @@ export default function LinksToolbar({
             Unread
           </TabButton>
           <TabButton
+            id="tab-read"
+            aria-controls={LINKS_LIST_ID}
             className="px-3 py-1.5"
             isActive={filter === 'read'}
             onClick={onNavigateRead}
@@ -129,7 +133,6 @@ export default function LinksToolbar({
             }
           }}
           aria-label="Search through your links"
-          aria-controls={LINKS_LIST_ID}
         />
 
         <LinksMobileControls

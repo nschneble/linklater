@@ -15,6 +15,12 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+@media (max-width: 767px) {
+  body.menu-open {
+    overflow: hidden;
+  }
+}
+
 @keyframes card-enter {
   from {
     opacity: 0;
@@ -85,6 +91,14 @@ body {
     transition-property: background-color, color, border-color;
     transition-duration: var(--theme-transition-duration);
     transition-timing-function: var(--theme-transition-easing);
+  }
+
+  /* Menu item hover highlights must stay fast regardless of theme preview state */
+  [role='menu'] *,
+  [role='menu'] *::before,
+  [role='menu'] *::after {
+    transition-duration: 80ms;
+    transition-timing-function: ease;
   }
 }
 

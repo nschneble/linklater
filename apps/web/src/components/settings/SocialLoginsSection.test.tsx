@@ -1,4 +1,10 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import {
+  act,
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+} from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import SocialLoginsSection from './SocialLoginsSection';
 import type { User } from '../../auth/AuthContext';
@@ -129,6 +135,33 @@ describe('SocialLoginsSection', () => {
       expect(
         screen.getByRole('button', { name: /cancel disconnect google/i }),
       ).toBeInTheDocument();
+    });
+
+    it('focuses the confirm button after clicking Disconnect', async () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({
+            connectedProviders: [
+              { provider: 'google', connectedAt: '2026-01-01T00:00:00.000Z' },
+            ],
+          }),
+        }),
+      );
+
+      render(<SocialLoginsSection googleEnabled />);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /disconnect google/i }),
+        );
+      });
+
+      // Focus is set via requestAnimationFrame — wait for it.
+      await waitFor(() => {
+        expect(document.activeElement).toBe(
+          screen.getByRole('button', { name: /confirm disconnect google/i }),
+        );
+      });
     });
 
     it('hides the confirm when Cancel is clicked', () => {

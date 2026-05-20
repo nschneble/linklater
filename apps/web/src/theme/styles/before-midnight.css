@@ -4,8 +4,8 @@
   --bg-elevated: #354828;
   --bg-input: #4e4435;
   --text: #ccc095;
-  --text-muted: #88bbb6;
-  --text-subtle: #6a9855;
+  --text-muted: #8abfba;
+  --text-subtle: #8ec870;
   --border: #11637a;
   --accent: #ebb327;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
@@ -21,7 +21,7 @@
   --text-muted: #4e4435;
   --text-subtle: #3c5228;
   --border: #11637a;
-  --accent: #b75638;
+  --accent: #a84c30;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #ffffff;
 }

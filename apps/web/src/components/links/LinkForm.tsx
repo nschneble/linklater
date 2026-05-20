@@ -3,7 +3,8 @@ import { getErrorMessage } from '../../lib/errors';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import PrimaryButton from '../common/PrimaryButton';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
 
 interface LinkFormProps {
   onCreated: (link: Link) => void;
@@ -54,20 +55,25 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
           value={url}
           onChange={(event) => setUrl(event.target.value)}
           required
+          // aria-describedby is only set when an error is present. If it
+          // pointed at an id that does not yet exist in the DOM, some
+          // screen readers announce "undefined" or skip the description
+          // entirely, which is worse than omitting it.
+          aria-describedby={error ? 'link-form-error' : undefined}
         />
-        <p className="mt-1.5 text-[var(--text-subtle)] text-xs">
+        <p className="hidden sm:inline-flex mt-1.5 text-[var(--text-subtle)] text-xs">
           Tip: Paste a link anywhere on the page to save it instantly
         </p>
       </div>
       <PrimaryButton
         disabled={saving}
-        className="w-full sm:w-auto sm:my-[7.5px]"
+        className="w-full sm:w-auto my-1 sm:my-[7.5px]"
       >
         <i className="fa-solid fa-bookmark text-xs" aria-hidden="true" />
         {saving ? 'Saving…' : 'Save link'}
       </PrimaryButton>
       {error && (
-        <Alert variant="error" className="sm:ml-2">
+        <Alert id="link-form-error" variant="error" className="sm:ml-2">
           {error}
         </Alert>
       )}

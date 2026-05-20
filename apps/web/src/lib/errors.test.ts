@@ -25,4 +25,14 @@ describe('getErrorMessage', () => {
   it('returns default fallback when no fallback provided and error is not an Error', () => {
     expect(getErrorMessage({ code: 42 })).toBe('Something went wrong');
   });
+
+  it('strips exception class prefix from error messages', () => {
+    const error = new Error('ThrottlerException: Too Many Requests');
+    expect(getErrorMessage(error)).toBe('Too Many Requests');
+  });
+
+  it('does not strip non-exception prefixes', () => {
+    const error = new Error('Something: went wrong');
+    expect(getErrorMessage(error)).toBe('Something: went wrong');
+  });
 });

@@ -25,7 +25,10 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[var(--bg)] text-[var(--text)] select-none">
+      <div
+        role="status"
+        className="flex items-center justify-center min-h-screen bg-[var(--bg)] text-[var(--text)] select-none"
+      >
         <div className="text-slate-400 text-sm animate-pulse">
           Defrosting Linklater in the microwave…
         </div>

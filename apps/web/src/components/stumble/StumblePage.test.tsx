@@ -74,4 +74,47 @@ describe('StumblePage', () => {
       ).toBeInTheDocument();
     });
   });
+
+  describe('live region', () => {
+    it('renders a role="status" paragraph with aria-live="polite" while loading', () => {
+      vi.mocked(api.stumbleLink).mockImplementation(
+        () => new Promise(() => {}),
+      );
+      renderStumblePage();
+
+      const status = screen.getByRole('status');
+      expect(status).toBeInTheDocument();
+      expect(status).toHaveAttribute('aria-live', 'polite');
+    });
+
+    it('shows "Finding a random link…" status text during the loading state', () => {
+      vi.mocked(api.stumbleLink).mockImplementation(
+        () => new Promise(() => {}),
+      );
+      renderStumblePage();
+
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Finding a random link…',
+      );
+    });
+
+    it('shows "Opening your link…" status text during the redirecting state', async () => {
+      vi.mocked(api.stumbleLink).mockResolvedValue({
+        url: 'https://example.com/article',
+      });
+
+      const mockLocation = { href: 'http://localhost:3000/' };
+      vi.stubGlobal('location', mockLocation);
+
+      renderStumblePage();
+
+      await waitFor(() => {
+        expect(screen.getByRole('status')).toHaveTextContent(
+          'Opening your link…',
+        );
+      });
+
+      vi.unstubAllGlobals();
+    });
+  });
 });

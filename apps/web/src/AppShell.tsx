@@ -2,7 +2,7 @@ import Header from './components/Header';
 import LinkButton from './components/common/LinkButton';
 import LinksView from './components/links/LinksView';
 import SettingsView from './components/settings/SettingsView';
-import { Suspense, lazy, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -44,6 +44,8 @@ export default function AppShell() {
   const navigate = useNavigate();
 
   const view = viewFromPath(location.pathname);
+  const mainReference = useRef<HTMLElement>(null);
+  const isFirstRender = useRef(true);
 
   // Optimistic update: the theme switches immediately without waiting for
   // the server response.
@@ -63,6 +65,28 @@ export default function AppShell() {
       console.error('Failed to save mode', error),
     );
   };
+
+  useEffect(() => {
+    const titles: Record<AppView, string> = {
+      links: 'Your links – Linklater',
+      settings: 'Settings – Linklater',
+      'theme-editor': 'Theme editor – Linklater',
+    };
+    document.title = titles[view];
+  }, [view]);
+
+  // Move focus to the main landmark whenever the user navigates between
+  // views. The isFirstRender guard prevents stealing focus on the
+  // initial page load — on mount the browser has not set focus anywhere
+  // meaningful yet, so moving it to <main> would skip the skip link and
+  // surprise keyboard users who land tabbed into the page header.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    mainReference.current?.focus();
+  }, [view]);
 
   // Global 'x' shortcut to open/close the user menu from anywhere.
   useEffect(() => {
@@ -90,6 +114,12 @@ export default function AppShell() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] select-none">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--bg-surface)] focus:text-[var(--text)] focus:text-sm focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:outline-none"
+      >
+        Skip to main content
+      </a>
       {isEmailUnverified && (
         <div
           className="px-4 py-2 bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/25 border-b border-amber-300 [[data-mode='dark']_&]:border-amber-800/50 text-center"
@@ -102,7 +132,7 @@ export default function AppShell() {
             />
             Please verify your email address.{' '}
             <LinkButton
-              className="hidden sm:contents"
+              className="hidden sm:inline-flex"
               onClick={() => navigate('/settings')}
             >
               Need to resend the verification email?
@@ -124,7 +154,12 @@ export default function AppShell() {
         view={view}
       />
 
-      <main className="max-w-3xl mx-auto px-4 py-6 sm:py-12 space-y-6">
+      <main
+        id="main-content"
+        ref={mainReference}
+        tabIndex={-1}
+        className="max-w-3xl mx-auto px-4 py-6 sm:py-12 space-y-6 focus:outline-none"
+      >
         {view === 'settings' ? (
           <SettingsView />
         ) : view === 'theme-editor' ? (

@@ -428,7 +428,7 @@ describe('AuthForm', () => {
       });
     });
 
-    it('shows an inline success alert while keeping the form visible', async () => {
+    it('hides form and shows success state after magic link sent', async () => {
       vi.mocked(requestMagicLink).mockResolvedValue(undefined);
 
       renderAuthForm();
@@ -445,9 +445,36 @@ describe('AuthForm', () => {
         expect(
           screen.getByText(/check your email for a login link/i),
         ).toBeInTheDocument();
-        expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+        expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: /back to login/i }),
+        ).toBeInTheDocument();
       });
+    });
+
+    it('returns to login form when Back to login is clicked from success state', async () => {
+      vi.mocked(requestMagicLink).mockResolvedValue(undefined);
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /log in with magic link/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/check your email for a login link/i),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /back to login/i }));
+
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /log in/i })).toBeInTheDocument();
     });
 
     it('shows an error when requestMagicLink fails', async () => {
@@ -499,7 +526,7 @@ describe('AuthForm', () => {
       });
     });
 
-    it('shows "Check your email to finish signing up!" after successful registerMagicLink', async () => {
+    it('shows "Check your email to complete signup" after successful registerMagicLink', async () => {
       vi.mocked(registerMagicLink).mockResolvedValue(undefined);
 
       renderAuthForm();
@@ -515,7 +542,7 @@ describe('AuthForm', () => {
       await waitFor(() => {
         expect(screen.getByRole('status')).toBeInTheDocument();
         expect(
-          screen.getByText(/check your email to finish signing up/i),
+          screen.getByText(/check your email to complete signup/i),
         ).toBeInTheDocument();
       });
     });
@@ -530,6 +557,104 @@ describe('AuthForm', () => {
       expect(
         screen.queryByRole('button', { name: /sign up with magic link/i }),
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe('MFA challenge — TOTP auto-submit', () => {
+    it('auto-submits TOTP code when 6 digits are entered without clicking Verify', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      const refreshUser = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ login: loginMock, refreshUser }),
+      );
+      vi.mocked(verifyOtp).mockResolvedValue({ accessToken: 'full-jwt' });
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByLabelText(/authenticator code/i),
+        ).toBeInTheDocument();
+      });
+
+      await act(async () => {
+        fireEvent.change(screen.getByLabelText(/authenticator code/i), {
+          target: { value: '123456' },
+        });
+      });
+
+      await waitFor(() => {
+        expect(verifyOtp).toHaveBeenCalledWith('mfa-tok', '123456', 'totp');
+      });
+    });
+
+    it('does not auto-submit TOTP code when fewer than 6 digits are entered', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByLabelText(/authenticator code/i),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByLabelText(/authenticator code/i), {
+        target: { value: '12345' },
+      });
+
+      expect(verifyOtp).not.toHaveBeenCalled();
+    });
+
+    it('does not auto-submit in recovery code mode when 6 chars are entered', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /use a recovery code/i }),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /use a recovery code/i }),
+      );
+
+      fireEvent.change(screen.getByLabelText(/recovery code/i), {
+        target: { value: 'abcdef' },
+      });
+
+      expect(verifyOtp).not.toHaveBeenCalled();
     });
   });
 
@@ -560,6 +685,232 @@ describe('AuthForm', () => {
       );
 
       expect(screen.getByLabelText(/recovery code/i)).toBeInTheDocument();
+    });
+
+    it('calls verifyOtp with recovery method and completes login on success', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      const refreshUser = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ login: loginMock, refreshUser }),
+      );
+      vi.mocked(verifyOtp).mockResolvedValue({ accessToken: 'full-jwt' });
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /use a recovery code/i }),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /use a recovery code/i }),
+      );
+
+      fireEvent.change(screen.getByLabelText(/recovery code/i), {
+        target: { value: 'aaaaa-bbbbb' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+      });
+
+      await waitFor(() => {
+        expect(verifyOtp).toHaveBeenCalledWith(
+          'mfa-tok',
+          'aaaaa-bbbbb',
+          'recovery',
+        );
+        expect(refreshUser).toHaveBeenCalled();
+      });
+    });
+
+    it('shows error when verifyOtp rejects in recovery code mode', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+      vi.mocked(verifyOtp).mockRejectedValue(
+        new Error('invalid recovery code'),
+      );
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /use a recovery code/i }),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /use a recovery code/i }),
+      );
+
+      fireEvent.change(screen.getByLabelText(/recovery code/i), {
+        target: { value: 'wrong-code' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(screen.getByText('Invalid recovery code')).toBeInTheDocument();
+      });
+    });
+
+    it('switches back to TOTP input when Use a different method is clicked', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /use a recovery code/i }),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /use a recovery code/i }),
+      );
+
+      expect(screen.getByLabelText(/recovery code/i)).toBeInTheDocument();
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /use a different method/i }),
+      );
+
+      expect(screen.getByLabelText(/authenticator code/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('MFA challenge — verifyOtp error', () => {
+    it('shows error when verifyOtp rejects in TOTP mode', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+      vi.mocked(verifyOtp).mockRejectedValue(new Error('invalid code'));
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByLabelText(/authenticator code/i),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByLabelText(/authenticator code/i), {
+        target: { value: '999999' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(screen.getByText('Invalid code')).toBeInTheDocument();
+      });
+    });
+
+    it('capitalizes a lowercase error message from verifyOtp', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'mfa-tok',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+      vi.mocked(verifyOtp).mockRejectedValue(new Error('otp has expired'));
+
+      renderAuthForm();
+      fillEmail(USER_EMAIL);
+      fillPassword(USER_PASSWORD);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^log in$/i }));
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByLabelText(/authenticator code/i),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByLabelText(/authenticator code/i), {
+        target: { value: '111111' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Otp has expired')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('register mode — magic link back button', () => {
+    it('returns to login form when Back button is clicked after registerMagicLink success', async () => {
+      vi.mocked(registerMagicLink).mockResolvedValue(undefined);
+
+      renderAuthForm();
+      fireEvent.click(screen.getByRole('tab', { name: /sign up/i }));
+      fillEmail(USER_EMAIL);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /sign up with magic link/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/check your email to complete signup/i),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /back to login/i }));
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('tab', { name: /log in/i }),
+        ).toBeInTheDocument();
+      });
     });
   });
 });

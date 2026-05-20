@@ -7,7 +7,7 @@ afterEach(() => vi.restoreAllMocks());
 function renderToolbar(
   overrides: Partial<Parameters<typeof LinksToolbar>[0]> = {},
 ) {
-  const searchInputRef = {
+  const searchInputReference = {
     current: null,
   } as React.RefObject<HTMLInputElement | null>;
   return render(
@@ -17,7 +17,7 @@ function renderToolbar(
       links={[]}
       randomLoading={false}
       search=""
-      searchInputRef={searchInputRef}
+      searchInputReference={searchInputReference}
       showLinkForm={false}
       onClearRead={vi.fn()}
       onNavigateRead={vi.fn()}
@@ -29,6 +29,38 @@ function renderToolbar(
     />,
   );
 }
+
+describe('LinksToolbar — tab panel wiring', () => {
+  it('Unread tab has aria-controls pointing to the links list', () => {
+    renderToolbar({ filter: 'unread' });
+    // Both desktop and mobile tabs carry the same id — use getAllByRole and
+    // check that at least one Unread tab has the aria-controls attribute.
+    const unreadTabs = screen.getAllByRole('tab', { name: 'Unread' });
+    expect(
+      unreadTabs.some(
+        (tab) => tab.getAttribute('aria-controls') === 'links-list',
+      ),
+    ).toBe(true);
+  });
+
+  it('Read tab has aria-controls pointing to the links list', () => {
+    renderToolbar({ filter: 'read' });
+    const readTabs = screen.getAllByRole('tab', { name: 'Read' });
+    expect(
+      readTabs.some(
+        (tab) => tab.getAttribute('aria-controls') === 'links-list',
+      ),
+    ).toBe(true);
+  });
+
+  it('tablist has aria-label "Links filter"', () => {
+    renderToolbar();
+    expect(screen.getByRole('tablist')).toHaveAttribute(
+      'aria-label',
+      'Links filter',
+    );
+  });
+});
 
 describe('LinksToolbar', () => {
   it('renders Unread and Read tabs', () => {
@@ -140,9 +172,12 @@ describe('LinksToolbar', () => {
 
     it('does not show the mobile trash button when filter is read but links is empty', () => {
       renderToolbar({ filter: 'read', links: [] });
-      expect(
-        screen.queryByRole('button', { name: 'Remove all read links' }),
-      ).toBeNull();
+      // Mobile trash uses disabled (not the hidden prop), so it stays visible
+      // but non-interactive when the list is empty.
+      const button = screen.getByRole('button', {
+        name: 'Remove all read links',
+      });
+      expect(button).toBeDisabled();
     });
 
     it('calls onClearRead when the mobile trash button is clicked', () => {

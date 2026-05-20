@@ -32,8 +32,8 @@ interface LinksControlsProps {
  * On the unread tab: "Stumble!" + "Add link / Hide form".
  * On the read tab: "Remove all read" (hidden when the list is empty).
  *
- * This component is hidden on mobile (`hidden sm:contents` in `LinksToolbar`)
- * — mobile has its own icon-only equivalents rendered inline in `LinksToolbar`.
+ * This component is hidden on mobile, which has its own icon-only
+ * equivalents rendered inline in `LinksToolbar`.
  */
 export default function LinksControls({
   filter,
@@ -51,7 +51,6 @@ export default function LinksControls({
         variant="elevated"
         disabled={isClearingRead}
         hidden={filter === 'unread' || linksCount === 0}
-        title="Permanently remove all read links"
         onClick={onClearRead}
       >
         <i className="fa-solid fa-trash text-[0.7rem]" aria-hidden="true" />
@@ -63,7 +62,6 @@ export default function LinksControls({
           variant="elevated"
           disabled={randomLoading}
           hidden={filter !== 'unread'}
-          title="Open a random unread link and mark it as read"
           onClick={onRandom}
         >
           <i

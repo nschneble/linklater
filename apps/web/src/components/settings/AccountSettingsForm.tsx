@@ -11,7 +11,8 @@ import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import StatusBadge from '../common/StatusBadge';
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 
 /**
  * Settings section for updating email address and password.
@@ -215,6 +216,9 @@ export default function AccountSettingsForm() {
           type="email"
           value={emailInput}
           onChange={(event) => setEmailInput(event.target.value)}
+          // only set when the error element exists in the DOM —
+          // see LinkForm for the rationale
+          aria-describedby={emailError ? 'account-email-error' : undefined}
         />
 
         {user?.twoFactorMethod && (
@@ -237,7 +241,11 @@ export default function AccountSettingsForm() {
         )}
 
         {emailMessage && <Alert variant="success">{emailMessage}</Alert>}
-        {emailError && <Alert variant="error">{emailError}</Alert>}
+        {emailError && (
+          <Alert id="account-email-error" variant="error">
+            {emailError}
+          </Alert>
+        )}
 
         <PrimaryButton
           disabled={emailSaving || emailInput === user?.email}
@@ -269,6 +277,9 @@ export default function AccountSettingsForm() {
             placeholder="Leave blank to keep current password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            aria-describedby={
+              passwordError ? 'account-password-error' : undefined
+            }
           />
 
           {password && (
@@ -293,7 +304,11 @@ export default function AccountSettingsForm() {
           {passwordMessage && (
             <Alert variant="success">{passwordMessage}</Alert>
           )}
-          {passwordError && <Alert variant="error">{passwordError}</Alert>}
+          {passwordError && (
+            <Alert id="account-password-error" variant="error">
+              {passwordError}
+            </Alert>
+          )}
 
           <PrimaryButton
             disabled={passwordSaving || !password}
@@ -326,10 +341,15 @@ export default function AccountSettingsForm() {
             type="password"
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
+            aria-describedby={
+              addPasswordError ? 'account-add-password-error' : undefined
+            }
           />
 
           {addPasswordError && (
-            <Alert variant="error">{addPasswordError}</Alert>
+            <Alert id="account-add-password-error" variant="error">
+              {addPasswordError}
+            </Alert>
           )}
 
           <PrimaryButton

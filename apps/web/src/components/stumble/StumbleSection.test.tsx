@@ -16,4 +16,10 @@ describe('StumbleSection', () => {
     expect(link).toHaveAttribute('href', '/stumble');
     expect(link).toHaveAttribute('draggable', 'true');
   });
+
+  it('stumble link has a descriptive aria-label mentioning drag', () => {
+    render(<StumbleSection />);
+    const link = screen.getByRole('link', { name: /stumble!/i });
+    expect(link.getAttribute('aria-label')).toMatch(/drag to bookmarks bar/i);
+  });
 });

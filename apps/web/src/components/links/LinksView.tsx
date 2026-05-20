@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import { useKeyboardShortcuts } from '../../lib/hooks/useKeyboardShortcuts';
 import { useLinks, type LinksFilter } from '../../lib/hooks/useLinks';
 import LinkForm from './LinkForm';
@@ -78,6 +79,7 @@ export default function LinksView() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isClearingRead, setIsClearingRead] = useState(false);
   const [, startTransition] = useTransition();
+  const dialogReference = useRef<HTMLDivElement>(null);
   const searchInputReference = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -167,6 +169,8 @@ export default function LinksView() {
     onOpenSelectedLink: handleOpenSelectedLink,
   });
 
+  useFocusTrap(dialogReference);
+
   useEffect(() => {
     setIsClearingRead(false);
     setSearch('');
@@ -207,18 +211,25 @@ export default function LinksView() {
         <h1 className="text-lg font-semibold">Your links</h1>
         <button
           type="button"
-          className="text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-help"
+          className="hidden sm:inline-flex text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-help"
           onClick={() => setShowShortcuts((previous) => !previous)}
           aria-label="Show keyboard shortcuts"
           title="Keyboard shortcuts"
         >
-          <i className="fa-regular fa-keyboard text-sm" aria-hidden="true" />
+          <i className="fa-solid fa-keyboard text-sm" aria-hidden="true" />
         </button>
       </div>
       <p className="text-[var(--text-muted)] text-xs">
-        {filter === 'read'
-          ? 'Read links are automatically removed after seven days.'
-          : 'Add, search, or stumble upon something random.'}
+        <span className="hidden sm:inline-flex">
+          {filter === 'read'
+            ? 'Read links are automatically removed after seven days.'
+            : 'Add, search, or stumble upon something random.'}
+        </span>
+        <span className="inline-flex sm:hidden">
+          {filter === 'read'
+            ? 'Read links are removed after 7 days.'
+            : 'Add, search, or stumble!'}
+        </span>
       </p>
 
       <LinksToolbar
@@ -263,6 +274,11 @@ export default function LinksView() {
       {showLinkForm && (
         <div
           id={LINK_FORM_ID}
+          ref={dialogReference}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Save a link"
+          tabIndex={-1}
           className="relative z-30 mt-0 animate-fade-in-up"
         >
           <LinkForm onCreated={handleCreated} />

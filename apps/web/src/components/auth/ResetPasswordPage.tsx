@@ -1,11 +1,11 @@
-import { useState, type FormEvent } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { resetPassword } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
+import { useState, type FormEvent } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 /**
  * Handles the `/reset-password?token=...` route. Renders a form for the user
@@ -58,7 +58,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
         {success && (
           <i
-            className="block mb-4 fa-regular fa-circle-check text-4xl text-[var(--text-subtle)] animate-bounce text-center"
+            className="block mb-4 fa-solid fa-circle-check text-4xl text-[var(--text-subtle)] animate-bounce text-center"
             aria-hidden="true"
           />
         )}
