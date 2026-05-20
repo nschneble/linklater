@@ -55,13 +55,13 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
           onChange={(event) => setUrl(event.target.value)}
           required
         />
-        <p className="mt-1.5 text-[var(--text-subtle)] text-xs">
+        <p className="hidden sm:inline-flex mt-1.5 text-[var(--text-subtle)] text-xs">
           Tip: Paste a link anywhere on the page to save it instantly
         </p>
       </div>
       <PrimaryButton
         disabled={saving}
-        className="w-full sm:w-auto sm:my-[7.5px]"
+        className="w-full sm:w-auto my-1 sm:my-[7.5px]"
       >
         <i className="fa-solid fa-bookmark text-xs" aria-hidden="true" />
         {saving ? 'Saving…' : 'Save link'}
