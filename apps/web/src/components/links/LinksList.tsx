@@ -79,7 +79,7 @@ export default function LinksList({
         className="flex flex-col items-center justify-center py-9 text-center animate-fade-in-up"
       >
         <i
-          className={`text-4xl text-[var(--text-subtle)] mb-[7px] fa-regular ${
+          className={`text-4xl text-[var(--text-subtle)] mb-[7px] fa-solid ${
             search !== '' || debouncedSearch !== ''
               ? 'fa-magnifying-glass'
               : filter === 'read'

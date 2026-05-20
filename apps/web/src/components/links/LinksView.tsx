@@ -212,7 +212,7 @@ export default function LinksView() {
           aria-label="Show keyboard shortcuts"
           title="Keyboard shortcuts"
         >
-          <i className="fa-regular fa-keyboard text-sm" aria-hidden="true" />
+          <i className="fa-solid fa-keyboard text-sm" aria-hidden="true" />
         </button>
       </div>
       <p className="text-[var(--text-muted)] text-xs">

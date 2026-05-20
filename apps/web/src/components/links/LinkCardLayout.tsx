@@ -121,7 +121,7 @@ export default function LinkCardLayout({
               />
             ) : (
               <i
-                className="fa-regular fa-bookmark text-[var(--text-muted)] text-xs"
+                className="fa-solid fa-bookmark text-[var(--text-muted)] text-xs"
                 aria-hidden="true"
               />
             )}
