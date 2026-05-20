@@ -63,6 +63,13 @@ export default function IconButton({
     <button
       className={`inline-flex items-center justify-center gap-1.5 text-xs rounded-full cursor-pointer ${DISABLED} active:scale-[0.96] transition duration-200 ${variantClasses[variant]} ${visibilityClasses} ${className}`}
       type="button"
+      // GOTCHA: use `disabled` rather than `aria-hidden` when `hidden`
+      // is true. `aria-hidden` on a focusable element hides it from the
+      // accessibility tree but leaves it reachable by Tab, which means
+      // screen-reader users land on an element with no announced name or
+      // role. `disabled` removes the button from the tab order and
+      // prevents all AT interaction, which is the correct behavior for
+      // an invisible control that is still mounted in the DOM.
       disabled={hidden || disabled}
       tabIndex={hidden ? -1 : undefined}
       {...props}

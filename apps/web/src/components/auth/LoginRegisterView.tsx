@@ -6,8 +6,8 @@ import PrimaryButton from '../common/PrimaryButton';
 import TabButton from '../common/TabButton';
 import AuthCard from './AuthCard';
 import { useRef } from 'react';
-import { useTabNavigation } from '../../lib/hooks/useTabNavigation';
 import type { FormEvent, RefObject } from 'react';
+import { useTabNavigation } from '../../lib/hooks/useTabNavigation';
 
 const googleSsoEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true';
 const appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true';
@@ -134,6 +134,8 @@ export default function LoginRegisterView({
               onChange={(event) => onEmailChange(event.target.value)}
               value={email}
               required
+              // only set when the error element exists in the DOM —
+              // see LinkForm for the rationale
               aria-describedby={error ? 'auth-form-error' : undefined}
             />
 

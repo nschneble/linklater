@@ -2,8 +2,24 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FOCUS_RING } from '../../lib/styles';
 import PrimaryButton from '../common/PrimaryButton';
 
+/**
+ * Full-screen modal that displays one-time recovery codes immediately
+ * after 2FA is enabled. The only dismiss path is the "I've saved these
+ * codes" button — there is deliberately no close/cancel action, because
+ * the codes must be recorded before the user leaves this screen.
+ *
+ * Focus is trapped inside the dialog while it is open and restored to
+ * the triggering element on close.
+ */
 interface RecoveryCodesModalProps {
+  /** The list of plaintext recovery codes to display and offer for copy. */
   codes: string[];
+  /**
+   * Called when the user confirms they have saved their codes. The
+   * parent is responsible for unmounting this modal on invocation.
+   * Also handles Escape key presses, treating them as confirmation
+   * since the codes are shown — not cancelled.
+   */
   onConfirm: () => void;
 }
 
@@ -32,6 +48,7 @@ export default function RecoveryCodesModal({
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       if (event.key === 'Escape') {
+        event.preventDefault();
         onConfirm();
         return;
       }

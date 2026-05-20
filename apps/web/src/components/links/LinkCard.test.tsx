@@ -233,6 +233,81 @@ describe('LinkCard', () => {
     });
   });
 
+  describe('aria-label', () => {
+    it('has aria-label "title — site, opens in new tab" when meta is fully loaded', () => {
+      render(
+        <LinkCard
+          link={makeLink({
+            url: 'https://example.com/article',
+            meta: {
+              fetchedAt: '2026-01-01T00:01:00.000Z',
+              title: 'Example Article',
+              siteName: 'Example Site',
+              faviconUrl: null,
+              description: null,
+              imageUrl: null,
+            },
+          })}
+          onReadToggle={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByRole('link')).toHaveAttribute(
+        'aria-label',
+        'Example Article — Example Site, opens in new tab',
+      );
+    });
+
+    it('falls back to hostname in aria-label when siteName is absent', () => {
+      render(
+        <LinkCard
+          link={makeLink({
+            url: 'https://www.example.com/article',
+            meta: {
+              fetchedAt: '2026-01-01T00:01:00.000Z',
+              title: 'Some Post',
+              siteName: null,
+              faviconUrl: null,
+              description: null,
+              imageUrl: null,
+            },
+          })}
+          onReadToggle={vi.fn()}
+        />,
+      );
+
+      // www. is stripped from the hostname
+      expect(screen.getByRole('link')).toHaveAttribute(
+        'aria-label',
+        'Some Post — example.com, opens in new tab',
+      );
+    });
+
+    it('uses "(No title)" in aria-label when meta.title is absent', () => {
+      render(
+        <LinkCard
+          link={makeLink({
+            url: 'https://example.com/article',
+            meta: {
+              fetchedAt: '2026-01-01T00:01:00.000Z',
+              title: null,
+              siteName: 'Example Site',
+              faviconUrl: null,
+              description: null,
+              imageUrl: null,
+            },
+          })}
+          onReadToggle={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByRole('link')).toHaveAttribute(
+        'aria-label',
+        '(No title) — Example Site, opens in new tab',
+      );
+    });
+  });
+
   describe('read state', () => {
     it('shows Mark as unread button when link is read', () => {
       render(

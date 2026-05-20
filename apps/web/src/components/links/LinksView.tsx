@@ -268,12 +268,21 @@ export default function LinksView() {
         )}
 
       {showLinkForm && (
+        // NOTE: a <div role="dialog"> with a manual focus trap is used
+        // here rather than the native <dialog> element because <dialog>
+        // requires an imperative showModal() / close() call and does not
+        // integrate cleanly with React's conditional-render pattern. The
+        // manual Tab-wrap below replicates the behavior required by the
+        // ARIA dialog pattern: Tab wraps forward to the first focusable
+        // element, Shift+Tab wraps back to the last.
+        //
         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- role="dialog" is interactive per ARIA spec; jsx-a11y incorrectly classifies it as non-interactive
         <div
           id={LINK_FORM_ID}
           role="dialog"
           aria-modal="true"
           aria-label="Save a link"
+          tabIndex={-1}
           className="relative z-30 mt-0 animate-fade-in-up"
           onKeyDown={(event) => {
             if (event.key !== 'Tab') return;

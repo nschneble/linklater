@@ -135,12 +135,12 @@ export default function LinkCardLayout({
           </span>
         </div>
       ) : (
-        <div className="absolute inset-0 pointer-events-none animate-pulse">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none animate-pulse"
+        >
           <div className="absolute top-0 bottom-0 left-0 -translate-x-full w-1 bg-[var(--accent)]" />
-          <span
-            aria-label="Fetching info…"
-            className="absolute left-0 top-4 -translate-x-1/2 z-10 block w-8 h-8 bg-[var(--accent)] ring-2 ring-[var(--bg-surface)] rounded-2xl"
-          />
+          <span className="absolute left-0 top-4 -translate-x-1/2 z-10 block w-8 h-8 bg-[var(--accent)] ring-2 ring-[var(--bg-surface)] rounded-2xl" />
         </div>
       )}
 

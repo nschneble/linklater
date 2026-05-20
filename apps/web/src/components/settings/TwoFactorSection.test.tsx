@@ -413,6 +413,75 @@ describe('TwoFactorSection', () => {
     });
   });
 
+  describe('Recovery codes modal — dialog accessibility', () => {
+    async function openRecoveryModal() {
+      vi.mocked(apiModule.setupTotp).mockResolvedValue({
+        qrCodeDataUrl: 'data:image/png;base64,abc',
+        secret: 'SECRETABC',
+      });
+      vi.mocked(apiModule.verifyTotpSetup).mockResolvedValue({
+        recoveryCodes: ['aaaaa-bbbbb', 'ccccc-ddddd'],
+      });
+
+      render(<TwoFactorSection />);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /set up authenticator app/i }),
+        );
+      });
+
+      const codeInput = screen.getByLabelText(/verification code/i);
+      fireEvent.change(codeInput, { target: { value: '123456' } });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('aaaaa-bbbbb')).toBeInTheDocument();
+      });
+    }
+
+    it('renders with role="dialog"', async () => {
+      await openRecoveryModal();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    it('has aria-modal="true" on the dialog', async () => {
+      await openRecoveryModal();
+      expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
+    });
+
+    it('receives focus when opened', async () => {
+      await openRecoveryModal();
+      const dialog = screen.getByRole('dialog');
+      expect(document.activeElement).toBe(dialog);
+    });
+
+    it('closes when Escape is pressed', async () => {
+      await openRecoveryModal();
+      const dialog = screen.getByRole('dialog');
+
+      await act(async () => {
+        fireEvent.keyDown(dialog, { key: 'Escape' });
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
+    });
+
+    it('is labelled by the "Save your recovery codes" heading', async () => {
+      await openRecoveryModal();
+      const dialog = screen.getByRole('dialog');
+      const labelId = dialog.getAttribute('aria-labelledby');
+      expect(labelId).toBeTruthy();
+      const heading = document.getElementById(labelId!);
+      expect(heading).toHaveTextContent(/save your recovery codes/i);
+    });
+  });
+
   describe('Recovery codes modal', () => {
     it('dismisses the recovery codes modal when confirmed', async () => {
       vi.mocked(apiModule.setupTotp).mockResolvedValue({

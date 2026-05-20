@@ -36,9 +36,41 @@ const defaultProps = {
   pagination: null,
   search: '',
   debouncedSearch: '',
+  selectedLinkIndex: null,
   onReadToggle: vi.fn(),
   onLoadMore: vi.fn(),
 };
+
+describe('LinksList — tab panel wiring', () => {
+  it('has role="tabpanel"', () => {
+    const { container } = render(<LinksList {...defaultProps} />);
+    expect(container.querySelector('[role="tabpanel"]')).toBeInTheDocument();
+  });
+
+  it('has aria-labelledby="tab-unread" when filter is unread', () => {
+    const { container } = render(
+      <LinksList {...defaultProps} filter="unread" />,
+    );
+    expect(
+      container.querySelector('[role="tabpanel"]'),
+    ).toHaveAttribute('aria-labelledby', 'tab-unread');
+  });
+
+  it('has aria-labelledby="tab-read" when filter is read', () => {
+    const { container } = render(
+      <LinksList {...defaultProps} filter="read" />,
+    );
+    expect(
+      container.querySelector('[role="tabpanel"]'),
+    ).toHaveAttribute('aria-labelledby', 'tab-read');
+  });
+
+  it('has id matching LINKS_LIST_ID', () => {
+    const { container } = render(<LinksList {...defaultProps} />);
+    const panel = container.querySelector('[role="tabpanel"]');
+    expect(panel).toHaveAttribute('id', 'links-list');
+  });
+});
 
 describe('LinksList', () => {
   it('shows a skeleton card when loading on page 1', () => {

@@ -109,4 +109,33 @@ describe('LinkForm', () => {
     render(<LinkForm onCreated={vi.fn()} />);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
+
+  describe('aria-describedby on URL input', () => {
+    it('URL input gets aria-describedby pointing to the error element when save fails', async () => {
+      vi.mocked(apiModule.createLink).mockRejectedValue(new Error('Invalid url'));
+
+      render(<LinkForm onCreated={vi.fn()} />);
+      fireEvent.change(screen.getByRole('textbox'), {
+        target: { value: LINK_URL },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /save link/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      });
+
+      expect(screen.getByRole('textbox')).toHaveAttribute(
+        'aria-describedby',
+        'link-form-error',
+      );
+      expect(document.getElementById('link-form-error')).toHaveTextContent(
+        'Invalid url',
+      );
+    });
+
+    it('URL input does not have aria-describedby when there is no error', () => {
+      render(<LinkForm onCreated={vi.fn()} />);
+      expect(screen.getByRole('textbox')).not.toHaveAttribute('aria-describedby');
+    });
+  });
 });

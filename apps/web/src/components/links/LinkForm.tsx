@@ -3,7 +3,8 @@ import { getErrorMessage } from '../../lib/errors';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import PrimaryButton from '../common/PrimaryButton';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
 
 interface LinkFormProps {
   onCreated: (link: Link) => void;
@@ -54,6 +55,10 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
           value={url}
           onChange={(event) => setUrl(event.target.value)}
           required
+          // aria-describedby is only set when an error is present. If it
+          // pointed at an id that does not yet exist in the DOM, some
+          // screen readers announce "undefined" or skip the description
+          // entirely, which is worse than omitting it.
           aria-describedby={error ? 'link-form-error' : undefined}
         />
         <p className="hidden sm:inline-flex mt-1.5 text-[var(--text-subtle)] text-xs">

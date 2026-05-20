@@ -133,7 +133,6 @@ export default function LinksToolbar({
             }
           }}
           aria-label="Search through your links"
-          aria-controls={LINKS_LIST_ID}
         />
 
         <LinksMobileControls

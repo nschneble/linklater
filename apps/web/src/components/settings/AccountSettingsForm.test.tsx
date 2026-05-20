@@ -335,6 +335,71 @@ describe('AccountSettingsForm', () => {
     });
   });
 
+  describe('aria-describedby on error inputs', () => {
+    it('email input gets aria-describedby pointing to the error element when email change fails', async () => {
+      vi.mocked(apiModule.requestEmailChange).mockRejectedValue(
+        new Error('Email already in use'),
+      );
+
+      render(<AccountSettingsForm />);
+      const emailInput = screen.getByLabelText(/change email/i);
+      fireEvent.change(emailInput, {
+        target: { value: 'taken@example.com' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      });
+
+      expect(emailInput).toHaveAttribute('aria-describedby', 'account-email-error');
+      expect(document.getElementById('account-email-error')).toHaveTextContent(
+        'Email already in use',
+      );
+    });
+
+    it('new password input gets aria-describedby pointing to the error element when update fails', async () => {
+      vi.mocked(apiModule.updateMe).mockRejectedValue(
+        new Error('Current password is incorrect'),
+      );
+
+      render(<AccountSettingsForm />);
+      fireEvent.change(screen.getByLabelText(/new password/i), {
+        target: { value: 'new-strong-password-123' },
+      });
+      fireEvent.change(screen.getByLabelText(/current password/i), {
+        target: { value: 'wrong-password' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /update password/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      });
+
+      expect(screen.getByLabelText(/new password/i)).toHaveAttribute(
+        'aria-describedby',
+        'account-password-error',
+      );
+      expect(document.getElementById('account-password-error')).toHaveTextContent(
+        'Current password is incorrect',
+      );
+    });
+
+    it('email input does not have aria-describedby when there is no error', () => {
+      render(<AccountSettingsForm />);
+      expect(screen.getByLabelText(/change email/i)).not.toHaveAttribute(
+        'aria-describedby',
+      );
+    });
+
+    it('new password input does not have aria-describedby when there is no error', () => {
+      render(<AccountSettingsForm />);
+      expect(screen.getByLabelText(/new password/i)).not.toHaveAttribute(
+        'aria-describedby',
+      );
+    });
+  });
+
   describe('add password section (SSO-only account)', () => {
     beforeEach(() => {
       vi.mocked(useAuth).mockReturnValue(

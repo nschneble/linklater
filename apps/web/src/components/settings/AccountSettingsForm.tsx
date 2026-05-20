@@ -11,7 +11,8 @@ import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import StatusBadge from '../common/StatusBadge';
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 
 /**
  * Settings section for updating email address and password.
@@ -215,6 +216,8 @@ export default function AccountSettingsForm() {
           type="email"
           value={emailInput}
           onChange={(event) => setEmailInput(event.target.value)}
+          // only set when the error element exists in the DOM —
+          // see LinkForm for the rationale
           aria-describedby={emailError ? 'account-email-error' : undefined}
         />
 

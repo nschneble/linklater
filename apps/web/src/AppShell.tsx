@@ -2,7 +2,7 @@ import Header from './components/Header';
 import LinkButton from './components/common/LinkButton';
 import LinksView from './components/links/LinksView';
 import SettingsView from './components/settings/SettingsView';
-import { Suspense, lazy, useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -75,6 +75,11 @@ export default function AppShell() {
     document.title = titles[view];
   }, [view]);
 
+  // Move focus to the main landmark whenever the user navigates between
+  // views. The isFirstRender guard prevents stealing focus on the
+  // initial page load — on mount the browser has not set focus anywhere
+  // meaningful yet, so moving it to <main> would skip the skip link and
+  // surprise keyboard users who land tabbed into the page header.
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;

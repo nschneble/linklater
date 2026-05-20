@@ -204,9 +204,15 @@ function ProviderRow({
   const isConfirming = confirmDisconnect === provider;
   const confirmRowReference = useRef<HTMLDivElement>(null);
 
+  // When the confirmation row replaces the Disconnect button, move
+  // focus to its first button. Without this, keyboard and screen-reader
+  // users lose their position: the button they activated disappears and
+  // focus falls back to the body.
   useEffect(() => {
     if (isConfirming) {
-      confirmRowReference.current?.querySelector('button')?.focus();
+      const button =
+        confirmRowReference.current?.querySelector<HTMLButtonElement>('button');
+      requestAnimationFrame(() => button?.focus());
     }
   }, [isConfirming]);
 
