@@ -122,10 +122,15 @@ export default function LinkCardLayout({
                 }}
               />
             ) : (
-              <i
-                className="fa-solid fa-bookmark text-[var(--text-muted)] text-xs"
+              <div
+                className="flex items-center justify-center w-8 h-8 bg-white outline outline-black/10 -outline-offset-1 rounded-4xl"
                 aria-hidden="true"
-              />
+              >
+                <i
+                  className="fa-solid fa-bookmark text-[var(--accent)] text-lg"
+                  aria-hidden="true"
+                />
+              </div>
             )}
           </span>
         </div>
