@@ -137,16 +137,21 @@ export default function LinkCardLayout({
 
       <div className="space-y-1">
         <div className="flex flex-row items-center">
-          {link.meta?.fetchedAt && (
+          {link.meta?.fetchedAt ? (
             <img
               src={link.meta.imageUrl ?? placeholderUrl}
               alt=""
               aria-hidden="true"
               style={childStyle(3)}
-              className={`w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] bg-white object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
+              className={`w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0 bg-white object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
               onError={(event) => {
                 (event.target as HTMLImageElement).src = placeholderUrl;
               }}
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0 rounded-md bg-[var(--bg-elevated)]"
             />
           )}
 
@@ -170,7 +175,7 @@ export default function LinkCardLayout({
         {(displayDescription || link.readAt) && (
           <div
             style={childStyle(2)}
-            className={`flex items-center gap-3 overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS}`}
+            className={`flex items-start gap-3 overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS}`}
           >
             {displayDescription && (
               <p className="flex-1 min-w-0 text-[var(--text-muted)] text-xs text-pretty line-clamp-2">
