@@ -48,7 +48,6 @@ const OAUTH_PROVIDER = 'google';
 const OAUTH_PROVIDER_ID = 'google-uid-123';
 const OAUTH_ACCOUNT_ID = 'oauth-account-1';
 const PENDING_EMAIL = 'pending.email@addy.com';
-const PENDING_EMAIL_TOKEN = 'pending-email-token-abc';
 
 const makeUser = (overrides = {}) => ({
   cvdMode: false,
@@ -343,85 +342,6 @@ describe('UsersService', () => {
     });
   });
 
-  describe('updateVerificationToken', () => {
-    it('stores verification token and expiry on the user', async () => {
-      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
-      const token = 'verification-token-abc';
-      const expiresAt = new Date(Date.now() + 86400000);
-
-      await service.updateVerificationToken(USER_ID, token, expiresAt);
-
-      expect(prismaMock.user.update).toHaveBeenCalledWith({
-        where: { id: USER_ID },
-        data: {
-          verificationToken: token,
-          verificationTokenExpiresAt: expiresAt,
-        },
-      });
-    });
-  });
-
-  describe('findByVerificationToken', () => {
-    it('looks up user by verificationToken field', async () => {
-      const token = 'verification-token-abc';
-      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
-
-      await service.findByVerificationToken(token);
-
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-        where: { verificationToken: token },
-      });
-    });
-  });
-
-  describe('clearVerificationToken', () => {
-    it('sets emailVerifiedAt and clears the token fields', async () => {
-      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
-
-      await service.clearVerificationToken(USER_ID);
-
-      expect(prismaMock.user.update).toHaveBeenCalledWith({
-        where: { id: USER_ID },
-        data: {
-          emailVerifiedAt: expect.any(Date),
-          verificationToken: null,
-          verificationTokenExpiresAt: null,
-        },
-      });
-    });
-  });
-
-  describe('updateResetToken', () => {
-    it('stores password reset token and expiry on the user', async () => {
-      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
-      const token = 'reset-token-xyz';
-      const expiresAt = new Date(Date.now() + 3600000);
-
-      await service.updateResetToken(USER_ID, token, expiresAt);
-
-      expect(prismaMock.user.update).toHaveBeenCalledWith({
-        where: { id: USER_ID },
-        data: {
-          resetToken: token,
-          resetTokenExpiresAt: expiresAt,
-        },
-      });
-    });
-  });
-
-  describe('findByResetToken', () => {
-    it('looks up user by resetToken field', async () => {
-      const token = 'reset-token-xyz';
-      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
-
-      await service.findByResetToken(token);
-
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-        where: { resetToken: token },
-      });
-    });
-  });
-
   describe('resetPasswordWithToken', () => {
     it('updates password hash and clears reset token fields', async () => {
       (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
@@ -453,41 +373,6 @@ describe('UsersService', () => {
           resetTokenExpiresAt: null,
           emailVerifiedAt: expect.any(Date),
         },
-      });
-    });
-  });
-
-  describe('updatePendingEmail', () => {
-    it('stores pending email, token, and expiry on the user', async () => {
-      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
-      const expiresAt = new Date(Date.now() + 86400000);
-
-      await service.updatePendingEmail(
-        USER_ID,
-        PENDING_EMAIL,
-        PENDING_EMAIL_TOKEN,
-        expiresAt,
-      );
-
-      expect(prismaMock.user.update).toHaveBeenCalledWith({
-        where: { id: USER_ID },
-        data: {
-          pendingEmail: PENDING_EMAIL,
-          pendingEmailToken: PENDING_EMAIL_TOKEN,
-          pendingEmailTokenExpiresAt: expiresAt,
-        },
-      });
-    });
-  });
-
-  describe('findByPendingEmailToken', () => {
-    it('looks up user by pendingEmailToken field', async () => {
-      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
-
-      await service.findByPendingEmailToken(PENDING_EMAIL_TOKEN);
-
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-        where: { pendingEmailToken: PENDING_EMAIL_TOKEN },
       });
     });
   });
@@ -726,47 +611,6 @@ describe('UsersService', () => {
       await expect(
         service.findByIdWithPasswordHash(MISSING_USER_ID),
       ).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('findByMagicLinkToken', () => {
-    it('looks up user by magicLinkToken field', async () => {
-      const token = 'magic-link-token-abc';
-      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
-
-      await service.findByMagicLinkToken(token);
-
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-        where: { magicLinkToken: token },
-      });
-    });
-  });
-
-  describe('updateMagicLinkToken', () => {
-    it('stores magic link token and expiry on the user', async () => {
-      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
-      const token = 'magic-link-token-abc';
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-
-      await service.updateMagicLinkToken(USER_ID, token, expiresAt);
-
-      expect(prismaMock.user.update).toHaveBeenCalledWith({
-        where: { id: USER_ID },
-        data: { magicLinkToken: token, magicLinkTokenExpiresAt: expiresAt },
-      });
-    });
-  });
-
-  describe('clearMagicLinkToken', () => {
-    it('nullifies the magic link token and expiry on the user', async () => {
-      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
-
-      await service.clearMagicLinkToken(USER_ID);
-
-      expect(prismaMock.user.update).toHaveBeenCalledWith({
-        where: { id: USER_ID },
-        data: { magicLinkToken: null, magicLinkTokenExpiresAt: null },
-      });
     });
   });
 

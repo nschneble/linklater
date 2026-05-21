@@ -11,6 +11,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { sha256Hex } from '../common/crypto-tokens';
 import { MagicLinkService } from './magic-link.service';
 import { EmailService } from '../email/email.service';
+import { UserTokensService } from '../users/user-tokens.service';
 import { UsersService } from '../users/users.service';
 
 const USER_ID = 'user-1';
@@ -31,13 +32,16 @@ describe('MagicLinkService', () => {
   let service: MagicLinkService;
 
   const usersServiceMock = {
-    clearMagicLinkToken: jest.fn(),
     createWithoutPassword: jest.fn(),
     findByEmail: jest.fn(),
-    findByMagicLinkToken: jest.fn(),
     markEmailVerified: jest.fn(),
-    updateMagicLinkToken: jest.fn(),
   } as unknown as UsersService;
+
+  const userTokensServiceMock = {
+    clearMagicLinkToken: jest.fn(),
+    findByMagicLinkToken: jest.fn(),
+    updateMagicLinkToken: jest.fn(),
+  } as unknown as UserTokensService;
 
   const emailServiceMock = {
     sendMagicLink: jest.fn(),
@@ -48,6 +52,7 @@ describe('MagicLinkService', () => {
       providers: [
         MagicLinkService,
         { provide: UsersService, useValue: usersServiceMock },
+        { provide: UserTokensService, useValue: userTokensServiceMock },
         { provide: EmailService, useValue: emailServiceMock },
       ],
     }).compile();
@@ -65,11 +70,11 @@ describe('MagicLinkService', () => {
       let storedHash = '';
 
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(makeUser());
-      (usersServiceMock.updateMagicLinkToken as jest.Mock).mockImplementation(
-        async (_id: string, hash: string) => {
-          storedHash = hash;
-        },
-      );
+      (
+        userTokensServiceMock.updateMagicLinkToken as jest.Mock
+      ).mockImplementation(async (_id: string, hash: string) => {
+        storedHash = hash;
+      });
       (emailServiceMock.sendMagicLink as jest.Mock).mockResolvedValue(
         undefined,
       );
@@ -77,7 +82,7 @@ describe('MagicLinkService', () => {
       await service.requestLogin(USER_EMAIL);
 
       expect(usersServiceMock.findByEmail).toHaveBeenCalledWith(USER_EMAIL);
-      expect(usersServiceMock.updateMagicLinkToken).toHaveBeenCalledWith(
+      expect(userTokensServiceMock.updateMagicLinkToken).toHaveBeenCalledWith(
         USER_ID,
         expect.stringMatching(/^[0-9a-f]{64}$/),
         expect.any(Date),
@@ -100,7 +105,7 @@ describe('MagicLinkService', () => {
 
       await service.requestLogin('unknown@example.com');
 
-      expect(usersServiceMock.updateMagicLinkToken).not.toHaveBeenCalled();
+      expect(userTokensServiceMock.updateMagicLinkToken).not.toHaveBeenCalled();
       expect(emailServiceMock.sendMagicLink).not.toHaveBeenCalled();
     });
 
@@ -109,7 +114,9 @@ describe('MagicLinkService', () => {
       const before = Date.now();
 
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(makeUser());
-      (usersServiceMock.updateMagicLinkToken as jest.Mock).mockImplementation(
+      (
+        userTokensServiceMock.updateMagicLinkToken as jest.Mock
+      ).mockImplementation(
         async (_id: string, _token: string, expiresAt: Date) => {
           capturedExpiry = expiresAt;
         },
@@ -139,30 +146,30 @@ describe('MagicLinkService', () => {
         magicLinkTokenExpiresAt: futureExpiry,
       });
 
-      (usersServiceMock.findByMagicLinkToken as jest.Mock).mockResolvedValue(
-        user,
-      );
-      (usersServiceMock.clearMagicLinkToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userTokensServiceMock.findByMagicLinkToken as jest.Mock
+      ).mockResolvedValue(user);
+      (
+        userTokensServiceMock.clearMagicLinkToken as jest.Mock
+      ).mockResolvedValue(undefined);
 
       const result = await service.verifyToken(RAW_TOKEN);
 
       // The raw token from the email is hashed before the lookup — the DB
       // never sees the raw value.
-      expect(usersServiceMock.findByMagicLinkToken).toHaveBeenCalledWith(
+      expect(userTokensServiceMock.findByMagicLinkToken).toHaveBeenCalledWith(
         TOKEN_HASH,
       );
-      expect(usersServiceMock.clearMagicLinkToken).toHaveBeenCalledWith(
+      expect(userTokensServiceMock.clearMagicLinkToken).toHaveBeenCalledWith(
         USER_ID,
       );
       expect(result.id).toBe(USER_ID);
     });
 
     it('throws BadRequestException when the token is not found', async () => {
-      (usersServiceMock.findByMagicLinkToken as jest.Mock).mockResolvedValue(
-        null,
-      );
+      (
+        userTokensServiceMock.findByMagicLinkToken as jest.Mock
+      ).mockResolvedValue(null);
 
       await expect(service.verifyToken(RAW_TOKEN)).rejects.toThrow(
         BadRequestException,
@@ -176,14 +183,14 @@ describe('MagicLinkService', () => {
         magicLinkTokenExpiresAt: pastExpiry,
       });
 
-      (usersServiceMock.findByMagicLinkToken as jest.Mock).mockResolvedValue(
-        user,
-      );
+      (
+        userTokensServiceMock.findByMagicLinkToken as jest.Mock
+      ).mockResolvedValue(user);
 
       await expect(service.verifyToken(RAW_TOKEN)).rejects.toThrow(
         BadRequestException,
       );
-      expect(usersServiceMock.clearMagicLinkToken).not.toHaveBeenCalled();
+      expect(userTokensServiceMock.clearMagicLinkToken).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when expiry is missing', async () => {
@@ -192,9 +199,9 @@ describe('MagicLinkService', () => {
         magicLinkTokenExpiresAt: null,
       });
 
-      (usersServiceMock.findByMagicLinkToken as jest.Mock).mockResolvedValue(
-        user,
-      );
+      (
+        userTokensServiceMock.findByMagicLinkToken as jest.Mock
+      ).mockResolvedValue(user);
 
       await expect(service.verifyToken(RAW_TOKEN)).rejects.toThrow(
         BadRequestException,
@@ -209,12 +216,12 @@ describe('MagicLinkService', () => {
         magicLinkTokenExpiresAt: futureExpiry,
       });
 
-      (usersServiceMock.findByMagicLinkToken as jest.Mock).mockResolvedValue(
-        user,
-      );
-      (usersServiceMock.clearMagicLinkToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userTokensServiceMock.findByMagicLinkToken as jest.Mock
+      ).mockResolvedValue(user);
+      (
+        userTokensServiceMock.clearMagicLinkToken as jest.Mock
+      ).mockResolvedValue(undefined);
       (usersServiceMock.markEmailVerified as jest.Mock).mockResolvedValue(
         undefined,
       );
@@ -232,12 +239,12 @@ describe('MagicLinkService', () => {
         magicLinkTokenExpiresAt: futureExpiry,
       });
 
-      (usersServiceMock.findByMagicLinkToken as jest.Mock).mockResolvedValue(
-        user,
-      );
-      (usersServiceMock.clearMagicLinkToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userTokensServiceMock.findByMagicLinkToken as jest.Mock
+      ).mockResolvedValue(user);
+      (
+        userTokensServiceMock.clearMagicLinkToken as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.verifyToken(RAW_TOKEN);
 
@@ -258,9 +265,9 @@ describe('MagicLinkService', () => {
       (usersServiceMock.createWithoutPassword as jest.Mock).mockResolvedValue(
         createdUser,
       );
-      (usersServiceMock.updateMagicLinkToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userTokensServiceMock.updateMagicLinkToken as jest.Mock
+      ).mockResolvedValue(undefined);
       (emailServiceMock.sendMagicLink as jest.Mock).mockResolvedValue(
         undefined,
       );
@@ -270,7 +277,7 @@ describe('MagicLinkService', () => {
       expect(usersServiceMock.createWithoutPassword).toHaveBeenCalledWith(
         USER_EMAIL,
       );
-      expect(usersServiceMock.updateMagicLinkToken).toHaveBeenCalledWith(
+      expect(userTokensServiceMock.updateMagicLinkToken).toHaveBeenCalledWith(
         USER_ID,
         expect.stringMatching(/^[0-9a-f]{64}$/),
         expect.any(Date),
@@ -288,9 +295,9 @@ describe('MagicLinkService', () => {
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(
         existingUser,
       );
-      (usersServiceMock.updateMagicLinkToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userTokensServiceMock.updateMagicLinkToken as jest.Mock
+      ).mockResolvedValue(undefined);
       (emailServiceMock.sendMagicLink as jest.Mock).mockResolvedValue(
         undefined,
       );
@@ -298,7 +305,7 @@ describe('MagicLinkService', () => {
       await service.requestSignup(USER_EMAIL);
 
       expect(usersServiceMock.createWithoutPassword).not.toHaveBeenCalled();
-      expect(usersServiceMock.updateMagicLinkToken).toHaveBeenCalledWith(
+      expect(userTokensServiceMock.updateMagicLinkToken).toHaveBeenCalledWith(
         USER_ID,
         expect.any(String),
         expect.any(Date),
@@ -314,7 +321,7 @@ describe('MagicLinkService', () => {
 
       await service.requestSignup(USER_EMAIL);
 
-      expect(usersServiceMock.updateMagicLinkToken).not.toHaveBeenCalled();
+      expect(userTokensServiceMock.updateMagicLinkToken).not.toHaveBeenCalled();
       expect(emailServiceMock.sendMagicLink).not.toHaveBeenCalled();
     });
   });

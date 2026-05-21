@@ -1,0 +1,82 @@
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import type { Response } from 'express';
+import { ExtensionAuthService } from './extension-auth.service.js';
+import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { ExtensionTokenDto } from './dto/extension-token.dto.js';
+import type { AuthRequest } from './auth-request.type.js';
+
+/**
+ * Browser-extension PKCE authorization endpoints. Authorize step requires a
+ * full browser session JWT; the token exchange is public and validates the
+ * verifier against the stored challenge.
+ */
+@ApiTags('auth')
+@Controller('auth')
+export class ExtensionAuthController {
+  constructor(private readonly extensionAuthService: ExtensionAuthService) {}
+
+  @ApiOperation({ summary: 'Authorize a browser extension (PKCE flow)' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to redirect_uri with auth code.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid redirect_uri or missing parameters.',
+  })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Get('extension/authorize')
+  async extensionAuthorize(
+    @Req() request: AuthRequest,
+    @Res() response: Response,
+    @Query('code_challenge') codeChallenge: string,
+    @Query('redirect_uri') redirectUri: string,
+  ) {
+    const { code, callbackUrl } =
+      await this.extensionAuthService.authorizeExtension(
+        request.user.userId,
+        codeChallenge,
+        redirectUri,
+      );
+
+    const destination = new URL(callbackUrl);
+    destination.searchParams.set('code', code);
+    response.redirect(destination.toString());
+  }
+
+  @ApiOperation({ summary: 'Exchange extension auth code for token pair' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns accessToken and refreshToken.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid code or PKCE verifier.',
+  })
+  @Post('extension/token')
+  @HttpCode(200)
+  async extensionToken(@Body() body: ExtensionTokenDto) {
+    return this.extensionAuthService.exchangeExtensionCode(
+      body.code,
+      body.codeVerifier,
+    );
+  }
+}

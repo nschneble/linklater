@@ -1,13 +1,10 @@
 import {
   BadRequestException,
   Injectable,
-  Logger,
-  OnModuleInit,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { createHash } from 'node:crypto';
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import {
   RECOVERY_CODE_REGEX,
@@ -22,16 +19,9 @@ import { MagicLinkService } from './magic-link.service.js';
 import { TotpService } from './totp.service.js';
 
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
-const FIVE_MINUTES_MS = 5 * 60 * 1000;
-
-function expiresInMs(ms: number) {
-  return new Date(Date.now() + ms);
-}
 
 @Injectable()
-export class AuthService implements OnModuleInit {
-  private readonly logger = new Logger(AuthService.name);
-
+export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -40,14 +30,6 @@ export class AuthService implements OnModuleInit {
     private readonly totpService: TotpService,
     private readonly prisma: PrismaService,
   ) {}
-
-  onModuleInit() {
-    if (!process.env.EXTENSION_REDIRECT_URIS) {
-      this.logger.warn(
-        'EXTENSION_REDIRECT_URIS is not set — the browser extension authorization flow will reject all redirect URIs. Set this to a comma-separated list of allowed extension callback URIs.',
-      );
-    }
-  }
 
   async register(email: string, password: string) {
     const user = await this.usersService.create(email, password);
@@ -151,66 +133,6 @@ export class AuthService implements OnModuleInit {
       this.prisma.refreshToken.deleteMany({ where: { userId } }),
       this.prisma.extensionAuthCode.deleteMany({ where: { userId } }),
     ]);
-  }
-
-  async authorizeExtension(
-    userId: string,
-    codeChallenge: string,
-    redirectUri: string,
-  ): Promise<{ code: string; callbackUrl: string }> {
-    if (!codeChallenge || !redirectUri) {
-      throw new BadRequestException(
-        'code_challenge and redirect_uri are required',
-      );
-    }
-
-    const allowedUris = process.env.EXTENSION_REDIRECT_URIS
-      ? process.env.EXTENSION_REDIRECT_URIS.split(',').map((uri) => uri.trim())
-      : [];
-
-    if (!allowedUris.includes(redirectUri)) {
-      throw new BadRequestException('Invalid redirect_uri');
-    }
-
-    const code = await this.createExtensionAuthCode(userId, codeChallenge);
-    return { code, callbackUrl: redirectUri };
-  }
-
-  async createExtensionAuthCode(
-    userId: string,
-    codeChallenge: string,
-  ): Promise<string> {
-    const rawCode = generateHexToken();
-    const codeHash = sha256Hex(rawCode);
-    const expiresAt = expiresInMs(FIVE_MINUTES_MS);
-
-    await this.prisma.extensionAuthCode.create({
-      data: { codeHash, codeChallenge, userId, expiresAt },
-    });
-
-    return rawCode;
-  }
-
-  async exchangeExtensionCode(rawCode: string, codeVerifier: string) {
-    const codeHash = sha256Hex(rawCode);
-    const stored = await this.prisma.extensionAuthCode.findUnique({
-      where: { codeHash },
-      include: { user: true },
-    });
-
-    if (!stored || stored.expiresAt < new Date()) {
-      throw new UnauthorizedException('Invalid or expired authorization code');
-    }
-
-    const computedChallenge = createHash('sha256')
-      .update(codeVerifier)
-      .digest('base64url');
-    if (computedChallenge !== stored.codeChallenge) {
-      throw new UnauthorizedException('Invalid code verifier');
-    }
-
-    await this.prisma.extensionAuthCode.delete({ where: { id: stored.id } });
-    return this.issueTokenPair(stored.userId, stored.user.email);
   }
 
   async requestMagicLink(email: string): Promise<void> {

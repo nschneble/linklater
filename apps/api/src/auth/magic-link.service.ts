@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import { EmailService } from '../email/index.js';
+import { UserTokensService } from '../users/user-tokens.service.js';
 import { UsersService } from '../users/users.service.js';
 
 const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
@@ -15,6 +16,7 @@ const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 export class MagicLinkService {
   constructor(
     private readonly usersService: UsersService,
+    private readonly userTokensService: UserTokensService,
     private readonly emailService: EmailService,
   ) {}
 
@@ -34,7 +36,11 @@ export class MagicLinkService {
     const tokenHash = sha256Hex(rawToken);
     const expiresAt = new Date(Date.now() + FIFTEEN_MINUTES_MS);
 
-    await this.usersService.updateMagicLinkToken(user.id, tokenHash, expiresAt);
+    await this.userTokensService.updateMagicLinkToken(
+      user.id,
+      tokenHash,
+      expiresAt,
+    );
     await this.emailService.sendMagicLink(user.email, rawToken, user.theme);
   }
 
@@ -46,7 +52,7 @@ export class MagicLinkService {
    * @throws {BadRequestException} When the token is not found or has expired.
    */
   async verifyToken(rawToken: string) {
-    const user = await this.usersService.findByMagicLinkToken(
+    const user = await this.userTokensService.findByMagicLinkToken(
       sha256Hex(rawToken),
     );
 
@@ -58,7 +64,7 @@ export class MagicLinkService {
       throw new BadRequestException('This login link has expired');
     }
 
-    await this.usersService.clearMagicLinkToken(user.id);
+    await this.userTokensService.clearMagicLinkToken(user.id);
     if (!user.emailVerifiedAt) {
       await this.usersService.markEmailVerified(user.id);
     }
@@ -83,7 +89,11 @@ export class MagicLinkService {
     const rawToken = generateHexToken();
     const tokenHash = sha256Hex(rawToken);
     const expiresAt = new Date(Date.now() + FIFTEEN_MINUTES_MS);
-    await this.usersService.updateMagicLinkToken(user.id, tokenHash, expiresAt);
+    await this.userTokensService.updateMagicLinkToken(
+      user.id,
+      tokenHash,
+      expiresAt,
+    );
     await this.emailService.sendMagicLink(email, rawToken, user.theme);
   }
 }

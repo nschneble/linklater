@@ -8,14 +8,19 @@ import { AppleStrategy } from './apple.strategy.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { EmailVerificationService } from './email-verification.service.js';
+import { ExtensionAuthController } from './extension-auth.controller.js';
+import { ExtensionAuthService } from './extension-auth.service.js';
+import { MagicLinkController } from './magic-link.controller.js';
 import { MagicLinkService } from './magic-link.service.js';
 import { OAuthAccountService } from './oauth-account.service.js';
+import { OAuthController } from './oauth.controller.js';
 import { GoogleLinkStrategy } from './google-link.strategy.js';
 import { GoogleStrategy } from './google.strategy.js';
 import { JwtStrategy } from './jwt.strategy.js';
 import { LocalStrategy } from './local.strategy.js';
 import { MfaAuthGuard } from './mfa-auth.guard.js';
 import { TotpService } from './totp.service.js';
+import { TwoFactorController } from './two-factor.controller.js';
 import { EmailModule } from '../email/email.module.js';
 import { TokensModule } from '../tokens/tokens.module.js';
 import { UsersModule } from '../users/users.module.js';
@@ -62,6 +67,7 @@ const oauthProviders: Provider[] = [
     AnyAuthGuard,
     AuthService,
     EmailVerificationService,
+    ExtensionAuthService,
     MagicLinkService,
     OAuthAccountService,
     JwtStrategy,
@@ -70,7 +76,13 @@ const oauthProviders: Provider[] = [
     TotpService,
     ...oauthProviders,
   ],
-  controllers: [AuthController],
+  controllers: [
+    AuthController,
+    ExtensionAuthController,
+    MagicLinkController,
+    OAuthController,
+    TwoFactorController,
+  ],
   exports: [AnyAuthGuard],
 })
 export class AuthModule {}

@@ -12,6 +12,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EmailVerificationService } from './email-verification.service';
 import { TotpService } from './totp.service';
 import { EmailService } from '../email/email.service';
+import { UserTokensService } from '../users/user-tokens.service';
 import { UsersService } from '../users/users.service';
 
 const NEW_EMAIL = 'new.email@addy.com';
@@ -25,21 +26,24 @@ describe('EmailVerificationService', () => {
   let service: EmailVerificationService;
 
   const usersServiceMock = {
-    clearVerificationToken: jest.fn(),
     confirmPendingEmail: jest.fn(),
     findByEmail: jest.fn(),
-    findByPendingEmailToken: jest.fn(),
-    findByResetToken: jest.fn(),
-    findByVerificationToken: jest.fn(),
     findById: jest.fn(),
     findUnusedRecoveryCodes: jest.fn(),
     markEmailVerified: jest.fn(),
     markRecoveryCodeUsed: jest.fn(),
     resetPasswordWithToken: jest.fn(),
+  } as unknown as UsersService;
+
+  const userTokensServiceMock = {
+    clearVerificationToken: jest.fn(),
+    findByPendingEmailToken: jest.fn(),
+    findByResetToken: jest.fn(),
+    findByVerificationToken: jest.fn(),
     updatePendingEmail: jest.fn(),
     updateResetToken: jest.fn(),
     updateVerificationToken: jest.fn(),
-  } as unknown as UsersService;
+  } as unknown as UserTokensService;
 
   const emailServiceMock = {
     sendEmailChangeVerification: jest.fn(),
@@ -56,6 +60,7 @@ describe('EmailVerificationService', () => {
       providers: [
         EmailVerificationService,
         { provide: UsersService, useValue: usersServiceMock },
+        { provide: UserTokensService, useValue: userTokensServiceMock },
         { provide: EmailService, useValue: emailServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
       ],
@@ -76,20 +81,18 @@ describe('EmailVerificationService', () => {
         email: USER_EMAIL,
         theme: 'before-sunrise',
       });
-      (usersServiceMock.updateVerificationToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userTokensServiceMock.updateVerificationToken as jest.Mock
+      ).mockResolvedValue(undefined);
       (emailServiceMock.sendVerification as jest.Mock).mockResolvedValue(
         undefined,
       );
 
       await service.sendVerificationEmail(USER_ID);
 
-      expect(usersServiceMock.updateVerificationToken).toHaveBeenCalledWith(
-        USER_ID,
-        expect.any(String),
-        expect.any(Date),
-      );
+      expect(
+        userTokensServiceMock.updateVerificationToken,
+      ).toHaveBeenCalledWith(USER_ID, expect.any(String), expect.any(Date));
       expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
@@ -100,28 +103,28 @@ describe('EmailVerificationService', () => {
 
   describe('verifyEmail', () => {
     it('clears the token when it is valid and not expired', async () => {
-      (usersServiceMock.findByVerificationToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          verificationToken: VERIFICATION_TOKEN,
-          verificationTokenExpiresAt: new Date(Date.now() + 3600000),
-        },
-      );
-      (usersServiceMock.clearVerificationToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userTokensServiceMock.findByVerificationToken as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        verificationToken: VERIFICATION_TOKEN,
+        verificationTokenExpiresAt: new Date(Date.now() + 3600000),
+      });
+      (
+        userTokensServiceMock.clearVerificationToken as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.verifyEmail(VERIFICATION_TOKEN);
 
-      expect(usersServiceMock.clearVerificationToken).toHaveBeenCalledWith(
+      expect(userTokensServiceMock.clearVerificationToken).toHaveBeenCalledWith(
         USER_ID,
       );
     });
 
     it('throws BadRequestException when the token is not found', async () => {
-      (usersServiceMock.findByVerificationToken as jest.Mock).mockResolvedValue(
-        null,
-      );
+      (
+        userTokensServiceMock.findByVerificationToken as jest.Mock
+      ).mockResolvedValue(null);
 
       await expect(service.verifyEmail('unknown-token')).rejects.toThrow(
         BadRequestException,
@@ -129,13 +132,13 @@ describe('EmailVerificationService', () => {
     });
 
     it('throws BadRequestException when the token has expired', async () => {
-      (usersServiceMock.findByVerificationToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          verificationToken: VERIFICATION_TOKEN,
-          verificationTokenExpiresAt: new Date(Date.now() - 1000),
-        },
-      );
+      (
+        userTokensServiceMock.findByVerificationToken as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        verificationToken: VERIFICATION_TOKEN,
+        verificationTokenExpiresAt: new Date(Date.now() - 1000),
+      });
 
       await expect(service.verifyEmail(VERIFICATION_TOKEN)).rejects.toThrow(
         BadRequestException,
@@ -143,13 +146,13 @@ describe('EmailVerificationService', () => {
     });
 
     it('throws BadRequestException when verificationTokenExpiresAt is null', async () => {
-      (usersServiceMock.findByVerificationToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          verificationToken: VERIFICATION_TOKEN,
-          verificationTokenExpiresAt: null,
-        },
-      );
+      (
+        userTokensServiceMock.findByVerificationToken as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        verificationToken: VERIFICATION_TOKEN,
+        verificationTokenExpiresAt: null,
+      });
 
       await expect(service.verifyEmail(VERIFICATION_TOKEN)).rejects.toThrow(
         BadRequestException,
@@ -164,7 +167,7 @@ describe('EmailVerificationService', () => {
         email: USER_EMAIL,
         theme: 'hit-man',
       });
-      (usersServiceMock.updateResetToken as jest.Mock).mockResolvedValue(
+      (userTokensServiceMock.updateResetToken as jest.Mock).mockResolvedValue(
         undefined,
       );
       (emailServiceMock.sendPasswordReset as jest.Mock).mockResolvedValue(
@@ -173,7 +176,7 @@ describe('EmailVerificationService', () => {
 
       await service.forgotPassword(USER_EMAIL);
 
-      expect(usersServiceMock.updateResetToken).toHaveBeenCalledWith(
+      expect(userTokensServiceMock.updateResetToken).toHaveBeenCalledWith(
         USER_ID,
         expect.any(String),
         expect.any(Date),
@@ -191,14 +194,14 @@ describe('EmailVerificationService', () => {
       await expect(
         service.forgotPassword('unknown@example.com'),
       ).resolves.not.toThrow();
-      expect(usersServiceMock.updateResetToken).not.toHaveBeenCalled();
+      expect(userTokensServiceMock.updateResetToken).not.toHaveBeenCalled();
       expect(emailServiceMock.sendPasswordReset).not.toHaveBeenCalled();
     });
   });
 
   describe('resetPassword', () => {
     it('updates the password and clears the reset token when valid', async () => {
-      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
+      (userTokensServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
         id: USER_ID,
         resetToken: RESET_TOKEN,
         resetTokenExpiresAt: new Date(Date.now() + 3600000),
@@ -217,7 +220,9 @@ describe('EmailVerificationService', () => {
     });
 
     it('throws BadRequestException when the reset token is not found', async () => {
-      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue(null);
+      (userTokensServiceMock.findByResetToken as jest.Mock).mockResolvedValue(
+        null,
+      );
 
       await expect(
         service.resetPassword('unknown-token', 'new-password-123'),
@@ -225,7 +230,7 @@ describe('EmailVerificationService', () => {
     });
 
     it('throws BadRequestException when the reset token has expired', async () => {
-      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
+      (userTokensServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
         id: USER_ID,
         resetToken: RESET_TOKEN,
         resetTokenExpiresAt: new Date(Date.now() - 1000),
@@ -237,7 +242,7 @@ describe('EmailVerificationService', () => {
     });
 
     it('throws BadRequestException when resetTokenExpiresAt is null', async () => {
-      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
+      (userTokensServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
         id: USER_ID,
         resetToken: RESET_TOKEN,
         resetTokenExpiresAt: null,
@@ -249,7 +254,7 @@ describe('EmailVerificationService', () => {
     });
 
     it('passes markVerified=true to resetPasswordWithToken when email is not yet verified', async () => {
-      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
+      (userTokensServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
         id: USER_ID,
         emailVerifiedAt: null,
         resetToken: RESET_TOKEN,
@@ -269,7 +274,7 @@ describe('EmailVerificationService', () => {
     });
 
     it('does not call markEmailVerified when the email is already verified', async () => {
-      (usersServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
+      (userTokensServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
         id: USER_ID,
         emailVerifiedAt: new Date(),
         resetToken: RESET_TOKEN,
@@ -293,20 +298,18 @@ describe('EmailVerificationService', () => {
         emailVerifiedAt: null,
         theme: 'boyhood',
       });
-      (usersServiceMock.updateVerificationToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userTokensServiceMock.updateVerificationToken as jest.Mock
+      ).mockResolvedValue(undefined);
       (emailServiceMock.sendVerification as jest.Mock).mockResolvedValue(
         undefined,
       );
 
       await service.resendVerificationEmail(USER_ID);
 
-      expect(usersServiceMock.updateVerificationToken).toHaveBeenCalledWith(
-        USER_ID,
-        expect.any(String),
-        expect.any(Date),
-      );
+      expect(
+        userTokensServiceMock.updateVerificationToken,
+      ).toHaveBeenCalledWith(USER_ID, expect.any(String), expect.any(Date));
       expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
@@ -341,7 +344,7 @@ describe('EmailVerificationService', () => {
         makeUserNoTwoFactor(),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
+      (userTokensServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
         undefined,
       );
       (
@@ -350,7 +353,7 @@ describe('EmailVerificationService', () => {
 
       await service.requestEmailChange(USER_ID, NEW_EMAIL);
 
-      expect(usersServiceMock.updatePendingEmail).toHaveBeenCalledWith(
+      expect(userTokensServiceMock.updatePendingEmail).toHaveBeenCalledWith(
         USER_ID,
         NEW_EMAIL,
         expect.any(String),
@@ -385,7 +388,7 @@ describe('EmailVerificationService', () => {
         id: USER_ID,
         email: NEW_EMAIL,
       });
-      (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
+      (userTokensServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
         undefined,
       );
       (
@@ -430,7 +433,7 @@ describe('EmailVerificationService', () => {
       );
       (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
+      (userTokensServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
         undefined,
       );
       (
@@ -473,7 +476,7 @@ describe('EmailVerificationService', () => {
         undefined,
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
+      (userTokensServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
         undefined,
       );
       (
@@ -510,14 +513,14 @@ describe('EmailVerificationService', () => {
 
   describe('confirmEmailChange', () => {
     it('confirms the email change when the token is valid and not expired', async () => {
-      (usersServiceMock.findByPendingEmailToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          pendingEmail: NEW_EMAIL,
-          pendingEmailToken: PENDING_EMAIL_TOKEN,
-          pendingEmailTokenExpiresAt: new Date(Date.now() + 3600000),
-        },
-      );
+      (
+        userTokensServiceMock.findByPendingEmailToken as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        pendingEmail: NEW_EMAIL,
+        pendingEmailToken: PENDING_EMAIL_TOKEN,
+        pendingEmailTokenExpiresAt: new Date(Date.now() + 3600000),
+      });
       (usersServiceMock.confirmPendingEmail as jest.Mock).mockResolvedValue(
         undefined,
       );
@@ -531,9 +534,9 @@ describe('EmailVerificationService', () => {
     });
 
     it('throws BadRequestException when the token is not found', async () => {
-      (usersServiceMock.findByPendingEmailToken as jest.Mock).mockResolvedValue(
-        null,
-      );
+      (
+        userTokensServiceMock.findByPendingEmailToken as jest.Mock
+      ).mockResolvedValue(null);
 
       await expect(service.confirmEmailChange('unknown-token')).rejects.toThrow(
         BadRequestException,
@@ -541,14 +544,14 @@ describe('EmailVerificationService', () => {
     });
 
     it('throws BadRequestException when the token has expired', async () => {
-      (usersServiceMock.findByPendingEmailToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          pendingEmail: NEW_EMAIL,
-          pendingEmailToken: PENDING_EMAIL_TOKEN,
-          pendingEmailTokenExpiresAt: new Date(Date.now() - 1000),
-        },
-      );
+      (
+        userTokensServiceMock.findByPendingEmailToken as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        pendingEmail: NEW_EMAIL,
+        pendingEmailToken: PENDING_EMAIL_TOKEN,
+        pendingEmailTokenExpiresAt: new Date(Date.now() - 1000),
+      });
 
       await expect(
         service.confirmEmailChange(PENDING_EMAIL_TOKEN),
@@ -556,14 +559,14 @@ describe('EmailVerificationService', () => {
     });
 
     it('throws BadRequestException when pendingEmail is missing', async () => {
-      (usersServiceMock.findByPendingEmailToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          pendingEmail: null,
-          pendingEmailToken: PENDING_EMAIL_TOKEN,
-          pendingEmailTokenExpiresAt: new Date(Date.now() + 3600000),
-        },
-      );
+      (
+        userTokensServiceMock.findByPendingEmailToken as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        pendingEmail: null,
+        pendingEmailToken: PENDING_EMAIL_TOKEN,
+        pendingEmailTokenExpiresAt: new Date(Date.now() + 3600000),
+      });
 
       await expect(
         service.confirmEmailChange(PENDING_EMAIL_TOKEN),
@@ -571,14 +574,14 @@ describe('EmailVerificationService', () => {
     });
 
     it('throws BadRequestException when pendingEmailTokenExpiresAt is null', async () => {
-      (usersServiceMock.findByPendingEmailToken as jest.Mock).mockResolvedValue(
-        {
-          id: USER_ID,
-          pendingEmail: NEW_EMAIL,
-          pendingEmailToken: PENDING_EMAIL_TOKEN,
-          pendingEmailTokenExpiresAt: null,
-        },
-      );
+      (
+        userTokensServiceMock.findByPendingEmailToken as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        pendingEmail: NEW_EMAIL,
+        pendingEmailToken: PENDING_EMAIL_TOKEN,
+        pendingEmailTokenExpiresAt: null,
+      });
 
       await expect(
         service.confirmEmailChange(PENDING_EMAIL_TOKEN),
