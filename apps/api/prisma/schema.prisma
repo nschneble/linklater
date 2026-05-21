@@ -8,10 +8,11 @@ datasource db {
 }
 
 model User {
-  id    String @id @default(cuid())
-  email String @unique
-  mode  String @default("dark")
-  theme String @default("scanner-darkly")
+  id      String  @id @default(cuid())
+  email   String  @unique
+  mode    String  @default("dark")
+  theme   String  @default("scanner-darkly")
+  cvdMode Boolean @default(false)
 
   passwordHash      String?
   pendingEmail      String?

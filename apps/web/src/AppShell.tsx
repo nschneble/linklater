@@ -2,7 +2,14 @@ import Header from './components/Header';
 import LinkButton from './components/common/LinkButton';
 import LinksView from './components/links/LinksView';
 import SettingsView from './components/settings/SettingsView';
-import { lazy, Suspense, useEffect, useRef } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -46,6 +53,13 @@ export default function AppShell() {
   const view = viewFromPath(location.pathname);
   const mainReference = useRef<HTMLElement>(null);
   const isFirstRender = useRef(true);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const handleUserMenuToggle = useCallback(
+    () => setShowUserMenu((open) => !open),
+    [],
+  );
+  const handleUserMenuClose = useCallback(() => setShowUserMenu(false), []);
 
   // Optimistic update: the theme switches immediately without waiting for
   // the server response.
@@ -122,10 +136,10 @@ export default function AppShell() {
       </a>
       {isEmailUnverified && (
         <div
-          className="px-4 py-2 bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/25 border-b border-amber-300 [[data-mode='dark']_&]:border-amber-800/50 text-center"
+          className="px-4 py-2 bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/25 [[data-theme='nouvelle-vague']_&]:bg-gray-100 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-gray-900/30 border-b border-amber-300 [[data-mode='dark']_&]:border-amber-800/50 [[data-theme='nouvelle-vague']_&]:border-gray-300 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-gray-700/50 text-center"
           role="status"
         >
-          <p className="text-amber-800 [[data-mode='dark']_&]:text-amber-300 text-xs font-medium">
+          <p className="text-amber-800 [[data-mode='dark']_&]:text-amber-300 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400 text-xs font-medium">
             <i
               className="fa-solid fa-triangle-exclamation mr-1.5"
               aria-hidden="true"
@@ -142,6 +156,9 @@ export default function AppShell() {
       )}
 
       <Header
+        isUserMenuOpen={showUserMenu}
+        onUserMenuToggle={handleUserMenuToggle}
+        onUserMenuClose={handleUserMenuClose}
         onLogout={logout}
         onModeToggle={handleModeToggle}
         onThemeSelect={handleThemeSelect}
@@ -167,7 +184,7 @@ export default function AppShell() {
             <ThemeEditor />
           </Suspense>
         ) : (
-          <LinksView />
+          <LinksView onCloseUserMenu={handleUserMenuClose} />
         )}
       </main>
     </div>

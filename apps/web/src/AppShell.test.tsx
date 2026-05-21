@@ -44,6 +44,7 @@ import type { User } from './auth/AuthContext';
 
 function makeUser(overrides: Partial<User> = {}): User {
   return {
+    cvdMode: false,
     connectedProviders: [],
     email: 'user@example.com',
     emailVerifiedAt: '2026-01-01T00:00:00.000Z',

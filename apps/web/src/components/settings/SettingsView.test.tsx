@@ -20,6 +20,10 @@ vi.mock('./BookmarkletSection', () => ({
   default: () => <div data-testid="bookmarklet-section" />,
 }));
 
+vi.mock('./CvdModeToggle', () => ({
+  default: () => <div data-testid="cvd-mode-toggle" />,
+}));
+
 vi.mock('./DangerZone', () => ({
   default: () => <div data-testid="danger-zone" />,
 }));
@@ -56,6 +60,7 @@ const USER_EMAIL = 'user@example.com';
 
 function makeUser(overrides: Partial<User> = {}): User {
   return {
+    cvdMode: false,
     connectedProviders: [],
     email: USER_EMAIL,
     emailVerifiedAt: '2026-01-01T00:00:00.000Z',
@@ -113,6 +118,11 @@ describe('SettingsView', () => {
   it('always renders the API Tokens section', () => {
     renderSettingsView();
     expect(screen.getByTestId('api-tokens-section')).toBeInTheDocument();
+  });
+
+  it('always renders the CVD mode toggle', () => {
+    renderSettingsView();
+    expect(screen.getByTestId('cvd-mode-toggle')).toBeInTheDocument();
   });
 
   describe('2FA section', () => {

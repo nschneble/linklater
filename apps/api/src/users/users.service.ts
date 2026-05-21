@@ -66,6 +66,7 @@ export class UsersService {
   async updateMe(
     id: string,
     data: {
+      cvdMode?: boolean;
       password?: string;
       currentPassword?: string;
       theme?: string;
@@ -73,6 +74,7 @@ export class UsersService {
     },
   ) {
     const updateData: {
+      cvdMode?: boolean;
       passwordHash?: string;
       theme?: string;
       mode?: string;
@@ -113,6 +115,10 @@ export class UsersService {
         throw new BadRequestException('Invalid mode');
       }
       updateData.mode = data.mode;
+    }
+
+    if (data.cvdMode !== undefined) {
+      updateData.cvdMode = data.cvdMode;
     }
 
     const user = await this.prisma.user.update({

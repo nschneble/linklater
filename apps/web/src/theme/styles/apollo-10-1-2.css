@@ -1,0 +1,42 @@
+[data-theme='apollo-10-1-2'] {
+  --state-danger: #b04053;
+  --state-danger-fg: #f4f1ec;
+  --state-success: var(--accent);
+  --state-success-fg: var(--accent-fg);
+  --state-info: #76636f;
+  --state-info-fg: #f4f1ec;
+}
+
+[data-theme='apollo-10-1-2'][data-mode='dark'] {
+  --bg: #0d1426;
+  --bg-surface: #223366;
+  --bg-elevated: #2c4180;
+  --bg-input: #1a274d;
+  --text: #f4f1ec;
+  --text-muted: #c1bbb5;
+  --text-subtle: #83acc5;
+  --border: #76636f;
+  --accent: #4e89c9;
+  --accent-hover: oklch(from var(--accent) calc(l + 0.1) c h);
+  --accent-fg: #ffffff;
+  --state-warning: #f7d080;
+  --state-warning-fg: #0d1426;
+  --focus-ring: #70b0e0;
+}
+
+[data-theme='apollo-10-1-2'][data-mode='light'] {
+  --bg: #f4f1ec;
+  --bg-surface: #e8e2d8;
+  --bg-elevated: #d4ccc0;
+  --bg-input: #ffffff;
+  --text: #0d1426;
+  --text-muted: #4f361a;
+  --text-subtle: #5a4555;
+  --border: #76636f;
+  --accent: #345f96;
+  --accent-hover: oklch(from var(--accent) calc(l - 0.1) c h);
+  --accent-fg: #f4f1ec;
+  --state-warning: #6b4f10;
+  --state-warning-fg: #0d1426;
+  --focus-ring: var(--accent);
+}

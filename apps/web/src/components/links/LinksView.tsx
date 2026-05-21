@@ -53,6 +53,10 @@ function filterFromPath(pathname: string): LinksFilter {
   return pathname === '/read' ? 'read' : 'unread';
 }
 
+interface LinksViewProps {
+  onCloseUserMenu?: () => void;
+}
+
 /**
  * The main links view, rendered inside `AppShell` for both `/unread` and `/read`.
  *
@@ -67,7 +71,7 @@ function filterFromPath(pathname: string): LinksFilter {
  *   outside the form closes it.
  * - Resets search and the `isClearingRead` flag whenever the filter changes.
  */
-export default function LinksView() {
+export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
   const location = useLocation();
   const navigate = useNavigate();
   const filter = filterFromPath(location.pathname);
@@ -78,6 +82,10 @@ export default function LinksView() {
   );
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isClearingRead, setIsClearingRead] = useState(false);
+
+  useEffect(() => {
+    if (showShortcuts) onCloseUserMenu?.();
+  }, [showShortcuts, onCloseUserMenu]);
   const [, startTransition] = useTransition();
   const dialogReference = useRef<HTMLDivElement>(null);
   const searchInputReference = useRef<HTMLInputElement>(null);

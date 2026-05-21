@@ -15,6 +15,17 @@ export interface EmailPalette {
 const FALLBACK_THEME = 'scanner-darkly';
 
 const palettes: Record<string, EmailPalette> = {
+  'apollo-10-1-2': {
+    accent: '#345f96',
+    accentFg: '#f4f1ec',
+    bg: '#f4f1ec',
+    bgElevated: '#d4ccc0',
+    bgSurface: '#e8e2d8',
+    border: '#76636f',
+    text: '#0d1426',
+    textMuted: '#4f361a',
+    textSubtle: '#5a4555',
+  },
   'before-midnight': {
     accent: '#a84c30',
     accentFg: '#ffffff',
@@ -80,6 +91,17 @@ const palettes: Record<string, EmailPalette> = {
     text: '#1a150e',
     textMuted: '#4e2c14',
     textSubtle: '#543818',
+  },
+  'nouvelle-vague': {
+    accent: '#1f1f1f',
+    accentFg: '#f8f8f8',
+    bg: '#f8f8f8',
+    bgElevated: '#ebebeb',
+    bgSurface: '#ffffff',
+    border: '#d0d0d0',
+    text: '#0f0f0f',
+    textMuted: '#4a4a4a',
+    textSubtle: '#656565',
   },
   'scanner-darkly': {
     accent: '#a73210',

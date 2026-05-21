@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import WikipediaArticleList from './WikipediaArticleList';
 import type { WikipediaArticle } from '../../lib/wikipedia';
+
+vi.mock('../../theme/ThemeContext', () => ({
+  useTheme: () => ({ baseTheme: 'scanner-darkly' }),
+}));
 
 const ARTICLES: WikipediaArticle[] = [
   {

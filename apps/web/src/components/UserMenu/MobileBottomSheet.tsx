@@ -142,6 +142,7 @@ export default function MobileBottomSheet({
         onClick={onClose}
       />
 
+      {/* FIME: replace custom box-shadow with Tailwind style */}
       <div
         className="fixed bottom-0 inset-x-0 z-50 max-h-[85svh] overflow-y-auto bg-[var(--bg-elevated)] rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
         style={{
@@ -232,6 +233,7 @@ export default function MobileBottomSheet({
                 </button>
               </MenuSection>
 
+              {/* FIXME: worth subclassing MenuItem for MobileMenuItem (?) */}
               <MenuItem
                 icon="fa-right-from-bracket"
                 label="Log out"

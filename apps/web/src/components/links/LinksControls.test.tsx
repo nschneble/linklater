@@ -60,14 +60,15 @@ describe('LinksControls', () => {
     });
 
     it('hides Remove all read button when no links exist', () => {
-      render(
+      const { container } = render(
         <LinksControls {...defaultUnreadProps} filter="read" linksCount={0} />,
       );
-      // When hidden, the button is disabled and visually hidden but stays in
-      // the accessibility tree (no aria-hidden) so AT users know it exists.
-      const button = screen.getByRole('button', { name: /remove all read/i });
+      const button = Array.from(container.querySelectorAll('button')).find(
+        (element) => element.textContent?.includes('Remove all read'),
+      );
       expect(button).toBeDisabled();
       expect(button).toHaveClass('opacity-0');
+      expect(button).toHaveAttribute('aria-hidden', 'true');
     });
 
     it('calls onClearRead when Remove all read is clicked', () => {
@@ -115,14 +116,15 @@ describe('LinksControls', () => {
 
   describe('Stumble! button', () => {
     it('is hidden on the read filter', () => {
-      render(
+      const { container } = render(
         <LinksControls {...defaultUnreadProps} filter="read" linksCount={3} />,
       );
-      // Hidden buttons are disabled and visually hidden, but remain in the
-      // accessibility tree (no aria-hidden).
-      const button = screen.getByRole('button', { name: /stumble!/i });
-      expect(button).toBeDisabled();
-      expect(button).toHaveClass('opacity-0');
+      const stumbleButton = Array.from(
+        container.querySelectorAll('button'),
+      ).find((button) => button.textContent?.includes('Stumble!'));
+      expect(stumbleButton).toBeDisabled();
+      expect(stumbleButton).toHaveClass('opacity-0');
+      expect(stumbleButton).toHaveAttribute('aria-hidden', 'true');
     });
   });
 });

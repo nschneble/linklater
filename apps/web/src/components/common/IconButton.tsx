@@ -41,8 +41,8 @@ const variantClasses: Record<
   string
 > = {
   default: `${SMALL_PADDING} hover:bg-[var(--bg-elevated)] ring-1 ring-[var(--border)] text-[var(--text)] ${FOCUS_RING}`,
-  danger: `${SMALL_PADDING} hover:bg-rose-100 [[data-mode='dark']_&]:hover:bg-rose-900/40 border border-rose-400 [[data-mode='dark']_&]:border-rose-700 text-rose-700 [[data-mode='dark']_&]:text-rose-300 ${FOCUS_RING_DANGER}`,
-  'danger-filled': `${SMALL_PADDING} bg-rose-600 hover:bg-rose-500 text-rose-50 ${FOCUS_RING_DANGER}`,
+  danger: `${SMALL_PADDING} hover:bg-rose-100 [[data-mode='dark']_&]:hover:bg-rose-900/40 border border-rose-400 [[data-mode='dark']_&]:border-rose-700 text-rose-700 [[data-mode='dark']_&]:text-rose-300 [[data-theme='nouvelle-vague']_&]:hover:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague']_&]:border-[var(--border)] [[data-theme='nouvelle-vague']_&]:text-[var(--text)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:hover:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-[var(--border)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-[var(--text)] [[data-theme='nouvelle-vague']_&]:focus-visible:ring-[var(--accent)] ${FOCUS_RING_DANGER}`,
+  'danger-filled': `${SMALL_PADDING} bg-rose-600 hover:bg-rose-500 text-rose-50 [[data-theme='nouvelle-vague']_&]:bg-[var(--accent)] [[data-theme='nouvelle-vague']_&]:hover:bg-[var(--accent-hover)] [[data-theme='nouvelle-vague']_&]:text-[var(--accent-fg)] [[data-theme='nouvelle-vague']_&]:focus-visible:ring-[var(--accent)] ${FOCUS_RING_DANGER}`,
   ghost: `${SMALL_PADDING} ring-1 ring-[var(--border)] text-[var(--text-muted)] ${FOCUS_RING}`,
   elevated: `pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] disabled:bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] font-semibold disabled:active:scale-100`,
 };
@@ -59,18 +59,21 @@ export default function IconButton({
     ? 'opacity-0 scale-95 pointer-events-none'
     : 'opacity-100 scale-100';
 
+  // Skip DISABLED when hidden: `disabled:opacity-60` has higher CSS specificity
+  // than `opacity-0` and would render hidden buttons at 60% opacity instead of invisible.
+  const disabledClasses = hidden ? '' : DISABLED;
+
   return (
     <button
-      className={`inline-flex items-center justify-center gap-1.5 text-xs rounded-full cursor-pointer ${DISABLED} active:scale-[0.96] transition duration-200 ${variantClasses[variant]} ${visibilityClasses} ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 text-xs rounded-full cursor-pointer ${disabledClasses} active:scale-[0.96] transition duration-200 ${variantClasses[variant]} ${visibilityClasses} ${className}`}
       type="button"
-      // GOTCHA: use `disabled` rather than `aria-hidden` when `hidden`
-      // is true. `aria-hidden` on a focusable element hides it from the
-      // accessibility tree but leaves it reachable by Tab, which means
-      // screen-reader users land on an element with no announced name or
-      // role. `disabled` removes the button from the tab order and
-      // prevents all AT interaction, which is the correct behavior for
-      // an invisible control that is still mounted in the DOM.
+      // GOTCHA: `disabled` + `aria-hidden` together give complete AT isolation:
+      // `disabled` removes the button from the tab order and interactive AT tree;
+      // `aria-hidden` seals browse-mode traversal (e.g. NVDA arrow keys) so screen
+      // readers don't announce the invisible button's text. `aria-hidden` is safe
+      // here because `disabled` already makes the element non-focusable.
       disabled={hidden || disabled}
+      aria-hidden={hidden || undefined}
       tabIndex={hidden ? -1 : undefined}
       {...props}
     >

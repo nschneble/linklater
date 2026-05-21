@@ -25,20 +25,27 @@ export default function InlineThemeList({
           type="button"
           role="menuitemradio"
           aria-checked={baseTheme === theme.id}
-          className="flex items-center gap-3 w-full px-4 py-3 text-[var(--text)] text-sm text-left focus:bg-[var(--bg-surface)] focus:outline-none cursor-pointer"
+          className="flex items-center gap-3 w-full px-4 py-3 text-[var(--text)] text-left focus:bg-[var(--bg-surface)] focus:outline-none cursor-pointer"
           onClick={() => onSelect(theme.id)}
         >
-          <i
-            className="fa-solid fa-circle text-[0.75rem]"
-            style={{ color: theme.accent }}
-            aria-hidden="true"
-          />
+          <span
+            className="relative shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full theme-color-dot"
+            style={{ backgroundColor: theme.accent }}
+          >
+            <i
+              className={`absolute fa-solid ${theme.swatchIcon} text-white text-[0.6rem]`}
+              aria-hidden="true"
+            />
+          </span>
           <span className="flex-1">{theme.label}</span>
           {baseTheme === theme.id && (
             <i
-              className="fa-solid fa-check text-[var(--accent)] text-[0.6rem]"
+              className="fa-solid fa-check text-[var(--accent)]"
               aria-hidden="true"
             />
+          )}
+          {theme.isAccessible && (
+            <i className="fa-solid fa-universal-access" aria-hidden="true" />
           )}
         </button>
       ))}

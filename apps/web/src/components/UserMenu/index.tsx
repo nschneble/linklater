@@ -1,6 +1,6 @@
 import { gravatarUrl } from '../../lib/gravatar';
 import { FOCUS_RING, menuRevealStyle } from '../../lib/styles';
-import { forwardRef, useEffect, useMemo, useRef } from 'react';
+import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useTheme, type BaseTheme } from '../../theme/ThemeContext';
 import MenuSection from './MenuSection';
 import MenuItem from './MenuItem';
@@ -66,8 +66,9 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
   const { baseTheme, mode } = useTheme();
 
   const {
+    applyPreview,
+    clearResetHandles,
     flyoutReference,
-    handlePreviewChange,
     handleThemeRowEnter,
     isThemeAreaPointerOver,
     previewTheme,
@@ -79,6 +80,13 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
     themeSubmenuOnLeft,
     resetPreview,
   } = useThemePreview();
+
+  // When the base theme actually commits (ThemeContext useLayoutEffect has
+  // already written the new data-theme), cancel any in-flight reset rAF so a
+  // stale closure value cannot overwrite the freshly selected theme.
+  useLayoutEffect(() => {
+    clearResetHandles();
+  }, [baseTheme, clearResetHandles]);
 
   const avatarReference = useRef<HTMLButtonElement | null>(null);
   const menuReference = useRef<HTMLDivElement | null>(null);
@@ -247,7 +255,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
               onKeyboardOpen={() => {
                 submenuOpenedByKeyboard.current = true;
               }}
-              onPreviewChange={handlePreviewChange}
+              onApplyPreview={applyPreview}
               onSelect={handleThemeSelect}
             />
           </div>

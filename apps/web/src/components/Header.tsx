@@ -1,6 +1,6 @@
 import MobileBottomSheet from './UserMenu/MobileBottomSheet';
 import UserMenu from './UserMenu';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTheme } from '../theme/ThemeContext';
 import type { AppView } from '../lib/navigation';
 import type { BaseTheme } from '../theme/ThemeContext';
@@ -11,6 +11,12 @@ interface HeaderProps {
   user: User;
   /** The currently active view — passed to `UserMenu` to highlight the active item. */
   view: AppView;
+  /** Whether the user menu dropdown is open. Owned by `AppShell`. */
+  isUserMenuOpen: boolean;
+  /** Called when the avatar button is clicked to toggle the menu. */
+  onUserMenuToggle: () => void;
+  /** Called to imperatively close the menu. */
+  onUserMenuClose: () => void;
   /** Called when the user clicks "Log out" in the `UserMenu`. */
   onLogout: () => void;
   /** Called when the user toggles light/dark mode in the `UserMenu`. */
@@ -37,26 +43,20 @@ interface HeaderProps {
 export default function Header({
   user,
   view,
+  isUserMenuOpen,
+  onUserMenuToggle,
+  onUserMenuClose,
   onLogout,
   onModeToggle,
   onThemeSelect,
   onViewChange,
 }: HeaderProps) {
   const { baseTheme, mode } = useTheme();
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const avatarButtonReference = useRef<HTMLButtonElement | null>(null);
   const headerReference = useRef<HTMLElement | null>(null);
 
-  function handleUserMenuToggle() {
-    setShowUserMenu((open) => !open);
-  }
-
-  function handleUserMenuClose() {
-    setShowUserMenu(false);
-  }
-
   useEffect(() => {
-    if (!showUserMenu) return;
+    if (!isUserMenuOpen) return;
 
     function handleOutsideInteraction(event: MouseEvent | TouchEvent) {
       const target = event.target as Node;
@@ -64,13 +64,13 @@ export default function Header({
         headerReference.current &&
         !headerReference.current.contains(target)
       ) {
-        setShowUserMenu(false);
+        onUserMenuClose();
       }
     }
 
     function handleEscapeKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
-        setShowUserMenu(false);
+        onUserMenuClose();
         avatarButtonReference.current?.focus();
       }
     }
@@ -83,7 +83,7 @@ export default function Header({
       document.removeEventListener('touchstart', handleOutsideInteraction);
       document.removeEventListener('keydown', handleEscapeKey);
     };
-  }, [showUserMenu]);
+  }, [isUserMenuOpen, onUserMenuClose]);
 
   return (
     <header
@@ -120,9 +120,9 @@ export default function Header({
             ref={avatarButtonReference}
             user={user}
             view={view}
-            isOpen={showUserMenu}
-            onToggle={handleUserMenuToggle}
-            onClose={handleUserMenuClose}
+            isOpen={isUserMenuOpen}
+            onToggle={onUserMenuToggle}
+            onClose={onUserMenuClose}
             onLogout={onLogout}
             onModeToggle={onModeToggle}
             onThemeSelect={onThemeSelect}
@@ -134,10 +134,10 @@ export default function Header({
       <MobileBottomSheet
         user={user}
         view={view}
-        isOpen={showUserMenu}
+        isOpen={isUserMenuOpen}
         baseTheme={baseTheme}
         mode={mode}
-        onClose={handleUserMenuClose}
+        onClose={onUserMenuClose}
         onLogout={onLogout}
         onModeToggle={onModeToggle}
         onThemeSelect={onThemeSelect}

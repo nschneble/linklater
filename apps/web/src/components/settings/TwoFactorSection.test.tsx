@@ -28,6 +28,7 @@ const USER_EMAIL = 'user@example.com';
 
 function makeUser(overrides: Partial<User> = {}): User {
   return {
+    cvdMode: false,
     connectedProviders: [],
     email: USER_EMAIL,
     emailVerifiedAt: '2026-01-01T00:00:00.000Z',

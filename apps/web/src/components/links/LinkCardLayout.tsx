@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import PrimaryButton from '../common/PrimaryButton';
 import type { Link } from '../../lib/api';
 import { stripHtml } from '../../lib/strings';
+import { useTheme } from '../../theme/ThemeContext';
 
 /**
  * Pure presentation props for `LinkCardLayout`. Interaction callbacks are
@@ -65,7 +66,13 @@ export default function LinkCardLayout({
   onUnreadClick,
 }: LinkCardLayoutProps) {
   const cardReference = useRef<HTMLDivElement>(null);
-  const placeholderUrl = useMemo(() => getPlaceholderUrl(link.url), [link.url]);
+  // included so the placeholder regenerates when the theme changes
+  const { baseTheme } = useTheme();
+  const placeholderUrl = useMemo(
+    () => getPlaceholderUrl(link.url),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [link.url, baseTheme],
+  );
 
   useEffect(() => {
     if (isSelected) {
@@ -98,6 +105,7 @@ export default function LinkCardLayout({
       ref={cardReference}
       role="link"
       aria-label={cardAriaLabel}
+      aria-busy={!link.meta?.fetchedAt}
       onClick={onCardClick}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -106,7 +114,7 @@ export default function LinkCardLayout({
         }
       }}
       tabIndex={0}
-      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-transparent'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--accent)]/60' : ''} focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none cursor-pointer`}
+      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--accent)]/60' : ''} focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none cursor-pointer`}
     >
       {link.meta?.fetchedAt ? (
         <div className="absolute left-0 top-4 -translate-x-1/2 z-10">

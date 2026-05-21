@@ -5,12 +5,14 @@
  * CSS variable definitions in `apps/web/src/theme/styles/`.
  */
 export const VALID_THEMES = [
+  'apollo-10-1-2',
   'before-midnight',
   'before-sunrise',
   'before-sunset',
   'boyhood',
   'dazed-and-confused',
   'hit-man',
+  'nouvelle-vague',
   'scanner-darkly',
   'school-of-rock',
 ] as const;
