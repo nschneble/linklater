@@ -14,6 +14,23 @@ import * as bcrypt from 'bcryptjs';
 export { VALID_MODES, VALID_THEMES };
 
 /**
+ * Inputs accepted by `UsersService.updateMe`. All fields are optional; only
+ * provided keys are written to the database.
+ */
+export interface UpdateMeInput {
+  /** Toggles the color-vision-deficient mode flag. */
+  cvdMode?: boolean;
+  /** New password (plaintext) to hash and store. Requires `currentPassword`. */
+  password?: string;
+  /** Existing password used to authorize a password change. */
+  currentPassword?: string;
+  /** Theme identifier from the `VALID_THEMES` allow-list. */
+  theme?: string;
+  /** Color mode identifier from the `VALID_MODES` allow-list. */
+  mode?: string;
+}
+
+/**
  * Manages user accounts — creation, lookup, update, and deletion. All methods
  * that return user data call `withoutPasswordHash` before returning so that
  * password hashes are never exposed to callers.
@@ -71,16 +88,7 @@ export class UsersService {
    * @throws {NotFoundException} When no user exists with the given ID.
    * @throws {UnauthorizedException} When `currentPassword` does not match the stored hash.
    */
-  async updateMe(
-    id: string,
-    data: {
-      cvdMode?: boolean;
-      password?: string;
-      currentPassword?: string;
-      theme?: string;
-      mode?: string;
-    },
-  ) {
+  async updateMe(id: string, data: UpdateMeInput) {
     const updateData: {
       cvdMode?: boolean;
       passwordHash?: string;
