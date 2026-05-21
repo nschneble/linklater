@@ -11,3 +11,10 @@ export const MAX_DESCRIPTION_LENGTH = 500;
  * long data URIs or query strings; this cap prevents column overflow.
  */
 export const MAX_URL_LENGTH = 2000;
+
+/**
+ * Maximum bytes to read from a remote HTML response before aborting.
+ * Protects the metadata worker from hostile or accidentally massive bodies
+ * that would otherwise be buffered entirely into memory.
+ */
+export const MAX_HTML_BYTES = 5 * 1024 * 1024;

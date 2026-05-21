@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
-import { PrismaService } from '../prisma/index.js';
+import { Prisma, PrismaService } from '../prisma/index.js';
 import { withoutPasswordHash } from './users.utils.js';
 import { VALID_MODES, VALID_THEMES } from './users.constants.js';
 import * as bcrypt from 'bcryptjs';
@@ -37,16 +37,24 @@ export class UsersService {
    * @throws {ConflictException} When the email is already registered.
    */
   async create(email: string, password: string) {
-    const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing) throw new ConflictException('Email already in use');
-
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const user = await this.prisma.user.create({
-      data: { email, passwordHash },
-    });
-
-    return withoutPasswordHash(user);
+    try {
+      const user = await this.prisma.user.create({
+        data: { email, passwordHash },
+      });
+      return withoutPasswordHash(user);
+    } catch (error) {
+      // Surface the unique-constraint race as a proper 409 instead of letting
+      // Prisma's P2002 escape as a 500.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Email already in use');
+      }
+      throw error;
+    }
   }
 
   /**
@@ -176,29 +184,39 @@ export class UsersService {
   }
 
   /**
-   * Stores a new email verification token and its expiry on the user record.
-   * Overwrites any previously stored token.
+   * Stores a new email verification token hash and its expiry on the user
+   * record. Overwrites any previously stored token. The raw token is sent
+   * via email; only its SHA-256 hash is persisted.
    *
    * @param id - The UUID of the user.
-   * @param token - The 64-character hex token to store.
+   * @param tokenHash - The SHA-256 hash (hex) of the raw token.
    * @param expiresAt - When the token should be considered expired.
    */
-  async updateVerificationToken(id: string, token: string, expiresAt: Date) {
+  async updateVerificationToken(
+    id: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ) {
     await this.prisma.user.update({
       where: { id },
-      data: { verificationToken: token, verificationTokenExpiresAt: expiresAt },
+      data: {
+        verificationToken: tokenHash,
+        verificationTokenExpiresAt: expiresAt,
+      },
     });
   }
 
   /**
-   * Looks up a user by their email verification token. Returns the full user
-   * record so the caller can inspect the expiry date.
+   * Looks up a user by the hash of their email verification token. Callers
+   * must hash the raw token from the URL before invoking this method.
    *
-   * @param token - The token string from the verification link.
+   * @param tokenHash - The SHA-256 hash (hex) of the token from the link.
    * @returns The full user record, or `null` if no match.
    */
-  async findByVerificationToken(token: string) {
-    return this.prisma.user.findUnique({ where: { verificationToken: token } });
+  async findByVerificationToken(tokenHash: string) {
+    return this.prisma.user.findUnique({
+      where: { verificationToken: tokenHash },
+    });
   }
 
   /**
@@ -219,29 +237,30 @@ export class UsersService {
   }
 
   /**
-   * Stores a new password reset token and its expiry on the user record.
-   * Overwrites any previously stored reset token.
+   * Stores a new password reset token hash and its expiry on the user
+   * record. Overwrites any previously stored reset token. The raw token is
+   * sent via email; only its SHA-256 hash is persisted.
    *
    * @param id - The UUID of the user.
-   * @param token - The 64-character hex token to store.
+   * @param tokenHash - The SHA-256 hash (hex) of the raw token.
    * @param expiresAt - When the token should be considered expired.
    */
-  async updateResetToken(id: string, token: string, expiresAt: Date) {
+  async updateResetToken(id: string, tokenHash: string, expiresAt: Date) {
     await this.prisma.user.update({
       where: { id },
-      data: { resetToken: token, resetTokenExpiresAt: expiresAt },
+      data: { resetToken: tokenHash, resetTokenExpiresAt: expiresAt },
     });
   }
 
   /**
-   * Looks up a user by their password reset token. Returns the full user
-   * record so the caller can inspect the expiry date.
+   * Looks up a user by the hash of their password reset token. Callers must
+   * hash the raw token from the URL before invoking this method.
    *
-   * @param token - The token string from the reset link.
+   * @param tokenHash - The SHA-256 hash (hex) of the token from the link.
    * @returns The full user record, or `null` if no match.
    */
-  async findByResetToken(token: string) {
-    return this.prisma.user.findUnique({ where: { resetToken: token } });
+  async findByResetToken(tokenHash: string) {
+    return this.prisma.user.findUnique({ where: { resetToken: tokenHash } });
   }
 
   /**
@@ -268,39 +287,44 @@ export class UsersService {
   }
 
   /**
-   * Stores the pending new email address along with its verification token
-   * and expiry. The user's primary email is unchanged until `confirmPendingEmail`
-   * is called.
+   * Stores the pending new email address along with the hash of its
+   * verification token and its expiry. The user's primary email is unchanged
+   * until `confirmPendingEmail` is called. The raw token is sent via email;
+   * only its SHA-256 hash is persisted.
    *
    * @param id - The UUID of the user.
    * @param pendingEmail - The new email address to store temporarily.
-   * @param token - The 64-character hex token sent to the new address.
+   * @param tokenHash - The SHA-256 hash (hex) of the raw token sent to the new address.
    * @param expiresAt - When the token should be considered expired.
    */
   async updatePendingEmail(
     id: string,
     pendingEmail: string,
-    token: string,
+    tokenHash: string,
     expiresAt: Date,
   ) {
     await this.prisma.user.update({
       where: { id },
       data: {
         pendingEmail,
-        pendingEmailToken: token,
+        pendingEmailToken: tokenHash,
         pendingEmailTokenExpiresAt: expiresAt,
       },
     });
   }
 
   /**
-   * Looks up a user by the token stored for a pending email change.
+   * Looks up a user by the hash of the token stored for a pending email
+   * change. Callers must hash the raw token from the URL before invoking
+   * this method.
    *
-   * @param token - The token string from the email change verification link.
+   * @param tokenHash - The SHA-256 hash (hex) of the token from the link.
    * @returns The full user record (including `pendingEmail`), or `null` if no match.
    */
-  async findByPendingEmailToken(token: string) {
-    return this.prisma.user.findUnique({ where: { pendingEmailToken: token } });
+  async findByPendingEmailToken(tokenHash: string) {
+    return this.prisma.user.findUnique({
+      where: { pendingEmailToken: tokenHash },
+    });
   }
 
   /**
@@ -335,12 +359,22 @@ export class UsersService {
    * @returns The newly created user without the password hash, or `null` if the email is already taken.
    */
   async createWithoutPassword(email: string) {
-    const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing) return null;
-    const user = await this.prisma.user.create({
-      data: { email, passwordHash: null },
-    });
-    return withoutPasswordHash(user);
+    try {
+      const user = await this.prisma.user.create({
+        data: { email, passwordHash: null },
+      });
+      return withoutPasswordHash(user);
+    } catch (error) {
+      // Magic-link signup path uses the null return to fall back to a login
+      // link when the address is already registered (race or otherwise).
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async createOAuthUser(email: string) {
@@ -416,14 +450,28 @@ export class UsersService {
     });
   }
 
-  async findByMagicLinkToken(token: string) {
-    return this.prisma.user.findUnique({ where: { magicLinkToken: token } });
+  /**
+   * Looks up a user by the hash of their magic-link token. Callers must hash
+   * the raw token from the URL before invoking this method.
+   */
+  async findByMagicLinkToken(tokenHash: string) {
+    return this.prisma.user.findUnique({
+      where: { magicLinkToken: tokenHash },
+    });
   }
 
-  async updateMagicLinkToken(userId: string, token: string, expiresAt: Date) {
+  /**
+   * Persists the hash of a magic-link token alongside its expiry. The raw
+   * token is sent via email; only its SHA-256 hash is stored.
+   */
+  async updateMagicLinkToken(
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ) {
     await this.prisma.user.update({
       where: { id: userId },
-      data: { magicLinkToken: token, magicLinkTokenExpiresAt: expiresAt },
+      data: { magicLinkToken: tokenHash, magicLinkTokenExpiresAt: expiresAt },
     });
   }
 

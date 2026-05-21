@@ -12,8 +12,24 @@ import { Test, TestingModule } from '@nestjs/testing';
 jest.mock('../prisma/prisma.service', () => ({
   PrismaService: jest.fn().mockImplementation(() => ({})),
 }));
-jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
+// Provide a real class for `instanceof Prisma.PrismaClientKnownRequestError`
+// checks so service code can branch on Prisma error codes (P2002 etc.).
+jest.mock('../prisma/generated/client', () => {
+  class MockPrismaClientKnownRequestError extends Error {
+    code: string;
+    constructor(message: string, options: { code: string }) {
+      super(message);
+      this.code = options.code;
+    }
+  }
+  return {
+    Prisma: {
+      PrismaClientKnownRequestError: MockPrismaClientKnownRequestError,
+    },
+  };
+});
 
+import { Prisma } from '../prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from './users.service';
 
@@ -86,7 +102,6 @@ describe('UsersService', () => {
 
   describe('create', () => {
     it('hashes password and creates user', async () => {
-      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaMock.user.create as jest.Mock).mockResolvedValue(makeUser());
 
       const result = await service.create(USER_EMAIL, USER_PASSWORD);
@@ -102,11 +117,30 @@ describe('UsersService', () => {
       expect(result).not.toHaveProperty('passwordHash');
     });
 
-    it('throws ConflictException when email is already in use', async () => {
-      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+    it('throws ConflictException when Prisma reports a P2002 unique-constraint violation', async () => {
+      // Concurrent registrations race past any preflight existence check, so
+      // the service relies on the database constraint and translates P2002
+      // into a 409 instead of letting Prisma's error escape as a 500.
+      const p2002 = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`email`)',
+        { code: 'P2002' },
+      );
+      (prismaMock.user.create as jest.Mock).mockRejectedValue(p2002);
 
       await expect(service.create(USER_EMAIL, USER_PASSWORD)).rejects.toThrow(
         ConflictException,
+      );
+    });
+
+    it('re-throws non-P2002 Prisma errors', async () => {
+      const otherError = new Prisma.PrismaClientKnownRequestError(
+        'Some other Prisma error',
+        { code: 'P2010' },
+      );
+      (prismaMock.user.create as jest.Mock).mockRejectedValue(otherError);
+
+      await expect(service.create(USER_EMAIL, USER_PASSWORD)).rejects.toThrow(
+        'Some other Prisma error',
       );
     });
   });
@@ -962,7 +996,6 @@ describe('UsersService', () => {
 
   describe('createWithoutPassword', () => {
     it('creates a user with passwordHash null and returns user without passwordHash when email is new', async () => {
-      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaMock.user.create as jest.Mock).mockResolvedValue(
         makeUser({ passwordHash: null }),
       );
@@ -981,13 +1014,28 @@ describe('UsersService', () => {
       expect(result).not.toHaveProperty('passwordHash');
     });
 
-    it('returns null when the email is already registered', async () => {
-      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+    it('returns null when Prisma reports P2002 (email already registered)', async () => {
+      const p2002 = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`email`)',
+        { code: 'P2002' },
+      );
+      (prismaMock.user.create as jest.Mock).mockRejectedValue(p2002);
 
       const result = await service.createWithoutPassword(USER_EMAIL);
 
       expect(result).toBeNull();
-      expect(prismaMock.user.create).not.toHaveBeenCalled();
+    });
+
+    it('re-throws non-P2002 Prisma errors', async () => {
+      const otherError = new Prisma.PrismaClientKnownRequestError(
+        'Some other Prisma error',
+        { code: 'P2010' },
+      );
+      (prismaMock.user.create as jest.Mock).mockRejectedValue(otherError);
+
+      await expect(service.createWithoutPassword(USER_EMAIL)).rejects.toThrow(
+        'Some other Prisma error',
+      );
     });
   });
 });

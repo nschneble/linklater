@@ -147,7 +147,7 @@ describe('AuthController', () => {
       );
     });
 
-    it('delegates to AuthService.login with the request user', async () => {
+    it('delegates to AuthService.login with the request user id', async () => {
       const request = {
         user: {
           email: USER_EMAIL,
@@ -160,7 +160,9 @@ describe('AuthController', () => {
 
       const result = await controller.login(request);
 
-      expect(authServiceMock.login).toHaveBeenCalledWith(request.user);
+      // login(userId) — the controller no longer passes the full request.user
+      // object, eliminating the OAuth strategy-shape footgun.
+      expect(authServiceMock.login).toHaveBeenCalledWith(USER_ID);
       expect(result).toEqual({ accessToken: ACCESS_TOKEN });
     });
   });

@@ -99,7 +99,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(200)
   async login(@Req() request: AuthRequest) {
-    return this.authService.login(request.user);
+    return this.authService.login(request.user.userId);
   }
 
   /**
@@ -479,7 +479,7 @@ export class AuthController {
     request: AuthRequest,
     response: Response,
   ): Promise<void> {
-    const result = await this.authService.login(request.user);
+    const result = await this.authService.login(request.user.userId);
     if (!('accessToken' in result)) {
       response.redirect(`${process.env.APP_URL}/login?error=mfa_required`);
       return;

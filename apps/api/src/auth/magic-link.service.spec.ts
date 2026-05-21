@@ -8,13 +8,15 @@ jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { sha256Hex } from '../common/crypto-tokens';
 import { MagicLinkService } from './magic-link.service';
 import { EmailService } from '../email/email.service';
 import { UsersService } from '../users/users.service';
 
 const USER_ID = 'user-1';
 const USER_EMAIL = 'user@example.com';
-const TOKEN = 'a'.repeat(64);
+const RAW_TOKEN = 'a'.repeat(64);
+const TOKEN_HASH = sha256Hex(RAW_TOKEN);
 
 const makeUser = (overrides = {}) => ({
   id: USER_ID,
@@ -59,13 +61,13 @@ describe('MagicLinkService', () => {
   });
 
   describe('requestLogin', () => {
-    it('generates a token, stores it with expiry, and sends the email', async () => {
-      let capturedToken = '';
+    it('stores the hash but emails the raw token, and the email value hashes to the stored value', async () => {
+      let storedHash = '';
 
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(makeUser());
       (usersServiceMock.updateMagicLinkToken as jest.Mock).mockImplementation(
-        async (_id: string, token: string) => {
-          capturedToken = token;
+        async (_id: string, hash: string) => {
+          storedHash = hash;
         },
       );
       (emailServiceMock.sendMagicLink as jest.Mock).mockResolvedValue(
@@ -80,11 +82,17 @@ describe('MagicLinkService', () => {
         expect.stringMatching(/^[0-9a-f]{64}$/),
         expect.any(Date),
       );
-      expect(emailServiceMock.sendMagicLink).toHaveBeenCalledWith(
-        USER_EMAIL,
-        capturedToken,
-        'scanner-darkly',
-      );
+
+      // The email must carry the raw 64-char hex token, NOT the hash.
+      const sendCall = (emailServiceMock.sendMagicLink as jest.Mock).mock
+        .calls[0];
+      const emailedToken = sendCall[1] as string;
+      expect(emailedToken).toMatch(/^[0-9a-f]{64}$/);
+      expect(emailedToken).not.toBe(storedHash);
+      // Hashing the emailed token must reproduce the stored value.
+      expect(sha256Hex(emailedToken)).toBe(storedHash);
+      expect(sendCall[0]).toBe(USER_EMAIL);
+      expect(sendCall[2]).toBe('scanner-darkly');
     });
 
     it('silently returns when the email is not registered', async () => {
@@ -123,11 +131,11 @@ describe('MagicLinkService', () => {
   });
 
   describe('verifyToken', () => {
-    it('returns the user and clears the token when valid and not expired', async () => {
+    it('looks up the user by the hash of the raw token and clears it on success', async () => {
       const futureExpiry = new Date(Date.now() + 15 * 60 * 1000);
       const user = makeUser({
         emailVerifiedAt: new Date(),
-        magicLinkToken: TOKEN,
+        magicLinkToken: TOKEN_HASH,
         magicLinkTokenExpiresAt: futureExpiry,
       });
 
@@ -138,9 +146,13 @@ describe('MagicLinkService', () => {
         undefined,
       );
 
-      const result = await service.verifyToken(TOKEN);
+      const result = await service.verifyToken(RAW_TOKEN);
 
-      expect(usersServiceMock.findByMagicLinkToken).toHaveBeenCalledWith(TOKEN);
+      // The raw token from the email is hashed before the lookup — the DB
+      // never sees the raw value.
+      expect(usersServiceMock.findByMagicLinkToken).toHaveBeenCalledWith(
+        TOKEN_HASH,
+      );
       expect(usersServiceMock.clearMagicLinkToken).toHaveBeenCalledWith(
         USER_ID,
       );
@@ -152,7 +164,7 @@ describe('MagicLinkService', () => {
         null,
       );
 
-      await expect(service.verifyToken(TOKEN)).rejects.toThrow(
+      await expect(service.verifyToken(RAW_TOKEN)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -160,7 +172,7 @@ describe('MagicLinkService', () => {
     it('throws BadRequestException when the token has expired', async () => {
       const pastExpiry = new Date(Date.now() - 1000);
       const user = makeUser({
-        magicLinkToken: TOKEN,
+        magicLinkToken: TOKEN_HASH,
         magicLinkTokenExpiresAt: pastExpiry,
       });
 
@@ -168,7 +180,7 @@ describe('MagicLinkService', () => {
         user,
       );
 
-      await expect(service.verifyToken(TOKEN)).rejects.toThrow(
+      await expect(service.verifyToken(RAW_TOKEN)).rejects.toThrow(
         BadRequestException,
       );
       expect(usersServiceMock.clearMagicLinkToken).not.toHaveBeenCalled();
@@ -176,7 +188,7 @@ describe('MagicLinkService', () => {
 
     it('throws BadRequestException when expiry is missing', async () => {
       const user = makeUser({
-        magicLinkToken: TOKEN,
+        magicLinkToken: TOKEN_HASH,
         magicLinkTokenExpiresAt: null,
       });
 
@@ -184,7 +196,7 @@ describe('MagicLinkService', () => {
         user,
       );
 
-      await expect(service.verifyToken(TOKEN)).rejects.toThrow(
+      await expect(service.verifyToken(RAW_TOKEN)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -193,7 +205,7 @@ describe('MagicLinkService', () => {
       const futureExpiry = new Date(Date.now() + 15 * 60 * 1000);
       const user = makeUser({
         emailVerifiedAt: null,
-        magicLinkToken: TOKEN,
+        magicLinkToken: TOKEN_HASH,
         magicLinkTokenExpiresAt: futureExpiry,
       });
 
@@ -207,7 +219,7 @@ describe('MagicLinkService', () => {
         undefined,
       );
 
-      await service.verifyToken(TOKEN);
+      await service.verifyToken(RAW_TOKEN);
 
       expect(usersServiceMock.markEmailVerified).toHaveBeenCalledWith(USER_ID);
     });
@@ -216,7 +228,7 @@ describe('MagicLinkService', () => {
       const futureExpiry = new Date(Date.now() + 15 * 60 * 1000);
       const user = makeUser({
         emailVerifiedAt: new Date(),
-        magicLinkToken: TOKEN,
+        magicLinkToken: TOKEN_HASH,
         magicLinkTokenExpiresAt: futureExpiry,
       });
 
@@ -227,7 +239,7 @@ describe('MagicLinkService', () => {
         undefined,
       );
 
-      await service.verifyToken(TOKEN);
+      await service.verifyToken(RAW_TOKEN);
 
       expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
     });

@@ -70,11 +70,52 @@ const makeHtml = (
   return `<html><head>${ogDescriptionTag}${metaDescriptionTag}${ogImageTag}${ogTitleTag}${ogSiteNameTag}${faviconTag}${titleTag}</head><body></body></html>`;
 };
 
-const mockFetch = (html: string, contentType = 'text/html; charset=utf-8') => {
+const mockFetch = (
+  html: string,
+  contentType = 'text/html; charset=utf-8',
+  options: { contentLength?: string } = {},
+) => {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(html);
+  const headers = new Map<string, string>([['content-type', contentType]]);
+  if (options.contentLength !== undefined) {
+    headers.set('content-length', options.contentLength);
+  }
   global.fetch = jest.fn().mockResolvedValue({
-    headers: { get: () => contentType },
+    headers: {
+      get: (key: string) => headers.get(key.toLowerCase()) ?? null,
+    },
     ok: true,
-    text: () => Promise.resolve(html),
+    body: new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(bytes);
+        controller.close();
+      },
+    }),
+  }) as unknown as typeof fetch;
+};
+
+const mockFetchOversize = (totalBytes: number) => {
+  // Streams chunks of 1 MB until the total exceeds the requested size, so we
+  // can prove `readBodyWithCap` cancels mid-stream rather than buffering.
+  global.fetch = jest.fn().mockResolvedValue({
+    headers: {
+      get: (key: string) =>
+        key.toLowerCase() === 'content-type' ? 'text/html' : null,
+    },
+    ok: true,
+    body: new ReadableStream<Uint8Array>({
+      start(controller) {
+        const chunkSize = 1024 * 1024;
+        let emitted = 0;
+        while (emitted < totalBytes) {
+          const next = Math.min(chunkSize, totalBytes - emitted);
+          controller.enqueue(new Uint8Array(next));
+          emitted += next;
+        }
+        controller.close();
+      },
+    }),
   }) as unknown as typeof fetch;
 };
 
@@ -559,6 +600,53 @@ describe('MetadataService', () => {
       // resolveUrl returns '' on parse failure — upsert should still be called
       expect(prismaMock.meta.upsert).toHaveBeenCalled();
       expect(typeof call.create.faviconUrl).toBe('string');
+    });
+  });
+
+  describe('HTML size cap', () => {
+    beforeEach(() => {
+      (prismaMock.meta.upsert as jest.Mock).mockResolvedValue({});
+    });
+
+    it('refuses the fetch when Content-Length exceeds the cap', async () => {
+      mockFetch(makeHtml({ ogTitle: OG_TITLE }), 'text/html', {
+        contentLength: String(10 * 1024 * 1024), // 10 MB declared
+      });
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      // Body should not be parsed — title field stays null because empty metadata.
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ title: null, source: null }),
+        }),
+      );
+    });
+
+    it('aborts mid-stream when the body crosses the cap even without Content-Length', async () => {
+      mockFetchOversize(6 * 1024 * 1024); // 6 MB streamed; cap is 5 MB
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ title: null, source: null }),
+        }),
+      );
+    });
+
+    it('accepts a well-formed body under the cap', async () => {
+      mockFetch(makeHtml({ ogTitle: OG_TITLE }), 'text/html', {
+        contentLength: '1024',
+      });
+
+      await service.fetchAndStore(LINK_ID, LINK_URL);
+
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ title: OG_TITLE }),
+        }),
+      );
     });
   });
 });

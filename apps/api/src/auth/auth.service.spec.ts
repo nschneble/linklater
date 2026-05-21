@@ -86,7 +86,18 @@ describe('AuthService', () => {
       deleteMany: jest.fn().mockResolvedValue({}),
       findUnique: jest.fn(),
     },
-  } as unknown as PrismaService;
+    // Invoke the transaction callback with the same mock client so existing
+    // assertions on refreshToken.{delete,create} still match.
+    $transaction: jest
+      .fn()
+      .mockImplementation(
+        async (
+          callback: (transaction: typeof prismaServiceMock) => Promise<unknown>,
+        ) => callback(prismaServiceMock),
+      ),
+  } as unknown as PrismaService & {
+    $transaction: jest.Mock;
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -284,11 +295,15 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('returns an accessToken and refreshToken when 2FA is not enabled', async () => {
-      const result = await service.login({
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
         email: USER_EMAIL,
-        userId: USER_ID,
+        totpEnabledAt: null,
       });
 
+      const result = await service.login(USER_ID);
+
+      expect(usersServiceMock.findById).toHaveBeenCalledWith(USER_ID);
       expect(jwtServiceMock.sign).toHaveBeenCalledWith({
         email: USER_EMAIL,
         subject: USER_ID,
@@ -306,16 +321,34 @@ describe('AuthService', () => {
     });
 
     it('returns mfaToken and mfaMethod totp when totpEnabledAt is set', async () => {
-      const result = await service.login({
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
         email: USER_EMAIL,
-        userId: USER_ID,
         totpEnabledAt: new Date(),
       });
+
+      const result = await service.login(USER_ID);
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith(
         { subject: USER_ID, mfaPending: true },
         { expiresIn: '5m' },
       );
+      expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
+      expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
+    });
+
+    it('forces MFA even when the caller supplies only a userId — closing the OAuth-strategy bypass', async () => {
+      // Regression for the audit finding: previously the OAuth path called
+      // login(request.user) where request.user lacked totpEnabledAt, so the
+      // MFA branch never fired. login(userId) now fetches internally.
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpEnabledAt: new Date('2024-01-01'),
+      });
+
+      const result = await service.login(USER_ID);
+
       expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
       expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
     });
@@ -336,9 +369,18 @@ describe('AuthService', () => {
 
       const result = await service.refresh(RAW_REFRESH_TOKEN);
 
+      expect(
+        (prismaServiceMock as unknown as { $transaction: jest.Mock })
+          .$transaction,
+      ).toHaveBeenCalledTimes(1);
       expect(prismaServiceMock.refreshToken.delete).toHaveBeenCalledWith({
         where: { id: 'rt-1' },
       });
+      expect(prismaServiceMock.refreshToken.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: USER_ID }),
+        }),
+      );
       expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
       expect(result).toHaveProperty('refreshToken');
     });
@@ -365,6 +407,26 @@ describe('AuthService', () => {
 
       await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
         UnauthorizedException,
+      );
+    });
+
+    it('propagates failure from the create half of the rotation so prisma rolls back the delete', async () => {
+      // The delete + create live inside the same $transaction callback, so a
+      // throw inside create bubbles out and the surrounding tx is rolled back.
+      (
+        prismaServiceMock.refreshToken.findUnique as jest.Mock
+      ).mockResolvedValue({
+        id: 'rt-1',
+        userId: USER_ID,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+        user: { id: USER_ID, email: USER_EMAIL },
+      });
+      (
+        prismaServiceMock.refreshToken.create as jest.Mock
+      ).mockRejectedValueOnce(new Error('db down'));
+
+      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
+        'db down',
       );
     });
   });
@@ -878,10 +940,15 @@ describe('AuthService', () => {
   });
 
   describe('verifyMagicLink', () => {
-    it('returns accessToken and refreshToken when the token is valid', async () => {
+    it('returns accessToken and refreshToken when the token is valid and 2FA is not enabled', async () => {
       (magicLinkServiceMock.verifyToken as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
+      });
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpEnabledAt: null,
       });
 
       const result = await service.verifyMagicLink('valid-token');
@@ -891,6 +958,24 @@ describe('AuthService', () => {
       );
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
+    });
+
+    it('returns an MFA challenge instead of a full session when 2FA is enabled', async () => {
+      // Magic-link verification now routes through login(), so a TOTP-enrolled
+      // user cannot bypass MFA simply by clicking a magic link.
+      (magicLinkServiceMock.verifyToken as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+      });
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpEnabledAt: new Date('2024-01-01'),
+      });
+
+      const result = await service.verifyMagicLink('valid-token');
+
+      expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
     });
 
     it('throws BadRequestException when the token is invalid', async () => {

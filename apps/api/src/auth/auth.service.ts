@@ -97,19 +97,24 @@ export class AuthService implements OnModuleInit {
     return withoutPasswordHash(user);
   }
 
-  async login(user: {
-    userId: string;
-    email: string;
-    totpEnabledAt?: Date | null;
-  }) {
+  /**
+   * Issues a session for the given user. Fetches the user record internally
+   * so all login paths (password, OAuth, magic-link) share a single 2FA gate.
+   * Passing a `userId` rather than a caller-provided user object eliminates
+   * the historical footgun where OAuth strategies omitted `totpEnabledAt`
+   * and bypassed the MFA branch.
+   */
+  async login(userId: string) {
+    const user = await this.usersService.findById(userId);
+
     if (user.totpEnabledAt) {
       const mfaToken = this.jwtService.sign(
-        { subject: user.userId, mfaPending: true },
+        { subject: userId, mfaPending: true },
         { expiresIn: '5m' },
       );
       return { mfaToken, mfaMethod: 'totp' as const };
     }
-    return this.issueTokenPair(user.userId, user.email);
+    return this.issueTokenPair(userId, user.email);
   }
 
   async refresh(rawRefreshToken: string) {
@@ -123,8 +128,22 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    await this.prisma.refreshToken.delete({ where: { id: stored.id } });
-    return this.issueTokenPair(stored.userId, stored.user.email);
+    // Delete + re-issue in a single transaction so a crash mid-rotation
+    // cannot leave the user without a refresh token.
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.refreshToken.delete({ where: { id: stored.id } });
+      const rawNewRefreshToken = generateHexToken();
+      const newTokenHash = sha256Hex(rawNewRefreshToken);
+      const expiresAt = new Date(Date.now() + ONE_YEAR_MS);
+      await transaction.refreshToken.create({
+        data: { tokenHash: newTokenHash, userId: stored.userId, expiresAt },
+      });
+      const accessToken = this.jwtService.sign({
+        subject: stored.userId,
+        email: stored.user.email,
+      });
+      return { accessToken, refreshToken: rawNewRefreshToken };
+    });
   }
 
   async revokeAllRefreshTokens(userId: string) {
@@ -204,7 +223,9 @@ export class AuthService implements OnModuleInit {
 
   async verifyMagicLink(token: string) {
     const user = await this.magicLinkService.verifyToken(token);
-    return this.issueTokenPair(user.id, user.email);
+    // Route through login() so TOTP-enrolled accounts hit the MFA gate
+    // instead of getting a session directly from a magic-link click.
+    return this.login(user.id);
   }
 
   async verifyOtp(userId: string, code: string, method: 'totp' | 'recovery') {

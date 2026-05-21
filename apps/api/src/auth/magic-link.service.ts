@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { generateHexToken } from '../common/crypto-tokens.js';
+import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import { EmailService } from '../email/index.js';
 import { UsersService } from '../users/users.service.js';
 
@@ -7,9 +7,9 @@ const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 
 /**
  * Manages password-less email login via one-time magic link tokens.
- * Tokens are 64-character hex strings stored unhashed for fast direct lookup,
- * matching the pattern used by verification and password-reset tokens.
- * Each token expires after 15 minutes and is cleared on first use.
+ * The raw 64-character hex token is sent via email; only its SHA-256 hash is
+ * persisted, so a database read cannot impersonate a user. Each token expires
+ * after 15 minutes and is cleared on first use.
  */
 @Injectable()
 export class MagicLinkService {
@@ -30,22 +30,25 @@ export class MagicLinkService {
       return;
     }
 
-    const token = generateHexToken();
+    const rawToken = generateHexToken();
+    const tokenHash = sha256Hex(rawToken);
     const expiresAt = new Date(Date.now() + FIFTEEN_MINUTES_MS);
 
-    await this.usersService.updateMagicLinkToken(user.id, token, expiresAt);
-    await this.emailService.sendMagicLink(user.email, token, user.theme);
+    await this.usersService.updateMagicLinkToken(user.id, tokenHash, expiresAt);
+    await this.emailService.sendMagicLink(user.email, rawToken, user.theme);
   }
 
   /**
    * Validates a magic link token. Clears the token on success to prevent reuse.
    *
-   * @param token - The 64-character hex token from the login link.
+   * @param rawToken - The 64-character hex token from the login link.
    * @returns The user record associated with the token.
    * @throws {BadRequestException} When the token is not found or has expired.
    */
-  async verifyToken(token: string) {
-    const user = await this.usersService.findByMagicLinkToken(token);
+  async verifyToken(rawToken: string) {
+    const user = await this.usersService.findByMagicLinkToken(
+      sha256Hex(rawToken),
+    );
 
     if (!user || !user.magicLinkTokenExpiresAt) {
       throw new BadRequestException('Invalid or expired login link');
@@ -77,9 +80,10 @@ export class MagicLinkService {
       return; // race-condition guard when createWithoutPassword loses the race
     }
 
-    const token = generateHexToken();
+    const rawToken = generateHexToken();
+    const tokenHash = sha256Hex(rawToken);
     const expiresAt = new Date(Date.now() + FIFTEEN_MINUTES_MS);
-    await this.usersService.updateMagicLinkToken(user.id, token, expiresAt);
-    await this.emailService.sendMagicLink(email, token, user.theme);
+    await this.usersService.updateMagicLinkToken(user.id, tokenHash, expiresAt);
+    await this.emailService.sendMagicLink(email, rawToken, user.theme);
   }
 }
