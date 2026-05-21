@@ -198,7 +198,7 @@ export default function ThemeSubmenu({
               style={{ backgroundColor: theme.accent }}
             >
               <i
-                className={`absolute fa-solid ${theme.swatchIcon} text-white text-[0.6rem]`}
+                className={`absolute fa-solid ${theme.swatchIcon} text-white text-[0.5rem]`}
                 aria-hidden="true"
               />
             </span>
