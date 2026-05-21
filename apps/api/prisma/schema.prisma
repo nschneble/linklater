@@ -33,6 +33,8 @@ model User {
   magicLinkToken          String?   @unique
   magicLinkTokenExpiresAt DateTime?
 
+  welcomedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

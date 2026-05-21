@@ -80,6 +80,7 @@ describe('UsersService', () => {
       delete: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
   } as unknown as PrismaService;
 
@@ -582,6 +583,25 @@ describe('UsersService', () => {
         where: { id: USER_ID },
         data: { emailVerifiedAt: expect.any(Date) },
       });
+    });
+  });
+
+  describe('markWelcomed', () => {
+    it('sets welcomedAt when it is null', async () => {
+      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+      await service.markWelcomed(USER_ID);
+
+      expect(prismaMock.user.updateMany).toHaveBeenCalledWith({
+        where: { id: USER_ID, welcomedAt: null },
+        data: { welcomedAt: expect.any(Date) },
+      });
+    });
+
+    it('is idempotent when welcomedAt is already set', async () => {
+      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+      await expect(service.markWelcomed(USER_ID)).resolves.toBeUndefined();
     });
   });
 

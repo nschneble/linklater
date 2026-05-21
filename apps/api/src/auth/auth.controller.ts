@@ -275,6 +275,18 @@ export class AuthController {
     return this.authService.refresh(body.refreshToken);
   }
 
+  @ApiOperation({ summary: 'Mark the user as having seen the welcome modal' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Welcome acknowledged.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @UseGuards(JwtAuthGuard)
+  @Post('welcome')
+  @HttpCode(200)
+  async acknowledgeWelcome(@Req() request: AuthRequest) {
+    await this.authService.markWelcomed(request.user.userId);
+    return { success: true };
+  }
+
   @ApiOperation({ summary: 'Revoke all refresh tokens (log out everywhere)' })
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'All sessions revoked.' })

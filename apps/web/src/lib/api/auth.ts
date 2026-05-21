@@ -59,9 +59,14 @@ export async function getMe() {
     twoFactorMethod: 'totp' | null;
     twoFactorPending: boolean;
     userId: string;
+    welcomedAt: string | null;
   }>('/auth/me', {
     method: 'GET',
   });
+}
+
+export async function acknowledgeWelcome(): Promise<void> {
+  await apiFetch('/auth/welcome', { method: 'POST' });
 }
 
 export async function forgotPassword(email: string): Promise<void> {

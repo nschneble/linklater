@@ -202,6 +202,10 @@ export class AuthService {
     await this.usersService.setFirstPassword(userId, password);
   }
 
+  async markWelcomed(userId: string): Promise<void> {
+    await this.usersService.markWelcomed(userId);
+  }
+
   // Shared re-auth guard used by disable2fa and regenerateRecoveryCodes.
   // Accepts password OR OTP/recovery code — verifies exactly one.
   private async reauthenticate(

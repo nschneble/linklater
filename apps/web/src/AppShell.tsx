@@ -20,6 +20,10 @@ import { type AppView } from './lib/navigation';
 // color-math utilities add non-trivial weight to the bundle.
 const ThemeEditor = lazy(() => import('./components/settings/ThemeEditor'));
 
+// WelcomeModal is lazy-loaded because it shows once per user and would
+// otherwise be dead weight in the initial bundle for every session.
+const WelcomeModal = lazy(() => import('./components/welcome/WelcomeModal'));
+
 /** Maps the current URL pathname to the active `AppView`. */
 function viewFromPath(pathname: string): AppView {
   switch (pathname) {
@@ -45,7 +49,7 @@ function viewFromPath(pathname: string): AppView {
  * guard; in practice `AppShell` is only rendered when `user` is non-null.
  */
 export default function AppShell() {
-  const { logout, user } = useAuth();
+  const { logout, markWelcomed, user } = useAuth();
   const { setBaseTheme, toggleMode } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -187,6 +191,12 @@ export default function AppShell() {
           <LinksView onCloseUserMenu={handleUserMenuClose} />
         )}
       </main>
+
+      {user.welcomedAt === null && (
+        <Suspense fallback={null}>
+          <WelcomeModal onClose={markWelcomed} />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { fireEvent } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
 
 vi.mock('../lib/api', () => ({
+  acknowledgeWelcome: vi.fn(),
   clearStoredToken: vi.fn(),
   getMe: vi.fn(),
   getStoredToken: vi.fn(),
@@ -23,7 +24,7 @@ vi.mock('../lib/api', () => ({
 
 import * as apiModule from '../lib/api';
 
-const makeUser = () => ({
+const makeUser = (overrides: Partial<{ welcomedAt: string | null }> = {}) => ({
   cvdMode: false,
   connectedProviders: [],
   email: 'user@example.com',
@@ -35,6 +36,8 @@ const makeUser = () => ({
   twoFactorMethod: null as 'totp' | 'email' | null,
   twoFactorPending: false,
   userId: 'user-1',
+  welcomedAt: '2024-01-01T00:00:00Z' as string | null,
+  ...overrides,
 });
 
 /** Tiny consumer that surfaces auth state into the DOM for assertions. */
@@ -438,6 +441,91 @@ describe('refreshUser', () => {
       expect.any(Error),
     );
     expect(screen.getByTestId('email')).toHaveTextContent('user@example.com');
+  });
+});
+
+describe('markWelcomed', () => {
+  it('calls the welcome endpoint and optimistically updates welcomedAt', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockResolvedValue(
+      makeUser({ welcomedAt: null }),
+    );
+    vi.mocked(apiModule.acknowledgeWelcome).mockResolvedValue(undefined);
+
+    function Consumer() {
+      const { markWelcomed, user } = useAuth();
+      return (
+        <div>
+          <span data-testid="welcomed">
+            {String(user?.welcomedAt ?? 'null')}
+          </span>
+          <button type="button" onClick={() => markWelcomed()}>
+            mark
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <AuthProvider>
+        <Consumer />
+      </AuthProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('welcomed')).toHaveTextContent('null'),
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'mark' }));
+    });
+
+    expect(apiModule.acknowledgeWelcome).toHaveBeenCalled();
+    expect(screen.getByTestId('welcomed')).not.toHaveTextContent('null');
+  });
+
+  it('swallows API errors and still updates state optimistically', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockResolvedValue(
+      makeUser({ welcomedAt: null }),
+    );
+    vi.mocked(apiModule.acknowledgeWelcome).mockRejectedValue(
+      new Error('Network error'),
+    );
+
+    function Consumer() {
+      const { markWelcomed, user } = useAuth();
+      return (
+        <div>
+          <span data-testid="welcomed">
+            {String(user?.welcomedAt ?? 'null')}
+          </span>
+          <button type="button" onClick={() => markWelcomed()}>
+            mark
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <AuthProvider>
+        <Consumer />
+      </AuthProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('welcomed')).toHaveTextContent('null'),
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'mark' }));
+    });
+
+    expect(console.error).toHaveBeenCalledWith(
+      'Failed to acknowledge welcome',
+      expect.any(Error),
+    );
+    expect(screen.getByTestId('welcomed')).not.toHaveTextContent('null');
   });
 });
 

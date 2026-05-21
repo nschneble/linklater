@@ -43,6 +43,7 @@ describe('AuthService', () => {
     listOAuthAccounts: jest.fn(),
     markEmailVerified: jest.fn(),
     markRecoveryCodeUsed: jest.fn(),
+    markWelcomed: jest.fn(),
     reissueRecoveryCodes: jest.fn(),
     resetPasswordWithToken: jest.fn(),
     saveTotpSecret: jest.fn(),
@@ -1001,6 +1002,16 @@ describe('AuthService', () => {
         USER_ID,
         NEW_PASSWORD,
       );
+    });
+  });
+
+  describe('markWelcomed', () => {
+    it('delegates to usersService.markWelcomed', async () => {
+      (usersServiceMock.markWelcomed as jest.Mock).mockResolvedValue(undefined);
+
+      await service.markWelcomed(USER_ID);
+
+      expect(usersServiceMock.markWelcomed).toHaveBeenCalledWith(USER_ID);
     });
   });
 });

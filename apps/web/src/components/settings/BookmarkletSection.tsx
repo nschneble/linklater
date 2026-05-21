@@ -57,7 +57,11 @@ export default function BookmarkletSection() {
   }, []);
 
   return (
-    <div className="max-w-md space-y-3">
+    <div
+      id="bookmarklet"
+      tabIndex={-1}
+      className="max-w-md space-y-3 focus:outline-none"
+    >
       <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
         Bookmarklet
       </h2>

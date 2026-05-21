@@ -57,6 +57,7 @@ describe('AuthController', () => {
       accessToken: ACCESS_TOKEN,
       refreshToken: REFRESH_TOKEN,
     }),
+    markWelcomed: jest.fn().mockResolvedValue(undefined),
     me: jest.fn(),
     refresh: jest.fn().mockResolvedValue({
       accessToken: ACCESS_TOKEN,
@@ -728,6 +729,17 @@ describe('AuthController', () => {
       expect(authServiceMock.revokeAllRefreshTokens).toHaveBeenCalledWith(
         USER_ID,
       );
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe('acknowledgeWelcome', () => {
+    it('delegates to authService.markWelcomed and returns success', async () => {
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+
+      const result = await controller.acknowledgeWelcome(request);
+
+      expect(authServiceMock.markWelcomed).toHaveBeenCalledWith(USER_ID);
       expect(result).toEqual({ success: true });
     });
   });

@@ -339,6 +339,18 @@ export class UsersService {
     });
   }
 
+  /**
+   * Records that the user has dismissed the welcome modal. Uses `updateMany`
+   * so a repeated dismissal (button + Escape + backdrop racing on close) is
+   * idempotent — only sets `welcomedAt` when it is still `null`.
+   */
+  async markWelcomed(id: string) {
+    await this.prisma.user.updateMany({
+      where: { id, welcomedAt: null },
+      data: { welcomedAt: new Date() },
+    });
+  }
+
   async saveTotpSecret(userId: string, encryptedSecret: string) {
     await this.prisma.user.update({
       where: { id: userId },
