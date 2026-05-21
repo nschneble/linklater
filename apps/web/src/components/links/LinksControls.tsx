@@ -75,6 +75,7 @@ export default function LinksControls({
           type="button"
           hidden={filter !== 'unread'}
           onClick={onToggleForm}
+          aria-label={showLinkForm ? 'Hide form' : 'Add link'}
           aria-expanded={showLinkForm}
           aria-controls={LINK_FORM_ID}
         >

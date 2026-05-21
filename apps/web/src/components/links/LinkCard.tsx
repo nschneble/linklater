@@ -52,12 +52,14 @@ interface LinkCardProps {
 /**
  * Displays a single saved link as an interactive card.
  *
- * Clicking the card opens the link in a new tab and, if it is currently
- * unread, immediately marks it as read. Read links show a "Mark as unread"
- * button instead.
+ * The card surface is a native `<a target="_blank">` so middle-click,
+ * Cmd-click, Enter/Space, and the "Open in new tab" context menu all behave
+ * as users expect. Activating the anchor on an unread link also marks it as
+ * read; read links show a "Mark as unread" button that sits above the
+ * anchor (sibling at higher z-index, no propagation needed).
  *
  * Delegates rendering to `LinkCardLayout` so that the interaction logic
- * (click handling, read toggling) is separated from the visual structure.
+ * (read toggling) is separated from the visual structure.
  */
 export default function LinkCard({
   link,
@@ -65,19 +67,14 @@ export default function LinkCard({
   isSelected = false,
   onReadToggle,
 }: LinkCardProps) {
-  function handleCardClick() {
-    window.open(link.url, '_blank', 'noreferrer');
-    // Only mark-as-read on open when the link is currently unread.
-    // Clicking an already-read card should just open it without changing
-    // its state.
+  function handleCardActivate() {
+    // Native anchor opens the URL; we just record the read transition.
     if (!link.readAt) {
       onReadToggle(link);
     }
   }
 
-  function handleUnreadClick(event: React.MouseEvent) {
-    // Prevent the click from bubbling up to the card, which would re-open the URL.
-    event.stopPropagation();
+  function handleUnreadClick() {
     onReadToggle(link);
   }
 
@@ -86,7 +83,7 @@ export default function LinkCard({
       link={link}
       animationDelay={animationDelay}
       isSelected={isSelected}
-      onCardClick={handleCardClick}
+      onCardActivate={handleCardActivate}
       onUnreadClick={handleUnreadClick}
     />
   );

@@ -109,8 +109,22 @@ describe('LinksControls', () => {
 
     it('has aria-expanded=true when form is open', () => {
       render(<LinksControls {...defaultUnreadProps} showLinkForm={true} />);
-      const button = screen.getByRole('button', { name: /add link/i });
+      const button = screen.getByRole('button', { name: /hide form/i });
       expect(button).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('switches aria-label between "Add link" and "Hide form" so screen readers hear state changes', () => {
+      const { rerender } = render(
+        <LinksControls {...defaultUnreadProps} showLinkForm={false} />,
+      );
+      expect(
+        screen.getByRole('button', { name: /add link/i }),
+      ).toBeInTheDocument();
+
+      rerender(<LinksControls {...defaultUnreadProps} showLinkForm={true} />);
+      expect(
+        screen.getByRole('button', { name: /hide form/i }),
+      ).toBeInTheDocument();
     });
   });
 

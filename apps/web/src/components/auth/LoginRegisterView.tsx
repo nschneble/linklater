@@ -102,6 +102,7 @@ export default function LoginRegisterView({
               }}
             />
             <TabButton
+              id="auth-tab-login"
               aria-controls="auth-form-panel"
               className="flex-1 py-2 text-sm"
               isActive={mode === 'login'}
@@ -110,6 +111,7 @@ export default function LoginRegisterView({
               Log in
             </TabButton>
             <TabButton
+              id="auth-tab-register"
               aria-controls="auth-form-panel"
               className="flex-1 py-2 text-sm"
               isActive={mode === 'register'}
@@ -119,7 +121,15 @@ export default function LoginRegisterView({
             </TabButton>
           </div>
 
-          <form id="auth-form-panel" className="space-y-4" onSubmit={onSubmit}>
+          <form
+            id="auth-form-panel"
+            role="tabpanel"
+            aria-labelledby={
+              mode === 'login' ? 'auth-tab-login' : 'auth-tab-register'
+            }
+            className="space-y-4"
+            onSubmit={onSubmit}
+          >
             <label
               className="block text-[var(--text-muted)] text-sm font-medium"
               htmlFor="auth-email"

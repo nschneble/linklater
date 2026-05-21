@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
 import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import { useKeyboardShortcuts } from '../../lib/hooks/useKeyboardShortcuts';
 import { useLinks, type LinksFilter } from '../../lib/hooks/useLinks';
@@ -178,6 +179,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
   });
 
   useFocusTrap(dialogReference);
+  useFocusReturn(showLinkForm);
 
   useEffect(() => {
     setIsClearingRead(false);

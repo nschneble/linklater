@@ -16,8 +16,10 @@ import HeroSection from './HeroSection';
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-hit-man">
-      <HeroSection />
-      <FeaturesSection />
+      <main>
+        <HeroSection />
+        <FeaturesSection />
+      </main>
       <FooterSection />
     </div>
   );

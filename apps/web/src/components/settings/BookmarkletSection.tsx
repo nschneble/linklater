@@ -49,9 +49,9 @@ export default function BookmarkletSection() {
       "headers:{'Content-Type':'application/json','Authorization':'Bearer '+t}," +
       'body:JSON.stringify({url:location.href})})' +
       '.then(function(r){r.ok' +
-      "?n('Saved to Linklater \u2713',true)" +
-      ":r.text().then(function(m){n(m||'Error saving link',false)})})" +
-      ".catch(function(){n('Could not reach Linklater',false)})" +
+      "?n('\u2713 Saved to Linklater',true)" +
+      ":r.text().then(function(m){n('\u26a0 '+(m||'Error saving link'),false)})})" +
+      ".catch(function(){n('\u26a0 Could not reach Linklater',false)})" +
       '})();';
     bookmarkletReference.current.setAttribute('href', code);
   }, []);
