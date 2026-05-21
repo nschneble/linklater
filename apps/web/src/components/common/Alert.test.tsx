@@ -2,10 +2,6 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import Alert from './Alert';
 
-vi.mock('../../theme/ThemeContext', () => ({
-  useTheme: () => ({ baseTheme: 'scanner-darkly' }),
-}));
-
 describe('Alert', () => {
   describe('error variant', () => {
     it('renders the message', () => {

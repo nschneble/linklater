@@ -1,4 +1,4 @@
-import { useTheme } from '../../theme/ThemeContext';
+import { useThemeStyling } from '../../theme/ThemeContext';
 import type { ReactNode } from 'react';
 
 interface StatusBadgeProps {
@@ -88,7 +88,7 @@ export default function StatusBadge({
   icon,
   children,
 }: StatusBadgeProps) {
-  const { baseTheme, mode } = useTheme();
+  const { baseTheme, mode } = useThemeStyling();
 
   const resolvedIcon = icon ?? defaultIcons[variant];
   const themeClasses = variantClasses[variant][mode];

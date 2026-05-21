@@ -1,4 +1,4 @@
-import { useTheme } from '../../theme/ThemeContext';
+import { useThemeStyling } from '../../theme/ThemeContext';
 import type { ReactNode } from 'react';
 
 /**
@@ -78,7 +78,7 @@ export default function Alert({
   id,
   variant,
 }: AlertProps) {
-  const { baseTheme, mode } = useTheme();
+  const { baseTheme, mode } = useThemeStyling();
 
   const resolvedIcon = icon ?? defaultIcons[variant];
   const themeClasses = variantClasses[variant][mode];

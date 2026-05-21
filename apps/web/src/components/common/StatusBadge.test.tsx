@@ -2,10 +2,6 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import StatusBadge from './StatusBadge';
 
-vi.mock('../../theme/ThemeContext', () => ({
-  useTheme: () => ({ baseTheme: 'scanner-darkly' }),
-}));
-
 describe('StatusBadge', () => {
   describe('success variant', () => {
     it('renders children', () => {

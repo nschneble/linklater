@@ -4,6 +4,7 @@ import CvdModeToggle from './CvdModeToggle';
 
 vi.mock('../../theme/ThemeContext', () => ({
   useTheme: vi.fn(),
+  useThemeStyling: () => ({ baseTheme: 'scanner-darkly', mode: 'light' }),
 }));
 
 vi.mock('../../lib/api', () => ({

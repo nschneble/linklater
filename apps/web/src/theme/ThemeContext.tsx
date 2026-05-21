@@ -385,3 +385,24 @@ export function useTheme() {
 
   return context;
 }
+
+/**
+ * Non-throwing variant for purely presentational leaf primitives (e.g.
+ * `Alert`, `StatusBadge`) that only need `baseTheme` and `mode` for class
+ * selection.
+ *
+ * Safe to call outside of a `ThemeProvider`: falls back to
+ * `{ baseTheme: 'scanner-darkly', mode: 'light' }`, which resolves to the
+ * `default` style branch in callers — the same styling production users see
+ * for themes that have no per-theme override. This keeps test environments
+ * working without forcing every caller to wrap in a provider.
+ *
+ * Use `useTheme` instead whenever you need theme actions, CVD state, or
+ * server-sync behavior — those must be inside a `ThemeProvider`.
+ */
+export function useThemeStyling(): { baseTheme: BaseTheme; mode: Mode } {
+  const context = useContext(ThemeContext);
+  if (!context) return { baseTheme: 'scanner-darkly', mode: 'light' };
+
+  return { baseTheme: context.baseTheme, mode: context.mode };
+}
