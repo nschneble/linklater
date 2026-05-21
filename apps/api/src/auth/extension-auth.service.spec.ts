@@ -1,27 +1,28 @@
 import { jest } from '@jest/globals';
 
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { AuthService } from './auth.service';
 import { ExtensionAuthService } from './extension-auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 
-const SIGNED_TOKEN = 'signed-token';
+const ACCESS_TOKEN = 'access-token';
+const REFRESH_TOKEN = 'refresh-token';
 const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';
 
 describe('ExtensionAuthService', () => {
   let service: ExtensionAuthService;
 
-  const jwtServiceMock = {
-    sign: jest.fn().mockReturnValue(SIGNED_TOKEN),
-  } as unknown as JwtService;
+  const authServiceMock = {
+    issueTokenPair: jest.fn().mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    }),
+  } as unknown as AuthService;
 
   const prismaServiceMock = {
-    refreshToken: {
-      create: jest.fn().mockResolvedValue({}),
-    },
     extensionAuthCode: {
       create: jest.fn().mockResolvedValue({}),
       delete: jest.fn().mockResolvedValue({}),
@@ -29,23 +30,30 @@ describe('ExtensionAuthService', () => {
     },
   } as unknown as PrismaService;
 
-  beforeEach(async () => {
+  async function buildService(): Promise<ExtensionAuthService> {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ExtensionAuthService,
-        { provide: JwtService, useValue: jwtServiceMock },
+        { provide: AuthService, useValue: authServiceMock },
         { provide: PrismaService, useValue: prismaServiceMock },
       ],
     }).compile();
-    service = module.get<ExtensionAuthService>(ExtensionAuthService);
+    const built = module.get<ExtensionAuthService>(ExtensionAuthService);
+    built.onModuleInit();
+    return built;
+  }
+
+  beforeEach(async () => {
     jest.clearAllMocks();
+    service = await buildService();
   });
 
   describe('authorizeExtension', () => {
     const ALLOWED_URI = 'chrome-extension://abc/callback';
 
-    beforeEach(() => {
+    beforeEach(async () => {
       process.env.EXTENSION_REDIRECT_URIS = ALLOWED_URI;
+      service = await buildService();
     });
 
     afterEach(() => {
@@ -89,9 +97,10 @@ describe('ExtensionAuthService', () => {
 
     it('throws BadRequestException when EXTENSION_REDIRECT_URIS is not set', async () => {
       delete process.env.EXTENSION_REDIRECT_URIS;
+      const freshService = await buildService();
 
       await expect(
-        service.authorizeExtension(
+        freshService.authorizeExtension(
           USER_ID,
           'sha256-challenge-abc',
           ALLOWED_URI,

@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
+import { expiresInMs } from '../common/dates.js';
 import {
   RECOVERY_CODE_REGEX,
   findMatchingRecoveryCode,
@@ -16,10 +17,6 @@ import { TotpService } from './totp.service.js';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const TWENTY_FOUR_HOURS_MS = 24 * ONE_HOUR_MS;
-
-function expiresInMs(ms: number) {
-  return new Date(Date.now() + ms);
-}
 
 @Injectable()
 export class EmailVerificationService {

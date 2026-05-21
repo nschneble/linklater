@@ -68,7 +68,6 @@ export default function LinkCard({
   onReadToggle,
 }: LinkCardProps) {
   function handleCardActivate() {
-    // Native anchor opens the URL; we just record the read transition.
     if (!link.readAt) {
       onReadToggle(link);
     }

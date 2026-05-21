@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
+import { expiresInMs } from '../common/dates.js';
 import { EmailService } from '../email/index.js';
 import { UserTokensService } from '../users/user-tokens.service.js';
 import { UsersService } from '../users/users.service.js';
@@ -34,7 +35,7 @@ export class MagicLinkService {
 
     const rawToken = generateHexToken();
     const tokenHash = sha256Hex(rawToken);
-    const expiresAt = new Date(Date.now() + FIFTEEN_MINUTES_MS);
+    const expiresAt = expiresInMs(FIFTEEN_MINUTES_MS);
 
     await this.userTokensService.updateMagicLinkToken(
       user.id,
@@ -52,9 +53,8 @@ export class MagicLinkService {
    * @throws {BadRequestException} When the token is not found or has expired.
    */
   async verifyToken(rawToken: string) {
-    const user = await this.userTokensService.findByMagicLinkToken(
-      sha256Hex(rawToken),
-    );
+    const tokenHash = sha256Hex(rawToken);
+    const user = await this.userTokensService.findByMagicLinkToken(tokenHash);
 
     if (!user || !user.magicLinkTokenExpiresAt) {
       throw new BadRequestException('Invalid or expired login link');
@@ -64,7 +64,13 @@ export class MagicLinkService {
       throw new BadRequestException('This login link has expired');
     }
 
-    await this.userTokensService.clearMagicLinkToken(user.id);
+    const consumed = await this.userTokensService.consumeMagicLinkToken(
+      user.id,
+      tokenHash,
+    );
+    if (!consumed) {
+      throw new BadRequestException('This login link has already been used');
+    }
     if (!user.emailVerifiedAt) {
       await this.usersService.markEmailVerified(user.id);
     }
@@ -88,7 +94,7 @@ export class MagicLinkService {
 
     const rawToken = generateHexToken();
     const tokenHash = sha256Hex(rawToken);
-    const expiresAt = new Date(Date.now() + FIFTEEN_MINUTES_MS);
+    const expiresAt = expiresInMs(FIFTEEN_MINUTES_MS);
     await this.userTokensService.updateMagicLinkToken(
       user.id,
       tokenHash,

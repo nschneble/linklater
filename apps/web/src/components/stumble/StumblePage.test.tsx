@@ -37,9 +37,8 @@ describe('StumblePage', () => {
   });
 
   it('shows an interstitial with an Open link button instead of auto-redirecting', async () => {
-    // Regression for the audit finding: auto-redirect via
-    // `window.location.href` was an unannounced context change (WCAG 3.2.5).
-    // The page must now require an explicit user action.
+    // Auto-redirect via window.location.href would be an unannounced context
+    // change (WCAG 3.2.5) — the page must require an explicit user action.
     vi.mocked(api.stumbleLink).mockResolvedValue({
       url: 'https://example.com/article',
     });

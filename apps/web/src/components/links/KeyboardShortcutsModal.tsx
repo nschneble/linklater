@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import { useEffect, useRef } from 'react';
 import { FOCUS_RING } from '../../lib/styles';
 import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
-import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
+import { FOCUSABLE_SELECTOR, useFocusTrap } from '../../lib/hooks/useFocusTrap';
 
 interface KeyboardShortcutsModalProps {
   /** Called when the user presses Escape or clicks the close button or backdrop. */
@@ -47,9 +47,8 @@ export default function KeyboardShortcutsModal({
   useFocusReturn(true);
 
   useEffect(() => {
-    const firstFocusable = dialogReference.current?.querySelector<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    );
+    const firstFocusable =
+      dialogReference.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
     firstFocusable?.focus();
   }, []);
 

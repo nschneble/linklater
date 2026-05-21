@@ -14,6 +14,7 @@ export function useFocusFirstButton(
     if (!isActive) return;
     const button =
       reference.current?.querySelector<HTMLButtonElement>('button');
-    requestAnimationFrame(() => button?.focus());
+    const handle = requestAnimationFrame(() => button?.focus());
+    return () => cancelAnimationFrame(handle);
   }, [reference, isActive]);
 }

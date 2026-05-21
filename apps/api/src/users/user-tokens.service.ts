@@ -5,9 +5,7 @@ import { PrismaService } from '../prisma/index.js';
  * Persistence for all per-user one-time tokens: email verification, password
  * reset, magic-link login, and pending-email-change. Each method takes the
  * SHA-256 hash of the raw token (callers are responsible for hashing the
- * value sent to the user). Carving these methods off `UsersService` keeps
- * the identity-store responsibilities focused on user CRUD while token
- * lifecycles live in one place.
+ * value sent to the user).
  */
 @Injectable()
 export class UserTokensService {
@@ -114,6 +112,22 @@ export class UserTokensService {
       where: { id: userId },
       data: { magicLinkToken: null, magicLinkTokenExpiresAt: null },
     });
+  }
+
+  /**
+   * Atomic compare-and-swap: clears the magic-link token only if it still
+   * matches `tokenHash`. Prevents a parallel second click from consuming an
+   * already-used token. Returns `true` when the token was cleared.
+   */
+  async consumeMagicLinkToken(
+    userId: string,
+    tokenHash: string,
+  ): Promise<boolean> {
+    const result = await this.prisma.user.updateMany({
+      where: { id: userId, magicLinkToken: tokenHash },
+      data: { magicLinkToken: null, magicLinkTokenExpiresAt: null },
+    });
+    return result.count === 1;
   }
 
   /**

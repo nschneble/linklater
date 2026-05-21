@@ -171,8 +171,10 @@ export class UsersService {
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
-    const { passwordHash, ...safe } = user;
-    return { ...safe, hasPassword: passwordHash !== null };
+    return {
+      ...withoutPasswordHash(user),
+      hasPassword: user.passwordHash !== null,
+    };
   }
 
   async findByIdWithPasswordHash(id: string) {

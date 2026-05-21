@@ -16,3 +16,15 @@ export function stripHtml(html: string): string {
     new DOMParser().parseFromString(html, 'text/html').body.textContent ?? ''
   );
 }
+
+/**
+ * Returns the hostname of a URL without the leading `www.`. Falls back to
+ * the original input if the URL cannot be parsed.
+ */
+export function hostnameOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}

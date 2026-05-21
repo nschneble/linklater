@@ -38,7 +38,7 @@ describe('MagicLinkService', () => {
   } as unknown as UsersService;
 
   const userTokensServiceMock = {
-    clearMagicLinkToken: jest.fn(),
+    consumeMagicLinkToken: jest.fn(),
     findByMagicLinkToken: jest.fn(),
     updateMagicLinkToken: jest.fn(),
   } as unknown as UserTokensService;
@@ -150,20 +150,39 @@ describe('MagicLinkService', () => {
         userTokensServiceMock.findByMagicLinkToken as jest.Mock
       ).mockResolvedValue(user);
       (
-        userTokensServiceMock.clearMagicLinkToken as jest.Mock
-      ).mockResolvedValue(undefined);
+        userTokensServiceMock.consumeMagicLinkToken as jest.Mock
+      ).mockResolvedValue(true);
 
       const result = await service.verifyToken(RAW_TOKEN);
 
-      // The raw token from the email is hashed before the lookup — the DB
-      // never sees the raw value.
       expect(userTokensServiceMock.findByMagicLinkToken).toHaveBeenCalledWith(
         TOKEN_HASH,
       );
-      expect(userTokensServiceMock.clearMagicLinkToken).toHaveBeenCalledWith(
+      expect(userTokensServiceMock.consumeMagicLinkToken).toHaveBeenCalledWith(
         USER_ID,
+        TOKEN_HASH,
       );
       expect(result.id).toBe(USER_ID);
+    });
+
+    it('throws when a parallel click already consumed the token', async () => {
+      const futureExpiry = new Date(Date.now() + 15 * 60 * 1000);
+      const user = makeUser({
+        emailVerifiedAt: new Date(),
+        magicLinkToken: TOKEN_HASH,
+        magicLinkTokenExpiresAt: futureExpiry,
+      });
+
+      (
+        userTokensServiceMock.findByMagicLinkToken as jest.Mock
+      ).mockResolvedValue(user);
+      (
+        userTokensServiceMock.consumeMagicLinkToken as jest.Mock
+      ).mockResolvedValue(false);
+
+      await expect(service.verifyToken(RAW_TOKEN)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws BadRequestException when the token is not found', async () => {
@@ -190,7 +209,9 @@ describe('MagicLinkService', () => {
       await expect(service.verifyToken(RAW_TOKEN)).rejects.toThrow(
         BadRequestException,
       );
-      expect(userTokensServiceMock.clearMagicLinkToken).not.toHaveBeenCalled();
+      expect(
+        userTokensServiceMock.consumeMagicLinkToken,
+      ).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when expiry is missing', async () => {
@@ -220,8 +241,8 @@ describe('MagicLinkService', () => {
         userTokensServiceMock.findByMagicLinkToken as jest.Mock
       ).mockResolvedValue(user);
       (
-        userTokensServiceMock.clearMagicLinkToken as jest.Mock
-      ).mockResolvedValue(undefined);
+        userTokensServiceMock.consumeMagicLinkToken as jest.Mock
+      ).mockResolvedValue(true);
       (usersServiceMock.markEmailVerified as jest.Mock).mockResolvedValue(
         undefined,
       );
@@ -243,8 +264,8 @@ describe('MagicLinkService', () => {
         userTokensServiceMock.findByMagicLinkToken as jest.Mock
       ).mockResolvedValue(user);
       (
-        userTokensServiceMock.clearMagicLinkToken as jest.Mock
-      ).mockResolvedValue(undefined);
+        userTokensServiceMock.consumeMagicLinkToken as jest.Mock
+      ).mockResolvedValue(true);
 
       await service.verifyToken(RAW_TOKEN);
 

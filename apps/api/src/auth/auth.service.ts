@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
+import { expiresInMs } from '../common/dates.js';
 import {
   RECOVERY_CODE_REGEX,
   findMatchingRecoveryCode,
@@ -81,10 +82,8 @@ export class AuthService {
 
   /**
    * Issues a session for the given user. Fetches the user record internally
-   * so all login paths (password, OAuth, magic-link) share a single 2FA gate.
-   * Passing a `userId` rather than a caller-provided user object eliminates
-   * the historical footgun where OAuth strategies omitted `totpEnabledAt`
-   * and bypassed the MFA branch.
+   * so all login paths (password, OAuth, magic-link) share a single 2FA gate
+   * — callers cannot accidentally bypass MFA by passing a stale user object.
    */
   async login(userId: string) {
     const user = await this.usersService.findById(userId);
@@ -116,7 +115,7 @@ export class AuthService {
       await transaction.refreshToken.delete({ where: { id: stored.id } });
       const rawNewRefreshToken = generateHexToken();
       const newTokenHash = sha256Hex(rawNewRefreshToken);
-      const expiresAt = new Date(Date.now() + ONE_YEAR_MS);
+      const expiresAt = expiresInMs(ONE_YEAR_MS);
       await transaction.refreshToken.create({
         data: { tokenHash: newTokenHash, userId: stored.userId, expiresAt },
       });
@@ -268,10 +267,10 @@ export class AuthService {
     return codes;
   }
 
-  private async issueTokenPair(userId: string, email: string) {
+  async issueTokenPair(userId: string, email: string) {
     const rawRefreshToken = generateHexToken();
     const tokenHash = sha256Hex(rawRefreshToken);
-    const expiresAt = new Date(Date.now() + ONE_YEAR_MS);
+    const expiresAt = expiresInMs(ONE_YEAR_MS);
 
     await this.prisma.refreshToken.create({
       data: { tokenHash, userId, expiresAt },

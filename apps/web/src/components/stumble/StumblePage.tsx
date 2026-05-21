@@ -1,6 +1,7 @@
 import StumbleEmptyView from './StumbleEmptyView';
 import { stumbleLink } from '../../lib/api';
-import { useEffect, useRef, useState } from 'react';
+import { hostnameOf } from '../../lib/strings';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import PrimaryButton from '../common/PrimaryButton';
 import { FOCUS_RING } from '../../lib/styles';
 
@@ -8,14 +9,6 @@ type StumbleState =
   | { kind: 'loading' }
   | { kind: 'ready'; url: string }
   | { kind: 'empty' };
-
-function hostnameOf(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '');
-  } catch {
-    return url;
-  }
-}
 
 /**
  * Standalone page rendered at `/stumble`. On mount it calls
@@ -31,12 +24,19 @@ function hostnameOf(url: string): string {
 export default function StumblePage() {
   const [state, setState] = useState<StumbleState>({ kind: 'loading' });
   const openButtonReference = useRef<HTMLAnchorElement>(null);
+  const isMountedReference = useRef(true);
 
   useEffect(() => {
-    let cancelled = false;
+    isMountedReference.current = true;
+    return () => {
+      isMountedReference.current = false;
+    };
+  }, []);
+
+  const fetchStumble = useCallback(() => {
     stumbleLink()
       .then((result) => {
-        if (cancelled) return;
+        if (!isMountedReference.current) return;
         if (result.url) {
           setState({ kind: 'ready', url: result.url });
         } else {
@@ -44,13 +44,14 @@ export default function StumblePage() {
         }
       })
       .catch(() => {
-        if (cancelled) return;
+        if (!isMountedReference.current) return;
         setState({ kind: 'empty' });
       });
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  useEffect(() => {
+    fetchStumble();
+  }, [fetchStumble]);
 
   // Move keyboard focus to the primary action as soon as the interstitial
   // renders so users can confirm with Enter without hunting for the button.
@@ -115,15 +116,7 @@ export default function StumblePage() {
             type="button"
             onClick={() => {
               setState({ kind: 'loading' });
-              stumbleLink()
-                .then((result) => {
-                  if (result.url) {
-                    setState({ kind: 'ready', url: result.url });
-                  } else {
-                    setState({ kind: 'empty' });
-                  }
-                })
-                .catch(() => setState({ kind: 'empty' }));
+              fetchStumble();
             }}
           >
             <i

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import PrimaryButton from '../common/PrimaryButton';
 import type { Link } from '../../lib/api';
-import { stripHtml } from '../../lib/strings';
+import { hostnameOf, stripHtml } from '../../lib/strings';
+import { FOCUS_RING } from '../../lib/styles';
 import { useTheme } from '../../theme/ThemeContext';
 
 /**
@@ -47,8 +48,7 @@ function getPlaceholderUrl(url: string) {
     .getPropertyValue('--accent-fg')
     .trim()
     .replace('#', '');
-  const text = new URL(url).hostname.replace(/^www\./, '');
-  return `https://placehold.co/240x126/${accent}/${accentFg}?text=${text}`;
+  return `https://placehold.co/240x126/${accent}/${accentFg}?text=${hostnameOf(url)}`;
 }
 
 /**
@@ -102,8 +102,13 @@ export default function LinkCardLayout({
   const displayDescription = rawDescription
     ? stripHtml(rawDescription)
     : rawDescription;
-  const rawSiteName = link.meta?.siteName ?? new URL(link.url).hostname;
-  const displaySiteName = rawSiteName.replace(/^www\./, '');
+  const displaySiteName = useMemo(
+    () =>
+      link.meta?.siteName
+        ? link.meta.siteName.replace(/^www\./, '')
+        : hostnameOf(link.url),
+    [link.meta?.siteName, link.url],
+  );
 
   const cardAriaLabel = `${displayTitle} — ${displaySiteName}, opens in new tab`;
 
@@ -197,17 +202,18 @@ export default function LinkCardLayout({
             )}
 
             {link.readAt && (
-              <div className="relative shrink-0 z-30">
-                <PrimaryButton onClick={onUnreadClick}>
-                  <span className="hidden sm:inline-flex">Mark unread</span>
-                  <span className="inline-flex sm:hidden">
-                    <i
-                      className="fa-solid fa-rotate-left text-xs"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </PrimaryButton>
-              </div>
+              <PrimaryButton
+                className="relative shrink-0 z-30"
+                onClick={onUnreadClick}
+              >
+                <span className="hidden sm:inline-flex">Mark unread</span>
+                <span className="inline-flex sm:hidden">
+                  <i
+                    className="fa-solid fa-rotate-left text-xs"
+                    aria-hidden="true"
+                  />
+                </span>
+              </PrimaryButton>
             )}
           </div>
         )}
@@ -220,10 +226,8 @@ export default function LinkCardLayout({
         aria-label={cardAriaLabel}
         aria-busy={!link.meta?.fetchedAt}
         onClick={onCardActivate}
-        className="absolute inset-0 z-10 rounded-r-xl focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none cursor-pointer"
-      >
-        <span className="sr-only">{cardAriaLabel}</span>
-      </a>
+        className={`absolute inset-0 z-10 ${FOCUS_RING} rounded-r-xl cursor-pointer`}
+      />
     </div>
   );
 }

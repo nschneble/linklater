@@ -5,43 +5,39 @@ import {
   OnModuleInit,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { createHash } from 'node:crypto';
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
+import { expiresInMs } from '../common/dates.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { AuthService } from './auth.service.js';
 
-const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
-
-function expiresInMs(ms: number) {
-  return new Date(Date.now() + ms);
-}
 
 /**
  * Browser-extension PKCE authorization flow. Issues short-lived,
  * hash-stored authorization codes that the extension trades for a
  * full refresh-token pair via the code-verifier exchange.
- *
- * Extracted from `AuthService` to keep the core auth service focused on
- * password/MFA/OAuth flows; the extension code path has its own lifecycle
- * (allowed redirect URIs, PKCE verifier mechanics, code hashing) that is
- * mechanically independent of normal browser sign-in.
  */
 @Injectable()
 export class ExtensionAuthService implements OnModuleInit {
   private readonly logger = new Logger(ExtensionAuthService.name);
 
+  private allowedRedirectUris: ReadonlySet<string> = new Set();
+
   constructor(
-    private readonly jwtService: JwtService,
+    private readonly authService: AuthService,
     private readonly prisma: PrismaService,
   ) {}
 
   onModuleInit() {
-    if (!process.env.EXTENSION_REDIRECT_URIS) {
+    const raw = process.env.EXTENSION_REDIRECT_URIS;
+    if (!raw) {
       this.logger.warn(
         'EXTENSION_REDIRECT_URIS is not set — the browser extension authorization flow will reject all redirect URIs. Set this to a comma-separated list of allowed extension callback URIs.',
       );
+      return;
     }
+    this.allowedRedirectUris = new Set(raw.split(',').map((uri) => uri.trim()));
   }
 
   async authorizeExtension(
@@ -55,11 +51,7 @@ export class ExtensionAuthService implements OnModuleInit {
       );
     }
 
-    const allowedUris = process.env.EXTENSION_REDIRECT_URIS
-      ? process.env.EXTENSION_REDIRECT_URIS.split(',').map((uri) => uri.trim())
-      : [];
-
-    if (!allowedUris.includes(redirectUri)) {
+    if (!this.allowedRedirectUris.has(redirectUri)) {
       throw new BadRequestException('Invalid redirect_uri');
     }
 
@@ -86,7 +78,7 @@ export class ExtensionAuthService implements OnModuleInit {
     const codeHash = sha256Hex(rawCode);
     const stored = await this.prisma.extensionAuthCode.findUnique({
       where: { codeHash },
-      include: { user: true },
+      include: { user: { select: { email: true } } },
     });
 
     if (!stored || stored.expiresAt < new Date()) {
@@ -101,19 +93,6 @@ export class ExtensionAuthService implements OnModuleInit {
     }
 
     await this.prisma.extensionAuthCode.delete({ where: { id: stored.id } });
-    return this.issueTokenPair(stored.userId, stored.user.email);
-  }
-
-  private async issueTokenPair(userId: string, email: string) {
-    const rawRefreshToken = generateHexToken();
-    const tokenHash = sha256Hex(rawRefreshToken);
-    const expiresAt = new Date(Date.now() + ONE_YEAR_MS);
-
-    await this.prisma.refreshToken.create({
-      data: { tokenHash, userId, expiresAt },
-    });
-
-    const accessToken = this.jwtService.sign({ subject: userId, email });
-    return { accessToken, refreshToken: rawRefreshToken };
+    return this.authService.issueTokenPair(stored.userId, stored.user.email);
   }
 }

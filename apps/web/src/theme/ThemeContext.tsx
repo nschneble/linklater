@@ -28,8 +28,6 @@ import {
 } from './constants';
 import { getInitialBaseTheme, getInitialMode } from './initial';
 
-// Re-export so the long list of existing consumers can keep importing
-// from `../../theme/ThemeContext` without churn.
 export {
   CVD_BASE_THEME,
   THEMES,

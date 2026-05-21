@@ -70,8 +70,5 @@ export function resolveThemeClasses(
   baseTheme: BaseTheme,
 ): string {
   const themeClasses = map[mode];
-  if (baseTheme in themeClasses) {
-    return themeClasses[baseTheme] ?? themeClasses.default;
-  }
-  return themeClasses.default;
+  return themeClasses[baseTheme] ?? themeClasses.default;
 }
