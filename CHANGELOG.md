@@ -18,15 +18,17 @@
   - full keyboard navigation
   - keyboard shortcuts
   - CVD mode toggle in Settings
-  - Apollo 10½ accessible theme
+  - "Apollo 10½" accessible theme
 - full-text search
 - marketing / landing page
+- "Nouvelle Vague" noir theme
 - "Stumble!" page
 
 #### Bugfixes
 
 - added missing accessibility tags
 - fixed unusable layout on mobile devices
+- user menu now closes when keyboard shortcuts modal opens
 
 ### Removed
 
