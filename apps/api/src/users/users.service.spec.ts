@@ -35,6 +35,7 @@ const PENDING_EMAIL = 'pending.email@addy.com';
 const PENDING_EMAIL_TOKEN = 'pending-email-token-abc';
 
 const makeUser = (overrides = {}) => ({
+  cvdMode: false,
   createdAt: new Date(),
   email: USER_EMAIL,
   emailVerifiedAt: null,
@@ -199,6 +200,42 @@ describe('UsersService', () => {
       const result = await service.updateMe(USER_ID, { theme: THEME_NAME });
 
       expect(result).not.toHaveProperty('passwordHash');
+    });
+
+    it('accepts apollo-10-1-2 as a valid theme', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.updateMe(USER_ID, { theme: 'apollo-10-1-2' });
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ theme: 'apollo-10-1-2' }),
+        }),
+      );
+    });
+
+    it('updates cvdMode when provided', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.updateMe(USER_ID, { cvdMode: true });
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ cvdMode: true }),
+        }),
+      );
+    });
+
+    it('updates cvdMode to false when disabled', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.updateMe(USER_ID, { cvdMode: false });
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ cvdMode: false }),
+        }),
+      );
     });
   });
 

@@ -15,7 +15,7 @@ const baseProps = {
   isPointerOver: false,
   onTriggerClick: vi.fn(),
   onKeyboardOpen: vi.fn(),
-  onPreviewChange: vi.fn(),
+  onApplyPreview: vi.fn(),
   onSelect: vi.fn(),
 };
 
@@ -89,14 +89,14 @@ describe('ThemeSubmenu', () => {
     expect(flyoutPanel).not.toBeNull();
   });
 
-  it('calls onPreviewChange when a flyout button receives focus', () => {
-    const onPreviewChange = vi.fn();
-    render(<ThemeSubmenu {...baseProps} onPreviewChange={onPreviewChange} />);
+  it('calls onApplyPreview when a flyout button receives focus', () => {
+    const onApplyPreview = vi.fn();
+    render(<ThemeSubmenu {...baseProps} onApplyPreview={onApplyPreview} />);
     const boyhoodButton = screen
       .getAllByRole('menuitemradio')
       .find((button) => button.textContent?.includes('Boyhood'));
     fireEvent.focus(boyhoodButton!);
-    expect(onPreviewChange).toHaveBeenCalledWith('boyhood');
+    expect(onApplyPreview).toHaveBeenCalledWith('boyhood');
   });
 
   it('calls onTriggerClick and onKeyboardOpen when ArrowRight is pressed on a closed submenu', () => {

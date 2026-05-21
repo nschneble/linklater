@@ -5,6 +5,7 @@
  * CSS variable definitions in `apps/web/src/theme/styles/`.
  */
 export const VALID_THEMES = [
+  'apollo-10-1-2',
   'before-midnight',
   'before-sunrise',
   'before-sunset',

@@ -1,4 +1,10 @@
-import { IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { VALID_MODES, VALID_THEMES } from '../users.constants.js';
 
@@ -42,4 +48,13 @@ export class UpdateMeDto {
   @IsOptional()
   @IsIn([...VALID_MODES])
   mode?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'When true, switches to the Apollo 10½ CVD-friendly theme and enables additional shape/icon accessibility enhancements.',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  cvdMode?: boolean;
 }

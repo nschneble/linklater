@@ -9,6 +9,10 @@ import { FOCUS_RING } from '../../lib/styles';
  * by the parent using an `aria-hidden` `<div>` so that the text color
  * transitions correctly over the highlight.
  *
+ * When active, renders a small `fa-circle-dot` icon to the left of the label
+ * as an additional non-color active indicator — particularly useful in the
+ * Apollo 10½ CVD-friendly theme.
+ *
  * Accepts all native `<button>` attributes (e.g. `aria-controls`) so the
  * parent tablist can wire up proper panel associations.
  *
@@ -34,10 +38,10 @@ export default function TabButton({
 }: TabButtonProps) {
   return (
     <button
-      className={`relative z-10 w-full font-semibold text-center ${FOCUS_RING} rounded-full transition-colors duration-200 ${
+      className={`relative z-10 w-full text-center ${FOCUS_RING} rounded-full transition-colors duration-200 ${
         isActive
-          ? 'text-[var(--bg)]'
-          : 'text-[var(--text-muted)] cursor-pointer'
+          ? 'flex items-center justify-center gap-1 text-[var(--bg)] font-extrabold'
+          : 'font-semibold text-[var(--text-muted)] cursor-pointer'
       } ${className}`}
       type="button"
       role="tab"
@@ -46,6 +50,12 @@ export default function TabButton({
       aria-selected={isActive}
       {...props}
     >
+      {isActive && (
+        <i
+          className="fa-solid fa-circle-dot text-[0.4rem]"
+          aria-hidden="true"
+        />
+      )}
       {children}
     </button>
   );

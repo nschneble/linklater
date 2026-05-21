@@ -47,4 +47,22 @@ describe('UpdateMeDto', () => {
     const errors = await validate(makeDto({ mode: 'dark' }));
     expect(errors).toHaveLength(0);
   });
+
+  it('accepts cvdMode: true', async () => {
+    const errors = await validate(makeDto({ cvdMode: true }));
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts cvdMode: false', async () => {
+    const errors = await validate(makeDto({ cvdMode: false }));
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a non-boolean cvdMode value', async () => {
+    const errors = await validate(
+      makeDto({ cvdMode: 'yes' as unknown as boolean }),
+    );
+    const cvdErrors = errors.filter((error) => error.property === 'cvdMode');
+    expect(cvdErrors.length).toBeGreaterThan(0);
+  });
 });

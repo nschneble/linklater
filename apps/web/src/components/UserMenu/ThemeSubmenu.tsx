@@ -52,8 +52,13 @@ interface ThemeSubmenuProps {
    * keyboard navigation.
    */
   flyoutReference?: RefObject<HTMLDivElement | null>;
-  /** Called with the hovered theme id while hovering, or `null` when leaving the flyout. */
-  onPreviewChange: (theme: BaseTheme | null) => void;
+  /**
+   * Called when hovering or focusing a theme option to apply a live preview.
+   * Handles setting `data-theme` on the document root and temporarily clearing
+   * `data-cvd` when previewing a non-accessible theme while cvd
+   * mode is active. Pass the hook's `applyPreview` here.
+   */
+  onApplyPreview: (theme: BaseTheme) => void;
   /** Called when the user clicks a theme option. Closes the menu. */
   onSelect: (theme: BaseTheme) => void;
 }
@@ -78,21 +83,13 @@ export default function ThemeSubmenu({
   isPointerOver,
   onTriggerClick,
   onKeyboardOpen,
-  onPreviewChange,
+  onApplyPreview,
   onSelect,
   onTriggerBlur,
   onFlyoutBlur,
   flyoutReference,
 }: ThemeSubmenuProps) {
   const [hoveredThemeId, setHoveredThemeId] = useState<string | null>(null);
-
-  function applyPreview(themeId: BaseTheme) {
-    const root = document.documentElement;
-    root.style.setProperty('--theme-transition-duration', '150ms');
-    root.style.setProperty('--theme-transition-easing', 'ease-out');
-    root.dataset.theme = themeId;
-    onPreviewChange(themeId);
-  }
 
   function handleOpenOrFocusFlyout() {
     if (showSubmenu) {
@@ -186,26 +183,34 @@ export default function ThemeSubmenu({
             onClick={() => onSelect(theme.id)}
             onMouseEnter={(event) => {
               setHoveredThemeId(theme.id);
-              applyPreview(theme.id);
+              onApplyPreview(theme.id);
               event.currentTarget.focus();
             }}
             onMouseLeave={() => setHoveredThemeId(null)}
             onBlur={() => setHoveredThemeId(null)}
             onFocus={() => {
               setHoveredThemeId(theme.id);
-              applyPreview(theme.id);
+              onApplyPreview(theme.id);
             }}
           >
             <span
-              className="shrink-0 inline-block w-3 h-3 rounded-full theme-color-dot"
+              className="relative shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full theme-color-dot"
               style={{ backgroundColor: theme.accent }}
-            />
+            >
+              <i
+                className={`absolute fa-solid ${theme.swatchIcon} text-white text-[0.6rem]`}
+                aria-hidden="true"
+              />
+            </span>
             <span className="flex-1">{theme.label}</span>
             {baseTheme === theme.id && (
               <i
-                className="fa-solid fa-check text-[var(--accent)] text-[0.6rem]"
+                className="fa-solid fa-check text-[var(--accent)]"
                 aria-hidden="true"
               />
+            )}
+            {theme.isAccessible && (
+              <i className="fa-solid fa-universal-access" aria-hidden="true" />
             )}
           </button>
         ))}

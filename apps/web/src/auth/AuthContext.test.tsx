@@ -24,15 +24,17 @@ vi.mock('../lib/api', () => ({
 import * as apiModule from '../lib/api';
 
 const makeUser = () => ({
-  userId: 'user-1',
+  cvdMode: false,
+  connectedProviders: [],
   email: 'user@example.com',
   emailVerifiedAt: '2024-01-01T00:00:00Z',
   hasPassword: true,
-  pendingEmail: null,
   mode: 'dark',
+  pendingEmail: null,
   theme: 'scanner-darkly',
   twoFactorMethod: null as 'totp' | 'email' | null,
   twoFactorPending: false,
+  userId: 'user-1',
 });
 
 /** Tiny consumer that surfaces auth state into the DOM for assertions. */

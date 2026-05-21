@@ -17,6 +17,8 @@
 - accessibility
   - full keyboard navigation
   - keyboard shortcuts
+  - CVD mode toggle in Settings
+  - Apollo 10½ accessible theme
 - full-text search
 - marketing / landing page
 - "Stumble!" page

@@ -66,9 +66,9 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
   const { baseTheme, mode } = useTheme();
 
   const {
+    applyPreview,
     clearResetHandles,
     flyoutReference,
-    handlePreviewChange,
     handleThemeRowEnter,
     isThemeAreaPointerOver,
     previewTheme,
@@ -255,7 +255,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
               onKeyboardOpen={() => {
                 submenuOpenedByKeyboard.current = true;
               }}
-              onPreviewChange={handlePreviewChange}
+              onApplyPreview={applyPreview}
               onSelect={handleThemeSelect}
             />
           </div>

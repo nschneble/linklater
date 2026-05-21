@@ -1,6 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { vi } from 'vitest';
 import LinkCard from './LinkCard';
 import type { Link } from '../../lib/api';
+
+vi.mock('../../theme/ThemeContext', () => ({
+  useTheme: () => ({ baseTheme: 'scanner-darkly' }),
+}));
 
 const makeLink = (overrides: Partial<Link> = {}): Link => ({
   createdAt: '2026-01-01T00:00:00.000Z',

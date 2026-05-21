@@ -1,11 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MutableRefObject, RefObject } from 'react';
-import type { BaseTheme } from '../../theme/ThemeContext';
+import { CVD_BASE_THEME, type BaseTheme } from '../../theme/ThemeContext';
 
 interface UseThemePreviewResult {
   /** ref attached to the flyout `div` — pass to `ThemeSubmenu`
    * and `useMenuNavigation` so both can read its DOM node. */
   flyoutReference: RefObject<HTMLDivElement | null>;
+  /**
+   * Applies a live preview for `themeId`. Sets `data-theme` on the document
+   * root with a fast 150ms transition. If cvd mode is on and the
+   * previewed theme is not the cvd base theme, `data-cvd` is
+   * temporarily cleared so the preview renders correctly; it is restored by
+   * `resetPreview` when the submenu closes.
+   */
+  applyPreview: (themeId: BaseTheme) => void;
   /** call with a `BaseTheme` value to show a live preview, or
    * `null` to clear without animating back (use `resetPreview`
    * instead when the submenu closes). */
@@ -70,6 +78,9 @@ export function useThemePreview(): UseThemePreviewResult {
   const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  // Stores the data-cvd value that was active when preview started
+  // so resetPreview can restore it after the submenu closes.
+  const previewCvdValue = useRef<string | undefined>(undefined);
   const submenuOpenedByKeyboard = useRef(false);
   const themeRowReference = useRef<HTMLDivElement | null>(null);
 
@@ -98,6 +109,8 @@ export function useThemePreview(): UseThemePreviewResult {
     clearResetHandles();
     setPreviewTheme(null);
     const root = document.documentElement;
+    const savedsavedCvd = previewCvdValue.current;
+    previewCvdValue.current = undefined;
     // Defer CSS var mutations to rAF so React re-renders first (removing the
     // Theme row highlight instantly) before the 600ms transition is applied.
     resetRafHandle.current = requestAnimationFrame(() => {
@@ -105,6 +118,10 @@ export function useThemePreview(): UseThemePreviewResult {
       root.style.setProperty('--theme-transition-duration', '600ms');
       root.style.setProperty('--theme-transition-easing', 'ease-out');
       root.dataset.theme = currentBaseTheme;
+      // Restore data-cvd if it was cleared during preview
+      if (savedsavedCvd !== undefined) {
+        root.dataset.cvd = savedsavedCvd;
+      }
       resetTransitionTimeout.current = setTimeout(() => {
         root.style.removeProperty('--theme-transition-duration');
         root.style.removeProperty('--theme-transition-easing');
@@ -112,6 +129,32 @@ export function useThemePreview(): UseThemePreviewResult {
       }, 650);
     });
   };
+
+  const applyPreview = useCallback(
+    (themeId: BaseTheme) => {
+      clearResetHandles();
+      setPreviewTheme(themeId);
+      const root = document.documentElement;
+      root.style.setProperty('--theme-transition-duration', '150ms');
+      root.style.setProperty('--theme-transition-easing', 'ease-out');
+      root.dataset.theme = themeId;
+
+      // If CVD mode is on and the previewed theme isn't the CVD base
+      // theme, temporarily clear data-cvd so the preview looks correct.
+      // resetPreview will restore it.
+      const currentsavedCvd = root.dataset.cvd;
+
+      if (
+        currentsavedCvd === 'on' &&
+        themeId !== CVD_BASE_THEME &&
+        previewCvdValue.current === undefined
+      ) {
+        previewCvdValue.current = currentsavedCvd;
+        delete root.dataset.cvd;
+      }
+    },
+    [clearResetHandles],
+  );
 
   const handlePreviewChange = (theme: BaseTheme | null) => {
     clearResetHandles();
@@ -140,6 +183,7 @@ export function useThemePreview(): UseThemePreviewResult {
   }, []);
 
   return {
+    applyPreview,
     clearResetHandles,
     flyoutReference,
     handlePreviewChange,

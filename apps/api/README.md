@@ -153,6 +153,19 @@ Recovery codes are also accepted at `verify-otp` as `method: 'recovery'`.
 
 ## API Endpoint Contracts
 
+### Users (`/users/me`) — requires JWT
+
+| Method   | Path        | Auth | Accepted fields            |
+| -------- | ----------- | ---- | -------------------------- |
+| `GET`    | `/users/me` | JWT  | —                          |
+| `PATCH`  | `/users/me` | JWT  | `theme`, `mode`, `cvdMode` |
+| `DELETE` | `/users/me` | JWT  | —                          |
+
+All `PATCH` fields are optional. `cvdMode` is a boolean; when set to
+`true` the server records the preference alongside `theme` and `mode` so
+the state survives a full re-login. The front-end also manages CVD mode
+locally via `localStorage`. (see `apps/web/README.md` — API Patterns)
+
 ### Tokens (`/tokens`) — requires JWT
 
 | Method   | Path          | Auth | Request Body       | Response                                    |

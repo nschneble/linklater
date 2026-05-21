@@ -8,6 +8,7 @@ beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.restoreAllMocks());
 
 const mockUser: User = {
+  cvdMode: false,
   connectedProviders: [],
   email: 'test@example.com',
   emailVerifiedAt: null,
@@ -139,9 +140,14 @@ describe('MobileBottomSheet', () => {
         onClose={onClose}
       />,
     );
+    // Use a theme that is not the active theme (scanner-darkly) so there
+    // is only one element with that label text in the DOM.
+    const nonActiveTheme = THEMES.find(
+      (theme) => theme.id !== defaultProps.baseTheme,
+    )!;
     fireEvent.click(screen.getByText('Theme').closest('button')!);
-    fireEvent.click(screen.getByText(THEMES[1].label));
-    expect(onThemeSelect).toHaveBeenCalledWith(THEMES[1].id);
+    fireEvent.click(screen.getByText(nonActiveTheme.label));
+    expect(onThemeSelect).toHaveBeenCalledWith(nonActiveTheme.id);
   });
 
   it('clicking the scrim calls onClose', () => {

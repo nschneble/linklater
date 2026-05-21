@@ -3,6 +3,10 @@ import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
 import LinksList from './LinksList';
 import type { Link, PaginatedLinks } from '../../lib/api';
 
+vi.mock('../../theme/ThemeContext', () => ({
+  useTheme: () => ({ baseTheme: 'scanner-darkly' }),
+}));
+
 afterEach(() => vi.restoreAllMocks());
 
 beforeEach(() => {

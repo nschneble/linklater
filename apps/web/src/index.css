@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import './theme/styles/default.css';
 @import './theme/styles/border-shadow.css';
+@import './theme/styles/apollo-10-1-2.css';
 @import './theme/styles/before-sunrise.css';
 @import './theme/styles/before-sunset.css';
 @import './theme/styles/before-midnight.css';
@@ -111,4 +112,33 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+[data-cvd='on'] *:focus-visible {
+  outline: 3px solid var(--focus-ring, var(--accent));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--bg);
+}
+
+[data-cvd='on'] :disabled,
+[data-cvd='on'] [aria-disabled='true'] {
+  opacity: 1;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    var(--border) 4px,
+    var(--border) 5px
+  );
+  color: var(--text-muted);
+}
+
+[data-cvd='on'] a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+[data-cvd='on'] [aria-selected='true'],
+[data-cvd='on'] [aria-checked='true'] {
+  box-shadow: inset 3px 0 0 var(--accent);
 }

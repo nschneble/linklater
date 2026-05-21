@@ -4,9 +4,21 @@ import {
   useContext,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
+import {
+  CVD_MODE_KEY,
+  CVD_UPDATED_AT_KEY,
+  MODE_STORAGE_KEY,
+  MODE_UPDATED_AT_KEY,
+  PRE_CVD_THEME_KEY,
+  RECENT_LOCAL_CHANGE_MS,
+  THEME_STORAGE_KEY,
+  THEME_UPDATED_AT_KEY,
+  readLocalStorage,
+} from './storage';
 
 /**
  * All valid theme identifiers, each mapping to a Richard Linklater film.
@@ -15,6 +27,7 @@ import {
  * matching CSS variable file in `apps/web/src/theme/styles/`.
  */
 export type BaseTheme =
+  | 'apollo-10-1-2'
   | 'before-midnight'
   | 'before-sunrise'
   | 'before-sunset'
@@ -28,35 +41,114 @@ export type BaseTheme =
 /** The two color modes. */
 export type Mode = 'light' | 'dark';
 
+/** The theme id for the Apollo 10½ CVD-friendly theme. */
+export const CVD_BASE_THEME: BaseTheme = 'apollo-10-1-2';
+
 /**
- * All available themes with their display labels and accent colors. The
- * accent color is used purely for the color dot in the theme submenu.
+ * All available themes with their display labels, accent colors, swatch
+ * icons, and accessibility flag. The accent color is used for the color dot
+ * in the theme submenu; the swatch icon is overlaid on the dot for quick
+ * visual identification.
  */
-export const THEMES: Array<{ id: BaseTheme; label: string; accent: string }> = [
-  { id: 'scanner-darkly', label: 'A Scanner Darkly', accent: '#a3e635' },
-  { id: 'before-sunrise', label: 'Before Sunrise', accent: '#b45309' },
-  { id: 'before-sunset', label: 'Before Sunset', accent: '#d97706' },
-  { id: 'before-midnight', label: 'Before Midnight', accent: '#f59e0b' },
-  { id: 'boyhood', label: 'Boyhood', accent: '#86efac' },
-  { id: 'dazed-and-confused', label: 'Dazed and Confused', accent: '#dc2626' },
-  { id: 'hit-man', label: 'Hit Man', accent: '#f59e0b' },
-  { id: 'nouvelle-vague', label: 'Nouvelle Vague (Noir)', accent: '#555555' },
-  { id: 'school-of-rock', label: 'School of Rock', accent: '#b91c1c' },
+export const THEMES: Array<{
+  id: BaseTheme;
+  label: string;
+  accent: string;
+  swatchIcon: string;
+  isAccessible?: boolean;
+}> = [
+  {
+    id: 'apollo-10-1-2',
+    label: 'Apollo 10½',
+    accent: '#4e89c9',
+    swatchIcon: 'fa-rocket',
+    isAccessible: true,
+  },
+  {
+    id: 'scanner-darkly',
+    label: 'A Scanner Darkly',
+    accent: '#a3e635',
+    swatchIcon: 'fa-eye',
+  },
+  {
+    id: 'before-sunrise',
+    label: 'Before Sunrise',
+    accent: '#b45309',
+    swatchIcon: 'fa-sun',
+  },
+  {
+    id: 'before-sunset',
+    label: 'Before Sunset',
+    accent: '#d97706',
+    swatchIcon: 'fa-cloud-sun',
+  },
+  {
+    id: 'before-midnight',
+    label: 'Before Midnight',
+    accent: '#f59e0b',
+    swatchIcon: 'fa-moon',
+  },
+  {
+    id: 'boyhood',
+    label: 'Boyhood',
+    accent: '#86efac',
+    swatchIcon: 'fa-child-reaching',
+  },
+  {
+    id: 'dazed-and-confused',
+    label: 'Dazed and Confused',
+    accent: '#dc2626',
+    swatchIcon: 'fa-fire',
+  },
+  {
+    id: 'hit-man',
+    label: 'Hit Man',
+    accent: '#f59e0b',
+    swatchIcon: 'fa-user-secret',
+  },
+  {
+    id: 'nouvelle-vague',
+    label: 'Nouvelle Vague (Noir)',
+    accent: '#555555',
+    swatchIcon: 'fa-clapperboard',
+  },
+  {
+    id: 'school-of-rock',
+    label: 'School of Rock',
+    accent: '#b91c1c',
+    swatchIcon: 'fa-guitar',
+  },
 ];
 
-const VALID_BASE_THEME_IDS = new Set<string>(THEMES.map((theme) => theme.id));
+export const VALID_BASE_THEME_IDS = new Set<string>(
+  THEMES.map((theme) => theme.id),
+);
 
 /**
- * Safely reads from `localStorage`. Returns `null` in SSR environments or
- * when the read fails (e.g. private browsing with blocked storage).
+ * Returns the theme that was last stored in `localStorage`, falling back
+ * to `'scanner-darkly'` for first-time visitors.
  */
-function readLocalStorage(key: string): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
+export function getInitialBaseTheme(): BaseTheme {
+  const stored = readLocalStorage(THEME_STORAGE_KEY);
+  if (stored && VALID_BASE_THEME_IDS.has(stored)) return stored as BaseTheme;
+  return 'scanner-darkly';
+}
+
+/**
+ * Returns the mode that was last stored in `localStorage`. Falls back to
+ * the OS preference (`prefers-color-scheme`) for first-time visitors,
+ * defaulting to `'dark'` when the media query is not available.
+ */
+export function getInitialMode(): Mode {
+  const stored = readLocalStorage(MODE_STORAGE_KEY);
+  if (stored === 'light' || stored === 'dark') return stored;
+  if (
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-color-scheme: light)').matches
+  ) {
+    return 'light';
   }
+  return 'dark';
 }
 
 /**
@@ -72,6 +164,9 @@ interface ThemeContextValue {
    * Sets the base theme from a user action. Persists to `localStorage`
    * with a timestamp so a subsequent server sync cannot overwrite a very
    * recent change.
+   *
+   * If CVD mode is currently on and the user picks a non-Apollo theme,
+   * CVD mode is automatically cleared.
    */
   setBaseTheme: (theme: BaseTheme) => void;
   /**
@@ -97,52 +192,25 @@ interface ThemeContextValue {
    * user changed the mode locally within the last 30 seconds.
    */
   applyServerMode: (mode: Mode) => void;
+  /**
+   * Enables CVD mode: saves the current theme as the pre-CVD theme,
+   * switches to Apollo 10½, and sets `data-cvd="on"` on the document root.
+   * Returns the resolved theme (`'apollo-10-1-2'`) so callers can include
+   * it in server PATCH payloads.
+   */
+  enableCvdMode: () => BaseTheme;
+  /**
+   * Disables CVD mode: restores the pre-CVD theme (or `'scanner-darkly'`
+   * if none was saved or the stored value is invalid), removes `data-cvd`,
+   * and clears the related `localStorage` keys. Returns the restored theme
+   * so callers can include it in server PATCH payloads.
+   */
+  disableCvdMode: () => BaseTheme;
+  /** Whether CVD mode is currently active. */
+  isCvdMode: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
-
-/** `localStorage` key for persisting the selected theme across sessions. */
-const THEME_STORAGE_KEY = 'linklater_theme';
-/** `localStorage` key for persisting the selected color mode across sessions. */
-const MODE_STORAGE_KEY = 'linklater_mode';
-/** Timestamp written alongside the theme when a user action changes it. */
-const THEME_UPDATED_AT_KEY = 'linklater_theme_updated_at';
-/** Timestamp written alongside the mode when a user action changes it. */
-const MODE_UPDATED_AT_KEY = 'linklater_mode_updated_at';
-
-/**
- * If the user changed a preference less than this many milliseconds ago,
- * the server sync in `App.tsx` will not override it. 30s is well beyond
- * any realistic `updateMe` round-trip time.
- */
-const RECENT_LOCAL_CHANGE_MS = 30_000;
-
-/**
- * Returns the theme that was last stored in `localStorage`, falling back
- * to `'scanner-darkly'` for first-time visitors.
- */
-function getInitialBaseTheme(): BaseTheme {
-  const stored = readLocalStorage(THEME_STORAGE_KEY);
-  if (stored && VALID_BASE_THEME_IDS.has(stored)) return stored as BaseTheme;
-  return 'scanner-darkly';
-}
-
-/**
- * Returns the mode that was last stored in `localStorage`. Falls back to
- * the OS preference (`prefers-color-scheme`) for first-time visitors,
- * defaulting to `'dark'` when the media query is not available.
- */
-function getInitialMode(): Mode {
-  const stored = readLocalStorage(MODE_STORAGE_KEY);
-  if (stored === 'light' || stored === 'dark') return stored;
-  if (
-    typeof window !== 'undefined' &&
-    window.matchMedia?.('(prefers-color-scheme: light)').matches
-  ) {
-    return 'light';
-  }
-  return 'dark';
-}
 
 /**
  * Provides theme and color-mode state to the component tree. Applies the
@@ -164,6 +232,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [baseTheme, setBaseThemeState] =
     useState<BaseTheme>(getInitialBaseTheme);
   const [mode, setModeState] = useState<Mode>(getInitialMode);
+  const [isCvdMode, setisCvdMode] = useState<boolean>(
+    () => readLocalStorage(CVD_MODE_KEY) === 'on',
+  );
+
+  // Ref to always have the current baseTheme available in callbacks
+  // without them needing to be recreated on every theme change.
+  const baseThemeRef = useRef<BaseTheme>(baseTheme);
+  useLayoutEffect(() => {
+    baseThemeRef.current = baseTheme;
+  }, [baseTheme]);
 
   // useLayoutEffect ensures data-theme/data-mode are set before any child
   // useEffect reads getComputedStyle (e.g. useThemeOverrides).
@@ -172,11 +250,31 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.mode = mode;
   }, [baseTheme, mode]);
 
-  const setBaseTheme = useCallback((theme: BaseTheme) => {
-    setBaseThemeState(theme);
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-    window.localStorage.setItem(THEME_UPDATED_AT_KEY, Date.now().toString());
-  }, []);
+  useLayoutEffect(() => {
+    if (isCvdMode) {
+      document.documentElement.dataset.cvd = 'on';
+    } else {
+      delete document.documentElement.dataset.cvd;
+    }
+  }, [isCvdMode]);
+
+  const setBaseTheme = useCallback(
+    (theme: BaseTheme) => {
+      setBaseThemeState(theme);
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+      window.localStorage.setItem(THEME_UPDATED_AT_KEY, Date.now().toString());
+
+      // If the user manually switches away from Apollo while CVD mode
+      // is on, clear CVD mode so the two don't become out-of-sync.
+
+      if (isCvdMode && theme !== CVD_BASE_THEME) {
+        setisCvdMode(false);
+        window.localStorage.setItem(CVD_MODE_KEY, 'off');
+        window.localStorage.removeItem(PRE_CVD_THEME_KEY);
+      }
+    },
+    [isCvdMode],
+  );
 
   const setMode = useCallback((newMode: Mode) => {
     setModeState(newMode);
@@ -213,11 +311,44 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(MODE_STORAGE_KEY, serverMode);
   }, []);
 
+  const enableCvdMode = useCallback((): BaseTheme => {
+    const current = baseThemeRef.current;
+    if (current !== CVD_BASE_THEME) {
+      window.localStorage.setItem(PRE_CVD_THEME_KEY, current);
+    }
+    setBaseThemeState(CVD_BASE_THEME);
+    window.localStorage.setItem(THEME_STORAGE_KEY, CVD_BASE_THEME);
+    window.localStorage.setItem(THEME_UPDATED_AT_KEY, Date.now().toString());
+    window.localStorage.setItem(CVD_MODE_KEY, 'on');
+    window.localStorage.setItem(CVD_UPDATED_AT_KEY, Date.now().toString());
+    setisCvdMode(true);
+    return CVD_BASE_THEME;
+  }, []);
+
+  const disableCvdMode = useCallback((): BaseTheme => {
+    const stored = readLocalStorage(PRE_CVD_THEME_KEY);
+    const previousTheme: BaseTheme =
+      stored && VALID_BASE_THEME_IDS.has(stored)
+        ? (stored as BaseTheme)
+        : 'scanner-darkly';
+    setBaseThemeState(previousTheme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, previousTheme);
+    window.localStorage.setItem(THEME_UPDATED_AT_KEY, Date.now().toString());
+    window.localStorage.setItem(CVD_MODE_KEY, 'off');
+    window.localStorage.setItem(CVD_UPDATED_AT_KEY, Date.now().toString());
+    window.localStorage.removeItem(PRE_CVD_THEME_KEY);
+    setisCvdMode(false);
+    return previousTheme;
+  }, []);
+
   const value = useMemo(
     () => ({
       applyServerMode,
       applyServerTheme,
       baseTheme,
+      disableCvdMode,
+      enableCvdMode,
+      isCvdMode,
       mode,
       setBaseTheme,
       setMode,
@@ -227,6 +358,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       applyServerMode,
       applyServerTheme,
       baseTheme,
+      disableCvdMode,
+      enableCvdMode,
+      isCvdMode,
       mode,
       setBaseTheme,
       setMode,

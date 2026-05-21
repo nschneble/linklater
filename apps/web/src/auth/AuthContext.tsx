@@ -26,6 +26,8 @@ import {
 export interface User {
   /** The OAuth providers connected to this account. */
   connectedProviders: Array<{ provider: string; connectedAt: string }>;
+  /** When `true`, CVD mode is enabled on the server. */
+  cvdMode: boolean;
   /** The user's current email address. */
   email: string;
   /** ISO timestamp of when the email was verified, or `null` if unverified. */
@@ -92,16 +94,17 @@ interface AuthContextValue {
  */
 function mapMeToUser(me: Awaited<ReturnType<typeof getMe>>): User {
   return {
+    cvdMode: me.cvdMode,
     connectedProviders: me.connectedProviders,
-    userId: me.userId,
     email: me.email,
     emailVerifiedAt: me.emailVerifiedAt,
     hasPassword: me.hasPassword,
-    pendingEmail: me.pendingEmail,
     mode: me.mode,
+    pendingEmail: me.pendingEmail,
     theme: me.theme,
     twoFactorMethod: me.twoFactorMethod,
     twoFactorPending: me.twoFactorPending,
+    userId: me.userId,
   };
 }
 

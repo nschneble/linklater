@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthContext';
 import AccountSettingsForm from './AccountSettingsForm';
 import ApiTokensSection from './ApiTokensSection';
 import BookmarkletSection from './BookmarkletSection';
+import CvdModeToggle from './CvdModeToggle';
 import DangerZone from './DangerZone';
 import SocialLoginsSection from './SocialLoginsSection';
 import StumbleSection from '../stumble/StumbleSection';
@@ -68,6 +69,7 @@ export default function SettingsView({
         />
       )}
       {user?.hasPassword && <TwoFactorSection />}
+      <CvdModeToggle />
       <BookmarkletSection />
       <ApiTokensSection />
       <StumbleSection />

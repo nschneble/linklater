@@ -15,9 +15,16 @@ describe('Toast', () => {
     expect(screen.getByText('Link saved!')).toBeInTheDocument();
   });
 
-  it('has role="status" for accessibility', () => {
+  it('has role="status" for accessibility when variant is success', () => {
     render(<Toast message="Link saved!" onDismiss={vi.fn()} />);
     expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  it('has role="alert" when variant is error', () => {
+    render(
+      <Toast message="Something failed" onDismiss={vi.fn()} variant="error" />,
+    );
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
   it('shows a dismiss button', () => {
@@ -45,5 +52,40 @@ describe('Toast', () => {
     act(() => vi.advanceTimersByTime(3000 + 150));
 
     expect(onDismiss).toHaveBeenCalledOnce();
+  });
+
+  describe('variant icons', () => {
+    it('renders fa-circle-check icon for success variant', () => {
+      const { container } = render(
+        <Toast message="Saved" onDismiss={vi.fn()} variant="success" />,
+      );
+      const icons = container.querySelectorAll('i.fa-solid');
+      const iconClasses = Array.from(icons).map((icon) => icon.className);
+      expect(iconClasses.some((cls) => cls.includes('fa-circle-check'))).toBe(
+        true,
+      );
+    });
+
+    it('renders fa-circle-exclamation icon for error variant', () => {
+      const { container } = render(
+        <Toast message="Failed" onDismiss={vi.fn()} variant="error" />,
+      );
+      const icons = container.querySelectorAll('i.fa-solid');
+      const iconClasses = Array.from(icons).map((icon) => icon.className);
+      expect(
+        iconClasses.some((cls) => cls.includes('fa-circle-exclamation')),
+      ).toBe(true);
+    });
+
+    it('defaults to the success icon when no variant is provided', () => {
+      const { container } = render(
+        <Toast message="Done" onDismiss={vi.fn()} />,
+      );
+      const icons = container.querySelectorAll('i.fa-solid');
+      const iconClasses = Array.from(icons).map((icon) => icon.className);
+      expect(iconClasses.some((cls) => cls.includes('fa-circle-check'))).toBe(
+        true,
+      );
+    });
   });
 });

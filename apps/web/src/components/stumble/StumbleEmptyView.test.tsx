@@ -3,6 +3,10 @@ import StumbleEmptyView from './StumbleEmptyView';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 
+vi.mock('../../theme/ThemeContext', () => ({
+  useTheme: () => ({ baseTheme: 'scanner-darkly' }),
+}));
+
 const WIKIPEDIA_ARTICLE = {
   title: 'Interesting Topic',
   extract: 'A fascinating subject that warrants further reading.',
