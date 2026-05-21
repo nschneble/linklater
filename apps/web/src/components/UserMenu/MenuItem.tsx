@@ -43,6 +43,7 @@ export default function MenuItem({
       className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-pointer ${className}`}
       type="button"
       role="menuitem"
+      aria-current={active ? 'page' : undefined}
       aria-label={ariaLabel}
       onMouseEnter={(event) => {
         event.currentTarget.focus();

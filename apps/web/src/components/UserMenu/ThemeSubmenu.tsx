@@ -210,7 +210,13 @@ export default function ThemeSubmenu({
               />
             )}
             {theme.isAccessible && (
-              <i className="fa-solid fa-universal-access" aria-hidden="true" />
+              <>
+                <i
+                  className="fa-solid fa-universal-access"
+                  aria-hidden="true"
+                />
+                <span className="sr-only">Accessible theme</span>
+              </>
             )}
           </button>
         ))}

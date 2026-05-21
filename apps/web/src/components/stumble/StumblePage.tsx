@@ -104,6 +104,7 @@ export default function StumblePage() {
             href={state.url}
             target="_blank"
             rel="noreferrer"
+            aria-label="Open link in new tab"
             className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[var(--accent)] text-[var(--accent-fg)] text-sm font-semibold ${FOCUS_RING} rounded-full cursor-pointer transition`}
           >
             <i
