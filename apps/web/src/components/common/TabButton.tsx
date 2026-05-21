@@ -38,10 +38,10 @@ export default function TabButton({
 }: TabButtonProps) {
   return (
     <button
-      className={`relative z-10 w-full text-center ${FOCUS_RING} rounded-full transition-colors duration-200 ${
+      className={`relative z-10 w-full pl-4 pr-4.5 ${FOCUS_RING} rounded-full transition-colors duration-200 ${
         isActive
-          ? 'flex items-center justify-center gap-1 text-[var(--bg)] font-extrabold'
-          : 'font-semibold text-[var(--text-muted)] cursor-pointer'
+          ? 'text-[var(--bg)] font-extrabold'
+          : 'text-[var(--text-muted)] font-semibold cursor-pointer'
       } ${className}`}
       type="button"
       role="tab"
@@ -50,13 +50,27 @@ export default function TabButton({
       aria-selected={isActive}
       {...props}
     >
-      {isActive && (
-        <i
-          className="fa-solid fa-circle-dot text-[0.4rem]"
+      <span className="grid justify-center">
+        <span
+          className="col-start-1 row-start-1 invisible flex items-center justify-center gap-1 font-extrabold"
           aria-hidden="true"
-        />
-      )}
-      {children}
+        >
+          <i
+            className="fa-solid fa-circle-dot text-[0.4rem]"
+            aria-hidden="true"
+          />
+          {children}
+        </span>
+        <span className="col-start-1 row-start-1 flex items-center justify-center gap-1">
+          {isActive && (
+            <i
+              className="fa-solid fa-circle-dot text-[0.4rem]"
+              aria-hidden="true"
+            />
+          )}
+          {children}
+        </span>
+      </span>
     </button>
   );
 }

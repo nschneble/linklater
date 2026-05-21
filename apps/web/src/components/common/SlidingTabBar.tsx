@@ -52,7 +52,8 @@ export default function SlidingTabBar({
   return (
     <div
       ref={tablistReference}
-      className={`relative flex p-1 rounded-full ${className}`}
+      className={`relative grid p-1 rounded-full ${className}`}
+      style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}
       role="tablist"
       aria-label={ariaLabel}
     >
@@ -70,7 +71,7 @@ export default function SlidingTabBar({
           key={tab.id}
           id={tab.id}
           aria-controls={tab.ariaControls}
-          className={`flex-1 ${tabClassName}`}
+          className={tabClassName}
           isActive={index === activeIndex}
           onClick={tab.onClick}
         >
