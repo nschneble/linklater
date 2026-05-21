@@ -1,9 +1,7 @@
 import { LINKS_LIST_ID } from './LinksList';
 import LinksControls from './LinksControls';
 import LinksMobileControls from './LinksMobileControls';
-import TabButton from '../common/TabButton';
-import { useRef } from 'react';
-import { useTabNavigation } from '../../lib/hooks/useTabNavigation';
+import SlidingTabBar from '../common/SlidingTabBar';
 import type { Link } from '../../lib/api';
 import type { LinksFilter } from '../../lib/hooks/useLinks';
 
@@ -62,46 +60,29 @@ export default function LinksToolbar({
   onSearch,
   onToggleForm,
 }: LinksToolbarProps) {
-  const tablistReference = useRef<HTMLDivElement>(null);
-  useTabNavigation(tablistReference);
-
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-4">
-        <div
-          ref={tablistReference}
-          className="relative grid grid-cols-2 shrink-0 p-1 bg-[var(--bg-surface)] border-shadow hover:border-shadow text-xs rounded-full"
-          role="tablist"
-          aria-label="Links filter"
-        >
-          <div
-            aria-hidden="true"
-            className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-[var(--text)] rounded-full"
-            style={{
-              transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transform:
-                filter === 'read' ? 'translateX(100%)' : 'translateX(0)',
-            }}
-          />
-          <TabButton
-            id="tab-unread"
-            aria-controls={LINKS_LIST_ID}
-            className="px-3 py-1.5"
-            isActive={filter === 'unread'}
-            onClick={onNavigateUnread}
-          >
-            Unread
-          </TabButton>
-          <TabButton
-            id="tab-read"
-            aria-controls={LINKS_LIST_ID}
-            className="px-3 py-1.5"
-            isActive={filter === 'read'}
-            onClick={onNavigateRead}
-          >
-            Read
-          </TabButton>
-        </div>
+        <SlidingTabBar
+          ariaLabel="Links filter"
+          activeIndex={filter === 'read' ? 1 : 0}
+          className="shrink-0 bg-[var(--bg-surface)] border-shadow hover:border-shadow text-xs"
+          tabClassName="px-3 py-1.5"
+          tabs={[
+            {
+              id: 'tab-unread',
+              ariaControls: LINKS_LIST_ID,
+              label: 'Unread',
+              onClick: onNavigateUnread,
+            },
+            {
+              id: 'tab-read',
+              ariaControls: LINKS_LIST_ID,
+              label: 'Read',
+              onClick: onNavigateRead,
+            },
+          ]}
+        />
 
         <div className="hidden sm:contents">
           <LinksControls

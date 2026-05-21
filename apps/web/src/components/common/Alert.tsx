@@ -1,4 +1,5 @@
 import { useThemeStyling } from '../../theme/ThemeContext';
+import { resolveThemeClasses, type ThemeClassMap } from '../../lib/styles';
 import type { ReactNode } from 'react';
 
 /**
@@ -35,7 +36,7 @@ const defaultIcons: Record<AlertProps['variant'], string> = {
   success: 'fa-circle-check',
 };
 
-const variantClasses = {
+const variantClasses: Record<AlertProps['variant'], ThemeClassMap> = {
   error: {
     dark: {
       default: 'bg-rose-950/40 border-rose-800 text-rose-400',
@@ -81,11 +82,11 @@ export default function Alert({
   const { baseTheme, mode } = useThemeStyling();
 
   const resolvedIcon = icon ?? defaultIcons[variant];
-  const themeClasses = variantClasses[variant][mode];
-  const resolvedClasses =
-    baseTheme in themeClasses
-      ? themeClasses[baseTheme as keyof typeof themeClasses]
-      : themeClasses.default;
+  const resolvedClasses = resolveThemeClasses(
+    variantClasses[variant],
+    mode,
+    baseTheme,
+  );
 
   return (
     <p

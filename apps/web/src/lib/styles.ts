@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import type { BaseTheme, Mode } from '../theme/constants';
 
 /**
  * Shared Tailwind CSS class strings for interactive element focus rings.
@@ -45,4 +46,32 @@ export function menuRevealStyle(
     opacity: isOpen ? 1 : 0,
     transform: isOpen ? openTransform : closedTransform,
   };
+}
+
+/**
+ * Shape used by themed variant class maps: an outer keying by mode, an inner
+ * keying by base theme, with a `default` fallback for themes that don't have
+ * an override.
+ */
+export interface ThemeClassMap {
+  light: Partial<Record<BaseTheme, string>> & { default: string };
+  dark: Partial<Record<BaseTheme, string>> & { default: string };
+}
+
+/**
+ * Looks up the Tailwind class string for the current `(mode, baseTheme)`
+ * pair, falling back to the `default` branch when no per-theme override
+ * exists. Extracted from `Alert` + `StatusBadge` where the same pattern
+ * appeared verbatim.
+ */
+export function resolveThemeClasses(
+  map: ThemeClassMap,
+  mode: Mode,
+  baseTheme: BaseTheme,
+): string {
+  const themeClasses = map[mode];
+  if (baseTheme in themeClasses) {
+    return themeClasses[baseTheme] ?? themeClasses.default;
+  }
+  return themeClasses.default;
 }

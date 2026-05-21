@@ -1,4 +1,5 @@
 import { useThemeStyling } from '../../theme/ThemeContext';
+import { resolveThemeClasses, type ThemeClassMap } from '../../lib/styles';
 import type { ReactNode } from 'react';
 
 interface StatusBadgeProps {
@@ -26,7 +27,7 @@ const variantShape: Record<StatusBadgeProps['variant'], string> = {
   info: 'rounded-sm',
 };
 
-const variantClasses = {
+const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
   success: {
     dark: {
       default: 'bg-emerald-950/20 border-emerald-800/40 text-emerald-400',
@@ -91,11 +92,11 @@ export default function StatusBadge({
   const { baseTheme, mode } = useThemeStyling();
 
   const resolvedIcon = icon ?? defaultIcons[variant];
-  const themeClasses = variantClasses[variant][mode];
-  const resolvedClasses =
-    baseTheme in themeClasses
-      ? themeClasses[baseTheme as keyof typeof themeClasses]
-      : themeClasses.default;
+  const resolvedClasses = resolveThemeClasses(
+    variantClasses[variant],
+    mode,
+    baseTheme,
+  );
 
   return (
     <span

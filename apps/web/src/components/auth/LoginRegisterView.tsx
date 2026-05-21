@@ -3,11 +3,9 @@ import FormInput from '../common/FormInput';
 import IconButton from '../common/IconButton';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
-import TabButton from '../common/TabButton';
+import SlidingTabBar from '../common/SlidingTabBar';
 import AuthCard from './AuthCard';
-import { useRef } from 'react';
 import type { FormEvent, RefObject } from 'react';
-import { useTabNavigation } from '../../lib/hooks/useTabNavigation';
 
 const googleSsoEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true';
 const appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true';
@@ -61,9 +59,6 @@ export default function LoginRegisterView({
   password,
   passwordReference,
 }: LoginRegisterViewProps) {
-  const tablistReference = useRef<HTMLDivElement>(null);
-  useTabNavigation(tablistReference);
-
   return (
     <AuthCard>
       <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold text-balance">
@@ -86,40 +81,26 @@ export default function LoginRegisterView({
         <>
           {/* mb-[24.5px] reserves the exact height of an Alert row so the layout
               does not shift when an error appears below the form. */}
-          <div
-            ref={tablistReference}
-            className="relative flex mb-[24.5px] p-1 bg-[var(--bg-elevated)] rounded-full"
-            role="tablist"
-            aria-label="Authentication mode"
-          >
-            <div
-              aria-hidden="true"
-              className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-[var(--text)] rounded-full"
-              style={{
-                transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-                transform:
-                  mode === 'register' ? 'translateX(100%)' : 'translateX(0)',
-              }}
-            />
-            <TabButton
-              id="auth-tab-login"
-              aria-controls="auth-form-panel"
-              className="flex-1 py-2 text-sm"
-              isActive={mode === 'login'}
-              onClick={() => onModeChange('login')}
-            >
-              Log in
-            </TabButton>
-            <TabButton
-              id="auth-tab-register"
-              aria-controls="auth-form-panel"
-              className="flex-1 py-2 text-sm"
-              isActive={mode === 'register'}
-              onClick={() => onModeChange('register')}
-            >
-              Sign up
-            </TabButton>
-          </div>
+          <SlidingTabBar
+            ariaLabel="Authentication mode"
+            activeIndex={mode === 'register' ? 1 : 0}
+            className="mb-[24.5px] bg-[var(--bg-elevated)]"
+            tabClassName="py-2 text-sm"
+            tabs={[
+              {
+                id: 'auth-tab-login',
+                ariaControls: 'auth-form-panel',
+                label: 'Log in',
+                onClick: () => onModeChange('login'),
+              },
+              {
+                id: 'auth-tab-register',
+                ariaControls: 'auth-form-panel',
+                label: 'Sign up',
+                onClick: () => onModeChange('register'),
+              },
+            ]}
+          />
 
           <form
             id="auth-form-panel"
