@@ -1,10 +1,10 @@
+import IconButton from '../common/IconButton';
+import PrimaryButton from '../common/PrimaryButton';
 import { createPortal } from 'react-dom';
 import { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import PrimaryButton from '../common/PrimaryButton';
-import { FOCUS_RING } from '../../lib/styles';
 import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
 import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
+import { useNavigate } from 'react-router-dom';
 
 interface WelcomeModalProps {
   /** Called when the user dismisses the modal via the button, Escape, or backdrop. */
@@ -35,6 +35,7 @@ const DESCRIPTION_ID = 'welcome-description';
 export default function WelcomeModal({ onClose }: WelcomeModalProps) {
   const dialogReference = useRef<HTMLDivElement>(null);
   const headingReference = useRef<HTMLHeadingElement>(null);
+  const navigate = useNavigate();
 
   useFocusReturn(true);
   useFocusTrap(dialogReference, { onEscape: onClose });
@@ -72,7 +73,7 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
         aria-labelledby={HEADING_ID}
         aria-describedby={DESCRIPTION_ID}
       >
-        <div className="space-y-5">
+        <div className="space-y-10">
           <div className="space-y-1">
             <h2
               ref={headingReference}
@@ -80,54 +81,74 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
               tabIndex={-1}
               className="text-[var(--text)] text-lg font-semibold text-balance focus:outline-none"
             >
-              Welcome to Linklater
+              Welcome to Linklater!
             </h2>
-            <p className="text-[var(--text-muted)] text-sm">
-              Glad you&rsquo;re here.
+            <p
+              id={DESCRIPTION_ID}
+              className="text-[var(--text-muted)] text-sm text-pretty"
+            >
+              So, um… what now?
             </p>
           </div>
-          <p
-            id={DESCRIPTION_ID}
-            className="text-[var(--text-muted)] text-sm text-pretty"
-          >
-            Linklater is your read-it-later home. Save links from anywhere,
-            browse them on your terms, and clear the queue when you&rsquo;re
-            ready.
-          </p>
-          <div className="flex items-start gap-3">
-            <i
-              className="mt-0.5 w-4 text-center text-[var(--text-subtle)] text-sm fa-solid fa-bookmark"
-              aria-hidden="true"
-            />
-            <p className="flex-1 text-[var(--text-muted)] text-sm text-pretty">
-              Drag the bookmarklet to your bookmarks bar to save links from any
-              tab.{' '}
-              <Link
-                to="/settings#bookmarklet"
-                onClick={onClose}
-                className={`text-[var(--accent)] hover:underline ${FOCUS_RING} rounded-sm`}
-              >
-                Open settings to grab the bookmarklet.
-              </Link>
-            </p>
-          </div>
-          <div className="flex items-start gap-3">
-            <i
-              className="mt-0.5 w-4 text-center text-[var(--text-subtle)] text-sm fa-solid fa-shuffle"
-              aria-hidden="true"
-            />
-            <p className="flex-1 text-[var(--text-muted)] text-sm text-pretty">
-              Press{' '}
-              <kbd className="px-2 py-0.5 bg-[var(--bg-elevated)] border-shadow text-[var(--text)] text-xs rounded-md font-mono">
-                D
-              </kbd>{' '}
-              anywhere or tap Stumble in the header to jump to a random unread
-              link.
-            </p>
+          <div className="space-y-5">
+            <div className="flex items-start gap-3 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
+              <span class="fa-stack fa-xl text-[var(--text-subtle)]">
+                <i class="fa-solid fa-bookmark fa-stack-2x"></i>
+                <i class="fa-solid fa-share fa-stack-1x fa-inverse"></i>
+              </span>
+              <div className="flex-1">
+                <p className="text-[var(--text-muted)] text-sm text-pretty">
+                  <span className="font-semibold">
+                    The Linklater bookmarklet is a pretty sweet way to save
+                    links.
+                  </span>{' '}
+                  Drag it to your bookmarks bar, then click it on any page to
+                  save the link directly to Linklater.{' '}
+                </p>
+                <IconButton
+                  variant="elevated"
+                  className="w-full mt-4"
+                  onClick={() => navigate('/settings#bookmarklet')}
+                >
+                  <i
+                    className="fa-solid fa-book-bookmark text-[0.7rem]"
+                    aria-hidden="true"
+                  />
+                  Get the bookmarklet
+                </IconButton>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
+              <span class="fa-stack fa-xl text-[var(--text-subtle)]">
+                <i class="fa-solid fa-laptop fa-stack-2x"></i>
+                <i class="fa-brands fa-stumbleupon fa-stack-1x fa-inverse"></i>
+              </span>
+              <div className="flex-1">
+                <p className="text-[var(--text-muted)] text-sm text-pretty">
+                  <span className="font-semibold">
+                    The Linklater "Stumble!" feature brings back the casual fun
+                    of discovery.{' '}
+                  </span>
+                  Visit the page to instantly open a random unread link from
+                  your collection.
+                </p>
+                <IconButton
+                  variant="elevated"
+                  className="w-full mt-4"
+                  onClick={() => navigate('/settings#stumble')}
+                >
+                  <i
+                    className="fa-solid fa-shuffle text-[0.7rem]"
+                    aria-hidden="true"
+                  />
+                  Get the link
+                </IconButton>
+              </div>
+            </div>
           </div>
           <div className="flex justify-end pt-1">
             <PrimaryButton type="button" onClick={onClose}>
-              Got it
+              Close welcome
             </PrimaryButton>
           </div>
         </div>
