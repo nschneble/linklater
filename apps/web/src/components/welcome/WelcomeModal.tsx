@@ -101,9 +101,11 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                   <span className="font-semibold">
                     The Linklater bookmarklet is a pretty sweet way to save
                     links.
-                  </span>{' '}
-                  Drag it to your bookmarks bar, then click it on any page to
-                  save the link directly to Linklater.{' '}
+                  </span>
+                  <span className="mt-1">
+                    Drag it to your bookmarks bar, then click it on any page to
+                    save the link directly to Linklater.
+                  </span>
                 </p>
                 <IconButton
                   variant="elevated"
@@ -127,10 +129,12 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                 <p className="text-[var(--text-muted)] text-sm text-pretty">
                   <span className="font-semibold">
                     The Linklater "Stumble!" feature brings back the casual fun
-                    of discovery.{' '}
+                    of discovery.
                   </span>
-                  Visit the page to instantly open a random unread link from
-                  your collection.
+                  <span className="mt-1">
+                    Visit the page to instantly open a random unread link from
+                    your collection.
+                  </span>
                 </p>
                 <IconButton
                   variant="elevated"
