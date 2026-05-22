@@ -58,6 +58,30 @@ export default function AppShell() {
   const mainReference = useRef<HTMLElement>(null);
   const isFirstRender = useRef(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  // The WelcomeModal pitches the bookmarklet, which can't be dragged to a
+  // bookmarks bar on touch devices. Gate it to >=md viewports so mobile
+  // users aren't shown irrelevant onboarding. A user who first lands on
+  // mobile will see it the next time they visit on desktop, since
+  // `markWelcomed` only fires when the modal is dismissed.
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(min-width: 768px)').matches
+      : true,
+  );
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
+      return;
+    }
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+    const handleChange = (event: MediaQueryListEvent) =>
+      setIsDesktop(event.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   const handleUserMenuToggle = useCallback(
     () => setShowUserMenu((open) => !open),
@@ -97,13 +121,18 @@ export default function AppShell() {
   // views. The isFirstRender guard prevents stealing focus on the
   // initial page load — on mount the browser has not set focus anywhere
   // meaningful yet, so moving it to <main> would skip the skip link and
-  // surprise keyboard users who land tabbed into the page header.
+  // surprise keyboard users who land tabbed into the page header. Skip
+  // the focus shift when the URL carries a hash, because the destination
+  // view is about to deep-link focus to a specific section and we'd
+  // otherwise steal focus right back to <main>.
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
+    if (location.hash) return;
     mainReference.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
 
   // Global 'x' shortcut to open/close the user menu from anywhere.
@@ -192,7 +221,7 @@ export default function AppShell() {
         )}
       </main>
 
-      {user.welcomedAt === null && (
+      {user.welcomedAt === null && isDesktop && (
         <Suspense fallback={null}>
           <WelcomeModal onClose={markWelcomed} />
         </Suspense>

@@ -14,9 +14,14 @@ export default function StumbleSection() {
     <div
       id="stumble"
       tabIndex={-1}
+      role="region"
+      aria-labelledby="stumble-heading"
       className="max-w-md space-y-3 focus:outline-none"
     >
-      <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
+      <h2
+        id="stumble-heading"
+        className="text-[var(--text)] text-sm font-semibold text-balance"
+      >
         Stumble!
       </h2>
       <p className="text-[var(--text-muted)] text-xs text-pretty">

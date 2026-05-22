@@ -37,8 +37,19 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
   const headingReference = useRef<HTMLHeadingElement>(null);
   const navigate = useNavigate();
 
-  useFocusReturn(true);
+  const { skipRestore } = useFocusReturn(true);
   useFocusTrap(dialogReference, { onEscape: onClose });
+
+  // Used by the bookmarklet/stumble action buttons: dismiss the modal and
+  // navigate to the corresponding section in Settings. Focus restoration is
+  // suppressed because the trigger that opened the modal may no longer be
+  // in the tab order after the route change; SettingsView moves focus to
+  // the target section instead.
+  const handleSectionLink = (path: string) => {
+    skipRestore();
+    onClose();
+    navigate(path);
+  };
 
   // Focus the heading on mount. Heading is tabbable only programmatically
   // (tabIndex=-1) so it does not appear in the keyboard tab cycle — Tab from
@@ -92,25 +103,26 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
           </div>
           <div className="space-y-5">
             <div className="flex items-start gap-3 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
-              <span class="fa-stack fa-xl text-[var(--text-subtle)]">
-                <i class="fa-solid fa-bookmark fa-stack-2x"></i>
-                <i class="fa-solid fa-share fa-stack-1x fa-inverse"></i>
+              <span
+                className="fa-stack fa-xl text-[var(--text-subtle)]"
+                aria-hidden="true"
+              >
+                <i className="fa-solid fa-bookmark fa-stack-2x" />
+                <i className="fa-solid fa-share fa-stack-1x fa-inverse" />
               </span>
               <div className="flex-1">
                 <p className="text-[var(--text-muted)] text-sm text-pretty">
                   <span className="font-semibold">
                     The Linklater bookmarklet is a pretty sweet way to save
-                    links.
+                    links.{' '}
                   </span>
-                  <span className="mt-1">
-                    Drag it to your bookmarks bar, then click it on any page to
-                    save the link directly to Linklater.
-                  </span>
+                  Drag it to your bookmarks bar, then click it on any page to
+                  save the link directly to Linklater.
                 </p>
                 <IconButton
                   variant="elevated"
                   className="w-full mt-4"
-                  onClick={() => navigate('/settings#bookmarklet')}
+                  onClick={() => handleSectionLink('/settings#bookmarklet')}
                 >
                   <i
                     className="fa-solid fa-book-bookmark text-[0.7rem]"
@@ -121,25 +133,26 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
               </div>
             </div>
             <div className="flex items-start gap-3 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
-              <span class="fa-stack fa-xl text-[var(--text-subtle)]">
-                <i class="fa-solid fa-laptop fa-stack-2x"></i>
-                <i class="fa-brands fa-stumbleupon fa-stack-1x fa-inverse"></i>
+              <span
+                className="fa-stack fa-xl text-[var(--text-subtle)]"
+                aria-hidden="true"
+              >
+                <i className="fa-solid fa-laptop fa-stack-2x" />
+                <i className="fa-brands fa-stumbleupon fa-stack-1x fa-inverse" />
               </span>
               <div className="flex-1">
                 <p className="text-[var(--text-muted)] text-sm text-pretty">
                   <span className="font-semibold">
                     The Linklater "Stumble!" feature brings back the casual fun
-                    of discovery.
+                    of discovery.{' '}
                   </span>
-                  <span className="mt-1">
-                    Visit the page to instantly open a random unread link from
-                    your collection.
-                  </span>
+                  Visit the page to instantly open a random unread link from
+                  your collection.
                 </p>
                 <IconButton
                   variant="elevated"
                   className="w-full mt-4"
-                  onClick={() => navigate('/settings#stumble')}
+                  onClick={() => handleSectionLink('/settings#stumble')}
                 >
                   <i
                     className="fa-solid fa-shuffle text-[0.7rem]"

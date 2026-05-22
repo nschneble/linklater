@@ -60,9 +60,14 @@ export default function BookmarkletSection() {
     <div
       id="bookmarklet"
       tabIndex={-1}
+      role="region"
+      aria-labelledby="bookmarklet-heading"
       className="max-w-md space-y-3 focus:outline-none"
     >
-      <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
+      <h2
+        id="bookmarklet-heading"
+        className="text-[var(--text)] text-sm font-semibold text-balance"
+      >
         Bookmarklet
       </h2>
       <p className="text-[var(--text-muted)] text-xs text-pretty">

@@ -47,6 +47,25 @@ describe('useFocusReturn', () => {
     innerInput.remove();
   });
 
+  it('skips restoration when skipRestore is called before unmount', () => {
+    const trigger = mountTriggerButton();
+    const { result, unmount } = renderHook(() => useFocusReturn(true));
+
+    const innerInput = document.createElement('input');
+    document.body.appendChild(innerInput);
+    innerInput.focus();
+
+    result.current.skipRestore();
+    unmount();
+    // Focus stays where the consumer left it instead of returning to the
+    // captured trigger — important for navigation cases where the trigger
+    // is no longer the right destination.
+    expect(document.activeElement).toBe(innerInput);
+
+    trigger.remove();
+    innerInput.remove();
+  });
+
   it('captures a fresh trigger when isOpen flips from false to true', () => {
     const triggerA = mountTriggerButton();
     const { rerender, unmount } = renderHook(

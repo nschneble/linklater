@@ -17,7 +17,9 @@ vi.mock('./ApiTokensSection', () => ({
 }));
 
 vi.mock('./BookmarkletSection', () => ({
-  default: () => <div data-testid="bookmarklet-section" />,
+  default: () => (
+    <div id="bookmarklet" tabIndex={-1} data-testid="bookmarklet-section" />
+  ),
 }));
 
 vi.mock('./CvdModeToggle', () => ({
@@ -29,7 +31,9 @@ vi.mock('./DangerZone', () => ({
 }));
 
 vi.mock('../stumble/StumbleSection', () => ({
-  default: () => <div data-testid="stumble-section" />,
+  default: () => (
+    <div id="stumble" tabIndex={-1} data-testid="stumble-section" />
+  ),
 }));
 
 vi.mock('./TwoFactorSection', () => ({
@@ -158,6 +162,39 @@ describe('SettingsView', () => {
       expect(
         screen.queryByTestId('social-logins-section'),
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe('hash deep-linking', () => {
+    it('scrolls and focuses the bookmarklet section when route includes #bookmarklet', () => {
+      const scrollSpy = vi.fn();
+      Element.prototype.scrollIntoView = scrollSpy;
+
+      renderSettingsView({ route: '/settings#bookmarklet' });
+
+      const section = screen.getByTestId('bookmarklet-section');
+      expect(scrollSpy).toHaveBeenCalled();
+      expect(document.activeElement).toBe(section);
+    });
+
+    it('scrolls and focuses the stumble section when route includes #stumble', () => {
+      const scrollSpy = vi.fn();
+      Element.prototype.scrollIntoView = scrollSpy;
+
+      renderSettingsView({ route: '/settings#stumble' });
+
+      const section = screen.getByTestId('stumble-section');
+      expect(scrollSpy).toHaveBeenCalled();
+      expect(document.activeElement).toBe(section);
+    });
+
+    it('does not scroll or move focus when route has no hash', () => {
+      const scrollSpy = vi.fn();
+      Element.prototype.scrollIntoView = scrollSpy;
+
+      renderSettingsView({ route: '/settings' });
+
+      expect(scrollSpy).not.toHaveBeenCalled();
     });
   });
 

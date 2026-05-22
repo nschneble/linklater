@@ -3,7 +3,22 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import WelcomeModal from './WelcomeModal';
 
-beforeEach(() => vi.clearAllMocks());
+const navigateMock = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual =
+    await vi.importActual<typeof import('react-router-dom')>(
+      'react-router-dom',
+    );
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
+
+beforeEach(() => {
+  navigateMock.mockReset();
+  vi.clearAllMocks();
+});
 afterEach(() => vi.restoreAllMocks());
 
 function renderModal(onClose = vi.fn()) {
@@ -24,30 +39,29 @@ describe('WelcomeModal', () => {
     expect(
       screen.getByRole('heading', { name: /welcome to linklater/i, level: 2 }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/your read-it-later home/i)).toBeInTheDocument();
+    expect(screen.getByText(/what now\?/i)).toBeInTheDocument();
   });
 
-  it('surfaces the bookmarklet feature with a settings link', () => {
+  it('surfaces the bookmarklet feature with a deep-link button', () => {
     renderModal();
 
     expect(
-      screen.getByText(/drag the bookmarklet to your bookmarks bar/i),
+      screen.getByText(/drag it to your bookmarks bar/i),
     ).toBeInTheDocument();
-    const settingsLink = screen.getByRole('link', {
-      name: /open settings to grab the bookmarklet/i,
-    });
-    expect(settingsLink).toHaveAttribute('href', '/settings#bookmarklet');
+    expect(
+      screen.getByRole('button', { name: /get the bookmarklet/i }),
+    ).toBeInTheDocument();
   });
 
-  it('surfaces the stumble feature with a D keyboard shortcut hint', () => {
+  it('surfaces the stumble feature with a deep-link button', () => {
     renderModal();
 
     expect(
-      screen.getByText(/jump to a random unread link/i),
+      screen.getByText(/random unread link from your collection/i),
     ).toBeInTheDocument();
-    // The shortcut is wrapped in <kbd> for semantic clarity.
-    const kbd = screen.getByText('D', { selector: 'kbd' });
-    expect(kbd).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /get the link/i }),
+    ).toBeInTheDocument();
   });
 
   it('exposes the dialog with aria-modal and aria-describedby pointing at the overview', () => {
@@ -61,12 +75,12 @@ describe('WelcomeModal', () => {
     const describedById = dialog.getAttribute('aria-describedby');
     expect(describedById).not.toBeNull();
     const description = document.getElementById(describedById!);
-    expect(description?.textContent).toMatch(/your read-it-later home/i);
+    expect(description?.textContent).toMatch(/what now\?/i);
   });
 
-  it('calls onClose when the "Got it" button is clicked', () => {
+  it('calls onClose when the close button is clicked', () => {
     const { onClose } = renderModal();
-    fireEvent.click(screen.getByRole('button', { name: /got it/i }));
+    fireEvent.click(screen.getByRole('button', { name: /close welcome/i }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
@@ -82,14 +96,20 @@ describe('WelcomeModal', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('calls onClose when the bookmarklet link is clicked so the welcome flag still fires on navigate-away', () => {
+  it('closes the modal and navigates to the bookmarklet section when the bookmarklet button is clicked', () => {
     const { onClose } = renderModal();
     fireEvent.click(
-      screen.getByRole('link', {
-        name: /open settings to grab the bookmarklet/i,
-      }),
+      screen.getByRole('button', { name: /get the bookmarklet/i }),
     );
     expect(onClose).toHaveBeenCalledOnce();
+    expect(navigateMock).toHaveBeenCalledWith('/settings#bookmarklet');
+  });
+
+  it('closes the modal and navigates to the stumble section when the stumble button is clicked', () => {
+    const { onClose } = renderModal();
+    fireEvent.click(screen.getByRole('button', { name: /get the link/i }));
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(navigateMock).toHaveBeenCalledWith('/settings#stumble');
   });
 
   it('moves initial focus to the heading so the first Tab lands on an action', () => {
