@@ -53,7 +53,7 @@ export default function Header({
 }: HeaderProps) {
   const { baseTheme, mode } = useTheme();
   const avatarButtonReference = useRef<HTMLButtonElement | null>(null);
-  const headerReference = useRef<HTMLElement | null>(null);
+  const userMenuContainerReference = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!isUserMenuOpen) return;
@@ -61,8 +61,8 @@ export default function Header({
     function handleOutsideInteraction(event: MouseEvent | TouchEvent) {
       const target = event.target as Node;
       if (
-        headerReference.current &&
-        !headerReference.current.contains(target)
+        userMenuContainerReference.current &&
+        !userMenuContainerReference.current.contains(target)
       ) {
         onUserMenuClose();
       }
@@ -86,10 +86,7 @@ export default function Header({
   }, [isUserMenuOpen, onUserMenuClose]);
 
   return (
-    <header
-      ref={headerReference}
-      className="bg-[var(--bg-elevated)] border-b border-[var(--border)]"
-    >
+    <header className="bg-[var(--bg-elevated)] border-b border-[var(--border)]">
       <div className="flex items-center justify-between max-w-4xl mx-auto px-4 py-3">
         <button
           type="button"
@@ -115,7 +112,10 @@ export default function Header({
           </div>
         </button>
 
-        <div className="flex items-center gap-3">
+        <div
+          ref={userMenuContainerReference}
+          className="flex items-center gap-3"
+        >
           <UserMenu
             ref={avatarButtonReference}
             user={user}
