@@ -135,6 +135,7 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
   - 10s — attention limit; give progress feedback beyond this
   - See [Response Time Limits](https://www.nngroup.com/articles/response-times-3-important-limits/)
 - Polish UI details — see [Details That Make Interfaces Feel Better](https://jakub.kr/writing/details-that-make-interfaces-feel-better)
+- Less doesn't need more — never ask the user to click a "Load more"/"Show more"/"Expand" affordance just to surface a single remaining item. Predict when the next batch would leave one trailing item and grab it in the same request; if total isn't knowable up front, auto-load the trailing item once it's detected so the user never sees a button labelled "1 remaining". See [Less Doesn't Need More](https://unsung.aresluna.org/less-doesnt-need-more/) — implemented in `useLinksData` + `LinksList`.
 - Embrace slow software — see [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software)
 - Clean up — kill listeners and temp processes when done
 - Run `bin/flintest` when done to verify format, lint, test, build
