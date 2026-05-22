@@ -33,11 +33,11 @@ export default function SettingsSidebar({
                 href={`#${section.hash}`}
                 aria-current={isActive ? 'location' : undefined}
                 onClick={() => onNavigate?.(section.hash)}
-                className={`flex items-center gap-2.5 w-full px-3 py-2 ${
+                className={`flex items-center gap-2.5 w-full min-h-10 px-3 py-2 ${
                   isActive
                     ? 'bg-[var(--bg-elevated)] text-[var(--text)] font-semibold'
                     : 'text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text)] font-medium'
-                } text-sm ${FOCUS_RING} rounded-lg transition-colors duration-150`}
+                } text-sm ${FOCUS_RING} rounded-lg motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms]`}
               >
                 <i
                   className={`fa-solid ${section.icon} ${

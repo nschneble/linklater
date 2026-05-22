@@ -20,11 +20,16 @@ const INTENT_LOCKOUT_MS = 700;
  * of a scroll listener.
  *
  * - On `location.hash` change, the active hash snaps to it immediately.
- * - When the consumer calls `markIntent(hash)` (e.g. a TOC click), the
+ * - When the consumer calls `markIntent()` (e.g. a TOC click), the
  *   observer's updates are ignored for `INTENT_LOCKOUT_MS` so a pass-through
  *   section mid-scroll doesn't briefly flicker as active.
  * - Picks the first intersecting section in document order; if none
  *   intersect, the previous value is kept (prevents flicker between groups).
+ *
+ * Intersection state is persisted in a ref across observer batches because
+ * IntersectionObserver only fires entries for sections whose state changed
+ * — relying on the current batch alone would miss sections that are still
+ * intersecting from a previous batch.
  */
 export function useSettingsScrollSpy({
   sectionIds,
@@ -38,6 +43,7 @@ export function useSettingsScrollSpy({
       : (sectionIds[0] ?? '');
   const [activeHash, setActiveHash] = useState<string>(initialActive);
   const intentLockoutUntil = useRef<number>(0);
+  const intersectionState = useRef<Map<string, boolean>>(new Map());
 
   // Hash-driven updates beat the observer. When the user clicks a TOC link,
   // React Router updates location.hash and we snap immediately.
@@ -57,32 +63,22 @@ export function useSettingsScrollSpy({
       .filter((element): element is HTMLElement => element !== null);
     if (elements.length === 0) return;
 
+    // Reset state for the current set of sections.
+    intersectionState.current = new Map(sectionIds.map((id) => [id, false]));
+
     const observer = new IntersectionObserver(
       (entries) => {
+        for (const entry of entries) {
+          const id = (entry.target as HTMLElement).id;
+          if (id) intersectionState.current.set(id, entry.isIntersecting);
+        }
+
         if (Date.now() < intentLockoutUntil.current) return;
 
-        // Build a set of currently-intersecting ids so we can pick the
-        // first one in document order. We can't rely on entries alone
-        // because each callback only contains changed sections.
-        const intersecting = new Set<string>();
-        for (const id of sectionIds) {
-          const element = document.getElementById(id);
-          if (!element) continue;
-          const wasIntersecting = entries.find(
-            (entry) => entry.target === element,
-          );
-          if (wasIntersecting) {
-            if (wasIntersecting.isIntersecting) intersecting.add(id);
-          }
-        }
-
-        // Merge in sections not in this entry batch that were previously
-        // intersecting (still are, observer didn't fire for them).
-        // Cheaper than tracking state — just trust the next entry batch.
-        const firstActive = sectionIds.find((id) => intersecting.has(id));
-        if (firstActive) {
-          setActiveHash(firstActive);
-        }
+        const firstActive = sectionIds.find(
+          (id) => intersectionState.current.get(id) === true,
+        );
+        if (firstActive) setActiveHash(firstActive);
       },
       { rootMargin, threshold: 0 },
     );
