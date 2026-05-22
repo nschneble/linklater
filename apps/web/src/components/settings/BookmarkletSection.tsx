@@ -60,7 +60,7 @@ export default function BookmarkletSection() {
     <div
       id="bookmarklet"
       tabIndex={-1}
-      className="scroll-mt-24 max-w-md space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-lg"
+      className="scroll-mt-24 max-w-md space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
     >
       <h3
         id="bookmarklet-heading"
@@ -86,7 +86,7 @@ export default function BookmarkletSection() {
         />
         Save to Linklater
       </a>
-      <p className="text-[var(--text-subtle)] text-xs text-pretty">
+      <p className="mb-8 text-[var(--text-subtle)] text-xs text-pretty">
         Your auth token is embedded in this bookmarklet. Keep it private. It
         expires after 90 days. Reinstall it from this page when it does.
       </p>

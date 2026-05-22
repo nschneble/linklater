@@ -23,8 +23,8 @@ export default function StumbleSection() {
         Stumble!
       </h3>
       <p className="text-[var(--text-muted)] text-xs text-pretty">
-        Drag this to your bookmarks bar. Click it to automatically open a random
-        unread link from your collection!
+        Drag this button to your bookmarks bar. Click it to automatically open a
+        random unread link from your collection.
       </p>
       <a
         href="/stumble"

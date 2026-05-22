@@ -213,9 +213,6 @@ export default function TwoFactorSection() {
       {/* State A — 2FA not enabled */}
       {!reauthAction && !twoFactorMethod && !totpSetup && !twoFactorPending && (
         <div className="space-y-3">
-          <p className="text-[var(--text-muted)] text-sm">
-            Add a second layer of security to your account.
-          </p>
           {error && <Alert variant="error">{error}</Alert>}
           <div className="flex items-center gap-2">
             <PrimaryButton

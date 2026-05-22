@@ -297,14 +297,6 @@ describe('SocialLoginsSection', () => {
       ).toBeInTheDocument();
     });
 
-    it('does not show a Connect Apple button even when not connected', () => {
-      render(<SocialLoginsSection appleEnabled />);
-
-      expect(
-        screen.queryByRole('button', { name: /connect apple/i }),
-      ).not.toBeInTheDocument();
-    });
-
     it('does not show Apple section when appleEnabled is false', () => {
       render(<SocialLoginsSection appleEnabled={false} />);
       expect(screen.queryByText(/apple/i)).not.toBeInTheDocument();

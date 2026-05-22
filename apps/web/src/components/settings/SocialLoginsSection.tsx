@@ -115,22 +115,6 @@ export default function SocialLoginsSection({
       {disconnectError && <Alert variant="error">{disconnectError}</Alert>}
 
       <div className="space-y-3">
-        {googleEnabled && (
-          <ProviderRow
-            confirmDisconnect={confirmDisconnect}
-            connected={isConnected('google')}
-            disconnecting={disconnecting}
-            hasPassword={hasPassword}
-            provider="google"
-            label="Google"
-            onCancelDisconnect={handleCancelDisconnect}
-            onConfirmDisconnect={handleConfirmDisconnect}
-            onConnect={() => handleConnect('google')}
-            onDisconnect={() => handleDisconnect('google')}
-            showConnect
-          />
-        )}
-
         {appleEnabled && (
           <ProviderRow
             confirmDisconnect={confirmDisconnect}
@@ -139,11 +123,29 @@ export default function SocialLoginsSection({
             hasPassword={hasPassword}
             provider="apple"
             label="Apple"
+            icon="fa-apple"
             onCancelDisconnect={handleCancelDisconnect}
             onConfirmDisconnect={handleConfirmDisconnect}
             onConnect={() => handleConnect('apple')}
             onDisconnect={() => handleDisconnect('apple')}
             showConnect={false}
+          />
+        )}
+
+        {googleEnabled && (
+          <ProviderRow
+            confirmDisconnect={confirmDisconnect}
+            connected={isConnected('google')}
+            disconnecting={disconnecting}
+            hasPassword={hasPassword}
+            provider="google"
+            label="Google"
+            icon="fa-google"
+            onCancelDisconnect={handleCancelDisconnect}
+            onConfirmDisconnect={handleConfirmDisconnect}
+            onConnect={() => handleConnect('google')}
+            onDisconnect={() => handleDisconnect('google')}
+            showConnect
           />
         )}
       </div>
@@ -169,6 +171,8 @@ interface ProviderRowProps {
   hasPassword: boolean;
   /** Display name shown next to the controls (e.g. `'Google'`). */
   label: string;
+  /** Font Awesome brand icon shown next to the display name (e.g. `'fa-google'`). */
+  icon: string;
   /** Internal provider key used for the confirmation check (e.g. `'google'`). */
   provider: string;
   /**
@@ -195,6 +199,7 @@ function ProviderRow({
   disconnecting,
   hasPassword,
   label,
+  icon,
   provider,
   showConnect,
   onCancelDisconnect,
@@ -208,8 +213,13 @@ function ProviderRow({
   useFocusFirstButton(confirmRowReference, isConfirming);
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-[var(--text)] text-sm w-16">{label}</span>
+    <div className="flex items-center justify-between">
+      <div
+        className={`flex items-center gap-2 ${showConnect ? 'opacity-100' : 'opacity-60'}`}
+      >
+        <i className={`fa-brands ${icon} text-[0.7rem]`} aria-hidden="true" />
+        <span className="text-[var(--text)] text-sm w-16">{label}</span>
+      </div>
 
       {connected ? (
         <>
@@ -254,11 +264,14 @@ function ProviderRow({
           )}
         </>
       ) : (
-        showConnect && (
-          <IconButton onClick={onConnect} aria-label={`Connect ${label}`}>
-            Connect
-          </IconButton>
-        )
+        <IconButton
+          className="min-w-32"
+          disabled={!showConnect}
+          onClick={onConnect}
+          aria-label={`Connect ${label}`}
+        >
+          Connect {label}
+        </IconButton>
       )}
     </div>
   );

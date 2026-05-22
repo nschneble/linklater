@@ -84,7 +84,7 @@ export default function SettingsView({
       label: 'Accessibility',
       icon: 'fa-universal-access',
     });
-    list.push({ hash: 'power', label: 'Power tools', icon: 'fa-bolt' });
+    list.push({ hash: 'power', label: 'Power features', icon: 'fa-bolt' });
     list.push({
       hash: 'danger',
       label: 'Danger zone',
@@ -130,13 +130,13 @@ export default function SettingsView({
         id="account"
         title="Account"
         icon="fa-user"
-        description="Manage your email address, password, and connected sign-in providers."
+        description="Manage your email address, password, and social logins."
         divided
       >
         <AccountSettingsForm />
         {showSocialLogins && (
           <SocialLoginsSection
-            appleEnabled={appleEnabled}
+            appleEnabled={!appleEnabled}
             googleEnabled={googleEnabled}
             linkedMessage={linkedMessage}
             linkError={linkError}
@@ -149,7 +149,7 @@ export default function SettingsView({
           id="security"
           title="Security"
           icon="fa-shield-halved"
-          description="Add a second factor and manage your recovery codes."
+          description="Set up multi-factor authentication and manage your recovery codes."
         >
           <TwoFactorSection />
         </SettingsGroup>
@@ -159,16 +159,16 @@ export default function SettingsView({
         id="accessibility"
         title="Accessibility"
         icon="fa-universal-access"
-        description="Adjust how Linklater looks to support how you see the page."
+        description="Adjust how Linklater looks and feels."
       >
         <CvdModeToggle />
       </SettingsGroup>
 
       <SettingsGroup
         id="power"
-        title="Power tools"
+        title="Power features"
         icon="fa-bolt"
-        description="Save links from anywhere and integrate with browser extensions."
+        description="Save links from anywhere and manage third-party integrations."
         divided
       >
         <BookmarkletSection />
@@ -185,6 +185,12 @@ export default function SettingsView({
       >
         <DangerZone />
       </SettingsGroup>
+      <div className="flex items-center justify-center mt-100">
+        <i
+          className="fa-solid fa-cat text-[var(--text-subtle)]"
+          aria-hidden="true"
+        />
+      </div>
     </SettingsLayout>
   );
 }

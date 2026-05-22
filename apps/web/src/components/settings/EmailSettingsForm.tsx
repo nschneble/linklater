@@ -101,7 +101,7 @@ export default function EmailSettingsForm() {
     >
       <h3
         id="email-settings-heading"
-        className="text-[var(--text)] text-sm font-semibold text-balance"
+        className="mb-0 text-[var(--text)] text-sm font-semibold text-balance"
       >
         Email
       </h3>
@@ -120,7 +120,7 @@ export default function EmailSettingsForm() {
       </div>
 
       {!isVerified && (
-        <div className="space-y-2">
+        <div className="space-y-2 mb-8">
           {resendMessage && <Alert variant="success">{resendMessage}</Alert>}
           {resendError && <Alert variant="error">{resendError}</Alert>}
           <LinkButton disabled={resending} onClick={handleResend}>

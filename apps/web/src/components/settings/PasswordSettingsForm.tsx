@@ -63,7 +63,7 @@ function ChangePasswordForm() {
 
   return (
     <form
-      className="space-y-4"
+      className="space-y-4 mb-8"
       aria-labelledby="password-settings-heading"
       onSubmit={handleSubmit}
     >

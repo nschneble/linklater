@@ -110,14 +110,14 @@ export default function ApiTokensSection() {
             onClick={() => setShowCreate(true)}
           >
             <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
-            Create token
+            Generate token
           </IconButton>
         )}
       </div>
 
       <p className="text-[var(--text-muted)] text-xs text-pretty">
-        Use personal access tokens to save links from browser extensions and
-        other tools. Tokens are shown only once at creation time.
+        Use personal access tokens (PATs) to save links from browser extensions
+        and other tools. Tokens are shown only once.
       </p>
 
       {loadError && <Alert variant="error">{loadError}</Alert>}
