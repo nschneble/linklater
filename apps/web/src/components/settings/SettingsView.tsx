@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import AccountSettingsForm from './AccountSettingsForm';
@@ -6,9 +6,13 @@ import ApiTokensSection from './ApiTokensSection';
 import BookmarkletSection from './BookmarkletSection';
 import CvdModeToggle from './CvdModeToggle';
 import DangerZone from './DangerZone';
+import SettingsGroup from './SettingsGroup';
+import SettingsLayout from './SettingsLayout';
 import SocialLoginsSection from './SocialLoginsSection';
 import StumbleSection from '../stumble/StumbleSection';
 import TwoFactorSection from './TwoFactorSection';
+import { useSettingsScrollSpy } from './useSettingsScrollSpy';
+import type { SettingsSection } from './settingsSections';
 
 interface SettingsViewProps {
   appleEnabled?: boolean;
@@ -58,6 +62,44 @@ export default function SettingsView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const showSocialLogins = googleEnabled || appleEnabled;
+  const showSecurity = Boolean(user?.hasPassword);
+
+  // Sections are derived from user state and feature flags. Order matches
+  // the document order of the rendered groups; both the sidebar and the
+  // scroll-spy hook depend on this.
+  const sections = useMemo<SettingsSection[]>(() => {
+    const list: SettingsSection[] = [
+      { hash: 'account', label: 'Account', icon: 'fa-user' },
+    ];
+    if (showSecurity) {
+      list.push({
+        hash: 'security',
+        label: 'Security',
+        icon: 'fa-shield-halved',
+      });
+    }
+    list.push({
+      hash: 'accessibility',
+      label: 'Accessibility',
+      icon: 'fa-universal-access',
+    });
+    list.push({ hash: 'power', label: 'Power tools', icon: 'fa-bolt' });
+    list.push({
+      hash: 'danger',
+      label: 'Danger zone',
+      icon: 'fa-triangle-exclamation',
+    });
+    return list;
+  }, [showSecurity]);
+
+  const sectionIds = useMemo(
+    () => sections.map((section) => section.hash),
+    [sections],
+  );
+
+  const { activeHash, markIntent } = useSettingsScrollSpy({ sectionIds });
+
   // React Router does not auto-scroll to the URL hash on SPA navigation.
   // When something deep-links into a settings section (e.g. the WelcomeModal
   // buttons land on `/settings#bookmarklet`), scroll the section into view
@@ -78,23 +120,71 @@ export default function SettingsView({
     element.focus({ preventScroll: true });
   }, [location.hash]);
 
-  const showSocialLogins = googleEnabled || appleEnabled;
-
   return (
-    <div className="space-y-8">
-      <AccountSettingsForm />
-      {showSocialLogins && (
-        <SocialLoginsSection
-          linkedMessage={linkedMessage}
-          linkError={linkError}
-        />
+    <SettingsLayout
+      sections={sections}
+      activeHash={activeHash}
+      onNavigate={markIntent}
+    >
+      <SettingsGroup
+        id="account"
+        title="Account"
+        icon="fa-user"
+        description="Manage your email address, password, and connected sign-in providers."
+        divided
+      >
+        <AccountSettingsForm />
+        {showSocialLogins && (
+          <SocialLoginsSection
+            appleEnabled={appleEnabled}
+            googleEnabled={googleEnabled}
+            linkedMessage={linkedMessage}
+            linkError={linkError}
+          />
+        )}
+      </SettingsGroup>
+
+      {showSecurity && (
+        <SettingsGroup
+          id="security"
+          title="Security"
+          icon="fa-shield-halved"
+          description="Add a second factor and manage your recovery codes."
+        >
+          <TwoFactorSection />
+        </SettingsGroup>
       )}
-      {user?.hasPassword && <TwoFactorSection />}
-      <CvdModeToggle />
-      <BookmarkletSection />
-      <ApiTokensSection />
-      <StumbleSection />
-      <DangerZone />
-    </div>
+
+      <SettingsGroup
+        id="accessibility"
+        title="Accessibility"
+        icon="fa-universal-access"
+        description="Adjust how Linklater looks to support how you see the page."
+      >
+        <CvdModeToggle />
+      </SettingsGroup>
+
+      <SettingsGroup
+        id="power"
+        title="Power tools"
+        icon="fa-bolt"
+        description="Save links from anywhere and integrate with browser extensions."
+        divided
+      >
+        <BookmarkletSection />
+        <ApiTokensSection />
+        <StumbleSection />
+      </SettingsGroup>
+
+      <SettingsGroup
+        id="danger"
+        title="Danger zone"
+        icon="fa-triangle-exclamation"
+        description="Deleting your account will remove all your saved links. This cannot be undone."
+        variant="danger"
+      >
+        <DangerZone />
+      </SettingsGroup>
+    </SettingsLayout>
   );
 }

@@ -114,6 +114,7 @@ function renderSettingsView({
 
 beforeEach(() => {
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
+  Element.prototype.scrollIntoView = vi.fn();
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -127,6 +128,41 @@ describe('SettingsView', () => {
   it('always renders the CVD mode toggle', () => {
     renderSettingsView();
     expect(screen.getByTestId('cvd-mode-toggle')).toBeInTheDocument();
+  });
+
+  describe('settings groups', () => {
+    it('renders the account group anchor', () => {
+      renderSettingsView();
+      expect(document.getElementById('account')).not.toBeNull();
+    });
+
+    it('renders the accessibility group anchor', () => {
+      renderSettingsView();
+      expect(document.getElementById('accessibility')).not.toBeNull();
+    });
+
+    it('renders the power group anchor', () => {
+      renderSettingsView();
+      expect(document.getElementById('power')).not.toBeNull();
+    });
+
+    it('renders the danger group anchor', () => {
+      renderSettingsView();
+      expect(document.getElementById('danger')).not.toBeNull();
+    });
+
+    it('renders the security group anchor when user has password', () => {
+      renderSettingsView();
+      expect(document.getElementById('security')).not.toBeNull();
+    });
+
+    it('omits the security group when user has no password', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ hasPassword: false }) }),
+      );
+      renderSettingsView();
+      expect(document.getElementById('security')).toBeNull();
+    });
   });
 
   describe('2FA section', () => {
@@ -167,34 +203,38 @@ describe('SettingsView', () => {
 
   describe('hash deep-linking', () => {
     it('scrolls and focuses the bookmarklet section when route includes #bookmarklet', () => {
-      const scrollSpy = vi.fn();
-      Element.prototype.scrollIntoView = scrollSpy;
-
       renderSettingsView({ route: '/settings#bookmarklet' });
 
       const section = screen.getByTestId('bookmarklet-section');
-      expect(scrollSpy).toHaveBeenCalled();
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'start' }),
+      );
       expect(document.activeElement).toBe(section);
     });
 
     it('scrolls and focuses the stumble section when route includes #stumble', () => {
-      const scrollSpy = vi.fn();
-      Element.prototype.scrollIntoView = scrollSpy;
-
       renderSettingsView({ route: '/settings#stumble' });
 
       const section = screen.getByTestId('stumble-section');
-      expect(scrollSpy).toHaveBeenCalled();
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'start' }),
+      );
       expect(document.activeElement).toBe(section);
     });
 
-    it('does not scroll or move focus when route has no hash', () => {
-      const scrollSpy = vi.fn();
-      Element.prototype.scrollIntoView = scrollSpy;
+    it('scrolls and focuses the power group when route includes #power', () => {
+      renderSettingsView({ route: '/settings#power' });
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'start' }),
+      );
+      expect(document.activeElement?.id).toBe('power');
+    });
 
+    it('does not perform a hash-driven scroll when route has no hash', () => {
       renderSettingsView({ route: '/settings' });
-
-      expect(scrollSpy).not.toHaveBeenCalled();
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'start' }),
+      );
     });
   });
 

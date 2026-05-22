@@ -60,16 +60,14 @@ export default function BookmarkletSection() {
     <div
       id="bookmarklet"
       tabIndex={-1}
-      role="region"
-      aria-labelledby="bookmarklet-heading"
-      className="max-w-md space-y-3 focus:outline-none"
+      className="scroll-mt-24 max-w-md space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-lg"
     >
-      <h2
+      <h3
         id="bookmarklet-heading"
         className="text-[var(--text)] text-sm font-semibold text-balance"
       >
         Bookmarklet
-      </h2>
+      </h3>
       <p className="text-[var(--text-muted)] text-xs text-pretty">
         Drag this button to your bookmarks bar. Click it on any page to save the
         link directly to Linklater.

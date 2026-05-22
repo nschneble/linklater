@@ -105,10 +105,10 @@ export default function SocialLoginsSection({
   }
 
   return (
-    <div className="max-w-md space-y-4">
-      <h2 className="text-[var(--text)] text-xl font-semibold text-balance">
+    <div className="space-y-4">
+      <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
         Social logins
-      </h2>
+      </h3>
 
       {linkedMessage && <Alert variant="success">{linkedMessage}</Alert>}
       {linkError && <Alert variant="error">{linkError}</Alert>}

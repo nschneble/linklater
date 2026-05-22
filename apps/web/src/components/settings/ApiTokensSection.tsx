@@ -100,9 +100,9 @@ export default function ApiTokensSection() {
   return (
     <div className="max-w-md space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
+        <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
           API Tokens
-        </h2>
+        </h3>
         {!showCreate && !newToken && (
           <IconButton
             type="button"

@@ -99,12 +99,12 @@ export default function EmailSettingsForm() {
       aria-labelledby="email-settings-heading"
       onSubmit={handleEmailSave}
     >
-      <h2
+      <h3
         id="email-settings-heading"
         className="text-[var(--text)] text-sm font-semibold text-balance"
       >
         Email
-      </h2>
+      </h3>
 
       <div className="flex items-center gap-2">
         <span className="text-[var(--text-muted)] text-xs">{user?.email}</span>

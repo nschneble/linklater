@@ -44,15 +44,8 @@ export default function CvdModeToggle() {
   }, [isCvdMode, enableCvdMode, disableCvdMode]);
 
   return (
-    <section aria-labelledby="accessibility-heading" className="space-y-4">
-      <h2
-        id="accessibility-heading"
-        className="text-[var(--text)] text-sm font-semibold"
-      >
-        Accessibility
-      </h2>
-
-      <div className="flex items-start justify-between gap-4 px-4 py-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-4">
         <div className="flex-1 space-y-1">
           <label
             id="cvd-label"
@@ -92,6 +85,6 @@ export default function CvdModeToggle() {
       </div>
 
       {error && <Alert variant="error">{error}</Alert>}
-    </section>
+    </div>
   );
 }

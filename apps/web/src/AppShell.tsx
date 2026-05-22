@@ -208,7 +208,7 @@ export default function AppShell() {
         id="main-content"
         ref={mainReference}
         tabIndex={-1}
-        className="max-w-3xl mx-auto px-4 py-6 sm:py-12 space-y-6 focus:outline-none"
+        className={`${view === 'settings' ? 'max-w-5xl' : 'max-w-3xl'} mx-auto px-4 py-6 sm:py-12 space-y-6 focus:outline-none`}
       >
         {view === 'settings' ? (
           <SettingsView />

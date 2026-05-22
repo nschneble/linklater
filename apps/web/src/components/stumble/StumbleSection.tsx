@@ -14,16 +14,14 @@ export default function StumbleSection() {
     <div
       id="stumble"
       tabIndex={-1}
-      role="region"
-      aria-labelledby="stumble-heading"
-      className="max-w-md space-y-3 focus:outline-none"
+      className="scroll-mt-24 max-w-md space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-lg"
     >
-      <h2
+      <h3
         id="stumble-heading"
         className="text-[var(--text)] text-sm font-semibold text-balance"
       >
         Stumble!
-      </h2>
+      </h3>
       <p className="text-[var(--text-muted)] text-xs text-pretty">
         Drag this to your bookmarks bar. Click it to automatically open a random
         unread link from your collection!

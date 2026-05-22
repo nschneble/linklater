@@ -40,15 +40,7 @@ export default function DangerZone() {
   };
 
   return (
-    <div className="max-w-md p-4 bg-rose-50 [[data-mode='dark']_&]:bg-rose-950/20 [[data-theme='nouvelle-vague']_&]:bg-gray-100 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-gray-900/20 border border-rose-200 [[data-mode='dark']_&]:border-rose-800/50 [[data-theme='nouvelle-vague']_&]:border-gray-300 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-gray-700/50 rounded-xl">
-      <h2 className="mb-1 text-rose-700 [[data-mode='dark']_&]:text-rose-400 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400 text-sm font-semibold text-balance">
-        Danger zone
-      </h2>
-      <p className="mb-3 text-rose-600/80 [[data-mode='dark']_&]:text-rose-300/80 [[data-theme='nouvelle-vague']_&]:text-gray-600/80 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400/80 text-xs text-pretty">
-        Deleting your account will remove all your saved links. This cannot be
-        undone.
-      </p>
-
+    <div className="space-y-3">
       {error && <Alert variant="error">{error}</Alert>}
 
       {!confirmDelete ? (

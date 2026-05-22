@@ -67,12 +67,12 @@ function ChangePasswordForm() {
       aria-labelledby="password-settings-heading"
       onSubmit={handleSubmit}
     >
-      <h2
+      <h3
         id="password-settings-heading"
         className="text-[var(--text)] text-sm font-semibold text-balance"
       >
         Password
-      </h2>
+      </h3>
 
       <label
         className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
@@ -160,12 +160,12 @@ function AddPasswordForm({ refreshUser }: AddPasswordFormProps) {
       aria-labelledby="add-password-heading"
       onSubmit={handleSubmit}
     >
-      <h2
+      <h3
         id="add-password-heading"
         className="text-[var(--text)] text-sm font-semibold text-balance"
       >
         Password
-      </h2>
+      </h3>
       <p className="text-[var(--text-muted)] text-xs">
         Add a password for backup access alongside social sign-in.
       </p>
