@@ -180,13 +180,17 @@ export class LinksService {
 
     const offset = (page - 1) * limit;
 
+    // Postel's Law: unaccent() is applied to both the stored searchVector
+    // (see the unaccent_search migration and MetadataService) and to the
+    // incoming term here, so a query for "montréal" matches a link titled
+    // "Montreal" and vice versa.
     const rows = await this.prisma.$queryRaw<{ id: string; total: bigint }[]>`
       SELECT l.id, COUNT(*) OVER() AS total
       FROM "Link" l
       WHERE l."userId" = ${userId}
-        AND l."searchVector" @@ plainto_tsquery('english', ${term})
+        AND l."searchVector" @@ plainto_tsquery('english', unaccent(${term}))
         ${readFilter}
-      ORDER BY ts_rank(l."searchVector", plainto_tsquery('english', ${term})) DESC,
+      ORDER BY ts_rank(l."searchVector", plainto_tsquery('english', unaccent(${term}))) DESC,
                l."createdAt" DESC
       LIMIT ${limit} OFFSET ${offset}
     `;

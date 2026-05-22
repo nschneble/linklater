@@ -192,6 +192,23 @@ describe('LinksService', () => {
     expect(call?.where?.OR).toBeUndefined();
   });
 
+  it('findAll wraps the search term in unaccent() so "montréal" matches "montreal"', async () => {
+    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
+
+    await service.findAll(USER_ID, { search: 'montréal' });
+
+    // $queryRaw is invoked as a tagged template — the first argument is the
+    // TemplateStringsArray containing the raw SQL fragments around the
+    // interpolated values. We assert that those fragments include the
+    // unaccent() wrapper around plainto_tsquery's input (Postel's Law).
+    const callArguments = (prismaMock.$queryRaw as jest.Mock).mock.calls[0] as [
+      readonly string[],
+      ...unknown[],
+    ];
+    const sql = callArguments[0].join(' ');
+    expect(sql).toContain("plainto_tsquery('english', unaccent(");
+  });
+
   it('findAll returns empty result when tsvector finds no matches', async () => {
     (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
 

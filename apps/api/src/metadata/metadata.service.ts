@@ -84,12 +84,14 @@ export class MetadataService implements OnModuleInit {
 
       // Update the full-text search vector with the newly fetched content so
       // that searches immediately find the link by title, description, or site name.
+      // unaccent() collapses diacritics so "Montréal" indexes the same as "Montreal";
+      // the search side mirrors this in LinksService.findAllByText (Postel's Law).
       await this.prisma.$executeRaw`
-        UPDATE "Link" SET "searchVector" = to_tsvector('english',
+        UPDATE "Link" SET "searchVector" = to_tsvector('english', unaccent(
           coalesce(${metadata.title}, '') || ' ' ||
           coalesce(${metadata.description}, '') || ' ' ||
           coalesce(${metadata.siteName}, '') || ' ' ||
-          url)
+          url))
         WHERE id = ${linkId}
       `;
     } catch (error) {
