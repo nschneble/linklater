@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import AccountSettingsForm from './AccountSettingsForm';
 import ApiTokensSection from './ApiTokensSection';
@@ -31,6 +31,7 @@ export default function SettingsView({
   googleEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
 }: SettingsViewProps = {}) {
   const { user } = useAuth();
+  const location = useLocation();
   const [searchParameters, setSearchParameters] = useSearchParams();
 
   // Capture flash messages from query params on mount and store them in state
@@ -56,6 +57,26 @@ export default function SettingsView({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // React Router does not auto-scroll to the URL hash on SPA navigation.
+  // When something deep-links into a settings section (e.g. the WelcomeModal
+  // buttons land on `/settings#bookmarklet`), scroll the section into view
+  // and move focus to it so screen reader and keyboard users land where the
+  // sighted user does. `prefers-reduced-motion` disables smooth scroll.
+  useEffect(() => {
+    if (!location.hash) return;
+    const element = document.getElementById(location.hash.slice(1));
+    if (!element) return;
+    const reducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    element.scrollIntoView({
+      behavior: reducedMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
+    element.focus({ preventScroll: true });
+  }, [location.hash]);
 
   const showSocialLogins = googleEnabled || appleEnabled;
 

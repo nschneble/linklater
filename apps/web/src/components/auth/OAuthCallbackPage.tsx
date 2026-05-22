@@ -1,3 +1,4 @@
+import Alert from '../common/Alert';
 import { getErrorMessage } from '../../lib/errors';
 import { FOCUS_RING } from '../../lib/styles';
 import { useAuth } from '../../auth/AuthContext';
@@ -50,16 +51,24 @@ export default function OAuthCallbackPage() {
         </h1>
 
         {status === 'loading' && (
-          <p className="text-[var(--text-muted)] animate-pulse">
+          <p
+            role="status"
+            aria-live="polite"
+            className="text-[var(--text-muted)] animate-pulse"
+          >
             Just a moment…
           </p>
         )}
 
         {status === 'error' && (
           <>
-            <p className="mb-2 text-rose-400 text-sm" role="alert">
+            <Alert
+              className="mb-2"
+              icon="fa-triangle-exclamation"
+              variant="error"
+            >
               {errorMessage}
-            </p>
+            </Alert>
             <p className="mb-6 text-[var(--text-muted)] text-sm">
               Something went wrong during sign-in.
             </p>

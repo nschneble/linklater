@@ -20,6 +20,10 @@ import { type AppView } from './lib/navigation';
 // color-math utilities add non-trivial weight to the bundle.
 const ThemeEditor = lazy(() => import('./components/settings/ThemeEditor'));
 
+// WelcomeModal is lazy-loaded because it shows once per user and would
+// otherwise be dead weight in the initial bundle for every session.
+const WelcomeModal = lazy(() => import('./components/welcome/WelcomeModal'));
+
 /** Maps the current URL pathname to the active `AppView`. */
 function viewFromPath(pathname: string): AppView {
   switch (pathname) {
@@ -45,7 +49,7 @@ function viewFromPath(pathname: string): AppView {
  * guard; in practice `AppShell` is only rendered when `user` is non-null.
  */
 export default function AppShell() {
-  const { logout, user } = useAuth();
+  const { logout, markWelcomed, user } = useAuth();
   const { setBaseTheme, toggleMode } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -54,6 +58,30 @@ export default function AppShell() {
   const mainReference = useRef<HTMLElement>(null);
   const isFirstRender = useRef(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  // The WelcomeModal pitches the bookmarklet, which can't be dragged to a
+  // bookmarks bar on touch devices. Gate it to >=md viewports so mobile
+  // users aren't shown irrelevant onboarding. A user who first lands on
+  // mobile will see it the next time they visit on desktop, since
+  // `markWelcomed` only fires when the modal is dismissed.
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(min-width: 768px)').matches
+      : true,
+  );
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
+      return;
+    }
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+    const handleChange = (event: MediaQueryListEvent) =>
+      setIsDesktop(event.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   const handleUserMenuToggle = useCallback(
     () => setShowUserMenu((open) => !open),
@@ -93,13 +121,18 @@ export default function AppShell() {
   // views. The isFirstRender guard prevents stealing focus on the
   // initial page load — on mount the browser has not set focus anywhere
   // meaningful yet, so moving it to <main> would skip the skip link and
-  // surprise keyboard users who land tabbed into the page header.
+  // surprise keyboard users who land tabbed into the page header. Skip
+  // the focus shift when the URL carries a hash, because the destination
+  // view is about to deep-link focus to a specific section and we'd
+  // otherwise steal focus right back to <main>.
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
+    if (location.hash) return;
     mainReference.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
 
   // Global 'x' shortcut to open/close the user menu from anywhere.
@@ -187,6 +220,12 @@ export default function AppShell() {
           <LinksView onCloseUserMenu={handleUserMenuClose} />
         )}
       </main>
+
+      {user.welcomedAt === null && isDesktop && (
+        <Suspense fallback={null}>
+          <WelcomeModal onClose={markWelcomed} />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import PrimaryButton from '../common/PrimaryButton';
 import type { Link } from '../../lib/api';
-import { stripHtml } from '../../lib/strings';
+import { hostnameOf, stripHtml } from '../../lib/strings';
+import { FOCUS_RING } from '../../lib/styles';
 import { useTheme } from '../../theme/ThemeContext';
 
 /**
@@ -19,12 +20,16 @@ interface LinkCardLayoutProps {
   animationDelay?: number;
   /** When `true`, the card shows a keyboard-selection highlight. */
   isSelected?: boolean;
-  /** Called when the card body is clicked. */
-  onCardClick: () => void;
   /**
-   * Called when the "Mark as unread" button is clicked. Must call
-   * `event.stopPropagation()` (handled in `LinkCard`) to prevent the card
-   * click from also firing.
+   * Called when the card anchor is activated (mouse click, Enter, Cmd-click).
+   * Native anchor activation handles opening the URL — this callback exists
+   * so callers can run side effects like marking the link read.
+   */
+  onCardActivate: (event: React.MouseEvent) => void;
+  /**
+   * Called when the "Mark as unread" button is clicked. The button is a
+   * sibling of the anchor overlay, so its click does not propagate to the
+   * card-open behavior — no `stopPropagation()` needed.
    */
   onUnreadClick: (event: React.MouseEvent) => void;
 }
@@ -43,8 +48,7 @@ function getPlaceholderUrl(url: string) {
     .getPropertyValue('--accent-fg')
     .trim()
     .replace('#', '');
-  const text = new URL(url).hostname.replace(/^www\./, '');
-  return `https://placehold.co/240x126/${accent}/${accentFg}?text=${text}`;
+  return `https://placehold.co/240x126/${accent}/${accentFg}?text=${hostnameOf(url)}`;
 }
 
 /**
@@ -55,14 +59,17 @@ function getPlaceholderUrl(url: string) {
  * - Shows the raw URL as the description when no title is present.
  * - Shows a "Mark as unread" button for read links.
  *
- * The card uses `role="link"` and responds to Enter/Space so keyboard users
- * can activate it without a pointer device.
+ * The card is interactive via a native `<a>` overlay that covers the entire
+ * card surface. The "Mark as unread" button sits at a higher z-index so its
+ * clicks do not reach the anchor. Native anchor semantics give middle-click,
+ * Cmd-click, Enter/Space activation, and "Open in new tab" context-menu
+ * support for free.
  */
 export default function LinkCardLayout({
   link,
   animationDelay = 0,
   isSelected = false,
-  onCardClick,
+  onCardActivate,
   onUnreadClick,
 }: LinkCardLayoutProps) {
   const cardReference = useRef<HTMLDivElement>(null);
@@ -95,29 +102,23 @@ export default function LinkCardLayout({
   const displayDescription = rawDescription
     ? stripHtml(rawDescription)
     : rawDescription;
-  const rawSiteName = link.meta?.siteName ?? new URL(link.url).hostname;
-  const displaySiteName = rawSiteName.replace(/^www\./, '');
+  const displaySiteName = useMemo(
+    () =>
+      link.meta?.siteName
+        ? link.meta.siteName.replace(/^www\./, '')
+        : hostnameOf(link.url),
+    [link.meta?.siteName, link.url],
+  );
 
   const cardAriaLabel = `${displayTitle} — ${displaySiteName}, opens in new tab`;
 
   return (
     <div
       ref={cardReference}
-      role="link"
-      aria-label={cardAriaLabel}
-      aria-busy={!link.meta?.fetchedAt}
-      onClick={onCardClick}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onCardClick();
-        }
-      }}
-      tabIndex={0}
-      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--accent)]/60' : ''} focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none cursor-pointer`}
+      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--accent)]/60' : ''}`}
     >
       {link.meta?.fetchedAt ? (
-        <div className="absolute left-0 top-4 -translate-x-1/2 z-10">
+        <div className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none">
           <span className="relative flex items-center justify-center">
             {link.meta?.faviconUrl ? (
               <img
@@ -145,7 +146,7 @@ export default function LinkCardLayout({
       ) : (
         <div
           aria-hidden="true"
-          className="absolute inset-0 pointer-events-none animate-pulse"
+          className="absolute inset-0 pointer-events-none animate-pulse z-20"
         >
           <div className="absolute top-0 bottom-0 left-0 -translate-x-full w-1 bg-[var(--accent)]" />
           <span className="absolute left-0 top-4 -translate-x-1/2 z-10 block w-8 h-8 bg-[var(--accent)] ring-2 ring-[var(--bg-surface)] rounded-2xl" />
@@ -201,21 +202,32 @@ export default function LinkCardLayout({
             )}
 
             {link.readAt && (
-              <div className="shrink-0">
-                <PrimaryButton onClick={onUnreadClick}>
-                  <span className="hidden sm:inline-flex">Mark unread</span>
-                  <span className="inline-flex sm:hidden">
-                    <i
-                      className="fa-solid fa-rotate-left text-xs"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </PrimaryButton>
-              </div>
+              <PrimaryButton
+                className="relative shrink-0 z-30"
+                onClick={onUnreadClick}
+              >
+                <span className="hidden sm:inline-flex">Mark unread</span>
+                <span className="inline-flex sm:hidden">
+                  <i
+                    className="fa-solid fa-rotate-left text-xs"
+                    aria-hidden="true"
+                  />
+                </span>
+              </PrimaryButton>
             )}
           </div>
         )}
       </div>
+
+      <a
+        href={link.url}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={cardAriaLabel}
+        aria-busy={!link.meta?.fetchedAt}
+        onClick={onCardActivate}
+        className={`absolute inset-0 z-10 ${FOCUS_RING} rounded-r-xl cursor-pointer`}
+      />
     </div>
   );
 }

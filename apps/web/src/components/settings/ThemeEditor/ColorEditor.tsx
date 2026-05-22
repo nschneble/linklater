@@ -82,10 +82,7 @@ function ColorRow({
 
   return (
     <div className="flex items-center gap-2">
-      <label
-        className="relative flex-shrink-0 cursor-pointer"
-        aria-label={`Pick color for ${label}`}
-      >
+      <label className="relative flex-shrink-0 cursor-pointer">
         <span
           className="block w-7 h-7 border border-[var(--border)] rounded-md shadow-sm"
           style={{ backgroundColor: currentValue }}

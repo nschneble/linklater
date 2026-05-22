@@ -102,24 +102,24 @@ export default function ThemeEditor() {
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-shrink-0 w-full lg:w-72 space-y-4">
           <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
-            <p className="mb-4 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
+            <h2 className="mb-4 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
               Colors
-            </p>
+            </h2>
             <ColorEditor colorValues={colorValues} onOverride={setOverride} />
           </div>
 
           <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
-            <p className="mb-3 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
+            <h2 className="mb-3 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
               Contrast (WCAG 2.1)
-            </p>
+            </h2>
             <ContrastChecker colorValues={colorValues} />
           </div>
         </div>
 
         <div className="flex-1 min-w-0 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
-          <p className="mb-6 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
+          <h2 className="mb-6 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
             Components
-          </p>
+          </h2>
           <ComponentShowcase />
         </div>
       </div>

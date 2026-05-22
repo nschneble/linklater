@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import {
+  acknowledgeWelcome as apiAcknowledgeWelcome,
   clearStoredToken,
   getMe,
   getStoredToken,
@@ -49,6 +50,12 @@ export interface User {
   twoFactorPending: boolean;
   /** The user's UUID (renamed from `id` to `userId` by `GET /auth/me`). */
   userId: string;
+  /**
+   * ISO timestamp of when the user dismissed the welcome modal, or `null` if
+   * they have not seen it yet. New users created after the feature shipped
+   * land with `null` and see the welcome modal on first sign-in.
+   */
+  welcomedAt: string | null;
 }
 
 /**
@@ -83,6 +90,13 @@ interface AuthContextValue {
   setPendingEmail: (email: string) => void;
   /** Re-fetches the current user profile from the server and updates auth state. */
   refreshUser: () => Promise<void>;
+  /**
+   * Records that the user has dismissed the welcome modal. Calls the welcome
+   * endpoint and optimistically updates `user.welcomedAt` so the modal
+   * disappears immediately. Errors are swallowed and logged — the modal
+   * dismissal is not blocking, and the next page load will retry naturally.
+   */
+  markWelcomed: () => Promise<void>;
   /** The authenticated user, or `null` when logged out. */
   user: User | null;
 }
@@ -105,6 +119,7 @@ function mapMeToUser(me: Awaited<ReturnType<typeof getMe>>): User {
     twoFactorMethod: me.twoFactorMethod,
     twoFactorPending: me.twoFactorPending,
     userId: me.userId,
+    welcomedAt: me.welcomedAt,
   };
 }
 
@@ -216,12 +231,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const markWelcomed = useCallback(async () => {
+    setUser((previous) =>
+      previous
+        ? { ...previous, welcomedAt: new Date().toISOString() }
+        : previous,
+    );
+    try {
+      await apiAcknowledgeWelcome();
+    } catch (error) {
+      console.error('Failed to acknowledge welcome', error);
+    }
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       loading,
       login,
       loginWithToken,
       logout,
+      markWelcomed,
       refreshUser,
       register,
       resendVerificationEmail,
@@ -233,6 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       loginWithToken,
       logout,
+      markWelcomed,
       refreshUser,
       register,
       resendVerificationEmail,

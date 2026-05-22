@@ -9,7 +9,16 @@ describe('TabButton', () => {
         Unread
       </TabButton>,
     );
-    expect(screen.getByText('Unread')).toBeInTheDocument();
+    expect(screen.getByRole('tab')).toHaveTextContent('Unread');
+  });
+
+  it('exposes a single accessible name despite the ghost label', () => {
+    render(
+      <TabButton isActive={false} onClick={vi.fn()}>
+        Unread
+      </TabButton>,
+    );
+    expect(screen.getByRole('tab', { name: 'Unread' })).toBeInTheDocument();
   });
 
   it('has role="tab"', () => {
@@ -63,19 +72,23 @@ describe('TabButton', () => {
         Active
       </TabButton>,
     );
-    const icon = container.querySelector('i.fa-circle-dot');
-    expect(icon).toBeInTheDocument();
-    expect(icon).toHaveAttribute('aria-hidden', 'true');
+    const icons = container.querySelectorAll('i.fa-circle-dot');
+    expect(icons.length).toBe(2);
+    icons.forEach((icon) => {
+      expect(icon).toHaveAttribute('aria-hidden', 'true');
+    });
   });
 
-  it('does not render the fa-circle-dot icon when inactive', () => {
+  it('does not render the fa-circle-dot icon in the visible label when inactive', () => {
     const { container } = render(
       <TabButton isActive={false} onClick={vi.fn()}>
         Inactive
       </TabButton>,
     );
-    const icon = container.querySelector('i.fa-circle-dot');
-    expect(icon).not.toBeInTheDocument();
+    const icons = container.querySelectorAll('i.fa-circle-dot');
+    expect(icons.length).toBe(1);
+    const ghostSpan = container.querySelector('span[aria-hidden="true"]');
+    expect(ghostSpan).toContainElement(icons[0] as HTMLElement);
   });
 
   it('is not keyboard-focusable when inactive (tabIndex -1)', () => {

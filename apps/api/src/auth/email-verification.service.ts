@@ -5,40 +5,45 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { generateHexToken } from '../common/crypto-tokens.js';
+import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
+import { expiresInMs } from '../common/dates.js';
 import {
   RECOVERY_CODE_REGEX,
   findMatchingRecoveryCode,
 } from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
-import { UsersService } from '../users/index.js';
+import { UserTokensService, UsersService } from '../users/index.js';
 import { TotpService } from './totp.service.js';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const TWENTY_FOUR_HOURS_MS = 24 * ONE_HOUR_MS;
 
-function expiresInMs(ms: number) {
-  return new Date(Date.now() + ms);
-}
-
 @Injectable()
 export class EmailVerificationService {
   constructor(
     private readonly usersService: UsersService,
+    private readonly userTokensService: UserTokensService,
     private readonly emailService: EmailService,
     private readonly totpService: TotpService,
   ) {}
 
   async sendVerificationEmail(userId: string) {
     const user = await this.usersService.findById(userId);
-    const token = generateHexToken();
+    const rawToken = generateHexToken();
+    const tokenHash = sha256Hex(rawToken);
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
-    await this.usersService.updateVerificationToken(userId, token, expiresAt);
-    await this.emailService.sendVerification(user.email, token, user.theme);
+    await this.userTokensService.updateVerificationToken(
+      userId,
+      tokenHash,
+      expiresAt,
+    );
+    await this.emailService.sendVerification(user.email, rawToken, user.theme);
   }
 
-  async verifyEmail(token: string) {
-    const user = await this.usersService.findByVerificationToken(token);
+  async verifyEmail(rawToken: string) {
+    const user = await this.userTokensService.findByVerificationToken(
+      sha256Hex(rawToken),
+    );
 
     if (!user) {
       throw new BadRequestException('Invalid or expired verification link');
@@ -51,7 +56,7 @@ export class EmailVerificationService {
       throw new BadRequestException('Verification link has expired');
     }
 
-    await this.usersService.clearVerificationToken(user.id);
+    await this.userTokensService.clearVerificationToken(user.id);
   }
 
   async resendVerificationEmail(userId: string) {
@@ -61,25 +66,37 @@ export class EmailVerificationService {
       throw new BadRequestException('Email is already verified');
     }
 
-    const token = generateHexToken();
+    const rawToken = generateHexToken();
+    const tokenHash = sha256Hex(rawToken);
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
-    await this.usersService.updateVerificationToken(userId, token, expiresAt);
-    await this.emailService.sendVerification(user.email, token, user.theme);
+    await this.userTokensService.updateVerificationToken(
+      userId,
+      tokenHash,
+      expiresAt,
+    );
+    await this.emailService.sendVerification(user.email, rawToken, user.theme);
   }
 
   async forgotPassword(email: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) return;
 
-    const token = generateHexToken();
+    const rawToken = generateHexToken();
+    const tokenHash = sha256Hex(rawToken);
     const expiresAt = expiresInMs(ONE_HOUR_MS);
-    await this.usersService.updateResetToken(user.id, token, expiresAt);
-    await this.emailService.sendPasswordReset(email, token, user.theme);
+    await this.userTokensService.updateResetToken(
+      user.id,
+      tokenHash,
+      expiresAt,
+    );
+    await this.emailService.sendPasswordReset(email, rawToken, user.theme);
   }
 
-  async resetPassword(token: string, newPassword: string) {
+  async resetPassword(rawToken: string, newPassword: string) {
     const bcrypt = await import('bcryptjs');
-    const user = await this.usersService.findByResetToken(token);
+    const user = await this.userTokensService.findByResetToken(
+      sha256Hex(rawToken),
+    );
 
     if (!user) {
       throw new BadRequestException('Invalid or expired reset link');
@@ -135,23 +152,26 @@ export class EmailVerificationService {
       }
     }
 
-    const token = generateHexToken();
+    const rawToken = generateHexToken();
+    const tokenHash = sha256Hex(rawToken);
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
-    await this.usersService.updatePendingEmail(
+    await this.userTokensService.updatePendingEmail(
       userId,
       newEmail,
-      token,
+      tokenHash,
       expiresAt,
     );
     await this.emailService.sendEmailChangeVerification(
       newEmail,
-      token,
+      rawToken,
       user.theme,
     );
   }
 
-  async confirmEmailChange(token: string) {
-    const user = await this.usersService.findByPendingEmailToken(token);
+  async confirmEmailChange(rawToken: string) {
+    const user = await this.userTokensService.findByPendingEmailToken(
+      sha256Hex(rawToken),
+    );
 
     if (!user) {
       throw new BadRequestException('Invalid or expired email change link');

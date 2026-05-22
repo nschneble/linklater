@@ -1,3 +1,4 @@
+import Alert from '../common/Alert';
 import { verifyMagicLink } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { FOCUS_RING } from '../../lib/styles';
@@ -52,16 +53,24 @@ export default function VerifyLoginPage() {
         </h1>
 
         {status === 'verifying' && (
-          <p className="text-[var(--text-muted)] animate-pulse">
+          <p
+            role="status"
+            aria-live="polite"
+            className="text-[var(--text-muted)] animate-pulse"
+          >
             Verifying your login link…
           </p>
         )}
 
         {status === 'error' && (
           <>
-            <p className="mb-2 text-rose-400 text-sm" role="alert">
+            <Alert
+              className="mb-2"
+              icon="fa-triangle-exclamation"
+              variant="error"
+            >
               {errorMessage}
-            </p>
+            </Alert>
             <p className="mb-6 text-[var(--text-muted)] text-sm">
               This login link may have expired or already been used. Request a
               new one from the login page.

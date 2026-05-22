@@ -1,7 +1,8 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useRef } from 'react';
 import { FOCUS_RING } from '../../lib/styles';
-import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
+import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
+import { FOCUSABLE_SELECTOR, useFocusTrap } from '../../lib/hooks/useFocusTrap';
 
 interface KeyboardShortcutsModalProps {
   /** Called when the user presses Escape or clicks the close button or backdrop. */
@@ -42,29 +43,24 @@ export default function KeyboardShortcutsModal({
   onClose,
 }: KeyboardShortcutsModalProps) {
   const dialogReference = useRef<HTMLDivElement>(null);
-  const previouslyFocusedElement = useRef<HTMLElement | null>(null);
+
+  useFocusReturn(true);
 
   useEffect(() => {
-    previouslyFocusedElement.current = document.activeElement as HTMLElement;
-
-    const firstFocusable = dialogReference.current?.querySelector<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    );
+    const firstFocusable =
+      dialogReference.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
     firstFocusable?.focus();
-
-    return () => {
-      previouslyFocusedElement.current?.focus();
-    };
   }, []);
 
   useFocusTrap(dialogReference, { onEscape: onClose });
 
   return createPortal(
     <>
-      <div
-        aria-hidden="true"
+      <button
+        type="button"
+        aria-label="Close shortcuts"
         data-testid="modal-backdrop"
-        className="fixed inset-0 z-20 w-full h-full bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-20 w-full h-full bg-black/50 backdrop-blur-sm cursor-default"
         onClick={onClose}
       />
       <div

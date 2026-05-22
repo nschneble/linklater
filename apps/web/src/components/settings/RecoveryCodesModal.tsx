@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FOCUS_RING } from '../../lib/styles';
+import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
 import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import PrimaryButton from '../common/PrimaryButton';
 
@@ -30,15 +31,8 @@ export default function RecoveryCodesModal({
 }: RecoveryCodesModalProps) {
   const [copied, setCopied] = useState(false);
   const dialogReference = useRef<HTMLDivElement>(null);
-  const triggerReference = useRef<Element | null>(null);
 
-  // Store the element that opened the modal so focus can be restored on close.
-  useEffect(() => {
-    triggerReference.current = document.activeElement;
-    return () => {
-      (triggerReference.current as HTMLElement | null)?.focus();
-    };
-  }, []);
+  useFocusReturn(true);
 
   // Focus the dialog panel on mount.
   useEffect(() => {

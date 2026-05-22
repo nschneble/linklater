@@ -36,7 +36,9 @@ describe('StumblePage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('replaces window.location.href when a link is found', async () => {
+  it('shows an interstitial with an Open link button instead of auto-redirecting', async () => {
+    // Auto-redirect via window.location.href would be an unannounced context
+    // change (WCAG 3.2.5) — the page must require an explicit user action.
     vi.mocked(api.stumbleLink).mockResolvedValue({
       url: 'https://example.com/article',
     });
@@ -46,9 +48,13 @@ describe('StumblePage', () => {
 
     renderStumblePage();
 
-    await waitFor(() => {
-      expect(mockLocation.href).toBe('https://example.com/article');
-    });
+    const openLink = await screen.findByRole('link', { name: /open link/i });
+    expect(openLink).toHaveAttribute('href', 'https://example.com/article');
+    expect(openLink).toHaveAttribute('target', '_blank');
+    expect(openLink).toHaveAttribute('rel', 'noreferrer');
+
+    // The page must NOT have redirected on its own.
+    expect(mockLocation.href).toBe('http://localhost:3000/');
 
     vi.unstubAllGlobals();
   });
@@ -75,6 +81,19 @@ describe('StumblePage', () => {
     });
   });
 
+  it('moves keyboard focus to the Open link button when the interstitial appears', async () => {
+    vi.mocked(api.stumbleLink).mockResolvedValue({
+      url: 'https://example.com/article',
+    });
+
+    renderStumblePage();
+
+    const openLink = await screen.findByRole('link', { name: /open link/i });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(openLink);
+    });
+  });
+
   describe('live region', () => {
     it('renders a role="status" paragraph with aria-live="polite" while loading', () => {
       vi.mocked(api.stumbleLink).mockImplementation(
@@ -98,23 +117,18 @@ describe('StumblePage', () => {
       );
     });
 
-    it('shows "Opening your link…" status text during the redirecting state', async () => {
+    it('announces the host of the found link via the live region', async () => {
       vi.mocked(api.stumbleLink).mockResolvedValue({
-        url: 'https://example.com/article',
+        url: 'https://blog.example.com/post',
       });
-
-      const mockLocation = { href: 'http://localhost:3000/' };
-      vi.stubGlobal('location', mockLocation);
 
       renderStumblePage();
 
       await waitFor(() => {
         expect(screen.getByRole('status')).toHaveTextContent(
-          'Opening your link…',
+          /Found a link from blog\.example\.com/i,
         );
       });
-
-      vi.unstubAllGlobals();
     });
   });
 });

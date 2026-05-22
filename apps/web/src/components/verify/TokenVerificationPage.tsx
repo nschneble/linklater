@@ -1,3 +1,4 @@
+import Alert from '../common/Alert';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getErrorMessage } from '../../lib/errors';
@@ -84,7 +85,11 @@ export default function TokenVerificationPage({
         <h1 className="mb-4 text-[var(--text)] text-2xl font-bold">{title}</h1>
 
         {status === 'verifying' && (
-          <p className="text-[var(--text-muted)] animate-pulse">
+          <p
+            role="status"
+            aria-live="polite"
+            className="text-[var(--text-muted)] animate-pulse"
+          >
             {verifyingText}
           </p>
         )}
@@ -110,9 +115,13 @@ export default function TokenVerificationPage({
 
         {status === 'error' && (
           <>
-            <p className="mb-2 text-rose-400 text-sm" role="alert">
+            <Alert
+              className="mb-2"
+              icon="fa-triangle-exclamation"
+              variant="error"
+            >
               {errorMessage}
-            </p>
+            </Alert>
             <p className="mb-6 text-[var(--text-muted)] text-sm">{helpText}</p>
             <button
               type="button"

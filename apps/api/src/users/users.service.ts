@@ -6,12 +6,29 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
-import { PrismaService } from '../prisma/index.js';
+import { Prisma, PrismaService } from '../prisma/index.js';
 import { withoutPasswordHash } from './users.utils.js';
 import { VALID_MODES, VALID_THEMES } from './users.constants.js';
 import * as bcrypt from 'bcryptjs';
 
 export { VALID_MODES, VALID_THEMES };
+
+/**
+ * Inputs accepted by `UsersService.updateMe`. All fields are optional; only
+ * provided keys are written to the database.
+ */
+export interface UpdateMeInput {
+  /** Toggles the color-vision-deficient mode flag. */
+  cvdMode?: boolean;
+  /** New password (plaintext) to hash and store. Requires `currentPassword`. */
+  password?: string;
+  /** Existing password used to authorize a password change. */
+  currentPassword?: string;
+  /** Theme identifier from the `VALID_THEMES` allow-list. */
+  theme?: string;
+  /** Color mode identifier from the `VALID_MODES` allow-list. */
+  mode?: string;
+}
 
 /**
  * Manages user accounts — creation, lookup, update, and deletion. All methods
@@ -37,16 +54,24 @@ export class UsersService {
    * @throws {ConflictException} When the email is already registered.
    */
   async create(email: string, password: string) {
-    const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing) throw new ConflictException('Email already in use');
-
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const user = await this.prisma.user.create({
-      data: { email, passwordHash },
-    });
-
-    return withoutPasswordHash(user);
+    try {
+      const user = await this.prisma.user.create({
+        data: { email, passwordHash },
+      });
+      return withoutPasswordHash(user);
+    } catch (error) {
+      // Surface the unique-constraint race as a proper 409 instead of letting
+      // Prisma's P2002 escape as a 500.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Email already in use');
+      }
+      throw error;
+    }
   }
 
   /**
@@ -63,16 +88,7 @@ export class UsersService {
    * @throws {NotFoundException} When no user exists with the given ID.
    * @throws {UnauthorizedException} When `currentPassword` does not match the stored hash.
    */
-  async updateMe(
-    id: string,
-    data: {
-      cvdMode?: boolean;
-      password?: string;
-      currentPassword?: string;
-      theme?: string;
-      mode?: string;
-    },
-  ) {
+  async updateMe(id: string, data: UpdateMeInput) {
     const updateData: {
       cvdMode?: boolean;
       passwordHash?: string;
@@ -155,8 +171,10 @@ export class UsersService {
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
-    const { passwordHash, ...safe } = user;
-    return { ...safe, hasPassword: passwordHash !== null };
+    return {
+      ...withoutPasswordHash(user),
+      hasPassword: user.passwordHash !== null,
+    };
   }
 
   async findByIdWithPasswordHash(id: string) {
@@ -173,75 +191,6 @@ export class UsersService {
    */
   async deleteById(id: string) {
     await this.prisma.user.delete({ where: { id } });
-  }
-
-  /**
-   * Stores a new email verification token and its expiry on the user record.
-   * Overwrites any previously stored token.
-   *
-   * @param id - The UUID of the user.
-   * @param token - The 64-character hex token to store.
-   * @param expiresAt - When the token should be considered expired.
-   */
-  async updateVerificationToken(id: string, token: string, expiresAt: Date) {
-    await this.prisma.user.update({
-      where: { id },
-      data: { verificationToken: token, verificationTokenExpiresAt: expiresAt },
-    });
-  }
-
-  /**
-   * Looks up a user by their email verification token. Returns the full user
-   * record so the caller can inspect the expiry date.
-   *
-   * @param token - The token string from the verification link.
-   * @returns The full user record, or `null` if no match.
-   */
-  async findByVerificationToken(token: string) {
-    return this.prisma.user.findUnique({ where: { verificationToken: token } });
-  }
-
-  /**
-   * Marks the user's email as verified and clears the verification token
-   * so it cannot be used again.
-   *
-   * @param id - The UUID of the user.
-   */
-  async clearVerificationToken(id: string) {
-    await this.prisma.user.update({
-      where: { id },
-      data: {
-        emailVerifiedAt: new Date(),
-        verificationToken: null,
-        verificationTokenExpiresAt: null,
-      },
-    });
-  }
-
-  /**
-   * Stores a new password reset token and its expiry on the user record.
-   * Overwrites any previously stored reset token.
-   *
-   * @param id - The UUID of the user.
-   * @param token - The 64-character hex token to store.
-   * @param expiresAt - When the token should be considered expired.
-   */
-  async updateResetToken(id: string, token: string, expiresAt: Date) {
-    await this.prisma.user.update({
-      where: { id },
-      data: { resetToken: token, resetTokenExpiresAt: expiresAt },
-    });
-  }
-
-  /**
-   * Looks up a user by their password reset token. Returns the full user
-   * record so the caller can inspect the expiry date.
-   *
-   * @param token - The token string from the reset link.
-   * @returns The full user record, or `null` if no match.
-   */
-  async findByResetToken(token: string) {
-    return this.prisma.user.findUnique({ where: { resetToken: token } });
   }
 
   /**
@@ -265,42 +214,6 @@ export class UsersService {
         ...(markVerified ? { emailVerifiedAt: new Date() } : {}),
       },
     });
-  }
-
-  /**
-   * Stores the pending new email address along with its verification token
-   * and expiry. The user's primary email is unchanged until `confirmPendingEmail`
-   * is called.
-   *
-   * @param id - The UUID of the user.
-   * @param pendingEmail - The new email address to store temporarily.
-   * @param token - The 64-character hex token sent to the new address.
-   * @param expiresAt - When the token should be considered expired.
-   */
-  async updatePendingEmail(
-    id: string,
-    pendingEmail: string,
-    token: string,
-    expiresAt: Date,
-  ) {
-    await this.prisma.user.update({
-      where: { id },
-      data: {
-        pendingEmail,
-        pendingEmailToken: token,
-        pendingEmailTokenExpiresAt: expiresAt,
-      },
-    });
-  }
-
-  /**
-   * Looks up a user by the token stored for a pending email change.
-   *
-   * @param token - The token string from the email change verification link.
-   * @returns The full user record (including `pendingEmail`), or `null` if no match.
-   */
-  async findByPendingEmailToken(token: string) {
-    return this.prisma.user.findUnique({ where: { pendingEmailToken: token } });
   }
 
   /**
@@ -335,12 +248,22 @@ export class UsersService {
    * @returns The newly created user without the password hash, or `null` if the email is already taken.
    */
   async createWithoutPassword(email: string) {
-    const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing) return null;
-    const user = await this.prisma.user.create({
-      data: { email, passwordHash: null },
-    });
-    return withoutPasswordHash(user);
+    try {
+      const user = await this.prisma.user.create({
+        data: { email, passwordHash: null },
+      });
+      return withoutPasswordHash(user);
+    } catch (error) {
+      // Magic-link signup path uses the null return to fall back to a login
+      // link when the address is already registered (race or otherwise).
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async createOAuthUser(email: string) {
@@ -416,21 +339,15 @@ export class UsersService {
     });
   }
 
-  async findByMagicLinkToken(token: string) {
-    return this.prisma.user.findUnique({ where: { magicLinkToken: token } });
-  }
-
-  async updateMagicLinkToken(userId: string, token: string, expiresAt: Date) {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { magicLinkToken: token, magicLinkTokenExpiresAt: expiresAt },
-    });
-  }
-
-  async clearMagicLinkToken(userId: string) {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { magicLinkToken: null, magicLinkTokenExpiresAt: null },
+  /**
+   * Records that the user has dismissed the welcome modal. Uses `updateMany`
+   * so a repeated dismissal (button + Escape + backdrop racing on close) is
+   * idempotent — only sets `welcomedAt` when it is still `null`.
+   */
+  async markWelcomed(id: string) {
+    await this.prisma.user.updateMany({
+      where: { id, welcomedAt: null },
+      data: { welcomedAt: new Date() },
     });
   }
 

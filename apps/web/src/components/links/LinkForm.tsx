@@ -31,8 +31,8 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
       const link = await createLink({ url });
       onCreated(link);
       setUrl('');
-    } catch (error: unknown) {
-      setError(getErrorMessage(error, 'Failed to save link'));
+    } catch (caughtError: unknown) {
+      setError(getErrorMessage(caughtError, 'Failed to save link'));
     } finally {
       setSaving(false);
     }

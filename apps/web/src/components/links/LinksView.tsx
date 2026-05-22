@@ -8,12 +8,14 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
 import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import { useKeyboardShortcuts } from '../../lib/hooks/useKeyboardShortcuts';
 import { useLinks, type LinksFilter } from '../../lib/hooks/useLinks';
 import LinkForm from './LinkForm';
 import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';
+import Alert from '../common/Alert';
 import Toast from '../common/Toast';
 
 /**
@@ -35,9 +37,13 @@ export const LINK_FORM_ID = 'link-form-container';
 function ViewError({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <p className="mt-2 text-rose-300 text-xs animate-fade-in-up" role="alert">
+    <Alert
+      className="mt-2 animate-fade-in-up"
+      icon="fa-triangle-exclamation"
+      variant="error"
+    >
       {message}
-    </p>
+    </Alert>
   );
 }
 
@@ -178,6 +184,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
   });
 
   useFocusTrap(dialogReference);
+  useFocusReturn(showLinkForm);
 
   useEffect(() => {
     setIsClearingRead(false);

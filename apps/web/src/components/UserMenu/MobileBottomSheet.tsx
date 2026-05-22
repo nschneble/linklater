@@ -109,10 +109,6 @@ export default function MobileBottomSheet({
     requestAnimationFrame(() => themeButtonReference.current?.focus());
   }
 
-  function handleTrojanHorse() {
-    // does nothing… for now
-  }
-
   function handleThemeSelect(theme: BaseTheme) {
     onThemeSelect(theme);
   }
@@ -258,16 +254,15 @@ export default function MobileBottomSheet({
                 <MenuItem
                   icon="fa-chevron-left"
                   label=""
+                  aria-label="Back to main menu"
                   className="flex-0 focus:bg-transparent!"
                   onClick={handleBackToMain}
                 />
                 <p className="font-semibold">Themes</p>
-                <MenuItem
-                  icon=""
-                  label=""
-                  className="flex-0 not:visible bg-transparent! cursor-default!"
-                  onClick={handleTrojanHorse}
-                />
+                {/* Non-interactive width-matching spacer so the heading stays
+                    visually centered. Replaces an empty `MenuItem` that sat
+                    in the tab order with no accessible name. */}
+                <div aria-hidden="true" className="flex-0 w-9" />
               </MenuSection>
 
               <InlineThemeList

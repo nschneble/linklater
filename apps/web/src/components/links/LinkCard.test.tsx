@@ -25,28 +25,18 @@ const makeLink = (overrides: Partial<Link> = {}): Link => ({
 });
 
 describe('LinkCard', () => {
-  beforeEach(() => {
-    vi.stubGlobal('open', vi.fn());
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  describe('card click', () => {
-    it('opens the link in a new tab', () => {
+  describe('card anchor', () => {
+    it('renders a native anchor with target=_blank pointing at the link URL', () => {
       render(<LinkCard link={makeLink()} onReadToggle={vi.fn()} />);
 
-      fireEvent.click(screen.getByRole('link'));
-
-      expect(window.open).toHaveBeenCalledWith(
-        'https://example.com/article',
-        '_blank',
-        'noreferrer',
-      );
+      const anchor = screen.getByRole('link');
+      expect(anchor.tagName).toBe('A');
+      expect(anchor).toHaveAttribute('href', 'https://example.com/article');
+      expect(anchor).toHaveAttribute('target', '_blank');
+      expect(anchor).toHaveAttribute('rel', 'noreferrer');
     });
 
-    it('calls onReadToggle when link is not read', () => {
+    it('calls onReadToggle when an unread card is activated', () => {
       const onReadToggle = vi.fn();
       render(
         <LinkCard
@@ -60,7 +50,7 @@ describe('LinkCard', () => {
       expect(onReadToggle).toHaveBeenCalledOnce();
     });
 
-    it('does not call onReadToggle when link is already read', () => {
+    it('does not call onReadToggle when an already-read card is activated', () => {
       const onReadToggle = vi.fn();
       render(
         <LinkCard
@@ -351,7 +341,7 @@ describe('LinkCard', () => {
       expect(onReadToggle).toHaveBeenCalledOnce();
     });
 
-    it('does not open the link when Mark as unread is clicked', () => {
+    it('Mark as unread button sits outside the anchor so its click cannot activate the card', () => {
       render(
         <LinkCard
           link={makeLink({ readAt: '2026-01-02T00:00:00.000Z' })}
@@ -359,9 +349,9 @@ describe('LinkCard', () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole('button', { name: /mark unread/i }));
-
-      expect(window.open).not.toHaveBeenCalled();
+      const anchor = screen.getByRole('link');
+      const button = screen.getByRole('button', { name: /mark unread/i });
+      expect(anchor.contains(button)).toBe(false);
     });
   });
 });

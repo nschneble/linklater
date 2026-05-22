@@ -268,11 +268,30 @@ render_log_view() {
   printf '%s' "$out"
 }
 
+# ── Free stale port ──────────────────────────────────────────────────────────
+# Kill any process holding the API port so a leftover Node from a previous run
+# doesn't crash startup with EADDRINUSE.
+free_port() {
+  local port=$1 log=$2
+  local pids
+  pids=$(lsof -ti tcp:"$port" -sTCP:LISTEN 2>/dev/null || true)
+  if [[ -n "$pids" ]]; then
+    printf 'Freeing port %s (killing PID %s)\n' "$port" "$(echo "$pids" | tr '\n' ' ')" >>"$log"
+    # shellcheck disable=SC2086
+    kill -9 $pids 2>/dev/null || true
+    # Brief pause to let the kernel release the socket before bind().
+    sleep 0.2
+  fi
+}
+
 # ── Launch services ───────────────────────────────────────────────────────────
 hide_cursor
 draw_header
 
-npm run dev --workspace @linklater/api </dev/null >"$API_LOG" 2>&1 &
+API_PORT="${PORT:-3000}"
+free_port "$API_PORT" "$API_LOG"
+
+npm run dev --workspace @linklater/api </dev/null >>"$API_LOG" 2>&1 &
 API_PID=$!
 
 npm run dev --workspace @linklater/web </dev/null >"$WEB_LOG" 2>&1 &

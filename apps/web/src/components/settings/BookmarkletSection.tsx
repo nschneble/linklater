@@ -49,16 +49,25 @@ export default function BookmarkletSection() {
       "headers:{'Content-Type':'application/json','Authorization':'Bearer '+t}," +
       'body:JSON.stringify({url:location.href})})' +
       '.then(function(r){r.ok' +
-      "?n('Saved to Linklater \u2713',true)" +
-      ":r.text().then(function(m){n(m||'Error saving link',false)})})" +
-      ".catch(function(){n('Could not reach Linklater',false)})" +
+      "?n('\u2713 Saved to Linklater',true)" +
+      ":r.text().then(function(m){n('\u26a0 '+(m||'Error saving link'),false)})})" +
+      ".catch(function(){n('\u26a0 Could not reach Linklater',false)})" +
       '})();';
     bookmarkletReference.current.setAttribute('href', code);
   }, []);
 
   return (
-    <div className="max-w-md space-y-3">
-      <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
+    <div
+      id="bookmarklet"
+      tabIndex={-1}
+      role="region"
+      aria-labelledby="bookmarklet-heading"
+      className="max-w-md space-y-3 focus:outline-none"
+    >
+      <h2
+        id="bookmarklet-heading"
+        className="text-[var(--text)] text-sm font-semibold text-balance"
+      >
         Bookmarklet
       </h2>
       <p className="text-[var(--text-muted)] text-xs text-pretty">

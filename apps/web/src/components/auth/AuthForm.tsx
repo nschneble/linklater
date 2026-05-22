@@ -7,12 +7,12 @@ import {
   requestMagicLink,
   verifyOtp,
 } from '../../lib/api';
+import { useAuth } from '../../auth/AuthContext';
 import { getErrorMessage } from '../../lib/errors';
 import { capitalizeFirst } from '../../lib/strings';
-import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import type { FormEvent } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 type Mode = 'login' | 'register' | 'forgot-password';
 type MfaChallenge = 'totp' | 'recovery';

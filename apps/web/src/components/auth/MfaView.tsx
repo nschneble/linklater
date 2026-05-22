@@ -67,15 +67,17 @@ export default function MfaView({
           onChange={(event) => onMfaCodeChange(event.target.value)}
           value={mfaCode}
           required
+          aria-describedby={error ? 'mfa-error' : undefined}
         />
 
         {error && (
-          <Alert icon="fa-triangle-exclamation" variant="error">
+          <Alert id="mfa-error" icon="fa-triangle-exclamation" variant="error">
             {error}
           </Alert>
         )}
 
         <PrimaryButton disabled={loading} className="w-full py-2.5">
+          <i className="fa-solid fa-shield-halved text-xs" aria-hidden="true" />
           {loading ? 'Verifying…' : 'Verify'}
         </PrimaryButton>
       </form>

@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import {
   MAX_DESCRIPTION_LENGTH,
+  MAX_HTML_BYTES,
   MAX_URL_LENGTH,
 } from './metadata.constants.js';
 import { PrismaService } from '../prisma/index.js';
@@ -178,8 +179,9 @@ export class MetadataService implements OnModuleInit {
 
   /**
    * Fetches the HTML of a URL with a 10-second timeout and a desktop
-   * User-Agent string. Returns `null` if the response status is not OK or
-   * if the `Content-Type` is not `text/html`.
+   * User-Agent string. Returns `null` if the response status is not OK,
+   * the `Content-Type` is not `text/html`, the declared `Content-Length`
+   * exceeds `MAX_HTML_BYTES`, or the streamed body crosses that cap.
    *
    * NOTE: The desktop User-Agent is used because many sites return minimal
    * or bot-blocked HTML for non-browser user agents.
@@ -203,16 +205,59 @@ export class MetadataService implements OnModuleInit {
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         },
       });
+
+      if (!response.ok) return null;
+
+      const contentType = response.headers.get('content-type') ?? '';
+      if (!contentType.includes('text/html')) return null;
+
+      const declaredLength = response.headers.get('content-length');
+      if (declaredLength && Number(declaredLength) > MAX_HTML_BYTES) {
+        this.logger.warn(
+          `Refused oversize HTML (declared ${declaredLength} bytes) from ${url}`,
+        );
+        return null;
+      }
+
+      return await this.readBodyWithCap(response, url);
     } finally {
       clearTimeout(timeout);
+      // Abort guarantees the socket is released even when we bailed early
+      // (oversize body, unsupported content type, etc.).
+      controller.abort();
     }
+  }
 
-    if (!response || !response.ok) return null;
+  /**
+   * Streams the response body and aborts once cumulative bytes exceed
+   * `MAX_HTML_BYTES`. Returns `null` when the cap is crossed so that the
+   * caller falls back to empty metadata instead of buffering a hostile body.
+   */
+  private async readBodyWithCap(
+    response: Response,
+    url: string,
+  ): Promise<string | null> {
+    if (!response.body) return null;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let received = 0;
+    let html = '';
 
-    const contentType = response.headers.get('content-type') ?? '';
-    if (!contentType.includes('text/html')) return null;
-
-    return response.text();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      received += value.byteLength;
+      if (received > MAX_HTML_BYTES) {
+        await reader.cancel();
+        this.logger.warn(
+          `Aborted oversize HTML stream (>${MAX_HTML_BYTES} bytes) from ${url}`,
+        );
+        return null;
+      }
+      html += decoder.decode(value, { stream: true });
+    }
+    html += decoder.decode();
+    return html;
   }
 
   /**

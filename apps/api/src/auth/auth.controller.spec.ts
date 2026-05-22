@@ -5,12 +5,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CustomThrottlerGuard } from './custom-throttler.guard';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { ExtensionAuthController } from './extension-auth.controller';
+import { ExtensionAuthService } from './extension-auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
 import { EmailVerificationService } from './email-verification.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { MagicLinkController } from './magic-link.controller';
 import { MfaAuthGuard } from './mfa-auth.guard';
 import { OAuthAccountService } from './oauth-account.service';
+import { OAuthController } from './oauth.controller';
 import { TotpService } from './totp.service';
+import { TwoFactorController } from './two-factor.controller';
 import type { Response } from 'express';
 import type { AuthRequest } from './auth-request.type';
 
@@ -27,24 +32,32 @@ const VERIFICATION_TOKEN = 'verification-token-xyz';
 
 describe('AuthController', () => {
   let controller: AuthController;
+  let oauthController: OAuthController;
+  let twoFactorController: TwoFactorController;
+  let magicLinkController: MagicLinkController;
+  let extensionAuthController: ExtensionAuthController;
 
   const REFRESH_TOKEN = 'refresh-token';
 
-  const authServiceMock = {
+  const extensionAuthServiceMock = {
     authorizeExtension: jest.fn().mockResolvedValue({
       code: 'auth-code-123',
       callbackUrl: 'chrome-extension://allowed/callback',
     }),
     createExtensionAuthCode: jest.fn().mockResolvedValue('auth-code-123'),
-    disable2fa: jest.fn(),
     exchangeExtensionCode: jest.fn().mockResolvedValue({
       accessToken: ACCESS_TOKEN,
       refreshToken: REFRESH_TOKEN,
     }),
+  } as unknown as ExtensionAuthService;
+
+  const authServiceMock = {
+    disable2fa: jest.fn(),
     login: jest.fn().mockResolvedValue({
       accessToken: ACCESS_TOKEN,
       refreshToken: REFRESH_TOKEN,
     }),
+    markWelcomed: jest.fn().mockResolvedValue(undefined),
     me: jest.fn(),
     refresh: jest.fn().mockResolvedValue({
       accessToken: ACCESS_TOKEN,
@@ -84,12 +97,22 @@ describe('AuthController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [AuthController],
+      controllers: [
+        AuthController,
+        ExtensionAuthController,
+        MagicLinkController,
+        OAuthController,
+        TwoFactorController,
+      ],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
         {
           provide: EmailVerificationService,
           useValue: emailVerificationServiceMock,
+        },
+        {
+          provide: ExtensionAuthService,
+          useValue: extensionAuthServiceMock,
         },
         { provide: OAuthAccountService, useValue: oauthAccountServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
@@ -102,6 +125,12 @@ describe('AuthController', () => {
       .compile();
 
     controller = module.get<AuthController>(AuthController);
+    oauthController = module.get<OAuthController>(OAuthController);
+    twoFactorController = module.get<TwoFactorController>(TwoFactorController);
+    magicLinkController = module.get<MagicLinkController>(MagicLinkController);
+    extensionAuthController = module.get<ExtensionAuthController>(
+      ExtensionAuthController,
+    );
     jest.clearAllMocks();
   });
 
@@ -147,7 +176,7 @@ describe('AuthController', () => {
       );
     });
 
-    it('delegates to AuthService.login with the request user', async () => {
+    it('delegates to AuthService.login with the request user id', async () => {
       const request = {
         user: {
           email: USER_EMAIL,
@@ -160,7 +189,9 @@ describe('AuthController', () => {
 
       const result = await controller.login(request);
 
-      expect(authServiceMock.login).toHaveBeenCalledWith(request.user);
+      // login(userId) — the controller no longer passes the full request.user
+      // object, eliminating the OAuth strategy-shape footgun.
+      expect(authServiceMock.login).toHaveBeenCalledWith(USER_ID);
       expect(result).toEqual({ accessToken: ACCESS_TOKEN });
     });
   });
@@ -311,7 +342,7 @@ describe('AuthController', () => {
     it('applies CustomThrottlerGuard before MfaAuthGuard to rate-limit before auth processing', () => {
       const guards: unknown[] = Reflect.getMetadata(
         '__guards__',
-        AuthController.prototype.verifyOtp,
+        TwoFactorController.prototype.verifyOtp,
       );
       expect(guards).toContain(CustomThrottlerGuard);
       expect(guards).toContain(MfaAuthGuard);
@@ -328,7 +359,7 @@ describe('AuthController', () => {
         method: 'totp' as const,
       };
 
-      const result = await controller.verifyOtp(request, body);
+      const result = await twoFactorController.verifyOtp(request, body);
 
       expect(authServiceMock.verifyOtp).toHaveBeenCalledWith(
         USER_ID,
@@ -353,7 +384,7 @@ describe('AuthController', () => {
         setupResult,
       );
 
-      const result = await controller.totpSetup(request);
+      const result = await twoFactorController.totpSetup(request);
 
       expect(totpServiceMock.generateSetup).toHaveBeenCalledWith(
         USER_ID,
@@ -371,7 +402,7 @@ describe('AuthController', () => {
         recoveryCodes,
       );
 
-      const result = await controller.totpVerifySetup(request, {
+      const result = await twoFactorController.totpVerifySetup(request, {
         code: '123456',
       });
 
@@ -389,7 +420,7 @@ describe('AuthController', () => {
         undefined,
       );
 
-      await controller.requestMagicLink({ email: USER_EMAIL });
+      await magicLinkController.requestMagicLink({ email: USER_EMAIL });
 
       expect(authServiceMock.requestMagicLink).toHaveBeenCalledWith(USER_EMAIL);
     });
@@ -401,7 +432,7 @@ describe('AuthController', () => {
         undefined,
       );
 
-      await controller.registerMagicLink({ email: USER_EMAIL });
+      await magicLinkController.registerMagicLink({ email: USER_EMAIL });
 
       expect(authServiceMock.registerMagicLink).toHaveBeenCalledWith(
         USER_EMAIL,
@@ -416,7 +447,7 @@ describe('AuthController', () => {
         accessToken: ACCESS_TOKEN_VALUE,
       });
 
-      const result = await controller.verifyMagicLink({
+      const result = await magicLinkController.verifyMagicLink({
         token: 'valid-token',
       });
 
@@ -432,7 +463,9 @@ describe('AuthController', () => {
       const request = { user: { userId: USER_ID } } as never;
       (authServiceMock.disable2fa as jest.Mock).mockResolvedValue(undefined);
 
-      await controller.disable2fa(request, { currentPassword: 'open-sesame' });
+      await twoFactorController.disable2fa(request, {
+        currentPassword: 'open-sesame',
+      });
 
       expect(authServiceMock.disable2fa).toHaveBeenCalledWith(
         USER_ID,
@@ -450,9 +483,12 @@ describe('AuthController', () => {
         recoveryCodes,
       );
 
-      const result = await controller.regenerateRecoveryCodes(request, {
-        currentPassword: 'open-sesame',
-      });
+      const result = await twoFactorController.regenerateRecoveryCodes(
+        request,
+        {
+          currentPassword: 'open-sesame',
+        },
+      );
 
       expect(authServiceMock.regenerateRecoveryCodes).toHaveBeenCalledWith(
         USER_ID,
@@ -472,7 +508,7 @@ describe('AuthController', () => {
         refreshToken: REFRESH_TOKEN,
       });
 
-      await controller.googleCallback(request, response);
+      await oauthController.googleCallback(request, response);
 
       expect(response.redirect).toHaveBeenCalledWith(
         expect.stringContaining(
@@ -489,7 +525,7 @@ describe('AuthController', () => {
         mfaMethod: 'totp',
       });
 
-      await controller.googleCallback(request, response);
+      await oauthController.googleCallback(request, response);
 
       expect(response.redirect).toHaveBeenCalledWith(
         expect.stringContaining('error=mfa_required'),
@@ -506,7 +542,7 @@ describe('AuthController', () => {
         refreshToken: REFRESH_TOKEN,
       });
 
-      await controller.appleCallback(request, response);
+      await oauthController.appleCallback(request, response);
 
       expect(response.redirect).toHaveBeenCalledWith(
         expect.stringContaining(
@@ -523,7 +559,7 @@ describe('AuthController', () => {
         mfaMethod: 'email',
       });
 
-      await controller.appleCallback(request, response);
+      await oauthController.appleCallback(request, response);
 
       expect(response.redirect).toHaveBeenCalledWith(
         expect.stringContaining('error=mfa_required'),
@@ -557,7 +593,7 @@ describe('AuthController', () => {
         oauthAccountServiceMock.unlinkOAuthProvider as jest.Mock
       ).mockResolvedValue(undefined);
 
-      const result = await controller.unlinkProvider(request, 'google');
+      const result = await oauthController.unlinkProvider(request, 'google');
 
       expect(oauthAccountServiceMock.unlinkOAuthProvider).toHaveBeenCalledWith(
         USER_ID,
@@ -579,7 +615,7 @@ describe('AuthController', () => {
       } as unknown as AuthRequest;
       const response = { redirect: jest.fn() } as unknown as Response;
 
-      controller.googleLink(request, response);
+      oauthController.googleLink(request, response);
 
       expect(response.redirect).toHaveBeenCalledWith(
         expect.stringContaining('https://accounts.google.com/o/oauth2/v2/auth'),
@@ -598,7 +634,7 @@ describe('AuthController', () => {
       const redirectMock = jest.fn();
       const response = { redirect: redirectMock } as unknown as Response;
 
-      controller.googleLink(request, response);
+      oauthController.googleLink(request, response);
 
       const redirectUrl = redirectMock.mock.calls[0][0] as string;
       const url = new URL(redirectUrl);
@@ -620,7 +656,7 @@ describe('AuthController', () => {
         oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
       ).mockResolvedValue(undefined);
 
-      await controller.googleLinkCallback(request, response);
+      await oauthController.googleLinkCallback(request, response);
 
       expect(response.redirect).toHaveBeenCalledWith(
         'https://app.example.com/settings?linked=google',
@@ -635,7 +671,7 @@ describe('AuthController', () => {
         oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
       ).mockRejectedValue(new ConflictException('Already linked'));
 
-      await controller.googleLinkCallback(request, response);
+      await oauthController.googleLinkCallback(request, response);
 
       expect(response.redirect).toHaveBeenCalledWith(
         'https://app.example.com/settings?link_error=already_linked',
@@ -650,7 +686,7 @@ describe('AuthController', () => {
         oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
       ).mockRejectedValue(new BadRequestException('Email mismatch'));
 
-      await controller.googleLinkCallback(request, response);
+      await oauthController.googleLinkCallback(request, response);
 
       expect(response.redirect).toHaveBeenCalledWith(
         'https://app.example.com/settings?link_error=email_mismatch',
@@ -665,7 +701,7 @@ describe('AuthController', () => {
       ).mockRejectedValue(new Error('Database connection lost'));
 
       await expect(
-        controller.googleLinkCallback(request, response),
+        oauthController.googleLinkCallback(request, response),
       ).rejects.toThrow('Database connection lost');
     });
   });
@@ -697,23 +733,36 @@ describe('AuthController', () => {
     });
   });
 
+  describe('acknowledgeWelcome', () => {
+    it('delegates to authService.markWelcomed and returns success', async () => {
+      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
+
+      const result = await controller.acknowledgeWelcome(request);
+
+      expect(authServiceMock.markWelcomed).toHaveBeenCalledWith(USER_ID);
+      expect(result).toEqual({ success: true });
+    });
+  });
+
   describe('extensionAuthorize', () => {
     it('delegates to authService.authorizeExtension with userId, codeChallenge, and redirectUri', async () => {
       const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
       const response = { redirect: jest.fn() } as unknown as Response;
-      (authServiceMock.authorizeExtension as jest.Mock).mockResolvedValue({
+      (
+        extensionAuthServiceMock.authorizeExtension as jest.Mock
+      ).mockResolvedValue({
         code: 'auth-code-123',
         callbackUrl: 'chrome-extension://allowed/callback',
       });
 
-      await controller.extensionAuthorize(
+      await extensionAuthController.extensionAuthorize(
         request,
         response,
         'challenge123',
         'chrome-extension://allowed/callback',
       );
 
-      expect(authServiceMock.authorizeExtension).toHaveBeenCalledWith(
+      expect(extensionAuthServiceMock.authorizeExtension).toHaveBeenCalledWith(
         USER_ID,
         'challenge123',
         'chrome-extension://allowed/callback',
@@ -726,12 +775,12 @@ describe('AuthController', () => {
     it('propagates exceptions thrown by authService.authorizeExtension', async () => {
       const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
       const response = { redirect: jest.fn() } as unknown as Response;
-      (authServiceMock.authorizeExtension as jest.Mock).mockRejectedValue(
-        new BadRequestException('Invalid redirect_uri'),
-      );
+      (
+        extensionAuthServiceMock.authorizeExtension as jest.Mock
+      ).mockRejectedValue(new BadRequestException('Invalid redirect_uri'));
 
       await expect(
-        controller.extensionAuthorize(
+        extensionAuthController.extensionAuthorize(
           request,
           response,
           'challenge123',
@@ -743,15 +792,14 @@ describe('AuthController', () => {
 
   describe('extensionToken', () => {
     it('delegates to authService.exchangeExtensionCode and returns token pair', async () => {
-      const result = await controller.extensionToken({
+      const result = await extensionAuthController.extensionToken({
         code: 'auth-code-123',
         codeVerifier: 'verifier-xyz',
       });
 
-      expect(authServiceMock.exchangeExtensionCode).toHaveBeenCalledWith(
-        'auth-code-123',
-        'verifier-xyz',
-      );
+      expect(
+        extensionAuthServiceMock.exchangeExtensionCode,
+      ).toHaveBeenCalledWith('auth-code-123', 'verifier-xyz');
       expect(result).toEqual({
         accessToken: ACCESS_TOKEN,
         refreshToken: REFRESH_TOKEN,
