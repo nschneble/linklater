@@ -1,13 +1,13 @@
 import IconButton from '../common/IconButton';
-import PrimaryButton from '../common/PrimaryButton';
 import { createPortal } from 'react-dom';
+import { FOCUS_RING } from '../../lib/styles';
 import { useEffect, useRef } from 'react';
 import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
 import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import { useNavigate } from 'react-router-dom';
 
 interface WelcomeModalProps {
-  /** Called when the user dismisses the modal via the button, Escape, or backdrop. */
+  /** Called when the user dismisses the modal via the close button, Escape, or backdrop. */
   onClose: () => void;
 }
 
@@ -16,15 +16,16 @@ const DESCRIPTION_ID = 'welcome-description';
 
 /**
  * One-shot welcome modal shown on the user's first authenticated session.
- * Greets the user, gives a one-paragraph overview of the app, and surfaces
- * two existing features (the bookmarklet and stumble) that new users tend
- * to miss. Mounted from `AppShell` whenever `user.welcomedAt` is `null`.
+ * Greets the user, gives a short forward-looking tagline, and surfaces two
+ * existing features (the bookmarklet and Stumble) that new users tend to
+ * miss. Mounted from `AppShell` whenever `user.welcomedAt` is `null`.
  *
  * Accessibility:
  * - `role="dialog"` with `aria-modal="true"`, `aria-labelledby`, and `aria-describedby`.
  * - Initial focus moves to the heading (least-destructive target per WAI-ARIA APG)
- *   so the first Tab moves into the action links and the primary "Got it" button
- *   sits at the end of the tab order.
+ *   so the first Tab moves into the feature action buttons. The dismiss control
+ *   is placed first in DOM order, mirroring the app-wide modal convention
+ *   established by `KeyboardShortcutsModal`.
  * - Tab key is trapped within the modal; Escape dismisses; focus returns to the
  *   previously focused element on unmount.
  * - Body scroll is locked while the modal is open to prevent disorienting
@@ -53,7 +54,7 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
 
   // Focus the heading on mount. Heading is tabbable only programmatically
   // (tabIndex=-1) so it does not appear in the keyboard tab cycle — Tab from
-  // here moves into the first action link, which is the desired flow.
+  // here moves into the first action button, which is the desired flow.
   useEffect(() => {
     headingReference.current?.focus();
   }, []);
@@ -84,13 +85,21 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
         aria-labelledby={HEADING_ID}
         aria-describedby={DESCRIPTION_ID}
       >
-        <div className="space-y-10">
-          <div className="space-y-1">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close welcome"
+          className={`absolute top-4 right-4 flex items-center justify-center w-8 h-8 text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors active:scale-[0.96] cursor-pointer rounded-full ${FOCUS_RING}`}
+        >
+          <i className="fa-solid fa-xmark text-sm" aria-hidden="true" />
+        </button>
+        <div className="space-y-8">
+          <div className="space-y-1 text-center">
             <h2
               ref={headingReference}
               id={HEADING_ID}
               tabIndex={-1}
-              className="text-[var(--text)] text-lg font-semibold text-balance focus:outline-none"
+              className="text-[var(--text)] text-2xl font-bold text-balance focus:outline-none"
             >
               Welcome to Linklater!
             </h2>
@@ -98,26 +107,25 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
               id={DESCRIPTION_ID}
               className="text-[var(--text-muted)] text-sm text-pretty"
             >
-              So, um… what now?
+              Two features worth knowing before you dive in.
             </p>
           </div>
-          <div className="space-y-5">
-            <div className="flex items-start gap-3 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
-              <span
-                className="fa-stack fa-xl text-[var(--text-subtle)]"
+          <div className="space-y-4">
+            <div className="flex items-start gap-4 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl animate-fade-in-up [animation-delay:120ms]">
+              <i
+                className="mt-0.5 text-[var(--text-subtle)] text-2xl fa-solid fa-book-bookmark"
                 aria-hidden="true"
-              >
-                <i className="fa-solid fa-bookmark fa-stack-2x" />
-                <i className="fa-solid fa-share fa-stack-1x fa-inverse" />
-              </span>
+              />
               <div className="flex-1">
-                <p className="text-[var(--text-muted)] text-sm text-pretty">
-                  <span className="font-semibold">
+                <p className="text-sm text-pretty">
+                  <span className="text-[var(--text)] font-semibold">
                     The Linklater bookmarklet is a pretty sweet way to save
                     links.{' '}
                   </span>
-                  Drag it to your bookmarks bar, then click it on any page to
-                  save the link directly to Linklater.
+                  <span className="text-[var(--text-muted)]">
+                    Drag it to your bookmarks bar, then click it on any page to
+                    save the link directly to Linklater.
+                  </span>
                 </p>
                 <IconButton
                   variant="elevated"
@@ -125,48 +133,42 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                   onClick={() => handleSectionLink('/settings#bookmarklet')}
                 >
                   <i
-                    className="fa-solid fa-book-bookmark text-[0.7rem]"
+                    className="fa-solid fa-bookmark text-[0.7rem]"
                     aria-hidden="true"
                   />
                   Get the bookmarklet
                 </IconButton>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
-              <span
-                className="fa-stack fa-xl text-[var(--text-subtle)]"
+            <div className="flex items-start gap-4 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl animate-fade-in-up [animation-delay:200ms]">
+              <i
+                className="mt-0.5 text-[var(--text-subtle)] text-2xl fa-solid fa-dice"
                 aria-hidden="true"
-              >
-                <i className="fa-solid fa-laptop fa-stack-2x" />
-                <i className="fa-brands fa-stumbleupon fa-stack-1x fa-inverse" />
-              </span>
+              />
               <div className="flex-1">
-                <p className="text-[var(--text-muted)] text-sm text-pretty">
-                  <span className="font-semibold">
+                <p className="text-sm text-pretty">
+                  <span className="text-[var(--text)] font-semibold">
                     The Linklater "Stumble!" feature brings back the casual fun
                     of discovery.{' '}
                   </span>
-                  Visit the page to instantly open a random unread link from
-                  your collection.
+                  <span className="text-[var(--text-muted)]">
+                    Visit the page to instantly open a random unread link from
+                    your collection.
+                  </span>
                 </p>
                 <IconButton
                   variant="elevated"
                   className="w-full mt-4"
-                  onClick={() => handleSectionLink('/settings#stumble')}
+                  onClick={() => handleSectionLink('/stumble')}
                 >
                   <i
-                    className="fa-solid fa-shuffle text-[0.7rem]"
+                    className="fa-brands fa-stumbleupon text-[0.7rem]"
                     aria-hidden="true"
                   />
-                  Get the link
+                  Try Stumble!
                 </IconButton>
               </div>
             </div>
-          </div>
-          <div className="flex justify-end pt-1">
-            <PrimaryButton type="button" onClick={onClose}>
-              Close welcome
-            </PrimaryButton>
           </div>
         </div>
       </div>

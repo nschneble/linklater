@@ -39,7 +39,9 @@ describe('WelcomeModal', () => {
     expect(
       screen.getByRole('heading', { name: /welcome to linklater/i, level: 2 }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/what now\?/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/two tricks worth knowing before you dive in/i),
+    ).toBeInTheDocument();
   });
 
   it('surfaces the bookmarklet feature with a deep-link button', () => {
@@ -60,7 +62,7 @@ describe('WelcomeModal', () => {
       screen.getByText(/random unread link from your collection/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /get the link/i }),
+      screen.getByRole('button', { name: /try stumble/i }),
     ).toBeInTheDocument();
   });
 
@@ -75,7 +77,9 @@ describe('WelcomeModal', () => {
     const describedById = dialog.getAttribute('aria-describedby');
     expect(describedById).not.toBeNull();
     const description = document.getElementById(describedById!);
-    expect(description?.textContent).toMatch(/what now\?/i);
+    expect(description?.textContent).toMatch(
+      /two tricks worth knowing before you dive in/i,
+    );
   });
 
   it('calls onClose when the close button is clicked', () => {
@@ -107,7 +111,7 @@ describe('WelcomeModal', () => {
 
   it('closes the modal and navigates to the stumble section when the stumble button is clicked', () => {
     const { onClose } = renderModal();
-    fireEvent.click(screen.getByRole('button', { name: /get the link/i }));
+    fireEvent.click(screen.getByRole('button', { name: /try stumble/i }));
     expect(onClose).toHaveBeenCalledOnce();
     expect(navigateMock).toHaveBeenCalledWith('/settings#stumble');
   });
