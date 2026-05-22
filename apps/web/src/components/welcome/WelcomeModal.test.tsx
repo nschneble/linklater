@@ -40,7 +40,7 @@ describe('WelcomeModal', () => {
       screen.getByRole('heading', { name: /welcome to linklater/i, level: 2 }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/two tricks worth knowing before you dive in/i),
+      screen.getByText(/two features worth knowing before you dive in/i),
     ).toBeInTheDocument();
   });
 
@@ -78,7 +78,7 @@ describe('WelcomeModal', () => {
     expect(describedById).not.toBeNull();
     const description = document.getElementById(describedById!);
     expect(description?.textContent).toMatch(
-      /two tricks worth knowing before you dive in/i,
+      /two features worth knowing before you dive in/i,
     );
   });
 
@@ -109,11 +109,11 @@ describe('WelcomeModal', () => {
     expect(navigateMock).toHaveBeenCalledWith('/settings#bookmarklet');
   });
 
-  it('closes the modal and navigates to the stumble section when the stumble button is clicked', () => {
+  it('closes the modal and navigates to the stumble page when the stumble button is clicked', () => {
     const { onClose } = renderModal();
     fireEvent.click(screen.getByRole('button', { name: /try stumble/i }));
     expect(onClose).toHaveBeenCalledOnce();
-    expect(navigateMock).toHaveBeenCalledWith('/settings#stumble');
+    expect(navigateMock).toHaveBeenCalledWith('/stumble');
   });
 
   it('moves initial focus to the heading so the first Tab lands on an action', () => {
