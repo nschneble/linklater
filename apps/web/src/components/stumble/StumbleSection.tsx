@@ -11,7 +11,11 @@ import { FOCUS_RING } from '../../lib/styles';
  */
 export default function StumbleSection() {
   return (
-    <div className="max-w-md space-y-3">
+    <div
+      id="stumble"
+      tabIndex={-1}
+      className="max-w-md space-y-3 focus:outline-none"
+    >
       <h2 className="text-[var(--text)] text-sm font-semibold text-balance">
         Stumble!
       </h2>
