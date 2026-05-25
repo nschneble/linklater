@@ -170,60 +170,70 @@ export default function ThemeSubmenu({
           onFlyoutBlur?.(event.relatedTarget as Element | null);
         }}
       >
-        {THEMES.map((theme) => (
-          <button
-            className={`flex items-center gap-2 w-full px-3 py-2 ${hoveredThemeId === theme.id ? 'bg-[var(--bg-surface)]' : ''} focus:outline-none text-[var(--text)] text-left cursor-pointer disabled:cursor-not-allowed`}
-            data-submenu-item
-            role="menuitemradio"
-            aria-checked={baseTheme === theme.id}
-            style={{
-              transitionDuration:
-                '150ms, var(--theme-transition-duration), var(--theme-transition-duration)',
-            }}
-            key={theme.id}
-            type="button"
-            disabled={isCvdMode && theme.id !== CVD_BASE_THEME}
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => onSelect(theme.id)}
-            onMouseEnter={(event) => {
-              setHoveredThemeId(theme.id);
-              onApplyPreview(theme.id);
-              event.currentTarget.focus();
-            }}
-            onMouseLeave={() => setHoveredThemeId(null)}
-            onBlur={() => setHoveredThemeId(null)}
-            onFocus={() => {
-              setHoveredThemeId(theme.id);
-              onApplyPreview(theme.id);
-            }}
-          >
-            <span
-              className="relative shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full theme-color-dot"
-              style={{ backgroundColor: theme.accent }}
+        {THEMES.map((theme) => {
+          const isDisabled = isCvdMode && theme.id !== CVD_BASE_THEME;
+          return (
+            <button
+              className={`flex items-center gap-2 w-full px-3 py-2 ${hoveredThemeId === theme.id ? 'bg-[var(--bg-surface)]' : ''} focus:outline-none text-[var(--text)] text-left ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+              data-submenu-item
+              role="menuitemradio"
+              aria-checked={baseTheme === theme.id}
+              aria-disabled={isDisabled ? 'true' : undefined}
+              style={{
+                transitionDuration:
+                  '150ms, var(--theme-transition-duration), var(--theme-transition-duration)',
+              }}
+              key={theme.id}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                if (isDisabled) return;
+                onSelect(theme.id);
+              }}
+              onMouseEnter={(event) => {
+                if (!isDisabled) {
+                  setHoveredThemeId(theme.id);
+                  onApplyPreview(theme.id);
+                  event.currentTarget.focus();
+                }
+              }}
+              onMouseLeave={() => setHoveredThemeId(null)}
+              onBlur={() => setHoveredThemeId(null)}
+              onFocus={() => {
+                if (!isDisabled) {
+                  setHoveredThemeId(theme.id);
+                  onApplyPreview(theme.id);
+                }
+              }}
             >
-              <i
-                className={`absolute fa-solid ${theme.swatchIcon} text-white text-[0.5rem]`}
-                aria-hidden="true"
-              />
-            </span>
-            <span className="flex-1">{theme.label}</span>
-            {baseTheme === theme.id && (
-              <i
-                className="fa-solid fa-check text-[var(--accent)]"
-                aria-hidden="true"
-              />
-            )}
-            {theme.isAccessible && (
-              <>
+              <span
+                className="relative shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full theme-color-dot"
+                style={{ backgroundColor: theme.accent }}
+              >
                 <i
-                  className="fa-solid fa-universal-access"
+                  className={`absolute fa-solid ${theme.swatchIcon} text-white text-[0.5rem]`}
                   aria-hidden="true"
                 />
-                <span className="sr-only">Accessible theme</span>
-              </>
-            )}
-          </button>
-        ))}
+              </span>
+              <span className="flex-1">{theme.label}</span>
+              {baseTheme === theme.id && (
+                <i
+                  className="fa-solid fa-check text-[var(--accent)]"
+                  aria-hidden="true"
+                />
+              )}
+              {theme.isAccessible && (
+                <>
+                  <i
+                    className="fa-solid fa-universal-access"
+                    aria-hidden="true"
+                  />
+                  <span className="sr-only">Accessible theme</span>
+                </>
+              )}
+            </button>
+          );
+        })}
       </div>
     </>
   );
