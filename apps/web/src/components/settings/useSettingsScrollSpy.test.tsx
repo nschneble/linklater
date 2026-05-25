@@ -67,13 +67,17 @@ afterEach(() => {
 
 describe('useSettingsScrollSpy', () => {
   it('defaults to the first section when there is no hash', () => {
-    renderHarness('/settings', ['account', 'security', 'power']);
+    renderHarness('/settings', ['account', 'security', 'integrations']);
     expect(screen.getByTestId('active')).toHaveTextContent('account');
   });
 
   it('initialises to the URL hash when it matches a section', () => {
-    renderHarness('/settings#power', ['account', 'security', 'power']);
-    expect(screen.getByTestId('active')).toHaveTextContent('power');
+    renderHarness('/settings#integrations', [
+      'account',
+      'security',
+      'integrations',
+    ]);
+    expect(screen.getByTestId('active')).toHaveTextContent('integrations');
   });
 
   it('falls back to the first section when the hash is not in the list', () => {
@@ -82,7 +86,7 @@ describe('useSettingsScrollSpy', () => {
   });
 
   it('updates activeHash when an observer entry intersects', () => {
-    renderHarness('/settings', ['account', 'security', 'power']);
+    renderHarness('/settings', ['account', 'security', 'integrations']);
     emit([
       { id: 'security', isIntersecting: true },
       { id: 'account', isIntersecting: false },
@@ -91,16 +95,16 @@ describe('useSettingsScrollSpy', () => {
   });
 
   it('picks the first intersecting section in document order', () => {
-    renderHarness('/settings', ['account', 'security', 'power']);
+    renderHarness('/settings', ['account', 'security', 'integrations']);
     emit([
-      { id: 'power', isIntersecting: true },
+      { id: 'integrations', isIntersecting: true },
       { id: 'security', isIntersecting: true },
     ]);
     expect(screen.getByTestId('active')).toHaveTextContent('security');
   });
 
   it('keeps the previous active value when nothing intersects', () => {
-    renderHarness('/settings', ['account', 'security', 'power']);
+    renderHarness('/settings', ['account', 'security', 'integrations']);
     emit([{ id: 'security', isIntersecting: true }]);
     expect(screen.getByTestId('active')).toHaveTextContent('security');
     emit([{ id: 'security', isIntersecting: false }]);

@@ -84,7 +84,12 @@ export default function SettingsView({
       label: 'Accessibility',
       icon: 'fa-universal-access',
     });
-    list.push({ hash: 'power', label: 'Power features', icon: 'fa-bolt' });
+    list.push({ hash: 'bookmarks', label: 'Bookmarks', icon: 'fa-book-open' });
+    list.push({
+      hash: 'integrations',
+      label: 'Integrations',
+      icon: 'fa-plug',
+    });
     list.push({
       hash: 'danger',
       label: 'Danger zone',
@@ -165,15 +170,22 @@ export default function SettingsView({
       </SettingsGroup>
 
       <SettingsGroup
-        id="power"
-        title="Power features"
-        icon="fa-bolt"
-        description="Save links from anywhere and manage third-party integrations."
-        divided
+        id="bookmarks"
+        title="Browser bookmarks"
+        icon="fa-book-open"
+        description="Save and stumble upon links right from your web browser's bookmarks bar."
       >
         <BookmarkletSection />
-        <ApiTokensSection />
         <StumbleSection />
+      </SettingsGroup>
+
+      <SettingsGroup
+        id="integrations"
+        title="Third-party integrations"
+        icon="fa-plug"
+        description="Use personal access tokens (PATs) to connect Linklater with external tools and services. Tokens are only shown once."
+      >
+        <ApiTokensSection />
       </SettingsGroup>
 
       <SettingsGroup

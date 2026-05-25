@@ -141,9 +141,14 @@ describe('SettingsView', () => {
       expect(document.getElementById('accessibility')).not.toBeNull();
     });
 
-    it('renders the power group anchor', () => {
+    it('renders the bookmarks group anchor', () => {
       renderSettingsView();
-      expect(document.getElementById('power')).not.toBeNull();
+      expect(document.getElementById('bookmarks')).not.toBeNull();
+    });
+
+    it('renders the integrations group anchor', () => {
+      renderSettingsView();
+      expect(document.getElementById('integrations')).not.toBeNull();
     });
 
     it('renders the danger group anchor', () => {
@@ -222,12 +227,20 @@ describe('SettingsView', () => {
       expect(document.activeElement).toBe(section);
     });
 
-    it('scrolls and focuses the power group when route includes #power', () => {
-      renderSettingsView({ route: '/settings#power' });
+    it('scrolls and focuses the bookmarks group when route includes #bookmarks', () => {
+      renderSettingsView({ route: '/settings#bookmarks' });
       expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
         expect.objectContaining({ block: 'start' }),
       );
-      expect(document.activeElement?.id).toBe('power');
+      expect(document.activeElement?.id).toBe('bookmarks');
+    });
+
+    it('scrolls and focuses the integrations group when route includes #integrations', () => {
+      renderSettingsView({ route: '/settings#integrations' });
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'start' }),
+      );
+      expect(document.activeElement?.id).toBe('integrations');
     });
 
     it('does not perform a hash-driven scroll when route has no hash', () => {

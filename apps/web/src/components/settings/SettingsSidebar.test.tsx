@@ -6,7 +6,7 @@ import type { SettingsSection } from './settingsSections';
 const SECTIONS: SettingsSection[] = [
   { hash: 'account', label: 'Account', icon: 'fa-user' },
   { hash: 'security', label: 'Security', icon: 'fa-shield-halved' },
-  { hash: 'power', label: 'Power tools', icon: 'fa-bolt' },
+  { hash: 'integrations', label: 'Integrations', icon: 'fa-plug' },
 ];
 
 describe('SettingsSidebar', () => {
@@ -22,7 +22,7 @@ describe('SettingsSidebar', () => {
     const links = screen.getAllByRole('link');
     expect(links).toHaveLength(SECTIONS.length);
     expect(links[0]).toHaveAttribute('href', '#account');
-    expect(links[2]).toHaveAttribute('href', '#power');
+    expect(links[2]).toHaveAttribute('href', '#integrations');
   });
 
   it('applies aria-current="location" to the active link only', () => {

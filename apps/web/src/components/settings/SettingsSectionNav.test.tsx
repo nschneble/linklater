@@ -6,7 +6,7 @@ import type { SettingsSection } from './settingsSections';
 const SECTIONS: SettingsSection[] = [
   { hash: 'account', label: 'Account', icon: 'fa-user' },
   { hash: 'security', label: 'Security', icon: 'fa-shield-halved' },
-  { hash: 'power', label: 'Power tools', icon: 'fa-bolt' },
+  { hash: 'integrations', label: 'Integrations', icon: 'fa-plug' },
 ];
 
 let scrollIntoViewMock: ReturnType<typeof vi.fn>;
@@ -36,11 +36,13 @@ describe('SettingsSectionNav', () => {
     render(<SettingsSectionNav sections={SECTIONS} activeHash="account" />);
     const links = screen.getAllByRole('link');
     expect(links).toHaveLength(SECTIONS.length);
-    expect(links[2]).toHaveAttribute('href', '#power');
+    expect(links[2]).toHaveAttribute('href', '#integrations');
   });
 
   it('applies aria-current="location" to the active chip only', () => {
-    render(<SettingsSectionNav sections={SECTIONS} activeHash="power" />);
+    render(
+      <SettingsSectionNav sections={SECTIONS} activeHash="integrations" />,
+    );
     const links = screen.getAllByRole('link');
     expect(links[2]).toHaveAttribute('aria-current', 'location');
     expect(links[0]).not.toHaveAttribute('aria-current');
@@ -74,7 +76,7 @@ describe('SettingsSectionNav', () => {
         onNavigate={onNavigate}
       />,
     );
-    screen.getByRole('link', { name: /power tools/i }).click();
-    expect(onNavigate).toHaveBeenCalledWith('power');
+    screen.getByRole('link', { name: /integrations/i }).click();
+    expect(onNavigate).toHaveBeenCalledWith('integrations');
   });
 });
