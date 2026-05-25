@@ -29,7 +29,8 @@ export default function StumbleSection() {
       <a
         href="/stumble"
         className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold ring-1 ring-[var(--border)] ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing active:scale-[0.96] transition duration-200`}
-        aria-label="Stumble! — drag to bookmarks bar to install, or click to open a random link"
+        aria-label="Drag this Stumble! button to your bookmarks bar. Click it to automatically open a random unread link from your collection."
+        onClick={(event) => event.preventDefault()}
         draggable
       >
         <i

@@ -92,7 +92,7 @@ export default function SettingsView({
     });
     list.push({
       hash: 'danger',
-      label: 'Danger zone',
+      label: 'Danger',
       icon: 'fa-triangle-exclamation',
     });
     return list;
@@ -192,7 +192,7 @@ export default function SettingsView({
         id="danger"
         title="Danger zone"
         icon="fa-triangle-exclamation"
-        description="Deleting your account will remove all your saved links. This cannot be undone."
+        description="Beware all ye who enter. Deleting your account will remove all your saved links. This cannot be undone."
         variant="danger"
       >
         <DangerZone />

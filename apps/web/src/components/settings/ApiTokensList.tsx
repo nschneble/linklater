@@ -135,7 +135,9 @@ export default function ApiTokensList({
 }: ApiTokensListProps) {
   if (tokens.length === 0) {
     return (
-      <p className="mb-8 text-[var(--text-subtle)] text-xs italic">No tokens</p>
+      <p className="mb-8 text-[var(--text-subtle)] text-xs italic">
+        You haven't created any tokens
+      </p>
     );
   }
 

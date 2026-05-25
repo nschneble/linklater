@@ -76,7 +76,7 @@ export default function DangerZone() {
             type="button"
             onClick={() => setConfirmDelete(false)}
           >
-            Cancel
+            No, don't delete
           </IconButton>
         </div>
       )}
