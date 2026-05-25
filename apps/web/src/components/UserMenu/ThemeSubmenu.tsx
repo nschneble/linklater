@@ -1,6 +1,7 @@
+import { CVD_BASE_THEME, THEMES } from '../../theme/ThemeContext';
 import { menuRevealStyle } from '../../lib/styles';
-import { THEMES } from '../../theme/ThemeContext';
 import { useState } from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import type { BaseTheme } from '../../theme/ThemeContext';
 import type { RefObject } from 'react';
 
@@ -89,6 +90,8 @@ export default function ThemeSubmenu({
   onFlyoutBlur,
   flyoutReference,
 }: ThemeSubmenuProps) {
+  const { isCvdMode } = useTheme();
+
   const [hoveredThemeId, setHoveredThemeId] = useState<string | null>(null);
 
   function handleOpenOrFocusFlyout() {
@@ -169,7 +172,7 @@ export default function ThemeSubmenu({
       >
         {THEMES.map((theme) => (
           <button
-            className={`flex items-center gap-2 w-full px-3 py-2 ${hoveredThemeId === theme.id ? 'bg-[var(--bg-surface)]' : ''} focus:outline-none text-[var(--text)] text-left cursor-pointer`}
+            className={`flex items-center gap-2 w-full px-3 py-2 ${hoveredThemeId === theme.id ? 'bg-[var(--bg-surface)]' : ''} focus:outline-none text-[var(--text)] text-left cursor-pointer disabled:cursor-not-allowed`}
             data-submenu-item
             role="menuitemradio"
             aria-checked={baseTheme === theme.id}
@@ -179,6 +182,7 @@ export default function ThemeSubmenu({
             }}
             key={theme.id}
             type="button"
+            disabled={isCvdMode && theme.id !== CVD_BASE_THEME}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelect(theme.id)}
             onMouseEnter={(event) => {

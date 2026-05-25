@@ -124,7 +124,7 @@ body {
 [data-cvd='on'] [aria-disabled='true'] {
   opacity: 1;
   background-image: repeating-linear-gradient(
-    45deg,
+    51deg,
     transparent,
     transparent 4px,
     var(--border) 4px,
