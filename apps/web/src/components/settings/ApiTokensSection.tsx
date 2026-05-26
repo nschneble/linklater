@@ -99,7 +99,7 @@ export default function ApiTokensSection() {
 
   return (
     <div className="max-w-md space-y-3">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-start justify-between gap-3">
         <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
           API Tokens
         </h3>
@@ -110,7 +110,7 @@ export default function ApiTokensSection() {
             onClick={() => setShowCreate(true)}
           >
             <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
-            Generate new token
+            Create new token
           </IconButton>
         )}
       </div>
