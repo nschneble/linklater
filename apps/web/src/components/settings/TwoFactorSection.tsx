@@ -205,7 +205,7 @@ export default function TwoFactorSection() {
             className="py-2.5"
             onClick={handleStartTotpSetup}
           >
-            {loading ? 'Loading…' : 'Continue setup'}
+            {loading ? 'Continuing…' : 'Continue setup'}
           </PrimaryButton>
         </div>
       )}
@@ -224,9 +224,11 @@ export default function TwoFactorSection() {
                 className="fa-solid fa-mobile-screen-button text-xs"
                 aria-hidden="true"
               />
-              Set up authenticator app
+              Add authenticator app
             </PrimaryButton>
-            <StatusBadge variant="info">Recommended</StatusBadge>
+            <StatusBadge variant="info" icon="fa-solid fa-ranking-star">
+              Recommended
+            </StatusBadge>
           </div>
         </div>
       )}

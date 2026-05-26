@@ -49,7 +49,11 @@ export async function logout(): Promise<void> {
 export async function getMe() {
   return apiFetch<{
     cvdMode: boolean;
-    connectedProviders: Array<{ provider: string; connectedAt: string }>;
+    connectedProviders: Array<{
+      provider: string;
+      providerEmail: string;
+      connectedAt: string;
+    }>;
     email: string;
     emailVerifiedAt: string | null;
     hasPassword: boolean;

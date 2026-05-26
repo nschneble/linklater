@@ -81,7 +81,7 @@ export default function ReauthForm({
 
       <div className="flex gap-3">
         <PrimaryButton disabled={loading} className="py-2.5">
-          {loading ? 'Working…' : 'Confirm'}
+          {loading ? 'Confirming…' : 'Confirm'}
         </PrimaryButton>
         <LinkButton onClick={onCancel}>Cancel</LinkButton>
       </div>

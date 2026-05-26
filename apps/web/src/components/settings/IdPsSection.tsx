@@ -1,5 +1,6 @@
 import Alert from '../common/Alert';
 import IconButton from '../common/IconButton';
+import LinkButton from '../common/LinkButton';
 import StatusBadge from '../common/StatusBadge';
 import { useAuth } from '../../auth/AuthContext';
 import { unlinkOAuthProvider } from '../../lib/api';
@@ -7,8 +8,8 @@ import { getErrorMessage } from '../../lib/errors';
 import { useFocusFirstButton } from '../../lib/hooks/useFocusFirstButton';
 import { useRef, useState } from 'react';
 
-/** Props for the social logins settings section. */
-interface SocialLoginsSectionProps {
+/** Props for the IdPs settings section. */
+interface IdPsSectionProps {
   /**
    * When `true`, the Apple row is shown. Defaults to the value of
    * `VITE_APPLE_SSO_ENABLED`. Overridable in tests.
@@ -20,9 +21,9 @@ interface SocialLoginsSectionProps {
    */
   googleEnabled?: boolean;
   /**
-   * Error message to display when an account-linking redirect returned
-   * a `link_error` query parameter (e.g. `'email_mismatch'` or
-   * `'already_linked'`). Null when no error.
+   * Error message to display when an account-linking redirect returned a
+   * `link_error` query parameter (currently only `'already_linked'`). Null
+   * when no error.
    */
   linkError?: string | null;
   /**
@@ -30,28 +31,37 @@ interface SocialLoginsSectionProps {
    * (e.g. the `linked=google` query parameter is present). Null when absent.
    */
   linkedMessage?: string | null;
+  /**
+   * Called when the user clicks "Use <providerEmail> instead". Carries the
+   * provider's email so the parent (`SettingsView`) can push it into the
+   * email-change form via `EmailPrefillContext`.
+   */
+  onUpdateAccountEmailTo?: (email: string) => void;
 }
 
 /**
  * Settings section for linking and disconnecting OAuth social accounts.
  *
- * Renders a row per enabled provider (Google, Apple). When the provider
- * is already connected, a "Disconnect" button with a two-step confirmation
- * is shown. When not connected, a "Connect" button navigates to
- * `GET /auth/<provider>/link` to start the OAuth linking flow.
+ * Renders a row per enabled provider (Google, Apple). When the provider is
+ * connected, the row shows the provider's email (announced as "Connected as
+ * …" for screen readers) plus a "Disconnect" button with two-step confirmation.
+ * When the provider's email differs from the account email, a "Use … instead"
+ * button is offered as a shortcut into the existing email-change flow.
  *
- * The disconnect button is disabled for accounts without a password —
- * disconnecting would otherwise leave the user with no way to log in.
- * A tooltip explains why the button is disabled in that case.
+ * The disconnect button is disabled for accounts without a password — losing
+ * the only login method would orphan the account. The reason is exposed via
+ * `aria-describedby` to keyboard + touch + AT users (a `title` attribute is
+ * insufficient for those audiences).
  *
  * Returns `null` when both providers are disabled (no env vars set).
  */
-export default function SocialLoginsSection({
+export default function IdPsSection({
   appleEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true',
   googleEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
   linkError = null,
   linkedMessage = null,
-}: SocialLoginsSectionProps) {
+  onUpdateAccountEmailTo,
+}: IdPsSectionProps) {
   const { refreshUser, user } = useAuth();
 
   const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(
@@ -62,9 +72,10 @@ export default function SocialLoginsSection({
 
   const connectedProviders = user?.connectedProviders ?? [];
   const hasPassword = Boolean(user?.hasPassword);
+  const accountEmail = user?.email ?? '';
 
-  const isConnected = (provider: string) =>
-    connectedProviders.some((connected) => connected.provider === provider);
+  const findConnection = (provider: string) =>
+    connectedProviders.find((entry) => entry.provider === provider) ?? null;
 
   const handleDisconnect = (provider: string) => {
     setConfirmDisconnect(provider);
@@ -107,11 +118,11 @@ export default function SocialLoginsSection({
   return (
     <div className="space-y-4">
       <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
-        Social logins
+        IdPs
       </h3>
-      {/* TODO: this message is in progress */}
       <p className="text-[var(--text-muted)] text-xs text-pretty">
-        If you logged in with third-party SSO, it'll show up here.
+        Identity providers you've connected for signing in. The provider's email
+        is shown for reference — it doesn't need to match your Linklater email.
       </p>
 
       {linkedMessage && <Alert variant="success">{linkedMessage}</Alert>}
@@ -121,8 +132,9 @@ export default function SocialLoginsSection({
       <div className="space-y-3">
         {appleEnabled && (
           <ProviderRow
+            accountEmail={accountEmail}
             confirmDisconnect={confirmDisconnect}
-            connected={isConnected('apple')}
+            connection={findConnection('apple')}
             disconnecting={disconnecting}
             hasPassword={hasPassword}
             provider="apple"
@@ -132,14 +144,16 @@ export default function SocialLoginsSection({
             onConfirmDisconnect={handleConfirmDisconnect}
             onConnect={() => handleConnect('apple')}
             onDisconnect={() => handleDisconnect('apple')}
+            onUpdateAccountEmailTo={onUpdateAccountEmailTo}
             showConnect={false}
           />
         )}
 
         {googleEnabled && (
           <ProviderRow
+            accountEmail={accountEmail}
             confirmDisconnect={confirmDisconnect}
-            connected={isConnected('google')}
+            connection={findConnection('google')}
             disconnecting={disconnecting}
             hasPassword={hasPassword}
             provider="google"
@@ -149,6 +163,7 @@ export default function SocialLoginsSection({
             onConfirmDisconnect={handleConfirmDisconnect}
             onConnect={() => handleConnect('google')}
             onDisconnect={() => handleDisconnect('google')}
+            onUpdateAccountEmailTo={onUpdateAccountEmailTo}
             showConnect
           />
         )}
@@ -157,15 +172,24 @@ export default function SocialLoginsSection({
   );
 }
 
+/** One connected IdP, as exposed by `AuthContext.User.connectedProviders`. */
+interface ProviderConnection {
+  provider: string;
+  providerEmail: string;
+  connectedAt: string;
+}
+
 /** Props for a single OAuth provider row. */
 interface ProviderRowProps {
+  /** The current Linklater account email. Compared with `providerEmail`. */
+  accountEmail: string;
   /**
    * The provider key currently awaiting confirmation, or `null`. This row
    * renders its confirmation UI when `confirmDisconnect === provider`.
    */
   confirmDisconnect: string | null;
-  /** Whether this provider is currently linked to the user's account. */
-  connected: boolean;
+  /** The connection record when this provider is linked; `null` otherwise. */
+  connection: ProviderConnection | null;
   /** Whether a disconnect request is in flight (disables buttons). */
   disconnecting: boolean;
   /**
@@ -192,14 +216,17 @@ interface ProviderRowProps {
   onConnect: () => void;
   /** Called to enter the disconnect confirmation step. */
   onDisconnect: () => void;
+  /** Bubbled up to `IdPsSection`'s parent — drives the email prefill flow. */
+  onUpdateAccountEmailTo?: (email: string) => void;
 }
 
 /**
  * A single row showing connect/disconnect controls for one OAuth provider.
  */
 function ProviderRow({
+  accountEmail,
   confirmDisconnect,
-  connected,
+  connection,
   disconnecting,
   hasPassword,
   label,
@@ -210,72 +237,102 @@ function ProviderRow({
   onConfirmDisconnect,
   onConnect,
   onDisconnect,
+  onUpdateAccountEmailTo,
 }: ProviderRowProps) {
+  const connected = connection !== null;
+  const providerEmail = connection?.providerEmail ?? '';
+  const emailsDiffer = connected && providerEmail !== accountEmail;
   const isConfirming = confirmDisconnect === provider;
   const confirmRowReference = useRef<HTMLDivElement>(null);
+  const disconnectReasonId = `disconnect-${provider}-reason`;
 
   useFocusFirstButton(confirmRowReference, isConfirming);
 
   return (
-    <div className="flex items-center justify-between">
-      <div
-        className={`flex items-center gap-2 ${showConnect ? 'opacity-100' : 'opacity-60'}`}
-      >
-        <i className={`fa-brands ${icon} text-[0.7rem]`} aria-hidden="true" />
-        <span className="text-[var(--text)] text-sm w-16">{label}</span>
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <div
+          className={`flex items-center gap-2 ${showConnect ? 'opacity-100' : 'opacity-60'}`}
+        >
+          <i className={`fa-brands ${icon} text-[0.7rem]`} aria-hidden="true" />
+          <span className="text-[var(--text)] text-sm w-16">{label}</span>
+          {connected && (
+            <span className="text-[var(--text-muted)] text-xs break-all">
+              <span className="sr-only">Connected as </span>
+              {providerEmail}
+            </span>
+          )}
+        </div>
+
+        {connected ? (
+          <div className="flex items-center gap-2">
+            <StatusBadge variant="success" icon="fa-solid fa-circle-check">
+              Connected
+            </StatusBadge>
+
+            {isConfirming ? (
+              <div
+                className="flex items-center gap-2 text-xs"
+                ref={confirmRowReference}
+              >
+                <span className="text-[var(--text-muted)]">
+                  Disconnect {label}?
+                </span>
+                <IconButton
+                  aria-label={`Confirm disconnect ${label}`}
+                  variant="danger-filled"
+                  disabled={disconnecting}
+                  onClick={onConfirmDisconnect}
+                >
+                  {disconnecting ? 'Disconnecting…' : 'Yes, disconnect'}
+                </IconButton>
+                <IconButton
+                  aria-label={`Cancel disconnect ${label}`}
+                  variant="ghost"
+                  onClick={onCancelDisconnect}
+                >
+                  Cancel
+                </IconButton>
+              </div>
+            ) : (
+              <IconButton
+                variant="danger"
+                disabled={!hasPassword}
+                aria-describedby={!hasPassword ? disconnectReasonId : undefined}
+                onClick={onDisconnect}
+                aria-label={`Disconnect ${label} (${providerEmail})`}
+              >
+                Disconnect
+              </IconButton>
+            )}
+          </div>
+        ) : (
+          <IconButton
+            className="min-w-32"
+            disabled={!showConnect}
+            onClick={onConnect}
+            aria-label={`Connect ${label}`}
+          >
+            Connect {label}
+          </IconButton>
+        )}
       </div>
 
-      {connected ? (
-        <>
-          <StatusBadge variant="success" icon="fa-solid fa-circle-check">
-            Connected
-          </StatusBadge>
+      {connected && !hasPassword && (
+        <p id={disconnectReasonId} className="text-[var(--text-muted)] text-xs">
+          Add a password first to enable disconnecting.
+        </p>
+      )}
 
-          {isConfirming ? (
-            <div
-              className="flex items-center gap-2 text-xs"
-              ref={confirmRowReference}
-            >
-              <span className="text-[var(--text-muted)]">
-                Disconnect {label}?
-              </span>
-              <IconButton
-                aria-label={`Confirm disconnect ${label}`}
-                variant="danger-filled"
-                disabled={disconnecting}
-                onClick={onConfirmDisconnect}
-              >
-                {disconnecting ? 'Disconnecting…' : 'Yes, disconnect'}
-              </IconButton>
-              <IconButton
-                aria-label={`Cancel disconnect ${label}`}
-                variant="ghost"
-                onClick={onCancelDisconnect}
-              >
-                Cancel
-              </IconButton>
-            </div>
-          ) : (
-            <IconButton
-              variant="danger"
-              disabled={!hasPassword}
-              title={!hasPassword ? 'Add a password first' : undefined}
-              onClick={onDisconnect}
-              aria-label={`Disconnect ${label}`}
-            >
-              Disconnect
-            </IconButton>
-          )}
-        </>
-      ) : (
-        <IconButton
-          className="min-w-32"
-          disabled={!showConnect}
-          onClick={onConnect}
-          aria-label={`Connect ${label}`}
-        >
-          Connect {label}
-        </IconButton>
+      {emailsDiffer && onUpdateAccountEmailTo && (
+        <div className="pl-6 text-xs">
+          <LinkButton
+            aria-label={`Use ${providerEmail} as your account email — opens the email change form`}
+            onClick={() => onUpdateAccountEmailTo(providerEmail)}
+          >
+            Use {providerEmail} instead
+          </LinkButton>
+        </div>
       )}
     </div>
   );

@@ -69,7 +69,7 @@ describe('TwoFactorSection', () => {
       render(<TwoFactorSection />);
 
       expect(
-        screen.getByRole('button', { name: /set up authenticator app/i }),
+        screen.getByRole('button', { name: /add authenticator app/i }),
       ).toBeInTheDocument();
     });
 
@@ -91,7 +91,7 @@ describe('TwoFactorSection', () => {
 
       await act(async () => {
         fireEvent.click(
-          screen.getByRole('button', { name: /set up authenticator app/i }),
+          screen.getByRole('button', { name: /add authenticator app/i }),
         );
       });
 
@@ -112,7 +112,7 @@ describe('TwoFactorSection', () => {
 
       await act(async () => {
         fireEvent.click(
-          screen.getByRole('button', { name: /set up authenticator app/i }),
+          screen.getByRole('button', { name: /add authenticator app/i }),
         );
       });
 
@@ -141,7 +141,7 @@ describe('TwoFactorSection', () => {
 
       await act(async () => {
         fireEvent.click(
-          screen.getByRole('button', { name: /set up authenticator app/i }),
+          screen.getByRole('button', { name: /add authenticator app/i }),
         );
       });
 
@@ -169,7 +169,7 @@ describe('TwoFactorSection', () => {
 
       await act(async () => {
         fireEvent.click(
-          screen.getByRole('button', { name: /set up authenticator app/i }),
+          screen.getByRole('button', { name: /add authenticator app/i }),
         );
       });
 
@@ -428,7 +428,7 @@ describe('TwoFactorSection', () => {
 
       await act(async () => {
         fireEvent.click(
-          screen.getByRole('button', { name: /set up authenticator app/i }),
+          screen.getByRole('button', { name: /add authenticator app/i }),
         );
       });
 
@@ -499,7 +499,7 @@ describe('TwoFactorSection', () => {
 
       await act(async () => {
         fireEvent.click(
-          screen.getByRole('button', { name: /set up authenticator app/i }),
+          screen.getByRole('button', { name: /add authenticator app/i }),
         );
       });
 

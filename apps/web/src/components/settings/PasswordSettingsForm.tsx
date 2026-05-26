@@ -116,11 +116,8 @@ function ChangePasswordForm() {
       )}
 
       <PrimaryButton disabled={passwordSaving || !password} className="py-2.5">
-        <i
-          className="fa-solid fa-floppy-disk text-[0.7rem]"
-          aria-hidden="true"
-        />
-        {passwordSaving ? 'Saving…' : 'Update password'}
+        <i className="fa-solid fa-key text-[0.7rem]" aria-hidden="true" />
+        {passwordSaving ? 'Saving…' : 'Save new password'}
       </PrimaryButton>
     </form>
   );
@@ -197,7 +194,7 @@ function AddPasswordForm({ refreshUser }: AddPasswordFormProps) {
         className="py-2.5"
       >
         <i className="fa-solid fa-key text-[0.7rem]" aria-hidden="true" />
-        {addPasswordSaving ? 'Saving…' : 'Add password'}
+        {addPasswordSaving ? 'Adding…' : 'Add password'}
       </PrimaryButton>
     </form>
   );

@@ -59,11 +59,12 @@ model RecoveryCode {
 }
 
 model OAuthAccount {
-  id         String @id @default(cuid())
-  provider   String
-  providerId String
-  userId     String
-  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String @id @default(cuid())
+  provider      String
+  providerId    String
+  providerEmail String
+  userId        String
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

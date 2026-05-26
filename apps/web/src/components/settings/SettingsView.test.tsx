@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import SettingsView from './SettingsView';
@@ -8,9 +8,20 @@ vi.mock('../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('./AccountSettingsForm', () => ({
-  default: () => <div data-testid="account-settings-form" />,
-}));
+vi.mock('./AccountSettingsForm', async () => {
+  // Render the active email prefill so SettingsView's prefill wiring is
+  // observable end-to-end without pulling in the full EmailSettingsForm.
+  const { useEmailPrefill } = await import('./EmailPrefillContext');
+  function MockAccountSettingsForm() {
+    const { prefill } = useEmailPrefill();
+    return (
+      <div data-testid="account-settings-form">
+        <span data-testid="email-prefill">{prefill.email ?? ''}</span>
+      </div>
+    );
+  }
+  return { default: MockAccountSettingsForm };
+});
 
 vi.mock('./ApiTokensSection', () => ({
   default: () => <div data-testid="api-tokens-section" />,
@@ -40,19 +51,27 @@ vi.mock('./TwoFactorSection', () => ({
   default: () => <div data-testid="two-factor-section" />,
 }));
 
-vi.mock('./SocialLoginsSection', () => ({
+vi.mock('./IdPsSection', () => ({
   default: ({
     linkedMessage,
     linkError,
+    onUpdateAccountEmailTo,
   }: {
     linkedMessage?: string | null;
     linkError?: string | null;
+    onUpdateAccountEmailTo?: (email: string) => void;
   }) => (
     <div data-testid="social-logins-section">
       {linkedMessage && (
         <span data-testid="linked-message">{linkedMessage}</span>
       )}
       {linkError && <span data-testid="link-error">{linkError}</span>}
+      <button
+        data-testid="update-account-email"
+        onClick={() => onUpdateAccountEmailTo?.('nick@gmail.com')}
+      >
+        Update account email (test trigger)
+      </button>
     </div>
   ),
 }));
@@ -75,6 +94,7 @@ function makeUser(overrides: Partial<User> = {}): User {
     twoFactorMethod: null,
     twoFactorPending: false,
     userId: USER_ID,
+    welcomedAt: null,
     ...overrides,
   };
 }
@@ -85,6 +105,7 @@ function makeAuthContext(overrides = {}) {
     login: vi.fn(),
     loginWithToken: vi.fn(),
     logout: vi.fn(),
+    markWelcomed: vi.fn(),
     refreshUser: vi.fn(),
     register: vi.fn(),
     resendVerificationEmail: vi.fn(),
@@ -187,18 +208,18 @@ describe('SettingsView', () => {
     });
   });
 
-  describe('Social logins section', () => {
-    it('shows the SocialLogins section when googleEnabled is true', () => {
+  describe('IdPs section', () => {
+    it('shows the IdPs section when googleEnabled is true', () => {
       renderSettingsView({ googleEnabled: true });
       expect(screen.getByTestId('social-logins-section')).toBeInTheDocument();
     });
 
-    it('shows the SocialLogins section when appleEnabled is true', () => {
+    it('shows the IdPs section when appleEnabled is true', () => {
       renderSettingsView({ appleEnabled: true });
       expect(screen.getByTestId('social-logins-section')).toBeInTheDocument();
     });
 
-    it('hides the SocialLogins section when neither provider is enabled', () => {
+    it('hides the IdPs section when neither provider is enabled', () => {
       renderSettingsView({ googleEnabled: false, appleEnabled: false });
       expect(
         screen.queryByTestId('social-logins-section'),
@@ -252,7 +273,7 @@ describe('SettingsView', () => {
   });
 
   describe('OAuth redirect flash messages', () => {
-    it('passes linked=google as a linkedMessage to SocialLoginsSection', () => {
+    it('passes linked=google as a linkedMessage to IdPsSection', () => {
       renderSettingsView({
         route: '/settings?linked=google',
         googleEnabled: true,
@@ -262,7 +283,7 @@ describe('SettingsView', () => {
       );
     });
 
-    it('passes link_error=already_linked as a linkError to SocialLoginsSection', () => {
+    it('passes link_error=already_linked as a linkError to IdPsSection', () => {
       renderSettingsView({
         route: '/settings?link_error=already_linked',
         googleEnabled: true,
@@ -272,13 +293,37 @@ describe('SettingsView', () => {
       );
     });
 
-    it('passes link_error=email_mismatch as a linkError to SocialLoginsSection', () => {
+    it('passes a generic linkError for unrecognized link_error codes', () => {
+      renderSettingsView({
+        route: '/settings?link_error=unknown_code',
+        googleEnabled: true,
+      });
+      expect(screen.getByTestId('link-error')).toHaveTextContent(
+        /failed to connect/i,
+      );
+    });
+
+    it('does not surface email_mismatch (no longer a behavior)', () => {
       renderSettingsView({
         route: '/settings?link_error=email_mismatch',
         googleEnabled: true,
       });
-      expect(screen.getByTestId('link-error')).toHaveTextContent(
+      expect(screen.getByTestId('link-error')).not.toHaveTextContent(
         /different email/i,
+      );
+    });
+  });
+
+  describe('email prefill from IdPs section', () => {
+    it('forwards onUpdateAccountEmailTo into the email prefill context', () => {
+      renderSettingsView({ googleEnabled: true });
+
+      expect(screen.getByTestId('email-prefill')).toHaveTextContent('');
+
+      fireEvent.click(screen.getByTestId('update-account-email'));
+
+      expect(screen.getByTestId('email-prefill')).toHaveTextContent(
+        'nick@gmail.com',
       );
     });
   });

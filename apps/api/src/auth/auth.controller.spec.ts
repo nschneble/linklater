@@ -678,21 +678,6 @@ describe('AuthController', () => {
       );
     });
 
-    it('redirects with link_error=email_mismatch when BadRequestException is thrown', async () => {
-      process.env.APP_URL = 'https://app.example.com';
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-      const response = { redirect: jest.fn() } as unknown as Response;
-      (
-        oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
-      ).mockRejectedValue(new BadRequestException('Email mismatch'));
-
-      await oauthController.googleLinkCallback(request, response);
-
-      expect(response.redirect).toHaveBeenCalledWith(
-        'https://app.example.com/settings?link_error=email_mismatch',
-      );
-    });
-
     it('re-throws unexpected errors from linkOAuthAccountToUser', async () => {
       const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
       const response = { redirect: jest.fn() } as unknown as Response;

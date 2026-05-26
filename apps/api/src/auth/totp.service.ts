@@ -37,7 +37,7 @@ export class TotpService {
 
     if (!user.hasPassword) {
       throw new ForbiddenException(
-        '2FA is not available for accounts created via social login',
+        '2FA is not available for accounts created via IdP',
       );
     }
 

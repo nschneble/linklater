@@ -17,23 +17,23 @@
 
 ### Pages and Views
 
-| Component                | Path                         | Description                                         |
-| ------------------------ | ---------------------------- | --------------------------------------------------- |
-| `App`                    | `src`                        | Root component; sets up routing and providers       |
-| `AppShell`               | `src`                        | Authenticated layout shell with theme/mode controls |
-| `AuthForm`               | `src/components/auth`        | Login, sign-up, and forgot-password form            |
-| `ExtensionAuthorizePage` | `src/components/auth`                  | Browser extension PKCE authorization page           |
-| `LandingPage`            | `src/components/LandingPage`           | Public-facing marketing page                        |
-| `LinksView`              | `src/components/links`                 | Main links page (unread and read tabs)              |
-| `NotFoundView`           | `src/components/errors`                | Authenticated 404 (catch-all under the app shell)   |
-| `OAuthCallbackPage`      | `src/components/auth`                  | Handles OAuth redirect from the API                 |
-| `ResetPasswordPage`      | `src/components/auth`                  | Password reset (token from email)                   |
-| `SettingsView`           | `src/components/settings`              | Settings page                                       |
-| `StumblePage`            | `src/components/stumble`               | Picks a random unread link and shows an interstitial confirm panel before navigating |
-| `ThemeEditor`            | `src/components/settings/ThemeEditor`  | Live theme customization                            |
-| `VerifyEmailChangePage`  | `src/components/verify`                | Confirm an email address change                     |
-| `VerifyEmailPage`        | `src/components/verify`                | Confirm a new account's email address               |
-| `VerifyLoginPage`        | `src/components/verify`                | Handles the magic-link login callback               |
+| Component                | Path                                  | Description                                                                          |
+| ------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------ |
+| `App`                    | `src`                                 | Root component; sets up routing and providers                                        |
+| `AppShell`               | `src`                                 | Authenticated layout shell with theme/mode controls                                  |
+| `AuthForm`               | `src/components/auth`                 | Login, sign-up, and forgot-password form                                             |
+| `ExtensionAuthorizePage` | `src/components/auth`                 | Browser extension PKCE authorization page                                            |
+| `LandingPage`            | `src/components/LandingPage`          | Public-facing marketing page                                                         |
+| `LinksView`              | `src/components/links`                | Main links page (unread and read tabs)                                               |
+| `NotFoundView`           | `src/components/errors`               | Authenticated 404 (catch-all under the app shell)                                    |
+| `OAuthCallbackPage`      | `src/components/auth`                 | Handles OAuth redirect from the API                                                  |
+| `ResetPasswordPage`      | `src/components/auth`                 | Password reset (token from email)                                                    |
+| `SettingsView`           | `src/components/settings`             | Settings page                                                                        |
+| `StumblePage`            | `src/components/stumble`              | Picks a random unread link and shows an interstitial confirm panel before navigating |
+| `ThemeEditor`            | `src/components/settings/ThemeEditor` | Live theme customization                                                             |
+| `VerifyEmailChangePage`  | `src/components/verify`               | Confirm an email address change                                                      |
+| `VerifyEmailPage`        | `src/components/verify`               | Confirm a new account's email address                                                |
+| `VerifyLoginPage`        | `src/components/verify`               | Handles the magic-link login callback                                                |
 
 ### Feature Components
 
@@ -58,7 +58,7 @@
 | `MfaView`                | `src/components/auth`     | TOTP / recovery-code challenge after login      |
 | `ReauthForm`             | `src/components/settings` | Password + OTP re-auth for sensitive operations |
 | `RecoveryCodesModal`     | `src/components/settings` | One-time recovery code display + copy           |
-| `SocialLoginsSection`    | `src/components/settings` | Connect / disconnect Google and Apple accounts  |
+| `IdPsSection`            | `src/components/settings` | Connect / disconnect Google and Apple accounts  |
 | `StatusBadge`            | `src/components/common`   | Themed status indicator with icon + label       |
 | `StumbleEmptyView`       | `src/components/stumble`  | Stumble page empty state with Wikipedia teasers |
 | `StumbleSection`         | `src/components/settings` | Bookmarkable "Stumble!" link card               |
@@ -83,15 +83,15 @@
 
 ### UserMenu (`src/components/UserMenu`)
 
-| Component           | Description                                                       |
-| ------------------- | ----------------------------------------------------------------- |
-| `UserMenu`          | Top-level dropdown / sheet wrapper (responsive)                   |
-| `MobileBottomSheet` | Slide-up sheet rendered on mobile breakpoints                     |
-| `MenuItem`          | Single action row inside a `role="menu"`; supports `aria-label`   |
-| `MenuSection`       | Headed grouping container for related menu items                  |
-| `NavMenuItems`      | Standard navigation entries (Unread, Read, Settings)              |
-| `InlineThemeList`   | Flat list of theme options for the mobile theme subview           |
-| `ThemeSubmenu`      | Desktop flyout listing themes                                     |
+| Component           | Description                                                     |
+| ------------------- | --------------------------------------------------------------- |
+| `UserMenu`          | Top-level dropdown / sheet wrapper (responsive)                 |
+| `MobileBottomSheet` | Slide-up sheet rendered on mobile breakpoints                   |
+| `MenuItem`          | Single action row inside a `role="menu"`; supports `aria-label` |
+| `MenuSection`       | Headed grouping container for related menu items                |
+| `NavMenuItems`      | Standard navigation entries (Unread, Read, Settings)            |
+| `InlineThemeList`   | Flat list of theme options for the mobile theme subview         |
+| `ThemeSubmenu`      | Desktop flyout listing themes                                   |
 
 ### Landing Page (`src/components/LandingPage`)
 
@@ -113,23 +113,23 @@
 
 ### Custom Hooks
 
-| Hook                   | File                         | Purpose                                |
-| ---------------------- | ---------------------------- | -------------------------------------- |
-| `useFocusFirstButton`  | `src/lib/hooks`                        | Focuses the first button inside a ref when activated |
-| `useFocusReturn`       | `src/lib/hooks`                        | Captures `document.activeElement` on open and restores it on close |
-| `useFocusTrap`         | `src/lib/hooks`                        | Wraps Tab/Shift+Tab inside a container; optional Escape callback |
-| `useKeyboardShortcuts` | `src/lib/hooks`                        | Registers keyboard shortcuts           |
-| `useLinks`             | `src/lib/hooks`                        | Facade composing the three hooks below |
-| `useLinksActions`      | `src/lib/hooks`                        | Handles link CRUD mutations            |
-| `useLinksData`         | `src/lib/hooks`                        | Fetch and paginate links               |
-| `useLinksForm`         | `src/lib/hooks`                        | Link creation form state               |
-| `useMenuNavigation`    | `src/components/UserMenu`              | Arrow-key navigation in the menu       |
-| `useMetadataPolling`   | `src/lib/hooks`                        | Polls `GET /links/:id` for metadata    |
-| `usePasteDetection`    | `src/lib/hooks`                        | Listens for `paste` events             |
-| `useRandomLink`        | `src/lib/hooks`                        | Fetch random unread links              |
-| `useTabNavigation`     | `src/lib/hooks`                        | Arrow-key navigation between tabs      |
-| `useThemeOverrides`    | `src/components/settings/ThemeEditor`  | Applies live theme CSS overrides       |
-| `useThemePreview`      | `src/components/UserMenu`              | Hover-preview of theme choices in the user menu |
+| Hook                   | File                                  | Purpose                                                            |
+| ---------------------- | ------------------------------------- | ------------------------------------------------------------------ |
+| `useFocusFirstButton`  | `src/lib/hooks`                       | Focuses the first button inside a ref when activated               |
+| `useFocusReturn`       | `src/lib/hooks`                       | Captures `document.activeElement` on open and restores it on close |
+| `useFocusTrap`         | `src/lib/hooks`                       | Wraps Tab/Shift+Tab inside a container; optional Escape callback   |
+| `useKeyboardShortcuts` | `src/lib/hooks`                       | Registers keyboard shortcuts                                       |
+| `useLinks`             | `src/lib/hooks`                       | Facade composing the three hooks below                             |
+| `useLinksActions`      | `src/lib/hooks`                       | Handles link CRUD mutations                                        |
+| `useLinksData`         | `src/lib/hooks`                       | Fetch and paginate links                                           |
+| `useLinksForm`         | `src/lib/hooks`                       | Link creation form state                                           |
+| `useMenuNavigation`    | `src/components/UserMenu`             | Arrow-key navigation in the menu                                   |
+| `useMetadataPolling`   | `src/lib/hooks`                       | Polls `GET /links/:id` for metadata                                |
+| `usePasteDetection`    | `src/lib/hooks`                       | Listens for `paste` events                                         |
+| `useRandomLink`        | `src/lib/hooks`                       | Fetch random unread links                                          |
+| `useTabNavigation`     | `src/lib/hooks`                       | Arrow-key navigation between tabs                                  |
+| `useThemeOverrides`    | `src/components/settings/ThemeEditor` | Applies live theme CSS overrides                                   |
+| `useThemePreview`      | `src/components/UserMenu`             | Hover-preview of theme choices in the user menu                    |
 
 ## API Patterns
 
@@ -160,10 +160,10 @@ continue to import from `../../lib/api`. Key behaviors:
 
 ### Direct Third-Party Calls
 
-| Module                    | Purpose                                                     | Failure mode                  |
-| ------------------------- | ----------------------------------------------------------- | ----------------------------- |
-| `src/lib/wikipedia.ts`    | Fetches a random Wikipedia article summary for `StumbleEmptyView`. Hits `https://en.wikipedia.org/api/rest_v1/page/random/summary` unauthenticated. | Returns `null`; UI degrades to its fallback message. |
-| `src/lib/gravatar.ts`     | Builds the Gravatar URL for the authenticated user's avatar. | Pure URL builder — no network failure possible at this layer. |
+| Module                 | Purpose                                                                                                                                             | Failure mode                                                  |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `src/lib/wikipedia.ts` | Fetches a random Wikipedia article summary for `StumbleEmptyView`. Hits `https://en.wikipedia.org/api/rest_v1/page/random/summary` unauthenticated. | Returns `null`; UI degrades to its fallback message.          |
+| `src/lib/gravatar.ts`  | Builds the Gravatar URL for the authenticated user's avatar.                                                                                        | Pure URL builder — no network failure possible at this layer. |
 
 ## Global Accessibility Hook
 

@@ -1,12 +1,14 @@
 import { useAuth } from '../../auth/AuthContext';
 import { ApiError, requestEmailChange } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
+import { useReducedMotion } from '../../lib/hooks/useReducedMotion';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import StatusBadge from '../common/StatusBadge';
-import { useState } from 'react';
+import { useEmailPrefill } from './EmailPrefillContext';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
 /**
@@ -20,18 +22,53 @@ import type { FormEvent } from 'react';
  */
 export default function EmailSettingsForm() {
   const { resendVerificationEmail, setPendingEmail, user } = useAuth();
+  const { prefill } = useEmailPrefill();
+  const reducedMotion = useReducedMotion();
 
-  const [emailInput, setEmailInput] = useState(user?.email ?? '');
+  const [emailInput, setEmailInput] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailMessage, setEmailMessage] = useState<string | null>(null);
   const [emailSaving, setEmailSaving] = useState(false);
   const [mfaEmailCode, setMfaEmailCode] = useState('');
+  const [prefillAnnouncement, setPrefillAnnouncement] = useState<string | null>(
+    null,
+  );
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [resendError, setResendError] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
 
+  const formReference = useRef<HTMLFormElement>(null);
   const isVerified = Boolean(user?.emailVerifiedAt);
   const hasPendingEmail = Boolean(user?.pendingEmail);
+
+  // Respond to "Use … instead" pushes from the IdPs section. The provider
+  // announces the prefill (live region) before moving focus so AT users hear
+  // "Pre-filled with X. Review and click Change email address to continue."
+  // alongside the focused input's own announcement. Mirrors the deep-link
+  // focus pattern at SettingsView's hash-driven effect.
+  useEffect(() => {
+    if (!prefill.email) return;
+    setEmailInput(prefill.email);
+    setEmailMessage(null);
+    setEmailError(null);
+    setPrefillAnnouncement(
+      `Pre-filled with ${prefill.email}. Review and click Change email address to continue.`,
+    );
+    const form = formReference.current;
+    if (form && typeof form.scrollIntoView === 'function') {
+      form.scrollIntoView({
+        behavior: reducedMotion ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    }
+    const handle = requestAnimationFrame(() => {
+      const input = document.getElementById(
+        'change-email',
+      ) as HTMLInputElement | null;
+      input?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(handle);
+  }, [prefill.email, prefill.token, reducedMotion]);
 
   async function handleEmailSave(event: FormEvent) {
     event.preventDefault();
@@ -98,6 +135,7 @@ export default function EmailSettingsForm() {
       className="space-y-4"
       aria-labelledby="email-settings-heading"
       onSubmit={handleEmailSave}
+      ref={formReference}
     >
       <h3
         id="email-settings-heading"
@@ -124,7 +162,7 @@ export default function EmailSettingsForm() {
           {resendMessage && <Alert variant="success">{resendMessage}</Alert>}
           {resendError && <Alert variant="error">{resendError}</Alert>}
           <LinkButton disabled={resending} onClick={handleResend}>
-            {resending ? 'Sending…' : 'Resend verification email'}
+            {resending ? 'Resending…' : 'Resend verification email'}
           </LinkButton>
         </div>
       )}
@@ -141,11 +179,12 @@ export default function EmailSettingsForm() {
         className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
         htmlFor="change-email"
       >
-        Change email
+        New email
       </label>
       <FormInput
         id="change-email"
         type="email"
+        placeholder={`Leave blank to keep ${user?.email ?? 'current email'}`}
         value={emailInput}
         onChange={(event) => setEmailInput(event.target.value)}
         // only set when the error element exists in the DOM —
@@ -172,6 +211,9 @@ export default function EmailSettingsForm() {
         </>
       )}
 
+      {prefillAnnouncement && (
+        <Alert variant="success">{prefillAnnouncement}</Alert>
+      )}
       {emailMessage && <Alert variant="success">{emailMessage}</Alert>}
       {emailError && (
         <Alert id="account-email-error" variant="error">
@@ -180,11 +222,13 @@ export default function EmailSettingsForm() {
       )}
 
       <PrimaryButton
-        disabled={emailSaving || emailInput === user?.email}
+        disabled={
+          emailSaving || emailInput.length === 0 || emailInput === user?.email
+        }
         className="py-2.5"
       >
         <i className="fa-solid fa-envelope text-[0.7rem]" aria-hidden="true" />
-        {emailSaving ? 'Sending…' : 'Change email'}
+        {emailSaving ? 'Changing…' : 'Change email address'}
       </PrimaryButton>
     </form>
   );

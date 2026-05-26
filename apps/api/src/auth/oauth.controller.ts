@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Controller,
   Delete,
@@ -134,12 +133,6 @@ export class OAuthController {
       if (error instanceof ConflictException) {
         response.redirect(
           `${process.env.APP_URL}/settings?link_error=already_linked`,
-        );
-        return;
-      }
-      if (error instanceof BadRequestException) {
-        response.redirect(
-          `${process.env.APP_URL}/settings?link_error=email_mismatch`,
         );
         return;
       }

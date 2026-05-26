@@ -20,6 +20,18 @@ export class OAuthAccountService {
       providerId,
     );
     if (account) {
+      // The provider may have updated the email between sign-ins. Mirror the
+      // current value so the IdPs section in Settings stays truthful without
+      // needing a manual refresh. Identity is keyed by (provider, providerId),
+      // not email, so this is purely informational.
+      if (account.providerEmail !== email) {
+        await this.usersService.updateOAuthProviderEmail(
+          account.userId,
+          provider,
+          providerId,
+          email,
+        );
+      }
       return { userId: account.userId, email: account.user.email };
     }
 
@@ -29,7 +41,12 @@ export class OAuthAccountService {
         existingUser.id,
         provider,
         providerId,
+        email,
       );
+      // Auto-verification here is safe because we matched the user *by* this
+      // email — the provider's verified-email assertion applies to the same
+      // address. The link-from-Settings path (`linkOAuthAccountToUser` below)
+      // gates auto-verify on an equality check for the same reason.
       if (!existingUser.emailVerifiedAt) {
         await this.usersService.markEmailVerified(existingUser.id);
       }
@@ -41,6 +58,7 @@ export class OAuthAccountService {
         email,
         provider,
         providerId,
+        email,
       );
       return { userId: newUser.id, email };
     } catch (error) {
@@ -82,12 +100,6 @@ export class OAuthAccountService {
   ): Promise<void> {
     const user = await this.usersService.findById(userId);
 
-    if (providerEmail !== user.email) {
-      throw new BadRequestException(
-        'This Google account uses a different email address than your Linklater account.',
-      );
-    }
-
     const existing = await this.usersService.findOAuthAccount(
       provider,
       providerId,
@@ -99,9 +111,19 @@ export class OAuthAccountService {
       );
     }
 
-    await this.usersService.linkOAuthAccount(userId, provider, providerId);
+    await this.usersService.linkOAuthAccount(
+      userId,
+      provider,
+      providerId,
+      providerEmail,
+    );
 
-    if (!user.emailVerifiedAt) {
+    // Auto-verify only when the provider's email matches the account email.
+    // Once federation is relaxed to allow mismatched provider emails, a
+    // foreign provider email cannot be used as proof that the user controls
+    // their own account email. Do NOT delete this conditional — see the
+    // identity-federation design notes.
+    if (!user.emailVerifiedAt && providerEmail === user.email) {
       await this.usersService.markEmailVerified(userId);
     }
   }

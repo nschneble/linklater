@@ -45,6 +45,7 @@ describe('OAuthAccountService', () => {
     linkOAuthAccount: jest.fn(),
     markEmailVerified: jest.fn(),
     unlinkOAuthAccount: jest.fn(),
+    updateOAuthProviderEmail: jest.fn(),
   } as unknown as UsersService;
 
   beforeEach(async () => {
@@ -67,6 +68,7 @@ describe('OAuthAccountService', () => {
     it('returns existing user when OAuth account already exists', async () => {
       (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
         userId: USER_ID,
+        providerEmail: USER_EMAIL,
         user: { id: USER_ID, email: USER_EMAIL },
       });
 
@@ -79,6 +81,28 @@ describe('OAuthAccountService', () => {
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
       expect(usersServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
       expect(usersServiceMock.createOAuthUserAndLink).not.toHaveBeenCalled();
+      expect(usersServiceMock.updateOAuthProviderEmail).not.toHaveBeenCalled();
+    });
+
+    it('refreshes providerEmail when the provider asserts a new value on sign-in', async () => {
+      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
+        userId: USER_ID,
+        providerEmail: 'stale@gmail.com',
+        user: { id: USER_ID, email: USER_EMAIL },
+      });
+
+      await service.findOrCreateOAuthUser(
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        'fresh@gmail.com',
+      );
+
+      expect(usersServiceMock.updateOAuthProviderEmail).toHaveBeenCalledWith(
+        USER_ID,
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        'fresh@gmail.com',
+      );
     });
 
     it('auto-links OAuth account to existing user with same email', async () => {
@@ -102,6 +126,7 @@ describe('OAuthAccountService', () => {
         USER_ID,
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
+        USER_EMAIL,
       );
       expect(usersServiceMock.createOAuthUserAndLink).not.toHaveBeenCalled();
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
@@ -148,6 +173,7 @@ describe('OAuthAccountService', () => {
         USER_EMAIL,
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
+        USER_EMAIL,
       );
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
     });
@@ -157,6 +183,7 @@ describe('OAuthAccountService', () => {
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({
           userId: USER_ID,
+          providerEmail: USER_EMAIL,
           user: { id: USER_ID, email: USER_EMAIL },
         });
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
@@ -251,22 +278,30 @@ describe('OAuthAccountService', () => {
   });
 
   describe('linkOAuthAccountToUser', () => {
-    it('throws BadRequestException when the provider email does not match the user email', async () => {
+    it('links the provider even when the provider email differs from the account email', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
-        emailVerifiedAt: null,
+        emailVerifiedAt: new Date(),
       });
       (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
+      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
+        undefined,
+      );
 
-      await expect(
-        service.linkOAuthAccountToUser(
-          USER_ID,
-          OAUTH_PROVIDER,
-          OAUTH_PROVIDER_ID,
-          'other@example.com',
-        ),
-      ).rejects.toThrow(BadRequestException);
+      await service.linkOAuthAccountToUser(
+        USER_ID,
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        'other@example.com',
+      );
+
+      expect(usersServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
+        USER_ID,
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        'other@example.com',
+      );
     });
 
     it('links the provider when no existing account is found', async () => {
@@ -291,10 +326,11 @@ describe('OAuthAccountService', () => {
         USER_ID,
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
+        USER_EMAIL,
       );
     });
 
-    it('marks email verified when linking and email was not yet verified', async () => {
+    it('marks email verified when linking an unverified user with matching emails', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
@@ -316,6 +352,27 @@ describe('OAuthAccountService', () => {
       );
 
       expect(usersServiceMock.markEmailVerified).toHaveBeenCalledWith(USER_ID);
+    });
+
+    it('does NOT mark email verified when the provider email differs from the account email', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        emailVerifiedAt: null,
+      });
+      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
+      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.linkOAuthAccountToUser(
+        USER_ID,
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        'foreign@example.com',
+      );
+
+      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
     });
 
     it('does not mark email verified when it is already verified', async () => {

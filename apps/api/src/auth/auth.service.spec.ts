@@ -209,7 +209,7 @@ describe('AuthService', () => {
       expect(result.twoFactorPending).toBe(true);
     });
 
-    it('includes connectedProviders from listOAuthAccounts', async () => {
+    it('includes connectedProviders (with providerEmail) from listOAuthAccounts', async () => {
       const connectedAt = new Date();
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
@@ -221,13 +221,13 @@ describe('AuthService', () => {
         magicLinkTokenExpiresAt: null,
       });
       (usersServiceMock.listOAuthAccounts as jest.Mock).mockResolvedValue([
-        { provider: 'google', connectedAt },
+        { provider: 'google', providerEmail: USER_EMAIL, connectedAt },
       ]);
 
       const result = await service.me(USER_ID);
 
       expect(result.connectedProviders).toEqual([
-        { provider: 'google', connectedAt },
+        { provider: 'google', providerEmail: USER_EMAIL, connectedAt },
       ]);
     });
 

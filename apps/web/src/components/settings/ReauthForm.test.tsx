@@ -130,9 +130,9 @@ describe('ReauthForm — interactions', () => {
     expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
   });
 
-  it('shows "Working…" and disables the confirm button while loading', () => {
+  it('shows "Confirming…" and disables the confirm button while loading', () => {
     renderForm({ loading: true });
-    const confirmButton = screen.getByRole('button', { name: /working/i });
+    const confirmButton = screen.getByRole('button', { name: /confirming/i });
     expect(confirmButton).toBeDisabled();
   });
 

@@ -106,7 +106,7 @@ export class UsersService {
       if (!user) throw new NotFoundException('User not found');
       if (!user.passwordHash) {
         throw new BadRequestException(
-          'Use the set-password endpoint to add a password to a social login account',
+          'Use the set-password endpoint to add a password to an IdP account',
         );
       }
       const isValid = await bcrypt.compare(
@@ -277,13 +277,14 @@ export class UsersService {
     email: string,
     provider: string,
     providerId: string,
+    providerEmail: string,
   ) {
     return this.prisma.$transaction(async (transaction) => {
       const user = await transaction.user.create({
         data: { email, passwordHash: null, emailVerifiedAt: new Date() },
       });
       await transaction.oAuthAccount.create({
-        data: { userId: user.id, provider, providerId },
+        data: { userId: user.id, provider, providerId, providerEmail },
       });
       return withoutPasswordHash(user);
     });
@@ -296,21 +297,49 @@ export class UsersService {
     });
   }
 
-  async linkOAuthAccount(userId: string, provider: string, providerId: string) {
+  async linkOAuthAccount(
+    userId: string,
+    provider: string,
+    providerId: string,
+    providerEmail: string,
+  ) {
     await this.prisma.oAuthAccount.create({
-      data: { userId, provider, providerId },
+      data: { userId, provider, providerId, providerEmail },
     });
   }
 
-  async listOAuthAccounts(
+  /**
+   * Refreshes the stored `providerEmail` for an already-linked account.
+   * Uses `updateMany` so a concurrent unlink is a clean no-op instead of a
+   * P2025. Identity is keyed by `(provider, providerId)` — this column is
+   * purely informational, so silently skipping a vanished row is correct.
+   */
+  async updateOAuthProviderEmail(
     userId: string,
-  ): Promise<{ provider: string; connectedAt: Date }[]> {
+    provider: string,
+    providerId: string,
+    providerEmail: string,
+  ): Promise<void> {
+    await this.prisma.oAuthAccount.updateMany({
+      where: { userId, provider, providerId },
+      data: { providerEmail },
+    });
+  }
+
+  async listOAuthAccounts(userId: string): Promise<
+    {
+      provider: string;
+      providerEmail: string;
+      connectedAt: Date;
+    }[]
+  > {
     const accounts = await this.prisma.oAuthAccount.findMany({
       where: { userId },
-      select: { provider: true, createdAt: true },
+      select: { provider: true, providerEmail: true, createdAt: true },
     });
     return accounts.map((account) => ({
       provider: account.provider,
+      providerEmail: account.providerEmail,
       connectedAt: account.createdAt,
     }));
   }

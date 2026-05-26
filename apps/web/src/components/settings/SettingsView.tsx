@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import AccountSettingsForm from './AccountSettingsForm';
@@ -6,9 +6,10 @@ import ApiTokensSection from './ApiTokensSection';
 import BookmarkletSection from './BookmarkletSection';
 import CvdModeToggle from './CvdModeToggle';
 import DangerZone from './DangerZone';
+import { EmailPrefillProvider } from './EmailPrefillContext';
 import SettingsGroup from './SettingsGroup';
 import SettingsLayout from './SettingsLayout';
-import SocialLoginsSection from './SocialLoginsSection';
+import IdPsSection from './IdPsSection';
 import StumbleSection from '../stumble/StumbleSection';
 import TwoFactorSection from './TwoFactorSection';
 import { useSettingsScrollSpy } from './useSettingsScrollSpy';
@@ -26,8 +27,6 @@ const LINKED_MESSAGES: Record<string, string> = {
 const LINK_ERROR_MESSAGES: Record<string, string> = {
   already_linked:
     'That account is already linked to another user. Try a different one.',
-  email_mismatch:
-    'That Google account uses a different email address. Use the Google account that matches your Linklater email.',
 };
 
 export default function SettingsView({
@@ -54,6 +53,25 @@ export default function SettingsView({
       : null;
   });
 
+  // Shared channel: IdPsSection pushes an email here when the user clicks
+  // "Use … instead"; EmailSettingsForm picks it up via useEmailPrefill().
+  // The token is bumped on every push so repeated clicks (e.g. same provider,
+  // user re-clicks after dismissing) re-run the consumer's effect.
+  const [emailPrefill, setEmailPrefill] = useState<{
+    email: string | null;
+    token: number;
+  }>({ email: null, token: 0 });
+  const handleUpdateAccountEmailTo = useCallback((email: string) => {
+    setEmailPrefill((previous) => ({ email, token: previous.token + 1 }));
+  }, []);
+  const emailPrefillValue = useMemo(
+    () => ({
+      prefill: emailPrefill,
+      setPrefillEmail: handleUpdateAccountEmailTo,
+    }),
+    [emailPrefill, handleUpdateAccountEmailTo],
+  );
+
   // Clean the flash params from the URL so they don't reappear on refresh.
   useEffect(() => {
     if (searchParameters.get('linked') || searchParameters.get('link_error')) {
@@ -62,7 +80,7 @@ export default function SettingsView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const showSocialLogins = googleEnabled || appleEnabled;
+  const showIdPs = googleEnabled || appleEnabled;
   const showSecurity = Boolean(user?.hasPassword);
 
   // Sections are derived from user state and feature flags. Order matches
@@ -126,83 +144,86 @@ export default function SettingsView({
   }, [location.hash]);
 
   return (
-    <SettingsLayout
-      sections={sections}
-      activeHash={activeHash}
-      onNavigate={markIntent}
-    >
-      <SettingsGroup
-        id="account"
-        title="Account"
-        icon="fa-user"
-        description="Manage your email address, password, and social logins."
-        divided
+    <EmailPrefillProvider value={emailPrefillValue}>
+      <SettingsLayout
+        sections={sections}
+        activeHash={activeHash}
+        onNavigate={markIntent}
       >
-        <AccountSettingsForm />
-        {showSocialLogins && (
-          <SocialLoginsSection
-            appleEnabled={appleEnabled}
-            googleEnabled={googleEnabled}
-            linkedMessage={linkedMessage}
-            linkError={linkError}
-          />
-        )}
-      </SettingsGroup>
-
-      {showSecurity && (
         <SettingsGroup
-          id="security"
-          title="Security"
-          icon="fa-shield-halved"
-          description="Set up multi-factor authentication and manage your recovery codes."
+          id="account"
+          title="Account"
+          icon="fa-user"
+          description="Manage your email address, password, and any identity providers (IdPs) you've connected."
+          divided
         >
-          <TwoFactorSection />
+          <AccountSettingsForm />
+          {showIdPs && (
+            <IdPsSection
+              appleEnabled={appleEnabled}
+              googleEnabled={googleEnabled}
+              linkedMessage={linkedMessage}
+              linkError={linkError}
+              onUpdateAccountEmailTo={handleUpdateAccountEmailTo}
+            />
+          )}
         </SettingsGroup>
-      )}
 
-      <SettingsGroup
-        id="accessibility"
-        title="Accessibility"
-        icon="fa-universal-access"
-        description="Adjust how Linklater looks and feels."
-      >
-        <CvdModeToggle />
-      </SettingsGroup>
+        {showSecurity && (
+          <SettingsGroup
+            id="security"
+            title="Security"
+            icon="fa-shield-halved"
+            description="Set up multi-factor authentication."
+          >
+            <TwoFactorSection />
+          </SettingsGroup>
+        )}
 
-      <SettingsGroup
-        id="bookmarks"
-        title="Browser bookmarks"
-        icon="fa-book-open"
-        description="Save and stumble upon links right from your web browser's bookmarks bar."
-      >
-        <BookmarkletSection />
-        <StumbleSection />
-      </SettingsGroup>
+        <SettingsGroup
+          id="accessibility"
+          title="Accessibility"
+          icon="fa-universal-access"
+          description="Adjust how Linklater looks and feels."
+        >
+          <CvdModeToggle />
+        </SettingsGroup>
 
-      <SettingsGroup
-        id="integrations"
-        title="Third-party integrations"
-        icon="fa-plug"
-        description="Use personal access tokens (PATs) to connect Linklater with external tools and services. Tokens are only shown once."
-      >
-        <ApiTokensSection />
-      </SettingsGroup>
+        <SettingsGroup
+          id="bookmarks"
+          title="Browser bookmarks"
+          icon="fa-book-open"
+          description="Save and stumble upon links right from your web browser's bookmarks bar."
+        >
+          <BookmarkletSection />
+          <StumbleSection />
+        </SettingsGroup>
 
-      <SettingsGroup
-        id="danger"
-        title="Danger zone"
-        icon="fa-triangle-exclamation"
-        description="Beware all ye who enter. Deleting your account will remove all your saved links. This cannot be undone."
-        variant="danger"
-      >
-        <DangerZone />
-      </SettingsGroup>
-      <div className="flex items-center justify-center mt-100">
-        <i
-          className="fa-solid fa-cat text-[var(--text-subtle)]"
-          aria-hidden="true"
-        />
-      </div>
-    </SettingsLayout>
+        <SettingsGroup
+          id="integrations"
+          title="Third-party integrations"
+          icon="fa-plug"
+          description="Use personal access tokens (PATs) to connect Linklater with external tools and services. Tokens are only shown once."
+        >
+          <ApiTokensSection />
+        </SettingsGroup>
+
+        <SettingsGroup
+          id="danger"
+          title="Danger zone"
+          icon="fa-triangle-exclamation"
+          description="Beware all ye who enter. Deleting your account will remove all your saved links. This cannot be undone."
+          variant="danger"
+        >
+          <DangerZone />
+        </SettingsGroup>
+        <div className="flex items-center justify-center mt-100">
+          <i
+            className="fa-solid fa-cat text-[var(--text-subtle)]"
+            aria-hidden="true"
+          />
+        </div>
+      </SettingsLayout>
+    </EmailPrefillProvider>
   );
 }

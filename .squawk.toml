@@ -9,7 +9,10 @@ excluded_rules = [
   # Prisma manages migration idempotency via its own state tracking, not IF NOT EXISTS guards
   "prefer-robust-stmts",
   # This app deploys as a single instance with a maintenance window for migrations, not rolling
-  # deployments — column drops, NOT NULL drops, and renames run atomically and are safe
+  # deployments — column drops, NOT NULL drops, NOT NULL adds, and renames run atomically and
+  # are safe. ACCESS EXCLUSIVE locks during a maintenance window have no concurrent readers to
+  # block, so the rolling-deploy hazard these rules guard against does not apply here.
+  "adding-not-nullable-field",
   "ban-drop-column",
   "ban-drop-not-null",
   "renaming-column",

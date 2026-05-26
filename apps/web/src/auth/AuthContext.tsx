@@ -26,7 +26,11 @@ import {
  */
 export interface User {
   /** The OAuth providers connected to this account. */
-  connectedProviders: Array<{ provider: string; connectedAt: string }>;
+  connectedProviders: Array<{
+    provider: string;
+    providerEmail: string;
+    connectedAt: string;
+  }>;
   /** When `true`, CVD mode is enabled on the server. */
   cvdMode: boolean;
   /** The user's current email address. */

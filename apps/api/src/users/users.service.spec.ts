@@ -74,6 +74,7 @@ describe('UsersService', () => {
       deleteMany: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      updateMany: jest.fn(),
     },
     user: {
       create: jest.fn(),
@@ -415,19 +416,29 @@ describe('UsersService', () => {
   });
 
   describe('listOAuthAccounts', () => {
-    it('returns provider and connectedAt for each linked account', async () => {
+    it('returns provider, providerEmail, and connectedAt for each linked account', async () => {
       const now = new Date();
       (prismaMock.oAuthAccount.findMany as jest.Mock).mockResolvedValue([
-        { provider: OAUTH_PROVIDER, createdAt: now },
+        {
+          provider: OAUTH_PROVIDER,
+          providerEmail: USER_EMAIL,
+          createdAt: now,
+        },
       ]);
 
       const result = await service.listOAuthAccounts(USER_ID);
 
       expect(prismaMock.oAuthAccount.findMany).toHaveBeenCalledWith({
         where: { userId: USER_ID },
-        select: { provider: true, createdAt: true },
+        select: { provider: true, providerEmail: true, createdAt: true },
       });
-      expect(result).toEqual([{ provider: OAUTH_PROVIDER, connectedAt: now }]);
+      expect(result).toEqual([
+        {
+          provider: OAUTH_PROVIDER,
+          providerEmail: USER_EMAIL,
+          connectedAt: now,
+        },
+      ]);
     });
 
     it('returns an empty array when no providers are linked', async () => {
@@ -552,7 +563,7 @@ describe('UsersService', () => {
   });
 
   describe('linkOAuthAccount', () => {
-    it('creates an OAuthAccount record linking user to provider', async () => {
+    it('creates an OAuthAccount record linking user to provider with providerEmail', async () => {
       (prismaMock.oAuthAccount.create as jest.Mock).mockResolvedValue(
         undefined,
       );
@@ -561,6 +572,7 @@ describe('UsersService', () => {
         USER_ID,
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
+        USER_EMAIL,
       );
 
       expect(prismaMock.oAuthAccount.create).toHaveBeenCalledWith({
@@ -568,8 +580,48 @@ describe('UsersService', () => {
           userId: USER_ID,
           provider: OAUTH_PROVIDER,
           providerId: OAUTH_PROVIDER_ID,
+          providerEmail: USER_EMAIL,
         },
       });
+    });
+  });
+
+  describe('updateOAuthProviderEmail', () => {
+    it('refreshes providerEmail for the matching OAuth account', async () => {
+      (prismaMock.oAuthAccount.updateMany as jest.Mock).mockResolvedValue({
+        count: 1,
+      });
+
+      await service.updateOAuthProviderEmail(
+        USER_ID,
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        'fresh@gmail.com',
+      );
+
+      expect(prismaMock.oAuthAccount.updateMany).toHaveBeenCalledWith({
+        where: {
+          userId: USER_ID,
+          provider: OAUTH_PROVIDER,
+          providerId: OAUTH_PROVIDER_ID,
+        },
+        data: { providerEmail: 'fresh@gmail.com' },
+      });
+    });
+
+    it('is a no-op when no row matches (concurrent unlink)', async () => {
+      (prismaMock.oAuthAccount.updateMany as jest.Mock).mockResolvedValue({
+        count: 0,
+      });
+
+      await expect(
+        service.updateOAuthProviderEmail(
+          USER_ID,
+          OAUTH_PROVIDER,
+          OAUTH_PROVIDER_ID,
+          'fresh@gmail.com',
+        ),
+      ).resolves.toBeUndefined();
     });
   });
 
@@ -724,6 +776,7 @@ describe('UsersService', () => {
         USER_EMAIL,
         'google',
         'google-uid-123',
+        USER_EMAIL,
       );
 
       expect(transactionMock.user.create).toHaveBeenCalledWith(
@@ -739,6 +792,7 @@ describe('UsersService', () => {
           userId: USER_ID,
           provider: 'google',
           providerId: 'google-uid-123',
+          providerEmail: USER_EMAIL,
         },
       });
       expect(result).not.toHaveProperty('passwordHash');

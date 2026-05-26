@@ -58,6 +58,7 @@ export class AuthService {
     const twoFactorMethod: 'totp' | null = totpEnabledAt ? 'totp' : null;
     const connectedProviders = oauthAccounts.map((account) => ({
       provider: account.provider,
+      providerEmail: account.providerEmail,
       connectedAt: account.connectedAt,
     }));
 

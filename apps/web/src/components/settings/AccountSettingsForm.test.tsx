@@ -1,9 +1,24 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import AccountSettingsForm from './AccountSettingsForm';
+import { EmailPrefillProvider } from './EmailPrefillContext';
 import type { User } from '../../auth/AuthContext';
 
 import { ApiError } from '../../lib/api';
+
+function renderWithPrefill(node: ReactNode) {
+  return render(
+    <EmailPrefillProvider
+      value={{
+        prefill: { email: null, token: 0 },
+        setPrefillEmail: vi.fn(),
+      }}
+    >
+      {node}
+    </EmailPrefillProvider>,
+  );
+}
 
 vi.mock('../../lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../lib/api')>();
@@ -40,6 +55,7 @@ function makeUser(overrides: Partial<User> = {}): User {
     twoFactorMethod: null,
     twoFactorPending: false,
     userId: USER_ID,
+    welcomedAt: null,
     ...overrides,
   };
 }
@@ -50,6 +66,7 @@ function makeAuthContext(overrides = {}) {
     login: vi.fn(),
     loginWithToken: vi.fn(),
     logout: vi.fn(),
+    markWelcomed: vi.fn(),
     refreshUser: vi.fn(),
     register: vi.fn(),
     resendVerificationEmail: vi.fn(),
@@ -68,12 +85,12 @@ afterEach(() => vi.restoreAllMocks());
 describe('AccountSettingsForm', () => {
   describe('email section', () => {
     it('shows the current email address', () => {
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       expect(screen.getByText(USER_EMAIL)).toBeInTheDocument();
     });
 
     it('shows Verified badge when email is verified', () => {
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       expect(screen.getByText('Verified')).toBeInTheDocument();
     });
 
@@ -81,7 +98,7 @@ describe('AccountSettingsForm', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({ user: makeUser({ emailVerifiedAt: null }) }),
       );
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       expect(screen.getByText('Unverified')).toBeInTheDocument();
     });
 
@@ -89,14 +106,14 @@ describe('AccountSettingsForm', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({ user: makeUser({ emailVerifiedAt: null }) }),
       );
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       expect(
         screen.getByRole('button', { name: /resend verification email/i }),
       ).toBeInTheDocument();
     });
 
     it('does not show the resend button when email is verified', () => {
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       expect(
         screen.queryByRole('button', { name: /resend verification email/i }),
       ).not.toBeInTheDocument();
@@ -108,7 +125,7 @@ describe('AccountSettingsForm', () => {
           user: makeUser({ pendingEmail: 'new@example.com' }),
         }),
       );
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       expect(screen.getByText(/new@example.com/i)).toBeInTheDocument();
     });
 
@@ -117,10 +134,12 @@ describe('AccountSettingsForm', () => {
       const setPendingEmail = vi.fn();
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ setPendingEmail }));
 
-      render(<AccountSettingsForm />);
-      const emailInput = screen.getByLabelText(/change email/i);
+      renderWithPrefill(<AccountSettingsForm />);
+      const emailInput = screen.getByLabelText(/new email/i);
       fireEvent.change(emailInput, { target: { value: 'new@example.com' } });
-      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /change email address/i }),
+      );
 
       await waitFor(() => {
         expect(apiModule.requestEmailChange).toHaveBeenCalledWith(
@@ -136,12 +155,14 @@ describe('AccountSettingsForm', () => {
         new Error('Email already in use'),
       );
 
-      render(<AccountSettingsForm />);
-      const emailInput = screen.getByLabelText(/change email/i);
+      renderWithPrefill(<AccountSettingsForm />);
+      const emailInput = screen.getByLabelText(/new email/i);
       fireEvent.change(emailInput, {
         target: { value: 'taken@example.com' },
       });
-      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /change email address/i }),
+      );
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -162,12 +183,14 @@ describe('AccountSettingsForm', () => {
         }),
       );
 
-      render(<AccountSettingsForm />);
-      const emailInput = screen.getByLabelText(/change email/i);
+      renderWithPrefill(<AccountSettingsForm />);
+      const emailInput = screen.getByLabelText(/new email/i);
       fireEvent.change(emailInput, {
         target: { value: 'new@example.com' },
       });
-      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /change email address/i }),
+      );
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -186,7 +209,7 @@ describe('AccountSettingsForm', () => {
         }),
       );
 
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       fireEvent.click(
         screen.getByRole('button', { name: /resend verification email/i }),
       );
@@ -204,7 +227,7 @@ describe('AccountSettingsForm', () => {
         makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
       );
 
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
 
       expect(
         screen.getByLabelText(/authenticator or recovery code/i),
@@ -221,8 +244,8 @@ describe('AccountSettingsForm', () => {
         }),
       );
 
-      render(<AccountSettingsForm />);
-      fireEvent.change(screen.getByLabelText(/change email/i), {
+      renderWithPrefill(<AccountSettingsForm />);
+      fireEvent.change(screen.getByLabelText(/new email/i), {
         target: { value: 'new@example.com' },
       });
       fireEvent.change(
@@ -231,7 +254,9 @@ describe('AccountSettingsForm', () => {
           target: { value: '123456' },
         },
       );
-      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /change email address/i }),
+      );
 
       await waitFor(() => {
         expect(apiModule.requestEmailChange).toHaveBeenCalledWith(
@@ -252,7 +277,7 @@ describe('AccountSettingsForm', () => {
         }),
       );
 
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       fireEvent.click(
         screen.getByRole('button', { name: /resend verification email/i }),
       );
@@ -266,14 +291,14 @@ describe('AccountSettingsForm', () => {
 
   describe('password section', () => {
     it('does not show the current password field until new password is typed', () => {
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       expect(
         screen.queryByLabelText(/current password/i),
       ).not.toBeInTheDocument();
     });
 
     it('shows the current password field when a new password is entered', () => {
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       fireEvent.change(screen.getByLabelText(/new password/i), {
         target: { value: 'my-new-password' },
       });
@@ -287,14 +312,16 @@ describe('AccountSettingsForm', () => {
         email: USER_EMAIL,
       });
 
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       fireEvent.change(screen.getByLabelText(/new password/i), {
         target: { value: 'new-strong-password-123' },
       });
       fireEvent.change(screen.getByLabelText(/current password/i), {
         target: { value: 'current-password' },
       });
-      fireEvent.click(screen.getByRole('button', { name: /update password/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /save new password/i }),
+      );
 
       await waitFor(() => {
         expect(apiModule.updateMe).toHaveBeenCalledWith({
@@ -311,14 +338,16 @@ describe('AccountSettingsForm', () => {
         new Error('Current password is incorrect'),
       );
 
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       fireEvent.change(screen.getByLabelText(/new password/i), {
         target: { value: 'new-strong-password-123' },
       });
       fireEvent.change(screen.getByLabelText(/current password/i), {
         target: { value: 'wrong-password' },
       });
-      fireEvent.click(screen.getByRole('button', { name: /update password/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /save new password/i }),
+      );
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -328,10 +357,10 @@ describe('AccountSettingsForm', () => {
       });
     });
 
-    it('the Update password button is disabled when new password is empty', () => {
-      render(<AccountSettingsForm />);
+    it('the Save new password button is disabled when new password is empty', () => {
+      renderWithPrefill(<AccountSettingsForm />);
       expect(
-        screen.getByRole('button', { name: /update password/i }),
+        screen.getByRole('button', { name: /save new password/i }),
       ).toBeDisabled();
     });
   });
@@ -342,12 +371,14 @@ describe('AccountSettingsForm', () => {
         new Error('Email already in use'),
       );
 
-      render(<AccountSettingsForm />);
-      const emailInput = screen.getByLabelText(/change email/i);
+      renderWithPrefill(<AccountSettingsForm />);
+      const emailInput = screen.getByLabelText(/new email/i);
       fireEvent.change(emailInput, {
         target: { value: 'taken@example.com' },
       });
-      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /change email address/i }),
+      );
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -367,14 +398,16 @@ describe('AccountSettingsForm', () => {
         new Error('Current password is incorrect'),
       );
 
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       fireEvent.change(screen.getByLabelText(/new password/i), {
         target: { value: 'new-strong-password-123' },
       });
       fireEvent.change(screen.getByLabelText(/current password/i), {
         target: { value: 'wrong-password' },
       });
-      fireEvent.click(screen.getByRole('button', { name: /update password/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /save new password/i }),
+      );
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -390,17 +423,70 @@ describe('AccountSettingsForm', () => {
     });
 
     it('email input does not have aria-describedby when there is no error', () => {
-      render(<AccountSettingsForm />);
-      expect(screen.getByLabelText(/change email/i)).not.toHaveAttribute(
+      renderWithPrefill(<AccountSettingsForm />);
+      expect(screen.getByLabelText(/new email/i)).not.toHaveAttribute(
         'aria-describedby',
       );
     });
 
     it('new password input does not have aria-describedby when there is no error', () => {
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       expect(screen.getByLabelText(/new password/i)).not.toHaveAttribute(
         'aria-describedby',
       );
+    });
+  });
+
+  describe('email prefill from IdPs section', () => {
+    it('prefills the email input when an active prefill is provided', () => {
+      render(
+        <EmailPrefillProvider
+          value={{
+            prefill: { email: 'nick@gmail.com', token: 1 },
+            setPrefillEmail: vi.fn(),
+          }}
+        >
+          <AccountSettingsForm />
+        </EmailPrefillProvider>,
+      );
+
+      expect(screen.getByLabelText(/new email/i)).toHaveValue('nick@gmail.com');
+    });
+
+    it('renders a status announcement after a prefill arrives', () => {
+      render(
+        <EmailPrefillProvider
+          value={{
+            prefill: { email: 'nick@gmail.com', token: 1 },
+            setPrefillEmail: vi.fn(),
+          }}
+        >
+          <AccountSettingsForm />
+        </EmailPrefillProvider>,
+      );
+
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /pre-filled with nick@gmail\.com/i,
+      );
+    });
+
+    it('moves focus to the email input after a prefill', async () => {
+      render(
+        <EmailPrefillProvider
+          value={{
+            prefill: { email: 'nick@gmail.com', token: 1 },
+            setPrefillEmail: vi.fn(),
+          }}
+        >
+          <AccountSettingsForm />
+        </EmailPrefillProvider>,
+      );
+
+      await waitFor(() => {
+        expect(document.activeElement).toBe(
+          screen.getByLabelText(/new email/i),
+        );
+      });
     });
   });
 
@@ -412,16 +498,16 @@ describe('AccountSettingsForm', () => {
     });
 
     it('shows the add password form when hasPassword is false', () => {
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       expect(
         screen.getByRole('button', { name: /add password/i }),
       ).toBeInTheDocument();
     });
 
-    it('does not show the update password form when hasPassword is false', () => {
-      render(<AccountSettingsForm />);
+    it('does not show the save new password form when hasPassword is false', () => {
+      renderWithPrefill(<AccountSettingsForm />);
       expect(
-        screen.queryByRole('button', { name: /update password/i }),
+        screen.queryByRole('button', { name: /save new password/i }),
       ).not.toBeInTheDocument();
     });
 
@@ -435,7 +521,7 @@ describe('AccountSettingsForm', () => {
       );
       vi.mocked(apiModule.setPassword).mockResolvedValue(undefined);
 
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       fireEvent.change(screen.getByLabelText(/new password/i), {
         target: { value: NEW_PASSWORD },
       });
@@ -453,7 +539,7 @@ describe('AccountSettingsForm', () => {
         new Error('Account already has a password'),
       );
 
-      render(<AccountSettingsForm />);
+      renderWithPrefill(<AccountSettingsForm />);
       fireEvent.change(screen.getByLabelText(/new password/i), {
         target: { value: NEW_PASSWORD },
       });

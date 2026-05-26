@@ -6,7 +6,7 @@ import {
   fireEvent,
 } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import SocialLoginsSection from './SocialLoginsSection';
+import IdPsSection from './IdPsSection';
 import type { User } from '../../auth/AuthContext';
 
 vi.mock('../../lib/api', async (importOriginal) => {
@@ -27,6 +27,18 @@ import { useAuth } from '../../auth/AuthContext';
 const USER_ID = 'user-1';
 const USER_EMAIL = 'user@example.com';
 
+const googleConnection = {
+  provider: 'google',
+  providerEmail: USER_EMAIL,
+  connectedAt: '2026-01-01T00:00:00.000Z',
+};
+
+const appleConnection = {
+  provider: 'apple',
+  providerEmail: USER_EMAIL,
+  connectedAt: '2026-01-01T00:00:00.000Z',
+};
+
 function makeUser(overrides: Partial<User> = {}): User {
   return {
     cvdMode: false,
@@ -40,6 +52,7 @@ function makeUser(overrides: Partial<User> = {}): User {
     twoFactorMethod: null,
     twoFactorPending: false,
     userId: USER_ID,
+    welcomedAt: null,
     ...overrides,
   };
 }
@@ -50,6 +63,7 @@ function makeAuthContext(overrides = {}) {
     login: vi.fn(),
     loginWithToken: vi.fn(),
     logout: vi.fn(),
+    markWelcomed: vi.fn(),
     refreshUser: vi.fn().mockResolvedValue(undefined),
     register: vi.fn(),
     resendVerificationEmail: vi.fn(),
@@ -65,10 +79,10 @@ beforeEach(() => {
 
 afterEach(() => vi.restoreAllMocks());
 
-describe('SocialLoginsSection', () => {
+describe('IdPsSection', () => {
   describe('Google', () => {
     it('shows a Connect button when Google is enabled and not connected', () => {
-      render(<SocialLoginsSection googleEnabled />);
+      render(<IdPsSection googleEnabled />);
       expect(
         screen.getByRole('button', { name: /connect google/i }),
       ).toBeInTheDocument();
@@ -77,15 +91,11 @@ describe('SocialLoginsSection', () => {
     it('shows connected state when Google is in connectedProviders', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
-          user: makeUser({
-            connectedProviders: [
-              { provider: 'google', connectedAt: '2026-01-01T00:00:00.000Z' },
-            ],
-          }),
+          user: makeUser({ connectedProviders: [googleConnection] }),
         }),
       );
 
-      render(<SocialLoginsSection googleEnabled />);
+      render(<IdPsSection googleEnabled />);
 
       expect(
         screen.queryByRole('button', { name: /^connect google$/i }),
@@ -95,37 +105,98 @@ describe('SocialLoginsSection', () => {
       ).toBeInTheDocument();
     });
 
-    it('disables Disconnect when the user has no password', () => {
+    it('renders the provider email under the provider name when connected', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
           user: makeUser({
-            hasPassword: false,
             connectedProviders: [
-              { provider: 'google', connectedAt: '2026-01-01T00:00:00.000Z' },
+              { ...googleConnection, providerEmail: 'nick@gmail.com' },
             ],
           }),
         }),
       );
 
-      render(<SocialLoginsSection googleEnabled />);
+      render(<IdPsSection googleEnabled />);
+
+      expect(screen.getByText('nick@gmail.com')).toBeInTheDocument();
+      expect(
+        screen.getByText((_, element) =>
+          Boolean(
+            element?.classList?.contains('sr-only') &&
+            /^Connected as\s*$/.test(element.textContent ?? ''),
+          ),
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it('includes the provider email in the Disconnect button accessible name', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({
+            connectedProviders: [
+              { ...googleConnection, providerEmail: 'nick@gmail.com' },
+            ],
+          }),
+        }),
+      );
+
+      render(<IdPsSection googleEnabled />);
+
+      expect(
+        screen.getByRole('button', {
+          name: /disconnect google \(nick@gmail\.com\)/i,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    it('disables Disconnect when the user has no password', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({
+            hasPassword: false,
+            connectedProviders: [googleConnection],
+          }),
+        }),
+      );
+
+      render(<IdPsSection googleEnabled />);
 
       expect(
         screen.getByRole('button', { name: /disconnect google/i }),
       ).toBeDisabled();
     });
 
-    it('shows inline confirm when Disconnect is clicked', () => {
+    it('exposes the disconnect-disabled reason via aria-describedby and visible text', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
           user: makeUser({
-            connectedProviders: [
-              { provider: 'google', connectedAt: '2026-01-01T00:00:00.000Z' },
-            ],
+            hasPassword: false,
+            connectedProviders: [googleConnection],
           }),
         }),
       );
 
-      render(<SocialLoginsSection googleEnabled />);
+      render(<IdPsSection googleEnabled />);
+
+      const button = screen.getByRole('button', { name: /disconnect google/i });
+      expect(button).toHaveAttribute(
+        'aria-describedby',
+        'disconnect-google-reason',
+      );
+      expect(button).not.toHaveAttribute('title');
+      expect(
+        document.getElementById('disconnect-google-reason'),
+      ).toHaveTextContent(/add a password first/i);
+    });
+
+    it('shows inline confirm when Disconnect is clicked', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({ connectedProviders: [googleConnection] }),
+        }),
+      );
+
+      render(<IdPsSection googleEnabled />);
       fireEvent.click(
         screen.getByRole('button', { name: /disconnect google/i }),
       );
@@ -141,15 +212,11 @@ describe('SocialLoginsSection', () => {
     it('focuses the confirm button after clicking Disconnect', async () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
-          user: makeUser({
-            connectedProviders: [
-              { provider: 'google', connectedAt: '2026-01-01T00:00:00.000Z' },
-            ],
-          }),
+          user: makeUser({ connectedProviders: [googleConnection] }),
         }),
       );
 
-      render(<SocialLoginsSection googleEnabled />);
+      render(<IdPsSection googleEnabled />);
 
       await act(async () => {
         fireEvent.click(
@@ -157,7 +224,6 @@ describe('SocialLoginsSection', () => {
         );
       });
 
-      // Focus is set via requestAnimationFrame — wait for it.
       await waitFor(() => {
         expect(document.activeElement).toBe(
           screen.getByRole('button', { name: /confirm disconnect google/i }),
@@ -168,15 +234,11 @@ describe('SocialLoginsSection', () => {
     it('hides the confirm when Cancel is clicked', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
-          user: makeUser({
-            connectedProviders: [
-              { provider: 'google', connectedAt: '2026-01-01T00:00:00.000Z' },
-            ],
-          }),
+          user: makeUser({ connectedProviders: [googleConnection] }),
         }),
       );
 
-      render(<SocialLoginsSection googleEnabled />);
+      render(<IdPsSection googleEnabled />);
       fireEvent.click(
         screen.getByRole('button', { name: /disconnect google/i }),
       );
@@ -194,16 +256,12 @@ describe('SocialLoginsSection', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
           refreshUser,
-          user: makeUser({
-            connectedProviders: [
-              { provider: 'google', connectedAt: '2026-01-01T00:00:00.000Z' },
-            ],
-          }),
+          user: makeUser({ connectedProviders: [googleConnection] }),
         }),
       );
       vi.mocked(apiModule.unlinkOAuthProvider).mockResolvedValue(undefined);
 
-      render(<SocialLoginsSection googleEnabled />);
+      render(<IdPsSection googleEnabled />);
       fireEvent.click(
         screen.getByRole('button', { name: /disconnect google/i }),
       );
@@ -220,18 +278,14 @@ describe('SocialLoginsSection', () => {
     it('shows an error when disconnect fails', async () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
-          user: makeUser({
-            connectedProviders: [
-              { provider: 'google', connectedAt: '2026-01-01T00:00:00.000Z' },
-            ],
-          }),
+          user: makeUser({ connectedProviders: [googleConnection] }),
         }),
       );
       vi.mocked(apiModule.unlinkOAuthProvider).mockRejectedValue(
         new Error('Disconnect failed'),
       );
 
-      render(<SocialLoginsSection googleEnabled />);
+      render(<IdPsSection googleEnabled />);
       fireEvent.click(
         screen.getByRole('button', { name: /disconnect google/i }),
       );
@@ -245,8 +299,90 @@ describe('SocialLoginsSection', () => {
     });
 
     it('does not show Google section when googleEnabled is false', () => {
-      render(<SocialLoginsSection googleEnabled={false} />);
+      render(<IdPsSection googleEnabled={false} />);
       expect(screen.queryByText(/google/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Update account email affordance', () => {
+    it('does not render the affordance when providerEmail matches the account email', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({ connectedProviders: [googleConnection] }),
+        }),
+      );
+
+      render(<IdPsSection googleEnabled onUpdateAccountEmailTo={vi.fn()} />);
+
+      expect(
+        screen.queryByRole('button', { name: /use .* instead/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('renders an "Use … instead" button when providerEmail differs from account email', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({
+            connectedProviders: [
+              { ...googleConnection, providerEmail: 'nick@gmail.com' },
+            ],
+          }),
+        }),
+      );
+
+      render(<IdPsSection googleEnabled onUpdateAccountEmailTo={vi.fn()} />);
+
+      expect(
+        screen.getByRole('button', {
+          name: /use nick@gmail\.com as your account email/i,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    it('calls onUpdateAccountEmailTo with the provider email when clicked', () => {
+      const onUpdateAccountEmailTo = vi.fn();
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({
+            connectedProviders: [
+              { ...googleConnection, providerEmail: 'nick@gmail.com' },
+            ],
+          }),
+        }),
+      );
+
+      render(
+        <IdPsSection
+          googleEnabled
+          onUpdateAccountEmailTo={onUpdateAccountEmailTo}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: /use nick@gmail\.com as your account email/i,
+        }),
+      );
+
+      expect(onUpdateAccountEmailTo).toHaveBeenCalledWith('nick@gmail.com');
+    });
+
+    it('does not render the affordance when onUpdateAccountEmailTo is omitted', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({
+            connectedProviders: [
+              { ...googleConnection, providerEmail: 'nick@gmail.com' },
+            ],
+          }),
+        }),
+      );
+
+      render(<IdPsSection googleEnabled />);
+
+      expect(
+        screen.queryByRole('button', { name: /use .* instead/i }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -256,16 +392,12 @@ describe('SocialLoginsSection', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
           refreshUser,
-          user: makeUser({
-            connectedProviders: [
-              { provider: 'apple', connectedAt: '2026-01-01T00:00:00.000Z' },
-            ],
-          }),
+          user: makeUser({ connectedProviders: [appleConnection] }),
         }),
       );
       vi.mocked(apiModule.unlinkOAuthProvider).mockResolvedValue(undefined);
 
-      render(<SocialLoginsSection appleEnabled />);
+      render(<IdPsSection appleEnabled />);
       fireEvent.click(
         screen.getByRole('button', { name: /disconnect apple/i }),
       );
@@ -282,15 +414,11 @@ describe('SocialLoginsSection', () => {
     it('shows Apple connected state when Apple is in connectedProviders', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
-          user: makeUser({
-            connectedProviders: [
-              { provider: 'apple', connectedAt: '2026-01-01T00:00:00.000Z' },
-            ],
-          }),
+          user: makeUser({ connectedProviders: [appleConnection] }),
         }),
       );
 
-      render(<SocialLoginsSection appleEnabled />);
+      render(<IdPsSection appleEnabled />);
 
       expect(
         screen.getByRole('button', { name: /disconnect apple/i }),
@@ -298,7 +426,7 @@ describe('SocialLoginsSection', () => {
     });
 
     it('does not show Apple section when appleEnabled is false', () => {
-      render(<SocialLoginsSection appleEnabled={false} />);
+      render(<IdPsSection appleEnabled={false} />);
       expect(screen.queryByText(/apple/i)).not.toBeInTheDocument();
     });
   });
@@ -306,10 +434,7 @@ describe('SocialLoginsSection', () => {
   describe('flash messages', () => {
     it('shows linkedMessage as a success alert', () => {
       render(
-        <SocialLoginsSection
-          googleEnabled
-          linkedMessage="Google account connected"
-        />,
+        <IdPsSection googleEnabled linkedMessage="Google account connected" />,
       );
       expect(screen.getByRole('status')).toBeInTheDocument();
       expect(screen.getByText('Google account connected')).toBeInTheDocument();
@@ -317,7 +442,7 @@ describe('SocialLoginsSection', () => {
 
     it('shows linkError as an error alert', () => {
       render(
-        <SocialLoginsSection
+        <IdPsSection
           googleEnabled
           linkError="That Google account is already linked to another user"
         />,
