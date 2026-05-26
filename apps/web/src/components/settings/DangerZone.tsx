@@ -1,5 +1,6 @@
 import { deleteMe } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
+import { setAuthNotice } from '../../auth/authNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { useRef, useState } from 'react';
 import { useFocusFirstButton } from '../../lib/hooks/useFocusFirstButton';
@@ -31,6 +32,7 @@ export default function DangerZone() {
     setDeleting(true);
     try {
       await deleteMe();
+      setAuthNotice('account-deleted');
       logout();
     } catch (error: unknown) {
       setError(getErrorMessage(error, 'Failed to delete account'));

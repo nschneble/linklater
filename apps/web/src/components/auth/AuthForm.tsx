@@ -1,12 +1,14 @@
 import ForgotPasswordView from './ForgotPasswordView';
 import LoginRegisterView from './LoginRegisterView';
 import MfaView from './MfaView';
+import Toast from '../common/Toast';
 import {
   forgotPassword as apiForgotPassword,
   registerMagicLink,
   requestMagicLink,
   verifyOtp,
 } from '../../lib/api';
+import { consumeAuthNotice } from '../../auth/authNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { getErrorMessage } from '../../lib/errors';
 import { capitalizeFirst } from '../../lib/strings';
@@ -44,6 +46,9 @@ export default function AuthForm() {
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(() =>
+    consumeAuthNotice(),
+  );
   const [password, setPassword] = useState('');
 
   function resolveMode(): Mode {
@@ -148,8 +153,9 @@ export default function AuthForm() {
     navigate(path, { state: { from }, replace: true });
   };
 
+  let view;
   if (mode === 'forgot-password') {
-    return (
+    view = (
       <ForgotPasswordView
         email={email}
         emailReference={emailReference}
@@ -161,10 +167,8 @@ export default function AuthForm() {
         onSubmit={handleSubmit}
       />
     );
-  }
-
-  if (mfaChallenge) {
-    return (
+  } else if (mfaChallenge) {
+    view = (
       <MfaView
         error={error}
         loading={loading}
@@ -185,29 +189,42 @@ export default function AuthForm() {
         }}
       />
     );
+  } else {
+    view = (
+      <LoginRegisterView
+        email={email}
+        emailReference={emailReference}
+        error={error}
+        loading={loading}
+        magicLinkSent={magicLinkSent}
+        mode={mode}
+        onEmailChange={setEmail}
+        onForgotPassword={() => handleModeChange('forgot-password')}
+        onMagicLinkBack={() => {
+          setMagicLinkSent(false);
+          if (mode === 'register') {
+            handleModeChange('login');
+          }
+        }}
+        onModeChange={handleModeChange}
+        onPasswordChange={setPassword}
+        onSubmit={handleSubmit}
+        password={password}
+        passwordReference={passwordReference}
+      />
+    );
   }
 
   return (
-    <LoginRegisterView
-      email={email}
-      emailReference={emailReference}
-      error={error}
-      loading={loading}
-      magicLinkSent={magicLinkSent}
-      mode={mode}
-      onEmailChange={setEmail}
-      onForgotPassword={() => handleModeChange('forgot-password')}
-      onMagicLinkBack={() => {
-        setMagicLinkSent(false);
-        if (mode === 'register') {
-          handleModeChange('login');
-        }
-      }}
-      onModeChange={handleModeChange}
-      onPasswordChange={setPassword}
-      onSubmit={handleSubmit}
-      password={password}
-      passwordReference={passwordReference}
-    />
+    <>
+      {view}
+      {notice && (
+        <Toast
+          message={notice}
+          onDismiss={() => setNotice(null)}
+          variant="success"
+        />
+      )}
+    </>
   );
 }

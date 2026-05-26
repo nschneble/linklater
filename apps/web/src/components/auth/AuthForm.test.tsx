@@ -6,8 +6,9 @@ import {
   act,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import AuthForm from './AuthForm';
+import { setAuthNotice } from '../../auth/authNotice';
 
 vi.mock('../../lib/api', () => ({
   forgotPassword: vi.fn(),
@@ -58,6 +59,10 @@ function makeAuthContext(overrides = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
+});
+
+afterEach(() => {
+  window.sessionStorage.clear();
 });
 
 function fillEmail(email: string) {
@@ -881,6 +886,33 @@ describe('AuthForm', () => {
       await waitFor(() => {
         expect(screen.getByText('Otp has expired')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('post-deletion notice', () => {
+    it('shows the account-deleted toast when the notice is queued', () => {
+      setAuthNotice('account-deleted');
+      renderAuthForm();
+      expect(
+        screen.getByText('Your account has been deleted.'),
+      ).toBeInTheDocument();
+    });
+
+    it('clears the notice after first render (one-shot)', () => {
+      setAuthNotice('account-deleted');
+      const { unmount } = renderAuthForm();
+      unmount();
+      renderAuthForm();
+      expect(
+        screen.queryByText(/your account has been deleted/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it('does not render a toast when no notice is queued', () => {
+      renderAuthForm();
+      expect(
+        screen.queryByText(/your account has been deleted/i),
+      ).not.toBeInTheDocument();
     });
   });
 

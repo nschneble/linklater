@@ -1,6 +1,7 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import DangerZone from './DangerZone';
+import { consumeAuthNotice } from '../../auth/authNotice';
 
 vi.mock('../../lib/api', () => ({
   deleteMe: vi.fn(),
@@ -31,7 +32,10 @@ beforeEach(() => {
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
 });
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  window.sessionStorage.clear();
+});
 
 describe('DangerZone', () => {
   it('renders the initial delete account button', () => {
@@ -110,5 +114,27 @@ describe('DangerZone', () => {
     await waitFor(() => {
       expect(screen.getByText('Failed to delete account')).toBeInTheDocument();
     });
+  });
+
+  it('queues the account-deleted notice before logging out', async () => {
+    const logoutMock = vi.fn();
+    vi.mocked(useAuth).mockReturnValue(makeAuthContext({ logout: logoutMock }));
+    vi.mocked(apiModule.deleteMe).mockResolvedValue({ success: true });
+
+    render(<DangerZone />);
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+    fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+
+    await waitFor(() => expect(logoutMock).toHaveBeenCalledOnce());
+    expect(consumeAuthNotice()).toBe('Your account has been deleted.');
+  });
+
+  it('does not queue the notice when deletion fails', async () => {
+    vi.mocked(apiModule.deleteMe).mockRejectedValue(new Error('boom'));
+    render(<DangerZone />);
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+    fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+    expect(consumeAuthNotice()).toBeNull();
   });
 });
