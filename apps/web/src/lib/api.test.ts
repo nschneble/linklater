@@ -966,6 +966,21 @@ describe('verifyMagicLink', () => {
     expect(result).toEqual({ accessToken: 'ml-jwt' });
     expect(getStoredToken()).toBe('ml-jwt');
   });
+
+  // 2FA-enabled accounts hitting a magic link get a challenge back from
+  // the server. The response must be returned as-is so the caller can
+  // surface MfaView instead of trying to destructure a missing accessToken.
+  it('returns the mfa challenge unchanged and does not store any token', async () => {
+    mockFetch({ mfaToken: 'pending-mfa-token', mfaMethod: 'totp' });
+
+    const result = await verifyMagicLink('my-token');
+
+    expect(result).toEqual({
+      mfaToken: 'pending-mfa-token',
+      mfaMethod: 'totp',
+    });
+    expect(getStoredToken()).toBeNull();
+  });
 });
 
 describe('verifyOtp', () => {

@@ -156,9 +156,7 @@ export async function requestMagicLink(email: string): Promise<void> {
   );
 }
 
-export async function verifyMagicLink(
-  token: string,
-): Promise<LoginResponse> {
+export async function verifyMagicLink(token: string): Promise<LoginResponse> {
   // The server routes magic-link verification through the same `login()`
   // helper as password sign-in, so a 2FA-enabled account answering a magic
   // link gets back an `mfaToken` challenge instead of an access token.
