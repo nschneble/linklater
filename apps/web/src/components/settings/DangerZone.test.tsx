@@ -54,13 +54,15 @@ describe('DangerZone', () => {
     expect(
       screen.getByRole('button', { name: /yes, delete/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /no, don't delete/i }),
+    ).toBeInTheDocument();
   });
 
   it('hides confirmation prompt when cancel is clicked', () => {
     render(<DangerZone />);
     fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
-    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    fireEvent.click(screen.getByRole('button', { name: /no, don't delete/i }));
 
     expect(screen.queryByText(/are you sure/i)).not.toBeInTheDocument();
     expect(

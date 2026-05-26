@@ -21,9 +21,11 @@ const makeToken = (overrides: Partial<ApiToken> = {}): ApiToken => ({
 });
 
 describe('ApiTokensList', () => {
-  it('shows "No tokens yet." when the token list is empty', () => {
+  it('shows "You haven\'t created any tokens" when the token list is empty', () => {
     render(<ApiTokensList tokens={[]} onRevoke={vi.fn()} />);
-    expect(screen.getByText('No tokens')).toBeInTheDocument();
+    expect(
+      screen.getByText("You haven't created any tokens"),
+    ).toBeInTheDocument();
   });
 
   it('renders one row per token', () => {

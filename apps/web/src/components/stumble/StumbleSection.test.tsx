@@ -20,6 +20,8 @@ describe('StumbleSection', () => {
   it('stumble link has a descriptive aria-label mentioning drag', () => {
     render(<StumbleSection />);
     const link = screen.getByRole('link', { name: /stumble!/i });
-    expect(link.getAttribute('aria-label')).toMatch(/drag to bookmarks bar/i);
+    expect(link.getAttribute('aria-label')).toMatch(
+      /drag this stumble! button to your bookmarks bar/i,
+    );
   });
 });

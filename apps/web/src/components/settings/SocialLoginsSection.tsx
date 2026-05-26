@@ -109,6 +109,10 @@ export default function SocialLoginsSection({
       <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
         Social logins
       </h3>
+      {/* TODO: this message is in progress */}
+      <p className="text-[var(--text-muted)] text-xs text-pretty">
+        If you logged in with third-party SSO, it'll show up here.
+      </p>
 
       {linkedMessage && <Alert variant="success">{linkedMessage}</Alert>}
       {linkError && <Alert variant="error">{linkError}</Alert>}

@@ -16,14 +16,20 @@ describe('BookmarkletSection', () => {
 
   it('renders the bookmarklet link with draggable="true"', () => {
     render(<BookmarkletSection />);
-    const link = screen.getByRole('link', { name: /save to linklater/i });
+    const link = screen.getByRole('link', {
+      name: /drag this bookmarklet to your bookmarks bar/i,
+    });
     expect(link).toHaveAttribute('draggable', 'true');
   });
 
   it('bookmarklet link has a descriptive aria-label mentioning drag', () => {
     render(<BookmarkletSection />);
-    const link = screen.getByRole('link', { name: /save to linklater/i });
-    expect(link.getAttribute('aria-label')).toMatch(/drag to bookmarks bar/i);
+    const link = screen.getByRole('link', {
+      name: /drag this bookmarklet to your bookmarks bar/i,
+    });
+    expect(link.getAttribute('aria-label')).toMatch(
+      /drag this bookmarklet to your bookmarks bar/i,
+    );
   });
 
   it('bookmarklet link text is "Save to Linklater"', () => {

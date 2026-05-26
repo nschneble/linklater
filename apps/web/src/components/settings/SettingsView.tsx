@@ -141,7 +141,7 @@ export default function SettingsView({
         <AccountSettingsForm />
         {showSocialLogins && (
           <SocialLoginsSection
-            appleEnabled={!appleEnabled}
+            appleEnabled={appleEnabled}
             googleEnabled={googleEnabled}
             linkedMessage={linkedMessage}
             linkError={linkError}
