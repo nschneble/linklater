@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  Logger,
   Param,
   Post,
   Req,
@@ -31,6 +32,8 @@ import type { AuthRequest } from './auth-request.type.js';
 @ApiTags('auth')
 @Controller('auth')
 export class OAuthController {
+  private readonly logger = new Logger(OAuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly oauthAccountService: OAuthAccountService,
@@ -144,7 +147,17 @@ export class OAuthController {
         );
         return;
       }
-      throw error;
+      // Anything else — DB outage, network blip linking the row, etc. —
+      // must not escape as a NestJS HTML 500 inside the OAuth-callback
+      // popup. Log it for triage, then redirect to a generic error state
+      // the SPA already knows how to render.
+      this.logger.error(
+        `Unexpected error linking google account for user ${request.user.userId}: ${String(error)}`,
+      );
+      response.redirect(
+        `${process.env.APP_URL}/settings?link_error=unknown`,
+      );
+      return;
     }
     response.redirect(`${process.env.APP_URL}/settings?linked=google`);
   }

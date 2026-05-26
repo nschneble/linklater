@@ -27,6 +27,8 @@ const LINKED_MESSAGES: Record<string, string> = {
 const LINK_ERROR_MESSAGES: Record<string, string> = {
   already_linked:
     'That account is already linked to another user. Try a different one.',
+  unknown:
+    'Something went wrong connecting that account. Please try again in a moment.',
 };
 
 export default function SettingsView({

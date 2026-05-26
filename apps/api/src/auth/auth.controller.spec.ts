@@ -674,16 +674,19 @@ describe('AuthController', () => {
       );
     });
 
-    it('re-throws unexpected errors from linkOAuthAccountToUser', async () => {
+    it('redirects with link_error=unknown when an unexpected error is thrown', async () => {
+      process.env.APP_URL = 'https://app.example.com';
       const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
       const response = { redirect: jest.fn() } as unknown as Response;
       (
         oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
       ).mockRejectedValue(new Error('Database connection lost'));
 
-      await expect(
-        oauthController.googleLinkCallback(request, response),
-      ).rejects.toThrow('Database connection lost');
+      await oauthController.googleLinkCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        'https://app.example.com/settings?link_error=unknown',
+      );
     });
   });
 
