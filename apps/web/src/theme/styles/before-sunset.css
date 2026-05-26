@@ -15,11 +15,11 @@
 [data-theme='before-sunset'][data-mode='light'] {
   --bg: #e8e5d7;
   --bg-surface: #d4b06a;
-  --bg-elevated: #b89030;
+  --bg-elevated: #e0b248;
   --bg-input: #e8e5d7;
   --text: #010101;
-  --text-muted: #010101;
-  --text-subtle: #020100;
+  --text-muted: #3d2b16;
+  --text-subtle: #5a4228;
   --border: #5e4517;
   --accent: #432910;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);

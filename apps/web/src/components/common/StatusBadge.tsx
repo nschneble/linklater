@@ -84,9 +84,9 @@ const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
  *
  * Always renders a variant-specific icon for color-independent meaning in
  * cvd-friendly contexts. The `icon` prop overrides the default when
- * provided. In the Apollo 10½ theme the shape of the pill differs per variant
+ * provided. Every theme also gets a variant-specific pill shape
  * (`rounded-full` for success, `rounded` for warning, `rounded-sm` for info)
- * to provide an additional non-color distinguisher.
+ * as an additional non-color distinguisher.
  */
 export default function StatusBadge({
   variant,

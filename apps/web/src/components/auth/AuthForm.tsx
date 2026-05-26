@@ -46,10 +46,19 @@ export default function AuthForm() {
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaToken, setMfaToken] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(() =>
-    consumeAuthNotice(),
-  );
+  // The deletion-confirmation notice is read once and surfaced on the next
+  // tick rather than synchronously during render. Screen readers (NVDA and
+  // sometimes JAWS) only announce an aria-live region when its content
+  // changes after mount — content present on first paint is treated as part
+  // of page load and skipped. Deferring the read guarantees the region
+  // transitions empty → populated, which all major SRs announce reliably.
+  const [notice, setNotice] = useState<string | null>(null);
   const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    const pending = consumeAuthNotice();
+    if (pending !== null) setNotice(pending);
+  }, []);
 
   function resolveMode(): Mode {
     if (location.pathname === '/signup') return 'register';

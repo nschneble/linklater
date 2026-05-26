@@ -121,10 +121,16 @@ An already-authenticated user can link their Google account from Settings.
    `/settings?link_error=email_mismatch`. On an already-linked conflict it
    redirects to `/settings?link_error=already_linked`.
 
+> **GOTCHA:** `GET /auth/google/link` returns JSON (`{ url }`) instead of
+> redirecting. The SPA calls this endpoint with `fetch` so it can attach an
+> `Authorization` header — a top-level browser navigation cannot send that
+> header and would receive a 401. The SPA then does `window.location.href =
+> url` to hand the user off to Google.
+
 > **GOTCHA:** Google account linking requires that the Google account's email
 > match the Linklater account's email exactly. The check is enforced in
-> `AuthService.linkOAuthAccountToUser`. Mismatches result in a
-> `BadRequestException` and a redirect with `link_error=email_mismatch`.
+> `OAuthAccountService.linkOAuthAccountToUser`. Mismatches redirect to
+> `/settings?link_error=email_mismatch`.
 
 ### Browser Extension OAuth (PKCE Flow)
 
@@ -262,7 +268,7 @@ the same shape minus `rawToken`.
 | `GET`    | `/auth/google/callback`      | google      | —                                | 302 to `/oauth/callback#token=…&refresh=…` or `?error=mfa_required` |
 | `GET`    | `/auth/apple`                | Public      | —                                | 302 to Apple Sign In                                      |
 | `POST`   | `/auth/apple/callback`       | apple       | —                                | 302 to `/oauth/callback#token=…&refresh=…` or `?error=mfa_required` |
-| `GET`    | `/auth/google/link`          | JWT         | —                                | 302 to Google OAuth (linking flow)                        |
+| `GET`    | `/auth/google/link`          | JWT         | —                                | `{ url: string }` — Google authorization URL for the SPA to navigate to (see note below) |
 | `GET`    | `/auth/google/link/callback` | google-link | —                                | 302 to `/settings?linked=google` or `link_error=…`        |
 | `DELETE` | `/auth/providers/:provider`  | JWT         | —                                | `{ success: true }`                                       |
 

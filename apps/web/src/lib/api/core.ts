@@ -4,10 +4,45 @@ if (!API_BASE_URL) {
   console.warn('VITE_API_BASE_URL is not set');
 }
 
-let storedToken: string | null = localStorage.getItem('linklater_token');
-let storedRefreshToken: string | null = localStorage.getItem(
-  'linklater_refresh_token',
-);
+const TOKEN_KEY = 'linklater_token';
+const REFRESH_TOKEN_KEY = 'linklater_refresh_token';
+
+/**
+ * Safely reads from `localStorage`. Returns `null` in SSR environments or
+ * when the read fails (e.g. Safari private browsing throws on access).
+ */
+function safeRead(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/** Safely writes to `localStorage`. No-op when storage is unavailable. */
+function safeWrite(key: string, value: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Storage quota exceeded or blocked — keep the in-memory copy so the
+    // current session keeps working, but skip persistence.
+  }
+}
+
+/** Safely removes from `localStorage`. No-op when storage is unavailable. */
+function safeRemove(key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Nothing to do — keep the in-memory copy in sync via the caller.
+  }
+}
+
+let storedToken: string | null = safeRead(TOKEN_KEY);
+let storedRefreshToken: string | null = safeRead(REFRESH_TOKEN_KEY);
 
 export function getStoredToken(): string | null {
   return storedToken;
@@ -22,19 +57,19 @@ export function setStoredToken(
   refreshToken?: string,
 ): void {
   storedToken = accessToken;
-  localStorage.setItem('linklater_token', accessToken);
+  safeWrite(TOKEN_KEY, accessToken);
 
   if (refreshToken !== undefined) {
     storedRefreshToken = refreshToken;
-    localStorage.setItem('linklater_refresh_token', refreshToken);
+    safeWrite(REFRESH_TOKEN_KEY, refreshToken);
   }
 }
 
 export function clearStoredToken(): void {
   storedToken = null;
   storedRefreshToken = null;
-  localStorage.removeItem('linklater_token');
-  localStorage.removeItem('linklater_refresh_token');
+  safeRemove(TOKEN_KEY);
+  safeRemove(REFRESH_TOKEN_KEY);
 }
 
 export type LoginResponse =
