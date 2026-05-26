@@ -5,6 +5,7 @@ import VerifyLoginPage from './VerifyLoginPage';
 
 vi.mock('../../lib/api', () => ({
   verifyMagicLink: vi.fn(),
+  verifyOtp: vi.fn(),
 }));
 
 vi.mock('../../auth/AuthContext', () => ({
@@ -125,6 +126,61 @@ describe('VerifyLoginPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/login page/i)).toBeInTheDocument();
+    });
+  });
+
+  // 2FA-enabled accounts that authenticate via a magic link still need to
+  // clear the OTP challenge. Before this branch existed, the page silently
+  // destructured `accessToken` off an `{ mfaToken, mfaMethod }` payload and
+  // hung on the spinner indefinitely.
+  it('renders the MFA view when the server returns an mfaToken', async () => {
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      mfaToken: 'pending-mfa-token',
+      mfaMethod: 'totp',
+    });
+
+    renderPage('valid-token');
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/two-factor authentication/i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('completes login when the OTP challenge succeeds', async () => {
+    const loginWithToken = vi.fn().mockResolvedValue(undefined);
+    const refreshUser = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ loginWithToken, refreshUser }),
+    );
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      mfaToken: 'pending-mfa-token',
+      mfaMethod: 'totp',
+    });
+    vi.mocked(apiModule.verifyOtp).mockResolvedValue({
+      accessToken: 'jwt-tok',
+      refreshToken: 'refresh-tok',
+    });
+
+    renderPage('valid-token');
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/authenticator code/i)).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText(/authenticator code/i), {
+      target: { value: '123456' },
+    });
+
+    await waitFor(() => {
+      expect(apiModule.verifyOtp).toHaveBeenCalledWith(
+        'pending-mfa-token',
+        '123456',
+        'totp',
+      );
+      expect(refreshUser).toHaveBeenCalled();
+      expect(screen.getByText(/unread page/i)).toBeInTheDocument();
     });
   });
 });

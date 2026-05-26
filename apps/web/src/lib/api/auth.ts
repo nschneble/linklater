@@ -158,13 +158,20 @@ export async function requestMagicLink(email: string): Promise<void> {
 
 export async function verifyMagicLink(
   token: string,
-): Promise<{ accessToken: string; refreshToken: string }> {
-  const data = await apiFetch<{ accessToken: string; refreshToken: string }>(
+): Promise<LoginResponse> {
+  // The server routes magic-link verification through the same `login()`
+  // helper as password sign-in, so a 2FA-enabled account answering a magic
+  // link gets back an `mfaToken` challenge instead of an access token.
+  // Returning `LoginResponse` keeps that branch visible to the caller and
+  // prevents a silent destructure failure for users with TOTP turned on.
+  const data = await apiFetch<LoginResponse>(
     '/auth/verify-magic-link',
     { body: JSON.stringify({ token }), method: 'POST' },
     false,
   );
-  setStoredToken(data.accessToken, data.refreshToken);
+  if ('accessToken' in data) {
+    setStoredToken(data.accessToken, data.refreshToken);
+  }
   return data;
 }
 
