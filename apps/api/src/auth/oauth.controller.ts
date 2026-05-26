@@ -154,9 +154,7 @@ export class OAuthController {
       this.logger.error(
         `Unexpected error linking google account for user ${request.user.userId}: ${String(error)}`,
       );
-      response.redirect(
-        `${process.env.APP_URL}/settings?link_error=unknown`,
-      );
+      response.redirect(`${process.env.APP_URL}/settings?link_error=unknown`);
       return;
     }
     response.redirect(`${process.env.APP_URL}/settings?linked=google`);

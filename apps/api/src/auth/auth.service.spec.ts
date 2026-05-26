@@ -628,12 +628,7 @@ describe('AuthService', () => {
         ).mockResolvedValue([]);
 
         await expect(
-          service.verifyOtp(
-            USER_ID,
-            RECOVERY_CODE_STUB,
-            'recovery',
-            MFA_NONCE,
-          ),
+          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery', MFA_NONCE),
         ).rejects.toThrow(UnauthorizedException);
       });
 
@@ -651,12 +646,7 @@ describe('AuthService', () => {
         ).mockResolvedValue([{ id: 'rc-1', codeHash: differentHash }]);
 
         await expect(
-          service.verifyOtp(
-            USER_ID,
-            RECOVERY_CODE_STUB,
-            'recovery',
-            MFA_NONCE,
-          ),
+          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery', MFA_NONCE),
         ).rejects.toThrow(UnauthorizedException);
       });
 
@@ -669,12 +659,7 @@ describe('AuthService', () => {
         });
 
         await expect(
-          service.verifyOtp(
-            USER_ID,
-            RECOVERY_CODE_STUB,
-            'recovery',
-            MFA_NONCE,
-          ),
+          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery', MFA_NONCE),
         ).rejects.toThrow(UnauthorizedException);
       });
     });
