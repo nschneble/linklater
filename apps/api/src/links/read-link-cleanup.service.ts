@@ -39,6 +39,13 @@ export class ReadLinkCleanupService implements OnModuleInit {
    * seven days. Scoped across all users — this is a global cleanup, not
    * per-user.
    *
+   * IDEMPOTENT: safe under pg-boss at-least-once delivery. The
+   * `where: { readAt: { lt: sevenDaysAgo } }` predicate is re-evaluated
+   * on every run, so a redelivered job either finds the same rows still
+   * matching (deletes them) or finds them already gone (no-op). The
+   * logged row count may understate the work done across the retry
+   * sequence, but the database state is correct in either case.
+   *
    * @returns Resolves when the delete completes. The count of deleted rows is logged.
    */
   async deleteExpiredReadLinks(): Promise<void> {

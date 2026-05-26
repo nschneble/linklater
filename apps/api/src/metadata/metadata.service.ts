@@ -52,6 +52,14 @@ export class MetadataService implements OnModuleInit {
    * set (and all content fields null) so that polling clients know the fetch
    * attempt completed rather than getting stuck in an infinite poll.
    *
+   * IDEMPOTENT: safe under pg-boss at-least-once delivery. The `Meta` write
+   * is a `upsert` keyed on `linkId`, so a redelivered job overwrites with
+   * the same content rather than producing a duplicate row. The searchVector
+   * `$executeRaw UPDATE` is similarly idempotent — running it twice produces
+   * the same tsvector. Redelivery re-fetches the URL (wasteful but not
+   * corrupting); if hot path bandwidth becomes a concern, gate on
+   * `meta.fetchedAt` at the start of the handler.
+   *
    * @param linkId - The UUID of the Link row to attach metadata to.
    * @param url - The URL to fetch and parse.
    */
