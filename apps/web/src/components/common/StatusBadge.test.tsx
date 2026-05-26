@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import StatusBadge from './StatusBadge';
+import { ThemeProvider } from '../../theme/ThemeContext';
+import { MODE_STORAGE_KEY, THEME_STORAGE_KEY } from '../../theme/storage';
 
 describe('StatusBadge', () => {
   describe('success variant', () => {
@@ -65,5 +67,77 @@ describe('StatusBadge', () => {
     );
     const icon = container.querySelector('i');
     expect(icon).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  describe('on the Nouvelle Vague (noir) theme', () => {
+    beforeEach(() => {
+      window.localStorage.setItem(THEME_STORAGE_KEY, 'nouvelle-vague');
+    });
+
+    afterEach(() => {
+      window.localStorage.clear();
+    });
+
+    function renderInNoir(mode: 'light' | 'dark') {
+      window.localStorage.setItem(MODE_STORAGE_KEY, mode);
+      return render(
+        <ThemeProvider>
+          <StatusBadge variant="success">Verified</StatusBadge>
+        </ThemeProvider>,
+      );
+    }
+
+    it('renders the success badge with monochrome inverted classes in dark mode', () => {
+      const { container } = renderInNoir('dark');
+      const badge = container.querySelector('span');
+      expect(badge).toHaveClass(
+        'bg-[var(--accent)]',
+        'border-[var(--accent)]',
+        'text-[var(--accent-fg)]',
+        'font-medium',
+      );
+      expect(badge?.className).not.toMatch(/emerald|teal|green/);
+    });
+
+    it('renders the success badge with monochrome inverted classes in light mode', () => {
+      const { container } = renderInNoir('light');
+      const badge = container.querySelector('span');
+      expect(badge).toHaveClass(
+        'bg-[var(--accent)]',
+        'border-[var(--accent)]',
+        'text-[var(--accent-fg)]',
+        'font-medium',
+      );
+      expect(badge?.className).not.toMatch(/emerald|teal|green/);
+    });
+
+    it('still renders the checkmark icon so success meaning is conveyed by shape, not color', () => {
+      const { container } = renderInNoir('dark');
+      const icon = container.querySelector('i');
+      expect(icon).toHaveClass('fa-circle-check');
+      expect(icon).toHaveAttribute('aria-hidden', 'true');
+    });
+  });
+
+  describe('on non-noir themes', () => {
+    afterEach(() => {
+      window.localStorage.clear();
+    });
+
+    it('keeps the emerald colorful styling on the default theme', () => {
+      window.localStorage.setItem(THEME_STORAGE_KEY, 'scanner-darkly');
+      window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+      const { container } = render(
+        <ThemeProvider>
+          <StatusBadge variant="success">Verified</StatusBadge>
+        </ThemeProvider>,
+      );
+      const badge = container.querySelector('span');
+      expect(badge).toHaveClass(
+        'bg-emerald-950/20',
+        'border-emerald-800/40',
+        'text-emerald-400',
+      );
+    });
   });
 });

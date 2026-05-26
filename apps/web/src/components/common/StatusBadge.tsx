@@ -31,11 +31,15 @@ const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
   success: {
     dark: {
       default: 'bg-emerald-950/20 border-emerald-800/40 text-emerald-400',
+      'nouvelle-vague':
+        'bg-[var(--accent)] border-[var(--accent)] text-[var(--accent-fg)] font-medium',
       'apollo-10-1-2':
         'bg-[var(--state-success)]/15 border-[1.5px] border-[var(--state-success)] text-[var(--state-success-fg)]',
     },
     light: {
       default: 'bg-emerald-100 border-emerald-300 text-emerald-700',
+      'nouvelle-vague':
+        'bg-[var(--accent)] border-[var(--accent)] text-[var(--accent-fg)] font-medium',
       'apollo-10-1-2':
         'bg-[var(--state-success)]/15 border-[1.5px] border-[var(--state-success)] text-[var(--state-success-fg)]',
     },
