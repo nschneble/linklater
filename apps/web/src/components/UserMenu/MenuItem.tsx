@@ -40,7 +40,7 @@ export default function MenuItem({
 }: MenuItemProps) {
   return (
     <button
-      className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-pointer ${className}`}
+      className={`group flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-pointer ${className}`}
       type="button"
       role="menuitem"
       aria-current={active ? 'page' : undefined}
@@ -57,9 +57,7 @@ export default function MenuItem({
       onClick={onClick}
     >
       <i
-        className={`fa-solid ${icon} text-[0.75rem] ${
-          active ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
-        }`}
+        className={`fa-solid ${icon} text-[var(--text-muted)] group-aria-[current=page]:text-[var(--accent)] text-[0.75rem]`}
         aria-hidden="true"
       />
       <span>{label}</span>

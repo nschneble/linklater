@@ -38,11 +38,7 @@ export default function TabButton({
 }: TabButtonProps) {
   return (
     <button
-      className={`relative z-10 w-full pl-4 pr-4.5 ${FOCUS_RING} rounded-full transition-colors duration-200 ${
-        isActive
-          ? 'text-[var(--bg)] font-extrabold'
-          : 'text-[var(--text-muted)] font-semibold cursor-pointer'
-      } ${className}`}
+      className={`relative z-10 w-full pl-4 pr-4.5 text-[var(--text-muted)] font-semibold aria-selected:text-[var(--bg)] aria-selected:font-extrabold ${FOCUS_RING} rounded-full transition-colors duration-200 cursor-pointer ${className}`}
       type="button"
       role="tab"
       tabIndex={isActive ? 0 : -1}

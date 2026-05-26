@@ -142,7 +142,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
   return (
     <div className="relative">
       <button
-        className={`flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] border-shadow hover:border-shadow ${FOCUS_RING} rounded-4xl transition cursor-pointer`}
+        className={`group flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] border-shadow hover:border-shadow ${FOCUS_RING} rounded-4xl transition cursor-pointer`}
         ref={(node) => {
           avatarReference.current = node;
           if (typeof forwardedReference === 'function') {
@@ -169,7 +169,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
         />
         <span className="hidden sm:inline-flex">
           <i
-            className={`fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] transition-transform duration-200 ease-out ${isOpen ? '-rotate-180' : ''}`}
+            className="fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] group-aria-expanded:-rotate-180 transition-transform duration-200 ease-out"
             aria-hidden="true"
           />
         </span>

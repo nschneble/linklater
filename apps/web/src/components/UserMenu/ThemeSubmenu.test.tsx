@@ -1,6 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
-import { THEMES, type BaseTheme } from '../../theme/ThemeContext';
+import {
+  THEMES,
+  ThemeProvider,
+  type BaseTheme,
+} from '../../theme/ThemeContext';
 import ThemeSubmenu from './ThemeSubmenu';
 
 afterEach(() => vi.restoreAllMocks());
@@ -19,9 +23,17 @@ const baseProps = {
   onSelect: vi.fn(),
 };
 
+function renderSubmenu(props: Partial<typeof baseProps> = {}) {
+  return render(
+    <ThemeProvider>
+      <ThemeSubmenu {...baseProps} {...props} />
+    </ThemeProvider>,
+  );
+}
+
 describe('ThemeSubmenu', () => {
   it('renders all theme options as buttons', () => {
-    render(<ThemeSubmenu {...baseProps} />);
+    renderSubmenu();
     const buttons = screen.getAllByRole('menuitemradio');
     for (const theme of THEMES) {
       expect(
@@ -31,7 +43,7 @@ describe('ThemeSubmenu', () => {
   });
 
   it('shows checkmark on the active base theme', () => {
-    render(<ThemeSubmenu {...baseProps} />);
+    renderSubmenu();
     const activeButton = screen
       .getAllByRole('menuitemradio')
       .find((button) => button.textContent?.includes('A Scanner Darkly'));
@@ -40,39 +52,37 @@ describe('ThemeSubmenu', () => {
 
   it('calls onSelect with theme id when a theme button is clicked', () => {
     const onSelect = vi.fn();
-    render(<ThemeSubmenu {...baseProps} onSelect={onSelect} />);
+    renderSubmenu({ onSelect });
     fireEvent.click(screen.getByText('Boyhood'));
     expect(onSelect).toHaveBeenCalledWith('boyhood');
   });
 
   it('highlights the trigger row when isPointerOver is true', () => {
-    render(<ThemeSubmenu {...baseProps} isPointerOver={true} />);
+    renderSubmenu({ isPointerOver: true });
     const trigger = screen.getByRole('menuitem');
     expect(trigger.className).toContain('bg-[var(--bg-surface)]');
   });
 
   it('does not highlight the trigger row when isPointerOver is false', () => {
-    render(<ThemeSubmenu {...baseProps} isPointerOver={false} />);
+    renderSubmenu({ isPointerOver: false });
     const trigger = screen.getByRole('menuitem');
     expect(trigger.classList.contains('bg-[var(--bg-surface)]')).toBe(false);
   });
 
   it('shows "Previewing X" label when previewTheme differs from baseTheme', () => {
     const boyhood = THEMES.find((theme) => theme.id === 'boyhood');
-    render(<ThemeSubmenu {...baseProps} previewTheme="boyhood" />);
+    renderSubmenu({ previewTheme: 'boyhood' });
     expect(screen.getByText(`Previewing ${boyhood?.label}`)).toBeDefined();
   });
 
   it('shows active theme label when previewTheme matches baseTheme', () => {
     const scannerDarkly = THEMES.find((theme) => theme.id === 'scanner-darkly');
-    render(<ThemeSubmenu {...baseProps} previewTheme="scanner-darkly" />);
+    renderSubmenu({ previewTheme: 'scanner-darkly' });
     expect(screen.getAllByText(scannerDarkly!.label).length).toBeGreaterThan(0);
   });
 
   it('positions flyout on the right when submenuOnLeft is false', () => {
-    const { container } = render(
-      <ThemeSubmenu {...baseProps} submenuOnLeft={false} />,
-    );
+    const { container } = renderSubmenu({ submenuOnLeft: false });
     const flyoutPanel = container.querySelector(
       '.left-\\[calc\\(100\\%-1px\\)\\]',
     );
@@ -80,9 +90,7 @@ describe('ThemeSubmenu', () => {
   });
 
   it('positions flyout on the left when submenuOnLeft is true', () => {
-    const { container } = render(
-      <ThemeSubmenu {...baseProps} submenuOnLeft={true} />,
-    );
+    const { container } = renderSubmenu({ submenuOnLeft: true });
     const flyoutPanel = container.querySelector(
       '.right-\\[calc\\(100\\%-1px\\)\\]',
     );
@@ -91,7 +99,7 @@ describe('ThemeSubmenu', () => {
 
   it('calls onApplyPreview when a flyout button receives focus', () => {
     const onApplyPreview = vi.fn();
-    render(<ThemeSubmenu {...baseProps} onApplyPreview={onApplyPreview} />);
+    renderSubmenu({ onApplyPreview });
     const boyhoodButton = screen
       .getAllByRole('menuitemradio')
       .find((button) => button.textContent?.includes('Boyhood'));
@@ -102,14 +110,7 @@ describe('ThemeSubmenu', () => {
   it('calls onTriggerClick and onKeyboardOpen when ArrowRight is pressed on a closed submenu', () => {
     const onTriggerClick = vi.fn();
     const onKeyboardOpen = vi.fn();
-    render(
-      <ThemeSubmenu
-        {...baseProps}
-        showSubmenu={false}
-        onTriggerClick={onTriggerClick}
-        onKeyboardOpen={onKeyboardOpen}
-      />,
-    );
+    renderSubmenu({ showSubmenu: false, onTriggerClick, onKeyboardOpen });
     const trigger = screen.getByRole('menuitem');
     fireEvent.keyDown(trigger, { key: 'ArrowRight' });
     expect(onTriggerClick).toHaveBeenCalledTimes(1);
@@ -119,14 +120,7 @@ describe('ThemeSubmenu', () => {
   it('calls onTriggerClick and onKeyboardOpen when Enter is pressed on a closed submenu', () => {
     const onTriggerClick = vi.fn();
     const onKeyboardOpen = vi.fn();
-    render(
-      <ThemeSubmenu
-        {...baseProps}
-        showSubmenu={false}
-        onTriggerClick={onTriggerClick}
-        onKeyboardOpen={onKeyboardOpen}
-      />,
-    );
+    renderSubmenu({ showSubmenu: false, onTriggerClick, onKeyboardOpen });
     const trigger = screen.getByRole('menuitem');
     fireEvent.keyDown(trigger, { key: 'Enter' });
     expect(onTriggerClick).toHaveBeenCalledTimes(1);
@@ -134,7 +128,7 @@ describe('ThemeSubmenu', () => {
   });
 
   it('marks the active theme button as aria-checked', () => {
-    render(<ThemeSubmenu {...baseProps} />);
+    renderSubmenu();
     const activeButton = screen
       .getAllByRole('menuitemradio')
       .find((button) => button.textContent?.includes('A Scanner Darkly'));
@@ -142,7 +136,7 @@ describe('ThemeSubmenu', () => {
   });
 
   it('marks inactive theme buttons as not aria-checked', () => {
-    render(<ThemeSubmenu {...baseProps} />);
+    renderSubmenu();
     const inactiveButton = screen
       .getAllByRole('menuitemradio')
       .find((button) => button.textContent?.includes('Boyhood'));
@@ -152,14 +146,7 @@ describe('ThemeSubmenu', () => {
   it('calls onTriggerClick and onKeyboardOpen when Space is pressed on a closed submenu', () => {
     const onTriggerClick = vi.fn();
     const onKeyboardOpen = vi.fn();
-    render(
-      <ThemeSubmenu
-        {...baseProps}
-        showSubmenu={false}
-        onTriggerClick={onTriggerClick}
-        onKeyboardOpen={onKeyboardOpen}
-      />,
-    );
+    renderSubmenu({ showSubmenu: false, onTriggerClick, onKeyboardOpen });
     const trigger = screen.getByRole('menuitem');
     fireEvent.keyDown(trigger, { key: ' ' });
     expect(onTriggerClick).toHaveBeenCalledTimes(1);
@@ -168,13 +155,7 @@ describe('ThemeSubmenu', () => {
 
   it('does not call onTriggerClick when ArrowRight is pressed on an already open submenu', () => {
     const onTriggerClick = vi.fn();
-    render(
-      <ThemeSubmenu
-        {...baseProps}
-        showSubmenu={true}
-        onTriggerClick={onTriggerClick}
-      />,
-    );
+    renderSubmenu({ showSubmenu: true, onTriggerClick });
     const trigger = screen.getByRole('menuitem');
     fireEvent.keyDown(trigger, { key: 'ArrowRight' });
     expect(onTriggerClick).not.toHaveBeenCalled();
@@ -182,13 +163,7 @@ describe('ThemeSubmenu', () => {
 
   it('calls onTriggerBlur when trigger button loses focus to an element outside the flyout', () => {
     const onTriggerBlur = vi.fn();
-    render(
-      <ThemeSubmenu
-        {...baseProps}
-        showSubmenu={true}
-        onTriggerBlur={onTriggerBlur}
-      />,
-    );
+    renderSubmenu({ showSubmenu: true, onTriggerBlur });
     const trigger = screen.getByRole('menuitem');
     // blur to document.body (outside flyout)
     fireEvent.blur(trigger, { relatedTarget: document.body });
@@ -197,13 +172,7 @@ describe('ThemeSubmenu', () => {
 
   it('calls onFlyoutBlur with the related target when focus leaves the flyout panel', () => {
     const onFlyoutBlur = vi.fn();
-    const { container } = render(
-      <ThemeSubmenu
-        {...baseProps}
-        showSubmenu={true}
-        onFlyoutBlur={onFlyoutBlur}
-      />,
-    );
+    const { container } = renderSubmenu({ showSubmenu: true, onFlyoutBlur });
     const flyout = container.querySelector('[role="menu"][aria-label="Theme"]');
     fireEvent.blur(flyout!, { relatedTarget: document.body });
     expect(onFlyoutBlur).toHaveBeenCalledWith(document.body);

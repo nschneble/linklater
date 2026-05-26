@@ -69,17 +69,9 @@ export default function CvdModeToggle() {
           aria-describedby="cvd-description"
           disabled={loading}
           onClick={handleToggle}
-          className={`relative shrink-0 mt-0.5 inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] cursor-pointer ${
-            isCvdMode
-              ? 'bg-[var(--accent)]'
-              : 'bg-[var(--bg-elevated)] border border-[var(--border)]'
-          }`}
+          className="group relative shrink-0 mt-0.5 inline-flex h-6 w-11 items-center bg-[var(--bg-elevated)] border border-[var(--border)] aria-checked:bg-[var(--accent)] aria-checked:border-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] rounded-full transition-colors duration-200 cursor-pointer"
         >
-          <span
-            className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-              isCvdMode ? 'translate-x-6' : 'translate-x-1'
-            }`}
-          />
+          <span className="inline-block h-4 w-4 translate-x-1 group-aria-checked:translate-x-6 bg-white rounded-full shadow-sm transition-transform duration-200" />
           <span className="sr-only">{isCvdMode ? 'On' : 'Off'}</span>
         </button>
       </div>

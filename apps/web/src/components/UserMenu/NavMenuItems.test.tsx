@@ -31,8 +31,6 @@ describe('NavMenuItems', () => {
   it('marks Your links as active when view is links', () => {
     renderNavMenuItems({ view: 'links' });
     const button = screen.getByText('Your links').closest('button');
-    const icon = button?.querySelector('i');
-    expect(icon).toHaveClass('text-[var(--accent)]');
     expect(button).toHaveAttribute('aria-current', 'page');
   });
 
@@ -45,8 +43,6 @@ describe('NavMenuItems', () => {
   it('marks Settings as active when view is settings', () => {
     renderNavMenuItems({ view: 'settings' });
     const button = screen.getByText('Settings').closest('button');
-    const icon = button?.querySelector('i');
-    expect(icon).toHaveClass('text-[var(--accent)]');
     expect(button).toHaveAttribute('aria-current', 'page');
   });
 
@@ -59,8 +55,6 @@ describe('NavMenuItems', () => {
   it('marks Theme editor as active when view is theme-editor', () => {
     renderNavMenuItems({ view: 'theme-editor' });
     const button = screen.getByText('Theme editor').closest('button');
-    const icon = button?.querySelector('i');
-    expect(icon).toHaveClass('text-[var(--accent)]');
     expect(button).toHaveAttribute('aria-current', 'page');
   });
 

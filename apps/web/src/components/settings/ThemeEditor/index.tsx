@@ -77,11 +77,7 @@ export default function ThemeEditor() {
                 key={modeOption}
                 type="button"
                 onClick={() => handleModeToggle(modeOption)}
-                className={`relative z-10 px-2.5 py-1 text-xs capitalize focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded-full transition-colors duration-150 ${
-                  mode === modeOption
-                    ? 'bg-[var(--text)] text-[var(--bg)] font-semibold'
-                    : 'text-[var(--text-muted)] cursor-pointer'
-                }`}
+                className="relative z-10 px-2.5 py-1 text-[var(--text-muted)] text-xs capitalize aria-pressed:bg-[var(--text)] aria-pressed:text-[var(--bg)] aria-pressed:font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded-full transition-colors duration-150 cursor-pointer"
                 aria-pressed={mode === modeOption}
               >
                 {modeOption}

@@ -55,18 +55,10 @@ export default function SettingsSectionNav({
                 aria-current={isActive ? 'location' : undefined}
                 ref={isActive ? activeReference : undefined}
                 onClick={() => onNavigate?.(section.hash)}
-                className={`inline-flex items-center gap-1.5 min-h-10 px-3.5 py-2 ${
-                  isActive
-                    ? 'bg-[var(--bg-elevated)] text-[var(--text)] font-semibold ring-1 ring-[var(--border)]'
-                    : 'bg-transparent text-[var(--text-muted)] hover:text-[var(--text)] font-medium ring-1 ring-[var(--border)]/60'
-                } text-xs ${FOCUS_RING} rounded-full motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] whitespace-nowrap`}
+                className={`group inline-flex items-center gap-1.5 min-h-10 px-3.5 py-2 bg-transparent text-[var(--text-muted)] hover:text-[var(--text)] ring-1 ring-[var(--border)]/60 font-medium aria-[current]:bg-[var(--bg-elevated)] aria-[current]:text-[var(--text)] aria-[current]:ring-[var(--border)] aria-[current]:font-semibold text-xs ${FOCUS_RING} rounded-full motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] whitespace-nowrap`}
               >
                 <i
-                  className={`fa-solid ${section.icon} ${
-                    isActive
-                      ? 'text-[var(--accent)]'
-                      : 'text-[var(--text-subtle)]'
-                  } text-[0.65rem]`}
+                  className={`fa-solid ${section.icon} text-[var(--text-subtle)] group-aria-[current]:text-[var(--accent)] text-[0.65rem]`}
                   aria-hidden="true"
                 />
                 {section.label}

@@ -174,7 +174,7 @@ export default function ThemeSubmenu({
           const isDisabled = isCvdMode && theme.id !== CVD_BASE_THEME;
           return (
             <button
-              className={`flex items-center gap-2 w-full px-3 py-2 ${hoveredThemeId === theme.id ? 'bg-[var(--bg-surface)]' : ''} focus:outline-none text-[var(--text)] text-left ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+              className={`flex items-center gap-2 w-full px-3 py-2 ${hoveredThemeId === theme.id ? 'bg-[var(--bg-surface)]' : ''} focus:outline-none text-[var(--text)] text-left cursor-pointer aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
               data-submenu-item
               role="menuitemradio"
               aria-checked={baseTheme === theme.id}

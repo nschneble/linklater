@@ -33,18 +33,10 @@ export default function SettingsSidebar({
                 href={`#${section.hash}`}
                 aria-current={isActive ? 'location' : undefined}
                 onClick={() => onNavigate?.(section.hash)}
-                className={`flex items-center gap-2.5 w-full min-h-10 px-3 py-2 ${
-                  isActive
-                    ? 'bg-[var(--bg-elevated)] text-[var(--text)] font-semibold'
-                    : 'text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text)] font-medium'
-                } text-sm ${FOCUS_RING} rounded-lg motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms]`}
+                className={`group flex items-center gap-2.5 w-full min-h-10 px-3 py-2 text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text)] font-medium aria-[current]:bg-[var(--bg-elevated)] aria-[current]:text-[var(--text)] aria-[current]:font-semibold text-sm ${FOCUS_RING} rounded-lg motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms]`}
               >
                 <i
-                  className={`fa-solid ${section.icon} ${
-                    isActive
-                      ? 'text-[var(--accent)]'
-                      : 'text-[var(--text-subtle)]'
-                  } text-xs`}
+                  className={`fa-solid ${section.icon} text-[var(--text-subtle)] group-aria-[current]:text-[var(--accent)] text-xs`}
                   aria-hidden="true"
                 />
                 {section.label}

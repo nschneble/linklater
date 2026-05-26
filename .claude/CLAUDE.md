@@ -224,6 +224,33 @@ import { useEffect, useState } from 'react';
   - transitions
   - pointers (cursor-pointer)
 - Layouts first. Widths before heights. x before y. Margins before padding. Backgrounds before borders before text. Colors before sizes. Transitions last. Primary before states (border, hover:border, focus:border). Primary before sizes (mx-auto, sm:mx-0).
+- **No ternaries for state-driven styling when Tailwind has a variant for it.** If state is already exposed on the DOM (`disabled`, `aria-disabled`, `aria-checked`, `aria-selected`, `aria-current`, `aria-pressed`, `aria-expanded`, `data-state`, `:hover`, `:focus`, `:focus-visible`, `:active`, `:checked`, `[open]`, etc.), drive the styling off that same attribute via the corresponding Tailwind variant — not a JS ternary that picks a class string. This keeps ARIA and visual state locked together so they cannot drift, and it deletes branching logic from JSX. For descendant elements, mark the stateful ancestor with `group` and use `group-aria-*:` / `group-data-*:` on the child. See [Hover, Focus & Other States](https://tailwindcss.com/docs/hover-focus-and-other-states). Examples:
+
+  ```tsx
+  // BAD — ternary toggling classes for a state the DOM already exposes
+  <button
+    aria-disabled={isDisabled}
+    className={isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
+  />
+
+  // GOOD — let the aria-disabled attribute drive the style
+  <button
+    aria-disabled={isDisabled}
+    className="cursor-pointer aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+  />
+
+  // BAD — ternary on a child of a stateful button
+  <button aria-expanded={isOpen}>
+    <i className={`fa-chevron-down ${isOpen ? '-rotate-180' : ''}`} />
+  </button>
+
+  // GOOD — group + group-aria-* on the child
+  <button className="group" aria-expanded={isOpen}>
+    <i className="fa-chevron-down group-aria-expanded:-rotate-180" />
+  </button>
+  ```
+
+  Ternaries are still correct for pure JS state with no DOM representation (e.g. `mode === 'login'`, animation gates, internal hover coordination across non-nested elements) — and for setting the ARIA attribute itself (e.g. `aria-current={isActive ? 'page' : undefined}`).
 
 ## Gotchas
 
