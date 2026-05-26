@@ -15,9 +15,12 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
+import { CustomThrottlerGuard } from './custom-throttler.guard.js';
 import { ExtensionAuthService } from './extension-auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { ThrottleMessage } from './throttle-message.decorator.js';
 import { ExtensionTokenDto } from './dto/extension-token.dto.js';
 import type { AuthRequest } from './auth-request.type.js';
 
@@ -71,6 +74,13 @@ export class ExtensionAuthController {
     status: 401,
     description: 'Invalid code or PKCE verifier.',
   })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many extension token-exchange attempts.',
+  })
+  @UseGuards(CustomThrottlerGuard)
+  @Throttle({ 'auth-extension-token': { ttl: 60000, limit: 20 } })
+  @ThrottleMessage('Too many extension token-exchange attempts')
   @Post('extension/token')
   @HttpCode(200)
   async extensionToken(@Body() body: ExtensionTokenDto) {
