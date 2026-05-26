@@ -81,10 +81,34 @@ export class LinksService {
       return link;
     }
 
-    const link = await this.prisma.link.create({
-      data: { userId, url: input.url },
-      include: { meta: true },
-    });
+    let link;
+    try {
+      link = await this.prisma.link.create({
+        data: { userId, url: input.url },
+        include: { meta: true },
+      });
+    } catch (error) {
+      // Concurrent POST /links for the same URL: a parallel request won
+      // the unique-constraint race and the row now exists. Fall back to
+      // the resurface path so the user gets a consistent response.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const racedExisting = await this.prisma.link.findFirst({
+          where: { userId, url: input.url },
+          include: { meta: true },
+        });
+        if (racedExisting) {
+          return this.prisma.link.update({
+            where: { id: racedExisting.id },
+            data: { readAt: null, createdAt: new Date() },
+            include: { meta: true },
+          });
+        }
+      }
+      throw error;
+    }
 
     // Fire-and-forget: metadata fetching is async and non-critical. Errors are
     // logged but do not affect the HTTP response.

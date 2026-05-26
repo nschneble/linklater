@@ -137,6 +137,38 @@ describe('LinksService', () => {
     expect(queueMock.send).not.toHaveBeenCalled();
   });
 
+  it('recovers from a concurrent-create P2002 by resurfacing the row that won the race', async () => {
+    // Both POST /links calls hit findFirst at the same moment and saw no
+    // existing row. The first to reach .create wins; the second hits the
+    // unique constraint, then re-queries and finds the now-existing row.
+    const racedExisting = makeLink({ readAt: new Date(), meta: null });
+    const resurfaced = makeLink({ readAt: null });
+    (prismaMock.link.findFirst as jest.Mock)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(racedExisting);
+    (prismaMock.link.create as jest.Mock).mockRejectedValue(
+      new (
+        Prisma as {
+          PrismaClientKnownRequestError: typeof MockPrismaClientKnownRequestError;
+        }
+      ).PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+      }),
+    );
+    (prismaMock.link.update as jest.Mock).mockResolvedValue(resurfaced);
+
+    const link = await service.create(USER_ID, { url: LINK_URL });
+
+    expect(prismaMock.link.create).toHaveBeenCalled();
+    expect(prismaMock.link.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: LINK_ID },
+        data: expect.objectContaining({ readAt: null }),
+      }),
+    );
+    expect(link.readAt).toBeNull();
+  });
+
   it('findAll returns paginated results with defaults', async () => {
     (prismaMock.link.findMany as jest.Mock).mockResolvedValue([makeLink()]);
     (prismaMock.link.count as jest.Mock).mockResolvedValue(1);

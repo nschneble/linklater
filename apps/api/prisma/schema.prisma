@@ -86,8 +86,8 @@ model Link {
   updatedAt DateTime  @updatedAt
   readAt    DateTime?
 
+  @@unique([userId, url])
   @@index([userId])
-  @@index([userId, url])
   @@index([userId, readAt])
   @@index([userId, createdAt])
 }
