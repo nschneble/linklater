@@ -15,13 +15,13 @@
 [data-theme='before-sunset'][data-mode='light'] {
   --bg: #e8e5d7;
   --bg-surface: #d4b06a;
-  --bg-elevated: #e0b248;
+  --bg-elevated: #b89030;
   --bg-input: #e8e5d7;
-  --text: #010101;
-  --text-muted: #3d2b16;
-  --text-subtle: #5a4228;
-  --border: #5e4517;
-  --accent: #432910;
+  --text: #050404;
+  --text-muted: #2f221a;
+  --text-subtle: #4a3015;
+  --border: #6b4a18;
+  --accent: #7a3f15;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #e8e5d7;
 }

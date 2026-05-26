@@ -3,13 +3,13 @@
   --bg-surface: #6a3c22;
   --bg-elevated: #7a4e30;
   --bg-input: #6a3c22;
-  --text: #fefef9;
-  --text-muted: #f0dcc0;
-  --text-subtle: #f0cea0;
-  --border: #d19e7d;
-  --accent: #ecc7b3;
+  --text: #f3ecd3;
+  --text-muted: #e6c89a;
+  --text-subtle: #c89968;
+  --border: #d18a55;
+  --accent: #e8854a;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #000000;
+  --accent-fg: #2a1408;
 }
 
 [data-theme='before-sunrise'][data-mode='light'] {
