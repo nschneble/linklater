@@ -391,11 +391,23 @@ export class UsersService {
     });
   }
 
-  async updateTotpLastUsedStep(id: string, step: number) {
-    await this.prisma.user.update({
-      where: { id },
+  /**
+   * Atomic compare-and-swap for the TOTP replay guard. Only advances
+   * `totpLastUsedStep` when the candidate `step` is strictly greater than
+   * the current value (or the current value is `null`). Returns `true`
+   * when the swap happened, `false` when a parallel verify-otp request
+   * already advanced the step to `>= step`. Callers must treat `false` as
+   * a replay attempt and reject the OTP.
+   */
+  async updateTotpLastUsedStep(id: string, step: number): Promise<boolean> {
+    const result = await this.prisma.user.updateMany({
+      where: {
+        id,
+        OR: [{ totpLastUsedStep: null }, { totpLastUsedStep: { lt: step } }],
+      },
       data: { totpLastUsedStep: step },
     });
+    return result.count === 1;
   }
 
   /**

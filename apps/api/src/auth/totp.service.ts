@@ -130,9 +130,18 @@ export class TotpService {
 
     if (result.valid) {
       const usedStep = Math.floor(Date.now() / 1000 / 30) + result.delta;
-      await this.usersService.updateTotpLastUsedStep(user.id, usedStep);
+      // Compare-and-swap. Two parallel verify-otp requests inside the same
+      // 30-second TOTP step would both pass `verify()` (the otplib check
+      // honors `afterTimeStep` but isn't atomic with the DB write). The
+      // first to land here advances `totpLastUsedStep`; any subsequent
+      // request gets `false` and is rejected as a replay.
+      const advanced = await this.usersService.updateTotpLastUsedStep(
+        user.id,
+        usedStep,
+      );
+      return advanced;
     }
 
-    return result.valid;
+    return false;
   }
 }

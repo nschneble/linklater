@@ -704,16 +704,29 @@ describe('UsersService', () => {
   });
 
   describe('updateTotpLastUsedStep', () => {
-    it('stores the time step used for replay prevention', async () => {
-      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+    it('CAS-advances totpLastUsedStep and returns true on win', async () => {
+      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
       const step = Math.floor(Date.now() / 1000 / 30);
 
-      await service.updateTotpLastUsedStep(USER_ID, step);
+      const result = await service.updateTotpLastUsedStep(USER_ID, step);
 
-      expect(prismaMock.user.update).toHaveBeenCalledWith({
-        where: { id: USER_ID },
+      expect(prismaMock.user.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: USER_ID,
+          OR: [{ totpLastUsedStep: null }, { totpLastUsedStep: { lt: step } }],
+        },
         data: { totpLastUsedStep: step },
       });
+      expect(result).toBe(true);
+    });
+
+    it('returns false when a parallel request already advanced the step', async () => {
+      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+      const step = Math.floor(Date.now() / 1000 / 30);
+
+      const result = await service.updateTotpLastUsedStep(USER_ID, step);
+
+      expect(result).toBe(false);
     });
   });
 
