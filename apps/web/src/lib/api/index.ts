@@ -4,6 +4,7 @@ export {
   disable2fa,
   forgotPassword,
   getMe,
+  initiateOAuthLink,
   login,
   logout,
   regenerateRecoveryCodes,

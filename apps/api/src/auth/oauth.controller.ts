@@ -87,11 +87,19 @@ export class OAuthController {
 
   @ApiOperation({ summary: 'Initiate Google OAuth account linking' })
   @ApiBearerAuth()
-  @ApiResponse({ status: 302, description: 'Redirects to Google OAuth.' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Returns the Google authorization URL for the SPA to navigate to.',
+  })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @UseGuards(JwtAuthGuard)
   @Get('google/link')
-  async googleLink(@Req() request: AuthRequest, @Res() response: Response) {
+  googleLink(@Req() request: AuthRequest): { url: string } {
+    // Returns JSON instead of redirecting because the SPA initiates this
+    // flow with `fetch` (so it can attach the bearer JWT). A top-level
+    // browser navigation cannot send an Authorization header, which is
+    // why the previous redirect-based design produced a 401.
     const linkState = generateLinkState(
       request.user.userId,
       process.env.JWT_SECRET!,
@@ -103,9 +111,9 @@ export class OAuthController {
       scope: 'email profile',
       state: linkState,
     });
-    response.redirect(
-      `https://accounts.google.com/o/oauth2/v2/auth?${parameters.toString()}`,
-    );
+    return {
+      url: `https://accounts.google.com/o/oauth2/v2/auth?${parameters.toString()}`,
+    };
   }
 
   @ApiOperation({ summary: 'Google OAuth account linking callback' })

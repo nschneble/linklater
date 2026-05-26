@@ -13,6 +13,7 @@ vi.mock('../../lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../lib/api')>();
   return {
     ...actual,
+    initiateOAuthLink: vi.fn(),
     unlinkOAuthProvider: vi.fn(),
   };
 });
@@ -86,6 +87,58 @@ describe('IdPsSection', () => {
       expect(
         screen.getByRole('button', { name: /connect google/i }),
       ).toBeInTheDocument();
+    });
+
+    it('fetches the OAuth URL and navigates the browser when Connect Google is clicked', async () => {
+      const assignMock = vi.fn();
+      const originalLocation = window.location;
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { ...originalLocation, assign: assignMock },
+        writable: true,
+      });
+      vi.mocked(apiModule.initiateOAuthLink).mockResolvedValue({
+        url: 'https://accounts.google.com/o/oauth2/v2/auth?x=1',
+      });
+
+      try {
+        render(<IdPsSection googleEnabled />);
+        await act(async () => {
+          fireEvent.click(
+            screen.getByRole('button', { name: /connect google/i }),
+          );
+        });
+
+        await waitFor(() => {
+          expect(apiModule.initiateOAuthLink).toHaveBeenCalledWith('google');
+          expect(assignMock).toHaveBeenCalledWith(
+            'https://accounts.google.com/o/oauth2/v2/auth?x=1',
+          );
+        });
+      } finally {
+        Object.defineProperty(window, 'location', {
+          configurable: true,
+          value: originalLocation,
+          writable: true,
+        });
+      }
+    });
+
+    it('shows an error alert when the OAuth URL request fails', async () => {
+      vi.mocked(apiModule.initiateOAuthLink).mockRejectedValue(
+        new Error('Unauthorized'),
+      );
+
+      render(<IdPsSection googleEnabled />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /connect google/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(/unauthorized/i)).toBeInTheDocument();
+      });
     });
 
     it('shows connected state when Google is in connectedProviders', () => {

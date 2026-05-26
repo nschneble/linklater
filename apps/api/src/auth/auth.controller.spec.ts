@@ -604,7 +604,7 @@ describe('AuthController', () => {
   });
 
   describe('googleLink', () => {
-    it('redirects to the Google OAuth authorization URL', () => {
+    it('returns the Google OAuth authorization URL as JSON', () => {
       process.env.GOOGLE_CLIENT_ID = 'test-client-id';
       process.env.GOOGLE_LINK_CALLBACK_URL =
         'https://api.example.com/auth/google/link/callback';
@@ -613,16 +613,15 @@ describe('AuthController', () => {
       const request = {
         user: { userId: USER_ID },
       } as unknown as AuthRequest;
-      const response = { redirect: jest.fn() } as unknown as Response;
 
-      oauthController.googleLink(request, response);
+      const result = oauthController.googleLink(request);
 
-      expect(response.redirect).toHaveBeenCalledWith(
+      expect(result.url).toEqual(
         expect.stringContaining('https://accounts.google.com/o/oauth2/v2/auth'),
       );
     });
 
-    it('redirect URL contains required OAuth query parameters', () => {
+    it('returned URL contains required OAuth query parameters', () => {
       process.env.GOOGLE_CLIENT_ID = 'test-client-id';
       process.env.GOOGLE_LINK_CALLBACK_URL =
         'https://api.example.com/auth/google/link/callback';
@@ -631,19 +630,16 @@ describe('AuthController', () => {
       const request = {
         user: { userId: USER_ID },
       } as unknown as AuthRequest;
-      const redirectMock = jest.fn();
-      const response = { redirect: redirectMock } as unknown as Response;
 
-      oauthController.googleLink(request, response);
-
-      const redirectUrl = redirectMock.mock.calls[0][0] as string;
-      const url = new URL(redirectUrl);
-      expect(url.searchParams.get('client_id')).toBe('test-client-id');
-      expect(url.searchParams.get('redirect_uri')).toBe(
+      const { url } = oauthController.googleLink(request);
+      const parsed = new URL(url);
+      expect(parsed.searchParams.get('client_id')).toBe('test-client-id');
+      expect(parsed.searchParams.get('redirect_uri')).toBe(
         'https://api.example.com/auth/google/link/callback',
       );
-      expect(url.searchParams.get('response_type')).toBe('code');
-      expect(url.searchParams.get('scope')).toBeTruthy();
+      expect(parsed.searchParams.get('response_type')).toBe('code');
+      expect(parsed.searchParams.get('scope')).toBeTruthy();
+      expect(parsed.searchParams.get('state')).toBeTruthy();
     });
   });
 

@@ -3,7 +3,7 @@ import IconButton from '../common/IconButton';
 import LinkButton from '../common/LinkButton';
 import StatusBadge from '../common/StatusBadge';
 import { useAuth } from '../../auth/AuthContext';
-import { unlinkOAuthProvider } from '../../lib/api';
+import { initiateOAuthLink, unlinkOAuthProvider } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useFocusFirstButton } from '../../lib/hooks/useFocusFirstButton';
 import { useRef, useState } from 'react';
@@ -67,6 +67,7 @@ export default function IdPsSection({
   const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(
     null,
   );
+  const [connectError, setConnectError] = useState<string | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
 
@@ -107,8 +108,16 @@ export default function IdPsSection({
     }
   };
 
-  const handleConnect = (provider: string) => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/${provider}/link`;
+  const handleConnect = async (provider: string) => {
+    setConnectError(null);
+    try {
+      const { url } = await initiateOAuthLink(provider);
+      window.location.assign(url);
+    } catch (error: unknown) {
+      setConnectError(
+        getErrorMessage(error, `Failed to start ${provider} sign-in`),
+      );
+    }
   };
 
   if (!googleEnabled && !appleEnabled) {
@@ -127,6 +136,7 @@ export default function IdPsSection({
 
       {linkedMessage && <Alert variant="success">{linkedMessage}</Alert>}
       {linkError && <Alert variant="error">{linkError}</Alert>}
+      {connectError && <Alert variant="error">{connectError}</Alert>}
       {disconnectError && <Alert variant="error">{disconnectError}</Alert>}
 
       <div className="space-y-3">

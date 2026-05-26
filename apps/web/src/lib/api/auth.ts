@@ -214,3 +214,19 @@ export async function unlinkOAuthProvider(provider: string): Promise<void> {
     method: 'DELETE',
   });
 }
+
+/**
+ * Initiates an OAuth account-linking flow by asking the API for the
+ * provider's authorization URL. The SPA then navigates the browser to
+ * that URL. We do this via `fetch` (rather than a top-level redirect to
+ * the API endpoint directly) so the bearer JWT can be attached, since
+ * the endpoint is protected by `JwtAuthGuard`.
+ */
+export async function initiateOAuthLink(
+  provider: string,
+): Promise<{ url: string }> {
+  return apiFetch<{ url: string }>(
+    `/auth/${encodeURIComponent(provider)}/link`,
+    { method: 'GET' },
+  );
+}
