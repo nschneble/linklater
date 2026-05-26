@@ -50,6 +50,8 @@ npm run lint --workspace @linklater/api           # Lint back-end only
 
 # Testing
 npm run test                                      # Run all tests
+npm run test apps/web/src/path/to/file.test.tsx   # Run a single front-end test file
+npm run test apps/api/src/path/to/file.spec.ts    # Run a single back-end test file
 npm run test:cov                                  # Run all tests with code coverage
 npm run test --workspace @linklater/web           # Test front-end only
 npm run test --workspace @linklater/api           # Test back-end only
