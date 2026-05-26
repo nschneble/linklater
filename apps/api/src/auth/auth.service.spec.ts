@@ -540,7 +540,7 @@ describe('AuthService', () => {
           usersServiceMock.findUnusedRecoveryCodes as jest.Mock
         ).mockResolvedValue([{ id: codeId, codeHash: realHash }]);
         (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
-          undefined,
+          true,
         );
 
         const result = await service.verifyOtp(
@@ -661,7 +661,7 @@ describe('AuthService', () => {
         [{ id: codeId, codeHash: realHash }],
       );
       (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
-        undefined,
+        true,
       );
       (usersServiceMock.disableTwoFactor as jest.Mock).mockResolvedValue(
         undefined,
@@ -856,7 +856,7 @@ describe('AuthService', () => {
         [{ id: codeId, codeHash: realHash }],
       );
       (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
-        undefined,
+        true,
       );
       (usersServiceMock.reissueRecoveryCodes as jest.Mock).mockResolvedValue(
         undefined,

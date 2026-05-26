@@ -441,11 +441,19 @@ export class UsersService {
     });
   }
 
-  async markRecoveryCodeUsed(id: string) {
-    await this.prisma.recoveryCode.update({
-      where: { id },
+  /**
+   * Atomically marks a recovery code as used, but only if it is still unused.
+   * Returns `true` when the code was just consumed, `false` when a parallel
+   * request had already used it. Callers MUST treat `false` as an auth
+   * failure — without this guard, two concurrent verify-otp requests could
+   * both succeed on the same code.
+   */
+  async markRecoveryCodeUsed(id: string): Promise<boolean> {
+    const result = await this.prisma.recoveryCode.updateMany({
+      where: { id, usedAt: null },
       data: { usedAt: new Date() },
     });
+    return result.count === 1;
   }
 
   async disableTwoFactor(id: string) {

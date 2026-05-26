@@ -13,6 +13,7 @@ import {
 } from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
 import { UserTokensService, UsersService } from '../users/index.js';
+import { Prisma } from '../prisma/index.js';
 import { TotpService } from './totp.service.js';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -141,9 +142,13 @@ export class EmailVerificationService {
         if (matchIndex === null) {
           throw new UnauthorizedException('Invalid OTP code');
         }
-        await this.usersService.markRecoveryCodeUsed(
+        // Atomic compare-and-swap — see UsersService.markRecoveryCodeUsed.
+        const consumed = await this.usersService.markRecoveryCodeUsed(
           recoveryCodes[matchIndex].id,
         );
+        if (!consumed) {
+          throw new UnauthorizedException('Invalid OTP code');
+        }
       } else {
         const isValid = await this.totpService.verifyCode(user, code);
         if (!isValid) {
@@ -188,6 +193,22 @@ export class EmailVerificationService {
       throw new BadRequestException('Invalid or expired email change link');
     }
 
-    await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
+    // The pendingEmail uniqueness check at request time is racy with another
+    // user claiming the same address between request and confirm. Catch the
+    // unique-constraint violation here and surface it as a clean 409 rather
+    // than letting Prisma's P2002 escape as a 500.
+    try {
+      await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'That email address is no longer available — request the change again with a different address',
+        );
+      }
+      throw error;
+    }
   }
 }

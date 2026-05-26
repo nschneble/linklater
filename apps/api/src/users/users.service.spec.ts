@@ -736,21 +736,39 @@ describe('UsersService', () => {
   });
 
   describe('markRecoveryCodeUsed', () => {
-    it('sets usedAt on the recovery code record', async () => {
+    it('sets usedAt only when the code is still unused and returns true', async () => {
       const CODE_ID = 'rc-1';
       const prismaMockExtended = prismaMock as unknown as {
-        recoveryCode: { update: jest.Mock };
+        recoveryCode: { updateMany: jest.Mock };
       };
       prismaMockExtended.recoveryCode = {
-        update: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       };
 
-      await service.markRecoveryCodeUsed(CODE_ID);
+      const result = await service.markRecoveryCodeUsed(CODE_ID);
 
-      expect(prismaMockExtended.recoveryCode.update).toHaveBeenCalledWith({
-        where: { id: CODE_ID },
+      expect(prismaMockExtended.recoveryCode.updateMany).toHaveBeenCalledWith({
+        where: { id: CODE_ID, usedAt: null },
         data: { usedAt: expect.any(Date) },
       });
+      expect(result).toBe(true);
+    });
+
+    // A second call for the same code id loses the race. Returning false lets
+    // callers convert that into a clean 401 instead of silently re-issuing a
+    // session on an already-used code.
+    it('returns false when the code was already used by a concurrent request', async () => {
+      const CODE_ID = 'rc-1';
+      const prismaMockExtended = prismaMock as unknown as {
+        recoveryCode: { updateMany: jest.Mock };
+      };
+      prismaMockExtended.recoveryCode = {
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      };
+
+      const result = await service.markRecoveryCodeUsed(CODE_ID);
+
+      expect(result).toBe(false);
     });
   });
 

@@ -186,9 +186,15 @@ export class AuthService {
       if (matchIndex === null)
         throw new UnauthorizedException('Invalid recovery code');
 
-      await this.usersService.markRecoveryCodeUsed(
+      // markRecoveryCodeUsed returns false when a parallel verify lost the
+      // race to consume the same code — treat that as an invalid code so
+      // two concurrent requests cannot both succeed on one recovery code.
+      const consumed = await this.usersService.markRecoveryCodeUsed(
         recoveryCodes[matchIndex].id,
       );
+      if (!consumed) {
+        throw new UnauthorizedException('Invalid recovery code');
+      }
       return this.issueTokenPair(userId, user.email);
     }
 
@@ -259,9 +265,14 @@ export class AuthService {
         if (matchIndex === null)
           throw new UnauthorizedException('Invalid recovery code');
 
-        await this.usersService.markRecoveryCodeUsed(
+        // Atomic compare-and-swap — if another request already used this
+        // code, reject. See `markRecoveryCodeUsed` for the rationale.
+        const consumed = await this.usersService.markRecoveryCodeUsed(
           recoveryCodes[matchIndex].id,
         );
+        if (!consumed) {
+          throw new UnauthorizedException('Invalid recovery code');
+        }
         return;
       }
 
