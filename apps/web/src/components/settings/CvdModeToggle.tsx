@@ -54,9 +54,15 @@ export default function CvdModeToggle() {
           >
             Color Vision Deficiency (CVD) mode
           </label>
-          <p id="cvd-description" className="text-[var(--text-muted)] text-xs">
-            Switches to the Apollo 10½ theme, adds icons next to colored badges,
-            and increases overall contrast.
+          <p
+            id="cvd-description"
+            className="text-[var(--text-muted)] text-xs text-pretty"
+          >
+            Switches to the{' '}
+            <span className="font-semibold">Apollo 10½ theme</span> and adds
+            distinctive visual non-color cues. These include underlined links,
+            striped disabled controls, stronger focus outlines, and selected
+            indicator bars.
           </p>
         </div>
 
