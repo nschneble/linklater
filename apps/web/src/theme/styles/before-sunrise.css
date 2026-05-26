@@ -3,13 +3,13 @@
   --bg-surface: #6a3c22;
   --bg-elevated: #7a4e30;
   --bg-input: #6a3c22;
-  --text: #f3ecd3;
-  --text-muted: #ead0a0;
-  --text-subtle: #d8b180;
-  --border: #b8854b;
-  --accent: #c87030;
+  --text: #fefef9;
+  --text-muted: #fefefc;
+  --text-subtle: #fffefe;
+  --border: #d19e7d;
+  --accent: #ecc7b3;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #f3ecd3;
+  --accent-fg: #000000;
 }
 
 [data-theme='before-sunrise'][data-mode='light'] {
@@ -17,11 +17,11 @@
   --bg-surface: #dcc8a4;
   --bg-elevated: #c8a870;
   --bg-input: #f3ecd3;
-  --text: #5a2e1a;
-  --text-muted: #553a10;
-  --text-subtle: #6e4828;
-  --border: #d5b886;
-  --accent: #8e4c22;
+  --text: #341b0d;
+  --text-muted: #2b1f0a;
+  --text-subtle: #2c200b;
+  --border: #6e5624;
+  --accent: #623618;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #f3ecd3;
 }

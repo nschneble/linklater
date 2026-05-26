@@ -4,12 +4,12 @@
   --bg-elevated: #3b376a;
   --bg-input: #201e43;
   --text: #eeeedf;
-  --text-muted: #d58c32;
-  --text-subtle: #8db030;
-  --border: #47419d;
-  --accent: #c03812;
+  --text-muted: #ebcaae;
+  --text-subtle: #bcdc6f;
+  --border: #847ecc;
+  --accent: #ed9156;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #eeeedf;
+  --accent-fg: #000000;
 }
 
 [data-theme='scanner-darkly'][data-mode='light'] {
@@ -18,10 +18,10 @@
   --bg-elevated: #d0bc78;
   --bg-input: #eeeedf;
   --text: #0f0b1b;
-  --text-muted: #64301a;
-  --text-subtle: #3b376a;
-  --border: #9a7030;
-  --accent: #a73210;
+  --text-muted: #4c2413;
+  --text-subtle: #2f2b52;
+  --border: #806023;
+  --accent: #8f2610;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #eeeedf;
 }

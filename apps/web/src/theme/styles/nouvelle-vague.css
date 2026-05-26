@@ -4,9 +4,9 @@
   --bg-elevated: #2c2c2c;
   --bg-input: #141414;
   --text: #f2f2f2;
-  --text-muted: #a8a8a8;
-  --text-subtle: #999999;
-  --border: #363636;
+  --text-muted: #b8b8b8;
+  --text-subtle: #b8b8b8;
+  --border: #757575;
   --accent: #d4d4d4;
   --accent-hover: oklch(from var(--accent) calc(l + 0.08) c h);
   --accent-fg: #0a0a0a;
@@ -19,8 +19,8 @@
   --bg-input: #f8f8f8;
   --text: #0f0f0f;
   --text-muted: #4a4a4a;
-  --text-subtle: #656565;
-  --border: #d0d0d0;
+  --text-subtle: #4d4d4d;
+  --border: #878787;
   --accent: #1f1f1f;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #f8f8f8;
