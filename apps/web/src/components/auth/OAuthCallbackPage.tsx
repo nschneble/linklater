@@ -29,6 +29,24 @@ export default function OAuthCallbackPage() {
     const accessToken = parameters.get('token');
     const refreshToken = parameters.get('refresh') ?? undefined;
 
+    // Strip the credentials out of the URL bar before doing anything else.
+    // The fragment never reaches the server, but it persists in the
+    // browser's address bar and history until the user navigates away —
+    // shoulder-surfing a stale tab would expose a usable JWT. replaceState
+    // keeps the entry in history (so Back still works) without the secret.
+    if (typeof window !== 'undefined' && window.location.hash) {
+      try {
+        window.history.replaceState(
+          null,
+          '',
+          window.location.pathname + window.location.search,
+        );
+      } catch {
+        // history.replaceState is unavailable in sandboxed contexts —
+        // silently fall through to the auth flow.
+      }
+    }
+
     if (!accessToken) {
       setStatus('error');
       setErrorMessage('Invalid authentication response. Please try again.');

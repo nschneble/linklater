@@ -149,4 +149,29 @@ describe('OAuthCallbackPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /back to login/i }));
     expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
+
+  // The fragment never reaches the server, but it persists in the
+  // browser's address bar and history until the user navigates away —
+  // strip it on arrival so a stale tab can't be shoulder-surfed for a
+  // usable access token.
+  it('strips the credentials from window.location.hash on mount', async () => {
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    const loginWithToken = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useAuth).mockReturnValue(makeAuthContext({ loginWithToken }));
+
+    window.location.hash = '#token=secret-jwt&refresh=secret-refresh';
+    renderPage();
+
+    await waitFor(() => {
+      expect(replaceState).toHaveBeenCalled();
+      expect(loginWithToken).toHaveBeenCalledWith(
+        'secret-jwt',
+        'secret-refresh',
+      );
+    });
+
+    const lastCall = replaceState.mock.calls.at(-1);
+    expect(lastCall?.[2]).not.toContain('secret-jwt');
+    expect(lastCall?.[2]).not.toContain('secret-refresh');
+  });
 });
