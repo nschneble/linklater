@@ -85,13 +85,22 @@ export class AuthService {
    * Issues a session for the given user. Fetches the user record internally
    * so all login paths (password, OAuth, magic-link) share a single 2FA gate
    * — callers cannot accidentally bypass MFA by passing a stale user object.
+   *
+   * When the user has TOTP enabled, generates a fresh `mfaNonce` and writes
+   * it to the user row before signing the MFA challenge JWT with the same
+   * nonce. verifyOtp later checks the JWT's nonce against the column and
+   * clears it on success, giving the MFA token single-use semantics and
+   * an implicit revocation handle (rotating the column invalidates any
+   * outstanding token).
    */
   async login(userId: string) {
     const user = await this.usersService.findById(userId);
 
     if (user.totpEnabledAt) {
+      const nonce = generateHexToken();
+      await this.usersService.setMfaNonce(userId, nonce);
       const mfaToken = this.jwtService.sign(
-        { subject: userId, mfaPending: true },
+        { subject: userId, mfaPending: true, nonce },
         { expiresIn: '5m' },
       );
       return { mfaToken, mfaMethod: 'totp' as const };
@@ -160,7 +169,12 @@ export class AuthService {
     return this.login(user.id);
   }
 
-  async verifyOtp(userId: string, code: string, method: 'totp' | 'recovery') {
+  async verifyOtp(
+    userId: string,
+    code: string,
+    method: 'totp' | 'recovery',
+    nonce?: string,
+  ) {
     const user = await this.usersService.findById(userId);
     const enrolledMethod = user.totpEnabledAt ? 'totp' : null;
 
@@ -168,9 +182,18 @@ export class AuthService {
       throw new UnauthorizedException('Invalid OTP method');
     }
 
+    // Bind the MFA challenge JWT to the per-user nonce stored when login()
+    // issued the token. A token with a mismatched (or missing) nonce is
+    // either replayed against a row whose nonce has rotated, or forged with
+    // a stale challenge, or has already been consumed.
+    if (!nonce || nonce !== user.mfaNonce) {
+      throw new UnauthorizedException('Invalid or expired MFA token');
+    }
+
     if (method === 'totp') {
       const isValid = await this.totpService.verifyCode(user, code);
       if (!isValid) throw new UnauthorizedException('Invalid TOTP code');
+      await this.usersService.clearMfaNonce(userId);
       return this.issueTokenPair(userId, user.email);
     }
 
@@ -195,6 +218,7 @@ export class AuthService {
       if (!consumed) {
         throw new UnauthorizedException('Invalid recovery code');
       }
+      await this.usersService.clearMfaNonce(userId);
       return this.issueTokenPair(userId, user.email);
     }
 

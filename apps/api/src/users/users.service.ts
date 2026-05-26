@@ -392,6 +392,32 @@ export class UsersService {
   }
 
   /**
+   * Writes a fresh MFA challenge nonce for the user. AuthService.login calls
+   * this when issuing an MFA challenge JWT; the same nonce is embedded in
+   * the JWT and verified at verifyOtp time so a leaked or replayed token
+   * carrying a stale nonce is rejected.
+   */
+  async setMfaNonce(id: string, nonce: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { mfaNonce: nonce },
+    });
+  }
+
+  /**
+   * Clears the MFA nonce after a successful verifyOtp, enforcing single-use
+   * semantics on the MFA challenge token. Also doubles as an explicit
+   * revocation handle — any code path can call this to invalidate an
+   * outstanding MFA token (e.g. after a password change).
+   */
+  async clearMfaNonce(id: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { mfaNonce: null },
+    });
+  }
+
+  /**
    * Atomic compare-and-swap for the TOTP replay guard. Only advances
    * `totpLastUsedStep` when the candidate `step` is strictly greater than
    * the current value (or the current value is `null`). Returns `true`

@@ -64,6 +64,7 @@ export class TwoFactorController {
       request.user.userId,
       body.code,
       body.method,
+      request.user.nonce,
     );
   }
 

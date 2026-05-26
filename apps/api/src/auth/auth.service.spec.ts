@@ -19,6 +19,7 @@ const SIGNED_TOKEN = 'signed-token';
 const UNKNOWN_PASSWORD = 'open-poppy-seed';
 const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';
+const MFA_NONCE = 'test-mfa-nonce';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -48,6 +49,8 @@ describe('AuthService', () => {
     resetPasswordWithToken: jest.fn(),
     saveTotpSecret: jest.fn(),
     setFirstPassword: jest.fn(),
+    setMfaNonce: jest.fn(),
+    clearMfaNonce: jest.fn(),
     unlinkOAuthAccount: jest.fn(),
     updateMagicLinkToken: jest.fn(),
     updatePendingEmail: jest.fn(),
@@ -321,7 +324,7 @@ describe('AuthService', () => {
       );
     });
 
-    it('returns mfaToken and mfaMethod totp when totpEnabledAt is set', async () => {
+    it('returns mfaToken and mfaMethod totp when totpEnabledAt is set, binding a fresh nonce', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
@@ -330,8 +333,14 @@ describe('AuthService', () => {
 
       const result = await service.login(USER_ID);
 
+      expect(usersServiceMock.setMfaNonce).toHaveBeenCalledWith(
+        USER_ID,
+        expect.any(String),
+      );
+      const nonceWritten = (usersServiceMock.setMfaNonce as jest.Mock).mock
+        .calls[0][1] as string;
       expect(jwtServiceMock.sign).toHaveBeenCalledWith(
-        { subject: USER_ID, mfaPending: true },
+        { subject: USER_ID, mfaPending: true, nonce: nonceWritten },
         { expiresIn: '5m' },
       );
       expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
@@ -482,11 +491,17 @@ describe('AuthService', () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
+          mfaNonce: MFA_NONCE,
           totpEnabledAt: new Date(),
         });
         (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
 
-        const result = await service.verifyOtp(USER_ID, '123456', 'totp');
+        const result = await service.verifyOtp(
+          USER_ID,
+          '123456',
+          'totp',
+          MFA_NONCE,
+        );
 
         expect(totpServiceMock.verifyCode).toHaveBeenCalledWith(
           expect.objectContaining({ id: USER_ID }),
@@ -500,24 +515,67 @@ describe('AuthService', () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
+          mfaNonce: MFA_NONCE,
           totpEnabledAt: new Date(),
         });
         (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(false);
 
         await expect(
-          service.verifyOtp(USER_ID, '000000', 'totp'),
+          service.verifyOtp(USER_ID, '000000', 'totp', MFA_NONCE),
         ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('throws UnauthorizedException when the MFA token nonce does not match the user row', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          mfaNonce: 'fresh-nonce',
+          totpEnabledAt: new Date(),
+        });
+
+        await expect(
+          service.verifyOtp(USER_ID, '123456', 'totp', 'stale-nonce'),
+        ).rejects.toThrow(UnauthorizedException);
+        expect(totpServiceMock.verifyCode).not.toHaveBeenCalled();
+      });
+
+      it('throws UnauthorizedException when the MFA token nonce is missing entirely', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          mfaNonce: MFA_NONCE,
+          totpEnabledAt: new Date(),
+        });
+
+        await expect(
+          service.verifyOtp(USER_ID, '123456', 'totp'),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('clears mfaNonce after a successful TOTP verification', async () => {
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          mfaNonce: MFA_NONCE,
+          totpEnabledAt: new Date(),
+        });
+        (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
+
+        await service.verifyOtp(USER_ID, '123456', 'totp', MFA_NONCE);
+
+        expect(usersServiceMock.clearMfaNonce).toHaveBeenCalledWith(USER_ID);
       });
 
       it('throws UnauthorizedException when no 2FA is enrolled and totp method is submitted', async () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
+          mfaNonce: MFA_NONCE,
           totpEnabledAt: null,
         });
 
         await expect(
-          service.verifyOtp(USER_ID, '123456', 'totp'),
+          service.verifyOtp(USER_ID, '123456', 'totp', MFA_NONCE),
         ).rejects.toThrow(UnauthorizedException);
 
         expect(totpServiceMock.verifyCode).not.toHaveBeenCalled();
@@ -534,6 +592,7 @@ describe('AuthService', () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
+          mfaNonce: MFA_NONCE,
           totpEnabledAt: new Date(),
         });
         (
@@ -547,6 +606,7 @@ describe('AuthService', () => {
           USER_ID,
           RECOVERY_CODE_STUB,
           'recovery',
+          MFA_NONCE,
         );
 
         expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
@@ -560,6 +620,7 @@ describe('AuthService', () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
+          mfaNonce: MFA_NONCE,
           totpEnabledAt: new Date(),
         });
         (
@@ -567,7 +628,12 @@ describe('AuthService', () => {
         ).mockResolvedValue([]);
 
         await expect(
-          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery'),
+          service.verifyOtp(
+            USER_ID,
+            RECOVERY_CODE_STUB,
+            'recovery',
+            MFA_NONCE,
+          ),
         ).rejects.toThrow(UnauthorizedException);
       });
 
@@ -577,6 +643,7 @@ describe('AuthService', () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
+          mfaNonce: MFA_NONCE,
           totpEnabledAt: new Date(),
         });
         (
@@ -584,7 +651,12 @@ describe('AuthService', () => {
         ).mockResolvedValue([{ id: 'rc-1', codeHash: differentHash }]);
 
         await expect(
-          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery'),
+          service.verifyOtp(
+            USER_ID,
+            RECOVERY_CODE_STUB,
+            'recovery',
+            MFA_NONCE,
+          ),
         ).rejects.toThrow(UnauthorizedException);
       });
 
@@ -592,11 +664,17 @@ describe('AuthService', () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
+          mfaNonce: MFA_NONCE,
           totpEnabledAt: null,
         });
 
         await expect(
-          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery'),
+          service.verifyOtp(
+            USER_ID,
+            RECOVERY_CODE_STUB,
+            'recovery',
+            MFA_NONCE,
+          ),
         ).rejects.toThrow(UnauthorizedException);
       });
     });

@@ -12,6 +12,12 @@ export interface AuthUser {
   userId: string;
   /** Present and true only on short-lived MFA challenge tokens. */
   mfaPending?: boolean;
+  /**
+   * Per-user nonce extracted from an MFA challenge token's `nonce` claim.
+   * Verified against `User.mfaNonce` in `AuthService.verifyOtp`. Present
+   * only on MFA-pending requests.
+   */
+  nonce?: string;
 }
 
 /**

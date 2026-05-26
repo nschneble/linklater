@@ -351,8 +351,10 @@ describe('AuthController', () => {
       );
     });
 
-    it('delegates to AuthService.verifyOtp with userId, code, and method', async () => {
-      const request = { user: { userId: USER_ID } } as never;
+    it('delegates to AuthService.verifyOtp with userId, code, method, and the nonce from the MFA token', async () => {
+      const request = {
+        user: { userId: USER_ID, nonce: 'mfa-nonce-abc' },
+      } as never;
       const body = {
         mfaToken: 'mfa-tok',
         code: '123456',
@@ -365,6 +367,7 @@ describe('AuthController', () => {
         USER_ID,
         '123456',
         'totp',
+        'mfa-nonce-abc',
       );
       expect(result).toEqual({
         accessToken: ACCESS_TOKEN,

@@ -29,6 +29,7 @@ model User {
   totpEnabledAt    DateTime?
   totpVerifiedAt   DateTime?
   totpLastUsedStep Int?
+  mfaNonce         String?
 
   magicLinkToken          String?   @unique
   magicLinkTokenExpiresAt DateTime?
