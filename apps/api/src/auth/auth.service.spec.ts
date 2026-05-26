@@ -368,14 +368,18 @@ describe('AuthService', () => {
         user: { id: USER_ID, email: USER_EMAIL },
       });
 
+      (
+        prismaServiceMock.refreshToken.deleteMany as jest.Mock
+      ).mockResolvedValueOnce({ count: 1 });
+
       const result = await service.refresh(RAW_REFRESH_TOKEN);
 
       expect(
         (prismaServiceMock as unknown as { $transaction: jest.Mock })
           .$transaction,
       ).toHaveBeenCalledTimes(1);
-      expect(prismaServiceMock.refreshToken.delete).toHaveBeenCalledWith({
-        where: { id: 'rt-1' },
+      expect(prismaServiceMock.refreshToken.deleteMany).toHaveBeenCalledWith({
+        where: { id: 'rt-1', tokenHash: expect.any(String) },
       });
       expect(prismaServiceMock.refreshToken.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -384,6 +388,31 @@ describe('AuthService', () => {
       );
       expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
       expect(result).toHaveProperty('refreshToken');
+    });
+
+    it('throws UnauthorizedException (not 500) when a concurrent refresh already deleted the row', async () => {
+      // Race scenario: two refresh calls fire with the same raw token. The
+      // first wins, deletes the row, and creates a new one. The second's
+      // transactional findUnique still sees the row (depending on isolation
+      // it may even see the old one), but the deleteMany returns count === 0
+      // because the row was already removed. The service must map that to
+      // a clean 401 — NOT let a Prisma P2025 (or count === 0) leak as 500.
+      (
+        prismaServiceMock.refreshToken.findUnique as jest.Mock
+      ).mockResolvedValue({
+        id: 'rt-1',
+        userId: USER_ID,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+        user: { id: USER_ID, email: USER_EMAIL },
+      });
+      (
+        prismaServiceMock.refreshToken.deleteMany as jest.Mock
+      ).mockResolvedValueOnce({ count: 0 });
+
+      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
     });
 
     it('throws UnauthorizedException when the refresh token is not found', async () => {
@@ -422,6 +451,9 @@ describe('AuthService', () => {
         expiresAt: new Date(Date.now() + 1000 * 60 * 60),
         user: { id: USER_ID, email: USER_EMAIL },
       });
+      (
+        prismaServiceMock.refreshToken.deleteMany as jest.Mock
+      ).mockResolvedValueOnce({ count: 1 });
       (
         prismaServiceMock.refreshToken.create as jest.Mock
       ).mockRejectedValueOnce(new Error('db down'));

@@ -100,19 +100,29 @@ export class AuthService {
 
   async refresh(rawRefreshToken: string) {
     const tokenHash = sha256Hex(rawRefreshToken);
-    const stored = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash },
-      include: { user: true },
-    });
 
-    if (!stored || stored.expiresAt < new Date()) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
-
-    // Delete + re-issue in a single transaction so a crash mid-rotation
-    // cannot leave the user without a refresh token.
+    // Lookup + delete + re-issue in a single transaction so a crash mid-rotation
+    // cannot leave the user without a refresh token, and concurrent refresh
+    // requests for the same raw token cannot race: the loser's deleteMany
+    // returns count === 0 and we map that to a clean 401 rather than letting
+    // a Prisma P2025 leak out as a 500.
     return this.prisma.$transaction(async (transaction) => {
-      await transaction.refreshToken.delete({ where: { id: stored.id } });
+      const stored = await transaction.refreshToken.findUnique({
+        where: { tokenHash },
+        include: { user: true },
+      });
+
+      if (!stored || stored.expiresAt < new Date()) {
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+
+      const { count } = await transaction.refreshToken.deleteMany({
+        where: { id: stored.id, tokenHash },
+      });
+      if (count === 0) {
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+
       const rawNewRefreshToken = generateHexToken();
       const newTokenHash = sha256Hex(rawNewRefreshToken);
       const expiresAt = expiresInMs(ONE_YEAR_MS);

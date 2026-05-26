@@ -69,7 +69,9 @@ async function parseError(response: Response): Promise<ApiError> {
   return new ApiError(message, response.status);
 }
 
-async function attemptTokenRefresh(): Promise<boolean> {
+let inFlightRefresh: Promise<boolean> | null = null;
+
+async function performTokenRefresh(): Promise<boolean> {
   if (!storedRefreshToken) return false;
 
   try {
@@ -94,6 +96,15 @@ async function attemptTokenRefresh(): Promise<boolean> {
     clearStoredToken();
     return false;
   }
+}
+
+// Dedup concurrent refreshes so N parallel 401s share one /auth/refresh call.
+async function attemptTokenRefresh(): Promise<boolean> {
+  if (inFlightRefresh) return inFlightRefresh;
+  inFlightRefresh = performTokenRefresh().finally(() => {
+    inFlightRefresh = null;
+  });
+  return inFlightRefresh;
 }
 
 export async function apiFetch<T>(

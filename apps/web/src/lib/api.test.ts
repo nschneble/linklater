@@ -321,6 +321,144 @@ describe('apiFetch', () => {
     expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
   });
 
+  it('dedupes concurrent refreshes — two parallel 401s share one /auth/refresh call', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+
+    let resolveRefresh: (value: unknown) => void = () => {};
+    const refreshResponse = new Promise((resolve) => {
+      resolveRefresh = resolve;
+    });
+
+    let retryTargetCallCount = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+
+      if (url.includes('/auth/refresh')) {
+        return refreshResponse;
+      }
+
+      if (url.includes('/retry-target')) {
+        retryTargetCallCount += 1;
+        if (retryTargetCallCount <= 2) {
+          return Promise.resolve({
+            ok: false,
+            status: 401,
+            text: () =>
+              Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          text: () => Promise.resolve(JSON.stringify({ id: 'retried' })),
+        });
+      }
+
+      return Promise.resolve({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const first = apiFetch('/retry-target');
+    const second = apiFetch('/retry-target');
+
+    await vi.waitFor(() => {
+      const refreshCalls = fetchMock.mock.calls.filter(([input]) => {
+        const url =
+          typeof input === 'string' ? input : (input as URL).toString();
+        return url.includes('/auth/refresh');
+      });
+      expect(refreshCalls).toHaveLength(1);
+    });
+
+    resolveRefresh({
+      ok: true,
+      status: 200,
+      text: () =>
+        Promise.resolve(
+          JSON.stringify({
+            accessToken: 'new-jwt',
+            refreshToken: 'new-refresh',
+          }),
+        ),
+      json: () =>
+        Promise.resolve({
+          accessToken: 'new-jwt',
+          refreshToken: 'new-refresh',
+        }),
+    });
+
+    await expect(first).resolves.toEqual({ id: 'retried' });
+    await expect(second).resolves.toEqual({ id: 'retried' });
+
+    const totalRefreshCalls = fetchMock.mock.calls.filter(([input]) => {
+      const url = typeof input === 'string' ? input : (input as URL).toString();
+      return url.includes('/auth/refresh');
+    });
+    expect(totalRefreshCalls).toHaveLength(1);
+  });
+
+  it('allows a new refresh after the previous one settles (failure does not block future attempts)', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Invalid refresh token' })),
+      });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(apiFetch('/first')).rejects.toBeInstanceOf(ApiError);
+    expect(getStoredToken()).toBeNull();
+
+    setStoredToken('another-expired-jwt', 'another-valid-refresh');
+
+    (fetchMock as unknown as Mock)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              accessToken: 'fresh-jwt',
+              refreshToken: 'fresh-refresh',
+            }),
+          ),
+        json: () =>
+          Promise.resolve({
+            accessToken: 'fresh-jwt',
+            refreshToken: 'fresh-refresh',
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ id: 'recovered' })),
+      });
+
+    await expect(apiFetch('/second')).resolves.toEqual({ id: 'recovered' });
+    expect(getStoredToken()).toBe('fresh-jwt');
+  });
+
   it('does not retry when path is /auth/refresh', async () => {
     setStoredToken('expired-jwt', 'valid-refresh');
     const fetchMock = vi.fn().mockResolvedValue({
