@@ -10,9 +10,10 @@ import { useTransientState } from '../../lib/hooks/useTransientState';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import IconButton from '../common/IconButton';
+import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import ApiTokensList from './ApiTokensList';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 /**
@@ -29,9 +30,10 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
  * - `DELETE /tokens/:id` — revoke a token
  */
 export default function ApiTokensSection() {
+  const navigate = useNavigate();
+
   const [tokens, setTokens] = useState<ApiToken[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
-
   const [showCreate, setShowCreate] = useState(false);
   const [createName, setCreateName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -234,18 +236,9 @@ export default function ApiTokensSection() {
 
       <ApiTokensList onRevoke={handleRevoke} tokens={tokens} />
 
-      <p className="pt-2">
-        <Link
-          to="/settings/api"
-          className="inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] text-xs underline underline-offset-3"
-        >
-          View the API documentation
-          <i
-            aria-hidden="true"
-            className="fa-solid fa-arrow-right text-[0.7rem]"
-          />
-        </Link>
-      </p>
+      <LinkButton onClick={() => navigate('/settings/api')}>
+        View the API documentation
+      </LinkButton>
     </div>
   );
 }
