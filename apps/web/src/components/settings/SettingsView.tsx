@@ -205,7 +205,7 @@ export default function SettingsView({
           id="integrations"
           title="Third-party integrations"
           icon="fa-plug"
-          description="Use personal access tokens (PATs) to connect Linklater with external tools and services."
+          description="Use personal access tokens (PATs) to connect Linklater with external tools and services. Tokens allow you to access the Linklater API."
         >
           <ApiTokensSection />
         </SettingsGroup>
