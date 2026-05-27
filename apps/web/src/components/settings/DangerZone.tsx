@@ -60,7 +60,7 @@ export default function DangerZone() {
       ) : (
         <div
           ref={confirmRowReference}
-          className="flex gap-2 items-center mb-0.5 text-xs"
+          className="flex gap-2 items-center text-xs"
         >
           <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400">
             Are you sure? This is permanent.
