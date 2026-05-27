@@ -1,6 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import ApiTokensSection from './ApiTokensSection';
+
+function renderInRouter() {
+  return render(
+    <MemoryRouter>
+      <ApiTokensSection />
+    </MemoryRouter>,
+  );
+}
 
 vi.mock('../../lib/api', () => ({
   createApiToken: vi.fn(),
@@ -49,14 +58,14 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('ApiTokensSection', () => {
   it('renders the section heading', async () => {
-    render(<ApiTokensSection />);
+    renderInRouter();
     await waitFor(() => {
       expect(screen.getByText('API Tokens')).toBeInTheDocument();
     });
   });
 
   it('renders the "Create new token" button', async () => {
-    render(<ApiTokensSection />);
+    renderInRouter();
     await waitFor(() => {
       expect(
         screen.getByRole('button', { name: /create new token/i }),
@@ -68,7 +77,7 @@ describe('ApiTokensSection', () => {
     const tokens = [makeApiToken(), makeApiToken({ id: 'tok-2', name: 'iOS' })];
     vi.mocked(apiModule.listApiTokens).mockResolvedValue(tokens);
 
-    render(<ApiTokensSection />);
+    renderInRouter();
 
     await waitFor(() => {
       expect(screen.getByTestId('token-tok-1')).toBeInTheDocument();
@@ -77,7 +86,7 @@ describe('ApiTokensSection', () => {
   });
 
   it('shows the create form when "Create new token" is clicked', async () => {
-    render(<ApiTokensSection />);
+    renderInRouter();
     await waitFor(() =>
       screen.getByRole('button', { name: /create new token/i }),
     );
@@ -100,7 +109,7 @@ describe('ApiTokensSection', () => {
     };
     vi.mocked(apiModule.createApiToken).mockResolvedValue(created);
 
-    render(<ApiTokensSection />);
+    renderInRouter();
     await waitFor(() =>
       screen.getByRole('button', { name: /create new token/i }),
     );
@@ -121,7 +130,7 @@ describe('ApiTokensSection', () => {
       new Error('Name already taken'),
     );
 
-    render(<ApiTokensSection />);
+    renderInRouter();
     await waitFor(() =>
       screen.getByRole('button', { name: /create new token/i }),
     );
@@ -139,7 +148,7 @@ describe('ApiTokensSection', () => {
   });
 
   it('hides the generate form and clears the name when Cancel is clicked', async () => {
-    render(<ApiTokensSection />);
+    renderInRouter();
     await waitFor(() =>
       screen.getByRole('button', { name: /create new token/i }),
     );
@@ -160,7 +169,7 @@ describe('ApiTokensSection', () => {
       new Error('Unauthorized'),
     );
 
-    render(<ApiTokensSection />);
+    renderInRouter();
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -168,12 +177,23 @@ describe('ApiTokensSection', () => {
     });
   });
 
+  it('renders a link to the API documentation page', async () => {
+    renderInRouter();
+    await waitFor(() =>
+      screen.getByRole('button', { name: /create new token/i }),
+    );
+    const link = screen.getByRole('link', {
+      name: /view the api documentation/i,
+    });
+    expect(link).toHaveAttribute('href', '/settings/api');
+  });
+
   it('calls revokeApiToken when a token is revoked', async () => {
     const token = makeApiToken();
     vi.mocked(apiModule.listApiTokens).mockResolvedValue([token]);
     vi.mocked(apiModule.revokeApiToken).mockResolvedValue({ success: true });
 
-    render(<ApiTokensSection />);
+    renderInRouter();
     await waitFor(() => screen.getByTestId('token-tok-1'));
 
     fireEvent.click(

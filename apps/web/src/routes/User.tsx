@@ -17,7 +17,7 @@ export function userRoutes() {
       />
     )),
 
-    ...['editor', 'read', 'settings', 'unread'].map((key) => (
+    ...['editor', 'read', 'settings', 'settings/api', 'unread'].map((key) => (
       <Route key={key} path={`/${key}`} element={<AppShell />} />
     )),
 

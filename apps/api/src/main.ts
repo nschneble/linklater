@@ -1,7 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import { CompactLogger } from './compact-logger.js';
+import { LinksModule } from './links/links.module.js';
 import type { Request, Response, NextFunction } from 'express';
 import { existsSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -106,6 +108,43 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: false,
   });
+
+  // Build the OpenAPI document for the Linklater API. Intentionally scoped to
+  // LinksModule — these are the only endpoints reachable with a personal
+  // access token (PAT), and the public docs page should describe exactly that
+  // surface and nothing else. Session-only routes (/auth, /users, /tokens)
+  // keep their decorators internally but are deliberately excluded from the
+  // user-facing spec.
+  const openapiDocument = SwaggerModule.createDocument(
+    app,
+    new DocumentBuilder()
+      .setTitle('Linklater API')
+      .setDescription(
+        'Personal access token endpoints for managing your saved links.',
+      )
+      .setVersion(process.env.npm_package_version ?? '0.0.0')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'ltk_…',
+          description:
+            'Personal access token. Create one in Settings → API Tokens.',
+        },
+        'pat',
+      )
+      .build(),
+    { include: [LinksModule] },
+  );
+
+  // Expose the spec at /openapi.json. The schema itself is not sensitive (it
+  // documents shapes, not data), so no guard is applied. The endpoints it
+  // describes still require a valid token to call.
+  app
+    .getHttpAdapter()
+    .get('/openapi.json', (_request: Request, response: Response) =>
+      response.json(openapiDocument),
+    );
 
   await app.listen(process.env.PORT ?? 3000);
 }

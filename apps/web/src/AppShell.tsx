@@ -20,6 +20,10 @@ import { type AppView } from './lib/navigation';
 // color-math utilities add non-trivial weight to the bundle.
 const ThemeEditor = lazy(() => import('./components/settings/ThemeEditor'));
 
+// ApiDocsView is lazy-loaded because Scalar's bundle is heavy (~300KB
+// gzipped) and only visitors to /settings/api should pay that cost.
+const ApiDocsView = lazy(() => import('./components/api-docs/ApiDocsView'));
+
 // WelcomeModal is lazy-loaded because it shows once per user and would
 // otherwise be dead weight in the initial bundle for every session.
 const WelcomeModal = lazy(() => import('./components/welcome/WelcomeModal'));
@@ -29,6 +33,8 @@ function viewFromPath(pathname: string): AppView {
   switch (pathname) {
     case '/settings':
       return 'settings';
+    case '/settings/api':
+      return 'api-docs';
     case '/editor':
       return 'theme-editor';
     default:
@@ -110,6 +116,7 @@ export default function AppShell() {
 
   useEffect(() => {
     const titles: Record<AppView, string> = {
+      'api-docs': 'API documentation – Linklater',
       links: 'Your links – Linklater',
       settings: 'Settings – Linklater',
       'theme-editor': 'Theme editor – Linklater',
@@ -215,6 +222,10 @@ export default function AppShell() {
         ) : view === 'theme-editor' ? (
           <Suspense>
             <ThemeEditor />
+          </Suspense>
+        ) : view === 'api-docs' ? (
+          <Suspense>
+            <ApiDocsView />
           </Suspense>
         ) : (
           <LinksView onCloseUserMenu={handleUserMenuClose} />

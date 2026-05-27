@@ -1,1 +1,1 @@
-export type AppView = 'links' | 'settings' | 'theme-editor';
+export type AppView = 'api-docs' | 'links' | 'settings' | 'theme-editor';

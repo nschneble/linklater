@@ -11,6 +11,7 @@ import FormInput from '../common/FormInput';
 import IconButton from '../common/IconButton';
 import PrimaryButton from '../common/PrimaryButton';
 import ApiTokensList from './ApiTokensList';
+import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 /**
@@ -237,6 +238,19 @@ export default function ApiTokensSection() {
       )}
 
       <ApiTokensList onRevoke={handleRevoke} tokens={tokens} />
+
+      <p className="pt-2">
+        <Link
+          to="/settings/api"
+          className="inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] text-xs underline underline-offset-3"
+        >
+          View the API documentation
+          <i
+            aria-hidden="true"
+            className="fa-solid fa-arrow-right text-[0.7rem]"
+          />
+        </Link>
+      </p>
     </div>
   );
 }
