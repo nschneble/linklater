@@ -131,9 +131,70 @@ export default function SettingsView({
   // buttons land on `/settings#bookmarklet`), scroll the section into view
   // and move focus to it so screen reader and keyboard users land where the
   // sighted user does.
+  //
+  // For sections near the page bottom (Integrations, Danger), the initial
+  // page height can be shorter than what is needed to scroll the section
+  // to viewport top — async content (the PAT list in particular) loads in
+  // a mount effect and extends the page after our scroll. A ResizeObserver
+  // re-anchors instantly whenever the body grows, until the user produces
+  // real scroll input or 2s elapses. Re-anchors skip focus so a user who
+  // tabbed away is not yanked back.
   useEffect(() => {
     if (!location.hash) return;
-    scrollToSettingsSection(location.hash.slice(1));
+    const hash = location.hash.slice(1);
+    if (!scrollToSettingsSection(hash)) return;
+    if (typeof ResizeObserver === 'undefined') return;
+
+    const targetElement = document.getElementById(hash);
+    if (!targetElement) return;
+
+    let cancelled = false;
+    let lastTop = -1;
+    let initialFire = true;
+
+    function cancel() {
+      cancelled = true;
+    }
+    function handleFocusOutside(event: FocusEvent) {
+      if (cancelled) return;
+      if (!targetElement) return;
+      if (targetElement.contains(event.target as Node)) return;
+      cancel();
+    }
+
+    window.addEventListener('wheel', cancel, { passive: true });
+    window.addEventListener('touchmove', cancel, { passive: true });
+    document.addEventListener('focusin', handleFocusOutside);
+
+    const observer = new ResizeObserver(() => {
+      if (initialFire) {
+        initialFire = false;
+        return;
+      }
+      if (cancelled) return;
+      const newTop = targetElement.getBoundingClientRect().top + window.scrollY;
+      // Guard against ResizeObserver loops: if our re-anchor itself nudges
+      // layout (sticky chrome, scrollbar toggle), the resulting top delta
+      // is sub-pixel — skip those.
+      if (Math.abs(newTop - lastTop) < 4) return;
+      lastTop = newTop;
+      scrollToSettingsSection(hash, { instant: true, skipFocus: true });
+    });
+    observer.observe(document.body);
+
+    const timeoutId = setTimeout(() => {
+      cancel();
+      observer.disconnect();
+    }, 2000);
+
+    return () => {
+      cancel();
+      observer.disconnect();
+      clearTimeout(timeoutId);
+      window.removeEventListener('wheel', cancel);
+      window.removeEventListener('touchmove', cancel);
+      document.removeEventListener('focusin', handleFocusOutside);
+    };
   }, [location.hash]);
 
   return (

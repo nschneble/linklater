@@ -1,3 +1,18 @@
+interface ScrollOptions {
+  /**
+   * Skip the smooth-scroll animation and snap instantly. Used by the
+   * re-anchor pass when async content extends the page after the initial
+   * scroll — stacking smooth scrolls visibly fights itself.
+   */
+  instant?: boolean;
+  /**
+   * Skip moving focus to the section. Used by the re-anchor pass: the
+   * initial scroll already moved focus, and re-grabbing it would yank a
+   * user who has since tabbed elsewhere back out of their flow.
+   */
+  skipFocus?: boolean;
+}
+
 /**
  * Scrolls a Settings section into view and moves focus to it. Shared by the
  * hash-driven scroll effect in `SettingsView` and the in-page nav click
@@ -6,7 +21,10 @@
  *
  * Returns true when the element was found and scrolled, false otherwise.
  */
-export function scrollToSettingsSection(hash: string): boolean {
+export function scrollToSettingsSection(
+  hash: string,
+  options: ScrollOptions = {},
+): boolean {
   if (!hash) return false;
   const element = document.getElementById(hash);
   if (!element) return false;
@@ -15,10 +33,19 @@ export function scrollToSettingsSection(hash: string): boolean {
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   element.scrollIntoView({
-    behavior: reducedMotion ? 'auto' : 'smooth',
+    behavior: options.instant || reducedMotion ? 'auto' : 'smooth',
     block: 'start',
   });
-  element.focus({ preventScroll: true });
+  // `focusVisible: true` forces the `:focus-visible` ring even when the
+  // call originates inside a mouse-click handler (e.g. sidebar nav). Without
+  // it, browsers' input-modality heuristic suppresses the ring on click-
+  // driven focus and the sidebar entry point silently diverges from
+  // deep-link / URL-hash entry. Unknown FocusOptions members are ignored
+  // silently, so the worst case in browsers without support is the prior
+  // behavior (ring on URL hash only). Cast is needed until lib.dom catches up.
+  if (!options.skipFocus) {
+    element.focus({ preventScroll: true, focusVisible: true } as FocusOptions);
+  }
   return true;
 }
 
