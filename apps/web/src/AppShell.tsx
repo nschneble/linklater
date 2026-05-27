@@ -224,7 +224,16 @@ export default function AppShell() {
             <ThemeEditor />
           </Suspense>
         ) : view === 'api-docs' ? (
-          <Suspense>
+          <Suspense
+            fallback={
+              <p
+                aria-live="polite"
+                className="text-[var(--text-muted)] text-sm"
+              >
+                Loading API documentation…
+              </p>
+            }
+          >
             <ApiDocsView />
           </Suspense>
         ) : (

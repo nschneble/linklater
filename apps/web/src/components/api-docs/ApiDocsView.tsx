@@ -1,45 +1,13 @@
 import TokenInput from './TokenInput';
 import { ApiReferenceReact } from '@scalar/api-reference-react';
 import { Link } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useApiDocsToken } from './useApiDocsToken';
 import { useTheme } from '../../theme/ThemeContext';
 
-const TOKEN_SESSION_KEY = 'linklater.api-docs.pat';
 const OPENAPI_PATH = '/openapi.json';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
-
-/**
- * Reads the cached token from sessionStorage. Returns an empty string when
- * no token is cached or when sessionStorage access fails (Safari private
- * browsing throws on read). Intentionally silent — never emits a live-region
- * announcement on hydration.
- */
-function readCachedToken(): string {
-  if (typeof window === 'undefined') return '';
-  try {
-    return window.sessionStorage.getItem(TOKEN_SESSION_KEY) ?? '';
-  } catch {
-    return '';
-  }
-}
-
-/**
- * Writes (or clears) the cached token in sessionStorage. Failures are
- * swallowed — the docs page still works without persistence.
- */
-function writeCachedToken(value: string) {
-  if (typeof window === 'undefined') return;
-  try {
-    if (value.length === 0) {
-      window.sessionStorage.removeItem(TOKEN_SESSION_KEY);
-    } else {
-      window.sessionStorage.setItem(TOKEN_SESSION_KEY, value);
-    }
-  } catch {
-    // sessionStorage unavailable — fall through silently.
-  }
-}
 
 /**
  * Reduces Scalar's animations to a near-instant transition under
@@ -66,11 +34,7 @@ const REDUCED_MOTION_CSS = `
  */
 export default function ApiDocsView() {
   const { mode } = useTheme();
-  const [token, setToken] = useState<string>(() => readCachedToken());
-
-  useEffect(() => {
-    writeCachedToken(token);
-  }, [token]);
+  const [token, setToken] = useApiDocsToken();
 
   const openapiUrl = useMemo(() => {
     if (!API_BASE_URL) return OPENAPI_PATH;
@@ -164,7 +128,11 @@ export default function ApiDocsView() {
         <ApiReferenceReact configuration={scalarConfiguration} />
       </section>
 
-      <div id="after-api-reference" tabIndex={-1} />
+      <div
+        aria-label="End of API reference"
+        id="after-api-reference"
+        tabIndex={-1}
+      />
     </div>
   );
 }

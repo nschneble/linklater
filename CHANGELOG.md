@@ -8,6 +8,15 @@
 
 #### Features
 
+- API documentation page (`/settings/api`)
+  - interactive Scalar reference embed, served from `/openapi.json`
+  - sessionStorage-scoped PAT field — token never leaves the tab, never
+    hits the URL bar
+  - dark mode follows the active Linklater theme with no flash-of-unstyled-
+    content; Scalar's own toggle is hidden
+  - keyboard skip link around the Scalar embed
+  - reduced-motion CSS injected into the Scalar scope
+  - discovery link added to Settings → API Tokens
 - account security
   - email verification
   - password reset

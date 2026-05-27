@@ -1,6 +1,7 @@
 import FormInput from '../common/FormInput';
 import IconButton from '../common/IconButton';
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
+import { useTransientState } from '../../lib/hooks/useTransientState';
 
 interface TokenInputProps {
   /** Current token value (controlled). */
@@ -31,17 +32,8 @@ export default function TokenInput({ value, onChange }: TokenInputProps) {
 
   // Reset transient announcements after a short delay so the live region
   // returns to empty and is ready to announce the next change.
-  useEffect(() => {
-    if (pasteState === 'idle') return;
-    const timeoutId = window.setTimeout(() => setPasteState('idle'), 1500);
-    return () => window.clearTimeout(timeoutId);
-  }, [pasteState]);
-
-  useEffect(() => {
-    if (clearState === 'idle') return;
-    const timeoutId = window.setTimeout(() => setClearState('idle'), 1500);
-    return () => window.clearTimeout(timeoutId);
-  }, [clearState]);
+  useTransientState(pasteState, 'idle', setPasteState);
+  useTransientState(clearState, 'idle', setClearState);
 
   const trimmed = value.trim();
   const hasValidationError =
@@ -142,17 +134,19 @@ export default function TokenInput({ value, onChange }: TokenInputProps) {
         This token is remembered for this tab only. Tokens start with{' '}
         <code className="text-[var(--text)] font-mono">ltk_</code>.
       </p>
-      {hasValidationError && (
-        <p
-          className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 text-xs"
-          id="api-docs-token-error"
-          role="alert"
-        >
-          Personal access tokens start with{' '}
-          <code className="font-mono">ltk_</code>.
-        </p>
-      )}
-      <span className="sr-only" role="status">
+      <p
+        className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 text-xs"
+        id="api-docs-token-error"
+        role="alert"
+      >
+        {hasValidationError && (
+          <>
+            Personal access tokens start with{' '}
+            <code className="font-mono">ltk_</code>.
+          </>
+        )}
+      </p>
+      <span aria-atomic="true" className="sr-only" role="status">
         {pasteState === 'pasted' ? 'Token pasted from clipboard' : ''}
         {pasteState === 'failed'
           ? 'Clipboard access denied. Paste manually with the keyboard.'

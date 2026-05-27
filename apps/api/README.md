@@ -288,6 +288,22 @@ the same shape minus `rawToken`.
 > than the intended per-route limits. To fix, add matching entries to the
 > `ThrottlerModule.forRoot` array in `src/app.module.ts`.
 
+## OpenAPI Spec (`/openapi.json`)
+
+The API serves a machine-readable OpenAPI 3.x document at `GET /openapi.json`
+with no authentication required. The schema describes shapes, not data, so
+exposing it publicly is safe — every endpoint it documents still requires a
+valid token to call.
+
+The document is intentionally **scoped to `LinksModule` only** (via
+`{ include: [LinksModule] }` in `SwaggerModule.createDocument`). The
+rationale: personal access tokens (PATs) can only call the links endpoints,
+so the public spec should describe exactly that surface and nothing else.
+Session-only routes (`/auth`, `/users`, `/tokens`) are deliberately excluded.
+
+The Linklater web app embeds this spec in the `/settings/api` page using
+the `@scalar/api-reference-react` component.
+
 ## SQL Migration Linting
 
 All SQL migrations are linted with [Squawk](https://squawkhq.com) as part of

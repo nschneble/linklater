@@ -40,8 +40,10 @@
 | Component                | Path                      | Description                                     |
 | ------------------------ | ------------------------- | ----------------------------------------------- |
 | `AccountSettingsForm`    | `src/components/settings` | Change email + password                         |
+| `ApiDocsView`            | `src/components/api-docs` | Interactive API reference powered by Scalar; sessionStorage-scoped PAT field on top |
 | `ApiTokensList`          | `src/components/settings` | Renders PAT rows with revoke confirmation       |
 | `ApiTokensSection`       | `src/components/settings` | Create, list, and revoke personal access tokens |
+| `TokenInput`             | `src/components/api-docs` | Controlled PAT input with paste, show/hide, and live-region announcements |
 | `BookmarkletSection`     | `src/components/settings` | Generates the installable bookmarklet           |
 | `CvdModeToggle`          | `src/components/settings` | Enables / disables CVD mode in Settings         |
 | `DangerZone`             | `src/components/settings` | Account deletion                                |
@@ -197,6 +199,7 @@ attributes picks them up automatically.
 | `/verify-email`        | Public        | `VerifyEmailPage`          |
 | `/verify-email-change` | Public        | `VerifyEmailChangePage`    |
 | `/verify-login`        | Public        | `VerifyLoginPage`          |
+| `/settings/api`        | Authenticated | `ApiDocsView`              |
 | `/editor`              | Authenticated | `ThemeEditor`              |
 | `/read`                | Authenticated | `LinksView` (read)         |
 | `/settings`            | Authenticated | `SettingsView`             |

@@ -40,7 +40,7 @@ import { UpdateLinkDto } from './dto/update-link.dto.js';
  * user — no route can read or modify another user's links.
  */
 @ApiTags('links')
-@ApiBearerAuth()
+@ApiBearerAuth('pat')
 @Controller('links')
 @UseGuards(AnyAuthGuard)
 export class LinksController {
@@ -246,7 +246,7 @@ export class LinksController {
   @ApiOperation({ summary: 'Mark a link as read' })
   @ApiParam({ name: 'id', description: 'UUID of the link.' })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: 'The updated link with `readAt` set.',
     type: LinkResponseDto,
   })
@@ -255,6 +255,7 @@ export class LinksController {
     description: 'Missing or invalid token (JWT or PAT).',
   })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
+  @HttpCode(200)
   @Post(':id/read')
   async read(@Req() request: AuthRequest, @Param('id') id: string) {
     const userId = request.user.userId;
@@ -265,7 +266,7 @@ export class LinksController {
   @ApiOperation({ summary: 'Mark a link as unread' })
   @ApiParam({ name: 'id', description: 'UUID of the link.' })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: 'The updated link with `readAt` cleared.',
     type: LinkResponseDto,
   })
@@ -274,6 +275,7 @@ export class LinksController {
     description: 'Missing or invalid token (JWT or PAT).',
   })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
+  @HttpCode(200)
   @Post(':id/unread')
   async unread(@Req() request: AuthRequest, @Param('id') id: string) {
     const userId = request.user.userId;

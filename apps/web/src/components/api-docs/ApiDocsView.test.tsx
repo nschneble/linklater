@@ -1,7 +1,7 @@
 import ApiDocsView from './ApiDocsView';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 // Scalar pulls in a heavy Vue runtime and a non-trivial stylesheet. Stub the
 // embed with a small marker component so we can assert the page's
@@ -20,8 +20,9 @@ vi.mock('@scalar/api-reference-react', () => ({
   ),
 }));
 
+let themeMode = 'light';
 vi.mock('../../theme/ThemeContext', () => ({
-  useTheme: () => ({ mode: 'light' }),
+  useTheme: () => ({ mode: themeMode }),
 }));
 
 function renderView() {
@@ -33,7 +34,9 @@ function renderView() {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks();
   window.sessionStorage.clear();
+  themeMode = 'light';
 });
 
 afterEach(() => {
@@ -80,5 +83,31 @@ describe('ApiDocsView', () => {
     renderView();
     const link = screen.getByRole('link', { name: /back to settings/i });
     expect(link).toHaveAttribute('href', '/settings');
+  });
+
+  it('passes darkMode=true to Scalar when the theme is dark', () => {
+    themeMode = 'dark';
+    renderView();
+    expect(screen.getByTestId('scalar-stub')).toHaveAttribute(
+      'data-dark-mode',
+      'true',
+    );
+  });
+
+  it('writes a typed token to sessionStorage', () => {
+    renderView();
+    const input = screen.getByLabelText(/personal access token/i);
+    fireEvent.change(input, { target: { value: 'ltk_newtoken' } });
+    expect(window.sessionStorage.getItem('linklater.api-docs.pat')).toBe(
+      'ltk_newtoken',
+    );
+  });
+
+  it('removes the sessionStorage key when the token is cleared', () => {
+    window.sessionStorage.setItem('linklater.api-docs.pat', 'ltk_existing');
+    renderView();
+    const input = screen.getByLabelText(/personal access token/i);
+    fireEvent.change(input, { target: { value: '' } });
+    expect(window.sessionStorage.getItem('linklater.api-docs.pat')).toBeNull();
   });
 });
