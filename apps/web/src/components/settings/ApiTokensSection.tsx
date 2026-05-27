@@ -6,6 +6,7 @@ import {
   type CreatedApiToken,
 } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
+import { useTransientState } from '../../lib/hooks/useTransientState';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import IconButton from '../common/IconButton';
@@ -59,13 +60,7 @@ export default function ApiTokensSection() {
     }
   }, [showCreate]);
 
-  useEffect(() => {
-    if (!copied) {
-      return;
-    }
-    const timeoutId = window.setTimeout(() => setCopied(false), 1000);
-    return () => window.clearTimeout(timeoutId);
-  }, [copied]);
+  useTransientState(copied, false, setCopied, 1000);
 
   const handleCreate = async (event: FormEvent) => {
     event.preventDefault();

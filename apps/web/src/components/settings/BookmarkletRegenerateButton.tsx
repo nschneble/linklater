@@ -1,5 +1,6 @@
 import { getErrorMessage } from '../../lib/errors';
 import { useFocusFirstButton } from '../../lib/hooks/useFocusFirstButton';
+import { useTransientState } from '../../lib/hooks/useTransientState';
 import Alert from '../common/Alert';
 import IconButton from '../common/IconButton';
 import { useEffect, useRef, useState } from 'react';
@@ -63,11 +64,7 @@ export default function BookmarkletRegenerateButton({
   }, [error]);
 
   // Clear the announcement after 3s so a repeat regenerate re-announces.
-  useEffect(() => {
-    if (!announcement) return;
-    const timeoutId = window.setTimeout(() => setAnnouncement(''), 3000);
-    return () => window.clearTimeout(timeoutId);
-  }, [announcement]);
+  useTransientState(announcement, '', setAnnouncement, 3000);
 
   // Escape cancels the confirm row.
   useEffect(() => {

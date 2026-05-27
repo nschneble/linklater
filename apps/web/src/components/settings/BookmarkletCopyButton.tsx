@@ -1,5 +1,6 @@
 import IconButton from '../common/IconButton';
-import { useEffect, useState } from 'react';
+import { useTransientState } from '../../lib/hooks/useTransientState';
+import { useState } from 'react';
 
 interface BookmarkletCopyButtonProps {
   /** The `javascript:` URL to write to the clipboard. */
@@ -19,12 +20,7 @@ export default function BookmarkletCopyButton({
   disabled,
 }: BookmarkletCopyButtonProps) {
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timeoutId = window.setTimeout(() => setCopied(false), 1000);
-    return () => window.clearTimeout(timeoutId);
-  }, [copied]);
+  useTransientState(copied, false, setCopied, 1000);
 
   const handleCopy = async () => {
     if (!code) return;
