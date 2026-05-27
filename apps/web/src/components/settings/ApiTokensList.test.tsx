@@ -9,13 +9,24 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import ApiTokensList from './ApiTokensList';
 import type { ApiToken } from '../../lib/api';
 
+const NOW = new Date('2026-05-26T12:00:00.000Z');
+
+/**
+ * Pin `Date.now` without taking over the timer scheduler. Real timers stay
+ * intact so `waitFor` and `useEffect` keep firing — only the wall clock is
+ * frozen, which is all `formatRelativeTimeFuzzy` needs.
+ */
+function pinNow(now: Date = NOW) {
+  vi.spyOn(Date, 'now').mockReturnValue(now.getTime());
+}
+
 afterEach(() => vi.restoreAllMocks());
 
 const makeToken = (overrides: Partial<ApiToken> = {}): ApiToken => ({
   id: 'tok-1',
   name: 'Chrome Extension',
   prefix: 'ltk_aBcDeFgH',
-  createdAt: '2026-01-01T00:00:00.000Z',
+  createdAt: '2026-05-26T11:00:00.000Z',
   lastUsedAt: null,
   ...overrides,
 });
@@ -38,9 +49,26 @@ describe('ApiTokensList', () => {
     expect(screen.getByText('iOS')).toBeInTheDocument();
   });
 
-  it('shows the token prefix', () => {
+  it('renders the token name as the card title', () => {
     render(<ApiTokensList tokens={[makeToken()]} onRevoke={vi.fn()} />);
-    expect(screen.getByText('ltk_aBcDeFgH…')).toBeInTheDocument();
+    expect(screen.getByText('Chrome Extension')).toBeInTheDocument();
+  });
+
+  it('renders the created date with a "Created" prefix and a machine-readable <time>', () => {
+    pinNow();
+    render(
+      <ApiTokensList
+        tokens={[makeToken({ createdAt: '2026-05-26T11:00:00.000Z' })]}
+        onRevoke={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/^Created/)).toBeInTheDocument();
+    expect(screen.getByText('an hour ago')).toBeInTheDocument();
+    expect(screen.getByText('an hour ago').tagName).toBe('TIME');
+    expect(screen.getByText('an hour ago')).toHaveAttribute(
+      'datetime',
+      '2026-05-26T11:00:00.000Z',
+    );
   });
 
   describe('revoke flow', () => {
@@ -139,26 +167,36 @@ describe('ApiTokensList', () => {
     });
   });
 
-  describe('date display', () => {
-    it('shows "Last used never" when lastUsedAt is null', () => {
+  describe('last-used display', () => {
+    it('shows "This token has never been used." when lastUsedAt is null', () => {
       render(
         <ApiTokensList
           tokens={[makeToken({ lastUsedAt: null })]}
           onRevoke={vi.fn()}
         />,
       );
-      expect(screen.getByText(/last used never/i)).toBeInTheDocument();
+      expect(
+        screen.getByText('This token has never been used.'),
+      ).toBeInTheDocument();
     });
 
-    it('shows a formatted last-used date when lastUsedAt is set', () => {
+    it('shows a fuzzy relative last-used phrase when lastUsedAt is set', () => {
+      pinNow();
       render(
         <ApiTokensList
-          tokens={[makeToken({ lastUsedAt: '2026-03-15T12:00:00.000Z' })]}
+          tokens={[
+            makeToken({ lastUsedAt: '2026-05-26T11:40:00.000Z' }), // 20 min ago
+          ]}
           onRevoke={vi.fn()}
         />,
       );
-      // The exact format is locale-dependent; match "Last used" + year.
-      expect(screen.getByText(/last used.*2026/i)).toBeInTheDocument();
+      expect(screen.getByText(/This token was last used/)).toBeInTheDocument();
+      expect(screen.getByText('a few minutes ago')).toBeInTheDocument();
+      expect(screen.getByText('a few minutes ago').tagName).toBe('TIME');
+      expect(screen.getByText('a few minutes ago')).toHaveAttribute(
+        'datetime',
+        '2026-05-26T11:40:00.000Z',
+      );
     });
   });
 });

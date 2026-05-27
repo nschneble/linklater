@@ -60,7 +60,7 @@ export default function CvdModeToggle() {
           >
             Switches to the{' '}
             <span className="font-semibold">Apollo 10½ theme</span> and adds
-            distinctive visual non-color cues. These include underlined links,
+            distinctive visual non-color cues, including underlined links,
             striped disabled controls, stronger focus outlines, and selected
             indicator bars.
           </p>

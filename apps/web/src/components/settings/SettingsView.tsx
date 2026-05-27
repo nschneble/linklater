@@ -195,7 +195,7 @@ export default function SettingsView({
           id="bookmarks"
           title="Browser bookmarks"
           icon="fa-book-open"
-          description="Save and stumble upon links right from your web browser's bookmarks bar."
+          description="Save and stumble upon links right from your bookmarks bar."
         >
           <BookmarkletSection />
           <StumbleSection />
@@ -205,7 +205,7 @@ export default function SettingsView({
           id="integrations"
           title="Third-party integrations"
           icon="fa-plug"
-          description="Use personal access tokens (PATs) to connect Linklater with external tools and services. Tokens are only shown once."
+          description="Use personal access tokens (PATs) to connect Linklater with external tools and services."
         >
           <ApiTokensSection />
         </SettingsGroup>

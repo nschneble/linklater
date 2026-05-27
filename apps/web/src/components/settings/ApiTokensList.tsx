@@ -1,4 +1,5 @@
 import type { ApiToken } from '../../lib/api';
+import { formatRelativeTimeFuzzy } from '../../lib/dates';
 import { getErrorMessage } from '../../lib/errors';
 import { useFocusFirstButton } from '../../lib/hooks/useFocusFirstButton';
 import Alert from '../common/Alert';
@@ -16,19 +17,15 @@ interface ApiTokenRowProps {
   token: ApiToken;
 }
 
-/** Formats an ISO 8601 timestamp as a locale-aware short date string. */
-function formatDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
 /**
- * A single row in the PAT list. Shows the token name, display prefix,
- * creation date, and last-used date. Includes a two-step revoke flow:
- * the user first clicks "Revoke", then confirms with "Yes, revoke".
+ * A single PAT row, styled to mirror a link card: thick left accent border,
+ * name as the title, created-at as the subtitle, last-used as the body.
+ * The Revoke button uses the same two-step confirm flow (Sure? → Yes, revoke
+ * / Cancel) and lives in the title row.
+ *
+ * `<time dateTime>` wraps both fuzzy timestamps so assistive tech and
+ * tooling can recover the exact ISO value even though the visible text is
+ * intentionally vague.
  */
 function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
   const [confirming, setConfirming] = useState(false);
@@ -52,20 +49,24 @@ function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
   };
 
   return (
-    <li className="flex flex-col gap-1.5 px-3 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <span className="text-[var(--text)] text-xs font-semibold truncate">
-            {token.name}
-          </span>
-          <code className="text-[var(--text-subtle)] text-[0.65rem] font-mono">
-            {token.prefix}…
-          </code>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
+    <li className="relative overflow-visible px-5 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] border-shadow hover:border-shadow rounded-r-xl">
+      <div className="space-y-1">
+        <div className="flex items-start gap-3">
+          <div className="flex flex-col items-start min-w-0 flex-1">
+            <p className="text-[var(--text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1">
+              {token.name}
+            </p>
+            <p className="w-full text-[var(--text-subtle)] text-xs truncate">
+              Created{' '}
+              <time dateTime={token.createdAt}>
+                {formatRelativeTimeFuzzy(token.createdAt)}
+              </time>
+            </p>
+          </div>
           {!confirming ? (
             <IconButton
               aria-label={`Revoke ${token.name}`}
+              className="relative shrink-0 z-30"
               type="button"
               variant="danger"
               onClick={() => setConfirming(true)}
@@ -74,10 +75,13 @@ function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
                 className="fa-solid fa-xmark text-[0.7rem]"
                 aria-hidden="true"
               />
-              Revoke
+              <span className="hidden sm:inline">Revoke</span>
             </IconButton>
           ) : (
-            <div className="flex items-center gap-2" ref={confirmRowReference}>
+            <div
+              className="flex items-center gap-2 shrink-0"
+              ref={confirmRowReference}
+            >
               <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 text-xs">
                 Sure?
               </span>
@@ -101,14 +105,25 @@ function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
             </div>
           )}
         </div>
+        <p className="text-[var(--text-muted)] text-xs text-pretty tracking-tight sm:tracking-normal line-clamp-2">
+          {token.lastUsedAt ? (
+            <>
+              This token was last used{' '}
+              <time dateTime={token.lastUsedAt}>
+                {formatRelativeTimeFuzzy(token.lastUsedAt)}
+              </time>
+              .
+            </>
+          ) : (
+            'This token has never been used.'
+          )}
+        </p>
       </div>
-      <div className="flex gap-3 text-[var(--text-subtle)] text-[0.65rem]">
-        <span>Created {formatDate(token.createdAt)}</span>
-        <span>
-          Last used {token.lastUsedAt ? formatDate(token.lastUsedAt) : 'never'}
-        </span>
-      </div>
-      {error && <Alert variant="error">{error}</Alert>}
+      {error && (
+        <div className="mt-2">
+          <Alert variant="error">{error}</Alert>
+        </div>
+      )}
     </li>
   );
 }
@@ -125,9 +140,9 @@ interface ApiTokensListProps {
 }
 
 /**
- * Renders the user's personal access tokens as a vertical list of
- * `ApiTokenRow` items. Shows a "No tokens yet." message when the array
- * is empty.
+ * Renders the user's personal access tokens as a vertical stack of cards
+ * that visually echo the saved-link card. Shows a "You haven't created any
+ * tokens" message when the list is empty.
  */
 export default function ApiTokensList({
   onRevoke,
@@ -135,14 +150,14 @@ export default function ApiTokensList({
 }: ApiTokensListProps) {
   if (tokens.length === 0) {
     return (
-      <p className="mb-8 text-[var(--text-subtle)] text-xs italic">
+      <p className="mb-8 text-[var(--text-subtle)] text-xs">
         You haven't created any tokens
       </p>
     );
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-3">
       {tokens.map((token) => (
         <ApiTokenRow key={token.id} onRevoke={onRevoke} token={token} />
       ))}

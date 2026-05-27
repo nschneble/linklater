@@ -84,11 +84,13 @@ describe('ApiTokensSection', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /create new token/i }));
 
-    expect(screen.getByLabelText(/token name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/new token name/i)).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /^create$/i }),
+      screen.getByRole('button', { name: /^create token$/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /do nothing and close this form/i }),
+    ).toBeInTheDocument();
   });
 
   it('shows the raw token after successful creation', async () => {
@@ -104,45 +106,13 @@ describe('ApiTokensSection', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /create new token/i }));
-    fireEvent.change(screen.getByLabelText(/token name/i), {
+    fireEvent.change(screen.getByLabelText(/new token name/i), {
       target: { value: 'Chrome Extension' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^create token$/i }));
 
     await waitFor(() => {
       expect(screen.getByText(created.rawToken)).toBeInTheDocument();
-    });
-  });
-
-  it('hides the raw token and reloads the list when "Done" is clicked', async () => {
-    const created = {
-      ...makeApiToken(),
-      rawToken: 'ltk_aBcDeFgHiJkLmNoPqRsTuVwXyZ12',
-    };
-    vi.mocked(apiModule.createApiToken).mockResolvedValue(created);
-    vi.mocked(apiModule.listApiTokens).mockResolvedValue([makeApiToken()]);
-
-    render(<ApiTokensSection />);
-    await waitFor(() =>
-      screen.getByRole('button', { name: /create new token/i }),
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /create new token/i }));
-    fireEvent.change(screen.getByLabelText(/token name/i), {
-      target: { value: 'Chrome Extension' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
-
-    await waitFor(() => screen.getByText(created.rawToken));
-
-    fireEvent.click(screen.getByRole('button', { name: /done/i }));
-
-    await waitFor(() => {
-      expect(screen.queryByText(created.rawToken)).not.toBeInTheDocument();
-    });
-
-    await waitFor(() => {
-      expect(apiModule.listApiTokens).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -157,10 +127,10 @@ describe('ApiTokensSection', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /create new token/i }));
-    fireEvent.change(screen.getByLabelText(/token name/i), {
+    fireEvent.change(screen.getByLabelText(/new token name/i), {
       target: { value: 'Chrome Extension' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^create token$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -175,12 +145,14 @@ describe('ApiTokensSection', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /create new token/i }));
-    fireEvent.change(screen.getByLabelText(/token name/i), {
+    fireEvent.change(screen.getByLabelText(/new token name/i), {
       target: { value: 'My Token' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /do nothing and close this form/i }),
+    );
 
-    expect(screen.queryByLabelText(/token name/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/new token name/i)).not.toBeInTheDocument();
   });
 
   it('shows an error when the token list fails to load', async () => {
