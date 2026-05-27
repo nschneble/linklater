@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { FOCUS_RING } from '../../lib/styles';
 import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
 import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
+import { useTransientState } from '../../lib/hooks/useTransientState';
+import { FOCUS_RING } from '../../lib/styles';
 import PrimaryButton from '../common/PrimaryButton';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Full-screen modal that displays one-time recovery codes immediately
@@ -33,6 +34,7 @@ export default function RecoveryCodesModal({
   const dialogReference = useRef<HTMLDivElement>(null);
 
   useFocusReturn(true);
+  useTransientState(copied, false, setCopied, 2000);
 
   // Focus the dialog panel on mount.
   useEffect(() => {
@@ -44,7 +46,6 @@ export default function RecoveryCodesModal({
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(codes.join('\n'));
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   }, [codes]);
 
   return (

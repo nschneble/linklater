@@ -180,14 +180,7 @@ export class TokensService {
 
     try {
       const stored = await this.prisma.apiToken.create({
-        data: {
-          name: BOOKMARKLET_TOKEN_NAME,
-          prefix,
-          tokenHash,
-          kind: TokenKind.BOOKMARKLET,
-          secretValue: rawToken,
-          userId,
-        },
+        data: this.bookmarkletTokenData(userId, rawToken, tokenHash, prefix),
       });
       return this.toBookmarkletSummary(stored);
     } catch (error) {
@@ -226,14 +219,7 @@ export class TokensService {
         where: { userId, kind: TokenKind.BOOKMARKLET },
       });
       return transaction.apiToken.create({
-        data: {
-          name: BOOKMARKLET_TOKEN_NAME,
-          prefix,
-          tokenHash,
-          kind: TokenKind.BOOKMARKLET,
-          secretValue: rawToken,
-          userId,
-        },
+        data: this.bookmarkletTokenData(userId, rawToken, tokenHash, prefix),
       });
     });
 
@@ -247,6 +233,27 @@ export class TokensService {
     return { rawToken, tokenHash, prefix };
   }
 
+  /**
+   * Builds the Prisma `data` payload for creating a bookmarklet token row.
+   * Extracted to avoid repeating the identical field set in
+   * `getOrCreateBookmarkletToken` and `regenerateBookmarkletToken`.
+   */
+  private bookmarkletTokenData(
+    userId: string,
+    rawToken: string,
+    tokenHash: string,
+    prefix: string,
+  ) {
+    return {
+      name: BOOKMARKLET_TOKEN_NAME,
+      prefix,
+      tokenHash,
+      kind: TokenKind.BOOKMARKLET,
+      secretValue: rawToken,
+      userId,
+    };
+  }
+
   private toBookmarkletSummary(stored: {
     id: string;
     name: string;
@@ -255,13 +262,22 @@ export class TokensService {
     lastUsedAt: Date | null;
     secretValue: string | null;
   }) {
+    if (!stored.secretValue) {
+      // Every BOOKMARKLET row must have a secretValue populated at creation.
+      // A null here means a data-integrity violation — throw so it produces a
+      // visible 500 rather than silently returning an empty token that leaves
+      // the bookmarklet anchor stuck at href="#" with no error shown.
+      throw new Error(
+        `Bookmarklet token ${stored.id} is missing secretValue — data integrity violation`,
+      );
+    }
     return {
       id: stored.id,
       name: stored.name,
       prefix: stored.prefix,
       createdAt: stored.createdAt,
       lastUsedAt: stored.lastUsedAt,
-      rawToken: stored.secretValue ?? '',
+      rawToken: stored.secretValue,
     };
   }
 }

@@ -8,6 +8,11 @@
 
 #### Features
 
+- bookmarklet token no longer expires; revocable via Regenerate button in
+  Settings — old installs stop working immediately on regeneration
+- cancellable TOTP enrollment — users can abort in-flight 2FA setup from
+  both the QR-scan step and the "Continue setup" recovery state; cancelling
+  clears the pending secret server-side so no orphaned secrets remain
 - API documentation page (`/settings/api`)
   - interactive Scalar reference embed, served from `/openapi.json`
   - sessionStorage-scoped PAT field — token never leaves the tab, never

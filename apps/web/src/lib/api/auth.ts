@@ -124,6 +124,17 @@ export async function resetPassword(
   );
 }
 
+/**
+ * Starts or resumes TOTP enrollment.
+ * `POST /auth/2fa/totp/setup`
+ *
+ * Idempotent: if a setup is already pending, the server returns the same
+ * QR code so a scan in progress is not invalidated.
+ *
+ * @returns `{ qrCodeDataUrl, secret }` — the QR image data-URL and the
+ *   base-32 secret for manual entry.
+ * @throws {ApiError} 409 when TOTP is already fully enabled.
+ */
 export async function setupTotp(): Promise<{
   qrCodeDataUrl: string;
   secret: string;
@@ -131,6 +142,15 @@ export async function setupTotp(): Promise<{
   return apiFetch('/auth/2fa/totp/setup', { method: 'POST' });
 }
 
+/**
+ * Completes TOTP enrollment by verifying the 6-digit code.
+ * `POST /auth/2fa/totp/verify`
+ *
+ * @param code - The current 6-digit code from the authenticator app.
+ * @returns `{ recoveryCodes }` — 10 plaintext codes shown exactly once.
+ * @throws {ApiError} 400 when there is no pending setup or the code is
+ *   invalid.
+ */
 export async function verifyTotpSetup(
   code: string,
 ): Promise<{ recoveryCodes: string[] }> {
@@ -140,6 +160,14 @@ export async function verifyTotpSetup(
   });
 }
 
+/**
+ * Cancels an in-flight TOTP enrollment, clearing the pending secret
+ * server-side. Safe to call even when no setup is pending (no-op).
+ * `DELETE /auth/2fa/totp/setup`
+ *
+ * @throws {ApiError} 409 when TOTP is already fully enabled (use
+ *   `disable2fa` instead).
+ */
 export async function cancelTotpSetup(): Promise<void> {
   await apiFetch('/auth/2fa/totp/setup', { method: 'DELETE' });
 }

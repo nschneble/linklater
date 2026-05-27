@@ -39,6 +39,17 @@ export default function TokenInput({ value, onChange }: TokenInputProps) {
   const hasValidationError =
     hasBlurred && trimmed.length > 0 && !trimmed.startsWith('ltk_');
 
+  // Derive a single announcement so overlapping transient states never
+  // produce a concatenated run-together message in the live region.
+  let announcement = '';
+  if (pasteState === 'pasted') {
+    announcement = 'Token pasted from clipboard';
+  } else if (pasteState === 'failed') {
+    announcement = 'Clipboard access denied. Paste manually with the keyboard.';
+  } else if (clearState === 'cleared') {
+    announcement = 'Token cleared';
+  }
+
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value);
   };
@@ -147,11 +158,7 @@ export default function TokenInput({ value, onChange }: TokenInputProps) {
         )}
       </p>
       <span aria-atomic="true" className="sr-only" role="status">
-        {pasteState === 'pasted' ? 'Token pasted from clipboard' : ''}
-        {pasteState === 'failed'
-          ? 'Clipboard access denied. Paste manually with the keyboard.'
-          : ''}
-        {clearState === 'cleared' ? 'Token cleared' : ''}
+        {announcement}
       </span>
     </div>
   );

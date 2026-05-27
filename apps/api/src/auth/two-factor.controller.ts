@@ -126,10 +126,13 @@ export class TwoFactorController {
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 409, description: 'TOTP is already enabled.' })
-  @ApiResponse({ status: 429, description: 'Too many setup attempts.' })
+  @ApiResponse({ status: 429, description: 'Too many cancel attempts.' })
   @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
-  @Throttle({ 'auth-2fa-totp-setup': { ttl: 60000, limit: 5 } })
-  @ThrottleMessage('Too many setup attempts')
+  // Own throttle bucket (not shared with `auth-2fa-totp-setup`) so cancel
+  // spam cannot exhaust the user's setup-generation budget. Cancel has no
+  // side effects an attacker could exploit, so the limit is generous.
+  @Throttle({ 'auth-2fa-totp-cancel': { ttl: 60000, limit: 10 } })
+  @ThrottleMessage('Too many cancel attempts')
   @Delete('2fa/totp/setup')
   @HttpCode(204)
   async totpCancelSetup(@Req() request: AuthRequest) {

@@ -40,7 +40,7 @@ async function renderResolved() {
   await waitFor(() => {
     expect(
       screen
-        .getByRole('link', { name: /drag this bookmarklet/i })
+        .getByRole('link', { name: /drag to your bookmarks bar/i })
         .getAttribute('href'),
     ).toMatch(/^javascript:/);
   });
@@ -58,7 +58,7 @@ describe('BookmarkletSection', () => {
   it('renders the bookmarklet link with draggable="true"', async () => {
     await renderResolved();
     const link = screen.getByRole('link', {
-      name: /drag this bookmarklet to your bookmarks bar/i,
+      name: /drag to your bookmarks bar/i,
     });
     expect(link).toHaveAttribute('draggable', 'true');
   });
@@ -66,10 +66,10 @@ describe('BookmarkletSection', () => {
   it('bookmarklet link has a descriptive aria-label mentioning drag', async () => {
     await renderResolved();
     const link = screen.getByRole('link', {
-      name: /drag this bookmarklet to your bookmarks bar/i,
+      name: /drag to your bookmarks bar/i,
     });
     expect(link.getAttribute('aria-label')).toMatch(
-      /drag this bookmarklet to your bookmarks bar/i,
+      /drag to your bookmarks bar/i,
     );
   });
 
@@ -104,7 +104,7 @@ describe('BookmarkletSection', () => {
     it('embeds the rawToken into the bookmarklet href once resolved', async () => {
       await renderResolved();
       const link = screen.getByRole('link', {
-        name: /drag this bookmarklet/i,
+        name: /drag to your bookmarks bar/i,
       });
       const href = link.getAttribute('href') ?? '';
       expect(href.startsWith('javascript:')).toBe(true);
@@ -133,7 +133,7 @@ describe('BookmarkletSection', () => {
       );
       render(<BookmarkletSection />);
       const link = screen.getByRole('link', {
-        name: /drag this bookmarklet/i,
+        name: /drag to your bookmarks bar/i,
       });
       expect(link).toHaveAttribute('aria-busy', 'true');
     });
@@ -167,7 +167,7 @@ describe('BookmarkletSection', () => {
 
       await renderResolved();
       const link = screen.getByRole('link', {
-        name: /drag this bookmarklet/i,
+        name: /drag to your bookmarks bar/i,
       });
       const code = link.getAttribute('href') ?? '';
 
@@ -292,7 +292,7 @@ describe('BookmarkletSection', () => {
 
       await waitFor(() => {
         const link = screen.getByRole('link', {
-          name: /drag this bookmarklet/i,
+          name: /drag to your bookmarks bar/i,
         });
         expect(link.getAttribute('href')).toContain(
           'ltk_FAKE_TOKEN_REGENERATED_XXXXXXXXXXXX',

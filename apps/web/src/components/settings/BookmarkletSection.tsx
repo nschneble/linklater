@@ -67,12 +67,14 @@ export default function BookmarkletSection() {
         Drag this button to your bookmarks bar. Click it on any page to save the
         link directly to Linklater.
       </p>
-      {loading && (
-        <p className="text-[var(--text-subtle)] text-xs" role="status">
-          Generating your bookmarklet…
-        </p>
+      <p className="text-[var(--text-subtle)] text-xs" role="status">
+        {loading ? 'Generating your bookmarklet…' : ''}
+      </p>
+      {loadError && (
+        <Alert id="bookmarklet-load-error" variant="error">
+          {loadError}
+        </Alert>
       )}
-      {loadError && <Alert variant="error">{loadError}</Alert>}
       <div className="flex items-center gap-2 flex-wrap">
         {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
         <a
@@ -82,9 +84,11 @@ export default function BookmarkletSection() {
           // `setAttribute` once the token resolves.
           href="#"
           aria-busy={loading}
-          aria-label="Drag this bookmarklet to your bookmarks bar. Click it on any page to save the link directly to Linklater."
-          className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold ring-1 ring-[var(--border)] ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing active:scale-[0.96] transition duration-200 aria-busy:opacity-50 aria-busy:cursor-wait aria-busy:pointer-events-none`}
-          draggable
+          aria-disabled={Boolean(loadError) || undefined}
+          aria-describedby={loadError ? 'bookmarklet-load-error' : undefined}
+          aria-label="Save to Linklater — drag to your bookmarks bar, or click on any page to save that link"
+          className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold ring-1 ring-[var(--border)] ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing active:scale-[0.96] transition duration-200 aria-busy:opacity-50 aria-busy:cursor-wait aria-busy:pointer-events-none aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:pointer-events-none`}
+          draggable={!loadError}
           onClick={(event) => event.preventDefault()}
         >
           <i

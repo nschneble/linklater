@@ -48,4 +48,17 @@ describe('useApiDocsToken', () => {
     expect(result.current[0]).toBe('');
     getItem.mockRestore();
   });
+
+  it('swallows sessionStorage failures during write and still updates local state', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota exceeded');
+    });
+    const { result } = renderHook(() => useApiDocsToken());
+    // The hook must not throw even when sessionStorage.setItem throws.
+    expect(() => {
+      act(() => result.current[1]('ltk_willnottopersist'));
+    }).not.toThrow();
+    // Local state still reflects the new value.
+    expect(result.current[0]).toBe('ltk_willnottopersist');
+  });
 });

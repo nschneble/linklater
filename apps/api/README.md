@@ -69,9 +69,11 @@ require an `Authorization: Bearer <token>` header.
 
 > **GOTCHA:** The JWT TTL changed from 90 days to 1 hour when refresh tokens
 > were introduced. Access tokens are now short-lived; long-lived sessions are
-> maintained by refresh token rotation. Bookmarklets embed the JWT directly and
-> are unaffected by refresh — they must be reinstalled when their embedded token
-> expires.
+> maintained by refresh token rotation. Bookmarklets embed a `kind =
+> BOOKMARKLET` PAT (not a JWT), so they are unaffected by JWT rotation and
+> never expire. The only way to invalidate a bookmarklet is to click
+> **Regenerate** in Settings, which atomically replaces the token in the
+> database.
 
 ### Passwordless / Magic Links
 
@@ -196,11 +198,13 @@ locally via `localStorage`. (see `apps/web/README.md` — API Patterns)
 
 ### Tokens (`/tokens`) — requires JWT
 
-| Method   | Path          | Auth | Request Body       | Response                                    |
-| -------- | ------------- | ---- | ------------------ | ------------------------------------------- |
-| `POST`   | `/tokens`     | JWT  | `{ name: string }` | Created token including one-time `rawToken` |
-| `GET`    | `/tokens`     | JWT  | —                  | Array of token summaries (no `rawToken`)    |
-| `DELETE` | `/tokens/:id` | JWT  | —                  | `{ success: true }`                         |
+| Method   | Path                           | Auth | Request Body       | Response                                                        |
+| -------- | ------------------------------ | ---- | ------------------ | --------------------------------------------------------------- |
+| `POST`   | `/tokens`                      | JWT  | `{ name: string }` | Created token including one-time `rawToken`                     |
+| `GET`    | `/tokens`                      | JWT  | —                  | Array of token summaries (no `rawToken`)                        |
+| `DELETE` | `/tokens/:id`                  | JWT  | —                  | `{ success: true }`                                             |
+| `GET`    | `/tokens/bookmarklet`          | JWT  | —                  | Bookmarklet token with `rawToken`; minted on first call         |
+| `POST`   | `/tokens/bookmarklet/regenerate` | JWT | —                 | New bookmarklet token; previous token revoked atomically        |
 
 **Created token response shape:**
 
@@ -257,6 +261,7 @@ the same shape minus `rawToken`.
 | `POST`   | `/auth/verify-otp`                    | mfa-token   | `{ code, method: 'totp' \| 'recovery' }` | `{ accessToken, refreshToken }`                       |
 | `POST`   | `/auth/2fa/totp/setup`                | JWT         | —                                       | `{ qrCodeDataUrl, secret }`                           |
 | `POST`   | `/auth/2fa/totp/verify`               | JWT         | `{ code }`                              | `{ recoveryCodes: string[] }` (10 codes, shown once)  |
+| `DELETE` | `/auth/2fa/totp/setup`                | JWT         | —                                       | 204 — pending secret cleared; idempotent              |
 | `DELETE` | `/auth/2fa`                           | JWT         | `{ currentPassword?, code? }`           | 200                                                   |
 | `POST`   | `/auth/2fa/recovery-codes/regenerate` | JWT         | `{ currentPassword?, code? }`           | `{ recoveryCodes: string[] }`                         |
 

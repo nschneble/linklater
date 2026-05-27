@@ -122,4 +122,28 @@ describe('TokenInput', () => {
       /clipboard access denied/i,
     );
   });
+
+  it('announces clipboard access denied when clipboard resolves to only whitespace', async () => {
+    Object.assign(navigator, {
+      clipboard: { readText: vi.fn().mockResolvedValue('   ') },
+    });
+    render(<Wrapper />);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: /paste from clipboard/i }),
+      );
+    });
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /clipboard access denied/i,
+    );
+    const input = screen.getByLabelText(
+      /personal access token/i,
+    ) as HTMLInputElement;
+    expect(input.value).toBe('');
+  });
+
+  it('Clear button is disabled when the input is empty', () => {
+    render(<Wrapper />);
+    expect(screen.getByRole('button', { name: /^clear$/i })).toBeDisabled();
+  });
 });

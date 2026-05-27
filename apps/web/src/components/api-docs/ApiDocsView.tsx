@@ -1,9 +1,9 @@
-import TokenInput from './TokenInput';
-import { ApiReferenceReact } from '@scalar/api-reference-react';
-import { Link } from 'react-router-dom';
-import { useMemo } from 'react';
-import { useApiDocsToken } from './useApiDocsToken';
 import { useTheme } from '../../theme/ThemeContext';
+import TokenInput from './TokenInput';
+import { useApiDocsToken } from './useApiDocsToken';
+import { ApiReferenceReact } from '@scalar/api-reference-react';
+import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 
 const OPENAPI_PATH = '/openapi.json';
 
@@ -41,11 +41,10 @@ export default function ApiDocsView() {
     return `${API_BASE_URL}${OPENAPI_PATH}`;
   }, []);
 
-  // Memoize the configuration so Scalar does not re-mount when the token
-  // changes — the same object reference is mutated in place via the
-  // `securitySchemes.pat.token` slot below by recreating only when the
-  // token actually changes. Re-creating on every render would tear down
-  // the entire Scalar tree on each keystroke.
+  // Memoize the configuration so Scalar does not re-mount on unrelated renders
+  // (e.g. a parent component re-rendering without changing mode or token).
+  // A new object is returned — and Scalar sees a changed prop — whenever
+  // mode, openapiUrl, or token changes (including each keystroke in TokenInput).
   const scalarConfiguration = useMemo(
     () => ({
       url: openapiUrl,

@@ -14,16 +14,32 @@ import StatusBadge from '../common/StatusBadge';
 import ReauthForm from './ReauthForm';
 import RecoveryCodesModal from './RecoveryCodesModal';
 import TotpSetupView from './TotpSetupView';
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
 
 type ReauthAction = 'disable' | 'regenerate';
 
+/**
+ * Settings section for two-factor authentication. Manages five
+ * mutually-exclusive UI states driven by `(user.twoFactorMethod,
+ * user.twoFactorPending, totpSetup, reauthAction)`:
+ *
+ * - **State A** — 2FA disabled. Shows the "Add authenticator app" button.
+ * - **State B** — TOTP setup in progress. Shows `TotpSetupView` with QR +
+ *   verification form. Either an in-session start or a server-side
+ *   `twoFactorPending` flag from a prior session can land us here.
+ * - **State C / E** — 2FA enabled. Shows Regenerate / Disable actions.
+ * - **State D** — Pending recovery: server reports `twoFactorPending` but no
+ *   local `totpSetup`. Shows "Continue setup" / Cancel pair.
+ * - **Reauth** — Disable or Regenerate requested, awaiting credentials.
+ *
+ * `shouldFocusAddAuthenticator` is a ref that bridges the cancel-then-unmount
+ * transition: after `handleCancelTotpSetup` succeeds the TOTP view unmounts
+ * and focus would fall to `<body>` — the effect at the bottom catches the
+ * next render that lands in State A and restores focus to "Add authenticator
+ * app". This pattern is necessary because the focused element is removed
+ * before React schedules the focus restore.
+ */
 export default function TwoFactorSection() {
   const { refreshUser, user } = useAuth();
 

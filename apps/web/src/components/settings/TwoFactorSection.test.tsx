@@ -81,6 +81,32 @@ describe('TwoFactorSection', () => {
     });
   });
 
+  describe('State A — setupTotp API failure', () => {
+    it('shows an error when setupTotp fails to start', async () => {
+      vi.mocked(apiModule.setupTotp).mockRejectedValue(
+        new Error('Service unavailable'),
+      );
+
+      render(<TwoFactorSection />);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /add authenticator app/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          'Service unavailable',
+        );
+      });
+      // State A remains — the setup view should not appear
+      expect(
+        screen.getByRole('button', { name: /add authenticator app/i }),
+      ).toBeInTheDocument();
+    });
+  });
+
   describe('State B — TOTP setup in progress', () => {
     it('initiates TOTP setup when the authenticator app button is clicked', async () => {
       vi.mocked(apiModule.setupTotp).mockResolvedValue({
@@ -305,6 +331,29 @@ describe('TwoFactorSection', () => {
         expect(apiModule.cancelTotpSetup).toHaveBeenCalled();
         expect(refreshUser).toHaveBeenCalled();
       });
+    });
+
+    it('shows an error when cancelling setup fails from the pending state', async () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ twoFactorPending: true }) }),
+      );
+      vi.mocked(apiModule.cancelTotpSetup).mockRejectedValue(
+        new Error('Network error'),
+      );
+
+      render(<TwoFactorSection />);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Network error');
+      });
+      // Continue setup remains visible since cancel failed
+      expect(
+        screen.getByRole('button', { name: /continue setup/i }),
+      ).toBeInTheDocument();
     });
 
     it('resumes TOTP setup when Continue setup is clicked', async () => {

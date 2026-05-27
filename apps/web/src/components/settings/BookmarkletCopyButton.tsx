@@ -1,5 +1,5 @@
-import IconButton from '../common/IconButton';
 import { useTransientState } from '../../lib/hooks/useTransientState';
+import IconButton from '../common/IconButton';
 import { useState } from 'react';
 
 interface BookmarkletCopyButtonProps {

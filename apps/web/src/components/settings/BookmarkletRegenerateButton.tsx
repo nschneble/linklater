@@ -84,6 +84,7 @@ export default function BookmarkletRegenerateButton({
   };
 
   const handleConfirm = async () => {
+    setError(null);
     setRegenerating(true);
     try {
       const fresh = await regenerate();

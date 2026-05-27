@@ -25,15 +25,18 @@ function renderView(
 }
 
 describe('TotpSetupView', () => {
-  it('renders the QR code image with the provided data URL', () => {
-    renderView();
-    const image = screen.getByRole('img', { name: /totp qr code/i });
+  it('renders the QR code as a decorative image with the provided data URL', () => {
+    const { container } = renderView();
+    // QR is decorative (alt="") since SR users cannot scan it — the manual
+    // secret below is the canonical accessible pathway.
+    const image = container.querySelector('img');
     expect(image).toHaveAttribute('src', QR_DATA_URL);
+    expect(image).toHaveAttribute('alt', '');
   });
 
-  it('renders the manual entry secret', () => {
+  it('exposes the manual entry secret with an accessible label', () => {
     renderView();
-    expect(screen.getByText(SECRET)).toBeInTheDocument();
+    expect(screen.getByLabelText('TOTP secret')).toHaveTextContent(SECRET);
   });
 
   it('configures the verification input with numeric inputmode, autocomplete, and 6-char cap', () => {

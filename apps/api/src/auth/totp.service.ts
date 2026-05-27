@@ -25,6 +25,25 @@ import { UsersService } from '../users/users.service.js';
 export class TotpService {
   constructor(private readonly usersService: UsersService) {}
 
+  /**
+   * Starts or resumes TOTP enrollment for the given user. Generates a new
+   * secret and QR code URI on first call; returns the same QR code on
+   * subsequent calls so a scan already in progress is not invalidated.
+   *
+   * The generated secret is AES-256-GCM encrypted before being written to
+   * `user.totpSecret`. `totpEnabledAt` stays `null` until `verifySetup`
+   * is called with a matching code.
+   *
+   * @param userId - UUID of the user enabling 2FA.
+   * @param userEmail - Shown as the account label inside the authenticator
+   *   app (e.g. "user@example.com").
+   * @returns `{ qrCodeDataUrl, secret }` — the data-URL for the QR image and
+   *   the plaintext base-32 secret for manual entry.
+   * @throws {ConflictException} When TOTP is already fully enabled for this
+   *   account.
+   * @throws {ForbiddenException} When the account was created via an identity
+   *   provider and has no password, or when the email is not yet verified.
+   */
   async generateSetup(
     userId: string,
     userEmail: string,
@@ -81,6 +100,20 @@ export class TotpService {
     return { qrCodeDataUrl, secret };
   }
 
+  /**
+   * Completes TOTP enrollment. Decrypts the pending secret, validates the
+   * supplied 6-digit code (±30 s window), then atomically enables TOTP and
+   * stores fresh recovery codes.
+   *
+   * The setup OTP step is recorded as `totpLastUsedStep` so the same code
+   * cannot be replayed on the very first login attempt.
+   *
+   * @param userId - UUID of the user completing setup.
+   * @param code - 6-digit TOTP code from the authenticator app.
+   * @returns Array of 10 plaintext recovery codes shown once to the user.
+   * @throws {BadRequestException} When there is no pending setup or the code
+   *   is invalid.
+   */
   async verifySetup(userId: string, code: string): Promise<string[]> {
     const user = await this.usersService.findById(userId);
 
@@ -108,6 +141,17 @@ export class TotpService {
     return codes;
   }
 
+  /**
+   * Abandons an in-flight TOTP enrollment by clearing the pending secret.
+   * Idempotent — calling this when no setup is pending is a no-op. The
+   * underlying `clearPendingTotpSecret` filters on `totpEnabledAt: null` at
+   * the DB layer, so a fully-enabled account is silently skipped rather than
+   * racing a concurrent `verifySetup` call.
+   *
+   * @param userId - UUID of the user cancelling setup.
+   * @throws {ConflictException} When TOTP is already fully enabled; callers
+   *   should direct the user to the disable endpoint instead.
+   */
   async cancelSetup(userId: string): Promise<void> {
     const user = await this.usersService.findById(userId);
 
@@ -120,6 +164,21 @@ export class TotpService {
     await this.usersService.clearPendingTotpSecret(userId);
   }
 
+  /**
+   * Validates a TOTP code during login (not during initial setup). Uses an
+   * atomic compare-and-swap on `totpLastUsedStep` to reject replays: two
+   * parallel requests with the same valid code inside the same 30-second
+   * window both pass the cryptographic check, but only the first one to write
+   * `totpLastUsedStep` returns `true`. The second receives `false`.
+   *
+   * @param user - Partial user record with `id`, `totpSecret`, and
+   *   `totpLastUsedStep`. Callers should load these from the database.
+   * @param code - 6-digit TOTP code from the authenticator app.
+   * @returns `true` when the code is valid and not a replay; `false`
+   *   otherwise.
+   * @throws {BadRequestException} When TOTP is not configured for this account
+   *   (no stored secret).
+   */
   async verifyCode(
     user: {
       id: string;

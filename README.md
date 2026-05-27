@@ -86,7 +86,10 @@ Linklater includes a one-click bookmarklet that saves the current page directly 
 
 To install, go to **Settings → Bookmarklet** and drag the _Save to Linklater_ button directly to your bookmarks bar. Your auth token is pre-embedded, so you can click it on any page and immediately save the link to your account.
 
-The embedded token expires after 90 days. If it stops working, revisit Settings and reinstall it.
+The embedded token never expires. If you lose a device or want to invalidate
+an old install, open **Settings → Bookmarklet** and click **Regenerate** —
+the previous bookmarklet stops working immediately and the new one is ready
+to drag to your bookmarks bar.
 
 ## Local Development
 

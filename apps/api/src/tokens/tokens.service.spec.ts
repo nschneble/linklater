@@ -320,6 +320,19 @@ describe('TokensService', () => {
         service.getOrCreateBookmarkletToken(USER_ID),
       ).rejects.toThrow('Connection timeout');
     });
+
+    it('re-throws the P2002 error when the recovery findFirst also returns null', async () => {
+      // Both create() and the fallback findFirst() fail — the P2002 itself
+      // propagates because there is no row to return.
+      (prismaMock.apiToken.findFirst as jest.Mock)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+      (prismaMock.apiToken.create as jest.Mock).mockRejectedValue(makeP2002());
+
+      await expect(
+        service.getOrCreateBookmarkletToken(USER_ID),
+      ).rejects.toMatchObject({ code: 'P2002' });
+    });
   });
 
   describe('regenerateBookmarkletToken', () => {

@@ -90,6 +90,11 @@ export class TokensController {
   @ApiOperation({ summary: 'Revoke a personal access token' })
   @ApiParam({ name: 'id', description: 'ID of the token to revoke.' })
   @ApiResponse({ status: 200, description: '{ success: true }' })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Token is a bookmarklet token; use the Regenerate endpoint instead.',
+  })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 404, description: 'Token not found.' })
   @HttpCode(200)

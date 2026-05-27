@@ -380,6 +380,16 @@ export class UsersService {
     });
   }
 
+  /**
+   * Writes an encrypted TOTP secret to the user row, marking setup as
+   * pending (but not yet enabled). Clears `totpEnabledAt` and
+   * `totpVerifiedAt` so a re-run of setup after a previous failed attempt
+   * starts from a clean state.
+   *
+   * @param userId - UUID of the user starting setup.
+   * @param encryptedSecret - AES-256-GCM ciphertext produced by
+   *   `crypto.encrypt`.
+   */
   async saveTotpSecret(userId: string, encryptedSecret: string) {
     await this.prisma.user.update({
       where: { id: userId },
