@@ -1,7 +1,16 @@
+import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import SettingsSectionNav from './SettingsSectionNav';
 import type { SettingsSection } from './settingsSections';
+
+function renderNav(properties: Parameters<typeof SettingsSectionNav>[0]) {
+  return render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <SettingsSectionNav {...properties} />
+    </MemoryRouter>,
+  );
+}
 
 const SECTIONS: SettingsSection[] = [
   { hash: 'account', label: 'Account', icon: 'fa-user' },
@@ -26,30 +35,28 @@ beforeEach(() => {
 
 describe('SettingsSectionNav', () => {
   it('renders a nav landmark labelled "Settings sections"', () => {
-    render(<SettingsSectionNav sections={SECTIONS} activeHash="account" />);
+    renderNav({ sections: SECTIONS, activeHash: 'account' });
     expect(
       screen.getByRole('navigation', { name: /settings sections/i }),
     ).toBeInTheDocument();
   });
 
   it('renders one chip anchor per section', () => {
-    render(<SettingsSectionNav sections={SECTIONS} activeHash="account" />);
+    renderNav({ sections: SECTIONS, activeHash: 'account' });
     const links = screen.getAllByRole('link');
     expect(links).toHaveLength(SECTIONS.length);
     expect(links[2]).toHaveAttribute('href', '#integrations');
   });
 
   it('applies aria-current="location" to the active chip only', () => {
-    render(
-      <SettingsSectionNav sections={SECTIONS} activeHash="integrations" />,
-    );
+    renderNav({ sections: SECTIONS, activeHash: 'integrations' });
     const links = screen.getAllByRole('link');
     expect(links[2]).toHaveAttribute('aria-current', 'location');
     expect(links[0]).not.toHaveAttribute('aria-current');
   });
 
   it('scrolls the active chip into view on mount', () => {
-    render(<SettingsSectionNav sections={SECTIONS} activeHash="security" />);
+    renderNav({ sections: SECTIONS, activeHash: 'security' });
     expect(scrollIntoViewMock).toHaveBeenCalledWith(
       expect.objectContaining({
         inline: 'center',
@@ -61,7 +68,7 @@ describe('SettingsSectionNav', () => {
 
   it('uses behavior="auto" when prefers-reduced-motion is set', () => {
     matchMediaMock.mockReturnValue({ matches: true });
-    render(<SettingsSectionNav sections={SECTIONS} activeHash="security" />);
+    renderNav({ sections: SECTIONS, activeHash: 'security' });
     expect(scrollIntoViewMock).toHaveBeenCalledWith(
       expect.objectContaining({ behavior: 'auto' }),
     );
@@ -69,13 +76,11 @@ describe('SettingsSectionNav', () => {
 
   it('calls onNavigate with the hash when a chip is clicked', () => {
     const onNavigate = vi.fn();
-    render(
-      <SettingsSectionNav
-        sections={SECTIONS}
-        activeHash="account"
-        onNavigate={onNavigate}
-      />,
-    );
+    renderNav({
+      sections: SECTIONS,
+      activeHash: 'account',
+      onNavigate,
+    });
     screen.getByRole('link', { name: /integrations/i }).click();
     expect(onNavigate).toHaveBeenCalledWith('integrations');
   });

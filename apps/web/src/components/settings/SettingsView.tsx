@@ -12,6 +12,7 @@ import SettingsLayout from './SettingsLayout';
 import IdPsSection from './IdPsSection';
 import StumbleSection from '../stumble/StumbleSection';
 import TwoFactorSection from './TwoFactorSection';
+import { scrollToSettingsSection } from './settingsScroll';
 import { useSettingsScrollSpy } from './useSettingsScrollSpy';
 import type { SettingsSection } from './settingsSections';
 
@@ -129,20 +130,10 @@ export default function SettingsView({
   // When something deep-links into a settings section (e.g. the WelcomeModal
   // buttons land on `/settings#bookmarklet`), scroll the section into view
   // and move focus to it so screen reader and keyboard users land where the
-  // sighted user does. `prefers-reduced-motion` disables smooth scroll.
+  // sighted user does.
   useEffect(() => {
     if (!location.hash) return;
-    const element = document.getElementById(location.hash.slice(1));
-    if (!element) return;
-    const reducedMotion =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    element.scrollIntoView({
-      behavior: reducedMotion ? 'auto' : 'smooth',
-      block: 'start',
-    });
-    element.focus({ preventScroll: true });
+    scrollToSettingsSection(location.hash.slice(1));
   }, [location.hash]);
 
   return (
@@ -205,7 +196,7 @@ export default function SettingsView({
           id="integrations"
           title="Third-party integrations"
           icon="fa-plug"
-          description="Use personal access tokens (PATs) to connect Linklater with external tools and services. Tokens allow you to access the Linklater API."
+          description="Use personal access tokens (PATs) to connect Linklater with external tools and services."
         >
           <ApiTokensSection />
         </SettingsGroup>

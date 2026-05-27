@@ -1,6 +1,8 @@
 import SettingsSectionNav from './SettingsSectionNav';
 import SettingsSidebar from './SettingsSidebar';
-import type { ReactNode } from 'react';
+import { isPlainAnchorClick, scrollToSettingsSection } from './settingsScroll';
+import { useNavigate } from 'react-router-dom';
+import type { MouseEvent, ReactNode } from 'react';
 import type { SettingsSection } from './settingsSections';
 
 interface SettingsLayoutProps {
@@ -26,6 +28,17 @@ export default function SettingsLayout({
   children,
 }: SettingsLayoutProps) {
   const firstHash = sections[0]?.hash;
+  const navigate = useNavigate();
+
+  // Route the skip link through the same scroll helper as the sidebar so
+  // keyboard users land at the same position as deep-link navigation.
+  function handleSkipClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (!firstHash || !isPlainAnchorClick(event)) return;
+    event.preventDefault();
+    scrollToSettingsSection(firstHash);
+    navigate(`#${firstHash}`);
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-[14rem_minmax(0,1fr)] gap-6 md:gap-10">
       <SettingsSidebar
@@ -37,6 +50,7 @@ export default function SettingsLayout({
         {firstHash && (
           <a
             href={`#${firstHash}`}
+            onClick={handleSkipClick}
             className="sr-only focus:not-sr-only focus:inline-flex focus:items-center focus:px-3 focus:py-1.5 focus:bg-[var(--bg-surface)] focus:text-[var(--text)] focus:text-xs focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:outline-none"
           >
             Skip settings navigation

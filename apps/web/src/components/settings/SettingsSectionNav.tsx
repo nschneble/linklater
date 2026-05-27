@@ -1,5 +1,8 @@
 import { FOCUS_RING } from '../../lib/styles';
+import { isPlainAnchorClick, scrollToSettingsSection } from './settingsScroll';
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { MouseEvent } from 'react';
 import type { SettingsSection } from './settingsSections';
 
 interface SettingsSectionNavProps {
@@ -22,6 +25,21 @@ export default function SettingsSectionNav({
   onNavigate,
 }: SettingsSectionNavProps) {
   const activeReference = useRef<HTMLAnchorElement>(null);
+  const navigate = useNavigate();
+
+  // Match SettingsSidebar: intercept plain left-clicks so the section scroll
+  // goes through the shared helper and lands at the same position as a
+  // direct deep-link. Modified clicks fall through to native behavior.
+  function handleClick(event: MouseEvent<HTMLAnchorElement>, hash: string) {
+    if (!isPlainAnchorClick(event)) {
+      onNavigate?.(hash);
+      return;
+    }
+    event.preventDefault();
+    onNavigate?.(hash);
+    scrollToSettingsSection(hash);
+    navigate(`#${hash}`);
+  }
 
   // Auto-scroll the active chip into the center of the row so it stays
   // visible after deep-link or scroll-spy advances. `prefers-reduced-motion`
@@ -54,7 +72,7 @@ export default function SettingsSectionNav({
                 href={`#${section.hash}`}
                 aria-current={isActive ? 'location' : undefined}
                 ref={isActive ? activeReference : undefined}
-                onClick={() => onNavigate?.(section.hash)}
+                onClick={(event) => handleClick(event, section.hash)}
                 className={`group inline-flex items-center gap-1.5 min-h-10 px-3.5 py-2 bg-transparent text-[var(--text-muted)] hover:text-[var(--text)] ring-1 ring-[var(--border)]/60 font-medium aria-[current]:bg-[var(--bg-elevated)] aria-[current]:text-[var(--text)] aria-[current]:ring-[var(--border)] aria-[current]:font-semibold text-xs ${FOCUS_RING} rounded-full motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] whitespace-nowrap`}
               >
                 <i

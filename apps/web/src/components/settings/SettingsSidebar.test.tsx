@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import SettingsSidebar from './SettingsSidebar';
@@ -9,16 +10,24 @@ const SECTIONS: SettingsSection[] = [
   { hash: 'integrations', label: 'Integrations', icon: 'fa-plug' },
 ];
 
+function renderSidebar(properties: Parameters<typeof SettingsSidebar>[0]) {
+  return render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <SettingsSidebar {...properties} />
+    </MemoryRouter>,
+  );
+}
+
 describe('SettingsSidebar', () => {
   it('renders a nav landmark labelled "Settings sections"', () => {
-    render(<SettingsSidebar sections={SECTIONS} activeHash="account" />);
+    renderSidebar({ sections: SECTIONS, activeHash: 'account' });
     expect(
       screen.getByRole('navigation', { name: /settings sections/i }),
     ).toBeInTheDocument();
   });
 
   it('renders one anchor per section', () => {
-    render(<SettingsSidebar sections={SECTIONS} activeHash="account" />);
+    renderSidebar({ sections: SECTIONS, activeHash: 'account' });
     const links = screen.getAllByRole('link');
     expect(links).toHaveLength(SECTIONS.length);
     expect(links[0]).toHaveAttribute('href', '#account');
@@ -26,7 +35,7 @@ describe('SettingsSidebar', () => {
   });
 
   it('applies aria-current="location" to the active link only', () => {
-    render(<SettingsSidebar sections={SECTIONS} activeHash="security" />);
+    renderSidebar({ sections: SECTIONS, activeHash: 'security' });
     const links = screen.getAllByRole('link');
     expect(links[0]).not.toHaveAttribute('aria-current');
     expect(links[1]).toHaveAttribute('aria-current', 'location');
@@ -35,13 +44,11 @@ describe('SettingsSidebar', () => {
 
   it('calls onNavigate with the hash when a link is clicked', () => {
     const onNavigate = vi.fn();
-    render(
-      <SettingsSidebar
-        sections={SECTIONS}
-        activeHash="account"
-        onNavigate={onNavigate}
-      />,
-    );
+    renderSidebar({
+      sections: SECTIONS,
+      activeHash: 'account',
+      onNavigate,
+    });
     screen.getByRole('link', { name: /security/i }).click();
     expect(onNavigate).toHaveBeenCalledWith('security');
   });
