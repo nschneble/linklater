@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, Ref } from 'react';
 import { DISABLED, FOCUS_RING } from '../../lib/styles';
 
 /**
@@ -21,6 +21,8 @@ interface PrimaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    * @default false
    */
   hidden?: boolean;
+  /** Forwarded to the underlying `<button>` so callers can manage focus. */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 export default function PrimaryButton({

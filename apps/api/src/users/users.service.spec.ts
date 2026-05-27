@@ -703,6 +703,33 @@ describe('UsersService', () => {
     });
   });
 
+  describe('clearPendingTotpSecret', () => {
+    it('clears the pending TOTP secret when totpEnabledAt is null', async () => {
+      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+      await service.clearPendingTotpSecret(USER_ID);
+
+      expect(prismaMock.user.updateMany).toHaveBeenCalledWith({
+        where: { id: USER_ID, totpEnabledAt: null },
+        data: { totpSecret: null, totpVerifiedAt: null },
+      });
+    });
+
+    it('is a no-op when the row is enabled (filter prevents the update)', async () => {
+      // updateMany returns count: 0 when the WHERE clause matches no rows
+      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.clearPendingTotpSecret(USER_ID),
+      ).resolves.toBeUndefined();
+
+      expect(prismaMock.user.updateMany).toHaveBeenCalledWith({
+        where: { id: USER_ID, totpEnabledAt: null },
+        data: { totpSecret: null, totpVerifiedAt: null },
+      });
+    });
+  });
+
   describe('updateTotpLastUsedStep', () => {
     it('CAS-advances totpLastUsedStep and returns true on win', async () => {
       (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 1 });

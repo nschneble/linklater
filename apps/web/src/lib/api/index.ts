@@ -1,6 +1,7 @@
 export type { LoginResponse } from './auth';
 export {
   acknowledgeWelcome,
+  cancelTotpSetup,
   disable2fa,
   forgotPassword,
   getMe,

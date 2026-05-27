@@ -118,6 +118,24 @@ export class TwoFactorController {
     return { recoveryCodes };
   }
 
+  @ApiOperation({ summary: 'Cancel an in-flight TOTP setup' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 204,
+    description: 'Pending setup cleared (idempotent).',
+  })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({ status: 409, description: 'TOTP is already enabled.' })
+  @ApiResponse({ status: 429, description: 'Too many setup attempts.' })
+  @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
+  @Throttle({ 'auth-2fa-totp-setup': { ttl: 60000, limit: 5 } })
+  @ThrottleMessage('Too many setup attempts')
+  @Delete('2fa/totp/setup')
+  @HttpCode(204)
+  async totpCancelSetup(@Req() request: AuthRequest) {
+    await this.totpService.cancelSetup(request.user.userId);
+  }
+
   @ApiOperation({
     summary: 'Disable 2FA (requires password or OTP re-authentication)',
   })

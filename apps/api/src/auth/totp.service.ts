@@ -108,6 +108,18 @@ export class TotpService {
     return codes;
   }
 
+  async cancelSetup(userId: string): Promise<void> {
+    const user = await this.usersService.findById(userId);
+
+    if (user.totpEnabledAt) {
+      throw new ConflictException(
+        'TOTP is already active; use the disable endpoint instead',
+      );
+    }
+
+    await this.usersService.clearPendingTotpSecret(userId);
+  }
+
   async verifyCode(
     user: {
       id: string;

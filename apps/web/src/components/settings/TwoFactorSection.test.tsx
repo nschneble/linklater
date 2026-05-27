@@ -10,6 +10,7 @@ import TwoFactorSection from './TwoFactorSection';
 import type { User } from '../../auth/AuthContext';
 
 vi.mock('../../lib/api', () => ({
+  cancelTotpSetup: vi.fn(),
   disable2fa: vi.fn(),
   regenerateRecoveryCodes: vi.fn(),
   setupTotp: vi.fn(),
@@ -156,6 +157,64 @@ describe('TwoFactorSection', () => {
       });
     });
 
+    it('cancels in-flight setup from the QR view and returns to State A', async () => {
+      vi.mocked(apiModule.setupTotp).mockResolvedValue({
+        qrCodeDataUrl: 'data:image/png;base64,abc',
+        secret: 'SECRETABC',
+      });
+      vi.mocked(apiModule.cancelTotpSetup).mockResolvedValue(undefined);
+
+      render(<TwoFactorSection />);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /add authenticator app/i }),
+        );
+      });
+
+      expect(screen.getByText('SECRETABC')).toBeInTheDocument();
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
+      });
+
+      await waitFor(() => {
+        expect(apiModule.cancelTotpSetup).toHaveBeenCalled();
+      });
+      expect(screen.queryByText('SECRETABC')).not.toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /add authenticator app/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('shows an error when cancelling setup fails', async () => {
+      vi.mocked(apiModule.setupTotp).mockResolvedValue({
+        qrCodeDataUrl: 'data:image/png;base64,abc',
+        secret: 'SECRETABC',
+      });
+      vi.mocked(apiModule.cancelTotpSetup).mockRejectedValue(
+        new Error('Network down'),
+      );
+
+      render(<TwoFactorSection />);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /add authenticator app/i }),
+        );
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Network down');
+      });
+      // QR view stays mounted so the user can retry or verify
+      expect(screen.getByText('SECRETABC')).toBeInTheDocument();
+    });
+
     it('shows an error when TOTP verification fails', async () => {
       vi.mocked(apiModule.setupTotp).mockResolvedValue({
         qrCodeDataUrl: 'data:image/png;base64,abc',
@@ -224,6 +283,28 @@ describe('TwoFactorSection', () => {
       expect(
         screen.getByRole('button', { name: /continue setup/i }),
       ).toBeInTheDocument();
+    });
+
+    it('cancels in-flight setup from the Continue setup view and refreshes the user', async () => {
+      const refreshUser = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({
+          user: makeUser({ twoFactorPending: true }),
+          refreshUser,
+        }),
+      );
+      vi.mocked(apiModule.cancelTotpSetup).mockResolvedValue(undefined);
+
+      render(<TwoFactorSection />);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
+      });
+
+      await waitFor(() => {
+        expect(apiModule.cancelTotpSetup).toHaveBeenCalled();
+        expect(refreshUser).toHaveBeenCalled();
+      });
     });
 
     it('resumes TOTP setup when Continue setup is clicked', async () => {

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { FormEvent, RefObject } from 'react';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
+import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 
 interface TotpSetupViewProps {
@@ -11,6 +12,7 @@ interface TotpSetupViewProps {
   codeInputReference: RefObject<HTMLInputElement | null>;
   loading: boolean;
   error: string | null;
+  onCancel: () => void;
   onCodeChange: (value: string) => void;
   onSubmit: (formEvent: FormEvent) => void;
 }
@@ -20,6 +22,7 @@ export default function TotpSetupView({
   codeInputReference,
   error,
   loading,
+  onCancel,
   onCodeChange,
   onSubmit,
   qrCodeDataUrl,
@@ -71,9 +74,14 @@ export default function TotpSetupView({
           required
         />
         {error && <Alert variant="error">{error}</Alert>}
-        <PrimaryButton disabled={loading} className="py-2.5">
-          {loading ? 'Verifying…' : 'Verify'}
-        </PrimaryButton>
+        <div className="flex items-center gap-3">
+          <PrimaryButton disabled={loading} className="py-2.5">
+            {loading ? 'Verifying…' : 'Verify'}
+          </PrimaryButton>
+          <LinkButton onClick={onCancel} disabled={loading}>
+            Cancel
+          </LinkButton>
+        </div>
       </form>
     </div>
   );

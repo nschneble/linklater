@@ -16,6 +16,7 @@ function renderView(
     codeInputReference: createRef<HTMLInputElement>(),
     loading: false,
     error: null,
+    onCancel: vi.fn(),
     onCodeChange: vi.fn(),
     onSubmit: vi.fn((event) => event.preventDefault()),
     ...overrides,
@@ -78,5 +79,25 @@ describe('TotpSetupView', () => {
   it('disables the verify button and shows "Verifying…" while loading', () => {
     renderView({ loading: true });
     expect(screen.getByRole('button', { name: /verifying/i })).toBeDisabled();
+  });
+
+  it('renders a Cancel button that calls onCancel when clicked', () => {
+    const onCancel = vi.fn();
+    renderView({ onCancel });
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables the Cancel button while loading', () => {
+    renderView({ loading: true });
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
+  });
+
+  it('Cancel button is type="button" so it does not submit the form', () => {
+    renderView();
+    expect(screen.getByRole('button', { name: /cancel/i })).toHaveAttribute(
+      'type',
+      'button',
+    );
   });
 });

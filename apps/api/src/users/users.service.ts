@@ -392,6 +392,20 @@ export class UsersService {
   }
 
   /**
+   * Clears a pending (not-yet-enabled) TOTP secret. Idempotent: no-op when the
+   * user has no pending setup. The `totpEnabledAt: null` filter is intentional
+   * — it makes the guard atomic so an enabled account is silently skipped at
+   * the DB layer rather than racing a concurrent enable. Callers must still
+   * surface a 409 to the user for the enabled case.
+   */
+  async clearPendingTotpSecret(userId: string): Promise<void> {
+    await this.prisma.user.updateMany({
+      where: { id: userId, totpEnabledAt: null },
+      data: { totpSecret: null, totpVerifiedAt: null },
+    });
+  }
+
+  /**
    * Writes a fresh MFA challenge nonce for the user. AuthService.login calls
    * this when issuing an MFA challenge JWT; the same nonce is embedded in
    * the JWT and verified at verifyOtp time so a leaked or replayed token

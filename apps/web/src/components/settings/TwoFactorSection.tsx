@@ -1,5 +1,6 @@
 import { useAuth } from '../../auth/AuthContext';
 import {
+  cancelTotpSetup,
   disable2fa,
   regenerateRecoveryCodes,
   setupTotp,
@@ -37,6 +38,12 @@ export default function TwoFactorSection() {
   } | null>(null);
   const [totpCode, setTotpCode] = useState('');
   const totpCodeInputReference = useRef<HTMLInputElement>(null);
+  const addAuthenticatorReference = useRef<HTMLButtonElement>(null);
+  // Set by handleCancelTotpSetup so the next render that lands in State A
+  // can return focus to the "Add authenticator app" button. Without this
+  // the cancelled button unmounts and focus falls to <body>, dropping
+  // keyboard + screen-reader users out of context.
+  const shouldFocusAddAuthenticator = useRef(false);
 
   useEffect(() => {
     if (totpSetup) {
@@ -118,8 +125,36 @@ export default function TwoFactorSection() {
     setError(null);
   }, []);
 
+  const handleCancelTotpSetup = useCallback(async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      await cancelTotpSetup();
+      shouldFocusAddAuthenticator.current = true;
+      setTotpSetup(null);
+      setTotpCode('');
+      // refreshUser() clears the server-side twoFactorPending flag so the
+      // UI drops out of the "Continue setup" recovery state too.
+      await refreshUser();
+    } catch (caught: unknown) {
+      setError(getErrorMessage(caught, 'Failed to cancel setup'));
+    } finally {
+      setLoading(false);
+    }
+  }, [refreshUser]);
+
   const twoFactorMethod = user?.twoFactorMethod ?? null;
   const twoFactorPending = user?.twoFactorPending ?? false;
+
+  const inStateA =
+    !reauthAction && !twoFactorMethod && !totpSetup && !twoFactorPending;
+
+  useEffect(() => {
+    if (shouldFocusAddAuthenticator.current && inStateA) {
+      addAuthenticatorReference.current?.focus();
+      shouldFocusAddAuthenticator.current = false;
+    }
+  }, [inStateA]);
 
   return (
     <div className="max-w-md space-y-4">
@@ -186,6 +221,7 @@ export default function TwoFactorSection() {
           codeInputReference={totpCodeInputReference}
           error={error}
           loading={loading}
+          onCancel={handleCancelTotpSetup}
           onCodeChange={setTotpCode}
           onSubmit={handleVerifyTotp}
           qrCodeDataUrl={totpSetup.qrCodeDataUrl}
@@ -200,22 +236,28 @@ export default function TwoFactorSection() {
             Authenticator app setup is in progress.
           </p>
           {error && <Alert variant="error">{error}</Alert>}
-          <PrimaryButton
-            disabled={loading}
-            className="py-2.5"
-            onClick={handleStartTotpSetup}
-          >
-            {loading ? 'Continuing…' : 'Continue setup'}
-          </PrimaryButton>
+          <div className="flex items-center gap-3">
+            <PrimaryButton
+              disabled={loading}
+              className="py-2.5"
+              onClick={handleStartTotpSetup}
+            >
+              {loading ? 'Continuing…' : 'Continue setup'}
+            </PrimaryButton>
+            <LinkButton onClick={handleCancelTotpSetup} disabled={loading}>
+              Cancel
+            </LinkButton>
+          </div>
         </div>
       )}
 
       {/* State A — 2FA not enabled */}
-      {!reauthAction && !twoFactorMethod && !totpSetup && !twoFactorPending && (
+      {inStateA && (
         <div className="space-y-3">
           {error && <Alert variant="error">{error}</Alert>}
           <div className="flex items-center gap-2">
             <PrimaryButton
+              ref={addAuthenticatorReference}
               disabled={loading}
               className="py-2.5"
               onClick={handleStartTotpSetup}

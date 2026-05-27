@@ -140,6 +140,10 @@ export async function verifyTotpSetup(
   });
 }
 
+export async function cancelTotpSetup(): Promise<void> {
+  await apiFetch('/auth/2fa/totp/setup', { method: 'DELETE' });
+}
+
 export async function registerMagicLink(email: string): Promise<void> {
   await apiFetch(
     '/auth/register-magic-link',

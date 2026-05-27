@@ -32,6 +32,7 @@ describe('TotpService', () => {
   let service: TotpService;
 
   const usersServiceMock = {
+    clearPendingTotpSecret: jest.fn(),
     enableTotpWithRecoveryCodes: jest.fn(),
     findById: jest.fn(),
     saveTotpSecret: jest.fn(),
@@ -169,6 +170,47 @@ describe('TotpService', () => {
       await expect(service.verifySetup(USER_ID, '123456')).rejects.toThrow(
         BadRequestException,
       );
+    });
+  });
+
+  describe('cancelSetup', () => {
+    it('clears the pending TOTP secret when setup is not yet enabled', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUser({ totpSecret: 'encrypted-pending-secret' }),
+      );
+      (usersServiceMock.clearPendingTotpSecret as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.cancelSetup(USER_ID);
+
+      expect(usersServiceMock.clearPendingTotpSecret).toHaveBeenCalledWith(
+        USER_ID,
+      );
+    });
+
+    it('is a no-op (still calls clear) when nothing is pending', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(makeUser());
+      (usersServiceMock.clearPendingTotpSecret as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.cancelSetup(USER_ID);
+
+      expect(usersServiceMock.clearPendingTotpSecret).toHaveBeenCalledWith(
+        USER_ID,
+      );
+    });
+
+    it('throws ConflictException when TOTP is already enabled', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUser({ totpEnabledAt: new Date() }),
+      );
+
+      await expect(service.cancelSetup(USER_ID)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(usersServiceMock.clearPendingTotpSecret).not.toHaveBeenCalled();
     });
   });
 
