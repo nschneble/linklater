@@ -64,11 +64,11 @@ describe('ApiTokensSection', () => {
     });
   });
 
-  it('renders the "Create new token" button', async () => {
+  it('renders the "Generate new token" button', async () => {
     renderInRouter();
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: /create new token/i }),
+        screen.getByRole('button', { name: /generate new token/i }),
       ).toBeInTheDocument();
     });
   });
@@ -85,13 +85,15 @@ describe('ApiTokensSection', () => {
     });
   });
 
-  it('shows the create form when "Create new token" is clicked', async () => {
+  it('shows the create form when "Generate new token" is clicked', async () => {
     renderInRouter();
     await waitFor(() =>
-      screen.getByRole('button', { name: /create new token/i }),
+      screen.getByRole('button', { name: /generate new token/i }),
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /create new token/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /generate new token/i }),
+    );
 
     expect(screen.getByLabelText(/new token name/i)).toBeInTheDocument();
     expect(
@@ -111,10 +113,12 @@ describe('ApiTokensSection', () => {
 
     renderInRouter();
     await waitFor(() =>
-      screen.getByRole('button', { name: /create new token/i }),
+      screen.getByRole('button', { name: /generate new token/i }),
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /create new token/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /generate new token/i }),
+    );
     fireEvent.change(screen.getByLabelText(/new token name/i), {
       target: { value: 'Chrome Extension' },
     });
@@ -132,10 +136,12 @@ describe('ApiTokensSection', () => {
 
     renderInRouter();
     await waitFor(() =>
-      screen.getByRole('button', { name: /create new token/i }),
+      screen.getByRole('button', { name: /generate new token/i }),
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /create new token/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /generate new token/i }),
+    );
     fireEvent.change(screen.getByLabelText(/new token name/i), {
       target: { value: 'Chrome Extension' },
     });
@@ -150,10 +156,12 @@ describe('ApiTokensSection', () => {
   it('hides the generate form and clears the name when Cancel is clicked', async () => {
     renderInRouter();
     await waitFor(() =>
-      screen.getByRole('button', { name: /create new token/i }),
+      screen.getByRole('button', { name: /generate new token/i }),
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /create new token/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /generate new token/i }),
+    );
     fireEvent.change(screen.getByLabelText(/new token name/i), {
       target: { value: 'My Token' },
     });
@@ -180,7 +188,7 @@ describe('ApiTokensSection', () => {
   it('renders a link to the API documentation page', async () => {
     renderInRouter();
     await waitFor(() =>
-      screen.getByRole('button', { name: /create new token/i }),
+      screen.getByRole('button', { name: /generate new token/i }),
     );
     const link = screen.getByRole('link', {
       name: /view the api documentation/i,

@@ -114,7 +114,7 @@ export default function ApiTokensSection() {
             onClick={() => setShowCreate(true)}
           >
             <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
-            Create new token
+            Generate new token
           </IconButton>
         )}
       </div>
