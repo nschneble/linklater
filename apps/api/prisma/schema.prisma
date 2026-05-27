@@ -93,17 +93,31 @@ model Link {
   @@index([userId, createdAt])
 }
 
+enum TokenKind {
+  USER
+  BOOKMARKLET
+}
+
 model ApiToken {
-  id         String    @id @default(cuid())
-  name       String
-  tokenHash  String    @unique
-  prefix     String
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lastUsedAt DateTime?
-  createdAt  DateTime  @default(now())
+  id          String    @id @default(cuid())
+  name        String
+  tokenHash   String    @unique
+  prefix      String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  kind        TokenKind @default(USER)
+  // Plaintext token value. Populated ONLY when kind = BOOKMARKLET, because the
+  // bookmarklet's `javascript:` URL must embed the raw token literally and the
+  // settings page needs to retrieve it on every load (including across devices).
+  // For kind = USER this column is NULL — those tokens follow the standard
+  // hash-only / shown-once model. DB compromise of bookmarklet rows allows
+  // saving links as the affected user; users can regenerate to invalidate.
+  secretValue String?
 
   @@index([userId])
+  @@index([userId, kind])
 }
 
 model RefreshToken {

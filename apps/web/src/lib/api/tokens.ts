@@ -30,3 +30,20 @@ export async function revokeApiToken(
     method: 'DELETE',
   });
 }
+
+// Bookmarklet PAT (kind = BOOKMARKLET on the server). Unlike user-created
+// PATs, the raw token is returned on every call so the settings page can
+// embed it into the `javascript:` URL — even across devices.
+export interface BookmarkletToken extends ApiToken {
+  rawToken: string;
+}
+
+export async function getBookmarkletToken(): Promise<BookmarkletToken> {
+  return apiFetch<BookmarkletToken>('/tokens/bookmarklet');
+}
+
+export async function regenerateBookmarkletToken(): Promise<BookmarkletToken> {
+  return apiFetch<BookmarkletToken>('/tokens/bookmarklet/regenerate', {
+    method: 'POST',
+  });
+}

@@ -45,6 +45,12 @@ export {
   unreadLink,
   updateLink,
 } from './links';
-export type { ApiToken, CreatedApiToken } from './tokens';
-export { createApiToken, listApiTokens, revokeApiToken } from './tokens';
+export type { ApiToken, BookmarkletToken, CreatedApiToken } from './tokens';
+export {
+  createApiToken,
+  getBookmarkletToken,
+  listApiTokens,
+  regenerateBookmarkletToken,
+  revokeApiToken,
+} from './tokens';
 export { deleteMe, updateMe } from './users';

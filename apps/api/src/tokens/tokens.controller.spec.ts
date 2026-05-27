@@ -27,6 +27,8 @@ describe('TokensController', () => {
   const tokensServiceMock = {
     create: jest.fn(),
     findAll: jest.fn(),
+    getOrCreateBookmarkletToken: jest.fn(),
+    regenerateBookmarkletToken: jest.fn(),
     revoke: jest.fn(),
   } as unknown as TokensService;
 
@@ -81,6 +83,38 @@ describe('TokensController', () => {
 
       expect(tokensServiceMock.revoke).toHaveBeenCalledWith(USER_ID, TOKEN_ID);
       expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe('getBookmarklet', () => {
+    it('delegates to TokensService.getOrCreateBookmarkletToken with userId', async () => {
+      const bookmarklet = { ...makeApiToken(), rawToken: RAW_TOKEN };
+      (
+        tokensServiceMock.getOrCreateBookmarkletToken as jest.Mock
+      ).mockResolvedValue(bookmarklet);
+
+      const result = await controller.getBookmarklet(makeRequest());
+
+      expect(
+        tokensServiceMock.getOrCreateBookmarkletToken,
+      ).toHaveBeenCalledWith(USER_ID);
+      expect(result).toBe(bookmarklet);
+    });
+  });
+
+  describe('regenerateBookmarklet', () => {
+    it('delegates to TokensService.regenerateBookmarkletToken with userId', async () => {
+      const bookmarklet = { ...makeApiToken(), rawToken: RAW_TOKEN };
+      (
+        tokensServiceMock.regenerateBookmarkletToken as jest.Mock
+      ).mockResolvedValue(bookmarklet);
+
+      const result = await controller.regenerateBookmarklet(makeRequest());
+
+      expect(tokensServiceMock.regenerateBookmarkletToken).toHaveBeenCalledWith(
+        USER_ID,
+      );
+      expect(result).toBe(bookmarklet);
     });
   });
 });

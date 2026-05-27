@@ -12,6 +12,15 @@ vi.mock('./auth/AuthContext', () => ({
 vi.mock('./lib/api', () => ({
   updateMe: vi.fn().mockResolvedValue({}),
   getStoredToken: vi.fn().mockReturnValue(null),
+  getBookmarkletToken: vi.fn().mockResolvedValue({
+    id: 'bm-1',
+    name: 'Bookmarklet',
+    prefix: 'ltk_aBcDeFgH',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    lastUsedAt: null,
+    rawToken: 'ltk_aBcDeFgHiJkLmNoPqRsTuVwXyZ12',
+  }),
+  regenerateBookmarkletToken: vi.fn(),
 }));
 
 // LinksView uses useLinks which hits the API — mock the whole hook so the

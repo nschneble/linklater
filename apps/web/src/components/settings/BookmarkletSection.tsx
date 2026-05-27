@@ -1,60 +1,55 @@
-import { getStoredToken } from '../../lib/api';
+import { getBookmarkletToken, regenerateBookmarkletToken } from '../../lib/api';
+import { getErrorMessage } from '../../lib/errors';
 import { FOCUS_RING } from '../../lib/styles';
-import { useEffect, useRef } from 'react';
+import Alert from '../common/Alert';
+import BookmarkletCopyButton from './BookmarkletCopyButton';
+import BookmarkletRegenerateButton from './BookmarkletRegenerateButton';
+import { buildBookmarkletCode } from './bookmarkletCode';
+import { useEffect, useRef, useState } from 'react';
 
 /**
- * Settings section that generates and renders the Linklater bookmarklet.
+ * Settings section that renders the Linklater bookmarklet.
  *
- * The bookmarklet is a `javascript:` URL that, when clicked in the browser,
- * calls `POST /links` with the current page's URL using the user's stored JWT.
- * A small toast notification (built into the bookmarklet itself) shows the
- * result inline on whatever page the user is visiting.
- *
- * GOTCHA: React sanitizes `javascript:` URLs set declaratively via the `href`
- * prop. The href is therefore set imperatively via `setAttribute` inside a
- * `useEffect` to bypass this sanitization. This is intentional.
- *
- * The JWT is embedded at render time and expires after 90 days. Users must
- * return to this page to reinstall the bookmarklet when it expires.
+ * Embeds a never-expiring `ltk_` PAT (`kind = BOOKMARKLET`) that is lazily
+ * provisioned on first render via `getBookmarkletToken()` and revoked +
+ * reissued by the Regenerate button. The `setAttribute` href-bypass for
+ * `javascript:` URLs (React sanitizes declarative ones) remains.
  */
 export default function BookmarkletSection() {
   const bookmarkletReference = useRef<HTMLAnchorElement>(null);
-
-  // NOTE: React sanitizes `javascript:` URLs that are set declaratively via
-  // the `href` prop (it replaces them with `about:blank`). Setting the href
-  // via `setAttribute` after render bypasses this safety check. This is the
-  // intended approach for bookmarklet generation.
-  // See: https://github.com/facebook/react/issues/16382
+  const [rawToken, setRawToken] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!bookmarkletReference.current) return;
-
-    const token = getStoredToken() ?? '';
-    const apiUrl = import.meta.env.VITE_API_BASE_URL as string;
-    const code =
-      'javascript:(function(){' +
-      'var t=' +
-      JSON.stringify(token) +
-      ',a=' +
-      JSON.stringify(apiUrl) +
-      ';' +
-      "function n(m,k){var e=document.createElement('div');e.textContent=m;" +
-      "e.style.cssText='position:fixed;top:16px;right:16px;padding:12px 18px;" +
-      'border-radius:8px;font:600 14px/1 system-ui;z-index:2147483647;' +
-      'box-shadow:0 4px 16px rgba(0,0,0,.35);transition:opacity .3s;' +
-      "color:'+(k?'#020617':'#fff')+';background:'+(k?'#34d399':'#ef4444');" +
-      'document.body.appendChild(e);' +
-      "setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.remove()},350)},2500)}" +
-      "fetch(a+'/links',{method:'POST'," +
-      "headers:{'Content-Type':'application/json','Authorization':'Bearer '+t}," +
-      'body:JSON.stringify({url:location.href})})' +
-      '.then(function(r){r.ok' +
-      "?n('\u2713 Saved to Linklater',true)" +
-      ":r.text().then(function(m){n('\u26a0 '+(m||'Error saving link'),false)})})" +
-      ".catch(function(){n('\u26a0 Could not reach Linklater',false)})" +
-      '})();';
-    bookmarkletReference.current.setAttribute('href', code);
+    let cancelled = false;
+    getBookmarkletToken()
+      .then((token) => {
+        if (!cancelled) setRawToken(token.rawToken);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setLoadError(
+            getErrorMessage(error, 'Failed to load bookmarklet token'),
+          );
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const code = rawToken ? buildBookmarkletCode(rawToken) : null;
+
+  // GOTCHA: React sanitizes `javascript:` URLs that are set declaratively via
+  // the `href` prop (replaces them with `about:blank`). Setting it via
+  // `setAttribute` after render bypasses this. See:
+  // https://github.com/facebook/react/issues/16382
+  useEffect(() => {
+    if (!bookmarkletReference.current || !code) return;
+    bookmarkletReference.current.setAttribute('href', code);
+  }, [code]);
+
+  const loading = rawToken === null && !loadError;
 
   return (
     <div
@@ -72,23 +67,53 @@ export default function BookmarkletSection() {
         Drag this button to your bookmarks bar. Click it on any page to save the
         link directly to Linklater.
       </p>
-      {/* eslint-disable-next-line jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-      <a
-        className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold ring-1 ring-[var(--border)] ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing active:scale-[0.96] transition duration-200`}
-        ref={bookmarkletReference}
-        aria-label="Drag this bookmarklet to your bookmarks bar. Click it on any page to save the link directly to Linklater."
-        onClick={(event) => event.preventDefault()}
-        draggable
-      >
-        <i
-          className="fa-solid fa-bookmark text-[var(--text-subtle)] text-[0.7rem]"
-          aria-hidden="true"
+      {loading && (
+        <p className="text-[var(--text-subtle)] text-xs" role="status">
+          Generating your bookmarklet…
+        </p>
+      )}
+      {loadError && <Alert variant="error">{loadError}</Alert>}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+        <a
+          ref={bookmarkletReference}
+          // Placeholder href so the element exposes the `link` role from
+          // first paint; the real `javascript:` URL is swapped in via
+          // `setAttribute` once the token resolves.
+          href="#"
+          aria-busy={loading}
+          aria-label="Drag this bookmarklet to your bookmarks bar. Click it on any page to save the link directly to Linklater."
+          className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold ring-1 ring-[var(--border)] ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing active:scale-[0.96] transition duration-200 aria-busy:opacity-50 aria-busy:cursor-wait aria-busy:pointer-events-none`}
+          draggable
+          onClick={(event) => event.preventDefault()}
+        >
+          <i
+            aria-hidden="true"
+            className="fa-solid fa-bookmark text-[var(--text-subtle)] text-[0.7rem]"
+          />
+          Save to Linklater
+        </a>
+        <BookmarkletCopyButton code={code} disabled={loading} />
+      </div>
+      {rawToken && (
+        <BookmarkletRegenerateButton
+          regenerate={regenerateBookmarkletToken}
+          onRegenerated={setRawToken}
         />
-        Save to Linklater
-      </a>
-      <p className="mb-8 text-[var(--text-subtle)] text-xs text-pretty">
-        Your auth token is embedded in this bookmarklet. Keep it private. It
-        expires after 90 days. Reinstall it from this page when it does.
+      )}
+      <p className="flex items-start gap-1.5 text-[var(--text-subtle)] text-xs text-pretty">
+        <i
+          aria-hidden="true"
+          className="fa-solid fa-triangle-exclamation mt-0.5"
+        />
+        <span>
+          Your bookmarklet token is embedded above and never expires. If you
+          lose a device or want to invalidate the install,{' '}
+          <span className="font-semibold">
+            regenerate below — your old bookmarklet will stop working
+            immediately.
+          </span>
+        </span>
       </p>
     </div>
   );

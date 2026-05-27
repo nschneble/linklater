@@ -27,6 +27,12 @@ interface AlertProps {
   icon?: string;
   /** Stable `id` so inputs can reference this alert via `aria-describedby`. */
   id?: string;
+  /**
+   * When set, makes the alert programmatically focusable so callers can
+   * `.focus()` it on appearance — needed when a sibling button keeps focus
+   * and a focused element's own re-render is not reliably re-announced.
+   */
+  tabIndex?: number;
   /** `'error'` renders red; `'success'` renders green. */
   variant: 'error' | 'success';
 }
@@ -77,6 +83,7 @@ export default function Alert({
   className = '',
   icon,
   id,
+  tabIndex,
   variant,
 }: AlertProps) {
   const { baseTheme, mode } = useThemeStyling();
@@ -91,7 +98,8 @@ export default function Alert({
   return (
     <p
       id={id}
-      className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 ${resolvedClasses} ${className}`}
+      tabIndex={tabIndex}
+      className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${resolvedClasses} ${className}`}
       role={variantRoles[variant]}
     >
       <i className={`fa-solid ${resolvedIcon} text-xs`} aria-hidden="true" />
