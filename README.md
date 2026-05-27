@@ -124,11 +124,12 @@ cp apps/web/.env.example apps/web/.env
 
 ```bash
 # cd /path/to/your/repo
-npm run migrate:reset --workspace @linklater/api
-npm run migrate --workspace @linklater/api
+bin/migrate
+bin/migrate --reset
+bin/migrate --help
 ```
 
-> **Note:** Use `npm run migrate` instead of `npx prisma migrate dev` directly. Prisma 7's `prisma-client` generator requires a custom output path, so `migrate dev` does not automatically regenerate the client.
+> **Note:** Use `bin/migrate` or `npm run migrate` instead of `npx prisma migrate dev` directly. Prisma 7's `prisma-client` generator requires a custom output path, so `migrate dev` does not automatically regenerate the client.
 
 ### Start Development Server
 

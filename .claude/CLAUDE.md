@@ -32,6 +32,8 @@ linklater/
 bin/dev                                           # Start development server + Mailpit at http://localhost:8025 (captures all outgoing dev email)
 bin/flintest                                      # Install, format, lint, test, build
 bin/flintest --update                             # Update, install, format, lint, test, build
+bin/migrate                                       # Run Prisma migrations
+bin/migrate --reset                               # Wipe + re-run migrations
 
 # Setup
 npm install                                       # Install dependencies
