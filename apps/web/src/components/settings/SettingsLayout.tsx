@@ -1,6 +1,9 @@
 import SettingsSectionNav from './SettingsSectionNav';
 import SettingsSidebar from './SettingsSidebar';
-import { isPlainAnchorClick, scrollToSettingsSection } from './settingsScroll';
+import {
+  isPlainAnchorClick,
+  navigateToSettingsSection,
+} from './settingsScroll';
 import { useNavigate } from 'react-router-dom';
 import type { MouseEvent, ReactNode } from 'react';
 import type { SettingsSection } from './settingsSections';
@@ -28,13 +31,15 @@ export default function SettingsLayout({
   const firstHash = sections[0]?.hash;
   const navigate = useNavigate();
 
-  // Route the skip link through the same scroll helper as the sidebar so
-  // keyboard users land at the same position as deep-link navigation.
+  // Route the skip link through the same intent-token nav as the sidebar so
+  // keyboard users land at the same position as deep-link navigation. The
+  // scroll-owner effect in `useSettingsScrollSpy` owns the scroll + focus;
+  // the skip link only needs to fire the navigation (no direct scroll call,
+  // which would compete with that effect).
   function handleSkipClick(event: MouseEvent<HTMLAnchorElement>) {
     if (!firstHash || !isPlainAnchorClick(event)) return;
     event.preventDefault();
-    scrollToSettingsSection(firstHash);
-    navigate(`/settings/${firstHash}`);
+    navigateToSettingsSection(navigate, firstHash);
   }
 
   return (

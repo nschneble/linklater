@@ -1,3 +1,5 @@
+import type { NavigateFunction } from 'react-router-dom';
+
 /** Resolves `prefers-reduced-motion` in an SSR/test-safe way. */
 function prefersReducedMotion(): boolean {
   return (
@@ -89,4 +91,29 @@ export function isPlainAnchorClick(event: {
     !event.altKey &&
     !event.defaultPrevented
   );
+}
+
+let settingsIntentSequence = 0;
+
+/**
+ * Navigates to a Settings section, tagging the navigation with a fresh,
+ * monotonically increasing intent token in history state.
+ * `useSettingsScrollSpy` keys its scroll-and-focus effect on this token, so
+ * every genuine navigation — sidebar click, mobile chip, skip link, even a
+ * repeat click on the section the user is already on — triggers a scroll,
+ * while the scroll-spy's own `activeHash` updates (which never navigate) are
+ * ignored. This is what makes the navigation deterministic: there is no
+ * scroll-driven URL echo to disambiguate, so a click can never be swallowed.
+ *
+ * The token is a plain incrementing counter (not `Date.now()`) so it stays
+ * deterministic under tests and cannot collide.
+ */
+export function navigateToSettingsSection(
+  navigate: NavigateFunction,
+  hash: string,
+): void {
+  settingsIntentSequence += 1;
+  navigate(`/settings/${hash}`, {
+    state: { settingsIntent: settingsIntentSequence },
+  });
 }

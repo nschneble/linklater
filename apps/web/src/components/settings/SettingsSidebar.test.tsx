@@ -64,9 +64,11 @@ describe('SettingsSidebar', () => {
     expect(buttons[2]).not.toHaveAttribute('aria-current');
   });
 
-  it('calls navigate with the section path when a button is clicked', () => {
+  it('navigates to the section path with an intent token when clicked', () => {
     renderSidebar({ sections: SECTIONS, activeHash: 'account' });
     fireEvent.click(screen.getByRole('button', { name: /security/i }));
-    expect(navigateMock).toHaveBeenCalledWith('/settings/security');
+    expect(navigateMock).toHaveBeenCalledWith('/settings/security', {
+      state: { settingsIntent: expect.any(Number) },
+    });
   });
 });

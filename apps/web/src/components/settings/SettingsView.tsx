@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import AccountSettingsForm from './AccountSettingsForm';
 import ApiTokensSection from './ApiTokensSection';
@@ -12,7 +12,6 @@ import SettingsLayout from './SettingsLayout';
 import IdPsSection from './IdPsSection';
 import StumbleSection from '../stumble/StumbleSection';
 import TwoFactorSection from './TwoFactorSection';
-import { scrollToSettingsSection } from './settingsScroll';
 import { useSettingsScrollSpy } from './useSettingsScrollSpy';
 import type { SettingsSection } from './settingsSections';
 
@@ -37,7 +36,6 @@ export default function SettingsView({
   googleEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
 }: SettingsViewProps = {}) {
   const { user } = useAuth();
-  const { section } = useParams<{ section?: string }>();
   const [searchParameters, setSearchParameters] = useSearchParams();
 
   // Capture flash messages from query params on mount and store them in state
@@ -125,28 +123,6 @@ export default function SettingsView({
   );
 
   const { activeHash } = useSettingsScrollSpy({ sectionIds });
-
-  // Tracked-section navigation (deep link, sidebar click, page load at
-  // `/settings/<section>`) scrolls + focuses inside `useSettingsScrollSpy`,
-  // which can tell a genuine navigation apart from its own scroll-driven URL
-  // echoes and so won't yank the viewport while the user scrolls.
-  //
-  // This effect covers only the *sub-section* anchors that live inside a
-  // group but are not top-level scroll-spy sections — e.g. the WelcomeModal
-  // lands on `/settings/bookmarklet`, which targets the `#bookmarklet`
-  // element nested inside the `bookmarks` group. `scrollToSettingsSection`
-  // no-ops when no element with that id exists, so a stray path segment is
-  // harmless.
-  //
-  // Sections near the page bottom (Integrations, Danger) can drift after the
-  // initial scroll because async content (the PAT list, the bookmarklet
-  // token) loads after first paint and extends the page above them. That
-  // drift is corrected by `useReanchorOnLoad` inside each async section,
-  // which re-fires the scroll once when its data settles — no ResizeObserver.
-  useEffect(() => {
-    if (!section || sectionIds.includes(section)) return;
-    scrollToSettingsSection(section);
-  }, [section, sectionIds]);
 
   return (
     <EmailPrefillProvider value={emailPrefillValue}>

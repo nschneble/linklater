@@ -1,4 +1,5 @@
 import IconListButton from '../common/IconListButton';
+import { navigateToSettingsSection } from './settingsScroll';
 import { useNavigate } from 'react-router-dom';
 import type { SettingsSection } from './settingsSections';
 
@@ -38,7 +39,9 @@ export default function SettingsSidebar({
               <IconListButton
                 icon={section.icon}
                 aria-current={isActive ? 'page' : undefined}
-                onClick={() => navigate(`/settings/${section.hash}`)}
+                onClick={() =>
+                  navigateToSettingsSection(navigate, section.hash)
+                }
               >
                 {section.label}
               </IconListButton>

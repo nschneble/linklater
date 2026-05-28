@@ -94,9 +94,11 @@ describe('SettingsSectionNav', () => {
     );
   });
 
-  it('calls navigate with the section path when a chip is clicked', () => {
+  it('navigates to the section path with an intent token when a chip is clicked', () => {
     renderNav({ sections: SECTIONS, activeHash: 'account' });
     fireEvent.click(screen.getByRole('button', { name: /integrations/i }));
-    expect(navigateMock).toHaveBeenCalledWith('/settings/integrations');
+    expect(navigateMock).toHaveBeenCalledWith('/settings/integrations', {
+      state: { settingsIntent: expect.any(Number) },
+    });
   });
 });

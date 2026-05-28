@@ -1,4 +1,5 @@
 import { FOCUS_RING } from '../../lib/styles';
+import { navigateToSettingsSection } from './settingsScroll';
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SettingsSection } from './settingsSections';
@@ -59,7 +60,9 @@ export default function SettingsSectionNav({
                 type="button"
                 aria-current={isActive ? 'page' : undefined}
                 ref={isActive ? activeReference : undefined}
-                onClick={() => navigate(`/settings/${section.hash}`)}
+                onClick={() =>
+                  navigateToSettingsSection(navigate, section.hash)
+                }
                 className={`group inline-flex items-center gap-1.5 min-h-10 px-3.5 py-2 bg-transparent text-[var(--text-muted)] hover:text-[var(--text)] ring-1 ring-[var(--border)]/60 font-medium aria-[current]:bg-[var(--bg-elevated)] aria-[current]:text-[var(--text)] aria-[current]:ring-[var(--border)] aria-[current]:font-semibold text-xs ${FOCUS_RING} rounded-full cursor-pointer motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] whitespace-nowrap`}
               >
                 <i

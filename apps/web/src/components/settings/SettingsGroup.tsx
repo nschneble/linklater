@@ -51,19 +51,24 @@ const DESCRIPTION_CLASSES = {
  * SettingsView scroll effect move focus here so screen-reader users land on
  * the group when they follow a deep link.
  *
- * When `activeSection === id`, an accent bar appears in the gutter at the
- * group's left edge (a `::before` pseudo-element translated fully into the
- * gap so it sits against the page background `--bg`, not the card surface).
- * The page background is the highest-contrast pairing for `--accent` across
- * every theme — an accent ring on the card surface failed WCAG 1.4.11 in
- * most dark themes because `--accent` and `--bg-surface` are too close in
- * luminance. The bar is driven off the `data-active` attribute via a Tailwind
- * `data-[active=true]:` variant so visual and data state stay locked together,
- * and is kept visually distinct from the keyboard focus ring (`ring-2` full
- * accent). A `forced-colors` companion swaps the bar to `Highlight` (and the
- * focus ring to a `ButtonText` outline) for Windows High Contrast Mode, where
- * box-shadow-based rings are ignored. The fade-in is gated behind
- * `motion-safe` so reduced-motion users get an unanimated state change.
+ * When `activeSection === id`, the card gains a 3px accent `outline` plus an
+ * accent border color. The outline renders just outside the border edge,
+ * against the page background `--bg` — the highest-contrast pairing for
+ * `--accent` across every theme. (An accent indicator on the card surface
+ * fails WCAG 1.4.11 in dark themes where `--accent` and `--bg-surface` are
+ * close in luminance.) At 3px the indicator clears the WCAG non-text
+ * "thick line" consideration, and its presence/absence — not just its hue —
+ * signals the active state, satisfying 1.4.1 (use of color). It is driven off
+ * the `data-active` attribute via a Tailwind `data-[active=true]:` variant so
+ * visual and data state stay locked together.
+ *
+ * The active `outline` and the keyboard focus `ring-2` live on different
+ * layers and never merge: `focus-visible:outline-none` drops the active
+ * outline exactly when the focus ring renders (same `:focus-visible`
+ * modality), so there is never a frame showing neither indicator; the active
+ * outline returns once focus leaves. A `forced-colors` companion maps the
+ * active outline to `Highlight` and the focus outline to `ButtonText` for
+ * Windows High Contrast Mode, where box-shadow rings are ignored.
  */
 export default function SettingsGroup({
   id,
@@ -82,7 +87,7 @@ export default function SettingsGroup({
       tabIndex={-1}
       aria-labelledby={headingId}
       data-active={activeSection === id}
-      className={`relative scroll-mt-24 p-5 sm:p-6 ${VARIANT_CLASSES[variant]} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] forced-colors:focus-visible:outline forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded-2xl before:absolute before:left-0 before:inset-y-5 before:w-1 before:-translate-x-full before:bg-[var(--accent)] before:rounded-full before:opacity-0 before:content-[''] data-[active=true]:before:opacity-100 forced-colors:before:bg-[Highlight] motion-safe:before:transition-opacity`}
+      className={`relative scroll-mt-24 p-5 sm:p-6 ${VARIANT_CLASSES[variant]} data-[active=true]:border-[var(--accent)] data-[active=true]:outline data-[active=true]:outline-[3px] data-[active=true]:outline-[var(--accent)] forced-colors:data-[active=true]:outline-[Highlight] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] forced-colors:focus-visible:outline forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded-2xl motion-safe:transition-[border-color,outline-color]`}
     >
       <header className={description ? 'mb-5' : 'mb-4'}>
         <h2

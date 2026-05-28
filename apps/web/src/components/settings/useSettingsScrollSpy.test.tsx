@@ -1,6 +1,13 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { navigateToSettingsSection } from './settingsScroll';
 import { useSettingsScrollSpy } from './useSettingsScrollSpy';
 
 type ObserverCallback = (entries: IntersectionObserverEntry[]) => void;
@@ -34,47 +41,25 @@ function emit(entries: { id: string; isIntersecting: boolean }[]) {
   }
 }
 
-// The spy is wired to the *real* react-router navigate so a clicked nav
-// button performs a genuine URL change (and re-fires the section-param
-// effect), exactly as the production sidebar does. `navigateMock` records
-// the calls for assertions but also delegates, so the hook's own
-// `replace` echoes are both observable and actually applied to the URL.
-const navigateMock = vi.fn();
-let realNavigate: (
-  to: string,
-  options?: { replace?: boolean },
-) => void = () => {};
-// A stable wrapper so the hook's effect dependency on `navigate` doesn't
-// change every render. Records the call for assertions, then delegates to
-// the live react-router navigate captured below.
-function navigateWrapper(to: string, options?: { replace?: boolean }) {
-  navigateMock(to, options);
-  realNavigate(to, options);
-}
-vi.mock('react-router-dom', async () => {
-  const actual =
-    await vi.importActual<typeof import('react-router-dom')>(
-      'react-router-dom',
-    );
-  return {
-    ...actual,
-    useNavigate: () => {
-      realNavigate = actual.useNavigate();
-      return navigateWrapper;
-    },
-  };
-});
-
+// The harness drives navigation through the real `navigateToSettingsSection`
+// helper (with the live react-router navigate), exactly as the production
+// sidebar/chip/skip-link do. There is no navigate mock: the spy no longer
+// calls navigate itself, so navigation is purely an *input* here. `pathname`
+// is surfaced so tests can assert the URL never changes on a scroll-driven
+// (observer) update.
 function ScrollSpyHarness({ sectionIds }: { sectionIds: string[] }) {
   const { activeHash } = useSettingsScrollSpy({ sectionIds });
+  const navigate = useNavigate();
+  const location = useLocation();
   return (
     <div>
       <div data-testid="active">{activeHash}</div>
+      <div data-testid="pathname">{location.pathname}</div>
       {sectionIds.map((id) => (
         <button
           key={id}
           data-testid={`navigate-${id}`}
-          onClick={() => realNavigate(`/settings/${id}`)}
+          onClick={() => navigateToSettingsSection(navigate, id)}
         >
           navigate {id}
         </button>
@@ -103,7 +88,6 @@ function renderHarness(route: string, sectionIds: string[]) {
 
 beforeEach(() => {
   observerCallbacks = [];
-  navigateMock.mockReset();
   Element.prototype.scrollIntoView = vi.fn();
   // jsdom implements `focus` on `HTMLElement.prototype`, which shadows
   // anything assigned to `Element.prototype.focus` (a `<section>` resolves
@@ -127,177 +111,190 @@ afterEach(() => {
 });
 
 describe('useSettingsScrollSpy', () => {
-  it('defaults to the first section when there is no section param', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    expect(screen.getByTestId('active')).toHaveTextContent('account');
-  });
-
-  it('initialises to the URL section param when it matches a section', () => {
-    renderHarness('/settings/integrations', [
-      'account',
-      'security',
-      'integrations',
-    ]);
-    expect(screen.getByTestId('active')).toHaveTextContent('integrations');
-  });
-
-  it('falls back to the first section when the param is not in the list', () => {
-    renderHarness('/settings/unknown', ['account', 'security']);
-    expect(screen.getByTestId('active')).toHaveTextContent('account');
-  });
-
-  it('updates activeHash when an observer entry intersects', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    emit([
-      { id: 'security', isIntersecting: true },
-      { id: 'account', isIntersecting: false },
-    ]);
-    expect(screen.getByTestId('active')).toHaveTextContent('security');
-  });
-
-  it('picks the first intersecting section in document order', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    emit([
-      { id: 'integrations', isIntersecting: true },
-      { id: 'security', isIntersecting: true },
-    ]);
-    expect(screen.getByTestId('active')).toHaveTextContent('security');
-  });
-
-  it('keeps the previous active value when nothing intersects', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    emit([{ id: 'security', isIntersecting: true }]);
-    expect(screen.getByTestId('active')).toHaveTextContent('security');
-    emit([{ id: 'security', isIntersecting: false }]);
-    expect(screen.getByTestId('active')).toHaveTextContent('security');
-  });
-
-  it('snaps activeHash to a genuine navigation target', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    act(() => {
-      screen.getByTestId('navigate-integrations').click();
+  describe('initial active section', () => {
+    it('defaults to the first section when there is no section param', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      expect(screen.getByTestId('active')).toHaveTextContent('account');
     });
-    expect(screen.getByTestId('active')).toHaveTextContent('integrations');
-  });
 
-  it('pins activeHash through subsequent observer entries after navigation', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    act(() => {
-      screen.getByTestId('navigate-integrations').click();
+    it('initialises to the URL section param when it matches a section', () => {
+      renderHarness('/settings/integrations', [
+        'account',
+        'security',
+        'integrations',
+      ]);
+      expect(screen.getByTestId('active')).toHaveTextContent('integrations');
     });
-    // Observer fires mid-scroll claiming a different section is in view.
-    // The intent pin must hold until the user actually scrolls.
-    emit([
-      { id: 'security', isIntersecting: true },
-      { id: 'integrations', isIntersecting: false },
-    ]);
-    expect(screen.getByTestId('active')).toHaveTextContent('integrations');
-  });
 
-  it('releases the intent pin when the user produces a wheel event', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    act(() => {
-      screen.getByTestId('navigate-integrations').click();
-    });
-    expect(screen.getByTestId('active')).toHaveTextContent('integrations');
-    // Pre-load intersection state with security in view.
-    emit([{ id: 'security', isIntersecting: true }]);
-    // Intent still active — observer call was ignored, activeHash stays.
-    expect(screen.getByTestId('active')).toHaveTextContent('integrations');
-    // User scrolls — release intent and recompute from intersection state.
-    act(() => {
-      fireEvent.wheel(window);
-    });
-    expect(screen.getByTestId('active')).toHaveTextContent('security');
-  });
-
-  it('pins activeHash to the initial URL section param so observer cannot override', () => {
-    renderHarness('/settings/integrations', [
-      'account',
-      'security',
-      'integrations',
-    ]);
-    // Page just loaded with a section param — emulate the observer reporting
-    // that a different section is currently in the band.
-    emit([
-      { id: 'security', isIntersecting: true },
-      { id: 'integrations', isIntersecting: false },
-    ]);
-    expect(screen.getByTestId('active')).toHaveTextContent('integrations');
-  });
-
-  it('calls navigate(/settings/<hash>, { replace: true }) when scroll changes the active section', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    emit([{ id: 'security', isIntersecting: true }]);
-    expect(navigateMock).toHaveBeenCalledWith('/settings/security', {
-      replace: true,
+    it('falls back to the first section when the param is not in the list', () => {
+      renderHarness('/settings/unknown', ['account', 'security']);
+      expect(screen.getByTestId('active')).toHaveTextContent('account');
     });
   });
 
-  it('does not push history entries on scroll-driven section changes', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    emit([{ id: 'security', isIntersecting: true }]);
-    for (const call of navigateMock.mock.calls) {
-      expect(call[1]).toEqual({ replace: true });
-    }
-  });
-
-  it('keeps tracking the active section after its own URL echo (no sticky pin)', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    // First scroll-driven change mirrors the URL to `security` via `replace`.
-    // The spy must consume that echo without re-pinning intent — a subsequent
-    // scroll past `integrations` must still advance the active section.
-    emit([{ id: 'security', isIntersecting: true }]);
-    expect(screen.getByTestId('active')).toHaveTextContent('security');
-    emit([
-      { id: 'integrations', isIntersecting: true },
-      { id: 'security', isIntersecting: false },
-    ]);
-    expect(screen.getByTestId('active')).toHaveTextContent('integrations');
-  });
-
-  it('does not scroll the viewport on a scroll-driven (echo) section change', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    (Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>).mockClear();
-    emit([{ id: 'security', isIntersecting: true }]);
-    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
-  });
-
-  it('scrolls + focuses the target on a genuine navigation (deep link / sidebar click)', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    (Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>).mockClear();
-    (HTMLElement.prototype.focus as ReturnType<typeof vi.fn>).mockClear();
-
-    act(() => {
-      screen.getByTestId('navigate-integrations').click();
+  describe('scroll-spy (IntersectionObserver)', () => {
+    it('updates activeHash when an observer entry intersects', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      emit([
+        { id: 'security', isIntersecting: true },
+        { id: 'account', isIntersecting: false },
+      ]);
+      expect(screen.getByTestId('active')).toHaveTextContent('security');
     });
 
-    expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
-    expect(HTMLElement.prototype.focus).toHaveBeenCalled();
-    expect(screen.getByTestId('active')).toHaveTextContent('integrations');
+    it('picks the first intersecting section in document order', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      emit([
+        { id: 'integrations', isIntersecting: true },
+        { id: 'security', isIntersecting: true },
+      ]);
+      expect(screen.getByTestId('active')).toHaveTextContent('security');
+    });
+
+    it('keeps the previous active value when nothing intersects', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      emit([{ id: 'security', isIntersecting: true }]);
+      expect(screen.getByTestId('active')).toHaveTextContent('security');
+      emit([{ id: 'security', isIntersecting: false }]);
+      expect(screen.getByTestId('active')).toHaveTextContent('security');
+    });
+
+    it('keeps tracking as the user scrolls past multiple sections', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      emit([{ id: 'security', isIntersecting: true }]);
+      expect(screen.getByTestId('active')).toHaveTextContent('security');
+      emit([
+        { id: 'integrations', isIntersecting: true },
+        { id: 'security', isIntersecting: false },
+      ]);
+      expect(screen.getByTestId('active')).toHaveTextContent('integrations');
+    });
+
+    it('never navigates on a scroll-driven change (URL is unchanged)', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      expect(screen.getByTestId('pathname')).toHaveTextContent('/settings');
+      emit([{ id: 'security', isIntersecting: true }]);
+      expect(screen.getByTestId('active')).toHaveTextContent('security');
+      // The spy mirrors nothing into the URL — the path stays put.
+      expect(screen.getByTestId('pathname')).toHaveTextContent('/settings');
+    });
+
+    it('does not scroll the viewport on a scroll-driven change', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      (
+        Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>
+      ).mockClear();
+      emit([{ id: 'security', isIntersecting: true }]);
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    });
   });
 
-  it('suppresses an observer echo (no scroll/focus) yet honors a later genuine navigation', () => {
-    renderHarness('/settings', ['account', 'security', 'integrations']);
-    // Observer echo to `security`: mirrors the URL via `replace`, consumed as
-    // a one-shot echo, so it must NOT scroll or focus the section.
-    (Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>).mockClear();
-    (HTMLElement.prototype.focus as ReturnType<typeof vi.fn>).mockClear();
-    emit([{ id: 'security', isIntersecting: true }]);
-    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
-    expect(HTMLElement.prototype.focus).not.toHaveBeenCalled();
-
-    // A subsequent genuine navigation to a different section (not preceded by
-    // a spy echo for it) has no pending echo to consume, so it must scroll +
-    // focus the target. With the old name-based guard, a stale guard value
-    // could wrongly swallow this; the one-shot echo counter cannot.
-    (Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>).mockClear();
-    (HTMLElement.prototype.focus as ReturnType<typeof vi.fn>).mockClear();
-    act(() => {
-      screen.getByTestId('navigate-integrations').click();
+  describe('genuine navigation (intent token)', () => {
+    it('snaps activeHash to a navigation target', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      act(() => {
+        screen.getByTestId('navigate-integrations').click();
+      });
+      expect(screen.getByTestId('active')).toHaveTextContent('integrations');
     });
-    expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
-    expect(HTMLElement.prototype.focus).toHaveBeenCalled();
-    expect(screen.getByTestId('active')).toHaveTextContent('integrations');
+
+    it('scrolls + focuses the target on navigation', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      (
+        Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>
+      ).mockClear();
+      (HTMLElement.prototype.focus as ReturnType<typeof vi.fn>).mockClear();
+
+      act(() => {
+        screen.getByTestId('navigate-integrations').click();
+      });
+
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
+      expect(HTMLElement.prototype.focus).toHaveBeenCalled();
+      expect(screen.getByTestId('active')).toHaveTextContent('integrations');
+    });
+
+    it('re-scrolls on a repeat click of the already-active section', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      act(() => {
+        screen.getByTestId('navigate-integrations').click();
+      });
+      // A fresh intent token is minted per click, so navigating to the
+      // section the user is already on still re-fires the scroll. This is the
+      // case the old echo-counter could swallow.
+      (
+        Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>
+      ).mockClear();
+      act(() => {
+        screen.getByTestId('navigate-integrations').click();
+      });
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
+      expect(screen.getByTestId('active')).toHaveTextContent('integrations');
+    });
+
+    it('pins activeHash through subsequent observer entries after navigation', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      act(() => {
+        screen.getByTestId('navigate-integrations').click();
+      });
+      // Observer fires mid-scroll claiming a different section is in view.
+      // The intent pin must hold until the user actually scrolls.
+      emit([
+        { id: 'security', isIntersecting: true },
+        { id: 'integrations', isIntersecting: false },
+      ]);
+      expect(screen.getByTestId('active')).toHaveTextContent('integrations');
+    });
+
+    it('releases the intent pin when the user produces a wheel event', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      act(() => {
+        screen.getByTestId('navigate-integrations').click();
+      });
+      expect(screen.getByTestId('active')).toHaveTextContent('integrations');
+      // Pre-load intersection state with security in view.
+      emit([{ id: 'security', isIntersecting: true }]);
+      // Intent still active — observer call was ignored, activeHash stays.
+      expect(screen.getByTestId('active')).toHaveTextContent('integrations');
+      // User scrolls — release intent and recompute from intersection state.
+      act(() => {
+        fireEvent.wheel(window);
+      });
+      expect(screen.getByTestId('active')).toHaveTextContent('security');
+    });
+  });
+
+  describe('deep link', () => {
+    it('pins activeHash to the initial URL section param so observer cannot override', () => {
+      renderHarness('/settings/integrations', [
+        'account',
+        'security',
+        'integrations',
+      ]);
+      // Page just loaded with a section param — emulate the observer reporting
+      // that a different section is currently in the band.
+      emit([
+        { id: 'security', isIntersecting: true },
+        { id: 'integrations', isIntersecting: false },
+      ]);
+      expect(screen.getByTestId('active')).toHaveTextContent('integrations');
+    });
+
+    it('scrolls + focuses the deep-linked section on mount', () => {
+      renderHarness('/settings/integrations', [
+        'account',
+        'security',
+        'integrations',
+      ]);
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'start' }),
+      );
+      expect(HTMLElement.prototype.focus).toHaveBeenCalled();
+    });
+
+    it('does not scroll on mount when there is no section param', () => {
+      renderHarness('/settings', ['account', 'security', 'integrations']);
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    });
   });
 });
