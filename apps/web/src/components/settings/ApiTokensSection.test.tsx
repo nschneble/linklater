@@ -190,10 +190,11 @@ describe('ApiTokensSection', () => {
     await waitFor(() =>
       screen.getByRole('button', { name: /generate new token/i }),
     );
-    const link = screen.getByRole('link', {
-      name: /view the api documentation/i,
-    });
-    expect(link).toHaveAttribute('href', '/settings/api');
+    expect(
+      screen.getByRole('button', {
+        name: /view the api documentation/i,
+      }),
+    ).toBeInTheDocument();
   });
 
   it('calls revokeApiToken when a token is revoked', async () => {
