@@ -1,12 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import ApiTokensSection from './ApiTokensSection';
 
-function renderInRouter() {
+// Render under the `/settings/:section?` route so the `useReanchorOnLoad`
+// hook inside `ApiTokensSection` sees a real `section` param (via `useParams`)
+// and its re-anchor path is actually representable, rather than silently
+// no-opping because `useParams` returns `{}`.
+function renderInRouter(route = '/settings/integrations') {
   return render(
-    <MemoryRouter>
-      <ApiTokensSection />
+    <MemoryRouter initialEntries={[route]}>
+      <Routes>
+        <Route path="/settings/:section?" element={<ApiTokensSection />} />
+      </Routes>
     </MemoryRouter>,
   );
 }
@@ -51,6 +57,10 @@ const makeApiToken = (overrides = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Under a real `/settings/:section?` route the `useReanchorOnLoad` hook may
+  // fire `scrollIntoView` once the token list resolves. jsdom doesn't
+  // implement it, so stub it out to keep the re-anchor path inert.
+  Element.prototype.scrollIntoView = vi.fn();
   vi.mocked(apiModule.listApiTokens).mockResolvedValue([]);
 });
 

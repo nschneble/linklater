@@ -134,6 +134,34 @@ describe('AppShell — page title', () => {
   });
 });
 
+describe('AppShell — settings section routing', () => {
+  it('resolves /settings/bookmarklet to the settings view, not a 404', () => {
+    renderOnRoute('/settings/bookmarklet');
+    expect(document.title).toBe('Settings – Linklater');
+    expect(
+      screen.getByRole('heading', { level: 1, name: /^settings$/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('resolves an arbitrary /settings/<section> to the settings view', () => {
+    renderOnRoute('/settings/integrations');
+    expect(document.title).toBe('Settings – Linklater');
+    expect(
+      screen.getByRole('heading', { level: 1, name: /^settings$/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('resolves /settings/api to the API docs view, not the settings view', () => {
+    // Guards against `pathname.startsWith('/settings/')` collapsing the
+    // dedicated API docs route into the generic settings view.
+    renderOnRoute('/settings/api');
+    expect(document.title).toBe('API documentation – Linklater');
+    expect(
+      screen.queryByRole('heading', { level: 1, name: /^settings$/i }),
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe('AppShell — focus management on route change', () => {
   it('does not focus main on the initial render', () => {
     const { container } = renderOnRoute('/unread');

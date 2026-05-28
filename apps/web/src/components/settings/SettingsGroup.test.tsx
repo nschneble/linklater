@@ -90,4 +90,42 @@ describe('SettingsGroup', () => {
     );
     expect(screen.getByTestId('child')).toBeInTheDocument();
   });
+
+  describe('active section ring', () => {
+    it('sets data-active="true" when activeSection matches the id', () => {
+      render(
+        <SettingsGroup id="account" title="Account" activeSection="account">
+          <p>content</p>
+        </SettingsGroup>,
+      );
+      expect(document.getElementById('account')).toHaveAttribute(
+        'data-active',
+        'true',
+      );
+    });
+
+    it('sets data-active="false" when activeSection does not match the id', () => {
+      render(
+        <SettingsGroup id="account" title="Account" activeSection="security">
+          <p>content</p>
+        </SettingsGroup>,
+      );
+      expect(document.getElementById('account')).toHaveAttribute(
+        'data-active',
+        'false',
+      );
+    });
+
+    it('defaults data-active to "false" when activeSection is not provided', () => {
+      render(
+        <SettingsGroup id="account" title="Account">
+          <p>content</p>
+        </SettingsGroup>,
+      );
+      expect(document.getElementById('account')).toHaveAttribute(
+        'data-active',
+        'false',
+      );
+    });
+  });
 });

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import AccountSettingsForm from './AccountSettingsForm';
 import ApiTokensSection from './ApiTokensSection';
@@ -37,7 +37,7 @@ export default function SettingsView({
   googleEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
 }: SettingsViewProps = {}) {
   const { user } = useAuth();
-  const location = useLocation();
+  const { section } = useParams<{ section?: string }>();
   const [searchParameters, setSearchParameters] = useSearchParams();
 
   // Capture flash messages from query params on mount and store them in state
@@ -120,95 +120,43 @@ export default function SettingsView({
   }, [showSecurity]);
 
   const sectionIds = useMemo(
-    () => sections.map((section) => section.hash),
+    () => sections.map((settingsSection) => settingsSection.hash),
     [sections],
   );
 
-  const { activeHash, markIntent } = useSettingsScrollSpy({ sectionIds });
+  const { activeHash } = useSettingsScrollSpy({ sectionIds });
 
-  // React Router does not auto-scroll to the URL hash on SPA navigation.
-  // When something deep-links into a settings section (e.g. the WelcomeModal
-  // buttons land on `/settings#bookmarklet`), scroll the section into view
-  // and move focus to it so screen reader and keyboard users land where the
-  // sighted user does.
+  // Tracked-section navigation (deep link, sidebar click, page load at
+  // `/settings/<section>`) scrolls + focuses inside `useSettingsScrollSpy`,
+  // which can tell a genuine navigation apart from its own scroll-driven URL
+  // echoes and so won't yank the viewport while the user scrolls.
   //
-  // For sections near the page bottom (Integrations, Danger), the initial
-  // page height can be shorter than what is needed to scroll the section
-  // to viewport top — async content (the PAT list in particular) loads in
-  // a mount effect and extends the page after our scroll. A ResizeObserver
-  // re-anchors instantly whenever the body grows, until the user produces
-  // real scroll input or 2s elapses. Re-anchors skip focus so a user who
-  // tabbed away is not yanked back.
+  // This effect covers only the *sub-section* anchors that live inside a
+  // group but are not top-level scroll-spy sections — e.g. the WelcomeModal
+  // lands on `/settings/bookmarklet`, which targets the `#bookmarklet`
+  // element nested inside the `bookmarks` group. `scrollToSettingsSection`
+  // no-ops when no element with that id exists, so a stray path segment is
+  // harmless.
+  //
+  // Sections near the page bottom (Integrations, Danger) can drift after the
+  // initial scroll because async content (the PAT list, the bookmarklet
+  // token) loads after first paint and extends the page above them. That
+  // drift is corrected by `useReanchorOnLoad` inside each async section,
+  // which re-fires the scroll once when its data settles — no ResizeObserver.
   useEffect(() => {
-    if (!location.hash) return;
-    const hash = location.hash.slice(1);
-    if (!scrollToSettingsSection(hash)) return;
-    if (typeof ResizeObserver === 'undefined') return;
-
-    const targetElement = document.getElementById(hash);
-    if (!targetElement) return;
-
-    let cancelled = false;
-    let lastTop = -1;
-    let initialFire = true;
-
-    function cancel() {
-      cancelled = true;
-    }
-    function handleFocusOutside(event: FocusEvent) {
-      if (cancelled) return;
-      if (!targetElement) return;
-      if (targetElement.contains(event.target as Node)) return;
-      cancel();
-    }
-
-    window.addEventListener('wheel', cancel, { passive: true });
-    window.addEventListener('touchmove', cancel, { passive: true });
-    document.addEventListener('focusin', handleFocusOutside);
-
-    const observer = new ResizeObserver(() => {
-      if (initialFire) {
-        initialFire = false;
-        return;
-      }
-      if (cancelled) return;
-      const newTop = targetElement.getBoundingClientRect().top + window.scrollY;
-      // Guard against ResizeObserver loops: if our re-anchor itself nudges
-      // layout (sticky chrome, scrollbar toggle), the resulting top delta
-      // is sub-pixel — skip those.
-      if (Math.abs(newTop - lastTop) < 4) return;
-      lastTop = newTop;
-      scrollToSettingsSection(hash, { instant: true, skipFocus: true });
-    });
-    observer.observe(document.body);
-
-    const timeoutId = setTimeout(() => {
-      cancel();
-      observer.disconnect();
-    }, 2000);
-
-    return () => {
-      cancel();
-      observer.disconnect();
-      clearTimeout(timeoutId);
-      window.removeEventListener('wheel', cancel);
-      window.removeEventListener('touchmove', cancel);
-      document.removeEventListener('focusin', handleFocusOutside);
-    };
-  }, [location.hash]);
+    if (!section || sectionIds.includes(section)) return;
+    scrollToSettingsSection(section);
+  }, [section, sectionIds]);
 
   return (
     <EmailPrefillProvider value={emailPrefillValue}>
-      <SettingsLayout
-        sections={sections}
-        activeHash={activeHash}
-        onNavigate={markIntent}
-      >
+      <SettingsLayout sections={sections} activeHash={activeHash}>
         <SettingsGroup
           id="account"
           title="Account"
           icon="fa-user"
           description="Manage your email address, password, and any identity providers (IdPs) you've connected."
+          activeSection={activeHash}
           divided
         >
           <AccountSettingsForm />
@@ -229,6 +177,7 @@ export default function SettingsView({
             title="Enhanced security"
             icon="fa-shield-halved"
             description="Manage multi-factor authentication. That's not overkill for a read-it-later app, right?"
+            activeSection={activeHash}
           >
             <TwoFactorSection />
           </SettingsGroup>
@@ -239,6 +188,7 @@ export default function SettingsView({
           title="Accessibility"
           icon="fa-universal-access"
           description="Adjust how Linklater looks and feels."
+          activeSection={activeHash}
         >
           <CvdModeToggle />
         </SettingsGroup>
@@ -248,6 +198,7 @@ export default function SettingsView({
           title="Browser bookmarks"
           icon="fa-book-open"
           description="Save and stumble upon links right from your bookmarks bar."
+          activeSection={activeHash}
         >
           <BookmarkletSection />
           <StumbleSection />
@@ -258,6 +209,7 @@ export default function SettingsView({
           title="Third-party integrations"
           icon="fa-plug"
           description="Use personal access tokens (PATs) to connect Linklater with external tools and services."
+          activeSection={activeHash}
         >
           <ApiTokensSection />
         </SettingsGroup>
@@ -268,6 +220,7 @@ export default function SettingsView({
           icon="fa-triangle-exclamation"
           description="Beware all ye who enter. Deleting your account will remove all your saved links. This cannot be undone."
           variant="danger"
+          activeSection={activeHash}
         >
           <DangerZone />
         </SettingsGroup>

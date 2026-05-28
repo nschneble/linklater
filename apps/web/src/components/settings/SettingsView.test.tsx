@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import SettingsView from './SettingsView';
 import type { User } from '../../auth/AuthContext';
@@ -128,7 +128,17 @@ function renderSettingsView({
 }: RenderOptions = {}) {
   return render(
     <MemoryRouter initialEntries={[route]}>
-      <SettingsView googleEnabled={googleEnabled} appleEnabled={appleEnabled} />
+      <Routes>
+        <Route
+          path="/settings/:section?"
+          element={
+            <SettingsView
+              googleEnabled={googleEnabled}
+              appleEnabled={appleEnabled}
+            />
+          }
+        />
+      </Routes>
     </MemoryRouter>,
   );
 }
@@ -227,9 +237,9 @@ describe('SettingsView', () => {
     });
   });
 
-  describe('hash deep-linking', () => {
-    it('scrolls and focuses the bookmarklet section when route includes #bookmarklet', () => {
-      renderSettingsView({ route: '/settings#bookmarklet' });
+  describe('path-based deep-linking', () => {
+    it('scrolls and focuses the bookmarklet section when route is /settings/bookmarklet', () => {
+      renderSettingsView({ route: '/settings/bookmarklet' });
 
       const section = screen.getByTestId('bookmarklet-section');
       expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
@@ -238,8 +248,8 @@ describe('SettingsView', () => {
       expect(document.activeElement).toBe(section);
     });
 
-    it('scrolls and focuses the stumble section when route includes #stumble', () => {
-      renderSettingsView({ route: '/settings#stumble' });
+    it('scrolls and focuses the stumble section when route is /settings/stumble', () => {
+      renderSettingsView({ route: '/settings/stumble' });
 
       const section = screen.getByTestId('stumble-section');
       expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
@@ -248,23 +258,23 @@ describe('SettingsView', () => {
       expect(document.activeElement).toBe(section);
     });
 
-    it('scrolls and focuses the bookmarks group when route includes #bookmarks', () => {
-      renderSettingsView({ route: '/settings#bookmarks' });
+    it('scrolls and focuses the bookmarks group when route is /settings/bookmarks', () => {
+      renderSettingsView({ route: '/settings/bookmarks' });
       expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
         expect.objectContaining({ block: 'start' }),
       );
       expect(document.activeElement?.id).toBe('bookmarks');
     });
 
-    it('scrolls and focuses the integrations group when route includes #integrations', () => {
-      renderSettingsView({ route: '/settings#integrations' });
+    it('scrolls and focuses the integrations group when route is /settings/integrations', () => {
+      renderSettingsView({ route: '/settings/integrations' });
       expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
         expect.objectContaining({ block: 'start' }),
       );
       expect(document.activeElement?.id).toBe('integrations');
     });
 
-    it('does not perform a hash-driven scroll when route has no hash', () => {
+    it('does not perform a section-driven scroll when route has no section', () => {
       renderSettingsView({ route: '/settings' });
       expect(Element.prototype.scrollIntoView).not.toHaveBeenCalledWith(
         expect.objectContaining({ block: 'start' }),

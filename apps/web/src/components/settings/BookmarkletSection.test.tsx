@@ -5,8 +5,23 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import BookmarkletSection from './BookmarkletSection';
+
+// Render under the `/settings/:section?` route so the `useReanchorOnLoad`
+// hook inside `BookmarkletSection` sees a real `section` param (via
+// `useParams`) and its re-anchor path is actually representable, rather than
+// silently no-opping because `useParams` returns `{}`.
+function renderSection(route = '/settings/bookmarklet') {
+  return render(
+    <MemoryRouter initialEntries={[route]}>
+      <Routes>
+        <Route path="/settings/:section?" element={<BookmarkletSection />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
 
 vi.mock('../../lib/api', () => ({
   getBookmarkletToken: vi.fn(),
@@ -27,6 +42,10 @@ const makeBookmarkletToken = (overrides = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Under a real `/settings/:section?` route the `useReanchorOnLoad` hook
+  // fires `scrollIntoView` once the token resolves. jsdom doesn't implement
+  // it, so stub it out to keep the re-anchor path representable but inert.
+  Element.prototype.scrollIntoView = vi.fn();
   vi.mocked(apiModule.getBookmarkletToken).mockResolvedValue(
     makeBookmarkletToken(),
   );
@@ -35,7 +54,7 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 async function renderResolved() {
-  const utilities = render(<BookmarkletSection />);
+  const utilities = renderSection();
   // Wait for getBookmarkletToken to resolve and the href to be applied.
   await waitFor(() => {
     expect(
@@ -49,7 +68,7 @@ async function renderResolved() {
 
 describe('BookmarkletSection', () => {
   it('renders the section heading', async () => {
-    render(<BookmarkletSection />);
+    renderSection();
     expect(
       screen.getByRole('heading', { name: /bookmarklet/i }),
     ).toBeInTheDocument();
@@ -80,7 +99,7 @@ describe('BookmarkletSection', () => {
 
   describe('initial load', () => {
     it('calls getBookmarkletToken on mount', async () => {
-      render(<BookmarkletSection />);
+      renderSection();
       await waitFor(() => {
         expect(apiModule.getBookmarkletToken).toHaveBeenCalledTimes(1);
       });
@@ -95,7 +114,7 @@ describe('BookmarkletSection', () => {
           resolve = res;
         }),
       );
-      render(<BookmarkletSection />);
+      renderSection();
       const status = screen.getByText(/generating your bookmarklet/i);
       expect(status).toHaveAttribute('role', 'status');
       resolve(makeBookmarkletToken());
@@ -119,7 +138,7 @@ describe('BookmarkletSection', () => {
       const previouslyFocused = document.createElement('button');
       document.body.appendChild(previouslyFocused);
       previouslyFocused.focus();
-      render(<BookmarkletSection />);
+      renderSection();
       await waitFor(() => {
         expect(apiModule.getBookmarkletToken).toHaveBeenCalled();
       });
@@ -131,7 +150,7 @@ describe('BookmarkletSection', () => {
       vi.mocked(apiModule.getBookmarkletToken).mockReturnValue(
         new Promise(() => {}),
       );
-      render(<BookmarkletSection />);
+      renderSection();
       const link = screen.getByRole('link', {
         name: /drag to your bookmarks bar/i,
       });
@@ -142,7 +161,7 @@ describe('BookmarkletSection', () => {
       vi.mocked(apiModule.getBookmarkletToken).mockRejectedValue(
         new Error('Network down'),
       );
-      render(<BookmarkletSection />);
+      renderSection();
       await waitFor(() => {
         expect(screen.getByRole('alert')).toHaveTextContent('Network down');
       });

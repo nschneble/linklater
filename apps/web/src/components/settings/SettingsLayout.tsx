@@ -8,7 +8,6 @@ import type { SettingsSection } from './settingsSections';
 interface SettingsLayoutProps {
   sections: SettingsSection[];
   activeHash: string;
-  onNavigate?: (hash: string) => void;
   children: ReactNode;
 }
 
@@ -24,7 +23,6 @@ interface SettingsLayoutProps {
 export default function SettingsLayout({
   sections,
   activeHash,
-  onNavigate,
   children,
 }: SettingsLayoutProps) {
   const firstHash = sections[0]?.hash;
@@ -36,20 +34,16 @@ export default function SettingsLayout({
     if (!firstHash || !isPlainAnchorClick(event)) return;
     event.preventDefault();
     scrollToSettingsSection(firstHash);
-    navigate(`#${firstHash}`);
+    navigate(`/settings/${firstHash}`);
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[14rem_minmax(0,1fr)] gap-6 md:gap-10">
-      <SettingsSidebar
-        sections={sections}
-        activeHash={activeHash}
-        onNavigate={onNavigate}
-      />
+      <SettingsSidebar sections={sections} activeHash={activeHash} />
       <div className="min-w-0 space-y-6">
         {firstHash && (
           <a
-            href={`#${firstHash}`}
+            href={`/settings/${firstHash}`}
             onClick={handleSkipClick}
             className="sr-only focus:not-sr-only focus:inline-flex focus:items-center focus:px-3 focus:py-1.5 focus:bg-[var(--bg-surface)] focus:text-[var(--text)] focus:text-xs focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:outline-none"
           >
@@ -61,11 +55,7 @@ export default function SettingsLayout({
             Settings
           </h1>
         </header>
-        <SettingsSectionNav
-          sections={sections}
-          activeHash={activeHash}
-          onNavigate={onNavigate}
-        />
+        <SettingsSectionNav sections={sections} activeHash={activeHash} />
         {children}
       </div>
     </div>

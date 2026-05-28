@@ -5,6 +5,7 @@ import Alert from '../common/Alert';
 import BookmarkletRegenerateButton from './BookmarkletRegenerateButton';
 import { buildBookmarkletCode } from './bookmarkletCode';
 import { useEffect, useRef, useState } from 'react';
+import { useReanchorOnLoad } from './useReanchorOnLoad';
 
 /**
  * Settings section that renders the Linklater bookmarklet.
@@ -49,6 +50,11 @@ export default function BookmarkletSection() {
   }, [code]);
 
   const loading = rawToken === null && !loadError;
+
+  // The bookmarklet token resolves after first paint and expands this
+  // section, sliding any deep-linked section below it (Integrations, Danger)
+  // off the top edge. Re-anchor the active section once the token settles.
+  useReanchorOnLoad(!loading);
 
   return (
     <div

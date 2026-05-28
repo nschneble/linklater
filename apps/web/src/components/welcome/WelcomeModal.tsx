@@ -130,7 +130,7 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                 <IconButton
                   variant="elevated"
                   className="w-full mt-4"
-                  onClick={() => handleSectionLink('/settings#bookmarklet')}
+                  onClick={() => handleSectionLink('/settings/bookmarklet')}
                 >
                   <i
                     className="fa-solid fa-bookmark text-[0.7rem]"

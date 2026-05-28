@@ -7,6 +7,12 @@ interface SettingsGroupProps {
   icon?: string;
   variant?: 'default' | 'danger';
   divided?: boolean;
+  /**
+   * The id of the section currently active in the scroll-spy. When it equals
+   * this group's `id`, the group renders a persistent ring so the connection
+   * between the sidebar's active item and the page is unambiguous.
+   */
+  activeSection?: string;
   children: ReactNode;
 }
 
@@ -41,9 +47,23 @@ const DESCRIPTION_CLASSES = {
  * render unboxed inside; pass `divided` when the group holds multiple
  * subsections and they should be visually separated by a thin rule.
  *
- * The `id` doubles as the URL hash target. `tabIndex={-1}` lets the
- * SettingsView hash-scroll effect move focus here so screen-reader users
- * land on the group when they follow a deep link.
+ * The `id` doubles as the URL section target. `tabIndex={-1}` lets the
+ * SettingsView scroll effect move focus here so screen-reader users land on
+ * the group when they follow a deep link.
+ *
+ * When `activeSection === id`, an accent bar appears in the gutter at the
+ * group's left edge (a `::before` pseudo-element translated fully into the
+ * gap so it sits against the page background `--bg`, not the card surface).
+ * The page background is the highest-contrast pairing for `--accent` across
+ * every theme — an accent ring on the card surface failed WCAG 1.4.11 in
+ * most dark themes because `--accent` and `--bg-surface` are too close in
+ * luminance. The bar is driven off the `data-active` attribute via a Tailwind
+ * `data-[active=true]:` variant so visual and data state stay locked together,
+ * and is kept visually distinct from the keyboard focus ring (`ring-2` full
+ * accent). A `forced-colors` companion swaps the bar to `Highlight` (and the
+ * focus ring to a `ButtonText` outline) for Windows High Contrast Mode, where
+ * box-shadow-based rings are ignored. The fade-in is gated behind
+ * `motion-safe` so reduced-motion users get an unanimated state change.
  */
 export default function SettingsGroup({
   id,
@@ -52,6 +72,7 @@ export default function SettingsGroup({
   icon,
   variant = 'default',
   divided = false,
+  activeSection,
   children,
 }: SettingsGroupProps) {
   const headingId = `${id}-heading`;
@@ -60,7 +81,8 @@ export default function SettingsGroup({
       id={id}
       tabIndex={-1}
       aria-labelledby={headingId}
-      className={`scroll-mt-24 p-5 sm:p-6 ${VARIANT_CLASSES[variant]} rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]`}
+      data-active={activeSection === id}
+      className={`relative scroll-mt-24 p-5 sm:p-6 ${VARIANT_CLASSES[variant]} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] forced-colors:focus-visible:outline forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded-2xl before:absolute before:left-0 before:inset-y-5 before:w-1 before:-translate-x-full before:bg-[var(--accent)] before:rounded-full before:opacity-0 before:content-[''] data-[active=true]:before:opacity-100 forced-colors:before:bg-[Highlight] motion-safe:before:transition-opacity`}
     >
       <header className={description ? 'mb-5' : 'mb-4'}>
         <h2

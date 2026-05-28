@@ -28,18 +28,21 @@ const ApiDocsView = lazy(() => import('./components/api-docs/ApiDocsView'));
 // otherwise be dead weight in the initial bundle for every session.
 const WelcomeModal = lazy(() => import('./components/welcome/WelcomeModal'));
 
-/** Maps the current URL pathname to the active `AppView`. */
+/**
+ * Maps the current URL pathname to the active `AppView`.
+ *
+ * `/settings/api` renders the dedicated API docs view (Scalar lazy bundle).
+ * Any other `/settings` or `/settings/<section>` path renders the settings
+ * view; section-level routing inside settings is handled by `SettingsView`
+ * via `useParams().section`.
+ */
 function viewFromPath(pathname: string): AppView {
-  switch (pathname) {
-    case '/settings':
-      return 'settings';
-    case '/settings/api':
-      return 'api-docs';
-    case '/editor':
-      return 'theme-editor';
-    default:
-      return 'links';
+  if (pathname === '/settings/api') return 'api-docs';
+  if (pathname === '/settings' || pathname.startsWith('/settings/')) {
+    return 'settings';
   }
+  if (pathname === '/editor') return 'theme-editor';
+  return 'links';
 }
 
 /**
@@ -129,15 +132,19 @@ export default function AppShell() {
   // initial page load — on mount the browser has not set focus anywhere
   // meaningful yet, so moving it to <main> would skip the skip link and
   // surprise keyboard users who land tabbed into the page header. Skip
-  // the focus shift when the URL carries a hash, because the destination
-  // view is about to deep-link focus to a specific section and we'd
-  // otherwise steal focus right back to <main>.
+  // the focus shift when the URL deep-links into a specific settings
+  // section (e.g. `/settings/bookmarklet`), because `SettingsView` is
+  // about to move focus to that section and we'd otherwise steal it right
+  // back to <main>. Plain `/settings` (no section) still focuses <main>.
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
-    if (location.hash) return;
+    const isSettingsSectionDeepLink =
+      location.pathname.startsWith('/settings/') &&
+      location.pathname !== '/settings/api';
+    if (isSettingsSectionDeepLink) return;
     mainReference.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);

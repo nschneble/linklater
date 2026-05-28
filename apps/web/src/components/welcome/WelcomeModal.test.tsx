@@ -106,7 +106,7 @@ describe('WelcomeModal', () => {
       screen.getByRole('button', { name: /get the bookmarklet/i }),
     );
     expect(onClose).toHaveBeenCalledOnce();
-    expect(navigateMock).toHaveBeenCalledWith('/settings#bookmarklet');
+    expect(navigateMock).toHaveBeenCalledWith('/settings/bookmarklet');
   });
 
   it('closes the modal and navigates to the stumble page when the stumble button is clicked', () => {

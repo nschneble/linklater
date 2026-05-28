@@ -1,16 +1,8 @@
-import { MemoryRouter } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import SettingsSectionNav from './SettingsSectionNav';
 import type { SettingsSection } from './settingsSections';
-
-function renderNav(properties: Parameters<typeof SettingsSectionNav>[0]) {
-  return render(
-    <MemoryRouter initialEntries={['/settings']}>
-      <SettingsSectionNav {...properties} />
-    </MemoryRouter>,
-  );
-}
 
 const SECTIONS: SettingsSection[] = [
   { hash: 'account', label: 'Account', icon: 'fa-user' },
@@ -18,10 +10,36 @@ const SECTIONS: SettingsSection[] = [
   { hash: 'integrations', label: 'Integrations', icon: 'fa-plug' },
 ];
 
+const navigateMock = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual =
+    await vi.importActual<typeof import('react-router-dom')>(
+      'react-router-dom',
+    );
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
+
+function renderNav(properties: Parameters<typeof SettingsSectionNav>[0]) {
+  return render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Routes>
+        <Route
+          path="/settings/:section?"
+          element={<SettingsSectionNav {...properties} />}
+        />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
 let scrollIntoViewMock: ReturnType<typeof vi.fn>;
 let matchMediaMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
+  navigateMock.mockReset();
   scrollIntoViewMock = vi.fn();
   Element.prototype.scrollIntoView = scrollIntoViewMock;
 
@@ -34,25 +52,27 @@ beforeEach(() => {
 });
 
 describe('SettingsSectionNav', () => {
-  it('renders a nav landmark labelled "Settings sections"', () => {
+  it('renders a nav landmark labelled "Settings sections (compact)"', () => {
     renderNav({ sections: SECTIONS, activeHash: 'account' });
     expect(
-      screen.getByRole('navigation', { name: /settings sections/i }),
+      screen.getByRole('navigation', {
+        name: /settings sections \(compact\)/i,
+      }),
     ).toBeInTheDocument();
   });
 
-  it('renders one chip anchor per section', () => {
+  it('renders one chip button per section', () => {
     renderNav({ sections: SECTIONS, activeHash: 'account' });
-    const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(SECTIONS.length);
-    expect(links[2]).toHaveAttribute('href', '#integrations');
+    const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(SECTIONS.length);
+    expect(buttons[2]).toHaveAccessibleName(/integrations/i);
   });
 
-  it('applies aria-current="location" to the active chip only', () => {
+  it('applies aria-current="page" to the active chip only', () => {
     renderNav({ sections: SECTIONS, activeHash: 'integrations' });
-    const links = screen.getAllByRole('link');
-    expect(links[2]).toHaveAttribute('aria-current', 'location');
-    expect(links[0]).not.toHaveAttribute('aria-current');
+    const buttons = screen.getAllByRole('button');
+    expect(buttons[2]).toHaveAttribute('aria-current', 'page');
+    expect(buttons[0]).not.toHaveAttribute('aria-current');
   });
 
   it('scrolls the active chip into view on mount', () => {
@@ -74,14 +94,9 @@ describe('SettingsSectionNav', () => {
     );
   });
 
-  it('calls onNavigate with the hash when a chip is clicked', () => {
-    const onNavigate = vi.fn();
-    renderNav({
-      sections: SECTIONS,
-      activeHash: 'account',
-      onNavigate,
-    });
-    screen.getByRole('link', { name: /integrations/i }).click();
-    expect(onNavigate).toHaveBeenCalledWith('integrations');
+  it('calls navigate with the section path when a chip is clicked', () => {
+    renderNav({ sections: SECTIONS, activeHash: 'account' });
+    fireEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    expect(navigateMock).toHaveBeenCalledWith('/settings/integrations');
   });
 });

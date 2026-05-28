@@ -15,6 +15,7 @@ import PrimaryButton from '../common/PrimaryButton';
 import ApiTokensList from './ApiTokensList';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useReanchorOnLoad } from './useReanchorOnLoad';
 
 /**
  * Settings section for managing personal access tokens (PATs).
@@ -33,6 +34,7 @@ export default function ApiTokensSection() {
   const navigate = useNavigate();
 
   const [tokens, setTokens] = useState<ApiToken[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [createName, setCreateName] = useState('');
@@ -45,16 +47,24 @@ export default function ApiTokensSection() {
 
   const loadTokens = async () => {
     try {
-      const loaded = await listApiTokens();
-      setTokens(loaded);
+      const loadedTokens = await listApiTokens();
+      setTokens(loadedTokens);
     } catch (error: unknown) {
       setLoadError(getErrorMessage(error, 'Failed to load tokens'));
+    } finally {
+      setLoaded(true);
     }
   };
 
   useEffect(() => {
     void loadTokens();
   }, []);
+
+  // The PAT list resolves after first paint and expands this section, which
+  // can shift a deep-linked section below it off the top edge. Re-anchor the
+  // active section once the list settles. This is the bottom-most async
+  // section, so its load transition is the last one that can drift layout.
+  useReanchorOnLoad(loaded);
 
   useEffect(() => {
     if (showCreate) {

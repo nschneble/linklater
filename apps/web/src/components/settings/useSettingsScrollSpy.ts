@@ -1,5 +1,6 @@
+import { scrollToSettingsSection } from './settingsScroll';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 interface UseSettingsScrollSpyOptions {
   /** Section ids in document order. The first id is the default active value. */
@@ -46,13 +47,8 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
  * `activeHash`. Uses IntersectionObserver (cheap, browser-debounced) instead
  * of a scroll listener.
  *
- * - On `location.hash` change, the active hash snaps to it and an "intent"
- *   flag is pinned so the observer cannot override it mid-scroll.
- * - When the consumer calls `markIntent(hash)` (e.g. a TOC click), the
- *   active hash snaps to that hash and intent is pinned the same way.
- *   Snapping here matters when the URL hash already equals the clicked
- *   section: `navigate(`#${hash}`)` is a no-op, the location effect does
- *   not re-fire, and we still need the highlight to land on the click.
+ * - On `useParams().section` change, the active hash snaps to it and an
+ *   "intent" flag is pinned so the observer cannot override it mid-scroll.
  * - Intent releases when the user produces real scroll input — `wheel`,
  *   `touchmove`, or a scroll-controlling key (with Space gated so it does
  *   not release while focus is on an interactive element). It also
@@ -64,6 +60,9 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
  *   or `touchmove`, so this cleanly distinguishes them from user input.
  * - Picks the first intersecting section in document order; if none
  *   intersect, the previous value is kept (prevents flicker between groups).
+ * - When a scroll-driven section change occurs, the URL is kept in sync via
+ *   `navigate('/settings/<hash>', { replace: true })` so back/forward does
+ *   not get spammed with one entry per section the user scrolled past.
  *
  * Intersection state is persisted in a ref across observer batches because
  * IntersectionObserver only fires entries for sections whose state changed
@@ -74,19 +73,32 @@ export function useSettingsScrollSpy({
   sectionIds,
   rootMargin = '-20% 0px -60% 0px',
 }: UseSettingsScrollSpyOptions) {
-  const location = useLocation();
-  const initialHash = location.hash.slice(1);
+  const parameters = useParams<{ section?: string }>();
+  const navigate = useNavigate();
+  const sectionParameter = parameters.section ?? '';
   const initialActive =
-    initialHash && sectionIds.includes(initialHash)
-      ? initialHash
+    sectionParameter && sectionIds.includes(sectionParameter)
+      ? sectionParameter
       : (sectionIds[0] ?? '');
   const [activeHash, setActiveHash] = useState<string>(initialActive);
   const activeHashRef = useRef<string>(initialActive);
   const intentActive = useRef<boolean>(
-    Boolean(initialHash && sectionIds.includes(initialHash)),
+    Boolean(sectionParameter && sectionIds.includes(sectionParameter)),
   );
   const intentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const intersectionState = useRef<Map<string, boolean>>(new Map());
+  // Echo tokens distinguish the spy's own `replace` navigations (which must
+  // NOT re-pin intent or re-scroll) from genuine external navigations (deep
+  // link, sidebar click) that should snap + pin. The observer bumps
+  // `echoesSent` immediately before each `replace`; the section-param effect
+  // consumes exactly one by advancing `echoesConsumed` to match. A genuine
+  // navigation that arrives when the two counters are equal has no pending
+  // echo to consume, so it is never mistaken for the spy's own — even when it
+  // targets the same section the spy last mirrored. Storing the section *name*
+  // (the previous approach) could mis-suppress a genuine click to that same
+  // section; a one-shot token cannot.
+  const echoesSent = useRef<number>(0);
+  const echoesConsumed = useRef<number>(0);
 
   // Keep a ref in sync with activeHash so event listeners can read the
   // current value without re-binding when it changes.
@@ -116,16 +128,32 @@ export function useSettingsScrollSpy({
     if (firstActive) setActiveHash(firstActive);
   }, [sectionIds]);
 
-  // Hash-driven updates beat the observer. When something deep-links into a
-  // section (browser load with a hash, or `navigate('#foo')`), snap the
-  // active hash and pin intent so the observer cannot drift off-target.
+  // Section-param-driven updates beat the observer. When something deep-links
+  // into a section (browser load with a section path, or
+  // `navigate('/settings/<section>')`), snap the active hash and pin intent
+  // so the observer cannot drift off-target.
+  //
+  // Skip the spy's own URL echo: when the observer mirrors a scroll-driven
+  // section change into the URL via `replace`, it bumps `echoesSent` first.
+  // Re-pinning intent here would make scrolling feel sticky (every section
+  // the user scrolls past would pin for up to 3s). Each echo is consumed
+  // exactly once — by advancing `echoesConsumed` — so a later genuine
+  // navigation (even to the same section) has no pending echo and still pins.
   useEffect(() => {
-    const hash = location.hash.slice(1);
-    if (hash && sectionIds.includes(hash)) {
-      setActiveHash(hash);
-      activateIntent();
+    if (echoesConsumed.current < echoesSent.current) {
+      echoesConsumed.current = echoesSent.current;
+      return;
     }
-  }, [location.hash, sectionIds, activateIntent]);
+    if (sectionParameter && sectionIds.includes(sectionParameter)) {
+      setActiveHash(sectionParameter);
+      activateIntent();
+      // Genuine navigation into a tracked section (deep link, sidebar click,
+      // initial page load) scrolls + focuses the section. The spy's own URL
+      // echoes are filtered out above so a scroll past a section does not
+      // yank the viewport back to its top.
+      scrollToSettingsSection(sectionParameter);
+    }
+  }, [sectionParameter, sectionIds, activateIntent]);
 
   // Real user scroll input releases intent so natural scrolling lets the
   // observer take over. `scroll` is too eager — smooth programmatic scrolls
@@ -183,14 +211,25 @@ export function useSettingsScrollSpy({
         const firstActive = sectionIds.find(
           (id) => intersectionState.current.get(id) === true,
         );
-        if (firstActive) setActiveHash(firstActive);
+        if (firstActive) {
+          // Mirror the active section into the URL with `replace` so
+          // back/forward isn't spammed with one entry per scroll. Skip the
+          // navigation when nothing would change. Bump the echo counter first
+          // so the `sectionParameter` effect recognises the resulting param
+          // change as the spy's own echo (one-shot) and does not re-pin intent.
+          if (firstActive !== activeHashRef.current) {
+            echoesSent.current += 1;
+            navigate(`/settings/${firstActive}`, { replace: true });
+          }
+          setActiveHash(firstActive);
+        }
       },
       { rootMargin, threshold: 0 },
     );
 
     for (const element of elements) observer.observe(element);
     return () => observer.disconnect();
-  }, [sectionIds, rootMargin]);
+  }, [sectionIds, rootMargin, navigate]);
 
   useEffect(() => {
     return () => {
@@ -198,13 +237,5 @@ export function useSettingsScrollSpy({
     };
   }, []);
 
-  const markIntent = useCallback(
-    (hash: string) => {
-      if (hash && sectionIds.includes(hash)) setActiveHash(hash);
-      activateIntent();
-    },
-    [sectionIds, activateIntent],
-  );
-
-  return { activeHash, markIntent };
+  return { activeHash };
 }

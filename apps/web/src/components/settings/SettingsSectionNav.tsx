@@ -1,45 +1,32 @@
 import { FOCUS_RING } from '../../lib/styles';
-import { isPlainAnchorClick, scrollToSettingsSection } from './settingsScroll';
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { MouseEvent } from 'react';
 import type { SettingsSection } from './settingsSections';
 
 interface SettingsSectionNavProps {
   sections: SettingsSection[];
   activeHash: string;
-  onNavigate?: (hash: string) => void;
 }
 
 /**
  * Mobile horizontal chip row for navigating Settings sections. Used in
- * place of the desktop sidebar below `md`. These are nav links (not tabs)
- * — the panels are not hidden, they scroll — so the markup is a plain
- * anchor list rather than a `tablist`. Active chip gets
- * `aria-current="location"` and a filled treatment, and is auto-scrolled
- * into the center of the row whenever it changes.
+ * place of the desktop sidebar below `md`. These are buttons that drive
+ * React Router navigation — the visual treatment is a chip (not the
+ * full-width `IconListButton` row used in the desktop sidebar). The
+ * active chip gets `aria-current="page"` plus a filled treatment, and is
+ * auto-scrolled into the center of the row whenever it changes.
+ *
+ * Landmark label is "Settings sections (compact)" so it differs from the
+ * desktop sidebar's "Settings sections" landmark when both happen to be
+ * present in the AT tree (they share the same component tree but are
+ * media-query-hidden alternately).
  */
 export default function SettingsSectionNav({
   sections,
   activeHash,
-  onNavigate,
 }: SettingsSectionNavProps) {
-  const activeReference = useRef<HTMLAnchorElement>(null);
+  const activeReference = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
-
-  // Match SettingsSidebar: intercept plain left-clicks so the section scroll
-  // goes through the shared helper and lands at the same position as a
-  // direct deep-link. Modified clicks fall through to native behavior.
-  function handleClick(event: MouseEvent<HTMLAnchorElement>, hash: string) {
-    if (!isPlainAnchorClick(event)) {
-      onNavigate?.(hash);
-      return;
-    }
-    event.preventDefault();
-    onNavigate?.(hash);
-    scrollToSettingsSection(hash);
-    navigate(`#${hash}`);
-  }
 
   // Auto-scroll the active chip into the center of the row so it stays
   // visible after deep-link or scroll-spy advances. `prefers-reduced-motion`
@@ -60,7 +47,7 @@ export default function SettingsSectionNav({
 
   return (
     <nav
-      aria-label="Settings sections"
+      aria-label="Settings sections (compact)"
       className="md:hidden sticky top-2 z-10 -mx-4 px-4 py-2 bg-[var(--bg)]"
     >
       <ul className="flex gap-2 overflow-x-auto snap-x snap-mandatory scroll-px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -68,19 +55,19 @@ export default function SettingsSectionNav({
           const isActive = activeHash === section.hash;
           return (
             <li key={section.hash} className="shrink-0 snap-start">
-              <a
-                href={`#${section.hash}`}
-                aria-current={isActive ? 'location' : undefined}
+              <button
+                type="button"
+                aria-current={isActive ? 'page' : undefined}
                 ref={isActive ? activeReference : undefined}
-                onClick={(event) => handleClick(event, section.hash)}
-                className={`group inline-flex items-center gap-1.5 min-h-10 px-3.5 py-2 bg-transparent text-[var(--text-muted)] hover:text-[var(--text)] ring-1 ring-[var(--border)]/60 font-medium aria-[current]:bg-[var(--bg-elevated)] aria-[current]:text-[var(--text)] aria-[current]:ring-[var(--border)] aria-[current]:font-semibold text-xs ${FOCUS_RING} rounded-full motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] whitespace-nowrap`}
+                onClick={() => navigate(`/settings/${section.hash}`)}
+                className={`group inline-flex items-center gap-1.5 min-h-10 px-3.5 py-2 bg-transparent text-[var(--text-muted)] hover:text-[var(--text)] ring-1 ring-[var(--border)]/60 font-medium aria-[current]:bg-[var(--bg-elevated)] aria-[current]:text-[var(--text)] aria-[current]:ring-[var(--border)] aria-[current]:font-semibold text-xs ${FOCUS_RING} rounded-full cursor-pointer motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] whitespace-nowrap`}
               >
                 <i
                   className={`fa-solid ${section.icon} text-[var(--text-subtle)] group-aria-[current]:text-[var(--accent)] text-[0.65rem]`}
                   aria-hidden="true"
                 />
                 {section.label}
-              </a>
+              </button>
             </li>
           );
         })}

@@ -121,29 +121,31 @@ export default function BookmarkletRegenerateButton({
         </IconButton>
         {confirming && (
           <div
-            className="flex items-center gap-2"
+            className="flex items-center gap-4 shrink-0"
             id={CONFIRM_ID}
             ref={confirmRowReference}
           >
             <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 text-xs">
               Sure?
             </span>
-            <IconButton
-              type="button"
-              variant="danger-filled"
-              disabled={regenerating}
-              onClick={() => void handleConfirm()}
-            >
-              {regenerating ? 'Regenerating…' : 'Yes, regenerate'}
-            </IconButton>
-            <IconButton
-              type="button"
-              variant="ghost"
-              disabled={regenerating}
-              onClick={() => setConfirming(false)}
-            >
-              Cancel
-            </IconButton>
+            <div className="space-x-2">
+              <IconButton
+                type="button"
+                variant="danger-filled"
+                disabled={regenerating}
+                onClick={() => void handleConfirm()}
+              >
+                {regenerating ? 'Regenerating…' : 'Yes, regenerate'}
+              </IconButton>
+              <IconButton
+                type="button"
+                variant="ghost"
+                disabled={regenerating}
+                onClick={() => setConfirming(false)}
+              >
+                Cancel
+              </IconButton>
+            </div>
           </div>
         )}
       </div>
