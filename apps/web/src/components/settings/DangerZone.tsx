@@ -60,26 +60,28 @@ export default function DangerZone() {
       ) : (
         <div
           ref={confirmRowReference}
-          className="flex gap-2 items-center text-xs"
+          className="flex gap-2 items-center justify-between text-xs"
         >
           <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400">
             Are you sure? This is permanent.
           </span>
-          <IconButton
-            variant="danger-filled"
-            type="button"
-            disabled={deleting}
-            onClick={handleDelete}
-          >
-            {deleting ? 'Deleting…' : 'Yes, delete'}
-          </IconButton>
-          <IconButton
-            variant="ghost"
-            type="button"
-            onClick={() => setConfirmDelete(false)}
-          >
-            No, don't delete
-          </IconButton>
+          <div className="space-x-2">
+            <IconButton
+              variant="danger-filled"
+              type="button"
+              disabled={deleting}
+              onClick={handleDelete}
+            >
+              {deleting ? 'Deleting…' : 'Yes, delete'}
+            </IconButton>
+            <IconButton
+              variant="ghost"
+              type="button"
+              onClick={() => setConfirmDelete(false)}
+            >
+              No, don't delete
+            </IconButton>
+          </div>
         </div>
       )}
     </div>
