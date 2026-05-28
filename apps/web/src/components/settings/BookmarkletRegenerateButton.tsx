@@ -152,9 +152,11 @@ export default function BookmarkletRegenerateButton({
           {error}
         </Alert>
       )}
-      <span className="sr-only" role="status">
-        {announcement}
-      </span>
+      {announcement && (
+        <span className="sr-only" role="status">
+          {announcement}
+        </span>
+      )}
     </div>
   );
 }
