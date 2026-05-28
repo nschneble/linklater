@@ -2,6 +2,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import TokenInput from './TokenInput';
 import { useApiDocsToken } from './useApiDocsToken';
 import { ApiReferenceReact } from '@scalar/api-reference-react';
+import '@scalar/api-reference-react/style.css';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
