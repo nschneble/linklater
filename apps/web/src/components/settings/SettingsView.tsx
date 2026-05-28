@@ -226,7 +226,7 @@ export default function SettingsView({
         {showSecurity && (
           <SettingsGroup
             id="security"
-            title="Security"
+            title="Enhanced security"
             icon="fa-shield-halved"
             description="Manage multi-factor authentication. That's not overkill for a read-it-later app, right?"
           >
