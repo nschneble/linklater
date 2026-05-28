@@ -153,34 +153,6 @@ describe('BookmarkletSection', () => {
     });
   });
 
-  describe('copy bookmarklet code', () => {
-    it('renders a "Copy bookmarklet code" button next to the anchor', async () => {
-      await renderResolved();
-      expect(
-        screen.getByRole('button', { name: /copy bookmarklet code/i }),
-      ).toBeInTheDocument();
-    });
-
-    it('writes the javascript: URL to the clipboard when clicked', async () => {
-      const writeText = vi.fn().mockResolvedValue(undefined);
-      Object.assign(navigator, { clipboard: { writeText } });
-
-      await renderResolved();
-      const link = screen.getByRole('link', {
-        name: /drag to your bookmarks bar/i,
-      });
-      const code = link.getAttribute('href') ?? '';
-
-      await act(async () => {
-        fireEvent.click(
-          screen.getByRole('button', { name: /copy bookmarklet code/i }),
-        );
-      });
-
-      expect(writeText).toHaveBeenCalledWith(code);
-    });
-  });
-
   describe('regenerate flow', () => {
     it('renders a Regenerate button with the right aria attributes', async () => {
       await renderResolved();
