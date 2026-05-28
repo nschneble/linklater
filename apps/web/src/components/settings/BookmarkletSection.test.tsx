@@ -9,15 +9,14 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import BookmarkletSection from './BookmarkletSection';
 
-// Render under the `/settings/:section?` route so the `useReanchorOnLoad`
-// hook inside `BookmarkletSection` sees a real `section` param (via
-// `useParams`) and its re-anchor path is actually representable, rather than
-// silently no-opping because `useParams` returns `{}`.
-function renderSection(route = '/settings/bookmarklet') {
+// Render under the single `/settings` route. `BookmarkletSection` uses router
+// hooks, so a router is still required; the re-anchor target now comes from the
+// module-level active-section accessor, not the URL.
+function renderSection(route = '/settings') {
   return render(
     <MemoryRouter initialEntries={[route]}>
       <Routes>
-        <Route path="/settings/:section?" element={<BookmarkletSection />} />
+        <Route path="/settings" element={<BookmarkletSection />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -42,9 +41,8 @@ const makeBookmarkletToken = (overrides = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Under a real `/settings/:section?` route the `useReanchorOnLoad` hook
-  // fires `scrollIntoView` once the token resolves. jsdom doesn't implement
-  // it, so stub it out to keep the re-anchor path representable but inert.
+  // `useReanchorOnLoad` may call `scrollIntoView` once the token resolves.
+  // jsdom doesn't implement it, so stub it out to keep the path inert.
   Element.prototype.scrollIntoView = vi.fn();
   vi.mocked(apiModule.getBookmarkletToken).mockResolvedValue(
     makeBookmarkletToken(),

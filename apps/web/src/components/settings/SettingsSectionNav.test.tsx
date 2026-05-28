@@ -1,6 +1,5 @@
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
 import SettingsSectionNav from './SettingsSectionNav';
 import type { SettingsSection } from './settingsSections';
 
@@ -10,50 +9,28 @@ const SECTIONS: SettingsSection[] = [
   { hash: 'integrations', label: 'Integrations', icon: 'fa-plug' },
 ];
 
-const navigateMock = vi.fn();
-vi.mock('react-router-dom', async () => {
-  const actual =
-    await vi.importActual<typeof import('react-router-dom')>(
-      'react-router-dom',
-    );
-  return {
-    ...actual,
-    useNavigate: () => navigateMock,
-  };
-});
+let onSelectSection: ReturnType<typeof vi.fn>;
 
-function renderNav(properties: Parameters<typeof SettingsSectionNav>[0]) {
+function renderNav(
+  overrides: Partial<Parameters<typeof SettingsSectionNav>[0]> = {},
+) {
   return render(
-    <MemoryRouter initialEntries={['/settings']}>
-      <Routes>
-        <Route
-          path="/settings/:section?"
-          element={<SettingsSectionNav {...properties} />}
-        />
-      </Routes>
-    </MemoryRouter>,
+    <SettingsSectionNav
+      sections={SECTIONS}
+      activeSection=""
+      onSelectSection={onSelectSection}
+      {...overrides}
+    />,
   );
 }
 
-let scrollIntoViewMock: ReturnType<typeof vi.fn>;
-let matchMediaMock: ReturnType<typeof vi.fn>;
-
-beforeEach(() => {
-  navigateMock.mockReset();
-  scrollIntoViewMock = vi.fn();
-  Element.prototype.scrollIntoView = scrollIntoViewMock;
-
-  matchMediaMock = vi.fn().mockReturnValue({ matches: false });
-  Object.defineProperty(window, 'matchMedia', {
-    configurable: true,
-    writable: true,
-    value: matchMediaMock,
-  });
-});
-
 describe('SettingsSectionNav', () => {
+  beforeEach(() => {
+    onSelectSection = vi.fn();
+  });
+
   it('renders a nav landmark labelled "Settings sections (compact)"', () => {
-    renderNav({ sections: SECTIONS, activeHash: 'account' });
+    renderNav();
     expect(
       screen.getByRole('navigation', {
         name: /settings sections \(compact\)/i,
@@ -62,43 +39,25 @@ describe('SettingsSectionNav', () => {
   });
 
   it('renders one chip button per section', () => {
-    renderNav({ sections: SECTIONS, activeHash: 'account' });
+    renderNav();
     const buttons = screen.getAllByRole('button');
     expect(buttons).toHaveLength(SECTIONS.length);
     expect(buttons[2]).toHaveAccessibleName(/integrations/i);
   });
 
   it('applies aria-current="page" to the active chip only', () => {
-    renderNav({ sections: SECTIONS, activeHash: 'integrations' });
-    const buttons = screen.getAllByRole('button');
-    expect(buttons[2]).toHaveAttribute('aria-current', 'page');
-    expect(buttons[0]).not.toHaveAttribute('aria-current');
+    renderNav({ activeSection: 'integrations' });
+    expect(
+      screen.getByRole('button', { name: /integrations/i }),
+    ).toHaveAttribute('aria-current', 'page');
+    expect(
+      screen.getByRole('button', { name: /account/i }),
+    ).not.toHaveAttribute('aria-current');
   });
 
-  it('scrolls the active chip into view on mount', () => {
-    renderNav({ sections: SECTIONS, activeHash: 'security' });
-    expect(scrollIntoViewMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        inline: 'center',
-        block: 'nearest',
-        behavior: 'smooth',
-      }),
-    );
-  });
-
-  it('uses behavior="auto" when prefers-reduced-motion is set', () => {
-    matchMediaMock.mockReturnValue({ matches: true });
-    renderNav({ sections: SECTIONS, activeHash: 'security' });
-    expect(scrollIntoViewMock).toHaveBeenCalledWith(
-      expect.objectContaining({ behavior: 'auto' }),
-    );
-  });
-
-  it('navigates to the section path with an intent token when a chip is clicked', () => {
-    renderNav({ sections: SECTIONS, activeHash: 'account' });
+  it('calls onSelectSection with the section hash when a chip is clicked', () => {
+    renderNav();
     fireEvent.click(screen.getByRole('button', { name: /integrations/i }));
-    expect(navigateMock).toHaveBeenCalledWith('/settings/integrations', {
-      state: { settingsIntent: expect.any(Number) },
-    });
+    expect(onSelectSection).toHaveBeenCalledWith('integrations');
   });
 });

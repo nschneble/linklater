@@ -100,20 +100,22 @@ describe('WelcomeModal', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('closes the modal and navigates to the bookmarklet section when the bookmarklet button is clicked', () => {
+  it('closes the modal and jumps to the bookmarks section via router state when the bookmarklet button is clicked', () => {
     const { onClose } = renderModal();
     fireEvent.click(
       screen.getByRole('button', { name: /get the bookmarklet/i }),
     );
     expect(onClose).toHaveBeenCalledOnce();
-    expect(navigateMock).toHaveBeenCalledWith('/settings/bookmarklet');
+    expect(navigateMock).toHaveBeenCalledWith('/settings', {
+      state: { scrollTo: 'bookmarks' },
+    });
   });
 
   it('closes the modal and navigates to the stumble page when the stumble button is clicked', () => {
     const { onClose } = renderModal();
     fireEvent.click(screen.getByRole('button', { name: /try stumble/i }));
     expect(onClose).toHaveBeenCalledOnce();
-    expect(navigateMock).toHaveBeenCalledWith('/stumble');
+    expect(navigateMock).toHaveBeenCalledWith('/stumble', undefined);
   });
 
   it('moves initial focus to the heading so the first Tab lands on an action', () => {

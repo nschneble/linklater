@@ -32,15 +32,12 @@ const WelcomeModal = lazy(() => import('./components/welcome/WelcomeModal'));
  * Maps the current URL pathname to the active `AppView`.
  *
  * `/settings/api` renders the dedicated API docs view (Scalar lazy bundle).
- * Any other `/settings` or `/settings/<section>` path renders the settings
- * view; section-level routing inside settings is handled by `SettingsView`
- * via `useParams().section`.
+ * `/settings` renders the settings view; sections within it are reached by
+ * scrolling or the in-page sidebar nav, not by URL.
  */
 function viewFromPath(pathname: string): AppView {
   if (pathname === '/settings/api') return 'api-docs';
-  if (pathname === '/settings' || pathname.startsWith('/settings/')) {
-    return 'settings';
-  }
+  if (pathname === '/settings') return 'settings';
   if (pathname === '/editor') return 'theme-editor';
   return 'links';
 }
@@ -132,19 +129,20 @@ export default function AppShell() {
   // initial page load — on mount the browser has not set focus anywhere
   // meaningful yet, so moving it to <main> would skip the skip link and
   // surprise keyboard users who land tabbed into the page header. Skip
-  // the focus shift when the URL deep-links into a specific settings
-  // section (e.g. `/settings/bookmarklet`), because `SettingsView` is
-  // about to move focus to that section and we'd otherwise steal it right
-  // back to <main>. Plain `/settings` (no section) still focuses <main>.
+  // the focus shift when a navigation into Settings carries a `scrollTo`
+  // intent (e.g. the welcome modal jumping to the bookmarks section),
+  // because `SettingsView` is about to move focus to that section and we'd
+  // otherwise steal it right back to <main>. Plain `/settings` still
+  // focuses <main>.
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
-    const isSettingsSectionDeepLink =
-      location.pathname.startsWith('/settings/') &&
-      location.pathname !== '/settings/api';
-    if (isSettingsSectionDeepLink) return;
+    const hasSettingsScrollIntent =
+      view === 'settings' &&
+      Boolean((location.state as { scrollTo?: string } | null)?.scrollTo);
+    if (hasSettingsScrollIntent) return;
     mainReference.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);

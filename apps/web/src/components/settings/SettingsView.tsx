@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import AccountSettingsForm from './AccountSettingsForm';
 import ApiTokensSection from './ApiTokensSection';
@@ -12,7 +12,7 @@ import SettingsLayout from './SettingsLayout';
 import IdPsSection from './IdPsSection';
 import StumbleSection from '../stumble/StumbleSection';
 import TwoFactorSection from './TwoFactorSection';
-import { useSettingsScrollSpy } from './useSettingsScrollSpy';
+import { useSettingsActiveSection } from './useSettingsActiveSection';
 import type { SettingsSection } from './settingsSections';
 
 interface SettingsViewProps {
@@ -36,6 +36,8 @@ export default function SettingsView({
   googleEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
 }: SettingsViewProps = {}) {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchParameters, setSearchParameters] = useSearchParams();
 
   // Capture flash messages from query params on mount and store them in state
@@ -85,8 +87,7 @@ export default function SettingsView({
   const showSecurity = Boolean(user?.hasPassword);
 
   // Sections are derived from user state and feature flags. Order matches
-  // the document order of the rendered groups; both the sidebar and the
-  // scroll-spy hook depend on this.
+  // the document order of the rendered groups; the sidebar depends on this.
   const sections = useMemo<SettingsSection[]>(() => {
     const list: SettingsSection[] = [
       { hash: 'account', label: 'Account', icon: 'fa-user' },
@@ -122,17 +123,37 @@ export default function SettingsView({
     [sections],
   );
 
-  const { activeHash } = useSettingsScrollSpy({ sectionIds });
+  const { activeSection, activateSection } = useSettingsActiveSection({
+    sectionIds,
+  });
+
+  // Honor a router-state `scrollTo` jump (e.g. the welcome modal linking to
+  // the bookmarks section). On arrival, activate + scroll to the target, then
+  // strip the state so a refresh or back navigation doesn't re-trigger it.
+  useEffect(() => {
+    const scrollTo = (location.state as { scrollTo?: string } | null)?.scrollTo;
+    if (scrollTo && sectionIds.includes(scrollTo)) {
+      activateSection(scrollTo);
+    }
+    if (location.state) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <EmailPrefillProvider value={emailPrefillValue}>
-      <SettingsLayout sections={sections} activeHash={activeHash}>
+      <SettingsLayout
+        sections={sections}
+        activeSection={activeSection}
+        onSelectSection={activateSection}
+      >
         <SettingsGroup
           id="account"
           title="Account"
           icon="fa-user"
           description="Manage your email address, password, and any identity providers (IdPs) you've connected."
-          activeSection={activeHash}
+          activeSection={activeSection}
           divided
         >
           <AccountSettingsForm />
@@ -153,7 +174,7 @@ export default function SettingsView({
             title="Enhanced security"
             icon="fa-shield-halved"
             description="Manage multi-factor authentication. That's not overkill for a read-it-later app, right?"
-            activeSection={activeHash}
+            activeSection={activeSection}
           >
             <TwoFactorSection />
           </SettingsGroup>
@@ -164,7 +185,7 @@ export default function SettingsView({
           title="Accessibility"
           icon="fa-universal-access"
           description="Adjust how Linklater looks and feels."
-          activeSection={activeHash}
+          activeSection={activeSection}
         >
           <CvdModeToggle />
         </SettingsGroup>
@@ -174,7 +195,7 @@ export default function SettingsView({
           title="Browser bookmarks"
           icon="fa-book-open"
           description="Save and stumble upon links right from your bookmarks bar."
-          activeSection={activeHash}
+          activeSection={activeSection}
         >
           <BookmarkletSection />
           <StumbleSection />
@@ -185,7 +206,7 @@ export default function SettingsView({
           title="Third-party integrations"
           icon="fa-plug"
           description="Use personal access tokens (PATs) to connect Linklater with external tools and services."
-          activeSection={activeHash}
+          activeSection={activeSection}
         >
           <ApiTokensSection />
         </SettingsGroup>
@@ -196,7 +217,7 @@ export default function SettingsView({
           icon="fa-triangle-exclamation"
           description="Beware all ye who enter. Deleting your account will remove all your saved links. This cannot be undone."
           variant="danger"
-          activeSection={activeHash}
+          activeSection={activeSection}
         >
           <DangerZone />
         </SettingsGroup>

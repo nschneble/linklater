@@ -17,15 +17,12 @@ export function userRoutes() {
       />
     )),
 
-    ...['editor', 'read', 'settings/api', 'unread'].map((key) => (
+    // `/settings` is a single route; sections are reached by scrolling or
+    // clicking the in-page sidebar nav, not by URL. `/settings/api` is a
+    // separate carve-out (the dedicated API docs view).
+    ...['editor', 'read', 'settings', 'settings/api', 'unread'].map((key) => (
       <Route key={key} path={`/${key}`} element={<AppShell />} />
     )),
-
-    // `/settings/:section?` is one route — `AppShell` resolves the optional
-    // `section` param against the known section list. Deep links like
-    // `/settings/bookmarks` and `/settings/integrations` all hit this route.
-    // `/settings/api` lives above as a separate carve-out (a different view).
-    <Route key="settings" path="/settings/:section?" element={<AppShell />} />,
 
     <Route key="stumble" path="/stumble" element={<StumblePage />} />,
     <Route key="not-found" path="*" element={<NotFoundView />} />,

@@ -42,14 +42,18 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
   useFocusTrap(dialogReference, { onEscape: onClose });
 
   // Used by the bookmarklet/stumble action buttons: dismiss the modal and
-  // navigate to the corresponding section in Settings. Focus restoration is
-  // suppressed because the trigger that opened the modal may no longer be
-  // in the tab order after the route change; SettingsView moves focus to
-  // the target section instead.
-  const handleSectionLink = (path: string) => {
+  // navigate away. The bookmarklet passes a `scrollTo` in router state so
+  // SettingsView jumps to (and activates) the bookmarks section without a
+  // section URL. Focus restoration is suppressed because the trigger that
+  // opened the modal may no longer be in the tab order after the route
+  // change; SettingsView moves focus to the target section instead.
+  const handleNavigate = (
+    path: string,
+    options?: { state: { scrollTo: string } },
+  ) => {
     skipRestore();
     onClose();
-    navigate(path);
+    navigate(path, options);
   };
 
   // Focus the heading on mount. Heading is tabbable only programmatically
@@ -130,7 +134,11 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                 <IconButton
                   variant="elevated"
                   className="w-full mt-4"
-                  onClick={() => handleSectionLink('/settings/bookmarklet')}
+                  onClick={() =>
+                    handleNavigate('/settings', {
+                      state: { scrollTo: 'bookmarks' },
+                    })
+                  }
                 >
                   <i
                     className="fa-solid fa-bookmark text-[0.7rem]"
@@ -159,7 +167,7 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                 <IconButton
                   variant="elevated"
                   className="w-full mt-4"
-                  onClick={() => handleSectionLink('/stumble')}
+                  onClick={() => handleNavigate('/stumble')}
                 >
                   <i
                     className="fa-brands fa-stumbleupon text-[0.7rem]"

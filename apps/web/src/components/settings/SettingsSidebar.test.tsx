@@ -1,4 +1,3 @@
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import SettingsSidebar from './SettingsSidebar';
@@ -10,65 +9,68 @@ const SECTIONS: SettingsSection[] = [
   { hash: 'integrations', label: 'Integrations', icon: 'fa-plug' },
 ];
 
-const navigateMock = vi.fn();
-vi.mock('react-router-dom', async () => {
-  const actual =
-    await vi.importActual<typeof import('react-router-dom')>(
-      'react-router-dom',
-    );
-  return {
-    ...actual,
-    useNavigate: () => navigateMock,
-  };
-});
+let onSelectSection: ReturnType<typeof vi.fn>;
+let onBackToTop: ReturnType<typeof vi.fn>;
 
 function renderSidebar(
-  properties: Parameters<typeof SettingsSidebar>[0],
-  route = '/settings',
+  overrides: Partial<Parameters<typeof SettingsSidebar>[0]> = {},
 ) {
   return render(
-    <MemoryRouter initialEntries={[route]}>
-      <Routes>
-        <Route
-          path="/settings/:section?"
-          element={<SettingsSidebar {...properties} />}
-        />
-      </Routes>
-    </MemoryRouter>,
+    <SettingsSidebar
+      sections={SECTIONS}
+      activeSection=""
+      onSelectSection={onSelectSection}
+      onBackToTop={onBackToTop}
+      {...overrides}
+    />,
   );
 }
 
 describe('SettingsSidebar', () => {
-  beforeEach(() => navigateMock.mockReset());
+  beforeEach(() => {
+    onSelectSection = vi.fn();
+    onBackToTop = vi.fn();
+  });
 
   it('renders a nav landmark labelled "Settings sections"', () => {
-    renderSidebar({ sections: SECTIONS, activeHash: 'account' });
+    renderSidebar();
     expect(
       screen.getByRole('navigation', { name: /settings sections/i }),
     ).toBeInTheDocument();
   });
 
-  it('renders one button per section', () => {
-    renderSidebar({ sections: SECTIONS, activeHash: 'account' });
+  it('renders one button per section plus a back-to-top button', () => {
+    renderSidebar();
     const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(SECTIONS.length);
+    expect(buttons).toHaveLength(SECTIONS.length + 1);
     expect(buttons[0]).toHaveAccessibleName(/account/i);
     expect(buttons[2]).toHaveAccessibleName(/integrations/i);
+    expect(buttons[3]).toHaveAccessibleName(/back to top/i);
   });
 
-  it('applies aria-current="page" to the active button only', () => {
-    renderSidebar({ sections: SECTIONS, activeHash: 'security' });
-    const buttons = screen.getAllByRole('button');
-    expect(buttons[0]).not.toHaveAttribute('aria-current');
-    expect(buttons[1]).toHaveAttribute('aria-current', 'page');
-    expect(buttons[2]).not.toHaveAttribute('aria-current');
+  it('applies aria-current="page" to the active section button only', () => {
+    renderSidebar({ activeSection: 'security' });
+    expect(
+      screen.getByRole('button', { name: /account/i }),
+    ).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('button', { name: /security/i })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(
+      screen.getByRole('button', { name: /integrations/i }),
+    ).not.toHaveAttribute('aria-current');
   });
 
-  it('navigates to the section path with an intent token when clicked', () => {
-    renderSidebar({ sections: SECTIONS, activeHash: 'account' });
+  it('calls onSelectSection with the section hash when clicked', () => {
+    renderSidebar();
     fireEvent.click(screen.getByRole('button', { name: /security/i }));
-    expect(navigateMock).toHaveBeenCalledWith('/settings/security', {
-      state: { settingsIntent: expect.any(Number) },
-    });
+    expect(onSelectSection).toHaveBeenCalledWith('security');
+  });
+
+  it('calls onBackToTop when the back-to-top button is clicked', () => {
+    renderSidebar();
+    fireEvent.click(screen.getByRole('button', { name: /back to top/i }));
+    expect(onBackToTop).toHaveBeenCalledOnce();
   });
 });

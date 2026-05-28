@@ -1,7 +1,5 @@
-import type { NavigateFunction } from 'react-router-dom';
-
 /** Resolves `prefers-reduced-motion` in an SSR/test-safe way. */
-function prefersReducedMotion(): boolean {
+export function prefersReducedMotion(): boolean {
   return (
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
@@ -93,27 +91,26 @@ export function isPlainAnchorClick(event: {
   );
 }
 
-let settingsIntentSequence = 0;
+let lastActivatedSection = '';
 
 /**
- * Navigates to a Settings section, tagging the navigation with a fresh,
- * monotonically increasing intent token in history state.
- * `useSettingsScrollSpy` keys its scroll-and-focus effect on this token, so
- * every genuine navigation — sidebar click, mobile chip, skip link, even a
- * repeat click on the section the user is already on — triggers a scroll,
- * while the scroll-spy's own `activeHash` updates (which never navigate) are
- * ignored. This is what makes the navigation deterministic: there is no
- * scroll-driven URL echo to disambiguate, so a click can never be swallowed.
+ * Records the section the user last deliberately navigated to (sidebar click,
+ * mobile chip, or a router-state `scrollTo` jump). Written by
+ * `useSettingsActiveSection`'s `activateSection`.
  *
- * The token is a plain incrementing counter (not `Date.now()`) so it stays
- * deterministic under tests and cannot collide.
+ * This is kept in module scope — separate from the React `activeSection`
+ * state — because `useReanchorOnLoad` runs deep inside async leaf sections
+ * (the PAT list, the bookmarklet token) that have no access to the hook's
+ * state. They read it via `getActiveSettingsSection` to re-anchor the jumped-to
+ * section once their content settles and extends the page. It is intentionally
+ * NOT reset when the visual active state clears: re-anchor is bounded by its
+ * own once-per-load-edge and "user has scrolled" guards.
  */
-export function navigateToSettingsSection(
-  navigate: NavigateFunction,
-  hash: string,
-): void {
-  settingsIntentSequence += 1;
-  navigate(`/settings/${hash}`, {
-    state: { settingsIntent: settingsIntentSequence },
-  });
+export function setActiveSettingsSection(hash: string): void {
+  lastActivatedSection = hash;
+}
+
+/** Reads the section recorded by {@link setActiveSettingsSection}. */
+export function getActiveSettingsSection(): string {
+  return lastActivatedSection;
 }

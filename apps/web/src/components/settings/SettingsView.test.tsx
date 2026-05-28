@@ -117,20 +117,25 @@ function makeAuthContext(overrides = {}) {
 
 interface RenderOptions {
   route?: string;
+  scrollTo?: string;
   googleEnabled?: boolean;
   appleEnabled?: boolean;
 }
 
 function renderSettingsView({
   route = '/settings',
+  scrollTo,
   googleEnabled = false,
   appleEnabled = false,
 }: RenderOptions = {}) {
+  // Plain strings let MemoryRouter parse query params (used by the OAuth flash
+  // tests). The router-state `scrollTo` jump needs an object entry.
+  const entry = scrollTo ? { pathname: route, state: { scrollTo } } : route;
   return render(
-    <MemoryRouter initialEntries={[route]}>
+    <MemoryRouter initialEntries={[entry]}>
       <Routes>
         <Route
-          path="/settings/:section?"
+          path="/settings"
           element={
             <SettingsView
               googleEnabled={googleEnabled}
@@ -237,45 +242,32 @@ describe('SettingsView', () => {
     });
   });
 
-  describe('path-based deep-linking', () => {
-    it('scrolls and focuses the bookmarklet section when route is /settings/bookmarklet', () => {
-      renderSettingsView({ route: '/settings/bookmarklet' });
-
-      const section = screen.getByTestId('bookmarklet-section');
-      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
-        expect.objectContaining({ block: 'start' }),
-      );
-      expect(document.activeElement).toBe(section);
-    });
-
-    it('scrolls and focuses the stumble section when route is /settings/stumble', () => {
-      renderSettingsView({ route: '/settings/stumble' });
-
-      const section = screen.getByTestId('stumble-section');
-      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
-        expect.objectContaining({ block: 'start' }),
-      );
-      expect(document.activeElement).toBe(section);
-    });
-
-    it('scrolls and focuses the bookmarks group when route is /settings/bookmarks', () => {
-      renderSettingsView({ route: '/settings/bookmarks' });
+  describe('router-state scrollTo jump', () => {
+    it('scrolls and focuses the bookmarks group when arriving with scrollTo=bookmarks', () => {
+      renderSettingsView({ scrollTo: 'bookmarks' });
       expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
         expect.objectContaining({ block: 'start' }),
       );
       expect(document.activeElement?.id).toBe('bookmarks');
     });
 
-    it('scrolls and focuses the integrations group when route is /settings/integrations', () => {
-      renderSettingsView({ route: '/settings/integrations' });
+    it('scrolls and focuses the integrations group when arriving with scrollTo=integrations', () => {
+      renderSettingsView({ scrollTo: 'integrations' });
       expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
         expect.objectContaining({ block: 'start' }),
       );
       expect(document.activeElement?.id).toBe('integrations');
     });
 
-    it('does not perform a section-driven scroll when route has no section', () => {
-      renderSettingsView({ route: '/settings' });
+    it('does not perform a section-driven scroll without a scrollTo state', () => {
+      renderSettingsView();
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'start' }),
+      );
+    });
+
+    it('ignores a scrollTo that is not a known section id', () => {
+      renderSettingsView({ scrollTo: 'bookmarklet' });
       expect(Element.prototype.scrollIntoView).not.toHaveBeenCalledWith(
         expect.objectContaining({ block: 'start' }),
       );

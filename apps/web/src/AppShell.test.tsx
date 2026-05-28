@@ -134,26 +134,28 @@ describe('AppShell — page title', () => {
   });
 });
 
-describe('AppShell — settings section routing', () => {
-  it('resolves /settings/bookmarklet to the settings view, not a 404', () => {
-    renderOnRoute('/settings/bookmarklet');
+describe('AppShell — settings routing', () => {
+  it('resolves /settings to the settings view', () => {
+    renderOnRoute('/settings');
     expect(document.title).toBe('Settings – Linklater');
     expect(
       screen.getByRole('heading', { level: 1, name: /^settings$/i }),
     ).toBeInTheDocument();
   });
 
-  it('resolves an arbitrary /settings/<section> to the settings view', () => {
-    renderOnRoute('/settings/integrations');
-    expect(document.title).toBe('Settings – Linklater');
+  it('does not treat /settings/<section> sub-paths as the settings view', () => {
+    // Sections are no longer URL-addressable: only exact `/settings` resolves
+    // to settings. A stray sub-path must not render the settings view (in the
+    // full app it falls through to the 404 route).
+    renderOnRoute('/settings/bookmarklet');
+    expect(document.title).not.toBe('Settings – Linklater');
     expect(
-      screen.getByRole('heading', { level: 1, name: /^settings$/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole('heading', { level: 1, name: /^settings$/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('resolves /settings/api to the API docs view, not the settings view', () => {
-    // Guards against `pathname.startsWith('/settings/')` collapsing the
-    // dedicated API docs route into the generic settings view.
+    // Guards against the dedicated API docs route collapsing into settings.
     renderOnRoute('/settings/api');
     expect(document.title).toBe('API documentation – Linklater');
     expect(
