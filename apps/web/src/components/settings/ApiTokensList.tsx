@@ -79,29 +79,31 @@ function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
             </IconButton>
           ) : (
             <div
-              className="flex items-center gap-2 shrink-0"
+              className="flex items-center gap-4 shrink-0"
               ref={confirmRowReference}
             >
-              <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 text-xs">
+              <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400 text-xs">
                 Sure?
               </span>
-              <IconButton
-                aria-label={`Confirm revoke ${token.name}`}
-                disabled={revoking}
-                type="button"
-                variant="danger-filled"
-                onClick={handleRevoke}
-              >
-                {revoking ? 'Revoking…' : 'Yes, revoke'}
-              </IconButton>
-              <IconButton
-                aria-label={`Cancel revoke ${token.name}`}
-                type="button"
-                variant="ghost"
-                onClick={() => setConfirming(false)}
-              >
-                Cancel
-              </IconButton>
+              <div className="space-x-2">
+                <IconButton
+                  aria-label={`Confirm revoke ${token.name}`}
+                  disabled={revoking}
+                  type="button"
+                  variant="danger-filled"
+                  onClick={handleRevoke}
+                >
+                  {revoking ? 'Revoking…' : 'Yes, revoke'}
+                </IconButton>
+                <IconButton
+                  aria-label={`Cancel revoke ${token.name}`}
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setConfirming(false)}
+                >
+                  Cancel
+                </IconButton>
+              </div>
             </div>
           )}
         </div>
