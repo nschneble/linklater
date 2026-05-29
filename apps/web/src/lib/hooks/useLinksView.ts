@@ -131,10 +131,6 @@ export function useLinksView({
     toastMessage,
   } = useLinks(filter, debouncedSearch);
 
-  /**
-   * Moves keyboard selection one step down the link list, clamping at
-   * the last card. If nothing is selected yet, selects the first card.
-   */
   function handleNavigateNextLink() {
     if (links.length === 0) return;
     setSelectedLinkIndex((previous) => {
@@ -143,10 +139,6 @@ export function useLinksView({
     });
   }
 
-  /**
-   * Moves keyboard selection one step up the link list, clamping at
-   * the first card. If nothing is selected yet, selects the last card.
-   */
   function handleNavigatePrevLink() {
     if (links.length === 0) return;
     setSelectedLinkIndex((previous) => {
@@ -155,10 +147,6 @@ export function useLinksView({
     });
   }
 
-  /**
-   * Opens the keyboard-selected link in a new tab and marks it as read
-   * if it hasn't been read yet. A no-op when no card is selected.
-   */
   function handleOpenSelectedLink() {
     if (selectedLinkIndex === null) return;
     const link = links[selectedLinkIndex];

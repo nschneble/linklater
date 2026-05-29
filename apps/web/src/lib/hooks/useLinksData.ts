@@ -61,30 +61,24 @@ export interface UseLinksDataResult {
    * count accurate without a round-trip.
    */
   adjustTotal: (delta: number) => void;
-  /** Empties the links array in state. Used after "delete all read". */
+  // used after "delete all read"
   clearLinks: () => void;
-  /** Error message from the most recent failed fetch, or `null` when the last fetch succeeded. */
   fetchError: string | null;
-  /** Increments the page and triggers a fetch for the next batch. */
   handleLoadMore: () => void;
-  /** The links currently loaded into state. */
   links: Link[];
-  /** `true` during any in-flight fetch. */
   loadingLinks: boolean;
-  /** The current page number (1-based). */
+  // 1-based
   page: number;
-  /** Pagination metadata from the last successful response, or `null` before the first fetch. */
+  // null before the first fetch
   pagination: Pick<PaginatedLinks, 'total' | 'limit'> | null;
   /**
    * Inserts `link` at the top of the list, deduplicating by id. Used for
    * optimistic prepend after a successful create.
    */
   prependLink: (link: Link) => void;
-  /** Removes the link with the given id from state. */
   removeLink: (linkId: string) => void;
-  /** Resets the cached total to zero without clearing the links array. */
+  // resets the cached total to zero without clearing the links array
   resetTotal: () => void;
-  /** Replaces the in-state copy of a link with the updated version. */
   updateLink: (link: Link) => void;
 }
 

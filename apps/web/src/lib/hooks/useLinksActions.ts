@@ -17,29 +17,20 @@ import type { LinksFilter } from './useLinks';
  * action.
  */
 interface UseLinksActionsOptions {
-  /** See `UseLinksDataResult.adjustTotal`. */
   adjustTotal: (delta: number) => void;
-  /** See `UseLinksDataResult.clearLinks`. */
   clearLinks: () => void;
-  /** The current tab filter — needed to decide whether to remove a link after reading. */
+  // needed to decide whether to remove a link after reading
   filter: LinksFilter;
-  /** Current links array — used to detect whether a newly created link is truly new. */
+  // used to detect whether a newly created link is truly new
   links: Link[];
-  /** See `UseLinksDataResult.prependLink`. */
   prependLink: (link: Link) => void;
-  /** See `UseLinksDataResult.removeLink`. */
   removeLink: (linkId: string) => void;
-  /** See `UseLinksDataResult.resetTotal`. */
   resetTotal: () => void;
-  /** See `UseLinksDataResult.updateLink`. */
   updateLink: (link: Link) => void;
 }
 
-/** Everything exposed by `useLinksActions`. */
 export interface UseLinksActionsResult {
-  /** Error message from the most recent read/unread attempt, or `null`. */
   readError: string | null;
-  /** Error message from the most recent "delete all read" attempt, or `null`. */
   deleteError: string | null;
   /**
    * Called by `LinkForm` / paste detection after a successful create.
@@ -50,7 +41,6 @@ export interface UseLinksActionsResult {
   handleCreated: (link: Link) => void;
   /** Calls `DELETE /links/read`, then clears the list and resets the total. */
   handleDeleteAllRead: () => Promise<void>;
-  /** Hides the success toast. */
   handleDismissToast: () => void;
   /**
    * Saves a link directly from a URL string. Used by paste detection.
@@ -62,15 +52,10 @@ export interface UseLinksActionsResult {
    * longer belongs in the current filter.
    */
   handleToggleRead: (link: Link) => Promise<void>;
-  /** Opens a random unread link in a new tab and marks it as read. */
   handleRandom: () => Promise<void>;
-  /** Error message from the most recent "stumble upon" attempt, or `null`. */
   randomError: string | null;
-  /** `true` while a "stumble upon" request is in flight. */
   randomLoading: boolean;
-  /** Error message from the most recent direct save, or `null`. */
   saveError: string | null;
-  /** The text of the current success toast, or `null` when no toast is showing. */
   toastMessage: string | null;
 }
 

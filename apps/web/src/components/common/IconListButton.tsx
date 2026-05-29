@@ -2,9 +2,7 @@ import type { ButtonHTMLAttributes } from 'react';
 import { DISABLED, FOCUS_RING } from '../../lib/styles';
 
 /**
- * Full-width row button used for vertical lists (e.g. the Settings sidebar).
- * Mirrors the structure of `IconButton` but uses a left-aligned row layout
- * with the icon leading the label rather than the pill/inline-flex layout.
+ * Full-width row button for vertical lists (e.g. the Settings sidebar).
  *
  * Active state is driven by `aria-current` (set by the parent — typically to
  * `"page"`) and styled via Tailwind `aria-[current]:` variants, so the ARIA
@@ -12,9 +10,6 @@ import { DISABLED, FOCUS_RING } from '../../lib/styles';
  *
  * When `hidden` is `true` the button fades out and becomes non-interactive
  * (`pointer-events-none`, `tabIndex={-1}`). Same pattern as `IconButton`.
- *
- * Accepts all native `<button>` attributes so `onClick`, `disabled`, `aria-*`,
- * etc. are passed through.
  */
 interface IconListButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /**
@@ -25,8 +20,6 @@ interface IconListButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /**
    * When `true`, the button is invisible and non-interactive but still occupies
    * layout space. Useful for conditionally showing controls without reflow.
-   *
-   * @default false
    */
   hidden?: boolean;
 }

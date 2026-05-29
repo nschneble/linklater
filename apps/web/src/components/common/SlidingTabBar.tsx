@@ -11,22 +11,17 @@ export interface SlidingTab {
   id: string;
   /** id of the panel this tab controls — surfaces on `aria-controls`. */
   ariaControls?: string;
-  /** Visible tab content. */
   label: ReactNode;
-  /** Called when the tab is activated. */
   onClick: () => void;
 }
 
 interface SlidingTabBarProps {
   /** Accessible name for the `role="tablist"` container. */
   ariaLabel: string;
-  /** Index of the active tab in `tabs`. Drives `aria-selected` and the pill position. */
+  // drives `aria-selected` and the pill position
   activeIndex: number;
-  /** Ordered list of tabs. */
   tabs: SlidingTab[];
-  /** Container-level Tailwind classes (background color, margin, text size, etc.). */
   className?: string;
-  /** Per-tab Tailwind classes (padding, sizing). */
   tabClassName?: string;
 }
 

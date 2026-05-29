@@ -15,9 +15,7 @@ import type { ReactNode, Ref } from 'react';
  * Use directly below the field or form section it relates to.
  */
 interface AlertProps {
-  /** The message content. Can include inline elements. */
   children: ReactNode;
-  /** Additional Tailwind classes for layout overrides (e.g. `"sm:ml-2"`). */
   className?: string;
   /**
    * Font Awesome icon class to render before the children (without `fa-solid`
@@ -35,7 +33,6 @@ interface AlertProps {
    * and a focused element's own re-render is not reliably re-announced.
    */
   tabIndex?: number;
-  /** `'error'` renders red; `'success'` renders green. */
   variant: 'error' | 'success';
 }
 

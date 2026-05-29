@@ -14,11 +14,9 @@ import type { User } from '../../auth/AuthContext';
 interface UserMenuProps {
   user: User;
   view: AppView;
-  /** Whether the menu is open. Controlled by Header. */
   isOpen: boolean;
-  /** Called when the avatar button is clicked. */
   onToggle: () => void;
-  /** Called to imperatively close the menu (e.g. after nav item selection). */
+  // imperative close, e.g. after nav item selection
   onClose: () => void;
   onLogout: () => void;
   onModeToggle: () => void;
@@ -28,25 +26,15 @@ interface UserMenuProps {
 
 /**
  * Avatar button that opens a dropdown menu with navigation, theme/mode
- * controls, and logout.
+ * controls, and logout. Mouse and keyboard navigable.
  *
- * State:
- * - `showThemeSubmenu` — whether the theme flyout is visible.
- * - `previewTheme` — the theme currently being previewed on hover.
- * - `themeSubmenuOnLeft` — whether the flyout opens left (when near the right edge).
- * - `isThemeAreaPointerOver` — whether the mouse is over the theme row + flyout area.
+ * Open/close state (`isOpen`) is owned by `Header`, which also owns the
+ * outside-click and Escape listeners that close the menu.
  *
- * Open/close state (`isOpen`) is owned by `Header` and passed as a prop.
- * `Header` also owns the outside-click and Escape listeners that close the menu.
- *
- * The theme submenu stays open until the user mouses over another menu item or
- * closes the main menu. Hover tracking uses the `themeRowReference` wrapper div
- * (which contains both the trigger row and the flyout panel) so the submenu does
- * not close when moving between the two.
- *
- * Keyboard navigation within the dropdown is handled by `useMenuNavigation`.
- *
- * The Gravatar URL is memoized so it only recomputes when `user.email` changes.
+ * The theme submenu stays open until the user mouses over another menu item
+ * or closes the main menu. Hover tracking uses the `themeRowReference` wrapper
+ * div (which contains both the trigger row and the flyout panel) so the
+ * submenu does not close when moving between the two.
  */
 const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
   {

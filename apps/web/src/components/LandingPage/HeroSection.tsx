@@ -1,13 +1,5 @@
 import { Link } from 'react-router-dom';
 
-/**
- * Full-height hero section for the public landing page.
- *
- * Renders the Linklater logo icon, headline, tagline, a one-sentence
- * pitch, and two call-to-action links: "Get started free" (goes to
- * `/signup`) and "Log in" (goes to `/login`). Uses `react-router-dom`
- * `Link` components so navigation stays within the SPA.
- */
 export default function HeroSection() {
   return (
     <section

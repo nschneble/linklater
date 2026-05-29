@@ -2,19 +2,13 @@ import type { ButtonHTMLAttributes } from 'react';
 import { type ReactNode } from 'react';
 
 /**
- * Inline text button styled to look like a hyperlink. Used for secondary
- * in-page actions that would look too heavy as a full button (e.g. "Back to
- * login", "Resend verification email").
- *
- * Renders as a `<button type="button">` so it does not accidentally submit
- * a form it is placed inside.
+ * Inline link-style button for lightweight in-page actions (e.g. "Back to
+ * login", "Resend verification email"). Renders as `<button type="button">`
+ * so it does not accidentally submit a form it is placed inside.
  */
 interface LinkButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  /** The visible link text. */
   children: ReactNode;
-  /** When true, the button is non-interactive and visually dimmed. */
   disabled?: boolean;
-  /** Called when the button is clicked. */
   onClick: () => void;
 }
 

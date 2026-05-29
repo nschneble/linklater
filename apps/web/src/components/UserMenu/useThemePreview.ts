@@ -14,20 +14,14 @@ interface UseThemePreviewResult {
    * `resetPreview` when the submenu closes.
    */
   applyPreview: (themeId: BaseTheme) => void;
-  /** call with a `BaseTheme` value to show a live preview, or
-   * `null` to clear without animating back (use `resetPreview`
-   * instead when the submenu closes). */
+  /** `null` clears without animating back — use `resetPreview`
+   * when the submenu closes instead. */
   handlePreviewChange: (theme: BaseTheme | null) => void;
   /** call when the pointer enters (or focus moves into) the Theme
    * row — opens the submenu and recalculates which side it
    * should open on. */
   handleThemeRowEnter: () => void;
-  /** true while the pointer is anywhere inside the Theme row or
-   * flyout area; used by the caller to suppress premature
-   * submenu close on mouse-leave. */
   isThemeAreaPointerOver: boolean;
-  /** the theme id currently being previewed, or `null` when no
-   * preview is active. */
   previewTheme: string | null;
   setIsThemeAreaPointerOver: (value: boolean) => void;
   setShowThemeSubmenu: (value: boolean) => void;
@@ -40,8 +34,6 @@ interface UseThemePreviewResult {
    * row's position so the submenu can decide whether to open
    * left or right of the trigger. */
   themeRowReference: RefObject<HTMLDivElement | null>;
-  /** true when the submenu should open to the left because there
-   * is insufficient room on the right side of the viewport. */
   themeSubmenuOnLeft: boolean;
   /** animates the active theme back into place after the submenu
    * closes: clears the preview immediately, then applies a
@@ -62,10 +54,6 @@ interface UseThemePreviewResult {
  * The caller owns `flyoutReference` and passes it to both `ThemeSubmenu` and
  * `useMenuNavigation`. `submenuOpenedByKeyboard` lets the caller auto-focus
  * the first flyout item when the submenu opens via keyboard.
- * @returns `UseThemePreviewResult` — refs, state values, state
- *   setters, and the two event handlers (`handlePreviewChange`,
- *   `handleThemeRowEnter`) that drive the submenu and live-preview
- *   lifecycle. See the interface for per-member descriptions.
  */
 export function useThemePreview(): UseThemePreviewResult {
   const [isThemeAreaPointerOver, setIsThemeAreaPointerOver] = useState(false);
