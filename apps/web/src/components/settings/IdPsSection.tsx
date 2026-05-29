@@ -127,7 +127,7 @@ export default function IdPsSection({
   return (
     <div className="space-y-4">
       <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
-        IdPs
+        Other ways to log in
       </h3>
       <p className="text-[var(--text-muted)] text-xs text-pretty">
         Identity providers you've connected for signing in. The provider's email

@@ -47,7 +47,11 @@ export default function SettingsSidebar({
           </li>
         ))}
       </ul>
-      <IconListButton icon="fa-arrow-up" className="mt-2" onClick={onBackToTop}>
+      <IconListButton
+        icon="fa-arrow-up"
+        className="mt-12"
+        onClick={onBackToTop}
+      >
         Back to top
       </IconListButton>
     </nav>
