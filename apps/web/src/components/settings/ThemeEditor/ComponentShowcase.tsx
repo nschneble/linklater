@@ -1,31 +1,10 @@
+import ShowcaseSection from './ShowcaseSection';
 import { useState } from 'react';
-import type { ReactNode } from 'react';
 import Alert from '../../common/Alert';
 import FormInput from '../../common/FormInput';
 import IconButton from '../../common/IconButton';
 import PrimaryButton from '../../common/PrimaryButton';
 import TabButton from '../../common/TabButton';
-
-/**
- * A labeled section within `ComponentShowcase`. Renders a small-caps title
- * above its children.
- */
-function ShowcaseSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <div>
-      <p className="mb-3 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
-        {title}
-      </p>
-      {children}
-    </div>
-  );
-}
 
 const SURFACE_ITEMS = [
   { label: 'Background', variable: '--bg' },
