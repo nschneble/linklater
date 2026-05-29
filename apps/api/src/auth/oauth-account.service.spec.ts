@@ -440,4 +440,30 @@ describe('OAuthAccountService', () => {
       ).rejects.toThrow(ConflictException);
     });
   });
+
+  describe('buildGoogleLinkUrl', () => {
+    beforeEach(() => {
+      process.env.GOOGLE_CLIENT_ID = 'test-client-id';
+      process.env.GOOGLE_LINK_CALLBACK_URL =
+        'https://api.example.com/auth/google/link/callback';
+      process.env.JWT_SECRET = 'test-secret';
+    });
+
+    it('returns a URL pointing to the Google OAuth v2 authorization endpoint', () => {
+      const { url } = service.buildGoogleLinkUrl(USER_ID);
+      expect(url).toContain('https://accounts.google.com/o/oauth2/v2/auth');
+    });
+
+    it('includes required OAuth query parameters', () => {
+      const { url } = service.buildGoogleLinkUrl(USER_ID);
+      const parsed = new URL(url);
+      expect(parsed.searchParams.get('client_id')).toBe('test-client-id');
+      expect(parsed.searchParams.get('redirect_uri')).toBe(
+        'https://api.example.com/auth/google/link/callback',
+      );
+      expect(parsed.searchParams.get('response_type')).toBe('code');
+      expect(parsed.searchParams.get('scope')).toBeTruthy();
+      expect(parsed.searchParams.get('state')).toBeTruthy();
+    });
+  });
 });

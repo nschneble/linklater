@@ -22,7 +22,6 @@ import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { OAuthAccountService } from './oauth-account.service.js';
-import { generateLinkState } from './oauth-link-state.js';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**
@@ -103,20 +102,7 @@ export class OAuthController {
     // flow with `fetch` (so it can attach the bearer JWT). A top-level
     // browser navigation cannot send an Authorization header, which is
     // why the previous redirect-based design produced a 401.
-    const linkState = generateLinkState(
-      request.user.userId,
-      process.env.JWT_SECRET!,
-    );
-    const parameters = new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID!,
-      redirect_uri: process.env.GOOGLE_LINK_CALLBACK_URL!,
-      response_type: 'code',
-      scope: 'email profile',
-      state: linkState,
-    });
-    return {
-      url: `https://accounts.google.com/o/oauth2/v2/auth?${parameters.toString()}`,
-    };
+    return this.oauthAccountService.buildGoogleLinkUrl(request.user.userId);
   }
 
   @ApiOperation({ summary: 'Google OAuth account linking callback' })

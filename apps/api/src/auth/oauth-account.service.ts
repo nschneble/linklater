@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '../prisma/index.js';
 import { UsersService } from '../users/index.js';
+import { generateLinkState } from './oauth-link-state.js';
 
 @Injectable()
 export class OAuthAccountService {
@@ -80,6 +81,29 @@ export class OAuthAccountService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Builds the Google OAuth authorization URL for the account-linking flow.
+   * Signs a state token with the user's ID so the callback can verify the
+   * request originated from this server and was initiated by this user.
+   *
+   * @param userId - The UUID of the authenticated user initiating the link.
+   * @returns An object with `url` — the full Google authorization URL to
+   *   navigate to, including the signed state parameter.
+   */
+  buildGoogleLinkUrl(userId: string): { url: string } {
+    const linkState = generateLinkState(userId, process.env.JWT_SECRET!);
+    const parameters = new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID!,
+      redirect_uri: process.env.GOOGLE_LINK_CALLBACK_URL!,
+      response_type: 'code',
+      scope: 'email profile',
+      state: linkState,
+    });
+    return {
+      url: `https://accounts.google.com/o/oauth2/v2/auth?${parameters.toString()}`,
+    };
   }
 
   async unlinkOAuthProvider(userId: string, provider: string): Promise<void> {
