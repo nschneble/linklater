@@ -5,21 +5,18 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
-import { expiresInMs } from '../common/dates.js';
+import { generateHexToken } from '../common/crypto-tokens.js';
 import {
   RECOVERY_CODE_REGEX,
   findMatchingRecoveryCode,
   generateRecoveryCodes,
   hashRecoveryCodes,
 } from '../common/recovery-codes.js';
-import { PrismaService } from '../prisma/prisma.service.js';
 import { UsersService, withoutPasswordHash } from '../users/index.js';
 import { EmailVerificationService } from './email-verification.service.js';
 import { MagicLinkService } from './magic-link.service.js';
+import { RefreshTokenService } from './refresh-token.service.js';
 import { TotpService } from './totp.service.js';
-
-const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
@@ -29,7 +26,7 @@ export class AuthService {
     private readonly emailVerificationService: EmailVerificationService,
     private readonly magicLinkService: MagicLinkService,
     private readonly totpService: TotpService,
-    private readonly prisma: PrismaService,
+    private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
   async register(email: string, password: string) {
@@ -109,49 +106,11 @@ export class AuthService {
   }
 
   async refresh(rawRefreshToken: string) {
-    const tokenHash = sha256Hex(rawRefreshToken);
-
-    // Lookup + delete + re-issue in a single transaction so a crash mid-rotation
-    // cannot leave the user without a refresh token, and concurrent refresh
-    // requests for the same raw token cannot race: the loser's deleteMany
-    // returns count === 0 and we map that to a clean 401 rather than letting
-    // a Prisma P2025 leak out as a 500.
-    return this.prisma.$transaction(async (transaction) => {
-      const stored = await transaction.refreshToken.findUnique({
-        where: { tokenHash },
-        include: { user: true },
-      });
-
-      if (!stored || stored.expiresAt < new Date()) {
-        throw new UnauthorizedException('Invalid or expired refresh token');
-      }
-
-      const { count } = await transaction.refreshToken.deleteMany({
-        where: { id: stored.id, tokenHash },
-      });
-      if (count === 0) {
-        throw new UnauthorizedException('Invalid or expired refresh token');
-      }
-
-      const rawNewRefreshToken = generateHexToken();
-      const newTokenHash = sha256Hex(rawNewRefreshToken);
-      const expiresAt = expiresInMs(ONE_YEAR_MS);
-      await transaction.refreshToken.create({
-        data: { tokenHash: newTokenHash, userId: stored.userId, expiresAt },
-      });
-      const accessToken = this.jwtService.sign({
-        subject: stored.userId,
-        email: stored.user.email,
-      });
-      return { accessToken, refreshToken: rawNewRefreshToken };
-    });
+    return this.refreshTokenService.refresh(rawRefreshToken);
   }
 
   async revokeAllRefreshTokens(userId: string) {
-    await Promise.all([
-      this.prisma.refreshToken.deleteMany({ where: { userId } }),
-      this.prisma.extensionAuthCode.deleteMany({ where: { userId } }),
-    ]);
+    await this.refreshTokenService.revokeAllRefreshTokens(userId);
   }
 
   async requestMagicLink(email: string): Promise<void> {
@@ -318,15 +277,6 @@ export class AuthService {
   }
 
   async issueTokenPair(userId: string, email: string) {
-    const rawRefreshToken = generateHexToken();
-    const tokenHash = sha256Hex(rawRefreshToken);
-    const expiresAt = expiresInMs(ONE_YEAR_MS);
-
-    await this.prisma.refreshToken.create({
-      data: { tokenHash, userId, expiresAt },
-    });
-
-    const accessToken = this.jwtService.sign({ subject: userId, email });
-    return { accessToken, refreshToken: rawRefreshToken };
+    return this.refreshTokenService.issueTokenPair(userId, email);
   }
 }

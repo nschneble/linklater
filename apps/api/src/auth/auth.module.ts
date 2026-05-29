@@ -14,6 +14,7 @@ import { MagicLinkController } from './magic-link.controller.js';
 import { MagicLinkService } from './magic-link.service.js';
 import { OAuthAccountService } from './oauth-account.service.js';
 import { OAuthController } from './oauth.controller.js';
+import { RefreshTokenService } from './refresh-token.service.js';
 import { GoogleLinkStrategy } from './google-link.strategy.js';
 import { GoogleStrategy } from './google.strategy.js';
 import { JwtStrategy } from './jwt.strategy.js';
@@ -70,6 +71,7 @@ const oauthProviders: Provider[] = [
     ExtensionAuthService,
     MagicLinkService,
     OAuthAccountService,
+    RefreshTokenService,
     JwtStrategy,
     LocalStrategy,
     MfaAuthGuard,

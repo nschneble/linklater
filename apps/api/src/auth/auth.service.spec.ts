@@ -8,9 +8,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { EmailVerificationService } from './email-verification.service';
 import { MagicLinkService } from './magic-link.service';
+import { RefreshTokenService } from './refresh-token.service';
 import { TotpService } from './totp.service';
 import { UsersService } from '../users/users.service';
-import { PrismaService } from '../prisma/prisma.service';
 
 const KNOWN_PASSWORD = 'open-sesame';
 const KNOWN_PASSWORD_HASH = bcrypt.hashSync(KNOWN_PASSWORD, 1);
@@ -77,31 +77,14 @@ describe('AuthService', () => {
     verifyCode: jest.fn(),
   } as unknown as TotpService;
 
-  const prismaServiceMock = {
-    refreshToken: {
-      create: jest.fn().mockResolvedValue({}),
-      delete: jest.fn().mockResolvedValue({}),
-      deleteMany: jest.fn().mockResolvedValue({}),
-      findUnique: jest.fn(),
-    },
-    extensionAuthCode: {
-      create: jest.fn().mockResolvedValue({}),
-      delete: jest.fn().mockResolvedValue({}),
-      deleteMany: jest.fn().mockResolvedValue({}),
-      findUnique: jest.fn(),
-    },
-    // Invoke the transaction callback with the same mock client so existing
-    // assertions on refreshToken.{delete,create} still match.
-    $transaction: jest
-      .fn()
-      .mockImplementation(
-        async (
-          callback: (transaction: typeof prismaServiceMock) => Promise<unknown>,
-        ) => callback(prismaServiceMock),
-      ),
-  } as unknown as PrismaService & {
-    $transaction: jest.Mock;
-  };
+  const refreshTokenServiceMock = {
+    issueTokenPair: jest.fn().mockResolvedValue({
+      accessToken: SIGNED_TOKEN,
+      refreshToken: 'raw-refresh-token',
+    }),
+    refresh: jest.fn(),
+    revokeAllRefreshTokens: jest.fn().mockResolvedValue(undefined),
+  } as unknown as RefreshTokenService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -115,7 +98,7 @@ describe('AuthService', () => {
         },
         { provide: MagicLinkService, useValue: magicLinkServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
-        { provide: PrismaService, useValue: prismaServiceMock },
+        { provide: RefreshTokenService, useValue: refreshTokenServiceMock },
       ],
     }).compile();
 
@@ -304,24 +287,20 @@ describe('AuthService', () => {
         email: USER_EMAIL,
         totpEnabledAt: null,
       });
+      (refreshTokenServiceMock.issueTokenPair as jest.Mock).mockResolvedValue({
+        accessToken: SIGNED_TOKEN,
+        refreshToken: 'raw-refresh-token',
+      });
 
       const result = await service.login(USER_ID);
 
       expect(usersServiceMock.findById).toHaveBeenCalledWith(USER_ID);
-      expect(jwtServiceMock.sign).toHaveBeenCalledWith({
-        email: USER_EMAIL,
-        subject: USER_ID,
-      });
+      expect(refreshTokenServiceMock.issueTokenPair).toHaveBeenCalledWith(
+        USER_ID,
+        USER_EMAIL,
+      );
       expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
       expect(result).toHaveProperty('refreshToken');
-      expect(typeof (result as { refreshToken: string }).refreshToken).toBe(
-        'string',
-      );
-      expect(prismaServiceMock.refreshToken.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ userId: USER_ID }),
-        }),
-      );
     });
 
     it('returns mfaToken and mfaMethod totp when totpEnabledAt is set, binding a fresh nonce', async () => {
@@ -344,7 +323,7 @@ describe('AuthService', () => {
         { expiresIn: '5m' },
       );
       expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
-      expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
+      expect(refreshTokenServiceMock.issueTokenPair).not.toHaveBeenCalled();
     });
 
     it('forces MFA even when the caller supplies only a userId — closing the OAuth-strategy bypass', async () => {
@@ -360,126 +339,36 @@ describe('AuthService', () => {
       const result = await service.login(USER_ID);
 
       expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
-      expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
+      expect(refreshTokenServiceMock.issueTokenPair).not.toHaveBeenCalled();
     });
   });
 
   describe('refresh', () => {
-    const RAW_REFRESH_TOKEN = 'a'.repeat(64);
-
-    it('returns a new token pair when the refresh token is valid', async () => {
-      (
-        prismaServiceMock.refreshToken.findUnique as jest.Mock
-      ).mockResolvedValue({
-        id: 'rt-1',
-        userId: USER_ID,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
-        user: { id: USER_ID, email: USER_EMAIL },
-      });
-
-      (
-        prismaServiceMock.refreshToken.deleteMany as jest.Mock
-      ).mockResolvedValueOnce({ count: 1 });
-
-      const result = await service.refresh(RAW_REFRESH_TOKEN);
-
-      expect(
-        (prismaServiceMock as unknown as { $transaction: jest.Mock })
-          .$transaction,
-      ).toHaveBeenCalledTimes(1);
-      expect(prismaServiceMock.refreshToken.deleteMany).toHaveBeenCalledWith({
-        where: { id: 'rt-1', tokenHash: expect.any(String) },
-      });
-      expect(prismaServiceMock.refreshToken.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ userId: USER_ID }),
-        }),
+    it('delegates to RefreshTokenService.refresh', async () => {
+      const tokenPair = {
+        accessToken: SIGNED_TOKEN,
+        refreshToken: 'new-raw-token',
+      };
+      (refreshTokenServiceMock.refresh as jest.Mock).mockResolvedValue(
+        tokenPair,
       );
-      expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
-      expect(result).toHaveProperty('refreshToken');
-    });
 
-    it('throws UnauthorizedException (not 500) when a concurrent refresh already deleted the row', async () => {
-      // Race scenario: two refresh calls fire with the same raw token. The
-      // first wins, deletes the row, and creates a new one. The second's
-      // transactional findUnique still sees the row (depending on isolation
-      // it may even see the old one), but the deleteMany returns count === 0
-      // because the row was already removed. The service must map that to
-      // a clean 401 — NOT let a Prisma P2025 (or count === 0) leak as 500.
-      (
-        prismaServiceMock.refreshToken.findUnique as jest.Mock
-      ).mockResolvedValue({
-        id: 'rt-1',
-        userId: USER_ID,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
-        user: { id: USER_ID, email: USER_EMAIL },
-      });
-      (
-        prismaServiceMock.refreshToken.deleteMany as jest.Mock
-      ).mockResolvedValueOnce({ count: 0 });
+      const result = await service.refresh('old-raw-token');
 
-      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
-        UnauthorizedException,
+      expect(refreshTokenServiceMock.refresh).toHaveBeenCalledWith(
+        'old-raw-token',
       );
-      expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
-    });
-
-    it('throws UnauthorizedException when the refresh token is not found', async () => {
-      (
-        prismaServiceMock.refreshToken.findUnique as jest.Mock
-      ).mockResolvedValue(null);
-
-      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
-    it('throws UnauthorizedException when the refresh token is expired', async () => {
-      (
-        prismaServiceMock.refreshToken.findUnique as jest.Mock
-      ).mockResolvedValue({
-        id: 'rt-1',
-        userId: USER_ID,
-        expiresAt: new Date(Date.now() - 1000),
-        user: { id: USER_ID, email: USER_EMAIL },
-      });
-
-      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
-    it('propagates failure from the create half of the rotation so prisma rolls back the delete', async () => {
-      // The delete + create live inside the same $transaction callback, so a
-      // throw inside create bubbles out and the surrounding tx is rolled back.
-      (
-        prismaServiceMock.refreshToken.findUnique as jest.Mock
-      ).mockResolvedValue({
-        id: 'rt-1',
-        userId: USER_ID,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
-        user: { id: USER_ID, email: USER_EMAIL },
-      });
-      (
-        prismaServiceMock.refreshToken.deleteMany as jest.Mock
-      ).mockResolvedValueOnce({ count: 1 });
-      (
-        prismaServiceMock.refreshToken.create as jest.Mock
-      ).mockRejectedValueOnce(new Error('db down'));
-
-      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
-        'db down',
-      );
+      expect(result).toBe(tokenPair);
     });
   });
 
   describe('revokeAllRefreshTokens', () => {
-    it('deletes all refresh tokens for the user', async () => {
+    it('delegates to RefreshTokenService.revokeAllRefreshTokens', async () => {
       await service.revokeAllRefreshTokens(USER_ID);
 
-      expect(prismaServiceMock.refreshToken.deleteMany).toHaveBeenCalledWith({
-        where: { userId: USER_ID },
-      });
+      expect(
+        refreshTokenServiceMock.revokeAllRefreshTokens,
+      ).toHaveBeenCalledWith(USER_ID);
     });
   });
 
