@@ -611,9 +611,9 @@ describe('AuthController', () => {
     it('delegates to oauthAccountService.buildGoogleLinkUrl with the userId and returns its result', () => {
       const expectedUrl =
         'https://accounts.google.com/o/oauth2/v2/auth?client_id=test-client-id&state=signed-state';
-      (
-        oauthAccountServiceMock.buildGoogleLinkUrl as jest.Mock
-      ).mockReturnValue({ url: expectedUrl });
+      (oauthAccountServiceMock.buildGoogleLinkUrl as jest.Mock).mockReturnValue(
+        { url: expectedUrl },
+      );
 
       const request = {
         user: { userId: USER_ID },

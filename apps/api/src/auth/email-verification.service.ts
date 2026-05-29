@@ -30,15 +30,7 @@ export class EmailVerificationService {
 
   async sendVerificationEmail(userId: string) {
     const user = await this.usersService.findById(userId);
-    const rawToken = generateHexToken();
-    const tokenHash = sha256Hex(rawToken);
-    const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
-    await this.userTokensService.updateVerificationToken(
-      userId,
-      tokenHash,
-      expiresAt,
-    );
-    await this.emailService.sendVerification(user.email, rawToken, user.theme);
+    await this.issueVerificationEmail(userId, user.email, user.theme);
   }
 
   async verifyEmail(rawToken: string) {
@@ -67,15 +59,7 @@ export class EmailVerificationService {
       throw new BadRequestException('Email is already verified');
     }
 
-    const rawToken = generateHexToken();
-    const tokenHash = sha256Hex(rawToken);
-    const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
-    await this.userTokensService.updateVerificationToken(
-      userId,
-      tokenHash,
-      expiresAt,
-    );
-    await this.emailService.sendVerification(user.email, rawToken, user.theme);
+    await this.issueVerificationEmail(userId, user.email, user.theme);
   }
 
   async forgotPassword(email: string) {
@@ -210,5 +194,21 @@ export class EmailVerificationService {
       }
       throw error;
     }
+  }
+
+  private async issueVerificationEmail(
+    userId: string,
+    email: string,
+    theme: string,
+  ) {
+    const rawToken = generateHexToken();
+    const tokenHash = sha256Hex(rawToken);
+    const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
+    await this.userTokensService.updateVerificationToken(
+      userId,
+      tokenHash,
+      expiresAt,
+    );
+    await this.emailService.sendVerification(email, rawToken, theme);
   }
 }

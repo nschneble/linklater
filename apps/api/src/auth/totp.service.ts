@@ -73,26 +73,18 @@ export class TotpService {
         user.totpSecret,
         process.env.TOTP_ENCRYPTION_KEY!,
       );
-      const existingUri = generateURI({
-        secret: existingSecret,
-        label: userEmail,
-        issuer: 'Linklater',
-        strategy: 'totp',
-      });
       return {
-        qrCodeDataUrl: await QRCode.toDataURL(existingUri),
+        qrCodeDataUrl: await QRCode.toDataURL(
+          this.buildTotpUri(existingSecret, userEmail),
+        ),
         secret: existingSecret,
       };
     }
 
     const secret = generateSecret();
-    const uri = generateURI({
-      secret,
-      label: userEmail,
-      issuer: 'Linklater',
-      strategy: 'totp',
-    });
-    const qrCodeDataUrl = await QRCode.toDataURL(uri);
+    const qrCodeDataUrl = await QRCode.toDataURL(
+      this.buildTotpUri(secret, userEmail),
+    );
 
     const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
     await this.usersService.saveTotpSecret(userId, encryptedSecret);
@@ -214,5 +206,14 @@ export class TotpService {
     }
 
     return false;
+  }
+
+  private buildTotpUri(secret: string, userEmail: string): string {
+    return generateURI({
+      secret,
+      label: userEmail,
+      issuer: 'Linklater',
+      strategy: 'totp',
+    });
   }
 }
