@@ -938,7 +938,7 @@ describe('UsersService', () => {
     });
   });
 
-  describe('disableTwoFactor', () => {
+  describe('disableMultiFactor', () => {
     it('runs a transaction that nullifies TOTP fields and deletes recovery codes', async () => {
       const prismaMockExtended = prismaMock as unknown as {
         $transaction: jest.Mock;
@@ -954,7 +954,7 @@ describe('UsersService', () => {
       };
       (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
 
-      await service.disableTwoFactor(USER_ID);
+      await service.disableMultiFactor(USER_ID);
 
       expect(prismaMockExtended.$transaction).toHaveBeenCalled();
       expect(prismaMock.user.update).toHaveBeenCalledWith(

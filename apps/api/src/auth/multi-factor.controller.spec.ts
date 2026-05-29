@@ -3,7 +3,7 @@ import { jest } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException } from '@nestjs/common';
 
-import { TwoFactorController } from './two-factor.controller';
+import { MultiFactorController } from './multi-factor.controller';
 import { AuthService } from './auth.service';
 import { TotpService } from './totp.service';
 import { CustomThrottlerGuard } from './custom-throttler.guard';
@@ -26,11 +26,11 @@ const makeRequest = (
     },
   }) as AuthRequest;
 
-describe('TwoFactorController', () => {
-  let controller: TwoFactorController;
+describe('MultiFactorController', () => {
+  let controller: MultiFactorController;
 
   const authServiceMock = {
-    disable2fa: jest.fn(),
+    disableMfa: jest.fn(),
     regenerateRecoveryCodes: jest.fn(),
     verifyOtp: jest.fn(),
   } as unknown as AuthService;
@@ -43,7 +43,7 @@ describe('TwoFactorController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [TwoFactorController],
+      controllers: [MultiFactorController],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
@@ -57,7 +57,7 @@ describe('TwoFactorController', () => {
       .useValue({ canActivate: () => true })
       .compile();
 
-    controller = module.get<TwoFactorController>(TwoFactorController);
+    controller = module.get<MultiFactorController>(MultiFactorController);
     jest.clearAllMocks();
   });
 
@@ -143,16 +143,16 @@ describe('TwoFactorController', () => {
     });
   });
 
-  describe('disable2fa', () => {
-    it('delegates to AuthService.disable2fa with userId and credentials', async () => {
-      (authServiceMock.disable2fa as jest.Mock).mockResolvedValue(undefined);
+  describe('disableMfa', () => {
+    it('delegates to AuthService.disableMfa with userId and credentials', async () => {
+      (authServiceMock.disableMfa as jest.Mock).mockResolvedValue(undefined);
 
-      await controller.disable2fa(makeRequest(), {
+      await controller.disableMfa(makeRequest(), {
         currentPassword: 'my-password',
         code: undefined,
       });
 
-      expect(authServiceMock.disable2fa).toHaveBeenCalledWith(
+      expect(authServiceMock.disableMfa).toHaveBeenCalledWith(
         USER_ID,
         'my-password',
         undefined,

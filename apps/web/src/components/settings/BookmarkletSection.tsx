@@ -62,7 +62,7 @@ export default function BookmarkletSection() {
       tabIndex={-1}
       className="scroll-mt-24 max-w-md space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <h3
           id="bookmarklet-heading"
           className="text-[var(--text)] text-sm font-semibold text-balance"

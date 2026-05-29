@@ -61,8 +61,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     mode: 'light',
     pendingEmail: null,
     theme: 'scanner-darkly',
-    twoFactorMethod: null,
-    twoFactorPending: false,
+    multiFactorMethod: null,
+    multiFactorPending: false,
     userId: 'user-1',
     ...overrides,
   };

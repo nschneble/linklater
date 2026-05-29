@@ -26,10 +26,10 @@ export interface User {
   mode: string;
   /** The current theme identifier (e.g. `'scanner-darkly'`). */
   theme: string;
-  /** The active 2FA method, or `null` when 2FA is disabled. */
-  twoFactorMethod: 'totp' | null;
+  /** The active MFA method, or `null` when MFA is disabled. */
+  multiFactorMethod: 'totp' | null;
   /** `true` when the user has started TOTP setup but not yet verified it. */
-  twoFactorPending: boolean;
+  multiFactorPending: boolean;
   /** The user's UUID (renamed from `id` to `userId` by `GET /auth/me`). */
   userId: string;
   /**
@@ -49,7 +49,7 @@ export interface AuthContextValue {
   loading: boolean;
   /**
    * Authenticates the user. On success, populates `user` and resolves to `void`.
-   * When the account has 2FA enabled, resolves to `{ mfaToken, mfaMethod }` instead
+   * When the account has MFA enabled, resolves to `{ mfaToken, mfaMethod }` instead
    * and leaves `user` unpopulated — the caller must present the OTP challenge.
    */
   login: (

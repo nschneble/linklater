@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, Matches } from 'class-validator';
 
-export class Disable2faDto {
+export class DisableMfaDto {
   @ApiPropertyOptional({ description: 'Current password for local accounts.' })
   @IsOptional()
   @IsString()

@@ -30,7 +30,7 @@ describe('AuthService', () => {
     create: jest.fn(),
     createOAuthUser: jest.fn(),
     createOAuthUserAndLink: jest.fn(),
-    disableTwoFactor: jest.fn(),
+    disableMultiFactor: jest.fn(),
     findByEmail: jest.fn(),
     findByIdWithPasswordHash: jest.fn(),
     findByMagicLinkToken: jest.fn(),
@@ -136,7 +136,7 @@ describe('AuthService', () => {
       (usersServiceMock.listOAuthAccounts as jest.Mock).mockResolvedValue([]);
     });
 
-    it('returns user with id remapped to userId and 2FA status fields', async () => {
+    it('returns user with id remapped to userId and MFA status fields', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
@@ -155,13 +155,13 @@ describe('AuthService', () => {
       expect(result).not.toHaveProperty('id');
       expect(result.userId).toBe(USER_ID);
       expect(result.email).toBe(USER_EMAIL);
-      expect(result.twoFactorMethod).toBeNull();
-      expect(result.twoFactorPending).toBe(false);
+      expect(result.multiFactorMethod).toBeNull();
+      expect(result.multiFactorPending).toBe(false);
       expect(result).not.toHaveProperty('totpSecret');
       expect(result).not.toHaveProperty('magicLinkToken');
     });
 
-    it('returns twoFactorMethod totp when totpEnabledAt is set', async () => {
+    it('returns multiFactorMethod totp when totpEnabledAt is set', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
@@ -174,11 +174,11 @@ describe('AuthService', () => {
 
       const result = await service.me(USER_ID);
 
-      expect(result.twoFactorMethod).toBe('totp');
-      expect(result.twoFactorPending).toBe(false);
+      expect(result.multiFactorMethod).toBe('totp');
+      expect(result.multiFactorPending).toBe(false);
     });
 
-    it('returns twoFactorPending true when totpSecret is set but totpEnabledAt is null', async () => {
+    it('returns multiFactorPending true when totpSecret is set but totpEnabledAt is null', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
@@ -191,8 +191,8 @@ describe('AuthService', () => {
 
       const result = await service.me(USER_ID);
 
-      expect(result.twoFactorMethod).toBeNull();
-      expect(result.twoFactorPending).toBe(true);
+      expect(result.multiFactorMethod).toBeNull();
+      expect(result.multiFactorPending).toBe(true);
     });
 
     it('includes connectedProviders (with providerEmail) from listOAuthAccounts', async () => {
@@ -281,7 +281,7 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('returns an accessToken and refreshToken when 2FA is not enabled', async () => {
+    it('returns an accessToken and refreshToken when MFA is not enabled', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
@@ -455,7 +455,7 @@ describe('AuthService', () => {
         expect(usersServiceMock.clearMfaNonce).toHaveBeenCalledWith(USER_ID);
       });
 
-      it('throws UnauthorizedException when no 2FA is enrolled and totp method is submitted', async () => {
+      it('throws UnauthorizedException when no MFA is enrolled and totp method is submitted', async () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
@@ -539,7 +539,7 @@ describe('AuthService', () => {
         ).rejects.toThrow(UnauthorizedException);
       });
 
-      it('throws UnauthorizedException when no 2FA method is enrolled', async () => {
+      it('throws UnauthorizedException when no MFA method is enrolled', async () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
@@ -554,8 +554,8 @@ describe('AuthService', () => {
     });
   });
 
-  describe('disable2fa', () => {
-    it('disables 2FA when currentPassword is valid', async () => {
+  describe('disableMfa', () => {
+    it('disables MFA when currentPassword is valid', async () => {
       (
         usersServiceMock.findByIdWithPasswordHash as jest.Mock
       ).mockResolvedValue({
@@ -563,16 +563,16 @@ describe('AuthService', () => {
         passwordHash: KNOWN_PASSWORD_HASH,
         totpEnabledAt: null,
       });
-      (usersServiceMock.disableTwoFactor as jest.Mock).mockResolvedValue(
+      (usersServiceMock.disableMultiFactor as jest.Mock).mockResolvedValue(
         undefined,
       );
 
-      await service.disable2fa(USER_ID, KNOWN_PASSWORD);
+      await service.disableMfa(USER_ID, KNOWN_PASSWORD);
 
-      expect(usersServiceMock.disableTwoFactor).toHaveBeenCalledWith(USER_ID);
+      expect(usersServiceMock.disableMultiFactor).toHaveBeenCalledWith(USER_ID);
     });
 
-    it('disables 2FA when TOTP code is valid', async () => {
+    it('disables MFA when TOTP code is valid', async () => {
       (
         usersServiceMock.findByIdWithPasswordHash as jest.Mock
       ).mockResolvedValue({
@@ -583,20 +583,20 @@ describe('AuthService', () => {
         totpEnabledAt: new Date(),
       });
       (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
-      (usersServiceMock.disableTwoFactor as jest.Mock).mockResolvedValue(
+      (usersServiceMock.disableMultiFactor as jest.Mock).mockResolvedValue(
         undefined,
       );
 
-      await service.disable2fa(USER_ID, undefined, '123456');
+      await service.disableMfa(USER_ID, undefined, '123456');
 
       expect(totpServiceMock.verifyCode).toHaveBeenCalledWith(
         expect.objectContaining({ id: USER_ID }),
         '123456',
       );
-      expect(usersServiceMock.disableTwoFactor).toHaveBeenCalledWith(USER_ID);
+      expect(usersServiceMock.disableMultiFactor).toHaveBeenCalledWith(USER_ID);
     });
 
-    it('disables 2FA using a recovery code', async () => {
+    it('disables MFA using a recovery code', async () => {
       const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
       const realHash = await bcrypt.hash(REAUTH_RECOVERY_CODE, 1);
       const codeId = 'rc-reauth-1';
@@ -615,20 +615,20 @@ describe('AuthService', () => {
       (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
         true,
       );
-      (usersServiceMock.disableTwoFactor as jest.Mock).mockResolvedValue(
+      (usersServiceMock.disableMultiFactor as jest.Mock).mockResolvedValue(
         undefined,
       );
 
-      await service.disable2fa(USER_ID, undefined, REAUTH_RECOVERY_CODE);
+      await service.disableMfa(USER_ID, undefined, REAUTH_RECOVERY_CODE);
 
       expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
         codeId,
       );
-      expect(usersServiceMock.disableTwoFactor).toHaveBeenCalledWith(USER_ID);
+      expect(usersServiceMock.disableMultiFactor).toHaveBeenCalledWith(USER_ID);
     });
 
     it('throws BadRequestException when neither credential is provided', async () => {
-      await expect(service.disable2fa(USER_ID)).rejects.toThrow(
+      await expect(service.disableMfa(USER_ID)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -643,7 +643,7 @@ describe('AuthService', () => {
       });
 
       await expect(
-        service.disable2fa(USER_ID, UNKNOWN_PASSWORD),
+        service.disableMfa(USER_ID, UNKNOWN_PASSWORD),
       ).rejects.toThrow(UnauthorizedException);
     });
 
@@ -656,7 +656,7 @@ describe('AuthService', () => {
         totpEnabledAt: null,
       });
 
-      await expect(service.disable2fa(USER_ID, KNOWN_PASSWORD)).rejects.toThrow(
+      await expect(service.disableMfa(USER_ID, KNOWN_PASSWORD)).rejects.toThrow(
         UnauthorizedException,
       );
     });
@@ -674,7 +674,7 @@ describe('AuthService', () => {
       (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(false);
 
       await expect(
-        service.disable2fa(USER_ID, undefined, '000000'),
+        service.disableMfa(USER_ID, undefined, '000000'),
       ).rejects.toThrow(UnauthorizedException);
     });
 
@@ -695,7 +695,7 @@ describe('AuthService', () => {
       );
 
       await expect(
-        service.disable2fa(USER_ID, undefined, REAUTH_RECOVERY_CODE),
+        service.disableMfa(USER_ID, undefined, REAUTH_RECOVERY_CODE),
       ).rejects.toThrow(UnauthorizedException);
     });
   });
@@ -870,8 +870,8 @@ describe('AuthService', () => {
     });
   });
 
-  describe('reauthenticate (via disable2fa / regenerateRecoveryCodes)', () => {
-    it('throws UnauthorizedException when a recovery-code-shaped string is provided but no 2FA is enrolled', async () => {
+  describe('reauthenticate (via disableMfa / regenerateRecoveryCodes)', () => {
+    it('throws UnauthorizedException when a recovery-code-shaped string is provided but no MFA is enrolled', async () => {
       const RECOVERY_CODE_STUB = 'aaaaa-bbbbb-ccccc';
 
       (
@@ -884,11 +884,11 @@ describe('AuthService', () => {
       });
 
       await expect(
-        service.disable2fa(USER_ID, undefined, RECOVERY_CODE_STUB),
+        service.disableMfa(USER_ID, undefined, RECOVERY_CODE_STUB),
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('throws UnauthorizedException when a plain OTP code is provided but no 2FA is enrolled', async () => {
+    it('throws UnauthorizedException when a plain OTP code is provided but no MFA is enrolled', async () => {
       (
         usersServiceMock.findByIdWithPasswordHash as jest.Mock
       ).mockResolvedValue({
@@ -899,7 +899,7 @@ describe('AuthService', () => {
       });
 
       await expect(
-        service.disable2fa(USER_ID, undefined, '123456'),
+        service.disableMfa(USER_ID, undefined, '123456'),
       ).rejects.toThrow(UnauthorizedException);
     });
   });
@@ -925,7 +925,7 @@ describe('AuthService', () => {
   });
 
   describe('verifyMagicLink', () => {
-    it('returns accessToken and refreshToken when the token is valid and 2FA is not enabled', async () => {
+    it('returns accessToken and refreshToken when the token is valid and MFA is not enabled', async () => {
       (magicLinkServiceMock.verifyToken as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
@@ -945,7 +945,7 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('refreshToken');
     });
 
-    it('returns an MFA challenge instead of a full session when 2FA is enabled', async () => {
+    it('returns an MFA challenge instead of a full session when MFA is enabled', async () => {
       // Magic-link verification now routes through login(), so a TOTP-enrolled
       // user cannot bypass MFA simply by clicking a magic link.
       (magicLinkServiceMock.verifyToken as jest.Mock).mockResolvedValue({

@@ -52,8 +52,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     mode: 'light',
     pendingEmail: null,
     theme: 'scanner-darkly',
-    twoFactorMethod: null,
-    twoFactorPending: false,
+    multiFactorMethod: null,
+    multiFactorPending: false,
     userId: USER_ID,
     welcomedAt: null,
     ...overrides,
@@ -173,13 +173,13 @@ describe('AccountSettingsForm', () => {
     it('shows an error when the server returns 403 (verification code required)', async () => {
       vi.mocked(apiModule.requestEmailChange).mockRejectedValue(
         new ApiError(
-          '2FA is enabled — provide a verification code to change your email',
+          'MFA is enabled — provide a verification code to change your email',
           403,
         ),
       );
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
-          user: makeUser({ twoFactorMethod: 'email' }),
+          user: makeUser({ multiFactorMethod: 'email' }),
         }),
       );
 
@@ -222,9 +222,9 @@ describe('AccountSettingsForm', () => {
       });
     });
 
-    it('shows a 2FA code input when the user has 2FA enabled', () => {
+    it('shows a MFA code input when the user has MFA enabled', () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+        makeAuthContext({ user: makeUser({ multiFactorMethod: 'totp' }) }),
       );
 
       renderWithPrefill(<AccountSettingsForm />);
@@ -234,13 +234,13 @@ describe('AccountSettingsForm', () => {
       ).toBeInTheDocument();
     });
 
-    it('includes the 2FA code when requesting an email change with 2FA enabled', async () => {
+    it('includes the MFA code when requesting an email change with MFA enabled', async () => {
       vi.mocked(apiModule.requestEmailChange).mockResolvedValue(undefined);
       const setPendingEmail = vi.fn();
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
           setPendingEmail,
-          user: makeUser({ twoFactorMethod: 'totp' }),
+          user: makeUser({ multiFactorMethod: 'totp' }),
         }),
       );
 

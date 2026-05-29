@@ -60,8 +60,8 @@ export async function getMe() {
     pendingEmail: string | null;
     mode: string;
     theme: string;
-    twoFactorMethod: 'totp' | null;
-    twoFactorPending: boolean;
+    multiFactorMethod: 'totp' | null;
+    multiFactorPending: boolean;
     userId: string;
     welcomedAt: string | null;
   }>('/auth/me', {
@@ -126,7 +126,7 @@ export async function resetPassword(
 
 /**
  * Starts or resumes TOTP enrollment.
- * `POST /auth/2fa/totp/setup`
+ * `POST /auth/mfa/totp/setup`
  *
  * Idempotent: if a setup is already pending, the server returns the same
  * QR code so a scan in progress is not invalidated.
@@ -139,12 +139,12 @@ export async function setupTotp(): Promise<{
   qrCodeDataUrl: string;
   secret: string;
 }> {
-  return apiFetch('/auth/2fa/totp/setup', { method: 'POST' });
+  return apiFetch('/auth/mfa/totp/setup', { method: 'POST' });
 }
 
 /**
  * Completes TOTP enrollment by verifying the 6-digit code.
- * `POST /auth/2fa/totp/verify`
+ * `POST /auth/mfa/totp/verify`
  *
  * @param code - The current 6-digit code from the authenticator app.
  * @returns `{ recoveryCodes }` — 10 plaintext codes shown exactly once.
@@ -154,7 +154,7 @@ export async function setupTotp(): Promise<{
 export async function verifyTotpSetup(
   code: string,
 ): Promise<{ recoveryCodes: string[] }> {
-  return apiFetch('/auth/2fa/totp/verify', {
+  return apiFetch('/auth/mfa/totp/verify', {
     body: JSON.stringify({ code }),
     method: 'POST',
   });
@@ -163,13 +163,13 @@ export async function verifyTotpSetup(
 /**
  * Cancels an in-flight TOTP enrollment, clearing the pending secret
  * server-side. Safe to call even when no setup is pending (no-op).
- * `DELETE /auth/2fa/totp/setup`
+ * `DELETE /auth/mfa/totp/setup`
  *
  * @throws {ApiError} 409 when TOTP is already fully enabled (use
- *   `disable2fa` instead).
+ *   `disableMfa` instead).
  */
 export async function cancelTotpSetup(): Promise<void> {
-  await apiFetch('/auth/2fa/totp/setup', { method: 'DELETE' });
+  await apiFetch('/auth/mfa/totp/setup', { method: 'DELETE' });
 }
 
 export async function registerMagicLink(email: string): Promise<void> {
@@ -190,7 +190,7 @@ export async function requestMagicLink(email: string): Promise<void> {
 
 export async function verifyMagicLink(token: string): Promise<LoginResponse> {
   // The server routes magic-link verification through the same `login()`
-  // helper as password sign-in, so a 2FA-enabled account answering a magic
+  // helper as password sign-in, so an MFA-enabled account answering a magic
   // link gets back an `mfaToken` challenge instead of an access token.
   // Returning `LoginResponse` keeps that branch visible to the caller and
   // prevents a silent destructure failure for users with TOTP turned on.
@@ -219,11 +219,11 @@ export async function verifyOtp(
   return data;
 }
 
-export async function disable2fa(credentials: {
+export async function disableMfa(credentials: {
   currentPassword?: string;
   code?: string;
 }): Promise<void> {
-  await apiFetch('/auth/2fa', {
+  await apiFetch('/auth/mfa', {
     body: JSON.stringify(credentials),
     method: 'DELETE',
   });
@@ -233,7 +233,7 @@ export async function regenerateRecoveryCodes(credentials: {
   currentPassword?: string;
   code?: string;
 }): Promise<{ recoveryCodes: string[] }> {
-  return apiFetch('/auth/2fa/recovery-codes/regenerate', {
+  return apiFetch('/auth/mfa/recovery-codes/regenerate', {
     body: JSON.stringify(credentials),
     method: 'POST',
   });

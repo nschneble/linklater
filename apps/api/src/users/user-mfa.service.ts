@@ -150,7 +150,7 @@ export class UserMfaService {
     return result.count === 1;
   }
 
-  async disableTwoFactor(id: string) {
+  async disableMultiFactor(id: string) {
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id },

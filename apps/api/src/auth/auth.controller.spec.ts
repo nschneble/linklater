@@ -15,7 +15,7 @@ import { MfaAuthGuard } from './mfa-auth.guard';
 import { OAuthAccountService } from './oauth-account.service';
 import { OAuthController } from './oauth.controller';
 import { TotpService } from './totp.service';
-import { TwoFactorController } from './two-factor.controller';
+import { MultiFactorController } from './multi-factor.controller';
 import type { Response } from 'express';
 import type { AuthRequest } from './auth-request.type';
 
@@ -33,7 +33,7 @@ const VERIFICATION_TOKEN = 'verification-token-xyz';
 describe('AuthController', () => {
   let controller: AuthController;
   let oauthController: OAuthController;
-  let twoFactorController: TwoFactorController;
+  let multiFactorController: MultiFactorController;
   let magicLinkController: MagicLinkController;
   let extensionAuthController: ExtensionAuthController;
 
@@ -52,7 +52,7 @@ describe('AuthController', () => {
   } as unknown as ExtensionAuthService;
 
   const authServiceMock = {
-    disable2fa: jest.fn(),
+    disableMfa: jest.fn(),
     login: jest.fn().mockResolvedValue({
       accessToken: ACCESS_TOKEN,
       refreshToken: REFRESH_TOKEN,
@@ -103,7 +103,7 @@ describe('AuthController', () => {
         ExtensionAuthController,
         MagicLinkController,
         OAuthController,
-        TwoFactorController,
+        MultiFactorController,
       ],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
@@ -127,7 +127,9 @@ describe('AuthController', () => {
 
     controller = module.get<AuthController>(AuthController);
     oauthController = module.get<OAuthController>(OAuthController);
-    twoFactorController = module.get<TwoFactorController>(TwoFactorController);
+    multiFactorController = module.get<MultiFactorController>(
+      MultiFactorController,
+    );
     magicLinkController = module.get<MagicLinkController>(MagicLinkController);
     extensionAuthController = module.get<ExtensionAuthController>(
       ExtensionAuthController,
@@ -343,7 +345,7 @@ describe('AuthController', () => {
     it('applies CustomThrottlerGuard before MfaAuthGuard to rate-limit before auth processing', () => {
       const guards: unknown[] = Reflect.getMetadata(
         '__guards__',
-        TwoFactorController.prototype.verifyOtp,
+        MultiFactorController.prototype.verifyOtp,
       );
       expect(guards).toContain(CustomThrottlerGuard);
       expect(guards).toContain(MfaAuthGuard);
@@ -362,7 +364,7 @@ describe('AuthController', () => {
         method: 'totp' as const,
       };
 
-      const result = await twoFactorController.verifyOtp(request, body);
+      const result = await multiFactorController.verifyOtp(request, body);
 
       expect(authServiceMock.verifyOtp).toHaveBeenCalledWith(
         USER_ID,
@@ -388,7 +390,7 @@ describe('AuthController', () => {
         setupResult,
       );
 
-      const result = await twoFactorController.totpSetup(request);
+      const result = await multiFactorController.totpSetup(request);
 
       expect(totpServiceMock.generateSetup).toHaveBeenCalledWith(
         USER_ID,
@@ -406,7 +408,7 @@ describe('AuthController', () => {
         recoveryCodes,
       );
 
-      const result = await twoFactorController.totpVerifySetup(request, {
+      const result = await multiFactorController.totpVerifySetup(request, {
         code: '123456',
       });
 
@@ -462,16 +464,16 @@ describe('AuthController', () => {
     });
   });
 
-  describe('disable2fa', () => {
-    it('delegates to AuthService.disable2fa with userId and credentials', async () => {
+  describe('disableMfa', () => {
+    it('delegates to AuthService.disableMfa with userId and credentials', async () => {
       const request = { user: { userId: USER_ID } } as never;
-      (authServiceMock.disable2fa as jest.Mock).mockResolvedValue(undefined);
+      (authServiceMock.disableMfa as jest.Mock).mockResolvedValue(undefined);
 
-      await twoFactorController.disable2fa(request, {
+      await multiFactorController.disableMfa(request, {
         currentPassword: 'open-sesame',
       });
 
-      expect(authServiceMock.disable2fa).toHaveBeenCalledWith(
+      expect(authServiceMock.disableMfa).toHaveBeenCalledWith(
         USER_ID,
         'open-sesame',
         undefined,
@@ -487,7 +489,7 @@ describe('AuthController', () => {
         recoveryCodes,
       );
 
-      const result = await twoFactorController.regenerateRecoveryCodes(
+      const result = await multiFactorController.regenerateRecoveryCodes(
         request,
         {
           currentPassword: 'open-sesame',

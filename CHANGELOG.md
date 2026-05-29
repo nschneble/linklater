@@ -10,7 +10,7 @@
 
 - bookmarklet token no longer expires; revocable via Regenerate button in
   Settings — old installs stop working immediately on regeneration
-- cancellable TOTP enrollment — users can abort in-flight 2FA setup from
+- cancellable TOTP enrollment — users can abort in-flight MFA setup from
   both the QR-scan step and the "Continue setup" recovery state; cancelling
   clears the pending secret server-side so no orphaned secrets remain
 - API documentation page (`/settings/api`)

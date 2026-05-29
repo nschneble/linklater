@@ -37,38 +37,38 @@
 
 ### Feature Components
 
-| Component                | Path                      | Description                                     |
-| ------------------------ | ------------------------- | ----------------------------------------------- |
-| `AccountSettingsForm`    | `src/components/settings` | Change email + password                         |
+| Component                | Path                      | Description                                                                         |
+| ------------------------ | ------------------------- | ----------------------------------------------------------------------------------- |
+| `AccountSettingsForm`    | `src/components/settings` | Change email + password                                                             |
 | `ApiDocsView`            | `src/components/api-docs` | Interactive API reference powered by Scalar; sessionStorage-scoped PAT field on top |
-| `ApiTokensList`          | `src/components/settings` | Renders PAT rows with revoke confirmation       |
-| `ApiTokensSection`       | `src/components/settings` | Create, list, and revoke personal access tokens |
-| `TokenInput`             | `src/components/api-docs` | Controlled PAT input with paste, show/hide, and live-region announcements |
-| `BookmarkletSection`     | `src/components/settings` | Generates the installable bookmarklet           |
-| `CvdModeToggle`          | `src/components/settings` | Enables / disables CVD mode in Settings         |
-| `DangerZone`             | `src/components/settings` | Account deletion                                |
-| `ErrorBoundary`          | `src/components/errors`   | React error boundary                            |
-| `Header`                 | `src/components`          | Top navigation bar                              |
-| `KeyboardShortcutsModal` | `src/components/links`    | List shortcut keys                              |
-| `LinkCard`               | `src/components/links`    | Link renderer                                   |
-| `LinkCardLayout`         | `src/components/links`    | Link card visual structure with anchor overlay  |
-| `LinkForm`               | `src/components/links`    | Add link form                                   |
-| `LinksControls`          | `src/components/links`    | Desktop link action buttons                     |
-| `LinksList`              | `src/components/links`    | Paginated list of cards                         |
-| `LinksMobileControls`    | `src/components/links`    | Mobile icon-only action buttons                 |
-| `LinksToolbar`           | `src/components/links`    | Link tabs and search                            |
-| `MfaView`                | `src/components/auth`     | TOTP / recovery-code challenge after login      |
-| `ReauthForm`             | `src/components/settings` | Password + OTP re-auth for sensitive operations |
-| `RecoveryCodesModal`     | `src/components/settings` | One-time recovery code display + copy           |
-| `IdPsSection`            | `src/components/settings` | Connect / disconnect Google and Apple accounts  |
-| `StatusBadge`            | `src/components/common`   | Themed status indicator with icon + label       |
-| `StumbleEmptyView`       | `src/components/stumble`  | Stumble page empty state with Wikipedia teasers |
-| `StumbleSection`         | `src/components/settings` | Bookmarkable "Stumble!" link card               |
-| `TokenVerificationPage`  | `src/components/verify`   | Verify token flow                               |
-| `TotpSetupView`          | `src/components/settings` | TOTP QR code + manual secret + verification     |
-| `TwoFactorSection`       | `src/components/settings` | TOTP setup and management                       |
-| `UserMenu`               | `src/components/UserMenu` | Site nav and theme picker                       |
-| `WikipediaArticleList`   | `src/components/stumble`  | Renders three random Wikipedia teaser cards     |
+| `ApiTokensList`          | `src/components/settings` | Renders PAT rows with revoke confirmation                                           |
+| `ApiTokensSection`       | `src/components/settings` | Create, list, and revoke personal access tokens                                     |
+| `TokenInput`             | `src/components/api-docs` | Controlled PAT input with paste, show/hide, and live-region announcements           |
+| `BookmarkletSection`     | `src/components/settings` | Generates the installable bookmarklet                                               |
+| `CvdModeToggle`          | `src/components/settings` | Enables / disables CVD mode in Settings                                             |
+| `DangerZone`             | `src/components/settings` | Account deletion                                                                    |
+| `ErrorBoundary`          | `src/components/errors`   | React error boundary                                                                |
+| `Header`                 | `src/components`          | Top navigation bar                                                                  |
+| `KeyboardShortcutsModal` | `src/components/links`    | List shortcut keys                                                                  |
+| `LinkCard`               | `src/components/links`    | Link renderer                                                                       |
+| `LinkCardLayout`         | `src/components/links`    | Link card visual structure with anchor overlay                                      |
+| `LinkForm`               | `src/components/links`    | Add link form                                                                       |
+| `LinksControls`          | `src/components/links`    | Desktop link action buttons                                                         |
+| `LinksList`              | `src/components/links`    | Paginated list of cards                                                             |
+| `LinksMobileControls`    | `src/components/links`    | Mobile icon-only action buttons                                                     |
+| `LinksToolbar`           | `src/components/links`    | Link tabs and search                                                                |
+| `MfaView`                | `src/components/auth`     | TOTP / recovery-code challenge after login                                          |
+| `ReauthForm`             | `src/components/settings` | Password + OTP re-auth for sensitive operations                                     |
+| `RecoveryCodesModal`     | `src/components/settings` | One-time recovery code display + copy                                               |
+| `IdPsSection`            | `src/components/settings` | Connect / disconnect Google and Apple accounts                                      |
+| `StatusBadge`            | `src/components/common`   | Themed status indicator with icon + label                                           |
+| `StumbleEmptyView`       | `src/components/stumble`  | Stumble page empty state with Wikipedia teasers                                     |
+| `StumbleSection`         | `src/components/settings` | Bookmarkable "Stumble!" link card                                                   |
+| `TokenVerificationPage`  | `src/components/verify`   | Verify token flow                                                                   |
+| `TotpSetupView`          | `src/components/settings` | TOTP QR code + manual secret + verification                                         |
+| `MultiFactorSection`     | `src/components/settings` | TOTP setup and management                                                           |
+| `UserMenu`               | `src/components/UserMenu` | Site nav and theme picker                                                           |
+| `WikipediaArticleList`   | `src/components/stumble`  | Renders three random Wikipedia teaser cards                                         |
 
 ### UI Primitives (`src/components/common`)
 

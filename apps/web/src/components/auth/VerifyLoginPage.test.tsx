@@ -129,7 +129,7 @@ describe('VerifyLoginPage', () => {
     });
   });
 
-  // 2FA-enabled accounts that authenticate via a magic link still need to
+  // MFA-enabled accounts that authenticate via a magic link still need to
   // clear the OTP challenge. Before this branch existed, the page silently
   // destructured `accessToken` off an `{ mfaToken, mfaMethod }` payload and
   // hung on the spinner indefinitely.
@@ -143,7 +143,7 @@ describe('VerifyLoginPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/two-factor authentication/i),
+        screen.getByText(/multi-factor authentication/i),
       ).toBeInTheDocument();
     });
   });

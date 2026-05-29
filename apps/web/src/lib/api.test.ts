@@ -21,7 +21,7 @@ import {
   ApiError,
   apiFetch,
   createApiToken,
-  disable2fa,
+  disableMfa,
   listApiTokens,
   readLink,
   clearStoredToken,
@@ -522,7 +522,7 @@ describe('login', () => {
     expect(getStoredToken()).toBeNull();
   });
 
-  it('returns mfaToken and mfaMethod when 2FA is required', async () => {
+  it('returns mfaToken and mfaMethod when MFA is required', async () => {
     mockFetch({ mfaToken: 'mfa-tok', mfaMethod: 'email' });
 
     const result = await login('user@example.com', 'password123');
@@ -881,18 +881,18 @@ describe('deleteMe', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 2FA endpoints
+// MFA endpoints
 // ---------------------------------------------------------------------------
 
 describe('setupTotp', () => {
-  it('POSTs to /auth/2fa/totp/setup with auth', async () => {
+  it('POSTs to /auth/mfa/totp/setup with auth', async () => {
     setStoredToken('my-jwt');
     const fetchMock = mockFetch({ qrCodeDataUrl: 'data:...', secret: 'ABC' });
 
     await setupTotp();
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/totp/setup');
+    expect(url).toContain('/auth/mfa/totp/setup');
     expect((options as { method: string }).method).toBe('POST');
     const headers = (options as { headers: Record<string, string> }).headers;
     expect(headers['Authorization']).toBe('Bearer my-jwt');
@@ -900,14 +900,14 @@ describe('setupTotp', () => {
 });
 
 describe('verifyTotpSetup', () => {
-  it('POSTs to /auth/2fa/totp/verify with the 6-digit code', async () => {
+  it('POSTs to /auth/mfa/totp/verify with the 6-digit code', async () => {
     setStoredToken('my-jwt');
     const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
 
     await verifyTotpSetup('123456');
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/totp/verify');
+    expect(url).toContain('/auth/mfa/totp/verify');
     const body = JSON.parse((options as { body: string }).body) as {
       code: string;
     };
@@ -967,7 +967,7 @@ describe('verifyMagicLink', () => {
     expect(getStoredToken()).toBe('ml-jwt');
   });
 
-  // 2FA-enabled accounts hitting a magic link get a challenge back from
+  // MFA-enabled accounts hitting a magic link get a challenge back from
   // the server. The response must be returned as-is so the caller can
   // surface MfaView instead of trying to destructure a missing accessToken.
   it('returns the mfa challenge unchanged and does not store any token', async () => {
@@ -1077,15 +1077,15 @@ describe('stumbleLink', () => {
   });
 });
 
-describe('disable2fa', () => {
-  it('DELETEs /auth/2fa with the provided credentials', async () => {
+describe('disableMfa', () => {
+  it('DELETEs /auth/mfa with the provided credentials', async () => {
     setStoredToken('my-jwt');
     const fetchMock = mockFetch({});
 
-    await disable2fa({ currentPassword: 'open-sesame' });
+    await disableMfa({ currentPassword: 'open-sesame' });
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa');
+    expect(url).toContain('/auth/mfa');
     expect((options as { method: string }).method).toBe('DELETE');
     const body = JSON.parse((options as { body: string }).body) as {
       currentPassword: string;
@@ -1095,14 +1095,14 @@ describe('disable2fa', () => {
 });
 
 describe('regenerateRecoveryCodes', () => {
-  it('POSTs to /auth/2fa/recovery-codes/regenerate with credentials', async () => {
+  it('POSTs to /auth/mfa/recovery-codes/regenerate with credentials', async () => {
     setStoredToken('my-jwt');
     const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
 
     await regenerateRecoveryCodes({ currentPassword: 'open-sesame' });
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/recovery-codes/regenerate');
+    expect(url).toContain('/auth/mfa/recovery-codes/regenerate');
     expect((options as { method: string }).method).toBe('POST');
   });
 });

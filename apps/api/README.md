@@ -2,30 +2,30 @@
 
 ## Environment Variables
 
-| Variable                   | Required | Description                                                                                 |
-| -------------------------- | -------- | ------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`             | Yes      | PostgreSQL connection string                                                                |
-| `JWT_SECRET`               | Yes      | Used to sign and verify JWTs and HMAC state tokens for OAuth linking                        |
+| Variable                   | Required | Description                                                                                                                           |
+| -------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`             | Yes      | PostgreSQL connection string                                                                                                          |
+| `JWT_SECRET`               | Yes      | Used to sign and verify JWTs and HMAC state tokens for OAuth linking                                                                  |
 | `TOTP_ENCRYPTION_KEY`      | Yes      | 64-char hex string used to encrypt stored TOTP secrets. Generate with `openssl rand -hex 32`. The server refuses to start without it. |
-| `APP_URL`                  | Yes      | Public URL of the web app (e.g. `https://linklater.app`)                                    |
-| `SMTP_HOST`                | Yes      | SMTP server hostname                                                                        |
-| `SMTP_PORT`                | Yes      | SMTP server port                                                                            |
-| `SMTP_SECURE`              | Yes      | Set to `true` to use TLS                                                                    |
-| `SMTP_USER`                | No       | SMTP authentication username (omit for Mailpit)                                             |
-| `SMTP_PASS`                | No       | SMTP authentication password (omit for Mailpit)                                             |
-| `SMTP_FROM`                | Yes      | `From` address for all outbound emails                                                      |
-| `CORS_ORIGIN`              | No       | Comma-separated allowlist of origins. Required in production; omit to allow any origin (development default). |
-| `PORT`                     | No       | HTTP port to bind. Defaults to `3000`.                                                      |
-| `GOOGLE_CLIENT_ID`         | No       | Google OAuth app client ID — omit to disable Google sign-in                                 |
-| `GOOGLE_CLIENT_SECRET`     | No       | Google OAuth app client secret                                                              |
-| `GOOGLE_CALLBACK_URL`      | No       | Absolute URL of the Google sign-in callback (e.g. `.../auth/google/callback`)               |
-| `GOOGLE_LINK_CALLBACK_URL` | No       | Absolute URL for the Google account-linking callback (e.g. `.../auth/google/link/callback`) |
-| `APPLE_CLIENT_ID`          | No       | Apple Sign In service ID — omit to disable Apple sign-in                                    |
-| `APPLE_TEAM_ID`            | No       | Apple developer team ID                                                                     |
-| `APPLE_KEY_ID`             | No       | Apple Sign In key ID                                                                        |
-| `APPLE_PRIVATE_KEY`        | No       | Apple Sign In private key (PEM string)                                                      |
-| `APPLE_CALLBACK_URL`       | No       | Absolute URL of the Apple Sign In callback                                                  |
-| `EXTENSION_REDIRECT_URIS`  | No       | Comma-separated allowlist of redirect URIs accepted by the extension auth flow              |
+| `APP_URL`                  | Yes      | Public URL of the web app (e.g. `https://linklater.app`)                                                                              |
+| `SMTP_HOST`                | Yes      | SMTP server hostname                                                                                                                  |
+| `SMTP_PORT`                | Yes      | SMTP server port                                                                                                                      |
+| `SMTP_SECURE`              | Yes      | Set to `true` to use TLS                                                                                                              |
+| `SMTP_USER`                | No       | SMTP authentication username (omit for Mailpit)                                                                                       |
+| `SMTP_PASS`                | No       | SMTP authentication password (omit for Mailpit)                                                                                       |
+| `SMTP_FROM`                | Yes      | `From` address for all outbound emails                                                                                                |
+| `CORS_ORIGIN`              | No       | Comma-separated allowlist of origins. Required in production; omit to allow any origin (development default).                         |
+| `PORT`                     | No       | HTTP port to bind. Defaults to `3000`.                                                                                                |
+| `GOOGLE_CLIENT_ID`         | No       | Google OAuth app client ID — omit to disable Google sign-in                                                                           |
+| `GOOGLE_CLIENT_SECRET`     | No       | Google OAuth app client secret                                                                                                        |
+| `GOOGLE_CALLBACK_URL`      | No       | Absolute URL of the Google sign-in callback (e.g. `.../auth/google/callback`)                                                         |
+| `GOOGLE_LINK_CALLBACK_URL` | No       | Absolute URL for the Google account-linking callback (e.g. `.../auth/google/link/callback`)                                           |
+| `APPLE_CLIENT_ID`          | No       | Apple Sign In service ID — omit to disable Apple sign-in                                                                              |
+| `APPLE_TEAM_ID`            | No       | Apple developer team ID                                                                                                               |
+| `APPLE_KEY_ID`             | No       | Apple Sign In key ID                                                                                                                  |
+| `APPLE_PRIVATE_KEY`        | No       | Apple Sign In private key (PEM string)                                                                                                |
+| `APPLE_CALLBACK_URL`       | No       | Absolute URL of the Apple Sign In callback                                                                                            |
+| `EXTENSION_REDIRECT_URIS`  | No       | Comma-separated allowlist of redirect URIs accepted by the extension auth flow                                                        |
 
 > **OAuth providers are loaded conditionally.** If the required environment
 > variables for a provider are absent, that Passport strategy is never
@@ -70,7 +70,7 @@ require an `Authorization: Bearer <token>` header.
 > **GOTCHA:** The JWT TTL changed from 90 days to 1 hour when refresh tokens
 > were introduced. Access tokens are now short-lived; long-lived sessions are
 > maintained by refresh token rotation. Bookmarklets embed a `kind =
-> BOOKMARKLET` PAT (not a JWT), so they are unaffected by JWT rotation and
+BOOKMARKLET` PAT (not a JWT), so they are unaffected by JWT rotation and
 > never expire. The only way to invalidate a bookmarklet is to click
 > **Regenerate** in Settings, which atomically replaces the token in the
 > database.
@@ -108,7 +108,7 @@ present.
   `/oauth/callback#token=<jwt>&refresh=<refreshToken>`.
 - Apple uses the same pattern with a `POST` callback instead of `GET`.
 - `mfa_required` is passed as an error query parameter when the user has
-  2FA enabled and Google/Apple login cannot complete the second factor.
+  MFA enabled and Google/Apple login cannot complete the second factor.
 
 ### Google Account Linking
 
@@ -127,7 +127,7 @@ An already-authenticated user can link their Google account from Settings.
 > redirecting. The SPA calls this endpoint with `fetch` so it can attach an
 > `Authorization` header — a top-level browser navigation cannot send that
 > header and would receive a 401. The SPA then does `window.location.href =
-> url` to hand the user off to Google.
+url` to hand the user off to Google.
 
 > **GOTCHA:** Google account linking requires that the Google account's email
 > match the Linklater account's email exactly. The check is enforced in
@@ -154,7 +154,7 @@ The allowed `redirect_uri` values are controlled by the
 `EXTENSION_REDIRECT_URIS` environment variable (comma-separated). Unlisted
 URIs are rejected with `400 Bad Request`.
 
-### Two-Factor Authentication (TOTP)
+### Multi-Factor Authentication (TOTP)
 
 After `POST /auth/login`, when a user has TOTP enabled, the response is
 `{ mfaToken, mfaMethod: 'totp' }` instead of `{ accessToken, refreshToken }`.
@@ -179,18 +179,18 @@ locally via `localStorage`. (see `apps/web/README.md` — API Patterns)
 
 ### Links (`/links`) — accepts JWT or PAT via `AnyAuthGuard`
 
-| Method   | Path                | Auth        | Request Body / Query                          | Response                                                           |
-| -------- | ------------------- | ----------- | --------------------------------------------- | ------------------------------------------------------------------ |
-| `POST`   | `/links`            | JWT or PAT  | `{ url: string }`                             | Created `Link` (metadata fetched async via the `fetch-metadata` queue) |
-| `GET`    | `/links`            | JWT or PAT  | Query: `filter=unread\|read`, `q`, `page`, `limit` | `PaginatedLinks` (`{ links, total, limit, page }`)               |
-| `GET`    | `/links/random`     | JWT or PAT  | Query: `filter=unread\|read`                   | A single random `Link` or `null`                                  |
-| `POST`   | `/links/stumble`    | JWT or PAT  | —                                             | `{ url: string \| null }` — picks a random unread link and atomically marks it read |
-| `GET`    | `/links/:id`        | JWT or PAT  | —                                             | `Link`                                                            |
-| `PATCH`  | `/links/:id`        | JWT or PAT  | (reserved — no fields accepted yet)           | `Link`                                                            |
-| `POST`   | `/links/:id/read`   | JWT or PAT  | —                                             | `Link` with `readAt` set                                          |
-| `POST`   | `/links/:id/unread` | JWT or PAT  | —                                             | `Link` with `readAt` cleared                                      |
-| `DELETE` | `/links/read`       | JWT or PAT  | —                                             | `{ count: number }` — bulk delete of all read links               |
-| `DELETE` | `/links/:id`        | JWT or PAT  | —                                             | `{ success: true }`                                               |
+| Method   | Path                | Auth       | Request Body / Query                               | Response                                                                            |
+| -------- | ------------------- | ---------- | -------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `POST`   | `/links`            | JWT or PAT | `{ url: string }`                                  | Created `Link` (metadata fetched async via the `fetch-metadata` queue)              |
+| `GET`    | `/links`            | JWT or PAT | Query: `filter=unread\|read`, `q`, `page`, `limit` | `PaginatedLinks` (`{ links, total, limit, page }`)                                  |
+| `GET`    | `/links/random`     | JWT or PAT | Query: `filter=unread\|read`                       | A single random `Link` or `null`                                                    |
+| `POST`   | `/links/stumble`    | JWT or PAT | —                                                  | `{ url: string \| null }` — picks a random unread link and atomically marks it read |
+| `GET`    | `/links/:id`        | JWT or PAT | —                                                  | `Link`                                                                              |
+| `PATCH`  | `/links/:id`        | JWT or PAT | (reserved — no fields accepted yet)                | `Link`                                                                              |
+| `POST`   | `/links/:id/read`   | JWT or PAT | —                                                  | `Link` with `readAt` set                                                            |
+| `POST`   | `/links/:id/unread` | JWT or PAT | —                                                  | `Link` with `readAt` cleared                                                        |
+| `DELETE` | `/links/read`       | JWT or PAT | —                                                  | `{ count: number }` — bulk delete of all read links                                 |
+| `DELETE` | `/links/:id`        | JWT or PAT | —                                                  | `{ success: true }`                                                                 |
 
 > **Route ordering matters.** `/links/stumble`, `/links/random`, and
 > `/links/read` are declared before the `/links/:id` routes so NestJS does
@@ -198,13 +198,13 @@ locally via `localStorage`. (see `apps/web/README.md` — API Patterns)
 
 ### Tokens (`/tokens`) — requires JWT
 
-| Method   | Path                           | Auth | Request Body       | Response                                                        |
-| -------- | ------------------------------ | ---- | ------------------ | --------------------------------------------------------------- |
-| `POST`   | `/tokens`                      | JWT  | `{ name: string }` | Created token including one-time `rawToken`                     |
-| `GET`    | `/tokens`                      | JWT  | —                  | Array of token summaries (no `rawToken`)                        |
-| `DELETE` | `/tokens/:id`                  | JWT  | —                  | `{ success: true }`                                             |
-| `GET`    | `/tokens/bookmarklet`          | JWT  | —                  | Bookmarklet token with `rawToken`; minted on first call         |
-| `POST`   | `/tokens/bookmarklet/regenerate` | JWT | —                 | New bookmarklet token; previous token revoked atomically        |
+| Method   | Path                             | Auth | Request Body       | Response                                                 |
+| -------- | -------------------------------- | ---- | ------------------ | -------------------------------------------------------- |
+| `POST`   | `/tokens`                        | JWT  | `{ name: string }` | Created token including one-time `rawToken`              |
+| `GET`    | `/tokens`                        | JWT  | —                  | Array of token summaries (no `rawToken`)                 |
+| `DELETE` | `/tokens/:id`                    | JWT  | —                  | `{ success: true }`                                      |
+| `GET`    | `/tokens/bookmarklet`            | JWT  | —                  | Bookmarklet token with `rawToken`; minted on first call  |
+| `POST`   | `/tokens/bookmarklet/regenerate` | JWT  | —                  | New bookmarklet token; previous token revoked atomically |
 
 **Created token response shape:**
 
@@ -226,63 +226,63 @@ the same shape minus `rawToken`.
 
 #### Password / Email Flow
 
-| Method   | Path                              | Auth      | Request Body                                 | Response                                                  |
-| -------- | --------------------------------- | --------- | -------------------------------------------- | --------------------------------------------------------- |
-| `POST`   | `/auth/register`                  | Public    | `{ email, password }`                        | Created user (without `passwordHash`); verification email sent |
-| `POST`   | `/auth/login`                     | Public    | `{ email, password }`                        | `{ accessToken, refreshToken }` or `{ mfaToken, mfaMethod }` |
-| `GET`    | `/auth/me`                        | JWT       | —                                            | Current user profile + connected providers + 2FA state    |
-| `POST`   | `/auth/verify-email`              | Public    | `{ token }`                                  | 200                                                       |
-| `POST`   | `/auth/resend-verification`       | JWT       | —                                            | 200                                                       |
-| `POST`   | `/auth/forgot-password`           | Public    | `{ email }`                                  | 200 (always — no enumeration)                             |
-| `POST`   | `/auth/reset-password`            | Public    | `{ token, password }`                        | 200                                                       |
-| `POST`   | `/auth/request-email-change`      | JWT       | `{ email, code? }`                           | 200 (verification sent to the new address; `code` required when 2FA is enabled) |
-| `POST`   | `/auth/verify-email-change`       | Public    | `{ token }`                                  | 200                                                       |
-| `POST`   | `/auth/set-password`              | JWT       | `{ password }` (min 12 characters)           | `{ success: true }`                                       |
+| Method | Path                         | Auth   | Request Body                       | Response                                                                        |
+| ------ | ---------------------------- | ------ | ---------------------------------- | ------------------------------------------------------------------------------- |
+| `POST` | `/auth/register`             | Public | `{ email, password }`              | Created user (without `passwordHash`); verification email sent                  |
+| `POST` | `/auth/login`                | Public | `{ email, password }`              | `{ accessToken, refreshToken }` or `{ mfaToken, mfaMethod }`                    |
+| `GET`  | `/auth/me`                   | JWT    | —                                  | Current user profile + connected providers + MFA state                          |
+| `POST` | `/auth/verify-email`         | Public | `{ token }`                        | 200                                                                             |
+| `POST` | `/auth/resend-verification`  | JWT    | —                                  | 200                                                                             |
+| `POST` | `/auth/forgot-password`      | Public | `{ email }`                        | 200 (always — no enumeration)                                                   |
+| `POST` | `/auth/reset-password`       | Public | `{ token, password }`              | 200                                                                             |
+| `POST` | `/auth/request-email-change` | JWT    | `{ email, code? }`                 | 200 (verification sent to the new address; `code` required when MFA is enabled) |
+| `POST` | `/auth/verify-email-change`  | Public | `{ token }`                        | 200                                                                             |
+| `POST` | `/auth/set-password`         | JWT    | `{ password }` (min 12 characters) | `{ success: true }`                                                             |
 
 #### Magic Link
 
-| Method   | Path                              | Auth      | Request Body          | Response                                              |
-| -------- | --------------------------------- | --------- | --------------------- | ----------------------------------------------------- |
-| `POST`   | `/auth/request-magic-link`        | Public    | `{ email }`           | 200 (always, even if email not found)                 |
-| `POST`   | `/auth/register-magic-link`       | Public    | `{ email }`           | 200 (creates account if new, sends magic link)        |
-| `POST`   | `/auth/verify-magic-link`         | Public    | `{ token }`           | `{ accessToken, refreshToken }` or `{ mfaToken, mfaMethod }` when 2FA is enabled |
+| Method | Path                        | Auth   | Request Body | Response                                                                         |
+| ------ | --------------------------- | ------ | ------------ | -------------------------------------------------------------------------------- |
+| `POST` | `/auth/request-magic-link`  | Public | `{ email }`  | 200 (always, even if email not found)                                            |
+| `POST` | `/auth/register-magic-link` | Public | `{ email }`  | 200 (creates account if new, sends magic link)                                   |
+| `POST` | `/auth/verify-magic-link`   | Public | `{ token }`  | `{ accessToken, refreshToken }` or `{ mfaToken, mfaMethod }` when MFA is enabled |
 
 #### Sessions / Refresh Tokens
 
-| Method   | Path              | Auth      | Request Body         | Response                                            |
-| -------- | ----------------- | --------- | -------------------- | --------------------------------------------------- |
-| `POST`   | `/auth/refresh`   | Public    | `{ refreshToken }`   | `{ accessToken, refreshToken }` (rotated pair, atomic) |
-| `DELETE` | `/auth/sessions`  | JWT       | —                    | `{ success: true }` — all refresh tokens revoked    |
+| Method   | Path             | Auth   | Request Body       | Response                                               |
+| -------- | ---------------- | ------ | ------------------ | ------------------------------------------------------ |
+| `POST`   | `/auth/refresh`  | Public | `{ refreshToken }` | `{ accessToken, refreshToken }` (rotated pair, atomic) |
+| `DELETE` | `/auth/sessions` | JWT    | —                  | `{ success: true }` — all refresh tokens revoked       |
 
-#### Two-Factor Authentication
+#### Multi-Factor Authentication
 
-| Method   | Path                                  | Auth        | Request Body                            | Response                                              |
-| -------- | ------------------------------------- | ----------- | --------------------------------------- | ----------------------------------------------------- |
-| `POST`   | `/auth/verify-otp`                    | mfa-token   | `{ code, method: 'totp' \| 'recovery' }` | `{ accessToken, refreshToken }`                       |
-| `POST`   | `/auth/2fa/totp/setup`                | JWT         | —                                       | `{ qrCodeDataUrl, secret }`                           |
-| `POST`   | `/auth/2fa/totp/verify`               | JWT         | `{ code }`                              | `{ recoveryCodes: string[] }` (10 codes, shown once)  |
-| `DELETE` | `/auth/2fa/totp/setup`                | JWT         | —                                       | 204 — pending secret cleared; idempotent              |
-| `DELETE` | `/auth/2fa`                           | JWT         | `{ currentPassword?, code? }`           | 200                                                   |
-| `POST`   | `/auth/2fa/recovery-codes/regenerate` | JWT         | `{ currentPassword?, code? }`           | `{ recoveryCodes: string[] }`                         |
+| Method   | Path                                  | Auth      | Request Body                             | Response                                             |
+| -------- | ------------------------------------- | --------- | ---------------------------------------- | ---------------------------------------------------- |
+| `POST`   | `/auth/verify-otp`                    | mfa-token | `{ code, method: 'totp' \| 'recovery' }` | `{ accessToken, refreshToken }`                      |
+| `POST`   | `/auth/mfa/totp/setup`                | JWT       | —                                        | `{ qrCodeDataUrl, secret }`                          |
+| `POST`   | `/auth/mfa/totp/verify`               | JWT       | `{ code }`                               | `{ recoveryCodes: string[] }` (10 codes, shown once) |
+| `DELETE` | `/auth/mfa/totp/setup`                | JWT       | —                                        | 204 — pending secret cleared; idempotent             |
+| `DELETE` | `/auth/mfa`                           | JWT       | `{ currentPassword?, code? }`            | 200                                                  |
+| `POST`   | `/auth/mfa/recovery-codes/regenerate` | JWT       | `{ currentPassword?, code? }`            | `{ recoveryCodes: string[] }`                        |
 
 #### OAuth (Google / Apple)
 
-| Method   | Path                         | Auth        | Request Body / Query             | Response                                                  |
-| -------- | ---------------------------- | ----------- | -------------------------------- | --------------------------------------------------------- |
-| `GET`    | `/auth/google`               | Public      | —                                | 302 to Google OAuth                                       |
-| `GET`    | `/auth/google/callback`      | google      | —                                | 302 to `/oauth/callback#token=…&refresh=…` or `?error=mfa_required` |
-| `GET`    | `/auth/apple`                | Public      | —                                | 302 to Apple Sign In                                      |
-| `POST`   | `/auth/apple/callback`       | apple       | —                                | 302 to `/oauth/callback#token=…&refresh=…` or `?error=mfa_required` |
-| `GET`    | `/auth/google/link`          | JWT         | —                                | `{ url: string }` — Google authorization URL for the SPA to navigate to (see note below) |
-| `GET`    | `/auth/google/link/callback` | google-link | —                                | 302 to `/settings?linked=google` or `link_error=…`        |
-| `DELETE` | `/auth/providers/:provider`  | JWT         | —                                | `{ success: true }`                                       |
+| Method   | Path                         | Auth        | Request Body / Query | Response                                                                                 |
+| -------- | ---------------------------- | ----------- | -------------------- | ---------------------------------------------------------------------------------------- |
+| `GET`    | `/auth/google`               | Public      | —                    | 302 to Google OAuth                                                                      |
+| `GET`    | `/auth/google/callback`      | google      | —                    | 302 to `/oauth/callback#token=…&refresh=…` or `?error=mfa_required`                      |
+| `GET`    | `/auth/apple`                | Public      | —                    | 302 to Apple Sign In                                                                     |
+| `POST`   | `/auth/apple/callback`       | apple       | —                    | 302 to `/oauth/callback#token=…&refresh=…` or `?error=mfa_required`                      |
+| `GET`    | `/auth/google/link`          | JWT         | —                    | `{ url: string }` — Google authorization URL for the SPA to navigate to (see note below) |
+| `GET`    | `/auth/google/link/callback` | google-link | —                    | 302 to `/settings?linked=google` or `link_error=…`                                       |
+| `DELETE` | `/auth/providers/:provider`  | JWT         | —                    | `{ success: true }`                                                                      |
 
 #### Browser Extension (PKCE)
 
-| Method | Path                          | Auth        | Request Body / Query             | Response                                  |
-| ------ | ----------------------------- | ----------- | -------------------------------- | ----------------------------------------- |
-| `GET`  | `/auth/extension/authorize`   | JWT + query | `code_challenge`, `redirect_uri` | 302 to `redirect_uri?code=<rawCode>`      |
-| `POST` | `/auth/extension/token`       | Public      | `{ code, codeVerifier }`         | `{ accessToken, refreshToken }`           |
+| Method | Path                        | Auth        | Request Body / Query             | Response                             |
+| ------ | --------------------------- | ----------- | -------------------------------- | ------------------------------------ |
+| `GET`  | `/auth/extension/authorize` | JWT + query | `code_challenge`, `redirect_uri` | 302 to `redirect_uri?code=<rawCode>` |
+| `POST` | `/auth/extension/token`     | Public      | `{ code, codeVerifier }`         | `{ accessToken, refreshToken }`      |
 
 > **KNOWN ISSUE:** Three throttler names used in `@Throttle()` decorators on
 > the controller — `auth-request-magic-link`, `auth-verify-magic-link`, and

@@ -23,7 +23,7 @@ As a user, you can:
 - Search and [stumble!](https://en.wikipedia.org/wiki/StumbleUpon)
 - Preview themes based on Richard Linklater's filmography
 - Toggle between light and dark mode
-- Secure your account with TOTP two-factor authentication
+- Secure your account with TOTP multi-factor authentication
 - Generate personal access tokens (PATs) for browser extensions
 - Delete your account and burn it to the ground
 

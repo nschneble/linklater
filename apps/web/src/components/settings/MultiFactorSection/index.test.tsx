@@ -6,12 +6,12 @@ import {
   act,
 } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import TwoFactorSection from '.';
+import MultiFactorSection from '.';
 import type { User } from '../../../auth/AuthContext';
 
 vi.mock('../../../lib/api', () => ({
   cancelTotpSetup: vi.fn(),
-  disable2fa: vi.fn(),
+  disableMfa: vi.fn(),
   regenerateRecoveryCodes: vi.fn(),
   setupTotp: vi.fn(),
   verifyTotpSetup: vi.fn(),
@@ -37,8 +37,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     mode: 'light',
     pendingEmail: null,
     theme: 'scanner-darkly',
-    twoFactorMethod: null,
-    twoFactorPending: false,
+    multiFactorMethod: null,
+    multiFactorPending: false,
     userId: USER_ID,
     ...overrides,
   };
@@ -64,10 +64,10 @@ beforeEach(() => {
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
 });
 
-describe('TwoFactorSection', () => {
-  describe('State A — 2FA not enabled', () => {
-    it('shows the authenticator app setup button when 2FA is not enabled', () => {
-      render(<TwoFactorSection />);
+describe('MultiFactorSection', () => {
+  describe('State A — MFA not enabled', () => {
+    it('shows the authenticator app setup button when MFA is not enabled', () => {
+      render(<MultiFactorSection />);
 
       expect(
         screen.getByRole('button', { name: /add authenticator app/i }),
@@ -75,7 +75,7 @@ describe('TwoFactorSection', () => {
     });
 
     it('labels TOTP as Recommended', () => {
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       expect(screen.getByText(/recommended/i)).toBeInTheDocument();
     });
@@ -87,7 +87,7 @@ describe('TwoFactorSection', () => {
         new Error('Service unavailable'),
       );
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       await act(async () => {
         fireEvent.click(
@@ -114,7 +114,7 @@ describe('TwoFactorSection', () => {
         secret: 'SECRETABC',
       });
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       await act(async () => {
         fireEvent.click(
@@ -135,7 +135,7 @@ describe('TwoFactorSection', () => {
         recoveryCodes: ['aaaaa-bbbbb', 'ccccc-ddddd'],
       });
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       await act(async () => {
         fireEvent.click(
@@ -164,7 +164,7 @@ describe('TwoFactorSection', () => {
         recoveryCodes: ['aaaaa-bbbbb'],
       });
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       await act(async () => {
         fireEvent.click(
@@ -190,7 +190,7 @@ describe('TwoFactorSection', () => {
       });
       vi.mocked(apiModule.cancelTotpSetup).mockResolvedValue(undefined);
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       await act(async () => {
         fireEvent.click(
@@ -222,7 +222,7 @@ describe('TwoFactorSection', () => {
         new Error('Network down'),
       );
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       await act(async () => {
         fireEvent.click(
@@ -250,7 +250,7 @@ describe('TwoFactorSection', () => {
         new Error('Invalid code'),
       );
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       await act(async () => {
         fireEvent.click(
@@ -274,26 +274,26 @@ describe('TwoFactorSection', () => {
   describe('State C — TOTP enabled', () => {
     it('shows enabled status when TOTP is active', () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+        makeAuthContext({ user: makeUser({ multiFactorMethod: 'totp' }) }),
       );
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       expect(screen.getByText(/enabled/i)).toBeInTheDocument();
     });
 
     it('shows regenerate and disable links when TOTP is active', () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+        makeAuthContext({ user: makeUser({ multiFactorMethod: 'totp' }) }),
       );
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       expect(
         screen.getByRole('button', { name: /regenerate recovery codes/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: /disable two-factor/i }),
+        screen.getByRole('button', { name: /disable multi-factor/i }),
       ).toBeInTheDocument();
     });
   });
@@ -301,10 +301,10 @@ describe('TwoFactorSection', () => {
   describe('State D — pending TOTP setup (totpSecret set, not yet enabled)', () => {
     it('shows a Continue setup button when setup is pending from a prior session', () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorPending: true }) }),
+        makeAuthContext({ user: makeUser({ multiFactorPending: true }) }),
       );
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       expect(
         screen.getByRole('button', { name: /continue setup/i }),
@@ -315,13 +315,13 @@ describe('TwoFactorSection', () => {
       const refreshUser = vi.fn().mockResolvedValue(undefined);
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
-          user: makeUser({ twoFactorPending: true }),
+          user: makeUser({ multiFactorPending: true }),
           refreshUser,
         }),
       );
       vi.mocked(apiModule.cancelTotpSetup).mockResolvedValue(undefined);
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
@@ -335,13 +335,13 @@ describe('TwoFactorSection', () => {
 
     it('shows an error when cancelling setup fails from the pending state', async () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorPending: true }) }),
+        makeAuthContext({ user: makeUser({ multiFactorPending: true }) }),
       );
       vi.mocked(apiModule.cancelTotpSetup).mockRejectedValue(
         new Error('Network error'),
       );
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
@@ -358,14 +358,14 @@ describe('TwoFactorSection', () => {
 
     it('resumes TOTP setup when Continue setup is clicked', async () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorPending: true }) }),
+        makeAuthContext({ user: makeUser({ multiFactorPending: true }) }),
       );
       vi.mocked(apiModule.setupTotp).mockResolvedValue({
         qrCodeDataUrl: 'data:image/png;base64,abc',
         secret: 'SECRETABC',
       });
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       await act(async () => {
         fireEvent.click(
@@ -378,16 +378,16 @@ describe('TwoFactorSection', () => {
     });
   });
 
-  describe('State C — disable 2FA flow', () => {
-    it('shows the reauth form when Disable two-factor is clicked', () => {
+  describe('State C — disable MFA flow', () => {
+    it('shows the reauth form when Disable multi-factor is clicked', () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+        makeAuthContext({ user: makeUser({ multiFactorMethod: 'totp' }) }),
       );
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       fireEvent.click(
-        screen.getByRole('button', { name: /disable two-factor/i }),
+        screen.getByRole('button', { name: /disable multi-factor/i }),
       );
 
       expect(
@@ -395,20 +395,20 @@ describe('TwoFactorSection', () => {
       ).toBeInTheDocument();
     });
 
-    it('calls disable2fa and refreshUser when reauth form is submitted with valid password', async () => {
+    it('calls disableMfa and refreshUser when reauth form is submitted with valid password', async () => {
       const refreshUser = vi.fn().mockResolvedValue(undefined);
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
-          user: makeUser({ twoFactorMethod: 'totp' }),
+          user: makeUser({ multiFactorMethod: 'totp' }),
           refreshUser,
         }),
       );
-      vi.mocked(apiModule.disable2fa).mockResolvedValue(undefined);
+      vi.mocked(apiModule.disableMfa).mockResolvedValue(undefined);
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       fireEvent.click(
-        screen.getByRole('button', { name: /disable two-factor/i }),
+        screen.getByRole('button', { name: /disable multi-factor/i }),
       );
 
       fireEvent.change(screen.getByLabelText(/current password/i), {
@@ -420,7 +420,7 @@ describe('TwoFactorSection', () => {
       });
 
       await waitFor(() => {
-        expect(apiModule.disable2fa).toHaveBeenCalledWith({
+        expect(apiModule.disableMfa).toHaveBeenCalledWith({
           currentPassword: 'my-password',
           code: undefined,
         });
@@ -428,18 +428,18 @@ describe('TwoFactorSection', () => {
       });
     });
 
-    it('shows an error when disable2fa fails', async () => {
+    it('shows an error when disableMfa fails', async () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+        makeAuthContext({ user: makeUser({ multiFactorMethod: 'totp' }) }),
       );
-      vi.mocked(apiModule.disable2fa).mockRejectedValue(
+      vi.mocked(apiModule.disableMfa).mockRejectedValue(
         new Error('Invalid password'),
       );
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       fireEvent.click(
-        screen.getByRole('button', { name: /disable two-factor/i }),
+        screen.getByRole('button', { name: /disable multi-factor/i }),
       );
       fireEvent.change(screen.getByLabelText(/current password/i), {
         target: { value: 'wrong-password' },
@@ -456,13 +456,13 @@ describe('TwoFactorSection', () => {
 
     it('hides the reauth form when Cancel is clicked', () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+        makeAuthContext({ user: makeUser({ multiFactorMethod: 'totp' }) }),
       );
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       fireEvent.click(
-        screen.getByRole('button', { name: /disable two-factor/i }),
+        screen.getByRole('button', { name: /disable multi-factor/i }),
       );
       fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
@@ -475,10 +475,10 @@ describe('TwoFactorSection', () => {
   describe('State C — regenerate recovery codes flow', () => {
     it('shows the reauth form when Regenerate recovery codes is clicked', () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+        makeAuthContext({ user: makeUser({ multiFactorMethod: 'totp' }) }),
       );
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       fireEvent.click(
         screen.getByRole('button', { name: /regenerate recovery codes/i }),
@@ -491,13 +491,13 @@ describe('TwoFactorSection', () => {
 
     it('calls regenerateRecoveryCodes and shows new codes on success', async () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+        makeAuthContext({ user: makeUser({ multiFactorMethod: 'totp' }) }),
       );
       vi.mocked(apiModule.regenerateRecoveryCodes).mockResolvedValue({
         recoveryCodes: ['new-code-1', 'new-code-2'],
       });
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       fireEvent.click(
         screen.getByRole('button', { name: /regenerate recovery codes/i }),
@@ -517,13 +517,13 @@ describe('TwoFactorSection', () => {
 
     it('shows an error when regenerateRecoveryCodes fails', async () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+        makeAuthContext({ user: makeUser({ multiFactorMethod: 'totp' }) }),
       );
       vi.mocked(apiModule.regenerateRecoveryCodes).mockRejectedValue(
         new Error('Authentication failed'),
       );
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       fireEvent.click(
         screen.getByRole('button', { name: /regenerate recovery codes/i }),
@@ -554,7 +554,7 @@ describe('TwoFactorSection', () => {
         recoveryCodes: ['aaaaa-bbbbb', 'ccccc-ddddd'],
       });
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       await act(async () => {
         fireEvent.click(
@@ -625,7 +625,7 @@ describe('TwoFactorSection', () => {
       const refreshUser = vi.fn().mockResolvedValue(undefined);
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ refreshUser }));
 
-      render(<TwoFactorSection />);
+      render(<MultiFactorSection />);
 
       await act(async () => {
         fireEvent.click(

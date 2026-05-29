@@ -44,7 +44,7 @@ export default function MfaView({
   return (
     <AuthCard>
       <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold text-balance">
-        {isRecovery ? 'Enter a recovery code' : 'Two-factor authentication'}
+        {isRecovery ? 'Enter a recovery code' : 'Multi-factor authentication'}
       </h1>
       <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
         {isRecovery

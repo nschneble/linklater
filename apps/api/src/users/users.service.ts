@@ -427,7 +427,7 @@ export class UsersService {
     return this.userMfaService.markRecoveryCodeUsed(id);
   }
 
-  async disableTwoFactor(id: string) {
-    return this.userMfaService.disableTwoFactor(id);
+  async disableMultiFactor(id: string) {
+    return this.userMfaService.disableMultiFactor(id);
   }
 }

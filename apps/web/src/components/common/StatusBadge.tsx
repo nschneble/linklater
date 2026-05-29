@@ -80,7 +80,7 @@ const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
 
 /**
  * Compact pill-shaped status indicator used next to labels in settings —
- * Verified/Unverified email, Connected social provider, Enabled 2FA, etc.
+ * Verified/Unverified email, Connected social provider, Enabled MFA, etc.
  *
  * Always renders a variant-specific icon for color-independent meaning in
  * cvd-friendly contexts. The `icon` prop overrides the default when

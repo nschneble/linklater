@@ -21,7 +21,7 @@ import { JwtStrategy } from './jwt.strategy.js';
 import { LocalStrategy } from './local.strategy.js';
 import { MfaAuthGuard } from './mfa-auth.guard.js';
 import { TotpService } from './totp.service.js';
-import { TwoFactorController } from './two-factor.controller.js';
+import { MultiFactorController } from './multi-factor.controller.js';
 import { EmailModule } from '../email/email.module.js';
 import { TokensModule } from '../tokens/tokens.module.js';
 import { UsersModule } from '../users/users.module.js';
@@ -83,7 +83,7 @@ const oauthProviders: Provider[] = [
     ExtensionAuthController,
     MagicLinkController,
     OAuthController,
-    TwoFactorController,
+    MultiFactorController,
   ],
   exports: [AnyAuthGuard],
 })

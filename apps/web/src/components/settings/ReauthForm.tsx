@@ -9,7 +9,7 @@ type ReauthAction = 'disable' | 'regenerate';
 interface ReauthFormProps {
   action: ReauthAction;
   hasPassword: boolean;
-  twoFactorMethod: 'totp' | null;
+  multiFactorMethod: 'totp' | null;
   loading: boolean;
   error: string | null;
   password: string;
@@ -31,13 +31,13 @@ export default function ReauthForm({
   onPasswordChange,
   onSubmit,
   password,
-  twoFactorMethod,
+  multiFactorMethod,
 }: ReauthFormProps) {
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       <p className="text-[var(--text-muted)] text-sm">
         {action === 'disable'
-          ? 'Confirm your identity to disable two-factor authentication.'
+          ? 'Confirm your identity to disable multi-factor authentication.'
           : 'Confirm your identity to regenerate recovery codes.'}
       </p>
 
@@ -58,7 +58,7 @@ export default function ReauthForm({
         </>
       )}
 
-      {twoFactorMethod && (
+      {multiFactorMethod && (
         <>
           <label
             className="block mb-0 text-[var(--text-muted)] text-xs font-medium"

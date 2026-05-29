@@ -84,7 +84,7 @@ export default function EmailSettingsForm() {
     setEmailSaving(true);
 
     try {
-      if (user?.twoFactorMethod) {
+      if (user?.multiFactorMethod) {
         await requestEmailChange(requestedEmail, mfaEmailCode);
       } else {
         await requestEmailChange(requestedEmail);
@@ -192,7 +192,7 @@ export default function EmailSettingsForm() {
         aria-describedby={emailError ? 'account-email-error' : undefined}
       />
 
-      {user?.twoFactorMethod && (
+      {user?.multiFactorMethod && (
         <>
           <label
             className="block mb-0 text-[var(--text-muted)] text-xs font-medium"

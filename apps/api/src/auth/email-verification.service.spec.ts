@@ -353,7 +353,7 @@ describe('EmailVerificationService', () => {
   });
 
   describe('requestEmailChange', () => {
-    const makeUserNoTwoFactor = (overrides = {}) => ({
+    const makeUserNoMultiFactor = (overrides = {}) => ({
       id: USER_ID,
       email: USER_EMAIL,
       theme: 'dazed-and-confused',
@@ -363,7 +363,7 @@ describe('EmailVerificationService', () => {
 
     it('stores pending email and sends a verification email to the new address', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor(),
+        makeUserNoMultiFactor(),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
       (userTokensServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
@@ -390,7 +390,7 @@ describe('EmailVerificationService', () => {
 
     it('throws ConflictException when the new email is already in use', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor(),
+        makeUserNoMultiFactor(),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         id: 'other-user',
@@ -404,7 +404,7 @@ describe('EmailVerificationService', () => {
 
     it('allows the request when the new email belongs to the same user (re-verify)', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor(),
+        makeUserNoMultiFactor(),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         id: USER_ID,
@@ -422,9 +422,9 @@ describe('EmailVerificationService', () => {
       ).resolves.not.toThrow();
     });
 
-    it('throws ConflictException before consuming a 2FA credential when the new email is taken', async () => {
+    it('throws ConflictException before consuming a MFA credential when the new email is taken', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+        makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         id: 'other-user',
@@ -438,9 +438,9 @@ describe('EmailVerificationService', () => {
       expect(totpServiceMock.verifyCode).not.toHaveBeenCalled();
     });
 
-    it('throws ForbiddenException when 2FA is enabled and no code is provided', async () => {
+    it('throws ForbiddenException when MFA is enabled and no code is provided', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+        makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
 
@@ -449,9 +449,9 @@ describe('EmailVerificationService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('allows email change when 2FA is enabled and valid TOTP code is provided', async () => {
+    it('allows email change when MFA is enabled and valid TOTP code is provided', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+        makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
@@ -472,9 +472,9 @@ describe('EmailVerificationService', () => {
       );
     });
 
-    it('throws UnauthorizedException when 2FA is enabled and TOTP code is invalid', async () => {
+    it('throws UnauthorizedException when MFA is enabled and TOTP code is invalid', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+        makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(false);
 
@@ -483,13 +483,13 @@ describe('EmailVerificationService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('allows email change using a recovery code when 2FA is enabled', async () => {
+    it('allows email change using a recovery code when MFA is enabled', async () => {
       const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
       const realHash = await bcrypt.hash(REAUTH_RECOVERY_CODE, 1);
       const codeId = 'rc-email-1';
 
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+        makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
         [{ id: codeId, codeHash: realHash }],
@@ -520,7 +520,7 @@ describe('EmailVerificationService', () => {
       const differentHash = await bcryptModule.hash('zzzzz-zzzzz-zzzzz', 1);
 
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+        makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
       (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(

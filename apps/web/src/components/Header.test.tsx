@@ -16,8 +16,8 @@ const mockUser: User = {
   mode: 'light',
   pendingEmail: null,
   theme: 'scanner-darkly',
-  twoFactorMethod: null,
-  twoFactorPending: false,
+  multiFactorMethod: null,
+  multiFactorPending: false,
   userId: '1',
 };
 

@@ -11,7 +11,7 @@ import SettingsGroup from './SettingsGroup';
 import SettingsLayout from './SettingsLayout';
 import IdPsSection from './IdPsSection';
 import StumbleSection from '../stumble/StumbleSection';
-import TwoFactorSection from './TwoFactorSection';
+import MultiFactorSection from './MultiFactorSection';
 import { useSettingsActiveSection } from './useSettingsActiveSection';
 import type { SettingsSection } from './settingsSections';
 
@@ -176,7 +176,7 @@ export default function SettingsView({
             description="Manage multi-factor authentication. That's not overkill for a read-it-later app, right?"
             activeSection={activeSection}
           >
-            <TwoFactorSection />
+            <MultiFactorSection />
           </SettingsGroup>
         )}
 

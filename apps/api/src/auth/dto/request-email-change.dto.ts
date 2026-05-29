@@ -13,7 +13,7 @@ export class RequestEmailChangeDto {
 
   @ApiPropertyOptional({
     description:
-      'Valid TOTP or email OTP, or a recovery code (xxxxx-xxxxx-xxxxx) — required when 2FA is enabled.',
+      'Valid TOTP or email OTP, or a recovery code (xxxxx-xxxxx-xxxxx) — required when MFA is enabled.',
   })
   @IsOptional()
   @IsString()

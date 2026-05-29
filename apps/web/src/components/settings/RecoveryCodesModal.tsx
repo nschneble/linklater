@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Full-screen modal that displays one-time recovery codes immediately
- * after 2FA is enabled. The only dismiss path is the "I've saved these
+ * after MFA is enabled. The only dismiss path is the "I've saved these
  * codes" button — there is deliberately no close/cancel action, because
  * the codes must be recorded before the user leaves this screen.
  *
@@ -66,7 +66,7 @@ export default function RecoveryCodesModal({
         </h3>
         <p className="text-[var(--text-muted)] text-sm">
           Store these codes somewhere safe. Each can be used once to access your
-          account if you lose your 2FA device.
+          account if you lose your MFA device.
         </p>
         <ul className="grid grid-cols-2 gap-2">
           {codes.map((code) => (

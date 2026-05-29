@@ -47,8 +47,8 @@ vi.mock('../stumble/StumbleSection', () => ({
   ),
 }));
 
-vi.mock('./TwoFactorSection', () => ({
-  default: () => <div data-testid="two-factor-section" />,
+vi.mock('./MultiFactorSection', () => ({
+  default: () => <div data-testid="multi-factor-section" />,
 }));
 
 vi.mock('./IdPsSection', () => ({
@@ -91,8 +91,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     mode: 'light',
     pendingEmail: null,
     theme: 'scanner-darkly',
-    twoFactorMethod: null,
-    twoFactorPending: false,
+    multiFactorMethod: null,
+    multiFactorPending: false,
     userId: USER_ID,
     welcomedAt: null,
     ...overrides,
@@ -206,19 +206,19 @@ describe('SettingsView', () => {
     });
   });
 
-  describe('2FA section', () => {
-    it('shows the TwoFactor section when the user has a password', () => {
+  describe('MFA section', () => {
+    it('shows the MultiFactor section when the user has a password', () => {
       renderSettingsView();
-      expect(screen.getByTestId('two-factor-section')).toBeInTheDocument();
+      expect(screen.getByTestId('multi-factor-section')).toBeInTheDocument();
     });
 
-    it('hides the TwoFactor section when the user has no password', () => {
+    it('hides the MultiFactor section when the user has no password', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({ user: makeUser({ hasPassword: false }) }),
       );
       renderSettingsView();
       expect(
-        screen.queryByTestId('two-factor-section'),
+        screen.queryByTestId('multi-factor-section'),
       ).not.toBeInTheDocument();
     });
   });

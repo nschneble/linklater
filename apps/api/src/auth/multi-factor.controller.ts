@@ -20,30 +20,30 @@ import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { MfaAuthGuard } from './mfa-auth.guard.js';
 import { ThrottleMessage } from './throttle-message.decorator.js';
 import { TotpService } from './totp.service.js';
-import { Disable2faDto } from './dto/disable-2fa.dto.js';
+import { DisableMfaDto } from './dto/disable-mfa.dto.js';
 import { RegenerateRecoveryCodesDto } from './dto/regenerate-recovery-codes.dto.js';
 import { TotpVerifySetupDto } from './dto/totp-verify-setup.dto.js';
 import { VerifyOtpDto } from './dto/verify-otp.dto.js';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**
- * Two-factor authentication endpoints: TOTP setup/verify, OTP challenge,
+ * Multi-factor authentication endpoints: TOTP setup/verify, OTP challenge,
  * disable, and recovery-code regeneration. Shares the `auth` prefix.
  */
 @ApiTags('auth')
 @Controller('auth')
-export class TwoFactorController {
+export class MultiFactorController {
   constructor(
     private readonly authService: AuthService,
     private readonly totpService: TotpService,
   ) {}
 
   /**
-   * Step 2 of 2FA login. Validates the OTP or recovery code and issues the
+   * Step 2 of MFA login. Validates the OTP or recovery code and issues the
    * full session JWT. Rate-limited to 5 attempts per 15 minutes per IP.
    */
   @ApiOperation({
-    summary: 'Verify an OTP or recovery code to complete 2FA login',
+    summary: 'Verify an OTP or recovery code to complete MFA login',
   })
   @ApiResponse({
     status: 200,
@@ -79,9 +79,9 @@ export class TwoFactorController {
   @ApiResponse({ status: 409, description: 'TOTP is already active.' })
   @ApiResponse({ status: 429, description: 'Too many setup attempts.' })
   @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
-  @Throttle({ 'auth-2fa-totp-setup': { ttl: 60000, limit: 5 } })
+  @Throttle({ 'auth-mfa-totp-setup': { ttl: 60000, limit: 5 } })
   @ThrottleMessage('Too many setup attempts')
-  @Post('2fa/totp/setup')
+  @Post('mfa/totp/setup')
   @HttpCode(200)
   async totpSetup(@Req() request: AuthRequest) {
     return this.totpService.generateSetup(
@@ -103,9 +103,9 @@ export class TwoFactorController {
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 429, description: 'Too many verify attempts.' })
   @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
-  @Throttle({ 'auth-2fa-totp-verify': { ttl: 900000, limit: 5 } })
+  @Throttle({ 'auth-mfa-totp-verify': { ttl: 900000, limit: 5 } })
   @ThrottleMessage('Too many verify attempts')
-  @Post('2fa/totp/verify')
+  @Post('mfa/totp/verify')
   @HttpCode(200)
   async totpVerifySetup(
     @Req() request: AuthRequest,
@@ -128,22 +128,22 @@ export class TwoFactorController {
   @ApiResponse({ status: 409, description: 'TOTP is already enabled.' })
   @ApiResponse({ status: 429, description: 'Too many cancel attempts.' })
   @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
-  // Own throttle bucket (not shared with `auth-2fa-totp-setup`) so cancel
+  // Own throttle bucket (not shared with `auth-mfa-totp-setup`) so cancel
   // spam cannot exhaust the user's setup-generation budget. Cancel has no
   // side effects an attacker could exploit, so the limit is generous.
-  @Throttle({ 'auth-2fa-totp-cancel': { ttl: 60000, limit: 10 } })
+  @Throttle({ 'auth-mfa-totp-cancel': { ttl: 60000, limit: 10 } })
   @ThrottleMessage('Too many cancel attempts')
-  @Delete('2fa/totp/setup')
+  @Delete('mfa/totp/setup')
   @HttpCode(204)
   async totpCancelSetup(@Req() request: AuthRequest) {
     await this.totpService.cancelSetup(request.user.userId);
   }
 
   @ApiOperation({
-    summary: 'Disable 2FA (requires password or OTP re-authentication)',
+    summary: 'Disable MFA (requires password or OTP re-authentication)',
   })
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: '2FA disabled successfully.' })
+  @ApiResponse({ status: 200, description: 'MFA disabled successfully.' })
   @ApiResponse({ status: 400, description: 'No credential provided.' })
   @ApiResponse({
     status: 401,
@@ -151,12 +151,12 @@ export class TwoFactorController {
   })
   @ApiResponse({ status: 429, description: 'Too many disable attempts.' })
   @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
-  @Throttle({ 'auth-disable-2fa': { ttl: 900000, limit: 5 } })
+  @Throttle({ 'auth-disable-mfa': { ttl: 900000, limit: 5 } })
   @ThrottleMessage('Too many disable attempts')
-  @Delete('2fa')
+  @Delete('mfa')
   @HttpCode(200)
-  async disable2fa(@Req() request: AuthRequest, @Body() body: Disable2faDto) {
-    await this.authService.disable2fa(
+  async disableMfa(@Req() request: AuthRequest, @Body() body: DisableMfaDto) {
+    await this.authService.disableMfa(
       request.user.userId,
       body.currentPassword,
       body.code,
@@ -180,7 +180,7 @@ export class TwoFactorController {
   @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
   @Throttle({ 'auth-reauth': { ttl: 900000, limit: 5 } })
   @ThrottleMessage('Too many re-auth attempts')
-  @Post('2fa/recovery-codes/regenerate')
+  @Post('mfa/recovery-codes/regenerate')
   async regenerateRecoveryCodes(
     @Req() request: AuthRequest,
     @Body() body: RegenerateRecoveryCodesDto,

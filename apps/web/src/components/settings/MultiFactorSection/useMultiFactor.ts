@@ -1,7 +1,7 @@
 import { useAuth } from '../../../auth/AuthContext';
 import {
   cancelTotpSetup,
-  disable2fa,
+  disableMfa,
   regenerateRecoveryCodes,
   setupTotp,
   verifyTotpSetup,
@@ -13,16 +13,16 @@ import type { FormEvent } from 'react';
 type ReauthAction = 'disable' | 'regenerate';
 
 /**
- * All state and handlers for `TwoFactorSection`.
+ * All state and handlers for `MultiFactorSection`.
  *
  * Manages five mutually-exclusive UI states driven by
- * `(user.twoFactorMethod, user.twoFactorPending, totpSetup, reauthAction)`:
+ * `(user.multiFactorMethod, user.multiFactorPending, totpSetup, reauthAction)`:
  *
- * - **State A** — 2FA disabled. Shows the "Add authenticator app" button.
+ * - **State A** — MFA disabled. Shows the "Add authenticator app" button.
  * - **State B** — TOTP setup in progress. Shows `TotpSetupView` with QR +
  *   verification form.
- * - **State C / E** — 2FA enabled. Shows Regenerate / Disable actions.
- * - **State D** — Pending recovery: server reports `twoFactorPending` but no
+ * - **State C / E** — MFA enabled. Shows Regenerate / Disable actions.
+ * - **State D** — Pending recovery: server reports `multiFactorPending` but no
  *   local `totpSetup`. Shows "Continue setup" / Cancel pair.
  * - **Reauth** — Disable or Regenerate requested, awaiting credentials.
  *
@@ -31,7 +31,7 @@ type ReauthAction = 'disable' | 'regenerate';
  * would fall to `<body>` — the effect catches the next render that lands in
  * State A and restores focus to "Add authenticator app".
  */
-export function useTwoFactor() {
+export function useMultiFactor() {
   const { refreshUser, user } = useAuth();
 
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
@@ -102,7 +102,7 @@ export function useTwoFactor() {
     };
     try {
       if (reauthAction === 'disable') {
-        await disable2fa(credentials);
+        await disableMfa(credentials);
         setReauthAction(null);
         setReauthPassword('');
         setReauthCode('');
@@ -140,7 +140,7 @@ export function useTwoFactor() {
       shouldFocusAddAuthenticator.current = true;
       setTotpSetup(null);
       setTotpCode('');
-      // refreshUser() clears the server-side twoFactorPending flag so the
+      // refreshUser() clears the server-side multiFactorPending flag so the
       // UI drops out of the "Continue setup" recovery state too.
       await refreshUser();
     } catch (caught: unknown) {
@@ -150,11 +150,11 @@ export function useTwoFactor() {
     }
   }, [refreshUser]);
 
-  const twoFactorMethod = user?.twoFactorMethod ?? null;
-  const twoFactorPending = user?.twoFactorPending ?? false;
+  const multiFactorMethod = user?.multiFactorMethod ?? null;
+  const multiFactorPending = user?.multiFactorPending ?? false;
 
   const inStateA =
-    !reauthAction && !twoFactorMethod && !totpSetup && !twoFactorPending;
+    !reauthAction && !multiFactorMethod && !totpSetup && !multiFactorPending;
 
   useEffect(() => {
     if (shouldFocusAddAuthenticator.current && inStateA) {
@@ -176,8 +176,8 @@ export function useTwoFactor() {
     totpCode,
     totpCodeInputReference,
     totpSetup,
-    twoFactorMethod,
-    twoFactorPending,
+    multiFactorMethod,
+    multiFactorPending,
     user,
     // handlers
     handleCancelReauth,

@@ -35,9 +35,9 @@ import type { AuthRequest } from './auth-request.type.js';
  * recovery, email verification, refresh, and session revocation.
  *
  * The original `AuthController` was split into focused sub-controllers —
- * see `OAuthController`, `MagicLinkController`, `TwoFactorController`, and
- * `ExtensionAuthController` for the related flows. All controllers share
- * the `auth` route prefix so external URLs are unchanged.
+ * see `OAuthController`, `MagicLinkController`, `MultiFactorController`,
+ * and `ExtensionAuthController` for the related flows. All controllers
+ * share the `auth` route prefix so external URLs are unchanged.
  *
  * Rate-limited per route to reduce brute-force and abuse risk. Endpoints
  * that operate on email addresses return 200 regardless of whether the

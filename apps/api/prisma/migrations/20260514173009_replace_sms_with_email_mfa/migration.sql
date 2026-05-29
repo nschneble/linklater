@@ -11,6 +11,6 @@ set statement_timeout = '5s';
 -- AlterTable
 ALTER TABLE "User" DROP COLUMN "phoneNumber",
 DROP COLUMN "smsEnabledAt",
-ADD COLUMN     "emailTwoFactorCodeHash" TEXT,
-ADD COLUMN     "emailTwoFactorEnabledAt" TIMESTAMP(3),
-ADD COLUMN     "emailTwoFactorExpiresAt" TIMESTAMP(3);
+ADD COLUMN     "emailMultiFactorCodeHash" TEXT,
+ADD COLUMN     "emailMultiFactorEnabledAt" TIMESTAMP(3),
+ADD COLUMN     "emailMultiFactorExpiresAt" TIMESTAMP(3);

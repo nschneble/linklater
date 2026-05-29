@@ -28,8 +28,8 @@ function mapMeToUser(me: Awaited<ReturnType<typeof getMe>>): User {
     mode: me.mode,
     pendingEmail: me.pendingEmail,
     theme: me.theme,
-    twoFactorMethod: me.twoFactorMethod,
-    twoFactorPending: me.twoFactorPending,
+    multiFactorMethod: me.multiFactorMethod,
+    multiFactorPending: me.multiFactorPending,
     userId: me.userId,
     welcomedAt: me.welcomedAt,
   };

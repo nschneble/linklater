@@ -52,7 +52,7 @@ export class AuthService {
       this.usersService.listOAuthAccounts(userId),
     ]);
 
-    const twoFactorMethod: 'totp' | null = totpEnabledAt ? 'totp' : null;
+    const multiFactorMethod: 'totp' | null = totpEnabledAt ? 'totp' : null;
     const connectedProviders = oauthAccounts.map((account) => ({
       provider: account.provider,
       providerEmail: account.providerEmail,
@@ -62,8 +62,8 @@ export class AuthService {
     return {
       userId: id,
       ...rest,
-      twoFactorMethod,
-      twoFactorPending: !!totpSecret && !totpEnabledAt,
+      multiFactorMethod,
+      multiFactorPending: !!totpSecret && !totpEnabledAt,
       connectedProviders,
     };
   }
@@ -80,7 +80,7 @@ export class AuthService {
 
   /**
    * Issues a session for the given user. Fetches the user record internally
-   * so all login paths (password, OAuth, magic-link) share a single 2FA gate
+   * so all login paths (password, OAuth, magic-link) share a single MFA gate
    * — callers cannot accidentally bypass MFA by passing a stale user object.
    *
    * When the user has TOTP enabled, generates a fresh `mfaNonce` and writes
@@ -158,7 +158,7 @@ export class AuthService {
 
     if (method === 'recovery') {
       if (!enrolledMethod)
-        throw new UnauthorizedException('No 2FA method enrolled');
+        throw new UnauthorizedException('No MFA method enrolled');
 
       const recoveryCodes =
         await this.usersService.findUnusedRecoveryCodes(userId);
@@ -184,9 +184,9 @@ export class AuthService {
     throw new UnauthorizedException('Invalid OTP');
   }
 
-  async disable2fa(userId: string, currentPassword?: string, code?: string) {
+  async disableMfa(userId: string, currentPassword?: string, code?: string) {
     await this.reauthenticate(userId, currentPassword, code);
-    await this.usersService.disableTwoFactor(userId);
+    await this.usersService.disableMultiFactor(userId);
   }
 
   async regenerateRecoveryCodes(
@@ -206,7 +206,7 @@ export class AuthService {
     await this.usersService.markWelcomed(userId);
   }
 
-  // Shared re-auth guard used by disable2fa and regenerateRecoveryCodes.
+  // Shared re-auth guard used by disableMfa and regenerateRecoveryCodes.
   // Accepts password OR OTP/recovery code — verifies exactly one.
   private async reauthenticate(
     userId: string,
@@ -237,7 +237,7 @@ export class AuthService {
 
       if (isRecoveryCode) {
         if (!user.totpEnabledAt)
-          throw new UnauthorizedException('No 2FA method enrolled');
+          throw new UnauthorizedException('No MFA method enrolled');
 
         const recoveryCodes =
           await this.usersService.findUnusedRecoveryCodes(userId);
@@ -265,7 +265,7 @@ export class AuthService {
         return;
       }
 
-      throw new UnauthorizedException('No 2FA method enrolled');
+      throw new UnauthorizedException('No MFA method enrolled');
     }
   }
 

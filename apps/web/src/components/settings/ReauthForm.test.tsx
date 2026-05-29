@@ -8,7 +8,7 @@ function renderForm(
   const props: React.ComponentProps<typeof ReauthForm> = {
     action: 'disable',
     hasPassword: true,
-    twoFactorMethod: 'totp',
+    multiFactorMethod: 'totp',
     loading: false,
     error: null,
     password: '',
@@ -45,21 +45,21 @@ describe('ReauthForm — conditional fields', () => {
   });
 
   it('hides the password field when hasPassword is false', () => {
-    renderForm({ hasPassword: false, twoFactorMethod: 'totp' });
+    renderForm({ hasPassword: false, multiFactorMethod: 'totp' });
     expect(
       screen.queryByLabelText(/current password/i),
     ).not.toBeInTheDocument();
   });
 
-  it('shows the code field when twoFactorMethod is "totp"', () => {
-    renderForm({ twoFactorMethod: 'totp' });
+  it('shows the code field when multiFactorMethod is "totp"', () => {
+    renderForm({ multiFactorMethod: 'totp' });
     expect(
       screen.getByLabelText(/authenticator or recovery code/i),
     ).toBeInTheDocument();
   });
 
-  it('hides the code field when twoFactorMethod is null', () => {
-    renderForm({ twoFactorMethod: null });
+  it('hides the code field when multiFactorMethod is null', () => {
+    renderForm({ multiFactorMethod: null });
     expect(
       screen.queryByLabelText(/authenticator or recovery code/i),
     ).not.toBeInTheDocument();
@@ -70,7 +70,7 @@ describe('ReauthForm — conditional fields', () => {
       <ReauthForm
         action="disable"
         hasPassword={true}
-        twoFactorMethod="totp"
+        multiFactorMethod="totp"
         loading={false}
         error={null}
         password=""
@@ -89,7 +89,7 @@ describe('ReauthForm — conditional fields', () => {
       <ReauthForm
         action="disable"
         hasPassword={false}
-        twoFactorMethod="totp"
+        multiFactorMethod="totp"
         loading={false}
         error={null}
         password=""

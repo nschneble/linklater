@@ -44,7 +44,7 @@ export default function VerifyLoginPage() {
 
     verifyMagicLink(token)
       .then(async (result) => {
-        // 2FA-enabled accounts that authenticate via a magic link still need
+        // MFA-enabled accounts that authenticate via a magic link still need
         // to clear the OTP challenge before a session is issued — mirror the
         // password login flow and surface the same MfaView.
         if ('mfaToken' in result) {

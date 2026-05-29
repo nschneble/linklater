@@ -14,8 +14,8 @@ import {
 import { UsersService } from '../users/users.service.js';
 
 /**
- * Manages TOTP (Time-based One-Time Password) two-factor authentication setup
- * and verification for user accounts.
+ * Manages TOTP (Time-based One-Time Password) multi-factor authentication
+ * setup and verification for user accounts.
  *
  * TOTP secrets are encrypted with AES-256-GCM before storage. The encryption
  * key is provided via the `TOTP_ENCRYPTION_KEY` environment variable as a
@@ -34,7 +34,7 @@ export class TotpService {
    * `user.totpSecret`. `totpEnabledAt` stays `null` until `verifySetup`
    * is called with a matching code.
    *
-   * @param userId - UUID of the user enabling 2FA.
+   * @param userId - UUID of the user enabling MFA.
    * @param userEmail - Shown as the account label inside the authenticator
    *   app (e.g. "user@example.com").
    * @returns `{ qrCodeDataUrl, secret }` — the data-URL for the QR image and
@@ -56,13 +56,13 @@ export class TotpService {
 
     if (!user.hasPassword) {
       throw new ForbiddenException(
-        '2FA is not available for accounts created via IdP',
+        'MFA is not available for accounts created via IdP',
       );
     }
 
     if (!user.emailVerifiedAt) {
       throw new ForbiddenException(
-        'Email must be verified before enabling 2FA',
+        'Email must be verified before enabling MFA',
       );
     }
 

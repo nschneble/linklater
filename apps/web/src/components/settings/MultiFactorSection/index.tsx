@@ -5,24 +5,24 @@ import StatusBadge from '../../common/StatusBadge';
 import ReauthForm from '../ReauthForm';
 import RecoveryCodesModal from '../RecoveryCodesModal';
 import TotpSetupView from '../TotpSetupView';
-import { useTwoFactor } from './useTwoFactor';
+import { useMultiFactor } from './useMultiFactor';
 
 /**
- * Settings section for two-factor authentication.
+ * Settings section for multi-factor authentication.
  *
- * All state and API calls live in `useTwoFactor`. This component renders the
+ * All state and API calls live in `useMultiFactor`. This component renders the
  * five mutually-exclusive UI states that hook drives:
  *
- * - **State A** — 2FA disabled. Shows the "Add authenticator app" button.
+ * - **State A** — MFA disabled. Shows the "Add authenticator app" button.
  * - **State B** — TOTP setup in progress. Shows `TotpSetupView` with QR +
  *   verification form. Either an in-session start or a server-side
- *   `twoFactorPending` flag from a prior session can land us here.
- * - **State C / E** — 2FA enabled. Shows Regenerate / Disable actions.
- * - **State D** — Pending recovery: server reports `twoFactorPending` but no
+ *   `multiFactorPending` flag from a prior session can land us here.
+ * - **State C / E** — MFA enabled. Shows Regenerate / Disable actions.
+ * - **State D** — Pending recovery: server reports `multiFactorPending` but no
  *   local `totpSetup`. Shows "Continue setup" / Cancel pair.
  * - **Reauth** — Disable or Regenerate requested, awaiting credentials.
  */
-export default function TwoFactorSection() {
+export default function MultiFactorSection() {
   const {
     addAuthenticatorReference,
     error,
@@ -35,8 +35,8 @@ export default function TwoFactorSection() {
     totpCode,
     totpCodeInputReference,
     totpSetup,
-    twoFactorMethod,
-    twoFactorPending,
+    multiFactorMethod,
+    multiFactorPending,
     user,
     handleCancelReauth,
     handleCancelTotpSetup,
@@ -49,7 +49,7 @@ export default function TwoFactorSection() {
     setReauthCode,
     setReauthPassword,
     setTotpCode,
-  } = useTwoFactor();
+  } = useMultiFactor();
 
   return (
     <div className="max-w-md space-y-4">
@@ -73,12 +73,12 @@ export default function TwoFactorSection() {
           onPasswordChange={setReauthPassword}
           onSubmit={handleReauth}
           password={reauthPassword}
-          twoFactorMethod={twoFactorMethod}
+          multiFactorMethod={multiFactorMethod}
         />
       )}
 
-      {/* State C / E — 2FA enabled */}
-      {!reauthAction && twoFactorMethod && (
+      {/* State C / E — MFA enabled */}
+      {!reauthAction && multiFactorMethod && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)] text-sm">
@@ -103,14 +103,14 @@ export default function TwoFactorSection() {
                 setReauthAction('disable');
               }}
             >
-              Disable two-factor authentication
+              Disable multi-factor authentication
             </LinkButton>
           </div>
         </div>
       )}
 
       {/* State B — TOTP setup: verify QR */}
-      {!reauthAction && !twoFactorMethod && totpSetup && (
+      {!reauthAction && !multiFactorMethod && totpSetup && (
         <TotpSetupView
           code={totpCode}
           codeInputReference={totpCodeInputReference}
@@ -125,28 +125,31 @@ export default function TwoFactorSection() {
       )}
 
       {/* State B — TOTP pending from server (setup started in prior session) */}
-      {!reauthAction && !twoFactorMethod && !totpSetup && twoFactorPending && (
-        <div className="space-y-3">
-          <p className="text-[var(--text-muted)] text-sm">
-            Authenticator app setup is in progress.
-          </p>
-          {error && <Alert variant="error">{error}</Alert>}
-          <div className="flex items-center gap-3">
-            <PrimaryButton
-              disabled={loading}
-              className="py-2.5"
-              onClick={handleStartTotpSetup}
-            >
-              {loading ? 'Continuing…' : 'Continue setup'}
-            </PrimaryButton>
-            <LinkButton onClick={handleCancelTotpSetup} disabled={loading}>
-              Cancel
-            </LinkButton>
+      {!reauthAction &&
+        !multiFactorMethod &&
+        !totpSetup &&
+        multiFactorPending && (
+          <div className="space-y-3">
+            <p className="text-[var(--text-muted)] text-sm">
+              Authenticator app setup is in progress.
+            </p>
+            {error && <Alert variant="error">{error}</Alert>}
+            <div className="flex items-center gap-3">
+              <PrimaryButton
+                disabled={loading}
+                className="py-2.5"
+                onClick={handleStartTotpSetup}
+              >
+                {loading ? 'Continuing…' : 'Continue setup'}
+              </PrimaryButton>
+              <LinkButton onClick={handleCancelTotpSetup} disabled={loading}>
+                Cancel
+              </LinkButton>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* State A — 2FA not enabled */}
+      {/* State A — MFA not enabled */}
       {inStateA && (
         <div className="space-y-3">
           {error && <Alert variant="error">{error}</Alert>}

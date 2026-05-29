@@ -2,7 +2,7 @@ export type { LoginResponse } from './auth';
 export {
   acknowledgeWelcome,
   cancelTotpSetup,
-  disable2fa,
+  disableMfa,
   forgotPassword,
   getMe,
   initiateOAuthLink,

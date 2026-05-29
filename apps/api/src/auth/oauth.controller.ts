@@ -70,7 +70,7 @@ export class OAuthController {
    * Shared OAuth post-login handler. Issues a session for the authenticated
    * user and redirects the browser to the SPA's `/oauth/callback` route with
    * the tokens in the URL fragment (fragments are never sent to servers or
-   * logged in Referer headers). When 2FA is enabled, redirects to `/login`
+   * logged in Referer headers). When MFA is enabled, redirects to `/login`
    * with an error code instead, since OAuth callbacks can't show an OTP form.
    */
   private async completeOAuthLogin(

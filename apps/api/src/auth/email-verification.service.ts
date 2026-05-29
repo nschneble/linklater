@@ -110,7 +110,7 @@ export class EmailVerificationService {
     if (user.totpEnabledAt) {
       if (!code) {
         throw new ForbiddenException(
-          '2FA is enabled — provide a verification code to change your email',
+          'MFA is enabled — provide a verification code to change your email',
         );
       }
 
