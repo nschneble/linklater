@@ -6,10 +6,10 @@ import {
   act,
 } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import TwoFactorSection from './TwoFactorSection';
-import type { User } from '../../auth/AuthContext';
+import TwoFactorSection from '.';
+import type { User } from '../../../auth/AuthContext';
 
-vi.mock('../../lib/api', () => ({
+vi.mock('../../../lib/api', () => ({
   cancelTotpSetup: vi.fn(),
   disable2fa: vi.fn(),
   regenerateRecoveryCodes: vi.fn(),
@@ -17,12 +17,12 @@ vi.mock('../../lib/api', () => ({
   verifyTotpSetup: vi.fn(),
 }));
 
-vi.mock('../../auth/AuthContext', () => ({
+vi.mock('../../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-import * as apiModule from '../../lib/api';
-import { useAuth } from '../../auth/AuthContext';
+import * as apiModule from '../../../lib/api';
+import { useAuth } from '../../../auth/AuthContext';
 
 const USER_ID = 'user-1';
 const USER_EMAIL = 'user@example.com';

@@ -6,8 +6,8 @@ import {
   fireEvent,
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import ApiTokensList from './ApiTokensList';
-import type { ApiToken } from '../../lib/api';
+import ApiTokensList from '.';
+import type { ApiToken } from '../../../lib/api';
 
 const NOW = new Date('2026-05-26T12:00:00.000Z');
 

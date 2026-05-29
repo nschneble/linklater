@@ -6,11 +6,11 @@ import {
   fireEvent,
 } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import IdPsSection from './IdPsSection';
-import type { User } from '../../auth/AuthContext';
+import IdPsSection from '.';
+import type { User } from '../../../auth/AuthContext';
 
-vi.mock('../../lib/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../lib/api')>();
+vi.mock('../../../lib/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../lib/api')>();
   return {
     ...actual,
     initiateOAuthLink: vi.fn(),
@@ -18,12 +18,12 @@ vi.mock('../../lib/api', async (importOriginal) => {
   };
 });
 
-vi.mock('../../auth/AuthContext', () => ({
+vi.mock('../../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-import * as apiModule from '../../lib/api';
-import { useAuth } from '../../auth/AuthContext';
+import * as apiModule from '../../../lib/api';
+import { useAuth } from '../../../auth/AuthContext';
 
 const USER_ID = 'user-1';
 const USER_EMAIL = 'user@example.com';

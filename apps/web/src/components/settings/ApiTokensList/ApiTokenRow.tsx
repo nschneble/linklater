@@ -1,21 +1,10 @@
-import type { ApiToken } from '../../lib/api';
-import { formatRelativeTimeFuzzy } from '../../lib/dates';
-import { getErrorMessage } from '../../lib/errors';
-import { useFocusFirstButton } from '../../lib/hooks/useFocusFirstButton';
-import Alert from '../common/Alert';
-import IconButton from '../common/IconButton';
+import { formatRelativeTimeFuzzy } from '../../../lib/dates';
+import { getErrorMessage } from '../../../lib/errors';
+import { useFocusFirstButton } from '../../../lib/hooks/useFocusFirstButton';
+import Alert from '../../common/Alert';
+import IconButton from '../../common/IconButton';
 import { useRef, useState } from 'react';
-
-/** Props for a single row in the PAT list. */
-interface ApiTokenRowProps {
-  /**
-   * Called when the user confirms revocation. The parent is responsible
-   * for issuing the API call and refreshing the list on completion.
-   */
-  onRevoke: (id: string) => Promise<void>;
-  /** The token summary to display. No raw token value is available here. */
-  token: ApiToken;
-}
+import type { ApiTokenRowProps } from './types';
 
 /**
  * A single PAT row, styled to mirror a link card: thick left accent border,
@@ -27,7 +16,7 @@ interface ApiTokenRowProps {
  * tooling can recover the exact ISO value even though the visible text is
  * intentionally vague.
  */
-function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
+export default function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
   const [confirming, setConfirming] = useState(false);
   const [revoking, setRevoking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -127,42 +116,5 @@ function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
         </div>
       )}
     </li>
-  );
-}
-
-/** Props for the full PAT list component. */
-interface ApiTokensListProps {
-  /**
-   * Passed through to each `ApiTokenRow`. Called with the token ID when
-   * the user confirms revocation.
-   */
-  onRevoke: (id: string) => Promise<void>;
-  /** The list of token summaries to render. */
-  tokens: ApiToken[];
-}
-
-/**
- * Renders the user's personal access tokens as a vertical stack of cards
- * that visually echo the saved-link card. Shows a "You haven't created any
- * tokens" message when the list is empty.
- */
-export default function ApiTokensList({
-  onRevoke,
-  tokens,
-}: ApiTokensListProps) {
-  if (tokens.length === 0) {
-    return (
-      <p className="mb-8 text-[var(--text-subtle)] text-xs">
-        You haven't created any tokens
-      </p>
-    );
-  }
-
-  return (
-    <ul className="space-y-3">
-      {tokens.map((token) => (
-        <ApiTokenRow key={token.id} onRevoke={onRevoke} token={token} />
-      ))}
-    </ul>
   );
 }

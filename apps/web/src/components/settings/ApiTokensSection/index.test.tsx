@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import ApiTokensSection from './ApiTokensSection';
+import ApiTokensSection from '.';
 
 // Render under the single `/settings` route. `ApiTokensSection` uses router
 // hooks (it navigates to `/settings/api`), so a router is still required; the
@@ -16,13 +16,13 @@ function renderInRouter(route = '/settings') {
   );
 }
 
-vi.mock('../../lib/api', () => ({
+vi.mock('../../../lib/api', () => ({
   createApiToken: vi.fn(),
   listApiTokens: vi.fn(),
   revokeApiToken: vi.fn(),
 }));
 
-vi.mock('./ApiTokensList', () => ({
+vi.mock('../ApiTokensList', () => ({
   default: ({
     tokens,
     onRevoke,
@@ -43,7 +43,7 @@ vi.mock('./ApiTokensList', () => ({
   ),
 }));
 
-import * as apiModule from '../../lib/api';
+import * as apiModule from '../../../lib/api';
 
 const makeApiToken = (overrides = {}) => ({
   id: 'tok-1',
