@@ -6,7 +6,12 @@ import { UsersController } from './users.controller.js';
 import { UsersService } from './users.service.js';
 
 @Module({
-  providers: [UsersService, UserTokensService, UserOAuthService, UserMfaService],
+  providers: [
+    UsersService,
+    UserTokensService,
+    UserOAuthService,
+    UserMfaService,
+  ],
   controllers: [UsersController],
   exports: [UsersService, UserTokensService],
 })

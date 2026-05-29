@@ -172,7 +172,9 @@ describe('RefreshTokenService', () => {
         prismaServiceMock.refreshToken.create as jest.Mock
       ).mockRejectedValueOnce(new Error('db down'));
 
-      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow('db down');
+      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
+        'db down',
+      );
     });
   });
 
@@ -190,7 +192,9 @@ describe('RefreshTokenService', () => {
       expect(prismaServiceMock.refreshToken.deleteMany).toHaveBeenCalledWith({
         where: { userId: USER_ID },
       });
-      expect(prismaServiceMock.extensionAuthCode.deleteMany).toHaveBeenCalledWith({
+      expect(
+        prismaServiceMock.extensionAuthCode.deleteMany,
+      ).toHaveBeenCalledWith({
         where: { userId: USER_ID },
       });
     });

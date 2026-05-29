@@ -65,7 +65,11 @@ export class RefreshTokenService {
       const newTokenHash = sha256Hex(rawNewRefreshToken);
       const newExpiresAt = expiresInMs(ONE_YEAR_MS);
       await transaction.refreshToken.create({
-        data: { tokenHash: newTokenHash, userId: stored.userId, expiresAt: newExpiresAt },
+        data: {
+          tokenHash: newTokenHash,
+          userId: stored.userId,
+          expiresAt: newExpiresAt,
+        },
       });
       const accessToken = this.jwtService.sign({
         subject: stored.userId,

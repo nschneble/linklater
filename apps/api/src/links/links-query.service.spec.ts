@@ -125,9 +125,8 @@ describe('LinksQueryService', () => {
 
       await service.findAll(USER_ID, { search: 'duck' });
 
-      const call = (prismaMock.link.findMany as jest.Mock).mock.calls[0]?.[0] as
-        | { where?: { OR?: unknown } }
-        | undefined;
+      const call = (prismaMock.link.findMany as jest.Mock).mock
+        .calls[0]?.[0] as { where?: { OR?: unknown } } | undefined;
       expect(call?.where?.OR).toBeUndefined();
     });
 
@@ -140,10 +139,8 @@ describe('LinksQueryService', () => {
       // TemplateStringsArray containing the raw SQL fragments around the
       // interpolated values. We assert that those fragments include the
       // unaccent() wrapper around plainto_tsquery's input (Postel's Law).
-      const callArguments = (prismaMock.$queryRaw as jest.Mock).mock.calls[0] as [
-        readonly string[],
-        ...unknown[],
-      ];
+      const callArguments = (prismaMock.$queryRaw as jest.Mock).mock
+        .calls[0] as [readonly string[], ...unknown[]];
       const sql = callArguments[0].join(' ');
       expect(sql).toContain("plainto_tsquery('english', unaccent(");
     });
