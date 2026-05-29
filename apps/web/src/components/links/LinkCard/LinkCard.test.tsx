@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
-import LinkCard from './LinkCard';
-import type { Link } from '../../lib/api';
+import LinkCard from '.';
+import type { Link } from '../../../lib/api';
 
-vi.mock('../../theme/ThemeContext', () => ({
+vi.mock('../../../theme/ThemeContext', () => ({
   useTheme: () => ({ baseTheme: 'scanner-darkly' }),
 }));
 
