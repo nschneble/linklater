@@ -1,0 +1,180 @@
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import {
+  acknowledgeWelcome as apiAcknowledgeWelcome,
+  clearStoredToken,
+  getMe,
+  getStoredToken,
+  login as apiLogin,
+  logout as apiLogout,
+  register as apiRegister,
+  resendVerificationEmail as apiResendVerificationEmail,
+  setStoredToken,
+} from '../../lib/api';
+import type { AuthContextValue, User } from './types';
+
+/**
+ * Maps the raw `GET /auth/me` response shape to the `User` interface.
+ * Extracted to avoid repetition in every code path that calls `getMe`
+ * (e.g. mount, login, loginWithToken, refreshUser).
+ */
+function mapMeToUser(me: Awaited<ReturnType<typeof getMe>>): User {
+  return {
+    cvdMode: me.cvdMode,
+    connectedProviders: me.connectedProviders,
+    email: me.email,
+    emailVerifiedAt: me.emailVerifiedAt,
+    hasPassword: me.hasPassword,
+    mode: me.mode,
+    pendingEmail: me.pendingEmail,
+    theme: me.theme,
+    twoFactorMethod: me.twoFactorMethod,
+    twoFactorPending: me.twoFactorPending,
+    userId: me.userId,
+    welcomedAt: me.welcomedAt,
+  };
+}
+
+/**
+ * Encapsulates all authentication state, effects, and action handlers.
+ * Consumed by `AuthProvider`, which passes the returned value into context.
+ */
+export function useAuthState(): AuthContextValue {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+
+  // On mount: hydrate auth state from the stored JWT, if any.
+  useEffect(() => {
+    const token = getStoredToken();
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    (async () => {
+      try {
+        const me = await getMe();
+        setUser(mapMeToUser(me));
+      } catch (error) {
+        console.error('Failed to fetch current user', error);
+        clearStoredToken();
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  /**
+   * Calls the API login endpoint, then fetches the user profile to populate
+   * state. The JWT is stored automatically by `apiLogin` via `setStoredToken`.
+   */
+  const login = useCallback(
+    async (
+      email: string,
+      password: string,
+    ): Promise<{ mfaToken: string; mfaMethod: 'totp' } | void> => {
+      const result = await apiLogin(email, password);
+      if ('mfaToken' in result) {
+        return { mfaToken: result.mfaToken, mfaMethod: result.mfaMethod };
+      }
+      const me = await getMe();
+      setUser(mapMeToUser(me));
+    },
+    [],
+  );
+
+  const loginWithToken = useCallback(
+    async (accessToken: string, refreshToken?: string) => {
+      setStoredToken(accessToken, refreshToken);
+      const me = await getMe();
+      setUser(mapMeToUser(me));
+    },
+    [],
+  );
+
+  /**
+   * Creates an account then immediately logs in so the user lands on the
+   * app without an extra step.
+   */
+  const register = useCallback(
+    async (email: string, password: string) => {
+      await apiRegister(email, password);
+      await login(email, password);
+    },
+    [login],
+  );
+
+  const logout = useCallback(() => {
+    void apiLogout();
+    setUser(null);
+  }, []);
+
+  const resendVerificationEmail = useCallback(async () => {
+    await apiResendVerificationEmail();
+  }, []);
+
+  /**
+   * Optimistically updates `user.pendingEmail` after the user submits an
+   * email change request. This prevents a stale value from being shown while
+   * the user's browser tab is still open.
+   */
+  const setPendingEmail = useCallback((email: string) => {
+    setUser((previous) =>
+      previous ? { ...previous, pendingEmail: email } : previous,
+    );
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const me = await getMe();
+      setUser(mapMeToUser(me));
+    } catch (error) {
+      console.error('Failed to refresh user', error);
+    }
+  }, []);
+
+  const markWelcomed = useCallback(async () => {
+    setUser((previous) =>
+      previous
+        ? { ...previous, welcomedAt: new Date().toISOString() }
+        : previous,
+    );
+    try {
+      await apiAcknowledgeWelcome();
+    } catch (error) {
+      console.error('Failed to acknowledge welcome', error);
+    }
+  }, []);
+
+  return useMemo<AuthContextValue>(
+    () => ({
+      loading,
+      login,
+      loginWithToken,
+      logout,
+      markWelcomed,
+      refreshUser,
+      register,
+      resendVerificationEmail,
+      setPendingEmail,
+      user,
+    }),
+    [
+      loading,
+      login,
+      loginWithToken,
+      logout,
+      markWelcomed,
+      refreshUser,
+      register,
+      resendVerificationEmail,
+      setPendingEmail,
+      user,
+    ],
+  );
+}
