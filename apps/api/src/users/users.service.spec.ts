@@ -31,6 +31,8 @@ jest.mock('../prisma/generated/client', () => {
 
 import { Prisma } from '../prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { UserMfaService } from './user-mfa.service';
+import { UserOAuthService } from './user-oauth.service';
 import { UsersService } from './users.service';
 
 const KNOWN_PASSWORD = 'open-sesame';
@@ -89,6 +91,8 @@ describe('UsersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
+        UserOAuthService,
+        UserMfaService,
         { provide: PrismaService, useValue: prismaMock },
       ],
     }).compile();

@@ -9,6 +9,8 @@ import {
 import { Prisma, PrismaService } from '../prisma/index.js';
 import { withoutPasswordHash } from './users.utils.js';
 import { VALID_MODES, VALID_THEMES } from './users.constants.js';
+import { UserMfaService } from './user-mfa.service.js';
+import { UserOAuthService } from './user-oauth.service.js';
 import * as bcrypt from 'bcryptjs';
 
 export { VALID_MODES, VALID_THEMES };
@@ -35,6 +37,11 @@ export interface UpdateMeInput {
  * that return user data call `withoutPasswordHash` before returning so that
  * password hashes are never exposed to callers.
  *
+ * OAuth-account persistence is delegated to `UserOAuthService`; MFA/TOTP and
+ * recovery-code persistence is delegated to `UserMfaService`. This service
+ * retains a stable public surface so all 9 consumer call sites remain
+ * unmodified.
+ *
  * Token management methods (verification, reset, pending email) are kept here
  * rather than in `AuthService` so that Prisma operations remain in one place.
  * `AuthService` is responsible for the *logic* (generating tokens, sending
@@ -42,7 +49,15 @@ export interface UpdateMeInput {
  */
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userOAuthService: UserOAuthService,
+    private readonly userMfaService: UserMfaService,
+  ) {}
+
+  // ---------------------------------------------------------------------------
+  // Core user CRUD
+  // ---------------------------------------------------------------------------
 
   /**
    * Creates a new user account. Hashes the password with bcrypt at cost 12
@@ -193,6 +208,10 @@ export class UsersService {
     await this.prisma.user.delete({ where: { id } });
   }
 
+  // ---------------------------------------------------------------------------
+  // Password / email persistence
+  // ---------------------------------------------------------------------------
+
   /**
    * Replaces the user's password hash and clears the reset token. Called
    * after `AuthService` has validated the token and its expiry.
@@ -266,88 +285,6 @@ export class UsersService {
     }
   }
 
-  async createOAuthUser(email: string) {
-    const user = await this.prisma.user.create({
-      data: { email, passwordHash: null, emailVerifiedAt: new Date() },
-    });
-    return withoutPasswordHash(user);
-  }
-
-  async createOAuthUserAndLink(
-    email: string,
-    provider: string,
-    providerId: string,
-    providerEmail: string,
-  ) {
-    return this.prisma.$transaction(async (transaction) => {
-      const user = await transaction.user.create({
-        data: { email, passwordHash: null, emailVerifiedAt: new Date() },
-      });
-      await transaction.oAuthAccount.create({
-        data: { userId: user.id, provider, providerId, providerEmail },
-      });
-      return withoutPasswordHash(user);
-    });
-  }
-
-  async findOAuthAccount(provider: string, providerId: string) {
-    return this.prisma.oAuthAccount.findUnique({
-      where: { provider_providerId: { provider, providerId } },
-      include: { user: true },
-    });
-  }
-
-  async linkOAuthAccount(
-    userId: string,
-    provider: string,
-    providerId: string,
-    providerEmail: string,
-  ) {
-    await this.prisma.oAuthAccount.create({
-      data: { userId, provider, providerId, providerEmail },
-    });
-  }
-
-  /**
-   * Refreshes the stored `providerEmail` for an already-linked account.
-   * Uses `updateMany` so a concurrent unlink is a clean no-op instead of a
-   * P2025. Identity is keyed by `(provider, providerId)` — this column is
-   * purely informational, so silently skipping a vanished row is correct.
-   */
-  async updateOAuthProviderEmail(
-    userId: string,
-    provider: string,
-    providerId: string,
-    providerEmail: string,
-  ): Promise<void> {
-    await this.prisma.oAuthAccount.updateMany({
-      where: { userId, provider, providerId },
-      data: { providerEmail },
-    });
-  }
-
-  async listOAuthAccounts(userId: string): Promise<
-    {
-      provider: string;
-      providerEmail: string;
-      connectedAt: Date;
-    }[]
-  > {
-    const accounts = await this.prisma.oAuthAccount.findMany({
-      where: { userId },
-      select: { provider: true, providerEmail: true, createdAt: true },
-    });
-    return accounts.map((account) => ({
-      provider: account.provider,
-      providerEmail: account.providerEmail,
-      connectedAt: account.createdAt,
-    }));
-  }
-
-  async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
-    await this.prisma.oAuthAccount.deleteMany({ where: { userId, provider } });
-  }
-
   async setFirstPassword(userId: string, password: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
@@ -380,156 +317,117 @@ export class UsersService {
     });
   }
 
-  /**
-   * Writes an encrypted TOTP secret to the user row, marking setup as
-   * pending (but not yet enabled). Clears `totpEnabledAt` and
-   * `totpVerifiedAt` so a re-run of setup after a previous failed attempt
-   * starts from a clean state.
-   *
-   * @param userId - UUID of the user starting setup.
-   * @param encryptedSecret - AES-256-GCM ciphertext produced by
-   *   `crypto.encrypt`.
-   */
+  // ---------------------------------------------------------------------------
+  // OAuth-account delegation (thin pass-throughs to UserOAuthService)
+  // ---------------------------------------------------------------------------
+
+  async createOAuthUser(email: string) {
+    return this.userOAuthService.createOAuthUser(email);
+  }
+
+  async createOAuthUserAndLink(
+    email: string,
+    provider: string,
+    providerId: string,
+    providerEmail: string,
+  ) {
+    return this.userOAuthService.createOAuthUserAndLink(
+      email,
+      provider,
+      providerId,
+      providerEmail,
+    );
+  }
+
+  async findOAuthAccount(provider: string, providerId: string) {
+    return this.userOAuthService.findOAuthAccount(provider, providerId);
+  }
+
+  async linkOAuthAccount(
+    userId: string,
+    provider: string,
+    providerId: string,
+    providerEmail: string,
+  ) {
+    return this.userOAuthService.linkOAuthAccount(
+      userId,
+      provider,
+      providerId,
+      providerEmail,
+    );
+  }
+
+  async updateOAuthProviderEmail(
+    userId: string,
+    provider: string,
+    providerId: string,
+    providerEmail: string,
+  ): Promise<void> {
+    return this.userOAuthService.updateOAuthProviderEmail(
+      userId,
+      provider,
+      providerId,
+      providerEmail,
+    );
+  }
+
+  async listOAuthAccounts(userId: string) {
+    return this.userOAuthService.listOAuthAccounts(userId);
+  }
+
+  async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
+    return this.userOAuthService.unlinkOAuthAccount(userId, provider);
+  }
+
+  // ---------------------------------------------------------------------------
+  // MFA / TOTP / recovery-code delegation (thin pass-throughs to UserMfaService)
+  // ---------------------------------------------------------------------------
+
   async saveTotpSecret(userId: string, encryptedSecret: string) {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        totpSecret: encryptedSecret,
-        totpEnabledAt: null,
-        totpVerifiedAt: null,
-      },
-    });
+    return this.userMfaService.saveTotpSecret(userId, encryptedSecret);
   }
 
-  /**
-   * Clears a pending (not-yet-enabled) TOTP secret. Idempotent: no-op when the
-   * user has no pending setup. The `totpEnabledAt: null` filter is intentional
-   * — it makes the guard atomic so an enabled account is silently skipped at
-   * the DB layer rather than racing a concurrent enable. Callers must still
-   * surface a 409 to the user for the enabled case.
-   */
   async clearPendingTotpSecret(userId: string): Promise<void> {
-    await this.prisma.user.updateMany({
-      where: { id: userId, totpEnabledAt: null },
-      data: { totpSecret: null, totpVerifiedAt: null },
-    });
+    return this.userMfaService.clearPendingTotpSecret(userId);
   }
 
-  /**
-   * Writes a fresh MFA challenge nonce for the user. AuthService.login calls
-   * this when issuing an MFA challenge JWT; the same nonce is embedded in
-   * the JWT and verified at verifyOtp time so a leaked or replayed token
-   * carrying a stale nonce is rejected.
-   */
   async setMfaNonce(id: string, nonce: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id },
-      data: { mfaNonce: nonce },
-    });
+    return this.userMfaService.setMfaNonce(id, nonce);
   }
 
-  /**
-   * Clears the MFA nonce after a successful verifyOtp, enforcing single-use
-   * semantics on the MFA challenge token. Also doubles as an explicit
-   * revocation handle — any code path can call this to invalidate an
-   * outstanding MFA token (e.g. after a password change).
-   */
   async clearMfaNonce(id: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id },
-      data: { mfaNonce: null },
-    });
+    return this.userMfaService.clearMfaNonce(id);
   }
 
-  /**
-   * Atomic compare-and-swap for the TOTP replay guard. Only advances
-   * `totpLastUsedStep` when the candidate `step` is strictly greater than
-   * the current value (or the current value is `null`). Returns `true`
-   * when the swap happened, `false` when a parallel verify-otp request
-   * already advanced the step to `>= step`. Callers must treat `false` as
-   * a replay attempt and reject the OTP.
-   */
   async updateTotpLastUsedStep(id: string, step: number): Promise<boolean> {
-    const result = await this.prisma.user.updateMany({
-      where: {
-        id,
-        OR: [{ totpLastUsedStep: null }, { totpLastUsedStep: { lt: step } }],
-      },
-      data: { totpLastUsedStep: step },
-    });
-    return result.count === 1;
+    return this.userMfaService.updateTotpLastUsedStep(id, step);
   }
 
-  /**
-   * Atomically enables TOTP, records the verified time step (replay prevention),
-   * and replaces any existing recovery codes with the provided set.
-   */
   async enableTotpWithRecoveryCodes(
     userId: string,
     codeHashes: string[],
     lastUsedStep: number,
   ) {
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          totpEnabledAt: new Date(),
-          totpVerifiedAt: new Date(),
-          totpLastUsedStep: lastUsedStep,
-        },
-      }),
-      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
-      this.prisma.recoveryCode.createMany({
-        data: codeHashes.map((codeHash) => ({ userId, codeHash })),
-      }),
-    ]);
+    return this.userMfaService.enableTotpWithRecoveryCodes(
+      userId,
+      codeHashes,
+      lastUsedStep,
+    );
   }
 
-  /**
-   * Atomically invalidates all existing recovery codes and stores a fresh set.
-   */
   async reissueRecoveryCodes(userId: string, codeHashes: string[]) {
-    await this.prisma.$transaction([
-      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
-      this.prisma.recoveryCode.createMany({
-        data: codeHashes.map((codeHash) => ({ userId, codeHash })),
-      }),
-    ]);
+    return this.userMfaService.reissueRecoveryCodes(userId, codeHashes);
   }
 
   async findUnusedRecoveryCodes(userId: string) {
-    return this.prisma.recoveryCode.findMany({
-      where: { userId, usedAt: null },
-    });
+    return this.userMfaService.findUnusedRecoveryCodes(userId);
   }
 
-  /**
-   * Atomically marks a recovery code as used, but only if it is still unused.
-   * Returns `true` when the code was just consumed, `false` when a parallel
-   * request had already used it. Callers MUST treat `false` as an auth
-   * failure — without this guard, two concurrent verify-otp requests could
-   * both succeed on the same code.
-   */
   async markRecoveryCodeUsed(id: string): Promise<boolean> {
-    const result = await this.prisma.recoveryCode.updateMany({
-      where: { id, usedAt: null },
-      data: { usedAt: new Date() },
-    });
-    return result.count === 1;
+    return this.userMfaService.markRecoveryCodeUsed(id);
   }
 
   async disableTwoFactor(id: string) {
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id },
-        data: {
-          totpSecret: null,
-          totpEnabledAt: null,
-          totpVerifiedAt: null,
-          totpLastUsedStep: null,
-        },
-      }),
-      this.prisma.recoveryCode.deleteMany({ where: { userId: id } }),
-    ]);
+    return this.userMfaService.disableTwoFactor(id);
   }
 }
