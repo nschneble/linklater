@@ -1,9 +1,5 @@
-import { getErrorMessage } from '../../lib/errors';
-import { useFocusFirstButton } from '../../lib/hooks/useFocusFirstButton';
-import { useTransientState } from '../../lib/hooks/useTransientState';
-import Alert from '../common/Alert';
+import ActionGuard from '../common/ActionGuard';
 import IconButton from '../common/IconButton';
-import { useEffect, useRef, useState } from 'react';
 
 interface BookmarkletRegenerateButtonProps {
   /**
@@ -15,150 +11,80 @@ interface BookmarkletRegenerateButtonProps {
   regenerate: () => Promise<{ rawToken: string }>;
 }
 
-const TRIGGER_ID = 'bookmarklet-regenerate-trigger';
-const ERROR_ID = 'bookmarklet-regenerate-error';
-
 /**
- * Two-step confirm for regenerating the bookmarklet PAT.
- *
- * Trigger toggles a "Sure? / Yes, regenerate / Cancel" row. Focus lands on
- * "Yes, regenerate" when the row opens and returns to the trigger when the
- * row closes (cancel, escape, or success) — `ApiTokenRow` does not return
- * focus today, this fixes that gap.
- *
- * The error alert receives focus on failure so the announcement is not
- * missed (the focused trigger button's own re-render is not reliably
- * re-announced by AT).
+ * Two-step confirm for regenerating the bookmarklet PAT. State, focus
+ * management, escape behavior, and the failure-focus + announcement plumbing
+ * all live in `ActionGuard`. This component only describes the trigger,
+ * confirm row, and the API wiring.
  */
 export default function BookmarkletRegenerateButton({
   onRegenerated,
   regenerate,
 }: BookmarkletRegenerateButtonProps) {
-  const [confirming, setConfirming] = useState(false);
-  const [regenerating, setRegenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [announcement, setAnnouncement] = useState('');
-
-  const confirmRowReference = useRef<HTMLDivElement>(null);
-
-  useFocusFirstButton(confirmRowReference, confirming);
-
-  // Return focus to the trigger whenever the confirm row closes (cancel or
-  // post-success). Skip the initial false→false transition so we don't
-  // steal focus on mount. Skip on error: the error-focus effect below should
-  // win, and effect ordering shouldn't be load-bearing.
-  const previouslyConfirming = useRef(confirming);
-  useEffect(() => {
-    if (previouslyConfirming.current && !confirming && !error) {
-      document.getElementById(TRIGGER_ID)?.focus();
-    }
-    previouslyConfirming.current = confirming;
-  }, [confirming, error]);
-
-  // Surface the alert by moving focus into it (the alert role alone is not
-  // enough when an interactive element keeps focus).
-  useEffect(() => {
-    if (error) {
-      document.getElementById(ERROR_ID)?.focus();
-    }
-  }, [error]);
-
-  // Clear the announcement after 3s so a repeat regenerate re-announces.
-  useTransientState(announcement, '', setAnnouncement, 3000);
-
-  // Escape cancels the confirm row.
-  useEffect(() => {
-    if (!confirming) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setConfirming(false);
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [confirming]);
-
-  const handleOpenConfirm = () => {
-    setError(null);
-    setConfirming(true);
-  };
-
-  const handleConfirm = async () => {
-    setError(null);
-    setRegenerating(true);
-    try {
-      const fresh = await regenerate();
-      onRegenerated(fresh.rawToken);
-      setConfirming(false);
-      setAnnouncement(
-        'Bookmarklet regenerated. The new token is now embedded in the Save to Linklater button above.',
-      );
-    } catch (caughtError: unknown) {
-      setError(
-        getErrorMessage(caughtError, 'Failed to regenerate bookmarklet'),
-      );
-      setConfirming(false);
-    } finally {
-      setRegenerating(false);
-    }
-  };
-
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        {!confirming ? (
-          <IconButton
-            type="button"
-            variant="danger"
-            id={TRIGGER_ID}
-            aria-label="Regenerate bookmarklet token"
-            onClick={handleOpenConfirm}
-          >
-            <i
-              aria-hidden="true"
-              className="fa-solid fa-rotate text-[0.7rem]"
-            />
-            Regenerate
-          </IconButton>
-        ) : (
-          <div
-            className="flex items-center gap-4 shrink-0"
-            ref={confirmRowReference}
-          >
-            <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400 text-xs">
-              Sure?
-            </span>
-            <div className="space-x-2">
-              <IconButton
-                type="button"
-                variant="danger-filled"
-                disabled={regenerating}
-                onClick={() => void handleConfirm()}
-              >
-                {regenerating ? 'Regenerating…' : 'Yes, regenerate'}
-              </IconButton>
-              <IconButton
-                type="button"
-                variant="ghost"
-                disabled={regenerating}
-                onClick={() => setConfirming(false)}
-              >
-                Cancel
-              </IconButton>
+    <ActionGuard
+      className="space-y-2"
+      errorFallback="Failed to regenerate bookmarklet"
+      successAnnouncement="Bookmarklet regenerated. The new token is now embedded in the Save to Linklater button above."
+      onConfirm={async () => {
+        const fresh = await regenerate();
+        onRegenerated(fresh.rawToken);
+      }}
+    >
+      {({
+        confirming,
+        pending,
+        triggerId,
+        confirmReference,
+        openConfirm,
+        closeConfirm,
+        runConfirm,
+      }) => (
+        <div className="flex items-center gap-2">
+          {!confirming ? (
+            <IconButton
+              type="button"
+              variant="danger"
+              id={triggerId}
+              aria-label="Regenerate bookmarklet token"
+              onClick={openConfirm}
+            >
+              <i
+                aria-hidden="true"
+                className="fa-solid fa-rotate text-[0.7rem]"
+              />
+              Regenerate
+            </IconButton>
+          ) : (
+            <div
+              className="flex items-center gap-4 shrink-0"
+              ref={confirmReference}
+            >
+              <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400 text-xs">
+                Sure?
+              </span>
+              <div className="space-x-2">
+                <IconButton
+                  type="button"
+                  variant="danger-filled"
+                  disabled={pending}
+                  onClick={runConfirm}
+                >
+                  {pending ? 'Regenerating…' : 'Yes, regenerate'}
+                </IconButton>
+                <IconButton
+                  type="button"
+                  variant="ghost"
+                  disabled={pending}
+                  onClick={closeConfirm}
+                >
+                  Cancel
+                </IconButton>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-      {error && (
-        <Alert id={ERROR_ID} tabIndex={-1} variant="error">
-          {error}
-        </Alert>
+          )}
+        </div>
       )}
-      {announcement && (
-        <span className="sr-only" role="status">
-          {announcement}
-        </span>
-      )}
-    </div>
+    </ActionGuard>
   );
 }

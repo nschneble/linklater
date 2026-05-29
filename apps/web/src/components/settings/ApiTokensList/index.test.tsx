@@ -165,6 +165,85 @@ describe('ApiTokensList', () => {
         expect(screen.getByRole('alert')).toHaveTextContent('Revoke failed');
       });
     });
+
+    it('returns focus to the Revoke trigger when Cancel is clicked', async () => {
+      render(<ApiTokensList tokens={[makeToken()]} onRevoke={vi.fn()} />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /revoke chrome extension/i }),
+        );
+      });
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', {
+            name: /cancel revoke chrome extension/i,
+          }),
+        );
+      });
+      await waitFor(() => {
+        const trigger = screen.getByRole('button', {
+          name: /revoke chrome extension/i,
+        });
+        expect(document.activeElement).toBe(trigger);
+      });
+    });
+
+    it('cancels the confirm row when Escape is pressed', async () => {
+      render(<ApiTokensList tokens={[makeToken()]} onRevoke={vi.fn()} />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /revoke chrome extension/i }),
+        );
+      });
+      await act(async () => {
+        fireEvent.keyDown(document, { key: 'Escape' });
+      });
+      expect(screen.queryByText('Sure?')).not.toBeInTheDocument();
+    });
+
+    it('focuses the error alert on failure', async () => {
+      const onRevoke = vi.fn().mockRejectedValue(new Error('Revoke failed'));
+      render(<ApiTokensList tokens={[makeToken()]} onRevoke={onRevoke} />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /revoke chrome extension/i }),
+        );
+      });
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', {
+            name: /confirm revoke chrome extension/i,
+          }),
+        );
+      });
+      await waitFor(() => {
+        expect(document.activeElement).toBe(screen.getByRole('alert'));
+      });
+    });
+
+    it('announces "Token revoked" via a polite live region on success', async () => {
+      const onRevoke = vi.fn().mockResolvedValue(undefined);
+      render(<ApiTokensList tokens={[makeToken()]} onRevoke={onRevoke} />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /revoke chrome extension/i }),
+        );
+      });
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', {
+            name: /confirm revoke chrome extension/i,
+          }),
+        );
+      });
+      await waitFor(() => {
+        const statuses = screen.getAllByRole('status');
+        const announcement = statuses.find((node) =>
+          /token revoked/i.test(node.textContent ?? ''),
+        );
+        expect(announcement).toBeTruthy();
+      });
+    });
   });
 
   describe('last-used display', () => {

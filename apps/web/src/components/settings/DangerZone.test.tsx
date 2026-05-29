@@ -1,4 +1,10 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import {
+  act,
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+} from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import DangerZone from './DangerZone';
 import { consumeAuthNotice } from '../../auth/authNotice';
@@ -136,5 +142,99 @@ describe('DangerZone', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     expect(consumeAuthNotice()).toBeNull();
+  });
+
+  describe('a11y: focus + escape (gained via ActionGuard)', () => {
+    it('focuses "Yes, delete" when the confirm row opens', async () => {
+      render(<DangerZone />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /delete my account/i }),
+        );
+      });
+      await waitFor(() => {
+        expect(document.activeElement).toBe(
+          screen.getByRole('button', { name: /yes, delete/i }),
+        );
+      });
+    });
+
+    it('returns focus to the trigger when Cancel is clicked', async () => {
+      render(<DangerZone />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /delete my account/i }),
+        );
+      });
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /no, don't delete/i }),
+        );
+      });
+      await waitFor(() => {
+        const trigger = screen.getByRole('button', {
+          name: /delete my account/i,
+        });
+        expect(document.activeElement).toBe(trigger);
+      });
+    });
+
+    it('cancels and returns focus to the trigger when Escape is pressed', async () => {
+      render(<DangerZone />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /delete my account/i }),
+        );
+      });
+      await act(async () => {
+        fireEvent.keyDown(document, { key: 'Escape' });
+      });
+      expect(screen.queryByText(/are you sure/i)).not.toBeInTheDocument();
+      await waitFor(() => {
+        const trigger = screen.getByRole('button', {
+          name: /delete my account/i,
+        });
+        expect(document.activeElement).toBe(trigger);
+      });
+    });
+
+    it('focuses the error alert on failure (winning over return-focus)', async () => {
+      vi.mocked(apiModule.deleteMe).mockRejectedValue(new Error('boom'));
+      render(<DangerZone />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /delete my account/i }),
+        );
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+      });
+      await waitFor(() => {
+        expect(document.activeElement).toBe(screen.getByRole('alert'));
+      });
+    });
+
+    it('clears a previous error when the confirm row is reopened', async () => {
+      vi.mocked(apiModule.deleteMe).mockRejectedValueOnce(new Error('boom'));
+      render(<DangerZone />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /delete my account/i }),
+        );
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+      });
+      await waitFor(() =>
+        expect(screen.getByRole('alert')).toBeInTheDocument(),
+      );
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /delete my account/i }),
+        );
+      });
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
   });
 });
