@@ -16,7 +16,6 @@ interface BookmarkletRegenerateButtonProps {
 }
 
 const TRIGGER_ID = 'bookmarklet-regenerate-trigger';
-const CONFIRM_ID = 'bookmarklet-regenerate-confirm';
 const ERROR_ID = 'bookmarklet-regenerate-error';
 
 /**
@@ -46,14 +45,15 @@ export default function BookmarkletRegenerateButton({
 
   // Return focus to the trigger whenever the confirm row closes (cancel or
   // post-success). Skip the initial false→false transition so we don't
-  // steal focus on mount.
+  // steal focus on mount. Skip on error: the error-focus effect below should
+  // win, and effect ordering shouldn't be load-bearing.
   const previouslyConfirming = useRef(confirming);
   useEffect(() => {
-    if (previouslyConfirming.current && !confirming) {
+    if (previouslyConfirming.current && !confirming && !error) {
       document.getElementById(TRIGGER_ID)?.focus();
     }
     previouslyConfirming.current = confirming;
-  }, [confirming]);
+  }, [confirming, error]);
 
   // Surface the alert by moving focus into it (the alert role alone is not
   // enough when an interactive element keeps focus).
@@ -106,26 +106,26 @@ export default function BookmarkletRegenerateButton({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <IconButton
-          type="button"
-          variant="danger"
-          id={TRIGGER_ID}
-          aria-label="Regenerate bookmarklet token"
-          aria-controls={CONFIRM_ID}
-          aria-expanded={confirming}
-          hidden={confirming}
-          onClick={handleOpenConfirm}
-        >
-          <i aria-hidden="true" className="fa-solid fa-rotate text-[0.7rem]" />
-          Regenerate
-        </IconButton>
-        {confirming && (
+        {!confirming ? (
+          <IconButton
+            type="button"
+            variant="danger"
+            id={TRIGGER_ID}
+            aria-label="Regenerate bookmarklet token"
+            onClick={handleOpenConfirm}
+          >
+            <i
+              aria-hidden="true"
+              className="fa-solid fa-rotate text-[0.7rem]"
+            />
+            Regenerate
+          </IconButton>
+        ) : (
           <div
             className="flex items-center gap-4 shrink-0"
-            id={CONFIRM_ID}
             ref={confirmRowReference}
           >
-            <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 text-xs">
+            <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400 text-xs">
               Sure?
             </span>
             <div className="space-x-2">

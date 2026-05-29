@@ -171,19 +171,20 @@ describe('BookmarkletSection', () => {
   });
 
   describe('regenerate flow', () => {
-    it('renders a Regenerate button with the right aria attributes', async () => {
+    it('renders a Regenerate trigger button', async () => {
       await renderResolved();
       const trigger = screen.getByRole('button', {
         name: /regenerate bookmarklet token/i,
       });
-      expect(trigger).toHaveAttribute('aria-expanded', 'false');
-      expect(trigger).toHaveAttribute(
-        'aria-controls',
-        'bookmarklet-regenerate-confirm',
-      );
+      expect(trigger).toBeInTheDocument();
+      // Disclosure ARIA was dropped: the trigger unmounts when the confirm row
+      // is open, so `aria-controls` would point at nothing. Matches the
+      // DangerZone/ApiTokenRow guard pattern.
+      expect(trigger).not.toHaveAttribute('aria-controls');
+      expect(trigger).not.toHaveAttribute('aria-expanded');
     });
 
-    it('opens the confirm row when Regenerate is clicked', async () => {
+    it('swaps the trigger for the confirm row when Regenerate is clicked', async () => {
       await renderResolved();
       fireEvent.click(
         screen.getByRole('button', { name: /regenerate bookmarklet token/i }),
@@ -195,15 +196,11 @@ describe('BookmarkletSection', () => {
       expect(
         screen.getByRole('button', { name: /^cancel$/i }),
       ).toBeInTheDocument();
-    });
-
-    it('flips the trigger aria-expanded to true when confirm opens', async () => {
-      await renderResolved();
-      const trigger = screen.getByRole('button', {
-        name: /regenerate bookmarklet token/i,
-      });
-      fireEvent.click(trigger);
-      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+      // Trigger unmounts during confirm to avoid the layout-leap/flash caused
+      // by the previous `hidden`-keeps-layout-space approach.
+      expect(
+        screen.queryByRole('button', { name: /regenerate bookmarklet token/i }),
+      ).not.toBeInTheDocument();
     });
 
     it('focuses the "Yes, regenerate" button when the confirm row appears', async () => {
@@ -222,12 +219,11 @@ describe('BookmarkletSection', () => {
 
     it('cancels and returns focus to the Regenerate trigger when Cancel is clicked', async () => {
       await renderResolved();
-      const trigger = screen.getByRole('button', {
-        name: /regenerate bookmarklet token/i,
-      });
 
       await act(async () => {
-        fireEvent.click(trigger);
+        fireEvent.click(
+          screen.getByRole('button', { name: /regenerate bookmarklet token/i }),
+        );
       });
 
       await act(async () => {
@@ -235,7 +231,13 @@ describe('BookmarkletSection', () => {
       });
 
       expect(screen.queryByText('Sure?')).not.toBeInTheDocument();
+      // Re-query: the trigger is unmounted while the confirm row is open and
+      // remounts when it closes, so a reference captured before the click is
+      // stale.
       await waitFor(() => {
+        const trigger = screen.getByRole('button', {
+          name: /regenerate bookmarklet token/i,
+        });
         expect(document.activeElement).toBe(trigger);
       });
     });
@@ -298,12 +300,11 @@ describe('BookmarkletSection', () => {
       );
 
       await renderResolved();
-      const trigger = screen.getByRole('button', {
-        name: /regenerate bookmarklet token/i,
-      });
 
       await act(async () => {
-        fireEvent.click(trigger);
+        fireEvent.click(
+          screen.getByRole('button', { name: /regenerate bookmarklet token/i }),
+        );
       });
       await act(async () => {
         fireEvent.click(
@@ -311,7 +312,11 @@ describe('BookmarkletSection', () => {
         );
       });
 
+      // Trigger unmounts during confirm and remounts on success — re-query.
       await waitFor(() => {
+        const trigger = screen.getByRole('button', {
+          name: /regenerate bookmarklet token/i,
+        });
         expect(document.activeElement).toBe(trigger);
       });
     });
