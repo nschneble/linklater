@@ -27,6 +27,7 @@ export default function VerifyLoginPage() {
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge>('totp');
   const [mfaCode, setMfaCode] = useState('');
   const [mfaLoading, setMfaLoading] = useState(false);
+  const errorReference = useRef<HTMLParagraphElement>(null);
   const mfaInputReference = useRef<HTMLInputElement>(null);
   const hasVerified = useRef(false);
 
@@ -62,6 +63,14 @@ export default function VerifyLoginPage() {
       });
   }, [loginWithToken, navigate, searchParameters]);
 
+  // focus the MfaView error when it appears. the ref is only attached while
+  // the mfa step is mounted, so this is a no-op for the full-page error.
+  useEffect(() => {
+    if (errorMessage) {
+      errorReference.current?.focus();
+    }
+  }, [errorMessage]);
+
   const handleVerifyOtp = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
     if (!mfaToken) return;
@@ -84,6 +93,7 @@ export default function VerifyLoginPage() {
     return (
       <MfaView
         error={errorMessage}
+        errorReference={errorReference}
         loading={mfaLoading}
         mfaChallenge={mfaChallenge}
         mfaCode={mfaCode}

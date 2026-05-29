@@ -1,6 +1,6 @@
 import { useThemeStyling } from '../../theme/ThemeContext';
 import { resolveThemeClasses, type ThemeClassMap } from '../../lib/styles';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 
 /**
  * Inline alert banner used for form-level error and success messages.
@@ -27,6 +27,8 @@ interface AlertProps {
   icon?: string;
   /** Stable `id` so inputs can reference this alert via `aria-describedby`. */
   id?: string;
+  /** Forwarded to the underlying `<p>` so callers can `.focus()` the alert. */
+  ref?: Ref<HTMLParagraphElement>;
   /**
    * When set, makes the alert programmatically focusable so callers can
    * `.focus()` it on appearance — needed when a sibling button keeps focus
@@ -83,6 +85,7 @@ export default function Alert({
   className = '',
   icon,
   id,
+  ref,
   tabIndex,
   variant,
 }: AlertProps) {
@@ -98,6 +101,7 @@ export default function Alert({
   return (
     <p
       id={id}
+      ref={ref}
       tabIndex={tabIndex}
       className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${resolvedClasses} ${className}`}
       role={variantRoles[variant]}

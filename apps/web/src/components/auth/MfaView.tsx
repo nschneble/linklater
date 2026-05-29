@@ -8,6 +8,7 @@ import type { FormEvent, RefObject } from 'react';
 
 interface MfaViewProps {
   error: string | null;
+  errorReference: RefObject<HTMLParagraphElement | null>;
   loading: boolean;
   mfaChallenge: 'totp' | 'recovery';
   mfaCode: string;
@@ -20,6 +21,7 @@ interface MfaViewProps {
 
 export default function MfaView({
   error,
+  errorReference,
   loading,
   mfaChallenge,
   mfaCode,
@@ -71,7 +73,13 @@ export default function MfaView({
         />
 
         {error && (
-          <Alert id="mfa-error" icon="fa-triangle-exclamation" variant="error">
+          <Alert
+            id="mfa-error"
+            ref={errorReference}
+            icon="fa-triangle-exclamation"
+            tabIndex={-1}
+            variant="error"
+          >
             {error}
           </Alert>
         )}

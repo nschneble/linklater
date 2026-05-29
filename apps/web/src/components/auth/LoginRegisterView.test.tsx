@@ -9,6 +9,7 @@ function renderView(modeOverride: 'login' | 'register' = 'login') {
       email=""
       emailReference={createRef<HTMLInputElement>()}
       error={null}
+      errorReference={createRef<HTMLParagraphElement>()}
       loading={false}
       magicLinkSent={false}
       mode={modeOverride}

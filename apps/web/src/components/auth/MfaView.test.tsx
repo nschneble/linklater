@@ -8,6 +8,7 @@ function renderView(
 ) {
   const props: React.ComponentProps<typeof MfaView> = {
     error: null,
+    errorReference: createRef<HTMLParagraphElement>(),
     loading: false,
     mfaChallenge: 'totp',
     mfaCode: '',

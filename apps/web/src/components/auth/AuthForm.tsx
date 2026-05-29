@@ -19,6 +19,7 @@ export default function AuthForm() {
     email,
     emailReference,
     error,
+    errorReference,
     forgotPasswordSent,
     handleModeChange,
     handleSubmit,
@@ -48,6 +49,7 @@ export default function AuthForm() {
         email={email}
         emailReference={emailReference}
         error={error}
+        errorReference={errorReference}
         forgotPasswordSent={forgotPasswordSent}
         loading={loading}
         onBack={() => handleModeChange('login')}
@@ -59,6 +61,7 @@ export default function AuthForm() {
     view = (
       <MfaView
         error={error}
+        errorReference={errorReference}
         loading={loading}
         mfaChallenge={mfaChallenge}
         mfaCode={mfaCode}
@@ -83,6 +86,7 @@ export default function AuthForm() {
         email={email}
         emailReference={emailReference}
         error={error}
+        errorReference={errorReference}
         loading={loading}
         magicLinkSent={magicLinkSent}
         mode={mode}

@@ -21,6 +21,7 @@ export function useAuthForm() {
   const navigate = useNavigate();
 
   const emailReference = useRef<HTMLInputElement>(null);
+  const errorReference = useRef<HTMLParagraphElement>(null);
   const mfaInputReference = useRef<HTMLInputElement>(null);
   const passwordReference = useRef<HTMLInputElement>(null);
 
@@ -77,6 +78,16 @@ export function useAuthForm() {
       mfaInputReference.current?.focus();
     }
   }, [mfaChallenge]);
+
+  // move focus to the form-level error when it first appears so keyboard and
+  // screen-reader users land on the message. the error Alert is unmounted
+  // while error is null, so the ref is null then and focus only fires on the
+  // empty -> populated transition, never on clears or unrelated re-renders.
+  useEffect(() => {
+    if (error) {
+      errorReference.current?.focus();
+    }
+  }, [error]);
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
@@ -152,6 +163,7 @@ export function useAuthForm() {
     email,
     emailReference,
     error,
+    errorReference,
     forgotPasswordSent,
     handleModeChange,
     handleSubmit,
