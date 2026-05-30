@@ -173,7 +173,7 @@ export default function SettingsView({
             id="security"
             title="Enhanced security"
             icon="fa-shield-halved"
-            description="Manage multi-factor authentication. That's not overkill for a read-it-later app, right?"
+            description="Set up and manage multi-factor authentication. That's not overkill for a read-it-later app, right?"
             activeSection={activeSection}
           >
             <MultiFactorSection />

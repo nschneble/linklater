@@ -3,7 +3,7 @@ import LinkButton from '../../common/LinkButton';
 import PrimaryButton from '../../common/PrimaryButton';
 import StatusBadge from '../../common/StatusBadge';
 import ReauthForm from '../ReauthForm';
-import RecoveryCodesModal from '../RecoveryCodesModal';
+import RecoveryCodesPanel from '../RecoveryCodesPanel';
 import TotpSetupView from '../TotpSetupView';
 import { useMultiFactor } from './useMultiFactor';
 
@@ -32,6 +32,7 @@ export default function MultiFactorSection() {
     reauthCode,
     reauthPassword,
     recoveryCodes,
+    regenerateButtonReference,
     totpCode,
     totpCodeInputReference,
     totpSetup,
@@ -53,13 +54,6 @@ export default function MultiFactorSection() {
 
   return (
     <div className="max-w-md space-y-4">
-      {recoveryCodes && (
-        <RecoveryCodesModal
-          codes={recoveryCodes}
-          onConfirm={handleRecoveryCodesConfirmed}
-        />
-      )}
-
       {/* Re-authentication form for disable / regenerate */}
       {reauthAction && (
         <ReauthForm
@@ -77,8 +71,12 @@ export default function MultiFactorSection() {
         />
       )}
 
-      {/* State C / E — MFA enabled */}
-      {!reauthAction && multiFactorMethod && (
+      {/* State C / E — MFA enabled. While `recoveryCodes` is non-null the
+       * panel below takes over the action area to keep the user focused on
+       * saving the codes (and to prevent an accidental Disable click mid-
+       * confirmation). The Regenerate button re-mounts on confirm; the hook
+       * routes focus to it via `regenerateButtonReference`. */}
+      {!reauthAction && multiFactorMethod && !recoveryCodes && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)] text-sm">
@@ -90,6 +88,7 @@ export default function MultiFactorSection() {
           </div>
           <div className="flex flex-col gap-2">
             <LinkButton
+              ref={regenerateButtonReference}
               onClick={() => {
                 setError(null);
                 setReauthAction('regenerate');
@@ -107,6 +106,16 @@ export default function MultiFactorSection() {
             </LinkButton>
           </div>
         </div>
+      )}
+
+      {/* Recovery codes reveal — shown after enrollment or regeneration.
+       * Replaces the action area above until the user confirms they've
+       * saved the codes. */}
+      {recoveryCodes && (
+        <RecoveryCodesPanel
+          codes={recoveryCodes}
+          onConfirm={handleRecoveryCodesConfirmed}
+        />
       )}
 
       {/* State B — TOTP setup: verify QR */}
@@ -130,7 +139,7 @@ export default function MultiFactorSection() {
         !totpSetup &&
         multiFactorPending && (
           <div className="space-y-3">
-            <p className="text-[var(--text-muted)] text-sm">
+            <p className="text-[var(--text-muted)] text-xs">
               Authenticator app setup is in progress.
             </p>
             {error && <Alert variant="error">{error}</Alert>}
@@ -140,6 +149,10 @@ export default function MultiFactorSection() {
                 className="py-2.5"
                 onClick={handleStartTotpSetup}
               >
+                <i
+                  className="fa-solid fa-circle-notch text-xs"
+                  aria-hidden="true"
+                />
                 {loading ? 'Continuing…' : 'Continue setup'}
               </PrimaryButton>
               <LinkButton onClick={handleCancelTotpSetup} disabled={loading}>
@@ -152,6 +165,9 @@ export default function MultiFactorSection() {
       {/* State A — MFA not enabled */}
       {inStateA && (
         <div className="space-y-3">
+          <p className="text-[var(--text-muted)] text-xs">
+            MFA is currently off.
+          </p>
           {error && <Alert variant="error">{error}</Alert>}
           <div className="flex items-center gap-2">
             <PrimaryButton
