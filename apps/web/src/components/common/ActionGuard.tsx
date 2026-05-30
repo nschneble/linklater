@@ -174,28 +174,33 @@ export default function ActionGuard({
     </Alert>
   ) : null;
 
-  // The sr-only live region is rendered as a sibling of the caller's wrapper
-  // (not a child) so it doesn't get treated as the last in-flow child by
-  // Tailwind v4's `space-y-*`, which would otherwise force a `margin-bottom`
-  // onto the trigger row and break `items-center` alignment in parents.
+  // The sr-only live region is rendered as the *first* child of the wrapper
+  // and is `position: absolute` (via `sr-only`), so two things hold:
+  //   1. It never participates in normal flow, so it doesn't push the rows
+  //      below it visually.
+  //   2. The trigger row stays the last in-flow child, so Tailwind v4's
+  //      `space-y-*` (`:where(& > :not(:last-child)) { margin-block-end }`)
+  //      never forces a `margin-bottom` onto it — preserving `items-center`
+  //      alignment in parents.
+  // Returning a single root (not a fragment with a sibling sr-only) also
+  // prevents the live region from leaking into a caller's parent `space-y-*`
+  // and adding a phantom bottom gutter to the surrounding section.
   return (
-    <>
-      <div className={className}>
-        {alertSlot === 'before' && alertElement}
-        {children({
-          confirming,
-          pending,
-          triggerId,
-          confirmReference,
-          openConfirm,
-          closeConfirm,
-          runConfirm,
-        })}
-        {alertSlot === 'after' && alertElement}
-      </div>
+    <div className={className}>
       <span className="sr-only" role="status">
         {announcement}
       </span>
-    </>
+      {alertSlot === 'before' && alertElement}
+      {children({
+        confirming,
+        pending,
+        triggerId,
+        confirmReference,
+        openConfirm,
+        closeConfirm,
+        runConfirm,
+      })}
+      {alertSlot === 'after' && alertElement}
+    </div>
   );
 }

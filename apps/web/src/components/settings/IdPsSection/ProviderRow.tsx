@@ -73,9 +73,7 @@ export default function ProviderRow({
               className="flex items-center gap-2 text-xs"
               ref={confirmReference}
             >
-              <span className="text-[var(--text-muted)]">
-                Disconnect {label}?
-              </span>
+              <span className="text-[var(--text-muted)]">Sure?</span>
               <IconButton
                 aria-label={`Confirm disconnect ${label}`}
                 variant="danger-filled"
