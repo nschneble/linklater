@@ -33,7 +33,6 @@ export default function MultiFactorSection() {
     reauthCode,
     reauthPassword,
     recoveryCodes,
-    regenerateButtonReference,
     totpCode,
     totpCodeInputReference,
     totpSetup,
@@ -42,7 +41,6 @@ export default function MultiFactorSection() {
     handleCancelReauth,
     handleCancelTotpSetup,
     handleReauth,
-    handleRecoveryCodesConfirmed,
     handleStartTotpSetup,
     handleVerifyTotp,
     setError,
@@ -71,9 +69,8 @@ export default function MultiFactorSection() {
 
       {/* State C / E — MFA enabled. While `recoveryCodes` is non-null the
        * panel below takes over the action area to keep the user focused on
-       * saving the codes (and to prevent an accidental Disable click mid-
-       * confirmation). The Regenerate button re-mounts on confirm; the hook
-       * routes focus to it via `regenerateButtonReference`. */}
+       * saving the codes and to prevent an accidental disable click mid-
+       * confirmation. */}
       {!reauthAction && multiFactorMethod && !recoveryCodes && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -86,7 +83,6 @@ export default function MultiFactorSection() {
           </div>
           <div className="flex items-center gap-2">
             <IconButton
-              ref={regenerateButtonReference}
               variant="default"
               onClick={() => {
                 setError(null);
@@ -113,15 +109,8 @@ export default function MultiFactorSection() {
         </div>
       )}
 
-      {/* Recovery codes reveal — shown after enrollment or regeneration.
-       * Replaces the action area above until the user confirms they've
-       * saved the codes. */}
-      {recoveryCodes && (
-        <RecoveryCodesPanel
-          codes={recoveryCodes}
-          onConfirm={handleRecoveryCodesConfirmed}
-        />
-      )}
+      {/* Recovery codes reveal — shown after enrollment or regeneration. */}
+      {recoveryCodes && <RecoveryCodesPanel codes={recoveryCodes} />}
 
       {/* State B — TOTP setup: verify QR */}
       {!reauthAction && !multiFactorMethod && totpSetup && (
