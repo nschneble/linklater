@@ -69,15 +69,6 @@ describe('RecoveryCodesPanel', () => {
     expect(button).toHaveAttribute('data-copied', 'true');
   });
 
-  it('calls onConfirm when the "I\'ve saved these codes" button is clicked', () => {
-    const onConfirm = vi.fn();
-    render(<RecoveryCodesPanel codes={SAMPLE_CODES} onConfirm={onConfirm} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: /i've saved these codes/i }),
-    );
-    expect(onConfirm).toHaveBeenCalledTimes(1);
-  });
-
   it('moves focus to the panel container on mount', () => {
     render(<RecoveryCodesPanel codes={SAMPLE_CODES} onConfirm={vi.fn()} />);
     const panel = screen.getByLabelText(

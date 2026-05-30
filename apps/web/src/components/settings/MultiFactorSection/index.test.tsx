@@ -290,10 +290,10 @@ describe('MultiFactorSection', () => {
       render(<MultiFactorSection />);
 
       expect(
-        screen.getByRole('button', { name: /regenerate recovery codes/i }),
+        screen.getByRole('button', { name: /generate new recovery codes/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: /disable multi-factor/i }),
+        screen.getByRole('button', { name: /disable mfa/i }),
       ).toBeInTheDocument();
     });
   });
@@ -386,9 +386,7 @@ describe('MultiFactorSection', () => {
 
       render(<MultiFactorSection />);
 
-      fireEvent.click(
-        screen.getByRole('button', { name: /disable multi-factor/i }),
-      );
+      fireEvent.click(screen.getByRole('button', { name: /disable mfa/i }));
 
       expect(
         screen.getByRole('button', { name: /confirm/i }),
@@ -407,9 +405,7 @@ describe('MultiFactorSection', () => {
 
       render(<MultiFactorSection />);
 
-      fireEvent.click(
-        screen.getByRole('button', { name: /disable multi-factor/i }),
-      );
+      fireEvent.click(screen.getByRole('button', { name: /disable mfa/i }));
 
       fireEvent.change(screen.getByLabelText(/current password/i), {
         target: { value: 'my-password' },
@@ -438,9 +434,7 @@ describe('MultiFactorSection', () => {
 
       render(<MultiFactorSection />);
 
-      fireEvent.click(
-        screen.getByRole('button', { name: /disable multi-factor/i }),
-      );
+      fireEvent.click(screen.getByRole('button', { name: /disable mfa/i }));
       fireEvent.change(screen.getByLabelText(/current password/i), {
         target: { value: 'wrong-password' },
       });
@@ -461,9 +455,7 @@ describe('MultiFactorSection', () => {
 
       render(<MultiFactorSection />);
 
-      fireEvent.click(
-        screen.getByRole('button', { name: /disable multi-factor/i }),
-      );
+      fireEvent.click(screen.getByRole('button', { name: /disable mfa/i }));
       fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
       expect(
@@ -481,7 +473,7 @@ describe('MultiFactorSection', () => {
       render(<MultiFactorSection />);
 
       fireEvent.click(
-        screen.getByRole('button', { name: /regenerate recovery codes/i }),
+        screen.getByRole('button', { name: /generate new recovery codes/i }),
       );
 
       expect(
@@ -500,7 +492,7 @@ describe('MultiFactorSection', () => {
       render(<MultiFactorSection />);
 
       fireEvent.click(
-        screen.getByRole('button', { name: /regenerate recovery codes/i }),
+        screen.getByRole('button', { name: /generate new recovery codes/i }),
       );
       fireEvent.change(screen.getByLabelText(/current password/i), {
         target: { value: 'my-password' },
@@ -526,7 +518,7 @@ describe('MultiFactorSection', () => {
       render(<MultiFactorSection />);
 
       fireEvent.click(
-        screen.getByRole('button', { name: /regenerate recovery codes/i }),
+        screen.getByRole('button', { name: /generate new recovery codes/i }),
       );
       fireEvent.change(screen.getByLabelText(/current password/i), {
         target: { value: 'wrong-pass' },
@@ -603,49 +595,6 @@ describe('MultiFactorSection', () => {
       expect(
         screen.queryByRole('button', { name: /disable multi-factor/i }),
       ).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Recovery codes panel — confirmation', () => {
-    it('dismisses the panel and refreshes the user when confirmed', async () => {
-      vi.mocked(apiModule.setupTotp).mockResolvedValue({
-        qrCodeDataUrl: 'data:image/png;base64,abc',
-        secret: 'SECRETABC',
-      });
-      vi.mocked(apiModule.verifyTotpSetup).mockResolvedValue({
-        recoveryCodes: ['aaaaa-bbbbb'],
-      });
-      const refreshUser = vi.fn().mockResolvedValue(undefined);
-      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ refreshUser }));
-
-      render(<MultiFactorSection />);
-
-      await act(async () => {
-        fireEvent.click(
-          screen.getByRole('button', { name: /add authenticator app/i }),
-        );
-      });
-
-      const codeInput = screen.getByLabelText(/verification code/i);
-      fireEvent.change(codeInput, { target: { value: '123456' } });
-
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /verify/i }));
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('aaaaa-bbbbb')).toBeInTheDocument();
-      });
-
-      await act(async () => {
-        fireEvent.click(
-          screen.getByRole('button', { name: /i've saved these codes/i }),
-        );
-      });
-
-      await waitFor(() => {
-        expect(refreshUser).toHaveBeenCalled();
-      });
     });
   });
 });

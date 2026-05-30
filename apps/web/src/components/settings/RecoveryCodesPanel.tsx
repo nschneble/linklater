@@ -17,18 +17,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 interface RecoveryCodesPanelProps {
   /** The list of plaintext recovery codes to display and offer for copy. */
   codes: string[];
-  /**
-   * Called when the user confirms they have saved their codes. The parent is
-   * responsible for unmounting this panel on invocation and routing focus to
-   * a sensible next target.
-   */
-  onConfirm: () => void;
 }
 
-export default function RecoveryCodesPanel({
-  codes,
-  onConfirm,
-}: RecoveryCodesPanelProps) {
+export default function RecoveryCodesPanel({ codes }: RecoveryCodesPanelProps) {
   const [copied, setCopied] = useState(false);
   const panelReference = useRef<HTMLDivElement>(null);
 

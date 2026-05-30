@@ -107,9 +107,7 @@ describe('ApiTokensSection', () => {
     expect(
       screen.getByRole('button', { name: /^create token$/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /do nothing and close this form/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
 
   it('shows the raw token after successful creation', async () => {
@@ -173,9 +171,7 @@ describe('ApiTokensSection', () => {
     fireEvent.change(screen.getByLabelText(/new token name/i), {
       target: { value: 'My Token' },
     });
-    fireEvent.click(
-      screen.getByRole('button', { name: /do nothing and close this form/i }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
     expect(screen.queryByLabelText(/new token name/i)).not.toBeInTheDocument();
   });
