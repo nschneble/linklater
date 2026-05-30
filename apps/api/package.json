@@ -97,6 +97,10 @@
       "json",
       "ts"
     ],
+    "reporters": [
+      "default",
+      "<rootDir>/../test/failed-files-reporter.cjs"
+    ],
     "moduleNameMapper": {
       "^(\\.\\.?/.*)\\.js$": "$1",
       "^@nestjs/swagger$": "<rootDir>/__mocks__/@nestjs/swagger.ts",

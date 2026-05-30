@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Routes `npm run test [path]` to the correct workspace test runner.
 //
-// - No path: runs the api and web test suites back-to-back (default behavior).
+// - No path: runs the api and web test suites back-to-back (both run even when
+//   the first fails), then prints a single consolidated block of failed test
+//   files tagged by workspace.
 // - Path under `apps/web/`: runs Vitest against that file in the web workspace.
 // - Path under `apps/api/`: runs Jest against that file in the api workspace.
 //
@@ -9,8 +11,9 @@
 // path into an api/src-relative path before handing it to Jest.
 
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const testTarget = process.argv[2];
@@ -35,23 +38,83 @@ function runCommand(command, commandArguments, options = {}) {
   });
 }
 
-async function runAllWorkspaces() {
-  const apiExitCode = await runCommand('npm', [
-    'run',
-    'test',
-    '--workspace',
-    '@linklater/api',
-  ]);
-  if (apiExitCode !== 0) {
-    return apiExitCode;
+function readFailedFiles(outputPath) {
+  if (!existsSync(outputPath)) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(readFileSync(outputPath, 'utf8'));
+    if (!Array.isArray(parsed.failed)) {
+      return null;
+    }
+    return parsed.failed;
+  } catch {
+    return null;
+  }
+}
+
+function printConsolidatedBlock(workspaceResults) {
+  const totalFailedCount = workspaceResults.reduce(
+    (count, result) => count + (result.failedFiles?.length ?? 0),
+    0,
+  );
+
+  const incompleteWorkspaces = workspaceResults.filter(
+    (result) => result.failedFiles === null,
+  );
+
+  if (totalFailedCount === 0 && incompleteWorkspaces.length === 0) {
+    return;
   }
 
-  return runCommand('npm', [
-    'run',
-    'test',
-    '--workspace',
-    '@linklater/web',
-  ]);
+  console.error(`\nFailed test files (${totalFailedCount}):`);
+  for (const result of workspaceResults) {
+    if (result.failedFiles === null) {
+      console.error(`  [${result.label}] (reporter produced no output)`);
+      continue;
+    }
+    for (const filePath of result.failedFiles) {
+      console.error(`  [${result.label}] ${result.pathPrefix}${filePath}`);
+    }
+  }
+  console.error('');
+}
+
+async function runAllWorkspaces() {
+  const tempDirectory = mkdtempSync(join(tmpdir(), 'linklater-tests-'));
+  const apiOutputPath = join(tempDirectory, 'api.json');
+  const webOutputPath = join(tempDirectory, 'web.json');
+
+  try {
+    const apiExitCode = await runCommand(
+      'npm',
+      ['run', 'test', '--workspace', '@linklater/api'],
+      { env: { ...process.env, LINKLATER_FAILED_TESTS_OUTPUT: apiOutputPath } },
+    );
+
+    const webExitCode = await runCommand(
+      'npm',
+      ['run', 'test', '--workspace', '@linklater/web'],
+      { env: { ...process.env, LINKLATER_FAILED_TESTS_OUTPUT: webOutputPath } },
+    );
+
+    printConsolidatedBlock([
+      {
+        label: 'api',
+        pathPrefix: 'apps/api/',
+        failedFiles: readFailedFiles(apiOutputPath),
+      },
+      {
+        label: 'web',
+        pathPrefix: 'apps/web/',
+        failedFiles: readFailedFiles(webOutputPath),
+      },
+    ]);
+
+    return apiExitCode !== 0 ? apiExitCode : webExitCode;
+  } finally {
+    rmSync(tempDirectory, { force: true, recursive: true });
+  }
 }
 
 function normalizePath(rawPath) {
