@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, Ref } from 'react';
 import { type ReactNode } from 'react';
 
 /**
@@ -10,6 +10,7 @@ interface LinkButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   disabled?: boolean;
   onClick: () => void;
+  ref?: Ref<HTMLButtonElement>;
 }
 
 export default function LinkButton({

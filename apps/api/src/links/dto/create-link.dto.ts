@@ -8,6 +8,6 @@ export class CreateLinkDto {
       'The fully-qualified URL to save. Must include the protocol (http:// or https://).',
     example: 'https://example.com/great-article',
   })
-  @IsUrl({}, { message: 'url must be a valid url' })
+  @IsUrl({}, { message: 'Url must be a valid url' })
   url: string;
 }

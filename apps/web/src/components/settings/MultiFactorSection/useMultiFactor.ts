@@ -46,11 +46,17 @@ export function useMultiFactor() {
   const [totpCode, setTotpCode] = useState('');
   const totpCodeInputReference = useRef<HTMLInputElement>(null);
   const addAuthenticatorReference = useRef<HTMLButtonElement>(null);
+  const regenerateButtonReference = useRef<HTMLButtonElement>(null);
   // Set by handleCancelTotpSetup so the next render that lands in State A
   // can return focus to the "Add authenticator app" button. Without this
   // the cancelled button unmounts and focus falls to <body>, dropping
   // keyboard + screen-reader users out of context.
   const shouldFocusAddAuthenticator = useRef(false);
+  // Set by handleRecoveryCodesConfirmed so the next render that lands in
+  // State C/E (panel hidden, MFA actions visible again) can return focus
+  // to "Regenerate recovery codes". Without this the panel collapses and
+  // focus falls to <body>.
+  const shouldFocusRegenerate = useRef(false);
 
   useEffect(() => {
     if (totpSetup) {
@@ -123,6 +129,7 @@ export function useMultiFactor() {
   };
 
   const handleRecoveryCodesConfirmed = useCallback(async () => {
+    shouldFocusRegenerate.current = true;
     setRecoveryCodes(null);
     await refreshUser();
   }, [refreshUser]);
@@ -163,6 +170,18 @@ export function useMultiFactor() {
     }
   }, [inStateA]);
 
+  // After "I've saved these codes" is clicked, the panel unmounts and the
+  // State C/E action buttons re-mount. Route focus to the first action so
+  // keyboard + screen-reader users stay in context.
+  const inStateCE =
+    !reauthAction && Boolean(multiFactorMethod) && !recoveryCodes;
+  useEffect(() => {
+    if (shouldFocusRegenerate.current && inStateCE) {
+      regenerateButtonReference.current?.focus();
+      shouldFocusRegenerate.current = false;
+    }
+  }, [inStateCE]);
+
   return {
     // state
     addAuthenticatorReference,
@@ -173,6 +192,7 @@ export function useMultiFactor() {
     reauthCode,
     reauthPassword,
     recoveryCodes,
+    regenerateButtonReference,
     totpCode,
     totpCodeInputReference,
     totpSetup,

@@ -544,8 +544,8 @@ describe('MultiFactorSection', () => {
     });
   });
 
-  describe('Recovery codes modal — dialog accessibility', () => {
-    async function openRecoveryModal() {
+  describe('Recovery codes panel — inline reveal', () => {
+    async function openRecoveryPanel() {
       vi.mocked(apiModule.setupTotp).mockResolvedValue({
         qrCodeDataUrl: 'data:image/png;base64,abc',
         secret: 'SECRETABC',
@@ -574,47 +574,40 @@ describe('MultiFactorSection', () => {
       });
     }
 
-    it('renders with role="dialog"', async () => {
-      await openRecoveryModal();
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    it('renders inline rather than as a dialog', async () => {
+      await openRecoveryPanel();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    it('has aria-modal="true" on the dialog', async () => {
-      await openRecoveryModal();
-      expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
+    it('is labelled by the "recovery codes have been generated" heading', async () => {
+      await openRecoveryPanel();
+      const panel = screen.getByLabelText(
+        /your recovery codes have been generated/i,
+      );
+      expect(panel).toBeInTheDocument();
     });
 
-    it('receives focus when opened', async () => {
-      await openRecoveryModal();
-      const dialog = screen.getByRole('dialog');
-      expect(document.activeElement).toBe(dialog);
+    it('moves focus to the panel container when opened', async () => {
+      await openRecoveryPanel();
+      const panel = screen.getByLabelText(
+        /your recovery codes have been generated/i,
+      );
+      expect(document.activeElement).toBe(panel);
     });
 
-    it('closes when Escape is pressed', async () => {
-      await openRecoveryModal();
-      const dialog = screen.getByRole('dialog');
-
-      await act(async () => {
-        fireEvent.keyDown(dialog, { key: 'Escape' });
-      });
-
-      await waitFor(() => {
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      });
-    });
-
-    it('is labelled by the "Save your recovery codes" heading', async () => {
-      await openRecoveryModal();
-      const dialog = screen.getByRole('dialog');
-      const labelId = dialog.getAttribute('aria-labelledby');
-      expect(labelId).toBeTruthy();
-      const heading = document.getElementById(labelId!);
-      expect(heading).toHaveTextContent(/save your recovery codes/i);
+    it('hides the Regenerate / Disable actions while the panel is shown', async () => {
+      await openRecoveryPanel();
+      expect(
+        screen.queryByRole('button', { name: /regenerate recovery codes/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /disable multi-factor/i }),
+      ).not.toBeInTheDocument();
     });
   });
 
-  describe('Recovery codes modal', () => {
-    it('dismisses the recovery codes modal when confirmed', async () => {
+  describe('Recovery codes panel — confirmation', () => {
+    it('dismisses the panel and refreshes the user when confirmed', async () => {
       vi.mocked(apiModule.setupTotp).mockResolvedValue({
         qrCodeDataUrl: 'data:image/png;base64,abc',
         secret: 'SECRETABC',

@@ -60,9 +60,12 @@ export default function TotpSetupView({
 
   return (
     <div className="space-y-4">
-      <p className="text-[var(--text-muted)] text-sm">
-        Add Linklater to your authenticator app by scanning the QR code, or
-        enter the secret manually:
+      <p className="text-[var(--text-muted)] text-xs">
+        <span className="text-[var(--text)] font-semibold">
+          Scan the QR code to add Linklater to your authenticator app.
+        </span>{' '}
+        You can also enter the secret manually if you enjoy doing things the
+        hard way.
       </p>
       {/*
        * QR image is decorative (`alt=""`): a screen-reader user cannot scan
@@ -81,15 +84,14 @@ export default function TotpSetupView({
         {secret}
       </code>
       <form ref={formReference} className="space-y-3" onSubmit={onSubmit}>
-        <label
-          className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
-          htmlFor="totp-code"
-        >
+        <label className="sr-only" htmlFor="totp-code">
           Verification code
         </label>
         <p className="text-[var(--text-subtle)] text-xs" id="totp-code-hint">
-          Enter the 6-digit code from your authenticator app. We&apos;ll verify
-          automatically when you finish typing.
+          <span className="text-[var(--text)] font-semibold">
+            Enter the 6-digit code from your authenticator app.
+          </span>{' '}
+          We'll verify it automatically after you finish typing.
         </p>
         <FormInput
           id="totp-code"
@@ -99,6 +101,7 @@ export default function TotpSetupView({
           autoComplete="one-time-code"
           aria-describedby="totp-code-hint"
           maxLength={6}
+          placeholder="000000"
           value={code}
           onChange={(event) => onCodeChange(event.target.value)}
           required
@@ -106,7 +109,8 @@ export default function TotpSetupView({
         {error && <Alert variant="error">{error}</Alert>}
         <div className="flex items-center gap-3">
           <PrimaryButton disabled={loading} className="py-2.5">
-            {loading ? 'Verifying…' : 'Verify'}
+            <i className="fa-solid fa-check text-xs" aria-hidden="true" />
+            {loading ? 'Verifying…' : 'Verify code'}
           </PrimaryButton>
           <LinkButton onClick={onCancel} disabled={loading}>
             Cancel
