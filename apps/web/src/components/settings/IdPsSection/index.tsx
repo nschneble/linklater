@@ -11,14 +11,13 @@ import type { IdPsSectionProps } from './types';
  *
  * Renders a row per enabled provider (Google, Apple). When the provider is
  * connected, the row shows the provider's email (announced as "Connected as
- * …" for screen readers) plus a "Disconnect" button with two-step confirmation.
- * When the provider's email differs from the account email, a "Use … instead"
- * button is offered as a shortcut into the existing email-change flow.
+ * …" for screen readers) plus a "Disconnect" button with two-step
+ * confirmation owned by `ActionGuard` inside the row.
  *
- * The disconnect button is disabled for accounts without a password — losing
- * the only login method would orphan the account. The reason is exposed via
- * `aria-describedby` to keyboard + touch + AT users (a `title` attribute is
- * insufficient for those audiences).
+ * Section-level Alerts here are only for state that isn't tied to a single
+ * row's guarded action: the `link_error` / `linked` query params from the
+ * OAuth redirect return, and the connect-initiation error (which fires
+ * before any row-scoped flow exists).
  *
  * Returns `null` when both providers are disabled (no env vars set).
  */
@@ -30,46 +29,16 @@ export default function IdPsSection({
 }: IdPsSectionProps) {
   const { refreshUser, user } = useAuth();
 
-  const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(
-    null,
-  );
   const [connectError, setConnectError] = useState<string | null>(null);
-  const [disconnecting, setDisconnecting] = useState(false);
-  const [disconnectError, setDisconnectError] = useState<string | null>(null);
 
   const connectedProviders = user?.connectedProviders ?? [];
 
   const findConnection = (provider: string) =>
     connectedProviders.find((entry) => entry.provider === provider) ?? null;
 
-  const handleDisconnect = (provider: string) => {
-    setConfirmDisconnect(provider);
-    setDisconnectError(null);
-  };
-
-  const handleCancelDisconnect = () => {
-    setConfirmDisconnect(null);
-  };
-
-  const handleConfirmDisconnect = async () => {
-    if (!confirmDisconnect) {
-      return;
-    }
-
-    setDisconnectError(null);
-    setDisconnecting(true);
-
-    try {
-      await unlinkOAuthProvider(confirmDisconnect);
-      setConfirmDisconnect(null);
-      await refreshUser();
-    } catch (error: unknown) {
-      setDisconnectError(
-        getErrorMessage(error, 'Failed to disconnect provider'),
-      );
-    } finally {
-      setDisconnecting(false);
-    }
+  const handleDisconnect = async (provider: string) => {
+    await unlinkOAuthProvider(provider);
+    await refreshUser();
   };
 
   const handleConnect = async (provider: string) => {
@@ -97,19 +66,13 @@ export default function IdPsSection({
       {linkedMessage && <Alert variant="success">{linkedMessage}</Alert>}
       {linkError && <Alert variant="error">{linkError}</Alert>}
       {connectError && <Alert variant="error">{connectError}</Alert>}
-      {disconnectError && <Alert variant="error">{disconnectError}</Alert>}
 
       <div className="mt-5 space-y-3">
         {appleEnabled && (
           <ProviderRow
-            confirmDisconnect={confirmDisconnect}
             connection={findConnection('apple')}
-            disconnecting={disconnecting}
-            provider="apple"
             label="Apple"
             icon="fa-apple"
-            onCancelDisconnect={handleCancelDisconnect}
-            onConfirmDisconnect={handleConfirmDisconnect}
             onConnect={() => handleConnect('apple')}
             onDisconnect={() => handleDisconnect('apple')}
           />
@@ -117,14 +80,9 @@ export default function IdPsSection({
 
         {googleEnabled && (
           <ProviderRow
-            confirmDisconnect={confirmDisconnect}
             connection={findConnection('google')}
-            disconnecting={disconnecting}
-            provider="google"
             label="Google"
             icon="fa-google"
-            onCancelDisconnect={handleCancelDisconnect}
-            onConfirmDisconnect={handleConfirmDisconnect}
             onConnect={() => handleConnect('google')}
             onDisconnect={() => handleDisconnect('google')}
           />

@@ -1,4 +1,5 @@
 import { setPassword as apiSetPassword } from '../../../lib/api';
+import { capitalizeFirst } from '../../../lib/strings';
 import { getErrorMessage } from '../../../lib/errors';
 import Alert from '../../common/Alert';
 import FormInput from '../../common/FormInput';
@@ -28,7 +29,7 @@ export default function AddPasswordForm({ refreshUser }: AddPasswordFormProps) {
       await refreshUser();
     } catch (caughtError: unknown) {
       setAddPasswordError(
-        getErrorMessage(caughtError, 'Failed to set password'),
+        capitalizeFirst(getErrorMessage(caughtError, 'Failed to set password')),
       );
     } finally {
       setAddPasswordSaving(false);

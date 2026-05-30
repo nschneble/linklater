@@ -17,16 +17,13 @@ export interface IdPsSectionProps {
 
 /** Props for a single OAuth provider row. */
 export interface ProviderRowProps {
-  // which provider is awaiting disconnect confirmation; row shows confirm
-  // UI when confirmDisconnect === provider
-  confirmDisconnect: string | null;
   connection: ProviderConnection | null;
-  disconnecting: boolean;
   label: string;
   icon: string;
-  provider: string;
-  onCancelDisconnect: () => void;
-  onConfirmDisconnect: () => void;
+  /**
+   * Async unlink action invoked when the user confirms a disconnect. Errors
+   * are caught by the row's `ActionGuard` and surfaced as an inline alert.
+   */
+  onDisconnect: () => Promise<void>;
   onConnect: () => void;
-  onDisconnect: () => void;
 }
