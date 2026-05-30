@@ -8,47 +8,45 @@
 
 #### Features
 
-- bookmarklet token no longer expires; revocable via Regenerate button in
-  Settings — old installs stop working immediately on regeneration
-- cancellable TOTP enrollment — users can abort in-flight MFA setup from
-  both the QR-scan step and the "Continue setup" recovery state; cancelling
-  clears the pending secret server-side so no orphaned secrets remain
-- API documentation page (`/settings/api`)
-  - interactive Scalar reference embed, served from `/openapi.json`
-  - sessionStorage-scoped PAT field — token never leaves the tab, never
-    hits the URL bar
-  - dark mode follows the active Linklater theme with no flash-of-unstyled-
-    content; Scalar's own toggle is hidden
-  - keyboard skip link around the Scalar embed
-  - reduced-motion CSS injected into the Scalar scope
-  - discovery link added to Settings → API Tokens
-- account security
-  - email verification
-  - password reset
+- Account security
+  - Email verification
   - Google SSO
-  - multi-factor authentication
-  - magic link login
-- accessibility
-  - full keyboard navigation
-  - keyboard shortcuts
-  - CVD mode toggle in Settings
+  - Magic link login
+  - Multi-factor authentication
+  - Password reset
+
+- Added two new themes
   - "Apollo 10½" accessible theme
-- full-text search
-- marketing / landing page
-- "Nouvelle Vague" noir theme
-- "Stumble!" page
+  - "Nouvelle Vague" noir theme
+
+- Accessibility
+  - Color Vision Deficiency (CVD) mode
+  - Full keyboard navigation
+  - Keyboard shortcuts
+
+- Bookmarklet
+  - Bookmarklet no longer expires
+  - Added regenerate option to invalidated old bookmarklet
+
+- New pages
+  - API documentation
+  - Marketing / landing page
+  - "Stumble!" page
 
 #### Bugfixes
 
-- added missing accessibility tags
-- fixed unusable layout on mobile devices
-- user menu now closes when keyboard shortcuts modal opens
+- Added a bunch of missing accessibility tags
+- Fixed the frankly unusable layout on mobile devices
+- The user menu now closes properly when the keyboard shortcuts modal is opened
 
-### Removed
+### Known Issues
 
-#### Features
-
-_Nothing here!_
+- Arrow key navigation on the user menu gets stuck on the "Themes" menu item
+- Bookmarklet currently displays an error when you try to save a link
+- Cannot click "Mark unread" on read link cards
+- If you revoke a brand new API token, the copy-to-clipboard section is still visible
+- Some changed settings may not be reflected until the page is refreshed
+- Theme and mode may periodically get reset
 
 ## [0.2.0] - 2026-04-21
 
@@ -74,7 +72,7 @@ _None_
 
 - Create and delete accounts
 - Save links in-app or using the bookmarklet
-- Search and [StumbleUpon](https://en.wikipedia.org/wiki/StumbleUpon)
+- Search and [Stumble!](https://en.wikipedia.org/wiki/StumbleUpon)
 - Toggle themes based on Richard Linklater's filmography
 - Toggle light and dark mode
 
