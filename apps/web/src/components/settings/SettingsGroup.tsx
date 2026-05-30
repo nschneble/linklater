@@ -6,7 +6,6 @@ interface SettingsGroupProps {
   description?: string;
   icon?: string;
   variant?: 'default' | 'danger';
-  divided?: boolean;
   /**
    * The id of the section currently active in the scroll-spy. When it equals
    * this group's `id`, the group renders a persistent ring so the connection
@@ -44,8 +43,7 @@ const DESCRIPTION_CLASSES = {
 /**
  * Card wrapper for a settings group. Owns the heading, optional description,
  * card chrome, and the focus target for hash-based deep-linking. Subsections
- * render unboxed inside; pass `divided` when the group holds multiple
- * subsections and they should be visually separated by a thin rule.
+ * render unboxed inside.
  *
  * The `id` doubles as the URL section target. `tabIndex={-1}` lets the
  * SettingsView scroll effect move focus here so screen-reader users land on
@@ -76,7 +74,6 @@ export default function SettingsGroup({
   description,
   icon,
   variant = 'default',
-  divided = false,
   activeSection,
   children,
 }: SettingsGroupProps) {
@@ -87,7 +84,7 @@ export default function SettingsGroup({
       tabIndex={-1}
       aria-labelledby={headingId}
       data-active={activeSection === id}
-      className={`relative scroll-mt-24 p-5 sm:p-6 ${VARIANT_CLASSES[variant]} data-[active=true]:border-[var(--accent)] data-[active=true]:outline data-[active=true]:outline-[3px] data-[active=true]:outline-[var(--accent)] forced-colors:data-[active=true]:outline-[Highlight] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] forced-colors:focus-visible:outline forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded-2xl motion-safe:transition-[border-color,outline-color]`}
+      className={`relative scroll-mt-[111px] p-5 sm:p-6 ${VARIANT_CLASSES[variant]} data-[active=true]:border-[var(--accent)] data-[active=true]:outline data-[active=true]:outline-[3px] data-[active=true]:outline-[var(--accent)] forced-colors:data-[active=true]:outline-[Highlight] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] forced-colors:focus-visible:outline forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded-2xl motion-safe:transition-[border-color,outline-color]`}
     >
       <header className={description ? 'mb-5' : 'mb-4'}>
         <h2
@@ -110,15 +107,7 @@ export default function SettingsGroup({
           </p>
         )}
       </header>
-      <div
-        className={
-          divided
-            ? 'divide-y divide-[var(--border)] [&>*+*]:pt-6 [&>*+*]:mt-6'
-            : ''
-        }
-      >
-        {children}
-      </div>
+      {children}
     </section>
   );
 }
