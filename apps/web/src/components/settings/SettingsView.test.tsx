@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import SettingsView from './SettingsView';
@@ -7,21 +7,6 @@ import type { User } from '../../auth/AuthContext';
 vi.mock('../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
-
-vi.mock('./AccountSettingsForm', async () => {
-  // Render the active email prefill so SettingsView's prefill wiring is
-  // observable end-to-end without pulling in the full EmailSettingsForm.
-  const { useEmailPrefill } = await import('./EmailPrefillContext');
-  function MockAccountSettingsForm() {
-    const { prefill } = useEmailPrefill();
-    return (
-      <div data-testid="account-settings-form">
-        <span data-testid="email-prefill">{prefill.email ?? ''}</span>
-      </div>
-    );
-  }
-  return { default: MockAccountSettingsForm };
-});
 
 vi.mock('./ApiTokensSection', () => ({
   default: () => <div data-testid="api-tokens-section" />,
@@ -55,23 +40,15 @@ vi.mock('./IdPsSection', () => ({
   default: ({
     linkedMessage,
     linkError,
-    onUpdateAccountEmailTo,
   }: {
     linkedMessage?: string | null;
     linkError?: string | null;
-    onUpdateAccountEmailTo?: (email: string) => void;
   }) => (
     <div data-testid="social-logins-section">
       {linkedMessage && (
         <span data-testid="linked-message">{linkedMessage}</span>
       )}
       {linkError && <span data-testid="link-error">{linkError}</span>}
-      <button
-        data-testid="update-account-email"
-        onClick={() => onUpdateAccountEmailTo?.('nick@gmail.com')}
-      >
-        Update account email (test trigger)
-      </button>
     </div>
   ),
 }));
@@ -327,20 +304,6 @@ describe('SettingsView', () => {
       });
       expect(screen.getByTestId('link-error')).not.toHaveTextContent(
         /different email/i,
-      );
-    });
-  });
-
-  describe('email prefill from IdPs section', () => {
-    it('forwards onUpdateAccountEmailTo into the email prefill context', () => {
-      renderSettingsView({ googleEnabled: true });
-
-      expect(screen.getByTestId('email-prefill')).toHaveTextContent('');
-
-      fireEvent.click(screen.getByTestId('update-account-email'));
-
-      expect(screen.getByTestId('email-prefill')).toHaveTextContent(
-        'nick@gmail.com',
       );
     });
   });

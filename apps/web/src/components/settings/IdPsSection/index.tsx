@@ -27,7 +27,6 @@ export default function IdPsSection({
   googleEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
   linkError = null,
   linkedMessage = null,
-  onUpdateAccountEmailTo,
 }: IdPsSectionProps) {
   const { refreshUser, user } = useAuth();
 
@@ -39,8 +38,6 @@ export default function IdPsSection({
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
 
   const connectedProviders = user?.connectedProviders ?? [];
-  const hasPassword = Boolean(user?.hasPassword);
-  const accountEmail = user?.email ?? '';
 
   const findConnection = (provider: string) =>
     connectedProviders.find((entry) => entry.provider === provider) ?? null;
@@ -92,28 +89,22 @@ export default function IdPsSection({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="mt-8 space-y-4">
       <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
         Other ways to log in
       </h3>
-      <p className="text-[var(--text-muted)] text-xs text-pretty">
-        Identity providers you've connected for signing in. The provider's email
-        is shown for reference — it doesn't need to match your Linklater email.
-      </p>
 
       {linkedMessage && <Alert variant="success">{linkedMessage}</Alert>}
       {linkError && <Alert variant="error">{linkError}</Alert>}
       {connectError && <Alert variant="error">{connectError}</Alert>}
       {disconnectError && <Alert variant="error">{disconnectError}</Alert>}
 
-      <div className="space-y-3">
+      <div className="mt-5 space-y-3">
         {appleEnabled && (
           <ProviderRow
-            accountEmail={accountEmail}
             confirmDisconnect={confirmDisconnect}
             connection={findConnection('apple')}
             disconnecting={disconnecting}
-            hasPassword={hasPassword}
             provider="apple"
             label="Apple"
             icon="fa-apple"
@@ -121,18 +112,14 @@ export default function IdPsSection({
             onConfirmDisconnect={handleConfirmDisconnect}
             onConnect={() => handleConnect('apple')}
             onDisconnect={() => handleDisconnect('apple')}
-            onUpdateAccountEmailTo={onUpdateAccountEmailTo}
-            showConnect={false}
           />
         )}
 
         {googleEnabled && (
           <ProviderRow
-            accountEmail={accountEmail}
             confirmDisconnect={confirmDisconnect}
             connection={findConnection('google')}
             disconnecting={disconnecting}
-            hasPassword={hasPassword}
             provider="google"
             label="Google"
             icon="fa-google"
@@ -140,8 +127,6 @@ export default function IdPsSection({
             onConfirmDisconnect={handleConfirmDisconnect}
             onConnect={() => handleConnect('google')}
             onDisconnect={() => handleDisconnect('google')}
-            onUpdateAccountEmailTo={onUpdateAccountEmailTo}
-            showConnect
           />
         )}
       </div>

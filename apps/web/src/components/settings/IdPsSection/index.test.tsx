@@ -202,46 +202,6 @@ describe('IdPsSection', () => {
       ).toBeInTheDocument();
     });
 
-    it('disables Disconnect when the user has no password', () => {
-      vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({
-          user: makeUser({
-            hasPassword: false,
-            connectedProviders: [googleConnection],
-          }),
-        }),
-      );
-
-      render(<IdPsSection googleEnabled />);
-
-      expect(
-        screen.getByRole('button', { name: /disconnect google/i }),
-      ).toBeDisabled();
-    });
-
-    it('exposes the disconnect-disabled reason via aria-describedby and visible text', () => {
-      vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({
-          user: makeUser({
-            hasPassword: false,
-            connectedProviders: [googleConnection],
-          }),
-        }),
-      );
-
-      render(<IdPsSection googleEnabled />);
-
-      const button = screen.getByRole('button', { name: /disconnect google/i });
-      expect(button).toHaveAttribute(
-        'aria-describedby',
-        'disconnect-google-reason',
-      );
-      expect(button).not.toHaveAttribute('title');
-      expect(
-        document.getElementById('disconnect-google-reason'),
-      ).toHaveTextContent(/add a password first/i);
-    });
-
     it('shows inline confirm when Disconnect is clicked', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
@@ -354,88 +314,6 @@ describe('IdPsSection', () => {
     it('does not show Google section when googleEnabled is false', () => {
       render(<IdPsSection googleEnabled={false} />);
       expect(screen.queryByText(/google/i)).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Update account email affordance', () => {
-    it('does not render the affordance when providerEmail matches the account email', () => {
-      vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({
-          user: makeUser({ connectedProviders: [googleConnection] }),
-        }),
-      );
-
-      render(<IdPsSection googleEnabled onUpdateAccountEmailTo={vi.fn()} />);
-
-      expect(
-        screen.queryByRole('button', { name: /use .* instead/i }),
-      ).not.toBeInTheDocument();
-    });
-
-    it('renders an "Use … instead" button when providerEmail differs from account email', () => {
-      vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({
-          user: makeUser({
-            connectedProviders: [
-              { ...googleConnection, providerEmail: 'nick@gmail.com' },
-            ],
-          }),
-        }),
-      );
-
-      render(<IdPsSection googleEnabled onUpdateAccountEmailTo={vi.fn()} />);
-
-      expect(
-        screen.getByRole('button', {
-          name: /use nick@gmail\.com as your account email/i,
-        }),
-      ).toBeInTheDocument();
-    });
-
-    it('calls onUpdateAccountEmailTo with the provider email when clicked', () => {
-      const onUpdateAccountEmailTo = vi.fn();
-      vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({
-          user: makeUser({
-            connectedProviders: [
-              { ...googleConnection, providerEmail: 'nick@gmail.com' },
-            ],
-          }),
-        }),
-      );
-
-      render(
-        <IdPsSection
-          googleEnabled
-          onUpdateAccountEmailTo={onUpdateAccountEmailTo}
-        />,
-      );
-
-      fireEvent.click(
-        screen.getByRole('button', {
-          name: /use nick@gmail\.com as your account email/i,
-        }),
-      );
-
-      expect(onUpdateAccountEmailTo).toHaveBeenCalledWith('nick@gmail.com');
-    });
-
-    it('does not render the affordance when onUpdateAccountEmailTo is omitted', () => {
-      vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({
-          user: makeUser({
-            connectedProviders: [
-              { ...googleConnection, providerEmail: 'nick@gmail.com' },
-            ],
-          }),
-        }),
-      );
-
-      render(<IdPsSection googleEnabled />);
-
-      expect(
-        screen.queryByRole('button', { name: /use .* instead/i }),
-      ).not.toBeInTheDocument();
     });
   });
 

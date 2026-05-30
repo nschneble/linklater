@@ -1,14 +1,12 @@
 import { useAuth } from '../../auth/AuthContext';
 import { ApiError, requestEmailChange } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import { useReducedMotion } from '../../lib/hooks/useReducedMotion';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import StatusBadge from '../common/StatusBadge';
-import { useEmailPrefill } from './EmailPrefillContext';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
 /**
@@ -22,17 +20,12 @@ import type { FormEvent } from 'react';
  */
 export default function EmailSettingsForm() {
   const { resendVerificationEmail, setPendingEmail, user } = useAuth();
-  const { prefill } = useEmailPrefill();
-  const reducedMotion = useReducedMotion();
 
   const [emailInput, setEmailInput] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailMessage, setEmailMessage] = useState<string | null>(null);
   const [emailSaving, setEmailSaving] = useState(false);
   const [mfaEmailCode, setMfaEmailCode] = useState('');
-  const [prefillAnnouncement, setPrefillAnnouncement] = useState<string | null>(
-    null,
-  );
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [resendError, setResendError] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
@@ -40,35 +33,6 @@ export default function EmailSettingsForm() {
   const formReference = useRef<HTMLFormElement>(null);
   const isVerified = Boolean(user?.emailVerifiedAt);
   const hasPendingEmail = Boolean(user?.pendingEmail);
-
-  // Respond to "Use … instead" pushes from the IdPs section. The provider
-  // announces the prefill (live region) before moving focus so AT users hear
-  // "Pre-filled with X. Review and click Change email address to continue."
-  // alongside the focused input's own announcement. Mirrors the deep-link
-  // focus pattern at SettingsView's hash-driven effect.
-  useEffect(() => {
-    if (!prefill.email) return;
-    setEmailInput(prefill.email);
-    setEmailMessage(null);
-    setEmailError(null);
-    setPrefillAnnouncement(
-      `Pre-filled with ${prefill.email}. Review and click Change email address to continue.`,
-    );
-    const form = formReference.current;
-    if (form && typeof form.scrollIntoView === 'function') {
-      form.scrollIntoView({
-        behavior: reducedMotion ? 'auto' : 'smooth',
-        block: 'start',
-      });
-    }
-    const handle = requestAnimationFrame(() => {
-      const input = document.getElementById(
-        'change-email',
-      ) as HTMLInputElement | null;
-      input?.focus({ preventScroll: true });
-    });
-    return () => cancelAnimationFrame(handle);
-  }, [prefill.email, prefill.token, reducedMotion]);
 
   async function handleEmailSave(event: FormEvent) {
     event.preventDefault();
@@ -211,9 +175,6 @@ export default function EmailSettingsForm() {
         </>
       )}
 
-      {prefillAnnouncement && (
-        <Alert variant="success">{prefillAnnouncement}</Alert>
-      )}
       {emailMessage && <Alert variant="success">{emailMessage}</Alert>}
       {emailError && (
         <Alert id="account-email-error" variant="error">
