@@ -126,13 +126,7 @@ export class MultiFactorController {
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 409, description: 'TOTP is already enabled.' })
-  @ApiResponse({ status: 429, description: 'Too many cancel attempts.' })
-  @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
-  // Own throttle bucket (not shared with `auth-mfa-totp-setup`) so cancel
-  // spam cannot exhaust the user's setup-generation budget. Cancel has no
-  // side effects an attacker could exploit, so the limit is generous.
-  @Throttle({ 'auth-mfa-totp-cancel': { ttl: 60000, limit: 10 } })
-  @ThrottleMessage('Too many cancel attempts')
+  @UseGuards(JwtAuthGuard)
   @Delete('mfa/totp/setup')
   @HttpCode(204)
   async totpCancelSetup(@Req() request: AuthRequest) {
