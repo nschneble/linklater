@@ -174,22 +174,28 @@ export default function ActionGuard({
     </Alert>
   ) : null;
 
+  // The sr-only live region is rendered as a sibling of the caller's wrapper
+  // (not a child) so it doesn't get treated as the last in-flow child by
+  // Tailwind v4's `space-y-*`, which would otherwise force a `margin-bottom`
+  // onto the trigger row and break `items-center` alignment in parents.
   return (
-    <div className={className}>
-      {alertSlot === 'before' && alertElement}
-      {children({
-        confirming,
-        pending,
-        triggerId,
-        confirmReference,
-        openConfirm,
-        closeConfirm,
-        runConfirm,
-      })}
-      {alertSlot === 'after' && alertElement}
+    <>
+      <div className={className}>
+        {alertSlot === 'before' && alertElement}
+        {children({
+          confirming,
+          pending,
+          triggerId,
+          confirmReference,
+          openConfirm,
+          closeConfirm,
+          runConfirm,
+        })}
+        {alertSlot === 'after' && alertElement}
+      </div>
       <span className="sr-only" role="status">
         {announcement}
       </span>
-    </div>
+    </>
   );
 }
