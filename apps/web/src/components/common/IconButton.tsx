@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, Ref } from 'react';
 import { DISABLED, FOCUS_RING, FOCUS_RING_DANGER } from '../../lib/styles';
 
 /**
@@ -23,6 +23,7 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    * - `'elevated'` — surface background, used for the floating action buttons in `LinksToolbar`.
    */
   variant?: 'default' | 'danger' | 'danger-filled' | 'ghost' | 'elevated';
+  ref?: Ref<HTMLButtonElement>;
 }
 
 const SMALL_PADDING = 'px-3 py-1.5';
