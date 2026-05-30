@@ -151,6 +151,21 @@ function renderSettingsView({
 beforeEach(() => {
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
   Element.prototype.scrollIntoView = vi.fn();
+  // Stub a non-zero document offset on every element. The scroll helper
+  // snaps to the top of the page (window.scrollTo) when a section's natural
+  // offset sits within its own scroll-margin — the jsdom default of 0,0
+  // would push every test through that branch. A large top keeps these
+  // tests on the standard `scrollIntoView` path; the snap-to-0 branch is
+  // covered in `settingsScroll.test.ts`.
+  Element.prototype.getBoundingClientRect = () =>
+    ({
+      top: 1000,
+      bottom: 1100,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 100,
+    }) as DOMRect;
 });
 
 afterEach(() => vi.restoreAllMocks());

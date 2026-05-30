@@ -22,7 +22,26 @@ function scrollSettingsSection(
   if (!hash) return false;
   const element = document.getElementById(hash);
   if (!element) return false;
-  element.scrollIntoView({ behavior, block: 'start' });
+  // When `scrollIntoView` would land the page at a `scrollY` smaller than
+  // the section's own `scroll-margin-top`, the resulting movement is by
+  // definition shorter than the gap the scroll-margin is meant to expose —
+  // i.e. there is no real content above worth scrolling past. The classic
+  // case is the first section: Account naturally sits ~111px down with
+  // `scroll-mt-24` (96px), so `scrollIntoView` would scroll the page 15px
+  // to anchor it at viewport y=96. That 15px drift makes click-to-section
+  // mismatch the fresh-load position. Snap to 0 in this regime so the two
+  // entry points agree visually; sections farther down the page (where the
+  // resulting `scrollY` exceeds the scroll-margin) keep the normal anchored
+  // behavior.
+  const scrollMarginTop =
+    Number.parseInt(getComputedStyle(element).scrollMarginTop, 10) || 0;
+  const naturalTop = element.getBoundingClientRect().top + window.scrollY;
+  const targetScrollY = naturalTop - scrollMarginTop;
+  if (targetScrollY < scrollMarginTop) {
+    window.scrollTo({ top: 69, behavior });
+  } else {
+    element.scrollIntoView({ behavior, block: 'start' });
+  }
   if (skipFocus) return true;
   // `focusVisible: true` forces the `:focus-visible` ring even when the
   // call originates inside a mouse-click handler (e.g. sidebar nav). Without

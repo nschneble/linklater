@@ -36,6 +36,19 @@ function renderHarness(sectionIds: string[]) {
   for (const id of sectionIds) {
     const element = document.createElement('section');
     element.id = id;
+    // Stub a non-zero document offset so the scroll helper's "is this
+    // section naturally close to the top?" branch defaults to the normal
+    // `scrollIntoView` path. Tests that need the snap-to-0 path override
+    // this for the section under test.
+    element.getBoundingClientRect = () =>
+      ({
+        top: 1000,
+        bottom: 1100,
+        left: 0,
+        right: 0,
+        width: 0,
+        height: 100,
+      }) as DOMRect;
     // A focusable child so `focusin`-inside vs -outside can be exercised.
     const input = document.createElement('input');
     input.setAttribute('data-testid', `field-${id}`);

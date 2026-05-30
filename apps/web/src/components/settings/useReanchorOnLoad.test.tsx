@@ -27,6 +27,18 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = scrollIntoViewMock;
   const target = document.createElement('section');
   target.id = 'integrations';
+  // Stub a non-zero document offset so the scroll helper takes the normal
+  // `scrollIntoView` path (its snap-to-0 branch fires only when a section
+  // naturally sits within its own scroll-margin of the page top).
+  target.getBoundingClientRect = () =>
+    ({
+      top: 1000,
+      bottom: 1100,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 100,
+    }) as DOMRect;
   document.body.appendChild(target);
 });
 
