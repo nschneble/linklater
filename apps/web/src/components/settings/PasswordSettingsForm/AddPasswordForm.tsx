@@ -43,19 +43,21 @@ export default function AddPasswordForm({ refreshUser }: AddPasswordFormProps) {
     >
       <h3
         id="add-password-heading"
-        className="text-[var(--text)] text-sm font-semibold text-balance"
+        className="mb-0 text-[var(--text)] text-sm font-semibold text-balance"
       >
         Password
       </h3>
-      <p className="text-[var(--text-muted)] text-xs">
-        Add a password for backup access alongside social sign-in.
-      </p>
+      <div className="flex items-center gap-2">
+        <span className="my-0.75 text-[var(--text-muted)] text-xs">
+          No password has been set
+        </span>
+      </div>
 
       <label
         className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
         htmlFor="add-password-input"
       >
-        New password
+        Password
       </label>
       <FormInput
         id="add-password-input"
