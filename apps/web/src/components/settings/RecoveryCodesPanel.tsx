@@ -1,5 +1,4 @@
 import IconButton from '../common/IconButton';
-import PrimaryButton from '../common/PrimaryButton';
 import { useTransientState } from '../../lib/hooks/useTransientState';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -33,7 +32,7 @@ export default function RecoveryCodesPanel({
   const [copied, setCopied] = useState(false);
   const panelReference = useRef<HTMLDivElement>(null);
 
-  useTransientState(copied, false, setCopied, 3000);
+  useTransientState(copied, false, setCopied, 1000);
 
   // Move focus to the panel container so the heading announces on mount.
   // tabIndex={-1} makes the container programmatically focusable without
@@ -74,9 +73,9 @@ export default function RecoveryCodesPanel({
         <span className="text-[var(--text)] font-semibold">
           Your recovery codes have been generated.
         </span>{' '}
-        Each can be used once to access your account if you lose your MFA
-        device. They'll only be shown here once, so make sure you copy them down
-        before navigating away from this page!
+        Each code can be used once to log in without the authenticator app.
+        They'll only be shown here, so make sure you copy them down before
+        navigating away from this page!
       </p>
       <ul className="grid grid-cols-2 gap-2">
         {codes.map((code) => (
@@ -112,12 +111,8 @@ export default function RecoveryCodesPanel({
               <i className="fa-solid fa-copy text-[0.7rem]" />
             </span>
           </span>
-          Copy to Clipboard
+          Copy to clipboard
         </IconButton>
-        <PrimaryButton className="py-2.5" onClick={onConfirm}>
-          <i className="fa-solid fa-check text-[0.7rem]" aria-hidden="true" />
-          I've saved these codes
-        </PrimaryButton>
       </div>
       {/*
        * Dedicated polite live region for the copy state change. Adding it

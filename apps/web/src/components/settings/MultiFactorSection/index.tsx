@@ -1,4 +1,5 @@
 import Alert from '../../common/Alert';
+import IconButton from '../../common/IconButton';
 import LinkButton from '../../common/LinkButton';
 import PrimaryButton from '../../common/PrimaryButton';
 import StatusBadge from '../../common/StatusBadge';
@@ -38,7 +39,6 @@ export default function MultiFactorSection() {
     totpSetup,
     multiFactorMethod,
     multiFactorPending,
-    user,
     handleCancelReauth,
     handleCancelTotpSetup,
     handleReauth,
@@ -60,14 +60,12 @@ export default function MultiFactorSection() {
           action={reauthAction}
           code={reauthCode}
           error={error}
-          hasPassword={user?.hasPassword ?? false}
           loading={loading}
           onCancel={handleCancelReauth}
           onCodeChange={setReauthCode}
           onPasswordChange={setReauthPassword}
           onSubmit={handleReauth}
           password={reauthPassword}
-          multiFactorMethod={multiFactorMethod}
         />
       )}
 
@@ -79,31 +77,38 @@ export default function MultiFactorSection() {
       {!reauthAction && multiFactorMethod && !recoveryCodes && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)] text-sm">
+            <span className="text-[var(--text-muted)] text-xs">
               Authenticator app
             </span>
             <StatusBadge variant="success" icon="fa-solid fa-circle-check">
               Enabled
             </StatusBadge>
           </div>
-          <div className="flex flex-col gap-2">
-            <LinkButton
+          <div className="flex items-center gap-2">
+            <IconButton
               ref={regenerateButtonReference}
+              variant="default"
               onClick={() => {
                 setError(null);
                 setReauthAction('regenerate');
               }}
             >
-              Regenerate recovery codes
-            </LinkButton>
-            <LinkButton
+              <i
+                className="fa-solid fa-rotate text-[0.7rem]"
+                aria-hidden="true"
+              />
+              Generate new recovery codes
+            </IconButton>
+            <IconButton
+              variant="danger"
               onClick={() => {
                 setError(null);
                 setReauthAction('disable');
               }}
             >
-              Disable multi-factor authentication
-            </LinkButton>
+              <i className="fa-solid fa-ban text-[0.7rem]" aria-hidden="true" />
+              Disable MFA
+            </IconButton>
           </div>
         </div>
       )}
