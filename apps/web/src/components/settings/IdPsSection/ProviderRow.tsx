@@ -62,6 +62,7 @@ export default function ProviderRow({
           {!confirming ? (
             <IconButton
               id={triggerId}
+              className="shrink-0"
               variant="danger"
               onClick={openConfirm}
               aria-label={`Disconnect ${label} (${providerEmail})`}
@@ -70,7 +71,7 @@ export default function ProviderRow({
             </IconButton>
           ) : (
             <div
-              className="flex items-center gap-2 text-xs"
+              className="flex items-center gap-2 shrink-0 text-xs"
               ref={confirmReference}
             >
               <span className="text-[var(--text-muted)]">Sure?</span>
@@ -106,12 +107,18 @@ interface ProviderLabelProps {
 
 function ProviderLabel({ icon, label, providerEmail }: ProviderLabelProps) {
   return (
-    <div className="flex items-center gap-2">
-      <i className={`fa-brands ${icon} text-[0.7rem]`} aria-hidden="true" />
-      <div className="flex flex-col">
+    <div className="flex items-center gap-2 min-w-0 flex-1">
+      <i
+        className={`shrink-0 fa-brands ${icon} text-[0.7rem]`}
+        aria-hidden="true"
+      />
+      <div className="flex flex-col min-w-0">
         <span className="text-[var(--text)] text-sm">{label}</span>
         {providerEmail && (
-          <span className="text-[var(--text-muted)] text-xs break-all">
+          <span
+            className="w-full text-[var(--text-muted)] text-xs truncate"
+            title={providerEmail}
+          >
             <span className="sr-only">Connected as </span>
             {providerEmail}
           </span>
