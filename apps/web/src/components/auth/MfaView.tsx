@@ -8,6 +8,7 @@ import type { FormEvent, RefObject } from 'react';
 
 interface MfaViewProps {
   error: string | null;
+  errorReference: RefObject<HTMLParagraphElement | null>;
   loading: boolean;
   mfaChallenge: 'totp' | 'recovery';
   mfaCode: string;
@@ -20,6 +21,7 @@ interface MfaViewProps {
 
 export default function MfaView({
   error,
+  errorReference,
   loading,
   mfaChallenge,
   mfaCode,
@@ -42,7 +44,7 @@ export default function MfaView({
   return (
     <AuthCard>
       <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold text-balance">
-        {isRecovery ? 'Enter a recovery code' : 'Two-factor authentication'}
+        {isRecovery ? 'Enter a recovery code' : 'Multi-factor authentication'}
       </h1>
       <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
         {isRecovery
@@ -71,7 +73,13 @@ export default function MfaView({
         />
 
         {error && (
-          <Alert id="mfa-error" icon="fa-triangle-exclamation" variant="error">
+          <Alert
+            id="mfa-error"
+            ref={errorReference}
+            icon="fa-triangle-exclamation"
+            tabIndex={-1}
+            variant="error"
+          >
             {error}
           </Alert>
         )}

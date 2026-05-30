@@ -48,16 +48,19 @@ describe('TabButton', () => {
     expect(screen.getByRole('tab')).toHaveAttribute('aria-selected', 'false');
   });
 
-  it('applies font-extrabold when active', () => {
+  it('wires active styling to the aria-selected attribute', () => {
     render(
       <TabButton isActive={true} onClick={vi.fn()}>
         Active
       </TabButton>,
     );
-    expect(screen.getByRole('tab')).toHaveClass('font-extrabold');
+    // active visual state is driven by the aria-selected:* variant, not a ternary,
+    // so the variant class is always present and Tailwind applies it when
+    // aria-selected="true"
+    expect(screen.getByRole('tab')).toHaveClass('aria-selected:font-extrabold');
   });
 
-  it('applies font-semibold when inactive', () => {
+  it('has font-semibold as the base font weight', () => {
     render(
       <TabButton isActive={false} onClick={vi.fn()}>
         Inactive

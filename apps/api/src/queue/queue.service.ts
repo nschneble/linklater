@@ -20,6 +20,15 @@ import type { PgBoss, Job } from 'pg-boss';
  *
  * The pg-boss instance is started on module init and stopped gracefully on
  * module destroy so that in-progress jobs complete before the process exits.
+ *
+ * DELIVERY SEMANTICS: pg-boss is at-least-once by default. A worker that
+ * crashes after side effects but before pg-boss marks the job complete will
+ * see the job redelivered on restart. Every handler registered with `work`
+ * must therefore be idempotent — running the same job twice must produce
+ * the same observable state. The two consumers in this repo
+ * (MetadataService.fetchAndStore and ReadLinkCleanupService
+ * .deleteExpiredReadLinks) achieve this via Prisma `upsert` and a
+ * delete-where-stale predicate respectively; both are safe to retry.
  */
 @Injectable()
 export class QueueService implements OnModuleInit, OnModuleDestroy {

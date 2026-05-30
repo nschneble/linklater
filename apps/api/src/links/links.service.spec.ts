@@ -20,6 +20,7 @@ jest.mock('../prisma/generated/client', () => ({
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { LinksService } from './links.service';
+import { LinksQueryService } from './links-query.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 import { QUEUES } from '../queue/queue.constants';
@@ -69,12 +70,20 @@ describe('LinksService', () => {
     },
   } as unknown as PrismaService;
 
+  const linksQueryMock = {
+    findAll: jest.fn(),
+    findOne: jest.fn(),
+    stumble: jest.fn(),
+    getRandom: jest.fn(),
+  } as unknown as LinksQueryService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LinksService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: QueueService, useValue: queueMock },
+        { provide: LinksQueryService, useValue: linksQueryMock },
       ],
     }).compile();
 
@@ -85,6 +94,10 @@ describe('LinksService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
+
+  // ──────────────────────────────────────────────
+  // create
+  // ──────────────────────────────────────────────
 
   it('creates link with url and enqueues metadata fetch', async () => {
     (prismaMock.link.findFirst as jest.Mock).mockResolvedValue(null);
@@ -137,86 +150,86 @@ describe('LinksService', () => {
     expect(queueMock.send).not.toHaveBeenCalled();
   });
 
-  it('findAll returns paginated results with defaults', async () => {
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([makeLink()]);
-    (prismaMock.link.count as jest.Mock).mockResolvedValue(1);
-
-    const result = await service.findAll(USER_ID, {});
-
-    expect(prismaMock.link.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { userId: USER_ID },
-        skip: 0,
-        take: 10,
+  it('recovers from a concurrent-create P2002 by resurfacing the row that won the race', async () => {
+    // Both POST /links calls hit findFirst at the same moment and saw no
+    // existing row. The first to reach .create wins; the second hits the
+    // unique constraint, then re-queries and finds the now-existing row.
+    const racedExisting = makeLink({ readAt: new Date(), meta: null });
+    const resurfaced = makeLink({ readAt: null });
+    (prismaMock.link.findFirst as jest.Mock)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(racedExisting);
+    (prismaMock.link.create as jest.Mock).mockRejectedValue(
+      new (
+        Prisma as {
+          PrismaClientKnownRequestError: typeof MockPrismaClientKnownRequestError;
+        }
+      ).PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
       }),
     );
-    expect(result.total).toBe(1);
-    expect(result.data).toHaveLength(1);
-  });
+    (prismaMock.link.update as jest.Mock).mockResolvedValue(resurfaced);
 
-  it('findAll filters read links when read=true', async () => {
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
-    (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
+    const link = await service.create(USER_ID, { url: LINK_URL });
 
-    await service.findAll(USER_ID, { read: true });
-
-    expect(prismaMock.link.findMany).toHaveBeenCalledWith(
+    expect(prismaMock.link.create).toHaveBeenCalled();
+    expect(prismaMock.link.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ readAt: { not: null } }),
+        where: { id: LINK_ID },
+        data: expect.objectContaining({ readAt: null }),
       }),
     );
+    expect(link.readAt).toBeNull();
   });
 
-  it('findAll uses tsvector query when search is provided', async () => {
-    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
-      { id: LINK_ID, total: BigInt(1) },
-    ]);
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([makeLink()]);
+  // ──────────────────────────────────────────────
+  // Delegation to LinksQueryService
+  // ──────────────────────────────────────────────
+
+  it('findAll delegates to LinksQueryService', async () => {
+    const paginated = { data: [], total: 0, page: 1, limit: 10 };
+    (linksQueryMock.findAll as jest.Mock).mockResolvedValue(paginated);
 
     const result = await service.findAll(USER_ID, { search: 'duck' });
 
-    expect(prismaMock.$queryRaw).toHaveBeenCalled();
-    expect(result.total).toBe(1);
-    expect(result.data).toHaveLength(1);
+    expect(linksQueryMock.findAll).toHaveBeenCalledWith(USER_ID, {
+      search: 'duck',
+    });
+    expect(result).toBe(paginated);
   });
 
-  it('findAll does not use OR filter when search is provided', async () => {
-    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
-
-    await service.findAll(USER_ID, { search: 'duck' });
-
-    const call = (prismaMock.link.findMany as jest.Mock).mock.calls[0]?.[0] as
-      | { where?: { OR?: unknown } }
-      | undefined;
-    expect(call?.where?.OR).toBeUndefined();
-  });
-
-  it('findAll returns empty result when tsvector finds no matches', async () => {
-    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
-
-    const result = await service.findAll(USER_ID, { search: 'xyzzy' });
-
-    expect(result.total).toBe(0);
-    expect(result.data).toHaveLength(0);
-    expect(prismaMock.link.findMany).not.toHaveBeenCalled();
-  });
-
-  it('findOne returns link when found', async () => {
+  it('findOne delegates to LinksQueryService', async () => {
     const link = makeLink();
-    (prismaMock.link.findFirst as jest.Mock).mockResolvedValue(link);
+    (linksQueryMock.findOne as jest.Mock).mockResolvedValue(link);
 
     const result = await service.findOne(USER_ID, LINK_ID);
+
+    expect(linksQueryMock.findOne).toHaveBeenCalledWith(USER_ID, LINK_ID);
     expect(result).toBe(link);
   });
 
-  it('findOne throws NotFoundException when link is not found', async () => {
-    (prismaMock.link.findFirst as jest.Mock).mockResolvedValue(null);
+  it('stumble delegates to LinksQueryService', async () => {
+    (linksQueryMock.stumble as jest.Mock).mockResolvedValue({ url: LINK_URL });
 
-    await expect(service.findOne(USER_ID, MISSING_LINK_ID)).rejects.toThrow(
-      NotFoundException,
-    );
+    const result = await service.stumble(USER_ID);
+
+    expect(linksQueryMock.stumble).toHaveBeenCalledWith(USER_ID);
+    expect(result).toEqual({ url: LINK_URL });
   });
+
+  it('getRandom delegates to LinksQueryService', async () => {
+    const link = makeLink();
+    (linksQueryMock.getRandom as jest.Mock).mockResolvedValue(link);
+
+    const result = await service.getRandom(USER_ID, true);
+
+    expect(linksQueryMock.getRandom).toHaveBeenCalledWith(USER_ID, true);
+    expect(result).toBe(link);
+  });
+
+  // ──────────────────────────────────────────────
+  // update
+  // ──────────────────────────────────────────────
 
   it('update returns updated link', async () => {
     const link = makeLink();
@@ -240,6 +253,19 @@ describe('LinksService', () => {
     );
   });
 
+  it('update rethrows non-P2025 errors', async () => {
+    const networkError = new Error('Network failure');
+    (prismaMock.link.update as jest.Mock).mockRejectedValue(networkError);
+
+    await expect(service.update(USER_ID, LINK_ID, {})).rejects.toThrow(
+      'Network failure',
+    );
+  });
+
+  // ──────────────────────────────────────────────
+  // read
+  // ──────────────────────────────────────────────
+
   it('read sets readAt and returns link', async () => {
     const read = makeLink({ readAt: new Date() });
     (prismaMock.link.update as jest.Mock).mockResolvedValue(read);
@@ -255,6 +281,19 @@ describe('LinksService', () => {
       NotFoundException,
     );
   });
+
+  it('read rethrows non-P2025 errors', async () => {
+    const networkError = new Error('Network failure');
+    (prismaMock.link.update as jest.Mock).mockRejectedValue(networkError);
+
+    await expect(service.read(USER_ID, LINK_ID)).rejects.toThrow(
+      'Network failure',
+    );
+  });
+
+  // ──────────────────────────────────────────────
+  // unread
+  // ──────────────────────────────────────────────
 
   it('unread clears readAt and returns link', async () => {
     const unread = makeLink({ readAt: null });
@@ -272,16 +311,18 @@ describe('LinksService', () => {
     );
   });
 
-  it('removeAllRead deletes all read links and returns count', async () => {
-    (prismaMock.link.deleteMany as jest.Mock).mockResolvedValue({ count: 3 });
+  it('unread rethrows non-P2025 errors', async () => {
+    const networkError = new Error('Network failure');
+    (prismaMock.link.update as jest.Mock).mockRejectedValue(networkError);
 
-    const result = await service.removeAllRead(USER_ID);
-
-    expect(prismaMock.link.deleteMany).toHaveBeenCalledWith({
-      where: { userId: USER_ID, readAt: { not: null } },
-    });
-    expect(result).toEqual({ count: 3 });
+    await expect(service.unread(USER_ID, LINK_ID)).rejects.toThrow(
+      'Network failure',
+    );
   });
+
+  // ──────────────────────────────────────────────
+  // remove
+  // ──────────────────────────────────────────────
 
   it('remove returns { success: true }', async () => {
     (prismaMock.link.delete as jest.Mock).mockResolvedValue(undefined);
@@ -302,109 +343,6 @@ describe('LinksService', () => {
     );
   });
 
-  it('getRandom returns null when there are no links', async () => {
-    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
-
-    const result = await service.getRandom(USER_ID);
-
-    expect(result).toBeNull();
-    expect(prismaMock.link.findFirst).not.toHaveBeenCalled();
-  });
-
-  it('getRandom returns a link when links exist', async () => {
-    const link = makeLink();
-    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([{ id: LINK_ID }]);
-    (prismaMock.link.findFirst as jest.Mock).mockResolvedValue(link);
-
-    const result = await service.getRandom(USER_ID);
-
-    expect(result).toBe(link);
-    expect(prismaMock.link.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: LINK_ID } }),
-    );
-  });
-
-  it('getRandom queries read links when read=true', async () => {
-    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
-
-    await service.getRandom(USER_ID, true);
-
-    expect(prismaMock.$queryRaw).toHaveBeenCalled();
-  });
-
-  it('findAll filters unread links when read=false', async () => {
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
-    (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
-
-    await service.findAll(USER_ID, { read: false });
-
-    expect(prismaMock.link.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ readAt: null }),
-      }),
-    );
-  });
-
-  it('findAll treats whitespace-only search as no search term', async () => {
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([makeLink()]);
-    (prismaMock.link.count as jest.Mock).mockResolvedValue(1);
-
-    await service.findAll(USER_ID, { search: '   ' });
-
-    // should use standard findMany, not the raw tsvector query
-    expect(prismaMock.$queryRaw).not.toHaveBeenCalled();
-    expect(prismaMock.link.findMany).toHaveBeenCalled();
-  });
-
-  it('findAll caps limit at MAX_LIMIT (100)', async () => {
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
-    (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
-
-    await service.findAll(USER_ID, { limit: 999 });
-
-    expect(prismaMock.link.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ take: 100 }),
-    );
-  });
-
-  it('findAll enforces minimum page of 1', async () => {
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
-    (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
-
-    await service.findAll(USER_ID, { page: -5 });
-
-    expect(prismaMock.link.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ skip: 0 }),
-    );
-  });
-
-  it('update rethrows non-P2025 errors', async () => {
-    const networkError = new Error('Network failure');
-    (prismaMock.link.update as jest.Mock).mockRejectedValue(networkError);
-
-    await expect(service.update(USER_ID, LINK_ID, {})).rejects.toThrow(
-      'Network failure',
-    );
-  });
-
-  it('read rethrows non-P2025 errors', async () => {
-    const networkError = new Error('Network failure');
-    (prismaMock.link.update as jest.Mock).mockRejectedValue(networkError);
-
-    await expect(service.read(USER_ID, LINK_ID)).rejects.toThrow(
-      'Network failure',
-    );
-  });
-
-  it('unread rethrows non-P2025 errors', async () => {
-    const networkError = new Error('Network failure');
-    (prismaMock.link.update as jest.Mock).mockRejectedValue(networkError);
-
-    await expect(service.unread(USER_ID, LINK_ID)).rejects.toThrow(
-      'Network failure',
-    );
-  });
-
   it('remove rethrows non-P2025 errors', async () => {
     const networkError = new Error('Network failure');
     (prismaMock.link.delete as jest.Mock).mockRejectedValue(networkError);
@@ -414,91 +352,18 @@ describe('LinksService', () => {
     );
   });
 
-  describe('stumble', () => {
-    it('returns null when no unread links exist', async () => {
-      (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
+  // ──────────────────────────────────────────────
+  // removeAllRead
+  // ──────────────────────────────────────────────
 
-      const result = await service.stumble(USER_ID);
+  it('removeAllRead deletes all read links and returns count', async () => {
+    (prismaMock.link.deleteMany as jest.Mock).mockResolvedValue({ count: 3 });
 
-      expect(result).toBeNull();
-      expect(prismaMock.link.update).not.toHaveBeenCalled();
+    const result = await service.removeAllRead(USER_ID);
+
+    expect(prismaMock.link.deleteMany).toHaveBeenCalledWith({
+      where: { userId: USER_ID, readAt: { not: null } },
     });
-
-    it('atomically marks link as read and returns its url', async () => {
-      (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
-        { id: LINK_ID, url: LINK_URL },
-      ]);
-
-      const result = await service.stumble(USER_ID);
-
-      expect(prismaMock.$queryRaw).toHaveBeenCalled();
-      expect(prismaMock.link.update).not.toHaveBeenCalled();
-      expect(prismaMock.link.findFirst).not.toHaveBeenCalled();
-      expect(result).toEqual({ url: LINK_URL });
-    });
-  });
-
-  it('findAll with search uses read filter when read=false', async () => {
-    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
-      { id: LINK_ID, total: BigInt(1) },
-    ]);
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([makeLink()]);
-
-    const result = await service.findAll(USER_ID, {
-      search: 'duck',
-      read: false,
-    });
-
-    expect(prismaMock.$queryRaw).toHaveBeenCalled();
-    expect(result.total).toBe(1);
-  });
-
-  it('findAll with search uses read=true filter', async () => {
-    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
-      { id: LINK_ID, total: BigInt(1) },
-    ]);
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([
-      makeLink({ readAt: new Date() }),
-    ]);
-
-    const result = await service.findAll(USER_ID, {
-      search: 'duck',
-      read: true,
-    });
-
-    expect(prismaMock.$queryRaw).toHaveBeenCalled();
-    expect(result.total).toBe(1);
-    expect(result.data[0]).toHaveProperty('readAt');
-  });
-
-  it('findAll clamps limit to at least 1 when 0 is supplied', async () => {
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
-    (prismaMock.link.count as jest.Mock).mockResolvedValue(0);
-
-    await service.findAll(USER_ID, { limit: 0 });
-
-    expect(prismaMock.link.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ take: 1 }),
-    );
-  });
-
-  it('findAll re-sorts search results to match the raw rank order', async () => {
-    const LINK_ID_A = 'link-a';
-    const LINK_ID_B = 'link-b';
-    // Raw query returns B then A (by rank)
-    (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
-      { id: LINK_ID_B, total: BigInt(2) },
-      { id: LINK_ID_A, total: BigInt(2) },
-    ]);
-    // Prisma returns them in the opposite order
-    (prismaMock.link.findMany as jest.Mock).mockResolvedValue([
-      makeLink({ id: LINK_ID_A }),
-      makeLink({ id: LINK_ID_B }),
-    ]);
-
-    const result = await service.findAll(USER_ID, { search: 'test' });
-
-    expect(result.data[0].id).toBe(LINK_ID_B);
-    expect(result.data[1].id).toBe(LINK_ID_A);
+    expect(result).toEqual({ count: 3 });
   });
 });

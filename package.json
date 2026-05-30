@@ -1,6 +1,6 @@
 {
   "name": "linklater",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Linklater is an Instapaper-inspired “read it later” app.",
   "author": "Nick Schneble",
   "private": true,
@@ -12,7 +12,7 @@
     "generate:email-palette": "node scripts/generate-email-palette.mjs",
     "lint": "npm run lint --workspace @linklater/api && npm run lint --workspace @linklater/web",
     "lint:migrations": "squawk 'apps/api/prisma/migrations/**/*.sql'",
-    "test": "npm run test --workspace @linklater/api && npm run test --workspace @linklater/web",
+    "test": "node scripts/run-tests.mjs",
     "test:cov": "npm run test:cov --workspace @linklater/api && npm run test:cov --workspace @linklater/web",
     "version:bump": "node scripts/bump-version.mjs"
   },

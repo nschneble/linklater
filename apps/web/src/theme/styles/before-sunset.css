@@ -4,12 +4,12 @@
   --bg-elevated: #4a3818;
   --bg-input: #2f221a;
   --text: #e8e5d7;
-  --text-muted: #cfa048;
-  --text-subtle: #b08e50;
-  --border: #5e4227;
-  --accent: #c07828;
+  --text-muted: #e6c99a;
+  --text-subtle: #e5c7ba;
+  --border: #b6745c;
+  --accent: #d7974f;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #e8e5d7;
+  --accent-fg: #000000;
 }
 
 [data-theme='before-sunset'][data-mode='light'] {
@@ -19,9 +19,9 @@
   --bg-input: #e8e5d7;
   --text: #050404;
   --text-muted: #2f221a;
-  --text-subtle: #5a3a18;
-  --border: #9a7030;
-  --accent: #874b1d;
+  --text-subtle: #4a3015;
+  --border: #6b4a18;
+  --accent: #7a3f15;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #e8e5d7;
 }

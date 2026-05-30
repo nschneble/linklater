@@ -1,6 +1,13 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import {
+  act,
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+} from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import DangerZone from './DangerZone';
+import { consumeAuthNotice } from '../../auth/authNotice';
 
 vi.mock('../../lib/api', () => ({
   deleteMe: vi.fn(),
@@ -31,7 +38,10 @@ beforeEach(() => {
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
 });
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  window.sessionStorage.clear();
+});
 
 describe('DangerZone', () => {
   it('renders the initial delete account button', () => {
@@ -54,13 +64,15 @@ describe('DangerZone', () => {
     expect(
       screen.getByRole('button', { name: /yes, delete/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /no, don't delete/i }),
+    ).toBeInTheDocument();
   });
 
   it('hides confirmation prompt when cancel is clicked', () => {
     render(<DangerZone />);
     fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
-    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    fireEvent.click(screen.getByRole('button', { name: /no, don't delete/i }));
 
     expect(screen.queryByText(/are you sure/i)).not.toBeInTheDocument();
     expect(
@@ -107,6 +119,122 @@ describe('DangerZone', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Failed to delete account')).toBeInTheDocument();
+    });
+  });
+
+  it('queues the account-deleted notice before logging out', async () => {
+    const logoutMock = vi.fn();
+    vi.mocked(useAuth).mockReturnValue(makeAuthContext({ logout: logoutMock }));
+    vi.mocked(apiModule.deleteMe).mockResolvedValue({ success: true });
+
+    render(<DangerZone />);
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+    fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+
+    await waitFor(() => expect(logoutMock).toHaveBeenCalledOnce());
+    expect(consumeAuthNotice()).toBe('Your account has been deleted.');
+  });
+
+  it('does not queue the notice when deletion fails', async () => {
+    vi.mocked(apiModule.deleteMe).mockRejectedValue(new Error('boom'));
+    render(<DangerZone />);
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+    fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+    expect(consumeAuthNotice()).toBeNull();
+  });
+
+  describe('a11y: focus + escape (gained via ActionGuard)', () => {
+    it('focuses "Yes, delete" when the confirm row opens', async () => {
+      render(<DangerZone />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /delete my account/i }),
+        );
+      });
+      await waitFor(() => {
+        expect(document.activeElement).toBe(
+          screen.getByRole('button', { name: /yes, delete/i }),
+        );
+      });
+    });
+
+    it('returns focus to the trigger when Cancel is clicked', async () => {
+      render(<DangerZone />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /delete my account/i }),
+        );
+      });
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /no, don't delete/i }),
+        );
+      });
+      await waitFor(() => {
+        const trigger = screen.getByRole('button', {
+          name: /delete my account/i,
+        });
+        expect(document.activeElement).toBe(trigger);
+      });
+    });
+
+    it('cancels and returns focus to the trigger when Escape is pressed', async () => {
+      render(<DangerZone />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /delete my account/i }),
+        );
+      });
+      await act(async () => {
+        fireEvent.keyDown(document, { key: 'Escape' });
+      });
+      expect(screen.queryByText(/are you sure/i)).not.toBeInTheDocument();
+      await waitFor(() => {
+        const trigger = screen.getByRole('button', {
+          name: /delete my account/i,
+        });
+        expect(document.activeElement).toBe(trigger);
+      });
+    });
+
+    it('focuses the error alert on failure (winning over return-focus)', async () => {
+      vi.mocked(apiModule.deleteMe).mockRejectedValue(new Error('boom'));
+      render(<DangerZone />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /delete my account/i }),
+        );
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+      });
+      await waitFor(() => {
+        expect(document.activeElement).toBe(screen.getByRole('alert'));
+      });
+    });
+
+    it('clears a previous error when the confirm row is reopened', async () => {
+      vi.mocked(apiModule.deleteMe).mockRejectedValueOnce(new Error('boom'));
+      render(<DangerZone />);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /delete my account/i }),
+        );
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+      });
+      await waitFor(() =>
+        expect(screen.getByRole('alert')).toBeInTheDocument(),
+      );
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /delete my account/i }),
+        );
+      });
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
   });
 });

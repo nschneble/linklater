@@ -207,6 +207,18 @@ describe('LinksList', () => {
     expect(screen.queryByText(/load more/i)).not.toBeInTheDocument();
   });
 
+  it('does not show Load more when exactly 1 link remains ("less doesn\'t need more")', () => {
+    const links = [makeLink({ id: 'link-1' }), makeLink({ id: 'link-2' })];
+    render(
+      <LinksList
+        {...defaultProps}
+        links={links}
+        pagination={makePagination({ total: 3, limit: 5 })}
+      />,
+    );
+    expect(screen.queryByText(/load more/i)).not.toBeInTheDocument();
+  });
+
   it('shows the remaining count in the Load more button label', () => {
     const links = [makeLink({ id: 'link-1' }), makeLink({ id: 'link-2' })];
     render(

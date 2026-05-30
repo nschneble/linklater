@@ -7,8 +7,6 @@ function renderForm(
 ) {
   const props: React.ComponentProps<typeof ReauthForm> = {
     action: 'disable',
-    hasPassword: true,
-    twoFactorMethod: 'totp',
     loading: false,
     error: null,
     password: '',
@@ -33,75 +31,21 @@ describe('ReauthForm — prompt copy', () => {
   it('uses the regenerate copy for action="regenerate"', () => {
     renderForm({ action: 'regenerate' });
     expect(
-      screen.getByText(/confirm your identity to regenerate/i),
+      screen.getByText(/confirm your identity to generate new recovery codes/i),
     ).toBeInTheDocument();
   });
 });
 
-describe('ReauthForm — conditional fields', () => {
-  it('shows the password field when hasPassword is true', () => {
-    renderForm({ hasPassword: true });
+describe('ReauthForm — fields', () => {
+  it('shows the password field', () => {
+    renderForm();
     expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
   });
 
-  it('hides the password field when hasPassword is false', () => {
-    renderForm({ hasPassword: false, twoFactorMethod: 'totp' });
+  it('shows the code field', () => {
+    renderForm();
     expect(
-      screen.queryByLabelText(/current password/i),
-    ).not.toBeInTheDocument();
-  });
-
-  it('shows the code field when twoFactorMethod is "totp"', () => {
-    renderForm({ twoFactorMethod: 'totp' });
-    expect(
-      screen.getByLabelText(/authenticator or recovery code/i),
-    ).toBeInTheDocument();
-  });
-
-  it('hides the code field when twoFactorMethod is null', () => {
-    renderForm({ twoFactorMethod: null });
-    expect(
-      screen.queryByLabelText(/authenticator or recovery code/i),
-    ).not.toBeInTheDocument();
-  });
-
-  it('changes the code label depending on whether a password also exists', () => {
-    const { rerender } = render(
-      <ReauthForm
-        action="disable"
-        hasPassword={true}
-        twoFactorMethod="totp"
-        loading={false}
-        error={null}
-        password=""
-        code=""
-        onPasswordChange={vi.fn()}
-        onCodeChange={vi.fn()}
-        onSubmit={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    );
-    expect(
-      screen.getByLabelText(/or enter your authenticator/i),
-    ).toBeInTheDocument();
-
-    rerender(
-      <ReauthForm
-        action="disable"
-        hasPassword={false}
-        twoFactorMethod="totp"
-        loading={false}
-        error={null}
-        password=""
-        code=""
-        onPasswordChange={vi.fn()}
-        onCodeChange={vi.fn()}
-        onSubmit={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    );
-    expect(
-      screen.getByLabelText(/^enter your authenticator/i),
+      screen.getByLabelText(/or enter an authenticator or recovery code/i),
     ).toBeInTheDocument();
   });
 });
@@ -130,9 +74,9 @@ describe('ReauthForm — interactions', () => {
     expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
   });
 
-  it('shows "Working…" and disables the confirm button while loading', () => {
+  it('shows "Confirming…" and disables the confirm button while loading', () => {
     renderForm({ loading: true });
-    const confirmButton = screen.getByRole('button', { name: /working/i });
+    const confirmButton = screen.getByRole('button', { name: /confirming/i });
     expect(confirmButton).toBeDisabled();
   });
 

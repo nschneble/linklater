@@ -14,13 +14,14 @@ import { MagicLinkController } from './magic-link.controller.js';
 import { MagicLinkService } from './magic-link.service.js';
 import { OAuthAccountService } from './oauth-account.service.js';
 import { OAuthController } from './oauth.controller.js';
+import { RefreshTokenService } from './refresh-token.service.js';
 import { GoogleLinkStrategy } from './google-link.strategy.js';
 import { GoogleStrategy } from './google.strategy.js';
 import { JwtStrategy } from './jwt.strategy.js';
 import { LocalStrategy } from './local.strategy.js';
 import { MfaAuthGuard } from './mfa-auth.guard.js';
 import { TotpService } from './totp.service.js';
-import { TwoFactorController } from './two-factor.controller.js';
+import { MultiFactorController } from './multi-factor.controller.js';
 import { EmailModule } from '../email/email.module.js';
 import { TokensModule } from '../tokens/tokens.module.js';
 import { UsersModule } from '../users/users.module.js';
@@ -70,6 +71,7 @@ const oauthProviders: Provider[] = [
     ExtensionAuthService,
     MagicLinkService,
     OAuthAccountService,
+    RefreshTokenService,
     JwtStrategy,
     LocalStrategy,
     MfaAuthGuard,
@@ -81,7 +83,7 @@ const oauthProviders: Provider[] = [
     ExtensionAuthController,
     MagicLinkController,
     OAuthController,
-    TwoFactorController,
+    MultiFactorController,
   ],
   exports: [AnyAuthGuard],
 })

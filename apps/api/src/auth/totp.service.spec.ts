@@ -32,6 +32,7 @@ describe('TotpService', () => {
   let service: TotpService;
 
   const usersServiceMock = {
+    clearPendingTotpSecret: jest.fn(),
     enableTotpWithRecoveryCodes: jest.fn(),
     findById: jest.fn(),
     saveTotpSecret: jest.fn(),
@@ -172,6 +173,47 @@ describe('TotpService', () => {
     });
   });
 
+  describe('cancelSetup', () => {
+    it('clears the pending TOTP secret when setup is not yet enabled', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUser({ totpSecret: 'encrypted-pending-secret' }),
+      );
+      (usersServiceMock.clearPendingTotpSecret as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.cancelSetup(USER_ID);
+
+      expect(usersServiceMock.clearPendingTotpSecret).toHaveBeenCalledWith(
+        USER_ID,
+      );
+    });
+
+    it('is a no-op (still calls clear) when nothing is pending', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(makeUser());
+      (usersServiceMock.clearPendingTotpSecret as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.cancelSetup(USER_ID);
+
+      expect(usersServiceMock.clearPendingTotpSecret).toHaveBeenCalledWith(
+        USER_ID,
+      );
+    });
+
+    it('throws ConflictException when TOTP is already enabled', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+        makeUser({ totpEnabledAt: new Date() }),
+      );
+
+      await expect(service.cancelSetup(USER_ID)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(usersServiceMock.clearPendingTotpSecret).not.toHaveBeenCalled();
+    });
+  });
+
   describe('verifyCode', () => {
     it('returns true for a valid TOTP code and records the used time step', async () => {
       const secret = generateSecret();
@@ -179,7 +221,7 @@ describe('TotpService', () => {
       const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
 
       (usersServiceMock.updateTotpLastUsedStep as jest.Mock).mockResolvedValue(
-        undefined,
+        true,
       );
 
       const user = makeUser({ totpSecret: encryptedSecret });
@@ -189,6 +231,24 @@ describe('TotpService', () => {
         USER_ID,
         expect.any(Number),
       );
+    });
+
+    it('returns false when the CAS swap loses to a parallel verify-otp request', async () => {
+      const secret = generateSecret();
+      const { encrypt } = await import('../common/crypto.js');
+      const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
+
+      // First request wins the CAS; the second arrives in the same 30s
+      // step, otplib accepts it as valid, but updateTotpLastUsedStep
+      // returns false because totpLastUsedStep is already >= usedStep.
+      (usersServiceMock.updateTotpLastUsedStep as jest.Mock).mockResolvedValue(
+        false,
+      );
+
+      const user = makeUser({ totpSecret: encryptedSecret });
+      const code = await generate({ secret });
+      expect(await service.verifyCode(user, code)).toBe(false);
+      expect(usersServiceMock.updateTotpLastUsedStep).toHaveBeenCalled();
     });
 
     it('returns false for an invalid TOTP code and does not update the step', async () => {

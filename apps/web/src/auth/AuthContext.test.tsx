@@ -33,8 +33,8 @@ const makeUser = (overrides: Partial<{ welcomedAt: string | null }> = {}) => ({
   mode: 'dark',
   pendingEmail: null,
   theme: 'scanner-darkly',
-  twoFactorMethod: null as 'totp' | 'email' | null,
-  twoFactorPending: false,
+  multiFactorMethod: null as 'totp' | 'email' | null,
+  multiFactorPending: false,
   userId: 'user-1',
   welcomedAt: '2024-01-01T00:00:00Z' as string | null,
   ...overrides,
@@ -159,7 +159,7 @@ describe('login', () => {
     expect(screen.getByTestId('email')).toHaveTextContent('user@example.com');
   });
 
-  it('returns mfaToken and mfaMethod without populating user when 2FA is required', async () => {
+  it('returns mfaToken and mfaMethod without populating user when MFA is required', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
     vi.mocked(apiModule.login).mockResolvedValue({
       mfaToken: 'mfa-tok',

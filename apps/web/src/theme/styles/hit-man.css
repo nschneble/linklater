@@ -3,13 +3,13 @@
   --bg-surface: #4e2c14;
   --bg-elevated: #594c3f;
   --bg-input: #4e2c14;
-  --text: #efb88e;
-  --text-muted: #f0c060;
-  --text-subtle: #b8a090;
-  --border: #7c421d;
-  --accent: #cc310d;
+  --text: #f8eae2;
+  --text-muted: #f0efbe;
+  --text-subtle: #f1ebeb;
+  --border: #e2843c;
+  --accent: #f2b186;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #ffffff;
+  --accent-fg: #000000;
 }
 
 [data-theme='hit-man'][data-mode='light'] {
@@ -18,10 +18,10 @@
   --bg-elevated: #d09848;
   --bg-input: #f0c870;
   --text: #1a150e;
-  --text-muted: #4e2c14;
-  --text-subtle: #543818;
+  --text-muted: #201508;
+  --text-subtle: #1e1607;
   --border: #7c421d;
-  --accent: #cc310d;
+  --accent: #70180d;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #ffffff;
 }

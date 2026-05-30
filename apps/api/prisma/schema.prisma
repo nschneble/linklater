@@ -29,6 +29,7 @@ model User {
   totpEnabledAt    DateTime?
   totpVerifiedAt   DateTime?
   totpLastUsedStep Int?
+  mfaNonce         String?
 
   magicLinkToken          String?   @unique
   magicLinkTokenExpiresAt DateTime?
@@ -59,11 +60,12 @@ model RecoveryCode {
 }
 
 model OAuthAccount {
-  id         String @id @default(cuid())
-  provider   String
-  providerId String
-  userId     String
-  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String @id @default(cuid())
+  provider      String
+  providerId    String
+  providerEmail String
+  userId        String
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -85,23 +87,37 @@ model Link {
   updatedAt DateTime  @updatedAt
   readAt    DateTime?
 
+  @@unique([userId, url])
   @@index([userId])
-  @@index([userId, url])
   @@index([userId, readAt])
   @@index([userId, createdAt])
 }
 
+enum TokenKind {
+  USER
+  BOOKMARKLET
+}
+
 model ApiToken {
-  id         String    @id @default(cuid())
-  name       String
-  tokenHash  String    @unique
-  prefix     String
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lastUsedAt DateTime?
-  createdAt  DateTime  @default(now())
+  id          String    @id @default(cuid())
+  name        String
+  tokenHash   String    @unique
+  prefix      String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  kind        TokenKind @default(USER)
+  // Plaintext token value. Populated ONLY when kind = BOOKMARKLET, because the
+  // bookmarklet's `javascript:` URL must embed the raw token literally and the
+  // settings page needs to retrieve it on every load (including across devices).
+  // For kind = USER this column is NULL — those tokens follow the standard
+  // hash-only / shown-once model. DB compromise of bookmarklet rows allows
+  // saving links as the affected user; users can regenerate to invalidate.
+  secretValue String?
 
   @@index([userId])
+  @@index([userId, kind])
 }
 
 model RefreshToken {

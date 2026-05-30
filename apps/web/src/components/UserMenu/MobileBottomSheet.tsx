@@ -186,6 +186,7 @@ export default function MobileBottomSheet({
               className="pb-4"
               inert={showThemeSubview ? true : undefined}
             >
+              {/* FIXME: align this bottom divider with the themes submenu divider */}
               <MenuSection label="Logged in as" className="px-4 pt-2">
                 <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
                   {user.email}
@@ -250,6 +251,7 @@ export default function MobileBottomSheet({
               className="pb-4"
               inert={!showThemeSubview ? true : undefined}
             >
+              {/* FIXME: align this bottom divider with the user menu divider */}
               <MenuSection className="flex items-center justify-between">
                 <MenuItem
                   icon="fa-chevron-left"

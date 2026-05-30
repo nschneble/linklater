@@ -15,7 +15,6 @@ import { FOCUS_RING } from '../../lib/styles';
  * for removing the `<Toast>` from the tree once `onDismiss` fires.
  */
 interface ToastProps {
-  /** The text to display inside the toast. */
   message: string;
   /**
    * Called 150ms after the exit animation begins (either from the auto-dismiss

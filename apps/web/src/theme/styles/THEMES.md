@@ -16,6 +16,20 @@ There are eight themes, each with light and dark variants. Each theme variant is
 | `--accent-hover` | Accent hover state                                          |
 | `--accent-fg`    | Foreground text on accent-colored backgrounds               |
 
+## Contrast targets
+
+When adding or tuning a theme, meet these WCAG thresholds:
+
+- `--text` and `--text-muted` on `--bg` / `--bg-surface`: **AAA**
+  (≥ 7 : 1 for normal text, ≥ 4.5 : 1 for large text)
+- `--accent-fg` on `--accent` and `--accent-hover`: **AA**
+  (≥ 4.5 : 1 for normal text)
+
+Verify with any WCAG contrast checker (e.g. https://webaim.org/resources/contrastchecker/).
+The `--text-subtle` token is intentionally lower-contrast — it is
+used only for de-emphasized metadata (URLs, hints, dividers), not
+primary readable content.
+
 ## `swatchIcon` field
 
 Every entry in the `THEMES` array (defined in

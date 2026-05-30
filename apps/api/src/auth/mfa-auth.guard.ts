@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 interface MfaTokenPayload {
   subject: string;
   mfaPending: boolean;
+  nonce?: string;
 }
 
 /**
@@ -45,7 +46,11 @@ export class MfaAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid MFA token');
     }
 
-    request.user = { userId: payload.subject, mfaPending: true };
+    request.user = {
+      userId: payload.subject,
+      mfaPending: true,
+      nonce: payload.nonce,
+    };
     return true;
   }
 }

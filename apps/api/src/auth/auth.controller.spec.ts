@@ -15,7 +15,7 @@ import { MfaAuthGuard } from './mfa-auth.guard';
 import { OAuthAccountService } from './oauth-account.service';
 import { OAuthController } from './oauth.controller';
 import { TotpService } from './totp.service';
-import { TwoFactorController } from './two-factor.controller';
+import { MultiFactorController } from './multi-factor.controller';
 import type { Response } from 'express';
 import type { AuthRequest } from './auth-request.type';
 
@@ -33,7 +33,7 @@ const VERIFICATION_TOKEN = 'verification-token-xyz';
 describe('AuthController', () => {
   let controller: AuthController;
   let oauthController: OAuthController;
-  let twoFactorController: TwoFactorController;
+  let multiFactorController: MultiFactorController;
   let magicLinkController: MagicLinkController;
   let extensionAuthController: ExtensionAuthController;
 
@@ -52,7 +52,7 @@ describe('AuthController', () => {
   } as unknown as ExtensionAuthService;
 
   const authServiceMock = {
-    disable2fa: jest.fn(),
+    disableMfa: jest.fn(),
     login: jest.fn().mockResolvedValue({
       accessToken: ACCESS_TOKEN,
       refreshToken: REFRESH_TOKEN,
@@ -86,6 +86,7 @@ describe('AuthController', () => {
   } as unknown as EmailVerificationService;
 
   const oauthAccountServiceMock = {
+    buildGoogleLinkUrl: jest.fn(),
     linkOAuthAccountToUser: jest.fn(),
     unlinkOAuthProvider: jest.fn(),
   } as unknown as OAuthAccountService;
@@ -102,7 +103,7 @@ describe('AuthController', () => {
         ExtensionAuthController,
         MagicLinkController,
         OAuthController,
-        TwoFactorController,
+        MultiFactorController,
       ],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
@@ -126,7 +127,9 @@ describe('AuthController', () => {
 
     controller = module.get<AuthController>(AuthController);
     oauthController = module.get<OAuthController>(OAuthController);
-    twoFactorController = module.get<TwoFactorController>(TwoFactorController);
+    multiFactorController = module.get<MultiFactorController>(
+      MultiFactorController,
+    );
     magicLinkController = module.get<MagicLinkController>(MagicLinkController);
     extensionAuthController = module.get<ExtensionAuthController>(
       ExtensionAuthController,
@@ -342,7 +345,7 @@ describe('AuthController', () => {
     it('applies CustomThrottlerGuard before MfaAuthGuard to rate-limit before auth processing', () => {
       const guards: unknown[] = Reflect.getMetadata(
         '__guards__',
-        TwoFactorController.prototype.verifyOtp,
+        MultiFactorController.prototype.verifyOtp,
       );
       expect(guards).toContain(CustomThrottlerGuard);
       expect(guards).toContain(MfaAuthGuard);
@@ -351,20 +354,23 @@ describe('AuthController', () => {
       );
     });
 
-    it('delegates to AuthService.verifyOtp with userId, code, and method', async () => {
-      const request = { user: { userId: USER_ID } } as never;
+    it('delegates to AuthService.verifyOtp with userId, code, method, and the nonce from the MFA token', async () => {
+      const request = {
+        user: { userId: USER_ID, nonce: 'mfa-nonce-abc' },
+      } as never;
       const body = {
         mfaToken: 'mfa-tok',
         code: '123456',
         method: 'totp' as const,
       };
 
-      const result = await twoFactorController.verifyOtp(request, body);
+      const result = await multiFactorController.verifyOtp(request, body);
 
       expect(authServiceMock.verifyOtp).toHaveBeenCalledWith(
         USER_ID,
         '123456',
         'totp',
+        'mfa-nonce-abc',
       );
       expect(result).toEqual({
         accessToken: ACCESS_TOKEN,
@@ -384,7 +390,7 @@ describe('AuthController', () => {
         setupResult,
       );
 
-      const result = await twoFactorController.totpSetup(request);
+      const result = await multiFactorController.totpSetup(request);
 
       expect(totpServiceMock.generateSetup).toHaveBeenCalledWith(
         USER_ID,
@@ -402,7 +408,7 @@ describe('AuthController', () => {
         recoveryCodes,
       );
 
-      const result = await twoFactorController.totpVerifySetup(request, {
+      const result = await multiFactorController.totpVerifySetup(request, {
         code: '123456',
       });
 
@@ -458,16 +464,16 @@ describe('AuthController', () => {
     });
   });
 
-  describe('disable2fa', () => {
-    it('delegates to AuthService.disable2fa with userId and credentials', async () => {
+  describe('disableMfa', () => {
+    it('delegates to AuthService.disableMfa with userId and credentials', async () => {
       const request = { user: { userId: USER_ID } } as never;
-      (authServiceMock.disable2fa as jest.Mock).mockResolvedValue(undefined);
+      (authServiceMock.disableMfa as jest.Mock).mockResolvedValue(undefined);
 
-      await twoFactorController.disable2fa(request, {
+      await multiFactorController.disableMfa(request, {
         currentPassword: 'open-sesame',
       });
 
-      expect(authServiceMock.disable2fa).toHaveBeenCalledWith(
+      expect(authServiceMock.disableMfa).toHaveBeenCalledWith(
         USER_ID,
         'open-sesame',
         undefined,
@@ -483,7 +489,7 @@ describe('AuthController', () => {
         recoveryCodes,
       );
 
-      const result = await twoFactorController.regenerateRecoveryCodes(
+      const result = await multiFactorController.regenerateRecoveryCodes(
         request,
         {
           currentPassword: 'open-sesame',
@@ -604,46 +610,23 @@ describe('AuthController', () => {
   });
 
   describe('googleLink', () => {
-    it('redirects to the Google OAuth authorization URL', () => {
-      process.env.GOOGLE_CLIENT_ID = 'test-client-id';
-      process.env.GOOGLE_LINK_CALLBACK_URL =
-        'https://api.example.com/auth/google/link/callback';
-      process.env.JWT_SECRET = 'test-secret';
+    it('delegates to oauthAccountService.buildGoogleLinkUrl with the userId and returns its result', () => {
+      const expectedUrl =
+        'https://accounts.google.com/o/oauth2/v2/auth?client_id=test-client-id&state=signed-state';
+      (oauthAccountServiceMock.buildGoogleLinkUrl as jest.Mock).mockReturnValue(
+        { url: expectedUrl },
+      );
 
       const request = {
         user: { userId: USER_ID },
       } as unknown as AuthRequest;
-      const response = { redirect: jest.fn() } as unknown as Response;
 
-      oauthController.googleLink(request, response);
+      const result = oauthController.googleLink(request);
 
-      expect(response.redirect).toHaveBeenCalledWith(
-        expect.stringContaining('https://accounts.google.com/o/oauth2/v2/auth'),
+      expect(oauthAccountServiceMock.buildGoogleLinkUrl).toHaveBeenCalledWith(
+        USER_ID,
       );
-    });
-
-    it('redirect URL contains required OAuth query parameters', () => {
-      process.env.GOOGLE_CLIENT_ID = 'test-client-id';
-      process.env.GOOGLE_LINK_CALLBACK_URL =
-        'https://api.example.com/auth/google/link/callback';
-      process.env.JWT_SECRET = 'test-secret';
-
-      const request = {
-        user: { userId: USER_ID },
-      } as unknown as AuthRequest;
-      const redirectMock = jest.fn();
-      const response = { redirect: redirectMock } as unknown as Response;
-
-      oauthController.googleLink(request, response);
-
-      const redirectUrl = redirectMock.mock.calls[0][0] as string;
-      const url = new URL(redirectUrl);
-      expect(url.searchParams.get('client_id')).toBe('test-client-id');
-      expect(url.searchParams.get('redirect_uri')).toBe(
-        'https://api.example.com/auth/google/link/callback',
-      );
-      expect(url.searchParams.get('response_type')).toBe('code');
-      expect(url.searchParams.get('scope')).toBeTruthy();
+      expect(result).toEqual({ url: expectedUrl });
     });
   });
 
@@ -678,31 +661,19 @@ describe('AuthController', () => {
       );
     });
 
-    it('redirects with link_error=email_mismatch when BadRequestException is thrown', async () => {
+    it('redirects with link_error=unknown when an unexpected error is thrown', async () => {
       process.env.APP_URL = 'https://app.example.com';
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-      const response = { redirect: jest.fn() } as unknown as Response;
-      (
-        oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
-      ).mockRejectedValue(new BadRequestException('Email mismatch'));
-
-      await oauthController.googleLinkCallback(request, response);
-
-      expect(response.redirect).toHaveBeenCalledWith(
-        'https://app.example.com/settings?link_error=email_mismatch',
-      );
-    });
-
-    it('re-throws unexpected errors from linkOAuthAccountToUser', async () => {
       const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
       const response = { redirect: jest.fn() } as unknown as Response;
       (
         oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
       ).mockRejectedValue(new Error('Database connection lost'));
 
-      await expect(
-        oauthController.googleLinkCallback(request, response),
-      ).rejects.toThrow('Database connection lost');
+      await oauthController.googleLinkCallback(request, response);
+
+      expect(response.redirect).toHaveBeenCalledWith(
+        'https://app.example.com/settings?link_error=unknown',
+      );
     });
   });
 

@@ -8,6 +8,7 @@ function renderView(
 ) {
   const props: React.ComponentProps<typeof MfaView> = {
     error: null,
+    errorReference: createRef<HTMLParagraphElement>(),
     loading: false,
     mfaChallenge: 'totp',
     mfaCode: '',
@@ -25,7 +26,7 @@ describe('MfaView — TOTP challenge', () => {
   it('renders the TOTP heading and input', () => {
     renderView({ mfaChallenge: 'totp' });
     expect(
-      screen.getByRole('heading', { name: /two-factor authentication/i }),
+      screen.getByRole('heading', { name: /multi-factor authentication/i }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/authenticator code/i)).toHaveAttribute(
       'id',

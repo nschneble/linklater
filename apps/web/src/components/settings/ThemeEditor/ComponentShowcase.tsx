@@ -1,31 +1,9 @@
+import ShowcaseSection from './ShowcaseSection';
 import { useState } from 'react';
-import type { ReactNode } from 'react';
 import Alert from '../../common/Alert';
 import FormInput from '../../common/FormInput';
 import IconButton from '../../common/IconButton';
 import PrimaryButton from '../../common/PrimaryButton';
-import TabButton from '../../common/TabButton';
-
-/**
- * A labeled section within `ComponentShowcase`. Renders a small-caps title
- * above its children.
- */
-function ShowcaseSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <div>
-      <p className="mb-3 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
-        {title}
-      </p>
-      {children}
-    </div>
-  );
-}
 
 const SURFACE_ITEMS = [
   { label: 'Background', variable: '--bg' },
@@ -56,7 +34,7 @@ export default function ComponentShowcase() {
               style={{ backgroundColor: `var(${variable})` }}
             >
               <p className="text-[var(--text)] text-xs font-medium">{label}</p>
-              <p className="text-[var(--text-subtle)] text-[0.65rem] font-mono">
+              <p className="text-[var(--text-muted)] text-[0.65rem] font-mono">
                 {variable}
               </p>
             </div>
@@ -129,11 +107,11 @@ export default function ComponentShowcase() {
       </ShowcaseSection>
 
       <ShowcaseSection title="Tabs">
-        <div
-          className="relative grid grid-cols-2 p-1 bg-[var(--bg-surface)] border-shadow hover:border-shadow text-xs rounded-full"
-          role="tablist"
-          aria-label="Tab example"
-        >
+        {/* read-only style preview, not a real tab widget — plain buttons
+            (no role="tab"/"tablist") so we don't advertise a tablist that
+            controls no panel. mirrors TabButton's active style + circle-dot
+            indicator + no-width-shift grid via aria-pressed. */}
+        <div className="relative grid grid-cols-2 p-1 bg-[var(--bg-surface)] border-shadow hover:border-shadow text-xs rounded-full">
           <div
             aria-hidden="true"
             className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-[var(--text)] rounded-full"
@@ -143,20 +121,35 @@ export default function ComponentShowcase() {
                 activeTab === 'read' ? 'translateX(100%)' : 'translateX(0)',
             }}
           />
-          <TabButton
-            className="px-3 py-1.5"
-            isActive={activeTab === 'unread'}
-            onClick={() => setActiveTab('unread')}
-          >
-            Unread
-          </TabButton>
-          <TabButton
-            className="px-3 py-1.5"
-            isActive={activeTab === 'read'}
-            onClick={() => setActiveTab('read')}
-          >
-            Read
-          </TabButton>
+          {(['unread', 'read'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              aria-pressed={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+              className="group relative z-10 px-3 py-1.5 text-[var(--text-muted)] font-semibold aria-pressed:text-[var(--bg)] aria-pressed:font-extrabold rounded-full transition-colors duration-200 cursor-pointer"
+            >
+              <span className="grid justify-center">
+                <span
+                  className="col-start-1 row-start-1 invisible flex items-center justify-center gap-1 font-extrabold"
+                  aria-hidden="true"
+                >
+                  <i
+                    className="fa-solid fa-circle-dot text-[0.4rem]"
+                    aria-hidden="true"
+                  />
+                  {tab === 'unread' ? 'Unread' : 'Read'}
+                </span>
+                <span className="col-start-1 row-start-1 flex items-center justify-center gap-1">
+                  <i
+                    className="hidden group-aria-pressed:inline fa-solid fa-circle-dot text-[0.4rem]"
+                    aria-hidden="true"
+                  />
+                  {tab === 'unread' ? 'Unread' : 'Read'}
+                </span>
+              </span>
+            </button>
+          ))}
         </div>
       </ShowcaseSection>
 
@@ -198,7 +191,7 @@ export default function ComponentShowcase() {
             <p className="text-[var(--accent-fg)] text-xs font-semibold">
               Accent surface
             </p>
-            <p className="text-[var(--accent-fg)] text-[0.65rem] opacity-75">
+            <p className="text-[var(--accent-fg)] text-[0.65rem]">
               --accent-fg on --accent
             </p>
           </div>

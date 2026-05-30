@@ -1,6 +1,6 @@
 import { useThemeStyling } from '../../theme/ThemeContext';
 import { resolveThemeClasses, type ThemeClassMap } from '../../lib/styles';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 
 /**
  * Inline alert banner used for form-level error and success messages.
@@ -15,9 +15,7 @@ import type { ReactNode } from 'react';
  * Use directly below the field or form section it relates to.
  */
 interface AlertProps {
-  /** The message content. Can include inline elements. */
   children: ReactNode;
-  /** Additional Tailwind classes for layout overrides (e.g. `"sm:ml-2"`). */
   className?: string;
   /**
    * Font Awesome icon class to render before the children (without `fa-solid`
@@ -27,7 +25,14 @@ interface AlertProps {
   icon?: string;
   /** Stable `id` so inputs can reference this alert via `aria-describedby`. */
   id?: string;
-  /** `'error'` renders red; `'success'` renders green. */
+  /** Forwarded to the underlying `<p>` so callers can `.focus()` the alert. */
+  ref?: Ref<HTMLParagraphElement>;
+  /**
+   * When set, makes the alert programmatically focusable so callers can
+   * `.focus()` it on appearance — needed when a sibling button keeps focus
+   * and a focused element's own re-render is not reliably re-announced.
+   */
+  tabIndex?: number;
   variant: 'error' | 'success';
 }
 
@@ -77,6 +82,8 @@ export default function Alert({
   className = '',
   icon,
   id,
+  ref,
+  tabIndex,
   variant,
 }: AlertProps) {
   const { baseTheme, mode } = useThemeStyling();
@@ -91,7 +98,9 @@ export default function Alert({
   return (
     <p
       id={id}
-      className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 ${resolvedClasses} ${className}`}
+      ref={ref}
+      tabIndex={tabIndex}
+      className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${resolvedClasses} ${className}`}
       role={variantRoles[variant]}
     >
       <i className={`fa-solid ${resolvedIcon} text-xs`} aria-hidden="true" />

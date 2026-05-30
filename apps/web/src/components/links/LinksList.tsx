@@ -132,13 +132,18 @@ export default function LinksList({
 
       {loadingLinks && page > 1 && <LinkCardSkeleton />}
 
-      {pagination && links.length < pagination.total && !loadingLinks && (
-        <div className="flex justify-center pt-2">
-          <IconButton variant="elevated" onClick={onLoadMore}>
-            {`Load more (${pagination.total - links.length} remaining)`}
-          </IconButton>
-        </div>
-      )}
+      {pagination &&
+        // "Less doesn't need more": never offer a Load more button for a
+        // single trailing item — `useLinksData` auto-loads that case so the
+        // remaining link arrives without a click.
+        pagination.total - links.length > 1 &&
+        !loadingLinks && (
+          <div className="flex justify-center pt-2">
+            <IconButton variant="elevated" onClick={onLoadMore}>
+              {`Load more (${pagination.total - links.length} remaining)`}
+            </IconButton>
+          </div>
+        )}
     </div>
   );
 }

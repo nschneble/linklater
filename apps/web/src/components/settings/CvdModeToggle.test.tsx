@@ -37,13 +37,6 @@ beforeEach(() => {
 });
 
 describe('CvdModeToggle', () => {
-  it('renders the Accessibility heading', () => {
-    render(<CvdModeToggle />);
-    expect(
-      screen.getByRole('heading', { name: /accessibility/i }),
-    ).toBeInTheDocument();
-  });
-
   it('renders the toggle button with role="switch"', () => {
     render(<CvdModeToggle />);
     expect(screen.getByRole('switch')).toBeInTheDocument();

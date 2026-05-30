@@ -4,28 +4,17 @@ import { FOCUS_RING } from '../../lib/styles';
 /**
  * A single tab within a `role="tablist"` container.
  *
- * Renders as a `<button>` with `role="tab"` and `aria-selected` set from
- * `isActive`. The active indicator (a sliding pill) is rendered separately
- * by the parent using an `aria-hidden` `<div>` so that the text color
- * transitions correctly over the highlight.
- *
- * When active, renders a small `fa-circle-dot` icon to the left of the label
- * as an additional non-color active indicator — particularly useful in the
- * Apollo 10½ CVD-friendly theme.
- *
- * Accepts all native `<button>` attributes (e.g. `aria-controls`) so the
- * parent tablist can wire up proper panel associations.
- *
- * Used in `LinksToolbar` (Unread/Read tabs) and `AuthForm` (Log in/Sign up).
+ * The active indicator (a sliding pill) is rendered separately by the parent
+ * using an `aria-hidden` `<div>` so the text color transitions correctly over
+ * the highlight. When active, the tab also renders a small `fa-circle-dot`
+ * icon as a non-color active indicator — useful in the Apollo 10½ CVD theme.
  */
 interface TabButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  /** Tab label content. */
   children: ReactNode;
-  /** Whether this tab is currently selected. Drives `aria-selected`. */
+  // drives `aria-selected`
   isActive: boolean;
-  /** Called when the tab is clicked. Parent is responsible for navigation. */
+  // parent handles navigation
   onClick: () => void;
-  /** Additional Tailwind classes for sizing/spacing overrides. */
   className?: string;
 }
 
@@ -38,11 +27,7 @@ export default function TabButton({
 }: TabButtonProps) {
   return (
     <button
-      className={`relative z-10 w-full pl-4 pr-4.5 ${FOCUS_RING} rounded-full transition-colors duration-200 ${
-        isActive
-          ? 'text-[var(--bg)] font-extrabold'
-          : 'text-[var(--text-muted)] font-semibold cursor-pointer'
-      } ${className}`}
+      className={`relative z-10 w-full pl-4 pr-4.5 text-[var(--text-muted)] font-semibold aria-selected:text-[var(--bg)] aria-selected:font-extrabold ${FOCUS_RING} rounded-full transition-colors duration-200 cursor-pointer ${className}`}
       type="button"
       role="tab"
       tabIndex={isActive ? 0 : -1}

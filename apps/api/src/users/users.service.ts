@@ -9,6 +9,8 @@ import {
 import { Prisma, PrismaService } from '../prisma/index.js';
 import { withoutPasswordHash } from './users.utils.js';
 import { VALID_MODES, VALID_THEMES } from './users.constants.js';
+import { UserMfaService } from './user-mfa.service.js';
+import { UserOAuthService } from './user-oauth.service.js';
 import * as bcrypt from 'bcryptjs';
 
 export { VALID_MODES, VALID_THEMES };
@@ -35,6 +37,11 @@ export interface UpdateMeInput {
  * that return user data call `withoutPasswordHash` before returning so that
  * password hashes are never exposed to callers.
  *
+ * OAuth-account persistence is delegated to `UserOAuthService`; MFA/TOTP and
+ * recovery-code persistence is delegated to `UserMfaService`. This service
+ * retains a stable public surface so all 9 consumer call sites remain
+ * unmodified.
+ *
  * Token management methods (verification, reset, pending email) are kept here
  * rather than in `AuthService` so that Prisma operations remain in one place.
  * `AuthService` is responsible for the *logic* (generating tokens, sending
@@ -42,7 +49,15 @@ export interface UpdateMeInput {
  */
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userOAuthService: UserOAuthService,
+    private readonly userMfaService: UserMfaService,
+  ) {}
+
+  // ---------------------------------------------------------------------------
+  // Core user CRUD
+  // ---------------------------------------------------------------------------
 
   /**
    * Creates a new user account. Hashes the password with bcrypt at cost 12
@@ -106,7 +121,7 @@ export class UsersService {
       if (!user) throw new NotFoundException('User not found');
       if (!user.passwordHash) {
         throw new BadRequestException(
-          'Use the set-password endpoint to add a password to a social login account',
+          'Use the set-password endpoint to add a password to an IdP account',
         );
       }
       const isValid = await bcrypt.compare(
@@ -193,6 +208,10 @@ export class UsersService {
     await this.prisma.user.delete({ where: { id } });
   }
 
+  // ---------------------------------------------------------------------------
+  // Password / email persistence
+  // ---------------------------------------------------------------------------
+
   /**
    * Replaces the user's password hash and clears the reset token. Called
    * after `AuthService` has validated the token and its expiry.
@@ -266,59 +285,6 @@ export class UsersService {
     }
   }
 
-  async createOAuthUser(email: string) {
-    const user = await this.prisma.user.create({
-      data: { email, passwordHash: null, emailVerifiedAt: new Date() },
-    });
-    return withoutPasswordHash(user);
-  }
-
-  async createOAuthUserAndLink(
-    email: string,
-    provider: string,
-    providerId: string,
-  ) {
-    return this.prisma.$transaction(async (transaction) => {
-      const user = await transaction.user.create({
-        data: { email, passwordHash: null, emailVerifiedAt: new Date() },
-      });
-      await transaction.oAuthAccount.create({
-        data: { userId: user.id, provider, providerId },
-      });
-      return withoutPasswordHash(user);
-    });
-  }
-
-  async findOAuthAccount(provider: string, providerId: string) {
-    return this.prisma.oAuthAccount.findUnique({
-      where: { provider_providerId: { provider, providerId } },
-      include: { user: true },
-    });
-  }
-
-  async linkOAuthAccount(userId: string, provider: string, providerId: string) {
-    await this.prisma.oAuthAccount.create({
-      data: { userId, provider, providerId },
-    });
-  }
-
-  async listOAuthAccounts(
-    userId: string,
-  ): Promise<{ provider: string; connectedAt: Date }[]> {
-    const accounts = await this.prisma.oAuthAccount.findMany({
-      where: { userId },
-      select: { provider: true, createdAt: true },
-    });
-    return accounts.map((account) => ({
-      provider: account.provider,
-      connectedAt: account.createdAt,
-    }));
-  }
-
-  async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
-    await this.prisma.oAuthAccount.deleteMany({ where: { userId, provider } });
-  }
-
   async setFirstPassword(userId: string, password: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
@@ -351,86 +317,117 @@ export class UsersService {
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // OAuth-account delegation (thin pass-throughs to UserOAuthService)
+  // ---------------------------------------------------------------------------
+
+  async createOAuthUser(email: string) {
+    return this.userOAuthService.createOAuthUser(email);
+  }
+
+  async createOAuthUserAndLink(
+    email: string,
+    provider: string,
+    providerId: string,
+    providerEmail: string,
+  ) {
+    return this.userOAuthService.createOAuthUserAndLink(
+      email,
+      provider,
+      providerId,
+      providerEmail,
+    );
+  }
+
+  async findOAuthAccount(provider: string, providerId: string) {
+    return this.userOAuthService.findOAuthAccount(provider, providerId);
+  }
+
+  async linkOAuthAccount(
+    userId: string,
+    provider: string,
+    providerId: string,
+    providerEmail: string,
+  ) {
+    return this.userOAuthService.linkOAuthAccount(
+      userId,
+      provider,
+      providerId,
+      providerEmail,
+    );
+  }
+
+  async updateOAuthProviderEmail(
+    userId: string,
+    provider: string,
+    providerId: string,
+    providerEmail: string,
+  ): Promise<void> {
+    return this.userOAuthService.updateOAuthProviderEmail(
+      userId,
+      provider,
+      providerId,
+      providerEmail,
+    );
+  }
+
+  async listOAuthAccounts(userId: string) {
+    return this.userOAuthService.listOAuthAccounts(userId);
+  }
+
+  async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
+    return this.userOAuthService.unlinkOAuthAccount(userId, provider);
+  }
+
+  // ---------------------------------------------------------------------------
+  // MFA / TOTP / recovery-code delegation (thin pass-throughs to UserMfaService)
+  // ---------------------------------------------------------------------------
+
   async saveTotpSecret(userId: string, encryptedSecret: string) {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        totpSecret: encryptedSecret,
-        totpEnabledAt: null,
-        totpVerifiedAt: null,
-      },
-    });
+    return this.userMfaService.saveTotpSecret(userId, encryptedSecret);
   }
 
-  async updateTotpLastUsedStep(id: string, step: number) {
-    await this.prisma.user.update({
-      where: { id },
-      data: { totpLastUsedStep: step },
-    });
+  async clearPendingTotpSecret(userId: string): Promise<void> {
+    return this.userMfaService.clearPendingTotpSecret(userId);
   }
 
-  /**
-   * Atomically enables TOTP, records the verified time step (replay prevention),
-   * and replaces any existing recovery codes with the provided set.
-   */
+  async setMfaNonce(id: string, nonce: string): Promise<void> {
+    return this.userMfaService.setMfaNonce(id, nonce);
+  }
+
+  async clearMfaNonce(id: string): Promise<void> {
+    return this.userMfaService.clearMfaNonce(id);
+  }
+
+  async updateTotpLastUsedStep(id: string, step: number): Promise<boolean> {
+    return this.userMfaService.updateTotpLastUsedStep(id, step);
+  }
+
   async enableTotpWithRecoveryCodes(
     userId: string,
     codeHashes: string[],
     lastUsedStep: number,
   ) {
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          totpEnabledAt: new Date(),
-          totpVerifiedAt: new Date(),
-          totpLastUsedStep: lastUsedStep,
-        },
-      }),
-      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
-      this.prisma.recoveryCode.createMany({
-        data: codeHashes.map((codeHash) => ({ userId, codeHash })),
-      }),
-    ]);
+    return this.userMfaService.enableTotpWithRecoveryCodes(
+      userId,
+      codeHashes,
+      lastUsedStep,
+    );
   }
 
-  /**
-   * Atomically invalidates all existing recovery codes and stores a fresh set.
-   */
   async reissueRecoveryCodes(userId: string, codeHashes: string[]) {
-    await this.prisma.$transaction([
-      this.prisma.recoveryCode.deleteMany({ where: { userId } }),
-      this.prisma.recoveryCode.createMany({
-        data: codeHashes.map((codeHash) => ({ userId, codeHash })),
-      }),
-    ]);
+    return this.userMfaService.reissueRecoveryCodes(userId, codeHashes);
   }
 
   async findUnusedRecoveryCodes(userId: string) {
-    return this.prisma.recoveryCode.findMany({
-      where: { userId, usedAt: null },
-    });
+    return this.userMfaService.findUnusedRecoveryCodes(userId);
   }
 
-  async markRecoveryCodeUsed(id: string) {
-    await this.prisma.recoveryCode.update({
-      where: { id },
-      data: { usedAt: new Date() },
-    });
+  async markRecoveryCodeUsed(id: string): Promise<boolean> {
+    return this.userMfaService.markRecoveryCodeUsed(id);
   }
 
-  async disableTwoFactor(id: string) {
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id },
-        data: {
-          totpSecret: null,
-          totpEnabledAt: null,
-          totpVerifiedAt: null,
-          totpLastUsedStep: null,
-        },
-      }),
-      this.prisma.recoveryCode.deleteMany({ where: { userId: id } }),
-    ]);
+  async disableMultiFactor(id: string) {
+    return this.userMfaService.disableMultiFactor(id);
   }
 }

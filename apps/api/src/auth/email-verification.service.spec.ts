@@ -1,6 +1,18 @@
 import { jest } from '@jest/globals';
 import * as bcrypt from 'bcryptjs';
 
+class MockPrismaClientKnownRequestError extends Error {
+  code: string;
+  constructor(message: string, { code }: { code: string }) {
+    super(message);
+    this.code = code;
+  }
+}
+
+jest.mock('../prisma/generated/client', () => ({
+  Prisma: { PrismaClientKnownRequestError: MockPrismaClientKnownRequestError },
+}));
+
 import {
   BadRequestException,
   ConflictException,
@@ -8,12 +20,22 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Prisma } from '../prisma/generated/client';
 
 import { EmailVerificationService } from './email-verification.service';
 import { TotpService } from './totp.service';
 import { EmailService } from '../email/email.service';
 import { UserTokensService } from '../users/user-tokens.service';
 import { UsersService } from '../users/users.service';
+
+const makeP2002 = () =>
+  new (
+    Prisma as {
+      PrismaClientKnownRequestError: typeof MockPrismaClientKnownRequestError;
+    }
+  ).PrismaClientKnownRequestError('Unique constraint failed', {
+    code: 'P2002',
+  });
 
 const NEW_EMAIL = 'new.email@addy.com';
 const PENDING_EMAIL_TOKEN = 'pending-email-token-abc';
@@ -331,7 +353,7 @@ describe('EmailVerificationService', () => {
   });
 
   describe('requestEmailChange', () => {
-    const makeUserNoTwoFactor = (overrides = {}) => ({
+    const makeUserNoMultiFactor = (overrides = {}) => ({
       id: USER_ID,
       email: USER_EMAIL,
       theme: 'dazed-and-confused',
@@ -341,7 +363,7 @@ describe('EmailVerificationService', () => {
 
     it('stores pending email and sends a verification email to the new address', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor(),
+        makeUserNoMultiFactor(),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
       (userTokensServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
@@ -368,7 +390,7 @@ describe('EmailVerificationService', () => {
 
     it('throws ConflictException when the new email is already in use', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor(),
+        makeUserNoMultiFactor(),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         id: 'other-user',
@@ -382,7 +404,7 @@ describe('EmailVerificationService', () => {
 
     it('allows the request when the new email belongs to the same user (re-verify)', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor(),
+        makeUserNoMultiFactor(),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         id: USER_ID,
@@ -400,9 +422,9 @@ describe('EmailVerificationService', () => {
       ).resolves.not.toThrow();
     });
 
-    it('throws ConflictException before consuming a 2FA credential when the new email is taken', async () => {
+    it('throws ConflictException before consuming a MFA credential when the new email is taken', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+        makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         id: 'other-user',
@@ -416,9 +438,9 @@ describe('EmailVerificationService', () => {
       expect(totpServiceMock.verifyCode).not.toHaveBeenCalled();
     });
 
-    it('throws ForbiddenException when 2FA is enabled and no code is provided', async () => {
+    it('throws ForbiddenException when MFA is enabled and no code is provided', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+        makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
 
@@ -427,9 +449,9 @@ describe('EmailVerificationService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('allows email change when 2FA is enabled and valid TOTP code is provided', async () => {
+    it('allows email change when MFA is enabled and valid TOTP code is provided', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+        makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
@@ -450,9 +472,9 @@ describe('EmailVerificationService', () => {
       );
     });
 
-    it('throws UnauthorizedException when 2FA is enabled and TOTP code is invalid', async () => {
+    it('throws UnauthorizedException when MFA is enabled and TOTP code is invalid', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+        makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(false);
 
@@ -461,19 +483,19 @@ describe('EmailVerificationService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('allows email change using a recovery code when 2FA is enabled', async () => {
+    it('allows email change using a recovery code when MFA is enabled', async () => {
       const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
       const realHash = await bcrypt.hash(REAUTH_RECOVERY_CODE, 1);
       const codeId = 'rc-email-1';
 
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+        makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
         [{ id: codeId, codeHash: realHash }],
       );
       (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
-        undefined,
+        true,
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
       (userTokensServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
@@ -498,7 +520,7 @@ describe('EmailVerificationService', () => {
       const differentHash = await bcryptModule.hash('zzzzz-zzzzz-zzzzz', 1);
 
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
-        makeUserNoTwoFactor({ totpEnabledAt: new Date() }),
+        makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
       (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
@@ -586,6 +608,27 @@ describe('EmailVerificationService', () => {
       await expect(
         service.confirmEmailChange(PENDING_EMAIL_TOKEN),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    // The pendingEmail uniqueness check at request time races with another
+    // user claiming the same address before confirm runs. Before this map,
+    // the Prisma P2002 escaped as an opaque 500.
+    it('throws ConflictException when the pending email was claimed in the meantime', async () => {
+      (
+        userTokensServiceMock.findByPendingEmailToken as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        pendingEmail: NEW_EMAIL,
+        pendingEmailToken: PENDING_EMAIL_TOKEN,
+        pendingEmailTokenExpiresAt: new Date(Date.now() + 3600000),
+      });
+      (usersServiceMock.confirmPendingEmail as jest.Mock).mockRejectedValue(
+        makeP2002(),
+      );
+
+      await expect(
+        service.confirmEmailChange(PENDING_EMAIL_TOKEN),
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

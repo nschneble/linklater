@@ -6,6 +6,7 @@ jest.mock('../prisma/prisma.service', () => ({
 jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 
 import { MAX_DESCRIPTION_LENGTH } from './metadata.constants';
+import { MetadataFetcherService } from './metadata-fetcher.service';
 import { MetadataService } from './metadata.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
@@ -136,6 +137,7 @@ describe('MetadataService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        MetadataFetcherService,
         MetadataService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: QueueService, useValue: queueMock },

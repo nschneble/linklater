@@ -13,6 +13,7 @@ import {
 } from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
 import { UserTokensService, UsersService } from '../users/index.js';
+import { Prisma } from '../prisma/index.js';
 import { TotpService } from './totp.service.js';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -29,15 +30,7 @@ export class EmailVerificationService {
 
   async sendVerificationEmail(userId: string) {
     const user = await this.usersService.findById(userId);
-    const rawToken = generateHexToken();
-    const tokenHash = sha256Hex(rawToken);
-    const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
-    await this.userTokensService.updateVerificationToken(
-      userId,
-      tokenHash,
-      expiresAt,
-    );
-    await this.emailService.sendVerification(user.email, rawToken, user.theme);
+    await this.issueVerificationEmail(userId, user.email, user.theme);
   }
 
   async verifyEmail(rawToken: string) {
@@ -66,15 +59,7 @@ export class EmailVerificationService {
       throw new BadRequestException('Email is already verified');
     }
 
-    const rawToken = generateHexToken();
-    const tokenHash = sha256Hex(rawToken);
-    const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
-    await this.userTokensService.updateVerificationToken(
-      userId,
-      tokenHash,
-      expiresAt,
-    );
-    await this.emailService.sendVerification(user.email, rawToken, user.theme);
+    await this.issueVerificationEmail(userId, user.email, user.theme);
   }
 
   async forgotPassword(email: string) {
@@ -125,7 +110,7 @@ export class EmailVerificationService {
     if (user.totpEnabledAt) {
       if (!code) {
         throw new ForbiddenException(
-          '2FA is enabled — provide a verification code to change your email',
+          'MFA is enabled — provide a verification code to change your email',
         );
       }
 
@@ -141,9 +126,13 @@ export class EmailVerificationService {
         if (matchIndex === null) {
           throw new UnauthorizedException('Invalid OTP code');
         }
-        await this.usersService.markRecoveryCodeUsed(
+        // Atomic compare-and-swap — see UsersService.markRecoveryCodeUsed.
+        const consumed = await this.usersService.markRecoveryCodeUsed(
           recoveryCodes[matchIndex].id,
         );
+        if (!consumed) {
+          throw new UnauthorizedException('Invalid OTP code');
+        }
       } else {
         const isValid = await this.totpService.verifyCode(user, code);
         if (!isValid) {
@@ -188,6 +177,38 @@ export class EmailVerificationService {
       throw new BadRequestException('Invalid or expired email change link');
     }
 
-    await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
+    // The pendingEmail uniqueness check at request time is racy with another
+    // user claiming the same address between request and confirm. Catch the
+    // unique-constraint violation here and surface it as a clean 409 rather
+    // than letting Prisma's P2002 escape as a 500.
+    try {
+      await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'That email address is no longer available — request the change again with a different address',
+        );
+      }
+      throw error;
+    }
+  }
+
+  private async issueVerificationEmail(
+    userId: string,
+    email: string,
+    theme: string,
+  ) {
+    const rawToken = generateHexToken();
+    const tokenHash = sha256Hex(rawToken);
+    const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
+    await this.userTokensService.updateVerificationToken(
+      userId,
+      tokenHash,
+      expiresAt,
+    );
+    await this.emailService.sendVerification(email, rawToken, theme);
   }
 }

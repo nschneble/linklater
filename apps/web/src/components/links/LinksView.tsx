@@ -1,28 +1,13 @@
-import {
-  lazy,
-  Suspense,
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-} from 'react';
+import { lazy, Suspense, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
 import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
-import { useKeyboardShortcuts } from '../../lib/hooks/useKeyboardShortcuts';
-import { useLinks, type LinksFilter } from '../../lib/hooks/useLinks';
+import { useLinksView } from '../../lib/hooks/useLinksView';
 import LinkForm from './LinkForm';
 import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';
 import Alert from '../common/Alert';
 import Toast from '../common/Toast';
-
-/**
- * How long to wait after the user stops typing before firing the search
- * request.
- */
-const SEARCH_DEBOUNCE_MS = 300;
 
 /**
  * Stable `id` for the link form container, referenced by the toggle
@@ -51,14 +36,6 @@ function ViewError({ message }: { message: string | null }) {
 // initial bundle.
 const KeyboardShortcutsModal = lazy(() => import('./KeyboardShortcutsModal'));
 
-/**
- * Maps the current URL pathname to the links filter.
- * `/read` → `'read'`, everything else → `'unread'`.
- */
-function filterFromPath(pathname: string): LinksFilter {
-  return pathname === '/read' ? 'read' : 'unread';
-}
-
 interface LinksViewProps {
   onCloseUserMenu?: () => void;
 }
@@ -78,147 +55,44 @@ interface LinksViewProps {
  * - Resets search and the `isClearingRead` flag whenever the filter changes.
  */
 export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const filter = filterFromPath(location.pathname);
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedLinkIndex, setSelectedLinkIndex] = useState<number | null>(
-    null,
-  );
-  const [showShortcuts, setShowShortcuts] = useState(false);
-  const [isClearingRead, setIsClearingRead] = useState(false);
-
-  useEffect(() => {
-    if (showShortcuts) onCloseUserMenu?.();
-  }, [showShortcuts, onCloseUserMenu]);
-  const [, startTransition] = useTransition();
-  const dialogReference = useRef<HTMLDivElement>(null);
-  const searchInputReference = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (search === '') {
-      startTransition(() => setDebouncedSearch(''));
-      return;
-    }
-    const timer = setTimeout(
-      () => startTransition(() => setDebouncedSearch(search)),
-      SEARCH_DEBOUNCE_MS,
-    );
-    return () => clearTimeout(timer);
-  }, [search]);
-
   const {
-    fetchError,
-    readError,
+    debouncedSearch,
     deleteError,
+    fetchError,
+    filter,
+    handleClearRead,
     handleCreated,
-    handleDeleteAllRead,
     handleDismissToast,
     handleLoadMore,
     handleRandom,
-    handleToggleRead,
     handleToggleForm,
+    handleToggleRead,
+    isClearingRead,
     links,
     loadingLinks,
+    onCloseShortcuts,
+    onNavigateRead,
+    onNavigateUnread,
+    onSearch,
+    onToggleShortcuts,
     page,
     pagination,
     randomError,
     randomLoading,
+    readError,
     saveError,
+    search,
+    searchInputReference,
+    selectedLinkIndex,
     showLinkForm,
+    showShortcuts,
     toastMessage,
-  } = useLinks(filter, debouncedSearch);
+  } = useLinksView({ onCloseUserMenu });
 
-  /**
-   * Moves keyboard selection one step down the link list, clamping at
-   * the last card. If nothing is selected yet, selects the first card.
-   */
-  function handleNavigateNextLink() {
-    if (links.length === 0) return;
-    setSelectedLinkIndex((previous) => {
-      if (previous === null) return 0;
-      return Math.min(previous + 1, links.length - 1);
-    });
-  }
-
-  /**
-   * Moves keyboard selection one step up the link list, clamping at
-   * the first card. If nothing is selected yet, selects the last card.
-   */
-  function handleNavigatePrevLink() {
-    if (links.length === 0) return;
-    setSelectedLinkIndex((previous) => {
-      if (previous === null) return links.length - 1;
-      return Math.max(previous - 1, 0);
-    });
-  }
-
-  /**
-   * Opens the keyboard-selected link in a new tab and marks it as read
-   * if it hasn't been read yet. A no-op when no card is selected.
-   */
-  function handleOpenSelectedLink() {
-    if (selectedLinkIndex === null) return;
-    const link = links[selectedLinkIndex];
-    if (!link) return;
-    window.open(link.url, '_blank', 'noreferrer');
-    if (!link.readAt) {
-      handleToggleRead(link);
-    }
-  }
-
-  useKeyboardShortcuts({
-    enabled: true,
-    isShortcutsModalOpen: showShortcuts,
-    onShowUnread: () => navigate('/unread'),
-    onShowRead: () => navigate('/read'),
-    onSearch: () => searchInputReference.current?.focus(),
-    onToggleForm: filter === 'unread' ? handleToggleForm : () => {},
-    onStumble: filter === 'unread' ? handleRandom : () => {},
-    onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
-    onEscape: showLinkForm ? handleToggleForm : undefined,
-    onNavigateNextLink: handleNavigateNextLink,
-    onNavigatePrevLink: handleNavigatePrevLink,
-    onOpenSelectedLink: handleOpenSelectedLink,
-  });
+  const dialogReference = useRef<HTMLDivElement>(null);
 
   useFocusTrap(dialogReference);
   useFocusReturn(showLinkForm);
-
-  useEffect(() => {
-    setIsClearingRead(false);
-    setSearch('');
-    setDebouncedSearch('');
-    setSelectedLinkIndex(null);
-  }, [filter]);
-
-  // clamps selection when the list shrinks (e.g. after a link is marked as read)
-  useEffect(() => {
-    if (selectedLinkIndex !== null && selectedLinkIndex >= links.length) {
-      setSelectedLinkIndex(links.length > 0 ? links.length - 1 : null);
-    }
-  }, [links.length, selectedLinkIndex]);
-
-  // resets selection when search changes, so the highlighted card matches
-  useEffect(() => {
-    setSelectedLinkIndex(null);
-  }, [debouncedSearch]);
-
-  /**
-   * Triggers the card exit animation before calling `handleDeleteAllRead`.
-   * `isClearingRead` is set to `true` immediately so `LinksList` can start
-   * animating cards out, then cleared in `finally` regardless of success
-   * or failure so the UI never gets stuck in the animating state.
-   */
-  async function handleClearRead() {
-    setIsClearingRead(true);
-    try {
-      await handleDeleteAllRead();
-    } finally {
-      setIsClearingRead(false);
-    }
-  }
 
   return (
     <>
@@ -227,7 +101,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         <button
           type="button"
           className="hidden sm:inline-flex text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-help"
-          onClick={() => setShowShortcuts((previous) => !previous)}
+          onClick={onToggleShortcuts}
           aria-label="Show keyboard shortcuts"
           title="Keyboard shortcuts"
         >
@@ -256,10 +130,10 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         searchInputReference={searchInputReference}
         showLinkForm={showLinkForm}
         onClearRead={handleClearRead}
-        onNavigateRead={() => navigate('/read')}
-        onNavigateUnread={() => navigate('/unread')}
+        onNavigateRead={onNavigateRead}
+        onNavigateUnread={onNavigateUnread}
         onRandom={handleRandom}
-        onSearch={setSearch}
+        onSearch={onSearch}
         onToggleForm={handleToggleForm}
       />
 
@@ -271,7 +145,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
 
       {showShortcuts && (
         <Suspense>
-          <KeyboardShortcutsModal onClose={() => setShowShortcuts(false)} />
+          <KeyboardShortcutsModal onClose={onCloseShortcuts} />
         </Suspense>
       )}
 

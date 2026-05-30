@@ -57,9 +57,44 @@ export class TokensController {
     return this.tokensService.findAll(userId);
   }
 
+  @ApiOperation({ summary: 'Get or create the bookmarklet token' })
+  @ApiResponse({
+    status: 200,
+    description:
+      "Returns the user's bookmarklet PAT, creating one if none exists. " +
+      'Unlike user-created PATs, the raw token is returned on every call ' +
+      'so the bookmarklet `javascript:` URL can be re-embedded across devices.',
+  })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @Get('bookmarklet')
+  async getBookmarklet(@Req() request: AuthRequest) {
+    const userId = request.user.userId;
+    return this.tokensService.getOrCreateBookmarkletToken(userId);
+  }
+
+  @ApiOperation({ summary: 'Regenerate the bookmarklet token' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Revokes the current bookmarklet PAT and mints a fresh one. ' +
+      'The returned raw token replaces the previous embedded value.',
+  })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @HttpCode(200)
+  @Post('bookmarklet/regenerate')
+  async regenerateBookmarklet(@Req() request: AuthRequest) {
+    const userId = request.user.userId;
+    return this.tokensService.regenerateBookmarkletToken(userId);
+  }
+
   @ApiOperation({ summary: 'Revoke a personal access token' })
   @ApiParam({ name: 'id', description: 'ID of the token to revoke.' })
   @ApiResponse({ status: 200, description: '{ success: true }' })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Token is a bookmarklet token; use the Regenerate endpoint instead.',
+  })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 404, description: 'Token not found.' })
   @HttpCode(200)

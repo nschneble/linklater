@@ -23,7 +23,15 @@ import {
 import { AnyAuthGuard, type AuthRequest } from '../auth/index.js';
 import { LinksService } from './links.service.js';
 
+import {
+  BulkDeleteResultDto,
+  DeleteResultDto,
+} from './dto/delete-result.dto.js';
 import { CreateLinkDto } from './dto/create-link.dto.js';
+import { LinkResponseDto } from './dto/link-response.dto.js';
+import { PaginatedLinksResponseDto } from './dto/paginated-links-response.dto.js';
+import { RandomLinkResponseDto } from './dto/random-link-response.dto.js';
+import { StumbleResponseDto } from './dto/stumble-response.dto.js';
 import { UpdateLinkDto } from './dto/update-link.dto.js';
 
 /**
@@ -32,7 +40,7 @@ import { UpdateLinkDto } from './dto/update-link.dto.js';
  * user — no route can read or modify another user's links.
  */
 @ApiTags('links')
-@ApiBearerAuth()
+@ApiBearerAuth('pat')
 @Controller('links')
 @UseGuards(AnyAuthGuard)
 export class LinksController {
@@ -48,6 +56,7 @@ export class LinksController {
     status: 201,
     description:
       'Link created or re-added to the unread list. Metadata fetch queued.',
+    type: LinkResponseDto,
   })
   @ApiResponse({ status: 400, description: 'URL is not a valid URL.' })
   @ApiResponse({
@@ -93,6 +102,7 @@ export class LinksController {
   @ApiResponse({
     status: 200,
     description: 'Paginated result set: { data, total, page, limit }.',
+    type: PaginatedLinksResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -140,6 +150,7 @@ export class LinksController {
   @ApiResponse({
     status: 200,
     description: '{ link: Link | null } — null when no links match the filter.',
+    type: RandomLinkResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -172,6 +183,7 @@ export class LinksController {
     status: 200,
     description:
       '{ url: string } when a link is found; { url: null } when the unread list is empty.',
+    type: StumbleResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -191,6 +203,7 @@ export class LinksController {
   @ApiResponse({
     status: 200,
     description: 'The requested link with its metadata.',
+    type: LinkResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -212,6 +225,7 @@ export class LinksController {
   @ApiResponse({
     status: 200,
     description: 'The link unchanged (no editable fields defined yet).',
+    type: LinkResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -232,14 +246,16 @@ export class LinksController {
   @ApiOperation({ summary: 'Mark a link as read' })
   @ApiParam({ name: 'id', description: 'UUID of the link.' })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: 'The updated link with `readAt` set.',
+    type: LinkResponseDto,
   })
   @ApiResponse({
     status: 401,
     description: 'Missing or invalid token (JWT or PAT).',
   })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
+  @HttpCode(200)
   @Post(':id/read')
   async read(@Req() request: AuthRequest, @Param('id') id: string) {
     const userId = request.user.userId;
@@ -250,14 +266,16 @@ export class LinksController {
   @ApiOperation({ summary: 'Mark a link as unread' })
   @ApiParam({ name: 'id', description: 'UUID of the link.' })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: 'The updated link with `readAt` cleared.',
+    type: LinkResponseDto,
   })
   @ApiResponse({
     status: 401,
     description: 'Missing or invalid token (JWT or PAT).',
   })
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
+  @HttpCode(200)
   @Post(':id/unread')
   async unread(@Req() request: AuthRequest, @Param('id') id: string) {
     const userId = request.user.userId;
@@ -275,6 +293,7 @@ export class LinksController {
   @ApiResponse({
     status: 200,
     description: '{ count: number } — the number of links deleted.',
+    type: BulkDeleteResultDto,
   })
   @ApiResponse({
     status: 401,
@@ -289,7 +308,11 @@ export class LinksController {
   /** Permanently deletes a single link by its UUID. */
   @ApiOperation({ summary: 'Permanently delete a single link' })
   @ApiParam({ name: 'id', description: 'UUID of the link.' })
-  @ApiResponse({ status: 200, description: '{ success: true }' })
+  @ApiResponse({
+    status: 200,
+    description: '{ success: true }',
+    type: DeleteResultDto,
+  })
   @ApiResponse({
     status: 401,
     description: 'Missing or invalid token (JWT or PAT).',

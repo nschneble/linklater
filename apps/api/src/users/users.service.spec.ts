@@ -31,6 +31,8 @@ jest.mock('../prisma/generated/client', () => {
 
 import { Prisma } from '../prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { UserMfaService } from './user-mfa.service';
+import { UserOAuthService } from './user-oauth.service';
 import { UsersService } from './users.service';
 
 const KNOWN_PASSWORD = 'open-sesame';
@@ -74,6 +76,7 @@ describe('UsersService', () => {
       deleteMany: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      updateMany: jest.fn(),
     },
     user: {
       create: jest.fn(),
@@ -88,6 +91,8 @@ describe('UsersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
+        UserOAuthService,
+        UserMfaService,
         { provide: PrismaService, useValue: prismaMock },
       ],
     }).compile();
@@ -415,19 +420,29 @@ describe('UsersService', () => {
   });
 
   describe('listOAuthAccounts', () => {
-    it('returns provider and connectedAt for each linked account', async () => {
+    it('returns provider, providerEmail, and connectedAt for each linked account', async () => {
       const now = new Date();
       (prismaMock.oAuthAccount.findMany as jest.Mock).mockResolvedValue([
-        { provider: OAUTH_PROVIDER, createdAt: now },
+        {
+          provider: OAUTH_PROVIDER,
+          providerEmail: USER_EMAIL,
+          createdAt: now,
+        },
       ]);
 
       const result = await service.listOAuthAccounts(USER_ID);
 
       expect(prismaMock.oAuthAccount.findMany).toHaveBeenCalledWith({
         where: { userId: USER_ID },
-        select: { provider: true, createdAt: true },
+        select: { provider: true, providerEmail: true, createdAt: true },
       });
-      expect(result).toEqual([{ provider: OAUTH_PROVIDER, connectedAt: now }]);
+      expect(result).toEqual([
+        {
+          provider: OAUTH_PROVIDER,
+          providerEmail: USER_EMAIL,
+          connectedAt: now,
+        },
+      ]);
     });
 
     it('returns an empty array when no providers are linked', async () => {
@@ -552,7 +567,7 @@ describe('UsersService', () => {
   });
 
   describe('linkOAuthAccount', () => {
-    it('creates an OAuthAccount record linking user to provider', async () => {
+    it('creates an OAuthAccount record linking user to provider with providerEmail', async () => {
       (prismaMock.oAuthAccount.create as jest.Mock).mockResolvedValue(
         undefined,
       );
@@ -561,6 +576,7 @@ describe('UsersService', () => {
         USER_ID,
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
+        USER_EMAIL,
       );
 
       expect(prismaMock.oAuthAccount.create).toHaveBeenCalledWith({
@@ -568,8 +584,48 @@ describe('UsersService', () => {
           userId: USER_ID,
           provider: OAUTH_PROVIDER,
           providerId: OAUTH_PROVIDER_ID,
+          providerEmail: USER_EMAIL,
         },
       });
+    });
+  });
+
+  describe('updateOAuthProviderEmail', () => {
+    it('refreshes providerEmail for the matching OAuth account', async () => {
+      (prismaMock.oAuthAccount.updateMany as jest.Mock).mockResolvedValue({
+        count: 1,
+      });
+
+      await service.updateOAuthProviderEmail(
+        USER_ID,
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        'fresh@gmail.com',
+      );
+
+      expect(prismaMock.oAuthAccount.updateMany).toHaveBeenCalledWith({
+        where: {
+          userId: USER_ID,
+          provider: OAUTH_PROVIDER,
+          providerId: OAUTH_PROVIDER_ID,
+        },
+        data: { providerEmail: 'fresh@gmail.com' },
+      });
+    });
+
+    it('is a no-op when no row matches (concurrent unlink)', async () => {
+      (prismaMock.oAuthAccount.updateMany as jest.Mock).mockResolvedValue({
+        count: 0,
+      });
+
+      await expect(
+        service.updateOAuthProviderEmail(
+          USER_ID,
+          OAUTH_PROVIDER,
+          OAUTH_PROVIDER_ID,
+          'fresh@gmail.com',
+        ),
+      ).resolves.toBeUndefined();
     });
   });
 
@@ -651,17 +707,57 @@ describe('UsersService', () => {
     });
   });
 
+  describe('clearPendingTotpSecret', () => {
+    it('clears the pending TOTP secret when totpEnabledAt is null', async () => {
+      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+      await service.clearPendingTotpSecret(USER_ID);
+
+      expect(prismaMock.user.updateMany).toHaveBeenCalledWith({
+        where: { id: USER_ID, totpEnabledAt: null },
+        data: { totpSecret: null, totpVerifiedAt: null },
+      });
+    });
+
+    it('is a no-op when the row is enabled (filter prevents the update)', async () => {
+      // updateMany returns count: 0 when the WHERE clause matches no rows
+      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.clearPendingTotpSecret(USER_ID),
+      ).resolves.toBeUndefined();
+
+      expect(prismaMock.user.updateMany).toHaveBeenCalledWith({
+        where: { id: USER_ID, totpEnabledAt: null },
+        data: { totpSecret: null, totpVerifiedAt: null },
+      });
+    });
+  });
+
   describe('updateTotpLastUsedStep', () => {
-    it('stores the time step used for replay prevention', async () => {
-      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+    it('CAS-advances totpLastUsedStep and returns true on win', async () => {
+      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
       const step = Math.floor(Date.now() / 1000 / 30);
 
-      await service.updateTotpLastUsedStep(USER_ID, step);
+      const result = await service.updateTotpLastUsedStep(USER_ID, step);
 
-      expect(prismaMock.user.update).toHaveBeenCalledWith({
-        where: { id: USER_ID },
+      expect(prismaMock.user.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: USER_ID,
+          OR: [{ totpLastUsedStep: null }, { totpLastUsedStep: { lt: step } }],
+        },
         data: { totpLastUsedStep: step },
       });
+      expect(result).toBe(true);
+    });
+
+    it('returns false when a parallel request already advanced the step', async () => {
+      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+      const step = Math.floor(Date.now() / 1000 / 30);
+
+      const result = await service.updateTotpLastUsedStep(USER_ID, step);
+
+      expect(result).toBe(false);
     });
   });
 
@@ -684,21 +780,39 @@ describe('UsersService', () => {
   });
 
   describe('markRecoveryCodeUsed', () => {
-    it('sets usedAt on the recovery code record', async () => {
+    it('sets usedAt only when the code is still unused and returns true', async () => {
       const CODE_ID = 'rc-1';
       const prismaMockExtended = prismaMock as unknown as {
-        recoveryCode: { update: jest.Mock };
+        recoveryCode: { updateMany: jest.Mock };
       };
       prismaMockExtended.recoveryCode = {
-        update: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       };
 
-      await service.markRecoveryCodeUsed(CODE_ID);
+      const result = await service.markRecoveryCodeUsed(CODE_ID);
 
-      expect(prismaMockExtended.recoveryCode.update).toHaveBeenCalledWith({
-        where: { id: CODE_ID },
+      expect(prismaMockExtended.recoveryCode.updateMany).toHaveBeenCalledWith({
+        where: { id: CODE_ID, usedAt: null },
         data: { usedAt: expect.any(Date) },
       });
+      expect(result).toBe(true);
+    });
+
+    // A second call for the same code id loses the race. Returning false lets
+    // callers convert that into a clean 401 instead of silently re-issuing a
+    // session on an already-used code.
+    it('returns false when the code was already used by a concurrent request', async () => {
+      const CODE_ID = 'rc-1';
+      const prismaMockExtended = prismaMock as unknown as {
+        recoveryCode: { updateMany: jest.Mock };
+      };
+      prismaMockExtended.recoveryCode = {
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      };
+
+      const result = await service.markRecoveryCodeUsed(CODE_ID);
+
+      expect(result).toBe(false);
     });
   });
 
@@ -724,6 +838,7 @@ describe('UsersService', () => {
         USER_EMAIL,
         'google',
         'google-uid-123',
+        USER_EMAIL,
       );
 
       expect(transactionMock.user.create).toHaveBeenCalledWith(
@@ -739,6 +854,7 @@ describe('UsersService', () => {
           userId: USER_ID,
           provider: 'google',
           providerId: 'google-uid-123',
+          providerEmail: USER_EMAIL,
         },
       });
       expect(result).not.toHaveProperty('passwordHash');
@@ -822,7 +938,7 @@ describe('UsersService', () => {
     });
   });
 
-  describe('disableTwoFactor', () => {
+  describe('disableMultiFactor', () => {
     it('runs a transaction that nullifies TOTP fields and deletes recovery codes', async () => {
       const prismaMockExtended = prismaMock as unknown as {
         $transaction: jest.Mock;
@@ -838,7 +954,7 @@ describe('UsersService', () => {
       };
       (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
 
-      await service.disableTwoFactor(USER_ID);
+      await service.disableMultiFactor(USER_ID);
 
       expect(prismaMockExtended.$transaction).toHaveBeenCalled();
       expect(prismaMock.user.update).toHaveBeenCalledWith(

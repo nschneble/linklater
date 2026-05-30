@@ -246,11 +246,14 @@ describe('useLinksData re-fetch on filter change', () => {
 describe('useLinksData handleLoadMore', () => {
   it('appends the next page results to existing links', async () => {
     const page1 = makeLink({ id: 'p1' });
-    const page2 = makeLink({ id: 'p2' });
+    const page2a = makeLink({ id: 'p2a' });
+    const page2b = makeLink({ id: 'p2b' });
 
     vi.mocked(apiModule.getLinks)
-      .mockResolvedValueOnce(makePaginated([page1], { total: 2 }))
-      .mockResolvedValueOnce(makePaginated([page2], { total: 2, page: 2 }));
+      .mockResolvedValueOnce(makePaginated([page1], { total: 3 }))
+      .mockResolvedValueOnce(
+        makePaginated([page2a, page2b], { total: 3, page: 2 }),
+      );
 
     const { result } = renderHook(() => useLinksData('unread', ''));
 
@@ -260,9 +263,13 @@ describe('useLinksData handleLoadMore', () => {
       result.current.handleLoadMore();
     });
 
-    await waitFor(() => expect(result.current.links).toHaveLength(2));
+    await waitFor(() => expect(result.current.links).toHaveLength(3));
 
-    expect(result.current.links.map((link) => link.id)).toEqual(['p1', 'p2']);
+    expect(result.current.links.map((link) => link.id)).toEqual([
+      'p1',
+      'p2a',
+      'p2b',
+    ]);
   });
 
   it('increments page number after load-more', async () => {
@@ -279,6 +286,127 @@ describe('useLinksData handleLoadMore', () => {
     });
 
     await waitFor(() => expect(result.current.page).toBe(2));
+  });
+});
+
+describe('useLinksData "less doesn\'t need more"', () => {
+  it('bumps limit on load-more when the next page would leave 1 trailing item', async () => {
+    const page1a = makeLink({ id: 'p1a' });
+    const page1b = makeLink({ id: 'p1b' });
+    const page2a = makeLink({ id: 'p2a' });
+    const page2b = makeLink({ id: 'p2b' });
+    const trailing = makeLink({ id: 'trailing' });
+
+    vi.mocked(apiModule.getLinks)
+      .mockResolvedValueOnce(
+        makePaginated([page1a, page1b], { total: 5, limit: 2 }),
+      )
+      .mockResolvedValueOnce(
+        makePaginated([page2a, page2b, trailing], {
+          total: 5,
+          limit: 3,
+          page: 2,
+        }),
+      );
+
+    const { result } = renderHook(() => useLinksData('unread', ''));
+
+    await waitFor(() => expect(result.current.links).toHaveLength(2));
+
+    await act(async () => {
+      result.current.handleLoadMore();
+    });
+
+    await waitFor(() => expect(result.current.links).toHaveLength(5));
+
+    // The second call should carry the bumped limit (limit + 1) to grab
+    // the trailing item in the same request.
+    expect(vi.mocked(apiModule.getLinks).mock.calls[1][0]).toEqual(
+      expect.objectContaining({ limit: 3, page: 2 }),
+    );
+  });
+
+  it('does not bump limit when the next page would leave more than 1 remaining', async () => {
+    vi.mocked(apiModule.getLinks)
+      .mockResolvedValueOnce(
+        makePaginated([makeLink({ id: 'p1' })], { total: 10, limit: 2 }),
+      )
+      .mockResolvedValueOnce(
+        makePaginated([makeLink({ id: 'p2' })], {
+          total: 10,
+          limit: 2,
+          page: 2,
+        }),
+      );
+
+    const { result } = renderHook(() => useLinksData('unread', ''));
+
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+
+    await act(async () => {
+      result.current.handleLoadMore();
+    });
+
+    await waitFor(() => expect(result.current.links).toHaveLength(2));
+
+    // limit override should be undefined — the second call should not pass
+    // a limit at all.
+    const secondCallArguments = vi.mocked(apiModule.getLinks).mock.calls[1][0];
+    expect(secondCallArguments).toEqual(
+      expect.objectContaining({ page: 2, limit: undefined }),
+    );
+  });
+
+  it('auto-loads the trailing item when page 1 leaves exactly 1 remaining', async () => {
+    const page1a = makeLink({ id: 'p1a' });
+    const page1b = makeLink({ id: 'p1b' });
+    const trailing = makeLink({ id: 'trailing' });
+
+    vi.mocked(apiModule.getLinks)
+      .mockResolvedValueOnce(
+        makePaginated([page1a, page1b], { total: 3, limit: 2 }),
+      )
+      .mockResolvedValueOnce(
+        makePaginated([trailing], { total: 3, limit: 2, page: 2 }),
+      );
+
+    const { result } = renderHook(() => useLinksData('unread', ''));
+
+    // No explicit handleLoadMore call — the hook should auto-fire because
+    // the page-1 response leaves a single trailing item.
+    await waitFor(() => expect(result.current.links).toHaveLength(3));
+
+    expect(result.current.links.map((link) => link.id)).toEqual([
+      'p1a',
+      'p1b',
+      'trailing',
+    ]);
+    expect(vi.mocked(apiModule.getLinks)).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not loop when the server returns no new items for the auto-fired follow-up', async () => {
+    const page1a = makeLink({ id: 'p1a' });
+    const page1b = makeLink({ id: 'p1b' });
+
+    // First call returns 2 items with total=3 (triggers auto-fire). Second
+    // call returns nothing but still claims total=3 (server/state drift).
+    // The auto-fire guard must prevent a re-fire loop.
+    vi.mocked(apiModule.getLinks)
+      .mockResolvedValueOnce(
+        makePaginated([page1a, page1b], { total: 3, limit: 2 }),
+      )
+      .mockResolvedValueOnce(
+        makePaginated([], { total: 3, limit: 2, page: 2 }),
+      );
+
+    const { result } = renderHook(() => useLinksData('unread', ''));
+
+    await waitFor(() => expect(result.current.loadingLinks).toBe(false));
+    // Give the effect ample chance to fire again — it must not.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(vi.mocked(apiModule.getLinks)).toHaveBeenCalledTimes(2);
+    expect(result.current.links).toHaveLength(2);
   });
 });
 

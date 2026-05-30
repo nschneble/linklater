@@ -1,26 +1,21 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, Ref } from 'react';
 import { DISABLED, FOCUS_RING } from '../../lib/styles';
 
 /**
- * Accent-colored primary action button used for the main call-to-action in
- * forms and toolbars (e.g. "Save link", "Log in", "Create account").
- *
- * Defaults to `type="submit"` so it can be dropped inside a `<form>` without
- * extra wiring. Pass `type="button"` when using outside a form.
+ * Primary call-to-action button. Defaults to `type="submit"` so it can be
+ * dropped inside a `<form>` without extra wiring; pass `type="button"` when
+ * using outside a form.
  *
  * When `hidden` is `true` the button fades out and becomes non-interactive
  * while still occupying layout space — same pattern as `IconButton`.
- *
- * Accepts all native `<button>` attributes.
  */
 interface PrimaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /**
    * When `true`, the button is invisible and non-interactive but still occupies
    * layout space. Keeps toolbar layouts stable when controls are conditionally shown.
-   *
-   * @default false
    */
   hidden?: boolean;
+  ref?: Ref<HTMLButtonElement>;
 }
 
 export default function PrimaryButton({

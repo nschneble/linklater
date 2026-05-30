@@ -1,8 +1,5 @@
-/** Props for a single `FooterLink` anchor element. */
 interface FooterLinkProps {
-  /** The destination URL or `mailto:` address. */
   href: string;
-  /** Visible link text. */
   label: string;
   /**
    * When `true`, opens in a new browser tab and adds the appropriate
@@ -11,7 +8,6 @@ interface FooterLinkProps {
   newTab?: boolean;
 }
 
-/** A single anchor link in the landing page footer. */
 function FooterLink({ href, label, newTab = false }: FooterLinkProps) {
   return (
     <a

@@ -31,11 +31,15 @@ const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
   success: {
     dark: {
       default: 'bg-emerald-950/20 border-emerald-800/40 text-emerald-400',
+      'nouvelle-vague':
+        'bg-[var(--accent)] border-[var(--accent)] text-[var(--accent-fg)] font-medium',
       'apollo-10-1-2':
         'bg-[var(--state-success)]/15 border-[1.5px] border-[var(--state-success)] text-[var(--state-success-fg)]',
     },
     light: {
       default: 'bg-emerald-100 border-emerald-300 text-emerald-700',
+      'nouvelle-vague':
+        'bg-[var(--accent)] border-[var(--accent)] text-[var(--accent-fg)] font-medium',
       'apollo-10-1-2':
         'bg-[var(--state-success)]/15 border-[1.5px] border-[var(--state-success)] text-[var(--state-success-fg)]',
     },
@@ -76,13 +80,13 @@ const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
 
 /**
  * Compact pill-shaped status indicator used next to labels in settings —
- * Verified/Unverified email, Connected social provider, Enabled 2FA, etc.
+ * Verified/Unverified email, Connected social provider, Enabled MFA, etc.
  *
  * Always renders a variant-specific icon for color-independent meaning in
  * cvd-friendly contexts. The `icon` prop overrides the default when
- * provided. In the Apollo 10½ theme the shape of the pill differs per variant
+ * provided. Every theme also gets a variant-specific pill shape
  * (`rounded-full` for success, `rounded` for warning, `rounded-sm` for info)
- * to provide an additional non-color distinguisher.
+ * as an additional non-color distinguisher.
  */
 export default function StatusBadge({
   variant,

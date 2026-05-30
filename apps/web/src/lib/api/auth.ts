@@ -49,15 +49,19 @@ export async function logout(): Promise<void> {
 export async function getMe() {
   return apiFetch<{
     cvdMode: boolean;
-    connectedProviders: Array<{ provider: string; connectedAt: string }>;
+    connectedProviders: Array<{
+      provider: string;
+      providerEmail: string;
+      connectedAt: string;
+    }>;
     email: string;
     emailVerifiedAt: string | null;
     hasPassword: boolean;
     pendingEmail: string | null;
     mode: string;
     theme: string;
-    twoFactorMethod: 'totp' | null;
-    twoFactorPending: boolean;
+    multiFactorMethod: 'totp' | null;
+    multiFactorPending: boolean;
     userId: string;
     welcomedAt: string | null;
   }>('/auth/me', {
@@ -120,20 +124,52 @@ export async function resetPassword(
   );
 }
 
+/**
+ * Starts or resumes TOTP enrollment.
+ * `POST /auth/mfa/totp/setup`
+ *
+ * Idempotent: if a setup is already pending, the server returns the same
+ * QR code so a scan in progress is not invalidated.
+ *
+ * @returns `{ qrCodeDataUrl, secret }` — the QR image data-URL and the
+ *   base-32 secret for manual entry.
+ * @throws {ApiError} 409 when TOTP is already fully enabled.
+ */
 export async function setupTotp(): Promise<{
   qrCodeDataUrl: string;
   secret: string;
 }> {
-  return apiFetch('/auth/2fa/totp/setup', { method: 'POST' });
+  return apiFetch('/auth/mfa/totp/setup', { method: 'POST' });
 }
 
+/**
+ * Completes TOTP enrollment by verifying the 6-digit code.
+ * `POST /auth/mfa/totp/verify`
+ *
+ * @param code - The current 6-digit code from the authenticator app.
+ * @returns `{ recoveryCodes }` — 10 plaintext codes shown exactly once.
+ * @throws {ApiError} 400 when there is no pending setup or the code is
+ *   invalid.
+ */
 export async function verifyTotpSetup(
   code: string,
 ): Promise<{ recoveryCodes: string[] }> {
-  return apiFetch('/auth/2fa/totp/verify', {
+  return apiFetch('/auth/mfa/totp/verify', {
     body: JSON.stringify({ code }),
     method: 'POST',
   });
+}
+
+/**
+ * Cancels an in-flight TOTP enrollment, clearing the pending secret
+ * server-side. Safe to call even when no setup is pending (no-op).
+ * `DELETE /auth/mfa/totp/setup`
+ *
+ * @throws {ApiError} 409 when TOTP is already fully enabled (use
+ *   `disableMfa` instead).
+ */
+export async function cancelTotpSetup(): Promise<void> {
+  await apiFetch('/auth/mfa/totp/setup', { method: 'DELETE' });
 }
 
 export async function registerMagicLink(email: string): Promise<void> {
@@ -152,15 +188,20 @@ export async function requestMagicLink(email: string): Promise<void> {
   );
 }
 
-export async function verifyMagicLink(
-  token: string,
-): Promise<{ accessToken: string; refreshToken: string }> {
-  const data = await apiFetch<{ accessToken: string; refreshToken: string }>(
+export async function verifyMagicLink(token: string): Promise<LoginResponse> {
+  // The server routes magic-link verification through the same `login()`
+  // helper as password sign-in, so an MFA-enabled account answering a magic
+  // link gets back an `mfaToken` challenge instead of an access token.
+  // Returning `LoginResponse` keeps that branch visible to the caller and
+  // prevents a silent destructure failure for users with TOTP turned on.
+  const data = await apiFetch<LoginResponse>(
     '/auth/verify-magic-link',
     { body: JSON.stringify({ token }), method: 'POST' },
     false,
   );
-  setStoredToken(data.accessToken, data.refreshToken);
+  if ('accessToken' in data) {
+    setStoredToken(data.accessToken, data.refreshToken);
+  }
   return data;
 }
 
@@ -178,11 +219,11 @@ export async function verifyOtp(
   return data;
 }
 
-export async function disable2fa(credentials: {
+export async function disableMfa(credentials: {
   currentPassword?: string;
   code?: string;
 }): Promise<void> {
-  await apiFetch('/auth/2fa', {
+  await apiFetch('/auth/mfa', {
     body: JSON.stringify(credentials),
     method: 'DELETE',
   });
@@ -192,7 +233,7 @@ export async function regenerateRecoveryCodes(credentials: {
   currentPassword?: string;
   code?: string;
 }): Promise<{ recoveryCodes: string[] }> {
-  return apiFetch('/auth/2fa/recovery-codes/regenerate', {
+  return apiFetch('/auth/mfa/recovery-codes/regenerate', {
     body: JSON.stringify(credentials),
     method: 'POST',
   });
@@ -209,4 +250,20 @@ export async function unlinkOAuthProvider(provider: string): Promise<void> {
   await apiFetch(`/auth/providers/${encodeURIComponent(provider)}`, {
     method: 'DELETE',
   });
+}
+
+/**
+ * Initiates an OAuth account-linking flow by asking the API for the
+ * provider's authorization URL. The SPA then navigates the browser to
+ * that URL. We do this via `fetch` (rather than a top-level redirect to
+ * the API endpoint directly) so the bearer JWT can be attached, since
+ * the endpoint is protected by `JwtAuthGuard`.
+ */
+export async function initiateOAuthLink(
+  provider: string,
+): Promise<{ url: string }> {
+  return apiFetch<{ url: string }>(
+    `/auth/${encodeURIComponent(provider)}/link`,
+    { method: 'GET' },
+  );
 }

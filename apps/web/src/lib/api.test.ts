@@ -21,7 +21,7 @@ import {
   ApiError,
   apiFetch,
   createApiToken,
-  disable2fa,
+  disableMfa,
   listApiTokens,
   readLink,
   clearStoredToken,
@@ -321,6 +321,144 @@ describe('apiFetch', () => {
     expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
   });
 
+  it('dedupes concurrent refreshes — two parallel 401s share one /auth/refresh call', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+
+    let resolveRefresh: (value: unknown) => void = () => {};
+    const refreshResponse = new Promise((resolve) => {
+      resolveRefresh = resolve;
+    });
+
+    let retryTargetCallCount = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+
+      if (url.includes('/auth/refresh')) {
+        return refreshResponse;
+      }
+
+      if (url.includes('/retry-target')) {
+        retryTargetCallCount += 1;
+        if (retryTargetCallCount <= 2) {
+          return Promise.resolve({
+            ok: false,
+            status: 401,
+            text: () =>
+              Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          text: () => Promise.resolve(JSON.stringify({ id: 'retried' })),
+        });
+      }
+
+      return Promise.resolve({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const first = apiFetch('/retry-target');
+    const second = apiFetch('/retry-target');
+
+    await vi.waitFor(() => {
+      const refreshCalls = fetchMock.mock.calls.filter(([input]) => {
+        const url =
+          typeof input === 'string' ? input : (input as URL).toString();
+        return url.includes('/auth/refresh');
+      });
+      expect(refreshCalls).toHaveLength(1);
+    });
+
+    resolveRefresh({
+      ok: true,
+      status: 200,
+      text: () =>
+        Promise.resolve(
+          JSON.stringify({
+            accessToken: 'new-jwt',
+            refreshToken: 'new-refresh',
+          }),
+        ),
+      json: () =>
+        Promise.resolve({
+          accessToken: 'new-jwt',
+          refreshToken: 'new-refresh',
+        }),
+    });
+
+    await expect(first).resolves.toEqual({ id: 'retried' });
+    await expect(second).resolves.toEqual({ id: 'retried' });
+
+    const totalRefreshCalls = fetchMock.mock.calls.filter(([input]) => {
+      const url = typeof input === 'string' ? input : (input as URL).toString();
+      return url.includes('/auth/refresh');
+    });
+    expect(totalRefreshCalls).toHaveLength(1);
+  });
+
+  it('allows a new refresh after the previous one settles (failure does not block future attempts)', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Invalid refresh token' })),
+      });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(apiFetch('/first')).rejects.toBeInstanceOf(ApiError);
+    expect(getStoredToken()).toBeNull();
+
+    setStoredToken('another-expired-jwt', 'another-valid-refresh');
+
+    (fetchMock as unknown as Mock)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              accessToken: 'fresh-jwt',
+              refreshToken: 'fresh-refresh',
+            }),
+          ),
+        json: () =>
+          Promise.resolve({
+            accessToken: 'fresh-jwt',
+            refreshToken: 'fresh-refresh',
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ id: 'recovered' })),
+      });
+
+    await expect(apiFetch('/second')).resolves.toEqual({ id: 'recovered' });
+    expect(getStoredToken()).toBe('fresh-jwt');
+  });
+
   it('does not retry when path is /auth/refresh', async () => {
     setStoredToken('expired-jwt', 'valid-refresh');
     const fetchMock = vi.fn().mockResolvedValue({
@@ -384,7 +522,7 @@ describe('login', () => {
     expect(getStoredToken()).toBeNull();
   });
 
-  it('returns mfaToken and mfaMethod when 2FA is required', async () => {
+  it('returns mfaToken and mfaMethod when MFA is required', async () => {
     mockFetch({ mfaToken: 'mfa-tok', mfaMethod: 'email' });
 
     const result = await login('user@example.com', 'password123');
@@ -743,18 +881,18 @@ describe('deleteMe', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 2FA endpoints
+// MFA endpoints
 // ---------------------------------------------------------------------------
 
 describe('setupTotp', () => {
-  it('POSTs to /auth/2fa/totp/setup with auth', async () => {
+  it('POSTs to /auth/mfa/totp/setup with auth', async () => {
     setStoredToken('my-jwt');
     const fetchMock = mockFetch({ qrCodeDataUrl: 'data:...', secret: 'ABC' });
 
     await setupTotp();
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/totp/setup');
+    expect(url).toContain('/auth/mfa/totp/setup');
     expect((options as { method: string }).method).toBe('POST');
     const headers = (options as { headers: Record<string, string> }).headers;
     expect(headers['Authorization']).toBe('Bearer my-jwt');
@@ -762,14 +900,14 @@ describe('setupTotp', () => {
 });
 
 describe('verifyTotpSetup', () => {
-  it('POSTs to /auth/2fa/totp/verify with the 6-digit code', async () => {
+  it('POSTs to /auth/mfa/totp/verify with the 6-digit code', async () => {
     setStoredToken('my-jwt');
     const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
 
     await verifyTotpSetup('123456');
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/totp/verify');
+    expect(url).toContain('/auth/mfa/totp/verify');
     const body = JSON.parse((options as { body: string }).body) as {
       code: string;
     };
@@ -827,6 +965,21 @@ describe('verifyMagicLink', () => {
     expect(body.token).toBe('my-token');
     expect(result).toEqual({ accessToken: 'ml-jwt' });
     expect(getStoredToken()).toBe('ml-jwt');
+  });
+
+  // MFA-enabled accounts hitting a magic link get a challenge back from
+  // the server. The response must be returned as-is so the caller can
+  // surface MfaView instead of trying to destructure a missing accessToken.
+  it('returns the mfa challenge unchanged and does not store any token', async () => {
+    mockFetch({ mfaToken: 'pending-mfa-token', mfaMethod: 'totp' });
+
+    const result = await verifyMagicLink('my-token');
+
+    expect(result).toEqual({
+      mfaToken: 'pending-mfa-token',
+      mfaMethod: 'totp',
+    });
+    expect(getStoredToken()).toBeNull();
   });
 });
 
@@ -924,15 +1077,15 @@ describe('stumbleLink', () => {
   });
 });
 
-describe('disable2fa', () => {
-  it('DELETEs /auth/2fa with the provided credentials', async () => {
+describe('disableMfa', () => {
+  it('DELETEs /auth/mfa with the provided credentials', async () => {
     setStoredToken('my-jwt');
     const fetchMock = mockFetch({});
 
-    await disable2fa({ currentPassword: 'open-sesame' });
+    await disableMfa({ currentPassword: 'open-sesame' });
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa');
+    expect(url).toContain('/auth/mfa');
     expect((options as { method: string }).method).toBe('DELETE');
     const body = JSON.parse((options as { body: string }).body) as {
       currentPassword: string;
@@ -942,14 +1095,14 @@ describe('disable2fa', () => {
 });
 
 describe('regenerateRecoveryCodes', () => {
-  it('POSTs to /auth/2fa/recovery-codes/regenerate with credentials', async () => {
+  it('POSTs to /auth/mfa/recovery-codes/regenerate with credentials', async () => {
     setStoredToken('my-jwt');
     const fetchMock = mockFetch({ recoveryCodes: ['aaaaa-bbbbb'] });
 
     await regenerateRecoveryCodes({ currentPassword: 'open-sesame' });
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/auth/2fa/recovery-codes/regenerate');
+    expect(url).toContain('/auth/mfa/recovery-codes/regenerate');
     expect((options as { method: string }).method).toBe('POST');
   });
 });

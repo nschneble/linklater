@@ -1,55 +1,20 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
+export {
+  ApiError,
+  clearStoredToken,
+  getStoredRefreshToken,
+  getStoredToken,
+  setStoredToken,
+} from './storage';
+export type { LoginResponse } from './storage';
 
-if (!API_BASE_URL) {
-  console.warn('VITE_API_BASE_URL is not set');
-}
-
-let storedToken: string | null = localStorage.getItem('linklater_token');
-let storedRefreshToken: string | null = localStorage.getItem(
-  'linklater_refresh_token',
-);
-
-export function getStoredToken(): string | null {
-  return storedToken;
-}
-
-export function getStoredRefreshToken(): string | null {
-  return storedRefreshToken;
-}
-
-export function setStoredToken(
-  accessToken: string,
-  refreshToken?: string,
-): void {
-  storedToken = accessToken;
-  localStorage.setItem('linklater_token', accessToken);
-
-  if (refreshToken !== undefined) {
-    storedRefreshToken = refreshToken;
-    localStorage.setItem('linklater_refresh_token', refreshToken);
-  }
-}
-
-export function clearStoredToken(): void {
-  storedToken = null;
-  storedRefreshToken = null;
-  localStorage.removeItem('linklater_token');
-  localStorage.removeItem('linklater_refresh_token');
-}
-
-export type LoginResponse =
-  | { accessToken: string; refreshToken: string }
-  | { mfaToken: string; mfaMethod: 'totp' };
-
-export class ApiError extends Error {
-  status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-  }
-}
+import {
+  ApiError,
+  clearStoredToken,
+  getStoredRefreshToken,
+  getStoredToken,
+  setStoredToken,
+} from './storage';
+import { API_BASE_URL } from './storage';
 
 async function parseResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
@@ -69,14 +34,16 @@ async function parseError(response: Response): Promise<ApiError> {
   return new ApiError(message, response.status);
 }
 
-async function attemptTokenRefresh(): Promise<boolean> {
-  if (!storedRefreshToken) return false;
+let inFlightRefresh: Promise<boolean> | null = null;
+
+async function performTokenRefresh(): Promise<boolean> {
+  if (!getStoredRefreshToken()) return false;
 
   try {
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: storedRefreshToken }),
+      body: JSON.stringify({ refreshToken: getStoredRefreshToken() }),
     });
 
     if (!response.ok) {
@@ -96,6 +63,15 @@ async function attemptTokenRefresh(): Promise<boolean> {
   }
 }
 
+// Dedup concurrent refreshes so N parallel 401s share one /auth/refresh call.
+async function attemptTokenRefresh(): Promise<boolean> {
+  if (inFlightRefresh) return inFlightRefresh;
+  inFlightRefresh = performTokenRefresh().finally(() => {
+    inFlightRefresh = null;
+  });
+  return inFlightRefresh;
+}
+
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
@@ -105,7 +81,7 @@ export async function apiFetch<T>(
   if (typeof includeAuth === 'string') {
     token = includeAuth;
   } else if (includeAuth) {
-    token = storedToken;
+    token = getStoredToken();
   }
 
   const headers: Record<string, string> = {
@@ -130,7 +106,7 @@ export async function apiFetch<T>(
       if (refreshed) {
         const retryHeaders = {
           ...headers,
-          Authorization: `Bearer ${storedToken}`,
+          Authorization: `Bearer ${getStoredToken()}`,
         };
         const retryResponse = await fetch(`${API_BASE_URL}${path}`, {
           ...options,

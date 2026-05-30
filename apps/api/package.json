@@ -1,6 +1,6 @@
 {
   "name": "@linklater/api",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Linklater is an Instapaper-inspired “read it later” app.",
   "author": "Nick Schneble",
   "private": true,
@@ -20,7 +20,7 @@
     "test": "NODE_OPTIONS=\"--experimental-vm-modules --no-experimental-webstorage --disable-warning=ExperimentalWarning\" jest",
     "test:cov": "NODE_OPTIONS=\"--experimental-vm-modules --no-experimental-webstorage --disable-warning=ExperimentalWarning\" jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:e2e": "NODE_OPTIONS=\"--experimental-vm-modules --disable-warning=ExperimentalWarning\" jest --config ./test/jest-e2e.json",
     "test:watch": "NODE_OPTIONS=\"--experimental-vm-modules --no-experimental-webstorage --disable-warning=ExperimentalWarning\" jest --watch"
   },
   "dependencies": {
@@ -96,6 +96,10 @@
       "js",
       "json",
       "ts"
+    ],
+    "reporters": [
+      "default",
+      "<rootDir>/../test/failed-files-reporter.cjs"
     ],
     "moduleNameMapper": {
       "^(\\.\\.?/.*)\\.js$": "$1",

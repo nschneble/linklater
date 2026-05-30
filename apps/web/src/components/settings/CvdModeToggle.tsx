@@ -44,15 +44,8 @@ export default function CvdModeToggle() {
   }, [isCvdMode, enableCvdMode, disableCvdMode]);
 
   return (
-    <section aria-labelledby="accessibility-heading" className="space-y-4">
-      <h2
-        id="accessibility-heading"
-        className="text-[var(--text)] text-sm font-semibold"
-      >
-        Accessibility
-      </h2>
-
-      <div className="flex items-start justify-between gap-4 px-4 py-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-4">
         <div className="flex-1 space-y-1">
           <label
             id="cvd-label"
@@ -61,9 +54,15 @@ export default function CvdModeToggle() {
           >
             Color Vision Deficiency (CVD) mode
           </label>
-          <p id="cvd-description" className="text-[var(--text-muted)] text-xs">
-            Switches to the Apollo 10½ theme, adds icons next to colored badges,
-            and increases overall contrast.
+          <p
+            id="cvd-description"
+            className="text-[var(--text-muted)] text-xs text-pretty"
+          >
+            Switches to the{' '}
+            <span className="font-semibold">Apollo 10½ theme</span> and adds
+            distinctive visual non-color cues, including underlined links,
+            striped disabled controls, stronger focus outlines, and selected
+            indicator bars.
           </p>
         </div>
 
@@ -76,22 +75,14 @@ export default function CvdModeToggle() {
           aria-describedby="cvd-description"
           disabled={loading}
           onClick={handleToggle}
-          className={`relative shrink-0 mt-0.5 inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] cursor-pointer ${
-            isCvdMode
-              ? 'bg-[var(--accent)]'
-              : 'bg-[var(--bg-elevated)] border border-[var(--border)]'
-          }`}
+          className="group relative shrink-0 mt-0.5 inline-flex h-6 w-11 items-center bg-[var(--bg-elevated)] border border-[var(--border)] aria-checked:bg-[var(--accent)] aria-checked:border-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] rounded-full transition-colors duration-200 cursor-pointer"
         >
-          <span
-            className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-              isCvdMode ? 'translate-x-6' : 'translate-x-1'
-            }`}
-          />
+          <span className="inline-block h-4 w-4 translate-x-1 group-aria-checked:translate-x-6 bg-white rounded-full shadow-sm transition-transform duration-200" />
           <span className="sr-only">{isCvdMode ? 'On' : 'Off'}</span>
         </button>
       </div>
 
       {error && <Alert variant="error">{error}</Alert>}
-    </section>
+    </div>
   );
 }

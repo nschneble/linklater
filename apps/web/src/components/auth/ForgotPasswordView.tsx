@@ -9,6 +9,7 @@ interface ForgotPasswordViewProps {
   email: string;
   emailReference: RefObject<HTMLInputElement | null>;
   error: string | null;
+  errorReference: RefObject<HTMLParagraphElement | null>;
   forgotPasswordSent: boolean;
   loading: boolean;
   onBack: () => void;
@@ -20,6 +21,7 @@ export default function ForgotPasswordView({
   email,
   emailReference,
   error,
+  errorReference,
   forgotPasswordSent,
   loading,
   onBack,
@@ -62,7 +64,12 @@ export default function ForgotPasswordView({
           />
 
           {error && (
-            <Alert icon="fa-triangle-exclamation" variant="error">
+            <Alert
+              ref={errorReference}
+              icon="fa-triangle-exclamation"
+              tabIndex={-1}
+              variant="error"
+            >
               {error}
             </Alert>
           )}

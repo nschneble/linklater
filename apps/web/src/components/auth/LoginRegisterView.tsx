@@ -30,6 +30,7 @@ interface LoginRegisterViewProps {
   email: string;
   emailReference: RefObject<HTMLInputElement | null>;
   error: string | null;
+  errorReference: RefObject<HTMLParagraphElement | null>;
   loading: boolean;
   magicLinkSent: boolean;
   mode: LoginRegisterMode;
@@ -47,6 +48,7 @@ export default function LoginRegisterView({
   email,
   emailReference,
   error,
+  errorReference,
   loading,
   magicLinkSent,
   mode,
@@ -153,7 +155,9 @@ export default function LoginRegisterView({
             {error && (
               <Alert
                 id="auth-form-error"
+                ref={errorReference}
                 icon="fa-triangle-exclamation"
+                tabIndex={-1}
                 variant="error"
               >
                 {error}

@@ -23,7 +23,7 @@ As a user, you can:
 - Search and [stumble!](https://en.wikipedia.org/wiki/StumbleUpon)
 - Preview themes based on Richard Linklater's filmography
 - Toggle between light and dark mode
-- Secure your account with TOTP two-factor authentication
+- Secure your account with TOTP multi-factor authentication
 - Generate personal access tokens (PATs) for browser extensions
 - Delete your account and burn it to the ground
 
@@ -86,7 +86,10 @@ Linklater includes a one-click bookmarklet that saves the current page directly 
 
 To install, go to **Settings → Bookmarklet** and drag the _Save to Linklater_ button directly to your bookmarks bar. Your auth token is pre-embedded, so you can click it on any page and immediately save the link to your account.
 
-The embedded token expires after 90 days. If it stops working, revisit Settings and reinstall it.
+The embedded token never expires. If you lose a device or want to invalidate
+an old install, open **Settings → Bookmarklet** and click **Regenerate** —
+the previous bookmarklet stops working immediately and the new one is ready
+to drag to your bookmarks bar.
 
 ## Local Development
 
@@ -121,11 +124,12 @@ cp apps/web/.env.example apps/web/.env
 
 ```bash
 # cd /path/to/your/repo
-npm run migrate:reset --workspace @linklater/api
-npm run migrate --workspace @linklater/api
+bin/migrate
+bin/migrate --reset
+bin/migrate --help
 ```
 
-> **Note:** Use `npm run migrate` instead of `npx prisma migrate dev` directly. Prisma 7's `prisma-client` generator requires a custom output path, so `migrate dev` does not automatically regenerate the client.
+> **Note:** Use `bin/migrate` or `npm run migrate` instead of `npx prisma migrate dev` directly. Prisma 7's `prisma-client` generator requires a custom output path, so `migrate dev` does not automatically regenerate the client.
 
 ### Start Development Server
 

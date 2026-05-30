@@ -16,8 +16,8 @@ const mockUser: User = {
   mode: 'light',
   pendingEmail: null,
   theme: 'scanner-darkly',
-  twoFactorMethod: null,
-  twoFactorPending: false,
+  multiFactorMethod: null,
+  multiFactorPending: false,
   userId: '1',
 };
 
@@ -99,10 +99,17 @@ describe('Header', () => {
     expect(onUserMenuClose).toHaveBeenCalledOnce();
   });
 
-  it('clicking inside the header does not call onUserMenuClose', () => {
+  it('clicking the avatar button does not call onUserMenuClose', () => {
     const onUserMenuClose = vi.fn();
     renderHeader({ ...defaultProps, isUserMenuOpen: true, onUserMenuClose });
     fireEvent.mouseDown(screen.getByLabelText(`User menu (${mockUser.email})`));
     expect(onUserMenuClose).not.toHaveBeenCalled();
+  });
+
+  it('clicking the logo within the header calls onUserMenuClose when menu is open', () => {
+    const onUserMenuClose = vi.fn();
+    renderHeader({ ...defaultProps, isUserMenuOpen: true, onUserMenuClose });
+    fireEvent.mouseDown(screen.getByLabelText('Go to your links'));
+    expect(onUserMenuClose).toHaveBeenCalledOnce();
   });
 });

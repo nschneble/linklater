@@ -1,17 +1,10 @@
-/** Props for an individual `FeatureTile` card. */
 interface FeatureTileProps {
-  /** One or two sentences describing the feature. */
   description: string;
-  /** Font Awesome icon class string (e.g. `'fa-solid fa-bookmark'`). */
+  // e.g. 'fa-solid fa-bookmark'
   icon: string;
-  /** Short feature name displayed as the card heading. */
   title: string;
 }
 
-/**
- * A single feature card on the landing page. Renders a Font Awesome icon,
- * a heading, and a short description inside a rounded card.
- */
 function FeatureTile({ description, icon, title }: FeatureTileProps) {
   return (
     <div className="flex flex-col gap-3 p-6 bg-midnight border border-boyhood rounded-2xl animate-fade-in-up">
@@ -45,10 +38,6 @@ const FEATURES: FeatureTileProps[] = [
   },
 ];
 
-/**
- * Three-column feature grid for the public landing page. Renders the
- * `FEATURES` array as a responsive grid of `FeatureTile` cards.
- */
 export default function FeaturesSection() {
   return (
     <section

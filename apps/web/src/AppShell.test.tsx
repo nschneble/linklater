@@ -12,6 +12,15 @@ vi.mock('./auth/AuthContext', () => ({
 vi.mock('./lib/api', () => ({
   updateMe: vi.fn().mockResolvedValue({}),
   getStoredToken: vi.fn().mockReturnValue(null),
+  getBookmarkletToken: vi.fn().mockResolvedValue({
+    id: 'bm-1',
+    name: 'Bookmarklet',
+    prefix: 'ltk_aBcDeFgH',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    lastUsedAt: null,
+    rawToken: 'ltk_aBcDeFgHiJkLmNoPqRsTuVwXyZ12',
+  }),
+  regenerateBookmarkletToken: vi.fn(),
 }));
 
 // LinksView uses useLinks which hits the API — mock the whole hook so the
@@ -52,8 +61,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     mode: 'light',
     pendingEmail: null,
     theme: 'scanner-darkly',
-    twoFactorMethod: null,
-    twoFactorPending: false,
+    multiFactorMethod: null,
+    multiFactorPending: false,
     userId: 'user-1',
     ...overrides,
   };
@@ -122,6 +131,36 @@ describe('AppShell — page title', () => {
   it('sets document.title to "Settings – Linklater" on the settings view', () => {
     renderOnRoute('/settings');
     expect(document.title).toBe('Settings – Linklater');
+  });
+});
+
+describe('AppShell — settings routing', () => {
+  it('resolves /settings to the settings view', () => {
+    renderOnRoute('/settings');
+    expect(document.title).toBe('Settings – Linklater');
+    expect(
+      screen.getByRole('heading', { level: 1, name: /^settings$/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('does not treat /settings/<section> sub-paths as the settings view', () => {
+    // Sections are no longer URL-addressable: only exact `/settings` resolves
+    // to settings. A stray sub-path must not render the settings view (in the
+    // full app it falls through to the 404 route).
+    renderOnRoute('/settings/bookmarklet');
+    expect(document.title).not.toBe('Settings – Linklater');
+    expect(
+      screen.queryByRole('heading', { level: 1, name: /^settings$/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('resolves /settings/api to the API docs view, not the settings view', () => {
+    // Guards against the dedicated API docs route collapsing into settings.
+    renderOnRoute('/settings/api');
+    expect(document.title).toBe('API documentation – Linklater');
+    expect(
+      screen.queryByRole('heading', { level: 1, name: /^settings$/i }),
+    ).not.toBeInTheDocument();
   });
 });
 

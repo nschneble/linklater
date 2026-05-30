@@ -14,8 +14,8 @@ import {
 import { UsersService } from '../users/users.service.js';
 
 /**
- * Manages TOTP (Time-based One-Time Password) two-factor authentication setup
- * and verification for user accounts.
+ * Manages TOTP (Time-based One-Time Password) multi-factor authentication
+ * setup and verification for user accounts.
  *
  * TOTP secrets are encrypted with AES-256-GCM before storage. The encryption
  * key is provided via the `TOTP_ENCRYPTION_KEY` environment variable as a
@@ -25,6 +25,25 @@ import { UsersService } from '../users/users.service.js';
 export class TotpService {
   constructor(private readonly usersService: UsersService) {}
 
+  /**
+   * Starts or resumes TOTP enrollment for the given user. Generates a new
+   * secret and QR code URI on first call; returns the same QR code on
+   * subsequent calls so a scan already in progress is not invalidated.
+   *
+   * The generated secret is AES-256-GCM encrypted before being written to
+   * `user.totpSecret`. `totpEnabledAt` stays `null` until `verifySetup`
+   * is called with a matching code.
+   *
+   * @param userId - UUID of the user enabling MFA.
+   * @param userEmail - Shown as the account label inside the authenticator
+   *   app (e.g. "user@example.com").
+   * @returns `{ qrCodeDataUrl, secret }` — the data-URL for the QR image and
+   *   the plaintext base-32 secret for manual entry.
+   * @throws {ConflictException} When TOTP is already fully enabled for this
+   *   account.
+   * @throws {ForbiddenException} When the account was created via an identity
+   *   provider and has no password, or when the email is not yet verified.
+   */
   async generateSetup(
     userId: string,
     userEmail: string,
@@ -37,13 +56,13 @@ export class TotpService {
 
     if (!user.hasPassword) {
       throw new ForbiddenException(
-        '2FA is not available for accounts created via social login',
+        'MFA is not available for accounts created via IdP',
       );
     }
 
     if (!user.emailVerifiedAt) {
       throw new ForbiddenException(
-        'Email must be verified before enabling 2FA',
+        'Email must be verified before enabling MFA',
       );
     }
 
@@ -54,26 +73,18 @@ export class TotpService {
         user.totpSecret,
         process.env.TOTP_ENCRYPTION_KEY!,
       );
-      const existingUri = generateURI({
-        secret: existingSecret,
-        label: userEmail,
-        issuer: 'Linklater',
-        strategy: 'totp',
-      });
       return {
-        qrCodeDataUrl: await QRCode.toDataURL(existingUri),
+        qrCodeDataUrl: await QRCode.toDataURL(
+          this.buildTotpUri(existingSecret, userEmail),
+        ),
         secret: existingSecret,
       };
     }
 
     const secret = generateSecret();
-    const uri = generateURI({
-      secret,
-      label: userEmail,
-      issuer: 'Linklater',
-      strategy: 'totp',
-    });
-    const qrCodeDataUrl = await QRCode.toDataURL(uri);
+    const qrCodeDataUrl = await QRCode.toDataURL(
+      this.buildTotpUri(secret, userEmail),
+    );
 
     const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
     await this.usersService.saveTotpSecret(userId, encryptedSecret);
@@ -81,6 +92,20 @@ export class TotpService {
     return { qrCodeDataUrl, secret };
   }
 
+  /**
+   * Completes TOTP enrollment. Decrypts the pending secret, validates the
+   * supplied 6-digit code (±30 s window), then atomically enables TOTP and
+   * stores fresh recovery codes.
+   *
+   * The setup OTP step is recorded as `totpLastUsedStep` so the same code
+   * cannot be replayed on the very first login attempt.
+   *
+   * @param userId - UUID of the user completing setup.
+   * @param code - 6-digit TOTP code from the authenticator app.
+   * @returns Array of 10 plaintext recovery codes shown once to the user.
+   * @throws {BadRequestException} When there is no pending setup or the code
+   *   is invalid.
+   */
   async verifySetup(userId: string, code: string): Promise<string[]> {
     const user = await this.usersService.findById(userId);
 
@@ -108,6 +133,44 @@ export class TotpService {
     return codes;
   }
 
+  /**
+   * Abandons an in-flight TOTP enrollment by clearing the pending secret.
+   * Idempotent — calling this when no setup is pending is a no-op. The
+   * underlying `clearPendingTotpSecret` filters on `totpEnabledAt: null` at
+   * the DB layer, so a fully-enabled account is silently skipped rather than
+   * racing a concurrent `verifySetup` call.
+   *
+   * @param userId - UUID of the user cancelling setup.
+   * @throws {ConflictException} When TOTP is already fully enabled; callers
+   *   should direct the user to the disable endpoint instead.
+   */
+  async cancelSetup(userId: string): Promise<void> {
+    const user = await this.usersService.findById(userId);
+
+    if (user.totpEnabledAt) {
+      throw new ConflictException(
+        'TOTP is already active; use the disable endpoint instead',
+      );
+    }
+
+    await this.usersService.clearPendingTotpSecret(userId);
+  }
+
+  /**
+   * Validates a TOTP code during login (not during initial setup). Uses an
+   * atomic compare-and-swap on `totpLastUsedStep` to reject replays: two
+   * parallel requests with the same valid code inside the same 30-second
+   * window both pass the cryptographic check, but only the first one to write
+   * `totpLastUsedStep` returns `true`. The second receives `false`.
+   *
+   * @param user - Partial user record with `id`, `totpSecret`, and
+   *   `totpLastUsedStep`. Callers should load these from the database.
+   * @param code - 6-digit TOTP code from the authenticator app.
+   * @returns `true` when the code is valid and not a replay; `false`
+   *   otherwise.
+   * @throws {BadRequestException} When TOTP is not configured for this account
+   *   (no stored secret).
+   */
   async verifyCode(
     user: {
       id: string;
@@ -130,9 +193,27 @@ export class TotpService {
 
     if (result.valid) {
       const usedStep = Math.floor(Date.now() / 1000 / 30) + result.delta;
-      await this.usersService.updateTotpLastUsedStep(user.id, usedStep);
+      // Compare-and-swap. Two parallel verify-otp requests inside the same
+      // 30-second TOTP step would both pass `verify()` (the otplib check
+      // honors `afterTimeStep` but isn't atomic with the DB write). The
+      // first to land here advances `totpLastUsedStep`; any subsequent
+      // request gets `false` and is rejected as a replay.
+      const advanced = await this.usersService.updateTotpLastUsedStep(
+        user.id,
+        usedStep,
+      );
+      return advanced;
     }
 
-    return result.valid;
+    return false;
+  }
+
+  private buildTotpUri(secret: string, userEmail: string): string {
+    return generateURI({
+      secret,
+      label: userEmail,
+      issuer: 'Linklater',
+      strategy: 'totp',
+    });
   }
 }

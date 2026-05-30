@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# migrate – run Prisma migrations against the API workspace
+
+set -euo pipefail
+
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+ROOT_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
+cd "$ROOT_DIR" || exit
+
+usage() {
+  cat <<'USAGE'
+Usage: bin/migrate [--reset]
+
+Runs Prisma migrations for the @linklater/api workspace.
+
+Options:
+  --reset    Wipe the database and re-run all migrations from scratch.
+  -h, --help Show this help.
+USAGE
+}
+
+TARGET="migrate"
+for argument in "$@"; do
+  case "$argument" in
+    --reset)
+      TARGET="migrate:reset"
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown option: %s\n\n' "$argument" >&2
+      usage >&2
+      exit 64
+      ;;
+  esac
+done
+
+exec npm run "$TARGET" --workspace @linklater/api

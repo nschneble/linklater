@@ -1,10 +1,10 @@
 import {
-  BadRequestException,
   ConflictException,
   Controller,
   Delete,
   Get,
   HttpCode,
+  Logger,
   Param,
   Post,
   Req,
@@ -22,7 +22,6 @@ import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { OAuthAccountService } from './oauth-account.service.js';
-import { generateLinkState } from './oauth-link-state.js';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**
@@ -32,6 +31,8 @@ import type { AuthRequest } from './auth-request.type.js';
 @ApiTags('auth')
 @Controller('auth')
 export class OAuthController {
+  private readonly logger = new Logger(OAuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly oauthAccountService: OAuthAccountService,
@@ -69,7 +70,7 @@ export class OAuthController {
    * Shared OAuth post-login handler. Issues a session for the authenticated
    * user and redirects the browser to the SPA's `/oauth/callback` route with
    * the tokens in the URL fragment (fragments are never sent to servers or
-   * logged in Referer headers). When 2FA is enabled, redirects to `/login`
+   * logged in Referer headers). When MFA is enabled, redirects to `/login`
    * with an error code instead, since OAuth callbacks can't show an OTP form.
    */
   private async completeOAuthLogin(
@@ -88,25 +89,20 @@ export class OAuthController {
 
   @ApiOperation({ summary: 'Initiate Google OAuth account linking' })
   @ApiBearerAuth()
-  @ApiResponse({ status: 302, description: 'Redirects to Google OAuth.' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Returns the Google authorization URL for the SPA to navigate to.',
+  })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @UseGuards(JwtAuthGuard)
   @Get('google/link')
-  async googleLink(@Req() request: AuthRequest, @Res() response: Response) {
-    const linkState = generateLinkState(
-      request.user.userId,
-      process.env.JWT_SECRET!,
-    );
-    const parameters = new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID!,
-      redirect_uri: process.env.GOOGLE_LINK_CALLBACK_URL!,
-      response_type: 'code',
-      scope: 'email profile',
-      state: linkState,
-    });
-    response.redirect(
-      `https://accounts.google.com/o/oauth2/v2/auth?${parameters.toString()}`,
-    );
+  googleLink(@Req() request: AuthRequest): { url: string } {
+    // Returns JSON instead of redirecting because the SPA initiates this
+    // flow with `fetch` (so it can attach the bearer JWT). A top-level
+    // browser navigation cannot send an Authorization header, which is
+    // why the previous redirect-based design produced a 401.
+    return this.oauthAccountService.buildGoogleLinkUrl(request.user.userId);
   }
 
   @ApiOperation({ summary: 'Google OAuth account linking callback' })
@@ -137,13 +133,15 @@ export class OAuthController {
         );
         return;
       }
-      if (error instanceof BadRequestException) {
-        response.redirect(
-          `${process.env.APP_URL}/settings?link_error=email_mismatch`,
-        );
-        return;
-      }
-      throw error;
+      // Anything else — DB outage, network blip linking the row, etc. —
+      // must not escape as a NestJS HTML 500 inside the OAuth-callback
+      // popup. Log it for triage, then redirect to a generic error state
+      // the SPA already knows how to render.
+      this.logger.error(
+        `Unexpected error linking google account for user ${request.user.userId}: ${String(error)}`,
+      );
+      response.redirect(`${process.env.APP_URL}/settings?link_error=unknown`);
+      return;
     }
     response.redirect(`${process.env.APP_URL}/settings?linked=google`);
   }

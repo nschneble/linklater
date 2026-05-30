@@ -37,9 +37,10 @@ function makeUser(overrides: Partial<User> = {}): User {
     mode: 'light',
     pendingEmail: null,
     theme: 'scanner-darkly',
-    twoFactorMethod: null,
-    twoFactorPending: false,
+    multiFactorMethod: null,
+    multiFactorPending: false,
     userId: USER_ID,
+    welcomedAt: null,
     ...overrides,
   };
 }
@@ -50,6 +51,7 @@ function makeAuthContext(overrides = {}) {
     login: vi.fn(),
     loginWithToken: vi.fn(),
     logout: vi.fn(),
+    markWelcomed: vi.fn(),
     refreshUser: vi.fn(),
     register: vi.fn(),
     resendVerificationEmail: vi.fn(),
@@ -118,9 +120,11 @@ describe('AccountSettingsForm', () => {
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ setPendingEmail }));
 
       render(<AccountSettingsForm />);
-      const emailInput = screen.getByLabelText(/change email/i);
+      const emailInput = screen.getByLabelText(/new email/i);
       fireEvent.change(emailInput, { target: { value: 'new@example.com' } });
-      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /change email address/i }),
+      );
 
       await waitFor(() => {
         expect(apiModule.requestEmailChange).toHaveBeenCalledWith(
@@ -137,11 +141,13 @@ describe('AccountSettingsForm', () => {
       );
 
       render(<AccountSettingsForm />);
-      const emailInput = screen.getByLabelText(/change email/i);
+      const emailInput = screen.getByLabelText(/new email/i);
       fireEvent.change(emailInput, {
         target: { value: 'taken@example.com' },
       });
-      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /change email address/i }),
+      );
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -152,22 +158,24 @@ describe('AccountSettingsForm', () => {
     it('shows an error when the server returns 403 (verification code required)', async () => {
       vi.mocked(apiModule.requestEmailChange).mockRejectedValue(
         new ApiError(
-          '2FA is enabled — provide a verification code to change your email',
+          'MFA is enabled — provide a verification code to change your email',
           403,
         ),
       );
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
-          user: makeUser({ twoFactorMethod: 'email' }),
+          user: makeUser({ multiFactorMethod: 'email' }),
         }),
       );
 
       render(<AccountSettingsForm />);
-      const emailInput = screen.getByLabelText(/change email/i);
+      const emailInput = screen.getByLabelText(/new email/i);
       fireEvent.change(emailInput, {
         target: { value: 'new@example.com' },
       });
-      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /change email address/i }),
+      );
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -199,9 +207,9 @@ describe('AccountSettingsForm', () => {
       });
     });
 
-    it('shows a 2FA code input when the user has 2FA enabled', () => {
+    it('shows a MFA code input when the user has MFA enabled', () => {
       vi.mocked(useAuth).mockReturnValue(
-        makeAuthContext({ user: makeUser({ twoFactorMethod: 'totp' }) }),
+        makeAuthContext({ user: makeUser({ multiFactorMethod: 'totp' }) }),
       );
 
       render(<AccountSettingsForm />);
@@ -211,18 +219,18 @@ describe('AccountSettingsForm', () => {
       ).toBeInTheDocument();
     });
 
-    it('includes the 2FA code when requesting an email change with 2FA enabled', async () => {
+    it('includes the MFA code when requesting an email change with MFA enabled', async () => {
       vi.mocked(apiModule.requestEmailChange).mockResolvedValue(undefined);
       const setPendingEmail = vi.fn();
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({
           setPendingEmail,
-          user: makeUser({ twoFactorMethod: 'totp' }),
+          user: makeUser({ multiFactorMethod: 'totp' }),
         }),
       );
 
       render(<AccountSettingsForm />);
-      fireEvent.change(screen.getByLabelText(/change email/i), {
+      fireEvent.change(screen.getByLabelText(/new email/i), {
         target: { value: 'new@example.com' },
       });
       fireEvent.change(
@@ -231,7 +239,9 @@ describe('AccountSettingsForm', () => {
           target: { value: '123456' },
         },
       );
-      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /change email address/i }),
+      );
 
       await waitFor(() => {
         expect(apiModule.requestEmailChange).toHaveBeenCalledWith(
@@ -294,7 +304,9 @@ describe('AccountSettingsForm', () => {
       fireEvent.change(screen.getByLabelText(/current password/i), {
         target: { value: 'current-password' },
       });
-      fireEvent.click(screen.getByRole('button', { name: /update password/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /save new password/i }),
+      );
 
       await waitFor(() => {
         expect(apiModule.updateMe).toHaveBeenCalledWith({
@@ -318,7 +330,9 @@ describe('AccountSettingsForm', () => {
       fireEvent.change(screen.getByLabelText(/current password/i), {
         target: { value: 'wrong-password' },
       });
-      fireEvent.click(screen.getByRole('button', { name: /update password/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /save new password/i }),
+      );
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -328,10 +342,10 @@ describe('AccountSettingsForm', () => {
       });
     });
 
-    it('the Update password button is disabled when new password is empty', () => {
+    it('the Save new password button is disabled when new password is empty', () => {
       render(<AccountSettingsForm />);
       expect(
-        screen.getByRole('button', { name: /update password/i }),
+        screen.getByRole('button', { name: /save new password/i }),
       ).toBeDisabled();
     });
   });
@@ -343,11 +357,13 @@ describe('AccountSettingsForm', () => {
       );
 
       render(<AccountSettingsForm />);
-      const emailInput = screen.getByLabelText(/change email/i);
+      const emailInput = screen.getByLabelText(/new email/i);
       fireEvent.change(emailInput, {
         target: { value: 'taken@example.com' },
       });
-      fireEvent.click(screen.getByRole('button', { name: /change email/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /change email address/i }),
+      );
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -374,7 +390,9 @@ describe('AccountSettingsForm', () => {
       fireEvent.change(screen.getByLabelText(/current password/i), {
         target: { value: 'wrong-password' },
       });
-      fireEvent.click(screen.getByRole('button', { name: /update password/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /save new password/i }),
+      );
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -391,7 +409,7 @@ describe('AccountSettingsForm', () => {
 
     it('email input does not have aria-describedby when there is no error', () => {
       render(<AccountSettingsForm />);
-      expect(screen.getByLabelText(/change email/i)).not.toHaveAttribute(
+      expect(screen.getByLabelText(/new email/i)).not.toHaveAttribute(
         'aria-describedby',
       );
     });
@@ -418,10 +436,10 @@ describe('AccountSettingsForm', () => {
       ).toBeInTheDocument();
     });
 
-    it('does not show the update password form when hasPassword is false', () => {
+    it('does not show the save new password form when hasPassword is false', () => {
       render(<AccountSettingsForm />);
       expect(
-        screen.queryByRole('button', { name: /update password/i }),
+        screen.queryByRole('button', { name: /save new password/i }),
       ).not.toBeInTheDocument();
     });
 
@@ -436,9 +454,12 @@ describe('AccountSettingsForm', () => {
       vi.mocked(apiModule.setPassword).mockResolvedValue(undefined);
 
       render(<AccountSettingsForm />);
-      fireEvent.change(screen.getByLabelText(/new password/i), {
-        target: { value: NEW_PASSWORD },
-      });
+      fireEvent.change(
+        screen.getByLabelText(/password/i, { selector: 'input' }),
+        {
+          target: { value: NEW_PASSWORD },
+        },
+      );
       await screen.findByDisplayValue(NEW_PASSWORD);
       fireEvent.click(screen.getByRole('button', { name: /add password/i }));
 
@@ -454,9 +475,12 @@ describe('AccountSettingsForm', () => {
       );
 
       render(<AccountSettingsForm />);
-      fireEvent.change(screen.getByLabelText(/new password/i), {
-        target: { value: NEW_PASSWORD },
-      });
+      fireEvent.change(
+        screen.getByLabelText(/password/i, { selector: 'input' }),
+        {
+          target: { value: NEW_PASSWORD },
+        },
+      );
       await screen.findByDisplayValue(NEW_PASSWORD);
       fireEvent.click(screen.getByRole('button', { name: /add password/i }));
 

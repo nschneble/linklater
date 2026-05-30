@@ -1,15 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import SettingsView from './SettingsView';
 import type { User } from '../../auth/AuthContext';
 
 vi.mock('../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
-}));
-
-vi.mock('./AccountSettingsForm', () => ({
-  default: () => <div data-testid="account-settings-form" />,
 }));
 
 vi.mock('./ApiTokensSection', () => ({
@@ -36,11 +32,11 @@ vi.mock('../stumble/StumbleSection', () => ({
   ),
 }));
 
-vi.mock('./TwoFactorSection', () => ({
-  default: () => <div data-testid="two-factor-section" />,
+vi.mock('./MultiFactorSection', () => ({
+  default: () => <div data-testid="multi-factor-section" />,
 }));
 
-vi.mock('./SocialLoginsSection', () => ({
+vi.mock('./IdPsSection', () => ({
   default: ({
     linkedMessage,
     linkError,
@@ -72,9 +68,10 @@ function makeUser(overrides: Partial<User> = {}): User {
     mode: 'light',
     pendingEmail: null,
     theme: 'scanner-darkly',
-    twoFactorMethod: null,
-    twoFactorPending: false,
+    multiFactorMethod: null,
+    multiFactorPending: false,
     userId: USER_ID,
+    welcomedAt: null,
     ...overrides,
   };
 }
@@ -85,6 +82,7 @@ function makeAuthContext(overrides = {}) {
     login: vi.fn(),
     loginWithToken: vi.fn(),
     logout: vi.fn(),
+    markWelcomed: vi.fn(),
     refreshUser: vi.fn(),
     register: vi.fn(),
     resendVerificationEmail: vi.fn(),
@@ -96,24 +94,55 @@ function makeAuthContext(overrides = {}) {
 
 interface RenderOptions {
   route?: string;
+  scrollTo?: string;
   googleEnabled?: boolean;
   appleEnabled?: boolean;
 }
 
 function renderSettingsView({
   route = '/settings',
+  scrollTo,
   googleEnabled = false,
   appleEnabled = false,
 }: RenderOptions = {}) {
+  // Plain strings let MemoryRouter parse query params (used by the OAuth flash
+  // tests). The router-state `scrollTo` jump needs an object entry.
+  const entry = scrollTo ? { pathname: route, state: { scrollTo } } : route;
   return render(
-    <MemoryRouter initialEntries={[route]}>
-      <SettingsView googleEnabled={googleEnabled} appleEnabled={appleEnabled} />
+    <MemoryRouter initialEntries={[entry]}>
+      <Routes>
+        <Route
+          path="/settings"
+          element={
+            <SettingsView
+              googleEnabled={googleEnabled}
+              appleEnabled={appleEnabled}
+            />
+          }
+        />
+      </Routes>
     </MemoryRouter>,
   );
 }
 
 beforeEach(() => {
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
+  Element.prototype.scrollIntoView = vi.fn();
+  // Stub a non-zero document offset on every element. The scroll helper
+  // snaps to the top of the page (window.scrollTo) when a section's natural
+  // offset sits within its own scroll-margin — the jsdom default of 0,0
+  // would push every test through that branch. A large top keeps these
+  // tests on the standard `scrollIntoView` path; the snap-to-0 branch is
+  // covered in `settingsScroll.test.ts`.
+  Element.prototype.getBoundingClientRect = () =>
+    ({
+      top: 1000,
+      bottom: 1100,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 100,
+    }) as DOMRect;
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -129,35 +158,75 @@ describe('SettingsView', () => {
     expect(screen.getByTestId('cvd-mode-toggle')).toBeInTheDocument();
   });
 
-  describe('2FA section', () => {
-    it('shows the TwoFactor section when the user has a password', () => {
+  describe('settings groups', () => {
+    it('renders the account group anchor', () => {
       renderSettingsView();
-      expect(screen.getByTestId('two-factor-section')).toBeInTheDocument();
+      expect(document.getElementById('account')).not.toBeNull();
     });
 
-    it('hides the TwoFactor section when the user has no password', () => {
+    it('renders the accessibility group anchor', () => {
+      renderSettingsView();
+      expect(document.getElementById('accessibility')).not.toBeNull();
+    });
+
+    it('renders the bookmarks group anchor', () => {
+      renderSettingsView();
+      expect(document.getElementById('bookmarks')).not.toBeNull();
+    });
+
+    it('renders the integrations group anchor', () => {
+      renderSettingsView();
+      expect(document.getElementById('integrations')).not.toBeNull();
+    });
+
+    it('renders the danger group anchor', () => {
+      renderSettingsView();
+      expect(document.getElementById('danger')).not.toBeNull();
+    });
+
+    it('renders the security group anchor when user has password', () => {
+      renderSettingsView();
+      expect(document.getElementById('security')).not.toBeNull();
+    });
+
+    it('omits the security group when user has no password', () => {
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ user: makeUser({ hasPassword: false }) }),
+      );
+      renderSettingsView();
+      expect(document.getElementById('security')).toBeNull();
+    });
+  });
+
+  describe('MFA section', () => {
+    it('shows the MultiFactor section when the user has a password', () => {
+      renderSettingsView();
+      expect(screen.getByTestId('multi-factor-section')).toBeInTheDocument();
+    });
+
+    it('hides the MultiFactor section when the user has no password', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({ user: makeUser({ hasPassword: false }) }),
       );
       renderSettingsView();
       expect(
-        screen.queryByTestId('two-factor-section'),
+        screen.queryByTestId('multi-factor-section'),
       ).not.toBeInTheDocument();
     });
   });
 
-  describe('Social logins section', () => {
-    it('shows the SocialLogins section when googleEnabled is true', () => {
+  describe('IdPs section', () => {
+    it('shows the IdPs section when googleEnabled is true', () => {
       renderSettingsView({ googleEnabled: true });
       expect(screen.getByTestId('social-logins-section')).toBeInTheDocument();
     });
 
-    it('shows the SocialLogins section when appleEnabled is true', () => {
+    it('shows the IdPs section when appleEnabled is true', () => {
       renderSettingsView({ appleEnabled: true });
       expect(screen.getByTestId('social-logins-section')).toBeInTheDocument();
     });
 
-    it('hides the SocialLogins section when neither provider is enabled', () => {
+    it('hides the IdPs section when neither provider is enabled', () => {
       renderSettingsView({ googleEnabled: false, appleEnabled: false });
       expect(
         screen.queryByTestId('social-logins-section'),
@@ -165,41 +234,40 @@ describe('SettingsView', () => {
     });
   });
 
-  describe('hash deep-linking', () => {
-    it('scrolls and focuses the bookmarklet section when route includes #bookmarklet', () => {
-      const scrollSpy = vi.fn();
-      Element.prototype.scrollIntoView = scrollSpy;
-
-      renderSettingsView({ route: '/settings#bookmarklet' });
-
-      const section = screen.getByTestId('bookmarklet-section');
-      expect(scrollSpy).toHaveBeenCalled();
-      expect(document.activeElement).toBe(section);
+  describe('router-state scrollTo jump', () => {
+    it('scrolls and focuses the bookmarks group when arriving with scrollTo=bookmarks', () => {
+      renderSettingsView({ scrollTo: 'bookmarks' });
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'start' }),
+      );
+      expect(document.activeElement?.id).toBe('bookmarks');
     });
 
-    it('scrolls and focuses the stumble section when route includes #stumble', () => {
-      const scrollSpy = vi.fn();
-      Element.prototype.scrollIntoView = scrollSpy;
-
-      renderSettingsView({ route: '/settings#stumble' });
-
-      const section = screen.getByTestId('stumble-section');
-      expect(scrollSpy).toHaveBeenCalled();
-      expect(document.activeElement).toBe(section);
+    it('scrolls and focuses the integrations group when arriving with scrollTo=integrations', () => {
+      renderSettingsView({ scrollTo: 'integrations' });
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'start' }),
+      );
+      expect(document.activeElement?.id).toBe('integrations');
     });
 
-    it('does not scroll or move focus when route has no hash', () => {
-      const scrollSpy = vi.fn();
-      Element.prototype.scrollIntoView = scrollSpy;
+    it('does not perform a section-driven scroll without a scrollTo state', () => {
+      renderSettingsView();
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'start' }),
+      );
+    });
 
-      renderSettingsView({ route: '/settings' });
-
-      expect(scrollSpy).not.toHaveBeenCalled();
+    it('ignores a scrollTo that is not a known section id', () => {
+      renderSettingsView({ scrollTo: 'bookmarklet' });
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'start' }),
+      );
     });
   });
 
   describe('OAuth redirect flash messages', () => {
-    it('passes linked=google as a linkedMessage to SocialLoginsSection', () => {
+    it('passes linked=google as a linkedMessage to IdPsSection', () => {
       renderSettingsView({
         route: '/settings?linked=google',
         googleEnabled: true,
@@ -209,7 +277,7 @@ describe('SettingsView', () => {
       );
     });
 
-    it('passes link_error=already_linked as a linkError to SocialLoginsSection', () => {
+    it('passes link_error=already_linked as a linkError to IdPsSection', () => {
       renderSettingsView({
         route: '/settings?link_error=already_linked',
         googleEnabled: true,
@@ -219,12 +287,22 @@ describe('SettingsView', () => {
       );
     });
 
-    it('passes link_error=email_mismatch as a linkError to SocialLoginsSection', () => {
+    it('passes a generic linkError for unrecognized link_error codes', () => {
+      renderSettingsView({
+        route: '/settings?link_error=unknown_code',
+        googleEnabled: true,
+      });
+      expect(screen.getByTestId('link-error')).toHaveTextContent(
+        /failed to connect/i,
+      );
+    });
+
+    it('does not surface email_mismatch (no longer a behavior)', () => {
       renderSettingsView({
         route: '/settings?link_error=email_mismatch',
         googleEnabled: true,
       });
-      expect(screen.getByTestId('link-error')).toHaveTextContent(
+      expect(screen.getByTestId('link-error')).not.toHaveTextContent(
         /different email/i,
       );
     });

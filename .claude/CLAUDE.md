@@ -32,6 +32,8 @@ linklater/
 bin/dev                                           # Start development server + Mailpit at http://localhost:8025 (captures all outgoing dev email)
 bin/flintest                                      # Install, format, lint, test, build
 bin/flintest --update                             # Update, install, format, lint, test, build
+bin/migrate                                       # Run Prisma migrations
+bin/migrate --reset                               # Wipe + re-run migrations
 
 # Setup
 npm install                                       # Install dependencies
@@ -50,6 +52,8 @@ npm run lint --workspace @linklater/api           # Lint back-end only
 
 # Testing
 npm run test                                      # Run all tests
+npm run test apps/web/src/path/to/file.test.tsx   # Run a single front-end test file
+npm run test apps/api/src/path/to/file.spec.ts    # Run a single back-end test file
 npm run test:cov                                  # Run all tests with code coverage
 npm run test --workspace @linklater/web           # Test front-end only
 npm run test --workspace @linklater/api           # Test back-end only
@@ -59,21 +63,21 @@ npm run migrate --workspace @linklater/api        # Run migrations + regenerate 
 npm run migrate:reset --workspace @linklater/api  # Wipe, re-run migrations + regenerate client
 ```
 
-> **Note:** `migrate` and `migrate:reset` chain `prisma migrate dev` with `prisma generate`. Prisma 7's `prisma-client` generator needs custom `output` path — `migrate dev` alone won't auto-regenerate client.
+> **Note:** `migrate` + `migrate:reset` chain `prisma migrate dev` with `prisma generate`. Prisma 7 `prisma-client` generator need custom `output` path — `migrate dev` alone no auto-regenerate client.
 
 ## Third-Party Integrations
 
 - Prefer **free and open-source** (FOSS) over paid/proprietary
-  - Choose self-hostable or MIT/Apache/BSD-licensed libs when viable
-  - If paid only realistic path, propose alternate design avoiding dependency first
-  - Document tradeoff explicitly when FOSS option has meaningful limitations vs paid
+  - Pick self-hostable or MIT/Apache/BSD-licensed libs when viable
+  - If paid only path, propose alternate design avoiding dependency first
+  - Document tradeoff when FOSS option has meaningful limits vs paid
 
 ## Tool Versions
 
-- Check **actual installed version** before suggesting. No assumption from training data.
+- Check **actual installed version** before suggesting. No assume from training data.
   - Read `package.json` to confirm versions before referencing APIs, syntax, behavior
-  - Example failure: assuming Tailwind v3 syntax (e.g. `@layer` behaviors) when v4 installed
-- When **installing new packages**, pick latest stable unless explicit reason not to.
+  - Example fail: assume Tailwind v3 syntax (e.g. `@layer` behaviors) when v4 installed
+- When **installing new packages**, pick latest stable unless explicit reason not.
 
 ## Development Workflow
 
@@ -88,7 +92,7 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
 - Organize code into modules
   - See [Organizing Your React App Into Modules](https://dev.to/jack/organizing-your-react-app-into-modules-d6n)
 - Self-explanatory folder, file, method, variable names
-  - Keep React conventions like `prop` and `props`
+  - Keep React conventions like `prop` + `props`
   - No single-character variables (e.g. `e` or `i`)
   - Shortenings to avoid:
 
@@ -132,25 +136,27 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
 - Three response time limits:
   - 0.1s — feels instantaneous
   - 1.0s — flow uninterrupted, no feedback needed between 0.1–1.0s
-  - 10s — attention limit; give progress feedback beyond this
+  - 10s — attention limit; give progress feedback beyond
   - See [Response Time Limits](https://www.nngroup.com/articles/response-times-3-important-limits/)
 - Polish UI details — see [Details That Make Interfaces Feel Better](https://jakub.kr/writing/details-that-make-interfaces-feel-better)
+- Less no need more — never ask user click "Load more"/"Show more"/"Expand" affordance just to surface single remaining item. Predict when next batch would leave one trailing item, grab in same request; if total not knowable up front, auto-load trailing item once detected so user never see button labelled "1 remaining". See [Less Doesn't Need More](https://unsung.aresluna.org/less-doesnt-need-more/) — done in `useLinksData` + `LinksList`.
+- Postel's Law — conservative in output, liberal in input. Normalize user input before matching/comparing so trivial variations no cause silent failures: case differences, accented characters, surrounding whitespace, smart vs straight quotes, full-width vs half-width characters, etc. Search for "montréal" must find "Montreal" + vice versa. See [Robustness Principle](https://en.wikipedia.org/wiki/Robustness_principle) + [Chrome's abnormal tab search](https://unsung.aresluna.org/chromes-abnormal-tab-search/) — done for link search via Postgres `unaccent` extension applied to both stored `searchVector` + incoming `plainto_tsquery` term.
 - Embrace slow software — see [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software)
-- Clean up — kill listeners and temp processes when done
+- Clean up — kill listeners + temp processes when done
 - Run `bin/flintest` when done to verify format, lint, test, build
 
 ## Database Conventions
 
 - Migrations must pass `npx squawk` with zero issues — no `-- squawk-ignore-file` or `-- squawk-ignore-next-statement`
-  - Start every migration with `set lock_timeout = '1s';` and `set statement_timeout = '5s';`
+  - Start every migration with `set lock_timeout = '1s';` + `set statement_timeout = '5s';`
   - Add foreign key constraints with `NOT VALID`, then immediately `VALIDATE CONSTRAINT` next line
-  - See `.squawk.toml` for project-level excluded rules and reasons
+  - See `.squawk.toml` for project-level excluded rules + reasons
 
 ## TypeScript Conventions
 
 - `class` for DTOs (class-validator decorators require it)
-- `interface` for request/response shapes and component props
-- `type` for unions and aliases
+- `interface` for request/response shapes + component props
+- `type` for unions + aliases
 - Props interfaces end in `Props` (e.g. `FormInputProps`, `LinkCardProps`)
 
 ## Nest.JS Patterns
@@ -164,7 +170,7 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
 - Extract `userId` from `@Req() request: AuthRequest`
   - `AuthRequest` extends Express `Request`
 - `@UseGuards(JwtAuthGuard)` at class level for web-session-only endpoints
-- `@UseGuards(AnyAuthGuard)` when endpoint must accept both JWT sessions **and** PAT tokens (`ltk_`-prefixed bearer tokens for browser extensions and API clients) — selects strategy by prefix
+- `@UseGuards(AnyAuthGuard)` when endpoint must accept both JWT sessions **and** PAT tokens (`ltk_`-prefixed bearer tokens for browser extensions + API clients) — selects strategy by prefix
 - Service inputs use `Input` suffix (e.g. `CreateLinkInput`, `UpdateLinkInput`)
 - Each module exposes barrel `index.ts` controlling public API
 
@@ -175,7 +181,7 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
 - Contexts: `createContext(undefined)` with custom hook that throws outside provider
 - Form state sequence: clear error → set loading → attempt action → handle result
 - Extract errors: `error instanceof Error ? error.message : 'Something went wrong'`
-- Sort imports alphabetically — within individual imports and across import list. Put `import {}` before `import type {}`.
+- Sort imports alphabetically — within individual imports + across import list. Put `import {}` before `import type {}`.
 
 ```typescript
 // Example of poor import organization
@@ -220,9 +226,36 @@ import { useEffect, useState } from 'react';
   - transitions
   - pointers (cursor-pointer)
 - Layouts first. Widths before heights. x before y. Margins before padding. Backgrounds before borders before text. Colors before sizes. Transitions last. Primary before states (border, hover:border, focus:border). Primary before sizes (mx-auto, sm:mx-0).
+- **No ternaries for state-driven styling when Tailwind has variant for it.** If state already exposed on DOM (`disabled`, `aria-disabled`, `aria-checked`, `aria-selected`, `aria-current`, `aria-pressed`, `aria-expanded`, `data-state`, `:hover`, `:focus`, `:focus-visible`, `:active`, `:checked`, `[open]`, etc.), drive styling off same attribute via corresponding Tailwind variant — not JS ternary that picks class string. Locks ARIA + visual state together so cannot drift, deletes branching logic from JSX. For descendant elements, mark stateful ancestor with `group` + use `group-aria-*:` / `group-data-*:` on child. See [Hover, Focus & Other States](https://tailwindcss.com/docs/hover-focus-and-other-states). Examples:
+
+  ```tsx
+  // BAD — ternary toggling classes for a state the DOM already exposes
+  <button
+    aria-disabled={isDisabled}
+    className={isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
+  />
+
+  // GOOD — let the aria-disabled attribute drive the style
+  <button
+    aria-disabled={isDisabled}
+    className="cursor-pointer aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+  />
+
+  // BAD — ternary on a child of a stateful button
+  <button aria-expanded={isOpen}>
+    <i className={`fa-chevron-down ${isOpen ? '-rotate-180' : ''}`} />
+  </button>
+
+  // GOOD — group + group-aria-* on the child
+  <button className="group" aria-expanded={isOpen}>
+    <i className="fa-chevron-down group-aria-expanded:-rotate-180" />
+  </button>
+  ```
+
+  Ternaries still correct for pure JS state with no DOM representation (e.g. `mode === 'login'`, animation gates, internal hover coordination across non-nested elements) — + for setting ARIA attribute itself (e.g. `aria-current={isActive ? 'page' : undefined}`).
 
 ## Gotchas
 
-- **TypeScript build errors on the frontend**: pre-existing `tsc` errors exist in `apps/web`. `vite build` (not `tsc`) is true correctness check — use it to validate frontend code.
-- **ESM Jest on the backend**: API test runner uses `--experimental-vm-modules`. Don't mock `bcryptjs` — use real low-round hashes (`bcrypt.hash('password', 1)`) to avoid ESM interop issues.
+- **TypeScript build errors on the frontend**: pre-existing `tsc` errors exist in `apps/web`. `vite build` (not `tsc`) is true correctness check — use to validate frontend code.
+- **ESM Jest on the backend**: API test runner uses `--experimental-vm-modules`. No mock `bcryptjs` — use real low-round hashes (`bcrypt.hash('password', 1)`) to avoid ESM interop issues.
 - **Prisma `P2025` in tests**: Prisma throws typed error class, not plain object. Mock with `Object.assign(new Error('...'), { code: 'P2025' })` so `instanceof` checks work correctly.

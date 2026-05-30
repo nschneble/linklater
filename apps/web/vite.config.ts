@@ -33,6 +33,7 @@ export default defineConfig({
     },
     environment: 'jsdom',
     globals: true,
+    reporters: ['default', './test/failed-files-reporter.ts'],
     setupFiles: './test/setup.ts',
   },
 });

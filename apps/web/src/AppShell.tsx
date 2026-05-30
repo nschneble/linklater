@@ -1,40 +1,22 @@
+import ErrorBoundary from './components/errors/ErrorBoundary';
 import Header from './components/Header';
 import LinkButton from './components/common/LinkButton';
 import LinksView from './components/links/LinksView';
 import SettingsView from './components/settings/SettingsView';
-import {
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import { updateMe } from './lib/api';
-import { useAuth } from './auth/AuthContext';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useTheme, type BaseTheme } from './theme/ThemeContext';
-import { type AppView } from './lib/navigation';
+import { lazy, Suspense } from 'react';
+import { useAppShell } from './useAppShell';
 
 // ThemeEditor is lazy-loaded because it's rarely visited and its
 // color-math utilities add non-trivial weight to the bundle.
 const ThemeEditor = lazy(() => import('./components/settings/ThemeEditor'));
 
+// ApiDocsView is lazy-loaded because Scalar's bundle is heavy (~300KB
+// gzipped) and only visitors to /settings/api should pay that cost.
+const ApiDocsView = lazy(() => import('./components/api-docs/ApiDocsView'));
+
 // WelcomeModal is lazy-loaded because it shows once per user and would
 // otherwise be dead weight in the initial bundle for every session.
 const WelcomeModal = lazy(() => import('./components/welcome/WelcomeModal'));
-
-/** Maps the current URL pathname to the active `AppView`. */
-function viewFromPath(pathname: string): AppView {
-  switch (pathname) {
-    case '/settings':
-      return 'settings';
-    case '/editor':
-      return 'theme-editor';
-    default:
-      return 'links';
-  }
-}
 
 /**
  * The main authenticated layout. Renders the `Header`, an optional
@@ -49,111 +31,20 @@ function viewFromPath(pathname: string): AppView {
  * guard; in practice `AppShell` is only rendered when `user` is non-null.
  */
 export default function AppShell() {
-  const { logout, markWelcomed, user } = useAuth();
-  const { setBaseTheme, toggleMode } = useTheme();
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const view = viewFromPath(location.pathname);
-  const mainReference = useRef<HTMLElement>(null);
-  const isFirstRender = useRef(true);
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  // The WelcomeModal pitches the bookmarklet, which can't be dragged to a
-  // bookmarks bar on touch devices. Gate it to >=md viewports so mobile
-  // users aren't shown irrelevant onboarding. A user who first lands on
-  // mobile will see it the next time they visit on desktop, since
-  // `markWelcomed` only fires when the modal is dismissed.
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-      ? window.matchMedia('(min-width: 768px)').matches
-      : true,
-  );
-
-  useEffect(() => {
-    if (
-      typeof window === 'undefined' ||
-      typeof window.matchMedia !== 'function'
-    ) {
-      return;
-    }
-    const mediaQuery = window.matchMedia('(min-width: 768px)');
-    const handleChange = (event: MediaQueryListEvent) =>
-      setIsDesktop(event.matches);
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  const handleUserMenuToggle = useCallback(
-    () => setShowUserMenu((open) => !open),
-    [],
-  );
-  const handleUserMenuClose = useCallback(() => setShowUserMenu(false), []);
-
-  // Optimistic update: the theme switches immediately without waiting for
-  // the server response.
-  const handleThemeSelect = (theme: BaseTheme) => {
-    setBaseTheme(theme);
-    updateMe({ theme }).catch((error) =>
-      console.error('Failed to save theme', error),
-    );
-  };
-
-  // The next mode is derived from user.mode (auth state) rather than from
-  // ThemeContext so the persisted value stays in sync with auth state.
-  const handleModeToggle = () => {
-    const nextMode = user?.mode === 'light' ? 'dark' : 'light';
-    toggleMode();
-    updateMe({ mode: nextMode }).catch((error) =>
-      console.error('Failed to save mode', error),
-    );
-  };
-
-  useEffect(() => {
-    const titles: Record<AppView, string> = {
-      links: 'Your links – Linklater',
-      settings: 'Settings – Linklater',
-      'theme-editor': 'Theme editor – Linklater',
-    };
-    document.title = titles[view];
-  }, [view]);
-
-  // Move focus to the main landmark whenever the user navigates between
-  // views. The isFirstRender guard prevents stealing focus on the
-  // initial page load — on mount the browser has not set focus anywhere
-  // meaningful yet, so moving it to <main> would skip the skip link and
-  // surprise keyboard users who land tabbed into the page header. Skip
-  // the focus shift when the URL carries a hash, because the destination
-  // view is about to deep-link focus to a specific section and we'd
-  // otherwise steal focus right back to <main>.
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    if (location.hash) return;
-    mainReference.current?.focus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view]);
-
-  // Global 'x' shortcut to open/close the user menu from anywhere.
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
-      if (event.key.toLowerCase() !== 'x') return;
-      const target = event.target as HTMLElement;
-      const isTypingField =
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable;
-      if (isTypingField) return;
-      event.preventDefault();
-      document
-        .querySelector<HTMLButtonElement>('[data-usermenu-trigger]')
-        ?.click();
-    }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  const {
+    handleModeToggle,
+    handleThemeSelect,
+    handleUserMenuClose,
+    handleUserMenuToggle,
+    isDesktop,
+    logout,
+    mainReference,
+    markWelcomed,
+    navigate,
+    showUserMenu,
+    user,
+    view,
+  } = useAppShell();
 
   if (!user) return null;
 
@@ -210,13 +101,45 @@ export default function AppShell() {
         tabIndex={-1}
         className="max-w-3xl mx-auto px-4 py-6 sm:py-12 space-y-6 focus:outline-none"
       >
+        {/*
+         * Always-mounted boundary at a stable first-child position. Scalar's
+         * ApiReferenceReact embeds a Vue runtime whose scheduler can fire
+         * queued jobs against an instance React is in the middle of tearing
+         * down (any navigation away from /settings/api), throwing inside a
+         * layout effect. A boundary anywhere INSIDE the view-ternary unmounts
+         * together with the view, so React routes the throw to the next
+         * surviving boundary (the root) and the whole app swaps to the
+         * "Something went wrong" UI. Hoisting the boundary out of the ternary
+         * keeps its fiber alive across view changes — only its `children`
+         * swap to/from null. `resetKey={view}` clears the error state on the
+         * next view change so a subsequent return to /settings/api gets a
+         * fresh attempt. `fallback={null}` because by the time it would
+         * paint the user is already on the new route.
+         */}
+        <ErrorBoundary fallback={null} resetKey={view}>
+          {view === 'api-docs' ? (
+            <Suspense
+              fallback={
+                <p
+                  aria-live="polite"
+                  className="text-[var(--text-muted)] text-sm"
+                >
+                  Loading API documentation…
+                </p>
+              }
+            >
+              <ApiDocsView />
+            </Suspense>
+          ) : null}
+        </ErrorBoundary>
+
         {view === 'settings' ? (
           <SettingsView />
         ) : view === 'theme-editor' ? (
           <Suspense>
             <ThemeEditor />
           </Suspense>
-        ) : (
+        ) : view === 'api-docs' ? null : (
           <LinksView onCloseUserMenu={handleUserMenuClose} />
         )}
       </main>

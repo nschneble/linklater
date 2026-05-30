@@ -5,21 +5,18 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
-import { expiresInMs } from '../common/dates.js';
+import { generateHexToken } from '../common/crypto-tokens.js';
 import {
   RECOVERY_CODE_REGEX,
   findMatchingRecoveryCode,
   generateRecoveryCodes,
   hashRecoveryCodes,
 } from '../common/recovery-codes.js';
-import { PrismaService } from '../prisma/prisma.service.js';
 import { UsersService, withoutPasswordHash } from '../users/index.js';
 import { EmailVerificationService } from './email-verification.service.js';
 import { MagicLinkService } from './magic-link.service.js';
+import { RefreshTokenService } from './refresh-token.service.js';
 import { TotpService } from './totp.service.js';
-
-const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
@@ -29,7 +26,7 @@ export class AuthService {
     private readonly emailVerificationService: EmailVerificationService,
     private readonly magicLinkService: MagicLinkService,
     private readonly totpService: TotpService,
-    private readonly prisma: PrismaService,
+    private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
   async register(email: string, password: string) {
@@ -55,17 +52,18 @@ export class AuthService {
       this.usersService.listOAuthAccounts(userId),
     ]);
 
-    const twoFactorMethod: 'totp' | null = totpEnabledAt ? 'totp' : null;
+    const multiFactorMethod: 'totp' | null = totpEnabledAt ? 'totp' : null;
     const connectedProviders = oauthAccounts.map((account) => ({
       provider: account.provider,
+      providerEmail: account.providerEmail,
       connectedAt: account.connectedAt,
     }));
 
     return {
       userId: id,
       ...rest,
-      twoFactorMethod,
-      twoFactorPending: !!totpSecret && !totpEnabledAt,
+      multiFactorMethod,
+      multiFactorPending: !!totpSecret && !totpEnabledAt,
       connectedProviders,
     };
   }
@@ -82,15 +80,24 @@ export class AuthService {
 
   /**
    * Issues a session for the given user. Fetches the user record internally
-   * so all login paths (password, OAuth, magic-link) share a single 2FA gate
+   * so all login paths (password, OAuth, magic-link) share a single MFA gate
    * — callers cannot accidentally bypass MFA by passing a stale user object.
+   *
+   * When the user has TOTP enabled, generates a fresh `mfaNonce` and writes
+   * it to the user row before signing the MFA challenge JWT with the same
+   * nonce. verifyOtp later checks the JWT's nonce against the column and
+   * clears it on success, giving the MFA token single-use semantics and
+   * an implicit revocation handle (rotating the column invalidates any
+   * outstanding token).
    */
   async login(userId: string) {
     const user = await this.usersService.findById(userId);
 
     if (user.totpEnabledAt) {
+      const nonce = generateHexToken();
+      await this.usersService.setMfaNonce(userId, nonce);
       const mfaToken = this.jwtService.sign(
-        { subject: userId, mfaPending: true },
+        { subject: userId, mfaPending: true, nonce },
         { expiresIn: '5m' },
       );
       return { mfaToken, mfaMethod: 'totp' as const };
@@ -99,39 +106,11 @@ export class AuthService {
   }
 
   async refresh(rawRefreshToken: string) {
-    const tokenHash = sha256Hex(rawRefreshToken);
-    const stored = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash },
-      include: { user: true },
-    });
-
-    if (!stored || stored.expiresAt < new Date()) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
-
-    // Delete + re-issue in a single transaction so a crash mid-rotation
-    // cannot leave the user without a refresh token.
-    return this.prisma.$transaction(async (transaction) => {
-      await transaction.refreshToken.delete({ where: { id: stored.id } });
-      const rawNewRefreshToken = generateHexToken();
-      const newTokenHash = sha256Hex(rawNewRefreshToken);
-      const expiresAt = expiresInMs(ONE_YEAR_MS);
-      await transaction.refreshToken.create({
-        data: { tokenHash: newTokenHash, userId: stored.userId, expiresAt },
-      });
-      const accessToken = this.jwtService.sign({
-        subject: stored.userId,
-        email: stored.user.email,
-      });
-      return { accessToken, refreshToken: rawNewRefreshToken };
-    });
+    return this.refreshTokenService.refresh(rawRefreshToken);
   }
 
   async revokeAllRefreshTokens(userId: string) {
-    await Promise.all([
-      this.prisma.refreshToken.deleteMany({ where: { userId } }),
-      this.prisma.extensionAuthCode.deleteMany({ where: { userId } }),
-    ]);
+    await this.refreshTokenService.revokeAllRefreshTokens(userId);
   }
 
   async requestMagicLink(email: string): Promise<void> {
@@ -149,7 +128,12 @@ export class AuthService {
     return this.login(user.id);
   }
 
-  async verifyOtp(userId: string, code: string, method: 'totp' | 'recovery') {
+  async verifyOtp(
+    userId: string,
+    code: string,
+    method: 'totp' | 'recovery',
+    nonce?: string,
+  ) {
     const user = await this.usersService.findById(userId);
     const enrolledMethod = user.totpEnabledAt ? 'totp' : null;
 
@@ -157,15 +141,24 @@ export class AuthService {
       throw new UnauthorizedException('Invalid OTP method');
     }
 
+    // Bind the MFA challenge JWT to the per-user nonce stored when login()
+    // issued the token. A token with a mismatched (or missing) nonce is
+    // either replayed against a row whose nonce has rotated, or forged with
+    // a stale challenge, or has already been consumed.
+    if (!nonce || nonce !== user.mfaNonce) {
+      throw new UnauthorizedException('Invalid or expired MFA token');
+    }
+
     if (method === 'totp') {
       const isValid = await this.totpService.verifyCode(user, code);
       if (!isValid) throw new UnauthorizedException('Invalid TOTP code');
+      await this.usersService.clearMfaNonce(userId);
       return this.issueTokenPair(userId, user.email);
     }
 
     if (method === 'recovery') {
       if (!enrolledMethod)
-        throw new UnauthorizedException('No 2FA method enrolled');
+        throw new UnauthorizedException('No MFA method enrolled');
 
       const recoveryCodes =
         await this.usersService.findUnusedRecoveryCodes(userId);
@@ -175,18 +168,25 @@ export class AuthService {
       if (matchIndex === null)
         throw new UnauthorizedException('Invalid recovery code');
 
-      await this.usersService.markRecoveryCodeUsed(
+      // markRecoveryCodeUsed returns false when a parallel verify lost the
+      // race to consume the same code — treat that as an invalid code so
+      // two concurrent requests cannot both succeed on one recovery code.
+      const consumed = await this.usersService.markRecoveryCodeUsed(
         recoveryCodes[matchIndex].id,
       );
+      if (!consumed) {
+        throw new UnauthorizedException('Invalid recovery code');
+      }
+      await this.usersService.clearMfaNonce(userId);
       return this.issueTokenPair(userId, user.email);
     }
 
     throw new UnauthorizedException('Invalid OTP');
   }
 
-  async disable2fa(userId: string, currentPassword?: string, code?: string) {
+  async disableMfa(userId: string, currentPassword?: string, code?: string) {
     await this.reauthenticate(userId, currentPassword, code);
-    await this.usersService.disableTwoFactor(userId);
+    await this.usersService.disableMultiFactor(userId);
   }
 
   async regenerateRecoveryCodes(
@@ -206,7 +206,7 @@ export class AuthService {
     await this.usersService.markWelcomed(userId);
   }
 
-  // Shared re-auth guard used by disable2fa and regenerateRecoveryCodes.
+  // Shared re-auth guard used by disableMfa and regenerateRecoveryCodes.
   // Accepts password OR OTP/recovery code — verifies exactly one.
   private async reauthenticate(
     userId: string,
@@ -237,7 +237,7 @@ export class AuthService {
 
       if (isRecoveryCode) {
         if (!user.totpEnabledAt)
-          throw new UnauthorizedException('No 2FA method enrolled');
+          throw new UnauthorizedException('No MFA method enrolled');
 
         const recoveryCodes =
           await this.usersService.findUnusedRecoveryCodes(userId);
@@ -248,9 +248,14 @@ export class AuthService {
         if (matchIndex === null)
           throw new UnauthorizedException('Invalid recovery code');
 
-        await this.usersService.markRecoveryCodeUsed(
+        // Atomic compare-and-swap — if another request already used this
+        // code, reject. See `markRecoveryCodeUsed` for the rationale.
+        const consumed = await this.usersService.markRecoveryCodeUsed(
           recoveryCodes[matchIndex].id,
         );
+        if (!consumed) {
+          throw new UnauthorizedException('Invalid recovery code');
+        }
         return;
       }
 
@@ -260,7 +265,7 @@ export class AuthService {
         return;
       }
 
-      throw new UnauthorizedException('No 2FA method enrolled');
+      throw new UnauthorizedException('No MFA method enrolled');
     }
   }
 
@@ -272,15 +277,6 @@ export class AuthService {
   }
 
   async issueTokenPair(userId: string, email: string) {
-    const rawRefreshToken = generateHexToken();
-    const tokenHash = sha256Hex(rawRefreshToken);
-    const expiresAt = expiresInMs(ONE_YEAR_MS);
-
-    await this.prisma.refreshToken.create({
-      data: { tokenHash, userId, expiresAt },
-    });
-
-    const accessToken = this.jwtService.sign({ subject: userId, email });
-    return { accessToken, refreshToken: rawRefreshToken };
+    return this.refreshTokenService.issueTokenPair(userId, email);
   }
 }
