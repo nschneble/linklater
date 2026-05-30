@@ -78,9 +78,8 @@ export default function ApiTokensSection() {
             required
           />
           {createError && <Alert variant="error">{createError}</Alert>}
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <PrimaryButton
-              className="py-2.5"
               disabled={creating || createName.trim().length === 0}
             >
               <i
@@ -89,18 +88,16 @@ export default function ApiTokensSection() {
               />
               {creating ? 'Creating…' : 'Create token'}
             </PrimaryButton>
-            <IconButton
+            <LinkButton
               disabled={creating}
-              type="button"
-              variant="ghost"
               onClick={() => {
                 setShowCreate(false);
                 setCreateName('');
                 setCreateError(null);
               }}
             >
-              Do nothing and close this form
-            </IconButton>
+              Cancel
+            </LinkButton>
           </div>
         </form>
       )}
@@ -133,7 +130,7 @@ export default function ApiTokensSection() {
               type="button"
               variant="default"
               data-copied={copied ? 'true' : undefined}
-              aria-label="Copy to Clipboard"
+              aria-label="Copy to clipboard"
               onClick={() => void handleCopy()}
             >
               {/*
@@ -156,7 +153,7 @@ export default function ApiTokensSection() {
                   <i className="fa-solid fa-copy text-[0.7rem]" />
                 </span>
               </span>
-              Copy to Clipboard
+              Copy to clipboard
             </IconButton>
           </div>
           {/*
