@@ -1,3 +1,4 @@
+import ErrorBoundary from './components/errors/ErrorBoundary';
 import Header from './components/Header';
 import LinkButton from './components/common/LinkButton';
 import LinksView from './components/links/LinksView';
@@ -100,26 +101,45 @@ export default function AppShell() {
         tabIndex={-1}
         className="max-w-3xl mx-auto px-4 py-6 sm:py-12 space-y-6 focus:outline-none"
       >
+        {/*
+         * Always-mounted boundary at a stable first-child position. Scalar's
+         * ApiReferenceReact embeds a Vue runtime whose scheduler can fire
+         * queued jobs against an instance React is in the middle of tearing
+         * down (any navigation away from /settings/api), throwing inside a
+         * layout effect. A boundary anywhere INSIDE the view-ternary unmounts
+         * together with the view, so React routes the throw to the next
+         * surviving boundary (the root) and the whole app swaps to the
+         * "Something went wrong" UI. Hoisting the boundary out of the ternary
+         * keeps its fiber alive across view changes — only its `children`
+         * swap to/from null. `resetKey={view}` clears the error state on the
+         * next view change so a subsequent return to /settings/api gets a
+         * fresh attempt. `fallback={null}` because by the time it would
+         * paint the user is already on the new route.
+         */}
+        <ErrorBoundary fallback={null} resetKey={view}>
+          {view === 'api-docs' ? (
+            <Suspense
+              fallback={
+                <p
+                  aria-live="polite"
+                  className="text-[var(--text-muted)] text-sm"
+                >
+                  Loading API documentation…
+                </p>
+              }
+            >
+              <ApiDocsView />
+            </Suspense>
+          ) : null}
+        </ErrorBoundary>
+
         {view === 'settings' ? (
           <SettingsView />
         ) : view === 'theme-editor' ? (
           <Suspense>
             <ThemeEditor />
           </Suspense>
-        ) : view === 'api-docs' ? (
-          <Suspense
-            fallback={
-              <p
-                aria-live="polite"
-                className="text-[var(--text-muted)] text-sm"
-              >
-                Loading API documentation…
-              </p>
-            }
-          >
-            <ApiDocsView />
-          </Suspense>
-        ) : (
+        ) : view === 'api-docs' ? null : (
           <LinksView onCloseUserMenu={handleUserMenuClose} />
         )}
       </main>
