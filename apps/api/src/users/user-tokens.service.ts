@@ -162,4 +162,72 @@ export class UserTokensService {
       where: { pendingEmailToken: tokenHash },
     });
   }
+
+  /**
+   * Persists the hash of an account-deletion confirmation token alongside its
+   * expiry. The raw token is sent via email; only its SHA-256 hash is stored.
+   * Used by `AuthService.deleteAccount` for accounts that have no password
+   * and no MFA — those accounts cannot supply step-up credentials inline, so
+   * deletion is gated behind an email-link confirmation instead.
+   */
+  async updateAccountDeletionToken(
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        accountDeletionToken: tokenHash,
+        accountDeletionTokenExpiresAt: expiresAt,
+      },
+    });
+  }
+
+  /**
+   * Looks up a user by the hash of their account-deletion token. Callers must
+   * hash the raw token from the URL before invoking this method.
+   */
+  async findByAccountDeletionToken(tokenHash: string) {
+    return this.prisma.user.findUnique({
+      where: { accountDeletionToken: tokenHash },
+    });
+  }
+
+  /**
+   * Atomic compare-and-swap: clears the account-deletion token only if it
+   * still matches `tokenHash`. Prevents a parallel second click from
+   * consuming an already-used token (the user could then be deleted twice
+   * if the consumer races against itself). Returns `true` when the token
+   * was cleared.
+   */
+  async consumeAccountDeletionToken(
+    userId: string,
+    tokenHash: string,
+  ): Promise<boolean> {
+    const result = await this.prisma.user.updateMany({
+      where: { id: userId, accountDeletionToken: tokenHash },
+      data: {
+        accountDeletionToken: null,
+        accountDeletionTokenExpiresAt: null,
+      },
+    });
+    return result.count === 1;
+  }
+
+  /**
+   * Clears any pending account-deletion token on the user. Used by the
+   * "Never mind, keep my account" cancel flow and as a safety net for other
+   * paths that should invalidate outstanding deletion tokens. Idempotent —
+   * clearing already-null columns is a no-op.
+   */
+  async clearAccountDeletionToken(userId: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        accountDeletionToken: null,
+        accountDeletionTokenExpiresAt: null,
+      },
+    });
+  }
 }

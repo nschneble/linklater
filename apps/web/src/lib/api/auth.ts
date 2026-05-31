@@ -229,6 +229,23 @@ export async function disableMfa(credentials: {
   });
 }
 
+export async function confirmAccountDeletion(
+  token: string,
+): Promise<{ success: true }> {
+  return apiFetch<{ success: true }>(
+    '/auth/account-deletion/confirm',
+    {
+      body: JSON.stringify({ token }),
+      method: 'POST',
+    },
+    false,
+  );
+}
+
+export async function cancelPendingAccountDeletion(): Promise<void> {
+  await apiFetch('/auth/account-deletion/pending', { method: 'DELETE' });
+}
+
 export async function regenerateRecoveryCodes(credentials: {
   currentPassword?: string;
   code?: string;

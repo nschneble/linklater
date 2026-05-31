@@ -55,7 +55,13 @@ export default function MultiFactorSection() {
       {/* Re-authentication form for disable / regenerate */}
       {reauthAction && (
         <ReauthForm
-          action={reauthAction}
+          prompt={
+            reauthAction === 'disable'
+              ? 'Confirm your identity to disable multi-factor authentication.'
+              : 'Confirm your identity to generate new recovery codes.'
+          }
+          submitLabel="Confirm"
+          submittingLabel="Confirming…"
           code={reauthCode}
           error={error}
           loading={loading}

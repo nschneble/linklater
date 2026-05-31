@@ -13,8 +13,16 @@ export async function updateMe(input: {
   });
 }
 
-export async function deleteMe() {
-  return apiFetch<{ success: boolean }>('/users/me', {
-    method: 'DELETE',
-  });
+export async function deleteMe(input?: {
+  currentPassword?: string;
+  code?: string;
+}): Promise<{ success: true; requiresEmailConfirmation?: true }> {
+  const hasBody = !!(input?.currentPassword || input?.code);
+  return apiFetch<{ success: true; requiresEmailConfirmation?: true }>(
+    '/users/me',
+    {
+      ...(hasBody ? { body: JSON.stringify(input) } : {}),
+      method: 'DELETE',
+    },
+  );
 }

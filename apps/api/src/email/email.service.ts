@@ -6,6 +6,7 @@ import {
 import { resolveEmailPalette } from './email-palette.js';
 import * as EmailChangeTemplate from './templates/email-change.template.js';
 import * as PasswordResetTemplate from './templates/password-reset.template.js';
+import * as ConfirmAccountDeletionTemplate from './templates/confirm-account-deletion.template.js';
 import * as MagicLinkTemplate from './templates/magic-link.template.js';
 import * as VerificationTemplate from './templates/verification.template.js';
 import * as nodemailer from 'nodemailer';
@@ -158,6 +159,32 @@ export class EmailService {
       subject: 'Your Linklater login link',
       text: MagicLinkTemplate.text(url),
       html: MagicLinkTemplate.html(url, palette),
+    });
+  }
+
+  /**
+   * Sends an account-deletion confirmation email. The link contains a
+   * 64-character hex token that expires in 15 minutes. Clicking it
+   * permanently deletes the user's account.
+   *
+   * @param email - The recipient's email address.
+   * @param token - The 64-character hex confirmation token.
+   * @param theme - The user's saved theme name; falls back to scanner-darkly.
+   */
+  async sendAccountDeletionConfirmation(
+    email: string,
+    token: string,
+    theme?: string,
+  ) {
+    const url = `${process.env.APP_URL}/account/confirm-deletion?token=${token}`;
+    const palette = resolveEmailPalette(theme ?? 'scanner-darkly');
+
+    await this.send({
+      from: this.from,
+      to: email,
+      subject: 'Confirm your Linklater account deletion',
+      text: ConfirmAccountDeletionTemplate.text(url),
+      html: ConfirmAccountDeletionTemplate.html(url, palette),
     });
   }
 }

@@ -6,7 +6,9 @@ function renderForm(
   overrides: Partial<React.ComponentProps<typeof ReauthForm>> = {},
 ) {
   const props: React.ComponentProps<typeof ReauthForm> = {
-    action: 'disable',
+    prompt: 'Confirm your identity.',
+    submitLabel: 'Confirm',
+    submittingLabel: 'Confirming…',
     loading: false,
     error: null,
     password: '',
@@ -21,17 +23,10 @@ function renderForm(
 }
 
 describe('ReauthForm — prompt copy', () => {
-  it('uses the disable copy for action="disable"', () => {
-    renderForm({ action: 'disable' });
+  it('renders the prompt verbatim', () => {
+    renderForm({ prompt: 'Confirm to permanently delete your account.' });
     expect(
-      screen.getByText(/confirm your identity to disable/i),
-    ).toBeInTheDocument();
-  });
-
-  it('uses the regenerate copy for action="regenerate"', () => {
-    renderForm({ action: 'regenerate' });
-    expect(
-      screen.getByText(/confirm your identity to generate new recovery codes/i),
+      screen.getByText('Confirm to permanently delete your account.'),
     ).toBeInTheDocument();
   });
 });
@@ -47,6 +42,23 @@ describe('ReauthForm — fields', () => {
     expect(
       screen.getByLabelText(/or enter an authenticator or recovery code/i),
     ).toBeInTheDocument();
+  });
+
+  it('password input has autoComplete="current-password"', () => {
+    renderForm();
+    expect(screen.getByLabelText(/current password/i)).toHaveAttribute(
+      'autocomplete',
+      'current-password',
+    );
+  });
+
+  it('code input has inputMode="numeric" and autoComplete="one-time-code"', () => {
+    renderForm();
+    const codeInput = screen.getByLabelText(
+      /or enter an authenticator or recovery code/i,
+    );
+    expect(codeInput).toHaveAttribute('inputmode', 'numeric');
+    expect(codeInput).toHaveAttribute('autocomplete', 'one-time-code');
   });
 });
 
@@ -74,10 +86,16 @@ describe('ReauthForm — interactions', () => {
     expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
   });
 
-  it('shows "Confirming…" and disables the confirm button while loading', () => {
-    renderForm({ loading: true });
-    const confirmButton = screen.getByRole('button', { name: /confirming/i });
-    expect(confirmButton).toBeDisabled();
+  it('uses submitLabel when idle and submittingLabel while loading', () => {
+    const { rerender, props } = renderForm({
+      submitLabel: 'Delete my account',
+      submittingLabel: 'Deleting…',
+    });
+    expect(
+      screen.getByRole('button', { name: 'Delete my account' }),
+    ).toBeInTheDocument();
+    rerender(<ReauthForm {...props} loading={true} />);
+    expect(screen.getByRole('button', { name: 'Deleting…' })).toBeDisabled();
   });
 
   it('calls onCancel when Cancel is clicked', () => {
@@ -85,5 +103,59 @@ describe('ReauthForm — interactions', () => {
     renderForm({ onCancel });
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('ReauthForm — accessibility wiring', () => {
+  it('links the prompt to both inputs via aria-describedby (no error)', () => {
+    renderForm({ prompt: 'Confirm your identity.' });
+    const passwordInput = screen.getByLabelText(/current password/i);
+    const codeInput = screen.getByLabelText(/authenticator or recovery code/i);
+    const promptId = passwordInput.getAttribute('aria-describedby');
+    expect(promptId).toBeTruthy();
+    expect(codeInput.getAttribute('aria-describedby')).toBe(promptId);
+    expect(document.getElementById(promptId!)).toHaveTextContent(
+      'Confirm your identity.',
+    );
+  });
+
+  it('extends aria-describedby with the error id and sets aria-invalid when error is present', () => {
+    renderForm({ error: 'Invalid credentials' });
+    const passwordInput = screen.getByLabelText(/current password/i);
+    const describedBy = passwordInput.getAttribute('aria-describedby')!;
+    const ids = describedBy.split(' ');
+    expect(ids).toHaveLength(2);
+    const errorElement = document.getElementById(ids[1]);
+    expect(errorElement).toHaveTextContent('Invalid credentials');
+    expect(passwordInput).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('moves focus into the error alert when error first appears', () => {
+    const { rerender, props } = renderForm({ error: null });
+    rerender(<ReauthForm {...props} error="Invalid credentials" />);
+    const alertElement = screen.getByRole('alert');
+    expect(document.activeElement).toBe(alertElement);
+  });
+
+  it('focusOnMount={true} focuses the password input on mount', () => {
+    renderForm({ focusOnMount: true });
+    expect(document.activeElement).toBe(
+      screen.getByLabelText(/current password/i),
+    );
+  });
+
+  it('focusOnMount={false} (default) does not move focus', () => {
+    renderForm();
+    expect(document.activeElement).not.toBe(
+      screen.getByLabelText(/current password/i),
+    );
+  });
+
+  it('cancelLabel sets aria-label on the Cancel button (visible text unchanged)', () => {
+    renderForm({ cancelLabel: 'Cancel account deletion' });
+    const cancelButton = screen.getByRole('button', {
+      name: 'Cancel account deletion',
+    });
+    expect(cancelButton).toHaveTextContent('Cancel');
   });
 });

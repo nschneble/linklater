@@ -20,6 +20,7 @@ describe('UserTokensService', () => {
     user: {
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
   } as unknown as PrismaService;
 
@@ -147,6 +148,77 @@ describe('UserTokensService', () => {
       await service.findByPendingEmailToken(PENDING_EMAIL_TOKEN);
       expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
         where: { pendingEmailToken: PENDING_EMAIL_TOKEN },
+      });
+    });
+  });
+
+  describe('updateAccountDeletionToken', () => {
+    it('stores account deletion token hash and expiry on the user', async () => {
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+      await service.updateAccountDeletionToken(USER_ID, 'hash', expiresAt);
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          accountDeletionToken: 'hash',
+          accountDeletionTokenExpiresAt: expiresAt,
+        },
+      });
+    });
+  });
+
+  describe('findByAccountDeletionToken', () => {
+    it('looks up user by accountDeletionToken field', async () => {
+      await service.findByAccountDeletionToken('hash');
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { accountDeletionToken: 'hash' },
+      });
+    });
+  });
+
+  describe('consumeAccountDeletionToken', () => {
+    it('atomically clears the token only when both id and token match', async () => {
+      (
+        prismaMock.user.updateMany as jest.Mock<
+          () => Promise<{ count: number }>
+        >
+      ).mockResolvedValue({ count: 1 });
+      const consumed = await service.consumeAccountDeletionToken(
+        USER_ID,
+        'hash',
+      );
+      expect(prismaMock.user.updateMany).toHaveBeenCalledWith({
+        where: { id: USER_ID, accountDeletionToken: 'hash' },
+        data: {
+          accountDeletionToken: null,
+          accountDeletionTokenExpiresAt: null,
+        },
+      });
+      expect(consumed).toBe(true);
+    });
+
+    it('returns false when no row matched (parallel consume already won)', async () => {
+      (
+        prismaMock.user.updateMany as jest.Mock<
+          () => Promise<{ count: number }>
+        >
+      ).mockResolvedValue({ count: 0 });
+      const consumed = await service.consumeAccountDeletionToken(
+        USER_ID,
+        'hash',
+      );
+      expect(consumed).toBe(false);
+    });
+  });
+
+  describe('clearAccountDeletionToken', () => {
+    it('nullifies the account deletion token and expiry on the user', async () => {
+      await service.clearAccountDeletionToken(USER_ID);
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          accountDeletionToken: null,
+          accountDeletionTokenExpiresAt: null,
+        },
       });
     });
   });

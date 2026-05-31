@@ -34,6 +34,9 @@ model User {
   magicLinkToken          String?   @unique
   magicLinkTokenExpiresAt DateTime?
 
+  accountDeletionToken          String?   @unique
+  accountDeletionTokenExpiresAt DateTime?
+
   welcomedAt DateTime?
 
   createdAt DateTime @default(now())

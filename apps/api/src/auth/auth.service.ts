@@ -5,18 +5,23 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { generateHexToken } from '../common/crypto-tokens.js';
+import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
+import { expiresInMs } from '../common/dates.js';
 import {
   RECOVERY_CODE_REGEX,
   findMatchingRecoveryCode,
   generateRecoveryCodes,
   hashRecoveryCodes,
 } from '../common/recovery-codes.js';
+import { EmailService } from '../email/email.service.js';
+import { UserTokensService } from '../users/user-tokens.service.js';
 import { UsersService, withoutPasswordHash } from '../users/index.js';
 import { EmailVerificationService } from './email-verification.service.js';
 import { MagicLinkService } from './magic-link.service.js';
 import { RefreshTokenService } from './refresh-token.service.js';
 import { TotpService } from './totp.service.js';
+
+const ACCOUNT_DELETION_TOKEN_TTL_MS = 15 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
@@ -27,6 +32,8 @@ export class AuthService {
     private readonly magicLinkService: MagicLinkService,
     private readonly totpService: TotpService,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly userTokensService: UserTokensService,
+    private readonly emailService: EmailService,
   ) {}
 
   async register(email: string, password: string) {
@@ -278,5 +285,91 @@ export class AuthService {
 
   async issueTokenPair(userId: string, email: string) {
     return this.refreshTokenService.issueTokenPair(userId, email);
+  }
+
+  /**
+   * Step-up authenticated account deletion. Routes to one of two paths based
+   * on what credentials the user actually has on file:
+   *
+   * - **Credentialed path** — when the account has a password or TOTP, the
+   *   caller must supply `currentPassword` OR `code` (TOTP or recovery
+   *   code). Same `reauthenticate()` semantics as `disableMfa`. On success
+   *   the account is deleted immediately.
+   * - **Email-confirm path** — when the account has neither a password nor
+   *   TOTP (magic-link-only accounts that never enrolled MFA), credentials
+   *   cannot be checked against anything other than the email address. A
+   *   confirmation token is persisted and emailed; deletion happens only
+   *   when the user clicks the link via `confirmAccountDeletion`.
+   *
+   * Any `currentPassword` / `code` arguments on the email-confirm path are
+   * silently ignored: there is nothing to verify them against.
+   */
+  async deleteAccount(
+    userId: string,
+    currentPassword?: string,
+    code?: string,
+  ): Promise<{ deleted: true } | { requiresEmailConfirmation: true }> {
+    const user = await this.usersService.findByIdWithPasswordHash(userId);
+
+    if (!user.hasPassword && !user.totpEnabledAt) {
+      const rawToken = generateHexToken();
+      const tokenHash = sha256Hex(rawToken);
+      const expiresAt = expiresInMs(ACCOUNT_DELETION_TOKEN_TTL_MS);
+
+      await this.userTokensService.updateAccountDeletionToken(
+        userId,
+        tokenHash,
+        expiresAt,
+      );
+      await this.emailService.sendAccountDeletionConfirmation(
+        user.email,
+        rawToken,
+        user.theme,
+      );
+      return { requiresEmailConfirmation: true };
+    }
+
+    await this.reauthenticate(userId, currentPassword, code);
+    await this.usersService.deleteById(userId);
+    return { deleted: true };
+  }
+
+  /**
+   * Consumes an account-deletion confirmation token and deletes the user.
+   * Used by the email-confirm path of `deleteAccount`. The raw token from
+   * the URL is hashed before lookup; an atomic compare-and-swap on the
+   * token column prevents replay.
+   */
+  async confirmAccountDeletion(rawToken: string): Promise<{ deleted: true }> {
+    const tokenHash = sha256Hex(rawToken);
+    const user =
+      await this.userTokensService.findByAccountDeletionToken(tokenHash);
+
+    if (!user || !user.accountDeletionTokenExpiresAt) {
+      throw new UnauthorizedException('Invalid or expired confirmation token');
+    }
+    if (user.accountDeletionTokenExpiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired confirmation token');
+    }
+
+    const consumed = await this.userTokensService.consumeAccountDeletionToken(
+      user.id,
+      tokenHash,
+    );
+    if (!consumed) {
+      throw new UnauthorizedException('Invalid or expired confirmation token');
+    }
+
+    await this.usersService.deleteById(user.id);
+    return { deleted: true };
+  }
+
+  /**
+   * Clears any outstanding account-deletion confirmation token for the user.
+   * Backs the "Never mind, keep my account" action on the email-sent panel.
+   * Idempotent — clearing already-clear columns is a no-op.
+   */
+  async cancelPendingAccountDeletion(userId: string): Promise<void> {
+    await this.userTokensService.clearAccountDeletionToken(userId);
   }
 }

@@ -10,6 +10,8 @@ import { EmailVerificationService } from './email-verification.service';
 import { MagicLinkService } from './magic-link.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { TotpService } from './totp.service';
+import { EmailService } from '../email/email.service';
+import { UserTokensService } from '../users/user-tokens.service';
 import { UsersService } from '../users/users.service';
 
 const KNOWN_PASSWORD = 'open-sesame';
@@ -30,6 +32,7 @@ describe('AuthService', () => {
     create: jest.fn(),
     createOAuthUser: jest.fn(),
     createOAuthUserAndLink: jest.fn(),
+    deleteById: jest.fn(),
     disableMultiFactor: jest.fn(),
     findByEmail: jest.fn(),
     findByIdWithPasswordHash: jest.fn(),
@@ -86,6 +89,17 @@ describe('AuthService', () => {
     revokeAllRefreshTokens: jest.fn().mockResolvedValue(undefined),
   } as unknown as RefreshTokenService;
 
+  const userTokensServiceMock = {
+    updateAccountDeletionToken: jest.fn(),
+    findByAccountDeletionToken: jest.fn(),
+    consumeAccountDeletionToken: jest.fn(),
+    clearAccountDeletionToken: jest.fn(),
+  } as unknown as UserTokensService;
+
+  const emailServiceMock = {
+    sendAccountDeletionConfirmation: jest.fn(),
+  } as unknown as EmailService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -99,6 +113,8 @@ describe('AuthService', () => {
         { provide: MagicLinkService, useValue: magicLinkServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
         { provide: RefreshTokenService, useValue: refreshTokenServiceMock },
+        { provide: UserTokensService, useValue: userTokensServiceMock },
+        { provide: EmailService, useValue: emailServiceMock },
       ],
     }).compile();
 
@@ -996,6 +1012,313 @@ describe('AuthService', () => {
       await service.markWelcomed(USER_ID);
 
       expect(usersServiceMock.markWelcomed).toHaveBeenCalledWith(USER_ID);
+    });
+  });
+
+  describe('deleteAccount', () => {
+    it('deletes when currentPassword is valid (credentialed branch)', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        theme: 'scanner-darkly',
+        hasPassword: true,
+        passwordHash: KNOWN_PASSWORD_HASH,
+        totpEnabledAt: null,
+      });
+      (usersServiceMock.deleteById as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await service.deleteAccount(USER_ID, KNOWN_PASSWORD);
+
+      expect(usersServiceMock.deleteById).toHaveBeenCalledWith(USER_ID);
+      expect(
+        userTokensServiceMock.updateAccountDeletionToken,
+      ).not.toHaveBeenCalled();
+      expect(
+        emailServiceMock.sendAccountDeletionConfirmation,
+      ).not.toHaveBeenCalled();
+      expect(result).toEqual({ deleted: true });
+    });
+
+    it('deletes when a valid TOTP code is provided', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        theme: 'scanner-darkly',
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: new Date(),
+      });
+      (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
+      (usersServiceMock.deleteById as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await service.deleteAccount(USER_ID, undefined, '123456');
+
+      expect(totpServiceMock.verifyCode).toHaveBeenCalledWith(
+        expect.objectContaining({ id: USER_ID }),
+        '123456',
+      );
+      expect(usersServiceMock.deleteById).toHaveBeenCalledWith(USER_ID);
+      expect(result).toEqual({ deleted: true });
+    });
+
+    it('deletes when a valid recovery code is provided', async () => {
+      const recoveryCode = 'aaaaa-bbbbb-ccccc';
+      const realHash = await bcrypt.hash(recoveryCode, 1);
+      const codeId = 'rc-delete-1';
+
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        theme: 'scanner-darkly',
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: new Date(),
+      });
+      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
+        [{ id: codeId, codeHash: realHash }],
+      );
+      (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
+        true,
+      );
+      (usersServiceMock.deleteById as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await service.deleteAccount(
+        USER_ID,
+        undefined,
+        recoveryCode,
+      );
+
+      expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
+        codeId,
+      );
+      expect(usersServiceMock.deleteById).toHaveBeenCalledWith(USER_ID);
+      expect(result).toEqual({ deleted: true });
+    });
+
+    it('throws BadRequestException when credentialed account provides no creds', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        theme: 'scanner-darkly',
+        hasPassword: true,
+        passwordHash: KNOWN_PASSWORD_HASH,
+        totpEnabledAt: null,
+      });
+
+      await expect(service.deleteAccount(USER_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(usersServiceMock.deleteById).not.toHaveBeenCalled();
+    });
+
+    it('throws UnauthorizedException when password is wrong', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        theme: 'scanner-darkly',
+        hasPassword: true,
+        passwordHash: KNOWN_PASSWORD_HASH,
+        totpEnabledAt: null,
+      });
+
+      await expect(
+        service.deleteAccount(USER_ID, UNKNOWN_PASSWORD),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(usersServiceMock.deleteById).not.toHaveBeenCalled();
+    });
+
+    it('issues an email confirmation token and skips delete on magic-link-only-no-MFA accounts', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        theme: 'scanner-darkly',
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: null,
+      });
+      (
+        userTokensServiceMock.updateAccountDeletionToken as jest.Mock
+      ).mockResolvedValue(undefined);
+      (
+        emailServiceMock.sendAccountDeletionConfirmation as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      const result = await service.deleteAccount(USER_ID);
+
+      expect(
+        userTokensServiceMock.updateAccountDeletionToken,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        userTokensServiceMock.updateAccountDeletionToken,
+      ).toHaveBeenCalledWith(USER_ID, expect.any(String), expect.any(Date));
+      expect(
+        emailServiceMock.sendAccountDeletionConfirmation,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        emailServiceMock.sendAccountDeletionConfirmation,
+      ).toHaveBeenCalledWith(USER_EMAIL, expect.any(String), 'scanner-darkly');
+      expect(usersServiceMock.deleteById).not.toHaveBeenCalled();
+      expect(result).toEqual({ requiresEmailConfirmation: true });
+    });
+
+    it('ignores creds passed on the email-confirm path (no throw, no use)', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        theme: 'scanner-darkly',
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: null,
+      });
+      (
+        userTokensServiceMock.updateAccountDeletionToken as jest.Mock
+      ).mockResolvedValue(undefined);
+      (
+        emailServiceMock.sendAccountDeletionConfirmation as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      const result = await service.deleteAccount(USER_ID, KNOWN_PASSWORD);
+
+      expect(usersServiceMock.deleteById).not.toHaveBeenCalled();
+      expect(
+        emailServiceMock.sendAccountDeletionConfirmation,
+      ).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({ requiresEmailConfirmation: true });
+    });
+
+    it('persists the SHA-256 hash of the emailed token, not the raw value', async () => {
+      (
+        usersServiceMock.findByIdWithPasswordHash as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        theme: 'scanner-darkly',
+        hasPassword: false,
+        passwordHash: null,
+        totpEnabledAt: null,
+      });
+      (
+        userTokensServiceMock.updateAccountDeletionToken as jest.Mock
+      ).mockResolvedValue(undefined);
+      (
+        emailServiceMock.sendAccountDeletionConfirmation as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await service.deleteAccount(USER_ID);
+
+      const persistedHash = (
+        userTokensServiceMock.updateAccountDeletionToken as jest.Mock
+      ).mock.calls[0][1] as string;
+      const emailedRaw = (
+        emailServiceMock.sendAccountDeletionConfirmation as jest.Mock
+      ).mock.calls[0][1] as string;
+      expect(persistedHash).not.toEqual(emailedRaw);
+      expect(persistedHash).toMatch(/^[0-9a-f]{64}$/);
+    });
+  });
+
+  describe('confirmAccountDeletion', () => {
+    const RAW_TOKEN = 'a'.repeat(64);
+
+    it('deletes the user when the token is valid and unexpired', async () => {
+      (
+        userTokensServiceMock.findByAccountDeletionToken as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        accountDeletionTokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      });
+      (
+        userTokensServiceMock.consumeAccountDeletionToken as jest.Mock
+      ).mockResolvedValue(true);
+      (usersServiceMock.deleteById as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await service.confirmAccountDeletion(RAW_TOKEN);
+
+      expect(
+        userTokensServiceMock.consumeAccountDeletionToken,
+      ).toHaveBeenCalledWith(USER_ID, expect.any(String));
+      expect(usersServiceMock.deleteById).toHaveBeenCalledWith(USER_ID);
+      expect(result).toEqual({ deleted: true });
+    });
+
+    it('throws UnauthorizedException when the token is unknown', async () => {
+      (
+        userTokensServiceMock.findByAccountDeletionToken as jest.Mock
+      ).mockResolvedValue(null);
+
+      await expect(service.confirmAccountDeletion(RAW_TOKEN)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(usersServiceMock.deleteById).not.toHaveBeenCalled();
+    });
+
+    it('throws UnauthorizedException when the token is expired', async () => {
+      (
+        userTokensServiceMock.findByAccountDeletionToken as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        accountDeletionTokenExpiresAt: new Date(Date.now() - 1000),
+      });
+
+      await expect(service.confirmAccountDeletion(RAW_TOKEN)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(usersServiceMock.deleteById).not.toHaveBeenCalled();
+    });
+
+    it('throws UnauthorizedException when CAS loses (parallel consume already won)', async () => {
+      (
+        userTokensServiceMock.findByAccountDeletionToken as jest.Mock
+      ).mockResolvedValue({
+        id: USER_ID,
+        accountDeletionTokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      });
+      (
+        userTokensServiceMock.consumeAccountDeletionToken as jest.Mock
+      ).mockResolvedValue(false);
+
+      await expect(service.confirmAccountDeletion(RAW_TOKEN)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(usersServiceMock.deleteById).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cancelPendingAccountDeletion', () => {
+    it('clears any pending account-deletion token for the user', async () => {
+      (
+        userTokensServiceMock.clearAccountDeletionToken as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await service.cancelPendingAccountDeletion(USER_ID);
+
+      expect(
+        userTokensServiceMock.clearAccountDeletionToken,
+      ).toHaveBeenCalledWith(USER_ID);
+    });
+
+    it('is idempotent — does not throw when no pending token exists', async () => {
+      (
+        userTokensServiceMock.clearAccountDeletionToken as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await expect(
+        service.cancelPendingAccountDeletion(USER_ID),
+      ).resolves.toBeUndefined();
     });
   });
 });
