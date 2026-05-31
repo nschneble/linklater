@@ -25,7 +25,6 @@ export default function BookmarkletRegenerateButton({
     <ActionGuard
       className="space-y-2"
       errorFallback="Failed to regenerate bookmarklet"
-      successAnnouncement="Bookmarklet regenerated. The new token is now embedded in the Save to Linklater button above."
       onConfirm={async () => {
         const fresh = await regenerate();
         onRegenerated(fresh.rawToken);
