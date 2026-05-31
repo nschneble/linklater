@@ -134,7 +134,7 @@ describe('DangerZone — credentialed branch', () => {
     render(<DangerZone />);
     fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
     fireEvent.change(
-      screen.getByLabelText(/or enter an authenticator or recovery code/i),
+      screen.getByLabelText(/authenticator or recovery code/i),
       { target: { value: '123456' } },
     );
     fireEvent.click(screen.getByRole('button', { name: 'Delete my account' }));

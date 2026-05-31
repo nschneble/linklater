@@ -171,6 +171,7 @@ export default function DangerZone() {
           error={reauthError}
           password={password}
           code={code}
+          hasPassword={!!user?.hasPassword}
           onPasswordChange={setPassword}
           onCodeChange={setCode}
           onSubmit={handleReauthSubmit}
