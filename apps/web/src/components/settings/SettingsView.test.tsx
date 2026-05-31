@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import SettingsView from './SettingsView';
+import { getActiveSettingsSection } from './settingsScroll';
 import type { User } from '../../auth/AuthContext';
 
 vi.mock('../../auth/AuthContext', () => ({
@@ -305,6 +306,18 @@ describe('SettingsView', () => {
       expect(screen.getByTestId('link-error')).not.toHaveTextContent(
         /different email/i,
       );
+    });
+  });
+
+  describe('unmount cleanup', () => {
+    // Regression: navigating away from /settings used to leave the
+    // module-scope `lastActivatedSection` set, so a later return to /settings
+    // re-anchored scroll to the stale section once async children settled.
+    it('clears the module-scope active section on unmount', () => {
+      const { unmount } = renderSettingsView({ scrollTo: 'integrations' });
+      expect(getActiveSettingsSection()).toBe('integrations');
+      unmount();
+      expect(getActiveSettingsSection()).toBe('');
     });
   });
 });

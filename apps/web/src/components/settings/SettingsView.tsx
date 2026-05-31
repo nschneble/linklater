@@ -11,6 +11,7 @@ import SettingsLayout from './SettingsLayout';
 import IdPsSection from './IdPsSection';
 import StumbleSection from '../stumble/StumbleSection';
 import MultiFactorSection from './MultiFactorSection';
+import { setActiveSettingsSection } from './settingsScroll';
 import { useSettingsActiveSection } from './useSettingsActiveSection';
 import type { SettingsSection } from './settingsSections';
 
@@ -119,6 +120,18 @@ export default function SettingsView({
       navigate(location.pathname, { replace: true, state: null });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Clear the module-scope last-activated-section on unmount. Without this,
+  // navigating away from /settings and back lands the user on whichever
+  // section they last clicked: the React `activeSection` state resets on
+  // remount, but `useReanchorOnLoad` reads from the module global, so async
+  // leaves (PAT list, bookmarklet token) re-anchor scroll to the stale value
+  // once they settle.
+  useEffect(() => {
+    return () => {
+      setActiveSettingsSection('');
+    };
   }, []);
 
   return (
