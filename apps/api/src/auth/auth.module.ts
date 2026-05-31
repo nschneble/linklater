@@ -85,6 +85,6 @@ const oauthProviders: Provider[] = [
     OAuthController,
     MultiFactorController,
   ],
-  exports: [AnyAuthGuard, AuthService],
+  exports: [AnyAuthGuard, ApiKeyStrategy, AuthService],
 })
 export class AuthModule {}
