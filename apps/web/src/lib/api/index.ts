@@ -1,7 +1,9 @@
 export type { LoginResponse } from './auth';
 export {
   acknowledgeWelcome,
+  cancelPendingAccountDeletion,
   cancelTotpSetup,
+  confirmAccountDeletion,
   disableMfa,
   forgotPassword,
   getMe,

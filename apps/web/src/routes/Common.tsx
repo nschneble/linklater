@@ -1,3 +1,4 @@
+import ConfirmAccountDeletionPage from '../components/auth/ConfirmAccountDeletionPage';
 import ExtensionAuthorizePage from '../components/auth/ExtensionAuthorizePage';
 import LandingPage from '../components/LandingPage';
 import LogoutPage from '../components/auth/LogoutPage';
@@ -12,6 +13,11 @@ export function commonRoutes() {
   return [
     <Route key="root" path="/" element={<LandingPage />} />,
     <Route key="logout" path="/logout" element={<LogoutPage />} />,
+    <Route
+      key="confirm-account-deletion"
+      path="/account/confirm-deletion"
+      element={<ConfirmAccountDeletionPage />}
+    />,
 
     <Route
       key="oauth-callback"
