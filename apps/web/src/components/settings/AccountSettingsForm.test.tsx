@@ -422,7 +422,7 @@ describe('AccountSettingsForm', () => {
     });
   });
 
-  describe('add password section (SSO-only account)', () => {
+  describe('add password section (passwordless account — SSO or magic link)', () => {
     beforeEach(() => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({ user: makeUser({ hasPassword: false }) }),

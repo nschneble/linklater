@@ -284,7 +284,7 @@ describe('AuthService', () => {
       expect(result).toBeNull();
     });
 
-    it('returns null when user has no password (SSO-only account)', async () => {
+    it('returns null when user has no password (passwordless account — SSO or magic link)', async () => {
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         email: USER_EMAIL,
         id: USER_ID,

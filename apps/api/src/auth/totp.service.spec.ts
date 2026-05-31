@@ -89,7 +89,7 @@ describe('TotpService', () => {
       );
     });
 
-    it('throws ForbiddenException when the account has no password (OAuth-only)', async () => {
+    it('throws ForbiddenException when the account has no password (passwordless — SSO or magic link)', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
         makeUser({ hasPassword: false }),
       );

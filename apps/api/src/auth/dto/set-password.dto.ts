@@ -2,9 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, MinLength } from 'class-validator';
 
 /**
- * Request body for `POST /auth/set-password`. Used by accounts that signed
- * up via Google or Apple SSO and have no password yet. Once a password is
- * set, the account can log in with email/password in addition to SSO.
+ * Request body for `POST /auth/set-password`. Used by passwordless
+ * accounts — those that signed up via Google/Apple SSO or a magic link
+ * and have no password yet. Once a password is set, the account can log
+ * in with email/password in addition to the original passwordless path.
  *
  * NOTE: This endpoint is only callable once per account. If the account
  * already has a password, the service throws a `BadRequestException`.

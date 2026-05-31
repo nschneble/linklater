@@ -121,7 +121,7 @@ export class UsersService {
       if (!user) throw new NotFoundException('User not found');
       if (!user.passwordHash) {
         throw new BadRequestException(
-          'Use the set-password endpoint to add a password to an IdP account',
+          'Use the set-password endpoint to add a password to a passwordless account',
         );
       }
       const isValid = await bcrypt.compare(

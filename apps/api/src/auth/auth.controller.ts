@@ -243,7 +243,7 @@ export class AuthController {
     await this.emailVerificationService.confirmEmailChange(body.token);
   }
 
-  @ApiOperation({ summary: 'Set a password for an SSO-only account' })
+  @ApiOperation({ summary: 'Set a password for a passwordless account' })
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Password set.' })
   @ApiResponse({ status: 400, description: 'Account already has a password.' })
