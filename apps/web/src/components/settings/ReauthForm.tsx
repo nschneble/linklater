@@ -34,6 +34,7 @@ interface ReauthFormProps {
   error: string | null;
   password: string;
   code: string;
+  hasPassword: boolean;
   onPasswordChange: (value: string) => void;
   onCodeChange: (value: string) => void;
   onSubmit: (formEvent: FormEvent) => void;
@@ -45,6 +46,7 @@ export default function ReauthForm({
   code,
   error,
   focusOnMount = false,
+  hasPassword,
   loading,
   onCancel,
   onCodeChange,
@@ -59,10 +61,13 @@ export default function ReauthForm({
   const errorId = useId();
   const alertReference = useRef<HTMLParagraphElement>(null);
   const passwordReference = useRef<HTMLInputElement>(null);
+  const codeReference = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (focusOnMount) passwordReference.current?.focus();
-  }, [focusOnMount]);
+    if (!focusOnMount) return;
+    if (hasPassword) passwordReference.current?.focus();
+    else codeReference.current?.focus();
+  }, [focusOnMount, hasPassword]);
 
   useEffect(() => {
     if (error) alertReference.current?.focus();
@@ -77,31 +82,38 @@ export default function ReauthForm({
         {prompt}
       </p>
 
-      <label
-        className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
-        htmlFor="reauth-password"
-      >
-        Current password
-      </label>
-      <FormInput
-        id="reauth-password"
-        ref={passwordReference}
-        type="password"
-        autoComplete="current-password"
-        aria-describedby={describedBy}
-        aria-invalid={isInvalid}
-        value={password}
-        onChange={(event) => onPasswordChange(event.target.value)}
-      />
+      {hasPassword && (
+        <>
+          <label
+            className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+            htmlFor="reauth-password"
+          >
+            Current password
+          </label>
+          <FormInput
+            id="reauth-password"
+            ref={passwordReference}
+            type="password"
+            autoComplete="current-password"
+            aria-describedby={describedBy}
+            aria-invalid={isInvalid}
+            value={password}
+            onChange={(event) => onPasswordChange(event.target.value)}
+          />
+        </>
+      )}
 
       <label
         className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
         htmlFor="reauth-code"
       >
-        Or enter an authenticator or recovery code
+        {hasPassword
+          ? 'Or enter an authenticator or recovery code'
+          : 'Authenticator or recovery code'}
       </label>
       <FormInput
         id="reauth-code"
+        ref={codeReference}
         type="text"
         maxLength={17}
         inputMode="numeric"

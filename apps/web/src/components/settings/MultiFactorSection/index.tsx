@@ -6,6 +6,7 @@ import StatusBadge from '../../common/StatusBadge';
 import ReauthForm from '../ReauthForm';
 import RecoveryCodesPanel from '../RecoveryCodesPanel';
 import TotpSetupView from '../TotpSetupView';
+import { useAuth } from '../../../auth/AuthContext';
 import { useMultiFactor } from './useMultiFactor';
 
 /**
@@ -24,6 +25,7 @@ import { useMultiFactor } from './useMultiFactor';
  * - **Reauth** — Disable or Regenerate requested, awaiting credentials.
  */
 export default function MultiFactorSection() {
+  const { user } = useAuth();
   const {
     addAuthenticatorReference,
     error,
@@ -64,6 +66,7 @@ export default function MultiFactorSection() {
           submittingLabel="Confirming…"
           code={reauthCode}
           error={error}
+          hasPassword={user?.hasPassword ?? false}
           loading={loading}
           onCancel={handleCancelReauth}
           onCodeChange={setReauthCode}

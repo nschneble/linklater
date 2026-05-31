@@ -185,17 +185,17 @@ describe('SettingsView', () => {
       expect(document.getElementById('danger')).not.toBeNull();
     });
 
-    it('renders the security group anchor when user has password', () => {
+    it('renders the security group anchor for accounts with a password', () => {
       renderSettingsView();
       expect(document.getElementById('security')).not.toBeNull();
     });
 
-    it('omits the security group when user has no password', () => {
+    it('renders the security group anchor for passwordless accounts (SSO or magic link)', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({ user: makeUser({ hasPassword: false }) }),
       );
       renderSettingsView();
-      expect(document.getElementById('security')).toBeNull();
+      expect(document.getElementById('security')).not.toBeNull();
     });
   });
 
@@ -205,14 +205,12 @@ describe('SettingsView', () => {
       expect(screen.getByTestId('multi-factor-section')).toBeInTheDocument();
     });
 
-    it('hides the MultiFactor section when the user has no password', () => {
+    it('shows the MultiFactor section for passwordless accounts (SSO or magic link)', () => {
       vi.mocked(useAuth).mockReturnValue(
         makeAuthContext({ user: makeUser({ hasPassword: false }) }),
       );
       renderSettingsView();
-      expect(
-        screen.queryByTestId('multi-factor-section'),
-      ).not.toBeInTheDocument();
+      expect(screen.getByTestId('multi-factor-section')).toBeInTheDocument();
     });
   });
 

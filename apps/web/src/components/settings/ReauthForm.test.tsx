@@ -13,6 +13,7 @@ function renderForm(
     error: null,
     password: '',
     code: '',
+    hasPassword: true,
     onPasswordChange: vi.fn(),
     onCodeChange: vi.fn(),
     onSubmit: vi.fn((event) => event.preventDefault()),
@@ -32,12 +33,12 @@ describe('ReauthForm — prompt copy', () => {
 });
 
 describe('ReauthForm — fields', () => {
-  it('shows the password field', () => {
+  it('shows the password field when hasPassword is true', () => {
     renderForm();
     expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
   });
 
-  it('shows the code field', () => {
+  it('shows the code field with "Or" prefix when hasPassword is true', () => {
     renderForm();
     expect(
       screen.getByLabelText(/or enter an authenticator or recovery code/i),
@@ -59,6 +60,20 @@ describe('ReauthForm — fields', () => {
     );
     expect(codeInput).toHaveAttribute('inputmode', 'numeric');
     expect(codeInput).toHaveAttribute('autocomplete', 'one-time-code');
+  });
+
+  it('hides the password field when hasPassword is false (passwordless account)', () => {
+    renderForm({ hasPassword: false });
+    expect(
+      screen.queryByLabelText(/current password/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it('uses a standalone code label when hasPassword is false', () => {
+    renderForm({ hasPassword: false });
+    expect(
+      screen.getByLabelText(/^authenticator or recovery code$/i),
+    ).toBeInTheDocument();
   });
 });
 
@@ -148,6 +163,13 @@ describe('ReauthForm — accessibility wiring', () => {
     renderForm();
     expect(document.activeElement).not.toBe(
       screen.getByLabelText(/current password/i),
+    );
+  });
+
+  it('focusOnMount={true} focuses the code input when hasPassword is false', () => {
+    renderForm({ focusOnMount: true, hasPassword: false });
+    expect(document.activeElement).toBe(
+      screen.getByLabelText(/^authenticator or recovery code$/i),
     );
   });
 

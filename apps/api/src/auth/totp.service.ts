@@ -41,10 +41,7 @@ export class TotpService {
    *   the plaintext base-32 secret for manual entry.
    * @throws {ConflictException} When TOTP is already fully enabled for this
    *   account.
-   * @throws {ForbiddenException} When the account has no password set
-   *   (passwordless accounts created via SSO or magic link must first add a
-   *   password via `POST /auth/set-password`), or when the email is not yet
-   *   verified.
+   * @throws {ForbiddenException} When the email is not yet verified.
    */
   async generateSetup(
     userId: string,
@@ -54,12 +51,6 @@ export class TotpService {
 
     if (user.totpEnabledAt) {
       throw new ConflictException('TOTP is already active for this account');
-    }
-
-    if (!user.hasPassword) {
-      throw new ForbiddenException(
-        'MFA is not available for passwordless accounts — add a password first',
-      );
     }
 
     if (!user.emailVerifiedAt) {
