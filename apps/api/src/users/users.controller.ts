@@ -2,10 +2,12 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Patch,
   Body,
   Req,
   UseGuards,
+  forwardRef,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -13,8 +15,13 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
+import { AuthService } from '../auth/auth.service.js';
+import { CustomThrottlerGuard } from '../auth/custom-throttler.guard.js';
+import { ThrottleMessage } from '../auth/throttle-message.decorator.js';
 import { JwtAuthGuard, type AuthRequest } from '../auth/index.js';
+import { DeleteMeDto } from './dto/delete-me.dto.js';
 import { UpdateMeDto } from './dto/update-me.dto.js';
 import { UsersService } from './users.service.js';
 
@@ -27,7 +34,11 @@ import { UsersService } from './users.service.js';
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
+  ) {}
 
   /**
    * Returns the current user's profile. Unlike `GET /auth/me`, this endpoint
@@ -69,16 +80,53 @@ export class UsersController {
   }
 
   /**
-   * Permanently deletes the current user's account and all associated links.
-   * After this call the JWT is no longer valid — the front-end should clear
-   * the stored token and redirect to the login page.
+   * Permanently deletes the current user's account and all associated
+   * records. Step-up authenticated via `AuthService.deleteAccount`:
+   *
+   * - Accounts with a password or TOTP must supply `currentPassword` OR a
+   *   `code` (TOTP / recovery). Wrong creds return 401; missing creds 400.
+   * - Magic-link-only-no-MFA accounts have no inline credential to
+   *   challenge — the service emails a confirmation link instead and
+   *   returns `{ requiresEmailConfirmation: true }` without deleting.
+   *
+   * Rate-limited via the shared `auth-reauth` bucket (5 attempts / 15
+   * minutes per IP) to match `disableMfa` / `regenerateRecoveryCodes`.
    */
   @ApiOperation({ summary: 'Permanently delete the current user account' })
-  @ApiResponse({ status: 200, description: '{ success: true }' })
-  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({
+    status: 200,
+    description:
+      '{ success: true } when deleted, { success: true, requiresEmailConfirmation: true } when an email link was sent instead.',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'No credentials supplied for an account that has a password or MFA enrolled.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid JWT, or wrong credentials supplied.',
+  })
+  @ApiResponse({ status: 429, description: 'Too many deletion attempts.' })
+  @UseGuards(CustomThrottlerGuard)
+  @Throttle({ 'auth-reauth': { ttl: 900000, limit: 5 } })
+  @ThrottleMessage('Too many deletion attempts')
   @Delete('me')
-  async deleteMe(@Req() request: AuthRequest) {
-    await this.usersService.deleteById(request.user.userId);
+  async deleteMe(
+    @Req() request: AuthRequest,
+    @Body() body: DeleteMeDto,
+  ): Promise<{
+    success: true;
+    requiresEmailConfirmation?: true;
+  }> {
+    const result = await this.authService.deleteAccount(
+      request.user.userId,
+      body.currentPassword,
+      body.code,
+    );
+    if ('requiresEmailConfirmation' in result) {
+      return { success: true, requiresEmailConfirmation: true };
+    }
     return { success: true };
   }
 }

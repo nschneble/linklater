@@ -1,4 +1,4 @@
-import { Module, type Provider } from '@nestjs/common';
+import { Module, forwardRef, type Provider } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
@@ -61,7 +61,7 @@ const oauthProviders: Provider[] = [
     }),
     PassportModule,
     TokensModule,
-    UsersModule,
+    forwardRef(() => UsersModule),
   ],
   providers: [
     ApiKeyStrategy,
@@ -85,6 +85,6 @@ const oauthProviders: Provider[] = [
     OAuthController,
     MultiFactorController,
   ],
-  exports: [AnyAuthGuard],
+  exports: [AnyAuthGuard, AuthService],
 })
 export class AuthModule {}
