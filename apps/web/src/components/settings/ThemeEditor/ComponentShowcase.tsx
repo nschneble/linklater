@@ -69,7 +69,7 @@ export default function ComponentShowcase() {
             />
             Stumble!
           </IconButton>
-          <IconButton variant="default">
+          <IconButton>
             <i
               className="fa-solid fa-bookmark text-[0.7rem]"
               aria-hidden="true"

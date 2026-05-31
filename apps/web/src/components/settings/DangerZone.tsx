@@ -207,7 +207,6 @@ export default function DangerZone() {
             id={triggerId}
             ref={triggerReference}
             variant="danger"
-            type="button"
             onClick={openConfirm}
           >
             <i
@@ -227,7 +226,6 @@ export default function DangerZone() {
             <div className="space-x-2">
               <IconButton
                 variant="danger-filled"
-                type="button"
                 disabled={pending}
                 onClick={runConfirm}
               >
@@ -235,7 +233,6 @@ export default function DangerZone() {
               </IconButton>
               <IconButton
                 variant="ghost"
-                type="button"
                 disabled={pending}
                 onClick={closeConfirm}
               >

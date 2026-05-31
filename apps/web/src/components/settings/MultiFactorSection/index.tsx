@@ -93,7 +93,6 @@ export default function MultiFactorSection() {
           {!recoveryCodes && (
             <div className="flex items-center gap-2">
               <IconButton
-                variant="default"
                 onClick={() => {
                   setError(null);
                   setReauthAction('regenerate');

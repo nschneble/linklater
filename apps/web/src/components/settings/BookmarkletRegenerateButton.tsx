@@ -43,7 +43,6 @@ export default function BookmarkletRegenerateButton({
         <div className="flex items-center gap-2">
           {!confirming ? (
             <IconButton
-              type="button"
               variant="danger"
               id={triggerId}
               aria-label="Regenerate bookmarklet token"
@@ -65,7 +64,6 @@ export default function BookmarkletRegenerateButton({
               </span>
               <div className="space-x-2">
                 <IconButton
-                  type="button"
                   variant="danger-filled"
                   disabled={pending}
                   onClick={runConfirm}
@@ -73,7 +71,6 @@ export default function BookmarkletRegenerateButton({
                   {pending ? 'Regenerating…' : 'Yes, regenerate'}
                 </IconButton>
                 <IconButton
-                  type="button"
                   variant="ghost"
                   disabled={pending}
                   onClick={closeConfirm}

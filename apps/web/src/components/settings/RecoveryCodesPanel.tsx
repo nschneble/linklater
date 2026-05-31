@@ -82,8 +82,6 @@ export default function RecoveryCodesPanel({ codes }: RecoveryCodesPanelProps) {
       <div className="flex flex-col items-start gap-4">
         <IconButton
           className="group"
-          type="button"
-          variant="default"
           data-copied={copied ? 'true' : undefined}
           aria-label="Copy all recovery codes to clipboard"
           onClick={() => void handleCopy()}

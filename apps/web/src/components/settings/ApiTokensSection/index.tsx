@@ -42,11 +42,7 @@ export default function ApiTokensSection() {
           API Tokens
         </h3>
         {!showCreate && !newToken && (
-          <IconButton
-            type="button"
-            variant="default"
-            onClick={() => setShowCreate(true)}
-          >
+          <IconButton onClick={() => setShowCreate(true)}>
             <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
             Generate new token
           </IconButton>
@@ -127,8 +123,6 @@ export default function ApiTokensSection() {
             </code>
             <IconButton
               className="group"
-              type="button"
-              variant="default"
               data-copied={copied ? 'true' : undefined}
               aria-label="Copy to clipboard"
               onClick={() => void handleCopy()}
