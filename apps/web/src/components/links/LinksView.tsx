@@ -70,6 +70,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
     isClearingRead,
     links,
     loadingLinks,
+    newLinksAnnouncement,
     onCloseShortcuts,
     onNavigateRead,
     onNavigateUnread,
@@ -191,6 +192,16 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       {toastMessage && (
         <Toast message={toastMessage} onDismiss={handleDismissToast} />
       )}
+
+      {/*
+        Polite live region announcing links that arrive via a background
+        visibility refresh (e.g. saved via the bookmarklet on another tab).
+        The visible list is updated regardless; this is purely for screen
+        reader users who don't see the prepend.
+      */}
+      <span className="sr-only" role="status" aria-live="polite">
+        {newLinksAnnouncement}
+      </span>
     </>
   );
 }

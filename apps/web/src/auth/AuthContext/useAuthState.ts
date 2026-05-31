@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   acknowledgeWelcome as apiAcknowledgeWelcome,
@@ -132,6 +132,35 @@ export function useAuthState(): AuthContextValue {
       console.error('Failed to refresh user', error);
     }
   }, []);
+
+  // When the user returns to the tab, re-fetch the current user so state
+  // mutated elsewhere (another tab, another device, a server-side flag flip
+  // during MFA setup) is picked up automatically. Guarded by a 2s stale
+  // threshold so rapid tab-switching can't fan out N requests, and skipped
+  // when there is no signed-in user.
+  const lastVisibilityRefreshReference = useRef(0);
+  useEffect(() => {
+    const VISIBILITY_REFRESH_MIN_INTERVAL_MS = 2000;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!getStoredToken()) return;
+      const now = Date.now();
+      if (
+        now - lastVisibilityRefreshReference.current <
+        VISIBILITY_REFRESH_MIN_INTERVAL_MS
+      ) {
+        return;
+      }
+      lastVisibilityRefreshReference.current = now;
+      void refreshUser();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refreshUser]);
 
   const markWelcomed = useCallback(async () => {
     setUser((previous) =>

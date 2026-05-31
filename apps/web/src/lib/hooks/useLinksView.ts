@@ -52,6 +52,7 @@ export interface UseLinksViewResult {
   handleToggleRead: ReturnType<typeof useLinks>['handleToggleRead'];
   links: ReturnType<typeof useLinks>['links'];
   loadingLinks: boolean;
+  newLinksAnnouncement: string;
   page: number;
   pagination: ReturnType<typeof useLinks>['pagination'];
   randomError: string | null;
@@ -121,6 +122,7 @@ export function useLinksView({
     handleToggleRead,
     links,
     loadingLinks,
+    newLinksAnnouncement,
     page,
     pagination,
     randomError,
@@ -224,6 +226,7 @@ export function useLinksView({
     isClearingRead,
     links,
     loadingLinks,
+    newLinksAnnouncement,
     onCloseShortcuts: () => setShowShortcuts(false),
     onNavigateRead: () => navigate('/read'),
     onNavigateUnread: () => navigate('/unread'),

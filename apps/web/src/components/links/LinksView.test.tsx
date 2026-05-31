@@ -23,6 +23,7 @@ function makeUseLinksResult(): ReturnType<typeof useLinks> {
     handleToggleForm: mockHandleToggleForm,
     links: [],
     loadingLinks: false,
+    newLinksAnnouncement: '',
     page: 1,
     pagination: null,
     randomError: null,

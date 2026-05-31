@@ -20,6 +20,7 @@ export interface UseLinksResult {
   handleToggleForm: () => void;
   links: Link[];
   loadingLinks: boolean;
+  newLinksAnnouncement: string;
   page: number;
   pagination: Pick<PaginatedLinks, 'total' | 'limit'> | null;
   randomError: string | null;
@@ -75,6 +76,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     handleToggleForm: form.handleToggleForm,
     links: data.links,
     loadingLinks: data.loadingLinks,
+    newLinksAnnouncement: data.newLinksAnnouncement,
     page: data.page,
     pagination: data.pagination,
     randomError: actions.randomError,

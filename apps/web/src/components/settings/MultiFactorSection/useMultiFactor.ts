@@ -66,13 +66,27 @@ export function useMultiFactor() {
   const handleStartTotpSetup = async () => {
     setError(null);
     setLoading(true);
+    let started = false;
     try {
       const setup = await setupTotp();
       setTotpSetup(setup);
+      started = true;
     } catch (caught: unknown) {
       setError(getErrorMessage(caught, 'Failed to initiate TOTP setup'));
     } finally {
       setLoading(false);
+    }
+    // Propagate the server-side `multiFactorPending` flag into AuthContext
+    // so navigating away and back to Settings restores the in-progress
+    // setup state rather than showing the stale "MFA off" view. Mirrors
+    // the post-verify refresh below: a refresh failure must not undo or
+    // shadow the successful setup transition.
+    if (started) {
+      try {
+        await refreshUser();
+      } catch {
+        // stale user state resolves on next navigation
+      }
     }
   };
 
