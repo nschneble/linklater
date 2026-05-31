@@ -193,7 +193,7 @@ export default function LinkCardLayout({
         {(displayDescription || link.readAt) && (
           <div
             style={childStyle(2)}
-            className={`flex items-start gap-3 overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS}`}
+            className={`relative flex items-start gap-3 overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS} z-20 pointer-events-none`}
           >
             {displayDescription && (
               <p className="flex-1 min-w-0 text-[var(--text-muted)] text-xs text-pretty tracking-tight sm:tracking-normal line-clamp-2">
@@ -203,8 +203,9 @@ export default function LinkCardLayout({
 
             {link.readAt && (
               <PrimaryButton
-                className="relative shrink-0 z-30"
+                className="relative shrink-0 z-30 pointer-events-auto"
                 onClick={onUnreadClick}
+                aria-label="Mark unread"
               >
                 <span className="hidden sm:inline-flex">Mark unread</span>
                 <span className="inline-flex sm:hidden">
