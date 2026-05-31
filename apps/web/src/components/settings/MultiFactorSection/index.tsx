@@ -73,11 +73,14 @@ export default function MultiFactorSection() {
         />
       )}
 
+      {/* Recovery codes reveal — shown after enrollment or regeneration. */}
+      {recoveryCodes && <RecoveryCodesPanel codes={recoveryCodes} />}
+
       {/* State C / E — MFA enabled. While `recoveryCodes` is non-null the
        * panel below takes over the action area to keep the user focused on
        * saving the codes and to prevent an accidental disable click mid-
        * confirmation. */}
-      {!reauthAction && multiFactorMethod && !recoveryCodes && (
+      {!reauthAction && multiFactorMethod && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)] text-xs">
@@ -87,36 +90,38 @@ export default function MultiFactorSection() {
               Enabled
             </StatusBadge>
           </div>
-          <div className="flex items-center gap-2">
-            <IconButton
-              variant="default"
-              onClick={() => {
-                setError(null);
-                setReauthAction('regenerate');
-              }}
-            >
-              <i
-                className="fa-solid fa-rotate text-[0.7rem]"
-                aria-hidden="true"
-              />
-              Generate new recovery codes
-            </IconButton>
-            <IconButton
-              variant="danger"
-              onClick={() => {
-                setError(null);
-                setReauthAction('disable');
-              }}
-            >
-              <i className="fa-solid fa-ban text-[0.7rem]" aria-hidden="true" />
-              Disable MFA
-            </IconButton>
-          </div>
+          {!recoveryCodes && (
+            <div className="flex items-center gap-2">
+              <IconButton
+                variant="default"
+                onClick={() => {
+                  setError(null);
+                  setReauthAction('regenerate');
+                }}
+              >
+                <i
+                  className="fa-solid fa-rotate text-[0.7rem]"
+                  aria-hidden="true"
+                />
+                Generate new recovery codes
+              </IconButton>
+              <IconButton
+                variant="danger"
+                onClick={() => {
+                  setError(null);
+                  setReauthAction('disable');
+                }}
+              >
+                <i
+                  className="fa-solid fa-ban text-[0.7rem]"
+                  aria-hidden="true"
+                />
+                Disable MFA
+              </IconButton>
+            </div>
+          )}
         </div>
       )}
-
-      {/* Recovery codes reveal — shown after enrollment or regeneration. */}
-      {recoveryCodes && <RecoveryCodesPanel codes={recoveryCodes} />}
 
       {/* State B — TOTP setup: verify QR */}
       {!reauthAction && !multiFactorMethod && totpSetup && (

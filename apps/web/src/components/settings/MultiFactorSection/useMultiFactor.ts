@@ -80,15 +80,24 @@ export function useMultiFactor() {
     formEvent.preventDefault();
     setError(null);
     setLoading(true);
+    let verified = false;
     try {
       const { recoveryCodes: codes } = await verifyTotpSetup(totpCode);
       setTotpSetup(null);
       setTotpCode('');
       setRecoveryCodes(codes);
+      verified = true;
     } catch (caught: unknown) {
       setError(getErrorMessage(caught, 'Invalid code'));
     } finally {
       setLoading(false);
+    }
+    if (verified) {
+      try {
+        await refreshUser();
+      } catch {
+        // stale user state resolves on next navigation
+      }
     }
   };
 
