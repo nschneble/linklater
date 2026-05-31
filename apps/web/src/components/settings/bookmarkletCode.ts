@@ -36,7 +36,8 @@ export function buildBookmarkletCode(token: string): string {
     'body:JSON.stringify({url:location.href})})' +
     '.then(function(r){r.ok' +
     "?n('✓ Saved to Linklater',true)" +
-    ":r.text().then(function(m){n('⚠ '+(m||'Error saving link'),false)})})" +
+    ":r.text().then(function(m){var p;try{p=JSON.parse(m).message;if(p&&p.join)p=p.join(', ')}catch(_){}" +
+    "n('⚠ '+(p||m||'Error saving link'),false)})})" +
     ".catch(function(){n('⚠ Could not reach Linklater',false)})" +
     '})();'
   );
