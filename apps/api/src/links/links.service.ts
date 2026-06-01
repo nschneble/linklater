@@ -9,7 +9,9 @@ export interface CreateLinkInput {
   url: string;
 }
 
-export type UpdateLinkInput = object;
+// TODO: Populate with user-editable fields (e.g. title, tags) when added.
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface UpdateLinkInput {}
 
 export type { LinksQuery } from './links-query.service.js';
 
@@ -48,12 +50,7 @@ export class LinksService {
     });
 
     if (existing) {
-      // Resurface the link at the top of the list by resetting its timestamps.
-      const link = await this.prisma.link.update({
-        where: { id: existing.id },
-        data: { readAt: null, createdAt: new Date() },
-        include: { meta: true },
-      });
+      const link = await this.resurfaceLink(existing.id);
 
       // Only re-fetch metadata if it has never been fetched before (e.g. the
       // previous fetch attempt failed before producing a `fetchedAt` timestamp).
@@ -89,11 +86,7 @@ export class LinksService {
           include: { meta: true },
         });
         if (racedExisting) {
-          return this.prisma.link.update({
-            where: { id: racedExisting.id },
-            data: { readAt: null, createdAt: new Date() },
-            include: { meta: true },
-          });
+          return this.resurfaceLink(racedExisting.id);
         }
       }
       throw error;
@@ -138,6 +131,22 @@ export class LinksService {
   }
 
   /**
+   * Resets a link's timestamps to resurface it at the top of the unread list.
+   * Used by both the found-existing path and the P2002 race-condition fallback
+   * in `create` — both paths represent the same intent: bring the link back.
+   *
+   * @param id - The UUID of the link to resurface.
+   * @returns The updated link with its `meta` relation included.
+   */
+  private resurfaceLink(id: string) {
+    return this.prisma.link.update({
+      where: { id },
+      data: { readAt: null, createdAt: new Date() },
+      include: { meta: true },
+    });
+  }
+
+  /**
    * Converts Prisma's `P2025` "record not found" error into a NestJS
    * `NotFoundException`. Any other error is re-thrown unchanged.
    *
@@ -179,7 +188,7 @@ export class LinksService {
         include: { meta: true },
       });
     } catch (error) {
-      this.mapP2025ToNotFound(error);
+      return this.mapP2025ToNotFound(error);
     }
   }
 
@@ -199,7 +208,7 @@ export class LinksService {
         include: { meta: true },
       });
     } catch (error) {
-      this.mapP2025ToNotFound(error);
+      return this.mapP2025ToNotFound(error);
     }
   }
 
@@ -219,7 +228,7 @@ export class LinksService {
         include: { meta: true },
       });
     } catch (error) {
-      this.mapP2025ToNotFound(error);
+      return this.mapP2025ToNotFound(error);
     }
   }
 
@@ -235,7 +244,7 @@ export class LinksService {
     try {
       await this.prisma.link.delete({ where: { id, userId } });
     } catch (error) {
-      this.mapP2025ToNotFound(error);
+      return this.mapP2025ToNotFound(error);
     }
     return { success: true };
   }

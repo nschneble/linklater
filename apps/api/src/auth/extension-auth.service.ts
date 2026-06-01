@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto';
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import { expiresInMs } from '../common/dates.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { AuthService } from './auth.service.js';
+import { RefreshTokenService } from './refresh-token.service.js';
 
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
@@ -25,7 +25,7 @@ export class ExtensionAuthService implements OnModuleInit {
   private allowedRedirectUris: ReadonlySet<string> = new Set();
 
   constructor(
-    private readonly authService: AuthService,
+    private readonly refreshTokenService: RefreshTokenService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -93,6 +93,9 @@ export class ExtensionAuthService implements OnModuleInit {
     }
 
     await this.prisma.extensionAuthCode.delete({ where: { id: stored.id } });
-    return this.authService.issueTokenPair(stored.userId, stored.user.email);
+    return this.refreshTokenService.issueTokenPair(
+      stored.userId,
+      stored.user.email,
+    );
   }
 }

@@ -11,6 +11,8 @@ import { MagicLinkService } from './magic-link.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { TotpService } from './totp.service';
 import { EmailService } from '../email/email.service';
+import { UserMfaService } from '../users/user-mfa.service';
+import { UserOAuthService } from '../users/user-oauth.service';
 import { UserTokensService } from '../users/user-tokens.service';
 import { UsersService } from '../users/users.service';
 
@@ -27,40 +29,26 @@ describe('AuthService', () => {
   let service: AuthService;
 
   const usersServiceMock = {
-    clearVerificationToken: jest.fn(),
-    confirmPendingEmail: jest.fn(),
     create: jest.fn(),
-    createOAuthUser: jest.fn(),
-    createOAuthUserAndLink: jest.fn(),
     deleteById: jest.fn(),
-    disableMultiFactor: jest.fn(),
     findByEmail: jest.fn(),
-    findByIdWithPasswordHash: jest.fn(),
-    findByMagicLinkToken: jest.fn(),
-    findByPendingEmailToken: jest.fn(),
-    findByResetToken: jest.fn(),
-    findByVerificationToken: jest.fn(),
     findById: jest.fn(),
-    findOAuthAccount: jest.fn(),
-    findUnusedRecoveryCodes: jest.fn(),
-    linkOAuthAccount: jest.fn(),
-    listOAuthAccounts: jest.fn(),
-    markEmailVerified: jest.fn(),
-    markRecoveryCodeUsed: jest.fn(),
+    findByIdWithPasswordHash: jest.fn(),
     markWelcomed: jest.fn(),
-    reissueRecoveryCodes: jest.fn(),
-    resetPasswordWithToken: jest.fn(),
-    saveTotpSecret: jest.fn(),
     setFirstPassword: jest.fn(),
-    setMfaNonce: jest.fn(),
-    clearMfaNonce: jest.fn(),
-    unlinkOAuthAccount: jest.fn(),
-    updateMagicLinkToken: jest.fn(),
-    updatePendingEmail: jest.fn(),
-    updateResetToken: jest.fn(),
-    updateTotpLastUsedStep: jest.fn(),
-    updateVerificationToken: jest.fn(),
   } as unknown as UsersService;
+
+  const userMfaServiceMock = {
+    clearMfaNonce: jest.fn(),
+    disableMultiFactor: jest.fn(),
+    reissueRecoveryCodes: jest.fn(),
+    setMfaNonce: jest.fn(),
+    verifyAndConsumeRecoveryCode: jest.fn(),
+  } as unknown as UserMfaService;
+
+  const userOAuthServiceMock = {
+    listOAuthAccounts: jest.fn(),
+  } as unknown as UserOAuthService;
 
   const jwtServiceMock = {
     sign: jest.fn().mockReturnValue(SIGNED_TOKEN),
@@ -105,6 +93,8 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         { provide: UsersService, useValue: usersServiceMock },
+        { provide: UserMfaService, useValue: userMfaServiceMock },
+        { provide: UserOAuthService, useValue: userOAuthServiceMock },
         { provide: JwtService, useValue: jwtServiceMock },
         {
           provide: EmailVerificationService,
@@ -149,7 +139,9 @@ describe('AuthService', () => {
 
   describe('me', () => {
     beforeEach(() => {
-      (usersServiceMock.listOAuthAccounts as jest.Mock).mockResolvedValue([]);
+      (userOAuthServiceMock.listOAuthAccounts as jest.Mock).mockResolvedValue(
+        [],
+      );
     });
 
     it('returns user with id remapped to userId and MFA status fields', async () => {
@@ -222,7 +214,7 @@ describe('AuthService', () => {
         magicLinkToken: null,
         magicLinkTokenExpiresAt: null,
       });
-      (usersServiceMock.listOAuthAccounts as jest.Mock).mockResolvedValue([
+      (userOAuthServiceMock.listOAuthAccounts as jest.Mock).mockResolvedValue([
         { provider: 'google', providerEmail: USER_EMAIL, connectedAt },
       ]);
 
@@ -243,7 +235,9 @@ describe('AuthService', () => {
         magicLinkToken: null,
         magicLinkTokenExpiresAt: null,
       });
-      (usersServiceMock.listOAuthAccounts as jest.Mock).mockResolvedValue([]);
+      (userOAuthServiceMock.listOAuthAccounts as jest.Mock).mockResolvedValue(
+        [],
+      );
 
       const result = await service.me(USER_ID);
 
@@ -328,11 +322,11 @@ describe('AuthService', () => {
 
       const result = await service.login(USER_ID);
 
-      expect(usersServiceMock.setMfaNonce).toHaveBeenCalledWith(
+      expect(userMfaServiceMock.setMfaNonce).toHaveBeenCalledWith(
         USER_ID,
         expect.any(String),
       );
-      const nonceWritten = (usersServiceMock.setMfaNonce as jest.Mock).mock
+      const nonceWritten = (userMfaServiceMock.setMfaNonce as jest.Mock).mock
         .calls[0][1] as string;
       expect(jwtServiceMock.sign).toHaveBeenCalledWith(
         { subject: USER_ID, mfaPending: true, nonce: nonceWritten },
@@ -468,7 +462,7 @@ describe('AuthService', () => {
 
         await service.verifyOtp(USER_ID, '123456', 'totp', MFA_NONCE);
 
-        expect(usersServiceMock.clearMfaNonce).toHaveBeenCalledWith(USER_ID);
+        expect(userMfaServiceMock.clearMfaNonce).toHaveBeenCalledWith(USER_ID);
       });
 
       it('throws UnauthorizedException when no MFA is enrolled and totp method is submitted', async () => {
@@ -488,12 +482,7 @@ describe('AuthService', () => {
     });
 
     describe('recovery method', () => {
-      it('marks the matching code used and returns accessToken', async () => {
-        const codeId = 'rc-1';
-
-        const bcryptModule = await import('bcryptjs');
-        const realHash = await bcryptModule.hash(RECOVERY_CODE_STUB, 1);
-
+      it('delegates to UserMfaService and returns a token pair', async () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
@@ -501,11 +490,8 @@ describe('AuthService', () => {
           totpEnabledAt: new Date(),
         });
         (
-          usersServiceMock.findUnusedRecoveryCodes as jest.Mock
-        ).mockResolvedValue([{ id: codeId, codeHash: realHash }]);
-        (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
-          true,
-        );
+          userMfaServiceMock.verifyAndConsumeRecoveryCode as jest.Mock
+        ).mockResolvedValue(undefined);
 
         const result = await service.verifyOtp(
           USER_ID,
@@ -514,20 +500,15 @@ describe('AuthService', () => {
           MFA_NONCE,
         );
 
-        expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
-          codeId,
-        );
+        expect(
+          userMfaServiceMock.verifyAndConsumeRecoveryCode,
+        ).toHaveBeenCalledWith(USER_ID, RECOVERY_CODE_STUB);
+        expect(userMfaServiceMock.clearMfaNonce).toHaveBeenCalledWith(USER_ID);
         expect(result).toHaveProperty('accessToken');
         expect(result).toHaveProperty('refreshToken');
       });
 
-      it('accepts a hyphenless recovery code by normalizing before bcrypt compare', async () => {
-        const codeId = 'rc-1';
-
-        const bcryptModule = await import('bcryptjs');
-        // Stored hash is over the canonical hyphenated form…
-        const realHash = await bcryptModule.hash(RECOVERY_CODE_STUB, 1);
-
+      it('propagates UnauthorizedException when verify-and-consume rejects', async () => {
         (usersServiceMock.findById as jest.Mock).mockResolvedValue({
           id: USER_ID,
           email: USER_EMAIL,
@@ -535,59 +516,13 @@ describe('AuthService', () => {
           totpEnabledAt: new Date(),
         });
         (
-          usersServiceMock.findUnusedRecoveryCodes as jest.Mock
-        ).mockResolvedValue([{ id: codeId, codeHash: realHash }]);
-        (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
-          true,
-        );
-
-        // …user pastes it without hyphens — normalize re-inserts them.
-        const hyphenless = RECOVERY_CODE_STUB.replace(/-/g, '');
-        const result = await service.verifyOtp(
-          USER_ID,
-          hyphenless,
-          'recovery',
-          MFA_NONCE,
-        );
-
-        expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
-          codeId,
-        );
-        expect(result).toHaveProperty('accessToken');
-      });
-
-      it('throws UnauthorizedException when no code matches', async () => {
-        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-          id: USER_ID,
-          email: USER_EMAIL,
-          mfaNonce: MFA_NONCE,
-          totpEnabledAt: new Date(),
-        });
-        (
-          usersServiceMock.findUnusedRecoveryCodes as jest.Mock
-        ).mockResolvedValue([]);
+          userMfaServiceMock.verifyAndConsumeRecoveryCode as jest.Mock
+        ).mockRejectedValue(new UnauthorizedException('Invalid recovery code'));
 
         await expect(
           service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery', MFA_NONCE),
         ).rejects.toThrow(UnauthorizedException);
-      });
-
-      it('throws UnauthorizedException when code does not match any hash', async () => {
-        const bcryptModule = await import('bcryptjs');
-        const differentHash = await bcryptModule.hash('zzzzz-zzzzz', 1);
-        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
-          id: USER_ID,
-          email: USER_EMAIL,
-          mfaNonce: MFA_NONCE,
-          totpEnabledAt: new Date(),
-        });
-        (
-          usersServiceMock.findUnusedRecoveryCodes as jest.Mock
-        ).mockResolvedValue([{ id: 'rc-1', codeHash: differentHash }]);
-
-        await expect(
-          service.verifyOtp(USER_ID, RECOVERY_CODE_STUB, 'recovery', MFA_NONCE),
-        ).rejects.toThrow(UnauthorizedException);
+        expect(userMfaServiceMock.clearMfaNonce).not.toHaveBeenCalled();
       });
 
       it('throws UnauthorizedException when no MFA method is enrolled', async () => {
@@ -614,13 +549,15 @@ describe('AuthService', () => {
         passwordHash: KNOWN_PASSWORD_HASH,
         totpEnabledAt: null,
       });
-      (usersServiceMock.disableMultiFactor as jest.Mock).mockResolvedValue(
+      (userMfaServiceMock.disableMultiFactor as jest.Mock).mockResolvedValue(
         undefined,
       );
 
       await service.disableMfa(USER_ID, KNOWN_PASSWORD);
 
-      expect(usersServiceMock.disableMultiFactor).toHaveBeenCalledWith(USER_ID);
+      expect(userMfaServiceMock.disableMultiFactor).toHaveBeenCalledWith(
+        USER_ID,
+      );
     });
 
     it('disables MFA when TOTP code is valid', async () => {
@@ -634,7 +571,7 @@ describe('AuthService', () => {
         totpEnabledAt: new Date(),
       });
       (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
-      (usersServiceMock.disableMultiFactor as jest.Mock).mockResolvedValue(
+      (userMfaServiceMock.disableMultiFactor as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -644,13 +581,13 @@ describe('AuthService', () => {
         expect.objectContaining({ id: USER_ID }),
         '123456',
       );
-      expect(usersServiceMock.disableMultiFactor).toHaveBeenCalledWith(USER_ID);
+      expect(userMfaServiceMock.disableMultiFactor).toHaveBeenCalledWith(
+        USER_ID,
+      );
     });
 
     it('disables MFA using a recovery code', async () => {
       const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
-      const realHash = await bcrypt.hash(REAUTH_RECOVERY_CODE, 1);
-      const codeId = 'rc-reauth-1';
 
       (
         usersServiceMock.findByIdWithPasswordHash as jest.Mock
@@ -660,22 +597,21 @@ describe('AuthService', () => {
         passwordHash: null,
         totpEnabledAt: new Date(),
       });
-      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
-        [{ id: codeId, codeHash: realHash }],
-      );
-      (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
-        true,
-      );
-      (usersServiceMock.disableMultiFactor as jest.Mock).mockResolvedValue(
+      (
+        userMfaServiceMock.verifyAndConsumeRecoveryCode as jest.Mock
+      ).mockResolvedValue(undefined);
+      (userMfaServiceMock.disableMultiFactor as jest.Mock).mockResolvedValue(
         undefined,
       );
 
       await service.disableMfa(USER_ID, undefined, REAUTH_RECOVERY_CODE);
 
-      expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
-        codeId,
+      expect(
+        userMfaServiceMock.verifyAndConsumeRecoveryCode,
+      ).toHaveBeenCalledWith(USER_ID, REAUTH_RECOVERY_CODE);
+      expect(userMfaServiceMock.disableMultiFactor).toHaveBeenCalledWith(
+        USER_ID,
       );
-      expect(usersServiceMock.disableMultiFactor).toHaveBeenCalledWith(USER_ID);
     });
 
     it('throws BadRequestException when neither credential is provided', async () => {
@@ -731,7 +667,6 @@ describe('AuthService', () => {
 
     it('throws UnauthorizedException when recovery code does not match', async () => {
       const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
-      const differentHash = await bcrypt.hash('zzzzz-zzzzz-zzzzz', 1);
 
       (
         usersServiceMock.findByIdWithPasswordHash as jest.Mock
@@ -741,13 +676,14 @@ describe('AuthService', () => {
         passwordHash: null,
         totpEnabledAt: new Date(),
       });
-      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
-        [{ id: 'rc-1', codeHash: differentHash }],
-      );
+      (
+        userMfaServiceMock.verifyAndConsumeRecoveryCode as jest.Mock
+      ).mockRejectedValue(new UnauthorizedException('Invalid recovery code'));
 
       await expect(
         service.disableMfa(USER_ID, undefined, REAUTH_RECOVERY_CODE),
       ).rejects.toThrow(UnauthorizedException);
+      expect(userMfaServiceMock.disableMultiFactor).not.toHaveBeenCalled();
     });
   });
 
@@ -760,7 +696,7 @@ describe('AuthService', () => {
         passwordHash: KNOWN_PASSWORD_HASH,
         totpEnabledAt: null,
       });
-      (usersServiceMock.reissueRecoveryCodes as jest.Mock).mockResolvedValue(
+      (userMfaServiceMock.reissueRecoveryCodes as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -771,7 +707,7 @@ describe('AuthService', () => {
 
       expect(Array.isArray(result)).toBe(true);
       expect(result).toHaveLength(10);
-      expect(usersServiceMock.reissueRecoveryCodes).toHaveBeenCalledWith(
+      expect(userMfaServiceMock.reissueRecoveryCodes).toHaveBeenCalledWith(
         USER_ID,
         expect.arrayContaining([expect.any(String)]),
       );
@@ -808,7 +744,7 @@ describe('AuthService', () => {
         totpEnabledAt: new Date(),
       });
       (totpServiceMock.verifyCode as jest.Mock).mockResolvedValue(true);
-      (usersServiceMock.reissueRecoveryCodes as jest.Mock).mockResolvedValue(
+      (userMfaServiceMock.reissueRecoveryCodes as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -844,8 +780,6 @@ describe('AuthService', () => {
 
     it('returns new recovery codes when a valid recovery code is provided', async () => {
       const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
-      const realHash = await bcrypt.hash(REAUTH_RECOVERY_CODE, 1);
-      const codeId = 'rc-regen-1';
 
       (
         usersServiceMock.findByIdWithPasswordHash as jest.Mock
@@ -855,13 +789,10 @@ describe('AuthService', () => {
         passwordHash: null,
         totpEnabledAt: new Date(),
       });
-      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
-        [{ id: codeId, codeHash: realHash }],
-      );
-      (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
-        true,
-      );
-      (usersServiceMock.reissueRecoveryCodes as jest.Mock).mockResolvedValue(
+      (
+        userMfaServiceMock.verifyAndConsumeRecoveryCode as jest.Mock
+      ).mockResolvedValue(undefined);
+      (userMfaServiceMock.reissueRecoveryCodes as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -871,15 +802,14 @@ describe('AuthService', () => {
         REAUTH_RECOVERY_CODE,
       );
 
-      expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
-        codeId,
-      );
+      expect(
+        userMfaServiceMock.verifyAndConsumeRecoveryCode,
+      ).toHaveBeenCalledWith(USER_ID, REAUTH_RECOVERY_CODE);
       expect(result).toHaveLength(10);
     });
 
     it('throws UnauthorizedException when the recovery code does not match', async () => {
       const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
-      const differentHash = await bcrypt.hash('zzzzz-zzzzz-zzzzz', 1);
 
       (
         usersServiceMock.findByIdWithPasswordHash as jest.Mock
@@ -889,9 +819,9 @@ describe('AuthService', () => {
         passwordHash: null,
         totpEnabledAt: new Date(),
       });
-      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
-        [{ id: 'rc-1', codeHash: differentHash }],
-      );
+      (
+        userMfaServiceMock.verifyAndConsumeRecoveryCode as jest.Mock
+      ).mockRejectedValue(new UnauthorizedException('Invalid recovery code'));
 
       await expect(
         service.regenerateRecoveryCodes(
@@ -900,6 +830,7 @@ describe('AuthService', () => {
           REAUTH_RECOVERY_CODE,
         ),
       ).rejects.toThrow(UnauthorizedException);
+      expect(userMfaServiceMock.reissueRecoveryCodes).not.toHaveBeenCalled();
     });
   });
 
@@ -1102,8 +1033,6 @@ describe('AuthService', () => {
 
     it('deletes when a valid recovery code is provided', async () => {
       const recoveryCode = 'aaaaa-bbbbb-ccccc';
-      const realHash = await bcrypt.hash(recoveryCode, 1);
-      const codeId = 'rc-delete-1';
 
       (
         usersServiceMock.findByIdWithPasswordHash as jest.Mock
@@ -1115,12 +1044,9 @@ describe('AuthService', () => {
         passwordHash: null,
         totpEnabledAt: new Date(),
       });
-      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
-        [{ id: codeId, codeHash: realHash }],
-      );
-      (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
-        true,
-      );
+      (
+        userMfaServiceMock.verifyAndConsumeRecoveryCode as jest.Mock
+      ).mockResolvedValue(undefined);
       (usersServiceMock.deleteById as jest.Mock).mockResolvedValue(undefined);
 
       const result = await service.deleteAccount(
@@ -1129,9 +1055,9 @@ describe('AuthService', () => {
         recoveryCode,
       );
 
-      expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
-        codeId,
-      );
+      expect(
+        userMfaServiceMock.verifyAndConsumeRecoveryCode,
+      ).toHaveBeenCalledWith(USER_ID, recoveryCode);
       expect(usersServiceMock.deleteById).toHaveBeenCalledWith(USER_ID);
       expect(result).toEqual({ deleted: true });
     });
@@ -1281,13 +1207,12 @@ describe('AuthService', () => {
       ).mockResolvedValue(true);
       (usersServiceMock.deleteById as jest.Mock).mockResolvedValue(undefined);
 
-      const result = await service.confirmAccountDeletion(RAW_TOKEN);
+      await service.confirmAccountDeletion(RAW_TOKEN);
 
       expect(
         userTokensServiceMock.consumeAccountDeletionToken,
       ).toHaveBeenCalledWith(USER_ID, expect.any(String));
       expect(usersServiceMock.deleteById).toHaveBeenCalledWith(USER_ID);
-      expect(result).toEqual({ deleted: true });
     });
 
     it('throws UnauthorizedException when the token is unknown', async () => {

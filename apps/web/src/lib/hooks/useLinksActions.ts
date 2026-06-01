@@ -9,7 +9,7 @@ import { getErrorMessage } from '../errors';
 import { useCallback, useRef, useState } from 'react';
 import { useMetadataPolling } from './useMetadataPolling';
 import { useRandomLink } from './useRandomLink';
-import type { LinksFilter } from './useLinks';
+import type { LinksFilter } from './types';
 
 /**
  * The mutation helpers and list state that `useLinksActions` needs from

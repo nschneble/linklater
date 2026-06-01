@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 
@@ -33,6 +34,8 @@ const BOOKMARKLET_TOKEN_NAME = 'Bookmarklet';
  */
 @Injectable()
 export class TokensService {
+  private readonly logger = new Logger(TokensService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -153,7 +156,11 @@ export class TokensService {
 
     void this.prisma.apiToken
       .update({ where: { tokenHash }, data: { lastUsedAt: new Date() } })
-      .catch(() => {});
+      .catch((error: unknown) => {
+        this.logger.warn(
+          `Failed to update lastUsedAt for token: ${String(error)}`,
+        );
+      });
 
     return stored.user;
   }

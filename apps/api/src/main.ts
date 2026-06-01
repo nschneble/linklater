@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
-import { CompactLogger } from './compact-logger.js';
+import { CompactLogger } from './common/compact-logger.js';
 import { LinksModule } from './links/links.module.js';
 import type { Request, Response, NextFunction } from 'express';
 import { existsSync, readFileSync } from 'fs';

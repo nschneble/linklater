@@ -25,11 +25,11 @@ export interface PaginatedLinks {
   total: number;
 }
 
-export async function getLink(id: string): Promise<Link> {
+export function getLink(id: string): Promise<Link> {
   return apiFetch<Link>(`/links/${id}`);
 }
 
-export async function getLinks(options?: {
+export function getLinks(options?: {
   read?: boolean;
   limit?: number;
   page?: number;
@@ -55,49 +55,49 @@ export async function getLinks(options?: {
   return apiFetch<PaginatedLinks>(path);
 }
 
-export async function createLink(input: { url: string }): Promise<Link> {
+export function createLink(input: { url: string }): Promise<Link> {
   return apiFetch<Link>('/links', {
     body: JSON.stringify(input),
     method: 'POST',
   });
 }
 
-export async function updateLink(id: string): Promise<Link> {
+export function updateLink(id: string): Promise<Link> {
   return apiFetch<Link>(`/links/${id}`, {
     body: JSON.stringify({}),
     method: 'PATCH',
   });
 }
 
-export async function readLink(id: string): Promise<Link> {
+export function readLink(id: string): Promise<Link> {
   return apiFetch<Link>(`/links/${id}/read`, {
     method: 'POST',
   });
 }
 
-export async function unreadLink(id: string): Promise<Link> {
+export function unreadLink(id: string): Promise<Link> {
   return apiFetch<Link>(`/links/${id}/unread`, {
     method: 'POST',
   });
 }
 
-export async function stumbleLink(): Promise<{ url: string | null }> {
+export function stumbleLink(): Promise<{ url: string | null }> {
   return apiFetch<{ url: string | null }>('/links/stumble', { method: 'POST' });
 }
 
-export async function deleteLink(id: string): Promise<{ success: boolean }> {
+export function deleteLink(id: string): Promise<{ success: boolean }> {
   return apiFetch<{ success: boolean }>(`/links/${id}`, {
     method: 'DELETE',
   });
 }
 
-export async function deleteAllReadLinks(): Promise<{ count: number }> {
+export function deleteAllReadLinks(): Promise<{ count: number }> {
   return apiFetch<{ count: number }>('/links/read', {
     method: 'DELETE',
   });
 }
 
-export async function getRandomLink(): Promise<{
+export function getRandomLink(): Promise<{
   link: Link | null;
 }> {
   return apiFetch<{ link: Link | null }>('/links/random');

@@ -1,7 +1,7 @@
 import { getLinks, type Link, type PaginatedLinks } from '../api';
 import { getErrorMessage } from '../errors';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import type { LinksFilter } from './useLinks';
+import type { LinksFilter } from './types';
 
 /**
  * Internal state driving the `GET /links` query. Held in a reducer so that

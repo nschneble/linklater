@@ -8,14 +8,18 @@ import * as bcrypt from 'bcryptjs';
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import { expiresInMs } from '../common/dates.js';
 import {
-  findMatchingRecoveryCode,
   generateRecoveryCodes,
   hashRecoveryCodes,
   normalizeRecoveryCode,
 } from '../common/recovery-codes.js';
 import { EmailService } from '../email/email.service.js';
-import { UserTokensService } from '../users/user-tokens.service.js';
-import { UsersService, withoutPasswordHash } from '../users/index.js';
+import {
+  UserMfaService,
+  UserOAuthService,
+  UserTokensService,
+  UsersService,
+  withoutPasswordHash,
+} from '../users/index.js';
 import { EmailVerificationService } from './email-verification.service.js';
 import { MagicLinkService } from './magic-link.service.js';
 import { RefreshTokenService } from './refresh-token.service.js';
@@ -27,6 +31,8 @@ const ACCOUNT_DELETION_TOKEN_TTL_MS = 15 * 60 * 1000;
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
+    private readonly userMfaService: UserMfaService,
+    private readonly userOAuthService: UserOAuthService,
     private readonly jwtService: JwtService,
     private readonly emailVerificationService: EmailVerificationService,
     private readonly magicLinkService: MagicLinkService,
@@ -56,7 +62,7 @@ export class AuthService {
       oauthAccounts,
     ] = await Promise.all([
       this.usersService.findById(userId),
-      this.usersService.listOAuthAccounts(userId),
+      this.userOAuthService.listOAuthAccounts(userId),
     ]);
 
     const multiFactorMethod: 'totp' | null = totpEnabledAt ? 'totp' : null;
@@ -102,14 +108,14 @@ export class AuthService {
 
     if (user.totpEnabledAt) {
       const nonce = generateHexToken();
-      await this.usersService.setMfaNonce(userId, nonce);
+      await this.userMfaService.setMfaNonce(userId, nonce);
       const mfaToken = this.jwtService.sign(
         { subject: userId, mfaPending: true, nonce },
         { expiresIn: '5m' },
       );
       return { mfaToken, mfaMethod: 'totp' as const };
     }
-    return this.issueTokenPair(userId, user.email);
+    return this.refreshTokenService.issueTokenPair(userId, user.email);
   }
 
   async refresh(rawRefreshToken: string) {
@@ -159,40 +165,17 @@ export class AuthService {
     if (method === 'totp') {
       const isValid = await this.totpService.verifyCode(user, code);
       if (!isValid) throw new UnauthorizedException('Invalid TOTP code');
-      await this.usersService.clearMfaNonce(userId);
-      return this.issueTokenPair(userId, user.email);
+      await this.userMfaService.clearMfaNonce(userId);
+      return this.refreshTokenService.issueTokenPair(userId, user.email);
     }
 
     if (method === 'recovery') {
       if (!enrolledMethod)
         throw new UnauthorizedException('No MFA method enrolled');
 
-      // Accept user-typed variants (hyphenless paste, internal spaces,
-      // surrounding whitespace) by normalizing to the canonical form
-      // that was hashed at issue time. See `normalizeRecoveryCode`.
-      const canonical = normalizeRecoveryCode(code);
-      if (canonical === null)
-        throw new UnauthorizedException('Invalid recovery code');
-
-      const recoveryCodes =
-        await this.usersService.findUnusedRecoveryCodes(userId);
-      const hashes = recoveryCodes.map((recoveryCode) => recoveryCode.codeHash);
-      const matchIndex = await findMatchingRecoveryCode(canonical, hashes);
-
-      if (matchIndex === null)
-        throw new UnauthorizedException('Invalid recovery code');
-
-      // markRecoveryCodeUsed returns false when a parallel verify lost the
-      // race to consume the same code — treat that as an invalid code so
-      // two concurrent requests cannot both succeed on one recovery code.
-      const consumed = await this.usersService.markRecoveryCodeUsed(
-        recoveryCodes[matchIndex].id,
-      );
-      if (!consumed) {
-        throw new UnauthorizedException('Invalid recovery code');
-      }
-      await this.usersService.clearMfaNonce(userId);
-      return this.issueTokenPair(userId, user.email);
+      await this.userMfaService.verifyAndConsumeRecoveryCode(userId, code);
+      await this.userMfaService.clearMfaNonce(userId);
+      return this.refreshTokenService.issueTokenPair(userId, user.email);
     }
 
     throw new UnauthorizedException('Invalid OTP');
@@ -200,7 +183,7 @@ export class AuthService {
 
   async disableMfa(userId: string, currentPassword?: string, code?: string) {
     await this.reauthenticate(userId, currentPassword, code);
-    await this.usersService.disableMultiFactor(userId);
+    await this.userMfaService.disableMultiFactor(userId);
   }
 
   async regenerateRecoveryCodes(
@@ -247,32 +230,11 @@ export class AuthService {
     }
 
     if (code) {
-      const canonicalRecovery = normalizeRecoveryCode(code);
-
-      if (canonicalRecovery !== null) {
+      if (normalizeRecoveryCode(code) !== null) {
         if (!user.totpEnabledAt)
           throw new UnauthorizedException('No MFA method enrolled');
 
-        const recoveryCodes =
-          await this.usersService.findUnusedRecoveryCodes(userId);
-        const hashes = recoveryCodes.map(
-          (recoveryCode) => recoveryCode.codeHash,
-        );
-        const matchIndex = await findMatchingRecoveryCode(
-          canonicalRecovery,
-          hashes,
-        );
-        if (matchIndex === null)
-          throw new UnauthorizedException('Invalid recovery code');
-
-        // Atomic compare-and-swap — if another request already used this
-        // code, reject. See `markRecoveryCodeUsed` for the rationale.
-        const consumed = await this.usersService.markRecoveryCodeUsed(
-          recoveryCodes[matchIndex].id,
-        );
-        if (!consumed) {
-          throw new UnauthorizedException('Invalid recovery code');
-        }
+        await this.userMfaService.verifyAndConsumeRecoveryCode(userId, code);
         return;
       }
 
@@ -289,12 +251,8 @@ export class AuthService {
   private async issueRecoveryCodes(userId: string): Promise<string[]> {
     const codes = generateRecoveryCodes();
     const hashes = await hashRecoveryCodes(codes);
-    await this.usersService.reissueRecoveryCodes(userId, hashes);
+    await this.userMfaService.reissueRecoveryCodes(userId, hashes);
     return codes;
-  }
-
-  async issueTokenPair(userId: string, email: string) {
-    return this.refreshTokenService.issueTokenPair(userId, email);
   }
 
   /**
@@ -350,7 +308,7 @@ export class AuthService {
    * the URL is hashed before lookup; an atomic compare-and-swap on the
    * token column prevents replay.
    */
-  async confirmAccountDeletion(rawToken: string): Promise<{ deleted: true }> {
+  async confirmAccountDeletion(rawToken: string): Promise<void> {
     const tokenHash = sha256Hex(rawToken);
     const user =
       await this.userTokensService.findByAccountDeletionToken(tokenHash);
@@ -371,7 +329,6 @@ export class AuthService {
     }
 
     await this.usersService.deleteById(user.id);
-    return { deleted: true };
   }
 
   /**

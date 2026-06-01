@@ -9,8 +9,6 @@ import {
 import { Prisma, PrismaService } from '../prisma/index.js';
 import { withoutPasswordHash } from './users.utils.js';
 import { VALID_MODES, VALID_THEMES } from './users.constants.js';
-import { UserMfaService } from './user-mfa.service.js';
-import { UserOAuthService } from './user-oauth.service.js';
 import * as bcrypt from 'bcryptjs';
 
 export { VALID_MODES, VALID_THEMES };
@@ -37,11 +35,6 @@ export interface UpdateMeInput {
  * that return user data call `withoutPasswordHash` before returning so that
  * password hashes are never exposed to callers.
  *
- * OAuth-account persistence is delegated to `UserOAuthService`; MFA/TOTP and
- * recovery-code persistence is delegated to `UserMfaService`. This service
- * retains a stable public surface so all 9 consumer call sites remain
- * unmodified.
- *
  * Token management methods (verification, reset, pending email) are kept here
  * rather than in `AuthService` so that Prisma operations remain in one place.
  * `AuthService` is responsible for the *logic* (generating tokens, sending
@@ -49,11 +42,7 @@ export interface UpdateMeInput {
  */
 @Injectable()
 export class UsersService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly userOAuthService: UserOAuthService,
-    private readonly userMfaService: UserMfaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   // ---------------------------------------------------------------------------
   // Core user CRUD
@@ -192,6 +181,16 @@ export class UsersService {
     };
   }
 
+  /**
+   * Finds a user by UUID and returns the full record including the password
+   * hash. Used by auth flows that must validate credentials (e.g. password
+   * change, reauthentication). Unlike `findById`, this intentionally exposes
+   * `passwordHash` — callers must not forward the result to the client.
+   *
+   * @param id - The UUID of the user.
+   * @returns The full user record with `passwordHash` included.
+   * @throws {NotFoundException} When no user exists with the given ID.
+   */
   async findByIdWithPasswordHash(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
@@ -285,6 +284,16 @@ export class UsersService {
     }
   }
 
+  /**
+   * Sets the user's password for the first time. Intended for OAuth-registered
+   * accounts that choose to add a password after initial sign-up. Rejects if
+   * the account already has a password (use `resetPasswordWithToken` instead).
+   *
+   * @param userId - The UUID of the user.
+   * @param password - The new plaintext password to hash and store.
+   * @throws {NotFoundException} When no user exists with the given ID.
+   * @throws {BadRequestException} When the account already has a password.
+   */
   async setFirstPassword(userId: string, password: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
@@ -298,6 +307,13 @@ export class UsersService {
     });
   }
 
+  /**
+   * Marks the user's email address as verified by setting `emailVerifiedAt`.
+   * Called during initial registration verification and when a magic-link
+   * user later adds a password via the reset flow.
+   *
+   * @param id - The UUID of the user.
+   */
   async markEmailVerified(id: string) {
     await this.prisma.user.update({
       where: { id },
@@ -315,119 +331,5 @@ export class UsersService {
       where: { id, welcomedAt: null },
       data: { welcomedAt: new Date() },
     });
-  }
-
-  // ---------------------------------------------------------------------------
-  // OAuth-account delegation (thin pass-throughs to UserOAuthService)
-  // ---------------------------------------------------------------------------
-
-  async createOAuthUser(email: string) {
-    return this.userOAuthService.createOAuthUser(email);
-  }
-
-  async createOAuthUserAndLink(
-    email: string,
-    provider: string,
-    providerId: string,
-    providerEmail: string,
-  ) {
-    return this.userOAuthService.createOAuthUserAndLink(
-      email,
-      provider,
-      providerId,
-      providerEmail,
-    );
-  }
-
-  async findOAuthAccount(provider: string, providerId: string) {
-    return this.userOAuthService.findOAuthAccount(provider, providerId);
-  }
-
-  async linkOAuthAccount(
-    userId: string,
-    provider: string,
-    providerId: string,
-    providerEmail: string,
-  ) {
-    return this.userOAuthService.linkOAuthAccount(
-      userId,
-      provider,
-      providerId,
-      providerEmail,
-    );
-  }
-
-  async updateOAuthProviderEmail(
-    userId: string,
-    provider: string,
-    providerId: string,
-    providerEmail: string,
-  ): Promise<void> {
-    return this.userOAuthService.updateOAuthProviderEmail(
-      userId,
-      provider,
-      providerId,
-      providerEmail,
-    );
-  }
-
-  async listOAuthAccounts(userId: string) {
-    return this.userOAuthService.listOAuthAccounts(userId);
-  }
-
-  async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
-    return this.userOAuthService.unlinkOAuthAccount(userId, provider);
-  }
-
-  // ---------------------------------------------------------------------------
-  // MFA / TOTP / recovery-code delegation (thin pass-throughs to UserMfaService)
-  // ---------------------------------------------------------------------------
-
-  async saveTotpSecret(userId: string, encryptedSecret: string) {
-    return this.userMfaService.saveTotpSecret(userId, encryptedSecret);
-  }
-
-  async clearPendingTotpSecret(userId: string): Promise<void> {
-    return this.userMfaService.clearPendingTotpSecret(userId);
-  }
-
-  async setMfaNonce(id: string, nonce: string): Promise<void> {
-    return this.userMfaService.setMfaNonce(id, nonce);
-  }
-
-  async clearMfaNonce(id: string): Promise<void> {
-    return this.userMfaService.clearMfaNonce(id);
-  }
-
-  async updateTotpLastUsedStep(id: string, step: number): Promise<boolean> {
-    return this.userMfaService.updateTotpLastUsedStep(id, step);
-  }
-
-  async enableTotpWithRecoveryCodes(
-    userId: string,
-    codeHashes: string[],
-    lastUsedStep: number,
-  ) {
-    return this.userMfaService.enableTotpWithRecoveryCodes(
-      userId,
-      codeHashes,
-      lastUsedStep,
-    );
-  }
-
-  async reissueRecoveryCodes(userId: string, codeHashes: string[]) {
-    return this.userMfaService.reissueRecoveryCodes(userId, codeHashes);
-  }
-
-  async findUnusedRecoveryCodes(userId: string) {
-    return this.userMfaService.findUnusedRecoveryCodes(userId);
-  }
-
-  async markRecoveryCodeUsed(id: string): Promise<boolean> {
-    return this.userMfaService.markRecoveryCodeUsed(id);
-  }
-
-  async disableMultiFactor(id: string) {
-    return this.userMfaService.disableMultiFactor(id);
   }
 }

@@ -16,10 +16,17 @@ import {
 } from './storage';
 import { API_BASE_URL } from './storage';
 
-async function parseResponse<T>(response: Response): Promise<T> {
+async function parseResponse<T>(response: Response): Promise<T | void> {
   const text = await response.text();
-  if (!text) return undefined as T;
-  return JSON.parse(text) as T;
+  if (!text) return;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new ApiError(
+      `Server returned non-JSON response: ${text.slice(0, 100)}`,
+      0,
+    );
+  }
 }
 
 async function parseError(response: Response): Promise<ApiError> {
@@ -72,15 +79,30 @@ async function attemptTokenRefresh(): Promise<boolean> {
   return inFlightRefresh;
 }
 
+// Two overloads: callers that do not need a typed response (e.g. POST/DELETE
+// endpoints that only signal success) call without `<T>` and get
+// `Promise<void>`. Callers that read a JSON body pass `<T>` and get
+// `Promise<T>`. Without the void overload, untyped callers silently get
+// `Promise<unknown>` and the JSON body leaks into a typed return position.
+export async function apiFetch(
+  path: string,
+  options?: RequestInit,
+  authContext?: boolean | string,
+): Promise<void>;
+export async function apiFetch<T>(
+  path: string,
+  options?: RequestInit,
+  authContext?: boolean | string,
+): Promise<T>;
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
-  includeAuth: boolean | string = true,
-): Promise<T> {
+  authContext: boolean | string = true,
+): Promise<T | void> {
   let token: string | null = null;
-  if (typeof includeAuth === 'string') {
-    token = includeAuth;
-  } else if (includeAuth) {
+  if (typeof authContext === 'string') {
+    token = authContext;
+  } else if (authContext) {
     token = getStoredToken();
   }
 
@@ -99,7 +121,7 @@ export async function apiFetch<T>(
   if (!response.ok) {
     if (
       response.status === 401 &&
-      includeAuth === true &&
+      authContext === true &&
       path !== '/auth/refresh'
     ) {
       const refreshed = await attemptTokenRefresh();

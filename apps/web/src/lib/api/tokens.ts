@@ -30,7 +30,7 @@ export interface CreatedApiToken extends ApiToken {
  *
  * @returns Array of token summaries without `rawToken`.
  */
-export async function listApiTokens(): Promise<ApiToken[]> {
+export function listApiTokens(): Promise<ApiToken[]> {
   return apiFetch<ApiToken[]>('/tokens');
 }
 
@@ -41,7 +41,7 @@ export async function listApiTokens(): Promise<ApiToken[]> {
  * @param name - A label the user can use to identify this token later.
  * @returns The new token record including the one-time `rawToken`.
  */
-export async function createApiToken(name: string): Promise<CreatedApiToken> {
+export function createApiToken(name: string): Promise<CreatedApiToken> {
   return apiFetch<CreatedApiToken>('/tokens', {
     body: JSON.stringify({ name }),
     method: 'POST',
@@ -58,9 +58,7 @@ export async function createApiToken(name: string): Promise<CreatedApiToken> {
  * @throws {ApiError} 400 when the token is a bookmarklet token (use
  *   `regenerateBookmarkletToken` instead).
  */
-export async function revokeApiToken(
-  id: string,
-): Promise<{ success: boolean }> {
+export function revokeApiToken(id: string): Promise<{ success: boolean }> {
   return apiFetch<{ success: boolean }>(`/tokens/${id}`, {
     method: 'DELETE',
   });
@@ -86,7 +84,7 @@ export interface BookmarkletToken extends ApiToken {
  *
  * @returns The bookmarklet token including its raw value.
  */
-export async function getBookmarkletToken(): Promise<BookmarkletToken> {
+export function getBookmarkletToken(): Promise<BookmarkletToken> {
   return apiFetch<BookmarkletToken>('/tokens/bookmarklet');
 }
 
@@ -98,7 +96,7 @@ export async function getBookmarkletToken(): Promise<BookmarkletToken> {
  *
  * @returns The new bookmarklet token including its raw value.
  */
-export async function regenerateBookmarkletToken(): Promise<BookmarkletToken> {
+export function regenerateBookmarkletToken(): Promise<BookmarkletToken> {
   return apiFetch<BookmarkletToken>('/tokens/bookmarklet/regenerate', {
     method: 'POST',
   });

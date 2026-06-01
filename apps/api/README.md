@@ -42,7 +42,7 @@
 | `Auth`     | `src/auth`     | All auth flows: login, registration, JWTs, email tokens, OAuth, PATs  |
 | `Email`    | `src/email`    | Send transactional emails via SMTP                                    |
 | `Links`    | `src/links`    | Link CRUD, search, mark as read                                       |
-| `Metadata` | `src/metadata` | Fetch Open Graph metadata tags                                        |
+| `Metadata` | `src/metadata` | Fetch Open Graph metadata tags (SSRF-guarded against private hosts)   |
 | `Prisma`   | `src/prisma`   | Prisma client wrapper                                                 |
 | `Queue`    | `src/queue`    | Enqueue and process background jobs via pg-boss                       |
 | `Tokens`   | `src/tokens`   | Personal access token (PAT) lifecycle: create, list, revoke, validate |

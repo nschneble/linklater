@@ -69,9 +69,7 @@ afterEach(() => {
 
 describe('ConfirmAccountDeletionPage — verifying state', () => {
   it('calls confirmAccountDeletion with the token from the query string', async () => {
-    vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue({
-      success: true,
-    });
+    vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue(undefined);
     renderWithRouter('/account/confirm-deletion?token=abc123');
     await waitFor(() => {
       expect(apiModule.confirmAccountDeletion).toHaveBeenCalledWith('abc123');
@@ -92,9 +90,7 @@ describe('ConfirmAccountDeletionPage — verifying state', () => {
   });
 
   it('does not double-fire the API call when the effect runs twice in one mount', async () => {
-    vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue({
-      success: true,
-    });
+    vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue(undefined);
     const { rerender } = render(
       <MemoryRouter initialEntries={['/account/confirm-deletion?token=once']}>
         <Routes>
@@ -125,9 +121,7 @@ describe('ConfirmAccountDeletionPage — verifying state', () => {
 
 describe('ConfirmAccountDeletionPage — success state', () => {
   it('renders the success heading + alert when the API succeeds', async () => {
-    vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue({
-      success: true,
-    });
+    vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue(undefined);
     renderWithRouter('/account/confirm-deletion?token=abc');
     await waitFor(() => {
       expect(
@@ -140,9 +134,7 @@ describe('ConfirmAccountDeletionPage — success state', () => {
   });
 
   it('focuses the Continue button on success-state mount', async () => {
-    vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue({
-      success: true,
-    });
+    vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue(undefined);
     await act(async () => {
       renderWithRouter('/account/confirm-deletion?token=abc');
     });
@@ -154,9 +146,7 @@ describe('ConfirmAccountDeletionPage — success state', () => {
   });
 
   it('Continue triggers logout + navigate(/auth) + queues the account-deleted notice', async () => {
-    vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue({
-      success: true,
-    });
+    vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue(undefined);
     renderWithRouter('/account/confirm-deletion?token=abc');
     const continueButton = await screen.findByRole('button', {
       name: /continue to sign-in/i,
@@ -234,9 +224,7 @@ describe('ConfirmAccountDeletionPage — page semantics', () => {
   });
 
   it('sets the document title for each state', async () => {
-    vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue({
-      success: true,
-    });
+    vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue(undefined);
     renderWithRouter('/account/confirm-deletion?token=abc');
     await waitFor(() => {
       expect(document.title).toBe('Account deleted — Linklater');

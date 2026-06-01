@@ -3,8 +3,32 @@ import type { LoginResponse } from './core';
 
 export type { LoginResponse };
 
-export async function register(email: string, password: string) {
-  return apiFetch(
+/**
+ * The shape of the `GET /auth/me` response. Named here so callers and
+ * mappers (e.g. `mapMeToUser`) can reference it directly rather than
+ * deriving it via `Awaited<ReturnType<typeof getMe>>`.
+ */
+export interface MeResponse {
+  cvdMode: boolean;
+  connectedProviders: Array<{
+    provider: string;
+    providerEmail: string;
+    connectedAt: string;
+  }>;
+  email: string;
+  emailVerifiedAt: string | null;
+  hasPassword: boolean;
+  pendingEmail: string | null;
+  mode: string;
+  theme: string;
+  multiFactorMethod: 'totp' | null;
+  multiFactorPending: boolean;
+  userId: string;
+  welcomedAt: string | null;
+}
+
+export async function register(email: string, password: string): Promise<void> {
+  await apiFetch(
     '/auth/register',
     {
       body: JSON.stringify({ email, password }),
@@ -46,25 +70,8 @@ export async function logout(): Promise<void> {
   clearStoredToken();
 }
 
-export async function getMe() {
-  return apiFetch<{
-    cvdMode: boolean;
-    connectedProviders: Array<{
-      provider: string;
-      providerEmail: string;
-      connectedAt: string;
-    }>;
-    email: string;
-    emailVerifiedAt: string | null;
-    hasPassword: boolean;
-    pendingEmail: string | null;
-    mode: string;
-    theme: string;
-    multiFactorMethod: 'totp' | null;
-    multiFactorPending: boolean;
-    userId: string;
-    welcomedAt: string | null;
-  }>('/auth/me', {
+export function getMe(): Promise<MeResponse> {
+  return apiFetch<MeResponse>('/auth/me', {
     method: 'GET',
   });
 }
@@ -135,11 +142,14 @@ export async function resetPassword(
  *   base-32 secret for manual entry.
  * @throws {ApiError} 409 when TOTP is already fully enabled.
  */
-export async function setupTotp(): Promise<{
+export function setupTotp(): Promise<{
   qrCodeDataUrl: string;
   secret: string;
 }> {
-  return apiFetch('/auth/mfa/totp/setup', { method: 'POST' });
+  return apiFetch<{ qrCodeDataUrl: string; secret: string }>(
+    '/auth/mfa/totp/setup',
+    { method: 'POST' },
+  );
 }
 
 /**
@@ -151,10 +161,10 @@ export async function setupTotp(): Promise<{
  * @throws {ApiError} 400 when there is no pending setup or the code is
  *   invalid.
  */
-export async function verifyTotpSetup(
+export function verifyTotpSetup(
   code: string,
 ): Promise<{ recoveryCodes: string[] }> {
-  return apiFetch('/auth/mfa/totp/verify', {
+  return apiFetch<{ recoveryCodes: string[] }>('/auth/mfa/totp/verify', {
     body: JSON.stringify({ code }),
     method: 'POST',
   });
@@ -229,10 +239,8 @@ export async function disableMfa(credentials: {
   });
 }
 
-export async function confirmAccountDeletion(
-  token: string,
-): Promise<{ success: true }> {
-  return apiFetch<{ success: true }>(
+export function confirmAccountDeletion(token: string): Promise<void> {
+  return apiFetch(
     '/auth/account-deletion/confirm',
     {
       body: JSON.stringify({ token }),
@@ -246,14 +254,17 @@ export async function cancelPendingAccountDeletion(): Promise<void> {
   await apiFetch('/auth/account-deletion/pending', { method: 'DELETE' });
 }
 
-export async function regenerateRecoveryCodes(credentials: {
+export function regenerateRecoveryCodes(credentials: {
   currentPassword?: string;
   code?: string;
 }): Promise<{ recoveryCodes: string[] }> {
-  return apiFetch('/auth/mfa/recovery-codes/regenerate', {
-    body: JSON.stringify(credentials),
-    method: 'POST',
-  });
+  return apiFetch<{ recoveryCodes: string[] }>(
+    '/auth/mfa/recovery-codes/regenerate',
+    {
+      body: JSON.stringify(credentials),
+      method: 'POST',
+    },
+  );
 }
 
 export async function setPassword(password: string): Promise<void> {
@@ -276,9 +287,7 @@ export async function unlinkOAuthProvider(provider: string): Promise<void> {
  * the API endpoint directly) so the bearer JWT can be attached, since
  * the endpoint is protected by `JwtAuthGuard`.
  */
-export async function initiateOAuthLink(
-  provider: string,
-): Promise<{ url: string }> {
+export function initiateOAuthLink(provider: string): Promise<{ url: string }> {
   return apiFetch<{ url: string }>(
     `/auth/${encodeURIComponent(provider)}/link`,
     { method: 'GET' },

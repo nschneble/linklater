@@ -1,5 +1,4 @@
 import { jest } from '@jest/globals';
-import * as bcrypt from 'bcryptjs';
 
 class MockPrismaClientKnownRequestError extends Error {
   code: string;
@@ -25,6 +24,7 @@ import { Prisma } from '../prisma/generated/client';
 import { EmailVerificationService } from './email-verification.service';
 import { TotpService } from './totp.service';
 import { EmailService } from '../email/email.service';
+import { UserMfaService } from '../users/user-mfa.service';
 import { UserTokensService } from '../users/user-tokens.service';
 import { UsersService } from '../users/users.service';
 
@@ -51,11 +51,13 @@ describe('EmailVerificationService', () => {
     confirmPendingEmail: jest.fn(),
     findByEmail: jest.fn(),
     findById: jest.fn(),
-    findUnusedRecoveryCodes: jest.fn(),
     markEmailVerified: jest.fn(),
-    markRecoveryCodeUsed: jest.fn(),
     resetPasswordWithToken: jest.fn(),
   } as unknown as UsersService;
+
+  const userMfaServiceMock = {
+    verifyAndConsumeRecoveryCode: jest.fn(),
+  } as unknown as UserMfaService;
 
   const userTokensServiceMock = {
     clearVerificationToken: jest.fn(),
@@ -82,6 +84,7 @@ describe('EmailVerificationService', () => {
       providers: [
         EmailVerificationService,
         { provide: UsersService, useValue: usersServiceMock },
+        { provide: UserMfaService, useValue: userMfaServiceMock },
         { provide: UserTokensService, useValue: userTokensServiceMock },
         { provide: EmailService, useValue: emailServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
@@ -485,18 +488,13 @@ describe('EmailVerificationService', () => {
 
     it('allows email change using a recovery code when MFA is enabled', async () => {
       const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
-      const realHash = await bcrypt.hash(REAUTH_RECOVERY_CODE, 1);
-      const codeId = 'rc-email-1';
 
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
         makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
-      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
-        [{ id: codeId, codeHash: realHash }],
-      );
-      (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
-        true,
-      );
+      (
+        userMfaServiceMock.verifyAndConsumeRecoveryCode as jest.Mock
+      ).mockResolvedValue(undefined);
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
       (userTokensServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
         undefined,
@@ -509,23 +507,21 @@ describe('EmailVerificationService', () => {
         service.requestEmailChange(USER_ID, NEW_EMAIL, REAUTH_RECOVERY_CODE),
       ).resolves.not.toThrow();
 
-      expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
-        codeId,
-      );
+      expect(
+        userMfaServiceMock.verifyAndConsumeRecoveryCode,
+      ).toHaveBeenCalledWith(USER_ID, REAUTH_RECOVERY_CODE);
     });
 
     it('throws UnauthorizedException when recovery code does not match any stored hash', async () => {
       const REAUTH_RECOVERY_CODE = 'aaaaa-bbbbb-ccccc';
-      const bcryptModule = await import('bcryptjs');
-      const differentHash = await bcryptModule.hash('zzzzz-zzzzz-zzzzz', 1);
 
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
         makeUserNoMultiFactor({ totpEnabledAt: new Date() }),
       );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.findUnusedRecoveryCodes as jest.Mock).mockResolvedValue(
-        [{ id: 'rc-1', codeHash: differentHash }],
-      );
+      (
+        userMfaServiceMock.verifyAndConsumeRecoveryCode as jest.Mock
+      ).mockRejectedValue(new UnauthorizedException('Invalid recovery code'));
 
       await expect(
         service.requestEmailChange(USER_ID, NEW_EMAIL, REAUTH_RECOVERY_CODE),

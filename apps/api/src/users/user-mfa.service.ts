@@ -1,5 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 
+import {
+  findMatchingRecoveryCode,
+  normalizeRecoveryCode,
+} from '../common/recovery-codes.js';
 import { PrismaService } from '../prisma/index.js';
 
 /**
@@ -148,6 +152,44 @@ export class UserMfaService {
       data: { usedAt: new Date() },
     });
     return result.count === 1;
+  }
+
+  /**
+   * Normalizes, finds, and atomically consumes a recovery code for the given
+   * user. Throws `UnauthorizedException` on any failure: invalid format, no
+   * matching hash, or a concurrent request already consumed the code.
+   *
+   * Callers are responsible for any post-consume steps (e.g. clearing the
+   * MFA nonce in `AuthService.verifyOtp`).
+   *
+   * @param userId - The UUID of the authenticated user.
+   * @param code - The raw recovery code as typed by the user.
+   */
+  async verifyAndConsumeRecoveryCode(
+    userId: string,
+    code: string,
+  ): Promise<void> {
+    // Accept user-typed variants (hyphenless paste, internal spaces,
+    // surrounding whitespace) by normalizing to the canonical form
+    // that was hashed at issue time. See `normalizeRecoveryCode`.
+    const canonical = normalizeRecoveryCode(code);
+    if (canonical === null)
+      throw new UnauthorizedException('Invalid recovery code');
+
+    const recoveryCodes = await this.findUnusedRecoveryCodes(userId);
+    const hashes = recoveryCodes.map((recoveryCode) => recoveryCode.codeHash);
+    const matchIndex = await findMatchingRecoveryCode(canonical, hashes);
+
+    if (matchIndex === null)
+      throw new UnauthorizedException('Invalid recovery code');
+
+    // markRecoveryCodeUsed returns false when a parallel verify lost the
+    // race to consume the same code — treat that as an invalid code so
+    // two concurrent requests cannot both succeed on one recovery code.
+    const consumed = await this.markRecoveryCodeUsed(
+      recoveryCodes[matchIndex].id,
+    );
+    if (!consumed) throw new UnauthorizedException('Invalid recovery code');
   }
 
   async disableMultiFactor(id: string) {
