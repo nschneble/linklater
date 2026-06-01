@@ -163,6 +163,7 @@ export default function DangerZone() {
       <div className="space-y-3">
         <ReauthForm
           prompt="Confirm your identity to permanently delete your account."
+          srOnlyHeading="Confirm account deletion"
           submitLabel="Delete my account"
           submittingLabel="Deleting…"
           cancelLabel="Cancel account deletion"

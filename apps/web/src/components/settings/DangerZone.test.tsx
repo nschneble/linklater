@@ -85,6 +85,17 @@ describe('DangerZone — credentialed branch', () => {
     expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
   });
 
+  it('renders an sr-only h3 above the reauth form for heading navigation', () => {
+    render(<DangerZone />);
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+    expect(
+      screen.getByRole('heading', {
+        level: 3,
+        name: /confirm account deletion/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
   it('focuses the password input when the form opens', async () => {
     render(<DangerZone />);
     await act(async () => {
@@ -133,10 +144,9 @@ describe('DangerZone — credentialed branch', () => {
 
     render(<DangerZone />);
     fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
-    fireEvent.change(
-      screen.getByLabelText(/authenticator or recovery code/i),
-      { target: { value: '123456' } },
-    );
+    fireEvent.change(screen.getByLabelText(/authenticator or recovery code/i), {
+      target: { value: '123456' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Delete my account' }));
 
     await waitFor(() => {

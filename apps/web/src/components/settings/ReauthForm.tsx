@@ -14,6 +14,14 @@ interface ReauthFormProps {
    * confirming).
    */
   prompt: string;
+  /**
+   * Visually-hidden `<h3>` rendered above the prompt so screen-reader users
+   * navigating by heading (NVDA/JAWS `H`, VoiceOver rotor) find the form.
+   * Each caller passes per-flow text — e.g. "Confirm account deletion".
+   * Level `h3` matches the surrounding hierarchy (`h1` Settings →
+   * `h2` SettingsGroup → `h3` here).
+   */
+  srOnlyHeading?: string;
   /** Visible label for the submit button when idle. */
   submitLabel: string;
   /** Visible label for the submit button while the request is in flight. */
@@ -54,6 +62,7 @@ export default function ReauthForm({
   onSubmit,
   password,
   prompt,
+  srOnlyHeading,
   submitLabel,
   submittingLabel,
 }: ReauthFormProps) {
@@ -78,6 +87,7 @@ export default function ReauthForm({
 
   return (
     <form className="mt-[23px] space-y-4" onSubmit={onSubmit}>
+      {srOnlyHeading && <h3 className="sr-only">{srOnlyHeading}</h3>}
       <p id={promptId} className="text-[var(--text-muted)] text-xs">
         {prompt}
       </p>

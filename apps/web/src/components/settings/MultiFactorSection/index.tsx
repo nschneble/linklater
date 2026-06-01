@@ -62,6 +62,11 @@ export default function MultiFactorSection() {
               ? 'Confirm your identity to disable multi-factor authentication.'
               : 'Confirm your identity to generate new recovery codes.'
           }
+          srOnlyHeading={
+            reauthAction === 'disable'
+              ? 'Confirm to disable multi-factor authentication'
+              : 'Confirm to regenerate recovery codes'
+          }
           submitLabel="Confirm"
           submittingLabel="Confirming…"
           code={reauthCode}

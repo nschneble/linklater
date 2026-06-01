@@ -181,3 +181,20 @@ describe('ReauthForm — accessibility wiring', () => {
     expect(cancelButton).toHaveTextContent('Cancel');
   });
 });
+
+describe('ReauthForm — heading navigation', () => {
+  it('renders an sr-only h3 when srOnlyHeading is provided', () => {
+    renderForm({ srOnlyHeading: 'Confirm account deletion' });
+    const heading = screen.getByRole('heading', {
+      level: 3,
+      name: 'Confirm account deletion',
+    });
+    expect(heading).toBeInTheDocument();
+    expect(heading).toHaveClass('sr-only');
+  });
+
+  it('does not render a heading when srOnlyHeading is omitted', () => {
+    renderForm();
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
+  });
+});
