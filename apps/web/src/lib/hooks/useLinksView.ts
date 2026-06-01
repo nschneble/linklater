@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useKeyboardShortcuts } from './useKeyboardShortcuts';
 import { useLinks } from './useLinks';
-import type { LinksFilter } from './useLinks';
+import type { LinksFilter } from './types';
 
 /**
  * How long to wait after the user stops typing before firing the search

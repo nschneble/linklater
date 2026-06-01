@@ -1,6 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
+ * Builds a minimal `localStorage` stub. Each method defaults to a no-op so
+ * tests only need to override the one method under test.
+ */
+function makeStorageStub(overrides: Partial<Storage> = {}): Storage {
+  return {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+    clear: () => {},
+    key: () => null,
+    length: 0,
+    ...overrides,
+  } as Storage;
+}
+
+/**
  * Verifies that `core.ts` survives module load when `localStorage` throws on
  * read — Safari private browsing and storage-blocked sites throw a
  * `SecurityError` on every access. A naked `localStorage.getItem` call at
@@ -27,16 +43,11 @@ describe('core.ts storage safety', () => {
   it('imports successfully when localStorage.getItem throws', async () => {
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
-      value: {
+      value: makeStorageStub({
         getItem: () => {
           throw new Error('SecurityError: access denied');
         },
-        setItem: () => {},
-        removeItem: () => {},
-        clear: () => {},
-        key: () => null,
-        length: 0,
-      },
+      }),
     });
 
     const module_ = await import('./core');
@@ -47,16 +58,11 @@ describe('core.ts storage safety', () => {
   it('does not throw when setStoredToken is called with broken storage', async () => {
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
-      value: {
-        getItem: () => null,
+      value: makeStorageStub({
         setItem: () => {
           throw new Error('QuotaExceededError');
         },
-        removeItem: () => {},
-        clear: () => {},
-        key: () => null,
-        length: 0,
-      },
+      }),
     });
 
     const module_ = await import('./core');
@@ -71,16 +77,11 @@ describe('core.ts storage safety', () => {
   it('does not throw when clearStoredToken is called with broken storage', async () => {
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
-      value: {
-        getItem: () => null,
-        setItem: () => {},
+      value: makeStorageStub({
         removeItem: () => {
           throw new Error('SecurityError: access denied');
         },
-        clear: () => {},
-        key: () => null,
-        length: 0,
-      },
+      }),
     });
 
     const module_ = await import('./core');

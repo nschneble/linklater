@@ -1,4 +1,4 @@
-export type { LoginResponse } from './auth';
+export type { LoginResponse, MeResponse } from './auth';
 export {
   acknowledgeWelcome,
   cancelPendingAccountDeletion,

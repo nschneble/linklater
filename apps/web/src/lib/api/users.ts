@@ -1,6 +1,6 @@
 import { apiFetch } from './core';
 
-export async function updateMe(input: {
+export function updateMe(input: {
   cvdMode?: boolean;
   currentPassword?: string;
   mode?: string;
@@ -13,7 +13,7 @@ export async function updateMe(input: {
   });
 }
 
-export async function deleteMe(input?: {
+export function deleteMe(input?: {
   currentPassword?: string;
   code?: string;
 }): Promise<{ success: true; requiresEmailConfirmation?: true }> {

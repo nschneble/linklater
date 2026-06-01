@@ -11,6 +11,7 @@ import {
   resendVerificationEmail as apiResendVerificationEmail,
   setStoredToken,
 } from '../../lib/api';
+import type { MeResponse } from '../../lib/api';
 import type { AuthContextValue, User } from './types';
 
 /**
@@ -18,7 +19,7 @@ import type { AuthContextValue, User } from './types';
  * Extracted to avoid repetition in every code path that calls `getMe`
  * (e.g. mount, login, loginWithToken, refreshUser).
  */
-function mapMeToUser(me: Awaited<ReturnType<typeof getMe>>): User {
+function mapMeToUser(me: MeResponse): User {
   return {
     cvdMode: me.cvdMode,
     connectedProviders: me.connectedProviders,
