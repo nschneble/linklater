@@ -51,7 +51,7 @@ export function generateRecoveryCodes(): string[] {
   );
 }
 
-export async function hashRecoveryCodes(codes: string[]): Promise<string[]> {
+export function hashRecoveryCodes(codes: string[]): Promise<string[]> {
   return Promise.all(codes.map((code) => bcrypt.hash(code, BCRYPT_COST)));
 }
 

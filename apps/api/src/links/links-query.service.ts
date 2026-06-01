@@ -105,12 +105,14 @@ export class LinksQueryService {
     page: number,
     limit: number,
   ) {
-    const readFilter =
-      where.readAt === null
-        ? Prisma.sql`AND l."readAt" IS NULL`
-        : where.readAt !== undefined
-          ? Prisma.sql`AND l."readAt" IS NOT NULL`
-          : Prisma.empty;
+    let readFilter: typeof Prisma.empty;
+    if (where.readAt === null) {
+      readFilter = Prisma.sql`AND l."readAt" IS NULL`;
+    } else if (where.readAt !== undefined) {
+      readFilter = Prisma.sql`AND l."readAt" IS NOT NULL`;
+    } else {
+      readFilter = Prisma.empty;
+    }
 
     const offset = (page - 1) * limit;
 

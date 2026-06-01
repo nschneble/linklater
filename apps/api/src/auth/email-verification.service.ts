@@ -7,12 +7,13 @@ import {
 } from '@nestjs/common';
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import { expiresInMs } from '../common/dates.js';
-import {
-  findMatchingRecoveryCode,
-  normalizeRecoveryCode,
-} from '../common/recovery-codes.js';
+import { normalizeRecoveryCode } from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
-import { UserTokensService, UsersService } from '../users/index.js';
+import {
+  UserMfaService,
+  UserTokensService,
+  UsersService,
+} from '../users/index.js';
 import { Prisma } from '../prisma/index.js';
 import { TotpService } from './totp.service.js';
 
@@ -23,6 +24,7 @@ const TWENTY_FOUR_HOURS_MS = 24 * ONE_HOUR_MS;
 export class EmailVerificationService {
   constructor(
     private readonly usersService: UsersService,
+    private readonly userMfaService: UserMfaService,
     private readonly userTokensService: UserTokensService,
     private readonly emailService: EmailService,
     private readonly totpService: TotpService,
@@ -114,28 +116,8 @@ export class EmailVerificationService {
         );
       }
 
-      const canonicalRecovery = normalizeRecoveryCode(code);
-
-      if (canonicalRecovery !== null) {
-        const recoveryCodes =
-          await this.usersService.findUnusedRecoveryCodes(userId);
-        const hashes = recoveryCodes.map(
-          (recoveryCode) => recoveryCode.codeHash,
-        );
-        const matchIndex = await findMatchingRecoveryCode(
-          canonicalRecovery,
-          hashes,
-        );
-        if (matchIndex === null) {
-          throw new UnauthorizedException('Invalid OTP code');
-        }
-        // Atomic compare-and-swap — see UsersService.markRecoveryCodeUsed.
-        const consumed = await this.usersService.markRecoveryCodeUsed(
-          recoveryCodes[matchIndex].id,
-        );
-        if (!consumed) {
-          throw new UnauthorizedException('Invalid OTP code');
-        }
+      if (normalizeRecoveryCode(code) !== null) {
+        await this.userMfaService.verifyAndConsumeRecoveryCode(userId, code);
       } else {
         const isValid = await this.totpService.verifyCode(user, code);
         if (!isValid) {

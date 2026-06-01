@@ -17,6 +17,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '../prisma/generated/client';
 
 import { OAuthAccountService } from './oauth-account.service';
+import { UserOAuthService } from '../users/user-oauth.service';
 import { UsersService } from '../users/users.service';
 
 const makeP2002 = () =>
@@ -37,21 +38,25 @@ describe('OAuthAccountService', () => {
   let service: OAuthAccountService;
 
   const usersServiceMock = {
-    createOAuthUserAndLink: jest.fn(),
     findByEmail: jest.fn(),
     findById: jest.fn(),
+    markEmailVerified: jest.fn(),
+  } as unknown as UsersService;
+
+  const userOAuthServiceMock = {
+    createOAuthUserAndLink: jest.fn(),
     findOAuthAccount: jest.fn(),
     linkOAuthAccount: jest.fn(),
-    markEmailVerified: jest.fn(),
     unlinkOAuthAccount: jest.fn(),
     updateOAuthProviderEmail: jest.fn(),
-  } as unknown as UsersService;
+  } as unknown as UserOAuthService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OAuthAccountService,
         { provide: UsersService, useValue: usersServiceMock },
+        { provide: UserOAuthService, useValue: userOAuthServiceMock },
       ],
     }).compile();
 
@@ -65,7 +70,7 @@ describe('OAuthAccountService', () => {
 
   describe('findOrCreateOAuthUser', () => {
     it('returns existing user when OAuth account already exists', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
         userId: USER_ID,
         providerEmail: USER_EMAIL,
         user: { id: USER_ID, email: USER_EMAIL },
@@ -78,13 +83,17 @@ describe('OAuthAccountService', () => {
       );
 
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-      expect(usersServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
-      expect(usersServiceMock.createOAuthUserAndLink).not.toHaveBeenCalled();
-      expect(usersServiceMock.updateOAuthProviderEmail).not.toHaveBeenCalled();
+      expect(userOAuthServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
+      expect(
+        userOAuthServiceMock.createOAuthUserAndLink,
+      ).not.toHaveBeenCalled();
+      expect(
+        userOAuthServiceMock.updateOAuthProviderEmail,
+      ).not.toHaveBeenCalled();
     });
 
     it('refreshes providerEmail when the provider asserts a new value on sign-in', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
         userId: USER_ID,
         providerEmail: 'stale@gmail.com',
         user: { id: USER_ID, email: USER_EMAIL },
@@ -96,7 +105,9 @@ describe('OAuthAccountService', () => {
         'fresh@gmail.com',
       );
 
-      expect(usersServiceMock.updateOAuthProviderEmail).toHaveBeenCalledWith(
+      expect(
+        userOAuthServiceMock.updateOAuthProviderEmail,
+      ).toHaveBeenCalledWith(
         USER_ID,
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
@@ -105,13 +116,15 @@ describe('OAuthAccountService', () => {
     });
 
     it('auto-links OAuth account to existing user with same email', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
+        null,
+      );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
         emailVerifiedAt: new Date(),
       });
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
+      (userOAuthServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -121,24 +134,28 @@ describe('OAuthAccountService', () => {
         USER_EMAIL,
       );
 
-      expect(usersServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
+      expect(userOAuthServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
         USER_ID,
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
         USER_EMAIL,
       );
-      expect(usersServiceMock.createOAuthUserAndLink).not.toHaveBeenCalled();
+      expect(
+        userOAuthServiceMock.createOAuthUserAndLink,
+      ).not.toHaveBeenCalled();
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
     });
 
     it('sets emailVerifiedAt when auto-linking an unverified account', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
+        null,
+      );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
         emailVerifiedAt: null,
       });
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
+      (userOAuthServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );
       (usersServiceMock.markEmailVerified as jest.Mock).mockResolvedValue(
@@ -155,9 +172,13 @@ describe('OAuthAccountService', () => {
     });
 
     it('creates a new user and OAuth account atomically when no match exists', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
+        null,
+      );
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockResolvedValue({
+      (
+        userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
+      ).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
       });
@@ -168,7 +189,7 @@ describe('OAuthAccountService', () => {
         USER_EMAIL,
       );
 
-      expect(usersServiceMock.createOAuthUserAndLink).toHaveBeenCalledWith(
+      expect(userOAuthServiceMock.createOAuthUserAndLink).toHaveBeenCalledWith(
         USER_EMAIL,
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
@@ -178,7 +199,7 @@ describe('OAuthAccountService', () => {
     });
 
     it('recovers via OAuth account lookup when concurrent creation causes P2002', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock)
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({
           userId: USER_ID,
@@ -186,9 +207,9 @@ describe('OAuthAccountService', () => {
           user: { id: USER_ID, email: USER_EMAIL },
         });
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockRejectedValue(
-        makeP2002(),
-      );
+      (
+        userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
+      ).mockRejectedValue(makeP2002());
 
       const result = await service.findOrCreateOAuthUser(
         OAUTH_PROVIDER,
@@ -200,15 +221,15 @@ describe('OAuthAccountService', () => {
     });
 
     it('recovers via email lookup when OAuth account not yet linked after P2002', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock)
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
       (usersServiceMock.findByEmail as jest.Mock)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({ id: USER_ID, email: USER_EMAIL });
-      (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockRejectedValue(
-        makeP2002(),
-      );
+      (
+        userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
+      ).mockRejectedValue(makeP2002());
 
       const result = await service.findOrCreateOAuthUser(
         OAUTH_PROVIDER,
@@ -220,13 +241,13 @@ describe('OAuthAccountService', () => {
     });
 
     it('re-throws non-P2002 errors from createOAuthUserAndLink', async () => {
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValueOnce(
-        null,
-      );
+      (
+        userOAuthServiceMock.findOAuthAccount as jest.Mock
+      ).mockResolvedValueOnce(null);
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValueOnce(null);
-      (usersServiceMock.createOAuthUserAndLink as jest.Mock).mockRejectedValue(
-        new Error('unexpected database error'),
-      );
+      (
+        userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
+      ).mockRejectedValue(new Error('unexpected database error'));
 
       await expect(
         service.findOrCreateOAuthUser(
@@ -240,26 +261,26 @@ describe('OAuthAccountService', () => {
 
   describe('unlinkOAuthProvider', () => {
     it('calls unlinkOAuthAccount when the user has a password', async () => {
-      (usersServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
+      (userOAuthServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );
 
       await service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER);
 
-      expect(usersServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
+      expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
         USER_ID,
         OAUTH_PROVIDER,
       );
     });
 
     it('allows passwordless accounts to unlink — magic-link login remains as fallback', async () => {
-      (usersServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
+      (userOAuthServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );
 
       await service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER);
 
-      expect(usersServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
+      expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
         USER_ID,
         OAUTH_PROVIDER,
       );
@@ -273,8 +294,10 @@ describe('OAuthAccountService', () => {
         email: USER_EMAIL,
         emailVerifiedAt: new Date(),
       });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
+        null,
+      );
+      (userOAuthServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -285,7 +308,7 @@ describe('OAuthAccountService', () => {
         'other@example.com',
       );
 
-      expect(usersServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
+      expect(userOAuthServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
         USER_ID,
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
@@ -299,8 +322,10 @@ describe('OAuthAccountService', () => {
         email: USER_EMAIL,
         emailVerifiedAt: new Date(),
       });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
+        null,
+      );
+      (userOAuthServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -311,7 +336,7 @@ describe('OAuthAccountService', () => {
         USER_EMAIL,
       );
 
-      expect(usersServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
+      expect(userOAuthServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
         USER_ID,
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
@@ -325,8 +350,10 @@ describe('OAuthAccountService', () => {
         email: USER_EMAIL,
         emailVerifiedAt: null,
       });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
+        null,
+      );
+      (userOAuthServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );
       (usersServiceMock.markEmailVerified as jest.Mock).mockResolvedValue(
@@ -349,8 +376,10 @@ describe('OAuthAccountService', () => {
         email: USER_EMAIL,
         emailVerifiedAt: null,
       });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
+        null,
+      );
+      (userOAuthServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -370,8 +399,10 @@ describe('OAuthAccountService', () => {
         email: USER_EMAIL,
         emailVerifiedAt: new Date(),
       });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(null);
-      (usersServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
+        null,
+      );
+      (userOAuthServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -391,7 +422,7 @@ describe('OAuthAccountService', () => {
         email: USER_EMAIL,
         emailVerifiedAt: new Date(),
       });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
         userId: USER_ID,
         provider: OAUTH_PROVIDER,
         providerId: OAUTH_PROVIDER_ID,
@@ -404,7 +435,7 @@ describe('OAuthAccountService', () => {
         USER_EMAIL,
       );
 
-      expect(usersServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
+      expect(userOAuthServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
     });
 
     it('throws ConflictException when the provider is linked to a different user', async () => {
@@ -413,7 +444,7 @@ describe('OAuthAccountService', () => {
         email: USER_EMAIL,
         emailVerifiedAt: new Date(),
       });
-      (usersServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
         userId: 'different-user-id',
         provider: OAUTH_PROVIDER,
         providerId: OAUTH_PROVIDER_ID,

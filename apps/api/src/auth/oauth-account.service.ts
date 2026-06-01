@@ -1,18 +1,21 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { Prisma } from '../prisma/index.js';
-import { UsersService } from '../users/index.js';
+import { UserOAuthService, UsersService } from '../users/index.js';
 import { generateLinkState } from './oauth-link-state.js';
 
 @Injectable()
 export class OAuthAccountService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly userOAuthService: UserOAuthService,
+  ) {}
 
   async findOrCreateOAuthUser(
     provider: string,
     providerId: string,
     email: string,
   ): Promise<{ userId: string; email: string }> {
-    const account = await this.usersService.findOAuthAccount(
+    const account = await this.userOAuthService.findOAuthAccount(
       provider,
       providerId,
     );
@@ -22,7 +25,7 @@ export class OAuthAccountService {
       // needing a manual refresh. Identity is keyed by (provider, providerId),
       // not email, so this is purely informational.
       if (account.providerEmail !== email) {
-        await this.usersService.updateOAuthProviderEmail(
+        await this.userOAuthService.updateOAuthProviderEmail(
           account.userId,
           provider,
           providerId,
@@ -34,7 +37,7 @@ export class OAuthAccountService {
 
     const existingUser = await this.usersService.findByEmail(email);
     if (existingUser) {
-      await this.usersService.linkOAuthAccount(
+      await this.userOAuthService.linkOAuthAccount(
         existingUser.id,
         provider,
         providerId,
@@ -51,7 +54,7 @@ export class OAuthAccountService {
     }
 
     try {
-      const newUser = await this.usersService.createOAuthUserAndLink(
+      const newUser = await this.userOAuthService.createOAuthUserAndLink(
         email,
         provider,
         providerId,
@@ -63,7 +66,7 @@ export class OAuthAccountService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        const raceAccount = await this.usersService.findOAuthAccount(
+        const raceAccount = await this.userOAuthService.findOAuthAccount(
           provider,
           providerId,
         );
@@ -103,7 +106,7 @@ export class OAuthAccountService {
   }
 
   async unlinkOAuthProvider(userId: string, provider: string): Promise<void> {
-    await this.usersService.unlinkOAuthAccount(userId, provider);
+    await this.userOAuthService.unlinkOAuthAccount(userId, provider);
   }
 
   async linkOAuthAccountToUser(
@@ -114,7 +117,7 @@ export class OAuthAccountService {
   ): Promise<void> {
     const user = await this.usersService.findById(userId);
 
-    const existing = await this.usersService.findOAuthAccount(
+    const existing = await this.userOAuthService.findOAuthAccount(
       provider,
       providerId,
     );
@@ -125,7 +128,7 @@ export class OAuthAccountService {
       );
     }
 
-    await this.usersService.linkOAuthAccount(
+    await this.userOAuthService.linkOAuthAccount(
       userId,
       provider,
       providerId,

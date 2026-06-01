@@ -11,6 +11,7 @@ import {
   generateRecoveryCodes,
   hashRecoveryCodes,
 } from '../common/recovery-codes.js';
+import { UserMfaService } from '../users/index.js';
 import { UsersService } from '../users/users.service.js';
 
 /**
@@ -23,7 +24,10 @@ import { UsersService } from '../users/users.service.js';
  */
 @Injectable()
 export class TotpService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly userMfaService: UserMfaService,
+  ) {}
 
   /**
    * Starts or resumes TOTP enrollment for the given user. Generates a new
@@ -80,7 +84,7 @@ export class TotpService {
     );
 
     const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
-    await this.usersService.saveTotpSecret(userId, encryptedSecret);
+    await this.userMfaService.saveTotpSecret(userId, encryptedSecret);
 
     return { qrCodeDataUrl, secret };
   }
@@ -117,7 +121,7 @@ export class TotpService {
 
     const codes = generateRecoveryCodes();
     const hashes = await hashRecoveryCodes(codes);
-    await this.usersService.enableTotpWithRecoveryCodes(
+    await this.userMfaService.enableTotpWithRecoveryCodes(
       userId,
       hashes,
       usedStep,
@@ -146,7 +150,7 @@ export class TotpService {
       );
     }
 
-    await this.usersService.clearPendingTotpSecret(userId);
+    await this.userMfaService.clearPendingTotpSecret(userId);
   }
 
   /**
@@ -191,7 +195,7 @@ export class TotpService {
       // honors `afterTimeStep` but isn't atomic with the DB write). The
       // first to land here advances `totpLastUsedStep`; any subsequent
       // request gets `false` and is rejected as a replay.
-      const advanced = await this.usersService.updateTotpLastUsedStep(
+      const advanced = await this.userMfaService.updateTotpLastUsedStep(
         user.id,
         usedStep,
       );

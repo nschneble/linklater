@@ -11,6 +11,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { generate, generateSecret } from 'otplib';
 
 import { TotpService } from './totp.service';
+import { UserMfaService } from '../users/user-mfa.service';
 import { UsersService } from '../users/users.service';
 
 const USER_EMAIL = 'user@example.com';
@@ -32,18 +33,22 @@ describe('TotpService', () => {
   let service: TotpService;
 
   const usersServiceMock = {
+    findById: jest.fn(),
+  } as unknown as UsersService;
+
+  const userMfaServiceMock = {
     clearPendingTotpSecret: jest.fn(),
     enableTotpWithRecoveryCodes: jest.fn(),
-    findById: jest.fn(),
     saveTotpSecret: jest.fn(),
     updateTotpLastUsedStep: jest.fn(),
-  } as unknown as UsersService;
+  } as unknown as UserMfaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TotpService,
         { provide: UsersService, useValue: usersServiceMock },
+        { provide: UserMfaService, useValue: userMfaServiceMock },
       ],
     }).compile();
 
@@ -58,7 +63,7 @@ describe('TotpService', () => {
   describe('generateSetup', () => {
     it('returns qrCodeDataUrl and plaintext secret', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(makeUser());
-      (usersServiceMock.saveTotpSecret as jest.Mock).mockResolvedValue(
+      (userMfaServiceMock.saveTotpSecret as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -123,7 +128,7 @@ describe('TotpService', () => {
 
       expect(result.qrCodeDataUrl).toMatch(/^data:image/);
       expect(result.secret).toBe(secret);
-      expect(usersServiceMock.saveTotpSecret).not.toHaveBeenCalled();
+      expect(userMfaServiceMock.saveTotpSecret).not.toHaveBeenCalled();
     });
   });
 
@@ -137,17 +142,15 @@ describe('TotpService', () => {
         makeUser({ totpSecret: encryptedSecret }),
       );
       (
-        usersServiceMock.enableTotpWithRecoveryCodes as jest.Mock
+        userMfaServiceMock.enableTotpWithRecoveryCodes as jest.Mock
       ).mockResolvedValue(undefined);
 
       const code = await generate({ secret });
       const result = await service.verifySetup(USER_ID, code);
 
-      expect(usersServiceMock.enableTotpWithRecoveryCodes).toHaveBeenCalledWith(
-        USER_ID,
-        expect.any(Array),
-        expect.any(Number),
-      );
+      expect(
+        userMfaServiceMock.enableTotpWithRecoveryCodes,
+      ).toHaveBeenCalledWith(USER_ID, expect.any(Array), expect.any(Number));
       expect(result).toHaveLength(10);
     });
 
@@ -179,26 +182,26 @@ describe('TotpService', () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
         makeUser({ totpSecret: 'encrypted-pending-secret' }),
       );
-      (usersServiceMock.clearPendingTotpSecret as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userMfaServiceMock.clearPendingTotpSecret as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.cancelSetup(USER_ID);
 
-      expect(usersServiceMock.clearPendingTotpSecret).toHaveBeenCalledWith(
+      expect(userMfaServiceMock.clearPendingTotpSecret).toHaveBeenCalledWith(
         USER_ID,
       );
     });
 
     it('is a no-op (still calls clear) when nothing is pending', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(makeUser());
-      (usersServiceMock.clearPendingTotpSecret as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userMfaServiceMock.clearPendingTotpSecret as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.cancelSetup(USER_ID);
 
-      expect(usersServiceMock.clearPendingTotpSecret).toHaveBeenCalledWith(
+      expect(userMfaServiceMock.clearPendingTotpSecret).toHaveBeenCalledWith(
         USER_ID,
       );
     });
@@ -211,7 +214,7 @@ describe('TotpService', () => {
       await expect(service.cancelSetup(USER_ID)).rejects.toThrow(
         ConflictException,
       );
-      expect(usersServiceMock.clearPendingTotpSecret).not.toHaveBeenCalled();
+      expect(userMfaServiceMock.clearPendingTotpSecret).not.toHaveBeenCalled();
     });
   });
 
@@ -221,14 +224,14 @@ describe('TotpService', () => {
       const { encrypt } = await import('../common/crypto.js');
       const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
 
-      (usersServiceMock.updateTotpLastUsedStep as jest.Mock).mockResolvedValue(
-        true,
-      );
+      (
+        userMfaServiceMock.updateTotpLastUsedStep as jest.Mock
+      ).mockResolvedValue(true);
 
       const user = makeUser({ totpSecret: encryptedSecret });
       const code = await generate({ secret });
       expect(await service.verifyCode(user, code)).toBe(true);
-      expect(usersServiceMock.updateTotpLastUsedStep).toHaveBeenCalledWith(
+      expect(userMfaServiceMock.updateTotpLastUsedStep).toHaveBeenCalledWith(
         USER_ID,
         expect.any(Number),
       );
@@ -242,14 +245,14 @@ describe('TotpService', () => {
       // First request wins the CAS; the second arrives in the same 30s
       // step, otplib accepts it as valid, but updateTotpLastUsedStep
       // returns false because totpLastUsedStep is already >= usedStep.
-      (usersServiceMock.updateTotpLastUsedStep as jest.Mock).mockResolvedValue(
-        false,
-      );
+      (
+        userMfaServiceMock.updateTotpLastUsedStep as jest.Mock
+      ).mockResolvedValue(false);
 
       const user = makeUser({ totpSecret: encryptedSecret });
       const code = await generate({ secret });
       expect(await service.verifyCode(user, code)).toBe(false);
-      expect(usersServiceMock.updateTotpLastUsedStep).toHaveBeenCalled();
+      expect(userMfaServiceMock.updateTotpLastUsedStep).toHaveBeenCalled();
     });
 
     it('returns false for an invalid TOTP code and does not update the step', async () => {
@@ -259,7 +262,7 @@ describe('TotpService', () => {
 
       const user = makeUser({ totpSecret: encryptedSecret });
       expect(await service.verifyCode(user, '000000')).toBe(false);
-      expect(usersServiceMock.updateTotpLastUsedStep).not.toHaveBeenCalled();
+      expect(userMfaServiceMock.updateTotpLastUsedStep).not.toHaveBeenCalled();
     });
 
     it('rejects a valid code whose time step was already used (replay prevention)', async () => {
@@ -275,7 +278,7 @@ describe('TotpService', () => {
       });
       const code = await generate({ secret });
       expect(await service.verifyCode(user, code)).toBe(false);
-      expect(usersServiceMock.updateTotpLastUsedStep).not.toHaveBeenCalled();
+      expect(userMfaServiceMock.updateTotpLastUsedStep).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when no totpSecret is set', async () => {

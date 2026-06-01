@@ -16,6 +16,6 @@ import { UsersService } from './users.service.js';
     UserMfaService,
   ],
   controllers: [UsersController, AccountDeletionController],
-  exports: [UsersService, UserTokensService],
+  exports: [UsersService, UserTokensService, UserOAuthService, UserMfaService],
 })
 export class UsersModule {}

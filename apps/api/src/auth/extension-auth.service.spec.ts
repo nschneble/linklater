@@ -3,8 +3,8 @@ import { jest } from '@jest/globals';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { AuthService } from './auth.service';
 import { ExtensionAuthService } from './extension-auth.service';
+import { RefreshTokenService } from './refresh-token.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 const ACCESS_TOKEN = 'access-token';
@@ -15,12 +15,12 @@ const USER_ID = 'user-1';
 describe('ExtensionAuthService', () => {
   let service: ExtensionAuthService;
 
-  const authServiceMock = {
+  const refreshTokenServiceMock = {
     issueTokenPair: jest.fn().mockResolvedValue({
       accessToken: ACCESS_TOKEN,
       refreshToken: REFRESH_TOKEN,
     }),
-  } as unknown as AuthService;
+  } as unknown as RefreshTokenService;
 
   const prismaServiceMock = {
     extensionAuthCode: {
@@ -34,7 +34,7 @@ describe('ExtensionAuthService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ExtensionAuthService,
-        { provide: AuthService, useValue: authServiceMock },
+        { provide: RefreshTokenService, useValue: refreshTokenServiceMock },
         { provide: PrismaService, useValue: prismaServiceMock },
       ],
     }).compile();

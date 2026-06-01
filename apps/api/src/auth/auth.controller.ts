@@ -243,6 +243,10 @@ export class AuthController {
     await this.emailVerificationService.confirmEmailChange(body.token);
   }
 
+  /**
+   * Sets a password for an account created via a passwordless flow (e.g.
+   * magic link or OAuth). Fails if the account already has a password hash.
+   */
   @ApiOperation({ summary: 'Set a password for a passwordless account' })
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Password set.' })
@@ -256,6 +260,11 @@ export class AuthController {
     return { success: true };
   }
 
+  /**
+   * Exchanges a valid refresh token for a new access/refresh token pair.
+   * The old refresh token is rotated (invalidated) on use. Rate-limited to
+   * 10 requests per 60 seconds per IP.
+   */
   @ApiOperation({ summary: 'Exchange a refresh token for a new token pair' })
   @ApiResponse({
     status: 200,
@@ -275,6 +284,10 @@ export class AuthController {
     return this.authService.refresh(body.refreshToken);
   }
 
+  /**
+   * Records that the authenticated user has dismissed the post-registration
+   * welcome modal so the front-end does not show it again on subsequent loads.
+   */
   @ApiOperation({ summary: 'Mark the user as having seen the welcome modal' })
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Welcome acknowledged.' })
@@ -287,6 +300,10 @@ export class AuthController {
     return { success: true };
   }
 
+  /**
+   * Invalidates all refresh tokens for the authenticated user, effectively
+   * logging them out of every active session across all devices.
+   */
   @ApiOperation({ summary: 'Revoke all refresh tokens (log out everywhere)' })
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'All sessions revoked.' })

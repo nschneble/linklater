@@ -11,10 +11,7 @@ const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
  * revocation. Extracted from `AuthService` so that Prisma refresh-token
  * operations are grouped in one focused provider.
  *
- * `issueTokenPair` is the only method called cross-service
- * (`ExtensionAuthService` → `AuthService.issueTokenPair` → here), so
- * `AuthService` retains a public delegation stub to keep all 13 consumer
- * call sites unchanged.
+ * `issueTokenPair` is called directly by `AuthService` and `ExtensionAuthService`.
  */
 @Injectable()
 export class RefreshTokenService {

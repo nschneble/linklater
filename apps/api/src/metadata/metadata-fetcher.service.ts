@@ -77,8 +77,9 @@ export class MetadataFetcherService {
 
     if (hostname === '::1' || hostname === '[::1]') return true;
 
-    // IPv6 unique-local and link-local prefixes (fc00::/7 and fe80::/10)
-    if (/^\[?f[cd]/i.test(hostname)) return true;
+    // IPv6 unique-local (fc00::/7 covers fc::/8 and fd::/8) and
+    // link-local (fe80::/10 covers fe80–febf, i.e. fe[89ab]x::)
+    if (/^\[?(?:f[cd]|fe[89ab])/i.test(hostname)) return true;
 
     const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
     if (ipv4) {
