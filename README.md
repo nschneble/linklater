@@ -80,6 +80,27 @@ apps
 └─ README.md
 ```
 
+## Code Health
+
+Linklater's code quality is tracked with [Desloppify](https://github.com/peteromallet/desloppify), which scores each app independently across file health, code quality, duplication, security, and test health.
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <a href="apps/api/scorecard.png">
+        <img src="apps/api/scorecard.png" alt="apps/api Desloppify scorecard" />
+      </a>
+      <br><sub><em>apps/api (back-end)</em></sub>
+    </td>
+    <td align="center" width="50%">
+      <a href="apps/web/scorecard.png">
+        <img src="apps/web/scorecard.png" alt="apps/web Desloppify scorecard" />
+      </a>
+      <br><sub><em>apps/web (front-end)</em></sub>
+    </td>
+  </tr>
+</table>
+
 ## Bookmarklet
 
 Linklater includes a one-click bookmarklet that saves the current page directly to your account.
