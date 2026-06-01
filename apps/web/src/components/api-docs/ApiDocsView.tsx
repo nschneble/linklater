@@ -1,10 +1,11 @@
 import { useTheme } from '../../theme/ThemeContext';
+import LinkButton from '../common/LinkButton';
 import TokenInput from './TokenInput';
 import { useApiDocsToken } from './useApiDocsToken';
 import { ApiReferenceReact } from '@scalar/api-reference-react';
 import '@scalar/api-reference-react/style.css';
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const OPENAPI_PATH = '/openapi.json';
 
@@ -36,6 +37,7 @@ const REDUCED_MOTION_CSS = `
 export default function ApiDocsView() {
   const { mode } = useTheme();
   const [token, setToken] = useApiDocsToken();
+  const navigate = useNavigate();
 
   const openapiUrl = useMemo(() => {
     if (!API_BASE_URL) return OPENAPI_PATH;
@@ -78,16 +80,12 @@ export default function ApiDocsView() {
        * "Linklater API" as a second heading at H2 level inside the embed.
        */}
       <div className="flex flex-col gap-2">
-        <Link
-          to="/settings"
-          className="inline-flex items-center gap-1.5 self-start text-[var(--text-muted)] hover:text-[var(--accent)] text-xs underline underline-offset-3"
+        <LinkButton
+          className="self-start"
+          onClick={() => navigate('/settings')}
         >
-          <i
-            aria-hidden="true"
-            className="fa-solid fa-arrow-left text-[0.7rem]"
-          />
           Back to Settings
-        </Link>
+        </LinkButton>
         <h1 className="sr-only">API documentation</h1>
         <p
           aria-hidden="true"
@@ -95,7 +93,7 @@ export default function ApiDocsView() {
         >
           API documentation
         </p>
-        <p className="text-[var(--text-muted)] text-sm max-w-2xl">
+        <p className="text-[var(--text-muted)] text-sm text-pretty">
           Personal access tokens unlock the link-management endpoints below.
           Paste a token to try requests live against your own account.
         </p>
