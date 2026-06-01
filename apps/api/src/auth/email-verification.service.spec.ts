@@ -56,8 +56,6 @@ describe('EmailVerificationService', () => {
   } as unknown as UsersService;
 
   const userMfaServiceMock = {
-    findUnusedRecoveryCodes: jest.fn(),
-    markRecoveryCodeUsed: jest.fn(),
     verifyAndConsumeRecoveryCode: jest.fn(),
   } as unknown as UserMfaService;
 

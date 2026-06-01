@@ -81,7 +81,30 @@ export class MetadataFetcherService {
     // link-local (fe80::/10 covers fe80–febf, i.e. fe[89ab]x::)
     if (/^\[?(?:f[cd]|fe[89ab])/i.test(hostname)) return true;
 
-    const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    // IPv4-mapped IPv6 (`::ffff:127.0.0.1` etc.) addresses an IPv4 destination
+    // but the URL parser normalizes the address into compressed-hex form —
+    // `[::ffff:127.0.0.1]` becomes `[::ffff:7f00:1]`. Detect either spelling
+    // (dotted decimal or compressed hex pair) and re-check the embedded IPv4
+    // against the private ranges below. Without this step the loopback /
+    // RFC 1918 / link-local ranges are all reachable via the mapped form.
+    const ipv4MappedHex = hostname.match(
+      /^\[?::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})\]?$/i,
+    );
+    const ipv4MappedDotted = hostname.match(
+      /^\[?::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\]?$/i,
+    );
+    let effectiveHost = hostname;
+    if (ipv4MappedDotted) {
+      effectiveHost = ipv4MappedDotted[1];
+    } else if (ipv4MappedHex) {
+      const high = parseInt(ipv4MappedHex[1], 16);
+      const low = parseInt(ipv4MappedHex[2], 16);
+      effectiveHost = `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`;
+    }
+
+    const ipv4 = effectiveHost.match(
+      /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/,
+    );
     if (ipv4) {
       const [, firstOctet, secondOctet] = ipv4.map(Number);
       if (firstOctet === 127) return true; // 127.0.0.0/8 loopback

@@ -76,6 +76,14 @@ describe('MetadataFetcherService', () => {
       ['fd00::1 (unique-local)', 'http://[fd00::1]/'],
       // IPv6 link-local (fe80::/10)
       ['fe80::1 (link-local)', 'http://[fe80::1]/'],
+      // IPv4-mapped IPv6 — must re-check the embedded IPv4 address
+      ['::ffff:127.0.0.1 (mapped loopback)', 'http://[::ffff:127.0.0.1]/'],
+      ['::ffff:192.168.1.1 (mapped private)', 'http://[::ffff:192.168.1.1]/'],
+      ['::ffff:10.0.0.1 (mapped private)', 'http://[::ffff:10.0.0.1]/'],
+      [
+        '::ffff:169.254.169.254 (mapped AWS metadata)',
+        'http://[::ffff:169.254.169.254]/',
+      ],
     ] as const;
 
     it.each(blockedUrls)('blocks %s', async (_label: string, url: string) => {

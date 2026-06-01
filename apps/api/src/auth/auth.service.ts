@@ -308,7 +308,7 @@ export class AuthService {
    * the URL is hashed before lookup; an atomic compare-and-swap on the
    * token column prevents replay.
    */
-  async confirmAccountDeletion(rawToken: string): Promise<{ deleted: true }> {
+  async confirmAccountDeletion(rawToken: string): Promise<void> {
     const tokenHash = sha256Hex(rawToken);
     const user =
       await this.userTokensService.findByAccountDeletionToken(tokenHash);
@@ -329,7 +329,6 @@ export class AuthService {
     }
 
     await this.usersService.deleteById(user.id);
-    return { deleted: true };
   }
 
   /**

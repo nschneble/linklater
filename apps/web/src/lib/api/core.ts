@@ -79,6 +79,11 @@ async function attemptTokenRefresh(): Promise<boolean> {
   return inFlightRefresh;
 }
 
+// Two overloads: callers that do not need a typed response (e.g. POST/DELETE
+// endpoints that only signal success) call without `<T>` and get
+// `Promise<void>`. Callers that read a JSON body pass `<T>` and get
+// `Promise<T>`. Without the void overload, untyped callers silently get
+// `Promise<unknown>` and the JSON body leaks into a typed return position.
 export async function apiFetch(
   path: string,
   options?: RequestInit,

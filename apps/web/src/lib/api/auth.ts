@@ -146,7 +146,10 @@ export function setupTotp(): Promise<{
   qrCodeDataUrl: string;
   secret: string;
 }> {
-  return apiFetch('/auth/mfa/totp/setup', { method: 'POST' });
+  return apiFetch<{ qrCodeDataUrl: string; secret: string }>(
+    '/auth/mfa/totp/setup',
+    { method: 'POST' },
+  );
 }
 
 /**
@@ -161,7 +164,7 @@ export function setupTotp(): Promise<{
 export function verifyTotpSetup(
   code: string,
 ): Promise<{ recoveryCodes: string[] }> {
-  return apiFetch('/auth/mfa/totp/verify', {
+  return apiFetch<{ recoveryCodes: string[] }>('/auth/mfa/totp/verify', {
     body: JSON.stringify({ code }),
     method: 'POST',
   });
@@ -236,10 +239,8 @@ export async function disableMfa(credentials: {
   });
 }
 
-export function confirmAccountDeletion(
-  token: string,
-): Promise<{ success: true }> {
-  return apiFetch<{ success: true }>(
+export function confirmAccountDeletion(token: string): Promise<void> {
+  return apiFetch(
     '/auth/account-deletion/confirm',
     {
       body: JSON.stringify({ token }),
@@ -257,10 +258,13 @@ export function regenerateRecoveryCodes(credentials: {
   currentPassword?: string;
   code?: string;
 }): Promise<{ recoveryCodes: string[] }> {
-  return apiFetch('/auth/mfa/recovery-codes/regenerate', {
-    body: JSON.stringify(credentials),
-    method: 'POST',
-  });
+  return apiFetch<{ recoveryCodes: string[] }>(
+    '/auth/mfa/recovery-codes/regenerate',
+    {
+      body: JSON.stringify(credentials),
+      method: 'POST',
+    },
+  );
 }
 
 export async function setPassword(password: string): Promise<void> {

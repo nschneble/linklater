@@ -8,8 +8,8 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import type { FormEvent } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { FormEvent } from 'react';
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
 
@@ -30,10 +30,10 @@ vi.mock('../../auth/authNotice', () => ({
 
 // ─── Imports after mocks ─────────────────────────────────────────────────────
 
-import * as apiModule from '../../lib/api';
-import * as authNoticeModule from '../../auth/authNotice';
-import { useAuth } from '../../auth/AuthContext';
 import { useAuthForm } from './useAuthForm';
+import { useAuth } from '../../auth/AuthContext';
+import * as authNoticeModule from '../../auth/authNotice';
+import * as apiModule from '../../lib/api';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

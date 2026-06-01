@@ -1,7 +1,7 @@
+import LinkButton from './LinkButton';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import LinkButton from './LinkButton';
 
 describe('LinkButton', () => {
   describe('element type and default attributes', () => {

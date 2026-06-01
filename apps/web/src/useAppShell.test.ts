@@ -35,8 +35,8 @@ vi.mock('./lib/api', () => ({
 
 import { useAuth } from './auth/AuthContext';
 import { useTheme } from './theme/ThemeContext';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppShell } from './useAppShell';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 function makeUser(overrides = {}) {
   return {

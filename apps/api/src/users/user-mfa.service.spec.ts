@@ -18,10 +18,17 @@ describe('UserMfaService', () => {
   let service: UserMfaService;
 
   const prismaMock = {
+    user: {
+      update: jest.fn(),
+      updateMany: jest.fn(),
+    },
     recoveryCode: {
       findMany: jest.fn(),
       updateMany: jest.fn(),
+      deleteMany: jest.fn(),
+      createMany: jest.fn(),
     },
+    $transaction: jest.fn(),
   } as unknown as PrismaService;
 
   beforeEach(async () => {
@@ -119,6 +126,161 @@ describe('UserMfaService', () => {
       await expect(
         service.verifyAndConsumeRecoveryCode(USER_ID, RECOVERY_CODE),
       ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('saveTotpSecret', () => {
+    it('writes the encrypted secret and clears any prior enabled / verified timestamps', async () => {
+      await service.saveTotpSecret(USER_ID, 'encrypted-secret');
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          totpSecret: 'encrypted-secret',
+          totpEnabledAt: null,
+          totpVerifiedAt: null,
+        },
+      });
+    });
+  });
+
+  describe('clearPendingTotpSecret', () => {
+    it('clears the pending secret only when totpEnabledAt is still null', async () => {
+      await service.clearPendingTotpSecret(USER_ID);
+      expect(prismaMock.user.updateMany).toHaveBeenCalledWith({
+        where: { id: USER_ID, totpEnabledAt: null },
+        data: { totpSecret: null, totpVerifiedAt: null },
+      });
+    });
+  });
+
+  describe('setMfaNonce', () => {
+    it('writes the nonce to the user row', async () => {
+      await service.setMfaNonce(USER_ID, 'nonce-abc');
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: { mfaNonce: 'nonce-abc' },
+      });
+    });
+  });
+
+  describe('clearMfaNonce', () => {
+    it('nulls the nonce on the user row', async () => {
+      await service.clearMfaNonce(USER_ID);
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: { mfaNonce: null },
+      });
+    });
+  });
+
+  describe('updateTotpLastUsedStep', () => {
+    it('returns true when the atomic CAS advances the step', async () => {
+      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      const result = await service.updateTotpLastUsedStep(USER_ID, 42);
+      expect(result).toBe(true);
+      expect(prismaMock.user.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: USER_ID,
+          OR: [{ totpLastUsedStep: null }, { totpLastUsedStep: { lt: 42 } }],
+        },
+        data: { totpLastUsedStep: 42 },
+      });
+    });
+
+    it('returns false when a parallel verify already advanced the step', async () => {
+      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+      const result = await service.updateTotpLastUsedStep(USER_ID, 42);
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('markRecoveryCodeUsed', () => {
+    it('returns true when the atomic CAS marks the code used', async () => {
+      (prismaMock.recoveryCode.updateMany as jest.Mock).mockResolvedValue({
+        count: 1,
+      });
+      const result = await service.markRecoveryCodeUsed('rc-1');
+      expect(result).toBe(true);
+      expect(prismaMock.recoveryCode.updateMany).toHaveBeenCalledWith({
+        where: { id: 'rc-1', usedAt: null },
+        data: { usedAt: expect.any(Date) },
+      });
+    });
+
+    it('returns false when a parallel verify already consumed the code', async () => {
+      (prismaMock.recoveryCode.updateMany as jest.Mock).mockResolvedValue({
+        count: 0,
+      });
+      const result = await service.markRecoveryCodeUsed('rc-1');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('findUnusedRecoveryCodes', () => {
+    it('queries the prisma layer for unused codes scoped to the user', async () => {
+      (prismaMock.recoveryCode.findMany as jest.Mock).mockResolvedValue([
+        { id: 'rc-1' },
+      ]);
+      const result = await service.findUnusedRecoveryCodes(USER_ID);
+      expect(result).toEqual([{ id: 'rc-1' }]);
+      expect(prismaMock.recoveryCode.findMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID, usedAt: null },
+      });
+    });
+  });
+
+  describe('enableTotpWithRecoveryCodes', () => {
+    it('runs the user update + recoveryCode delete + insert as a single transaction', async () => {
+      const hashes = ['hash-a', 'hash-b'];
+      await service.enableTotpWithRecoveryCodes(USER_ID, hashes, 100);
+      expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          totpEnabledAt: expect.any(Date),
+          totpVerifiedAt: expect.any(Date),
+          totpLastUsedStep: 100,
+        },
+      });
+      expect(prismaMock.recoveryCode.deleteMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID },
+      });
+      expect(prismaMock.recoveryCode.createMany).toHaveBeenCalledWith({
+        data: hashes.map((codeHash) => ({ userId: USER_ID, codeHash })),
+      });
+    });
+  });
+
+  describe('reissueRecoveryCodes', () => {
+    it('atomically replaces all stored codes inside a single transaction', async () => {
+      const hashes = ['new-hash-a', 'new-hash-b'];
+      await service.reissueRecoveryCodes(USER_ID, hashes);
+      expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+      expect(prismaMock.recoveryCode.deleteMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID },
+      });
+      expect(prismaMock.recoveryCode.createMany).toHaveBeenCalledWith({
+        data: hashes.map((codeHash) => ({ userId: USER_ID, codeHash })),
+      });
+    });
+  });
+
+  describe('disableMultiFactor', () => {
+    it('clears all TOTP columns and deletes all recovery codes in one transaction', async () => {
+      await service.disableMultiFactor(USER_ID);
+      expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          totpSecret: null,
+          totpEnabledAt: null,
+          totpVerifiedAt: null,
+          totpLastUsedStep: null,
+        },
+      });
+      expect(prismaMock.recoveryCode.deleteMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID },
+      });
     });
   });
 });

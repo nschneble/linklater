@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildBookmarkletCode } from './bookmarkletCode';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const API_URL = 'https://api.linklater.example';
 const TOKEN = 'ltk_abc123';

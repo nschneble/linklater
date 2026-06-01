@@ -29,32 +29,18 @@ describe('AuthService', () => {
   let service: AuthService;
 
   const usersServiceMock = {
-    clearVerificationToken: jest.fn(),
-    confirmPendingEmail: jest.fn(),
     create: jest.fn(),
     deleteById: jest.fn(),
     findByEmail: jest.fn(),
-    findByIdWithPasswordHash: jest.fn(),
-    findByMagicLinkToken: jest.fn(),
-    findByPendingEmailToken: jest.fn(),
-    findByResetToken: jest.fn(),
-    findByVerificationToken: jest.fn(),
     findById: jest.fn(),
-    markEmailVerified: jest.fn(),
+    findByIdWithPasswordHash: jest.fn(),
     markWelcomed: jest.fn(),
-    resetPasswordWithToken: jest.fn(),
     setFirstPassword: jest.fn(),
-    updateMagicLinkToken: jest.fn(),
-    updatePendingEmail: jest.fn(),
-    updateResetToken: jest.fn(),
-    updateVerificationToken: jest.fn(),
   } as unknown as UsersService;
 
   const userMfaServiceMock = {
     clearMfaNonce: jest.fn(),
     disableMultiFactor: jest.fn(),
-    findUnusedRecoveryCodes: jest.fn(),
-    markRecoveryCodeUsed: jest.fn(),
     reissueRecoveryCodes: jest.fn(),
     setMfaNonce: jest.fn(),
     verifyAndConsumeRecoveryCode: jest.fn(),
@@ -1221,13 +1207,12 @@ describe('AuthService', () => {
       ).mockResolvedValue(true);
       (usersServiceMock.deleteById as jest.Mock).mockResolvedValue(undefined);
 
-      const result = await service.confirmAccountDeletion(RAW_TOKEN);
+      await service.confirmAccountDeletion(RAW_TOKEN);
 
       expect(
         userTokensServiceMock.consumeAccountDeletionToken,
       ).toHaveBeenCalledWith(USER_ID, expect.any(String));
       expect(usersServiceMock.deleteById).toHaveBeenCalledWith(USER_ID);
-      expect(result).toEqual({ deleted: true });
     });
 
     it('throws UnauthorizedException when the token is unknown', async () => {

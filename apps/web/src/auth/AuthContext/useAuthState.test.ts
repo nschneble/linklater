@@ -161,6 +161,36 @@ describe('loginWithToken', () => {
     );
     expect(result.current.user?.email).toBe('user@example.com');
   });
+
+  it('forwards rememberMe=true to setStoredToken', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
+    vi.mocked(apiModule.setStoredToken).mockImplementation(() => undefined);
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.loginWithToken('oauth-jwt', true);
+    });
+
+    expect(apiModule.setStoredToken).toHaveBeenCalledWith('oauth-jwt', true);
+  });
+
+  it('forwards rememberMe=false to setStoredToken', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
+    vi.mocked(apiModule.setStoredToken).mockImplementation(() => undefined);
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.loginWithToken('oauth-jwt', false);
+    });
+
+    expect(apiModule.setStoredToken).toHaveBeenCalledWith('oauth-jwt', false);
+  });
 });
 
 describe('logout', () => {

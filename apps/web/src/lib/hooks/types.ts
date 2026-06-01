@@ -3,7 +3,12 @@ import type { Link, PaginatedLinks } from '../api';
 /** The two possible views of the links list. */
 export type LinksFilter = 'unread' | 'read';
 
-/** The full public interface returned by `useLinks`. */
+/**
+ * The full public interface returned by `useLinks`. Extracted from the facade
+ * (`useLinks.ts`) so the sub-hooks (`useLinksActions`, `useLinksData`,
+ * `useLinksView`) can import the type without depending on the facade —
+ * breaks an otherwise circular import.
+ */
 export interface UseLinksResult {
   fetchError: string | null;
   readError: string | null;
