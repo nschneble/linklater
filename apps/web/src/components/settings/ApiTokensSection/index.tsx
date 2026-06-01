@@ -117,7 +117,7 @@ export default function ApiTokensSection() {
           <div className="flex flex-col items-start gap-4">
             <code
               aria-label="Personal access token — navigate here to read it character by character"
-              className="w-full px-2.5 py-2 bg-[var(--bg-elevated)] border-shadow text-[var(--text)] text-sm font-mono rounded-lg break-all"
+              className="w-full block px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-xs font-mono rounded select-all"
             >
               {newToken.rawToken}
             </code>
