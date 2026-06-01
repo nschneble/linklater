@@ -110,52 +110,31 @@ export function useLinksView({
     return () => clearTimeout(timer);
   }, [search]);
 
-  const {
-    deleteError,
-    fetchError,
-    handleCreated,
-    handleDeleteAllRead,
-    handleDismissToast,
-    handleLoadMore,
-    handleRandom,
-    handleToggleForm,
-    handleToggleRead,
-    links,
-    loadingLinks,
-    newLinksAnnouncement,
-    page,
-    pagination,
-    randomError,
-    randomLoading,
-    readError,
-    saveError,
-    showLinkForm,
-    toastMessage,
-  } = useLinks(filter, debouncedSearch);
+  const linksResult = useLinks(filter, debouncedSearch);
 
   function handleNavigateNextLink() {
-    if (links.length === 0) return;
+    if (linksResult.links.length === 0) return;
     setSelectedLinkIndex((previous) => {
       if (previous === null) return 0;
-      return Math.min(previous + 1, links.length - 1);
+      return Math.min(previous + 1, linksResult.links.length - 1);
     });
   }
 
   function handleNavigatePrevLink() {
-    if (links.length === 0) return;
+    if (linksResult.links.length === 0) return;
     setSelectedLinkIndex((previous) => {
-      if (previous === null) return links.length - 1;
+      if (previous === null) return linksResult.links.length - 1;
       return Math.max(previous - 1, 0);
     });
   }
 
   function handleOpenSelectedLink() {
     if (selectedLinkIndex === null) return;
-    const link = links[selectedLinkIndex];
+    const link = linksResult.links[selectedLinkIndex];
     if (!link) return;
     window.open(link.url, '_blank', 'noreferrer');
     if (!link.readAt) {
-      handleToggleRead(link);
+      linksResult.handleToggleRead(link);
     }
   }
 
@@ -165,10 +144,12 @@ export function useLinksView({
     onShowUnread: () => navigate('/unread'),
     onShowRead: () => navigate('/read'),
     onSearch: () => searchInputReference.current?.focus(),
-    onToggleForm: filter === 'unread' ? handleToggleForm : () => {},
-    onStumble: filter === 'unread' ? handleRandom : () => {},
+    onToggleForm: filter === 'unread' ? linksResult.handleToggleForm : () => {},
+    onStumble: filter === 'unread' ? linksResult.handleRandom : () => {},
     onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
-    onEscape: showLinkForm ? handleToggleForm : undefined,
+    onEscape: linksResult.showLinkForm
+      ? linksResult.handleToggleForm
+      : undefined,
     onNavigateNextLink: handleNavigateNextLink,
     onNavigatePrevLink: handleNavigatePrevLink,
     onOpenSelectedLink: handleOpenSelectedLink,
@@ -185,10 +166,15 @@ export function useLinksView({
 
   // Clamps selection when the list shrinks (e.g. after a link is marked as read).
   useEffect(() => {
-    if (selectedLinkIndex !== null && selectedLinkIndex >= links.length) {
-      setSelectedLinkIndex(links.length > 0 ? links.length - 1 : null);
+    if (
+      selectedLinkIndex !== null &&
+      selectedLinkIndex >= linksResult.links.length
+    ) {
+      setSelectedLinkIndex(
+        linksResult.links.length > 0 ? linksResult.links.length - 1 : null,
+      );
     }
-  }, [links.length, selectedLinkIndex]);
+  }, [linksResult.links.length, selectedLinkIndex]);
 
   // Resets selection when search changes, so the highlighted card matches the
   // new result set.
@@ -205,7 +191,7 @@ export function useLinksView({
   async function handleClearRead() {
     setIsClearingRead(true);
     try {
-      await handleDeleteAllRead();
+      await linksResult.handleDeleteAllRead();
     } finally {
       setIsClearingRead(false);
     }
@@ -213,36 +199,36 @@ export function useLinksView({
 
   return {
     debouncedSearch,
-    deleteError,
-    fetchError,
+    deleteError: linksResult.deleteError,
+    fetchError: linksResult.fetchError,
     filter,
     handleClearRead,
-    handleCreated,
-    handleDismissToast,
-    handleLoadMore,
-    handleRandom,
-    handleToggleForm,
-    handleToggleRead,
+    handleCreated: linksResult.handleCreated,
+    handleDismissToast: linksResult.handleDismissToast,
+    handleLoadMore: linksResult.handleLoadMore,
+    handleRandom: linksResult.handleRandom,
+    handleToggleForm: linksResult.handleToggleForm,
+    handleToggleRead: linksResult.handleToggleRead,
     isClearingRead,
-    links,
-    loadingLinks,
-    newLinksAnnouncement,
+    links: linksResult.links,
+    loadingLinks: linksResult.loadingLinks,
+    newLinksAnnouncement: linksResult.newLinksAnnouncement,
     onCloseShortcuts: () => setShowShortcuts(false),
     onNavigateRead: () => navigate('/read'),
     onNavigateUnread: () => navigate('/unread'),
     onSearch: setSearch,
     onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
-    page,
-    pagination,
-    randomError,
-    randomLoading,
-    readError,
-    saveError,
+    page: linksResult.page,
+    pagination: linksResult.pagination,
+    randomError: linksResult.randomError,
+    randomLoading: linksResult.randomLoading,
+    readError: linksResult.readError,
+    saveError: linksResult.saveError,
     search,
     searchInputReference,
     selectedLinkIndex,
-    showLinkForm,
+    showLinkForm: linksResult.showLinkForm,
     showShortcuts,
-    toastMessage,
+    toastMessage: linksResult.toastMessage,
   };
 }
