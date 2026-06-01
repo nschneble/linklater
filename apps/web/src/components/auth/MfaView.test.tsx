@@ -46,6 +46,26 @@ describe('MfaView — TOTP challenge', () => {
     expect(screen.getByLabelText(/authenticator code/i)).toHaveValue('123 4');
   });
 
+  it('renders the WCAG 3.2.2 auto-submit hint and wires it via aria-describedby', () => {
+    renderView({ mfaChallenge: 'totp' });
+    const hint = screen.getByText(
+      /verify it automatically after the 6th digit/i,
+    );
+    expect(hint).toHaveAttribute('id', 'mfa-totp-code-hint');
+    expect(screen.getByLabelText(/authenticator code/i)).toHaveAttribute(
+      'aria-describedby',
+      'mfa-totp-code-hint',
+    );
+  });
+
+  it('keeps the hint in aria-describedby when an error appears, hint first', () => {
+    renderView({ mfaChallenge: 'totp', error: 'Invalid code' });
+    expect(screen.getByLabelText(/authenticator code/i)).toHaveAttribute(
+      'aria-describedby',
+      'mfa-totp-code-hint mfa-error',
+    );
+  });
+
   it('offers a switch to recovery mode but not the other direction', () => {
     renderView({ mfaChallenge: 'totp' });
     expect(
@@ -92,6 +112,13 @@ describe('MfaView — recovery challenge', () => {
     expect(input).not.toHaveAttribute('maxlength');
     expect(input).toHaveAttribute('inputmode', 'text');
     expect(input).toHaveAttribute('autocomplete', 'off');
+  });
+
+  it('does not render the TOTP auto-submit hint in the recovery branch', () => {
+    renderView({ mfaChallenge: 'recovery' });
+    expect(
+      screen.queryByText(/verify it automatically after the 6th digit/i),
+    ).not.toBeInTheDocument();
   });
 
   it('offers a switch back to a different method', () => {

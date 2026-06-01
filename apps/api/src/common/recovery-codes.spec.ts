@@ -2,6 +2,7 @@ import {
   findMatchingRecoveryCode,
   generateRecoveryCodes,
   hashRecoveryCodes,
+  normalizeRecoveryCode,
 } from './recovery-codes.js';
 
 describe('generateRecoveryCodes', () => {
@@ -41,6 +42,68 @@ describe('hashRecoveryCodes', () => {
     const hashes = await hashRecoveryCodes(codes);
     for (let index = 0; index < codes.length; index++) {
       expect(hashes[index]).not.toBe(codes[index]);
+    }
+  });
+});
+
+describe('normalizeRecoveryCode', () => {
+  it('returns a canonical code unchanged', () => {
+    expect(normalizeRecoveryCode('abcde-fghij-kmnpq')).toBe(
+      'abcde-fghij-kmnpq',
+    );
+  });
+
+  it('inserts hyphens into a hyphenless 15-char payload', () => {
+    expect(normalizeRecoveryCode('abcdefghijkmnpq')).toBe('abcde-fghij-kmnpq');
+  });
+
+  it('strips spaces between groups before re-inserting hyphens', () => {
+    expect(normalizeRecoveryCode('abcde fghij kmnpq')).toBe(
+      'abcde-fghij-kmnpq',
+    );
+  });
+
+  it('strips surrounding whitespace', () => {
+    expect(normalizeRecoveryCode('  abcde-fghij-kmnpq  ')).toBe(
+      'abcde-fghij-kmnpq',
+    );
+  });
+
+  it('handles uppercase characters', () => {
+    expect(normalizeRecoveryCode('ABCDE-FGHJK-MNPQR')).toBe(
+      'ABCDE-FGHJK-MNPQR',
+    );
+  });
+
+  it('returns null when the payload is too short', () => {
+    expect(normalizeRecoveryCode('abcde-fghij')).toBeNull();
+  });
+
+  it('returns null when the payload is too long', () => {
+    expect(normalizeRecoveryCode('abcde-fghij-kmnpq-rstuv')).toBeNull();
+  });
+
+  it('returns null when the payload contains ambiguous characters (0, 1, I, O, l)', () => {
+    expect(normalizeRecoveryCode('0bcde-fghij-kmnpq')).toBeNull();
+    expect(normalizeRecoveryCode('1bcde-fghij-kmnpq')).toBeNull();
+    expect(normalizeRecoveryCode('Ibcde-fghij-kmnpq')).toBeNull();
+    expect(normalizeRecoveryCode('Obcde-fghij-kmnpq')).toBeNull();
+    expect(normalizeRecoveryCode('lbcde-fghij-kmnpq')).toBeNull();
+  });
+
+  it('returns null for an empty string', () => {
+    expect(normalizeRecoveryCode('')).toBeNull();
+  });
+
+  it('returns null when payload contains other punctuation', () => {
+    expect(normalizeRecoveryCode('abcde.fghij.kmnpq')).toBeNull();
+  });
+
+  it('round-trips a freshly generated code through normalization', () => {
+    for (const code of generateRecoveryCodes()) {
+      expect(normalizeRecoveryCode(code)).toBe(code);
+      // hyphenless form must also map back to the original
+      expect(normalizeRecoveryCode(code.replace(/-/g, ''))).toBe(code);
     }
   });
 });

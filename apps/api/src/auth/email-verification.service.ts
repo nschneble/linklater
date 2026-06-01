@@ -8,8 +8,8 @@ import {
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import { expiresInMs } from '../common/dates.js';
 import {
-  RECOVERY_CODE_REGEX,
   findMatchingRecoveryCode,
+  normalizeRecoveryCode,
 } from '../common/recovery-codes.js';
 import { EmailService } from '../email/index.js';
 import { UserTokensService, UsersService } from '../users/index.js';
@@ -114,15 +114,18 @@ export class EmailVerificationService {
         );
       }
 
-      const isRecoveryCode = RECOVERY_CODE_REGEX.test(code);
+      const canonicalRecovery = normalizeRecoveryCode(code);
 
-      if (isRecoveryCode) {
+      if (canonicalRecovery !== null) {
         const recoveryCodes =
           await this.usersService.findUnusedRecoveryCodes(userId);
         const hashes = recoveryCodes.map(
           (recoveryCode) => recoveryCode.codeHash,
         );
-        const matchIndex = await findMatchingRecoveryCode(code, hashes);
+        const matchIndex = await findMatchingRecoveryCode(
+          canonicalRecovery,
+          hashes,
+        );
         if (matchIndex === null) {
           throw new UnauthorizedException('Invalid OTP code');
         }

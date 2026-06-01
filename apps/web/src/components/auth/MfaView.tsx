@@ -7,6 +7,17 @@ import { formatTotpCode, normalizeTotpInput } from '../../lib/totpCode';
 import { useEffect, useRef } from 'react';
 import type { FormEvent, RefObject } from 'react';
 
+// Wires `aria-describedby` for the TOTP input. SRs announce describedby
+// targets in order, so hint first + error second means the error is the
+// last thing heard before the user retries (WCAG 3.3.1 friendly).
+function describedBy(
+  isRecovery: boolean,
+  error: string | null,
+): string | undefined {
+  if (isRecovery) return error ? 'mfa-error' : undefined;
+  return error ? 'mfa-totp-code-hint mfa-error' : 'mfa-totp-code-hint';
+}
+
 interface MfaViewProps {
   error: string | null;
   errorReference: RefObject<HTMLParagraphElement | null>;
@@ -60,6 +71,14 @@ export default function MfaView({
         >
           {isRecovery ? 'Recovery code' : 'Authenticator code'}
         </label>
+        {!isRecovery && (
+          <p
+            className="text-[var(--text-subtle)] text-xs"
+            id="mfa-totp-code-hint"
+          >
+            We'll verify it automatically after the 6th digit.
+          </p>
+        )}
         <FormInput
           id={isRecovery ? 'mfa-recovery-code' : 'mfa-totp-code'}
           ref={mfaInputReference}
@@ -77,7 +96,7 @@ export default function MfaView({
           }
           value={isRecovery ? mfaCode : formatTotpCode(mfaCode)}
           required
-          aria-describedby={error ? 'mfa-error' : undefined}
+          aria-describedby={describedBy(isRecovery, error)}
         />
 
         {error && (

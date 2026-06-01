@@ -96,6 +96,47 @@ describe('ReauthForm — interactions', () => {
     expect(onCodeChange).toHaveBeenCalledWith('123456');
   });
 
+  it('strips a space from a pasted "XXX XXX" TOTP code before forwarding', () => {
+    const onCodeChange = vi.fn();
+    renderForm({ onCodeChange });
+    fireEvent.change(screen.getByLabelText(/authenticator or recovery code/i), {
+      target: { value: '123 456' },
+    });
+    expect(onCodeChange).toHaveBeenCalledWith('123456');
+  });
+
+  it('caps a TOTP-shaped paste at six digits', () => {
+    const onCodeChange = vi.fn();
+    renderForm({ onCodeChange });
+    fireEvent.change(screen.getByLabelText(/authenticator or recovery code/i), {
+      target: { value: '1234567890' },
+    });
+    expect(onCodeChange).toHaveBeenCalledWith('123456');
+  });
+
+  it('passes a recovery code through verbatim (hyphen switches off TOTP formatting)', () => {
+    const onCodeChange = vi.fn();
+    renderForm({ onCodeChange });
+    fireEvent.change(screen.getByLabelText(/authenticator or recovery code/i), {
+      target: { value: 'abcde-fghij-klmno' },
+    });
+    expect(onCodeChange).toHaveBeenCalledWith('abcde-fghij-klmno');
+  });
+
+  it('formats a stored 6-digit code as "XXX XXX" for display', () => {
+    renderForm({ code: '123456' });
+    expect(
+      screen.getByLabelText(/authenticator or recovery code/i),
+    ).toHaveValue('123 456');
+  });
+
+  it('displays a recovery-shaped stored code verbatim (no TOTP formatting)', () => {
+    renderForm({ code: 'abcde-fghij-klmno' });
+    expect(
+      screen.getByLabelText(/authenticator or recovery code/i),
+    ).toHaveValue('abcde-fghij-klmno');
+  });
+
   it('renders the error message when error is set', () => {
     renderForm({ error: 'Invalid credentials' });
     expect(screen.getByText('Invalid credentials')).toBeInTheDocument();

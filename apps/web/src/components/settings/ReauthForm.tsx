@@ -4,6 +4,16 @@ import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
+import { formatTotpCode } from '../../lib/totpCode';
+
+// The code field accepts either a 6-digit TOTP code or a 17-char recovery
+// code ("XXXXX-XXXXX-XXXXX", alphabet excludes 0/1/I/O/l). We detect which
+// path the user is on by looking at the stored value:
+//   - empty / only ASCII digits, up to 6 -> TOTP shape, format as "XXX XXX"
+//   - anything else (hyphen, letter, more than 6 digits) -> recovery shape,
+//     display verbatim.
+const TOTP_SHAPE = /^\d{0,6}$/;
+const DIGITS_AND_SPACES_ONLY = /^[\d ]*$/;
 
 interface ReauthFormProps {
   /**
@@ -130,8 +140,18 @@ export default function ReauthForm({
         autoComplete="one-time-code"
         aria-describedby={describedBy}
         aria-invalid={isInvalid}
-        value={code}
-        onChange={(event) => onCodeChange(event.target.value)}
+        value={TOTP_SHAPE.test(code) ? formatTotpCode(code) : code}
+        onChange={(event) => {
+          const raw = event.target.value;
+          if (DIGITS_AND_SPACES_ONLY.test(raw)) {
+            // TOTP path: store digits-only, cap at 6 so the field cannot
+            // exceed an authenticator code length even on paste.
+            onCodeChange(raw.replace(/\D/g, '').slice(0, 6));
+          } else {
+            // Recovery path: hyphen or letter detected — leave verbatim.
+            onCodeChange(raw);
+          }
+        }}
       />
 
       {error && (

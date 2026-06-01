@@ -389,7 +389,7 @@ describe('AuthService', () => {
   });
 
   describe('verifyOtp', () => {
-    const RECOVERY_CODE_STUB = 'aaaaa-bbbbb';
+    const RECOVERY_CODE_STUB = 'aaaaa-bbbbb-ccccc';
 
     describe('totp method', () => {
       it('returns accessToken and refreshToken when TOTP code is valid', async () => {
@@ -519,6 +519,41 @@ describe('AuthService', () => {
         );
         expect(result).toHaveProperty('accessToken');
         expect(result).toHaveProperty('refreshToken');
+      });
+
+      it('accepts a hyphenless recovery code by normalizing before bcrypt compare', async () => {
+        const codeId = 'rc-1';
+
+        const bcryptModule = await import('bcryptjs');
+        // Stored hash is over the canonical hyphenated form…
+        const realHash = await bcryptModule.hash(RECOVERY_CODE_STUB, 1);
+
+        (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+          id: USER_ID,
+          email: USER_EMAIL,
+          mfaNonce: MFA_NONCE,
+          totpEnabledAt: new Date(),
+        });
+        (
+          usersServiceMock.findUnusedRecoveryCodes as jest.Mock
+        ).mockResolvedValue([{ id: codeId, codeHash: realHash }]);
+        (usersServiceMock.markRecoveryCodeUsed as jest.Mock).mockResolvedValue(
+          true,
+        );
+
+        // …user pastes it without hyphens — normalize re-inserts them.
+        const hyphenless = RECOVERY_CODE_STUB.replace(/-/g, '');
+        const result = await service.verifyOtp(
+          USER_ID,
+          hyphenless,
+          'recovery',
+          MFA_NONCE,
+        );
+
+        expect(usersServiceMock.markRecoveryCodeUsed).toHaveBeenCalledWith(
+          codeId,
+        );
+        expect(result).toHaveProperty('accessToken');
       });
 
       it('throws UnauthorizedException when no code matches', async () => {
