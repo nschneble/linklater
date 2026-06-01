@@ -39,12 +39,19 @@ describe('TotpSetupView', () => {
     expect(screen.getByLabelText('TOTP secret')).toHaveTextContent(SECRET);
   });
 
-  it('configures the verification input with numeric inputmode, autocomplete, and 6-char cap', () => {
+  it('configures the verification input with numeric inputmode, autocomplete, placeholder, and 7-char cap', () => {
     renderView();
     const input = screen.getByLabelText(/verification code/i);
     expect(input).toHaveAttribute('inputmode', 'numeric');
     expect(input).toHaveAttribute('autocomplete', 'one-time-code');
-    expect(input).toHaveAttribute('maxlength', '6');
+    expect(input).toHaveAttribute('placeholder', '000 000');
+    // 7 = 6 digits + the inserted space in the displayed "XXX XXX" form.
+    expect(input).toHaveAttribute('maxlength', '7');
+  });
+
+  it('displays the stored digits formatted as "XXX XXX"', () => {
+    renderView({ code: '123456' });
+    expect(screen.getByLabelText(/verification code/i)).toHaveValue('123 456');
   });
 
   it('forwards input changes to onCodeChange', () => {
@@ -54,6 +61,15 @@ describe('TotpSetupView', () => {
       target: { value: '1' },
     });
     expect(onCodeChange).toHaveBeenCalledWith('1');
+  });
+
+  it('strips a space from a pasted "XXX XXX" code before forwarding', () => {
+    const onCodeChange = vi.fn();
+    renderView({ onCodeChange });
+    fireEvent.change(screen.getByLabelText(/verification code/i), {
+      target: { value: '123 456' },
+    });
+    expect(onCodeChange).toHaveBeenCalledWith('123456');
   });
 
   it('auto-submits when the code reaches 6 digits', () => {

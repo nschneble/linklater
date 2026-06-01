@@ -4,6 +4,7 @@ import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
+import { formatTotpCode, normalizeTotpInput } from '../../lib/totpCode';
 
 interface TotpSetupViewProps {
   /** Base64 PNG data URL for the authenticator-app QR code. */
@@ -100,10 +101,12 @@ export default function TotpSetupView({
           inputMode="numeric"
           autoComplete="one-time-code"
           aria-describedby="totp-code-hint"
-          maxLength={6}
-          placeholder="000000"
-          value={code}
-          onChange={(event) => onCodeChange(event.target.value)}
+          maxLength={7}
+          placeholder="000 000"
+          value={formatTotpCode(code)}
+          onChange={(event) =>
+            onCodeChange(normalizeTotpInput(event.target.value))
+          }
           required
         />
         {error && <Alert variant="error">{error}</Alert>}

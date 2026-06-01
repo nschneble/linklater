@@ -3,6 +3,7 @@ import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import AuthCard from './AuthCard';
+import { formatTotpCode, normalizeTotpInput } from '../../lib/totpCode';
 import { useEffect, useRef } from 'react';
 import type { FormEvent, RefObject } from 'react';
 
@@ -65,9 +66,16 @@ export default function MfaView({
           type="text"
           inputMode={isRecovery ? 'text' : 'numeric'}
           autoComplete={isRecovery ? 'off' : 'one-time-code'}
-          maxLength={isRecovery ? undefined : 6}
-          onChange={(event) => onMfaCodeChange(event.target.value)}
-          value={mfaCode}
+          maxLength={isRecovery ? undefined : 7}
+          placeholder={isRecovery ? undefined : '000 000'}
+          onChange={(event) =>
+            onMfaCodeChange(
+              isRecovery
+                ? event.target.value
+                : normalizeTotpInput(event.target.value),
+            )
+          }
+          value={isRecovery ? mfaCode : formatTotpCode(mfaCode)}
           required
           aria-describedby={error ? 'mfa-error' : undefined}
         />

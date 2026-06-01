@@ -28,18 +28,22 @@ describe('MfaView — TOTP challenge', () => {
     expect(
       screen.getByRole('heading', { name: /multi-factor authentication/i }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(/authenticator code/i)).toHaveAttribute(
-      'id',
-      'mfa-totp-code',
-    );
-    expect(screen.getByLabelText(/authenticator code/i)).toHaveAttribute(
-      'inputmode',
-      'numeric',
-    );
-    expect(screen.getByLabelText(/authenticator code/i)).toHaveAttribute(
-      'autocomplete',
-      'one-time-code',
-    );
+    const input = screen.getByLabelText(/authenticator code/i);
+    expect(input).toHaveAttribute('id', 'mfa-totp-code');
+    expect(input).toHaveAttribute('inputmode', 'numeric');
+    expect(input).toHaveAttribute('autocomplete', 'one-time-code');
+    expect(input).toHaveAttribute('placeholder', '000 000');
+    expect(input).toHaveAttribute('maxlength', '7');
+  });
+
+  it('displays the stored digits formatted as "XXX XXX"', () => {
+    renderView({ mfaCode: '123456' });
+    expect(screen.getByLabelText(/authenticator code/i)).toHaveValue('123 456');
+  });
+
+  it('displays a partial code formatted with a space after the third digit', () => {
+    renderView({ mfaCode: '1234' });
+    expect(screen.getByLabelText(/authenticator code/i)).toHaveValue('123 4');
   });
 
   it('offers a switch to recovery mode but not the other direction', () => {
@@ -116,6 +120,33 @@ describe('MfaView — interactions', () => {
       target: { value: '1' },
     });
     expect(onMfaCodeChange).toHaveBeenCalledWith('1');
+  });
+
+  it('strips a space from a pasted "XXX XXX" code before forwarding', () => {
+    const onMfaCodeChange = vi.fn();
+    renderView({ onMfaCodeChange });
+    fireEvent.change(screen.getByLabelText(/authenticator code/i), {
+      target: { value: '123 456' },
+    });
+    expect(onMfaCodeChange).toHaveBeenCalledWith('123456');
+  });
+
+  it('strips non-digit characters from a pasted code before forwarding', () => {
+    const onMfaCodeChange = vi.fn();
+    renderView({ onMfaCodeChange });
+    fireEvent.change(screen.getByLabelText(/authenticator code/i), {
+      target: { value: '  123-456  ' },
+    });
+    expect(onMfaCodeChange).toHaveBeenCalledWith('123456');
+  });
+
+  it('passes recovery-mode input through unchanged (no digit stripping)', () => {
+    const onMfaCodeChange = vi.fn();
+    renderView({ mfaChallenge: 'recovery', onMfaCodeChange });
+    fireEvent.change(screen.getByLabelText(/recovery code/i), {
+      target: { value: 'abcde-fghij-klmno' },
+    });
+    expect(onMfaCodeChange).toHaveBeenCalledWith('abcde-fghij-klmno');
   });
 
   it('renders an alert with role="alert" when error is set', () => {
