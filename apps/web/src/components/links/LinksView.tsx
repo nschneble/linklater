@@ -105,11 +105,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         onToggleForm={view.handleToggleForm}
       />
 
-      <ViewError message={view.fetchError} />
-      <ViewError message={view.randomError} />
-      <ViewError message={view.saveError} />
-      <ViewError message={view.readError} />
-      <ViewError message={view.deleteError} />
+      <ViewError message={view.error} />
 
       {view.showShortcuts && (
         <Suspense>
@@ -169,7 +165,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         The visible list is updated regardless; this is purely for screen
         reader users who don't see the prepend.
       */}
-      <span className="sr-only" role="status" aria-live="polite">
+      <span className="sr-only" role="status">
         {view.newLinksAnnouncement}
       </span>
     </>

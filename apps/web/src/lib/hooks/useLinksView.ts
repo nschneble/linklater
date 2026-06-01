@@ -29,6 +29,13 @@ interface UseLinksViewOptions {
 /** Everything the `LinksView` component needs from this hook. */
 export interface UseLinksViewResult {
   debouncedSearch: string;
+  /**
+   * Most-recently-set error across the five sub-error fields below. Drives
+   * the single visible `Alert` so that `role="alert"` mounts/unmounts at
+   * most once per transition — concurrent failures (e.g. background fetch +
+   * user save) no longer cascade multiple assertive announcements.
+   */
+  error: string | null;
   filter: LinksFilter;
   isClearingRead: boolean;
   search: string;
@@ -182,6 +189,50 @@ export function useLinksView({
     setSelectedLinkIndex(null);
   }, [debouncedSearch]);
 
+  // Aggregates the five sub-error fields into a single last-write-wins
+  // `error` so the view can render one `Alert` (one `role="alert"`)
+  // instead of mounting up to five assertive regions concurrently. Detects
+  // both `null → string` and `string → string'` transitions so the same
+  // field re-failing with a new message also re-announces.
+  const previousErrors = useRef({
+    delete: null as string | null,
+    fetch: null as string | null,
+    random: null as string | null,
+    read: null as string | null,
+    save: null as string | null,
+  });
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const current = {
+      delete: linksResult.deleteError,
+      fetch: linksResult.fetchError,
+      random: linksResult.randomError,
+      read: linksResult.readError,
+      save: linksResult.saveError,
+    };
+    let nextError: string | null = null;
+    for (const kind of Object.keys(current) as Array<keyof typeof current>) {
+      const currentValue = current[kind];
+      const previousValue = previousErrors.current[kind];
+      if (currentValue !== null && currentValue !== previousValue) {
+        nextError = currentValue;
+      }
+    }
+    const allCleared = Object.values(current).every((value) => value === null);
+    previousErrors.current = current;
+    if (allCleared) {
+      setError(null);
+    } else if (nextError !== null) {
+      setError(nextError);
+    }
+  }, [
+    linksResult.deleteError,
+    linksResult.fetchError,
+    linksResult.randomError,
+    linksResult.readError,
+    linksResult.saveError,
+  ]);
+
   /**
    * Triggers the card exit animation before calling `handleDeleteAllRead`.
    * `isClearingRead` is set to `true` immediately so `LinksList` can start
@@ -200,6 +251,7 @@ export function useLinksView({
   return {
     debouncedSearch,
     deleteError: linksResult.deleteError,
+    error,
     fetchError: linksResult.fetchError,
     filter,
     handleClearRead,

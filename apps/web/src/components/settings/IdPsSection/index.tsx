@@ -57,6 +57,11 @@ export default function IdPsSection({
     return null;
   }
 
+  // Single error slot so only one `role="alert"` mounts at a time. A retry
+  // click sets `connectError`, which takes precedence over the URL-derived
+  // `linkError` from a prior redirect.
+  const displayedError = connectError ?? linkError;
+
   return (
     <div className="mt-8 space-y-4">
       <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
@@ -64,8 +69,7 @@ export default function IdPsSection({
       </h3>
 
       {linkedMessage && <Alert variant="success">{linkedMessage}</Alert>}
-      {linkError && <Alert variant="error">{linkError}</Alert>}
-      {connectError && <Alert variant="error">{connectError}</Alert>}
+      {displayedError && <Alert variant="error">{displayedError}</Alert>}
 
       <div className="mt-5 space-y-3">
         {appleEnabled && (
