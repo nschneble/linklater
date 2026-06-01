@@ -9,8 +9,8 @@ import type { FormEvent } from 'react';
 import type { AddPasswordFormProps } from './types';
 
 /**
- * Add-password form for SSO-only accounts adding a backup credential.
- * Submits to `POST /auth/set-password`.
+ * Add-password form for passwordless accounts (created via SSO or magic
+ * link) adding a backup credential. Submits to `POST /auth/set-password`.
  */
 export default function AddPasswordForm({ refreshUser }: AddPasswordFormProps) {
   const [newPassword, setNewPassword] = useState('');

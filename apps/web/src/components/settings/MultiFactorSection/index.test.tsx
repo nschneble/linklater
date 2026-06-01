@@ -155,6 +155,79 @@ describe('MultiFactorSection', () => {
       });
     });
 
+    it('refreshes the user after a successful verify so the stale "MFA is currently off" block clears', async () => {
+      // refreshUser is the seam that lets the AuthContext pick up the new
+      // multiFactorMethod from the server; without it, State A would still
+      // render alongside the recovery codes panel. The mocked useAuth here
+      // does not re-render on refresh, so we assert the call itself — the
+      // State C render contract is covered by the "TOTP enabled" tests.
+      const refreshUser = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ refreshUser }));
+      vi.mocked(apiModule.setupTotp).mockResolvedValue({
+        qrCodeDataUrl: 'data:image/png;base64,abc',
+        secret: 'SECRETABC',
+      });
+      vi.mocked(apiModule.verifyTotpSetup).mockResolvedValue({
+        recoveryCodes: ['aaaaa-bbbbb', 'ccccc-ddddd'],
+      });
+
+      render(<MultiFactorSection />);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /add authenticator app/i }),
+        );
+      });
+
+      fireEvent.change(screen.getByLabelText(/verification code/i), {
+        target: { value: '123456' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+      });
+
+      await waitFor(() => {
+        expect(refreshUser).toHaveBeenCalled();
+      });
+    });
+
+    it('keeps recovery codes visible without surfacing an error when refreshUser rejects', async () => {
+      const refreshUser = vi
+        .fn()
+        .mockRejectedValue(new Error('Refresh failed'));
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ refreshUser }));
+      vi.mocked(apiModule.setupTotp).mockResolvedValue({
+        qrCodeDataUrl: 'data:image/png;base64,abc',
+        secret: 'SECRETABC',
+      });
+      vi.mocked(apiModule.verifyTotpSetup).mockResolvedValue({
+        recoveryCodes: ['aaaaa-bbbbb', 'ccccc-ddddd'],
+      });
+
+      render(<MultiFactorSection />);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /add authenticator app/i }),
+        );
+      });
+
+      fireEvent.change(screen.getByLabelText(/verification code/i), {
+        target: { value: '123456' },
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+      });
+
+      await waitFor(() => {
+        expect(refreshUser).toHaveBeenCalled();
+      });
+      expect(screen.getByText('aaaaa-bbbbb')).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
     it('auto-submits TOTP verification code when 6 digits are entered without clicking Verify', async () => {
       vi.mocked(apiModule.setupTotp).mockResolvedValue({
         qrCodeDataUrl: 'data:image/png;base64,abc',

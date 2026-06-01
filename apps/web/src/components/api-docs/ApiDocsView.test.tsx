@@ -81,8 +81,9 @@ describe('ApiDocsView', () => {
 
   it('exposes a back-to-Settings link as the first focusable affordance', () => {
     renderView();
-    const link = screen.getByRole('link', { name: /back to settings/i });
-    expect(link).toHaveAttribute('href', '/settings');
+    expect(
+      screen.getByRole('button', { name: /back to settings/i }),
+    ).toBeInTheDocument();
   });
 
   it('passes darkMode=true to Scalar when the theme is dark', () => {

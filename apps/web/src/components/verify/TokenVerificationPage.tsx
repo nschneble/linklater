@@ -106,7 +106,7 @@ export default function TokenVerificationPage({
             <button
               type="button"
               className="text-[var(--accent)] underline text-sm"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/unread')}
             >
               Go to Linklater
             </button>
@@ -126,7 +126,7 @@ export default function TokenVerificationPage({
             <button
               type="button"
               className="text-[var(--accent)] underline text-sm"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/unread')}
             >
               Back to Linklater
             </button>

@@ -77,7 +77,7 @@ export function useMenuNavigation(
 
       const items = Array.from(
         container!.querySelectorAll<HTMLElement>(itemSelector),
-      );
+      ).filter((item) => !item.closest('[inert]'));
       const currentIndex = items.indexOf(document.activeElement as HTMLElement);
 
       event.preventDefault();

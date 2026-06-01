@@ -8,10 +8,10 @@ import * as bcrypt from 'bcryptjs';
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import { expiresInMs } from '../common/dates.js';
 import {
-  RECOVERY_CODE_REGEX,
   findMatchingRecoveryCode,
   generateRecoveryCodes,
   hashRecoveryCodes,
+  normalizeRecoveryCode,
 } from '../common/recovery-codes.js';
 import { EmailService } from '../email/email.service.js';
 import { UserTokensService } from '../users/user-tokens.service.js';
@@ -167,10 +167,17 @@ export class AuthService {
       if (!enrolledMethod)
         throw new UnauthorizedException('No MFA method enrolled');
 
+      // Accept user-typed variants (hyphenless paste, internal spaces,
+      // surrounding whitespace) by normalizing to the canonical form
+      // that was hashed at issue time. See `normalizeRecoveryCode`.
+      const canonical = normalizeRecoveryCode(code);
+      if (canonical === null)
+        throw new UnauthorizedException('Invalid recovery code');
+
       const recoveryCodes =
         await this.usersService.findUnusedRecoveryCodes(userId);
       const hashes = recoveryCodes.map((recoveryCode) => recoveryCode.codeHash);
-      const matchIndex = await findMatchingRecoveryCode(code, hashes);
+      const matchIndex = await findMatchingRecoveryCode(canonical, hashes);
 
       if (matchIndex === null)
         throw new UnauthorizedException('Invalid recovery code');
@@ -240,9 +247,9 @@ export class AuthService {
     }
 
     if (code) {
-      const isRecoveryCode = RECOVERY_CODE_REGEX.test(code);
+      const canonicalRecovery = normalizeRecoveryCode(code);
 
-      if (isRecoveryCode) {
+      if (canonicalRecovery !== null) {
         if (!user.totpEnabledAt)
           throw new UnauthorizedException('No MFA method enrolled');
 
@@ -251,7 +258,10 @@ export class AuthService {
         const hashes = recoveryCodes.map(
           (recoveryCode) => recoveryCode.codeHash,
         );
-        const matchIndex = await findMatchingRecoveryCode(code, hashes);
+        const matchIndex = await findMatchingRecoveryCode(
+          canonicalRecovery,
+          hashes,
+        );
         if (matchIndex === null)
           throw new UnauthorizedException('Invalid recovery code');
 

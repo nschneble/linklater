@@ -6,6 +6,7 @@ import StatusBadge from '../../common/StatusBadge';
 import ReauthForm from '../ReauthForm';
 import RecoveryCodesPanel from '../RecoveryCodesPanel';
 import TotpSetupView from '../TotpSetupView';
+import { useAuth } from '../../../auth/AuthContext';
 import { useMultiFactor } from './useMultiFactor';
 
 /**
@@ -24,60 +25,46 @@ import { useMultiFactor } from './useMultiFactor';
  * - **Reauth** — Disable or Regenerate requested, awaiting credentials.
  */
 export default function MultiFactorSection() {
-  const {
-    addAuthenticatorReference,
-    error,
-    inStateA,
-    loading,
-    reauthAction,
-    reauthCode,
-    reauthPassword,
-    recoveryCodes,
-    totpCode,
-    totpCodeInputReference,
-    totpSetup,
-    multiFactorMethod,
-    multiFactorPending,
-    handleCancelReauth,
-    handleCancelTotpSetup,
-    handleReauth,
-    handleStartTotpSetup,
-    handleVerifyTotp,
-    setError,
-    setReauthAction,
-    setReauthCode,
-    setReauthPassword,
-    setTotpCode,
-  } = useMultiFactor();
+  const { user } = useAuth();
+  const mfa = useMultiFactor();
 
   return (
     <div className="max-w-md space-y-4">
       {/* Re-authentication form for disable / regenerate */}
-      {reauthAction && (
+      {mfa.reauthAction && (
         <ReauthForm
           prompt={
-            reauthAction === 'disable'
+            mfa.reauthAction === 'disable'
               ? 'Confirm your identity to disable multi-factor authentication.'
               : 'Confirm your identity to generate new recovery codes.'
           }
+          srOnlyHeading={
+            mfa.reauthAction === 'disable'
+              ? 'Confirm to disable multi-factor authentication'
+              : 'Confirm to regenerate recovery codes'
+          }
           submitLabel="Confirm"
           submittingLabel="Confirming…"
-          code={reauthCode}
-          error={error}
-          loading={loading}
-          onCancel={handleCancelReauth}
-          onCodeChange={setReauthCode}
-          onPasswordChange={setReauthPassword}
-          onSubmit={handleReauth}
-          password={reauthPassword}
+          code={mfa.reauthCode}
+          error={mfa.error}
+          hasPassword={user?.hasPassword ?? false}
+          loading={mfa.loading}
+          onCancel={mfa.handleCancelReauth}
+          onCodeChange={mfa.setReauthCode}
+          onPasswordChange={mfa.setReauthPassword}
+          onSubmit={mfa.handleReauth}
+          password={mfa.reauthPassword}
         />
       )}
+
+      {/* Recovery codes reveal — shown after enrollment or regeneration. */}
+      {mfa.recoveryCodes && <RecoveryCodesPanel codes={mfa.recoveryCodes} />}
 
       {/* State C / E — MFA enabled. While `recoveryCodes` is non-null the
        * panel below takes over the action area to keep the user focused on
        * saving the codes and to prevent an accidental disable click mid-
        * confirmation. */}
-      {!reauthAction && multiFactorMethod && !recoveryCodes && (
+      {!mfa.reauthAction && mfa.multiFactorMethod && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)] text-xs">
@@ -87,75 +74,79 @@ export default function MultiFactorSection() {
               Enabled
             </StatusBadge>
           </div>
-          <div className="flex items-center gap-2">
-            <IconButton
-              variant="default"
-              onClick={() => {
-                setError(null);
-                setReauthAction('regenerate');
-              }}
-            >
-              <i
-                className="fa-solid fa-rotate text-[0.7rem]"
-                aria-hidden="true"
-              />
-              Generate new recovery codes
-            </IconButton>
-            <IconButton
-              variant="danger"
-              onClick={() => {
-                setError(null);
-                setReauthAction('disable');
-              }}
-            >
-              <i className="fa-solid fa-ban text-[0.7rem]" aria-hidden="true" />
-              Disable MFA
-            </IconButton>
-          </div>
+          {!mfa.recoveryCodes && (
+            <div className="flex items-center gap-2">
+              <IconButton
+                onClick={() => {
+                  mfa.setError(null);
+                  mfa.setReauthAction('regenerate');
+                }}
+              >
+                <i
+                  className="fa-solid fa-rotate text-[0.7rem]"
+                  aria-hidden="true"
+                />
+                Generate new recovery codes
+              </IconButton>
+              <IconButton
+                variant="danger"
+                onClick={() => {
+                  mfa.setError(null);
+                  mfa.setReauthAction('disable');
+                }}
+              >
+                <i
+                  className="fa-solid fa-ban text-[0.7rem]"
+                  aria-hidden="true"
+                />
+                Disable MFA
+              </IconButton>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Recovery codes reveal — shown after enrollment or regeneration. */}
-      {recoveryCodes && <RecoveryCodesPanel codes={recoveryCodes} />}
-
       {/* State B — TOTP setup: verify QR */}
-      {!reauthAction && !multiFactorMethod && totpSetup && (
+      {!mfa.reauthAction && !mfa.multiFactorMethod && mfa.totpSetup && (
         <TotpSetupView
-          code={totpCode}
-          codeInputReference={totpCodeInputReference}
-          error={error}
-          loading={loading}
-          onCancel={handleCancelTotpSetup}
-          onCodeChange={setTotpCode}
-          onSubmit={handleVerifyTotp}
-          qrCodeDataUrl={totpSetup.qrCodeDataUrl}
-          secret={totpSetup.secret}
+          code={mfa.totpCode}
+          codeInputReference={mfa.totpCodeInputReference}
+          error={mfa.error}
+          loading={mfa.loading}
+          onCancel={mfa.handleCancelTotpSetup}
+          onCodeChange={mfa.setTotpCode}
+          onSubmit={mfa.handleVerifyTotp}
+          qrCodeDataUrl={mfa.totpSetup.qrCodeDataUrl}
+          secret={mfa.totpSetup.secret}
         />
       )}
 
       {/* State B — TOTP pending from server (setup started in prior session) */}
-      {!reauthAction &&
-        !multiFactorMethod &&
-        !totpSetup &&
-        multiFactorPending && (
+      {!mfa.reauthAction &&
+        !mfa.multiFactorMethod &&
+        !mfa.totpSetup &&
+        mfa.multiFactorPending && (
           <div className="space-y-3">
             <p className="text-[var(--text-muted)] text-xs">
               Authenticator app setup is in progress.
             </p>
-            {error && <Alert variant="error">{error}</Alert>}
+            {mfa.error && <Alert variant="error">{mfa.error}</Alert>}
             <div className="flex items-center gap-3">
               <PrimaryButton
-                disabled={loading}
+                disabled={mfa.loading}
                 className="py-2.5"
-                onClick={handleStartTotpSetup}
+                onClick={mfa.handleStartTotpSetup}
               >
                 <i
                   className="fa-solid fa-circle-notch text-xs"
                   aria-hidden="true"
                 />
-                {loading ? 'Continuing…' : 'Continue setup'}
+                {mfa.loading ? 'Continuing…' : 'Continue setup'}
               </PrimaryButton>
-              <LinkButton onClick={handleCancelTotpSetup} disabled={loading}>
+              <LinkButton
+                onClick={mfa.handleCancelTotpSetup}
+                disabled={mfa.loading}
+              >
                 Cancel
               </LinkButton>
             </div>
@@ -163,18 +154,18 @@ export default function MultiFactorSection() {
         )}
 
       {/* State A — MFA not enabled */}
-      {inStateA && (
+      {mfa.inStateA && (
         <div className="space-y-3">
           <p className="text-[var(--text-muted)] text-xs">
             MFA is currently off.
           </p>
-          {error && <Alert variant="error">{error}</Alert>}
+          {mfa.error && <Alert variant="error">{mfa.error}</Alert>}
           <div className="flex items-center gap-2">
             <PrimaryButton
-              ref={addAuthenticatorReference}
-              disabled={loading}
+              ref={mfa.addAuthenticatorReference}
+              disabled={mfa.loading}
               className="py-2.5"
-              onClick={handleStartTotpSetup}
+              onClick={mfa.handleStartTotpSetup}
             >
               <i
                 className="fa-solid fa-mobile-screen-button text-xs"

@@ -28,23 +28,12 @@ linklater/
 ## Key Commands
 
 ```bash
-# TUIs
-bin/dev                                           # Start development server + Mailpit at http://localhost:8025 (captures all outgoing dev email)
-bin/flintest                                      # Install, format, lint, test, build
-bin/flintest --update                             # Update, install, format, lint, test, build
-bin/migrate                                       # Run Prisma migrations
-bin/migrate --reset                               # Wipe + re-run migrations
-
-# Setup
+# Setup + run
 npm install                                       # Install dependencies
-
-# Run
 npm run dev                                       # Start development server
 
-# Formatting
+# Linting + Formatting
 npm run format                                    # Format code using Prettier
-
-# Linting
 npm run lint                                      # Lint code for consistent style
 npm run lint:migrations                           # Lint migrations using Squawk
 npm run lint --workspace @linklater/web           # Lint front-end only
@@ -52,11 +41,11 @@ npm run lint --workspace @linklater/api           # Lint back-end only
 
 # Testing
 npm run test                                      # Run all tests
+npm run test --workspace @linklater/web           # Test front-end only
 npm run test apps/web/src/path/to/file.test.tsx   # Run a single front-end test file
+npm run test --workspace @linklater/api           # Test back-end only
 npm run test apps/api/src/path/to/file.spec.ts    # Run a single back-end test file
 npm run test:cov                                  # Run all tests with code coverage
-npm run test --workspace @linklater/web           # Test front-end only
-npm run test --workspace @linklater/api           # Test back-end only
 
 # Database
 npm run migrate --workspace @linklater/api        # Run migrations + regenerate client
@@ -143,7 +132,7 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
 - Postel's Law — conservative in output, liberal in input. Normalize user input before matching/comparing so trivial variations no cause silent failures: case differences, accented characters, surrounding whitespace, smart vs straight quotes, full-width vs half-width characters, etc. Search for "montréal" must find "Montreal" + vice versa. See [Robustness Principle](https://en.wikipedia.org/wiki/Robustness_principle) + [Chrome's abnormal tab search](https://unsung.aresluna.org/chromes-abnormal-tab-search/) — done for link search via Postgres `unaccent` extension applied to both stored `searchVector` + incoming `plainto_tsquery` term.
 - Embrace slow software — see [Slow Software Movement](https://codeberg.org/jaredwhite/slow-software)
 - Clean up — kill listeners + temp processes when done
-- Run `bin/flintest` when done to verify format, lint, test, build
+- Run `npm run lint` and `npm run test` when done to lint and test code changes
 
 ## Database Conventions
 
@@ -151,6 +140,7 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
   - Start every migration with `set lock_timeout = '1s';` + `set statement_timeout = '5s';`
   - Add foreign key constraints with `NOT VALID`, then immediately `VALIDATE CONSTRAINT` next line
   - See `.squawk.toml` for project-level excluded rules + reasons
+- Run `npm run lint:migrations` to lint migrations
 
 ## TypeScript Conventions
 

@@ -31,22 +31,10 @@ const WelcomeModal = lazy(() => import('./components/welcome/WelcomeModal'));
  * guard; in practice `AppShell` is only rendered when `user` is non-null.
  */
 export default function AppShell() {
-  const {
-    handleModeToggle,
-    handleThemeSelect,
-    handleUserMenuClose,
-    handleUserMenuToggle,
-    isDesktop,
-    logout,
-    mainReference,
-    markWelcomed,
-    navigate,
-    showUserMenu,
-    user,
-    view,
-  } = useAppShell();
+  const shell = useAppShell();
 
-  if (!user) return null;
+  if (!shell.user) return null;
+  const { user } = shell;
 
   const isEmailUnverified = !user.emailVerifiedAt;
 
@@ -71,7 +59,7 @@ export default function AppShell() {
             Please verify your email address.{' '}
             <LinkButton
               className="hidden sm:inline-flex"
-              onClick={() => navigate('/settings')}
+              onClick={() => shell.navigate('/settings')}
             >
               Need to resend the verification email?
             </LinkButton>
@@ -80,51 +68,36 @@ export default function AppShell() {
       )}
 
       <Header
-        isUserMenuOpen={showUserMenu}
-        onUserMenuToggle={handleUserMenuToggle}
-        onUserMenuClose={handleUserMenuClose}
-        onLogout={logout}
-        onModeToggle={handleModeToggle}
-        onThemeSelect={handleThemeSelect}
+        isUserMenuOpen={shell.showUserMenu}
+        onUserMenuToggle={shell.handleUserMenuToggle}
+        onUserMenuClose={shell.handleUserMenuClose}
+        onLogout={shell.logout}
+        onModeToggle={shell.handleModeToggle}
+        onThemeSelect={shell.handleThemeSelect}
         onViewChange={(newView) => {
-          if (newView === 'settings') navigate('/settings');
-          else if (newView === 'theme-editor') navigate('/editor');
-          else navigate('/unread');
+          if (newView === 'settings') shell.navigate('/settings');
+          else if (newView === 'theme-editor') shell.navigate('/editor');
+          else shell.navigate('/unread');
         }}
         user={user}
-        view={view}
+        view={shell.view}
       />
 
       <main
         id="main-content"
-        ref={mainReference}
+        ref={shell.mainReference}
         tabIndex={-1}
         className="max-w-3xl mx-auto px-4 py-6 sm:py-12 space-y-6 focus:outline-none"
       >
-        {/*
-         * Always-mounted boundary at a stable first-child position. Scalar's
-         * ApiReferenceReact embeds a Vue runtime whose scheduler can fire
-         * queued jobs against an instance React is in the middle of tearing
-         * down (any navigation away from /settings/api), throwing inside a
-         * layout effect. A boundary anywhere INSIDE the view-ternary unmounts
-         * together with the view, so React routes the throw to the next
-         * surviving boundary (the root) and the whole app swaps to the
-         * "Something went wrong" UI. Hoisting the boundary out of the ternary
-         * keeps its fiber alive across view changes — only its `children`
-         * swap to/from null. `resetKey={view}` clears the error state on the
-         * next view change so a subsequent return to /settings/api gets a
-         * fresh attempt. `fallback={null}` because by the time it would
-         * paint the user is already on the new route.
-         */}
-        <ErrorBoundary fallback={null} resetKey={view}>
-          {view === 'api-docs' ? (
+        <ErrorBoundary fallback={null} resetKey={shell.view}>
+          {shell.view === 'api-docs' ? (
             <Suspense
               fallback={
                 <p
                   aria-live="polite"
                   className="text-[var(--text-muted)] text-sm"
                 >
-                  Loading API documentation…
+                  Loading API docs…
                 </p>
               }
             >
@@ -133,20 +106,20 @@ export default function AppShell() {
           ) : null}
         </ErrorBoundary>
 
-        {view === 'settings' ? (
+        {shell.view === 'settings' ? (
           <SettingsView />
-        ) : view === 'theme-editor' ? (
+        ) : shell.view === 'theme-editor' ? (
           <Suspense>
             <ThemeEditor />
           </Suspense>
-        ) : view === 'api-docs' ? null : (
-          <LinksView onCloseUserMenu={handleUserMenuClose} />
+        ) : shell.view === 'api-docs' ? null : (
+          <LinksView onCloseUserMenu={shell.handleUserMenuClose} />
         )}
       </main>
 
-      {user.welcomedAt === null && isDesktop && (
+      {user.welcomedAt === null && shell.isDesktop && (
         <Suspense fallback={null}>
-          <WelcomeModal onClose={markWelcomed} />
+          <WelcomeModal onClose={shell.markWelcomed} />
         </Suspense>
       )}
     </div>

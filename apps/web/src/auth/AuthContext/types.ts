@@ -15,7 +15,7 @@ export interface User {
   email: string;
   /** ISO timestamp of when the email was verified, or `null` if unverified. */
   emailVerifiedAt: string | null;
-  /** `true` when the account has a password set; `false` for SSO-only accounts. */
+  /** `true` when the account has a password set; `false` for passwordless accounts (SSO or magic link). */
   hasPassword: boolean;
   /**
    * The new email address awaiting verification, or `null` if no change is pending.

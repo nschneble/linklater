@@ -17,23 +17,7 @@ import type { FormEvent } from 'react';
  */
 export default function ApiTokensSection() {
   const navigate = useNavigate();
-  const {
-    copied,
-    createError,
-    createName,
-    creating,
-    loadError,
-    nameInputReference,
-    newToken,
-    showCreate,
-    tokens,
-    handleCopy,
-    handleCreate,
-    handleRevoke,
-    setCreateError,
-    setCreateName,
-    setShowCreate,
-  } = useApiTokens();
+  const apiTokens = useApiTokens();
 
   return (
     <div className="max-w-md space-y-3">
@@ -41,24 +25,22 @@ export default function ApiTokensSection() {
         <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
           API Tokens
         </h3>
-        {!showCreate && !newToken && (
-          <IconButton
-            type="button"
-            variant="default"
-            onClick={() => setShowCreate(true)}
-          >
+        {!apiTokens.showCreate && !apiTokens.newToken && (
+          <IconButton onClick={() => apiTokens.setShowCreate(true)}>
             <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />
             Generate new token
           </IconButton>
         )}
       </div>
 
-      {loadError && <Alert variant="error">{loadError}</Alert>}
+      {apiTokens.loadError && (
+        <Alert variant="error">{apiTokens.loadError}</Alert>
+      )}
 
-      {showCreate && (
+      {apiTokens.showCreate && (
         <form
           className="space-y-4 -mx-6 my-6 p-6 border-y border-[var(--border)] border-dotted"
-          onSubmit={(event: FormEvent) => void handleCreate(event)}
+          onSubmit={(event: FormEvent) => void apiTokens.handleCreate(event)}
         >
           <label
             className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
@@ -67,33 +49,37 @@ export default function ApiTokensSection() {
             New token name
           </label>
           <FormInput
-            ref={nameInputReference}
+            ref={apiTokens.nameInputReference}
             id="token-name"
             type="text"
-            disabled={creating}
+            disabled={apiTokens.creating}
             placeholder="e.g. Claude, Twilio"
-            onChange={(event) => setCreateName(event.target.value)}
-            value={createName}
+            onChange={(event) => apiTokens.setCreateName(event.target.value)}
+            value={apiTokens.createName}
             maxLength={100}
             required
           />
-          {createError && <Alert variant="error">{createError}</Alert>}
+          {apiTokens.createError && (
+            <Alert variant="error">{apiTokens.createError}</Alert>
+          )}
           <div className="flex gap-3">
             <PrimaryButton
-              disabled={creating || createName.trim().length === 0}
+              disabled={
+                apiTokens.creating || apiTokens.createName.trim().length === 0
+              }
             >
               <i
                 className="fa-solid fa-plug-circle-plus text-[0.7rem]"
                 aria-hidden="true"
               />
-              {creating ? 'Creating…' : 'Create token'}
+              {apiTokens.creating ? 'Creating…' : 'Create token'}
             </PrimaryButton>
             <LinkButton
-              disabled={creating}
+              disabled={apiTokens.creating}
               onClick={() => {
-                setShowCreate(false);
-                setCreateName('');
-                setCreateError(null);
+                apiTokens.setShowCreate(false);
+                apiTokens.setCreateName('');
+                apiTokens.setCreateError(null);
               }}
             >
               Cancel
@@ -102,7 +88,7 @@ export default function ApiTokensSection() {
         </form>
       )}
 
-      {newToken && (
+      {apiTokens.newToken && (
         <div className="space-y-4 -mx-6 my-6 p-6 pb-2 border-y border-[var(--border)] border-dotted">
           {/*
            * `role="status"` is scoped to the heading only so the raw token
@@ -121,17 +107,15 @@ export default function ApiTokensSection() {
           <div className="flex flex-col items-start gap-4">
             <code
               aria-label="Personal access token — navigate here to read it character by character"
-              className="w-full px-2.5 py-2 bg-[var(--bg-elevated)] border-shadow text-[var(--text)] text-sm font-mono rounded-lg break-all"
+              className="w-full block px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-xs font-mono rounded select-all"
             >
-              {newToken.rawToken}
+              {apiTokens.newToken.rawToken}
             </code>
             <IconButton
               className="group"
-              type="button"
-              variant="default"
-              data-copied={copied ? 'true' : undefined}
+              data-copied={apiTokens.copied ? 'true' : undefined}
               aria-label="Copy to clipboard"
-              onClick={() => void handleCopy()}
+              onClick={() => void apiTokens.handleCopy()}
             >
               {/*
                * Both icons share a single grid cell so they stack without
@@ -163,12 +147,15 @@ export default function ApiTokensSection() {
            * own accessible-name change is not reliably re-announced).
            */}
           <span className="sr-only" role="status">
-            {copied ? 'Token copied to clipboard' : ''}
+            {apiTokens.copied ? 'Token copied to clipboard' : ''}
           </span>
         </div>
       )}
 
-      <ApiTokensList onRevoke={handleRevoke} tokens={tokens} />
+      <ApiTokensList
+        onRevoke={apiTokens.handleRevoke}
+        tokens={apiTokens.tokens}
+      />
 
       <LinkButton onClick={() => navigate('/settings/api')}>
         View the API documentation

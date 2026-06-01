@@ -3,8 +3,20 @@ import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import AuthCard from './AuthCard';
+import { formatTotpCode, normalizeTotpInput } from '../../lib/totpCode';
 import { useEffect, useRef } from 'react';
 import type { FormEvent, RefObject } from 'react';
+
+// Wires `aria-describedby` for the TOTP input. SRs announce describedby
+// targets in order, so hint first + error second means the error is the
+// last thing heard before the user retries (WCAG 3.3.1 friendly).
+function describedBy(
+  isRecovery: boolean,
+  error: string | null,
+): string | undefined {
+  if (isRecovery) return error ? 'mfa-error' : undefined;
+  return error ? 'mfa-totp-code-hint mfa-error' : 'mfa-totp-code-hint';
+}
 
 interface MfaViewProps {
   error: string | null;
@@ -59,17 +71,32 @@ export default function MfaView({
         >
           {isRecovery ? 'Recovery code' : 'Authenticator code'}
         </label>
+        {!isRecovery && (
+          <p
+            className="text-[var(--text-subtle)] text-xs"
+            id="mfa-totp-code-hint"
+          >
+            We'll verify it automatically after the 6th digit.
+          </p>
+        )}
         <FormInput
           id={isRecovery ? 'mfa-recovery-code' : 'mfa-totp-code'}
           ref={mfaInputReference}
           type="text"
           inputMode={isRecovery ? 'text' : 'numeric'}
           autoComplete={isRecovery ? 'off' : 'one-time-code'}
-          maxLength={isRecovery ? undefined : 6}
-          onChange={(event) => onMfaCodeChange(event.target.value)}
-          value={mfaCode}
+          maxLength={isRecovery ? undefined : 7}
+          placeholder={isRecovery ? undefined : '000 000'}
+          onChange={(event) =>
+            onMfaCodeChange(
+              isRecovery
+                ? event.target.value
+                : normalizeTotpInput(event.target.value),
+            )
+          }
+          value={isRecovery ? mfaCode : formatTotpCode(mfaCode)}
           required
-          aria-describedby={error ? 'mfa-error' : undefined}
+          aria-describedby={describedBy(isRecovery, error)}
         />
 
         {error && (

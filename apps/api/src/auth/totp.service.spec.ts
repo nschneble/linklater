@@ -89,14 +89,15 @@ describe('TotpService', () => {
       );
     });
 
-    it('throws ForbiddenException when the account has no password (OAuth-only)', async () => {
+    it('allows passwordless accounts (SSO or magic link) to set up MFA', async () => {
       (usersServiceMock.findById as jest.Mock).mockResolvedValue(
         makeUser({ hasPassword: false }),
       );
 
-      await expect(service.generateSetup(USER_ID, USER_EMAIL)).rejects.toThrow(
-        ForbiddenException,
-      );
+      const result = await service.generateSetup(USER_ID, USER_EMAIL);
+
+      expect(result).toHaveProperty('qrCodeDataUrl');
+      expect(result).toHaveProperty('secret');
     });
 
     it('throws ForbiddenException when emailVerifiedAt is null', async () => {

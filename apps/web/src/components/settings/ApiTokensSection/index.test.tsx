@@ -217,4 +217,82 @@ describe('ApiTokensSection', () => {
       expect(apiModule.revokeApiToken).toHaveBeenCalledWith('tok-1');
     });
   });
+
+  it('hides the new-token reveal panel when that just-created token is revoked', async () => {
+    const created = {
+      ...makeApiToken(),
+      rawToken: 'ltk_aBcDeFgHiJkLmNoPqRsTuVwXyZ12',
+    };
+    vi.mocked(apiModule.createApiToken).mockResolvedValue(created);
+    vi.mocked(apiModule.revokeApiToken).mockResolvedValue({ success: true });
+    // After creation, the list reload returns the token; after revoke, empty.
+    vi.mocked(apiModule.listApiTokens)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([created])
+      .mockResolvedValueOnce([]);
+
+    renderInRouter();
+    await waitFor(() =>
+      screen.getByRole('button', { name: /generate new token/i }),
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /generate new token/i }),
+    );
+    fireEvent.change(screen.getByLabelText(/new token name/i), {
+      target: { value: 'Chrome Extension' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^create token$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(created.rawToken)).toBeInTheDocument();
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /revoke chrome extension/i }),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText(created.rawToken)).not.toBeInTheDocument();
+    });
+    expect(
+      screen.queryByRole('button', { name: /copy to clipboard/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the new-token reveal panel visible when a different token is revoked', async () => {
+    const created = {
+      ...makeApiToken({ id: 'tok-new' }),
+      rawToken: 'ltk_aBcDeFgHiJkLmNoPqRsTuVwXyZ12',
+    };
+    const other = makeApiToken({ id: 'tok-other', name: 'iOS' });
+    vi.mocked(apiModule.createApiToken).mockResolvedValue(created);
+    vi.mocked(apiModule.revokeApiToken).mockResolvedValue({ success: true });
+    vi.mocked(apiModule.listApiTokens)
+      .mockResolvedValueOnce([other])
+      .mockResolvedValueOnce([other, created])
+      .mockResolvedValueOnce([created]);
+
+    renderInRouter();
+    await waitFor(() => screen.getByTestId('token-tok-other'));
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /generate new token/i }),
+    );
+    fireEvent.change(screen.getByLabelText(/new token name/i), {
+      target: { value: 'Chrome Extension' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^create token$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(created.rawToken)).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /revoke ios/i }));
+
+    await waitFor(() => {
+      expect(apiModule.revokeApiToken).toHaveBeenCalledWith('tok-other');
+    });
+    expect(screen.getByText(created.rawToken)).toBeInTheDocument();
+  });
 });

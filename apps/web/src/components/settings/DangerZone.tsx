@@ -163,6 +163,7 @@ export default function DangerZone() {
       <div className="space-y-3">
         <ReauthForm
           prompt="Confirm your identity to permanently delete your account."
+          srOnlyHeading="Confirm account deletion"
           submitLabel="Delete my account"
           submittingLabel="Deleting…"
           cancelLabel="Cancel account deletion"
@@ -171,6 +172,7 @@ export default function DangerZone() {
           error={reauthError}
           password={password}
           code={code}
+          hasPassword={!!user?.hasPassword}
           onPasswordChange={setPassword}
           onCodeChange={setCode}
           onSubmit={handleReauthSubmit}
@@ -207,7 +209,6 @@ export default function DangerZone() {
             id={triggerId}
             ref={triggerReference}
             variant="danger"
-            type="button"
             onClick={openConfirm}
           >
             <i
@@ -227,7 +228,6 @@ export default function DangerZone() {
             <div className="space-x-2">
               <IconButton
                 variant="danger-filled"
-                type="button"
                 disabled={pending}
                 onClick={runConfirm}
               >
@@ -235,7 +235,6 @@ export default function DangerZone() {
               </IconButton>
               <IconButton
                 variant="ghost"
-                type="button"
                 disabled={pending}
                 onClick={closeConfirm}
               >

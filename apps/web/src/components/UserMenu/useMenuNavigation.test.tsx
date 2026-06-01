@@ -66,4 +66,43 @@ describe('useMenuNavigation', () => {
     fireEvent.keyDown(first, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  it('skips items inside an inert subtree when arrowing', () => {
+    function MenuWithInertFlyout({ onClose }: { onClose: () => void }) {
+      const menuReference = useRef<HTMLDivElement>(null);
+      useMenuNavigation(menuReference, onClose);
+      return (
+        <div ref={menuReference} role="menu">
+          <button type="button" role="menuitem">
+            Top
+          </button>
+          <button type="button" role="menuitem">
+            Trigger
+          </button>
+          <div role="menu" inert>
+            <button type="button" role="menuitemradio" aria-checked="false">
+              Hidden A
+            </button>
+            <button type="button" role="menuitemradio" aria-checked="false">
+              Hidden B
+            </button>
+          </div>
+          <button type="button" role="menuitem">
+            Logout
+          </button>
+        </div>
+      );
+    }
+
+    render(<MenuWithInertFlyout onClose={vi.fn()} />);
+    const trigger = screen.getByRole('menuitem', { name: 'Trigger' });
+    const logout = screen.getByRole('menuitem', { name: 'Logout' });
+
+    trigger.focus();
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(logout);
+
+    fireEvent.keyDown(logout, { key: 'ArrowUp' });
+    expect(document.activeElement).toBe(trigger);
+  });
 });

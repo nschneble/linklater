@@ -108,7 +108,8 @@ present.
   `/oauth/callback#token=<jwt>&refresh=<refreshToken>`.
 - Apple uses the same pattern with a `POST` callback instead of `GET`.
 - `mfa_required` is passed as an error query parameter when the user has
-  MFA enabled and Google/Apple login cannot complete the second factor.
+  MFA enabled and a passwordless login flow (Google/Apple SSO or magic
+  link) cannot complete the second factor in-band.
 
 ### Google Account Linking
 

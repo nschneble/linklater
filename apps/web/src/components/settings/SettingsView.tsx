@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../auth/AuthContext';
 import AccountSettingsForm from './AccountSettingsForm';
 import ApiTokensSection from './ApiTokensSection';
 import BookmarkletSection from './BookmarkletSection';
@@ -11,6 +10,7 @@ import SettingsLayout from './SettingsLayout';
 import IdPsSection from './IdPsSection';
 import StumbleSection from '../stumble/StumbleSection';
 import MultiFactorSection from './MultiFactorSection';
+import { setActiveSettingsSection } from './settingsScroll';
 import { useSettingsActiveSection } from './useSettingsActiveSection';
 import type { SettingsSection } from './settingsSections';
 
@@ -34,7 +34,6 @@ export default function SettingsView({
   appleEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true',
   googleEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
 }: SettingsViewProps = {}) {
-  const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParameters, setSearchParameters] = useSearchParams();
@@ -64,39 +63,24 @@ export default function SettingsView({
   }, []);
 
   const showIdPs = googleEnabled || appleEnabled;
-  const showSecurity = Boolean(user?.hasPassword);
 
   // Sections are derived from user state and feature flags. Order matches
   // the document order of the rendered groups; the sidebar depends on this.
-  const sections = useMemo<SettingsSection[]>(() => {
-    const list: SettingsSection[] = [
+  const sections = useMemo<SettingsSection[]>(
+    () => [
       { hash: 'account', label: 'Account', icon: 'fa-user' },
-    ];
-    if (showSecurity) {
-      list.push({
-        hash: 'security',
-        label: 'Security',
-        icon: 'fa-shield-halved',
-      });
-    }
-    list.push({
-      hash: 'accessibility',
-      label: 'Accessibility',
-      icon: 'fa-universal-access',
-    });
-    list.push({ hash: 'bookmarks', label: 'Bookmarks', icon: 'fa-book-open' });
-    list.push({
-      hash: 'integrations',
-      label: 'Integrations',
-      icon: 'fa-plug',
-    });
-    list.push({
-      hash: 'danger',
-      label: 'Danger',
-      icon: 'fa-triangle-exclamation',
-    });
-    return list;
-  }, [showSecurity]);
+      { hash: 'security', label: 'Security', icon: 'fa-shield-halved' },
+      {
+        hash: 'accessibility',
+        label: 'Accessibility',
+        icon: 'fa-universal-access',
+      },
+      { hash: 'bookmarks', label: 'Bookmarks', icon: 'fa-book-open' },
+      { hash: 'integrations', label: 'Integrations', icon: 'fa-plug' },
+      { hash: 'danger', label: 'Danger', icon: 'fa-triangle-exclamation' },
+    ],
+    [],
+  );
 
   const sectionIds = useMemo(
     () => sections.map((settingsSection) => settingsSection.hash),
@@ -119,6 +103,18 @@ export default function SettingsView({
       navigate(location.pathname, { replace: true, state: null });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Clear the module-scope last-activated-section on unmount. Without this,
+  // navigating away from /settings and back lands the user on whichever
+  // section they last clicked: the React `activeSection` state resets on
+  // remount, but `useReanchorOnLoad` reads from the module global, so async
+  // leaves (PAT list, bookmarklet token) re-anchor scroll to the stale value
+  // once they settle.
+  useEffect(() => {
+    return () => {
+      setActiveSettingsSection('');
+    };
   }, []);
 
   return (
@@ -145,17 +141,15 @@ export default function SettingsView({
         )}
       </SettingsGroup>
 
-      {showSecurity && (
-        <SettingsGroup
-          id="security"
-          title="Enhanced security"
-          icon="fa-shield-halved"
-          description="Set up and manage multi-factor authentication. That's not overkill for a read-it-later app, right?"
-          activeSection={activeSection}
-        >
-          <MultiFactorSection />
-        </SettingsGroup>
-      )}
+      <SettingsGroup
+        id="security"
+        title="Enhanced security"
+        icon="fa-shield-halved"
+        description="Set up and manage multi-factor authentication. That's not overkill for a read-it-later app, right?"
+        activeSection={activeSection}
+      >
+        <MultiFactorSection />
+      </SettingsGroup>
 
       <SettingsGroup
         id="accessibility"

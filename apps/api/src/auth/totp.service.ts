@@ -41,8 +41,7 @@ export class TotpService {
    *   the plaintext base-32 secret for manual entry.
    * @throws {ConflictException} When TOTP is already fully enabled for this
    *   account.
-   * @throws {ForbiddenException} When the account was created via an identity
-   *   provider and has no password, or when the email is not yet verified.
+   * @throws {ForbiddenException} When the email is not yet verified.
    */
   async generateSetup(
     userId: string,
@@ -52,12 +51,6 @@ export class TotpService {
 
     if (user.totpEnabledAt) {
       throw new ConflictException('TOTP is already active for this account');
-    }
-
-    if (!user.hasPassword) {
-      throw new ForbiddenException(
-        'MFA is not available for accounts created via IdP',
-      );
     }
 
     if (!user.emailVerifiedAt) {

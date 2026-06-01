@@ -6,7 +6,27 @@ const GROUP_COUNT = 3;
 const GROUP_LENGTH = 5;
 const BCRYPT_COST = 10;
 
-export const RECOVERY_CODE_REGEX = /^[^01IOl]{5}-[^01IOl]{5}-[^01IOl]{5}$/;
+/**
+ * Recognizes any user-typed recovery code that maps to a canonical
+ * `XXXXX-XXXXX-XXXXX` form once trivial input variations (whitespace,
+ * hyphens) are stripped. Used to keep input forgiving without storing
+ * multiple hash variants per code (Postel's Law — see CLAUDE.md).
+ */
+const RECOVERY_CODE_PAYLOAD = /^[^01IOl]{15}$/;
+
+/**
+ * Normalizes a user-supplied recovery code into the canonical
+ * `XXXXX-XXXXX-XXXXX` form that matches what was hashed at issue time.
+ * Strips surrounding whitespace, internal whitespace, and any hyphens
+ * the user may have typed, then re-inserts hyphens after positions 5
+ * and 10. Returns `null` when the stripped payload is not 15 valid
+ * recovery-charset characters.
+ */
+export function normalizeRecoveryCode(input: string): string | null {
+  const stripped = input.replace(/[\s-]/g, '');
+  if (!RECOVERY_CODE_PAYLOAD.test(stripped)) return null;
+  return `${stripped.slice(0, 5)}-${stripped.slice(5, 10)}-${stripped.slice(10, 15)}`;
+}
 
 /** Characters that are unambiguous to read and type (no 0, O, I, l, 1). */
 const CHARSET = 'abcdefghjkmnpqrstuvwxyz23456789ABCDEFGHJKMNPQRSTUVWXYZ';

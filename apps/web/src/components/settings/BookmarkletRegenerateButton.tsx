@@ -25,7 +25,6 @@ export default function BookmarkletRegenerateButton({
     <ActionGuard
       className="space-y-2"
       errorFallback="Failed to regenerate bookmarklet"
-      successAnnouncement="Bookmarklet regenerated. The new token is now embedded in the Save to Linklater button above."
       onConfirm={async () => {
         const fresh = await regenerate();
         onRegenerated(fresh.rawToken);
@@ -43,7 +42,6 @@ export default function BookmarkletRegenerateButton({
         <div className="flex items-center gap-2">
           {!confirming ? (
             <IconButton
-              type="button"
               variant="danger"
               id={triggerId}
               aria-label="Regenerate bookmarklet token"
@@ -65,7 +63,6 @@ export default function BookmarkletRegenerateButton({
               </span>
               <div className="space-x-2">
                 <IconButton
-                  type="button"
                   variant="danger-filled"
                   disabled={pending}
                   onClick={runConfirm}
@@ -73,7 +70,6 @@ export default function BookmarkletRegenerateButton({
                   {pending ? 'Regenerating…' : 'Yes, regenerate'}
                 </IconButton>
                 <IconButton
-                  type="button"
                   variant="ghost"
                   disabled={pending}
                   onClick={closeConfirm}

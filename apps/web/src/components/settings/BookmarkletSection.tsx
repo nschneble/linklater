@@ -2,6 +2,7 @@ import { getBookmarkletToken, regenerateBookmarkletToken } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
+import Toast from '../common/Toast';
 import BookmarkletRegenerateButton from './BookmarkletRegenerateButton';
 import { buildBookmarkletCode } from './bookmarkletCode';
 import { useEffect, useRef, useState } from 'react';
@@ -19,6 +20,7 @@ export default function BookmarkletSection() {
   const bookmarkletReference = useRef<HTMLAnchorElement>(null);
   const [rawToken, setRawToken] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,7 +74,10 @@ export default function BookmarkletSection() {
         {rawToken && (
           <BookmarkletRegenerateButton
             regenerate={regenerateBookmarkletToken}
-            onRegenerated={setRawToken}
+            onRegenerated={(token) => {
+              setRawToken(token);
+              setToastMessage('Bookmarklet regenerated');
+            }}
           />
         )}
       </div>
@@ -91,15 +96,12 @@ export default function BookmarkletSection() {
       {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
       <a
         ref={bookmarkletReference}
-        // Placeholder href so the element exposes the `link` role from
-        // first paint; the real `javascript:` URL is swapped in via
-        // `setAttribute` once the token resolves.
         href="#"
         aria-busy={loading}
         aria-disabled={Boolean(loadError) || undefined}
         aria-describedby={loadError ? 'bookmarklet-load-error' : undefined}
         aria-label="Save to Linklater — drag to your bookmarks bar, or click on any page to save that link"
-        className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold ring-1 ring-[var(--border)] ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing active:scale-[0.96] transition duration-200 aria-busy:opacity-50 aria-busy:cursor-wait aria-busy:pointer-events-none aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:pointer-events-none`}
+        className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] text-xs font-semibold no-underline! ring-1 ring-[var(--border)] ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing active:scale-[0.96] transition duration-200 aria-busy:opacity-50 aria-busy:cursor-wait aria-busy:pointer-events-none aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:pointer-events-none`}
         draggable={!loadError}
         onClick={(event) => event.preventDefault()}
       >
@@ -107,12 +109,17 @@ export default function BookmarkletSection() {
           aria-hidden="true"
           className="fa-solid fa-bookmark text-[var(--text-subtle)] text-[0.7rem]"
         />
-        Save to Linklater
+        <span className="[[data-cvd='on']_&]:underline [[data-cvd='on']_&]:underline-offset-2">
+          Save to Linklater
+        </span>
       </a>
       <p className="mb-8 text-[var(--text-subtle)] text-xs text-pretty">
         Your auth token is embedded in this bookmarklet. It never expires, but
         it can be regenerated if someone else gains access to it.
       </p>
+      {toastMessage && (
+        <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
+      )}
     </div>
   );
 }

@@ -73,4 +73,23 @@ describe('Alert', () => {
     const icon = container.querySelector('i');
     expect(icon).toHaveAttribute('aria-hidden', 'true');
   });
+
+  // Callers focus the alert programmatically via ref + tabIndex={-1} so screen
+  // readers re-announce on error. Browsers do not match `:focus-visible` on
+  // script-driven `.focus()` of a non-interactive element, so the ring must
+  // hang off `:focus` instead — otherwise sighted keyboard users see focus
+  // silently disappear into the alert.
+  describe('focus ring on programmatic focus', () => {
+    it('uses focus:ring-2 (not focus-visible:ring-2) so .focus() shows the ring', () => {
+      render(
+        <Alert variant="error" tabIndex={-1}>
+          Oops
+        </Alert>,
+      );
+      const alertElement = screen.getByRole('alert');
+      expect(alertElement.className).toContain('focus:ring-2');
+      expect(alertElement.className).toContain('focus:ring-[var(--accent)]');
+      expect(alertElement.className).not.toContain('focus-visible:ring-2');
+    });
+  });
 });

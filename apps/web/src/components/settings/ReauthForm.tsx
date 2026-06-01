@@ -4,6 +4,16 @@ import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
+import { formatTotpCode } from '../../lib/totpCode';
+
+// The code field accepts either a 6-digit TOTP code or a 17-char recovery
+// code ("XXXXX-XXXXX-XXXXX", alphabet excludes 0/1/I/O/l). We detect which
+// path the user is on by looking at the stored value:
+//   - empty / only ASCII digits, up to 6 -> TOTP shape, format as "XXX XXX"
+//   - anything else (hyphen, letter, more than 6 digits) -> recovery shape,
+//     display verbatim.
+const TOTP_SHAPE = /^\d{0,6}$/;
+const DIGITS_AND_SPACES_ONLY = /^[\d ]*$/;
 
 interface ReauthFormProps {
   /**
@@ -14,6 +24,14 @@ interface ReauthFormProps {
    * confirming).
    */
   prompt: string;
+  /**
+   * Visually-hidden `<h3>` rendered above the prompt so screen-reader users
+   * navigating by heading (NVDA/JAWS `H`, VoiceOver rotor) find the form.
+   * Each caller passes per-flow text — e.g. "Confirm account deletion".
+   * Level `h3` matches the surrounding hierarchy (`h1` Settings →
+   * `h2` SettingsGroup → `h3` here).
+   */
+  srOnlyHeading?: string;
   /** Visible label for the submit button when idle. */
   submitLabel: string;
   /** Visible label for the submit button while the request is in flight. */
@@ -34,6 +52,7 @@ interface ReauthFormProps {
   error: string | null;
   password: string;
   code: string;
+  hasPassword: boolean;
   onPasswordChange: (value: string) => void;
   onCodeChange: (value: string) => void;
   onSubmit: (formEvent: FormEvent) => void;
@@ -45,6 +64,7 @@ export default function ReauthForm({
   code,
   error,
   focusOnMount = false,
+  hasPassword,
   loading,
   onCancel,
   onCodeChange,
@@ -52,6 +72,7 @@ export default function ReauthForm({
   onSubmit,
   password,
   prompt,
+  srOnlyHeading,
   submitLabel,
   submittingLabel,
 }: ReauthFormProps) {
@@ -59,10 +80,13 @@ export default function ReauthForm({
   const errorId = useId();
   const alertReference = useRef<HTMLParagraphElement>(null);
   const passwordReference = useRef<HTMLInputElement>(null);
+  const codeReference = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (focusOnMount) passwordReference.current?.focus();
-  }, [focusOnMount]);
+    if (!focusOnMount) return;
+    if (hasPassword) passwordReference.current?.focus();
+    else codeReference.current?.focus();
+  }, [focusOnMount, hasPassword]);
 
   useEffect(() => {
     if (error) alertReference.current?.focus();
@@ -73,43 +97,61 @@ export default function ReauthForm({
 
   return (
     <form className="mt-[23px] space-y-4" onSubmit={onSubmit}>
+      {srOnlyHeading && <h3 className="sr-only">{srOnlyHeading}</h3>}
       <p id={promptId} className="text-[var(--text-muted)] text-xs">
         {prompt}
       </p>
 
-      <label
-        className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
-        htmlFor="reauth-password"
-      >
-        Current password
-      </label>
-      <FormInput
-        id="reauth-password"
-        ref={passwordReference}
-        type="password"
-        autoComplete="current-password"
-        aria-describedby={describedBy}
-        aria-invalid={isInvalid}
-        value={password}
-        onChange={(event) => onPasswordChange(event.target.value)}
-      />
+      {hasPassword && (
+        <>
+          <label
+            className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+            htmlFor="reauth-password"
+          >
+            Current password
+          </label>
+          <FormInput
+            id="reauth-password"
+            ref={passwordReference}
+            type="password"
+            autoComplete="current-password"
+            aria-describedby={describedBy}
+            aria-invalid={isInvalid}
+            value={password}
+            onChange={(event) => onPasswordChange(event.target.value)}
+          />
+        </>
+      )}
 
       <label
         className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
         htmlFor="reauth-code"
       >
-        Or enter an authenticator or recovery code
+        {hasPassword
+          ? 'Or enter an authenticator or recovery code'
+          : 'Authenticator or recovery code'}
       </label>
       <FormInput
         id="reauth-code"
+        ref={codeReference}
         type="text"
         maxLength={17}
         inputMode="numeric"
         autoComplete="one-time-code"
         aria-describedby={describedBy}
         aria-invalid={isInvalid}
-        value={code}
-        onChange={(event) => onCodeChange(event.target.value)}
+        value={TOTP_SHAPE.test(code) ? formatTotpCode(code) : code}
+        onChange={(event) => {
+          const raw = event.target.value;
+          if (DIGITS_AND_SPACES_ONLY.test(raw)) {
+            // TOTP path: store digits-only, cap at 6 so the field cannot
+            // exceed an authenticator code length even on paste.
+            onCodeChange(raw.replace(/\D/g, '').slice(0, 6));
+          } else {
+            // Recovery path: hyphen or letter detected — leave verbatim.
+            onCodeChange(raw);
+          }
+        }}
       />
 
       {error && (

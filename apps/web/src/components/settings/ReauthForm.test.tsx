@@ -13,6 +13,7 @@ function renderForm(
     error: null,
     password: '',
     code: '',
+    hasPassword: true,
     onPasswordChange: vi.fn(),
     onCodeChange: vi.fn(),
     onSubmit: vi.fn((event) => event.preventDefault()),
@@ -32,12 +33,12 @@ describe('ReauthForm — prompt copy', () => {
 });
 
 describe('ReauthForm — fields', () => {
-  it('shows the password field', () => {
+  it('shows the password field when hasPassword is true', () => {
     renderForm();
     expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
   });
 
-  it('shows the code field', () => {
+  it('shows the code field with "Or" prefix when hasPassword is true', () => {
     renderForm();
     expect(
       screen.getByLabelText(/or enter an authenticator or recovery code/i),
@@ -60,6 +61,20 @@ describe('ReauthForm — fields', () => {
     expect(codeInput).toHaveAttribute('inputmode', 'numeric');
     expect(codeInput).toHaveAttribute('autocomplete', 'one-time-code');
   });
+
+  it('hides the password field when hasPassword is false (passwordless account)', () => {
+    renderForm({ hasPassword: false });
+    expect(
+      screen.queryByLabelText(/current password/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it('uses a standalone code label when hasPassword is false', () => {
+    renderForm({ hasPassword: false });
+    expect(
+      screen.getByLabelText(/^authenticator or recovery code$/i),
+    ).toBeInTheDocument();
+  });
 });
 
 describe('ReauthForm — interactions', () => {
@@ -79,6 +94,47 @@ describe('ReauthForm — interactions', () => {
       target: { value: '123456' },
     });
     expect(onCodeChange).toHaveBeenCalledWith('123456');
+  });
+
+  it('strips a space from a pasted "XXX XXX" TOTP code before forwarding', () => {
+    const onCodeChange = vi.fn();
+    renderForm({ onCodeChange });
+    fireEvent.change(screen.getByLabelText(/authenticator or recovery code/i), {
+      target: { value: '123 456' },
+    });
+    expect(onCodeChange).toHaveBeenCalledWith('123456');
+  });
+
+  it('caps a TOTP-shaped paste at six digits', () => {
+    const onCodeChange = vi.fn();
+    renderForm({ onCodeChange });
+    fireEvent.change(screen.getByLabelText(/authenticator or recovery code/i), {
+      target: { value: '1234567890' },
+    });
+    expect(onCodeChange).toHaveBeenCalledWith('123456');
+  });
+
+  it('passes a recovery code through verbatim (hyphen switches off TOTP formatting)', () => {
+    const onCodeChange = vi.fn();
+    renderForm({ onCodeChange });
+    fireEvent.change(screen.getByLabelText(/authenticator or recovery code/i), {
+      target: { value: 'abcde-fghij-klmno' },
+    });
+    expect(onCodeChange).toHaveBeenCalledWith('abcde-fghij-klmno');
+  });
+
+  it('formats a stored 6-digit code as "XXX XXX" for display', () => {
+    renderForm({ code: '123456' });
+    expect(
+      screen.getByLabelText(/authenticator or recovery code/i),
+    ).toHaveValue('123 456');
+  });
+
+  it('displays a recovery-shaped stored code verbatim (no TOTP formatting)', () => {
+    renderForm({ code: 'abcde-fghij-klmno' });
+    expect(
+      screen.getByLabelText(/authenticator or recovery code/i),
+    ).toHaveValue('abcde-fghij-klmno');
   });
 
   it('renders the error message when error is set', () => {
@@ -151,11 +207,35 @@ describe('ReauthForm — accessibility wiring', () => {
     );
   });
 
+  it('focusOnMount={true} focuses the code input when hasPassword is false', () => {
+    renderForm({ focusOnMount: true, hasPassword: false });
+    expect(document.activeElement).toBe(
+      screen.getByLabelText(/^authenticator or recovery code$/i),
+    );
+  });
+
   it('cancelLabel sets aria-label on the Cancel button (visible text unchanged)', () => {
     renderForm({ cancelLabel: 'Cancel account deletion' });
     const cancelButton = screen.getByRole('button', {
       name: 'Cancel account deletion',
     });
     expect(cancelButton).toHaveTextContent('Cancel');
+  });
+});
+
+describe('ReauthForm — heading navigation', () => {
+  it('renders an sr-only h3 when srOnlyHeading is provided', () => {
+    renderForm({ srOnlyHeading: 'Confirm account deletion' });
+    const heading = screen.getByRole('heading', {
+      level: 3,
+      name: 'Confirm account deletion',
+    });
+    expect(heading).toBeInTheDocument();
+    expect(heading).toHaveClass('sr-only');
+  });
+
+  it('does not render a heading when srOnlyHeading is omitted', () => {
+    renderForm();
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
   });
 });

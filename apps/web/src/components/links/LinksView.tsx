@@ -55,44 +55,12 @@ interface LinksViewProps {
  * - Resets search and the `isClearingRead` flag whenever the filter changes.
  */
 export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
-  const {
-    debouncedSearch,
-    deleteError,
-    fetchError,
-    filter,
-    handleClearRead,
-    handleCreated,
-    handleDismissToast,
-    handleLoadMore,
-    handleRandom,
-    handleToggleForm,
-    handleToggleRead,
-    isClearingRead,
-    links,
-    loadingLinks,
-    onCloseShortcuts,
-    onNavigateRead,
-    onNavigateUnread,
-    onSearch,
-    onToggleShortcuts,
-    page,
-    pagination,
-    randomError,
-    randomLoading,
-    readError,
-    saveError,
-    search,
-    searchInputReference,
-    selectedLinkIndex,
-    showLinkForm,
-    showShortcuts,
-    toastMessage,
-  } = useLinksView({ onCloseUserMenu });
+  const view = useLinksView({ onCloseUserMenu });
 
   const dialogReference = useRef<HTMLDivElement>(null);
 
   useFocusTrap(dialogReference);
-  useFocusReturn(showLinkForm);
+  useFocusReturn(view.showLinkForm);
 
   return (
     <>
@@ -101,7 +69,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         <button
           type="button"
           className="hidden sm:inline-flex text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-help"
-          onClick={onToggleShortcuts}
+          onClick={view.onToggleShortcuts}
           aria-label="Show keyboard shortcuts"
           title="Keyboard shortcuts"
         >
@@ -110,57 +78,53 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       </div>
       <p className="text-[var(--text-muted)] text-xs">
         <span className="hidden sm:inline-flex">
-          {filter === 'read'
+          {view.filter === 'read'
             ? 'Read links are automatically removed after seven days.'
             : 'Add, search, or stumble upon something random.'}
         </span>
         <span className="inline-flex sm:hidden">
-          {filter === 'read'
+          {view.filter === 'read'
             ? 'Read links are removed after 7 days.'
             : 'Add, search, or stumble!'}
         </span>
       </p>
 
       <LinksToolbar
-        filter={filter}
-        isClearingRead={isClearingRead}
-        links={links}
-        randomLoading={randomLoading}
-        search={search}
-        searchInputReference={searchInputReference}
-        showLinkForm={showLinkForm}
-        onClearRead={handleClearRead}
-        onNavigateRead={onNavigateRead}
-        onNavigateUnread={onNavigateUnread}
-        onRandom={handleRandom}
-        onSearch={onSearch}
-        onToggleForm={handleToggleForm}
+        filter={view.filter}
+        isClearingRead={view.isClearingRead}
+        links={view.links}
+        randomLoading={view.randomLoading}
+        search={view.search}
+        searchInputReference={view.searchInputReference}
+        showLinkForm={view.showLinkForm}
+        onClearRead={view.handleClearRead}
+        onNavigateRead={view.onNavigateRead}
+        onNavigateUnread={view.onNavigateUnread}
+        onRandom={view.handleRandom}
+        onSearch={view.onSearch}
+        onToggleForm={view.handleToggleForm}
       />
 
-      <ViewError message={fetchError} />
-      <ViewError message={randomError} />
-      <ViewError message={saveError} />
-      <ViewError message={readError} />
-      <ViewError message={deleteError} />
+      <ViewError message={view.error} />
 
-      {showShortcuts && (
+      {view.showShortcuts && (
         <Suspense>
-          <KeyboardShortcutsModal onClose={onCloseShortcuts} />
+          <KeyboardShortcutsModal onClose={view.onCloseShortcuts} />
         </Suspense>
       )}
 
-      {showLinkForm &&
+      {view.showLinkForm &&
         createPortal(
           <button
             type="button"
             aria-label="Close form"
             className="fixed inset-0 z-20 w-full h-full bg-black/50 backdrop-blur-sm cursor-default"
-            onClick={handleToggleForm}
+            onClick={view.handleToggleForm}
           />,
           document.body,
         )}
 
-      {showLinkForm && (
+      {view.showLinkForm && (
         <div
           id={LINK_FORM_ID}
           ref={dialogReference}
@@ -170,27 +134,40 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
           tabIndex={-1}
           className="relative z-30 mt-0 animate-fade-in-up"
         >
-          <LinkForm onCreated={handleCreated} />
+          <LinkForm onCreated={view.handleCreated} />
         </div>
       )}
 
       <LinksList
-        filter={filter}
-        isClearingRead={isClearingRead}
-        links={links}
-        loadingLinks={loadingLinks}
-        page={page}
-        pagination={pagination}
-        search={search}
-        debouncedSearch={debouncedSearch}
-        selectedLinkIndex={selectedLinkIndex}
-        onReadToggle={handleToggleRead}
-        onLoadMore={handleLoadMore}
+        filter={view.filter}
+        isClearingRead={view.isClearingRead}
+        links={view.links}
+        loadingLinks={view.loadingLinks}
+        page={view.page}
+        pagination={view.pagination}
+        search={view.search}
+        debouncedSearch={view.debouncedSearch}
+        selectedLinkIndex={view.selectedLinkIndex}
+        onReadToggle={view.handleToggleRead}
+        onLoadMore={view.handleLoadMore}
       />
 
-      {toastMessage && (
-        <Toast message={toastMessage} onDismiss={handleDismissToast} />
+      {view.toastMessage && (
+        <Toast
+          message={view.toastMessage}
+          onDismiss={view.handleDismissToast}
+        />
       )}
+
+      {/*
+        Polite live region announcing links that arrive via a background
+        visibility refresh (e.g. saved via the bookmarklet on another tab).
+        The visible list is updated regardless; this is purely for screen
+        reader users who don't see the prepend.
+      */}
+      <span className="sr-only" role="status">
+        {view.newLinksAnnouncement}
+      </span>
     </>
   );
 }

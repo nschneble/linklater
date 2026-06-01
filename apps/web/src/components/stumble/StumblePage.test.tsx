@@ -36,25 +36,21 @@ describe('StumblePage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows an interstitial with an Open link button instead of auto-redirecting', async () => {
-    // Auto-redirect via window.location.href would be an unannounced context
-    // change (WCAG 3.2.5) — the page must require an explicit user action.
+  it('redirects via window.location.replace when a link is found', async () => {
+    // Use `replace` rather than assigning `href` so `/stumble` is dropped from
+    // history and the back button returns to the page before the bookmark click.
     vi.mocked(api.stumbleLink).mockResolvedValue({
       url: 'https://example.com/article',
     });
 
-    const mockLocation = { href: 'http://localhost:3000/' };
-    vi.stubGlobal('location', mockLocation);
+    const replaceMock = vi.fn();
+    vi.stubGlobal('location', { replace: replaceMock });
 
     renderStumblePage();
 
-    const openLink = await screen.findByRole('link', { name: /open link/i });
-    expect(openLink).toHaveAttribute('href', 'https://example.com/article');
-    expect(openLink).toHaveAttribute('target', '_blank');
-    expect(openLink).toHaveAttribute('rel', 'noreferrer');
-
-    // The page must NOT have redirected on its own.
-    expect(mockLocation.href).toBe('http://localhost:3000/');
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith('https://example.com/article');
+    });
 
     vi.unstubAllGlobals();
   });
@@ -81,19 +77,6 @@ describe('StumblePage', () => {
     });
   });
 
-  it('moves keyboard focus to the Open link button when the interstitial appears', async () => {
-    vi.mocked(api.stumbleLink).mockResolvedValue({
-      url: 'https://example.com/article',
-    });
-
-    renderStumblePage();
-
-    const openLink = await screen.findByRole('link', { name: /open link/i });
-    await waitFor(() => {
-      expect(document.activeElement).toBe(openLink);
-    });
-  });
-
   describe('live region', () => {
     it('renders a role="status" paragraph with aria-live="polite" while loading', () => {
       vi.mocked(api.stumbleLink).mockImplementation(
@@ -115,20 +98,6 @@ describe('StumblePage', () => {
       expect(screen.getByRole('status')).toHaveTextContent(
         'Finding a random link…',
       );
-    });
-
-    it('announces the host of the found link via the live region', async () => {
-      vi.mocked(api.stumbleLink).mockResolvedValue({
-        url: 'https://blog.example.com/post',
-      });
-
-      renderStumblePage();
-
-      await waitFor(() => {
-        expect(screen.getByRole('status')).toHaveTextContent(
-          /Found a link from blog\.example\.com/i,
-        );
-      });
     });
   });
 });

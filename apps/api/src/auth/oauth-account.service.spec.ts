@@ -12,7 +12,7 @@ jest.mock('../prisma/generated/client', () => ({
   Prisma: { PrismaClientKnownRequestError: MockPrismaClientKnownRequestError },
 }));
 
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '../prisma/generated/client';
 
@@ -39,7 +39,6 @@ describe('OAuthAccountService', () => {
   const usersServiceMock = {
     createOAuthUserAndLink: jest.fn(),
     findByEmail: jest.fn(),
-    findByIdWithPasswordHash: jest.fn(),
     findById: jest.fn(),
     findOAuthAccount: jest.fn(),
     linkOAuthAccount: jest.fn(),
@@ -240,30 +239,20 @@ describe('OAuthAccountService', () => {
   });
 
   describe('unlinkOAuthProvider', () => {
-    it('throws BadRequestException when the user has no password', async () => {
-      (
-        usersServiceMock.findByIdWithPasswordHash as jest.Mock
-      ).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        hasPassword: false,
-        passwordHash: null,
-      });
+    it('calls unlinkOAuthAccount when the user has a password', async () => {
+      (usersServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
+        undefined,
+      );
 
-      await expect(
-        service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER),
-      ).rejects.toThrow(BadRequestException);
+      await service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER);
+
+      expect(usersServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
+        USER_ID,
+        OAUTH_PROVIDER,
+      );
     });
 
-    it('calls unlinkOAuthAccount when the user has a password', async () => {
-      (
-        usersServiceMock.findByIdWithPasswordHash as jest.Mock
-      ).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        hasPassword: true,
-        passwordHash: 'hash',
-      });
+    it('allows passwordless accounts to unlink — magic-link login remains as fallback', async () => {
       (usersServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );

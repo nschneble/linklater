@@ -97,6 +97,9 @@ export function useApiTokens() {
 
   const handleRevoke = async (id: string) => {
     await revokeApiToken(id);
+    if (newToken?.id === id) {
+      setNewToken(null);
+    }
     await loadTokens();
   };
 

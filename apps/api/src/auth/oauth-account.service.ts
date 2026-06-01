@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-} from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { Prisma } from '../prisma/index.js';
 import { UsersService } from '../users/index.js';
 import { generateLinkState } from './oauth-link-state.js';
@@ -107,12 +103,6 @@ export class OAuthAccountService {
   }
 
   async unlinkOAuthProvider(userId: string, provider: string): Promise<void> {
-    const user = await this.usersService.findByIdWithPasswordHash(userId);
-    if (!user.hasPassword) {
-      throw new BadRequestException(
-        'Add a password before disconnecting all social providers',
-      );
-    }
     await this.usersService.unlinkOAuthAccount(userId, provider);
   }
 

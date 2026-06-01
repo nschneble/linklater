@@ -67,6 +67,12 @@ export interface UseLinksDataResult {
   handleLoadMore: () => void;
   links: Link[];
   loadingLinks: boolean;
+  /**
+   * Polite live-region message describing links that arrived via a
+   * background visibility refresh (e.g. saved via the bookmarklet on
+   * another tab). Empty string when there is nothing to announce.
+   */
+  newLinksAnnouncement: string;
   // 1-based
   page: number;
   // null before the first fetch
@@ -246,6 +252,99 @@ export function useLinksData(
     );
   }, []);
 
+  // Soft refresh on tab return. When the user saves a link via the
+  // bookmarklet on another tab and switches back, we want the unread list
+  // to surface the new link without a manual reload. Scoped to the default
+  // unread, no-search view: paginated/searched/read views fall outside the
+  // bookmarklet flow and refresh on the next deliberate user action.
+  //
+  // - 2s stale-time guard prevents rapid tab-switching from fanning out
+  //   requests.
+  // - Existing items keep their positions and React keys (LinksList keys
+  //   by `link.id`), so focus inside a card is preserved across the
+  //   refresh.
+  // - Newly-arrived items are announced via a polite live region rendered
+  //   by LinksView so screen-reader users learn that the list updated.
+  const linksReference = useRef(links);
+  linksReference.current = links;
+  const lastVisibilityRefreshReference = useRef(0);
+  const [newLinksAnnouncement, setNewLinksAnnouncement] = useState('');
+
+  useEffect(() => {
+    if (filter !== 'unread' || search !== '') return;
+
+    const VISIBILITY_REFRESH_MIN_INTERVAL_MS = 2000;
+
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState !== 'visible') return;
+      const now = Date.now();
+      if (
+        now - lastVisibilityRefreshReference.current <
+        VISIBILITY_REFRESH_MIN_INTERVAL_MS
+      ) {
+        return;
+      }
+      lastVisibilityRefreshReference.current = now;
+
+      try {
+        const currentPagination = paginationRef.current;
+        const result = await getLinks({
+          read: false,
+          page: 1,
+          limit: currentPagination?.limit,
+        });
+
+        const existingIds = new Set(
+          linksReference.current.map((link) => link.id),
+        );
+        const additions = result.data.filter(
+          (link) => !existingIds.has(link.id),
+        );
+
+        if (additions.length > 0) {
+          setLinks((previous) => {
+            const previousIds = new Set(previous.map((link) => link.id));
+            const newAdditions = result.data.filter(
+              (link) => !previousIds.has(link.id),
+            );
+            return [...newAdditions, ...previous];
+          });
+          // Clear-then-set on a microtask so re-announcement fires even if
+          // the message text is identical to the previous one.
+          setNewLinksAnnouncement('');
+          setTimeout(() => {
+            setNewLinksAnnouncement(
+              additions.length === 1
+                ? '1 new link added'
+                : `${additions.length} new links added`,
+            );
+          }, 0);
+        }
+
+        setPagination({ total: result.total, limit: result.limit });
+      } catch {
+        // Silent: next user navigation will retry. We don't surface a
+        // background-refresh failure as a UI error.
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [filter, search]);
+
+  // Clear the announcement a few seconds after it appears so a follow-up
+  // refresh that yields the same number of new links still triggers a new
+  // announcement (aria-live only fires on text change).
+  useEffect(() => {
+    if (!newLinksAnnouncement) return;
+    const timeoutId = setTimeout(() => {
+      setNewLinksAnnouncement('');
+    }, 5000);
+    return () => clearTimeout(timeoutId);
+  }, [newLinksAnnouncement]);
+
   return {
     adjustTotal,
     clearLinks,
@@ -253,6 +352,7 @@ export function useLinksData(
     handleLoadMore,
     links,
     loadingLinks,
+    newLinksAnnouncement,
     page: fetchParams.page,
     pagination,
     prependLink,
