@@ -2,24 +2,26 @@
 
 **All notable project changes will be documented in this file.** The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses [Pride Versioning](https://pridever.org) → `PROUD.DEFAULT.SHAME`
 
-## Known Issues
-
-- Arrow key navigation on the user menu gets stuck on the "Themes" menu item
-- Bookmarklet currently displays an error when you try to save a link
-- Cannot click "Mark unread" on read link cards
-- If you revoke a brand new API token, the copy-token section is still visible
-- Some changed settings may not be reflected until the page is refreshed
-- Theme and mode may periodically get reset
-
 ## [Unreleased]
 
 ### Added
 
-_Nothing new yet_
+- Password/MFA confirmation step to delete your account
+
+### Changed
+
+- Hide new API token if you immediately revoke it
+- Show a success toast after regenerating the bookmarklet
+- Stop underlining Font Awesome icons in CVD mode
 
 ### Fixed
 
-_Nothing new yet_
+- Arrow key navigation gets stuck on the Themes menu
+- Bookmarklet displays an error when you try to save a link
+- Cannot click "Mark unread" on read link cards
+- Last selected Settings section is restored after navigating away and back
+- Magic link accounts can't use MFA
+- Some changed settings may not be reflected until after a page refresh
 
 ## [0.3.0] - 2026-05-30
 
