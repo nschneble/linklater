@@ -74,7 +74,7 @@ function printConsolidatedBlock(workspaceResults) {
       continue;
     }
     for (const filePath of result.failedFiles) {
-      console.error(`  [${result.label}] ${result.pathPrefix}${filePath}`);
+      console.error(`  [${result.label}] ${filePath}`);
     }
   }
   console.error('');

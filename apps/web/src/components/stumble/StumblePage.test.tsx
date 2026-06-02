@@ -6,10 +6,11 @@ import * as api from '../../lib/api';
 
 vi.mock('../../lib/api', () => ({
   stumbleLink: vi.fn(),
+  // Suggestions fetch is tested in StumbleEmptyView.test.tsx; here, a
+  // never-resolving stub keeps the empty view's callout in loading state
+  // without affecting these assertions.
+  getSuggestions: vi.fn(() => new Promise(() => {})),
 }));
-
-// Wikipedia cards fetch is tested in StumbleEmptyView
-vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false } as Response));
 
 function renderStumblePage() {
   return render(

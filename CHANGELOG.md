@@ -7,12 +7,14 @@
 ### Added
 
 - Password/MFA confirmation step to delete your account
+- Reading suggestions on an empty links view
 
 ### Changed
 
 - Hide new API token if you immediately revoke it
 - Show a success toast after regenerating the bookmarklet
 - Stop underlining Font Awesome icons in CVD mode
+- Stumble! now draws from a variety of sources
 
 ### Fixed
 

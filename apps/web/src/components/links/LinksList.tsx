@@ -1,5 +1,6 @@
 import IconButton from '../common/IconButton';
 import LinkCard, { LinkCardSkeleton } from './LinkCard';
+import SuggestionCallout from './SuggestionCallout';
 import type { Link, PaginatedLinks } from '../../lib/api';
 import type { LinksFilter } from '../../lib/hooks/useLinks';
 
@@ -80,6 +81,12 @@ export default function LinksList({
   }
 
   if (links.length === 0) {
+    // Show the discovery callout only when the unread list is genuinely
+    // empty — never when an active search just happens to return no
+    // matches, and never on the read tab.
+    const isUnreadEmpty =
+      filter === 'unread' && search === '' && debouncedSearch === '';
+
     return (
       <div
         id={LINKS_LIST_ID}
@@ -97,9 +104,10 @@ export default function LinksList({
           }`}
           aria-hidden="true"
         />
-        <p className="text-[var(--text-muted)] text-sm font-medium">
+        <p className="mb-6 text-[var(--text-muted)] text-sm font-medium">
           {filter === 'read' ? 'No read links' : 'No unread links'}
         </p>
+        {isUnreadEmpty && <SuggestionCallout inNewTab={true} />}
       </div>
     );
   }

@@ -2,24 +2,29 @@ import { MemoryRouter } from 'react-router-dom';
 import StumbleEmptyView from './StumbleEmptyView';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import * as api from '../../lib/api';
 
 vi.mock('../../theme/ThemeContext', () => ({
   useTheme: () => ({ baseTheme: 'scanner-darkly' }),
+  useThemeStyling: () => ({ baseTheme: 'scanner-darkly', mode: 'dark' }),
 }));
 
-const WIKIPEDIA_ARTICLE = {
-  title: 'Interesting Topic',
-  extract: 'A fascinating subject that warrants further reading.',
-  content_urls: {
-    desktop: { page: 'https://en.wikipedia.org/wiki/Interesting_Topic' },
-  },
-};
+vi.mock('../../lib/api', () => ({
+  getSuggestions: vi.fn(),
+  createLink: vi.fn(),
+}));
 
-function makeWikipediaResponse(article = WIKIPEDIA_ARTICLE) {
+function makeSuggestion(
+  overrides: Partial<api.Suggestion> = {},
+): api.Suggestion {
   return {
-    ok: true,
-    json: () => Promise.resolve(article),
-  } as Response;
+    url: 'https://example.com/article',
+    title: 'Interesting Topic',
+    description: 'A fascinating subject.',
+    imageUrl: null,
+    siteName: 'Aeon',
+    ...overrides,
+  };
 }
 
 function renderView() {
@@ -39,8 +44,10 @@ describe('StumbleEmptyView', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders the ghost illustration, headline, and back button', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(makeWikipediaResponse()));
+  it('renders the ghost illustration, headline, and back button', () => {
+    vi.mocked(api.getSuggestions).mockImplementation(
+      () => new Promise(() => {}),
+    );
     renderView();
 
     expect(screen.getByRole('img', { name: /ghost/i })).toBeInTheDocument();
@@ -52,97 +59,55 @@ describe('StumbleEmptyView', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders wikipedia cards after fetching', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(makeWikipediaResponse()));
-    renderView();
-
-    await waitFor(() => {
-      const cards = screen.getAllByText('Interesting Topic');
-      expect(cards.length).toBe(3);
+  it('renders the suggestion callout with the picked source name', async () => {
+    vi.mocked(api.getSuggestions).mockResolvedValue({
+      sourceName: 'Atlas Obscura',
+      suggestions: [makeSuggestion({ title: 'Hidden hot springs' })],
     });
-  });
 
-  it('shows fallback message when all wikipedia fetches fail', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: false } as Response),
-    );
     renderView();
 
     await waitFor(() => {
       expect(
-        screen.getByText(/wikipedia seems to be napping/i),
+        screen.getByText('How about something from Atlas Obscura?'),
       ).toBeInTheDocument();
     });
-  });
-
-  it('shows partial results when some wikipedia fetches fail', async () => {
-    let callCount = 0;
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockImplementation(() => {
-        callCount += 1;
-        return Promise.resolve(
-          callCount === 1
-            ? makeWikipediaResponse()
-            : ({ ok: false } as Response),
-        );
-      }),
-    );
-    renderView();
-
-    await waitFor(() => {
-      expect(screen.getAllByText('Interesting Topic')).toHaveLength(1);
-    });
-  });
-
-  it('back button navigates to /unread', () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(makeWikipediaResponse()));
-    renderView();
-
+    expect(screen.getByText('Hidden hot springs')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /back to linklater/i }),
+      screen.getByRole('button', { name: /add and read/i }),
     ).toBeInTheDocument();
   });
 
-  it('shows the loading text while fetching articles', () => {
-    // Never resolves so the component stays in loading state
-    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
-    renderView();
+  it('renders the napping fallback when the suggestions endpoint returns an empty list', async () => {
+    vi.mocked(api.getSuggestions).mockResolvedValue({
+      sourceName: 'Aeon',
+      suggestions: [],
+    });
 
-    expect(screen.getByText('Fetching entries…')).toBeInTheDocument();
-  });
-
-  it('shows three skeleton cards while loading', () => {
-    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
-    const { container } = renderView();
-
-    const skeletons = container.querySelectorAll('.animate-pulse');
-    expect(skeletons.length).toBe(3);
-  });
-
-  it('shows "How about one of these?" after articles load', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(makeWikipediaResponse()));
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByText('How about one of these?')).toBeInTheDocument();
+      expect(screen.getByText(/suggestions are napping/i)).toBeInTheDocument();
     });
   });
 
-  it('aborts pending fetches when unmounted', async () => {
-    let capturedSignal: AbortSignal | undefined;
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockImplementation((_url: string, options: RequestInit) => {
-        capturedSignal = options.signal;
-        return new Promise(() => {});
-      }),
+  it('renders the napping fallback when the suggestions endpoint fails', async () => {
+    vi.mocked(api.getSuggestions).mockRejectedValue(new Error('503'));
+
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByText(/suggestions are napping/i)).toBeInTheDocument();
+    });
+  });
+
+  it('only requests a single suggestion (not three)', () => {
+    vi.mocked(api.getSuggestions).mockImplementation(
+      () => new Promise(() => {}),
     );
 
-    const { unmount } = renderView();
-    unmount();
+    renderView();
 
-    expect(capturedSignal?.aborted).toBe(true);
+    expect(api.getSuggestions).toHaveBeenCalledWith(1);
   });
 });
