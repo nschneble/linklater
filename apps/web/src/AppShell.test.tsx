@@ -21,6 +21,11 @@ vi.mock('./lib/api', () => ({
     rawToken: 'ltk_aBcDeFgHiJkLmNoPqRsTuVwXyZ12',
   }),
   regenerateBookmarkletToken: vi.fn(),
+  // SuggestionCallout (rendered in the unread empty state) calls this on
+  // mount. A never-resolving stub keeps the callout in its loading state
+  // and out of the way of the AppShell assertions.
+  getSuggestions: vi.fn(() => new Promise(() => {})),
+  createLink: vi.fn(),
 }));
 
 // LinksView uses useLinks which hits the API — mock the whole hook so the

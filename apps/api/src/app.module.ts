@@ -5,6 +5,7 @@ import { LinksModule } from './links/links.module.js';
 import { MetadataModule } from './metadata/metadata.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { QueueModule } from './queue/queue.module.js';
+import { SuggestionsModule } from './suggestions/suggestions.module.js';
 import { TokensModule } from './tokens/tokens.module.js';
 import { UsersModule } from './users/users.module.js';
 
@@ -37,6 +38,7 @@ import { UsersModule } from './users/users.module.js';
     MetadataModule,
     PrismaModule,
     QueueModule,
+    SuggestionsModule,
     TokensModule,
     UsersModule,
   ],

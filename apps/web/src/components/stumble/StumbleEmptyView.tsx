@@ -1,43 +1,21 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchRandomWikipediaArticle } from '../../lib/wikipedia';
-import type { WikipediaArticle } from '../../lib/wikipedia';
 import PixelArtGhost from './PixelArtGhost';
 import PrimaryButton from '../common/PrimaryButton';
-import WikipediaArticleList from './WikipediaArticleList';
+import SuggestionCallout from '../links/SuggestionCallout';
 
 /**
- * Full-page empty state shown by `StumblePage` when the user has no unread
- * links. Displays a pixel-art ghost, a playful message, and three randomly
- * fetched Wikipedia article snippets as consolation reading.
+ * Full-page empty state shown by `StumblePage` when the user has no
+ * unread links. Displays a pixel-art ghost, a playful headline, and a
+ * single-suggestion CTA card (shared with the main unread empty state)
+ * so a one-click "Add and read" jumps the user into an article from one
+ * randomly picked source.
  *
- * Wikipedia fetch failures are swallowed silently. The page degrades
- * gracefully to a static fallback message.
+ * The fallback prop on `SuggestionCallout` preserves the "Suggestions
+ * are napping too." copy when the suggestions endpoint produces nothing
+ * — without it the page would silently lose all suggestion messaging.
  */
 export default function StumbleEmptyView() {
   const navigate = useNavigate();
-  const [articles, setArticles] = useState<WikipediaArticle[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    Promise.all([
-      fetchRandomWikipediaArticle(controller.signal),
-      fetchRandomWikipediaArticle(controller.signal),
-      fetchRandomWikipediaArticle(controller.signal),
-    ]).then((results) => {
-      if (controller.signal.aborted) return;
-      setArticles(
-        results.filter(
-          (article): article is WikipediaArticle => article !== null,
-        ),
-      );
-      setLoading(false);
-    });
-
-    return () => controller.abort();
-  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12 bg-[var(--bg)] text-[var(--text)] text-center select-none">
@@ -45,20 +23,23 @@ export default function StumbleEmptyView() {
         <PixelArtGhost />
       </div>
 
-      <h1 className="mb-2 text-xl font-semibold text-balance">
+      <h1 className="mb-6 text-xl font-semibold text-balance">
         Boo. Your reading list is empty.
       </h1>
-      <p
-        className="mb-8 text-[var(--text-muted)] text-sm max-w-xs text-pretty"
-        aria-live="polite"
-        aria-atomic="true"
+
+      <SuggestionCallout
+        fallback={
+          <p className="mb-8 text-[var(--text-subtle)] text-xs italic">
+            (Suggestions are napping too.)
+          </p>
+        }
+      />
+
+      <PrimaryButton
+        className="mt-8"
+        type="button"
+        onClick={() => navigate('/unread')}
       >
-        {loading ? 'Fetching entries…' : 'How about one of these?'}
-      </p>
-
-      <WikipediaArticleList loading={loading} articles={articles} />
-
-      <PrimaryButton type="button" onClick={() => navigate('/unread')}>
         <i className="fa-solid fa-arrow-left text-xs" aria-hidden="true" />
         Back to Linklater
       </PrimaryButton>

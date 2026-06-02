@@ -162,3 +162,18 @@ model Meta {
   updatedAt DateTime  @updatedAt
   fetchedAt DateTime?
 }
+
+model RssEntry {
+  id          String   @id @default(cuid())
+  sourceKey   String
+  url         String
+  title       String
+  description String?
+  imageUrl    String?
+  siteName    String?
+  publishedAt DateTime
+  fetchedAt   DateTime @default(now())
+
+  @@unique([sourceKey, url])
+  @@index([sourceKey, publishedAt(sort: Desc)])
+}

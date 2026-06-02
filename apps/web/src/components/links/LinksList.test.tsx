@@ -5,7 +5,22 @@ import type { Link, PaginatedLinks } from '../../lib/api';
 
 vi.mock('../../theme/ThemeContext', () => ({
   useTheme: () => ({ baseTheme: 'scanner-darkly' }),
+  useThemeStyling: () => ({ baseTheme: 'scanner-darkly', mode: 'dark' }),
 }));
+
+// `SuggestionCallout` renders in the unread empty state and calls
+// `getSuggestions` on mount. Stub it with a never-resolving promise so
+// the callout stays in its loading state — neutralizes the network call
+// without interfering with the assertions in this file.
+vi.mock('../../lib/api', async () => {
+  const actual =
+    await vi.importActual<typeof import('../../lib/api')>('../../lib/api');
+  return {
+    ...actual,
+    getSuggestions: vi.fn(() => new Promise(() => {})),
+    createLink: vi.fn(),
+  };
+});
 
 afterEach(() => vi.restoreAllMocks());
 
