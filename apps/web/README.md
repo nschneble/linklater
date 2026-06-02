@@ -33,31 +33,33 @@ graph TD
     end
 
     subgraph Components["components/"]
+        Header["Header.tsx"]
         subgraph CompAuth["auth/"]
-            authComps["AuthForm · OAuthCallback · MfaView · …"]
+            authComps["AuthCard · AuthForm · LoginRegisterView · OAuthCallbackPage · MfaView · …"]
         end
         subgraph CompLinks["links/"]
             LinkCard["LinkCard/"]
-            linksComps["LinksView · LinksList · LinkForm · …"]
+            linksComps["LinksView · LinksList · LinksControls · …"]
         end
         subgraph CompSettings["settings/"]
             ThemeEditor["ThemeEditor/"]
-            settingsComps["ApiTokensSection · MultiFactorSection · …"]
+            ApiTokensList["ApiTokensList/"]
+            settingsComps["SettingsLayout · TotpSetupView · IdPsSection · PasswordSettingsForm · …"]
         end
         subgraph CompStumble["stumble/"]
-            stumbleComps["StumblePage · StumbleEmptyView · …"]
+            stumbleComps["StumblePage · StumbleSection · StumbleEmptyView · …"]
         end
         subgraph CompLanding["LandingPage/"]
-            landingComps["HeroSection · FeaturesSection · FooterSection"]
+            landingComps["HeroSection · FeaturesSection"]
         end
         subgraph CompUserMenu["UserMenu/"]
-            userMenuComps["ThemeSubmenu · MobileBottomSheet · …"]
+            userMenuComps["MenuSection · MobileBottomSheet · …"]
         end
         subgraph CompApiDocs["api-docs/"]
             apiDocsComps["ApiDocsView · TokenInput"]
         end
         subgraph CompVerify["verify/"]
-            verifyComps["VerifyEmailPage · VerifyLoginPage · …"]
+            verifyComps["TokenVerificationPage · VerifyEmailPage · VerifyEmailChangePage"]
         end
         subgraph CompWelcome["welcome/"]
             WelcomeModal["WelcomeModal"]
@@ -68,24 +70,29 @@ graph TD
         common["common/"]
     end
 
+    main --> App
     App --> AuthContext
     App --> ThemeContext
     App --> Routes
+    App --> CompErrors
+    AppShell --> Header
     AppShell --> Components
+    AppShell --> hooks
+    ThemeContext --> styles
     Components --> api
     Components --> hooks
     Components --> AuthContext
 
-    classDef rootStyle fill:#4f6bed,stroke:#2a3d8f,color:#fff
+    classDef rootStyle fill:#1f3a8a,stroke:#0f1f4a,color:#fff
     classDef authStyle fill:#7c5cbf,stroke:#4a2f80,color:#fff
     classDef themeStyle fill:#a04575,stroke:#702a52,color:#fff
     classDef libStyle fill:#1f7a52,stroke:#0f5238,color:#fff
     classDef routesStyle fill:#8a4f10,stroke:#5e3508,color:#fff
     classDef compAuthStyle fill:#7c5cbf,stroke:#4a2f80,color:#fff
     classDef compLinksStyle fill:#2459a0,stroke:#143d72,color:#fff
-    classDef compSettingsStyle fill:#a04575,stroke:#702a52,color:#fff
-    classDef compStumbleStyle fill:#1f7a52,stroke:#0f5238,color:#fff
-    classDef compLandingStyle fill:#8a4f10,stroke:#5e3508,color:#fff
+    classDef compSettingsStyle fill:#b85c8a,stroke:#7a3a5c,color:#fff
+    classDef compStumbleStyle fill:#3e9772,stroke:#1f5238,color:#fff
+    classDef compLandingStyle fill:#b06820,stroke:#704210,color:#fff
     classDef compUserMenuStyle fill:#3e5e22,stroke:#283f15,color:#fff
     classDef compApiDocsStyle fill:#4f6bed,stroke:#2a3d8f,color:#fff
     classDef compVerifyStyle fill:#6a5020,stroke:#473515,color:#fff
@@ -93,14 +100,14 @@ graph TD
     classDef compErrorsStyle fill:#9e4040,stroke:#702828,color:#fff
     classDef compCommonStyle fill:#525252,stroke:#363636,color:#fff
 
-    class App,AppShell,main,css rootStyle
+    class App,AppShell,main,css,Header rootStyle
     class AuthContext authStyle
     class ThemeContext,styles themeStyle
     class api,hooks,utils libStyle
     class routeConfig routesStyle
     class authComps compAuthStyle
     class LinkCard,linksComps compLinksStyle
-    class ThemeEditor,settingsComps compSettingsStyle
+    class ThemeEditor,ApiTokensList,settingsComps compSettingsStyle
     class stumbleComps compStumbleStyle
     class landingComps compLandingStyle
     class userMenuComps compUserMenuStyle

@@ -68,7 +68,7 @@ graph TD
     end
 
     subgraph Common["Common"]
-        common["src/common/"]
+        common["src/common/ (shared utilities)"]
     end
 
     app --> auth
@@ -81,8 +81,16 @@ graph TD
     app --> prisma_src
 
     auth --> email
+    auth --> tokens
+    auth --> users
+    links --> auth
     links --> queue
+    metadata --> queue
+    suggestions --> auth
     suggestions --> queue
+    users --> auth
+
+    prisma_schema -.->|generates| prisma_gen
 
     classDef authStyle fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
     classDef emailStyle fill:#fef9c3,stroke:#ca8a04,color:#422006
@@ -94,6 +102,7 @@ graph TD
     classDef usersStyle fill:#f0fdf4,stroke:#15803d,color:#14532d
     classDef prismaStyle fill:#f1f5f9,stroke:#64748b,color:#1e293b
     classDef commonStyle fill:#fafafa,stroke:#a1a1aa,color:#18181b
+    classDef coreStyle fill:#fff,stroke:#000,color:#000
 
     class auth,auth_dto authStyle
     class email,email_tmpl emailStyle
@@ -105,7 +114,7 @@ graph TD
     class users,users_dto usersStyle
     class prisma_src,prisma_gen,prisma_schema,prisma_migrations prismaStyle
     class common commonStyle
-    class main,app prismaStyle
+    class main,app coreStyle
 ```
 
 ## Where the wild components are
