@@ -1,9 +1,8 @@
-# React + Vite Front-End
+# React + Vite front-end
 
-The web app: a React + Vite SPA that lets authenticated users save,
-browse, and stumble through links.
+The Linklater web app is a React + Vite SPA that lets authenticated users save, browse, and stumble through links.
 
-## File Hierarchy
+## File hierarchy
 
 ```mermaid
 graph TD
@@ -112,36 +111,32 @@ graph TD
     class common compCommonStyle
 ```
 
-## Where Things Live
+## Where the wild components are
 
-| I want to...                                 | Open                                                            |
-| -------------------------------------------- | --------------------------------------------------------------- |
-| Change the marketing page                    | `src/components/LandingPage/`                                   |
-| Edit theme styles or add a theme             | `src/theme/`, `src/theme/styles/`                               |
-| Tweak the user menu or nav                   | `src/components/UserMenu/`                                      |
-| Change Settings page sections                | `src/components/settings/`                                      |
-| Edit the Stumble! flow                       | `src/components/stumble/`                                       |
-| Change link card layout                      | `src/components/links/LinkCard/`                                |
-| Add a new authenticated route                | `src/routes/`, `AppShell.tsx`, `src/lib/navigation.ts`          |
-| Touch API client behavior                    | `src/lib/api/`                                                  |
-| Add a new hook                               | `src/lib/hooks/`                                                |
-| Adjust auth context                          | `src/auth/AuthContext/`                                         |
-| Wire up CVD / accessibility CSS              | `src/index.css`, `src/theme/ThemeContext/`                      |
-| Edit the post-signup welcome modal           | `src/components/welcome/`                                       |
-| Add or change auth flows (login, OAuth, MFA) | `src/components/auth/`                                          |
-| Edit the interactive API reference UI        | `src/components/api-docs/`                                      |
-| Tweak email / login verification pages       | `src/components/verify/`                                        |
-| Edit the error boundary or 404 page          | `src/components/errors/`                                        |
-| Reach for a shared UI primitive              | `src/components/common/`                                        |
+| I want to…                             | I should open…                                         |
+| -------------------------------------- | ------------------------------------------------------ |
+| Add a new authenticated route          | `src/routes/`, `AppShell.tsx`, `src/lib/navigation.ts` |
+| Add a new hook                         | `src/lib/hooks/`                                       |
+| Add or change auth flows               | `src/components/auth/`                                 |
+| Adjust auth context                    | `src/auth/AuthContext/`                                |
+| Change link card layout                | `src/components/links/LinkCard/`                       |
+| Change Settings page sections          | `src/components/settings/`                             |
+| Change the marketing page              | `src/components/LandingPage/`                          |
+| Edit theme styles                      | `src/theme/`, `src/theme/styles/`                      |
+| Edit the API reference UI              | `src/components/api-docs/`                             |
+| Edit the error boundary or 404 page    | `src/components/errors/`                               |
+| Edit the post-signup welcome modal     | `src/components/welcome/`                              |
+| Edit the Stumble! flow                 | `src/components/stumble/`                              |
+| Find a shared UI primitive             | `src/components/common/`                               |
+| Touch API client behavior              | `src/lib/api/`                                         |
+| Tweak email / login verification pages | `src/components/verify/`                               |
+| Tweak the menu navigation              | `src/components/UserMenu/`                             |
+| Wire up CVD / accessibility CSS        | `src/index.css`, `src/theme/ThemeContext/`             |
 
-## Pointers
+## A few explanations
 
-Environment variables are documented in [`.env.example`](./.env.example).
-The rendered API reference (Scalar UI over the OpenAPI spec) is available
-at `/settings/api` when the app is running. Monorepo setup, key commands,
-and project conventions live in the [root README](../../README.md) and
-[`.claude/CLAUDE.md`](../../.claude/CLAUDE.md) at the repo root.
+Environment variables are documented in `.env.example`
 
-The CVD accessibility hook (`data-cvd="on"` on `<html>`) is implemented in
-`src/theme/ThemeContext/` and drives a set of global CSS rules in
-`src/index.css` — no per-component changes required.
+The API reference is available at `/settings/api` when the app is running
+
+The CVD accessibility hook (`data-cvd="on"`) is implemented in `src/theme/ThemeContext/` and drives a set of global CSS rules defined in `src/index.css`

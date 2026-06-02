@@ -1,9 +1,9 @@
-# NestJS Back-End
+# NestJS back-end
 
-REST API for Linklater — handles auth, link storage, background jobs,
+The Linklater REST API handles auth, link storage, background jobs,
 and personal access tokens.
 
-## File Hierarchy
+## File hierarchy
 
 ```mermaid
 graph TD
@@ -108,30 +108,26 @@ graph TD
     class main,app prismaStyle
 ```
 
-## Where Things Live
+## Where the wild components are
 
-| I want to...                              | Open                                          |
-| ----------------------------------------- | --------------------------------------------- |
-| Add or change an auth flow                | `src/auth/`                                   |
-| Wire a new OAuth provider                 | `src/auth/*.strategy.ts`                      |
-| Add a transactional email                 | `src/email/templates/`                        |
-| Change link CRUD or search                | `src/links/`                                  |
-| Tweak Open Graph metadata fetching        | `src/metadata/`                               |
-| Add a background job                      | `src/queue/`                                  |
-| Edit suggested links (RSS / Wikipedia)    | `src/suggestions/`                            |
-| Edit PAT lifecycle (create / revoke)      | `src/tokens/`                                 |
-| Touch the Prisma schema or migrations     | `prisma/schema.prisma`, `prisma/migrations/`  |
-| Adjust user profile / deletion            | `src/users/`                                  |
-| Edit shared crypto, date, or logger utils | `src/common/`                                 |
+| I want to…                            | I should open…                               |
+| ------------------------------------- | -------------------------------------------- |
+| Add a background job                  | `src/queue/`                                 |
+| Add a transactional email             | `src/email/templates/`                       |
+| Add or change an auth flow            | `src/auth/`                                  |
+| Adjust user profile                   | `src/users/`                                 |
+| Change link CRUD or search            | `src/links/`                                 |
+| Edit PAT lifecycle                    | `src/tokens/`                                |
+| Edit shared utils                     | `src/common/`                                |
+| Edit suggested links (RSS feeds)      | `src/suggestions/`                           |
+| Touch the Prisma schema or migrations | `prisma/schema.prisma`, `prisma/migrations/` |
+| Tweak Open Graph metadata fetching    | `src/metadata/`                              |
+| Wire up a new OAuth provider          | `src/auth/*.strategy.ts`                     |
 
-## Pointers
+## A few explanations
 
-- **Environment variables** — all vars, defaults, and local dev notes are in
-  [`.env.example`](./.env.example).
-- **Endpoint contracts** — the machine-readable OpenAPI spec is served at
-  `/openapi.json` and rendered in the app at `/settings/api`.
-- **Conventions** — coding patterns, NestJS rules, and migration requirements
-  are documented in [`.claude/CLAUDE.md`](../../.claude/CLAUDE.md) at the
-  repo root.
-- **Monorepo setup** — local dev commands and workspace structure are in the
-  [root README](../../README.md).
+All environment variables, defaults, and local development notes are in `.env.example`
+
+The OpenAPI spec is served at `/openapi.json`
+
+Coding patterns, NestJS rules, and migration requirements are documented in `.claude/CLAUDE.md` at the repo root

@@ -8,7 +8,7 @@ It’s both an homage to [Richard Linklater](https://en.wikipedia.org/wiki/Richa
 
 ![Linklater](screenshots/your-links.jpg)
 
-## Who Needs This?
+## Who needs this?
 
 Most curious adults come across dozens of interesting articles on any given day. Do they have time to read them all? Nope. Do they often forget about them? Totally.
 
@@ -18,13 +18,12 @@ Most curious adults come across dozens of interesting articles on any given day.
 
 As a user, you can:
 
-- Create an account (email/password, magic link, or Google/Apple SSO)
+- Create an account with passwords, magic links, and/or Google SSO
 - Save links in-app or using the handy [bookmarklet](#bookmarklet)
 - Search and [stumble!](https://en.wikipedia.org/wiki/StumbleUpon)
 - Preview themes based on Richard Linklater's filmography
 - Toggle between light and dark mode
-- Secure your account with TOTP multi-factor authentication
-- Generate personal access tokens (PATs) for browser extensions
+- Generate API tokens for third-party integrations
 - Delete your account and burn it to the ground
 
 ## Screenshots
@@ -54,7 +53,7 @@ Click on an image to open it full-size in a new browser tab:
   </tr>
 </table>
 
-## Tech Stack
+## Tech stack
 
 - **Front-end**: React + [Vite](https://vite.dev) + [Tailwind](https://tailwindcss.com) + [Font Awesome](https://fontawesome.com)
 - **Back-end**: [NestJS](https://nestjs.com)
@@ -64,7 +63,7 @@ Click on an image to open it full-size in a new browser tab:
 - **Linting**: ESLint + Prettier
 - **Testing**: Vitest (front-end) + Jest (back-end)
 
-## Monorepo Structure
+## Monorepo structure
 
 It’s a majestic modular monorepo!
 
@@ -80,7 +79,7 @@ apps
 └─ README.md
 ```
 
-## Code Health
+## Code health
 
 Linklater's code quality is tracked with [Desloppify](https://github.com/peteromallet/desloppify), which scores each app independently across file health, code quality, duplication, security, and test health.
 
@@ -90,13 +89,13 @@ Linklater's code quality is tracked with [Desloppify](https://github.com/peterom
       <a href="apps/api/scorecard.png">
         <img src="apps/api/scorecard.png" alt="apps/api Desloppify scorecard" />
       </a>
-      <br><sub><em>apps/api (back-end)</em></sub>
+      <br><sub><em>api</em></sub>
     </td>
     <td align="center" width="50%">
       <a href="apps/web/scorecard.png">
         <img src="apps/web/scorecard.png" alt="apps/web Desloppify scorecard" />
       </a>
-      <br><sub><em>apps/web (front-end)</em></sub>
+      <br><sub><em>web</em></sub>
     </td>
   </tr>
 </table>
@@ -105,14 +104,9 @@ Linklater's code quality is tracked with [Desloppify](https://github.com/peterom
 
 Linklater includes a one-click bookmarklet that saves the current page directly to your account.
 
-To install, go to **Settings → Bookmarklet** and drag the _Save to Linklater_ button directly to your bookmarks bar. Your auth token is pre-embedded, so you can click it on any page and immediately save the link to your account.
+To install, go to **Settings → Bookmarklet** and drag the _Save to Linklater_ button to your bookmarks bar. Your auth token is embedded, so you can immediately click it on any page to save the link.
 
-The embedded token never expires. If you lose a device or want to invalidate
-an old install, open **Settings → Bookmarklet** and click **Regenerate** —
-the previous bookmarklet stops working immediately and the new one is ready
-to drag to your bookmarks bar.
-
-## Local Development
+## Local development
 
 ### Prerequisites
 
@@ -120,14 +114,14 @@ to drag to your bookmarks bar.
 - PostgreSQL 18
 - [Mailpit](https://mailpit.axllent.org/)
 
-### Install Dependencies
+### Install dependencies
 
 ```bash
 # cd /path/to/your/repo
 npm install
 ```
 
-### Set Environment Variables
+### Set environment variables
 
 You'll need to set the database url, JWT secret, app url, and SMTP values on the back-end, and the API's base url on the front-end for Vite to access.
 
@@ -141,18 +135,18 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
-### Run Database Migrations
+### Run database migrations
 
 ```bash
 # cd /path/to/your/repo
 bin/migrate
-bin/migrate --reset
 bin/migrate --help
+bin/migrate --reset
 ```
 
-> **Note:** Use `bin/migrate` or `npm run migrate` instead of `npx prisma migrate dev` directly. Prisma 7's `prisma-client` generator requires a custom output path, so `migrate dev` does not automatically regenerate the client.
+> **Note:** Use `bin/migrate` or `npm run migrate` instead of calling `npx prisma migrate dev` directly. Prisma 7's `prisma-client` generator requires a custom output path, so `migrate dev` does not automatically regenerate the client.
 
-### Start Development Server
+### Start development server
 
 ```bash
 # cd /path/to/your/repo
@@ -169,7 +163,7 @@ Linklater uses `concurrently` to run NestJS on port 3000 and Vite on port 5173. 
 
 ![dev](screenshots/dev.jpg)
 
-### Linting, Tests, and CI
+### Linting, tests, and CI
 
 Both the front and back-end use ESLint and Prettier. Vitest is used to test the front-end and Jest is used to test the back-end. GitHub Actions lint and test on pushes and PRs to `main`.
 
