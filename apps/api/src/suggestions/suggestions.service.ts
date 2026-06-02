@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
+import { PrismaService } from '../prisma/index.js';
 import { QueueService } from '../queue/index.js';
 import { RssAdapter } from './rss-adapter.js';
 import { RssFeedService } from './rss-feed.service.js';
@@ -36,6 +37,7 @@ export class SuggestionsService implements OnModuleInit {
     private readonly rssFeedService: RssFeedService,
     private readonly wikipediaAdapter: WikipediaAdapter,
     private readonly queueService: QueueService,
+    private readonly prisma: PrismaService,
   ) {
     this.adapters = this.buildAdapters();
   }
@@ -62,16 +64,23 @@ export class SuggestionsService implements OnModuleInit {
 
   /**
    * Picks one source uniformly at random and returns `count` suggestions
-   * from it. On empty results or adapter errors, removes the failed source
-   * from the candidate pool and retries until either the pool is exhausted
-   * or a source returns at least one suggestion.
+   * from it, excluding any URL the user already has saved (read or
+   * unread). On empty results, adapter errors, or every entry being a
+   * duplicate of an existing link, removes the failed source from the
+   * candidate pool and retries until either the pool is exhausted or a
+   * source returns at least one fresh suggestion.
    *
+   * @param count - Maximum number of suggestions to return.
+   * @param userId - Authenticated user, used to filter out already-saved
+   * URLs so a stumble never surfaces something the user has bookmarked.
    * @returns `{ sourceName, suggestions }`. `suggestions` may have fewer
-   * than `count` entries if the chosen source had less to offer. `null`
-   * if no source had anything — caller treats this as a soft failure.
+   * than `count` entries if the chosen source had less to offer after
+   * the duplicate filter. `null` if no source had anything fresh —
+   * caller treats this as a soft failure and renders a napping fallback.
    */
   async getSuggestions(
     count: number,
+    userId: string,
   ): Promise<{ sourceName: string; suggestions: Suggestion[] } | null> {
     const candidates = [...this.adapters.values()];
 
@@ -82,11 +91,19 @@ export class SuggestionsService implements OnModuleInit {
 
       try {
         const suggestions = await adapter.fetch(count);
-        if (suggestions.length > 0) {
-          return { sourceName: adapter.name, suggestions };
+        if (suggestions.length === 0) {
+          this.logger.warn(
+            `Source ${adapter.key} returned no suggestions; trying another.`,
+          );
+          continue;
+        }
+
+        const fresh = await this.filterAlreadySaved(suggestions, userId);
+        if (fresh.length > 0) {
+          return { sourceName: adapter.name, suggestions: fresh };
         }
         this.logger.warn(
-          `Source ${adapter.key} returned no suggestions; trying another.`,
+          `Source ${adapter.key} produced only duplicates of saved links; trying another.`,
         );
       } catch (error) {
         this.logger.warn(
@@ -96,6 +113,25 @@ export class SuggestionsService implements OnModuleInit {
     }
 
     return null;
+  }
+
+  /**
+   * Removes suggestions whose URL already exists on the user's `Link`
+   * table (across both read and unread states). Done as a single bulk
+   * `findMany ... where url IN (...)` so the cost is one query per
+   * candidate batch regardless of `count`.
+   */
+  private async filterAlreadySaved(
+    suggestions: Suggestion[],
+    userId: string,
+  ): Promise<Suggestion[]> {
+    const urls = suggestions.map((suggestion) => suggestion.url);
+    const existing = await this.prisma.link.findMany({
+      where: { userId, url: { in: urls } },
+      select: { url: true },
+    });
+    const taken = new Set(existing.map((link) => link.url));
+    return suggestions.filter((suggestion) => !taken.has(suggestion.url));
   }
 
   /**

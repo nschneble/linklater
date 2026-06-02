@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import IconButton from '../common/IconButton';
 import PixelArtGhost from './PixelArtGhost';
-import PrimaryButton from '../common/PrimaryButton';
 import SuggestionCallout from '../links/SuggestionCallout';
 
 /**
@@ -35,14 +35,14 @@ export default function StumbleEmptyView() {
         }
       />
 
-      <PrimaryButton
+      <IconButton
+        variant="elevated"
         className="mt-8"
-        type="button"
         onClick={() => navigate('/unread')}
       >
         <i className="fa-solid fa-arrow-left text-xs" aria-hidden="true" />
         Back to Linklater
-      </PrimaryButton>
+      </IconButton>
     </div>
   );
 }

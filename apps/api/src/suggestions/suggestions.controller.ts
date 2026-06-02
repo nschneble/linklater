@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Query,
+  Req,
   ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
@@ -14,7 +15,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { AnyAuthGuard } from '../auth/index.js';
+import { AnyAuthGuard, type AuthRequest } from '../auth/index.js';
 import { SuggestionsResponseDto } from './dto/suggestions-response.dto.js';
 import { SuggestionsService } from './suggestions.service.js';
 
@@ -60,10 +61,12 @@ export class SuggestionsController {
   })
   @Get()
   async getSuggestions(
+    @Req() request: AuthRequest,
     @Query('count') countParameter?: string,
   ): Promise<SuggestionsResponseDto> {
     const count = this.parseCount(countParameter);
-    const result = await this.suggestionsService.getSuggestions(count);
+    const userId = request.user.userId;
+    const result = await this.suggestionsService.getSuggestions(count, userId);
     if (!result) {
       throw new ServiceUnavailableException(
         'No suggestions are available right now.',

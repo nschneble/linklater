@@ -104,10 +104,10 @@ export default function LinksList({
           }`}
           aria-hidden="true"
         />
-        <p className="text-[var(--text-muted)] text-sm font-medium">
+        <p className="mb-6 text-[var(--text-muted)] text-sm font-medium">
           {filter === 'read' ? 'No read links' : 'No unread links'}
         </p>
-        {isUnreadEmpty && <SuggestionCallout />}
+        {isUnreadEmpty && <SuggestionCallout inNewTab={true} />}
       </div>
     );
   }
