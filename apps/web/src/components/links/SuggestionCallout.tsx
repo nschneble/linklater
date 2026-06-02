@@ -187,7 +187,11 @@ export default function SuggestionCallout({
 
 function SuggestionCalloutSkeleton() {
   return (
-    <div className="mt-6 mx-auto w-full max-w-md pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-shadow hover:border-shadow rounded-xl text-left animate-pulse">
+    <div
+      className="mt-6 mx-auto w-full max-w-md pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-shadow hover:border-shadow rounded-xl text-left animate-pulse"
+      aria-hidden="true"
+      aria-busy="true"
+    >
       <div className="w-10/12 h-5 mb-1 bg-[var(--text)]/50 rounded-xs"></div>
       <div className="flex flex-col items-start gap-1 mb-3">
         <div className="w-11/12 h-[13px] bg-[var(--text-muted)]/50 rounded-xs"></div>

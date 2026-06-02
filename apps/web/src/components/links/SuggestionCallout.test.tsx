@@ -63,11 +63,11 @@ describe('SuggestionCallout', () => {
     expect(liveRegion).toHaveAttribute('aria-atomic', 'true');
     expect(liveRegion).toHaveTextContent(/looking for something to read/i);
 
-    // The card body wrapper carries aria-busy + the skeleton inside is
-    // aria-hidden so SR users don't hear placeholder rectangles.
+    // The skeleton card carries both aria-busy and aria-hidden so SR users
+    // don't hear placeholder rectangles while the fetch is in flight.
     const busyCard = container.querySelector('[aria-busy="true"]');
     expect(busyCard).toBeInTheDocument();
-    expect(busyCard?.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
+    expect(busyCard).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('renders the picked source name above the suggestion title', async () => {
