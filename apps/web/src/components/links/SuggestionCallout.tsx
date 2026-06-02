@@ -130,7 +130,7 @@ export default function SuggestionCallout({
   return (
     <>
       <p
-        className="mb-2 text-[var(--text-muted)] text-xs font-medium"
+        className="mb-2 text-[var(--text-muted)] text-xs font-medium animate-card-enter"
         aria-live="polite"
         aria-atomic="true"
       >
@@ -138,7 +138,7 @@ export default function SuggestionCallout({
           ? 'Looking for something to read…'
           : `How about something from ${sourceName}?`}
       </p>
-      {loading ? (
+      {loading || !suggestion ? (
         <SuggestionCalloutSkeleton />
       ) : (
         <div
@@ -146,17 +146,24 @@ export default function SuggestionCallout({
           aria-busy={loading}
         >
           <p
-            className="mb-1 text-[var(--text)] text-sm font-semibold text-balance line-clamp-1"
+            style={{ animationDelay: '60ms' }}
+            className="mb-1 text-[var(--text)] text-sm font-semibold text-balance line-clamp-1 animate-card-enter"
             id="suggestion-callout-title"
           >
             {suggestion.title}
           </p>
           {suggestion.description && (
-            <p className="mb-3 text-[var(--text-muted)] text-xs text-pretty line-clamp-2">
+            <p
+              style={{ animationDelay: '120ms' }}
+              className="mb-3 text-[var(--text-muted)] text-xs text-pretty line-clamp-2 animate-card-enter"
+            >
               {suggestion.description}
             </p>
           )}
-          <div className="flex items-center gap-2">
+          <div
+            style={{ animationDelay: '180ms' }}
+            className="flex items-center gap-2 animate-card-enter"
+          >
             <PrimaryButton
               className="-ml-2"
               onClick={handleAddAndRead}
