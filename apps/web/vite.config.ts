@@ -2,11 +2,15 @@
 
 import { defineConfig } from 'vitest/config';
 import mkcert from 'vite-plugin-mkcert';
+import os from 'node:os';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 const isTest =
   process.env['VITEST'] === 'true' || process.env['NODE_ENV'] === 'test';
+
+const bareHostname = os.hostname().replace(/\.local$/i, '');
+const mkcertHosts = ['localhost', `${bareHostname}.local`];
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -25,7 +29,18 @@ export default defineConfig({
       },
     },
   },
-  plugins: [!isTest && mkcert(), react(), tailwindcss()],
+  plugins: [!isTest && mkcert({ hosts: mkcertHosts }), react(), tailwindcss()],
+  server: {
+    allowedHosts: ['.trycloudflare.com'],
+    proxy: {
+      '/api': {
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        secure: false,
+        target: 'https://localhost:3000',
+      },
+    },
+  },
   test: {
     coverage: {
       include: ['src/**/*.{ts,tsx}'],
