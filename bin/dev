@@ -10,9 +10,13 @@ cd "$ROOT_DIR" || exit
 # ── Arguments ────────────────────────────────────────────────────────────────
 usage() {
   cat <<'USAGE'
-Usage: bin/dev
+Usage: bin/dev [--remote]
 
 Starts the API and web development servers with a live status/log TUI.
+
+Options:
+  --remote   Allow the app to be reachable from other devices on the same
+             Wi-Fi network. Prints the LAN url in the status view.
 
 Keys:
   0  Status
@@ -22,11 +26,16 @@ Keys:
 USAGE
 }
 
+REMOTE=false
+
 for arg in "$@"; do
   case "$arg" in
     -h|--help)
       usage
       exit 0
+      ;;
+    --remote)
+      REMOTE=true
       ;;
     *)
       printf 'Unknown option: %s\n\n' "$arg" >&2
@@ -77,6 +86,15 @@ API_PID=""
 WEB_PID=""
 MAILPIT_PID=""
 KEY_READER_PID=""
+
+# ── LAN hostname (remote mode) ────────────────────────────────────────────────
+REMOTE_URL=""
+if [[ "$REMOTE" == true ]]; then
+  LAN_HOSTNAME=$(scutil --get LocalHostName 2>/dev/null || hostname -s 2>/dev/null || true)
+  if [[ -n "$LAN_HOSTNAME" ]]; then
+    REMOTE_URL="https://${LAN_HOSTNAME}.local:5173"
+  fi
+fi
 
 # ── View state ────────────────────────────────────────────────────────────────
 # Values: status | api | web | mailpit
@@ -143,6 +161,12 @@ render_service_line() {
   esac
 }
 
+# ── LAN row (remote mode only) ────────────────────────────────────────────────
+render_lan_line() {
+  [[ -z "$REMOTE_URL" ]] && return
+  printf "${CYN}↗${RST} %-7s  ${CYN}%s${RST}" "LAN" "$REMOTE_URL"
+}
+
 # ── Status view ───────────────────────────────────────────────────────────────
 render_status_view() {
   local frame_char=$1
@@ -152,6 +176,9 @@ render_status_view() {
   out+="  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"$'\n'
   out+="  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"$'\n'
   out+="  $(render_service_line "$MAILPIT_STATE" "$MAILPIT_URL" "$frame_char" "Mailpit")"$'\n'
+  if [[ -n "$REMOTE_URL" ]]; then
+    out+="  $(render_lan_line)"$'\n'
+  fi
   out+=$'\n'
 
   if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" && \
@@ -188,13 +215,13 @@ render_log_view() {
   local cols; cols=${stty_size##* }; cols=${cols:-80}
   local content_width=$(( cols - 4 ))
   (( content_width < 20 )) && content_width=20
-  # Lines above log content: 4 title + 4 service + 2 status + (3 or 4) options + 3 log labels
   local available
   if [[ "$MAILPIT_STATE" == "skipped" ]]; then
     available=$(( rows - 16 ))
   else
     available=$(( rows - 17 ))
   fi
+  [[ -n "$REMOTE_URL" ]] && available=$(( available - 1 ))
   (( available < 1 )) && available=1
   local divider; printf -v divider '%*s' "$content_width" ''
   divider=${divider// /─}
@@ -205,6 +232,9 @@ render_log_view() {
   out+="  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"$'\n'
   out+="  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"$'\n'
   out+="  $(render_service_line "$MAILPIT_STATE" "$MAILPIT_URL" "$frame_char" "Mailpit")"$'\n'
+  if [[ -n "$REMOTE_URL" ]]; then
+    out+="  $(render_lan_line)"$'\n'
+  fi
   out+=$'\n'
   out+="  ${DIM}0. (back to status)${RST}"$'\n'$'\n'
 
@@ -294,7 +324,11 @@ free_port "$API_PORT" "$API_LOG"
 npm run dev --workspace @linklater/api </dev/null >>"$API_LOG" 2>&1 &
 API_PID=$!
 
-npm run dev --workspace @linklater/web </dev/null >"$WEB_LOG" 2>&1 &
+if [[ "$REMOTE" == true ]]; then
+  VITE_API_BASE_URL=/api npm run dev --workspace @linklater/web -- --host </dev/null >"$WEB_LOG" 2>&1 &
+else
+  npm run dev --workspace @linklater/web </dev/null >"$WEB_LOG" 2>&1 &
+fi
 WEB_PID=$!
 
 if [[ -n "$MAILPIT_BIN" ]]; then

@@ -201,3 +201,51 @@ git tag -a v0.3.0 -m "v0.3.0"
 git push origin main
 git push origin v0.3.0
 ```
+
+### Advanced
+
+#### Remote access (LAN)
+
+The development server TUI has a `--remote` option which allows Linklater to be discoverable by other devices on the same Wi-Fi network.
+
+```bash
+# cd /path/to/your/repo
+bin/dev --remote
+
+# Linklater is now available on https://linklater.local:5173
+```
+
+#### One-time setup for mobile devices
+
+The teck stack uses [mkcert](https://github.com/FiloSottile/mkcert) for HTTPS. Mobile devices need to trust the mkcert root certificate authority, or the connection will be refused.
+
+1. Find the root CA on the computer where Linklater is running:
+
+ ```bash
+ mkcert -CAROOT
+ # ~/Library/Application Support/mkcert
+ ```
+
+2. AirDrop (iOS) or transfer (Android) `rootCA.pem` to your mobile device
+
+3. Install the certificate
+
+ 1. **On iOS:** Settings → General → VPN & Device Management. Then enable trust under Settings → General → About → Certificate Trust Settings.
+ 2. **On Android:** Settings → Security → Install from storage → CA certificate.
+
+#### Set a friendly hostname (optional)
+
+By default the LAN url uses your Mac's Bonjour hostname.
+
+To get `linklater.local` instead:
+
+```bash
+sudo scutil --set LocalHostName linklater
+```
+
+This is a one-time system-level change and persists across reboots.
+
+#### Known limitations
+
+- Google SSO won't work; OAuth callback URLs are pinned to localhost
+- The bookmarklet generated on the Settings page won't work
