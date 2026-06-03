@@ -8,12 +8,7 @@ import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';
 import Alert from '../common/Alert';
 import Toast from '../common/Toast';
-
-/**
- * Stable `id` for the link form container, referenced by the toggle
- * button's `aria-controls`.
- */
-export const LINK_FORM_ID = 'link-form-container';
+import { LINK_FORM_ID } from './constants';
 
 /**
  * Renders an inline error message when `message` is non-null. Used for the

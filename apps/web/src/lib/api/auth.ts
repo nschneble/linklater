@@ -1,4 +1,4 @@
-import { apiFetch, clearStoredToken, setStoredToken } from './core';
+import { ApiError, apiFetch, clearStoredToken, setStoredToken } from './core';
 import type { LoginResponse } from './core';
 
 export type { LoginResponse };
@@ -27,6 +27,12 @@ export interface MeResponse {
   welcomedAt: string | null;
 }
 
+/**
+ * Creates a new account. Does not store a token or sign the user in —
+ * callers (e.g. `useAuthState.register`) are responsible for following up
+ * with a `login()` call so the token-storage side-effect stays explicit and
+ * testable.
+ */
 export async function register(email: string, password: string): Promise<void> {
   await apiFetch(
     '/auth/register',
@@ -50,6 +56,10 @@ export async function login(
     },
     false,
   );
+
+  if (data === undefined) {
+    throw new ApiError('Login endpoint returned an empty response', 0);
+  }
 
   if ('accessToken' in data) {
     setStoredToken(data.accessToken, data.refreshToken);
@@ -209,6 +219,11 @@ export async function verifyMagicLink(token: string): Promise<LoginResponse> {
     { body: JSON.stringify({ token }), method: 'POST' },
     false,
   );
+
+  if (data === undefined) {
+    throw new ApiError('Magic-link verification returned an empty response', 0);
+  }
+
   if ('accessToken' in data) {
     setStoredToken(data.accessToken, data.refreshToken);
   }
@@ -225,6 +240,11 @@ export async function verifyOtp(
     { body: JSON.stringify({ mfaToken, code, method }), method: 'POST' },
     false,
   );
+
+  if (data === undefined) {
+    throw new ApiError('OTP verification returned an empty response', 0);
+  }
+
   setStoredToken(data.accessToken, data.refreshToken);
   return data;
 }
