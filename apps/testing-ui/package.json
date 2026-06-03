@@ -1,0 +1,42 @@
+{
+  "name": "@linklater/testing-ui",
+  "version": "0.3.0",
+  "description": "Declarative JSON-driven UI testing harness for Linklater. Executes actions/stories against the running app and captures a visual library.",
+  "author": "Nick Schneble",
+  "private": true,
+  "license": "CC0-1.0",
+  "type": "module",
+  "bin": {
+    "testing-ui": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "run": "node --experimental-strip-types src/cli.ts run",
+    "approve": "node --experimental-strip-types src/cli.ts approve",
+    "seed": "node --experimental-strip-types scripts/seed.ts",
+    "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\" \"scripts/**/*.ts\" --max-warnings=0",
+    "install:browsers": "playwright install chromium",
+    "test": "echo \"testing-ui owns its own runner; nothing to delegate\" && exit 0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "pg": "^8.11.0",
+    "pixelmatch": "^7.1.0",
+    "playwright": "^1.49.0",
+    "pngjs": "^7.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/pg": "^8.11.0",
+    "@types/pixelmatch": "^5.2.6",
+    "@types/pngjs": "^6.0.5",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.7.4",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.49.0"
+  }
+}

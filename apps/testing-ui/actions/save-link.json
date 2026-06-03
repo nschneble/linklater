@@ -1,0 +1,20 @@
+{
+  "action": "save-link",
+  "parameters": ["url"],
+  "steps": [
+    { "kind": "navigate", "path": "/unread" },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Add link" }
+    },
+    {
+      "kind": "input",
+      "hint": { "role": "textbox", "text": "URL" },
+      "value": "${url}"
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Save link" }
+    }
+  ]
+}

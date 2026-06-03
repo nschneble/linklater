@@ -1,0 +1,11 @@
+{
+  "story": "When the API is unreachable, saving a link surfaces an error.",
+  "storageState": "logged-in",
+  "actions": [
+    { "action": "intercept-links-api" },
+    {
+      "action": "save-link",
+      "parameters": { "url": "http://httpforever.com/" }
+    }
+  ]
+}

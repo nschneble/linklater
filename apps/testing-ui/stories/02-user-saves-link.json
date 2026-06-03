@@ -1,0 +1,10 @@
+{
+  "story": "As a logged-in user, I can save a link I found.",
+  "storageState": "logged-in",
+  "actions": [
+    {
+      "action": "save-link",
+      "parameters": { "url": "http://httpforever.com/" }
+    }
+  ]
+}

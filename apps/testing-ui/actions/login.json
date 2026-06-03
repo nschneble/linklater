@@ -1,0 +1,24 @@
+{
+  "action": "login",
+  "steps": [
+    { "kind": "navigate", "path": "/login" },
+    {
+      "kind": "input",
+      "hint": { "role": "textbox", "text": "Email" },
+      "value": "testing-ui@linklater.test"
+    },
+    {
+      "kind": "input",
+      "hint": { "role": "textbox", "text": "Password" },
+      "value": "testing-ui-correct-horse"
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Log in" }
+    },
+    {
+      "kind": "waitFor",
+      "hint": { "role": "heading", "text": "Your links" }
+    }
+  ]
+}
