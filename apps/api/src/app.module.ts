@@ -24,10 +24,6 @@ import { UsersModule } from './users/users.module.js';
       { name: 'auth-verify-otp', ttl: 900000, limit: 5 },
       // MFA setup
       { name: 'auth-mfa-totp-setup', ttl: 60000, limit: 5 },
-      { name: 'auth-mfa-email-setup', ttl: 60000, limit: 3 },
-      { name: 'auth-mfa-email-verify', ttl: 60000, limit: 5 },
-      { name: 'auth-email-resend', ttl: 60000, limit: 3 },
-      { name: 'auth-mfa-email-reauth-send', ttl: 60000, limit: 3 },
       // MFA disable — most sensitive action; matches verify-otp window
       { name: 'auth-disable-mfa', ttl: 900000, limit: 5 },
       // Re-auth gate for recovery code operations

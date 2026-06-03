@@ -4,7 +4,7 @@ import { unauthenticatedRoutes } from './routes/Unauthenticated';
 import { userRoutes } from './routes/User';
 import { useAuth } from './auth/AuthContext';
 import { useEffect } from 'react';
-import { useTheme, type BaseTheme, type Mode } from './theme/ThemeContext';
+import { useTheme } from './theme/ThemeContext';
 import {
   CVD_MODE_KEY,
   CVD_UPDATED_AT_KEY,
@@ -38,10 +38,9 @@ export default function App() {
     if (!user) return;
     const localCvdOn = readLocalStorage(CVD_MODE_KEY) === 'on';
     if (!user.cvdMode && !isCvdMode && !localCvdOn) {
-      applyServerTheme(user.theme as BaseTheme);
+      applyServerTheme(user.theme);
     }
-    if (user.mode === 'light' || user.mode === 'dark')
-      applyServerMode(user.mode as Mode);
+    applyServerMode(user.mode);
   }, [user, applyServerTheme, applyServerMode, isCvdMode]);
 
   // Syncs CVD mode from the server with a 30s local-change guard. If the

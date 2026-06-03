@@ -1,5 +1,3 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
 import {
   acknowledgeWelcome as apiAcknowledgeWelcome,
   clearStoredToken,
@@ -12,7 +10,45 @@ import {
   setStoredToken,
 } from '../../lib/api';
 import type { MeResponse } from '../../lib/api';
+import { VALID_BASE_THEME_IDS } from '../../theme/constants';
+import type { BaseTheme, Mode } from '../../theme/constants';
 import type { AuthContextValue, User } from './types';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+const VISIBILITY_REFRESH_MIN_INTERVAL_MS = 2000;
+
+/**
+ * Narrows the server-returned `theme` string to a `BaseTheme`, falling back
+ * to `'scanner-darkly'` if the server returns an id this client doesn't
+ * know about (schema drift between API and web releases). The fallback is
+ * silent at runtime to avoid disrupting the user, but a `console.warn` fires
+ * in development so an in-flight deploy that ships an API theme before the
+ * matching client CSS is visible during debugging.
+ */
+export function narrowTheme(theme: string): BaseTheme {
+  if (VALID_BASE_THEME_IDS.has(theme)) return theme as BaseTheme;
+  if (import.meta.env.DEV) {
+    console.warn(
+      `[auth] Unknown server theme "${theme}"; falling back to "scanner-darkly".`,
+    );
+  }
+  return 'scanner-darkly';
+}
+
+/**
+ * Narrows the server-returned `mode` string to a `Mode`, falling back to
+ * `'dark'` for any unexpected value. Same dev-only warn rationale as
+ * `narrowTheme`.
+ */
+export function narrowMode(mode: string): Mode {
+  if (mode === 'light' || mode === 'dark') return mode;
+  if (import.meta.env.DEV) {
+    console.warn(
+      `[auth] Unknown server mode "${mode}"; falling back to "dark".`,
+    );
+  }
+  return 'dark';
+}
 
 /**
  * Maps the raw `GET /auth/me` response shape to the `User` interface.
@@ -26,9 +62,9 @@ function mapMeToUser(me: MeResponse): User {
     email: me.email,
     emailVerifiedAt: me.emailVerifiedAt,
     hasPassword: me.hasPassword,
-    mode: me.mode,
+    mode: narrowMode(me.mode),
     pendingEmail: me.pendingEmail,
-    theme: me.theme,
+    theme: narrowTheme(me.theme),
     multiFactorMethod: me.multiFactorMethod,
     multiFactorPending: me.multiFactorPending,
     userId: me.userId,
@@ -110,9 +146,10 @@ export function useAuthState(): AuthContextValue {
     setUser(null);
   }, []);
 
-  const resendVerificationEmail = useCallback(async () => {
-    await apiResendVerificationEmail();
-  }, []);
+  // Identity pass-through; `apiResendVerificationEmail` is module-level
+  // stable so a `useCallback` wrapper would add no value beyond the
+  // reference itself.
+  const resendVerificationEmail = apiResendVerificationEmail;
 
   /**
    * Optimistically updates `user.pendingEmail` after the user submits an
@@ -141,8 +178,6 @@ export function useAuthState(): AuthContextValue {
   // when there is no signed-in user.
   const lastVisibilityRefreshReference = useRef(0);
   useEffect(() => {
-    const VISIBILITY_REFRESH_MIN_INTERVAL_MS = 2000;
-
     const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible') return;
       if (!getStoredToken()) return;

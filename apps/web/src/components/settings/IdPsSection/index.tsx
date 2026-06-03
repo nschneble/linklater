@@ -19,7 +19,7 @@ import type { IdPsSectionProps } from './types';
  * OAuth redirect return, and the connect-initiation error (which fires
  * before any row-scoped flow exists).
  *
- * Returns `null` when both providers are disabled (no env vars set).
+ * Returns `null` when neither provider has a renderable row.
  */
 export default function IdPsSection({
   appleEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true',
@@ -35,6 +35,14 @@ export default function IdPsSection({
 
   const findConnection = (provider: string) =>
     connectedProviders.find((entry) => entry.provider === provider) ?? null;
+
+  // Apple linking from Settings is not supported yet: the API exposes
+  // `/auth/google/link` but no `/auth/apple/link`. Apple sign-in (sign-up
+  // flow) still works from the login page and auto-links on first sign-in,
+  // so existing Apple connections are still shown here for disconnect, but
+  // the broken "Connect Apple" affordance is hidden entirely.
+  const appleConnection = findConnection('apple');
+  const showAppleRow = appleEnabled && appleConnection !== null;
 
   const handleDisconnect = async (provider: string) => {
     await unlinkOAuthProvider(provider);
@@ -53,7 +61,7 @@ export default function IdPsSection({
     }
   };
 
-  if (!googleEnabled && !appleEnabled) {
+  if (!googleEnabled && !showAppleRow) {
     return null;
   }
 
@@ -72,9 +80,9 @@ export default function IdPsSection({
       {displayedError && <Alert variant="error">{displayedError}</Alert>}
 
       <div className="mt-5 space-y-3">
-        {appleEnabled && (
+        {showAppleRow && (
           <ProviderRow
-            connection={findConnection('apple')}
+            connection={appleConnection}
             label="Apple"
             icon="fa-apple"
             onConnect={() => handleConnect('apple')}

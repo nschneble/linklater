@@ -9,10 +9,6 @@ export interface CreateLinkInput {
   url: string;
 }
 
-// TODO: Populate with user-editable fields (e.g. title, tags) when added.
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface UpdateLinkInput {}
-
 export type { LinksQuery } from './links-query.service.js';
 
 /**
@@ -150,8 +146,8 @@ export class LinksService {
    * Converts Prisma's `P2025` "record not found" error into a NestJS
    * `NotFoundException`. Any other error is re-thrown unchanged.
    *
-   * Used by `update`, `read`, `unread`, and `remove` to produce
-   * consistent 404 responses when a link does not belong to the current user.
+   * Used by `read`, `unread`, and `remove` to produce consistent 404
+   * responses when a link does not belong to the current user.
    *
    * @param error - The caught error.
    * @throws {NotFoundException} When `error` is a Prisma P2025 error.
@@ -165,31 +161,6 @@ export class LinksService {
       throw new NotFoundException('Link not found');
     }
     throw error;
-  }
-
-  /**
-   * Updates a link's editable fields. Currently a no-op — `data: {}` is sent
-   * to keep the endpoint wired for future use without skipping the database
-   * round-trip (which also validates ownership via the `userId` filter).
-   *
-   * // TODO: Populate `data` once user-editable fields are added.
-   *
-   * @param userId - The UUID of the authenticated user.
-   * @param id - The UUID of the link.
-   * @param _input - The update payload (unused until fields are defined).
-   * @returns The link unchanged.
-   * @throws {NotFoundException} When the link does not exist for this user.
-   */
-  async update(userId: string, id: string, _input: UpdateLinkInput) {
-    try {
-      return await this.prisma.link.update({
-        where: { id, userId },
-        data: {},
-        include: { meta: true },
-      });
-    } catch (error) {
-      return this.mapP2025ToNotFound(error);
-    }
   }
 
   /**

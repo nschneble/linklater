@@ -1,5 +1,5 @@
 /**
- * Tests for the central API client (`api.ts`).
+ * Tests for the central API client (`lib/api/`).
  *
  * All network calls are intercepted by replacing `globalThis.fetch` with a
  * vi.fn(). Tests verify both the happy path (correct URL, method, headers,
@@ -36,6 +36,7 @@ import {
   getRandomLink,
   getStoredRefreshToken,
   getStoredToken,
+  initiateOAuthLink,
   login,
   logout,
   regenerateRecoveryCodes,
@@ -53,14 +54,13 @@ import {
   stumbleLink,
   unreadLink,
   unlinkOAuthProvider,
-  updateLink,
   updateMe,
   verifyEmail,
   verifyEmailChange,
   verifyMagicLink,
   verifyOtp,
   verifyTotpSetup,
-} from './api';
+} from '.';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -83,6 +83,22 @@ function mockFetchText(text: string, status = 400): Mock {
     status,
     text: () => Promise.resolve(text),
     json: () => Promise.resolve({}),
+  });
+  globalThis.fetch = mock as unknown as typeof fetch;
+  return mock;
+}
+
+/**
+ * Simulates a 2xx response with an empty body. Used to exercise the
+ * `ApiError` guards in `auth.ts` that throw when typed endpoints receive
+ * `undefined`.
+ */
+function mockFetchEmptyBody(status = 200): Mock {
+  const mock = vi.fn().mockResolvedValue({
+    ok: true,
+    status,
+    text: () => Promise.resolve(''),
+    json: () => Promise.resolve(undefined),
   });
   globalThis.fetch = mock as unknown as typeof fetch;
   return mock;
@@ -162,7 +178,7 @@ describe('apiFetch', () => {
     expect(headers['Authorization']).toBe('Bearer test-token');
   });
 
-  it('omits Authorization header when includeAuth is false', async () => {
+  it('omits Authorization header when authContext is false', async () => {
     setStoredToken('test-token');
     const fetchMock = mockFetch({ ok: true });
     await apiFetch('/test', {}, false);
@@ -171,7 +187,7 @@ describe('apiFetch', () => {
     expect(headers['Authorization']).toBeUndefined();
   });
 
-  it('uses a custom string token when includeAuth is a string', async () => {
+  it('uses a custom string token when authContext is a string', async () => {
     setStoredToken('stored-token');
     const fetchMock = mockFetch({ ok: true });
     await apiFetch('/test', {}, 'custom-mfa-token');
@@ -459,7 +475,7 @@ describe('apiFetch', () => {
     expect(getStoredToken()).toBe('fresh-jwt');
   });
 
-  it('does not retry when path is /auth/refresh', async () => {
+  it('does not retry when authContext is false (suppresses the refresh-retry path)', async () => {
     setStoredToken('expired-jwt', 'valid-refresh');
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
@@ -766,18 +782,6 @@ describe('createLink', () => {
       url: string;
     };
     expect(body.url).toBe('https://example.com');
-  });
-});
-
-describe('updateLink', () => {
-  it('PATCHes /links/:id', async () => {
-    const fetchMock = mockFetch({ id: 'link-1', url: 'https://example.com' });
-
-    await updateLink('link-1');
-
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/links/link-1');
-    expect((options as { method: string }).method).toBe('PATCH');
   });
 });
 
@@ -1169,5 +1173,56 @@ describe('revokeApiToken', () => {
     expect(url).toContain('/tokens/tok-1');
     expect((options as { method: string }).method).toBe('DELETE');
     expect(result).toEqual({ success: true });
+  });
+});
+
+describe('typed endpoints — ApiError guards on empty response body', () => {
+  it('login throws ApiError when the server returns an empty body', async () => {
+    mockFetchEmptyBody();
+    await expect(login('a@b.co', 'pw')).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it('verifyMagicLink throws ApiError when the server returns an empty body', async () => {
+    mockFetchEmptyBody();
+    await expect(verifyMagicLink('token')).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it('verifyOtp throws ApiError when the server returns an empty body', async () => {
+    mockFetchEmptyBody();
+    await expect(verifyOtp('mfa', '123456', 'totp')).rejects.toBeInstanceOf(
+      ApiError,
+    );
+  });
+
+  it('getMe throws ApiError when the server returns an empty body', async () => {
+    setStoredToken('my-jwt');
+    mockFetchEmptyBody();
+    await expect(getMe()).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it('setupTotp throws ApiError when the server returns an empty body', async () => {
+    setStoredToken('my-jwt');
+    mockFetchEmptyBody();
+    await expect(setupTotp()).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it('verifyTotpSetup throws ApiError when the server returns an empty body', async () => {
+    setStoredToken('my-jwt');
+    mockFetchEmptyBody();
+    await expect(verifyTotpSetup('123456')).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it('regenerateRecoveryCodes throws ApiError when the server returns an empty body', async () => {
+    setStoredToken('my-jwt');
+    mockFetchEmptyBody();
+    await expect(
+      regenerateRecoveryCodes({ currentPassword: 'pw' }),
+    ).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it('initiateOAuthLink throws ApiError when the server returns an empty body', async () => {
+    setStoredToken('my-jwt');
+    mockFetchEmptyBody();
+    await expect(initiateOAuthLink('google')).rejects.toBeInstanceOf(ApiError);
   });
 });

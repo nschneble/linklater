@@ -1,7 +1,11 @@
 import { getLinks, type Link, type PaginatedLinks } from '../api';
 import { getErrorMessage } from '../errors';
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { findNewLinks, formatNewLinksAnnouncement } from './linksData.utils';
 import type { LinksFilter } from './types';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+
+const VISIBILITY_REFRESH_MIN_INTERVAL_MS = 2000;
+const NEW_LINKS_ANNOUNCEMENT_TTL_MS = 5000;
 
 /**
  * Internal state driving the `GET /links` query. Held in a reducer so that
@@ -85,6 +89,11 @@ export interface UseLinksDataResult {
   removeLink: (linkId: string) => void;
   // resets the cached total to zero without clearing the links array
   resetTotal: () => void;
+  /**
+   * Replaces the matching cached entry in local state. Not the same as the
+   * API-layer `refreshLink` — this mutates the in-memory list only and never
+   * round-trips to the server.
+   */
   updateLink: (link: Link) => void;
 }
 
@@ -270,12 +279,40 @@ export function useLinksData(
   const lastVisibilityRefreshReference = useRef(0);
   const [newLinksAnnouncement, setNewLinksAnnouncement] = useState('');
 
+  const runVisibilityRefresh = useCallback(async () => {
+    try {
+      const result = await getLinks({
+        read: false,
+        page: 1,
+        limit: paginationRef.current?.limit,
+      });
+
+      const additions = findNewLinks(result.data, linksReference.current);
+
+      if (additions.length > 0) {
+        setLinks((previous) => [
+          ...findNewLinks(result.data, previous),
+          ...previous,
+        ]);
+        // Clear-then-set on a microtask so re-announcement fires even if
+        // the message text is identical to the previous one.
+        setNewLinksAnnouncement('');
+        setTimeout(() => {
+          setNewLinksAnnouncement(formatNewLinksAnnouncement(additions.length));
+        }, 0);
+      }
+
+      setPagination({ total: result.total, limit: result.limit });
+    } catch {
+      // Silent: next user navigation will retry. We don't surface a
+      // background-refresh failure as a UI error.
+    }
+  }, []);
+
   useEffect(() => {
     if (filter !== 'unread' || search !== '') return;
 
-    const VISIBILITY_REFRESH_MIN_INTERVAL_MS = 2000;
-
-    const handleVisibilityChange = async () => {
+    const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible') return;
       const now = Date.now();
       if (
@@ -285,54 +322,14 @@ export function useLinksData(
         return;
       }
       lastVisibilityRefreshReference.current = now;
-
-      try {
-        const currentPagination = paginationRef.current;
-        const result = await getLinks({
-          read: false,
-          page: 1,
-          limit: currentPagination?.limit,
-        });
-
-        const existingIds = new Set(
-          linksReference.current.map((link) => link.id),
-        );
-        const additions = result.data.filter(
-          (link) => !existingIds.has(link.id),
-        );
-
-        if (additions.length > 0) {
-          setLinks((previous) => {
-            const previousIds = new Set(previous.map((link) => link.id));
-            const newAdditions = result.data.filter(
-              (link) => !previousIds.has(link.id),
-            );
-            return [...newAdditions, ...previous];
-          });
-          // Clear-then-set on a microtask so re-announcement fires even if
-          // the message text is identical to the previous one.
-          setNewLinksAnnouncement('');
-          setTimeout(() => {
-            setNewLinksAnnouncement(
-              additions.length === 1
-                ? '1 new link added'
-                : `${additions.length} new links added`,
-            );
-          }, 0);
-        }
-
-        setPagination({ total: result.total, limit: result.limit });
-      } catch {
-        // Silent: next user navigation will retry. We don't surface a
-        // background-refresh failure as a UI error.
-      }
+      void runVisibilityRefresh();
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [filter, search]);
+  }, [filter, search, runVisibilityRefresh]);
 
   // Clear the announcement a few seconds after it appears so a follow-up
   // refresh that yields the same number of new links still triggers a new
@@ -341,7 +338,7 @@ export function useLinksData(
     if (!newLinksAnnouncement) return;
     const timeoutId = setTimeout(() => {
       setNewLinksAnnouncement('');
-    }, 5000);
+    }, NEW_LINKS_ANNOUNCEMENT_TTL_MS);
     return () => clearTimeout(timeoutId);
   }, [newLinksAnnouncement]);
 

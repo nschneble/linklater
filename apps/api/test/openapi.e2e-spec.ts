@@ -109,7 +109,6 @@ describe('OpenAPI document (e2e)', () => {
     expect(paths['/links/random'].get).toBeDefined();
     expect(paths['/links/{id}']).toBeDefined();
     expect(paths['/links/{id}'].get).toBeDefined();
-    expect(paths['/links/{id}'].patch).toBeDefined();
     expect(paths['/links/{id}'].delete).toBeDefined();
     expect(paths['/links/read']).toBeDefined();
     expect(paths['/links/read'].delete).toBeDefined();

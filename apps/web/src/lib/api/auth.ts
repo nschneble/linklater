@@ -1,7 +1,14 @@
-import { apiFetch, clearStoredToken, setStoredToken } from './core';
-import type { LoginResponse } from './core';
+import { ApiError, apiFetch, clearStoredToken, setStoredToken } from './core';
 
-export type { LoginResponse };
+/**
+ * The two shapes `POST /auth/login` (and the magic-link verifier) can return.
+ * Accounts without MFA get a session token pair; accounts with TOTP enrolled
+ * get an `mfaToken` challenge instead and must complete `verifyOtp` to finish
+ * authenticating.
+ */
+export type LoginResponse =
+  | { accessToken: string; refreshToken: string }
+  | { mfaToken: string; mfaMethod: 'totp' };
 
 /**
  * The shape of the `GET /auth/me` response. Named here so callers and
@@ -27,6 +34,12 @@ export interface MeResponse {
   welcomedAt: string | null;
 }
 
+/**
+ * Creates a new account. Does not store a token or sign the user in —
+ * callers (e.g. `useAuthState.register`) are responsible for following up
+ * with a `login()` call so the token-storage side-effect stays explicit and
+ * testable.
+ */
 export async function register(email: string, password: string): Promise<void> {
   await apiFetch(
     '/auth/register',
@@ -51,6 +64,10 @@ export async function login(
     false,
   );
 
+  if (data === undefined) {
+    throw new ApiError('Login endpoint returned an empty response', 0);
+  }
+
   if ('accessToken' in data) {
     setStoredToken(data.accessToken, data.refreshToken);
   }
@@ -70,10 +87,12 @@ export async function logout(): Promise<void> {
   clearStoredToken();
 }
 
-export function getMe(): Promise<MeResponse> {
-  return apiFetch<MeResponse>('/auth/me', {
-    method: 'GET',
-  });
+export async function getMe(): Promise<MeResponse> {
+  const data = await apiFetch<MeResponse>('/auth/me', { method: 'GET' });
+  if (data === undefined) {
+    throw new ApiError('/auth/me returned an empty response', 0);
+  }
+  return data;
 }
 
 export async function acknowledgeWelcome(): Promise<void> {
@@ -142,14 +161,18 @@ export async function resetPassword(
  *   base-32 secret for manual entry.
  * @throws {ApiError} 409 when TOTP is already fully enabled.
  */
-export function setupTotp(): Promise<{
+export async function setupTotp(): Promise<{
   qrCodeDataUrl: string;
   secret: string;
 }> {
-  return apiFetch<{ qrCodeDataUrl: string; secret: string }>(
+  const data = await apiFetch<{ qrCodeDataUrl: string; secret: string }>(
     '/auth/mfa/totp/setup',
     { method: 'POST' },
   );
+  if (data === undefined) {
+    throw new ApiError('TOTP setup returned an empty response', 0);
+  }
+  return data;
 }
 
 /**
@@ -161,13 +184,17 @@ export function setupTotp(): Promise<{
  * @throws {ApiError} 400 when there is no pending setup or the code is
  *   invalid.
  */
-export function verifyTotpSetup(
+export async function verifyTotpSetup(
   code: string,
 ): Promise<{ recoveryCodes: string[] }> {
-  return apiFetch<{ recoveryCodes: string[] }>('/auth/mfa/totp/verify', {
-    body: JSON.stringify({ code }),
-    method: 'POST',
-  });
+  const data = await apiFetch<{ recoveryCodes: string[] }>(
+    '/auth/mfa/totp/verify',
+    { body: JSON.stringify({ code }), method: 'POST' },
+  );
+  if (data === undefined) {
+    throw new ApiError('TOTP verification returned an empty response', 0);
+  }
+  return data;
 }
 
 /**
@@ -209,6 +236,11 @@ export async function verifyMagicLink(token: string): Promise<LoginResponse> {
     { body: JSON.stringify({ token }), method: 'POST' },
     false,
   );
+
+  if (data === undefined) {
+    throw new ApiError('Magic-link verification returned an empty response', 0);
+  }
+
   if ('accessToken' in data) {
     setStoredToken(data.accessToken, data.refreshToken);
   }
@@ -225,6 +257,11 @@ export async function verifyOtp(
     { body: JSON.stringify({ mfaToken, code, method }), method: 'POST' },
     false,
   );
+
+  if (data === undefined) {
+    throw new ApiError('OTP verification returned an empty response', 0);
+  }
+
   setStoredToken(data.accessToken, data.refreshToken);
   return data;
 }
@@ -254,17 +291,24 @@ export async function cancelPendingAccountDeletion(): Promise<void> {
   await apiFetch('/auth/account-deletion/pending', { method: 'DELETE' });
 }
 
-export function regenerateRecoveryCodes(credentials: {
+export async function regenerateRecoveryCodes(credentials: {
   currentPassword?: string;
   code?: string;
 }): Promise<{ recoveryCodes: string[] }> {
-  return apiFetch<{ recoveryCodes: string[] }>(
+  const data = await apiFetch<{ recoveryCodes: string[] }>(
     '/auth/mfa/recovery-codes/regenerate',
     {
       body: JSON.stringify(credentials),
       method: 'POST',
     },
   );
+  if (data === undefined) {
+    throw new ApiError(
+      'Recovery-code regeneration returned an empty response',
+      0,
+    );
+  }
+  return data;
 }
 
 export async function setPassword(password: string): Promise<void> {
@@ -287,9 +331,15 @@ export async function unlinkOAuthProvider(provider: string): Promise<void> {
  * the API endpoint directly) so the bearer JWT can be attached, since
  * the endpoint is protected by `JwtAuthGuard`.
  */
-export function initiateOAuthLink(provider: string): Promise<{ url: string }> {
-  return apiFetch<{ url: string }>(
+export async function initiateOAuthLink(
+  provider: string,
+): Promise<{ url: string }> {
+  const data = await apiFetch<{ url: string }>(
     `/auth/${encodeURIComponent(provider)}/link`,
     { method: 'GET' },
   );
+  if (data === undefined) {
+    throw new ApiError('OAuth link initiation returned an empty response', 0);
+  }
+  return data;
 }

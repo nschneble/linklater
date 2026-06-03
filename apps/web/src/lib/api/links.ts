@@ -62,13 +62,6 @@ export function createLink(input: { url: string }): Promise<Link> {
   });
 }
 
-export function updateLink(id: string): Promise<Link> {
-  return apiFetch<Link>(`/links/${id}`, {
-    body: JSON.stringify({}),
-    method: 'PATCH',
-  });
-}
-
 export function readLink(id: string): Promise<Link> {
   return apiFetch<Link>(`/links/${id}/read`, {
     method: 'POST',

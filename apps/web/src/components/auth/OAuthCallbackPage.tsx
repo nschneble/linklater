@@ -1,6 +1,5 @@
-import Alert from '../common/Alert';
+import AuthErrorPanel from './AuthErrorPanel';
 import { getErrorMessage } from '../../lib/errors';
-import { FOCUS_RING } from '../../lib/styles';
 import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -79,25 +78,11 @@ export default function OAuthCallbackPage() {
         )}
 
         {status === 'error' && (
-          <>
-            <Alert
-              className="mb-2"
-              icon="fa-triangle-exclamation"
-              variant="error"
-            >
-              {errorMessage}
-            </Alert>
-            <p className="mb-6 text-[var(--text-muted)] text-sm">
-              Something went wrong during sign-in.
-            </p>
-            <button
-              type="button"
-              className={`text-[var(--accent)] underline text-sm rounded ${FOCUS_RING}`}
-              onClick={() => navigate('/login')}
-            >
-              Back to login
-            </button>
-          </>
+          <AuthErrorPanel
+            errorMessage={errorMessage}
+            explanation="Something went wrong during sign-in."
+            onBackToLogin={() => navigate('/login')}
+          />
         )}
       </div>
     </div>

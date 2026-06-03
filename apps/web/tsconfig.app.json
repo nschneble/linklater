@@ -24,6 +24,12 @@
     "noUnusedParameters": true,
     "strict": true,
   },
+  // Test files are excluded from `tsc -b` typecheck because they carry
+  // long-standing type drift (stale `multiFactorMethod: 'email'`, missing
+  // `markWelcomed`, partial `LoginResponse` mocks, etc). The runtime test
+  // suites still pass and ESLint catches obvious issues. Re-including these
+  // would surface ~150 errors that need a dedicated test-mock refresh pass
+  // before `tsc -b` can stay green. Track that as a separate cleanup.
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"],
   "include": ["src"]
 }

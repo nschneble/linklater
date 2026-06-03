@@ -9,8 +9,6 @@ const noopDecorator =
   (..._arguments: unknown[]) => {};
 
 export const ApiBearerAuth = noopDecorator;
-export const ApiBody = noopDecorator;
-export const ApiHeader = noopDecorator;
 export const ApiOperation = noopDecorator;
 export const ApiParam = noopDecorator;
 export const ApiProperty = noopDecorator;

@@ -74,16 +74,16 @@ export function clearStoredToken(): void {
   safeRemove(REFRESH_TOKEN_KEY);
 }
 
-export type LoginResponse =
-  | { accessToken: string; refreshToken: string }
-  | { mfaToken: string; mfaMethod: 'totp' };
-
-export class ApiError extends Error {
-  status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-  }
+/**
+ * Resets the module-level token singletons to `null` without touching
+ * `localStorage`. Use in test `beforeEach` to prevent stale state from
+ * one test leaking into the next — each test that calls `setStoredToken`
+ * gets a clean slate.
+ *
+ * Not exported from the public API barrel (`lib/api/index.ts`) — this is
+ * a test-only helper.
+ */
+export function resetStorageForTesting(): void {
+  storedToken = null;
+  storedRefreshToken = null;
 }

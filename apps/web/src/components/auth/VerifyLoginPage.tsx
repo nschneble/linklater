@@ -1,8 +1,7 @@
-import Alert from '../common/Alert';
+import AuthErrorPanel from './AuthErrorPanel';
 import MfaView from './MfaView';
 import { verifyMagicLink, verifyOtp } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import { FOCUS_RING } from '../../lib/styles';
 import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -132,26 +131,11 @@ export default function VerifyLoginPage() {
         )}
 
         {status === 'error' && (
-          <>
-            <Alert
-              className="mb-2"
-              icon="fa-triangle-exclamation"
-              variant="error"
-            >
-              {errorMessage}
-            </Alert>
-            <p className="mb-6 text-[var(--text-muted)] text-sm">
-              This login link may have expired or already been used. Request a
-              new one from the login page.
-            </p>
-            <button
-              type="button"
-              className={`text-[var(--accent)] underline text-sm rounded ${FOCUS_RING}`}
-              onClick={() => navigate('/login')}
-            >
-              Back to login
-            </button>
-          </>
+          <AuthErrorPanel
+            errorMessage={errorMessage}
+            explanation="This login link may have expired or already been used. Request a new one from the login page."
+            onBackToLogin={() => navigate('/login')}
+          />
         )}
       </div>
     </div>

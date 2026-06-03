@@ -228,41 +228,6 @@ describe('LinksService', () => {
   });
 
   // ──────────────────────────────────────────────
-  // update
-  // ──────────────────────────────────────────────
-
-  it('update returns updated link', async () => {
-    const link = makeLink();
-    (prismaMock.link.update as jest.Mock).mockResolvedValue(link);
-
-    const result = await service.update(USER_ID, LINK_ID, {});
-
-    expect(prismaMock.link.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: LINK_ID, userId: USER_ID },
-      }),
-    );
-    expect(result).toBe(link);
-  });
-
-  it('update throws NotFoundException on P2025', async () => {
-    (prismaMock.link.update as jest.Mock).mockRejectedValue(makeP2025());
-
-    await expect(service.update(USER_ID, MISSING_LINK_ID, {})).rejects.toThrow(
-      NotFoundException,
-    );
-  });
-
-  it('update rethrows non-P2025 errors', async () => {
-    const networkError = new Error('Network failure');
-    (prismaMock.link.update as jest.Mock).mockRejectedValue(networkError);
-
-    await expect(service.update(USER_ID, LINK_ID, {})).rejects.toThrow(
-      'Network failure',
-    );
-  });
-
-  // ──────────────────────────────────────────────
   // read
   // ──────────────────────────────────────────────
 
