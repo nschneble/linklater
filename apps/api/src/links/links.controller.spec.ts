@@ -17,7 +17,6 @@ describe('LinksController', () => {
     getRandom: jest.fn(),
     stumble: jest.fn(),
     findOne: jest.fn(),
-    update: jest.fn(),
     read: jest.fn(),
     unread: jest.fn(),
     remove: jest.fn(),
@@ -202,26 +201,6 @@ describe('LinksController', () => {
       const result = await controller.findOne(makeRequest(), LINK_ID);
 
       expect(linksServiceMock.findOne).toHaveBeenCalledWith(USER_ID, LINK_ID);
-      expect(result).toBe(link);
-    });
-  });
-
-  describe('update', () => {
-    it('delegates to LinksService.update', async () => {
-      const link = makeLink();
-      (linksServiceMock.update as jest.Mock).mockResolvedValue(link);
-
-      const result = await controller.update(
-        makeRequest(),
-        LINK_ID,
-        {} as never,
-      );
-
-      expect(linksServiceMock.update).toHaveBeenCalledWith(
-        USER_ID,
-        LINK_ID,
-        {},
-      );
       expect(result).toBe(link);
     });
   });

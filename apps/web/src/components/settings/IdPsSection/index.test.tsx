@@ -360,6 +360,14 @@ describe('IdPsSection', () => {
       render(<IdPsSection appleEnabled={false} />);
       expect(screen.queryByText(/apple/i)).not.toBeInTheDocument();
     });
+
+    it('hides Apple row when enabled but not connected (no /auth/apple/link endpoint yet)', () => {
+      // No Apple connection in connectedProviders → row should not render,
+      // since the "Connect Apple" path would call /auth/apple/link which
+      // does not exist server-side.
+      render(<IdPsSection appleEnabled googleEnabled={false} />);
+      expect(screen.queryByText(/apple/i)).not.toBeInTheDocument();
+    });
   });
 
   describe('flash messages', () => {

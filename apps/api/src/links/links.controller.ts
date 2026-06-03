@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   Param,
-  Patch,
   Post,
   Query,
   Req,
@@ -32,7 +31,6 @@ import { LinkResponseDto } from './dto/link-response.dto.js';
 import { PaginatedLinksResponseDto } from './dto/paginated-links-response.dto.js';
 import { RandomLinkResponseDto } from './dto/random-link-response.dto.js';
 import { StumbleResponseDto } from './dto/stumble-response.dto.js';
-import { UpdateLinkDto } from './dto/update-link.dto.js';
 
 /**
  * CRUD endpoints for a user's saved links. Every route requires a valid JWT
@@ -214,32 +212,6 @@ export class LinksController {
   async findOne(@Req() request: AuthRequest, @Param('id') id: string) {
     const userId = request.user.userId;
     return this.linksService.findOne(userId, id);
-  }
-
-  /**
-   * Updates a link. Currently a no-op — no user-editable fields are defined.
-   * The endpoint is wired in advance for future additions.
-   */
-  @ApiOperation({ summary: 'Update a link (no editable fields yet)' })
-  @ApiParam({ name: 'id', description: 'UUID of the link.' })
-  @ApiResponse({
-    status: 200,
-    description: 'The link unchanged (no editable fields defined yet).',
-    type: LinkResponseDto,
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Missing or invalid token (JWT or PAT).',
-  })
-  @ApiResponse({ status: 404, description: 'Link not found for this user.' })
-  @Patch(':id')
-  async update(
-    @Req() request: AuthRequest,
-    @Param('id') id: string,
-    @Body() body: UpdateLinkDto,
-  ) {
-    const userId = request.user.userId;
-    return this.linksService.update(userId, id, body);
   }
 
   /** Marks a link as read by setting `readAt` to the current timestamp. */

@@ -1,5 +1,5 @@
 /**
- * Tests for the central API client (`api.ts`).
+ * Tests for the central API client (`lib/api/`).
  *
  * All network calls are intercepted by replacing `globalThis.fetch` with a
  * vi.fn(). Tests verify both the happy path (correct URL, method, headers,
@@ -60,7 +60,7 @@ import {
   verifyMagicLink,
   verifyOtp,
   verifyTotpSetup,
-} from './api';
+} from '.';
 
 // ---------------------------------------------------------------------------
 // Helpers

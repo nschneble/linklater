@@ -28,7 +28,7 @@ export function useThemeState(): ThemeContextValue {
   const [baseTheme, setBaseThemeState] =
     useState<BaseTheme>(getInitialBaseTheme);
   const [mode, setModeState] = useState<Mode>(getInitialMode);
-  const [isCvdMode, setisCvdMode] = useState<boolean>(
+  const [isCvdMode, setIsCvdMode] = useState<boolean>(
     () => readLocalStorage(CVD_MODE_KEY) === 'on',
   );
 
@@ -64,7 +64,7 @@ export function useThemeState(): ThemeContextValue {
       // is on, clear CVD mode so the two don't become out-of-sync.
 
       if (isCvdMode && theme !== CVD_BASE_THEME) {
-        setisCvdMode(false);
+        setIsCvdMode(false);
         window.localStorage.setItem(CVD_MODE_KEY, 'off');
         window.localStorage.removeItem(PRE_CVD_THEME_KEY);
       }
@@ -117,7 +117,7 @@ export function useThemeState(): ThemeContextValue {
     window.localStorage.setItem(THEME_UPDATED_AT_KEY, Date.now().toString());
     window.localStorage.setItem(CVD_MODE_KEY, 'on');
     window.localStorage.setItem(CVD_UPDATED_AT_KEY, Date.now().toString());
-    setisCvdMode(true);
+    setIsCvdMode(true);
     return CVD_BASE_THEME;
   }, []);
 
@@ -133,7 +133,7 @@ export function useThemeState(): ThemeContextValue {
     window.localStorage.setItem(CVD_MODE_KEY, 'off');
     window.localStorage.setItem(CVD_UPDATED_AT_KEY, Date.now().toString());
     window.localStorage.removeItem(PRE_CVD_THEME_KEY);
-    setisCvdMode(false);
+    setIsCvdMode(false);
     return previousTheme;
   }, []);
 

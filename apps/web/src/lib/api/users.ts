@@ -6,8 +6,8 @@ export function updateMe(input: {
   mode?: string;
   password?: string;
   theme?: string;
-}): Promise<{ id: string; email: string }> {
-  return apiFetch<{ id: string; email: string }>('/users/me', {
+}): Promise<void> {
+  return apiFetch('/users/me', {
     body: JSON.stringify(input),
     method: 'PATCH',
   });
