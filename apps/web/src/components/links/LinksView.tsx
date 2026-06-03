@@ -1,18 +1,19 @@
-import { lazy, Suspense, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
 import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import { useLinksView } from '../../lib/hooks/useLinksView';
+import Alert from '../common/Alert';
+import Toast from '../common/Toast';
 import LinkForm from './LinkForm';
 import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';
-import Alert from '../common/Alert';
-import Toast from '../common/Toast';
 import { LINK_FORM_ID } from './constants';
+import { lazy, Suspense, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * Renders an inline error message when `message` is non-null. Used for the
- * four separate error states in `LinksView` (save, read, random, delete).
+ * five separate error states surfaced by `useLinksView` (save, read, random,
+ * delete, fetch).
  */
 function ViewError({ message }: { message: string | null }) {
   if (!message) return null;

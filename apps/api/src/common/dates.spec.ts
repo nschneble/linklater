@@ -1,4 +1,9 @@
+import { jest } from '@jest/globals';
 import { expiresInMs } from './dates.js';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('expiresInMs', () => {
   it('returns a Date roughly ms milliseconds from now', () => {

@@ -1,5 +1,5 @@
-import IconButton from './IconButton';
 import { useTransientState } from '../../lib/hooks/useTransientState';
+import IconButton from './IconButton';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
@@ -30,9 +30,13 @@ interface CopyRevealPanelProps {
   focusOnMount?: boolean;
   /**
    * Controlled copy state. When omitted, the component owns state + the
-   * clipboard write internally. When provided, the parent owns them — used
-   * by ApiTokensSection where `useApiTokens` already returns `copied` +
-   * `handleCopy` (revoking a token resets `copied` via that hook).
+   * clipboard write internally and runs its own ~1s reset timer via
+   * `useTransientState`. When provided, the parent owns both — including
+   * the obligation to flip `copied` back to `false` after the desired TTL
+   * (e.g. `useApiTokens` runs its own `useTransientState(copied, false,
+   * setCopied, 1000)` so revoking a token also clears the copied flag).
+   * Without that parent-side reset, the icon cross-fade will stay in the
+   * "copied" state indefinitely.
    */
   copied?: boolean;
   onCopy?: () => void | Promise<void>;

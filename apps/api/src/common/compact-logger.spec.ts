@@ -1,9 +1,11 @@
+import { jest } from '@jest/globals';
 import { CompactLogger } from './compact-logger.js';
 
 describe('CompactLogger', () => {
   let logger: CompactLogger;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     logger = new CompactLogger();
   });
 

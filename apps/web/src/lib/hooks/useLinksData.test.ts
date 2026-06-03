@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchParamsReducer, useLinksData } from './useLinksData';
+import { findNewLinks, formatNewLinksAnnouncement } from './linksData.utils';
 import type { Link, PaginatedLinks } from '../api';
 
 vi.mock('../api', () => ({
@@ -517,5 +518,173 @@ describe('useLinksData mutation helpers', () => {
 
     act(() => result.current.resetTotal());
     expect(result.current.pagination).toBeNull();
+  });
+});
+
+describe('findNewLinks', () => {
+  it('returns only links not present in existing', () => {
+    const existing = [makeLink({ id: 'a' }), makeLink({ id: 'b' })];
+    const incoming = [
+      makeLink({ id: 'a' }),
+      makeLink({ id: 'c' }),
+      makeLink({ id: 'd' }),
+    ];
+    expect(findNewLinks(incoming, existing).map((link) => link.id)).toEqual([
+      'c',
+      'd',
+    ]);
+  });
+
+  it('returns empty array when all incoming links already exist', () => {
+    const existing = [makeLink({ id: 'a' }), makeLink({ id: 'b' })];
+    const incoming = [makeLink({ id: 'a' }), makeLink({ id: 'b' })];
+    expect(findNewLinks(incoming, existing)).toEqual([]);
+  });
+
+  it('returns all incoming links when existing is empty', () => {
+    const incoming = [makeLink({ id: 'a' }), makeLink({ id: 'b' })];
+    expect(findNewLinks(incoming, []).map((link) => link.id)).toEqual([
+      'a',
+      'b',
+    ]);
+  });
+});
+
+describe('formatNewLinksAnnouncement', () => {
+  it('returns singular form for count of 1', () => {
+    expect(formatNewLinksAnnouncement(1)).toBe('1 new link added');
+  });
+
+  it('returns plural form for counts greater than 1', () => {
+    expect(formatNewLinksAnnouncement(2)).toBe('2 new links added');
+    expect(formatNewLinksAnnouncement(10)).toBe('10 new links added');
+  });
+
+  it('returns plural form for count of 0', () => {
+    expect(formatNewLinksAnnouncement(0)).toBe('0 new links added');
+  });
+});
+
+describe('visibility refresh', () => {
+  function fireVisibilityChange(state: 'visible' | 'hidden') {
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => state,
+    });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }
+
+  it('does nothing when the filter is "read"', async () => {
+    vi.mocked(apiModule.getLinks).mockResolvedValue(
+      makePaginated([makeLink({ id: 'a' })]),
+    );
+    const { result } = renderHook(() => useLinksData('read', ''));
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+
+    vi.mocked(apiModule.getLinks).mockClear();
+    await act(async () => {
+      fireVisibilityChange('visible');
+    });
+
+    expect(apiModule.getLinks).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when search is non-empty', async () => {
+    vi.mocked(apiModule.getLinks).mockResolvedValue(
+      makePaginated([makeLink({ id: 'a' })]),
+    );
+    const { result } = renderHook(() => useLinksData('unread', 'query'));
+    await waitFor(() => expect(result.current.loadingLinks).toBe(false));
+
+    vi.mocked(apiModule.getLinks).mockClear();
+    await act(async () => {
+      fireVisibilityChange('visible');
+    });
+
+    expect(apiModule.getLinks).not.toHaveBeenCalled();
+  });
+
+  it('prepends newly arrived links and updates the live-region announcement', async () => {
+    vi.mocked(apiModule.getLinks).mockResolvedValueOnce(
+      makePaginated([makeLink({ id: 'a' })]),
+    );
+    const { result } = renderHook(() => useLinksData('unread', ''));
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+
+    vi.mocked(apiModule.getLinks).mockResolvedValueOnce(
+      makePaginated(
+        [
+          makeLink({ id: 'new-1' }),
+          makeLink({ id: 'new-2' }),
+          makeLink({ id: 'a' }),
+        ],
+        { total: 3 },
+      ),
+    );
+
+    await act(async () => {
+      fireVisibilityChange('visible');
+    });
+
+    await waitFor(() => {
+      expect(result.current.links.map((link) => link.id)).toEqual([
+        'new-1',
+        'new-2',
+        'a',
+      ]);
+    });
+
+    await waitFor(() => {
+      expect(result.current.newLinksAnnouncement).toBe('2 new links added');
+    });
+  });
+
+  it('does not modify state or announce when no new links arrive', async () => {
+    vi.mocked(apiModule.getLinks).mockResolvedValueOnce(
+      makePaginated([makeLink({ id: 'a' })], { total: 1 }),
+    );
+    const { result } = renderHook(() => useLinksData('unread', ''));
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+
+    vi.mocked(apiModule.getLinks).mockResolvedValueOnce(
+      makePaginated([makeLink({ id: 'a' })], { total: 1 }),
+    );
+
+    await act(async () => {
+      fireVisibilityChange('visible');
+    });
+
+    await waitFor(() =>
+      expect(vi.mocked(apiModule.getLinks).mock.calls.length).toBeGreaterThan(
+        1,
+      ),
+    );
+
+    expect(result.current.links).toHaveLength(1);
+    expect(result.current.newLinksAnnouncement).toBe('');
+  });
+
+  it('silently swallows refresh errors without setting fetchError', async () => {
+    vi.mocked(apiModule.getLinks).mockResolvedValueOnce(
+      makePaginated([makeLink({ id: 'a' })]),
+    );
+    const { result } = renderHook(() => useLinksData('unread', ''));
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+
+    vi.mocked(apiModule.getLinks).mockRejectedValueOnce(
+      new Error('network down'),
+    );
+
+    await act(async () => {
+      fireVisibilityChange('visible');
+    });
+
+    await waitFor(() =>
+      expect(vi.mocked(apiModule.getLinks).mock.calls.length).toBeGreaterThan(
+        1,
+      ),
+    );
+
+    expect(result.current.fetchError).toBeNull();
   });
 });

@@ -1,27 +1,11 @@
 import { getLinks, type Link, type PaginatedLinks } from '../api';
 import { getErrorMessage } from '../errors';
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { findNewLinks, formatNewLinksAnnouncement } from './linksData.utils';
 import type { LinksFilter } from './types';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 
 const VISIBILITY_REFRESH_MIN_INTERVAL_MS = 2000;
 const NEW_LINKS_ANNOUNCEMENT_TTL_MS = 5000;
-
-/**
- * Picks out links from `incoming` that don't already appear in `existing`,
- * keyed by id. Pure — safe to call inside a setter callback to avoid races.
- */
-export function findNewLinks(incoming: Link[], existing: Link[]): Link[] {
-  const existingIds = new Set(existing.map((link) => link.id));
-  return incoming.filter((link) => !existingIds.has(link.id));
-}
-
-/**
- * Builds the polite live-region message for the count of links that arrived
- * via a background visibility refresh.
- */
-export function formatNewLinksAnnouncement(count: number): string {
-  return count === 1 ? '1 new link added' : `${count} new links added`;
-}
 
 /**
  * Internal state driving the `GET /links` query. Held in a reducer so that
@@ -105,6 +89,11 @@ export interface UseLinksDataResult {
   removeLink: (linkId: string) => void;
   // resets the cached total to zero without clearing the links array
   resetTotal: () => void;
+  /**
+   * Replaces the matching cached entry in local state. Not the same as the
+   * API-layer `refreshLink` — this mutates the in-memory list only and never
+   * round-trips to the server.
+   */
   updateLink: (link: Link) => void;
 }
 

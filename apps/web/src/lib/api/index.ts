@@ -44,7 +44,6 @@ export {
   getLinks,
   getRandomLink,
   readLink,
-  refreshLink,
   stumbleLink,
   unreadLink,
 } from './links';

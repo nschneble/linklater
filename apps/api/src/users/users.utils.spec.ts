@@ -1,4 +1,9 @@
+import { jest } from '@jest/globals';
 import { withoutPasswordHash } from './users.utils.js';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('withoutPasswordHash', () => {
   it('removes passwordHash from a user object', () => {

@@ -62,18 +62,6 @@ export function createLink(input: { url: string }): Promise<Link> {
   });
 }
 
-/**
- * Triggers a server-side metadata re-fetch for the link. The request body is
- * empty — the PATCH is purely a signal to the API to re-scrape the URL's
- * metadata (title, description, image, favicon) and return the updated link.
- */
-export function refreshLink(id: string): Promise<Link> {
-  return apiFetch<Link>(`/links/${id}`, {
-    body: JSON.stringify({}),
-    method: 'PATCH',
-  });
-}
-
 export function readLink(id: string): Promise<Link> {
   return apiFetch<Link>(`/links/${id}/read`, {
     method: 'POST',
