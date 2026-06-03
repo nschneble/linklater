@@ -12,7 +12,28 @@ import {
   setStoredToken,
 } from '../../lib/api';
 import type { MeResponse } from '../../lib/api';
+import { VALID_BASE_THEME_IDS } from '../../theme/constants';
+import type { BaseTheme, Mode } from '../../theme/constants';
 import type { AuthContextValue, User } from './types';
+
+/**
+ * Narrows the server-returned `theme` string to a `BaseTheme`, falling back
+ * to `'scanner-darkly'` if the server returns an id this client doesn't
+ * know about (schema drift between API and web releases).
+ */
+function narrowTheme(theme: string): BaseTheme {
+  return VALID_BASE_THEME_IDS.has(theme)
+    ? (theme as BaseTheme)
+    : 'scanner-darkly';
+}
+
+/**
+ * Narrows the server-returned `mode` string to a `Mode`, falling back to
+ * `'dark'` for any unexpected value.
+ */
+function narrowMode(mode: string): Mode {
+  return mode === 'light' || mode === 'dark' ? mode : 'dark';
+}
 
 /**
  * Maps the raw `GET /auth/me` response shape to the `User` interface.
@@ -26,9 +47,9 @@ function mapMeToUser(me: MeResponse): User {
     email: me.email,
     emailVerifiedAt: me.emailVerifiedAt,
     hasPassword: me.hasPassword,
-    mode: me.mode,
+    mode: narrowMode(me.mode),
     pendingEmail: me.pendingEmail,
-    theme: me.theme,
+    theme: narrowTheme(me.theme),
     multiFactorMethod: me.multiFactorMethod,
     multiFactorPending: me.multiFactorPending,
     userId: me.userId,

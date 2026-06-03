@@ -40,12 +40,7 @@ export default function App() {
     if (!user.cvdMode && !isCvdMode && !localCvdOn) {
       applyServerTheme(user.theme);
     }
-    // Runtime guard: User.mode is typed Mode but the server response is
-    // plain JSON — defend against schema drift before persisting to
-    // localStorage.
-    if (user.mode === 'light' || user.mode === 'dark') {
-      applyServerMode(user.mode);
-    }
+    applyServerMode(user.mode);
   }, [user, applyServerTheme, applyServerMode, isCvdMode]);
 
   // Syncs CVD mode from the server with a 30s local-change guard. If the
