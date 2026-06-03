@@ -1,20 +1,27 @@
 export {
-  ApiError,
   clearStoredToken,
   getStoredRefreshToken,
   getStoredToken,
   setStoredToken,
 } from './storage';
-export type { LoginResponse } from './storage';
 
 import {
-  ApiError,
+  API_BASE_URL,
   clearStoredToken,
   getStoredRefreshToken,
   getStoredToken,
   setStoredToken,
 } from './storage';
-import { API_BASE_URL } from './storage';
+
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
 
 async function parseResponse<T>(response: Response): Promise<T | undefined> {
   const text = await response.text();

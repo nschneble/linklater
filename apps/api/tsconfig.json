@@ -12,6 +12,8 @@
     "moduleResolution": "nodenext",
     "noFallthroughCasesInSwitch": false,
     "noImplicitAny": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "outDir": "./dist",
     "removeComments": true,
     "resolvePackageJsonExports": true,

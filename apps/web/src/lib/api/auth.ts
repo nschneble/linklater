@@ -1,7 +1,14 @@
 import { ApiError, apiFetch, clearStoredToken, setStoredToken } from './core';
-import type { LoginResponse } from './core';
 
-export type { LoginResponse };
+/**
+ * The two shapes `POST /auth/login` (and the magic-link verifier) can return.
+ * Accounts without MFA get a session token pair; accounts with TOTP enrolled
+ * get an `mfaToken` challenge instead and must complete `verifyOtp` to finish
+ * authenticating.
+ */
+export type LoginResponse =
+  | { accessToken: string; refreshToken: string }
+  | { mfaToken: string; mfaMethod: 'totp' };
 
 /**
  * The shape of the `GET /auth/me` response. Named here so callers and

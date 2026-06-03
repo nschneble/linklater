@@ -87,17 +87,3 @@ export function resetStorageForTesting(): void {
   storedToken = null;
   storedRefreshToken = null;
 }
-
-export type LoginResponse =
-  | { accessToken: string; refreshToken: string }
-  | { mfaToken: string; mfaMethod: 'totp' };
-
-export class ApiError extends Error {
-  status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-  }
-}

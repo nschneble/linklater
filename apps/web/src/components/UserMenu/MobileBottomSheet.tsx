@@ -138,7 +138,6 @@ export default function MobileBottomSheet({
         onClick={onClose}
       />
 
-      {/* FIME: replace custom box-shadow with Tailwind style */}
       <div
         className="fixed bottom-0 inset-x-0 z-50 max-h-[85svh] overflow-y-auto bg-[var(--bg-elevated)] rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
         style={{
@@ -186,7 +185,6 @@ export default function MobileBottomSheet({
               className="pb-4"
               inert={showThemeSubview ? true : undefined}
             >
-              {/* FIXME: align this bottom divider with the themes submenu divider */}
               <MenuSection label="Logged in as" className="px-4 pt-2">
                 <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
                   {user.email}
@@ -230,7 +228,6 @@ export default function MobileBottomSheet({
                 </button>
               </MenuSection>
 
-              {/* FIXME: worth subclassing MenuItem for MobileMenuItem (?) */}
               <MenuItem
                 icon="fa-right-from-bracket"
                 label="Log out"
@@ -251,7 +248,6 @@ export default function MobileBottomSheet({
               className="pb-4"
               inert={!showThemeSubview ? true : undefined}
             >
-              {/* FIXME: align this bottom divider with the user menu divider */}
               <MenuSection className="flex items-center justify-between">
                 <MenuItem
                   icon="fa-chevron-left"

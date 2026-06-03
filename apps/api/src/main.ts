@@ -91,17 +91,14 @@ async function bootstrap() {
     next();
   });
 
-  // GOTCHA: CORS is intentionally open (`*`) by default so the bookmarklet
-  // can POST from any website. In production you should set CORS_ORIGIN to
-  // your front-end domain. Note that `credentials: false` is required when
-  // `origin: '*'` — cookies are not used here (we use JWT Bearer tokens).
-  //
-  // TODO (extension PATs): once the browser-extension PAT flow firms up
-  // and the production extension origins are known
-  // (chrome-extension://<id>, moz-extension://<id>, etc.), narrow CORS_ORIGIN
-  // to the union of { frontend domain, extension origins } and drop the
-  // wildcard. Bookmarklets are an Origin-less navigation in modern browsers
-  // and will keep working under a restricted CORS policy.
+  // CORS is intentionally open (`*`) by default so the bookmarklet can POST
+  // from any website. In production set `CORS_ORIGIN` to the union of the
+  // front-end domain and any extension origins
+  // (`chrome-extension://<id>`, `moz-extension://<id>`, etc.) — bookmarklets
+  // are an Origin-less navigation in modern browsers and keep working under
+  // a restricted CORS policy. `credentials: false` is required when
+  // `origin: '*'` and is harmless under a restricted origin since the API
+  // uses JWT Bearer tokens, not cookies.
   app.enableCors({
     origin: process.env.CORS_ORIGIN ?? '*',
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
