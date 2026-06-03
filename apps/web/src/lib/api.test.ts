@@ -53,7 +53,7 @@ import {
   stumbleLink,
   unreadLink,
   unlinkOAuthProvider,
-  updateLink,
+  refreshLink,
   updateMe,
   verifyEmail,
   verifyEmailChange,
@@ -769,11 +769,11 @@ describe('createLink', () => {
   });
 });
 
-describe('updateLink', () => {
+describe('refreshLink', () => {
   it('PATCHes /links/:id', async () => {
     const fetchMock = mockFetch({ id: 'link-1', url: 'https://example.com' });
 
-    await updateLink('link-1');
+    await refreshLink('link-1');
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/links/link-1');

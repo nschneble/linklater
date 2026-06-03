@@ -1,3 +1,5 @@
+import type { BaseTheme, Mode } from '../../theme/constants';
+
 /**
  * The minimal user object stored in auth state. Populated from `GET /auth/me`
  * after login or after page load when a stored JWT is found.
@@ -22,10 +24,10 @@ export interface User {
    * Shown in `AccountSettingsForm` so the user knows their change is in progress.
    */
   pendingEmail: string | null;
-  /** The current color mode (`'light'` or `'dark'`). */
-  mode: string;
+  /** The current color mode. */
+  mode: Mode;
   /** The current theme identifier (e.g. `'scanner-darkly'`). */
-  theme: string;
+  theme: BaseTheme;
   /** The active MFA method, or `null` when MFA is disabled. */
   multiFactorMethod: 'totp' | null;
   /** `true` when the user has started TOTP setup but not yet verified it. */

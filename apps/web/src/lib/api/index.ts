@@ -44,9 +44,9 @@ export {
   getLinks,
   getRandomLink,
   readLink,
+  refreshLink,
   stumbleLink,
   unreadLink,
-  updateLink,
 } from './links';
 export type { Suggestion, SuggestionsResponse } from './suggestions';
 export { getSuggestions } from './suggestions';
