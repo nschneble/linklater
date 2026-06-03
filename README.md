@@ -215,25 +215,24 @@ bin/dev --remote
 # Linklater is now available on https://linklater.local:5173
 ```
 
-#### One-time setup for mobile devices
+##### One-time setup for mobile devices
 
 The teck stack uses [mkcert](https://github.com/FiloSottile/mkcert) for HTTPS. Mobile devices need to trust the mkcert root certificate authority, or the connection will be refused.
 
 1. Find the root CA on the computer where Linklater is running:
 
- ```bash
- mkcert -CAROOT
- # ~/Library/Application Support/mkcert
- ```
+```bash
+mkcert -CAROOT
+# ~/Library/Application Support/mkcert
+```
 
 2. AirDrop (iOS) or transfer (Android) `rootCA.pem` to your mobile device
 
 3. Install the certificate
+   1. **On iOS:** Settings → General → VPN & Device Management. Then enable trust under Settings → General → About → Certificate Trust Settings.
+   2. **On Android:** Settings → Security → Install from storage → CA certificate.
 
- 1. **On iOS:** Settings → General → VPN & Device Management. Then enable trust under Settings → General → About → Certificate Trust Settings.
- 2. **On Android:** Settings → Security → Install from storage → CA certificate.
-
-#### Set a friendly hostname (optional)
+##### Set a friendly hostname (optional)
 
 By default the LAN url uses your Mac's Bonjour hostname.
 
@@ -244,6 +243,17 @@ sudo scutil --set LocalHostName linklater
 ```
 
 This is a one-time system-level change and persists across reboots.
+
+#### Remote access (public)
+
+The development server TUI has a `--public` option which allows Linklater to be discoverable publicly using a [Cloudflare TryCloudflare tunnel](https://github.com/cloudflare/cloudflared).
+
+```bash
+# cd /path/to/your/repo
+bin/dev --public
+
+# Linklater is now available on https://wildly-foxy-rice-pilaf.trycloudflare.com
+```
 
 #### Known limitations
 

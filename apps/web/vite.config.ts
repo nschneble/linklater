@@ -31,6 +31,7 @@ export default defineConfig({
   },
   plugins: [!isTest && mkcert({ hosts: mkcertHosts }), react(), tailwindcss()],
   server: {
+    allowedHosts: ['.trycloudflare.com'],
     proxy: {
       '/api': {
         changeOrigin: true,
