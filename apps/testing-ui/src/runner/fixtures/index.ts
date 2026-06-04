@@ -38,7 +38,17 @@ export async function applyFixture(name: string): Promise<void> {
   const client = new pg.Client({ connectionString: url });
   await client.connect();
   try {
-    await fixture({ client });
+    // Wrap every fixture in a transaction so a partial failure leaves the
+    // database exactly as we found it. Fixtures stay idempotent on
+    // re-application; transactions cover the cases they don't.
+    await client.query('BEGIN');
+    try {
+      await fixture({ client });
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw error;
+    }
   } finally {
     await client.end();
   }

@@ -1,3 +1,4 @@
+import { writeFile } from 'node:fs/promises';
 import { cpus } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +30,7 @@ export interface RunCliOptions {
 
 const moduleDir = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = join(moduleDir, '..', '..');
+const HEARTBEAT_PATH = join(ROOT_DIR, '.dev-test-heartbeat');
 
 /**
  * Loads every action and story under the package, resets the dedicated test
@@ -42,6 +44,11 @@ export async function runAll(options: RunCliOptions): Promise<RunResult> {
   if (options.manageServers) {
     managedServers = await startManagedDevServers(ROOT_DIR);
   }
+  // Heartbeat is the signal the `dev:test:supervised` supervisor reads to
+  // decide whether the dev servers are still being used. Touched on every
+  // invocation regardless of --manage-servers so a developer who started
+  // the supervisor in a sibling shell keeps it alive while iterating.
+  await touchHeartbeat();
   const coverage = options.coverage
     ? new CoverageCollector(ROOT_DIR)
     : undefined;
@@ -130,6 +137,15 @@ function resolveWorkerCount(requested: number | undefined): number {
   }
   const half = Math.floor(cpus().length / 2);
   return Math.max(1, Math.min(half, 4));
+}
+
+async function touchHeartbeat(): Promise<void> {
+  try {
+    await writeFile(HEARTBEAT_PATH, new Date().toISOString(), 'utf8');
+  } catch {
+    // The heartbeat is opportunistic — a missing parent dir or a disk
+    // hiccup should not fail the entire run.
+  }
 }
 
 function summarise(results: StoryResult[]): RunResult['totals'] {

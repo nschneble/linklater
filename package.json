@@ -18,6 +18,7 @@
     "test:ui": "npm run run --workspace @linklater/testing-ui",
     "test:ui:approve": "npm run approve --workspace @linklater/testing-ui",
     "test:ui:setup": "npm run setup --workspace @linklater/testing-ui",
+    "dev:test:supervised": "npm run supervise --workspace @linklater/testing-ui",
     "version:bump": "node scripts/bump-version.mjs"
   },
   "workspaces": [

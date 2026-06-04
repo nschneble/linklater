@@ -1,0 +1,26 @@
+{
+  "action": "register",
+  "parameters": ["email", "password"],
+  "steps": [
+    { "kind": "navigate", "path": "/signup" },
+    {
+      "kind": "input",
+      "hint": { "role": "textbox", "text": "Email" },
+      "value": "${email}"
+    },
+    {
+      "kind": "input",
+      "hint": { "role": "textbox", "text": "Password" },
+      "value": "${password}"
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Create account" }
+    }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Your links" }]
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

@@ -2,4 +2,5 @@ dist/
 node_modules/
 report/
 .auth/
+.dev-test-heartbeat
 *.tsbuildinfo

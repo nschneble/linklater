@@ -14,6 +14,7 @@
     "run": "node --experimental-strip-types src/cli.ts run",
     "approve": "node --experimental-strip-types src/cli.ts approve",
     "setup": "node --experimental-strip-types scripts/setup-test-db.ts",
+    "supervise": "node --experimental-strip-types scripts/dev-test-supervisor.ts",
     "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" \"scripts/**/*.ts\" --max-warnings=0",
     "install:browsers": "playwright install chromium",
