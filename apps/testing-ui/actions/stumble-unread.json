@@ -11,7 +11,8 @@
       "hint": {
         "selector": "#links-list a[aria-label*='Test Link 2']"
       }
-    }
+    },
+    { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [{ "selector": "#links-list a[aria-label*='Test Link 2']" }]

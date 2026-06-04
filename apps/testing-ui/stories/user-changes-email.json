@@ -4,6 +4,7 @@
   "needs": ["logged-in"],
   "actions": [
     { "action": "intercept-no-api-tokens" },
+    { "action": "intercept-noop-email-change" },
     {
       "action": "change-email",
       "parameters": { "newEmail": "moved@linklater.test" }

@@ -2,7 +2,8 @@
   "action": "keyboard-navigation",
   "steps": [
     { "kind": "navigate", "path": "/unread" },
-    { "kind": "type", "value": "z" }
+    { "kind": "type", "value": "z" },
+    { "kind": "wait", "ms": 400 }
   ],
   "expect": {
     "anyOf": [{ "role": "dialog", "text": "Keyboard shortcuts" }]

@@ -5,7 +5,8 @@
     {
       "kind": "click",
       "hint": { "role": "tab", "text": "Unread" }
-    }
+    },
+    { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [

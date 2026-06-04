@@ -5,7 +5,8 @@
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Delete my account" }
-    }
+    },
+    { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [{ "role": "button", "text": "Cancel account deletion" }]

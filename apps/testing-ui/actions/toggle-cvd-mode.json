@@ -5,7 +5,8 @@
     {
       "kind": "click",
       "hint": { "role": "switch", "text": "Color Vision Deficiency" }
-    }
+    },
+    { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [{ "selector": "[role=\"switch\"][aria-checked=\"true\"]" }]

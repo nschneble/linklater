@@ -1,0 +1,12 @@
+{
+  "action": "intercept-noop-email-change",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/auth/request-email-change",
+      "method": "POST",
+      "respond": { "status": 200, "body": {} }
+    }
+  ],
+  "screenshot": false
+}

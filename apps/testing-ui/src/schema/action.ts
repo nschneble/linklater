@@ -97,6 +97,17 @@ export const stepSchema = z.discriminatedUnion('kind', [
     kind: z.literal('type'),
     value: z.string().min(1),
   }),
+  /**
+   * Pauses the action for the given number of milliseconds. Use to absorb
+   * staggered enter animations or React-lazy chunk loads that happen after
+   * `expect.anyOf` resolves but before paint settles. Linklater's
+   * `LinkCardLayout` and `WelcomeModal` are the recurring offenders.
+   * Bounded at 5 seconds to discourage hiding genuine flakes.
+   */
+  z.object({
+    kind: z.literal('wait'),
+    ms: z.number().int().min(0).max(5000),
+  }),
 ]);
 
 export type Step = z.infer<typeof stepSchema>;

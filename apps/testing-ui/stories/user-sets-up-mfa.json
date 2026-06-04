@@ -2,5 +2,8 @@
   "story": "As a logged-in user, I can start setting up an authenticator app.",
   "flow": "add an authenticator app",
   "needs": ["logged-in"],
-  "actions": [{ "action": "setup-mfa" }]
+  "actions": [
+    { "action": "intercept-noop-totp-setup" },
+    { "action": "setup-mfa" }
+  ]
 }

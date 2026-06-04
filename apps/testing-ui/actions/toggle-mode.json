@@ -12,7 +12,8 @@
     {
       "kind": "click",
       "hint": { "role": "menuitem", "text": "Switch to light mode" }
-    }
+    },
+    { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [

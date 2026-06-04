@@ -21,6 +21,7 @@ import { runNavigate } from './steps/navigate.ts';
 import { runRead } from './steps/read.ts';
 import { runScroll } from './steps/scroll.ts';
 import { runType } from './steps/type.ts';
+import { runWait } from './steps/wait.ts';
 import { runWaitFor } from './steps/waitFor.ts';
 
 export interface RunActionOptions {
@@ -156,6 +157,8 @@ async function dispatch(
       return runRead(page, interpolateHint(step.hint, parameters));
     case 'type':
       return runType(page, interpolate(step.value, parameters));
+    case 'wait':
+      return runWait(page, step.ms);
   }
 }
 

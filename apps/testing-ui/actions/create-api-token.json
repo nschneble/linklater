@@ -15,7 +15,8 @@
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Create token" }
-    }
+    },
+    { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [

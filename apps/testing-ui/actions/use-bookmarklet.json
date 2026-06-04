@@ -17,7 +17,8 @@
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Yes, regenerate" }
-    }
+    },
+    { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [{ "selector": "[aria-label='Regenerate bookmarklet token']" }],

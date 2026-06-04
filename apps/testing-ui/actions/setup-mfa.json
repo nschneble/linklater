@@ -5,7 +5,8 @@
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Add authenticator app" }
-    }
+    },
+    { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [{ "role": "button", "text": "Verify code" }],

@@ -18,7 +18,8 @@
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Add and read" }
-    }
+    },
+    { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [{ "role": "button", "text": "Add and read" }]

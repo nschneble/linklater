@@ -20,7 +20,8 @@
     {
       "kind": "click",
       "hint": { "selector": "button[data-submenu-item]" }
-    }
+    },
+    { "kind": "wait", "ms": 800 }
   ],
   "expect": {
     "anyOf": [{ "selector": "html[data-theme='apollo-10-1-2']" }]

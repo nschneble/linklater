@@ -11,7 +11,8 @@
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Change email address" }
-    }
+    },
+    { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [{ "selector": "[role='status']" }]

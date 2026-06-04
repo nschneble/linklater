@@ -3,5 +3,8 @@
   "flow": "click on an unread link",
   "needs": ["logged-in"],
   "fixtures": ["user-with-3-links"],
-  "actions": [{ "action": "read-link" }]
+  "actions": [
+    { "action": "intercept-1-read-link" },
+    { "action": "read-link" }
+  ]
 }
