@@ -48,7 +48,7 @@ jobs:
         run: npx prisma generate
 
       - name: Install Playwright browsers (Chromium only)
-        run: npm run install:browsers --workspace @linklater/testing-ui
+        run: npx playwright install --with-deps chromium
 
       - name: Bootstrap test database
         run: npm run test:ui:setup
@@ -67,7 +67,7 @@ jobs:
         id: outcome
         if: always()
         run: |
-          results="apps/testing-ui/report/results.json"
+          results="tuffgal/report/results.json"
           if [ ! -f "$results" ]; then
             echo "failed=true" >> "$GITHUB_OUTPUT"
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -84,7 +84,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: testing-ui-report
-          path: apps/testing-ui/report/
+          path: tuffgal/report/
           retention-days: 14
 
       # Baselines upload separately so reviewers approving an intentional
@@ -94,7 +94,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: testing-ui-baselines
-          path: apps/testing-ui/baselines/
+          path: tuffgal/baselines/
           retention-days: 14
 
       - name: Surface harness exit code
