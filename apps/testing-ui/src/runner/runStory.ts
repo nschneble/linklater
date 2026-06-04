@@ -26,6 +26,14 @@ const AUTH_DIR = '.auth';
 const TRACE_DIR = 'report/traces';
 
 /**
+ * Fixed point the harness pins each page's clock to. Stops "x minutes ago"
+ * timestamps and any other Date.now()-derived UI from drifting between runs
+ * and producing false-positive visual diffs. Update when a story explicitly
+ * needs the clock to tick — that is a per-action concern, not a global one.
+ */
+const FROZEN_TIME_ISO = '2026-01-15T12:00:00.000Z';
+
+/**
  * Drives one story end-to-end on a freshly launched browser. Wraps the
  * context in Playwright tracing so a failed action leaves behind a
  * full-fidelity `trace.zip` for post-mortem in the Playwright trace viewer.
@@ -64,6 +72,7 @@ async function runStoryWithBrowser(
     title: file,
   });
   const page = await context.newPage();
+  await page.clock.install({ time: FROZEN_TIME_ISO });
 
   const results: ActionResult[] = [];
   let storyStatus: StoryStatus = 'pass';

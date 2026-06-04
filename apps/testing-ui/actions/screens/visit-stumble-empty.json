@@ -1,0 +1,19 @@
+{
+  "action": "visit-stumble-empty",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "**/links/stumble",
+      "method": "POST",
+      "respond": { "status": 200, "body": { "url": null } }
+    },
+    { "kind": "navigate", "path": "/stumble" }
+  ],
+  "expect": {
+    "anyOf": [
+      { "role": "heading", "text": "Boo. Your reading list is empty." }
+    ]
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

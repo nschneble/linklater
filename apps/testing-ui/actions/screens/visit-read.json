@@ -1,0 +1,8 @@
+{
+  "action": "visit-read",
+  "steps": [{ "kind": "navigate", "path": "/read" }],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Your links" }]
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

@@ -43,6 +43,15 @@ export class SuggestionsService implements OnModuleInit {
   }
 
   async onModuleInit(): Promise<void> {
+    // In testing-ui mode we never want network calls to flaky external
+    // sources or the recurring refresh job competing for the test database
+    // — both would inject non-determinism into visual baselines.
+    if (process.env.TESTING_UI === '1') {
+      this.logger.log(
+        'TESTING_UI=1: skipping RSS scheduling and bootstrap refresh.',
+      );
+      return;
+    }
     await this.queueService.schedule(RSS_REFRESH_QUEUE, RSS_REFRESH_CRON);
     await this.queueService.work(RSS_REFRESH_QUEUE, async () => {
       await this.rssFeedService.refreshAll();
@@ -82,6 +91,9 @@ export class SuggestionsService implements OnModuleInit {
     count: number,
     userId: string,
   ): Promise<{ sourceName: string; suggestions: Suggestion[] } | null> {
+    if (process.env.TESTING_UI === '1') {
+      return this.deterministicTestSuggestions(count);
+    }
     const candidates = [...this.adapters.values()];
 
     while (candidates.length > 0) {
@@ -113,6 +125,39 @@ export class SuggestionsService implements OnModuleInit {
     }
 
     return null;
+  }
+
+  /**
+   * Returns a fixed, content-stable suggestion set for the testing-ui
+   * harness. Avoids both random source selection and any network call —
+   * every visit to a page that renders the suggestion callout shows the
+   * same article, so visual diffs only ever flag real UI changes.
+   */
+  private deterministicTestSuggestions(count: number): {
+    sourceName: string;
+    suggestions: Suggestion[];
+  } {
+    const pool: Suggestion[] = [
+      {
+        title: 'Testing-UI Determinism',
+        url: 'https://example.test/articles/testing-ui-determinism',
+        description:
+          'A frozen sample article used by the testing-ui harness so screenshot diffs only flag genuine UI changes.',
+        imageUrl: null,
+        siteName: 'Testing Fixture',
+      },
+      {
+        title: 'A Note on Sample Suggestions',
+        url: 'https://example.test/articles/sample-suggestions',
+        description: 'Another stable placeholder for visual regression runs.',
+        imageUrl: null,
+        siteName: 'Testing Fixture',
+      },
+    ];
+    return {
+      sourceName: 'Testing Fixture',
+      suggestions: pool.slice(0, Math.max(1, Math.min(count, pool.length))),
+    };
   }
 
   /**

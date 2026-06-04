@@ -57,6 +57,10 @@ interface JsonFile {
 
 async function readJsonFiles(directory: string): Promise<JsonFile[]> {
   const entries = await readdir(directory, { withFileTypes: true });
+  const subdirectories = entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
   const jsonNames = entries
     .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
     .map((entry) => entry.name)
@@ -71,6 +75,10 @@ async function readJsonFiles(directory: string): Promise<JsonFile[]> {
       const message = error instanceof Error ? error.message : 'invalid JSON';
       throw new LoadError(path, message);
     }
+  }
+  for (const subdirectory of subdirectories) {
+    const nested = await readJsonFiles(join(directory, subdirectory));
+    files.push(...nested);
   }
   return files;
 }

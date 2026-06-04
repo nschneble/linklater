@@ -1,0 +1,8 @@
+{
+  "action": "visit-login",
+  "steps": [{ "kind": "navigate", "path": "/login" }],
+  "expect": {
+    "anyOf": [{ "role": "button", "text": "Log in" }]
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

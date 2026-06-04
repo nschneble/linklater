@@ -1,0 +1,8 @@
+{
+  "action": "visit-editor",
+  "steps": [{ "kind": "navigate", "path": "/editor" }],
+  "expect": {
+    "anyOf": [{ "role": "heading" }]
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

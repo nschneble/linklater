@@ -57,6 +57,15 @@ export class EmailService {
              the email.
    */
   private async send(options: nodemailer.SendMailOptions) {
+    // testing-ui mode drops emails on the floor so the harness never
+    // depends on an SMTP relay being reachable and never logs a
+    // ServiceUnavailableException for a downstream that does not exist.
+    if (process.env.TESTING_UI === '1') {
+      this.logger.log(
+        `TESTING_UI=1: noop email send to=${String(options.to)} subject=${String(options.subject)}`,
+      );
+      return;
+    }
     try {
       await this.transporter.sendMail(options);
     } catch (error: unknown) {
