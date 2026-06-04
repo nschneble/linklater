@@ -12,12 +12,17 @@ import {
   drainSchedule,
   type ScheduledStory,
 } from './scheduler.ts';
+import {
+  startManagedDevServers,
+  type ManagedDevServers,
+} from './devServers.ts';
 import { resetTestDatabase } from './testDb.ts';
 
 export interface RunCliOptions {
   storyFilter?: string;
   headed: boolean;
   workers?: number;
+  manageServers?: boolean;
 }
 
 const moduleDir = dirname(fileURLToPath(import.meta.url));
@@ -31,46 +36,56 @@ const ROOT_DIR = join(moduleDir, '..', '..');
  */
 export async function runAll(options: RunCliOptions): Promise<RunResult> {
   const startedAt = new Date();
-  process.stdout.write('Resetting test database…\n');
-  await resetTestDatabase();
-  const actions = await loadActions(ROOT_DIR);
-  const allStories = await loadStories(ROOT_DIR);
-  const scheduled = buildSchedule(allStories);
-  const subset = options.storyFilter
-    ? scheduled.filter((item) => matchesFilter(item, options.storyFilter!))
-    : scheduled;
-
-  if (options.storyFilter && subset.length === 0) {
-    throw new Error(`No story matched filter "${options.storyFilter}"`);
+  let managedServers: ManagedDevServers | undefined;
+  if (options.manageServers) {
+    managedServers = await startManagedDevServers(ROOT_DIR);
   }
+  try {
+    process.stdout.write('Resetting test database…\n');
+    await resetTestDatabase();
+    const actions = await loadActions(ROOT_DIR);
+    const allStories = await loadStories(ROOT_DIR);
+    const scheduled = buildSchedule(allStories);
+    const subset = options.storyFilter
+      ? scheduled.filter((item) => matchesFilter(item, options.storyFilter!))
+      : scheduled;
 
-  const workerCount = resolveWorkerCount(options.workers);
-  process.stdout.write(
-    `Scheduling ${subset.length} stories on ${workerCount} worker${workerCount === 1 ? '' : 's'}.\n`,
-  );
+    if (options.storyFilter && subset.length === 0) {
+      throw new Error(`No story matched filter "${options.storyFilter}"`);
+    }
 
-  const results = await drainSchedule(
-    subset,
-    workerCount,
-    (item) => runScheduledStory(item, actions, options.headed),
-    (item) => process.stdout.write(`▶ ${item.file}\n`),
-    (item, result) =>
-      process.stdout.write(
-        `  ${result.status.toUpperCase()} ${item.file} (${result.actions.length} actions, ${result.durationMs} ms)\n`,
-      ),
-  );
+    const workerCount = resolveWorkerCount(options.workers);
+    process.stdout.write(
+      `Scheduling ${subset.length} stories on ${workerCount} worker${workerCount === 1 ? '' : 's'}.\n`,
+    );
 
-  const finishedAt = new Date();
-  const runResult: RunResult = {
-    startedAt: startedAt.toISOString(),
-    finishedAt: finishedAt.toISOString(),
-    durationMs: finishedAt.getTime() - startedAt.getTime(),
-    totals: summarise(results),
-    stories: results,
-  };
-  const reportPath = await writeReport(ROOT_DIR, runResult);
-  process.stdout.write(`\nReport: ${reportPath}\n`);
-  return runResult;
+    const results = await drainSchedule(
+      subset,
+      workerCount,
+      (item) => runScheduledStory(item, actions, options.headed),
+      (item) => process.stdout.write(`▶ ${item.file}\n`),
+      (item, result) =>
+        process.stdout.write(
+          `  ${result.status.toUpperCase()} ${item.file} (${result.actions.length} actions, ${result.durationMs} ms)\n`,
+        ),
+    );
+
+    const finishedAt = new Date();
+    const runResult: RunResult = {
+      startedAt: startedAt.toISOString(),
+      finishedAt: finishedAt.toISOString(),
+      durationMs: finishedAt.getTime() - startedAt.getTime(),
+      totals: summarise(results),
+      stories: results,
+    };
+    const reportPath = await writeReport(ROOT_DIR, runResult);
+    process.stdout.write(`\nReport: ${reportPath}\n`);
+    return runResult;
+  } finally {
+    if (managedServers) {
+      await managedServers.stop();
+    }
+  }
 }
 
 function runScheduledStory(

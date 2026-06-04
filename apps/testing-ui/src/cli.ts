@@ -7,6 +7,7 @@ interface ParsedArguments {
   storyFilter?: string;
   headed: boolean;
   workers?: number;
+  manageServers: boolean;
 }
 
 function parseArguments(argv: string[]): ParsedArguments {
@@ -17,6 +18,7 @@ function parseArguments(argv: string[]): ParsedArguments {
         ? command
         : 'help',
     headed: false,
+    manageServers: false,
   };
   for (let index = 0; index < rest.length; index += 1) {
     const arg = rest[index];
@@ -32,6 +34,8 @@ function parseArguments(argv: string[]): ParsedArguments {
       index += 1;
     } else if (arg.startsWith('--workers=')) {
       parsed.workers = Number(arg.slice('--workers='.length));
+    } else if (arg === '--manage-servers') {
+      parsed.manageServers = true;
     }
   }
   return parsed;
@@ -51,6 +55,7 @@ function printHelp(): void {
       '  --story <name>      Filter to a single story (filename or story text).',
       '  --headed            Show the browser while running.',
       '  --workers N         Override the worker pool size (default min(cpus/2, 4)).',
+      '  --manage-servers    Spawn `npm run dev:test`, wait for it, run, then kill it.',
     ].join('\n') + '\n',
   );
 }
@@ -66,6 +71,7 @@ async function main(): Promise<void> {
       storyFilter: args.storyFilter,
       headed: args.headed,
       workers: args.workers,
+      manageServers: args.manageServers,
     });
     process.stdout.write(
       `\nTotals: ${result.totals.passed} pass · ${result.totals.changed} changed · ${result.totals.failed} failed\n`,

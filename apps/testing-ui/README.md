@@ -53,7 +53,8 @@ are explicit future work; the MVP stays locator-only.
 
 ## Run a test pass
 
-Two shells:
+**Interactive (recommended for local iteration).** Two shells; the dev
+server stays warm between runs so you keep React/Nest hot reload.
 
 ```bash
 # Shell A — dev servers pointed at the test database
@@ -63,11 +64,22 @@ npm run dev:test
 npm run test:ui
 ```
 
-Shell A keeps `linklater_testing_ui` connected. Shell B truncates and
-re-seeds the test database before every invocation, runs all stories in
-dependency order across the worker pool, captures masked screenshots,
-diffs them against committed baselines, and writes the HTML report to
-`apps/testing-ui/report/index.html`.
+**One-shot (CI or quick smoke).** The harness spawns its own `dev:test`,
+waits for both ports to open, runs the stories, then tears everything
+down. Pays a ~25s cold-start on every invocation, but the developer's
+normal `npm run dev` is left untouched.
+
+```bash
+npm run test:ui -- --manage-servers
+```
+
+Either way, Shell B truncates and re-seeds the test database before
+every invocation, runs all stories in dependency order across the worker
+pool, captures masked screenshots, diffs them against committed
+baselines, and writes the HTML report to
+`apps/testing-ui/report/index.html`. With `--manage-servers`, the spawned
+dev server's combined stdout/stderr is teed to
+`apps/testing-ui/report/dev-servers.log` for post-mortem.
 
 Open the report:
 
@@ -82,6 +94,7 @@ testing-ui run                   # run every story
 testing-ui run --story <name>    # run one story (filename or story text)
 testing-ui run --headed          # show the browser
 testing-ui run --workers N       # override worker pool size
+testing-ui run --manage-servers  # spawn dev:test, wait, run, kill (one-shot)
 testing-ui approve               # promote every "changed" actual to its baseline
 testing-ui approve --story <n>   # accept changes for one story
 ```
