@@ -1,63 +1,45 @@
-// Minimal tab controller for the screenshot views. Keeps the report a single
-// flat HTML file with no build step. Activates the default tab declared by
-// each action card and supports left/right arrow navigation per WAI-ARIA tabs
-// pattern.
+// Reveals the matching <div.shot-panel> for the radio the user picks. The
+// radio group already handles keyboard navigation natively (arrow keys move
+// the selection across the visible labels); this script just translates the
+// `change` event into a panel-visibility toggle so we stay framework-free.
 (function () {
-  function setupTabs(container) {
-    var buttons = Array.prototype.slice.call(
-      container.querySelectorAll('[role="tab"]'),
+  function setupShots(container) {
+    var radios = Array.prototype.slice.call(
+      container.querySelectorAll('input[type="radio"]'),
     );
     var panels = Array.prototype.slice.call(
-      container.querySelectorAll('[role="tabpanel"]'),
+      container.parentElement.querySelectorAll('.shot-panel'),
     );
-    var defaultTab =
-      container.getAttribute('data-default-tab') ||
-      (buttons.find(function (button) {
-        return button.getAttribute('aria-disabled') !== 'true';
-      }) || buttons[0]).getAttribute('data-tab');
 
-    function activate(target) {
-      buttons.forEach(function (button) {
-        var isActive = button.getAttribute('data-tab') === target;
-        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        button.tabIndex = isActive ? 0 : -1;
-      });
+    function activate(name) {
       panels.forEach(function (panel) {
-        panel.hidden = panel.getAttribute('data-tab') !== target;
+        panel.hidden = panel.getAttribute('data-tab') !== name;
       });
     }
 
-    buttons.forEach(function (button) {
-      button.addEventListener('click', function () {
-        if (button.getAttribute('aria-disabled') === 'true') return;
-        activate(button.getAttribute('data-tab'));
-        button.focus();
+    var defaultTab = container.getAttribute('data-default-tab');
+    var initialRadio = radios.find(function (radio) {
+      return radio.value === defaultTab && !radio.disabled;
+    }) ||
+      radios.find(function (radio) {
+        return !radio.disabled;
       });
-      button.addEventListener('keydown', function (event) {
-        var index = buttons.indexOf(button);
-        var next = index;
-        if (event.key === 'ArrowRight') next = (index + 1) % buttons.length;
-        else if (event.key === 'ArrowLeft')
-          next = (index - 1 + buttons.length) % buttons.length;
-        else if (event.key === 'Home') next = 0;
-        else if (event.key === 'End') next = buttons.length - 1;
-        else return;
-        event.preventDefault();
-        var target = buttons[next];
-        if (target.getAttribute('aria-disabled') === 'true') {
-          target = buttons[index];
-        }
-        activate(target.getAttribute('data-tab'));
-        target.focus();
+    if (initialRadio) {
+      initialRadio.checked = true;
+      activate(initialRadio.value);
+    }
+
+    radios.forEach(function (radio) {
+      radio.addEventListener('change', function () {
+        if (radio.disabled) return;
+        activate(radio.value);
       });
     });
-
-    activate(defaultTab);
   }
 
   document
-    .querySelectorAll('.screenshots')
+    .querySelectorAll('.shot-radio')
     .forEach(function (container) {
-      setupTabs(container);
+      setupShots(container);
     });
 })();

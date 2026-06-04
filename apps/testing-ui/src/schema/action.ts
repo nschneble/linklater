@@ -88,6 +88,35 @@ export const actionSchema = z.object({
   parameters: z.array(z.string().min(1)).optional(),
   steps: z.array(stepSchema).min(1),
   screenshot: z.boolean().default(true),
+  /**
+   * Hints whose matching elements are blacked out before the screenshot is
+   * captured. Use sparingly to neutralise non-deterministic content (relative
+   * timestamps, randomised suggestions, animated counters) so the diff layer
+   * only flags meaningful changes.
+   */
+  mask: z.array(hintSchema).optional(),
+  /**
+   * Success criteria the harness polls before capturing the screenshot. The
+   * action is only "done" once at least one of the listed hints is visible.
+   * Eliminates the entire class of "screenshot snapped mid-render" flakes.
+   */
+  expect: z
+    .object({
+      anyOf: z.array(hintSchema).min(1),
+      timeoutMs: z.number().int().positive().optional(),
+    })
+    .optional(),
+  /**
+   * Bounded retry budget for individual steps. Wraps each step's dispatch so
+   * a transient LocatorNotFoundError (UI not yet hydrated) does not fail the
+   * action immediately. Steps that succeed on the first try cost no retry.
+   */
+  retry: z
+    .object({
+      attempts: z.number().int().min(1).max(5).default(2),
+      backoffMs: z.number().int().min(0).default(200),
+    })
+    .optional(),
   diff: z
     .object({
       pixelThreshold: z.number().min(0).max(1).default(0.1),

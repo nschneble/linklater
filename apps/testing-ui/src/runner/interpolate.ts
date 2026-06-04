@@ -1,3 +1,5 @@
+import type { Hint } from '../schema/action.ts';
+
 /**
  * Expands `${name}` placeholders in a string from a parameter map. Throws when
  * a placeholder has no matching parameter so a typo in a story or action fails
@@ -14,4 +16,21 @@ export function interpolate(
     }
     return value;
   });
+}
+
+/**
+ * Returns a new Hint with `text` and `selector` interpolated against the
+ * supplied parameter map. `role` and `position` are enums and pass through.
+ */
+export function interpolateHint(
+  hint: Hint,
+  parameters: Record<string, string>,
+): Hint {
+  return {
+    ...hint,
+    text: hint.text ? interpolate(hint.text, parameters) : hint.text,
+    selector: hint.selector
+      ? interpolate(hint.selector, parameters)
+      : hint.selector,
+  };
 }

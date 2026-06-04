@@ -1,5 +1,5 @@
-import type { Page } from 'playwright';
-import type { Action, Step } from '../schema/action.ts';
+import type { Locator, Page } from 'playwright';
+import type { Action, Hint, Step } from '../schema/action.ts';
 import type { ActionResult, ActionStatus } from '../schema/result.ts';
 import type { HarnessConfig } from '../../playwright.config.ts';
 import { capturePage } from '../screenshots/capture.ts';
@@ -10,7 +10,8 @@ import {
   readBaseline,
   writePng,
 } from '../screenshots/baselineStore.ts';
-import { interpolate } from './interpolate.ts';
+import { interpolate, interpolateHint } from './interpolate.ts';
+import { LocatorNotFoundError, resolveLocator } from './resolveLocator.ts';
 import { runClick } from './steps/click.ts';
 import { runInput } from './steps/input.ts';
 import { runIntercept } from './steps/intercept.ts';
@@ -27,11 +28,16 @@ export interface RunActionOptions {
   config: HarnessConfig;
 }
 
+const DEFAULT_RETRY_ATTEMPTS = 2;
+const DEFAULT_RETRY_BACKOFF_MS = 200;
+const DEFAULT_EXPECT_TIMEOUT_MS = 10_000;
+
 /**
- * Runs every step of an action in order. Fails fast on the first error so the
- * harness never captures a screenshot of a half-finished state. If every step
- * succeeds and `action.screenshot !== false`, captures the page and compares
- * against the committed baseline.
+ * Runs every step of an action in order, applies optional step-level retry on
+ * transient locator misses, waits for at least one `expect.anyOf` hint to
+ * become visible, then captures a masked full-page screenshot. Fails fast on
+ * the first non-recoverable step error so the harness never compares a
+ * screenshot of a half-finished state.
  */
 export async function runAction(
   options: RunActionOptions,
@@ -39,36 +45,41 @@ export async function runAction(
   const { action, page, parameters, rootDir, storyFile, config } = options;
   validateParameters(action, parameters);
   const startedAt = new Date();
+  const attempts = action.retry?.attempts ?? DEFAULT_RETRY_ATTEMPTS;
+  const backoffMs = action.retry?.backoffMs ?? DEFAULT_RETRY_BACKOFF_MS;
 
   for (let index = 0; index < action.steps.length; index += 1) {
     const step = action.steps[index];
     try {
-      await dispatch(page, step, parameters, config);
-    } catch (error) {
-      const finishedAt = new Date();
-      return {
-        action: action.action,
+      await dispatchWithRetry(
+        page,
+        step,
         parameters,
-        status: 'failed',
-        startedAt: startedAt.toISOString(),
-        finishedAt: finishedAt.toISOString(),
-        durationMs: finishedAt.getTime() - startedAt.getTime(),
-        failedStepIndex: index,
-        failureMessage: error instanceof Error ? error.message : String(error),
-      };
+        config,
+        attempts,
+        backoffMs,
+      );
+    } catch (error) {
+      return failedResult(action, parameters, startedAt, index, error);
+    }
+  }
+
+  if (action.expect) {
+    try {
+      await waitForExpectation(page, action.expect, parameters, config);
+    } catch (error) {
+      return failedResult(
+        action,
+        parameters,
+        startedAt,
+        action.steps.length,
+        error,
+      );
     }
   }
 
   if (action.screenshot === false) {
-    const finishedAt = new Date();
-    return {
-      action: action.action,
-      parameters,
-      status: 'pass',
-      startedAt: startedAt.toISOString(),
-      finishedAt: finishedAt.toISOString(),
-      durationMs: finishedAt.getTime() - startedAt.getTime(),
-    };
+    return successResultWithoutScreenshot(action, parameters, startedAt);
   }
 
   return captureAndCompare({
@@ -81,6 +92,30 @@ export async function runAction(
   });
 }
 
+async function dispatchWithRetry(
+  page: Page,
+  step: Step,
+  parameters: Record<string, string>,
+  config: HarnessConfig,
+  attempts: number,
+  backoffMs: number,
+): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await dispatch(page, step, parameters, config);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!(error instanceof LocatorNotFoundError) || attempt === attempts) {
+        throw error;
+      }
+      await sleep(backoffMs * attempt);
+    }
+  }
+  throw lastError;
+}
+
 async function dispatch(
   page: Page,
   step: Step,
@@ -91,11 +126,15 @@ async function dispatch(
     case 'navigate':
       return runNavigate(page, interpolate(step.path, parameters), config);
     case 'click':
-      return runClick(page, step.hint, config.defaultTimeoutMs);
+      return runClick(
+        page,
+        interpolateHint(step.hint, parameters),
+        config.defaultTimeoutMs,
+      );
     case 'input':
       return runInput(
         page,
-        step.hint,
+        interpolateHint(step.hint, parameters),
         interpolate(step.value, parameters),
         config.defaultTimeoutMs,
       );
@@ -104,8 +143,51 @@ async function dispatch(
     case 'intercept':
       return runIntercept(page, step.pattern, step.respond, step.method);
     case 'waitFor':
-      return runWaitFor(page, step.hint, config.defaultTimeoutMs);
+      return runWaitFor(
+        page,
+        interpolateHint(step.hint, parameters),
+        config.defaultTimeoutMs,
+      );
   }
+}
+
+/**
+ * Polls every hint in `expect.anyOf` concurrently and resolves as soon as one
+ * becomes visible. Throws when none resolve within the configured timeout.
+ * Race semantics: any single match satisfies the expectation — this is what
+ * lets a single action declare "success looks like list-item OR toast OR
+ * status banner" without the story knowing which renderer the app picked.
+ */
+async function waitForExpectation(
+  page: Page,
+  expectation: NonNullable<Action['expect']>,
+  parameters: Record<string, string>,
+  config: HarnessConfig,
+): Promise<void> {
+  const timeoutMs = expectation.timeoutMs ?? DEFAULT_EXPECT_TIMEOUT_MS;
+  const resolvedCandidates = expectation.anyOf.map((hint) =>
+    interpolateHint(hint, parameters),
+  );
+  const candidates = resolvedCandidates.map((hint) =>
+    resolveLocator(page, hint)
+      .first()
+      .waitFor({ state: 'visible', timeout: timeoutMs })
+      .then(() => hint)
+      .catch((error: unknown) => {
+        throw new LocatorNotFoundError(hint, error);
+      }),
+  );
+  try {
+    await Promise.any(candidates);
+  } catch (error) {
+    const inner =
+      error instanceof AggregateError && error.errors.length > 0
+        ? error.errors[error.errors.length - 1]
+        : error;
+    throw new ExpectationTimedOutError(expectation, inner, timeoutMs);
+  }
+  // Suppress unused-variable warning for config — kept for future tuning.
+  void config;
 }
 
 interface CaptureOptions {
@@ -126,15 +208,12 @@ async function captureAndCompare(
     storyFile,
     actionName: action.action,
   });
-  const actualPng = await capturePage(page);
+  const masks = resolveMasks(page, action.mask, parameters);
+  const actualPng = await capturePage(page, masks);
   await writePng(paths.actual, actualPng);
 
   const baselinePng = await readBaseline(paths.baseline);
-  const baseResult: ActionResult = baseResultFor(
-    action.action,
-    parameters,
-    startedAt,
-  );
+  const baseResult = baseResultFor(action.action, parameters, startedAt);
 
   if (baselinePng === undefined) {
     await writePng(paths.baseline, actualPng);
@@ -181,6 +260,19 @@ async function captureAndCompare(
   }
 }
 
+function resolveMasks(
+  page: Page,
+  maskHints: Hint[] | undefined,
+  parameters: Record<string, string>,
+): Locator[] {
+  if (!maskHints || maskHints.length === 0) {
+    return [];
+  }
+  return maskHints.map((hint) =>
+    resolveLocator(page, interpolateHint(hint, parameters)),
+  );
+}
+
 function baseResultFor(
   actionName: string,
   parameters: Record<string, string>,
@@ -193,6 +285,42 @@ function baseResultFor(
     startedAt: startedAt.toISOString(),
     finishedAt: startedAt.toISOString(),
     durationMs: 0,
+  };
+}
+
+function successResultWithoutScreenshot(
+  action: Action,
+  parameters: Record<string, string>,
+  startedAt: Date,
+): ActionResult {
+  const finishedAt = new Date();
+  return {
+    action: action.action,
+    parameters,
+    status: 'pass',
+    startedAt: startedAt.toISOString(),
+    finishedAt: finishedAt.toISOString(),
+    durationMs: finishedAt.getTime() - startedAt.getTime(),
+  };
+}
+
+function failedResult(
+  action: Action,
+  parameters: Record<string, string>,
+  startedAt: Date,
+  failedIndex: number,
+  error: unknown,
+): ActionResult {
+  const finishedAt = new Date();
+  return {
+    action: action.action,
+    parameters,
+    status: 'failed',
+    startedAt: startedAt.toISOString(),
+    finishedAt: finishedAt.toISOString(),
+    durationMs: finishedAt.getTime() - startedAt.getTime(),
+    failedStepIndex: failedIndex,
+    failureMessage: error instanceof Error ? error.message : String(error),
   };
 }
 
@@ -227,5 +355,31 @@ function validateParameters(
         `Action "${action.action}" is missing parameter "${required}"`,
       );
     }
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+export class ExpectationTimedOutError extends Error {
+  readonly expectation: NonNullable<Action['expect']>;
+  readonly innerError: unknown;
+  constructor(
+    expectation: NonNullable<Action['expect']>,
+    innerError: unknown,
+    timeoutMs: number,
+  ) {
+    const summary = expectation.anyOf
+      .map((hint) => JSON.stringify(hint))
+      .join(', ');
+    super(
+      `expect.anyOf did not resolve within ${timeoutMs}ms (candidates: ${summary})`,
+    );
+    this.name = 'ExpectationTimedOutError';
+    this.expectation = expectation;
+    this.innerError = innerError;
   }
 }

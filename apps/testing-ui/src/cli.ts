@@ -6,6 +6,7 @@ interface ParsedArguments {
   command: 'run' | 'approve' | 'help';
   storyFilter?: string;
   headed: boolean;
+  workers?: number;
 }
 
 function parseArguments(argv: string[]): ParsedArguments {
@@ -26,6 +27,11 @@ function parseArguments(argv: string[]): ParsedArguments {
       index += 1;
     } else if (arg.startsWith('--story=')) {
       parsed.storyFilter = arg.slice('--story='.length);
+    } else if (arg === '--workers') {
+      parsed.workers = Number(rest[index + 1]);
+      index += 1;
+    } else if (arg.startsWith('--workers=')) {
+      parsed.workers = Number(arg.slice('--workers='.length));
     }
   }
   return parsed;
@@ -44,6 +50,7 @@ function printHelp(): void {
       'Options:',
       '  --story <name>      Filter to a single story (filename or story text).',
       '  --headed            Show the browser while running.',
+      '  --workers N         Override the worker pool size (default min(cpus/2, 4)).',
     ].join('\n') + '\n',
   );
 }
@@ -58,6 +65,7 @@ async function main(): Promise<void> {
     const result = await runAll({
       storyFilter: args.storyFilter,
       headed: args.headed,
+      workers: args.workers,
     });
     process.stdout.write(
       `\nTotals: ${result.totals.passed} pass · ${result.totals.changed} changed · ${result.totals.failed} failed\n`,

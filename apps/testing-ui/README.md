@@ -1,74 +1,93 @@
 # @linklater/testing-ui
 
-Declarative JSON-driven UI testing harness for Linklater. Authors describe
-user behaviour as **actions** (atomic UI interactions) and **stories** (chained
-actions), runs them against the live app, and captures a screenshot after each
-successful action to build a visual library that doubles as regression coverage.
+Declarative JSON-driven UI testing harness for Linklater. Author user
+behaviours as **actions** (atomic Playwright steps) and **stories** (chained
+actions with dependency-graph ordering). Each successful action ends with a
+masked, pixel-diffed screenshot so the run also builds a visual library that
+doubles as regression coverage.
 
 ## Concepts
 
 - **Action** — a named, reusable JSON object describing a sequence of steps
-  (`navigate`, `click`, `input`, `scroll`, `intercept`, `waitFor`) that the
-  harness executes against a Playwright `Page`. Each action ends with one
-  screenshot.
-- **Story** — a JSON object that chains actions together to model a real user
-  journey. A failed action immediately fails its parent story so the harness
-  never captures screenshots downstream of a broken step.
-- **Hint** — the locator description on each interactive step. Carries
-  visible text, ARIA role, an optional cached selector, and a position bucket.
-  Today the resolver tries role + name, then text, then explicit selector. A
-  future AI fallback can resolve and self-heal hints when the literal locator
-  drifts.
+  (`navigate`, `click`, `input`, `scroll`, `intercept`, `waitFor`). Optional
+  fields: `expect.anyOf` (success criteria the harness polls before
+  screenshotting), `mask` (locators blacked out before capture), `retry`
+  (bounded step-level retry), `screenshot`, `diff` thresholds.
+- **Story** — a JSON object that chains actions together. Stories declare
+  `needs` (label prerequisites) and `produces` (labels they emit). The
+  harness topo-sorts the dependency graph at load time, detects cycles, and
+  runs disjoint stories in parallel up to `--workers N`.
+- **Label** — an opaque string that ties producers to consumers. The first
+  story that passes and produces a label persists its Playwright storage
+  state to `.auth/<label>.json`; consumer stories load it automatically. The
+  canonical example: a `login` story produces `logged-in`; every other
+  story declares `needs: ["logged-in"]`.
+- **Hint** — the locator description on each interactive step. Resolved in
+  this order: `role + text`, `role`, `selector`, `text`. Interpolated
+  against the action's parameters so a single hint can reference `${url}`.
 
 ## Why a new harness
 
-Existing tools (Playwright, Cypress) require code per scenario. This harness
+Existing tools (Playwright, Cypress) need code per scenario. This harness
 treats actions and stories as data and the visual library as a first-class
-build artifact. The eventual differentiators are AI-powered fuzzy element
-matching and self-healing hints, but the MVP stays locator-only and proves
-the data model first.
+build artifact. AI-powered fuzzy element matching and self-healing hints
+are explicit future work; the MVP stays locator-only.
 
-## Quick start
+## Setup once
+
+1. Install repo dependencies + Playwright browsers.
+
+   ```bash
+   npm install
+   npm run install:browsers --workspace @linklater/testing-ui
+   ```
+
+2. Bootstrap the dedicated test database. Idempotent — safe to re-run.
+
+   ```bash
+   npm run test:ui:setup
+   ```
+
+   Creates `linklater_testing_ui`, runs every Prisma migration, and seeds a
+   deterministic test user.
+
+## Run a test pass
+
+Two shells:
 
 ```bash
-# 1. Install dependencies + Playwright browsers
-npm install
-npm run install:browsers --workspace @linklater/testing-ui
+# Shell A — dev servers pointed at the test database
+npm run dev:test
 
-# 2. Start Linklater dev servers in another shell
-npm run dev
+# Shell B — execute the harness
+npm run test:ui
+```
 
-# 3. Seed the test user once per database
-npm run seed --workspace @linklater/testing-ui
+Shell A keeps `linklater_testing_ui` connected. Shell B truncates and
+re-seeds the test database before every invocation, runs all stories in
+dependency order across the worker pool, captures masked screenshots,
+diffs them against committed baselines, and writes the HTML report to
+`apps/testing-ui/report/index.html`.
 
-# 4. Run every story
-npm run run --workspace @linklater/testing-ui
+Open the report:
 
-# 5. Open the report
+```bash
 open apps/testing-ui/report/index.html
 ```
 
 ## CLI
 
 ```
-testing-ui run                     # run every story under stories/
-testing-ui run --story <name>      # run one story by filename or story field
-testing-ui run --headed            # show the browser while running
-testing-ui approve                 # accept every "changed" baseline from the last run
-testing-ui approve --story <name>  # accept changes for one story only
+testing-ui run                   # run every story
+testing-ui run --story <name>    # run one story (filename or story text)
+testing-ui run --headed          # show the browser
+testing-ui run --workers N       # override worker pool size
+testing-ui approve               # promote every "changed" actual to its baseline
+testing-ui approve --story <n>   # accept changes for one story
 ```
 
-## Layout
-
-```
-apps/testing-ui/
-├─ actions/      # JSON action definitions
-├─ stories/      # JSON story definitions
-├─ baselines/    # git-tracked PNGs; one per action
-├─ report/       # generated HTML report (gitignored)
-├─ .auth/        # cached Playwright storage state (gitignored)
-└─ src/          # runner + schemas + reporter
-```
+Wired via root scripts: `npm run test:ui`, `npm run test:ui:approve`,
+`npm run test:ui:setup`.
 
 ## Authoring an action
 
@@ -85,7 +104,13 @@ apps/testing-ui/
       "value": "${url}"
     },
     { "kind": "click", "hint": { "role": "button", "text": "Save link" } }
-  ]
+  ],
+  "expect": {
+    "anyOf": [{ "selector": "#links-list a" }]
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "retry": { "attempts": 2, "backoffMs": 200 },
+  "diff": { "maxDiffRatio": 0.02 }
 }
 ```
 
@@ -93,17 +118,46 @@ apps/testing-ui/
 
 ```json
 {
-  "story": "As a user, I want to save a link I found.",
-  "storageState": "logged-in",
+  "story": "As a logged-in user, I can save a link I found.",
+  "needs": ["logged-in"],
   "actions": [
-    { "action": "login" },
-    { "action": "save-link", "parameters": { "url": "http://httpforever.com/" } }
+    {
+      "action": "save-link",
+      "parameters": { "url": "http://httpforever.com/" }
+    }
   ]
 }
 ```
 
+## Layout
+
+```
+apps/testing-ui/
+├─ actions/                # JSON action definitions
+├─ stories/                # JSON story definitions
+├─ baselines/              # git-tracked PNGs; one per action
+├─ report/                 # generated HTML report (gitignored)
+│  └─ traces/              # Playwright trace zips, one per failed story
+├─ .auth/                  # cached Playwright storage state (gitignored)
+└─ src/                    # runner + schemas + reporter + scheduler
+```
+
+## Debugging a failure
+
+The HTML report's "failures" section links to a Playwright trace zip per
+failed story. Open with:
+
+```bash
+npx playwright show-trace apps/testing-ui/report/traces/<story>.zip
+```
+
+The trace viewer gives a full timeline, DOM snapshots per step, network
+log, and screenshots — enough to figure out almost any flake without
+adding logs to the harness.
+
 ## Status
 
-MVP. AI fuzzy matching, self-healing hints, and CI wiring are deferred. The
-HTML reporter still needs a pass from the accessibility lead before the page
-ships as a long-term review surface.
+Hardened MVP. Stability primitives (exit conditions, retry, masks,
+deterministic test DB), parallelism, dependency-graph ordering, and trace
+recording all land in this revision. AI fuzzy matching and CI wiring are
+still future work.

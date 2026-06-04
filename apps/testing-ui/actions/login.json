@@ -15,10 +15,11 @@
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Log in" }
-    },
-    {
-      "kind": "waitFor",
-      "hint": { "role": "heading", "text": "Your links" }
     }
-  ]
+  ],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Your links" }]
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
 }

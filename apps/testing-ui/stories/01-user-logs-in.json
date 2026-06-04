@@ -1,7 +1,0 @@
-{
-  "story": "As a user, I can log in with email and password.",
-  "storageState": "fresh",
-  "actions": [
-    { "action": "login" }
-  ]
-}

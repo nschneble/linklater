@@ -1,5 +1,5 @@
 {
-  "action": "save-link",
+  "action": "save-link-expect-error",
   "parameters": ["url"],
   "steps": [
     { "kind": "navigate", "path": "/unread" },
@@ -18,7 +18,7 @@
     }
   ],
   "expect": {
-    "anyOf": [{ "selector": "#links-list a" }]
+    "anyOf": [{ "role": "alert" }]
   },
   "mask": [{ "selector": "#suggestion-callout-title" }],
   "diff": { "maxDiffRatio": 0.02 }

@@ -1,51 +1,59 @@
 import { relative } from 'node:path';
-import type { ActionResult, RunResult, StoryResult } from '../schema/result.ts';
+import type {
+  ActionResult,
+  ActionStatus,
+  RunResult,
+  StoryResult,
+} from '../schema/result.ts';
 
-const STATUS_LABELS: Record<ActionResult['status'], string> = {
-  pass: 'Pass',
-  changed: 'Changed',
-  failed: 'Failed',
-  skipped: 'Skipped',
-  new: 'New baseline',
+const STATUS_LABELS: Record<ActionStatus, string> = {
+  pass: 'pass',
+  changed: 'changed',
+  failed: 'failed',
+  skipped: 'skipped',
+  new: 'new baseline',
+};
+
+const STATUS_LETTERS: Record<ActionStatus, string> = {
+  pass: 'P',
+  changed: 'C',
+  failed: 'F',
+  skipped: '·',
+  new: 'N',
 };
 
 /**
- * Renders a static HTML report from a `RunResult`. No client framework — the
- * page is a flat document with a tiny script that wires up the
- * baseline/actual/diff tabs on each action card. Screenshot paths are
- * rewritten to be relative to the `report/` directory so the file works when
- * the user double-clicks it.
+ * Static HTML report. Console / dev-tool aesthetic: dark by default, mono for
+ * data, sans for prose, sharp 1px borders, tree branches in box-drawing
+ * characters that are hidden from assistive tech. Stories + actions are
+ * conveyed semantically through nested `<ol>` elements; the glyphs are
+ * pure presentation.
  */
 export function renderReport(result: RunResult, rootDir: string): string {
-  const summary = renderSummary(result);
-  const stories = result.stories.map((story, index) =>
-    renderStory(story, index, rootDir),
-  );
+  const failures = collectFailures(result);
+  const dateLabel = formatDate(result.finishedAt);
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>testing-ui report — Linklater</title>
+<title>testing-ui report — ${dateLabel}</title>
 <link rel="stylesheet" href="assets/report.css" />
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to report</a>
 <header class="report-header">
-  <h1>Linklater testing-ui report</h1>
+  <h1>testing-ui report</h1>
   <p class="report-meta">
-    Run finished <time datetime="${result.finishedAt}">${formatDate(result.finishedAt)}</time>
-    · Duration ${formatDuration(result.durationMs)}
+    <time datetime="${result.finishedAt}">${dateLabel}</time>
+    <span aria-hidden="true">·</span>
+    duration ${formatDuration(result.durationMs)}
   </p>
 </header>
 <main id="main" tabindex="-1">
-  <section aria-labelledby="summary-heading" class="summary">
-    <h2 id="summary-heading">Summary</h2>
-    ${summary}
-  </section>
-  <section aria-labelledby="stories-heading">
-    <h2 id="stories-heading">Stories</h2>
-    ${stories.join('\n')}
-  </section>
+  ${renderSummary(result)}
+  ${renderStories(result, rootDir)}
+  ${renderFailures(failures, rootDir)}
 </main>
 <script src="assets/report.js"></script>
 </body>
@@ -55,12 +63,41 @@ export function renderReport(result: RunResult, rootDir: string): string {
 
 function renderSummary(result: RunResult): string {
   return `
-    <ul class="summary-list">
-      <li><strong>${result.totals.stories}</strong> stories</li>
-      <li class="badge badge-pass"><strong>${result.totals.passed}</strong> passed</li>
-      <li class="badge badge-changed"><strong>${result.totals.changed}</strong> changed</li>
-      <li class="badge badge-failed"><strong>${result.totals.failed}</strong> failed</li>
-    </ul>`;
+<section class="summary" aria-labelledby="summary-heading">
+  <h2 id="summary-heading">summary</h2>
+  <ul class="summary-list" aria-label="Run totals">
+    ${summaryItem('stories', result.totals.stories)}
+    ${summaryItem('pass', result.totals.passed, 'pass')}
+    ${summaryItem('changed', result.totals.changed, 'changed')}
+    ${summaryItem('failed', result.totals.failed, 'failed')}
+  </ul>
+</section>`;
+}
+
+function summaryItem(
+  label: string,
+  value: number,
+  statusKey?: ActionStatus,
+): string {
+  const indicator = statusKey
+    ? `<span class="indicator" data-status="${statusKey}" aria-hidden="true"></span>`
+    : '';
+  return `<li class="summary-item"${
+    statusKey ? ` data-status="${statusKey}"` : ''
+  }><span class="count">${value}</span>${indicator}<span class="label">${label}</span></li>`;
+}
+
+function renderStories(result: RunResult, rootDir: string): string {
+  const items = result.stories
+    .map((story, index) => renderStory(story, index, rootDir))
+    .join('\n');
+  return `
+<section aria-labelledby="stories-heading">
+  <h2 id="stories-heading">stories</h2>
+  <ol class="stories" aria-label="Stories executed in dependency order">
+    ${items}
+  </ol>
+</section>`;
 }
 
 function renderStory(
@@ -69,61 +106,69 @@ function renderStory(
   rootDir: string,
 ): string {
   const actions = story.actions
-    .map((action, actionIndex) =>
-      renderAction(action, `s${storyIndex}-a${actionIndex}`, rootDir),
+    .map((action, actionIndex, all) =>
+      renderAction(
+        action,
+        `s${storyIndex}-a${actionIndex}`,
+        actionIndex === all.length - 1,
+        rootDir,
+      ),
     )
     .join('\n');
   return `
-    <article class="story" data-status="${story.status}">
-      <header class="story-header">
-        <h3>${escapeHtml(story.story)}</h3>
-        <p class="story-meta">
-          <span class="badge badge-${story.status}">${STATUS_LABELS[story.status]}</span>
-          <code>${escapeHtml(story.file)}</code>
-          · ${formatDuration(story.durationMs)}
-        </p>
-      </header>
-      <ol class="action-list">
-        ${actions}
-      </ol>
-    </article>`;
+<li class="story" data-status="${story.status}">
+  <div class="story-row">
+    ${storyBadge(story.status)}
+    <code class="story-file">${escapeHtml(story.file)}</code>
+    <span class="story-duration">${formatDuration(story.durationMs)}</span>
+  </div>
+  <p class="story-prose">${escapeHtml(story.story)}</p>
+  <ol class="actions" aria-label="Actions">
+    ${actions}
+  </ol>
+</li>`;
 }
 
 function renderAction(
   action: ActionResult,
   actionId: string,
+  isLast: boolean,
   rootDir: string,
 ): string {
-  const status = action.status;
+  const branch = isLast ? '└─' : '├─';
   const screenshots = renderScreenshots(action, actionId, rootDir);
-  const failure =
-    status === 'failed'
-      ? `<p class="action-error">
-          Step ${(action.failedStepIndex ?? 0) + 1} failed: ${escapeHtml(action.failureMessage ?? 'unknown error')}
-        </p>`
+  const errorBlock =
+    action.status === 'failed'
+      ? `<pre class="action-error">${escapeHtml(action.failureMessage ?? 'unknown error')}</pre>`
       : '';
-  const parameters =
-    action.parameters && Object.keys(action.parameters).length > 0
-      ? `<dl class="action-parameters">
-          ${Object.entries(action.parameters)
-            .map(
-              ([key, value]) =>
-                `<dt>${escapeHtml(key)}</dt><dd>${escapeHtml(value)}</dd>`,
-            )
-            .join('')}
-        </dl>`
-      : '';
+  const parameters = renderParameters(action.parameters);
   return `
-    <li class="action" data-status="${status}">
-      <div class="action-head">
-        <h4>${escapeHtml(action.action)}</h4>
-        <span class="badge badge-${status}">${STATUS_LABELS[status]}</span>
-        <span class="action-duration">${formatDuration(action.durationMs)}</span>
-      </div>
-      ${parameters}
-      ${failure}
-      ${screenshots}
-    </li>`;
+<li class="action" data-status="${action.status}">
+  <div class="action-row">
+    <span class="branch" aria-hidden="true">${branch}</span>
+    ${statusBadge(action.status)}
+    <code class="action-name">${escapeHtml(action.action)}</code>
+    <span class="action-duration">${formatDuration(action.durationMs)}</span>
+    ${screenshots ? `<span class="action-shots">${screenshots}</span>` : ''}
+  </div>
+  ${parameters}
+  ${errorBlock}
+</li>`;
+}
+
+function renderParameters(
+  parameters: Record<string, string> | undefined,
+): string {
+  if (!parameters || Object.keys(parameters).length === 0) {
+    return '';
+  }
+  const entries = Object.entries(parameters)
+    .map(
+      ([key, value]) =>
+        `<dt>${escapeHtml(key)}</dt><dd>${escapeHtml(value)}</dd>`,
+    )
+    .join('');
+  return `<dl class="action-parameters">${entries}</dl>`;
 }
 
 function renderScreenshots(
@@ -143,42 +188,44 @@ function renderScreenshots(
   const diff = action.diffPath
     ? toReportRelative(rootDir, action.diffPath)
     : undefined;
+  const defaultTab = diff ? 'diff' : 'actual';
   const diffStatsId = `${actionId}-diff-stats`;
-  const ratio =
+  const diffStats =
     action.diffRatio !== undefined
       ? `<p class="diff-stats" id="${diffStatsId}">${action.diffPixels} pixels differ (${(action.diffRatio * 100).toFixed(3)}%)</p>`
       : '';
   return `
-    <div class="screenshots" data-default-tab="${diff ? 'diff' : 'actual'}">
-      <div class="screenshot-tabs" role="tablist" aria-label="Screenshot view">
-        ${tabButton(actionId, 'baseline', 'Baseline', baseline === undefined)}
-        ${tabButton(actionId, 'actual', 'Actual', actual === undefined)}
-        ${tabButton(actionId, 'diff', 'Diff', diff === undefined)}
-      </div>
-      ${tabPanel(actionId, 'baseline', baseline, `${action.action} baseline screenshot`)}
-      ${tabPanel(actionId, 'actual', actual, `${action.action} actual screenshot from this run`)}
-      ${tabPanel(actionId, 'diff', diff, `Pixel diff overlay for ${action.action}: red pixels mark changed regions`, action.diffRatio !== undefined ? diffStatsId : undefined)}
-    </div>
-    ${ratio}`;
+<details class="shots">
+  <summary><span aria-hidden="true">[</span>view<span aria-hidden="true">]</span></summary>
+  <fieldset class="shot-radio" data-default-tab="${defaultTab}">
+    <legend class="sr-only">Screenshot to display</legend>
+    ${shotRadio(actionId, 'baseline', baseline === undefined)}
+    ${shotRadio(actionId, 'actual', actual === undefined)}
+    ${shotRadio(actionId, 'diff', diff === undefined)}
+  </fieldset>
+  ${shotPanel(actionId, 'baseline', baseline, `${action.action} baseline screenshot`)}
+  ${shotPanel(actionId, 'actual', actual, `${action.action} actual screenshot from this run`)}
+  ${shotPanel(actionId, 'diff', diff, `Pixel diff overlay for ${action.action}: red pixels mark changed regions`, action.diffRatio !== undefined ? diffStatsId : undefined)}
+  ${diffStats}
+</details>`;
 }
 
-function tabButton(
-  actionId: string,
-  name: string,
-  label: string,
-  disabled: boolean,
-): string {
-  return `<button
-    type="button"
-    role="tab"
-    tabindex="-1"
-    data-tab="${name}"
-    aria-controls="panel-${actionId}-${name}"
-    ${disabled ? 'aria-disabled="true"' : ''}
-  >${label}</button>`;
+function shotRadio(actionId: string, name: string, disabled: boolean): string {
+  const inputId = `${actionId}-radio-${name}`;
+  return `<label for="${inputId}" class="shot-radio-label">
+    <input
+      type="radio"
+      name="${actionId}-shot"
+      id="${inputId}"
+      value="${name}"
+      data-tab="${name}"
+      ${disabled ? 'disabled' : ''}
+    />
+    ${name}
+  </label>`;
 }
 
-function tabPanel(
+function shotPanel(
   actionId: string,
   name: string,
   src: string | undefined,
@@ -186,8 +233,7 @@ function tabPanel(
   describedById?: string,
 ): string {
   return `<div
-    class="screenshot-panel"
-    role="tabpanel"
+    class="shot-panel"
     id="panel-${actionId}-${name}"
     data-tab="${name}"
     hidden
@@ -195,9 +241,78 @@ function tabPanel(
     ${
       src
         ? `<img src="${escapeAttribute(src)}" alt="${escapeAttribute(alt)}" loading="lazy"${describedById ? ` aria-describedby="${describedById}"` : ''} />`
-        : `<p class="screenshot-missing">No ${name} screenshot for this action.</p>`
+        : `<p class="shot-missing">no ${name} screenshot for this action</p>`
     }
   </div>`;
+}
+
+function renderFailures(failures: FailureRecord[], rootDir: string): string {
+  if (failures.length === 0) {
+    return `
+<section aria-labelledby="failures-heading">
+  <h2 id="failures-heading">failures</h2>
+  <p class="prose-block empty">(none)</p>
+</section>`;
+  }
+  const items = failures
+    .map(
+      (failure) => `
+<article class="failure">
+  <header class="failure-head">
+    <code>${escapeHtml(failure.storyFile)}</code>
+    <span aria-hidden="true">·</span>
+    <code>${escapeHtml(failure.actionName)}</code>
+  </header>
+  <pre class="failure-message">${escapeHtml(failure.message)}</pre>
+  ${
+    failure.tracePath
+      ? `<p class="failure-trace">trace: <a href="${escapeAttribute(toReportRelative(rootDir, failure.tracePath))}">${escapeHtml(toReportRelative(rootDir, failure.tracePath))}</a></p>`
+      : ''
+  }
+</article>`,
+    )
+    .join('\n');
+  return `
+<section aria-labelledby="failures-heading">
+  <h2 id="failures-heading">failures</h2>
+  <ol class="failures" aria-label="Failed actions">
+    ${items}
+  </ol>
+</section>`;
+}
+
+interface FailureRecord {
+  storyFile: string;
+  actionName: string;
+  message: string;
+  tracePath?: string;
+}
+
+function collectFailures(result: RunResult): FailureRecord[] {
+  const out: FailureRecord[] = [];
+  for (const story of result.stories) {
+    for (const action of story.actions) {
+      if (action.status === 'failed') {
+        out.push({
+          storyFile: story.file,
+          actionName: action.action,
+          message: action.failureMessage ?? 'unknown error',
+          tracePath: story.tracePath,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+function statusBadge(status: ActionStatus): string {
+  return `<span class="status" data-status="${status}">
+    <span class="status-letter" aria-hidden="true">${STATUS_LETTERS[status]}</span><span class="sr-only">${STATUS_LABELS[status]}</span><span class="status-label" aria-hidden="true">${STATUS_LABELS[status]}</span>
+  </span>`;
+}
+
+function storyBadge(status: ActionStatus): string {
+  return statusBadge(status);
 }
 
 function toReportRelative(rootDir: string, absolute: string): string {
@@ -205,13 +320,13 @@ function toReportRelative(rootDir: string, absolute: string): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString();
+  const date = new Date(iso);
+  return date.toISOString().replace('T', ' ').slice(0, 19);
 }
 
 function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms} ms`;
-  const seconds = (ms / 1000).toFixed(2);
-  return `${seconds} s`;
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(2)}s`;
 }
 
 function escapeHtml(value: string): string {

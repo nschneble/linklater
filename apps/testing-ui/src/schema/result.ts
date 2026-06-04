@@ -41,6 +41,8 @@ export interface StoryResult {
   finishedAt: string;
   durationMs: number;
   actions: ActionResult[];
+  /** Absolute path to the Playwright trace zip when the story failed. */
+  tracePath?: string;
 }
 
 export interface RunResult {

@@ -1,74 +1,116 @@
+import { cpus } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import config from '../../playwright.config.ts';
-import type { RunResult } from '../schema/result.ts';
+import type { Action } from '../schema/action.ts';
+import type { RunResult, StoryResult } from '../schema/result.ts';
 import { loadActions, loadStories } from '../schema/load.ts';
 import { writeReport } from '../reporter/writeReport.ts';
 import { runStory } from './runStory.ts';
+import {
+  buildSchedule,
+  drainSchedule,
+  type ScheduledStory,
+} from './scheduler.ts';
+import { resetTestDatabase } from './testDb.ts';
 
 export interface RunCliOptions {
   storyFilter?: string;
   headed: boolean;
+  workers?: number;
 }
 
 const moduleDir = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = join(moduleDir, '..', '..');
 
 /**
- * Loads every action and story under the package, executes each story
- * sequentially (parallelism is a v2 concern — keep the failure log readable),
- * and emits the HTML report. Returns the aggregate `RunResult` so the CLI
- * caller can set the process exit code based on whether any story failed.
+ * Loads every action and story under the package, resets the dedicated test
+ * database, schedules stories according to their needs/produces DAG, and
+ * drives execution across a fixed worker pool. Returns the aggregate
+ * `RunResult` so the CLI can set the process exit code.
  */
 export async function runAll(options: RunCliOptions): Promise<RunResult> {
   const startedAt = new Date();
+  process.stdout.write('Resetting test database…\n');
+  await resetTestDatabase();
   const actions = await loadActions(ROOT_DIR);
   const allStories = await loadStories(ROOT_DIR);
-  const stories = options.storyFilter
-    ? allStories.filter(
-        ({ file, story }) =>
-          file === options.storyFilter ||
-          file === `${options.storyFilter}.json` ||
-          story.story === options.storyFilter,
-      )
-    : allStories;
+  const scheduled = buildSchedule(allStories);
+  const subset = options.storyFilter
+    ? scheduled.filter((item) => matchesFilter(item, options.storyFilter!))
+    : scheduled;
 
-  if (options.storyFilter && stories.length === 0) {
+  if (options.storyFilter && subset.length === 0) {
     throw new Error(`No story matched filter "${options.storyFilter}"`);
   }
 
-  const results = [];
-  for (const { story, file } of stories) {
-    process.stdout.write(`▶ ${file}\n`);
-    const storyResult = await runStory({
-      story,
-      file,
-      actions,
-      rootDir: ROOT_DIR,
-      config,
-      headed: options.headed,
-    });
-    process.stdout.write(
-      `  ${storyResult.status.toUpperCase()} (${storyResult.actions.length} actions, ${storyResult.durationMs} ms)\n`,
-    );
-    results.push(storyResult);
-  }
+  const workerCount = resolveWorkerCount(options.workers);
+  process.stdout.write(
+    `Scheduling ${subset.length} stories on ${workerCount} worker${workerCount === 1 ? '' : 's'}.\n`,
+  );
+
+  const results = await drainSchedule(
+    subset,
+    workerCount,
+    (item) => runScheduledStory(item, actions, options.headed),
+    (item) => process.stdout.write(`▶ ${item.file}\n`),
+    (item, result) =>
+      process.stdout.write(
+        `  ${result.status.toUpperCase()} ${item.file} (${result.actions.length} actions, ${result.durationMs} ms)\n`,
+      ),
+  );
 
   const finishedAt = new Date();
-  const totals = {
-    stories: results.length,
-    passed: results.filter((result) => result.status === 'pass').length,
-    changed: results.filter((result) => result.status === 'changed').length,
-    failed: results.filter((result) => result.status === 'failed').length,
-  };
   const runResult: RunResult = {
     startedAt: startedAt.toISOString(),
     finishedAt: finishedAt.toISOString(),
     durationMs: finishedAt.getTime() - startedAt.getTime(),
-    totals,
+    totals: summarise(results),
     stories: results,
   };
   const reportPath = await writeReport(ROOT_DIR, runResult);
   process.stdout.write(`\nReport: ${reportPath}\n`);
   return runResult;
+}
+
+function runScheduledStory(
+  item: ScheduledStory,
+  actions: Map<string, Action>,
+  headed: boolean,
+): Promise<StoryResult> {
+  return runStory({
+    story: item.story,
+    file: item.file,
+    needs: item.needs,
+    produces: item.produces,
+    actions,
+    rootDir: ROOT_DIR,
+    config,
+    headed,
+  });
+}
+
+function matchesFilter(item: ScheduledStory, filter: string): boolean {
+  return (
+    item.file === filter ||
+    item.file === `${filter}.json` ||
+    item.story.story === filter
+  );
+}
+
+function resolveWorkerCount(requested: number | undefined): number {
+  if (requested && requested > 0) {
+    return requested;
+  }
+  const half = Math.floor(cpus().length / 2);
+  return Math.max(1, Math.min(half, 4));
+}
+
+function summarise(results: StoryResult[]): RunResult['totals'] {
+  return {
+    stories: results.length,
+    passed: results.filter((result) => result.status === 'pass').length,
+    changed: results.filter((result) => result.status === 'changed').length,
+    failed: results.filter((result) => result.status === 'failed').length,
+  };
 }

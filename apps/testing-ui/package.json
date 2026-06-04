@@ -13,7 +13,7 @@
     "build": "tsc -b",
     "run": "node --experimental-strip-types src/cli.ts run",
     "approve": "node --experimental-strip-types src/cli.ts approve",
-    "seed": "node --experimental-strip-types scripts/seed.ts",
+    "setup": "node --experimental-strip-types scripts/setup-test-db.ts",
     "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" \"scripts/**/*.ts\" --max-warnings=0",
     "install:browsers": "playwright install chromium",

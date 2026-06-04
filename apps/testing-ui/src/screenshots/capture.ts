@@ -1,14 +1,19 @@
-import type { Page } from 'playwright';
+import type { Locator, Page } from 'playwright';
 
 /**
- * Full-page screenshot with animations disabled and caret hidden so the same
- * UI renders to bit-identical pixels across runs. Returns the raw PNG buffer
- * so the caller can write to a baseline or an actual file.
+ * Full-page screenshot with animations disabled, caret hidden, and any masks
+ * applied so the same UI renders to bit-identical pixels across runs. Masks
+ * are Playwright locators whose bounding boxes are blacked out before the
+ * image is encoded — use them to neutralise randomised or time-based regions.
  */
-export async function capturePage(page: Page): Promise<Buffer> {
+export async function capturePage(
+  page: Page,
+  masks: Locator[] = [],
+): Promise<Buffer> {
   return page.screenshot({
     fullPage: true,
     animations: 'disabled',
     caret: 'hide',
+    mask: masks,
   });
 }
