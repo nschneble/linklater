@@ -3,6 +3,7 @@
   "flow": "change my email address",
   "needs": ["logged-in"],
   "actions": [
+    { "action": "intercept-no-api-tokens" },
     {
       "action": "change-email",
       "parameters": { "newEmail": "moved@linklater.test" }

@@ -8,7 +8,10 @@
     }
   ],
   "expect": {
-    "anyOf": [{ "role": "tab", "text": "Read" }]
+    "anyOf": [
+      { "selector": "[role='tab'][aria-selected='true']:has-text('Read')" }
+    ],
+    "timeoutMs": 15000
   },
   "mask": [{ "selector": "#suggestion-callout-title" }],
   "diff": { "maxDiffRatio": 0.02 }

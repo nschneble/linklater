@@ -1,0 +1,28 @@
+{
+  "action": "intercept-noop-user-patch",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/users/me",
+      "method": "PATCH",
+      "respond": {
+        "status": 200,
+        "body": {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "email": "testing-ui@linklater.test",
+          "emailVerifiedAt": "2026-01-01T12:00:00.000Z",
+          "pendingEmail": null,
+          "welcomedAt": "2026-01-01T12:00:00.000Z",
+          "mode": null,
+          "theme": null,
+          "cvdMode": false,
+          "hasPassword": true,
+          "multiFactorMethod": null,
+          "createdAt": "2026-01-01T12:00:00.000Z",
+          "updatedAt": "2026-01-01T12:00:00.000Z"
+        }
+      }
+    }
+  ],
+  "screenshot": false
+}

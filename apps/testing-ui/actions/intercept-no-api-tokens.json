@@ -1,0 +1,12 @@
+{
+  "action": "intercept-no-api-tokens",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/tokens",
+      "method": "GET",
+      "respond": { "status": 200, "body": [] }
+    }
+  ],
+  "screenshot": false
+}

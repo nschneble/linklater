@@ -3,6 +3,7 @@
   "flow": "add a new link",
   "needs": ["logged-in"],
   "actions": [
+    { "action": "intercept-no-links" },
     {
       "action": "save-link",
       "parameters": { "url": "http://httpforever.com/" }

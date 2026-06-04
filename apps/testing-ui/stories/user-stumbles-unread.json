@@ -4,6 +4,7 @@
   "needs": ["logged-in"],
   "fixtures": ["user-with-3-links"],
   "actions": [
+    { "action": "intercept-3-unread-links" },
     { "action": "intercept-random-link" },
     { "action": "stumble-unread" }
   ]
