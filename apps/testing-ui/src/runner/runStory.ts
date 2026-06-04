@@ -9,6 +9,8 @@ import type {
   StoryStatus,
 } from '../schema/result.ts';
 import type { HarnessConfig } from '../../playwright.config.ts';
+import type { CoverageCollector } from './coverage.ts';
+import { applyFixture } from './fixtures/index.ts';
 import { runAction } from './runAction.ts';
 
 export interface RunStoryOptions {
@@ -20,6 +22,7 @@ export interface RunStoryOptions {
   rootDir: string;
   config: HarnessConfig;
   headed: boolean;
+  coverage?: CoverageCollector;
 }
 
 const AUTH_DIR = '.auth';
@@ -43,6 +46,9 @@ const FROZEN_TIME_ISO = '2026-01-15T12:00:00.000Z';
  */
 export async function runStory(options: RunStoryOptions): Promise<StoryResult> {
   const startedAt = new Date();
+  for (const fixture of options.story.fixtures ?? []) {
+    await applyFixture(fixture);
+  }
   const browser = await chromium.launch({ headless: !options.headed });
   try {
     return await runStoryWithBrowser(browser, options, startedAt);
@@ -56,7 +62,8 @@ async function runStoryWithBrowser(
   options: RunStoryOptions,
   startedAt: Date,
 ): Promise<StoryResult> {
-  const { story, file, needs, produces, actions, rootDir, config } = options;
+  const { story, file, needs, produces, actions, rootDir, config, coverage } =
+    options;
   const storageStatePath = await resolveStorageStateForNeeds(rootDir, needs);
   const context = await browser.newContext({
     baseURL: config.baseUrl,
@@ -73,6 +80,9 @@ async function runStoryWithBrowser(
   });
   const page = await context.newPage();
   await page.clock.install({ time: FROZEN_TIME_ISO });
+  if (coverage) {
+    await coverage.startForPage(page);
+  }
 
   const results: ActionResult[] = [];
   let storyStatus: StoryStatus = 'pass';
@@ -106,6 +116,9 @@ async function runStoryWithBrowser(
     }
   }
 
+  if (coverage) {
+    await coverage.stopForPage(page);
+  }
   const tracePath = await stopTracing(context, rootDir, file, storyStatus);
   if (storyStatus !== 'failed' && produces.length > 0) {
     await persistProducedAuthState(context, rootDir, produces);

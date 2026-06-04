@@ -125,6 +125,33 @@ Defaults: `pixelThreshold: 0.1` (perceptual similarity per pixel),
 `maxDiffRatio: 0.005` (0.5% of pixels may drift). Tighten or loosen
 deliberately — don't sprinkle it on every action.
 
+## Fixtures (preloaded DB state)
+
+Stories that need preloaded rows in the test DB declare named fixtures
+that run before the browser context launches.
+
+```json
+{
+  "story": "User reviews their reading history",
+  "needs": ["logged-in"],
+  "fixtures": ["user-with-read-history"],
+  "actions": [{ "action": "visit-read" }]
+}
+```
+
+Fixtures live under `src/runner/fixtures/`. Each is a deterministic
+`(client: pg.Client) => Promise<void>` registered in
+`src/runner/fixtures/index.ts`. Add a new fixture by writing the file,
+registering its name in the registry, and listing it in the story.
+
+Fixtures apply against the same shared test database. Two stories that
+mutate overlapping rows in parallel will race — use `needs`/`produces`
+to serialise them.
+
+`npm run test:ui:setup` MUST have been run at least once before any
+fixture executes; fixtures throw if the deterministic test user is
+missing.
+
 ## Storage state + dependency graph
 
 Stories declare needs and produces. Labels are opaque strings; the

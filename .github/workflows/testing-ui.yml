@@ -1,0 +1,65 @@
+name: testing-ui
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  testing-ui:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: linklater_testing_ui
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      TESTING_UI: '1'
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/linklater_testing_ui?schema=public'
+      JWT_SECRET: 'ci-jwt-secret'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: apps/api
+        run: npx prisma generate
+
+      - name: Install Playwright browsers (Chromium only)
+        run: npm run install:browsers --workspace @linklater/testing-ui
+
+      - name: Bootstrap test database
+        run: npm run test:ui:setup
+
+      - name: Run testing-ui harness
+        run: npm run test:ui -- --manage-servers
+
+      - name: Upload testing-ui report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testing-ui-report
+          path: apps/testing-ui/report/
+          retention-days: 14

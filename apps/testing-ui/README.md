@@ -168,9 +168,19 @@ The trace viewer gives a full timeline, DOM snapshots per step, network
 log, and screenshots — enough to figure out almost any flake without
 adding logs to the harness.
 
+## CI
+
+Runs in `.github/workflows/testing-ui.yml` on every pull request to `main`
+and every push to `main`. The job spins up Postgres 16, runs
+`test:ui:setup` against `linklater_testing_ui`, then executes
+`npm run test:ui -- --manage-servers` so the harness owns its own dev
+servers. On failure, `apps/testing-ui/report/` (HTML report, traces,
+screenshots, `dev-servers.log`) uploads as the `testing-ui-report`
+artifact with 14-day retention.
+
 ## Status
 
 Hardened MVP. Stability primitives (exit conditions, retry, masks,
-deterministic test DB), parallelism, dependency-graph ordering, and trace
-recording all land in this revision. AI fuzzy matching and CI wiring are
+deterministic test DB), parallelism, dependency-graph ordering, trace
+recording, and CI wiring all land in this revision. AI fuzzy matching is
 still future work.

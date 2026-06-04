@@ -17,12 +17,14 @@ import {
   type ManagedDevServers,
 } from './devServers.ts';
 import { resetTestDatabase } from './testDb.ts';
+import { CoverageCollector } from './coverage.ts';
 
 export interface RunCliOptions {
   storyFilter?: string;
   headed: boolean;
   workers?: number;
   manageServers?: boolean;
+  coverage?: boolean;
 }
 
 const moduleDir = dirname(fileURLToPath(import.meta.url));
@@ -40,6 +42,9 @@ export async function runAll(options: RunCliOptions): Promise<RunResult> {
   if (options.manageServers) {
     managedServers = await startManagedDevServers(ROOT_DIR);
   }
+  const coverage = options.coverage
+    ? new CoverageCollector(ROOT_DIR)
+    : undefined;
   try {
     process.stdout.write('Resetting test database…\n');
     await resetTestDatabase();
@@ -62,7 +67,7 @@ export async function runAll(options: RunCliOptions): Promise<RunResult> {
     const results = await drainSchedule(
       subset,
       workerCount,
-      (item) => runScheduledStory(item, actions, options.headed),
+      (item) => runScheduledStory(item, actions, options.headed, coverage),
       (item) => process.stdout.write(`▶ ${item.file}\n`),
       (item, result) =>
         process.stdout.write(
@@ -80,6 +85,10 @@ export async function runAll(options: RunCliOptions): Promise<RunResult> {
     };
     const reportPath = await writeReport(ROOT_DIR, runResult);
     process.stdout.write(`\nReport: ${reportPath}\n`);
+    if (coverage) {
+      const coveragePath = await coverage.generate();
+      process.stdout.write(`Coverage: ${coveragePath}\n`);
+    }
     return runResult;
   } finally {
     if (managedServers) {
@@ -92,6 +101,7 @@ function runScheduledStory(
   item: ScheduledStory,
   actions: Map<string, Action>,
   headed: boolean,
+  coverage: CoverageCollector | undefined,
 ): Promise<StoryResult> {
   return runStory({
     story: item.story,
@@ -102,6 +112,7 @@ function runScheduledStory(
     rootDir: ROOT_DIR,
     config,
     headed,
+    coverage,
   });
 }
 

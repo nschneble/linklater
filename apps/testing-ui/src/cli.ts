@@ -8,6 +8,7 @@ interface ParsedArguments {
   headed: boolean;
   workers?: number;
   manageServers: boolean;
+  coverage: boolean;
 }
 
 function parseArguments(argv: string[]): ParsedArguments {
@@ -19,6 +20,7 @@ function parseArguments(argv: string[]): ParsedArguments {
         : 'help',
     headed: false,
     manageServers: false,
+    coverage: false,
   };
   for (let index = 0; index < rest.length; index += 1) {
     const arg = rest[index];
@@ -36,6 +38,8 @@ function parseArguments(argv: string[]): ParsedArguments {
       parsed.workers = Number(arg.slice('--workers='.length));
     } else if (arg === '--manage-servers') {
       parsed.manageServers = true;
+    } else if (arg === '--coverage') {
+      parsed.coverage = true;
     }
   }
   return parsed;
@@ -56,6 +60,7 @@ function printHelp(): void {
       '  --headed            Show the browser while running.',
       '  --workers N         Override the worker pool size (default min(cpus/2, 4)).',
       '  --manage-servers    Spawn `npm run dev:test`, wait for it, run, then kill it.',
+      '  --coverage          Capture V8 JS + CSS coverage and emit a monocart report.',
     ].join('\n') + '\n',
   );
 }
@@ -72,6 +77,7 @@ async function main(): Promise<void> {
       headed: args.headed,
       workers: args.workers,
       manageServers: args.manageServers,
+      coverage: args.coverage,
     });
     process.stdout.write(
       `\nTotals: ${result.totals.passed} pass · ${result.totals.changed} changed · ${result.totals.failed} failed\n`,
