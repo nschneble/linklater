@@ -1,0 +1,7 @@
+{
+  "story": "As a logged-in user, I can click on an unread link to mark it as read.",
+  "flow": "click on an unread link",
+  "needs": ["logged-in"],
+  "fixtures": ["user-with-3-links"],
+  "actions": [{ "action": "read-link" }]
+}

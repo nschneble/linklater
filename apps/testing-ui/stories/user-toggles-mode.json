@@ -1,0 +1,6 @@
+{
+  "story": "As a logged-in user, I can change between light and dark mode.",
+  "flow": "change the mode",
+  "needs": ["logged-in"],
+  "actions": [{ "action": "toggle-mode" }]
+}

@@ -1,0 +1,7 @@
+{
+  "story": "As a logged-in user, I can view my read links.",
+  "flow": "view my read links",
+  "needs": ["logged-in"],
+  "fixtures": ["user-with-read-history"],
+  "actions": [{ "action": "view-read-links" }]
+}

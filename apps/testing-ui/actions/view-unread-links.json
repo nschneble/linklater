@@ -1,0 +1,15 @@
+{
+  "action": "view-unread-links",
+  "steps": [
+    { "kind": "navigate", "path": "/read" },
+    {
+      "kind": "click",
+      "hint": { "role": "tab", "text": "Unread" }
+    }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "tab", "text": "Unread" }]
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

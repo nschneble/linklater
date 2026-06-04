@@ -1,0 +1,11 @@
+{
+  "story": "As a logged-in user, I can change my email address.",
+  "flow": "change my email address",
+  "needs": ["logged-in"],
+  "actions": [
+    {
+      "action": "change-email",
+      "parameters": { "newEmail": "moved@linklater.test" }
+    }
+  ]
+}

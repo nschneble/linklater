@@ -9,19 +9,19 @@ const LINKS = [
     id: 'fixture-read-0000000000000001',
     metaId: 'fixture-readmeta-000000000001',
     title: 'Test Link 1',
-    url: 'https://example.test/1',
+    url: 'https://example.test/read/1',
   },
   {
     id: 'fixture-read-0000000000000002',
     metaId: 'fixture-readmeta-000000000002',
     title: 'Test Link 2',
-    url: 'https://example.test/2',
+    url: 'https://example.test/read/2',
   },
   {
     id: 'fixture-read-0000000000000003',
     metaId: 'fixture-readmeta-000000000003',
     title: 'Test Link 3',
-    url: 'https://example.test/3',
+    url: 'https://example.test/read/3',
   },
 ] as const;
 
@@ -42,8 +42,8 @@ export const userWithReadHistory: Fixture = async ({ client }) => {
     }
     await client.query(
       `
-      INSERT INTO "Meta" ("id", "linkId", "title", "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, $4, $4)
+      INSERT INTO "Meta" ("id", "linkId", "title", "createdAt", "updatedAt", "fetchedAt")
+      VALUES ($1, $2, $3, $4, $4, $4)
       ON CONFLICT ("id") DO NOTHING
       `,
       [link.metaId, link.id, link.title, FIXED_DATE],

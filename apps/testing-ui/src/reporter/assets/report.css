@@ -183,6 +183,21 @@ h2 {
   color: var(--failed);
 }
 
+.summary-item.coverage {
+  gap: 0.4rem;
+}
+
+.summary-item.coverage .coverage-detail {
+  color: var(--text-subtle);
+  font-size: 0.8125rem;
+}
+
+.summary-item.coverage .coverage-detail::before {
+  content: '·';
+  margin-right: 0.35rem;
+  color: var(--text-subtle);
+}
+
 /* Stories tree */
 
 .stories {

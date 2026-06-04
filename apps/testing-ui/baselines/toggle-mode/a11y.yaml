@@ -1,0 +1,51 @@
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - button "Go to your links": Linklater Save links now, read them later.
+  - button "User menu (testing-ui@linklater.test)" [expanded]
+  - menu:
+    - group "Logged in as":
+      - paragraph: Logged in as
+      - paragraph: testing-ui@linklater.test
+    - menuitem "Your links"
+    - menuitem "Settings"
+    - menuitem "Switch to dark mode"
+    - menuitem "Theme editor"
+    - menuitem "Theme Apollo 10½"
+    - menu "Theme":
+      - menuitemradio "Apollo 10½ Accessible theme" [checked]
+      - menuitemradio "A Scanner Darkly" [disabled]
+      - menuitemradio "Before Sunrise" [disabled]
+      - menuitemradio "Before Sunset" [disabled]
+      - menuitemradio "Before Midnight" [disabled]
+      - menuitemradio "Boyhood" [disabled]
+      - menuitemradio "Dazed and Confused" [disabled]
+      - menuitemradio "Hit Man" [disabled]
+      - menuitemradio "Nouvelle Vague (Noir)" [disabled]
+      - menuitemradio "School of Rock" [disabled]
+    - menuitem "Log out"
+- main:
+  - heading "Your links" [level=1]
+  - button "Show keyboard shortcuts"
+  - paragraph: Add, search, or stumble upon something random.
+  - tablist "Links filter":
+    - tab "Unread" [selected]
+    - tab "Read"
+  - button "Stumble!"
+  - button "Add link"
+  - searchbox "Search through your links"
+  - tabpanel "Unread":
+    - paragraph: (No title)
+    - paragraph: httpforever.com
+    - paragraph: http://httpforever.com/
+    - link "(No title) — httpforever.com, opens in new tab":
+      - /url: http://httpforever.com/
+    - paragraph: Test Link 3
+    - paragraph: example.test
+    - link "Test Link 3 — example.test, opens in new tab":
+      - /url: https://example.test/3
+    - paragraph: Test Link 2
+    - paragraph: example.test
+    - link "Test Link 2 — example.test, opens in new tab":
+      - /url: https://example.test/2
+  - status

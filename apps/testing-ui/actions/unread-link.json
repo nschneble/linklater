@@ -1,0 +1,18 @@
+{
+  "action": "unread-link",
+  "steps": [
+    { "kind": "navigate", "path": "/read" },
+    {
+      "kind": "click",
+      "hint": {
+        "selector": "#links-list > div:first-child button[aria-label='Mark unread']"
+      }
+    },
+    { "kind": "navigate", "path": "/unread" }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "link", "text": "Test Link 1" }]
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

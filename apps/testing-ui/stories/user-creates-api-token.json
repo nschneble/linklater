@@ -1,0 +1,11 @@
+{
+  "story": "As a logged-in user, I can create an API token.",
+  "flow": "create an API token",
+  "needs": ["logged-in"],
+  "actions": [
+    {
+      "action": "create-api-token",
+      "parameters": { "tokenName": "ci-smoke-test" }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "action": "toggle-mode",
+  "steps": [
+    { "kind": "navigate", "path": "/unread" },
+    {
+      "kind": "click",
+      "hint": {
+        "role": "button",
+        "text": "User menu (testing-ui@linklater.test)"
+      }
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "menuitem", "text": "Switch to light mode" }
+    }
+  ],
+  "expect": {
+    "anyOf": [
+      { "role": "button", "text": "User menu (testing-ui@linklater.test)" }
+    ]
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

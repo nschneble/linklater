@@ -42,8 +42,8 @@ export const userWithLinks: Fixture = async ({ client }) => {
     }
     await client.query(
       `
-      INSERT INTO "Meta" ("id", "linkId", "title", "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, $4, $4)
+      INSERT INTO "Meta" ("id", "linkId", "title", "createdAt", "updatedAt", "fetchedAt")
+      VALUES ($1, $2, $3, $4, $4, $4)
       ON CONFLICT ("id") DO NOTHING
       `,
       [link.metaId, link.id, link.title, FIXED_DATE],

@@ -152,6 +152,36 @@ to serialise them.
 fixture executes; fixtures throw if the deterministic test user is
 missing.
 
+## Avoiding cross-story races
+
+The test database is shared. Fixtures run before each story's browser
+launches. Stories that mutate the *same* user row (or the same view's
+content) in parallel will produce non-deterministic visual diffs.
+
+Rules of thumb:
+
+- A story whose action's screenshot depends on observable user state
+  (e.g. screenshots `/unread` after fixtures populate it) should pin
+  that state via a `fixture`. The fixture's `ON CONFLICT DO NOTHING`
+  makes it idempotent and the topo-sort ensures the producer's storage
+  state is ready first.
+- A story that mutates a column another story screenshots must
+  serialise via `produces` + `needs`. Example: if `user-saves-link`
+  adds a row to `Link` and `user-views-unread-links` screenshots
+  `/unread`, the latter must `needs` a label `produces`d by the
+  former. Otherwise the screenshot grows by one card whenever
+  ordering reshuffles.
+- Settings-mutation stories (`change-password`, `change-email`,
+  `toggle-cvd-mode`) all attach to the same user row. They are safe
+  in parallel only when each screenshots its own success state and
+  none of the downstream stories observe the mutated column. If you
+  add a story that *reads* `cvdMode`, declare `needs:
+  ["cvd-mode-toggled"]` on it.
+
+When in doubt, run with `--workers 1` once. If a story flickers
+between runs with workers=1, the bug is in the action itself, not the
+schedule.
+
 ## Storage state + dependency graph
 
 Stories declare needs and produces. Labels are opaque strings; the
