@@ -3,28 +3,27 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import * as bcrypt from 'bcryptjs';
 import pg from 'pg';
-import { hashTestUserPassword, TEST_USER } from '../src/runner/testUser.ts';
+import { TEST_USER } from './database.ts';
 
 const moduleDir = dirname(fileURLToPath(import.meta.url));
-const TESTING_UI_DIR = join(moduleDir, '..');
-const API_DIR = join(TESTING_UI_DIR, '..', 'api');
+const TUFFGAL_DIR = moduleDir;
+const REPO_ROOT = join(TUFFGAL_DIR, '..');
+const API_DIR = join(REPO_ROOT, 'apps', 'api');
 const API_ENV_PATH = join(API_DIR, '.env');
 
 const TEST_DB_NAME = 'linklater_testing_ui';
+const BCRYPT_ROUNDS = 10;
 
 const execFileAsync = promisify(execFile);
 
 /**
- * One-shot bootstrap for the dedicated test database. Idempotent: safe to run
- * repeatedly. Creates `linklater_testing_ui` if missing, runs every committed
- * Prisma migration, and upserts the deterministic test user. Subsequent test
- * runs reset state through `runner/testDb.ts` — they no longer touch this
- * script.
- *
- * Connection credentials come from `apps/api/.env`. We swap the database name
- * to `postgres` for the `CREATE DATABASE` call (you cannot create a database
- * while connected to it) and then point Prisma at the test DB.
+ * One-shot bootstrap for the dedicated test database. Idempotent: safe to
+ * run repeatedly. Creates `linklater_testing_ui` if missing, runs every
+ * committed Prisma migration, and upserts the deterministic test user.
+ * Subsequent test runs reset state through the `database.reset` callback
+ * declared in `tuffgal.config.ts` — they no longer touch this script.
  */
 async function main(): Promise<void> {
   const devUrl = await readDatabaseUrl(API_ENV_PATH);
@@ -75,7 +74,7 @@ async function runMigrations(testUrl: string): Promise<void> {
 }
 
 async function seedTestUser(testUrl: string): Promise<void> {
-  const passwordHash = await hashTestUserPassword();
+  const passwordHash = await bcrypt.hash(TEST_USER.password, BCRYPT_ROUNDS);
   const now = new Date();
   const client = new pg.Client({ connectionString: testUrl });
   await client.connect();
@@ -128,7 +127,7 @@ function redactPassword(connectionString: string): string {
 
 main().catch((error) => {
   process.stderr.write(
-    `setup-test-db error: ${error instanceof Error ? error.message : String(error)}\n`,
+    `tuffgal setup error: ${error instanceof Error ? error.message : String(error)}\n`,
   );
   process.exit(1);
 });
