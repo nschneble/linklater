@@ -12,6 +12,8 @@ export interface BaselinePaths {
   baseline: string;
   actual: string;
   diff: string;
+  a11yBaseline: string;
+  a11yActual: string;
 }
 
 export interface StoreOptions {
@@ -44,6 +46,19 @@ export function pathsFor(options: StoreOptions): BaselinePaths {
       storySlug,
       `${options.actionName}.diff.png`,
     ),
+    a11yBaseline: join(
+      options.rootDir,
+      'baselines',
+      options.actionName,
+      'a11y.yaml',
+    ),
+    a11yActual: join(
+      options.rootDir,
+      'report',
+      'screenshots',
+      storySlug,
+      `${options.actionName}.a11y.yaml`,
+    ),
   };
 }
 
@@ -54,6 +69,22 @@ export async function readBaseline(path: string): Promise<Buffer | undefined> {
     return undefined;
   }
   return readFile(path);
+}
+
+export async function readJsonBaseline(
+  path: string,
+): Promise<string | undefined> {
+  try {
+    await access(path);
+  } catch {
+    return undefined;
+  }
+  return readFile(path, 'utf8');
+}
+
+export async function writeText(path: string, content: string): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, content, 'utf8');
 }
 
 export async function writePng(path: string, png: Buffer): Promise<void> {

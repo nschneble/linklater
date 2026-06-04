@@ -1,5 +1,6 @@
 {
   "story": "As a user, I can log in with email and password.",
+  "flow": "log in",
   "produces": ["logged-in"],
   "actions": [{ "action": "login" }]
 }

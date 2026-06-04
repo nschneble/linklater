@@ -19,6 +19,8 @@ import {
 } from './devServers.ts';
 import { resetTestDatabase } from './testDb.ts';
 import { CoverageCollector } from './coverage.ts';
+import { computeFlowCoverage } from '../coverage/flows.ts';
+import { computeScreenCoverage } from '../coverage/screens.ts';
 
 export interface RunCliOptions {
   storyFilter?: string;
@@ -30,6 +32,7 @@ export interface RunCliOptions {
 
 const moduleDir = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = join(moduleDir, '..', '..');
+const REPO_ROOT = join(ROOT_DIR, '..', '..');
 const HEARTBEAT_PATH = join(ROOT_DIR, '.dev-test-heartbeat');
 
 /**
@@ -83,11 +86,16 @@ export async function runAll(options: RunCliOptions): Promise<RunResult> {
     );
 
     const finishedAt = new Date();
+    const [screens, flows] = await Promise.all([
+      computeScreenCoverage(ROOT_DIR),
+      computeFlowCoverage(REPO_ROOT, allStories),
+    ]);
     const runResult: RunResult = {
       startedAt: startedAt.toISOString(),
       finishedAt: finishedAt.toISOString(),
       durationMs: finishedAt.getTime() - startedAt.getTime(),
       totals: summarise(results),
+      customCoverage: { screens, flows },
       stories: results,
     };
     const reportPath = await writeReport(ROOT_DIR, runResult);

@@ -1,5 +1,6 @@
 {
   "story": "As a logged-in user, I can save a link I found.",
+  "flow": "add a new link",
   "needs": ["logged-in"],
   "actions": [
     {

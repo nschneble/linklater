@@ -33,6 +33,12 @@ export const storySchema = z.object({
    * `produces` labels.
    */
   fixtures: z.array(z.string().min(1)).optional(),
+  /**
+   * Tag declaring which user-journey row in `local/tuffgal/stories.md`
+   * this story covers. Used to compute flow-coverage in the report.
+   * Match is case- and whitespace-insensitive.
+   */
+  flow: z.string().min(1).optional(),
   actions: z.array(storyStepSchema).min(1),
 });
 

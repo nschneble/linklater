@@ -62,6 +62,8 @@ export function renderReport(result: RunResult, rootDir: string): string {
 }
 
 function renderSummary(result: RunResult): string {
+  const screens = result.customCoverage.screens;
+  const flows = result.customCoverage.flows;
   return `
 <section class="summary" aria-labelledby="summary-heading">
   <h2 id="summary-heading">summary</h2>
@@ -70,8 +72,18 @@ function renderSummary(result: RunResult): string {
     ${summaryItem('pass', result.totals.passed, 'pass')}
     ${summaryItem('changed', result.totals.changed, 'changed')}
     ${summaryItem('failed', result.totals.failed, 'failed')}
+    ${coverageItem('screens', screens)}
+    ${coverageItem('flows', flows)}
   </ul>
 </section>`;
+}
+
+function coverageItem(
+  label: string,
+  metric: { total: number; covered: number; ratio: number },
+): string {
+  const pct = `${(metric.ratio * 100).toFixed(0)}%`;
+  return `<li class="summary-item coverage"><span class="count">${pct}</span><span class="label">${label}</span><span class="coverage-detail" aria-hidden="true">${metric.covered}/${metric.total}</span><span class="sr-only">${metric.covered} of ${metric.total} ${label} covered</span></li>`;
 }
 
 function summaryItem(

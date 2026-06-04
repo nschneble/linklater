@@ -8,7 +8,9 @@ import {
   deleteIfExists,
   pathsFor,
   readBaseline,
+  readJsonBaseline,
   writePng,
+  writeText,
 } from '../screenshots/baselineStore.ts';
 import { interpolate, interpolateHint } from './interpolate.ts';
 import { LocatorNotFoundError, resolveLocator } from './resolveLocator.ts';
@@ -16,7 +18,9 @@ import { runClick } from './steps/click.ts';
 import { runInput } from './steps/input.ts';
 import { runIntercept } from './steps/intercept.ts';
 import { runNavigate } from './steps/navigate.ts';
+import { runRead } from './steps/read.ts';
 import { runScroll } from './steps/scroll.ts';
+import { runType } from './steps/type.ts';
 import { runWaitFor } from './steps/waitFor.ts';
 
 export interface RunActionOptions {
@@ -148,6 +152,10 @@ async function dispatch(
         interpolateHint(step.hint, parameters),
         config.defaultTimeoutMs,
       );
+    case 'read':
+      return runRead(page, interpolateHint(step.hint, parameters));
+    case 'type':
+      return runType(page, interpolate(step.value, parameters));
   }
 }
 
@@ -211,12 +219,16 @@ async function captureAndCompare(
   const masks = resolveMasks(page, action.mask, parameters);
   const actualPng = await capturePage(page, masks);
   await writePng(paths.actual, actualPng);
+  const a11yJson = await captureA11yTree(page);
+  await writeText(paths.a11yActual, a11yJson);
 
   const baselinePng = await readBaseline(paths.baseline);
+  const baselineA11y = await readJsonBaseline(paths.a11yBaseline);
   const baseResult = baseResultFor(action.action, parameters, startedAt);
 
   if (baselinePng === undefined) {
     await writePng(paths.baseline, actualPng);
+    await writeText(paths.a11yBaseline, a11yJson);
     return finishResult(baseResult, {
       status: 'new',
       baselinePath: paths.baseline,
@@ -224,11 +236,18 @@ async function captureAndCompare(
     });
   }
 
+  const a11yChanged = baselineA11y !== undefined && baselineA11y !== a11yJson;
+
   try {
     const pixelThreshold = action.diff?.pixelThreshold ?? 0.1;
-    const maxDiffRatio = action.diff?.maxDiffRatio ?? 0.005;
+    const ssimThreshold = action.diff?.ssimThreshold ?? 0.99;
+    const legacyMaxDiffRatio = action.diff?.maxDiffRatio;
     const outcome = diffPngs(baselinePng, actualPng, pixelThreshold);
-    if (outcome.diffRatio <= maxDiffRatio) {
+    const passesSsim = outcome.ssimScore >= ssimThreshold;
+    const passesLegacy =
+      legacyMaxDiffRatio === undefined ||
+      outcome.diffRatio <= legacyMaxDiffRatio;
+    if (passesSsim && passesLegacy) {
       await deleteIfExists(paths.diff);
       return finishResult(baseResult, {
         status: 'pass',
@@ -236,6 +255,8 @@ async function captureAndCompare(
         actualPath: paths.actual,
         diffPixels: outcome.diffPixels,
         diffRatio: outcome.diffRatio,
+        ssimScore: outcome.ssimScore,
+        a11yChanged: a11yChanged || undefined,
       });
     }
     await writePng(paths.diff, outcome.diffPng);
@@ -246,6 +267,8 @@ async function captureAndCompare(
       diffPath: paths.diff,
       diffPixels: outcome.diffPixels,
       diffRatio: outcome.diffRatio,
+      ssimScore: outcome.ssimScore,
+      a11yChanged: a11yChanged || undefined,
     });
   } catch (error) {
     if (error instanceof ScreenshotSizeMismatchError) {
@@ -271,6 +294,16 @@ function resolveMasks(
   return maskHints.map((hint) =>
     resolveLocator(page, interpolateHint(hint, parameters)),
   );
+}
+
+/**
+ * Snapshots the page's accessibility tree as a YAML-shaped string. Two
+ * runs of the same page produce byte-identical output so a simple string
+ * comparison detects semantic changes (button label, role, structure)
+ * without flagging visual-only drift.
+ */
+async function captureA11yTree(page: Page): Promise<string> {
+  return page.locator('body').ariaSnapshot();
 }
 
 function baseResultFor(

@@ -1,0 +1,140 @@
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - button "Go to your links": Linklater Save links now, read them later.
+  - button "User menu (testing-ui@linklater.test)"
+- main:
+  - heading "Theme editor" [level=1]
+  - paragraph: Edit color variables and see changes live. Resets when you navigate away.
+  - combobox "Select theme":
+    - option "Apollo 10½"
+    - option "A Scanner Darkly" [selected]
+    - option "Before Sunrise"
+    - option "Before Sunset"
+    - option "Before Midnight"
+    - option "Boyhood"
+    - option "Dazed and Confused"
+    - option "Hit Man"
+    - option "Nouvelle Vague (Noir)"
+    - option "School of Rock"
+  - group "Color mode":
+    - button "dark" [pressed]
+    - button "light"
+  - button "Reset"
+  - heading "Colors" [level=2]
+  - paragraph: Backgrounds
+  - textbox "Color picker for Base": "#0f0b1b"
+  - paragraph: Base
+  - paragraph: "--bg"
+  - textbox "Hex value for Base":
+    - /placeholder: "#000000"
+    - text: "#0f0b1b"
+  - textbox "Color picker for Surface": "#201e43"
+  - paragraph: Surface
+  - paragraph: "--bg-surface"
+  - textbox "Hex value for Surface":
+    - /placeholder: "#000000"
+    - text: "#201e43"
+  - textbox "Color picker for Elevated": "#3b376a"
+  - paragraph: Elevated
+  - paragraph: "--bg-elevated"
+  - textbox "Hex value for Elevated":
+    - /placeholder: "#000000"
+    - text: "#3b376a"
+  - textbox "Color picker for Input": "#201e43"
+  - paragraph: Input
+  - paragraph: "--bg-input"
+  - textbox "Hex value for Input":
+    - /placeholder: "#000000"
+    - text: "#201e43"
+  - paragraph: Text
+  - textbox "Color picker for Primary": "#eeeedf"
+  - paragraph: Primary
+  - paragraph: "--text"
+  - textbox "Hex value for Primary":
+    - /placeholder: "#000000"
+    - text: "#eeeedf"
+  - textbox "Color picker for Muted": "#ebcaae"
+  - paragraph: Muted
+  - paragraph: "--text-muted"
+  - textbox "Hex value for Muted":
+    - /placeholder: "#000000"
+    - text: "#ebcaae"
+  - textbox "Color picker for Subtle": "#bcdc6f"
+  - paragraph: Subtle
+  - paragraph: "--text-subtle"
+  - textbox "Hex value for Subtle":
+    - /placeholder: "#000000"
+    - text: "#bcdc6f"
+  - paragraph: Border
+  - textbox "Color picker for Border": "#847ecc"
+  - paragraph: Border
+  - paragraph: "--border"
+  - textbox "Hex value for Border":
+    - /placeholder: "#000000"
+    - text: "#847ecc"
+  - paragraph: Accent
+  - textbox "Color picker for Primary": "#ed9156"
+  - paragraph: Primary
+  - paragraph: "--accent"
+  - textbox "Hex value for Primary":
+    - /placeholder: "#000000"
+    - text: "#ed9156"
+  - textbox "Color picker for Foreground": "#000000"
+  - paragraph: Foreground
+  - paragraph: "--accent-fg"
+  - textbox "Hex value for Foreground":
+    - /placeholder: "#000000"
+    - text: "#000000"
+  - heading "Contrast (WCAG 2.1)" [level=2]
+  - paragraph: Text / Background
+  - text: 16.5 AA AAA
+  - paragraph: Text / Surface
+  - text: 13.5 AA AAA
+  - paragraph: Text / Elevated
+  - text: 9.2 AA AAA
+  - paragraph: Muted / Background
+  - text: 12.5 AA AAA
+  - paragraph: Subtle / Background
+  - text: 12.6 AA AAA
+  - paragraph: Text / Input
+  - text: 13.5 AA AAA
+  - paragraph: Accent fg / Accent
+  - text: 8.8 AA AAA
+  - heading "Components" [level=2]
+  - paragraph: Surfaces
+  - paragraph: Background
+  - paragraph: "--bg"
+  - paragraph: Surface
+  - paragraph: "--bg-surface"
+  - paragraph: Elevated
+  - paragraph: "--bg-elevated"
+  - paragraph: Input
+  - paragraph: "--bg-input"
+  - paragraph: Typography
+  - paragraph: Primary text
+  - paragraph: Muted — labels and captions
+  - paragraph: Subtle — hints and URLs
+  - paragraph: Buttons
+  - button "Add link"
+  - button "Stumble!"
+  - button "Default"
+  - button "Ghost"
+  - button "Danger"
+  - button "Danger filled"
+  - paragraph: Form input
+  - textbox "Demo URL input":
+    - /placeholder: Paste a URL to save…
+  - paragraph: Tabs
+  - button "Unread" [pressed]
+  - button "Read"
+  - paragraph: Alerts
+  - alert: Something went wrong. Please try again.
+  - status: Changes saved successfully.
+  - paragraph: Card
+  - paragraph: Example saved link
+  - paragraph: example.com
+  - paragraph: A brief description of the saved link. This shows how muted text looks within a card surface in the current theme.
+  - paragraph: Accent
+  - paragraph: Accent surface
+  - paragraph: "--accent-fg on --accent"

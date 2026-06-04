@@ -29,6 +29,14 @@ export interface ActionResult {
   diffPath?: string;
   diffPixels?: number;
   diffRatio?: number;
+  /** Mean SSIM score of baseline vs actual — see screenshots/diff.ts. */
+  ssimScore?: number;
+  /**
+   * `true` when the captured page accessibility tree differs from the
+   * baseline tree. Informational only — does not gate pass/changed by
+   * itself; pixel/SSIM still drives the status.
+   */
+  a11yChanged?: boolean;
 }
 
 export type StoryStatus = 'pass' | 'changed' | 'failed';
@@ -45,6 +53,13 @@ export interface StoryResult {
   tracePath?: string;
 }
 
+export interface CoverageMetric {
+  total: number;
+  covered: number;
+  ratio: number;
+  missing: string[];
+}
+
 export interface RunResult {
   startedAt: string;
   finishedAt: string;
@@ -54,6 +69,15 @@ export interface RunResult {
     passed: number;
     changed: number;
     failed: number;
+  };
+  /**
+   * Custom coverage metrics layered on top of V8 line coverage:
+   * `screens` = baselined visit-* actions / declared screens,
+   * `flows` = stories with `flow` tag / journeys listed in tuffgal.
+   */
+  customCoverage: {
+    screens: CoverageMetric;
+    flows: CoverageMetric;
   };
   stories: StoryResult[];
 }

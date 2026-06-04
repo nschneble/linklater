@@ -76,6 +76,27 @@ export const stepSchema = z.discriminatedUnion('kind', [
     kind: z.literal('waitFor'),
     hint: hintSchema,
   }),
+  /**
+   * Instant assertion that a hint resolves to an attached element. Unlike
+   * `waitFor`, does not poll — the element must already be present when
+   * the step runs. Use as a mid-flow checkpoint after a click/input that
+   * synchronously updates the DOM.
+   */
+  z.object({
+    kind: z.literal('read'),
+    hint: hintSchema,
+  }),
+  /**
+   * Keyboard input directed at the page (not an input field). Passed
+   * straight to Playwright's `keyboard.press`, so single keys ("A"),
+   * named keys ("Escape", "Tab"), and combinations ("Shift+A",
+   * "Control+Enter") all work. Use for hotkeys, modal dismissal, focus
+   * cycling.
+   */
+  z.object({
+    kind: z.literal('type'),
+    value: z.string().min(1),
+  }),
 ]);
 
 export type Step = z.infer<typeof stepSchema>;
@@ -119,8 +140,24 @@ export const actionSchema = z.object({
     .optional(),
   diff: z
     .object({
+      /**
+       * Pixelmatch per-pixel similarity. Tighter values flag more pixels
+       * as changed; loosens anti-aliasing tolerance as it grows. Only
+       * controls how the diff PNG is computed — it does not gate the
+       * action's pass/changed status.
+       */
       pixelThreshold: z.number().min(0).max(1).default(0.1),
-      maxDiffRatio: z.number().min(0).max(1).default(0.005),
+      /**
+       * Mean SSIM score threshold. Action passes when the score is at
+       * least this high. 1.0 = identical; 0.99 = the new default and
+       * roughly corresponds to "no perceptible change."
+       */
+      ssimThreshold: z.number().min(0).max(1).default(0.99),
+      /**
+       * Legacy pixelmatch-ratio gate. Retained for backward compat with
+       * actions that pre-date SSIM. If set, both gates must pass.
+       */
+      maxDiffRatio: z.number().min(0).max(1).optional(),
     })
     .optional(),
 });
