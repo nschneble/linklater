@@ -1,0 +1,21 @@
+{
+  "action": "stumble-unread",
+  "steps": [
+    { "kind": "navigate", "path": "/unread" },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Stumble!" }
+    },
+    {
+      "kind": "waitFor",
+      "hint": {
+        "selector": "#links-list a[aria-label*='Test Link 2']"
+      }
+    }
+  ],
+  "expect": {
+    "anyOf": [{ "selector": "#links-list a[aria-label*='Test Link 2']" }]
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

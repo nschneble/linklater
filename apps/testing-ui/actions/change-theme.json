@@ -1,0 +1,30 @@
+{
+  "action": "change-theme",
+  "steps": [
+    { "kind": "navigate", "path": "/unread" },
+    {
+      "kind": "click",
+      "hint": {
+        "role": "button",
+        "text": "User menu (testing-ui@linklater.test)"
+      }
+    },
+    {
+      "kind": "click",
+      "hint": { "selector": "[role='menuitem'][aria-haspopup='menu']" }
+    },
+    {
+      "kind": "waitFor",
+      "hint": { "selector": "button[data-submenu-item]" }
+    },
+    {
+      "kind": "click",
+      "hint": { "selector": "button[data-submenu-item]" }
+    }
+  ],
+  "expect": {
+    "anyOf": [{ "selector": "html[data-theme='apollo-10-1-2']" }]
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

@@ -1,0 +1,6 @@
+{
+  "story": "As a logged-in user, I can navigate using the keyboard.",
+  "flow": "navigatie using the keyboard",
+  "needs": ["logged-in"],
+  "actions": [{ "action": "keyboard-navigation" }]
+}

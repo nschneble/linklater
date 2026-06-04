@@ -1,0 +1,6 @@
+{
+  "story": "As a logged-in user with no unread links, Stumble! lands on a suggestion.",
+  "flow": "stumble! upon a sugestion",
+  "needs": ["logged-in"],
+  "actions": [{ "action": "visit-stumble-empty" }]
+}

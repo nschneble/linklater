@@ -1,0 +1,14 @@
+{
+  "action": "delete-account",
+  "steps": [
+    { "kind": "navigate", "path": "/settings#danger" },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Delete my account" }
+    }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "button", "text": "Cancel account deletion" }]
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

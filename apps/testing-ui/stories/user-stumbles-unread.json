@@ -1,0 +1,10 @@
+{
+  "story": "As a logged-in user, I can Stumble! upon an unread link.",
+  "flow": "stumble! upon an unread link",
+  "needs": ["logged-in"],
+  "fixtures": ["user-with-3-links"],
+  "actions": [
+    { "action": "intercept-random-link" },
+    { "action": "stumble-unread" }
+  ]
+}

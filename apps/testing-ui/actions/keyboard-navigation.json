@@ -1,0 +1,12 @@
+{
+  "action": "keyboard-navigation",
+  "steps": [
+    { "kind": "navigate", "path": "/unread" },
+    { "kind": "type", "value": "z" }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "dialog", "text": "Keyboard shortcuts" }]
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

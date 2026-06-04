@@ -1,0 +1,6 @@
+{
+  "story": "As a logged-in user with no unread links, I can add and read a suggestion.",
+  "flow": "click on a link suggestion",
+  "needs": ["logged-in"],
+  "actions": [{ "action": "read-suggestion" }]
+}

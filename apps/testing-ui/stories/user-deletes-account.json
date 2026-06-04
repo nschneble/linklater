@@ -1,0 +1,6 @@
+{
+  "story": "As a logged-in user, I can start the account deletion flow.",
+  "flow": "delete my account",
+  "needs": ["logged-in"],
+  "actions": [{ "action": "delete-account" }]
+}
