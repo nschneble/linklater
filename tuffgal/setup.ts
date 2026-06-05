@@ -28,6 +28,7 @@ const execFileAsync = promisify(execFile);
 async function main(): Promise<void> {
   const devUrl = await readDatabaseUrl(API_ENV_PATH);
   const testUrl = withDatabase(devUrl, TEST_DB_NAME);
+  await generatePrismaClient();
   await createTestDatabaseIfMissing(devUrl);
   await runMigrations(testUrl);
   await seedTestUser(testUrl);
@@ -58,6 +59,16 @@ async function createTestDatabaseIfMissing(devUrl: string): Promise<void> {
   } finally {
     await admin.end();
   }
+}
+
+async function generatePrismaClient(): Promise<void> {
+  process.stdout.write('Generating Prisma client…\n');
+  await execFileAsync(
+    'npx',
+    ['prisma', 'generate', '--schema', 'prisma/schema.prisma'],
+    { cwd: API_DIR },
+  );
+  process.stdout.write('Prisma client generated.\n');
 }
 
 async function runMigrations(testUrl: string): Promise<void> {

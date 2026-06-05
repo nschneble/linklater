@@ -31,72 +31,7 @@ jobs:
       JWT_SECRET: 'ci-jwt-secret'
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node.js 22.x
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: nschneble/tuffgal-action@v0
         with:
-          node-version: '22.x'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate Prisma client
-        working-directory: apps/api
-        run: npx prisma generate
-
-      - name: Install Playwright browsers (Chromium only)
-        run: npx playwright install --with-deps chromium
-
-      - name: Bootstrap test database
-        run: npm run test:ui:setup
-
-      - name: Run testing-ui harness
-        id: harness
-        continue-on-error: true
-        run: npm run test:ui -- --manage-servers
-
-      # Read results.json (always present after the run, even on harness
-      # failure) so the upload steps below can fork on the actual outcome
-      # rather than just the harness exit code. `changed` includes new
-      # baselines a reviewer probably wants to inspect; `failed` is the
-      # debugging case.
-      - name: Parse harness outcome
-        id: outcome
-        if: always()
-        run: |
-          results="tuffgal/report/results.json"
-          if [ ! -f "$results" ]; then
-            echo "failed=true" >> "$GITHUB_OUTPUT"
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Harness produced no results.json; treating as failed." >&2
-            exit 0
-          fi
-          failed=$(jq -r '.totals.failed' "$results")
-          changed=$(jq -r '.totals.changed' "$results")
-          echo "failed=$([ "$failed" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          echo "changed=$([ "$changed" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-
-      - name: Upload report (on failure or visual change)
-        if: always() && (steps.outcome.outputs.failed == 'true' || steps.outcome.outputs.changed == 'true')
-        uses: actions/upload-artifact@v4
-        with:
-          name: testing-ui-report
-          path: tuffgal/report/
-          retention-days: 14
-
-      # Baselines upload separately so reviewers approving an intentional
-      # visual change can download just the new PNGs and commit them.
-      - name: Upload updated baselines (on visual change)
-        if: always() && steps.outcome.outputs.changed == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: testing-ui-baselines
-          path: tuffgal/baselines/
-          retention-days: 14
-
-      - name: Surface harness exit code
-        if: always() && steps.harness.outcome == 'failure'
-        run: exit 1
+          setup-script: test:ui:setup
