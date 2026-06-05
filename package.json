@@ -33,7 +33,7 @@
     "pg": "^8.11.0",
     "prettier": "^3.7.4",
     "squawk-cli": "^2.52.1",
-    "tuffgal": "github:nschneble/tuffgal#main",
+    "tuffgal": "^0.1.0-alpha.1",
     "typescript-eslint": "^8.49.0"
   },
   "overrides": {
