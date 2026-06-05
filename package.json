@@ -5,6 +5,7 @@
   "author": "Nick Schneble",
   "private": true,
   "license": "CC0-1.0",
+  "type": "module",
   "scripts": {
     "build": "npm run build --workspace @linklater/api && npm run build --workspace @linklater/web",
     "dev": "concurrently \"npm run dev --workspace @linklater/api\" \"npm run dev --workspace @linklater/web\"",
