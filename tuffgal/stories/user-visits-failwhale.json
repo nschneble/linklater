@@ -1,0 +1,4 @@
+{
+  "story": "Visiting /failwhale surfaces the Easter-egg page with its crash button.",
+  "actions": [{ "action": "visit-failwhale" }]
+}

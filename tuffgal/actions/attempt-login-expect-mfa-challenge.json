@@ -1,0 +1,28 @@
+{
+  "action": "attempt-login-expect-mfa-challenge",
+  "steps": [
+    { "kind": "navigate", "path": "/login" },
+    {
+      "kind": "input",
+      "hint": { "role": "textbox", "text": "Email" },
+      "value": "testing-ui@linklater.test"
+    },
+    {
+      "kind": "input",
+      "hint": { "role": "textbox", "text": "Password" },
+      "value": "testing-ui-correct-horse"
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Log in" }
+    },
+    { "kind": "wait", "ms": 800 }
+  ],
+  "expect": {
+    "anyOf": [
+      { "role": "heading", "text": "Multi-factor authentication" }
+    ]
+  },
+  "mask": [{ "selector": "[aria-live='polite']" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

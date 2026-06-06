@@ -1,0 +1,4 @@
+{
+  "story": "Visiting /extension/authorize while logged out surfaces the sign-in prompt.",
+  "actions": [{ "action": "visit-extension-authorize-unauthenticated" }]
+}

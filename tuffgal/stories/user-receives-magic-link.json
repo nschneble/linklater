@@ -1,0 +1,7 @@
+{
+  "story": "Submitting the login form with the password blank surfaces the magic-link sent screen.",
+  "actions": [
+    { "action": "intercept-noop-magic-link-request" },
+    { "action": "request-magic-link" }
+  ]
+}

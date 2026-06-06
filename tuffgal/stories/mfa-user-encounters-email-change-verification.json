@@ -1,0 +1,13 @@
+{
+  "story": "As an MFA-enrolled user, changing my email without a verification code surfaces the 403 prompt.",
+  "needs": ["logged-in"],
+  "actions": [
+    { "action": "intercept-no-api-tokens" },
+    { "action": "intercept-me-mfa-enrolled" },
+    { "action": "intercept-email-change-403" },
+    {
+      "action": "change-email-expect-403",
+      "parameters": { "newEmail": "moved@linklater.test" }
+    }
+  ]
+}

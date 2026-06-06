@@ -1,0 +1,11 @@
+{
+  "action": "visit-oauth-callback-no-token",
+  "steps": [
+    { "kind": "navigate", "path": "/oauth/callback" },
+    { "kind": "wait", "ms": 600 }
+  ],
+  "expect": {
+    "anyOf": [{ "text": "Invalid authentication response" }]
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

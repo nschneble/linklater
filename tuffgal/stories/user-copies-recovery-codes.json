@@ -1,0 +1,14 @@
+{
+  "story": "After my recovery codes are revealed, clicking Copy flips the button to the copied state.",
+  "needs": ["logged-in"],
+  "actions": [
+    { "action": "intercept-noop-totp-setup" },
+    { "action": "intercept-noop-totp-verify" },
+    { "action": "setup-mfa" },
+    {
+      "action": "verify-totp-and-reveal-codes",
+      "parameters": { "code": "123456" }
+    },
+    { "action": "copy-recovery-codes" }
+  ]
+}

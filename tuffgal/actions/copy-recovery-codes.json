@@ -1,0 +1,19 @@
+{
+  "action": "copy-recovery-codes",
+  "steps": [
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Copy all recovery codes to clipboard" }
+    },
+    { "kind": "wait", "ms": 400 }
+  ],
+  "expect": {
+    "anyOf": [
+      {
+        "selector": "button[data-copied='true']"
+      }
+    ]
+  },
+  "mask": [{ "selector": "[role='status']" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

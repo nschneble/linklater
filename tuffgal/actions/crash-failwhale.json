@@ -1,0 +1,14 @@
+{
+  "action": "crash-failwhale",
+  "steps": [
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Crash this page on purpose" }
+    },
+    { "kind": "wait", "ms": 600 }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Something went wrong" }]
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

@@ -1,0 +1,13 @@
+{
+  "action": "visit-extension-authorize-unauthenticated",
+  "steps": [
+    {
+      "kind": "navigate",
+      "path": "/extension/authorize?code_challenge=test-challenge&redirect_uri=https%3A%2F%2Fextension.example%2Fcallback"
+    }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Sign in to authorize" }]
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

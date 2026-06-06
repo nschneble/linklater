@@ -1,0 +1,15 @@
+{
+  "action": "intercept-auth-me-401",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/auth/me",
+      "method": "GET",
+      "respond": {
+        "status": 401,
+        "body": { "statusCode": 401, "message": "Unauthorized" }
+      }
+    }
+  ],
+  "screenshot": false
+}

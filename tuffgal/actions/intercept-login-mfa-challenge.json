@@ -1,0 +1,18 @@
+{
+  "action": "intercept-login-mfa-challenge",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/auth/login",
+      "method": "POST",
+      "respond": {
+        "status": 200,
+        "body": {
+          "mfaToken": "fake-mfa-challenge-token-deterministic",
+          "mfaMethod": "totp"
+        }
+      }
+    }
+  ],
+  "screenshot": false
+}

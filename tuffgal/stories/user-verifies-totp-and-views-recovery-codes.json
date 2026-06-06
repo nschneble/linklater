@@ -1,0 +1,13 @@
+{
+  "story": "After verifying my TOTP setup, the recovery codes panel appears.",
+  "needs": ["logged-in"],
+  "actions": [
+    { "action": "intercept-noop-totp-setup" },
+    { "action": "intercept-noop-totp-verify" },
+    { "action": "setup-mfa" },
+    {
+      "action": "verify-totp-and-reveal-codes",
+      "parameters": { "code": "123456" }
+    }
+  ]
+}

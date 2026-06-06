@@ -1,0 +1,8 @@
+{
+  "story": "When the stored JWT is rejected on mount, the app clears it and shows the logged-out shell.",
+  "needs": ["logged-in"],
+  "actions": [
+    { "action": "intercept-auth-me-401" },
+    { "action": "visit-authenticated-with-stale-token" }
+  ]
+}
