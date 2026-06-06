@@ -73,7 +73,7 @@ export default function CopyRevealPanel({
     isControlled ? false : uncontrolledCopied,
     false,
     setUncontrolledCopied,
-    1000,
+    3000,
   );
 
   useEffect(() => {
