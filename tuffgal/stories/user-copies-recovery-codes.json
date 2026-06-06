@@ -1,5 +1,5 @@
 {
-  "story": "After my recovery codes are revealed, clicking Copy flips the button to the copied state.",
+  "story": "After verifying TOTP, I can copy my recovery codes to the clipboard.",
   "needs": ["logged-in"],
   "actions": [
     { "action": "intercept-noop-totp-setup" },

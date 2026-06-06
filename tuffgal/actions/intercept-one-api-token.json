@@ -1,0 +1,22 @@
+{
+  "action": "intercept-one-api-token",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/tokens",
+      "method": "GET",
+      "respond": {
+        "status": 200,
+        "body": [
+          {
+            "id": "tok-00000000-0000-0000-0000-000000000001",
+            "name": "Browser extension",
+            "createdAt": "2026-01-10T12:00:00.000Z",
+            "lastUsedAt": "2026-01-14T12:00:00.000Z"
+          }
+        ]
+      }
+    }
+  ],
+  "screenshot": false
+}
