@@ -121,8 +121,15 @@ async function applyLinks(
 }
 
 async function readTestDatabaseUrl(): Promise<string> {
+  if (process.env.DATABASE_URL) {
+    const url = new URL(process.env.DATABASE_URL);
+    url.pathname = `/${TEST_DB_NAME}`;
+    return url.toString();
+  }
   const raw = await readFile(API_ENV_PATH, 'utf8').catch(() => {
-    throw new Error(`Cannot read API .env at ${API_ENV_PATH}`);
+    throw new Error(
+      `DATABASE_URL not set and cannot read API .env at ${API_ENV_PATH}`,
+    );
   });
   for (const line of raw.split(/\r?\n/)) {
     const match = line.match(/^DATABASE_URL\s*=\s*"?([^"\n]+)"?\s*$/);

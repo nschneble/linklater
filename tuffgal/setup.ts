@@ -110,8 +110,13 @@ async function seedTestUser(testUrl: string): Promise<void> {
 }
 
 async function readDatabaseUrl(envPath: string): Promise<string> {
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
   const raw = await readFile(envPath, 'utf8').catch(() => {
-    throw new Error(`Cannot read API .env at ${envPath}`);
+    throw new Error(
+      `DATABASE_URL not set and cannot read API .env at ${envPath}`,
+    );
   });
   for (const line of raw.split(/\r?\n/)) {
     const match = line.match(/^DATABASE_URL\s*=\s*"?([^"\n]+)"?\s*$/);
