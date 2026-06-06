@@ -2,6 +2,8 @@
   "story": "After verifying TOTP, I can copy my recovery codes to the clipboard.",
   "needs": ["logged-in"],
   "actions": [
+    { "action": "intercept-no-api-tokens" },
+    { "action": "intercept-instant-bookmarklet-token" },
     { "action": "intercept-noop-totp-setup" },
     { "action": "intercept-noop-totp-verify" },
     { "action": "setup-mfa" },

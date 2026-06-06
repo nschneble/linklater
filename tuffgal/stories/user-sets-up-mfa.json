@@ -3,6 +3,8 @@
   "flow": "add an authenticator app",
   "needs": ["logged-in"],
   "actions": [
+    { "action": "intercept-no-api-tokens" },
+    { "action": "intercept-instant-bookmarklet-token" },
     { "action": "intercept-noop-totp-setup" },
     { "action": "setup-mfa" }
   ]

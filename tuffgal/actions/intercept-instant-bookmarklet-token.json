@@ -1,0 +1,18 @@
+{
+  "action": "intercept-instant-bookmarklet-token",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/tokens/bookmarklet",
+      "method": "GET",
+      "respond": {
+        "status": 200,
+        "body": {
+          "id": "bookmarklet-token",
+          "rawToken": "ltk_bookmarklet_stub_token_for_visual_regression"
+        }
+      }
+    }
+  ],
+  "screenshot": false
+}
