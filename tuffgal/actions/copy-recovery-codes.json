@@ -5,7 +5,7 @@
       "kind": "click",
       "hint": { "role": "button", "text": "Copy all recovery codes to clipboard" }
     },
-    { "kind": "wait", "ms": 400 }
+    { "kind": "wait", "ms": 800 }
   ],
   "expect": {
     "anyOf": [
