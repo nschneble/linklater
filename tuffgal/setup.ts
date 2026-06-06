@@ -7,8 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import pg from 'pg';
 import { TEST_USER } from './database.ts';
 
-const moduleDir = dirname(fileURLToPath(import.meta.url));
-const TUFFGAL_DIR = moduleDir;
+const TUFFGAL_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(TUFFGAL_DIR, '..');
 const API_DIR = join(REPO_ROOT, 'apps', 'api');
 const API_ENV_PATH = join(API_DIR, '.env');

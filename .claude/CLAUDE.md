@@ -47,6 +47,12 @@ npm run test --workspace @linklater/api           # Test back-end only
 npm run test apps/api/src/path/to/file.spec.ts    # Run a single back-end test file
 npm run test:cov                                  # Run all tests with code coverage
 
+# Tuffgal Visual regression tests
+npm run dev:test                                  # Run dev server in test mode (TESTING_UI=1)
+npm run test:ui:setup                             # One-time: create test DB + seed user
+npm run test:ui                                   # Run every story against baselines
+npm run test:ui:approve                           # Accept intentional UI changes as new baseline
+
 # Database
 npm run migrate --workspace @linklater/api        # Run migrations + regenerate client
 npm run migrate:reset --workspace @linklater/api  # Wipe, re-run migrations + regenerate client

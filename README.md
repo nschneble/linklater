@@ -182,6 +182,27 @@ bin/flintest --help
 bin/flintest --update
 ```
 
+#### Visual regression tests
+
+Visual + accessibility regression coverage is provided by [Tuffgal](https://www.npmjs.com/package/tuffgal):
+
+- Stories live in `tuffgal/stories/`
+- Committed baselines are in `tuffgal/baselines/`
+
+```bash
+# cd /path/to/your/repo
+
+# one-time setup to create the test database + seed the test user
+npm run test:ui:setup
+
+# run the dev server in test mode + run every story against the baselines
+npm run dev:test
+npm run test:ui
+
+# accept intentional UI changes as the new baseline
+npm run test:ui:approve
+```
+
 ### Versioning
 
 Create a new version in four easy steps!

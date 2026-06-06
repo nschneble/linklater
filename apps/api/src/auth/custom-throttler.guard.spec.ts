@@ -27,10 +27,46 @@ function makeContext(
 
 describe('CustomThrottlerGuard', () => {
   let reflector: Reflector;
+  const originalTestingUi = process.env.TESTING_UI;
 
   beforeEach(() => {
     reflector = new Reflector();
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    if (originalTestingUi === undefined) {
+      delete process.env.TESTING_UI;
+    } else {
+      process.env.TESTING_UI = originalTestingUi;
+    }
+  });
+
+  describe('shouldSkip', () => {
+    function callShouldSkip(): Promise<boolean> {
+      const guard = makeGuard(reflector);
+      const context = makeContext(() => undefined);
+      return (
+        guard as unknown as {
+          shouldSkip: (context: ExecutionContext) => Promise<boolean>;
+        }
+      ).shouldSkip(context);
+    }
+
+    it('returns true when TESTING_UI=1 so the harness bypasses rate-limits', async () => {
+      process.env.TESTING_UI = '1';
+      await expect(callShouldSkip()).resolves.toBe(true);
+    });
+
+    it('returns false when TESTING_UI is unset', async () => {
+      delete process.env.TESTING_UI;
+      await expect(callShouldSkip()).resolves.toBe(false);
+    });
+
+    it('returns false when TESTING_UI is any value other than the literal "1"', async () => {
+      process.env.TESTING_UI = 'true';
+      await expect(callShouldSkip()).resolves.toBe(false);
+    });
   });
 
   it('returns the custom message when @ThrottleMessage is set on the handler', async () => {

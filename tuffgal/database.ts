@@ -4,8 +4,7 @@ import { fileURLToPath } from 'node:url';
 import * as bcrypt from 'bcryptjs';
 import pg from 'pg';
 
-const moduleDir = dirname(fileURLToPath(import.meta.url));
-const TUFFGAL_DIR = moduleDir;
+const TUFFGAL_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(TUFFGAL_DIR, '..');
 const API_ENV_PATH = join(REPO_ROOT, 'apps', 'api', '.env');
 
