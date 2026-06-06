@@ -1,0 +1,16 @@
+{
+  "action": "click-signup-cta",
+  "steps": [
+    { "kind": "navigate", "path": "/" },
+    {
+      "kind": "click",
+      "hint": { "role": "link", "text": "Get started free" }
+    },
+    { "kind": "wait", "ms": 600 }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "button", "text": "Sign up" }],
+    "timeoutMs": 10000
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

@@ -4,13 +4,13 @@
     { "kind": "navigate", "path": "/unread" },
     {
       "kind": "click",
-      "hint": { "role": "tab", "text": "Read" }
+      "hint": { "selector": "#tab-read" }
     },
     { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [
-      { "selector": "[role='tab'][aria-selected='true']:has-text('Read')" }
+      { "selector": "#tab-read[aria-selected='true']" }
     ],
     "timeoutMs": 15000
   },

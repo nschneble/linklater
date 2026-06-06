@@ -1,0 +1,12 @@
+{
+  "story": "As a logged-in user, I can search through my unread links to find one quickly.",
+  "flow": "search through unread links",
+  "needs": ["logged-in"],
+  "fixtures": ["user-with-3-links"],
+  "actions": [
+    {
+      "action": "search-unread-links",
+      "parameters": { "query": "Test Link 2" }
+    }
+  ]
+}

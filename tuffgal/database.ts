@@ -108,6 +108,15 @@ async function applyLinks(
           `,
           [link.metaId, link.id, link.title, FIXED_DATE],
         );
+        // Mirrors metadata.service.ts so /search returns fixture rows.
+        await client.query(
+          `
+          UPDATE "Link"
+          SET "searchVector" = to_tsvector('english', unaccent(coalesce($1, '') || ' ' || "url"))
+          WHERE "id" = $2
+          `,
+          [link.title, link.id],
+        );
       }
       await client.query('COMMIT');
     } catch (error) {

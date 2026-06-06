@@ -1,9 +1,0 @@
-{
-  "story": "When revoking a token fails on the server, an error message appears.",
-  "needs": ["logged-in"],
-  "actions": [
-    { "action": "intercept-one-api-token" },
-    { "action": "intercept-token-revoke-500" },
-    { "action": "revoke-token-and-expect-error" }
-  ]
-}

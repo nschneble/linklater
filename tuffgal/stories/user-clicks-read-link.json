@@ -1,7 +1,0 @@
-{
-  "story": "As a logged-in user, I can click on a read link to re-open it.",
-  "flow": "click on a read link",
-  "needs": ["logged-in"],
-  "fixtures": ["user-with-read-history"],
-  "actions": [{ "action": "click-read-link" }]
-}

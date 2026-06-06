@@ -1,0 +1,12 @@
+{
+  "action": "intercept-noop-logout",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/auth/sessions",
+      "method": "DELETE",
+      "respond": { "status": 200, "body": { "success": true } }
+    }
+  ],
+  "screenshot": false
+}

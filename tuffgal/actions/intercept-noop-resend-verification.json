@@ -1,0 +1,12 @@
+{
+  "action": "intercept-noop-resend-verification",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/auth/resend-verification",
+      "method": "POST",
+      "respond": { "status": 200, "body": {} }
+    }
+  ],
+  "screenshot": false
+}

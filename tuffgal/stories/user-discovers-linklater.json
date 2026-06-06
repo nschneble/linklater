@@ -1,0 +1,8 @@
+{
+  "story": "As a visitor to the marketing page, I can click through to sign up or log in.",
+  "flow": "visit the marketing page",
+  "actions": [
+    { "action": "click-signup-cta" },
+    { "action": "click-login-cta" }
+  ]
+}

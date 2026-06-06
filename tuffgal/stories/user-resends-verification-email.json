@@ -1,0 +1,11 @@
+{
+  "story": "As a user whose email is not yet verified, I can resend the verification email from settings.",
+  "flow": "resend the verification email",
+  "needs": ["logged-in"],
+  "actions": [
+    { "action": "intercept-no-api-tokens" },
+    { "action": "intercept-me-unverified" },
+    { "action": "intercept-noop-resend-verification" },
+    { "action": "resend-verification-email" }
+  ]
+}

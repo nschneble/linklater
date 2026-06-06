@@ -1,5 +1,5 @@
 {
-  "story": "As a logged-in user, I can change my email address.",
+  "story": "As a logged-in user, I can change my email address — and if I have MFA enabled, I am prompted for a verification code.",
   "flow": "change my email address",
   "needs": ["logged-in"],
   "actions": [
@@ -7,6 +7,12 @@
     { "action": "intercept-noop-email-change" },
     {
       "action": "change-email",
+      "parameters": { "newEmail": "moved@linklater.test" }
+    },
+    { "action": "intercept-me-mfa-enrolled" },
+    { "action": "intercept-email-change-403" },
+    {
+      "action": "change-email-expect-403",
       "parameters": { "newEmail": "moved@linklater.test" }
     }
   ]

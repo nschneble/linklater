@@ -1,0 +1,13 @@
+{
+  "story": "As a logged-in user, I can use the user menu to toggle light/dark mode, change my theme, and log out.",
+  "flow": "use the user menu",
+  "needs": ["logged-in"],
+  "actions": [
+    { "action": "intercept-no-links" },
+    { "action": "intercept-noop-user-patch" },
+    { "action": "toggle-mode" },
+    { "action": "change-theme" },
+    { "action": "intercept-noop-logout" },
+    { "action": "log-out" }
+  ]
+}

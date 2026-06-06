@@ -1,0 +1,16 @@
+{
+  "action": "empty-read-history",
+  "steps": [
+    { "kind": "navigate", "path": "/read" },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Remove all read" }
+    },
+    { "kind": "wait", "ms": 800 }
+  ],
+  "expect": {
+    "anyOf": [{ "text": "No read links" }],
+    "timeoutMs": 10000
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

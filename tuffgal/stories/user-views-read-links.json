@@ -1,9 +1,0 @@
-{
-  "story": "As a logged-in user, I can view my read links.",
-  "flow": "view my read links",
-  "needs": ["logged-in"],
-  "actions": [
-    { "action": "intercept-3-read-links" },
-    { "action": "view-read-links" }
-  ]
-}

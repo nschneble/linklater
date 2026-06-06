@@ -1,0 +1,9 @@
+{
+  "story": "As a logged-in user, I can remove all my read links and see the empty state.",
+  "flow": "remove all read links",
+  "needs": ["logged-in"],
+  "fixtures": ["user-with-read-history"],
+  "actions": [
+    { "action": "empty-read-history" }
+  ]
+}

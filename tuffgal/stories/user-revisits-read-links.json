@@ -1,0 +1,11 @@
+{
+  "story": "As a logged-in user, I can revisit my read links, re-open one, and mark another back as unread.",
+  "flow": "revisit my read links",
+  "needs": ["logged-in"],
+  "fixtures": ["user-with-read-history"],
+  "actions": [
+    { "action": "view-read-links" },
+    { "action": "click-read-link" },
+    { "action": "unread-link" }
+  ]
+}

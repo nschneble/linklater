@@ -1,11 +1,16 @@
 {
-  "story": "As a logged-in user, I can save a link I found.",
+  "story": "As a logged-in user, I can save a link I found — and if the API is unreachable, I see an error.",
   "flow": "add a new link",
   "needs": ["logged-in"],
   "actions": [
     { "action": "intercept-no-links" },
     {
       "action": "save-link",
+      "parameters": { "url": "http://httpforever.com/" }
+    },
+    { "action": "intercept-links-api" },
+    {
+      "action": "save-link-expect-error",
       "parameters": { "url": "http://httpforever.com/" }
     }
   ]
