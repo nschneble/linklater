@@ -1,0 +1,14 @@
+{
+  "action": "visit-authenticated-with-stale-token",
+  "steps": [
+    { "kind": "navigate", "path": "/unread" },
+    { "kind": "wait", "ms": 800 }
+  ],
+  "expect": {
+    "anyOf": [
+      { "role": "button", "text": "Log in" },
+      { "role": "heading", "text": "Linklater" }
+    ]
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

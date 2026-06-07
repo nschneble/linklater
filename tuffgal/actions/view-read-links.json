@@ -1,0 +1,19 @@
+{
+  "action": "view-read-links",
+  "steps": [
+    { "kind": "navigate", "path": "/unread" },
+    {
+      "kind": "click",
+      "hint": { "selector": "#tab-read" }
+    },
+    { "kind": "wait", "ms": 600 }
+  ],
+  "expect": {
+    "anyOf": [
+      { "selector": "#tab-read[aria-selected='true']" }
+    ],
+    "timeoutMs": 15000
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

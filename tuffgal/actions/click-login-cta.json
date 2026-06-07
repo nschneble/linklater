@@ -1,0 +1,16 @@
+{
+  "action": "click-login-cta",
+  "steps": [
+    { "kind": "navigate", "path": "/" },
+    {
+      "kind": "click",
+      "hint": { "role": "link", "text": "Log in" }
+    },
+    { "kind": "wait", "ms": 600 }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "button", "text": "Log in" }],
+    "timeoutMs": 10000
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

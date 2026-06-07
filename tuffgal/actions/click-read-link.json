@@ -1,0 +1,14 @@
+{
+  "action": "click-read-link",
+  "steps": [
+    { "kind": "navigate", "path": "/read" },
+    {
+      "kind": "click",
+      "hint": { "role": "link", "text": "Test Link 1" }
+    }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "link", "text": "Test Link 1" }]
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

@@ -1,0 +1,32 @@
+{
+  "action": "read-suggestion",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/links?*",
+      "method": "GET",
+      "respond": {
+        "status": 200,
+        "body": { "data": [], "limit": 20, "page": 1, "total": 0 }
+      }
+    },
+    { "kind": "navigate", "path": "/unread" },
+    {
+      "kind": "waitFor",
+      "hint": { "role": "button", "text": "Add and read" }
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Add and read" }
+    },
+    { "kind": "wait", "ms": 600 }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "button", "text": "Add and read" }]
+  },
+  "mask": [
+    { "selector": "#suggestion-callout-title" },
+    { "selector": "[aria-live='polite']" }
+  ],
+  "diff": { "maxDiffRatio": 0.02 }
+}

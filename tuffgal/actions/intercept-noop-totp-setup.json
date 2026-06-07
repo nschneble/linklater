@@ -1,0 +1,18 @@
+{
+  "action": "intercept-noop-totp-setup",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/auth/mfa/totp/setup",
+      "method": "POST",
+      "respond": {
+        "status": 200,
+        "body": {
+          "qrCodeDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAAA1BMVEX///+nxBvIAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
+          "secret": "JBSWY3DPEHPK3PXP"
+        }
+      }
+    }
+  ],
+  "screenshot": false
+}

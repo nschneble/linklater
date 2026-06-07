@@ -1,0 +1,28 @@
+{
+  "action": "register",
+  "parameters": ["email", "password"],
+  "steps": [
+    { "kind": "navigate", "path": "/signup" },
+    {
+      "kind": "input",
+      "hint": { "role": "textbox", "text": "Email" },
+      "value": "${email}"
+    },
+    {
+      "kind": "input",
+      "hint": { "role": "textbox", "text": "Password" },
+      "value": "${password}"
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Create account" }
+    },
+    { "kind": "wait", "ms": 800 }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Welcome to Linklater!" }],
+    "timeoutMs": 20000
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

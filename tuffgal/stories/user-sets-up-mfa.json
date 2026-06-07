@@ -1,0 +1,17 @@
+{
+  "story": "As a logged-in user, I can enable MFA by adding an authenticator app, verifying my first code, and saving my recovery codes.",
+  "flow": "add an authenticator app to enable MFA",
+  "needs": ["logged-in"],
+  "actions": [
+    { "action": "intercept-no-api-tokens" },
+    { "action": "intercept-instant-bookmarklet-token" },
+    { "action": "intercept-noop-totp-setup" },
+    { "action": "intercept-noop-totp-verify" },
+    { "action": "setup-mfa" },
+    {
+      "action": "verify-totp-and-reveal-codes",
+      "parameters": { "code": "123456" }
+    },
+    { "action": "copy-recovery-codes" }
+  ]
+}

@@ -1,0 +1,4 @@
+- heading "Signing you in…" [level=1]
+- alert: Invalid authentication response. Please try again.
+- paragraph: Something went wrong during sign-in.
+- button "Back to login"

@@ -1,0 +1,23 @@
+{
+  "action": "log-out",
+  "steps": [
+    { "kind": "navigate", "path": "/unread" },
+    {
+      "kind": "click",
+      "hint": {
+        "role": "button",
+        "text": "User menu (testing-ui@linklater.test)"
+      }
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "menuitem", "text": "Log out" }
+    },
+    { "kind": "wait", "ms": 800 }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "button", "text": "Log in" }],
+    "timeoutMs": 10000
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

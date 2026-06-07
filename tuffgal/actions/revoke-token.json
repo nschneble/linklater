@@ -1,0 +1,33 @@
+{
+  "action": "revoke-token",
+  "steps": [
+    { "kind": "navigate", "path": "/settings" },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Revoke Browser extension" }
+    },
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/tokens",
+      "method": "GET",
+      "respond": {
+        "status": 200,
+        "body": []
+      }
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Confirm revoke Browser extension" }
+    },
+    { "kind": "wait", "ms": 600 },
+    {
+      "kind": "read",
+      "hint": { "text": "You haven't created any tokens" }
+    }
+  ],
+  "expect": {
+    "anyOf": [{ "text": "You haven't created any tokens" }]
+  },
+  "mask": [{ "selector": "[role='status']" }, { "selector": "time" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

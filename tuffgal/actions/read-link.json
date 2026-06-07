@@ -1,0 +1,18 @@
+{
+  "action": "read-link",
+  "steps": [
+    { "kind": "navigate", "path": "/unread" },
+    {
+      "kind": "click",
+      "hint": { "role": "link", "text": "Test Link 1" }
+    },
+    { "kind": "navigate", "path": "/read" },
+    { "kind": "wait", "ms": 600 }
+  ],
+  "expect": {
+    "anyOf": [{ "selector": "#links-list a[aria-label*='Test Link 1']" }],
+    "timeoutMs": 20000
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

@@ -1,0 +1,9 @@
+{
+  "story": "As a logged-in user, I can view my unread links.",
+  "flow": "view my unread links",
+  "needs": ["logged-in"],
+  "actions": [
+    { "action": "intercept-3-unread-links" },
+    { "action": "view-unread-links" }
+  ]
+}

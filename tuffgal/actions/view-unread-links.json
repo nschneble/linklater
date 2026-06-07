@@ -1,0 +1,19 @@
+{
+  "action": "view-unread-links",
+  "steps": [
+    { "kind": "navigate", "path": "/read" },
+    {
+      "kind": "click",
+      "hint": { "role": "tab", "text": "Unread" }
+    },
+    { "kind": "wait", "ms": 600 }
+  ],
+  "expect": {
+    "anyOf": [
+      { "selector": "[role='tab'][aria-selected='true']:has-text('Unread')" }
+    ],
+    "timeoutMs": 15000
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

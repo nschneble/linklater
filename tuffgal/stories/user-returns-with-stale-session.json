@@ -1,0 +1,8 @@
+{
+  "story": "As a user returning after my session expired, I open the app and land on the logged-out shell.",
+  "needs": ["logged-in"],
+  "actions": [
+    { "action": "intercept-auth-me-401" },
+    { "action": "visit-authenticated-with-stale-token" }
+  ]
+}

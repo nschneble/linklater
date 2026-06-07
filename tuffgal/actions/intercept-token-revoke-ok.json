@@ -1,0 +1,15 @@
+{
+  "action": "intercept-token-revoke-ok",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/tokens/*",
+      "method": "DELETE",
+      "respond": {
+        "status": 200,
+        "body": { "success": true }
+      }
+    }
+  ],
+  "screenshot": false
+}

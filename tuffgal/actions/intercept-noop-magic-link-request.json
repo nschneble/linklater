@@ -1,0 +1,12 @@
+{
+  "action": "intercept-noop-magic-link-request",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/auth/request-magic-link",
+      "method": "POST",
+      "respond": { "status": 200, "body": {} }
+    }
+  ],
+  "screenshot": false
+}

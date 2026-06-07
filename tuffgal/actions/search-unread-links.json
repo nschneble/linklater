@@ -1,0 +1,19 @@
+{
+  "action": "search-unread-links",
+  "parameters": ["query"],
+  "steps": [
+    { "kind": "navigate", "path": "/unread" },
+    {
+      "kind": "input",
+      "hint": { "role": "searchbox", "text": "Search through your links" },
+      "value": "${query}"
+    },
+    { "kind": "wait", "ms": 800 }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "link", "text": "Test Link 2" }],
+    "timeoutMs": 10000
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

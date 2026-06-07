@@ -1,5 +1,6 @@
 import ConfirmAccountDeletionPage from '../components/auth/ConfirmAccountDeletionPage';
 import ExtensionAuthorizePage from '../components/auth/ExtensionAuthorizePage';
+import FailWhalePage from '../components/FailWhalePage';
 import LandingPage from '../components/LandingPage';
 import LogoutPage from '../components/auth/LogoutPage';
 import OAuthCallbackPage from '../components/auth/OAuthCallbackPage';
@@ -49,5 +50,6 @@ export function commonRoutes() {
       path="/extension/authorize"
       element={<ExtensionAuthorizePage />}
     />,
+    <Route key="failwhale" path="/failwhale" element={<FailWhalePage />} />,
   ];
 }

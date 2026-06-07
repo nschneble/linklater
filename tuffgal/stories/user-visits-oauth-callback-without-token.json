@@ -1,0 +1,4 @@
+{
+  "story": "Visiting the OAuth callback without a token in the hash surfaces the error screen.",
+  "actions": [{ "action": "visit-oauth-callback-no-token" }]
+}

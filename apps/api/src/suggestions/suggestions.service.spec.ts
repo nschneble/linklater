@@ -18,6 +18,7 @@ const TEST_USER_ID = 'user-1';
 
 describe('SuggestionsService', () => {
   let service: SuggestionsService;
+  const originalTestingUi = process.env.TESTING_UI;
 
   const rssFeedServiceMock = {
     refreshAll: jest.fn().mockResolvedValue(undefined),
@@ -55,6 +56,14 @@ describe('SuggestionsService', () => {
     service = module.get<SuggestionsService>(SuggestionsService);
     jest.clearAllMocks();
     (prismaMock.link.findMany as jest.Mock).mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    if (originalTestingUi === undefined) {
+      delete process.env.TESTING_UI;
+    } else {
+      process.env.TESTING_UI = originalTestingUi;
+    }
   });
 
   describe('onModuleInit', () => {
@@ -272,6 +281,80 @@ describe('SuggestionsService', () => {
       const result = await service.getSuggestions(1, TEST_USER_ID);
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('TESTING_UI bypass', () => {
+    beforeEach(() => {
+      process.env.TESTING_UI = '1';
+    });
+
+    describe('onModuleInit', () => {
+      it('skips queue scheduling so the test DB sees no recurring writes', async () => {
+        await service.onModuleInit();
+
+        expect(queueServiceMock.schedule).not.toHaveBeenCalled();
+        expect(queueServiceMock.work).not.toHaveBeenCalled();
+      });
+
+      it('skips the bootstrap RSS refresh so no external network call fires', async () => {
+        await service.onModuleInit();
+        await Promise.resolve();
+
+        expect(rssFeedServiceMock.refreshAll).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('getSuggestions', () => {
+      it('returns deterministic fixture entries instead of calling any adapter', async () => {
+        const result = await service.getSuggestions(2, TEST_USER_ID);
+
+        expect(result).not.toBeNull();
+        expect(result!.sourceName).toBe('Testing Fixture');
+        expect(result!.suggestions).toHaveLength(2);
+        expect(wikipediaAdapterMock.fetch).not.toHaveBeenCalled();
+        expect(rssFeedServiceMock.getLatest).not.toHaveBeenCalled();
+      });
+
+      it('clamps requested count to the fixture pool size', async () => {
+        const result = await service.getSuggestions(99, TEST_USER_ID);
+
+        expect(result!.suggestions).toHaveLength(2);
+      });
+
+      it('returns at least one suggestion even when count=0', async () => {
+        const result = await service.getSuggestions(0, TEST_USER_ID);
+
+        expect(result!.suggestions.length).toBeGreaterThanOrEqual(1);
+      });
+
+      it('still runs the saved-link filter so a fixture saving a pool URL never sees the duplicate surface as a suggestion', async () => {
+        await service.getSuggestions(1, TEST_USER_ID);
+
+        expect(prismaMock.link.findMany).toHaveBeenCalledWith({
+          where: {
+            userId: TEST_USER_ID,
+            url: {
+              in: ['https://example.test/articles/testing-ui-determinism'],
+            },
+          },
+          select: { url: true },
+        });
+      });
+
+      it('falls back to the first pool entry when every candidate is already saved, so the callout still renders', async () => {
+        (prismaMock.link.findMany as jest.Mock).mockResolvedValueOnce([
+          { url: 'https://example.test/articles/testing-ui-determinism' },
+          { url: 'https://example.test/articles/sample-suggestions' },
+        ]);
+
+        const result = await service.getSuggestions(2, TEST_USER_ID);
+
+        expect(result!.suggestions).toHaveLength(1);
+        expect(result!.suggestions[0].url).toBe(
+          'https://example.test/articles/testing-ui-determinism',
+        );
+      });
     });
   });
 });

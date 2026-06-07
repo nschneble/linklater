@@ -1,0 +1,51 @@
+{
+  "action": "unread-link",
+  "steps": [
+    { "kind": "navigate", "path": "/read" },
+    {
+      "kind": "click",
+      "hint": {
+        "selector": "#links-list > div:first-child button[aria-label='Mark unread']"
+      }
+    },
+    { "kind": "wait", "ms": 1000 },
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/links?*read=false*",
+      "method": "GET",
+      "respond": {
+        "status": 200,
+        "body": {
+          "data": [
+            {
+              "id": "fixture-read-0000000000000001",
+              "url": "https://example.test/read/1",
+              "createdAt": "2026-01-01T12:00:00.000Z",
+              "updatedAt": "2026-01-01T12:00:00.000Z",
+              "readAt": null,
+              "meta": {
+                "title": "Test Link 1",
+                "description": null,
+                "imageUrl": null,
+                "faviconUrl": null,
+                "siteName": null,
+                "source": null,
+                "fetchedAt": "2026-01-01T12:00:00.000Z"
+              }
+            }
+          ],
+          "limit": 20,
+          "page": 1,
+          "total": 1
+        }
+      }
+    },
+    { "kind": "navigate", "path": "/unread" }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "link", "text": "Test Link 1" }],
+    "timeoutMs": 15000
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

@@ -1,0 +1,20 @@
+{
+  "action": "request-magic-link",
+  "steps": [
+    { "kind": "navigate", "path": "/login" },
+    {
+      "kind": "input",
+      "hint": { "role": "textbox", "text": "Email" },
+      "value": "testing-ui@linklater.test"
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Log in with magic link" }
+    },
+    { "kind": "wait", "ms": 800 }
+  ],
+  "expect": {
+    "anyOf": [{ "text": "Check your email for a login link" }]
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}

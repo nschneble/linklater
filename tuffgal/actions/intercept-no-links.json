@@ -1,0 +1,15 @@
+{
+  "action": "intercept-no-links",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/links?*",
+      "method": "GET",
+      "respond": {
+        "status": 200,
+        "body": { "data": [], "limit": 20, "page": 1, "total": 0 }
+      }
+    }
+  ],
+  "screenshot": false
+}

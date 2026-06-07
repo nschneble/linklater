@@ -1,0 +1,20 @@
+{
+  "action": "setup-mfa",
+  "steps": [
+    { "kind": "navigate", "path": "/settings" },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Add authenticator app" }
+    },
+    { "kind": "wait", "ms": 600 }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "button", "text": "Verify code" }],
+    "timeoutMs": 20000
+  },
+  "mask": [
+    { "selector": "img[alt='']" },
+    { "selector": "[aria-label='TOTP secret']" }
+  ],
+  "diff": { "maxDiffRatio": 0.02 }
+}

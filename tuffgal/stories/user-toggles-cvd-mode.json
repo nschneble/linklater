@@ -1,0 +1,9 @@
+{
+  "story": "As a logged-in user, I can turn on CVD mode.",
+  "flow": "turn on CVD mode",
+  "needs": ["logged-in"],
+  "actions": [
+    { "action": "intercept-noop-user-patch" },
+    { "action": "toggle-cvd-mode" }
+  ]
+}

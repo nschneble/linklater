@@ -1,0 +1,4 @@
+- heading "You forgot?" [level=1]
+- paragraph: Silly goose. We'll send you a reset link! Unless you don't have an account. Then this isn't gonna do much.
+- status: Check your email for a reset link
+- button "Back to login"

@@ -1,0 +1,15 @@
+{
+  "action": "intercept-token-revoke-500",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/tokens/*",
+      "method": "DELETE",
+      "respond": {
+        "status": 500,
+        "body": { "statusCode": 500, "message": "Internal server error" }
+      }
+    }
+  ],
+  "screenshot": false
+}

@@ -1,0 +1,12 @@
+{
+  "action": "visit-unread",
+  "steps": [
+    { "kind": "navigate", "path": "/unread" },
+    { "kind": "wait", "ms": 600 }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Your links" }]
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

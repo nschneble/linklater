@@ -1,0 +1,15 @@
+{
+  "action": "intercept-links-api",
+  "screenshot": false,
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "**/links",
+      "method": "POST",
+      "respond": {
+        "status": 500,
+        "body": { "message": "Service unavailable" }
+      }
+    }
+  ]
+}

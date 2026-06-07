@@ -1,0 +1,28 @@
+{
+  "action": "intercept-noop-totp-verify",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/auth/mfa/totp/verify",
+      "method": "POST",
+      "respond": {
+        "status": 200,
+        "body": {
+          "recoveryCodes": [
+            "AAAA-BBBB-1111",
+            "CCCC-DDDD-2222",
+            "EEEE-FFFF-3333",
+            "GGGG-HHHH-4444",
+            "IIII-JJJJ-5555",
+            "KKKK-LLLL-6666",
+            "MMMM-NNNN-7777",
+            "OOOO-PPPP-8888",
+            "QQQQ-RRRR-9999",
+            "SSSS-TTTT-0000"
+          ]
+        }
+      }
+    }
+  ],
+  "screenshot": false
+}

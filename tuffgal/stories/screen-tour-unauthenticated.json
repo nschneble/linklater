@@ -1,0 +1,9 @@
+{
+  "story": "Visual tour of every screen reachable while signed out.",
+  "actions": [
+    { "action": "visit-landing" },
+    { "action": "visit-login" },
+    { "action": "visit-signup" },
+    { "action": "visit-forgot-password" }
+  ]
+}

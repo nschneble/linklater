@@ -9,6 +9,8 @@ const RESET_TOKEN = 'reset-token-xyz';
 describe('EmailService', () => {
   let service: EmailService;
   let sendMailMock: jest.Mock;
+  let logMock: jest.SpiedFunction<(...args: unknown[]) => void>;
+  const originalTestingUi = process.env.TESTING_UI;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -26,6 +28,17 @@ describe('EmailService', () => {
     jest
       .spyOn(serviceAsAny.logger, 'error')
       .mockImplementation(() => undefined);
+    logMock = jest
+      .spyOn(serviceAsAny.logger, 'log')
+      .mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    if (originalTestingUi === undefined) {
+      delete process.env.TESTING_UI;
+    } else {
+      process.env.TESTING_UI = originalTestingUi;
+    }
   });
 
   describe('sendVerification', () => {
@@ -151,6 +164,44 @@ describe('EmailService', () => {
       await expect(
         service.sendEmailChangeVerification(USER_EMAIL, VERIFICATION_TOKEN),
       ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+
+  describe('TESTING_UI bypass', () => {
+    beforeEach(() => {
+      process.env.TESTING_UI = '1';
+    });
+
+    it('skips the SMTP transporter entirely on every send variant', async () => {
+      await service.sendVerification(USER_EMAIL, VERIFICATION_TOKEN);
+      await service.sendPasswordReset(USER_EMAIL, RESET_TOKEN);
+      await service.sendEmailChangeVerification(USER_EMAIL, VERIFICATION_TOKEN);
+      await service.sendMagicLink(USER_EMAIL, VERIFICATION_TOKEN);
+      await service.sendAccountDeletionConfirmation(
+        USER_EMAIL,
+        VERIFICATION_TOKEN,
+      );
+
+      expect(sendMailMock).not.toHaveBeenCalled();
+    });
+
+    it('logs the noop with subject (but never the recipient) so the harness has a trail without leaking PII', async () => {
+      await service.sendVerification(USER_EMAIL, VERIFICATION_TOKEN);
+
+      expect(logMock).toHaveBeenCalledWith(
+        expect.stringContaining('TESTING_UI=1'),
+      );
+      const [logMessage] = logMock.mock.calls[0] as [string];
+      expect(logMessage).toContain('Verify your Linklater email');
+      expect(logMessage).not.toContain(USER_EMAIL);
+    });
+
+    it('does not throw ServiceUnavailableException even if the transporter would have', async () => {
+      sendMailMock.mockRejectedValue(new Error('SMTP connection refused'));
+
+      await expect(
+        service.sendVerification(USER_EMAIL, VERIFICATION_TOKEN),
+      ).resolves.toBeUndefined();
     });
   });
 });

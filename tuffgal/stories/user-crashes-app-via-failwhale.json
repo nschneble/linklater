@@ -1,0 +1,7 @@
+{
+  "story": "Clicking the failwhale crash button triggers the app-root ErrorBoundary fallback.",
+  "actions": [
+    { "action": "visit-failwhale" },
+    { "action": "crash-failwhale" }
+  ]
+}

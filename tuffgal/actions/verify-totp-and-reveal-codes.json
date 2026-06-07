@@ -1,0 +1,17 @@
+{
+  "action": "verify-totp-and-reveal-codes",
+  "parameters": ["code"],
+  "steps": [
+    {
+      "kind": "input",
+      "hint": { "selector": "#totp-code" },
+      "value": "${code}"
+    },
+    { "kind": "wait", "ms": 1000 }
+  ],
+  "expect": {
+    "anyOf": [{ "text": "Your recovery codes have been generated" }]
+  },
+  "mask": [{ "selector": "[role='status']" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

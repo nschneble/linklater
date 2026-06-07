@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
+import { isTestingUi } from '../common/testing-ui.js';
 import { PrismaService } from '../prisma/index.js';
 import { QueueService } from '../queue/index.js';
 import { RssAdapter } from './rss-adapter.js';
@@ -7,6 +8,30 @@ import { RssFeedService } from './rss-feed.service.js';
 import { SOURCES, type SourceDefinition } from './sources.js';
 import { WikipediaAdapter } from './wikipedia-adapter.js';
 import type { SourceAdapter, Suggestion } from './suggestions.types.js';
+
+/**
+ * Frozen suggestion pool returned in TESTING_UI mode. Exported so tuffgal
+ * fixtures can avoid writing colliding `Link.url` rows for the test user
+ * — a fixture sharing one of these URLs would be filtered out and would
+ * shrink the deterministic suggestion set unexpectedly.
+ */
+export const TESTING_UI_SUGGESTION_POOL: readonly Suggestion[] = [
+  {
+    title: 'Testing-UI Determinism',
+    url: 'https://example.test/articles/testing-ui-determinism',
+    description:
+      'A frozen sample article used by the testing-ui harness so screenshot diffs only flag genuine UI changes.',
+    imageUrl: null,
+    siteName: 'Testing Fixture',
+  },
+  {
+    title: 'A Note on Sample Suggestions',
+    url: 'https://example.test/articles/sample-suggestions',
+    description: 'Another stable placeholder for visual regression runs.',
+    imageUrl: null,
+    siteName: 'Testing Fixture',
+  },
+];
 
 /** Queue name for the recurring RSS refresh. */
 const RSS_REFRESH_QUEUE = 'rss-refresh';
@@ -43,6 +68,15 @@ export class SuggestionsService implements OnModuleInit {
   }
 
   async onModuleInit(): Promise<void> {
+    // In testing-ui mode we never want network calls to flaky external
+    // sources or the recurring refresh job competing for the test database
+    // — both would inject non-determinism into visual baselines.
+    if (isTestingUi()) {
+      this.logger.log(
+        'TESTING_UI=1: skipping RSS scheduling and bootstrap refresh.',
+      );
+      return;
+    }
     await this.queueService.schedule(RSS_REFRESH_QUEUE, RSS_REFRESH_CRON);
     await this.queueService.work(RSS_REFRESH_QUEUE, async () => {
       await this.rssFeedService.refreshAll();
@@ -82,6 +116,9 @@ export class SuggestionsService implements OnModuleInit {
     count: number,
     userId: string,
   ): Promise<{ sourceName: string; suggestions: Suggestion[] } | null> {
+    if (isTestingUi()) {
+      return this.deterministicTestSuggestions(count, userId);
+    }
     const candidates = [...this.adapters.values()];
 
     while (candidates.length > 0) {
@@ -113,6 +150,29 @@ export class SuggestionsService implements OnModuleInit {
     }
 
     return null;
+  }
+
+  /**
+   * Returns a fixed, content-stable suggestion set for the testing-ui
+   * harness. Avoids random source selection + network I/O, and still
+   * runs the candidate set through `filterAlreadySaved` so the contract
+   * matches the production path (a fixture that saves one of the pool
+   * URLs would otherwise see it surfaced as a duplicate). If everything
+   * is filtered out, falls back to the first pool entry so the callout
+   * always has something to render.
+   */
+  private async deterministicTestSuggestions(
+    count: number,
+    userId: string,
+  ): Promise<{ sourceName: string; suggestions: Suggestion[] }> {
+    const pool: Suggestion[] = [...TESTING_UI_SUGGESTION_POOL];
+    const wanted = Math.max(1, Math.min(count, pool.length));
+    const candidate = pool.slice(0, wanted);
+    const fresh = await this.filterAlreadySaved(candidate, userId);
+    return {
+      sourceName: 'Testing Fixture',
+      suggestions: fresh.length > 0 ? fresh : [pool[0]],
+    };
   }
 
   /**

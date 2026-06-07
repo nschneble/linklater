@@ -5,7 +5,7 @@ import {
   MAX_URL_LENGTH,
 } from './metadata.constants.js';
 import type { LinkMetadata } from './metadata.types.js';
-import * as cheerio from 'cheerio';
+import * as cheerio from 'cheerio/slim';
 
 /**
  * Fetches and parses Open Graph / Twitter Card metadata from a public URL.

@@ -1,0 +1,69 @@
+{
+  "action": "intercept-3-unread-links",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/links?*read=false*",
+      "method": "GET",
+      "respond": {
+        "status": 200,
+        "body": {
+          "data": [
+            {
+              "id": "fixture-link-0000000000000001",
+              "url": "https://example.test/1",
+              "createdAt": "2026-01-01T12:00:00.000Z",
+              "updatedAt": "2026-01-01T12:00:00.000Z",
+              "readAt": null,
+              "meta": {
+                "title": "Test Link 1",
+                "description": null,
+                "imageUrl": null,
+                "faviconUrl": null,
+                "siteName": null,
+                "source": null,
+                "fetchedAt": "2026-01-01T12:00:00.000Z"
+              }
+            },
+            {
+              "id": "fixture-link-0000000000000002",
+              "url": "https://example.test/2",
+              "createdAt": "2026-01-01T12:00:00.000Z",
+              "updatedAt": "2026-01-01T12:00:00.000Z",
+              "readAt": null,
+              "meta": {
+                "title": "Test Link 2",
+                "description": null,
+                "imageUrl": null,
+                "faviconUrl": null,
+                "siteName": null,
+                "source": null,
+                "fetchedAt": "2026-01-01T12:00:00.000Z"
+              }
+            },
+            {
+              "id": "fixture-link-0000000000000003",
+              "url": "https://example.test/3",
+              "createdAt": "2026-01-01T12:00:00.000Z",
+              "updatedAt": "2026-01-01T12:00:00.000Z",
+              "readAt": null,
+              "meta": {
+                "title": "Test Link 3",
+                "description": null,
+                "imageUrl": null,
+                "faviconUrl": null,
+                "siteName": null,
+                "source": null,
+                "fetchedAt": "2026-01-01T12:00:00.000Z"
+              }
+            }
+          ],
+          "limit": 20,
+          "page": 1,
+          "total": 3
+        }
+      }
+    }
+  ],
+  "screenshot": false
+}

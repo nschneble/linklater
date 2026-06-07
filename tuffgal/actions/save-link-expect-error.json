@@ -1,0 +1,25 @@
+{
+  "action": "save-link-expect-error",
+  "parameters": ["url"],
+  "steps": [
+    { "kind": "navigate", "path": "/unread" },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Add link" }
+    },
+    {
+      "kind": "input",
+      "hint": { "role": "textbox", "text": "URL" },
+      "value": "${url}"
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Save link" }
+    }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "alert" }]
+  },
+  "mask": [{ "selector": "#suggestion-callout-title" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

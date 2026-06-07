@@ -1,0 +1,33 @@
+{
+  "action": "intercept-random-link",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "**/links/random",
+      "method": "GET",
+      "respond": {
+        "status": 200,
+        "body": {
+          "link": {
+            "id": "fixture-link-0000000000000001",
+            "url": "https://example.test/1",
+            "userId": "00000000-0000-0000-0000-000000000001",
+            "createdAt": "2026-01-01T12:00:00.000Z",
+            "updatedAt": "2026-01-01T12:00:00.000Z",
+            "readAt": null,
+            "meta": {
+              "title": "Test Link 1",
+              "description": null,
+              "imageUrl": null,
+              "faviconUrl": null,
+              "siteName": null,
+              "source": null,
+              "fetchedAt": "2026-01-01T12:00:00.000Z"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "screenshot": false
+}

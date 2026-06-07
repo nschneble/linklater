@@ -1,0 +1,22 @@
+{
+  "action": "change-email",
+  "parameters": ["newEmail"],
+  "steps": [
+    { "kind": "navigate", "path": "/settings" },
+    {
+      "kind": "input",
+      "hint": { "selector": "#change-email" },
+      "value": "${newEmail}"
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Change email address" }
+    },
+    { "kind": "wait", "ms": 600 }
+  ],
+  "expect": {
+    "anyOf": [{ "selector": "[role='status']" }]
+  },
+  "mask": [{ "selector": "[role='status']" }],
+  "diff": { "maxDiffRatio": 0.02 }
+}

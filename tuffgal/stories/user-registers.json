@@ -1,0 +1,13 @@
+{
+  "story": "As a new user, I can create an account.",
+  "flow": "create a new account",
+  "actions": [
+    {
+      "action": "register",
+      "parameters": {
+        "email": "fresh-user@linklater.test",
+        "password": "fresh-user-password"
+      }
+    }
+  ]
+}

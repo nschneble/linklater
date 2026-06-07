@@ -1,0 +1,57 @@
+name: Tuffgal
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  visual-regression:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: linklater_testing_ui
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      TESTING_UI: '1'
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/linklater_testing_ui?schema=public'
+      JWT_SECRET: 'ci-jwt-secret'
+      TOTP_ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
+      APP_URL: 'https://localhost:5173'
+      VITE_API_BASE_URL: 'https://localhost:3000'
+      VITE_APPLE_SSO_ENABLED: 'false'
+      VITE_GOOGLE_SSO_ENABLED: 'false'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: Provision HTTPS certs for API
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libnss3-tools
+          curl -fsSL "https://dl.filippo.io/mkcert/latest?for=linux/amd64" -o mkcert
+          chmod +x mkcert
+          sudo mv mkcert /usr/local/bin/mkcert
+          mkcert -install
+          mkdir -p apps/api/certs
+          mkcert -key-file apps/api/certs/localhost-key.pem -cert-file apps/api/certs/localhost.pem localhost
+      - uses: nschneble/tuffgal-action@v0
+        with:
+          setup-script: test:ui:setup

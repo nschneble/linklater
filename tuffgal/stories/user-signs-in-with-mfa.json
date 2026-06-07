@@ -1,0 +1,7 @@
+{
+  "story": "As a TOTP-enrolled user, I can sign in by submitting my password and clearing the MFA challenge.",
+  "actions": [
+    { "action": "intercept-login-mfa-challenge" },
+    { "action": "attempt-login-expect-mfa-challenge" }
+  ]
+}

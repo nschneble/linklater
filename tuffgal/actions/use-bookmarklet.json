@@ -1,0 +1,28 @@
+{
+  "action": "use-bookmarklet",
+  "steps": [
+    { "kind": "navigate", "path": "/settings#bookmarklet" },
+    {
+      "kind": "waitFor",
+      "hint": {
+        "selector": "[aria-label='Regenerate bookmarklet token']"
+      }
+    },
+    {
+      "kind": "click",
+      "hint": {
+        "selector": "[aria-label='Regenerate bookmarklet token']"
+      }
+    },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Yes, regenerate" }
+    },
+    { "kind": "wait", "ms": 600 }
+  ],
+  "expect": {
+    "anyOf": [{ "selector": "[aria-label='Regenerate bookmarklet token']" }],
+    "timeoutMs": 15000
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}
