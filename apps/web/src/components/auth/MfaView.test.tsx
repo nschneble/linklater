@@ -15,12 +15,7 @@ interface HarnessProps {
   onSubmit: (event: FormEvent) => void;
 }
 
-function Harness({
-  loading,
-  mfaChallenge,
-  mfaCode,
-  onSubmit,
-}: HarnessProps) {
+function Harness({ loading, mfaChallenge, mfaCode, onSubmit }: HarnessProps) {
   const errorReference = useRef<HTMLParagraphElement>(
     null,
   ) as RefObject<HTMLParagraphElement | null>;
