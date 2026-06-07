@@ -16,18 +16,27 @@ export class IsPublicUrlConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
     if (typeof value !== 'string') return false;
 
-    let hostname: string;
+    let parsed: URL;
     try {
-      hostname = new URL(value).hostname;
+      parsed = new URL(value);
     } catch {
       return false;
     }
 
-    return !isPrivateHost(hostname);
+    // Defence-in-depth: reject non-http(s) schemes inside the validator
+    // itself. Otherwise `new URL('javascript:alert(1)').hostname` is the
+    // empty string, isPrivateHost('') returns false, and the validator
+    // green-lights the payload — a footgun if @IsPublicUrl is ever used
+    // without a co-located @IsUrl({ protocols: ['http', 'https'] }).
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false;
+    }
+
+    return !isPrivateHost(parsed.hostname);
   }
 
   defaultMessage(): string {
-    return 'Url must not point to a private or loopback address';
+    return 'Url must be a public http(s) URL — private or loopback addresses are not allowed';
   }
 }
 

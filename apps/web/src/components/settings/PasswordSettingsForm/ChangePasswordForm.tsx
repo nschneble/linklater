@@ -48,12 +48,12 @@ export default function ChangePasswordForm() {
       aria-labelledby="password-settings-heading"
       onSubmit={handleSubmit}
     >
-      <h2
+      <h3
         id="password-settings-heading"
         className="text-[var(--text)] text-sm font-semibold text-balance"
       >
         Password
-      </h2>
+      </h3>
 
       <label
         className="block mb-0 text-[var(--text-muted)] text-xs font-medium"

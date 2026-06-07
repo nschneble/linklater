@@ -95,12 +95,10 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
       ?.focus();
   };
 
-  useMenuNavigation(
-    flyoutReference,
-    closeFlyout,
-    '[data-submenu-item]',
-    closeFlyout,
-  );
+  useMenuNavigation(flyoutReference, closeFlyout, {
+    itemSelector: '[data-submenu-item]',
+    onArrowLeft: closeFlyout,
+  });
 
   // resets submenu when main menu closes; moves focus into menu on open
   useEffect(() => {

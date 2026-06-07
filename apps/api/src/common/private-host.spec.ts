@@ -82,6 +82,14 @@ describe('isPrivateHost', () => {
       // ::ffff:127.0.0.1 in compressed hex = ::ffff:7f00:1
       expect(isPrivateHost('::ffff:7f00:1')).toBe(true);
     });
+
+    it('blocks 0.0.0.0 (routes to loopback on Linux/macOS)', () => {
+      expect(isPrivateHost('0.0.0.0')).toBe(true);
+    });
+
+    it('blocks 0.255.255.255 (entire 0.0.0.0/8 reserved range)', () => {
+      expect(isPrivateHost('0.255.255.255')).toBe(true);
+    });
   });
 
   describe('allows public hosts', () => {
@@ -95,6 +103,26 @@ describe('isPrivateHost', () => {
 
     it('allows 2001:db8::1 (public IPv6 documentation range)', () => {
       expect(isPrivateHost('2001:db8::1')).toBe(false);
+    });
+
+    it('allows fcc.gov (public DNS host that starts with "fc")', () => {
+      expect(isPrivateHost('fcc.gov')).toBe(false);
+    });
+
+    it('allows fdic.gov (public DNS host that starts with "fd")', () => {
+      expect(isPrivateHost('fdic.gov')).toBe(false);
+    });
+
+    it('allows fda.gov (public DNS host that starts with "fd")', () => {
+      expect(isPrivateHost('fda.gov')).toBe(false);
+    });
+
+    it('allows febreze.com (public DNS host that starts with "feb")', () => {
+      expect(isPrivateHost('febreze.com')).toBe(false);
+    });
+
+    it('allows fe80styles.com (public DNS host that starts with "fe80" but is not an IPv6 literal)', () => {
+      expect(isPrivateHost('fe80styles.com')).toBe(false);
     });
   });
 });

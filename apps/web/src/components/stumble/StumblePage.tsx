@@ -1,24 +1,36 @@
 import { stumbleLink } from '../../lib/api';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
+import Alert from '../common/Alert';
+import IconButton from '../common/IconButton';
 import StumbleEmptyView from './StumbleEmptyView';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-type StumbleState = 'loading' | 'empty';
+type StumbleState = 'loading' | 'empty' | 'error';
 
 /**
  * Standalone page rendered at `/stumble`. On mount it calls
  * `POST /links/stumble`, which atomically picks a random unread link and
- * marks it as read. If a link is found, the page redirects via
- * `window.location.replace(url)` so the browser back button returns to
- * whatever page the user was on before clicking the Stumble! bookmark —
- * `/stumble` itself is dropped from history, avoiding a redirect loop.
- * When no unread links exist, renders `StumbleEmptyView` instead.
+ * marks it as read.
+ *
+ * Outcomes:
+ * - URL passes `isSafeRedirectUrl` → `window.location.replace(url)` so the
+ *   browser back button returns to wherever the user clicked the Stumble!
+ *   bookmark; `/stumble` itself drops from history, avoiding a redirect loop.
+ * - URL is null → `StumbleEmptyView` (the user's unread list is empty).
+ * - URL is non-null but fails the safety check, or the request errors →
+ *   `error` state with an `Alert` + a retry button that pulls another link.
+ *   Without the dedicated state, an unsafe-URL link silently looked
+ *   identical to "no unread links" and the user lost access to it.
  */
 export default function StumblePage() {
-  useDocumentTitle('Stumble — Linklater');
   const [state, setState] = useState<StumbleState>('loading');
+  useDocumentTitle(
+    state === 'error' ? 'Stumble error — Linklater' : 'Stumble — Linklater',
+  );
+
   const isMountedReference = useRef(true);
+  const retryButtonReference = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     isMountedReference.current = true;
@@ -27,23 +39,63 @@ export default function StumblePage() {
     };
   }, []);
 
-  useEffect(() => {
+  const tryStumble = useCallback(() => {
+    setState('loading');
     stumbleLink()
       .then((result) => {
         if (!isMountedReference.current) return;
+        if (!result.url) {
+          // No unread links — backend signals this with a null/empty URL.
+          setState('empty');
+          return;
+        }
         if (isSafeRedirectUrl(result.url)) {
           window.location.replace(result.url);
-        } else {
-          setState('empty');
+          return;
         }
+        // URL came back but failed the safety check (e.g. legacy non-http
+        // row) — surface it as a recoverable error rather than the same
+        // view used for "you have no unread links".
+        setState('error');
       })
       .catch(() => {
         if (!isMountedReference.current) return;
-        setState('empty');
+        setState('error');
       });
   }, []);
 
+  useEffect(() => {
+    tryStumble();
+  }, [tryStumble]);
+
+  // Move keyboard focus onto the retry button when the error state appears
+  // so a keyboard-only user can recover without hunting for it.
+  useEffect(() => {
+    if (state === 'error') {
+      retryButtonReference.current?.focus();
+    }
+  }, [state]);
+
   if (state === 'empty') return <StumbleEmptyView />;
+
+  if (state === 'error') {
+    return (
+      <main className="flex flex-col items-center justify-center min-h-screen max-w-md mx-auto px-4 bg-[var(--bg)] text-[var(--text)] text-center gap-4">
+        <Alert variant="error" icon="fa-triangle-exclamation">
+          We couldn't open that link. It may have been saved with an unsupported
+          address.
+        </Alert>
+        <IconButton
+          ref={retryButtonReference}
+          variant="elevated"
+          onClick={tryStumble}
+        >
+          <i className="fa-solid fa-arrows-rotate text-xs" aria-hidden="true" />
+          Try another link
+        </IconButton>
+      </main>
+    );
+  }
 
   return (
     <main className="flex items-center justify-center min-h-screen bg-[var(--bg)] text-[var(--text-muted)] select-none">

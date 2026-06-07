@@ -55,10 +55,16 @@ export default function MobileBottomSheet({
   const mainViewReference = useRef<HTMLDivElement | null>(null);
   const themeViewReference = useRef<HTMLDivElement | null>(null);
   const themeButtonReference = useRef<HTMLButtonElement | null>(null);
+  const openerReference = useRef<HTMLElement | null>(null);
   const touchStartY = useRef(0);
 
-  useMenuNavigation(mainViewReference, onClose);
-  useMenuNavigation(themeViewReference, handleBackToMain);
+  // Modal-dialog contract: Tab must stay inside the sheet (not advance into
+  // the inert subtree behind the scrim) so keyboard users do not get
+  // stranded on <body>. Both panels use trap behavior.
+  useMenuNavigation(mainViewReference, onClose, { tabBehavior: 'trap' });
+  useMenuNavigation(themeViewReference, handleBackToMain, {
+    tabBehavior: 'trap',
+  });
 
   useEffect(() => {
     const isMobile =
@@ -74,6 +80,22 @@ export default function MobileBottomSheet({
     return () => {
       document.body.classList.remove('menu-open');
     };
+  }, [isOpen]);
+
+  // Capture the trigger that opened the sheet so focus can be restored to
+  // it on close. Without this, closing the sheet (Escape, scrim tap, swipe)
+  // leaves focus stranded inside the now-inert subtree and the browser
+  // falls back to <body>. WAI-ARIA APG dialog pattern.
+  useEffect(() => {
+    if (isOpen) {
+      openerReference.current = document.activeElement as HTMLElement | null;
+      return;
+    }
+    const opener = openerReference.current;
+    if (opener && typeof opener.focus === 'function') {
+      opener.focus();
+    }
+    openerReference.current = null;
   }, [isOpen]);
 
   useEffect(() => {
@@ -110,11 +132,17 @@ export default function MobileBottomSheet({
   }
 
   function handleDragHandleTouchStart(event: React.TouchEvent) {
-    touchStartY.current = event.touches[0].clientY;
+    // Multi-finger or synthetic events can dispatch with an empty touches
+    // list — accessing `[0].clientY` would throw and crash the sheet.
+    const firstTouch = event.touches[0];
+    if (!firstTouch) return;
+    touchStartY.current = firstTouch.clientY;
   }
 
   function handleDragHandleTouchEnd(event: React.TouchEvent) {
-    const deltaY = event.changedTouches[0].clientY - touchStartY.current;
+    const lastTouch = event.changedTouches[0];
+    if (!lastTouch) return;
+    const deltaY = lastTouch.clientY - touchStartY.current;
     if (deltaY > 64) {
       onClose();
     }
@@ -123,16 +151,22 @@ export default function MobileBottomSheet({
   return (
     <div className="md:hidden">
       {/* Scrim: always aria-hidden (decorative backdrop); keyboard close is
-          handled by Escape in useMenuNavigation. data-open drives Tailwind. */}
+          handled by Escape in useMenuNavigation. data-open drives Tailwind.
+          Opacity transition is motion-safe so reduced-motion users get an
+          instant scrim swap to match the instant panel snap. */}
       <div
-        className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 data-[open=false]:opacity-0 data-[open=false]:pointer-events-none"
+        className="fixed inset-0 z-40 bg-black/50 motion-safe:transition-opacity motion-safe:duration-300 data-[open=false]:opacity-0 data-[open=false]:pointer-events-none"
         aria-hidden="true"
         data-open={isOpen}
         onClick={onClose}
       />
 
       <div
-        className="fixed bottom-0 inset-x-0 z-50 max-h-[85svh] overflow-y-auto bg-[var(--bg-elevated)] rounded-t-2xl pb-[env(safe-area-inset-bottom)] motion-safe:[transition:transform_300ms_ease-out]"
+        className={`fixed bottom-0 inset-x-0 z-50 max-h-[85svh] overflow-y-auto bg-[var(--bg-elevated)] rounded-t-2xl pb-[env(safe-area-inset-bottom)] ${
+          isOpen
+            ? 'motion-safe:[transition:transform_300ms_ease-out]'
+            : 'motion-safe:[transition:transform_250ms_ease-in]'
+        }`}
         style={{
           transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
           overscrollBehavior: 'contain',

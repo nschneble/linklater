@@ -34,8 +34,15 @@ export class BookmarkletTokensService {
       where: { userId, kind: TokenKind.BOOKMARKLET },
     });
 
-    if (existing) {
+    if (existing && existing.secretValue) {
       return this.toSummary(existing);
+    }
+
+    // Row exists but secretValue is missing (data-integrity glitch, manual
+    // patch, partial restore). Self-heal by regenerating instead of 500ing
+    // every settings-page load.
+    if (existing) {
+      return this.regenerate(userId);
     }
 
     const { rawToken, tokenHash, prefix } = this.tokensService.mintRawToken();

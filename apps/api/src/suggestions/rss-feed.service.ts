@@ -87,41 +87,66 @@ export class RssFeedService {
       ];
     });
 
-    // Insert new rows in one round-trip; the unique constraint on
-    // (sourceKey, url) makes skipDuplicates safe — existing rows are
-    // left untouched by createMany and picked up by the update pass below.
-    await this.prisma.rssEntry.createMany({
-      data: validItems.map(({ suggestion, publishedAt }) => ({
-        sourceKey: source.key,
-        url: suggestion.url,
-        title: suggestion.title,
-        description: suggestion.description,
-        imageUrl: suggestion.imageUrl,
-        siteName: suggestion.siteName,
-        publishedAt,
-        fetchedAt: now,
-      })),
-      skipDuplicates: true,
-    });
+    // Dedup by URL so a feed that emits the same <link> twice does not race
+    // two parallel updateMany calls against the same row. Last entry wins,
+    // matching the previous per-item upsert behavior where later items in
+    // the feed overwrote earlier ones in iteration order.
+    const byUrl = new Map<string, (typeof validItems)[number]>();
+    for (const entry of validItems) {
+      byUrl.set(entry.suggestion.url, entry);
+    }
+    const deduped = Array.from(byUrl.values());
 
-    // Update mutable fields on rows that already existed. Each updateMany
-    // targets exactly one row via the unique (sourceKey, url) pair.
-    // Promise.all parallelises the writes instead of serialising them.
-    await Promise.all(
-      validItems.map(({ suggestion, publishedAt }) =>
-        this.prisma.rssEntry.updateMany({
-          where: { sourceKey: source.key, url: suggestion.url },
-          data: {
-            title: suggestion.title,
-            description: suggestion.description,
-            imageUrl: suggestion.imageUrl,
-            siteName: suggestion.siteName,
-            publishedAt,
-            fetchedAt: now,
-          },
-        }),
-      ),
+    // Partition new vs existing so the update pass touches only rows that
+    // already exist; freshly-inserted rows do not get a redundant write.
+    const existing = await this.prisma.rssEntry.findMany({
+      where: {
+        sourceKey: source.key,
+        url: { in: deduped.map((entry) => entry.suggestion.url) },
+      },
+      select: { url: true },
+    });
+    const existingUrls = new Set(existing.map((entry) => entry.url));
+
+    const toCreate = deduped.filter(
+      (entry) => !existingUrls.has(entry.suggestion.url),
     );
+    const toUpdate = deduped.filter((entry) =>
+      existingUrls.has(entry.suggestion.url),
+    );
+
+    if (toCreate.length > 0) {
+      await this.prisma.rssEntry.createMany({
+        data: toCreate.map(({ suggestion, publishedAt }) => ({
+          sourceKey: source.key,
+          url: suggestion.url,
+          title: suggestion.title,
+          description: suggestion.description,
+          imageUrl: suggestion.imageUrl,
+          siteName: suggestion.siteName,
+          publishedAt,
+          fetchedAt: now,
+        })),
+      });
+    }
+
+    if (toUpdate.length > 0) {
+      await Promise.all(
+        toUpdate.map(({ suggestion, publishedAt }) =>
+          this.prisma.rssEntry.updateMany({
+            where: { sourceKey: source.key, url: suggestion.url },
+            data: {
+              title: suggestion.title,
+              description: suggestion.description,
+              imageUrl: suggestion.imageUrl,
+              siteName: suggestion.siteName,
+              publishedAt,
+              fetchedAt: now,
+            },
+          }),
+        ),
+      );
+    }
   }
 
   /**

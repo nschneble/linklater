@@ -170,13 +170,39 @@ describe('BookmarkletTokensService', () => {
       });
     });
 
-    it('throws when secretValue is null (data integrity violation)', async () => {
+    it('self-heals by regenerating when the existing row has a null secretValue', async () => {
       const corrupted = makeApiToken({ secretValue: null });
       (prismaMock.apiToken.findFirst as jest.Mock).mockResolvedValue(corrupted);
 
-      await expect(service.getOrCreate(USER_ID)).rejects.toThrow(
-        'missing secretValue',
+      const regenerated = makeApiToken({
+        id: 'bm-regen',
+        secretValue: RAW_TOKEN,
+      });
+      const transactionMock = prismaMock.$transaction as unknown as jest.Mock;
+      transactionMock.mockImplementation(
+        async (callback: (transaction: unknown) => Promise<unknown>) => {
+          const transactionClient = {
+            apiToken: {
+              deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+              create: jest.fn().mockResolvedValue(regenerated),
+            },
+          };
+          return callback(transactionClient);
+        },
       );
+      (tokensServiceMock.mintRawToken as jest.Mock).mockReturnValue({
+        rawToken: RAW_TOKEN,
+        tokenHash: 'abc123hash',
+        prefix: 'ltk_bookmar',
+      });
+
+      const result = await service.getOrCreate(USER_ID);
+
+      expect(result.id).toBe('bm-regen');
+      expect(result.rawToken).toBe(RAW_TOKEN);
+      // The user must never see a 500 just because of a row-level data
+      // glitch — recovery is transparent.
+      expect(transactionMock).toHaveBeenCalled();
     });
   });
 

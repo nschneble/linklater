@@ -23,7 +23,11 @@ describe('useDocumentTitle', () => {
     expect(document.title).toBe('Second — Linklater');
   });
 
-  it('restores the previous title on unmount', () => {
+  it('does NOT restore the previous title on unmount', () => {
+    // Overlapping route transitions would let an unmounting page clobber
+    // the title that the incoming page just set. Each top-level route
+    // component is expected to call useDocumentTitle on mount, so the
+    // next mount always re-establishes the page title — no restore needed.
     document.title = 'Original Title';
 
     const { unmount } = renderHook(() =>
@@ -32,6 +36,6 @@ describe('useDocumentTitle', () => {
     expect(document.title).toBe('Temporary — Linklater');
 
     unmount();
-    expect(document.title).toBe('Original Title');
+    expect(document.title).toBe('Temporary — Linklater');
   });
 });

@@ -76,13 +76,13 @@ describe('RssFeedService', () => {
   });
 
   describe('refreshOne', () => {
-    it('parses an RSS 2.0 feed and persists all items via batch createMany', async () => {
+    it('inserts all-new items via a single createMany and skips updateMany', async () => {
       fetchMock.mockResolvedValueOnce(textResponse(RSS_XML));
+      // No existing rows → every feed item is freshly created. updateMany
+      // must NOT fire for these — that would be a redundant write.
+      (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValueOnce([]);
       (prismaMock.rssEntry.createMany as jest.Mock).mockResolvedValue({
         count: 2,
-      });
-      (prismaMock.rssEntry.updateMany as jest.Mock).mockResolvedValue({
-        count: 1,
       });
 
       await service.refreshOne({
@@ -104,9 +104,7 @@ describe('RssFeedService', () => {
           imageUrl: string | null;
           siteName: string;
         }>;
-        skipDuplicates: boolean;
       };
-      expect(createCall.skipDuplicates).toBe(true);
       expect(createCall.data).toHaveLength(2);
       expect(createCall.data[0]).toMatchObject({
         sourceKey: 'aeon',
@@ -115,13 +113,17 @@ describe('RssFeedService', () => {
         imageUrl: 'https://example.com/first.jpg',
         siteName: 'Aeon',
       });
+      expect(prismaMock.rssEntry.updateMany as jest.Mock).not.toHaveBeenCalled();
     });
 
-    it('issues one updateMany per item to refresh mutable fields', async () => {
+    it('issues one updateMany per pre-existing item and skips createMany for them', async () => {
       fetchMock.mockResolvedValueOnce(textResponse(RSS_XML));
-      (prismaMock.rssEntry.createMany as jest.Mock).mockResolvedValue({
-        count: 0,
-      });
+      // Both feed URLs already exist → updateMany fires per row, createMany
+      // is skipped entirely (no fresh rows to insert).
+      (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValueOnce([
+        { url: 'https://example.com/first' },
+        { url: 'https://example.com/second' },
+      ]);
       (prismaMock.rssEntry.updateMany as jest.Mock).mockResolvedValue({
         count: 1,
       });
@@ -135,7 +137,6 @@ describe('RssFeedService', () => {
       });
 
       const updateManyMock = prismaMock.rssEntry.updateMany as jest.Mock;
-      // Two items in the feed → two parallel updateMany calls
       expect(updateManyMock).toHaveBeenCalledTimes(2);
 
       const firstCall = updateManyMock.mock.calls[0][0] as {
@@ -147,14 +148,14 @@ describe('RssFeedService', () => {
         url: 'https://example.com/first',
       });
       expect(firstCall.data.title).toBe('First Item');
+
+      expect(prismaMock.rssEntry.createMany as jest.Mock).not.toHaveBeenCalled();
     });
 
     it('parses Atom feeds and persists entries', async () => {
       fetchMock.mockResolvedValueOnce(textResponse(ATOM_XML));
+      (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValueOnce([]);
       (prismaMock.rssEntry.createMany as jest.Mock).mockResolvedValue({
-        count: 1,
-      });
-      (prismaMock.rssEntry.updateMany as jest.Mock).mockResolvedValue({
         count: 1,
       });
 
@@ -218,11 +219,9 @@ describe('RssFeedService', () => {
         <rss version="2.0"><channel><title>Big Feed</title>${items}</channel></rss>`;
 
       fetchMock.mockResolvedValueOnce(textResponse(xml));
+      (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValueOnce([]);
       (prismaMock.rssEntry.createMany as jest.Mock).mockResolvedValue({
         count: 10,
-      });
-      (prismaMock.rssEntry.updateMany as jest.Mock).mockResolvedValue({
-        count: 1,
       });
 
       await service.refreshOne({
@@ -236,9 +235,44 @@ describe('RssFeedService', () => {
       const createCall = (prismaMock.rssEntry.createMany as jest.Mock).mock
         .calls[0][0] as { data: unknown[] };
       expect(createCall.data).toHaveLength(10);
+      expect(prismaMock.rssEntry.updateMany as jest.Mock).not.toHaveBeenCalled();
+    });
+
+    it('dedups same-batch duplicate URLs so two parallel updateMany cannot race the same row', async () => {
+      const duplicateXml = `<?xml version="1.0" encoding="UTF-8"?>
+        <rss version="2.0"><channel><title>Duplicates</title>
+          <item>
+            <title>Earlier headline</title>
+            <link>https://example.com/dup</link>
+          </item>
+          <item>
+            <title>Revised headline</title>
+            <link>https://example.com/dup</link>
+          </item>
+        </channel></rss>`;
+
+      fetchMock.mockResolvedValueOnce(textResponse(duplicateXml));
+      (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValueOnce([
+        { url: 'https://example.com/dup' },
+      ]);
+      (prismaMock.rssEntry.updateMany as jest.Mock).mockResolvedValue({
+        count: 1,
+      });
+
+      await service.refreshOne({
+        key: 'aeon',
+        name: 'Aeon',
+        type: 'latest',
+        feedUrl: 'https://aeon.co/feed.rss',
+        siteName: 'Aeon',
+      });
 
       const updateManyMock = prismaMock.rssEntry.updateMany as jest.Mock;
-      expect(updateManyMock).toHaveBeenCalledTimes(10);
+      // Same URL twice in the batch → dedup to one update; the later item
+      // wins (matches the old sequential per-item upsert semantics).
+      expect(updateManyMock).toHaveBeenCalledTimes(1);
+      const call = updateManyMock.mock.calls[0][0] as { data: { title: string } };
+      expect(call.data.title).toBe('Revised headline');
     });
   });
 

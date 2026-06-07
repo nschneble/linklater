@@ -163,25 +163,11 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       )}
 
       {/*
-        Pre-mounted live region for the visual Toast above. Some SRs miss
-        `role="status"` on a freshly-mounted node; keeping this span in the
-        DOM always and swapping its text via state ensures the announcement
-        fires reliably (same fix as BookmarkletSection).
-      */}
-      <span
-        className="sr-only"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {view.toastMessage ?? ''}
-      </span>
-
-      {/*
-        Separate polite live region announcing links that arrive via a
-        background visibility refresh (e.g. saved via the bookmarklet on
-        another tab). Kept distinct from the toast region so the two streams
-        cannot race.
+        Polite live region announcing links that arrive via a background
+        visibility refresh (e.g. saved via the bookmarklet on another tab).
+        The visual Toast above already carries its own role="status"
+        aria-live="polite", so it is not echoed here — that produced a
+        double SR announcement.
       */}
       <span className="sr-only" role="status">
         {view.newLinksAnnouncement}

@@ -3,10 +3,12 @@
  *
  * On mount, calls stumbleLink(). Based on the result:
  *   - Safe URL → window.location.replace() called with the URL
- *   - Null/empty/unsafe URL → StumbleEmptyView rendered
- *   - API error → StumbleEmptyView rendered
+ *   - Null/empty URL → StumbleEmptyView (no unread links)
+ *   - Unsafe URL → error state with retry button (recoverable)
+ *   - API error → error state with retry button
  *
- * document.title is verified to confirm useDocumentTitle fires.
+ * document.title is verified to confirm useDocumentTitle fires, including
+ * the "Stumble error — Linklater" title for the error state.
  * isSafeRedirectUrl rejection prevents open-redirect security regression.
  */
 
@@ -140,7 +142,7 @@ describe('StumblePage empty/null result', () => {
 });
 
 describe('StumblePage error path', () => {
-  it('renders StumbleEmptyView when the API call throws', async () => {
+  it('renders an error Alert with a retry button when the API call throws', async () => {
     vi.mocked(apiModule.stumbleLink).mockRejectedValue(
       new Error('Server error'),
     );
@@ -150,11 +152,33 @@ describe('StumblePage error path', () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', {
-          name: /boo\. your reading list is empty/i,
-        }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+    expect(
+      screen.getByRole('button', { name: /try another link/i }),
+    ).toBeInTheDocument();
+    expect(document.title).toBe('Stumble error — Linklater');
+  });
+
+  it('retries the API call when the retry button is clicked', async () => {
+    vi.mocked(apiModule.stumbleLink)
+      .mockRejectedValueOnce(new Error('Server error'))
+      .mockResolvedValueOnce({ url: 'https://example.com/recovered' });
+
+    await act(async () => {
+      renderStumblePage();
+    });
+
+    const retryButton = await screen.findByRole('button', {
+      name: /try another link/i,
+    });
+
+    await act(async () => {
+      retryButton.click();
+    });
+
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith('https://example.com/recovered');
     });
   });
 });
@@ -170,14 +194,13 @@ describe('StumblePage security: isSafeRedirectUrl rejection', () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', {
-          name: /boo\. your reading list is empty/i,
-        }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toBeInTheDocument();
     });
 
     expect(replaceMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('button', { name: /try another link/i }),
+    ).toBeInTheDocument();
   });
 
   it('does NOT call window.location.replace for a data: URL', async () => {
@@ -190,11 +213,7 @@ describe('StumblePage security: isSafeRedirectUrl rejection', () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', {
-          name: /boo\. your reading list is empty/i,
-        }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toBeInTheDocument();
     });
 
     expect(replaceMock).not.toHaveBeenCalled();
@@ -210,11 +229,7 @@ describe('StumblePage security: isSafeRedirectUrl rejection', () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', {
-          name: /boo\. your reading list is empty/i,
-        }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toBeInTheDocument();
     });
 
     expect(replaceMock).not.toHaveBeenCalled();

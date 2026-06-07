@@ -41,6 +41,9 @@ export class MetadataFetcherService {
     try {
       hostname = new URL(url).hostname;
     } catch {
+      // Malformed URL reaching the fetcher is itself a signal — log so ops
+      // alerts catch the bypass attempt instead of silently dropping it.
+      this.logger.warn(`Blocked SSRF attempt — invalid URL: ${url}`);
       return this.emptyMetadata();
     }
 

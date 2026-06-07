@@ -16,8 +16,11 @@ export function isPrivateHost(hostname: string): boolean {
 
   if (lower === '::1' || lower === '[::1]') return true;
 
-  // IPv6 unique-local (fc::/8, fd::/8) and link-local (fe80::/10)
-  if (/^\[?(?:f[cd]|fe[89ab])/i.test(lower)) return true;
+  // IPv6 unique-local (fc00::/7) and link-local (fe80::/10). Anchored to
+  // IPv6 literal syntax (hex segment + colon) so public DNS hostnames
+  // starting with 'fc'/'fd'/'fe8'–'feb' (e.g. fcc.gov, fdic.gov, febreze.com)
+  // are not matched — those contain dots, not colons.
+  if (/^\[?(?:f[cd][0-9a-f]{0,2}|fe[89ab][0-9a-f]?):/i.test(lower)) return true;
 
   // IPv4-mapped IPv6 — unwrap and fall through to IPv4 checks below
   const ipv4MappedDotted = lower.match(
@@ -39,6 +42,7 @@ export function isPrivateHost(hostname: string): boolean {
   const ipv4 = effective.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (ipv4) {
     const [, firstOctet, secondOctet] = ipv4.map(Number);
+    if (firstOctet === 0) return true; // 0.0.0.0/8 "this host" — routes to loopback on Linux/macOS (SSRF bypass)
     if (firstOctet === 127) return true; // 127.0.0.0/8 loopback
     if (firstOctet === 10) return true; // 10.0.0.0/8 private
     if (firstOctet === 169 && secondOctet === 254) return true; // 169.254.0.0/16 link-local

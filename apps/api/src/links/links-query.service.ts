@@ -87,9 +87,11 @@ export class LinksQueryService {
    * records including their metadata, then re-sorts them to match the rank
    * order returned by Postgres.
    *
-   * GOTCHA: The `total` is derived from `COUNT(*) OVER()` on the raw query
-   * result (a window function). When there are no results the array is empty
-   * so `total` defaults to 0 rather than reading from a missing first row.
+   * The `total` is derived from `COUNT(*) OVER()` on the raw query result
+   * (a window function). When the paged result is empty AND `page > 1`,
+   * a separate COUNT query runs so the caller can detect "past the last
+   * page" — otherwise paging past the end would collapse `total` to 0 and
+   * make the UI claim "no results" even when matches exist.
    *
    * @param userId - The UUID of the authenticated user.
    * @param term - The trimmed search string passed to `plainto_tsquery`.
@@ -132,6 +134,19 @@ export class LinksQueryService {
     `;
 
     if (rows.length === 0) {
+      // Page past the last result: COUNT(*) OVER() is unavailable, so issue
+      // a dedicated count to recover the real total.
+      if (page > 1) {
+        const countRows = await this.prisma.$queryRaw<{ total: bigint }[]>`
+          SELECT COUNT(*) AS total
+          FROM "Link" l
+          WHERE l."userId" = ${userId}
+            AND l."searchVector" @@ plainto_tsquery('english', unaccent(${term}))
+            ${readFilter}
+        `;
+        const total = Number(countRows[0]?.total ?? 0);
+        return { data: [], total, page, limit };
+      }
       return { data: [], total: 0, page, limit };
     }
 
