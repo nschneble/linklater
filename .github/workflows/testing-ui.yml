@@ -42,6 +42,16 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
+      - name: Provision HTTPS certs for API
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libnss3-tools
+          curl -fsSL "https://dl.filippo.io/mkcert/latest?for=linux/amd64" -o mkcert
+          chmod +x mkcert
+          sudo mv mkcert /usr/local/bin/mkcert
+          mkcert -install
+          mkdir -p apps/api/certs
+          mkcert -key-file apps/api/certs/localhost-key.pem -cert-file apps/api/certs/localhost.pem localhost
       - uses: nschneble/tuffgal-action@v0
         with:
           setup-script: test:ui:setup
