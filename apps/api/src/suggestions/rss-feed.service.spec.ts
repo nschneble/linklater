@@ -113,7 +113,9 @@ describe('RssFeedService', () => {
         imageUrl: 'https://example.com/first.jpg',
         siteName: 'Aeon',
       });
-      expect(prismaMock.rssEntry.updateMany as jest.Mock).not.toHaveBeenCalled();
+      expect(
+        prismaMock.rssEntry.updateMany as jest.Mock,
+      ).not.toHaveBeenCalled();
     });
 
     it('issues one updateMany per pre-existing item and skips createMany for them', async () => {
@@ -149,7 +151,9 @@ describe('RssFeedService', () => {
       });
       expect(firstCall.data.title).toBe('First Item');
 
-      expect(prismaMock.rssEntry.createMany as jest.Mock).not.toHaveBeenCalled();
+      expect(
+        prismaMock.rssEntry.createMany as jest.Mock,
+      ).not.toHaveBeenCalled();
     });
 
     it('parses Atom feeds and persists entries', async () => {
@@ -235,7 +239,9 @@ describe('RssFeedService', () => {
       const createCall = (prismaMock.rssEntry.createMany as jest.Mock).mock
         .calls[0][0] as { data: unknown[] };
       expect(createCall.data).toHaveLength(10);
-      expect(prismaMock.rssEntry.updateMany as jest.Mock).not.toHaveBeenCalled();
+      expect(
+        prismaMock.rssEntry.updateMany as jest.Mock,
+      ).not.toHaveBeenCalled();
     });
 
     it('dedups same-batch duplicate URLs so two parallel updateMany cannot race the same row', async () => {
@@ -271,7 +277,9 @@ describe('RssFeedService', () => {
       // Same URL twice in the batch → dedup to one update; the later item
       // wins (matches the old sequential per-item upsert semantics).
       expect(updateManyMock).toHaveBeenCalledTimes(1);
-      const call = updateManyMock.mock.calls[0][0] as { data: { title: string } };
+      const call = updateManyMock.mock.calls[0][0] as {
+        data: { title: string };
+      };
       expect(call.data.title).toBe('Revised headline');
     });
   });

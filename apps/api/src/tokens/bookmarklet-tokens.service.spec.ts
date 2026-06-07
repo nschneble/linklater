@@ -20,7 +20,6 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { Prisma } from '../prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BookmarkletTokensService } from './bookmarklet-tokens.service';
-import { TokensService } from './tokens.service';
 
 const makeP2002 = () =>
   new (
@@ -59,20 +58,11 @@ describe('BookmarkletTokensService', () => {
     $transaction: jest.fn(),
   } as unknown as PrismaService;
 
-  const tokensServiceMock = {
-    mintRawToken: jest.fn().mockReturnValue({
-      rawToken: RAW_TOKEN,
-      tokenHash: 'abc123hash',
-      prefix: 'ltk_bookmar',
-    }),
-  } as unknown as TokensService;
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BookmarkletTokensService,
         { provide: PrismaService, useValue: prismaMock },
-        { provide: TokensService, useValue: tokensServiceMock },
       ],
     }).compile();
 
@@ -111,11 +101,6 @@ describe('BookmarkletTokensService', () => {
         ({ data }: { data: Record<string, unknown> }) =>
           Promise.resolve(makeApiToken({ ...data, id: 'bm-new' })),
       );
-      (tokensServiceMock.mintRawToken as jest.Mock).mockReturnValue({
-        rawToken: RAW_TOKEN,
-        tokenHash: 'abc123hash',
-        prefix: 'ltk_bookmar',
-      });
 
       const result = await service.getOrCreate(USER_ID);
 
@@ -131,8 +116,10 @@ describe('BookmarkletTokensService', () => {
       expect(callArgs.data.name).toBe('Bookmarklet');
       expect(callArgs.data.kind).toBe('BOOKMARKLET');
       expect(callArgs.data.userId).toBe(USER_ID);
-      expect(callArgs.data.secretValue).toBe(RAW_TOKEN);
-      expect(result.rawToken).toBe(RAW_TOKEN);
+      // mintRawToken runs for real (it is a pure module function, not
+      // injected) — assert shape, not the literal RAW_TOKEN constant.
+      expect(callArgs.data.secretValue).toMatch(/^ltk_[A-Za-z0-9_-]+$/);
+      expect(result.rawToken).toBe(callArgs.data.secretValue);
     });
 
     it('falls back to the existing row when create races (P2002)', async () => {
@@ -190,12 +177,6 @@ describe('BookmarkletTokensService', () => {
           return callback(transactionClient);
         },
       );
-      (tokensServiceMock.mintRawToken as jest.Mock).mockReturnValue({
-        rawToken: RAW_TOKEN,
-        tokenHash: 'abc123hash',
-        prefix: 'ltk_bookmar',
-      });
-
       const result = await service.getOrCreate(USER_ID);
 
       expect(result.id).toBe('bm-regen');
@@ -233,12 +214,6 @@ describe('BookmarkletTokensService', () => {
           return result;
         },
       );
-      (tokensServiceMock.mintRawToken as jest.Mock).mockReturnValue({
-        rawToken: RAW_TOKEN,
-        tokenHash: 'abc123hash',
-        prefix: 'ltk_bookmar',
-      });
-
       const result = await service.regenerate(USER_ID);
 
       const lastClient = (
@@ -262,8 +237,9 @@ describe('BookmarkletTokensService', () => {
       expect(createCallArgs.data.name).toBe('Bookmarklet');
       expect(createCallArgs.data.kind).toBe('BOOKMARKLET');
       expect(createCallArgs.data.userId).toBe(USER_ID);
-      expect(createCallArgs.data.secretValue).toBe(RAW_TOKEN);
-      expect(result.rawToken).toBe(RAW_TOKEN);
+      // mintRawToken runs for real — assert shape, not literal equality.
+      expect(createCallArgs.data.secretValue).toMatch(/^ltk_[A-Za-z0-9_-]+$/);
+      expect(result.rawToken).toBe(createCallArgs.data.secretValue);
     });
   });
 });

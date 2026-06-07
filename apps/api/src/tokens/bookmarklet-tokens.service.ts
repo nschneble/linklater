@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { Prisma, TokenKind } from '../prisma/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { TokensService } from './tokens.service.js';
+import { mintRawToken } from './mint-raw-token.js';
 
 const BOOKMARKLET_TOKEN_NAME = 'Bookmarklet';
 
@@ -13,15 +13,14 @@ const BOOKMARKLET_TOKEN_NAME = 'Bookmarklet';
  * `secretValue` so the settings page can embed it in the `javascript:`
  * URL on every load — including from a new device.
  *
- * Depends on `TokensService` solely for `mintRawToken`, which is the
- * shared low-level primitive for generating a raw PAT string and its hash.
+ * The raw-token minting primitive is imported directly from
+ * `./mint-raw-token` rather than reached through `TokensService`. Keeping
+ * the primitive out of any injected service surface makes accidental reuse
+ * less likely.
  */
 @Injectable()
 export class BookmarkletTokensService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly tokensService: TokensService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Returns the user's bookmarklet token, minting one if none exists.
@@ -45,7 +44,7 @@ export class BookmarkletTokensService {
       return this.regenerate(userId);
     }
 
-    const { rawToken, tokenHash, prefix } = this.tokensService.mintRawToken();
+    const { rawToken, tokenHash, prefix } = mintRawToken();
 
     try {
       const stored = await this.prisma.apiToken.create({
@@ -81,7 +80,7 @@ export class BookmarkletTokensService {
    * @returns Token summary including the new raw token value.
    */
   async regenerate(userId: string) {
-    const { rawToken, tokenHash, prefix } = this.tokensService.mintRawToken();
+    const { rawToken, tokenHash, prefix } = mintRawToken();
 
     const stored = await this.prisma.$transaction(async (transaction) => {
       await transaction.apiToken.deleteMany({

@@ -1,5 +1,3 @@
-import { randomBytes } from 'node:crypto';
-
 import {
   BadRequestException,
   Injectable,
@@ -10,17 +8,9 @@ import {
 import { sha256Hex } from '../common/crypto-tokens.js';
 import { Prisma, TokenKind } from '../prisma/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { mintRawToken } from './mint-raw-token.js';
 
-/** The prefix prepended to every personal access token. Used by `AnyAuthGuard`
- * to distinguish PATs from JWTs without decoding the token. */
-export const TOKEN_PREFIX = 'ltk_';
-
-/**
- * Number of characters from the raw token preserved as `prefix`.
- * Stored so the user can visually identify which token is which
- * in the token list without exposing the full secret.
- */
-const DISPLAY_PREFIX_LENGTH = 12;
+export { TOKEN_PREFIX } from './mint-raw-token.js';
 
 /**
  * Manages the lifecycle of personal access tokens (PATs).
@@ -30,8 +20,9 @@ const DISPLAY_PREFIX_LENGTH = 12;
  * `validateToken` is called on every API request that presents an
  * `ltk_`-prefixed bearer token.
  *
- * `mintRawToken` is public so that `BookmarkletTokensService` can share the
- * same low-level minting primitive without duplicating the crypto logic.
+ * The raw-token minting primitive lives in `./mint-raw-token` so that
+ * `BookmarkletTokensService` can share it without exposing the primitive
+ * through the barrel-exported `TokensService` class surface.
  */
 @Injectable()
 export class TokensService {
@@ -49,7 +40,7 @@ export class TokensService {
    * @returns The stored token record plus the one-time `rawToken`.
    */
   async create(userId: string, name: string) {
-    const { rawToken, tokenHash, prefix } = this.mintRawToken();
+    const { rawToken, tokenHash, prefix } = mintRawToken();
 
     const stored = await this.prisma.apiToken.create({
       data: { name, prefix, tokenHash, userId },
@@ -97,8 +88,8 @@ export class TokensService {
    * The `userId` scope ensures users can only revoke their own tokens.
    *
    * Bookmarklet tokens cannot be revoked through this method — users must
-   * use `regenerateBookmarkletToken` instead so they always have a working
-   * bookmarklet to drag to their bookmarks bar.
+   * use `BookmarkletTokensService.regenerate` instead so they always have a
+   * working bookmarklet to drag to their bookmarks bar.
    *
    * @param userId - The UUID of the owning user (scope guard).
    * @param tokenId - The UUID of the token to delete.
@@ -164,12 +155,5 @@ export class TokensService {
       });
 
     return stored.user;
-  }
-
-  mintRawToken() {
-    const rawToken = TOKEN_PREFIX + randomBytes(24).toString('base64url');
-    const tokenHash = sha256Hex(rawToken);
-    const prefix = rawToken.slice(0, DISPLAY_PREFIX_LENGTH);
-    return { rawToken, tokenHash, prefix };
   }
 }
