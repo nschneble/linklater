@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { isTestingUi } from '../common/testing-ui.js';
 import { THROTTLE_MESSAGE_KEY } from './throttle-message.decorator.js';
 import type { ExecutionContext } from '@nestjs/common';
 import type { ThrottlerLimitDetail } from '@nestjs/throttler';
@@ -16,7 +17,7 @@ import type { ThrottlerLimitDetail } from '@nestjs/throttler';
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
   protected override shouldSkip(_context: ExecutionContext): Promise<boolean> {
-    return Promise.resolve(process.env.TESTING_UI === '1');
+    return Promise.resolve(isTestingUi());
   }
 
   protected override async getErrorMessage(

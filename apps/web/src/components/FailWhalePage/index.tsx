@@ -1,5 +1,5 @@
 import PrimaryButton from '../common/PrimaryButton';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const FAILWHALE_ASCII = String.raw`
               v  ~
@@ -24,6 +24,19 @@ const FAILWHALE_ASCII = String.raw`
  */
 export default function FailWhalePage() {
   const [shouldCrash, setShouldCrash] = useState(false);
+
+  // Mount a robots=noindex meta tag so search engines do not surface
+  // this destructive easter egg. App has no SSR head manager
+  // (react-helmet, etc.), so inject directly and clean up on unmount.
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex';
+    document.head.appendChild(meta);
+    return () => {
+      document.head.removeChild(meta);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">

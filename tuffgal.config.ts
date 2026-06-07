@@ -16,6 +16,12 @@ export default defineConfig({
 
   baseUrl: process.env.LINKLATER_BASE_URL ?? 'https://localhost:5173',
   apiHost: 'https://localhost:3000',
+  // `linklater_token` is a JWT — its `exp` claim is set at login and is
+  // not renewed by pin/restore. Storage state cached across runs older
+  // than the access-token TTL will hydrate an expired JWT, and the first
+  // authenticated request will 401. `resetTestDatabase` wipes
+  // `tuffgal/.auth` on every reset which covers the common path; do not
+  // reuse a longer-lived CI cache of this directory beyond JWT exp.
   storageStatePins: ['linklater_token', 'linklater_refresh_token', 'linklater_mode', 'linklater_theme'],
 
   viewport: { width: 1280, height: 800 },

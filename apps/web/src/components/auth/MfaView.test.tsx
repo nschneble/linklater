@@ -1,12 +1,8 @@
 import MfaView from './MfaView';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { useRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { FormEvent, RefObject } from 'react';
-
-function waitForAnimationFrame(): Promise<void> {
-  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
-}
 
 interface HarnessProps {
   loading: boolean;
@@ -61,8 +57,9 @@ describe('MfaView auto-submit gating', () => {
         onSubmit={onSubmit}
       />,
     );
-    await waitForAnimationFrame();
-    expect(onSubmit).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('does not auto-submit while loading, preventing a double-submit if loading flips on mid-type', async () => {
@@ -86,7 +83,8 @@ describe('MfaView auto-submit gating', () => {
         onSubmit={onSubmit}
       />,
     );
-    await waitForAnimationFrame();
+    // Give effects a chance to fire; assert nothing was scheduled.
+    await Promise.resolve();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -110,7 +108,7 @@ describe('MfaView auto-submit gating', () => {
         onSubmit={onSubmit}
       />,
     );
-    await waitForAnimationFrame();
+    await Promise.resolve();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 });

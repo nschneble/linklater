@@ -185,15 +185,15 @@ describe('EmailService', () => {
       expect(sendMailMock).not.toHaveBeenCalled();
     });
 
-    it('logs the noop with recipient + subject so the harness has a trail', async () => {
+    it('logs the noop with subject (but never the recipient) so the harness has a trail without leaking PII', async () => {
       await service.sendVerification(USER_EMAIL, VERIFICATION_TOKEN);
 
       expect(logMock).toHaveBeenCalledWith(
         expect.stringContaining('TESTING_UI=1'),
       );
       const [logMessage] = logMock.mock.calls[0] as [string];
-      expect(logMessage).toContain(USER_EMAIL);
       expect(logMessage).toContain('Verify your Linklater email');
+      expect(logMessage).not.toContain(USER_EMAIL);
     });
 
     it('does not throw ServiceUnavailableException even if the transporter would have', async () => {

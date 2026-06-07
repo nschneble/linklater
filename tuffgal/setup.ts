@@ -1,19 +1,28 @@
 import { execFile } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import * as bcrypt from 'bcryptjs';
 import pg from 'pg';
 import { TEST_USER } from './database.ts';
+import {
+  TEST_DB_NAME,
+  readDatabaseUrl,
+  withDatabase,
+} from './database-url.ts';
 
 const TUFFGAL_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(TUFFGAL_DIR, '..');
 const API_DIR = join(REPO_ROOT, 'apps', 'api');
 const API_ENV_PATH = join(API_DIR, '.env');
 
-const TEST_DB_NAME = 'linklater_testing_ui';
-const BCRYPT_ROUNDS = 10;
+// Bcrypt minimum; this script seeds a known-plaintext test password.
+const BCRYPT_ROUNDS = 4;
+
+// Pin every timestamp to a stable value so server-written User fields
+// never drift across runs (the client-side `frozenTime` in
+// tuffgal.config.ts only freezes Date.now() in the browser).
+const FIXED_DATE = '2026-01-01T12:00:00.000Z';
 
 const execFileAsync = promisify(execFile);
 
@@ -85,51 +94,35 @@ async function runMigrations(testUrl: string): Promise<void> {
 
 async function seedTestUser(testUrl: string): Promise<void> {
   const passwordHash = await bcrypt.hash(TEST_USER.password, BCRYPT_ROUNDS);
-  const now = new Date();
   const client = new pg.Client({ connectionString: testUrl });
   await client.connect();
   try {
+    // Kill any orphan row that shares our email but not our id — a
+    // previous dev experiment could have left one behind, and the
+    // following INSERT would otherwise fail the email uniqueness
+    // constraint with no recovery path.
+    await client.query(
+      `DELETE FROM "User" WHERE "email" = $1 AND "id" <> $2`,
+      [TEST_USER.email, TEST_USER.id],
+    );
     await client.query(
       `
       INSERT INTO "User"
-        ("id", "email", "passwordHash", "emailVerifiedAt", "welcomedAt", "updatedAt")
-      VALUES ($1, $2, $3, $4, $4, $4)
+        ("id", "email", "passwordHash", "emailVerifiedAt", "welcomedAt", "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, $4, $4, $4)
       ON CONFLICT ("id") DO UPDATE
-        SET "passwordHash"    = EXCLUDED."passwordHash",
+        SET "email"           = EXCLUDED."email",
+            "passwordHash"    = EXCLUDED."passwordHash",
             "emailVerifiedAt" = EXCLUDED."emailVerifiedAt",
             "welcomedAt"      = EXCLUDED."welcomedAt",
             "updatedAt"       = EXCLUDED."updatedAt"
       `,
-      [TEST_USER.id, TEST_USER.email, passwordHash, now],
+      [TEST_USER.id, TEST_USER.email, passwordHash, FIXED_DATE],
     );
     process.stdout.write(`Seeded ${TEST_USER.email} (id=${TEST_USER.id}).\n`);
   } finally {
     await client.end();
   }
-}
-
-async function readDatabaseUrl(envPath: string): Promise<string> {
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL;
-  }
-  const raw = await readFile(envPath, 'utf8').catch(() => {
-    throw new Error(
-      `DATABASE_URL not set and cannot read API .env at ${envPath}`,
-    );
-  });
-  for (const line of raw.split(/\r?\n/)) {
-    const match = line.match(/^DATABASE_URL\s*=\s*"?([^"\n]+)"?\s*$/);
-    if (match) {
-      return match[1];
-    }
-  }
-  throw new Error(`DATABASE_URL not found in ${envPath}`);
-}
-
-function withDatabase(connectionString: string, databaseName: string): string {
-  const url = new URL(connectionString);
-  url.pathname = `/${databaseName}`;
-  return url.toString();
 }
 
 function redactPassword(connectionString: string): string {

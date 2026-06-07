@@ -1,17 +1,25 @@
-import { readFile, rm } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { rm } from 'node:fs/promises';
 import * as bcrypt from 'bcryptjs';
 import pg from 'pg';
+import {
+  TEST_DB_NAME,
+  guardAgainstWrongDatabase,
+  readDatabaseUrl,
+  withDatabase,
+} from './database-url.ts';
 
 const TUFFGAL_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(TUFFGAL_DIR, '..');
 const API_ENV_PATH = join(REPO_ROOT, 'apps', 'api', '.env');
 
-const TEST_DB_NAME = 'linklater_testing_ui';
 const PROTECTED_TABLES = new Set(['_prisma_migrations']);
 const AUTH_STATE_DIR = join(TUFFGAL_DIR, '.auth');
-const BCRYPT_ROUNDS = 10;
+
+// Bcrypt minimum (4 rounds). Test password is a known plaintext seeded
+// once per reset; production-grade work factor would only burn CI time.
+const BCRYPT_ROUNDS = 4;
 
 export const TEST_USER = {
   id: '00000000-0000-0000-0000-000000000001',
@@ -29,8 +37,7 @@ const FIXED_READ_DATE = '2026-01-02T12:00:00.000Z';
  * flow against fresh DB rows.
  */
 export async function resetTestDatabase(): Promise<void> {
-  const url = await readTestDatabaseUrl();
-  guardAgainstWrongDatabase(url);
+  const url = await resolveTestUrl();
   const client = new pg.Client({ connectionString: url });
   await client.connect();
   try {
@@ -48,7 +55,9 @@ export async function resetTestDatabase(): Promise<void> {
 
 /**
  * 3 unread links owned by TEST_USER. Idempotent — re-applying the fixture
- * leaves the database in the same state.
+ * leaves the database in the same state, including the searchVector (which
+ * is computed inside the INSERT to stay in lockstep with `url` and
+ * `Meta.title`).
  */
 export async function userWithLinksFixture(): Promise<void> {
   const links = [
@@ -84,38 +93,46 @@ async function applyLinks(
   links: FixtureLink[],
   readAt: string | null,
 ): Promise<void> {
-  const url = await readTestDatabaseUrl();
-  guardAgainstWrongDatabase(url);
+  const url = await resolveTestUrl();
   const client = new pg.Client({ connectionString: url });
   await client.connect();
   try {
     await client.query('BEGIN');
     try {
       for (const link of links) {
+        // Compute searchVector inline + refresh on conflict so the index
+        // never gets out of sync with url + title when fixture data is
+        // edited between runs (the prior INSERT-then-UPDATE pattern left
+        // a stale row when ON CONFLICT skipped the INSERT).
         await client.query(
           `
-          INSERT INTO "Link" ("id", "url", "userId", "createdAt", "updatedAt", "readAt")
-          VALUES ($1, $2, $3, $4, $4, $5)
-          ON CONFLICT ("id") DO NOTHING
+          INSERT INTO "Link"
+            ("id", "url", "userId", "createdAt", "updatedAt", "readAt", "searchVector")
+          VALUES
+            ($1, $2, $3, $4, $4, $5,
+             to_tsvector('english', unaccent(coalesce($6, '') || ' ' || $2)))
+          ON CONFLICT ("id") DO UPDATE
+            SET "url"          = EXCLUDED."url",
+                "userId"       = EXCLUDED."userId",
+                "createdAt"    = EXCLUDED."createdAt",
+                "updatedAt"    = EXCLUDED."updatedAt",
+                "readAt"       = EXCLUDED."readAt",
+                "searchVector" = EXCLUDED."searchVector"
           `,
-          [link.id, link.url, TEST_USER.id, FIXED_DATE, readAt],
+          [link.id, link.url, TEST_USER.id, FIXED_DATE, readAt, link.title],
         );
         await client.query(
           `
-          INSERT INTO "Meta" ("id", "linkId", "title", "createdAt", "updatedAt", "fetchedAt")
+          INSERT INTO "Meta"
+            ("id", "linkId", "title", "createdAt", "updatedAt", "fetchedAt")
           VALUES ($1, $2, $3, $4, $4, $4)
-          ON CONFLICT ("id") DO NOTHING
+          ON CONFLICT ("id") DO UPDATE
+            SET "linkId"    = EXCLUDED."linkId",
+                "title"     = EXCLUDED."title",
+                "updatedAt" = EXCLUDED."updatedAt",
+                "fetchedAt" = EXCLUDED."fetchedAt"
           `,
           [link.metaId, link.id, link.title, FIXED_DATE],
-        );
-        // Mirrors metadata.service.ts so /search returns fixture rows.
-        await client.query(
-          `
-          UPDATE "Link"
-          SET "searchVector" = to_tsvector('english', unaccent(coalesce($1, '') || ' ' || "url"))
-          WHERE "id" = $2
-          `,
-          [link.title, link.id],
         );
       }
       await client.query('COMMIT');
@@ -128,37 +145,11 @@ async function applyLinks(
   }
 }
 
-async function readTestDatabaseUrl(): Promise<string> {
-  if (process.env.DATABASE_URL) {
-    const url = new URL(process.env.DATABASE_URL);
-    url.pathname = `/${TEST_DB_NAME}`;
-    return url.toString();
-  }
-  const raw = await readFile(API_ENV_PATH, 'utf8').catch(() => {
-    throw new Error(
-      `DATABASE_URL not set and cannot read API .env at ${API_ENV_PATH}`,
-    );
-  });
-  for (const line of raw.split(/\r?\n/)) {
-    const match = line.match(/^DATABASE_URL\s*=\s*"?([^"\n]+)"?\s*$/);
-    if (match) {
-      const url = new URL(match[1]);
-      url.pathname = `/${TEST_DB_NAME}`;
-      return url.toString();
-    }
-  }
-  throw new Error(`DATABASE_URL not found in ${API_ENV_PATH}`);
-}
-
-function guardAgainstWrongDatabase(connectionString: string): void {
-  const url = new URL(connectionString);
-  const dbName = url.pathname.replace(/^\//, '');
-  if (dbName !== TEST_DB_NAME) {
-    throw new Error(
-      `Refusing to operate on database "${dbName}" — only "${TEST_DB_NAME}" is allowed. ` +
-        `Check that apps/api/.env has not been changed.`,
-    );
-  }
+async function resolveTestUrl(): Promise<string> {
+  const raw = await readDatabaseUrl(API_ENV_PATH);
+  const url = withDatabase(raw, TEST_DB_NAME);
+  guardAgainstWrongDatabase(url);
+  return url;
 }
 
 async function listDataTables(client: pg.Client): Promise<string[]> {
@@ -177,13 +168,15 @@ async function listDataTables(client: pg.Client): Promise<string[]> {
 
 async function seedDeterministicUser(client: pg.Client): Promise<void> {
   const passwordHash = await bcrypt.hash(TEST_USER.password, BCRYPT_ROUNDS);
-  const now = new Date();
+  // Pin every timestamp to FIXED_DATE so any UI that surfaces User.* fields
+  // renders byte-identical across runs; the client-side `frozenTime` only
+  // covers Date.now() in the browser, not server-written timestamps.
   await client.query(
     `
     INSERT INTO "User"
-      ("id", "email", "passwordHash", "emailVerifiedAt", "welcomedAt", "updatedAt")
-    VALUES ($1, $2, $3, $4, $4, $4)
+      ("id", "email", "passwordHash", "emailVerifiedAt", "welcomedAt", "createdAt", "updatedAt")
+    VALUES ($1, $2, $3, $4, $4, $4, $4)
     `,
-    [TEST_USER.id, TEST_USER.email, passwordHash, now],
+    [TEST_USER.id, TEST_USER.email, passwordHash, FIXED_DATE],
   );
 }

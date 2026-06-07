@@ -13,6 +13,12 @@
   - button "Remove all read"
   - searchbox "Search through your links"
   - tabpanel "Read":
+    - paragraph: (No title)
+    - paragraph: example.test
+    - paragraph: https://example.test/articles/testing-ui-determinism
+    - button "Mark unread"
+    - link "(No title) — example.test, opens in new tab":
+      - /url: https://example.test/articles/testing-ui-determinism
     - paragraph: Test Link 3
     - paragraph: example.test
     - button "Mark unread"

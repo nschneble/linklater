@@ -4,6 +4,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { isTestingUi } from '../common/testing-ui.js';
 import { resolveEmailPalette } from './email-palette.js';
 import * as ConfirmAccountDeletionTemplate from './templates/confirm-account-deletion.template.js';
 import * as EmailChangeTemplate from './templates/email-change.template.js';
@@ -60,10 +61,15 @@ export class EmailService {
     // testing-ui mode drops emails on the floor so the harness never
     // depends on an SMTP relay being reachable and never logs a
     // ServiceUnavailableException for a downstream that does not exist.
-    if (process.env.TESTING_UI === '1') {
-      this.logger.log(
-        `TESTING_UI=1: noop email send to=${String(options.to)} subject=${String(options.subject)}`,
-      );
+    // Subject only — never the recipient. If TESTING_UI is ever
+    // accidentally set in a non-test env, this log path must not leak
+    // user email addresses.
+    if (isTestingUi()) {
+      const subject =
+        options.subject === undefined
+          ? '(no subject)'
+          : String(options.subject);
+      this.logger.log(`TESTING_UI=1: noop email send subject=${subject}`);
       return;
     }
     try {

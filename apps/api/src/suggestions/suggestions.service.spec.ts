@@ -328,10 +328,32 @@ describe('SuggestionsService', () => {
         expect(result!.suggestions.length).toBeGreaterThanOrEqual(1);
       });
 
-      it('does not consult the saved-link filter — fixture URLs are stable across runs', async () => {
+      it('still runs the saved-link filter so a fixture saving a pool URL never sees the duplicate surface as a suggestion', async () => {
         await service.getSuggestions(1, TEST_USER_ID);
 
-        expect(prismaMock.link.findMany).not.toHaveBeenCalled();
+        expect(prismaMock.link.findMany).toHaveBeenCalledWith({
+          where: {
+            userId: TEST_USER_ID,
+            url: {
+              in: ['https://example.test/articles/testing-ui-determinism'],
+            },
+          },
+          select: { url: true },
+        });
+      });
+
+      it('falls back to the first pool entry when every candidate is already saved, so the callout still renders', async () => {
+        (prismaMock.link.findMany as jest.Mock).mockResolvedValueOnce([
+          { url: 'https://example.test/articles/testing-ui-determinism' },
+          { url: 'https://example.test/articles/sample-suggestions' },
+        ]);
+
+        const result = await service.getSuggestions(2, TEST_USER_ID);
+
+        expect(result!.suggestions).toHaveLength(1);
+        expect(result!.suggestions[0].url).toBe(
+          'https://example.test/articles/testing-ui-determinism',
+        );
       });
     });
   });
