@@ -64,30 +64,35 @@ export default function ChangePasswordForm() {
       <FormInput
         id="new-password"
         type="password"
+        autoComplete="new-password"
         placeholder="Leave blank to keep current password"
         value={password}
         onChange={(event) => setPassword(event.target.value)}
         aria-describedby={passwordError ? 'account-password-error' : undefined}
       />
 
-      {password && (
-        <>
-          <label
-            className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
-            htmlFor="current-password"
-          >
-            Current password
-          </label>
-          <FormInput
-            id="current-password"
-            type="password"
-            placeholder="Required to confirm password change"
-            value={currentPassword}
-            onChange={(event) => setCurrentPassword(event.target.value)}
-            required
-          />
-        </>
-      )}
+      {/*
+        CSS-hidden (not unmounted) so that focus never drops unexpectedly when
+        the user clears the new-password field, and so password managers can
+        always read both fields together.
+      */}
+      <div hidden={!password}>
+        <label
+          className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+          htmlFor="current-password"
+        >
+          Current password
+        </label>
+        <FormInput
+          id="current-password"
+          type="password"
+          autoComplete="current-password"
+          placeholder="Required to confirm password change"
+          value={currentPassword}
+          onChange={(event) => setCurrentPassword(event.target.value)}
+          required={Boolean(password)}
+        />
+      </div>
 
       {passwordMessage && <Alert variant="success">{passwordMessage}</Alert>}
       {passwordError && (

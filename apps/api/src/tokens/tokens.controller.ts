@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard, type AuthRequest } from '../auth/index.js';
+import { BookmarkletTokensService } from './bookmarklet-tokens.service.js';
 import { CreateTokenDto } from './dto/create-token.dto.js';
 import { TokensService } from './tokens.service.js';
 
@@ -31,7 +32,10 @@ import { TokensService } from './tokens.service.js';
 @Controller('tokens')
 @UseGuards(JwtAuthGuard)
 export class TokensController {
-  constructor(private readonly tokensService: TokensService) {}
+  constructor(
+    private readonly tokensService: TokensService,
+    private readonly bookmarkletTokensService: BookmarkletTokensService,
+  ) {}
 
   @ApiOperation({ summary: 'Create a personal access token' })
   @ApiResponse({
@@ -69,7 +73,7 @@ export class TokensController {
   @Get('bookmarklet')
   async getBookmarklet(@Req() request: AuthRequest) {
     const userId = request.user.userId;
-    return this.tokensService.getOrCreateBookmarkletToken(userId);
+    return this.bookmarkletTokensService.getOrCreate(userId);
   }
 
   @ApiOperation({ summary: 'Regenerate the bookmarklet token' })
@@ -84,7 +88,7 @@ export class TokensController {
   @Post('bookmarklet/regenerate')
   async regenerateBookmarklet(@Req() request: AuthRequest) {
     const userId = request.user.userId;
-    return this.tokensService.regenerateBookmarkletToken(userId);
+    return this.bookmarkletTokensService.regenerate(userId);
   }
 
   @ApiOperation({ summary: 'Revoke a personal access token' })

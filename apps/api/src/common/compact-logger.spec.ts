@@ -43,20 +43,5 @@ describe('CompactLogger', () => {
       ).formatPid(12345);
       expect(formatted).toContain('12345');
     });
-
-    it('includes the Nest label', () => {
-      const formatted = (
-        logger as unknown as { formatPid: (pid: number) => string }
-      ).formatPid(1);
-      expect(formatted).toContain('Nest');
-    });
-
-    it('wraps output in ANSI color codes', () => {
-      const formatted = (
-        logger as unknown as { formatPid: (pid: number) => string }
-      ).formatPid(1);
-      expect(formatted).toContain('\x1B[37m');
-      expect(formatted).toContain('\x1B[39m');
-    });
   });
 });

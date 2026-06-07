@@ -1,10 +1,7 @@
-import InlineThemeList from './InlineThemeList';
-import MenuItem from './MenuItem';
-import MenuSection from './MenuSection';
-import NavMenuItems from './NavMenuItems';
-import { useEffect, useRef, useState } from 'react';
+import BottomSheetMainPanel from './BottomSheetMainPanel';
+import BottomSheetThemeSubmenu from './BottomSheetThemeSubmenu';
 import { useMenuNavigation } from './useMenuNavigation';
-import { THEMES } from '../../theme/ThemeContext';
+import { useEffect, useRef, useState } from 'react';
 import type { AppView } from '../../lib/navigation';
 import type { BaseTheme, Mode } from '../../theme/ThemeContext';
 import type { User } from '../../auth/AuthContext';
@@ -32,12 +29,15 @@ interface MobileBottomSheetProps {
  * so the media-query guard in `index.css` keeps scroll unlocked on larger
  * screens.
  *
- * The sheet contains two views that alternate via CSS grid 0fr/1fr:
- * - Main view: nav items, theme trigger row, and logout.
+ * The sheet contains two panels that alternate via CSS grid 0fr/1fr:
+ * - Main panel: nav items, theme trigger row, and logout.
  * - Theme subview: a back button and the flat theme list.
  *
- * Both views are always mounted; `inert` is applied to the off-screen one
- * so keyboard/pointer events only reach the visible view.
+ * Both panels are always mounted; `inert` is applied to the off-screen one
+ * so keyboard/pointer events only reach the visible panel.
+ *
+ * `useMenuNavigation` calls and panel refs stay in this shell — not inside
+ * children — so focus management is owned by one component.
  */
 export default function MobileBottomSheet({
   user,
@@ -55,10 +55,16 @@ export default function MobileBottomSheet({
   const mainViewReference = useRef<HTMLDivElement | null>(null);
   const themeViewReference = useRef<HTMLDivElement | null>(null);
   const themeButtonReference = useRef<HTMLButtonElement | null>(null);
+  const openerReference = useRef<HTMLElement | null>(null);
   const touchStartY = useRef(0);
 
-  useMenuNavigation(mainViewReference, onClose);
-  useMenuNavigation(themeViewReference, handleBackToMain);
+  // Modal-dialog contract: Tab must stay inside the sheet (not advance into
+  // the inert subtree behind the scrim) so keyboard users do not get
+  // stranded on <body>. Both panels use trap behavior.
+  useMenuNavigation(mainViewReference, onClose, { tabBehavior: 'trap' });
+  useMenuNavigation(themeViewReference, handleBackToMain, {
+    tabBehavior: 'trap',
+  });
 
   useEffect(() => {
     const isMobile =
@@ -74,6 +80,22 @@ export default function MobileBottomSheet({
     return () => {
       document.body.classList.remove('menu-open');
     };
+  }, [isOpen]);
+
+  // Capture the trigger that opened the sheet so focus can be restored to
+  // it on close. Without this, closing the sheet (Escape, scrim tap, swipe)
+  // leaves focus stranded inside the now-inert subtree and the browser
+  // falls back to <body>. WAI-ARIA APG dialog pattern.
+  useEffect(() => {
+    if (isOpen) {
+      openerReference.current = document.activeElement as HTMLElement | null;
+      return;
+    }
+    const opener = openerReference.current;
+    if (opener && typeof opener.focus === 'function') {
+      opener.focus();
+    }
+    openerReference.current = null;
   }, [isOpen]);
 
   useEffect(() => {
@@ -109,40 +131,44 @@ export default function MobileBottomSheet({
     requestAnimationFrame(() => themeButtonReference.current?.focus());
   }
 
-  function handleThemeSelect(theme: BaseTheme) {
-    onThemeSelect(theme);
-  }
-
   function handleDragHandleTouchStart(event: React.TouchEvent) {
-    touchStartY.current = event.touches[0].clientY;
+    // Multi-finger or synthetic events can dispatch with an empty touches
+    // list — accessing `[0].clientY` would throw and crash the sheet.
+    const firstTouch = event.touches[0];
+    if (!firstTouch) return;
+    touchStartY.current = firstTouch.clientY;
   }
 
   function handleDragHandleTouchEnd(event: React.TouchEvent) {
-    const deltaY = event.changedTouches[0].clientY - touchStartY.current;
+    const lastTouch = event.changedTouches[0];
+    if (!lastTouch) return;
+    const deltaY = lastTouch.clientY - touchStartY.current;
     if (deltaY > 64) {
       onClose();
     }
   }
 
-  const currentThemeLabel = THEMES.find(
-    (theme) => theme.id === baseTheme,
-  )?.label;
-
   return (
     <div className="md:hidden">
+      {/* Scrim: always aria-hidden (decorative backdrop); keyboard close is
+          handled by Escape in useMenuNavigation. data-open drives Tailwind.
+          Opacity transition is motion-safe so reduced-motion users get an
+          instant scrim swap to match the instant panel snap. */}
       <div
-        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+        className="fixed inset-0 z-40 bg-black/50 motion-safe:transition-opacity motion-safe:duration-300 data-[open=false]:opacity-0 data-[open=false]:pointer-events-none"
         aria-hidden="true"
+        data-open={isOpen}
         onClick={onClose}
       />
 
       <div
-        className="fixed bottom-0 inset-x-0 z-50 max-h-[85svh] overflow-y-auto bg-[var(--bg-elevated)] rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+        className={`fixed bottom-0 inset-x-0 z-50 max-h-[85svh] overflow-y-auto bg-[var(--bg-elevated)] rounded-t-2xl pb-[env(safe-area-inset-bottom)] ${
+          isOpen
+            ? 'motion-safe:[transition:transform_300ms_ease-out]'
+            : 'motion-safe:[transition:transform_250ms_ease-in]'
+        }`}
         style={{
           transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
-          transition: `transform ${isOpen ? '300ms ease-out' : '250ms ease-in'}`,
           overscrollBehavior: 'contain',
           boxShadow: '0 -4px 32px rgba(0,0,0,0.12)',
         }}
@@ -165,109 +191,39 @@ export default function MobileBottomSheet({
 
         <div style={{ clipPath: 'inset(0)' }}>
           <div
+            className="motion-safe:[transition:transform_300ms_cubic-bezier(0.4,0,0.2,1)]"
             style={{
               display: 'flex',
               width: '200%',
               transform: showThemeSubview
                 ? 'translateX(-50%)'
                 : 'translateX(0)',
-              transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
               alignItems: 'flex-start',
               willChange: 'transform',
             }}
           >
-            <div
-              style={{ width: '50%' }}
-              role="menu"
-              aria-label="User menu"
-              tabIndex={-1}
-              ref={mainViewReference}
-              className="pb-4"
-              inert={showThemeSubview ? true : undefined}
-            >
-              <MenuSection label="Logged in as" className="px-4 pt-2">
-                <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
-                  {user.email}
-                </p>
-              </MenuSection>
+            <BottomSheetMainPanel
+              user={user}
+              view={view}
+              baseTheme={baseTheme}
+              mode={mode}
+              showThemeSubview={showThemeSubview}
+              panelReference={mainViewReference}
+              themeButtonReference={themeButtonReference}
+              onClose={onClose}
+              onLogout={onLogout}
+              onModeToggle={onModeToggle}
+              onShowThemeSubview={() => setShowThemeSubview(true)}
+              onViewChange={onViewChange}
+            />
 
-              <NavMenuItems
-                mode={mode}
-                view={view}
-                onClose={onClose}
-                onModeToggle={onModeToggle}
-                onViewChange={onViewChange}
-              />
-
-              <MenuSection>
-                <button
-                  ref={themeButtonReference}
-                  type="button"
-                  role="menuitem"
-                  aria-haspopup="menu"
-                  aria-expanded={showThemeSubview}
-                  className="flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:outline-none text-[var(--text)] text-left cursor-pointer"
-                  onMouseEnter={(event) => event.currentTarget.focus()}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => setShowThemeSubview(true)}
-                >
-                  <i
-                    className="fa-solid fa-palette text-[var(--text-muted)] text-[0.75rem]"
-                    aria-hidden="true"
-                  />
-                  <div className="flex-1">
-                    <div>Theme</div>
-                    <div className="mt-0.5 text-[var(--text-muted)] line-clamp-1">
-                      {currentThemeLabel}
-                    </div>
-                  </div>
-                  <i
-                    className="fa-solid fa-chevron-right text-[var(--text-subtle)] text-[0.6rem]"
-                    aria-hidden="true"
-                  />
-                </button>
-              </MenuSection>
-
-              <MenuItem
-                icon="fa-right-from-bracket"
-                label="Log out"
-                className="mt-2 focus:bg-transparent!"
-                onClick={() => {
-                  onLogout();
-                  onClose();
-                }}
-              />
-            </div>
-
-            <div
-              style={{ width: '50%' }}
-              role="menu"
-              aria-label="Theme"
-              tabIndex={-1}
-              ref={themeViewReference}
-              className="pb-4"
-              inert={!showThemeSubview ? true : undefined}
-            >
-              <MenuSection className="flex items-center justify-between">
-                <MenuItem
-                  icon="fa-chevron-left"
-                  label=""
-                  aria-label="Back to main menu"
-                  className="flex-0 focus:bg-transparent!"
-                  onClick={handleBackToMain}
-                />
-                <p className="font-semibold">Themes</p>
-                {/* Non-interactive width-matching spacer so the heading stays
-                    visually centered. Replaces an empty `MenuItem` that sat
-                    in the tab order with no accessible name. */}
-                <div aria-hidden="true" className="flex-0 w-9" />
-              </MenuSection>
-
-              <InlineThemeList
-                baseTheme={baseTheme}
-                onSelect={handleThemeSelect}
-              />
-            </div>
+            <BottomSheetThemeSubmenu
+              baseTheme={baseTheme}
+              showThemeSubview={showThemeSubview}
+              panelReference={themeViewReference}
+              onBack={handleBackToMain}
+              onThemeSelect={onThemeSelect}
+            />
           </div>
         </div>
       </div>

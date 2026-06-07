@@ -79,20 +79,45 @@ export class RssFeedService {
     const feed = await this.fetchAndParse(source.feedUrl);
     const now = new Date();
 
-    for (const item of feed.items) {
+    const validItems = feed.items.flatMap((item) => {
       const suggestion = this.itemToSuggestion(item, source);
-      if (!suggestion) continue;
+      if (!suggestion) return [];
+      return [
+        { suggestion, publishedAt: this.extractPublishedAt(item) ?? now },
+      ];
+    });
 
-      const publishedAt = this.extractPublishedAt(item) ?? now;
+    // Dedup by URL so a feed that emits the same <link> twice does not race
+    // two parallel updateMany calls against the same row. Last entry wins,
+    // matching the previous per-item upsert behavior where later items in
+    // the feed overwrote earlier ones in iteration order.
+    const byUrl = new Map<string, (typeof validItems)[number]>();
+    for (const entry of validItems) {
+      byUrl.set(entry.suggestion.url, entry);
+    }
+    const deduped = Array.from(byUrl.values());
 
-      // Upsert on (sourceKey, url) so a redelivered job, a feed that
-      // re-emits the same item with a tweaked title, or a duplicate cron
-      // tick all converge on a single row per article.
-      await this.prisma.rssEntry.upsert({
-        where: {
-          sourceKey_url: { sourceKey: source.key, url: suggestion.url },
-        },
-        create: {
+    // Partition new vs existing so the update pass touches only rows that
+    // already exist; freshly-inserted rows do not get a redundant write.
+    const existing = await this.prisma.rssEntry.findMany({
+      where: {
+        sourceKey: source.key,
+        url: { in: deduped.map((entry) => entry.suggestion.url) },
+      },
+      select: { url: true },
+    });
+    const existingUrls = new Set(existing.map((entry) => entry.url));
+
+    const toCreate = deduped.filter(
+      (entry) => !existingUrls.has(entry.suggestion.url),
+    );
+    const toUpdate = deduped.filter((entry) =>
+      existingUrls.has(entry.suggestion.url),
+    );
+
+    if (toCreate.length > 0) {
+      await this.prisma.rssEntry.createMany({
+        data: toCreate.map(({ suggestion, publishedAt }) => ({
           sourceKey: source.key,
           url: suggestion.url,
           title: suggestion.title,
@@ -101,16 +126,26 @@ export class RssFeedService {
           siteName: suggestion.siteName,
           publishedAt,
           fetchedAt: now,
-        },
-        update: {
-          title: suggestion.title,
-          description: suggestion.description,
-          imageUrl: suggestion.imageUrl,
-          siteName: suggestion.siteName,
-          publishedAt,
-          fetchedAt: now,
-        },
+        })),
       });
+    }
+
+    if (toUpdate.length > 0) {
+      await Promise.all(
+        toUpdate.map(({ suggestion, publishedAt }) =>
+          this.prisma.rssEntry.updateMany({
+            where: { sourceKey: source.key, url: suggestion.url },
+            data: {
+              title: suggestion.title,
+              description: suggestion.description,
+              imageUrl: suggestion.imageUrl,
+              siteName: suggestion.siteName,
+              publishedAt,
+              fetchedAt: now,
+            },
+          }),
+        ),
+      );
     }
   }
 

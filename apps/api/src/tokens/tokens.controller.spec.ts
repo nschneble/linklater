@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { BookmarkletTokensService } from './bookmarklet-tokens.service';
 import { TokensController } from './tokens.controller';
 import { TokensService } from './tokens.service';
 import type { AuthRequest } from '../auth/index.js';
@@ -27,15 +28,24 @@ describe('TokensController', () => {
   const tokensServiceMock = {
     create: jest.fn(),
     findAll: jest.fn(),
-    getOrCreateBookmarkletToken: jest.fn(),
-    regenerateBookmarkletToken: jest.fn(),
     revoke: jest.fn(),
   } as unknown as TokensService;
+
+  const bookmarkletTokensServiceMock = {
+    getOrCreate: jest.fn(),
+    regenerate: jest.fn(),
+  } as unknown as BookmarkletTokensService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TokensController],
-      providers: [{ provide: TokensService, useValue: tokensServiceMock }],
+      providers: [
+        { provide: TokensService, useValue: tokensServiceMock },
+        {
+          provide: BookmarkletTokensService,
+          useValue: bookmarkletTokensServiceMock,
+        },
+      ],
     }).compile();
 
     controller = module.get<TokensController>(TokensController);
@@ -87,31 +97,31 @@ describe('TokensController', () => {
   });
 
   describe('getBookmarklet', () => {
-    it('delegates to TokensService.getOrCreateBookmarkletToken with userId', async () => {
+    it('delegates to BookmarkletTokensService.getOrCreate with userId', async () => {
       const bookmarklet = { ...makeApiToken(), rawToken: RAW_TOKEN };
-      (
-        tokensServiceMock.getOrCreateBookmarkletToken as jest.Mock
-      ).mockResolvedValue(bookmarklet);
+      (bookmarkletTokensServiceMock.getOrCreate as jest.Mock).mockResolvedValue(
+        bookmarklet,
+      );
 
       const result = await controller.getBookmarklet(makeRequest());
 
-      expect(
-        tokensServiceMock.getOrCreateBookmarkletToken,
-      ).toHaveBeenCalledWith(USER_ID);
+      expect(bookmarkletTokensServiceMock.getOrCreate).toHaveBeenCalledWith(
+        USER_ID,
+      );
       expect(result).toBe(bookmarklet);
     });
   });
 
   describe('regenerateBookmarklet', () => {
-    it('delegates to TokensService.regenerateBookmarkletToken with userId', async () => {
+    it('delegates to BookmarkletTokensService.regenerate with userId', async () => {
       const bookmarklet = { ...makeApiToken(), rawToken: RAW_TOKEN };
-      (
-        tokensServiceMock.regenerateBookmarkletToken as jest.Mock
-      ).mockResolvedValue(bookmarklet);
+      (bookmarkletTokensServiceMock.regenerate as jest.Mock).mockResolvedValue(
+        bookmarklet,
+      );
 
       const result = await controller.regenerateBookmarklet(makeRequest());
 
-      expect(tokensServiceMock.regenerateBookmarkletToken).toHaveBeenCalledWith(
+      expect(bookmarkletTokensServiceMock.regenerate).toHaveBeenCalledWith(
         USER_ID,
       );
       expect(result).toBe(bookmarklet);

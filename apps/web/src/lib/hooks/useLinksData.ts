@@ -1,11 +1,9 @@
 import { getLinks, type Link, type PaginatedLinks } from '../api';
 import { getErrorMessage } from '../errors';
-import { findNewLinks, formatNewLinksAnnouncement } from './linksData.utils';
+import { findNewLinks } from './linksData.utils';
+import { useLinksVisibilityRefresh } from './useLinksVisibilityRefresh';
 import type { LinksFilter } from './types';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-
-const VISIBILITY_REFRESH_MIN_INTERVAL_MS = 2000;
-const NEW_LINKS_ANNOUNCEMENT_TTL_MS = 5000;
 
 /**
  * Internal state driving the `GET /links` query. Held in a reducer so that
@@ -267,80 +265,34 @@ export function useLinksData(
   // unread, no-search view: paginated/searched/read views fall outside the
   // bookmarklet flow and refresh on the next deliberate user action.
   //
-  // - 2s stale-time guard prevents rapid tab-switching from fanning out
-  //   requests.
-  // - Existing items keep their positions and React keys (LinksList keys
-  //   by `link.id`), so focus inside a card is preserved across the
-  //   refresh.
-  // - Newly-arrived items are announced via a polite live region rendered
-  //   by LinksView so screen-reader users learn that the list updated.
+  // Existing items keep their positions and React keys (LinksList keys
+  // by `link.id`), so focus inside a card is preserved across the refresh.
+  // Newly-arrived items are announced via a polite live region rendered
+  // by LinksView so screen-reader users learn that the list updated.
   const linksReference = useRef(links);
   linksReference.current = links;
-  const lastVisibilityRefreshReference = useRef(0);
-  const [newLinksAnnouncement, setNewLinksAnnouncement] = useState('');
 
-  const runVisibilityRefresh = useCallback(async () => {
-    try {
-      const result = await getLinks({
-        read: false,
-        page: 1,
-        limit: paginationRef.current?.limit,
-      });
-
-      const additions = findNewLinks(result.data, linksReference.current);
-
+  const handleVisibilityRefreshed = useCallback(
+    (additions: Link[], result: { total: number; limit: number }) => {
       if (additions.length > 0) {
+        // Deduplicate against the latest state inside the updater to guard
+        // against races where a concurrent update already prepended some items.
         setLinks((previous) => [
-          ...findNewLinks(result.data, previous),
+          ...findNewLinks(additions, previous),
           ...previous,
         ]);
-        // Clear-then-set on a microtask so re-announcement fires even if
-        // the message text is identical to the previous one.
-        setNewLinksAnnouncement('');
-        setTimeout(() => {
-          setNewLinksAnnouncement(formatNewLinksAnnouncement(additions.length));
-        }, 0);
       }
-
       setPagination({ total: result.total, limit: result.limit });
-    } catch {
-      // Silent: next user navigation will retry. We don't surface a
-      // background-refresh failure as a UI error.
-    }
-  }, []);
+    },
+    [],
+  );
 
-  useEffect(() => {
-    if (filter !== 'unread' || search !== '') return;
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return;
-      const now = Date.now();
-      if (
-        now - lastVisibilityRefreshReference.current <
-        VISIBILITY_REFRESH_MIN_INTERVAL_MS
-      ) {
-        return;
-      }
-      lastVisibilityRefreshReference.current = now;
-      void runVisibilityRefresh();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [filter, search, runVisibilityRefresh]);
-
-  // Clear the announcement a few seconds after it appears so a follow-up
-  // refresh that yields the same number of new links still triggers a new
-  // announcement (aria-live only fires on text change).
-  useEffect(() => {
-    if (!newLinksAnnouncement) return;
-    const timeoutId = setTimeout(() => {
-      setNewLinksAnnouncement('');
-    }, NEW_LINKS_ANNOUNCEMENT_TTL_MS);
-    return () => clearTimeout(timeoutId);
-  }, [newLinksAnnouncement]);
+  const newLinksAnnouncement = useLinksVisibilityRefresh({
+    enabled: filter === 'unread' && search === '',
+    linksReference,
+    paginationReference: paginationRef,
+    onRefreshed: handleVisibilityRefreshed,
+  });
 
   return {
     adjustTotal,

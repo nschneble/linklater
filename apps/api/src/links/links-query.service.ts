@@ -87,9 +87,11 @@ export class LinksQueryService {
    * records including their metadata, then re-sorts them to match the rank
    * order returned by Postgres.
    *
-   * GOTCHA: The `total` is derived from `COUNT(*) OVER()` on the raw query
-   * result (a window function). When there are no results the array is empty
-   * so `total` defaults to 0 rather than reading from a missing first row.
+   * The `total` is derived from `COUNT(*) OVER()` on the raw query result
+   * (a window function). When the paged result is empty AND `page > 1`,
+   * a separate COUNT query runs so the caller can detect "past the last
+   * page" — otherwise paging past the end would collapse `total` to 0 and
+   * make the UI claim "no results" even when matches exist.
    *
    * @param userId - The UUID of the authenticated user.
    * @param term - The trimmed search string passed to `plainto_tsquery`.
@@ -132,6 +134,19 @@ export class LinksQueryService {
     `;
 
     if (rows.length === 0) {
+      // Page past the last result: COUNT(*) OVER() is unavailable, so issue
+      // a dedicated count to recover the real total.
+      if (page > 1) {
+        const countRows = await this.prisma.$queryRaw<{ total: bigint }[]>`
+          SELECT COUNT(*) AS total
+          FROM "Link" l
+          WHERE l."userId" = ${userId}
+            AND l."searchVector" @@ plainto_tsquery('english', unaccent(${term}))
+            ${readFilter}
+        `;
+        const total = Number(countRows[0]?.total ?? 0);
+        return { data: [], total, page, limit };
+      }
       return { data: [], total: 0, page, limit };
     }
 
@@ -196,8 +211,11 @@ export class LinksQueryService {
 
   /**
    * Returns a single randomly selected link from the user's collection.
-   * Uses `ORDER BY RANDOM()` in a raw query for true randomness without
-   * loading the full collection into memory.
+   * Uses a single `$queryRaw` with a LEFT JOIN to `Meta` so the link and
+   * its metadata are fetched in one round-trip. This eliminates the TOCTOU
+   * window present in the previous two-query approach, where a concurrent
+   * delete could cause the second query to return null even though a random
+   * link had just been selected.
    *
    * @param userId - The UUID of the authenticated user.
    * @param read - When `true`, picks from read links; when `false` (default), picks from unread links.
@@ -206,17 +224,80 @@ export class LinksQueryService {
   async getRandom(userId: string, read = false) {
     const readFilter = read ? Prisma.sql`IS NOT NULL` : Prisma.sql`IS NULL`;
 
-    const result = await this.prisma.$queryRaw<{ id: string }[]>`
-      SELECT id FROM "Link"
-      WHERE "userId" = ${userId} AND "readAt" ${readFilter}
+    const rows = await this.prisma.$queryRaw<
+      {
+        id: string;
+        url: string;
+        userId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        readAt: Date | null;
+        meta_id: string | null;
+        meta_linkId: string | null;
+        meta_description: string | null;
+        meta_faviconUrl: string | null;
+        meta_imageUrl: string | null;
+        meta_siteName: string | null;
+        meta_source: string | null;
+        meta_title: string | null;
+        meta_createdAt: Date | null;
+        meta_updatedAt: Date | null;
+        meta_fetchedAt: Date | null;
+      }[]
+    >`
+      SELECT
+        l.id,
+        l.url,
+        l."userId",
+        l."createdAt",
+        l."updatedAt",
+        l."readAt",
+        m.id          AS meta_id,
+        m."linkId"    AS "meta_linkId",
+        m.description AS meta_description,
+        m."faviconUrl" AS "meta_faviconUrl",
+        m."imageUrl"   AS "meta_imageUrl",
+        m."siteName"   AS "meta_siteName",
+        m.source      AS meta_source,
+        m.title       AS meta_title,
+        m."createdAt" AS "meta_createdAt",
+        m."updatedAt" AS "meta_updatedAt",
+        m."fetchedAt" AS "meta_fetchedAt"
+      FROM "Link" l
+      LEFT JOIN "Meta" m ON m."linkId" = l.id
+      WHERE l."userId" = ${userId} AND l."readAt" ${readFilter}
       ORDER BY RANDOM() LIMIT 1
     `;
 
-    if (result.length === 0) return null;
+    if (rows.length === 0) return null;
 
-    return this.prisma.link.findFirst({
-      where: { id: result[0].id },
-      include: { meta: true },
-    });
+    const row = rows[0];
+
+    const meta =
+      row.meta_id !== null
+        ? {
+            id: row.meta_id,
+            linkId: row.meta_linkId!,
+            description: row.meta_description,
+            faviconUrl: row.meta_faviconUrl,
+            imageUrl: row.meta_imageUrl,
+            siteName: row.meta_siteName,
+            source: row.meta_source,
+            title: row.meta_title,
+            createdAt: row.meta_createdAt!,
+            updatedAt: row.meta_updatedAt!,
+            fetchedAt: row.meta_fetchedAt,
+          }
+        : null;
+
+    return {
+      id: row.id,
+      url: row.url,
+      userId: row.userId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      readAt: row.readAt,
+      meta,
+    };
   }
 }

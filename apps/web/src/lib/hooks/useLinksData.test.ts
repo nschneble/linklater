@@ -70,6 +70,19 @@ describe('fetchParamsReducer', () => {
     const next = fetchParamsReducer(state, { type: 'load-more' });
     expect(next.page).toBe(2);
   });
+
+  it('load-more carries the optional limit override', () => {
+    const state = { filter: 'unread' as const, page: 1, search: '' };
+    const next = fetchParamsReducer(state, { type: 'load-more', limit: 11 });
+    expect(next.page).toBe(2);
+    expect(next.limit).toBe(11);
+  });
+
+  it('load-more without a limit override leaves limit undefined', () => {
+    const state = { filter: 'unread' as const, page: 1, search: '' };
+    const next = fetchParamsReducer(state, { type: 'load-more' });
+    expect(next.limit).toBeUndefined();
+  });
 });
 
 describe('useLinksData initial fetch', () => {

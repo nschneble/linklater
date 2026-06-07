@@ -73,7 +73,11 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  vi.runOnlyPendingTimers();
+  // Flush any pending timers (e.g. the 5s safety-clear) inside act() so
+  // React processes the resulting state updates without triggering act warnings.
+  act(() => {
+    vi.runOnlyPendingTimers();
+  });
   vi.useRealTimers();
   document.body.innerHTML = '';
   vi.restoreAllMocks();

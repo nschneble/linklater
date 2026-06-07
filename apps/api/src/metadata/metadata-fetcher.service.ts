@@ -6,6 +6,7 @@ import {
 } from './metadata.constants.js';
 import type { LinkMetadata } from './metadata.types.js';
 import * as cheerio from 'cheerio/slim';
+import { isPrivateHost } from '../common/private-host.js';
 
 /**
  * Fetches and parses Open Graph / Twitter Card metadata from a public URL.
@@ -36,7 +37,17 @@ export class MetadataFetcherService {
    * @returns Extracted metadata, or an empty metadata object on failure.
    */
   async fetchMetadata(url: string): Promise<LinkMetadata> {
-    if (this.isPrivateHost(url)) {
+    let hostname: string;
+    try {
+      hostname = new URL(url).hostname;
+    } catch {
+      // Malformed URL reaching the fetcher is itself a signal — log so ops
+      // alerts catch the bypass attempt instead of silently dropping it.
+      this.logger.warn(`Blocked SSRF attempt — invalid URL: ${url}`);
+      return this.emptyMetadata();
+    }
+
+    if (isPrivateHost(hostname)) {
       this.logger.warn(`Blocked SSRF attempt to private host: ${url}`);
       return this.emptyMetadata();
     }
@@ -51,71 +62,6 @@ export class MetadataFetcherService {
     }
 
     return { ...metadata, source };
-  }
-
-  /**
-   * Returns `true` for any host that should not be fetched — localhost,
-   * loopback addresses, and RFC 1918 private IP ranges.
-   *
-   * GOTCHA: This check runs on the raw URL string, not on any resolved
-   * redirect target. A redirect chain that ends at a private host would bypass
-   * this guard. Fetch is configured without `redirect: 'follow'` so that the
-   * default redirect handling is used, but the initial host is always validated.
-   *
-   * @param url - The URL string to check.
-   * @returns `true` when the host is private and the fetch should be blocked.
-   */
-  private isPrivateHost(url: string): boolean {
-    let hostname: string;
-    try {
-      hostname = new URL(url).hostname.toLowerCase();
-    } catch {
-      return true;
-    }
-
-    if (hostname === 'localhost') return true;
-
-    if (hostname === '::1' || hostname === '[::1]') return true;
-
-    // IPv6 unique-local (fc00::/7 covers fc::/8 and fd::/8) and
-    // link-local (fe80::/10 covers fe80–febf, i.e. fe[89ab]x::)
-    if (/^\[?(?:f[cd]|fe[89ab])/i.test(hostname)) return true;
-
-    // IPv4-mapped IPv6 (`::ffff:127.0.0.1` etc.) addresses an IPv4 destination
-    // but the URL parser normalizes the address into compressed-hex form —
-    // `[::ffff:127.0.0.1]` becomes `[::ffff:7f00:1]`. Detect either spelling
-    // (dotted decimal or compressed hex pair) and re-check the embedded IPv4
-    // against the private ranges below. Without this step the loopback /
-    // RFC 1918 / link-local ranges are all reachable via the mapped form.
-    const ipv4MappedHex = hostname.match(
-      /^\[?::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})\]?$/i,
-    );
-    const ipv4MappedDotted = hostname.match(
-      /^\[?::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\]?$/i,
-    );
-    let effectiveHost = hostname;
-    if (ipv4MappedDotted) {
-      effectiveHost = ipv4MappedDotted[1];
-    } else if (ipv4MappedHex) {
-      const high = parseInt(ipv4MappedHex[1], 16);
-      const low = parseInt(ipv4MappedHex[2], 16);
-      effectiveHost = `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`;
-    }
-
-    const ipv4 = effectiveHost.match(
-      /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/,
-    );
-    if (ipv4) {
-      const [, firstOctet, secondOctet] = ipv4.map(Number);
-      if (firstOctet === 127) return true; // 127.0.0.0/8 loopback
-      if (firstOctet === 10) return true; // 10.0.0.0/8 private
-      if (firstOctet === 169 && secondOctet === 254) return true; // 169.254.0.0/16 link-local
-      if (firstOctet === 192 && secondOctet === 168) return true; // 192.168.0.0/16 private
-      if (firstOctet === 172 && secondOctet >= 16 && secondOctet <= 31)
-        return true; // 172.16.0.0/12 private
-    }
-
-    return false;
   }
 
   /**

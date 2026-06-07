@@ -1,5 +1,6 @@
 import { resetPassword } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
@@ -19,6 +20,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
  * This route is always accessible without authentication.
  */
 export default function ResetPasswordPage() {
+  useDocumentTitle('Reset password — Linklater');
+
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');

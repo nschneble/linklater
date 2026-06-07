@@ -1,6 +1,7 @@
-import AuthErrorPanel from './AuthErrorPanel';
-import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
+import { getErrorMessage } from '../../lib/errors';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
+import AuthErrorPanel from './AuthErrorPanel';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,6 +18,7 @@ type Status = 'loading' | 'error';
  * the app. On failure it shows an error state with a link back to the login form.
  */
 export default function OAuthCallbackPage() {
+  useDocumentTitle('Sign in — Linklater');
   const { loginWithToken } = useAuth();
   const navigate = useNavigate();
   const [status, setStatus] = useState<Status>('loading');

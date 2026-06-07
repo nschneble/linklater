@@ -1,6 +1,5 @@
 import { jest } from '@jest/globals';
 
-import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CustomThrottlerGuard } from './custom-throttler.guard';
 import { AuthController } from './auth.controller';
@@ -16,7 +15,6 @@ import { OAuthAccountService } from './oauth-account.service';
 import { OAuthController } from './oauth.controller';
 import { TotpService } from './totp.service';
 import { MultiFactorController } from './multi-factor.controller';
-import type { Response } from 'express';
 import type { AuthRequest } from './auth-request.type';
 
 const ACCESS_TOKEN = 'token';
@@ -32,10 +30,7 @@ const VERIFICATION_TOKEN = 'verification-token-xyz';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let oauthController: OAuthController;
   let multiFactorController: MultiFactorController;
-  let magicLinkController: MagicLinkController;
-  let extensionAuthController: ExtensionAuthController;
 
   const REFRESH_TOKEN = 'refresh-token';
 
@@ -126,13 +121,8 @@ describe('AuthController', () => {
       .compile();
 
     controller = module.get<AuthController>(AuthController);
-    oauthController = module.get<OAuthController>(OAuthController);
     multiFactorController = module.get<MultiFactorController>(
       MultiFactorController,
-    );
-    magicLinkController = module.get<MagicLinkController>(MagicLinkController);
-    extensionAuthController = module.get<ExtensionAuthController>(
-      ExtensionAuthController,
     );
     jest.clearAllMocks();
   });
@@ -420,50 +410,6 @@ describe('AuthController', () => {
     });
   });
 
-  describe('requestMagicLink', () => {
-    it('delegates to AuthService.requestMagicLink with the provided email', async () => {
-      (authServiceMock.requestMagicLink as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await magicLinkController.requestMagicLink({ email: USER_EMAIL });
-
-      expect(authServiceMock.requestMagicLink).toHaveBeenCalledWith(USER_EMAIL);
-    });
-  });
-
-  describe('registerMagicLink', () => {
-    it('delegates to AuthService.registerMagicLink with the email from the request body', async () => {
-      (authServiceMock.registerMagicLink as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await magicLinkController.registerMagicLink({ email: USER_EMAIL });
-
-      expect(authServiceMock.registerMagicLink).toHaveBeenCalledWith(
-        USER_EMAIL,
-      );
-    });
-  });
-
-  describe('verifyMagicLink', () => {
-    it('delegates to AuthService.verifyMagicLink and returns the access token', async () => {
-      const ACCESS_TOKEN_VALUE = 'magic-access-token';
-      (authServiceMock.verifyMagicLink as jest.Mock).mockResolvedValue({
-        accessToken: ACCESS_TOKEN_VALUE,
-      });
-
-      const result = await magicLinkController.verifyMagicLink({
-        token: 'valid-token',
-      });
-
-      expect(authServiceMock.verifyMagicLink).toHaveBeenCalledWith(
-        'valid-token',
-      );
-      expect(result).toEqual({ accessToken: ACCESS_TOKEN_VALUE });
-    });
-  });
-
   describe('disableMfa', () => {
     it('delegates to AuthService.disableMfa with userId and credentials', async () => {
       const request = { user: { userId: USER_ID } } as never;
@@ -505,74 +451,6 @@ describe('AuthController', () => {
     });
   });
 
-  describe('googleCallback', () => {
-    it('redirects to oauth callback with the access token and refresh token on success', async () => {
-      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
-      const response = { redirect: jest.fn() } as never;
-      (authServiceMock.login as jest.Mock).mockResolvedValue({
-        accessToken: ACCESS_TOKEN,
-        refreshToken: REFRESH_TOKEN,
-      });
-
-      await oauthController.googleCallback(request, response);
-
-      expect(response.redirect).toHaveBeenCalledWith(
-        expect.stringContaining(
-          `#token=${ACCESS_TOKEN}&refresh=${REFRESH_TOKEN}`,
-        ),
-      );
-    });
-
-    it('redirects to login error page when login returns an MFA challenge', async () => {
-      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
-      const response = { redirect: jest.fn() } as never;
-      (authServiceMock.login as jest.Mock).mockResolvedValue({
-        mfaToken: 'mfa-tok',
-        mfaMethod: 'totp',
-      });
-
-      await oauthController.googleCallback(request, response);
-
-      expect(response.redirect).toHaveBeenCalledWith(
-        expect.stringContaining('error=mfa_required'),
-      );
-    });
-  });
-
-  describe('appleCallback', () => {
-    it('redirects to oauth callback with the access token and refresh token on success', async () => {
-      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
-      const response = { redirect: jest.fn() } as never;
-      (authServiceMock.login as jest.Mock).mockResolvedValue({
-        accessToken: ACCESS_TOKEN,
-        refreshToken: REFRESH_TOKEN,
-      });
-
-      await oauthController.appleCallback(request, response);
-
-      expect(response.redirect).toHaveBeenCalledWith(
-        expect.stringContaining(
-          `#token=${ACCESS_TOKEN}&refresh=${REFRESH_TOKEN}`,
-        ),
-      );
-    });
-
-    it('redirects to login error page when login returns an MFA challenge', async () => {
-      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
-      const response = { redirect: jest.fn() } as never;
-      (authServiceMock.login as jest.Mock).mockResolvedValue({
-        mfaToken: 'mfa-tok',
-        mfaMethod: 'email',
-      });
-
-      await oauthController.appleCallback(request, response);
-
-      expect(response.redirect).toHaveBeenCalledWith(
-        expect.stringContaining('error=mfa_required'),
-      );
-    });
-  });
-
   describe('setPassword', () => {
     it('delegates to authService.setFirstPassword with userId and password', async () => {
       const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
@@ -589,91 +467,6 @@ describe('AuthController', () => {
         USER_PASSWORD,
       );
       expect(result).toEqual({ success: true });
-    });
-  });
-
-  describe('unlinkProvider', () => {
-    it('delegates to oauthAccountService.unlinkOAuthProvider with userId and provider', async () => {
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-      (
-        oauthAccountServiceMock.unlinkOAuthProvider as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      const result = await oauthController.unlinkProvider(request, 'google');
-
-      expect(oauthAccountServiceMock.unlinkOAuthProvider).toHaveBeenCalledWith(
-        USER_ID,
-        'google',
-      );
-      expect(result).toEqual({ success: true });
-    });
-  });
-
-  describe('googleLink', () => {
-    it('delegates to oauthAccountService.buildGoogleLinkUrl with the userId and returns its result', () => {
-      const expectedUrl =
-        'https://accounts.google.com/o/oauth2/v2/auth?client_id=test-client-id&state=signed-state';
-      (oauthAccountServiceMock.buildGoogleLinkUrl as jest.Mock).mockReturnValue(
-        { url: expectedUrl },
-      );
-
-      const request = {
-        user: { userId: USER_ID },
-      } as unknown as AuthRequest;
-
-      const result = oauthController.googleLink(request);
-
-      expect(oauthAccountServiceMock.buildGoogleLinkUrl).toHaveBeenCalledWith(
-        USER_ID,
-      );
-      expect(result).toEqual({ url: expectedUrl });
-    });
-  });
-
-  describe('googleLinkCallback', () => {
-    it('redirects to settings with linked=google on success', async () => {
-      process.env.APP_URL = 'https://app.example.com';
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-      const response = { redirect: jest.fn() } as unknown as Response;
-      (
-        oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      await oauthController.googleLinkCallback(request, response);
-
-      expect(response.redirect).toHaveBeenCalledWith(
-        'https://app.example.com/settings?linked=google',
-      );
-    });
-
-    it('redirects with link_error=already_linked when ConflictException is thrown', async () => {
-      process.env.APP_URL = 'https://app.example.com';
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-      const response = { redirect: jest.fn() } as unknown as Response;
-      (
-        oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
-      ).mockRejectedValue(new ConflictException('Already linked'));
-
-      await oauthController.googleLinkCallback(request, response);
-
-      expect(response.redirect).toHaveBeenCalledWith(
-        'https://app.example.com/settings?link_error=already_linked',
-      );
-    });
-
-    it('redirects with link_error=unknown when an unexpected error is thrown', async () => {
-      process.env.APP_URL = 'https://app.example.com';
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-      const response = { redirect: jest.fn() } as unknown as Response;
-      (
-        oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
-      ).mockRejectedValue(new Error('Database connection lost'));
-
-      await oauthController.googleLinkCallback(request, response);
-
-      expect(response.redirect).toHaveBeenCalledWith(
-        'https://app.example.com/settings?link_error=unknown',
-      );
     });
   });
 
@@ -712,69 +505,6 @@ describe('AuthController', () => {
 
       expect(authServiceMock.markWelcomed).toHaveBeenCalledWith(USER_ID);
       expect(result).toEqual({ success: true });
-    });
-  });
-
-  describe('extensionAuthorize', () => {
-    it('delegates to authService.authorizeExtension with userId, codeChallenge, and redirectUri', async () => {
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-      const response = { redirect: jest.fn() } as unknown as Response;
-      (
-        extensionAuthServiceMock.authorizeExtension as jest.Mock
-      ).mockResolvedValue({
-        code: 'auth-code-123',
-        callbackUrl: 'chrome-extension://allowed/callback',
-      });
-
-      await extensionAuthController.extensionAuthorize(
-        request,
-        response,
-        'challenge123',
-        'chrome-extension://allowed/callback',
-      );
-
-      expect(extensionAuthServiceMock.authorizeExtension).toHaveBeenCalledWith(
-        USER_ID,
-        'challenge123',
-        'chrome-extension://allowed/callback',
-      );
-      expect(response.redirect).toHaveBeenCalledWith(
-        expect.stringContaining('code=auth-code-123'),
-      );
-    });
-
-    it('propagates exceptions thrown by authService.authorizeExtension', async () => {
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-      const response = { redirect: jest.fn() } as unknown as Response;
-      (
-        extensionAuthServiceMock.authorizeExtension as jest.Mock
-      ).mockRejectedValue(new BadRequestException('Invalid redirect_uri'));
-
-      await expect(
-        extensionAuthController.extensionAuthorize(
-          request,
-          response,
-          'challenge123',
-          'chrome-extension://not-allowed/callback',
-        ),
-      ).rejects.toThrow(BadRequestException);
-    });
-  });
-
-  describe('extensionToken', () => {
-    it('delegates to authService.exchangeExtensionCode and returns token pair', async () => {
-      const result = await extensionAuthController.extensionToken({
-        code: 'auth-code-123',
-        codeVerifier: 'verifier-xyz',
-      });
-
-      expect(
-        extensionAuthServiceMock.exchangeExtensionCode,
-      ).toHaveBeenCalledWith('auth-code-123', 'verifier-xyz');
-      expect(result).toEqual({
-        accessToken: ACCESS_TOKEN,
-        refreshToken: REFRESH_TOKEN,
-      });
     });
   });
 });

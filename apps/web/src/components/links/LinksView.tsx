@@ -1,5 +1,6 @@
 import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
 import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useLinksView } from '../../lib/hooks/useLinksView';
 import Alert from '../common/Alert';
 import Toast from '../common/Toast';
@@ -52,6 +53,12 @@ interface LinksViewProps {
  */
 export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
   const view = useLinksView({ onCloseUserMenu });
+
+  useDocumentTitle(
+    view.filter === 'unread'
+      ? 'Your links — Linklater'
+      : 'Read links — Linklater',
+  );
 
   const dialogReference = useRef<HTMLDivElement>(null);
 
@@ -158,8 +165,9 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       {/*
         Polite live region announcing links that arrive via a background
         visibility refresh (e.g. saved via the bookmarklet on another tab).
-        The visible list is updated regardless; this is purely for screen
-        reader users who don't see the prepend.
+        The visual Toast above already carries its own role="status"
+        aria-live="polite", so it is not echoed here — that produced a
+        double SR announcement.
       */}
       <span className="sr-only" role="status">
         {view.newLinksAnnouncement}

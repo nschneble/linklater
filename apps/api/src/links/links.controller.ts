@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 
 import { AnyAuthGuard, type AuthRequest } from '../auth/index.js';
+import { LinksQueryService } from './links-query.service.js';
 import { LinksService } from './links.service.js';
 
 import {
@@ -42,7 +43,10 @@ import { StumbleResponseDto } from './dto/stumble-response.dto.js';
 @Controller('links')
 @UseGuards(AnyAuthGuard)
 export class LinksController {
-  constructor(private readonly linksService: LinksService) {}
+  constructor(
+    private readonly linksService: LinksService,
+    private readonly linksQuery: LinksQueryService,
+  ) {}
 
   /**
    * Saves a URL to the authenticated user's collection. If the URL was
@@ -122,7 +126,7 @@ export class LinksController {
     if (read === 'true') readFlag = true;
     if (read === 'false') readFlag = false;
 
-    return this.linksService.findAll(userId, {
+    return this.linksQuery.findAll(userId, {
       search,
       read: readFlag,
       page: page ? parseInt(page, 10) : undefined,
@@ -161,7 +165,7 @@ export class LinksController {
     let readFlag = false;
     if (read === 'true') readFlag = true;
 
-    const link = await this.linksService.getRandom(userId, readFlag);
+    const link = await this.linksQuery.getRandom(userId, readFlag);
     return { link };
   }
 
@@ -191,7 +195,7 @@ export class LinksController {
   @Post('stumble')
   async stumble(@Req() request: AuthRequest) {
     const userId = request.user.userId;
-    const result = await this.linksService.stumble(userId);
+    const result = await this.linksQuery.stumble(userId);
     return { url: result?.url ?? null };
   }
 
@@ -211,7 +215,7 @@ export class LinksController {
   @Get(':id')
   async findOne(@Req() request: AuthRequest, @Param('id') id: string) {
     const userId = request.user.userId;
-    return this.linksService.findOne(userId, id);
+    return this.linksQuery.findOne(userId, id);
   }
 
   /** Marks a link as read by setting `readAt` to the current timestamp. */

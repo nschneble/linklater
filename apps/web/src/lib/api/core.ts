@@ -106,6 +106,23 @@ async function attemptTokenRefresh(): Promise<boolean> {
  */
 export type AuthContext = boolean | string;
 
+/**
+ * Like `apiFetch<T>` but throws `ApiError` when the server returns an empty
+ * body. Use this on endpoints that must return JSON — avoids repeating the
+ * `if (data === undefined) throw new ApiError(...)` guard at every callsite.
+ */
+export async function apiFetchRequired<T>(
+  path: string,
+  options?: RequestInit,
+  authContext?: AuthContext,
+): Promise<T> {
+  const data = await apiFetch<T>(path, options, authContext);
+  if (data === undefined) {
+    throw new ApiError(`${path} returned an empty response`, 0);
+  }
+  return data;
+}
+
 export async function apiFetch(
   path: string,
   options?: RequestInit,

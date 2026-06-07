@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
 import Alert from '../common/Alert';
 import PrimaryButton from '../common/PrimaryButton';
 import { createLink, getSuggestions, readLink } from '../../lib/api';
 import type { Suggestion } from '../../lib/api';
+import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
 interface SuggestionCalloutProps {
@@ -61,6 +62,7 @@ export default function SuggestionCallout({
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [sourceName, setSourceName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchFailed, setFetchFailed] = useState(false);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,8 +76,12 @@ export default function SuggestionCallout({
         setSourceName(response.sourceName);
         setLoading(false);
       })
-      .catch(() => {
+      .catch((caught) => {
         if (cancelled) return;
+        if (import.meta.env.DEV) {
+          console.warn('SuggestionCallout: fetch failed', caught);
+        }
+        setFetchFailed(true);
         setLoading(false);
       });
 
@@ -90,6 +96,12 @@ export default function SuggestionCallout({
     setAdding(true);
 
     const url = suggestion.url;
+
+    if (!isSafeRedirectUrl(url)) {
+      setError('Suggestion URL is not safe to open.');
+      setAdding(false);
+      return;
+    }
 
     // For new-tab mode, open the tab synchronously inside the click
     // handler. Waiting for `await createLink` first puts the
@@ -120,10 +132,9 @@ export default function SuggestionCallout({
     })();
   }
 
-  // Failure path: after the fetch resolves with no usable suggestion,
-  // render the caller-provided fallback (the Stumble page passes the
-  // "Suggestions are napping too." line; the unread list passes nothing).
-  if (!loading && (!suggestion || !sourceName)) {
+  // No suggestion returned (empty result) — show caller-provided fallback.
+  // Fetch errors are kept in the live region instead so screen readers hear them.
+  if (!loading && !fetchFailed && (!suggestion || !sourceName)) {
     return <>{fallback}</>;
   }
 
@@ -136,15 +147,13 @@ export default function SuggestionCallout({
       >
         {loading
           ? 'Looking for something to read…'
-          : `How about something from ${sourceName}?`}
+          : fetchFailed
+            ? "Couldn't load suggestions right now."
+            : `How about something from ${sourceName}?`}
       </p>
-      {loading || !suggestion ? (
-        <SuggestionCalloutSkeleton />
-      ) : (
-        <div
-          className="mt-2 mx-auto w-full max-w-md pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-shadow hover:border-shadow rounded-xl text-left"
-          aria-busy={loading}
-        >
+      {loading && <SuggestionCalloutSkeleton />}
+      {!loading && !fetchFailed && suggestion && (
+        <div className="mt-2 mx-auto w-full max-w-md pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-shadow hover:border-shadow rounded-xl text-left">
           <p
             style={{ animationDelay: '60ms' }}
             className="mb-1 text-[var(--text)] text-sm font-semibold text-balance line-clamp-1 animate-card-enter"

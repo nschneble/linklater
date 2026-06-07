@@ -5,9 +5,9 @@ import IconButton from '../../common/IconButton';
 import LinkButton from '../../common/LinkButton';
 import PrimaryButton from '../../common/PrimaryButton';
 import ApiTokensList from '../ApiTokensList';
-import { useNavigate } from 'react-router-dom';
 import { useApiTokens } from './useApiTokens';
 import type { FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Settings section for managing personal access tokens (PATs).

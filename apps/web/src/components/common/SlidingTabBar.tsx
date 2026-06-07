@@ -54,10 +54,9 @@ export default function SlidingTabBar({
     >
       <div
         aria-hidden="true"
-        className="absolute top-1 bottom-1 left-1 bg-[var(--text)] rounded-full"
+        className="absolute top-1 bottom-1 left-1 bg-[var(--text)] rounded-full motion-safe:[transition:transform_200ms_cubic-bezier(0.34,1.56,0.64,1)]"
         style={{
           width: `calc(${widthPercent}% - 4px)`,
-          transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
           transform: `translateX(${activeIndex * 100}%)`,
         }}
       />

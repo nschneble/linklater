@@ -1,6 +1,7 @@
 import FeaturesSection from './FeaturesSection';
 import FooterSection from './FooterSection';
 import HeroSection from './HeroSection';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 
 /**
  * Public-facing marketing page rendered at the root `/` route.
@@ -14,6 +15,8 @@ import HeroSection from './HeroSection';
  * landing-page theme rather than the authenticated app's CSS variables.
  */
 export default function LandingPage() {
+  useDocumentTitle('Linklater');
+
   return (
     <div className="min-h-screen bg-hit-man">
       <a

@@ -1,0 +1,335 @@
+/**
+ * Tests for DangerZone — the account-deletion settings section.
+ *
+ * Two branches based on credential presence:
+ *   - Credentialed: hasPassword=true → ReauthForm inline
+ *   - Email-confirm: magic-link-only account → ActionGuard two-step
+ *
+ * State machine: idle → reauth → reauth-pending → (logout) or (reauth on error)
+ *                idle → confirming → email-sent → (never-mind → idle)
+ */
+
+import DangerZone from './DangerZone';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { User } from '../../auth/AuthContext/types';
+
+// ─── Module mocks ─────────────────────────────────────────────────────────────
+
+vi.mock('../../lib/api', () => ({
+  deleteMe: vi.fn(),
+  cancelPendingAccountDeletion: vi.fn(),
+}));
+
+vi.mock('../../auth/authNotice', () => ({
+  setAuthNotice: vi.fn(),
+}));
+
+vi.mock('../../auth/AuthContext', () => ({
+  useAuth: vi.fn(),
+}));
+
+// ─── Imports after mocks ──────────────────────────────────────────────────────
+
+import * as apiModule from '../../lib/api';
+import { useAuth } from '../../auth/AuthContext';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function makeUser(overrides: Partial<User> = {}): User {
+  return {
+    connectedProviders: [],
+    cvdMode: false,
+    email: 'test@example.com',
+    emailVerifiedAt: null,
+    hasPassword: false,
+    pendingEmail: null,
+    mode: 'light',
+    theme: 'scanner-darkly',
+    multiFactorMethod: null,
+    multiFactorPending: false,
+    userId: 'user-1',
+    welcomedAt: null,
+    ...overrides,
+  };
+}
+
+function makeAuthContext(
+  overrides: Partial<{
+    logout: ReturnType<typeof vi.fn>;
+    user: User | null;
+    loading: boolean;
+  }> = {},
+) {
+  return {
+    loading: false,
+    logout: vi.fn(),
+    user: makeUser(),
+    login: vi.fn(),
+    loginWithToken: vi.fn(),
+    register: vi.fn(),
+    refreshUser: vi.fn(),
+    resendVerificationEmail: vi.fn(),
+    setPendingEmail: vi.fn(),
+    markWelcomed: vi.fn(),
+    ...overrides,
+  };
+}
+
+function renderDangerZone() {
+  return render(
+    <MemoryRouter>
+      <DangerZone />
+    </MemoryRouter>,
+  );
+}
+
+// ─── Setup ────────────────────────────────────────────────────────────────────
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(useAuth).mockReturnValue(makeAuthContext());
+  vi.mocked(apiModule.deleteMe).mockResolvedValue({ success: true });
+  vi.mocked(apiModule.cancelPendingAccountDeletion).mockResolvedValue(
+    undefined,
+  );
+});
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
+
+describe('DangerZone loading state', () => {
+  it('renders a disabled trigger while auth is loading', () => {
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ loading: true, user: null }),
+    );
+    renderDangerZone();
+
+    const button = screen.getByRole('button', { name: /delete my account/i });
+    expect(button).toBeDisabled();
+  });
+});
+
+describe('DangerZone credentialed branch (hasPassword: true)', () => {
+  beforeEach(() => {
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ user: makeUser({ hasPassword: true }) }),
+    );
+  });
+
+  it('shows the "Delete my account" trigger initially', () => {
+    renderDangerZone();
+    expect(
+      screen.getByRole('button', { name: /delete my account/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('clicking "Delete my account" reveals the ReauthForm', () => {
+    renderDangerZone();
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
+  });
+
+  it('submitting the reauth form with a password calls deleteMe with that password', async () => {
+    vi.mocked(apiModule.deleteMe).mockResolvedValue({ success: true });
+    const { container } = renderDangerZone();
+
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+    fireEvent.change(screen.getByLabelText(/current password/i), {
+      target: { value: 'secret123' },
+    });
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    expect(apiModule.deleteMe).toHaveBeenCalledWith(
+      expect.objectContaining({ currentPassword: 'secret123' }),
+    );
+  });
+
+  it('successful submission calls logout', async () => {
+    const logout = vi.fn();
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ user: makeUser({ hasPassword: true }), logout }),
+    );
+    vi.mocked(apiModule.deleteMe).mockResolvedValue({ success: true });
+    const { container } = renderDangerZone();
+
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    expect(logout).toHaveBeenCalled();
+  });
+
+  it('wrong password → error appears in role="alert" and phase reverts to reauth', async () => {
+    vi.mocked(apiModule.deleteMe).mockRejectedValue(
+      new Error('Incorrect password'),
+    );
+    const { container } = renderDangerZone();
+
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+    fireEvent.change(screen.getByLabelText(/current password/i), {
+      target: { value: 'wrong' },
+    });
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/incorrect password/i);
+    // ReauthForm still visible — phase is 'reauth'
+    expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
+  });
+
+  it('Escape key closes the reauth form', async () => {
+    renderDangerZone();
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
+
+    act(() => {
+      fireEvent.keyDown(document, { key: 'Escape' });
+    });
+
+    expect(
+      screen.queryByLabelText(/current password/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /delete my account/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('cancel button closes the reauth form', () => {
+    renderDangerZone();
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+    expect(
+      screen.queryByLabelText(/current password/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /delete my account/i }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe('DangerZone email-confirm branch (magic-link-only: hasPassword=false, no MFA)', () => {
+  beforeEach(() => {
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({
+        user: makeUser({ hasPassword: false, multiFactorMethod: null }),
+      }),
+    );
+  });
+
+  it('shows the "Delete my account" trigger in the email-confirm branch', () => {
+    renderDangerZone();
+    expect(
+      screen.getByRole('button', { name: /delete my account/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('clicking "Delete my account" reveals the confirmation row', () => {
+    renderDangerZone();
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    expect(
+      screen.getByRole('button', { name: /yes, delete/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('confirming deletion when API returns requiresEmailConfirmation transitions to email-sent panel', async () => {
+    vi.mocked(apiModule.deleteMe).mockResolvedValue({
+      success: true,
+      requiresEmailConfirmation: true,
+    });
+    renderDangerZone();
+
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+    });
+  });
+
+  it('"Never mind" button calls cancelPendingAccountDeletion and reverts to idle', async () => {
+    vi.mocked(apiModule.deleteMe).mockResolvedValue({
+      success: true,
+      requiresEmailConfirmation: true,
+    });
+    renderDangerZone();
+
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: /never mind, keep my account/i }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(apiModule.cancelPendingAccountDeletion).toHaveBeenCalled();
+    });
+
+    expect(
+      screen.getByRole('button', { name: /delete my account/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('"Never mind" reverts to idle even if cancelPendingAccountDeletion fails', async () => {
+    vi.mocked(apiModule.deleteMe).mockResolvedValue({
+      success: true,
+      requiresEmailConfirmation: true,
+    });
+    vi.mocked(apiModule.cancelPendingAccountDeletion).mockRejectedValue(
+      new Error('Network error'),
+    );
+    renderDangerZone();
+
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: /never mind, keep my account/i }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /delete my account/i }),
+      ).toBeInTheDocument();
+    });
+  });
+});

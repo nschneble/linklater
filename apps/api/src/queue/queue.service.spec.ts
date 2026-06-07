@@ -90,4 +90,21 @@ describe('QueueService', () => {
       {},
     );
   });
+
+  it('propagates errors thrown by boss.send', async () => {
+    bossMock.send.mockRejectedValue(new Error('pg-boss connection lost'));
+
+    await expect(service.send(QUEUE_NAME, { q: 'duck' })).rejects.toThrow(
+      'pg-boss connection lost',
+    );
+  });
+
+  it('propagates errors thrown by boss.work', async () => {
+    const handler = jest.fn();
+    bossMock.work.mockRejectedValue(new Error('worker registration failed'));
+
+    await expect(service.work(QUEUE_NAME, handler as never)).rejects.toThrow(
+      'worker registration failed',
+    );
+  });
 });
