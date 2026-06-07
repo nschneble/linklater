@@ -30,6 +30,10 @@ jobs:
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/linklater_testing_ui?schema=public'
       JWT_SECRET: 'ci-jwt-secret'
       TOTP_ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
+      APP_URL: 'https://localhost:5173'
+      VITE_API_BASE_URL: 'https://localhost:3000'
+      VITE_APPLE_SSO_ENABLED: 'false'
+      VITE_GOOGLE_SSO_ENABLED: 'false'
 
     steps:
       - uses: actions/checkout@v4
