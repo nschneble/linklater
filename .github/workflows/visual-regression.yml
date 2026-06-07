@@ -1,4 +1,4 @@
-name: testing-ui
+name: visual-regression
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  testing-ui:
+  visual-regression:
     runs-on: ubuntu-latest
 
     services:
