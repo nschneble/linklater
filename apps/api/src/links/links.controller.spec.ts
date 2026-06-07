@@ -1,8 +1,9 @@
 import { jest } from '@jest/globals';
 
 import { LinksController } from './links.controller';
+import { LinksQueryService } from './links-query.service';
 import { LinksService } from './links.service';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 
 const LINK_ID = 'link-1';
 const LINK_URL = 'https://example.com/page';
@@ -13,15 +14,18 @@ describe('LinksController', () => {
 
   const linksServiceMock = {
     create: jest.fn(),
-    findAll: jest.fn(),
-    getRandom: jest.fn(),
-    stumble: jest.fn(),
-    findOne: jest.fn(),
     read: jest.fn(),
     unread: jest.fn(),
     remove: jest.fn(),
     removeAllRead: jest.fn(),
   } as unknown as LinksService;
+
+  const linksQueryMock = {
+    findAll: jest.fn(),
+    findOne: jest.fn(),
+    getRandom: jest.fn(),
+    stumble: jest.fn(),
+  } as unknown as LinksQueryService;
 
   const makeRequest = (userId = USER_ID) => ({ user: { userId } }) as never;
   const makeLink = (overrides = {}) => ({
@@ -38,7 +42,10 @@ describe('LinksController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [LinksController],
-      providers: [{ provide: LinksService, useValue: linksServiceMock }],
+      providers: [
+        { provide: LinksService, useValue: linksServiceMock },
+        { provide: LinksQueryService, useValue: linksQueryMock },
+      ],
     }).compile();
 
     controller = module.get<LinksController>(LinksController);
@@ -68,11 +75,11 @@ describe('LinksController', () => {
   describe('findAll', () => {
     it('passes search and read flag parsed from query strings', async () => {
       const paginated = { data: [], limit: 50, page: 1, total: 0 };
-      (linksServiceMock.findAll as jest.Mock).mockResolvedValue(paginated);
+      (linksQueryMock.findAll as jest.Mock).mockResolvedValue(paginated);
 
       await controller.findAll(makeRequest(), 'duck', 'true', '2', '25');
 
-      expect(linksServiceMock.findAll).toHaveBeenCalledWith(USER_ID, {
+      expect(linksQueryMock.findAll).toHaveBeenCalledWith(USER_ID, {
         read: true,
         limit: 25,
         page: 2,
@@ -81,7 +88,7 @@ describe('LinksController', () => {
     });
 
     it('passes read=false when the query param is "false"', async () => {
-      (linksServiceMock.findAll as jest.Mock).mockResolvedValue({
+      (linksQueryMock.findAll as jest.Mock).mockResolvedValue({
         data: [],
         limit: 50,
         page: 1,
@@ -96,7 +103,7 @@ describe('LinksController', () => {
         undefined,
       );
 
-      expect(linksServiceMock.findAll).toHaveBeenCalledWith(USER_ID, {
+      expect(linksQueryMock.findAll).toHaveBeenCalledWith(USER_ID, {
         read: false,
         limit: undefined,
         page: undefined,
@@ -105,7 +112,7 @@ describe('LinksController', () => {
     });
 
     it('passes undefined for read when the query param is absent', async () => {
-      (linksServiceMock.findAll as jest.Mock).mockResolvedValue({
+      (linksQueryMock.findAll as jest.Mock).mockResolvedValue({
         data: [],
         limit: 50,
         page: 1,
@@ -120,7 +127,7 @@ describe('LinksController', () => {
         undefined,
       );
 
-      expect(linksServiceMock.findAll).toHaveBeenCalledWith(USER_ID, {
+      expect(linksQueryMock.findAll).toHaveBeenCalledWith(USER_ID, {
         read: undefined,
         limit: undefined,
         page: undefined,
@@ -131,24 +138,24 @@ describe('LinksController', () => {
 
   describe('random', () => {
     it('passes read=false by default', async () => {
-      (linksServiceMock.getRandom as jest.Mock).mockResolvedValue(null);
+      (linksQueryMock.getRandom as jest.Mock).mockResolvedValue(null);
 
       await controller.random(makeRequest(), undefined);
 
-      expect(linksServiceMock.getRandom).toHaveBeenCalledWith(USER_ID, false);
+      expect(linksQueryMock.getRandom).toHaveBeenCalledWith(USER_ID, false);
     });
 
     it('passes read=true when query param is "true"', async () => {
-      (linksServiceMock.getRandom as jest.Mock).mockResolvedValue(null);
+      (linksQueryMock.getRandom as jest.Mock).mockResolvedValue(null);
 
       await controller.random(makeRequest(), 'true');
 
-      expect(linksServiceMock.getRandom).toHaveBeenCalledWith(USER_ID, true);
+      expect(linksQueryMock.getRandom).toHaveBeenCalledWith(USER_ID, true);
     });
 
     it('wraps result in { link }', async () => {
       const link = makeLink();
-      (linksServiceMock.getRandom as jest.Mock).mockResolvedValue(link);
+      (linksQueryMock.getRandom as jest.Mock).mockResolvedValue(link);
 
       const result = await controller.random(makeRequest(), undefined);
 
@@ -156,15 +163,15 @@ describe('LinksController', () => {
     });
 
     it('passes read=false when the query param is any value other than "true"', async () => {
-      (linksServiceMock.getRandom as jest.Mock).mockResolvedValue(null);
+      (linksQueryMock.getRandom as jest.Mock).mockResolvedValue(null);
 
       await controller.random(makeRequest(), 'false');
 
-      expect(linksServiceMock.getRandom).toHaveBeenCalledWith(USER_ID, false);
+      expect(linksQueryMock.getRandom).toHaveBeenCalledWith(USER_ID, false);
     });
 
     it('returns { link: null } when no link matches', async () => {
-      (linksServiceMock.getRandom as jest.Mock).mockResolvedValue(null);
+      (linksQueryMock.getRandom as jest.Mock).mockResolvedValue(null);
 
       const result = await controller.random(makeRequest(), undefined);
 
@@ -174,18 +181,18 @@ describe('LinksController', () => {
 
   describe('stumble', () => {
     it('returns { url } when an unread link is found', async () => {
-      (linksServiceMock.stumble as jest.Mock).mockResolvedValue({
+      (linksQueryMock.stumble as jest.Mock).mockResolvedValue({
         url: LINK_URL,
       });
 
       const result = await controller.stumble(makeRequest());
 
-      expect(linksServiceMock.stumble).toHaveBeenCalledWith(USER_ID);
+      expect(linksQueryMock.stumble).toHaveBeenCalledWith(USER_ID);
       expect(result).toEqual({ url: LINK_URL });
     });
 
     it('returns { url: null } when no unread links exist', async () => {
-      (linksServiceMock.stumble as jest.Mock).mockResolvedValue(null);
+      (linksQueryMock.stumble as jest.Mock).mockResolvedValue(null);
 
       const result = await controller.stumble(makeRequest());
 
@@ -194,13 +201,13 @@ describe('LinksController', () => {
   });
 
   describe('findOne', () => {
-    it('delegates to LinksService.findOne', async () => {
+    it('delegates to LinksQueryService.findOne', async () => {
       const link = makeLink();
-      (linksServiceMock.findOne as jest.Mock).mockResolvedValue(link);
+      (linksQueryMock.findOne as jest.Mock).mockResolvedValue(link);
 
       const result = await controller.findOne(makeRequest(), LINK_ID);
 
-      expect(linksServiceMock.findOne).toHaveBeenCalledWith(USER_ID, LINK_ID);
+      expect(linksQueryMock.findOne).toHaveBeenCalledWith(USER_ID, LINK_ID);
       expect(result).toBe(link);
     });
   });

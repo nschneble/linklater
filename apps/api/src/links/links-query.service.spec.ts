@@ -293,26 +293,83 @@ describe('LinksQueryService', () => {
   });
 
   describe('getRandom', () => {
+    const makeRawRow = (overrides = {}) => ({
+      id: LINK_ID,
+      url: LINK_URL,
+      userId: USER_ID,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      readAt: null,
+      meta_id: null,
+      meta_linkId: null,
+      meta_description: null,
+      meta_faviconUrl: null,
+      meta_imageUrl: null,
+      meta_siteName: null,
+      meta_source: null,
+      meta_title: null,
+      meta_createdAt: null,
+      meta_updatedAt: null,
+      meta_fetchedAt: null,
+      ...overrides,
+    });
+
     it('returns null when there are no links', async () => {
       (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([]);
 
       const result = await service.getRandom(USER_ID);
 
       expect(result).toBeNull();
+      // single-query implementation never calls link.findFirst
       expect(prismaMock.link.findFirst).not.toHaveBeenCalled();
     });
 
-    it('returns a link when links exist', async () => {
-      const link = makeLink();
-      (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([{ id: LINK_ID }]);
-      (prismaMock.link.findFirst as jest.Mock).mockResolvedValue(link);
+    it('returns link with null meta when no meta row exists', async () => {
+      (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([makeRawRow()]);
 
       const result = await service.getRandom(USER_ID);
 
-      expect(result).toBe(link);
-      expect(prismaMock.link.findFirst).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: LINK_ID } }),
-      );
+      expect(result).not.toBeNull();
+      expect(result!.id).toBe(LINK_ID);
+      expect(result!.meta).toBeNull();
+      expect(prismaMock.link.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('returns link with populated meta when a meta row is joined', async () => {
+      const metaCreatedAt = new Date();
+      const metaUpdatedAt = new Date();
+      (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
+        makeRawRow({
+          meta_id: 'meta-1',
+          meta_linkId: LINK_ID,
+          meta_title: 'Example Page',
+          meta_description: 'A page',
+          meta_faviconUrl: null,
+          meta_imageUrl: null,
+          meta_siteName: 'Example',
+          meta_source: null,
+          meta_createdAt: metaCreatedAt,
+          meta_updatedAt: metaUpdatedAt,
+          meta_fetchedAt: null,
+        }),
+      ]);
+
+      const result = await service.getRandom(USER_ID);
+
+      expect(result).not.toBeNull();
+      expect(result!.meta).toEqual({
+        id: 'meta-1',
+        linkId: LINK_ID,
+        title: 'Example Page',
+        description: 'A page',
+        faviconUrl: null,
+        imageUrl: null,
+        siteName: 'Example',
+        source: null,
+        createdAt: metaCreatedAt,
+        updatedAt: metaUpdatedAt,
+        fetchedAt: null,
+      });
     });
 
     it('queries read links when read=true', async () => {

@@ -79,39 +79,49 @@ export class RssFeedService {
     const feed = await this.fetchAndParse(source.feedUrl);
     const now = new Date();
 
-    for (const item of feed.items) {
+    const validItems = feed.items.flatMap((item) => {
       const suggestion = this.itemToSuggestion(item, source);
-      if (!suggestion) continue;
+      if (!suggestion) return [];
+      return [
+        { suggestion, publishedAt: this.extractPublishedAt(item) ?? now },
+      ];
+    });
 
-      const publishedAt = this.extractPublishedAt(item) ?? now;
+    // Insert new rows in one round-trip; the unique constraint on
+    // (sourceKey, url) makes skipDuplicates safe — existing rows are
+    // left untouched by createMany and picked up by the update pass below.
+    await this.prisma.rssEntry.createMany({
+      data: validItems.map(({ suggestion, publishedAt }) => ({
+        sourceKey: source.key,
+        url: suggestion.url,
+        title: suggestion.title,
+        description: suggestion.description,
+        imageUrl: suggestion.imageUrl,
+        siteName: suggestion.siteName,
+        publishedAt,
+        fetchedAt: now,
+      })),
+      skipDuplicates: true,
+    });
 
-      // Upsert on (sourceKey, url) so a redelivered job, a feed that
-      // re-emits the same item with a tweaked title, or a duplicate cron
-      // tick all converge on a single row per article.
-      await this.prisma.rssEntry.upsert({
-        where: {
-          sourceKey_url: { sourceKey: source.key, url: suggestion.url },
-        },
-        create: {
-          sourceKey: source.key,
-          url: suggestion.url,
-          title: suggestion.title,
-          description: suggestion.description,
-          imageUrl: suggestion.imageUrl,
-          siteName: suggestion.siteName,
-          publishedAt,
-          fetchedAt: now,
-        },
-        update: {
-          title: suggestion.title,
-          description: suggestion.description,
-          imageUrl: suggestion.imageUrl,
-          siteName: suggestion.siteName,
-          publishedAt,
-          fetchedAt: now,
-        },
-      });
-    }
+    // Update mutable fields on rows that already existed. Each updateMany
+    // targets exactly one row via the unique (sourceKey, url) pair.
+    // Promise.all parallelises the writes instead of serialising them.
+    await Promise.all(
+      validItems.map(({ suggestion, publishedAt }) =>
+        this.prisma.rssEntry.updateMany({
+          where: { sourceKey: source.key, url: suggestion.url },
+          data: {
+            title: suggestion.title,
+            description: suggestion.description,
+            imageUrl: suggestion.imageUrl,
+            siteName: suggestion.siteName,
+            publishedAt,
+            fetchedAt: now,
+          },
+        }),
+      ),
+    );
   }
 
   /**

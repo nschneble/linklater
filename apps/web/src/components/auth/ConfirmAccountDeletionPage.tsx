@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import Alert from '../common/Alert';
-import { FOCUS_RING } from '../../lib/styles';
 import { confirmAccountDeletion } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
+import { FOCUS_RING } from '../../lib/styles';
 import { setAuthNotice } from '../../auth/authNotice';
 import { useAuth } from '../../auth/AuthContext';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 type Status = 'verifying' | 'success' | 'error';
 
@@ -38,9 +39,7 @@ export default function ConfirmAccountDeletionPage() {
   const continueButtonReference = useRef<HTMLButtonElement>(null);
   const backButtonReference = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    document.title = TITLES[status];
-  }, [status]);
+  useDocumentTitle(TITLES[status]);
 
   useEffect(() => {
     if (hasConfirmed.current) return;

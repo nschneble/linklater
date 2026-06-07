@@ -88,6 +88,13 @@ export default function Alert({
 }: AlertProps) {
   const { baseTheme, mode } = useThemeStyling();
 
+  // When no content is provided, keep the element in the DOM so any
+  // `aria-describedby` pointing at `id` is never a dangling reference, but
+  // hide it visually and from assistive technology.
+  if (!children) {
+    return <p id={id} aria-hidden="true" className="sr-only" />;
+  }
+
   const resolvedIcon = icon ?? defaultIcons[variant];
   const resolvedClasses = resolveThemeClasses(
     variantClasses[variant],

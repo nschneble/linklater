@@ -260,20 +260,7 @@ describe('OAuthAccountService', () => {
   });
 
   describe('unlinkOAuthProvider', () => {
-    it('calls unlinkOAuthAccount when the user has a password', async () => {
-      (userOAuthServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER);
-
-      expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
-        USER_ID,
-        OAUTH_PROVIDER,
-      );
-    });
-
-    it('allows passwordless accounts to unlink — magic-link login remains as fallback', async () => {
+    it('delegates to unlinkOAuthAccount with userId and provider', async () => {
       (userOAuthServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );

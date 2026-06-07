@@ -65,12 +65,12 @@ export default function BookmarkletSection() {
       className="scroll-mt-24 max-w-md space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
     >
       <div className="flex items-center justify-between gap-3">
-        <h3
+        <h2
           id="bookmarklet-heading"
           className="text-[var(--text)] text-sm font-semibold text-balance"
         >
           Bookmarklet
-        </h3>
+        </h2>
         {rawToken && (
           <BookmarkletRegenerateButton
             regenerate={regenerateBookmarkletToken}

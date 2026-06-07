@@ -1,0 +1,222 @@
+/**
+ * Tests for StumblePage.
+ *
+ * On mount, calls stumbleLink(). Based on the result:
+ *   - Safe URL → window.location.replace() called with the URL
+ *   - Null/empty/unsafe URL → StumbleEmptyView rendered
+ *   - API error → StumbleEmptyView rendered
+ *
+ * document.title is verified to confirm useDocumentTitle fires.
+ * isSafeRedirectUrl rejection prevents open-redirect security regression.
+ */
+
+import StumblePage from './StumblePage';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// ─── Module mocks ─────────────────────────────────────────────────────────────
+
+vi.mock('../../lib/api', () => ({
+  stumbleLink: vi.fn(),
+  getSuggestions: vi.fn().mockResolvedValue({ suggestions: [] }),
+}));
+
+// ─── Imports after mocks ──────────────────────────────────────────────────────
+
+import * as apiModule from '../../lib/api';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function renderStumblePage() {
+  return render(
+    <MemoryRouter>
+      <StumblePage />
+    </MemoryRouter>,
+  );
+}
+
+// ─── Setup ────────────────────────────────────────────────────────────────────
+
+// jsdom's window.location is sealed — replace it with a configurable object so
+// we can spy on replace() without hitting "Cannot redefine property".
+const replaceMock = vi.fn();
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  replaceMock.mockReset();
+  Object.defineProperty(window, 'location', {
+    configurable: true,
+    writable: true,
+    value: { ...window.location, replace: replaceMock },
+  });
+});
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
+
+describe('StumblePage loading state', () => {
+  it('shows a polite status region while waiting for the API call', () => {
+    // Never resolves — keeps the component in 'loading' state
+    vi.mocked(apiModule.stumbleLink).mockReturnValue(new Promise(() => {}));
+
+    renderStumblePage();
+
+    expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  it('does not render StumbleEmptyView while loading', () => {
+    vi.mocked(apiModule.stumbleLink).mockReturnValue(new Promise(() => {}));
+
+    renderStumblePage();
+
+    expect(
+      screen.queryByRole('heading', { name: /boo/i }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe('StumblePage sets document title', () => {
+  it('sets document.title to "Stumble — Linklater"', async () => {
+    vi.mocked(apiModule.stumbleLink).mockReturnValue(new Promise(() => {}));
+
+    renderStumblePage();
+
+    await waitFor(() => {
+      expect(document.title).toBe('Stumble — Linklater');
+    });
+  });
+});
+
+describe('StumblePage success path', () => {
+  it('calls window.location.replace with the returned URL', async () => {
+    vi.mocked(apiModule.stumbleLink).mockResolvedValue({
+      url: 'https://example.com/article',
+    });
+
+    await act(async () => {
+      renderStumblePage();
+    });
+
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith('https://example.com/article');
+    });
+  });
+
+  it('does not render StumbleEmptyView when a valid URL is returned', async () => {
+    vi.mocked(apiModule.stumbleLink).mockResolvedValue({
+      url: 'https://example.com/article',
+    });
+
+    await act(async () => {
+      renderStumblePage();
+    });
+
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalled();
+    });
+
+    expect(
+      screen.queryByRole('heading', { name: /boo/i }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe('StumblePage empty/null result', () => {
+  it('renders StumbleEmptyView when the API returns an empty URL', async () => {
+    vi.mocked(apiModule.stumbleLink).mockResolvedValue({ url: '' });
+
+    await act(async () => {
+      renderStumblePage();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', {
+          name: /boo\. your reading list is empty/i,
+        }),
+      ).toBeInTheDocument();
+    });
+  });
+});
+
+describe('StumblePage error path', () => {
+  it('renders StumbleEmptyView when the API call throws', async () => {
+    vi.mocked(apiModule.stumbleLink).mockRejectedValue(
+      new Error('Server error'),
+    );
+
+    await act(async () => {
+      renderStumblePage();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', {
+          name: /boo\. your reading list is empty/i,
+        }),
+      ).toBeInTheDocument();
+    });
+  });
+});
+
+describe('StumblePage security: isSafeRedirectUrl rejection', () => {
+  it('does NOT call window.location.replace for a javascript: URL', async () => {
+    vi.mocked(apiModule.stumbleLink).mockResolvedValue({
+      url: 'javascript:alert(1)',
+    });
+
+    await act(async () => {
+      renderStumblePage();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', {
+          name: /boo\. your reading list is empty/i,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it('does NOT call window.location.replace for a data: URL', async () => {
+    vi.mocked(apiModule.stumbleLink).mockResolvedValue({
+      url: 'data:text/html,<h1>pwned</h1>',
+    });
+
+    await act(async () => {
+      renderStumblePage();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', {
+          name: /boo\. your reading list is empty/i,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it('does NOT call window.location.replace for a protocol-relative URL', async () => {
+    vi.mocked(apiModule.stumbleLink).mockResolvedValue({
+      url: '//evil.com/xss',
+    });
+
+    await act(async () => {
+      renderStumblePage();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', {
+          name: /boo\. your reading list is empty/i,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+});

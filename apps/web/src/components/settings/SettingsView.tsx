@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import AccountSettingsForm from './AccountSettingsForm';
 import ApiTokensSection from './ApiTokensSection';
 import BookmarkletSection from './BookmarkletSection';
@@ -34,6 +35,8 @@ export default function SettingsView({
   appleEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true',
   googleEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
 }: SettingsViewProps = {}) {
+  useDocumentTitle('Settings — Linklater');
+
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParameters, setSearchParameters] = useSearchParams();

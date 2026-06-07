@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import { useEffect, useRef } from 'react';
 import { FOCUS_RING } from '../../lib/styles';
 import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
-import { FOCUSABLE_SELECTOR, useFocusTrap } from '../../lib/hooks/useFocusTrap';
+import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 
 interface KeyboardShortcutsModalProps {
   /** Called when the user presses Escape or clicks the close button or backdrop. */
@@ -43,13 +43,15 @@ export default function KeyboardShortcutsModal({
   onClose,
 }: KeyboardShortcutsModalProps) {
   const dialogReference = useRef<HTMLDivElement>(null);
+  const headingReference = useRef<HTMLHeadingElement>(null);
 
   useFocusReturn(true);
 
+  // Focus the heading on mount (tabIndex=-1 keeps it out of the tab cycle).
+  // Tab from the heading moves into the close button, which is the natural
+  // next stop for a reference-only modal with no form inputs.
   useEffect(() => {
-    const firstFocusable =
-      dialogReference.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-    firstFocusable?.focus();
+    headingReference.current?.focus();
   }, []);
 
   useFocusTrap(dialogReference, { onEscape: onClose });
@@ -72,8 +74,10 @@ export default function KeyboardShortcutsModal({
       >
         <div className="flex items-center justify-between mb-7.5">
           <h2
+            ref={headingReference}
             id={HEADING_ID}
-            className="text-sm font-semibold text-[var(--text)] text-balance"
+            tabIndex={-1}
+            className="text-sm font-semibold text-[var(--text)] text-balance focus:outline-none"
           >
             Keyboard shortcuts
           </h2>

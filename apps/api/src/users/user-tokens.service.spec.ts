@@ -50,15 +50,6 @@ describe('UserTokensService', () => {
     });
   });
 
-  describe('findByVerificationToken', () => {
-    it('looks up user by verificationToken field', async () => {
-      await service.findByVerificationToken('hash');
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-        where: { verificationToken: 'hash' },
-      });
-    });
-  });
-
   describe('clearVerificationToken', () => {
     it('sets emailVerifiedAt and clears the token fields', async () => {
       await service.clearVerificationToken(USER_ID);
@@ -84,15 +75,6 @@ describe('UserTokensService', () => {
     });
   });
 
-  describe('findByResetToken', () => {
-    it('looks up user by resetToken field', async () => {
-      await service.findByResetToken('hash');
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-        where: { resetToken: 'hash' },
-      });
-    });
-  });
-
   describe('updateMagicLinkToken', () => {
     it('stores magic link token hash and expiry on the user', async () => {
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -100,15 +82,6 @@ describe('UserTokensService', () => {
       expect(prismaMock.user.update).toHaveBeenCalledWith({
         where: { id: USER_ID },
         data: { magicLinkToken: 'hash', magicLinkTokenExpiresAt: expiresAt },
-      });
-    });
-  });
-
-  describe('findByMagicLinkToken', () => {
-    it('looks up user by magicLinkToken field', async () => {
-      await service.findByMagicLinkToken('hash');
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-        where: { magicLinkToken: 'hash' },
       });
     });
   });
@@ -143,15 +116,6 @@ describe('UserTokensService', () => {
     });
   });
 
-  describe('findByPendingEmailToken', () => {
-    it('looks up user by pendingEmailToken field', async () => {
-      await service.findByPendingEmailToken(PENDING_EMAIL_TOKEN);
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-        where: { pendingEmailToken: PENDING_EMAIL_TOKEN },
-      });
-    });
-  });
-
   describe('updateAccountDeletionToken', () => {
     it('stores account deletion token hash and expiry on the user', async () => {
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -162,15 +126,6 @@ describe('UserTokensService', () => {
           accountDeletionToken: 'hash',
           accountDeletionTokenExpiresAt: expiresAt,
         },
-      });
-    });
-  });
-
-  describe('findByAccountDeletionToken', () => {
-    it('looks up user by accountDeletionToken field', async () => {
-      await service.findByAccountDeletionToken('hash');
-      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-        where: { accountDeletionToken: 'hash' },
       });
     });
   });

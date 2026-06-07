@@ -67,6 +67,9 @@ graph TD
         subgraph CompErrors["errors/"]
             errorsComps["ErrorBoundary · NotFoundView"]
         end
+        subgraph CompFailWhale["FailWhalePage/"]
+            failWhaleComps["FailWhalePage"]
+        end
         common["common/"]
     end
 
@@ -98,6 +101,7 @@ graph TD
     classDef compVerifyStyle fill:#6a5020,stroke:#473515,color:#fff
     classDef compWelcomeStyle fill:#3e5e7e,stroke:#284058,color:#fff
     classDef compErrorsStyle fill:#9e4040,stroke:#702828,color:#fff
+    classDef compFailWhaleStyle fill:#9e4040,stroke:#702828,color:#fff
     classDef compCommonStyle fill:#525252,stroke:#363636,color:#fff
 
     class App,AppShell,main,css,Header rootStyle
@@ -115,6 +119,7 @@ graph TD
     class verifyComps compVerifyStyle
     class WelcomeModal compWelcomeStyle
     class errorsComps compErrorsStyle
+    class failWhaleComps compFailWhaleStyle
     class common compCommonStyle
 ```
 
@@ -131,7 +136,9 @@ graph TD
 | Change the marketing page              | `src/components/LandingPage/`                          |
 | Edit theme styles                      | `src/theme/`, `src/theme/styles/`                      |
 | Edit the API reference UI              | `src/components/api-docs/`                             |
+| Edit the crash/error fallback page     | `src/components/FailWhalePage/`                        |
 | Edit the error boundary or 404 page    | `src/components/errors/`                               |
+| Edit the extension OAuth authorize page | `src/components/auth/`                                |
 | Edit the post-signup welcome modal     | `src/components/welcome/`                              |
 | Edit the Stumble! flow                 | `src/components/stumble/`                              |
 | Find a shared UI primitive             | `src/components/common/`                               |

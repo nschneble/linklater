@@ -10,3 +10,19 @@
 export function isTestingUi(): boolean {
   return process.env.TESTING_UI === '1';
 }
+
+/**
+ * Exits the process with a fatal error when `TESTING_UI=1` is set in a
+ * production environment. Prevents an accidental deploy of a test-mode
+ * server that skips rate-limiting and email sending from ever going live.
+ * Call this once, early in bootstrap, before `app.listen`.
+ */
+export function assertTestingUiNotInProduction(): void {
+  if (process.env.TESTING_UI === '1' && process.env.NODE_ENV === 'production') {
+    console.error(
+      '[startup] FATAL: TESTING_UI=1 is not allowed in production. ' +
+        'Unset the flag before deploying.',
+    );
+    process.exit(1);
+  }
+}

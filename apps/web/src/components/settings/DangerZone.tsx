@@ -267,9 +267,9 @@ function CheckYourEmailPanel({ email, onNeverMind }: CheckYourEmailPanelProps) {
       aria-labelledby="check-email-heading"
       className="space-y-3 focus:outline-none"
     >
-      <h3 id="check-email-heading" className="text-xs font-medium">
+      <h2 id="check-email-heading" className="text-xs font-medium">
         Check your email
-      </h3>
+      </h2>
       <Alert variant="success">
         We sent a confirmation link to {email}. Click it to permanently delete
         your account. The link expires in 15 minutes.

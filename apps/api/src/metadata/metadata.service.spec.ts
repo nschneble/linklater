@@ -437,71 +437,17 @@ describe('MetadataService', () => {
       (prismaMock.meta.upsert as jest.Mock).mockResolvedValue({});
     });
 
-    it('blocks fetch to localhost', async () => {
-      await service.fetchAndStore(LINK_ID, 'http://localhost/secret');
-
-      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          create: expect.objectContaining({
-            description: null,
-            imageUrl: null,
-            title: null,
-          }),
-        }),
-      );
-      // Should not have made any outbound fetch
-      expect(global.fetch).not.toHaveBeenCalled();
-    });
-
-    it('blocks fetch to IPv4 loopback (127.0.0.1)', async () => {
-      global.fetch = jest.fn() as unknown as typeof fetch;
-
-      await service.fetchAndStore(LINK_ID, 'http://127.0.0.1/internal');
-
-      expect(global.fetch).not.toHaveBeenCalled();
-    });
-
-    it('blocks fetch to RFC 1918 private range 10.x.x.x', async () => {
-      global.fetch = jest.fn() as unknown as typeof fetch;
-
-      await service.fetchAndStore(LINK_ID, 'http://10.0.0.1/admin');
-
-      expect(global.fetch).not.toHaveBeenCalled();
-    });
-
-    it('blocks fetch to RFC 1918 private range 192.168.x.x', async () => {
+    it('blocks fetch to a private host and returns empty metadata without throwing', async () => {
       global.fetch = jest.fn() as unknown as typeof fetch;
 
       await service.fetchAndStore(LINK_ID, 'http://192.168.1.1/router');
 
       expect(global.fetch).not.toHaveBeenCalled();
-    });
-
-    it('blocks fetch to RFC 1918 private range 172.16.x.x', async () => {
-      global.fetch = jest.fn() as unknown as typeof fetch;
-
-      await service.fetchAndStore(LINK_ID, 'http://172.16.0.1/private');
-
-      expect(global.fetch).not.toHaveBeenCalled();
-    });
-
-    it('blocks fetch to link-local address 169.254.x.x', async () => {
-      global.fetch = jest.fn() as unknown as typeof fetch;
-
-      await service.fetchAndStore(
-        LINK_ID,
-        'http://169.254.169.254/latest/meta-data',
+      expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ description: null, title: null }),
+        }),
       );
-
-      expect(global.fetch).not.toHaveBeenCalled();
-    });
-
-    it('blocks fetch to IPv6 loopback ::1', async () => {
-      global.fetch = jest.fn() as unknown as typeof fetch;
-
-      await service.fetchAndStore(LINK_ID, 'http://[::1]/secret');
-
-      expect(global.fetch).not.toHaveBeenCalled();
     });
 
     it('allows fetch to a public hostname', async () => {

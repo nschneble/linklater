@@ -1,8 +1,9 @@
-import AuthErrorPanel from './AuthErrorPanel';
-import MfaView from './MfaView';
+import { useAuth } from '../../auth/AuthContext';
 import { verifyMagicLink, verifyOtp } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import { useAuth } from '../../auth/AuthContext';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
+import AuthErrorPanel from './AuthErrorPanel';
+import MfaView from './MfaView';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -17,6 +18,7 @@ type MfaChallenge = 'totp' | 'recovery';
  * stores the returned JWT via `loginWithToken`, and navigates to `/unread`.
  */
 export default function VerifyLoginPage() {
+  useDocumentTitle('Verifying sign in — Linklater');
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
   const { loginWithToken, refreshUser } = useAuth();

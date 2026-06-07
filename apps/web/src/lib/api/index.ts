@@ -30,6 +30,7 @@ export {
 export {
   ApiError,
   apiFetch,
+  apiFetchRequired,
   clearStoredToken,
   getStoredToken,
   getStoredRefreshToken,

@@ -1,8 +1,8 @@
-import Alert from '../../common/Alert';
-import ProviderRow from './ProviderRow';
 import { useAuth } from '../../../auth/AuthContext';
 import { initiateOAuthLink, unlinkOAuthProvider } from '../../../lib/api';
 import { getErrorMessage } from '../../../lib/errors';
+import Alert from '../../common/Alert';
+import ProviderRow from './ProviderRow';
 import { useState } from 'react';
 import type { IdPsSectionProps } from './types';
 

@@ -68,14 +68,15 @@ Click on an image to open it full-size in a new browser tab:
 It’s a majestic modular monorepo!
 
 ```txt
-apps
-├─ api/          # NestJS back-end
-│  └─ README.md  # .env, modules, auth, jobs
+linklater/
+├─ apps/
+│  ├─ api/          # NestJS back-end
+│  │  └─ README.md  # .env, modules, auth, jobs
+│  │
+│  └─ web/          # React + Vite front-end
+│     └─ README.md  # .env, components, state, API, routes
 │
-├─ web/          # React + Vite front-end
-│  └─ README.md  # .env, components, state, API, routes
-│
-├─ package.json  # root workspace + scripts
+├─ package.json     # root workspace + scripts
 └─ README.md
 ```
 
@@ -202,6 +203,16 @@ npm run test:ui
 # accept intentional UI changes as the new baseline
 npm run test:ui:approve
 ```
+
+##### Authoring stories
+
+Stories live in `tuffgal/stories/` as JSON files. Each step uses one of
+the built-in primitives: `navigate`, `click`, `input`, `scroll`,
+`intercept`, `waitFor`, `read`, `type`, `wait`. The `read` step supports
+CSS escape hatches (`:focus`, `:has-text()`) for behavioral assertions.
+
+Reference: [npmjs.com/package/tuffgal](https://www.npmjs.com/package/tuffgal)
+· [github.com/nschneble/tuffgal](https://github.com/nschneble/tuffgal)
 
 ### Versioning
 

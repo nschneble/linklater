@@ -22,8 +22,6 @@ export const TOKEN_PREFIX = 'ltk_';
  */
 const DISPLAY_PREFIX_LENGTH = 12;
 
-const BOOKMARKLET_TOKEN_NAME = 'Bookmarklet';
-
 /**
  * Manages the lifecycle of personal access tokens (PATs).
  *
@@ -31,6 +29,9 @@ const BOOKMARKLET_TOKEN_NAME = 'Bookmarklet';
  * The raw token is returned once at creation and never again.
  * `validateToken` is called on every API request that presents an
  * `ltk_`-prefixed bearer token.
+ *
+ * `mintRawToken` is public so that `BookmarkletTokensService` can share the
+ * same low-level minting primitive without duplicating the crypto logic.
  */
 @Injectable()
 export class TokensService {
@@ -165,126 +166,10 @@ export class TokensService {
     return stored.user;
   }
 
-  /**
-   * Returns the user's bookmarklet token, minting one if none exists.
-   * Unlike regular PATs, the bookmarklet token's raw value is stored in
-   * `secretValue` so the settings page can embed it in the `javascript:`
-   * URL on every load (including from a new device).
-   *
-   * @param userId - The UUID of the owning user.
-   * @returns Token summary including the raw token value.
-   */
-  async getOrCreateBookmarkletToken(userId: string) {
-    const existing = await this.prisma.apiToken.findFirst({
-      where: { userId, kind: TokenKind.BOOKMARKLET },
-    });
-
-    if (existing) {
-      return this.toBookmarkletSummary(existing);
-    }
-
-    const { rawToken, tokenHash, prefix } = this.mintRawToken();
-
-    try {
-      const stored = await this.prisma.apiToken.create({
-        data: this.bookmarkletTokenData(userId, rawToken, tokenHash, prefix),
-      });
-      return this.toBookmarkletSummary(stored);
-    } catch (error) {
-      // Two tabs opened simultaneously can both hit the create branch; the
-      // partial unique index on (userId) WHERE kind = 'BOOKMARKLET' wins
-      // one and rejects the other with P2002. Re-fetch the row the winning
-      // tab inserted and return its raw value.
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        const raced = await this.prisma.apiToken.findFirst({
-          where: { userId, kind: TokenKind.BOOKMARKLET },
-        });
-        if (raced) {
-          return this.toBookmarkletSummary(raced);
-        }
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Replaces the user's bookmarklet token with a freshly minted one in a
-   * single transaction. Used when the user clicks "Regenerate" to invalidate
-   * any bookmarklet they previously dragged to a bookmarks bar.
-   *
-   * @param userId - The UUID of the owning user.
-   * @returns Token summary including the new raw token value.
-   */
-  async regenerateBookmarkletToken(userId: string) {
-    const { rawToken, tokenHash, prefix } = this.mintRawToken();
-
-    const stored = await this.prisma.$transaction(async (transaction) => {
-      await transaction.apiToken.deleteMany({
-        where: { userId, kind: TokenKind.BOOKMARKLET },
-      });
-      return transaction.apiToken.create({
-        data: this.bookmarkletTokenData(userId, rawToken, tokenHash, prefix),
-      });
-    });
-
-    return this.toBookmarkletSummary(stored);
-  }
-
-  private mintRawToken() {
+  mintRawToken() {
     const rawToken = TOKEN_PREFIX + randomBytes(24).toString('base64url');
     const tokenHash = sha256Hex(rawToken);
     const prefix = rawToken.slice(0, DISPLAY_PREFIX_LENGTH);
     return { rawToken, tokenHash, prefix };
-  }
-
-  /**
-   * Builds the Prisma `data` payload for creating a bookmarklet token row.
-   * Extracted to avoid repeating the identical field set in
-   * `getOrCreateBookmarkletToken` and `regenerateBookmarkletToken`.
-   */
-  private bookmarkletTokenData(
-    userId: string,
-    rawToken: string,
-    tokenHash: string,
-    prefix: string,
-  ) {
-    return {
-      name: BOOKMARKLET_TOKEN_NAME,
-      prefix,
-      tokenHash,
-      kind: TokenKind.BOOKMARKLET,
-      secretValue: rawToken,
-      userId,
-    };
-  }
-
-  private toBookmarkletSummary(stored: {
-    id: string;
-    name: string;
-    prefix: string;
-    createdAt: Date;
-    lastUsedAt: Date | null;
-    secretValue: string | null;
-  }) {
-    if (!stored.secretValue) {
-      // Every BOOKMARKLET row must have a secretValue populated at creation.
-      // A null here means a data-integrity violation — throw so it produces a
-      // visible 500 rather than silently returning an empty token that leaves
-      // the bookmarklet anchor stuck at href="#" with no error shown.
-      throw new Error(
-        `Bookmarklet token ${stored.id} is missing secretValue — data integrity violation`,
-      );
-    }
-    return {
-      id: stored.id,
-      name: stored.name,
-      prefix: stored.prefix,
-      createdAt: stored.createdAt,
-      lastUsedAt: stored.lastUsedAt,
-      rawToken: stored.secretValue,
-    };
   }
 }

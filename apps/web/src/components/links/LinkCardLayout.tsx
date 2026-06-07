@@ -115,6 +115,7 @@ export default function LinkCardLayout({
   return (
     <div
       ref={cardReference}
+      aria-busy={!link.meta?.fetchedAt || undefined}
       className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--accent)]/60' : ''}`}
     >
       {link.meta?.fetchedAt ? (
@@ -225,7 +226,6 @@ export default function LinkCardLayout({
         target="_blank"
         rel="noreferrer"
         aria-label={cardAriaLabel}
-        aria-busy={!link.meta?.fetchedAt}
         onClick={onCardActivate}
         className={`absolute inset-0 z-10 ${FOCUS_RING} rounded-r-xl cursor-pointer`}
       />

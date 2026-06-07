@@ -1,5 +1,6 @@
 import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
 import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useLinksView } from '../../lib/hooks/useLinksView';
 import Alert from '../common/Alert';
 import Toast from '../common/Toast';
@@ -52,6 +53,12 @@ interface LinksViewProps {
  */
 export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
   const view = useLinksView({ onCloseUserMenu });
+
+  useDocumentTitle(
+    view.filter === 'unread'
+      ? 'Your links — Linklater'
+      : 'Read links — Linklater',
+  );
 
   const dialogReference = useRef<HTMLDivElement>(null);
 
@@ -156,10 +163,25 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       )}
 
       {/*
-        Polite live region announcing links that arrive via a background
-        visibility refresh (e.g. saved via the bookmarklet on another tab).
-        The visible list is updated regardless; this is purely for screen
-        reader users who don't see the prepend.
+        Pre-mounted live region for the visual Toast above. Some SRs miss
+        `role="status"` on a freshly-mounted node; keeping this span in the
+        DOM always and swapping its text via state ensures the announcement
+        fires reliably (same fix as BookmarkletSection).
+      */}
+      <span
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {view.toastMessage ?? ''}
+      </span>
+
+      {/*
+        Separate polite live region announcing links that arrive via a
+        background visibility refresh (e.g. saved via the bookmarklet on
+        another tab). Kept distinct from the toast region so the two streams
+        cannot race.
       */}
       <span className="sr-only" role="status">
         {view.newLinksAnnouncement}

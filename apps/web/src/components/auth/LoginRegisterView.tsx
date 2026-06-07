@@ -127,9 +127,7 @@ export default function LoginRegisterView({
               onChange={(event) => onEmailChange(event.target.value)}
               value={email}
               required
-              // only set when the error element exists in the DOM —
-              // see LinkForm for the rationale
-              aria-describedby={error ? 'auth-form-error' : undefined}
+              aria-describedby="auth-form-error"
             />
 
             <label
@@ -149,20 +147,20 @@ export default function LoginRegisterView({
               placeholder="Leave blank to use magic link"
               value={password}
               required={false}
-              aria-describedby={error ? 'auth-form-error' : undefined}
+              aria-describedby="auth-form-error"
             />
 
-            {error && (
-              <Alert
-                id="auth-form-error"
-                ref={errorReference}
-                icon="fa-triangle-exclamation"
-                tabIndex={-1}
-                variant="error"
-              >
-                {error}
-              </Alert>
-            )}
+            {/* Always mounted so aria-describedby="auth-form-error" is never
+                a dangling reference. Empty content renders nothing visible. */}
+            <Alert
+              id="auth-form-error"
+              ref={errorReference}
+              icon="fa-triangle-exclamation"
+              tabIndex={-1}
+              variant="error"
+            >
+              {error}
+            </Alert>
 
             <PrimaryButton disabled={loading} className="w-full py-2.5">
               <i
@@ -236,7 +234,7 @@ export default function LoginRegisterView({
           <div
             aria-hidden={mode !== 'login' ? true : undefined}
             inert={mode !== 'login' ? true : undefined}
-            className={`mt-4 flex flex-col items-center gap-2 text-center transition-opacity duration-200 ${mode === 'login' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            className="mt-4 flex flex-col items-center gap-2 text-center transition-opacity duration-200 aria-hidden:opacity-0 aria-hidden:pointer-events-none"
           >
             <LinkButton
               tabIndex={mode !== 'login' ? -1 : undefined}

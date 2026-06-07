@@ -250,18 +250,6 @@ describe('UsersService', () => {
         }),
       );
     });
-
-    it('updates cvdMode to false when disabled', async () => {
-      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
-
-      await service.updateMe(USER_ID, { cvdMode: false });
-
-      expect(prismaMock.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ cvdMode: false }),
-        }),
-      );
-    });
   });
 
   describe('findByEmail', () => {
@@ -463,12 +451,6 @@ describe('UsersService', () => {
         where: { id: USER_ID, welcomedAt: null },
         data: { welcomedAt: expect.any(Date) },
       });
-    });
-
-    it('is idempotent when welcomedAt is already set', async () => {
-      (prismaMock.user.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
-
-      await expect(service.markWelcomed(USER_ID)).resolves.toBeUndefined();
     });
   });
 

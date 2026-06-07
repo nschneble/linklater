@@ -17,10 +17,9 @@ jest.mock('../prisma/generated/client', () => ({
   Prisma: { PrismaClientKnownRequestError: MockPrismaClientKnownRequestError },
 }));
 
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { LinksService } from './links.service';
-import { LinksQueryService } from './links-query.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 import { QUEUES } from '../queue/queue.constants';
@@ -70,20 +69,12 @@ describe('LinksService', () => {
     },
   } as unknown as PrismaService;
 
-  const linksQueryMock = {
-    findAll: jest.fn(),
-    findOne: jest.fn(),
-    stumble: jest.fn(),
-    getRandom: jest.fn(),
-  } as unknown as LinksQueryService;
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LinksService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: QueueService, useValue: queueMock },
-        { provide: LinksQueryService, useValue: linksQueryMock },
       ],
     }).compile();
 
@@ -182,49 +173,25 @@ describe('LinksService', () => {
     expect(link.readAt).toBeNull();
   });
 
-  // ──────────────────────────────────────────────
-  // Delegation to LinksQueryService
-  // ──────────────────────────────────────────────
-
-  it('findAll delegates to LinksQueryService', async () => {
-    const paginated = { data: [], total: 0, page: 1, limit: 10 };
-    (linksQueryMock.findAll as jest.Mock).mockResolvedValue(paginated);
-
-    const result = await service.findAll(USER_ID, { search: 'duck' });
-
-    expect(linksQueryMock.findAll).toHaveBeenCalledWith(USER_ID, {
-      search: 'duck',
+  it('re-throws the original P2002 when findFirst returns null after the race (row vanished between constraint error and recovery query)', async () => {
+    // The race winner created the row but immediately deleted it. The recovery
+    // findFirst finds nothing, so the service has no row to resurface — it
+    // must propagate the original P2002 rather than swallow it silently.
+    const p2002 = new (
+      Prisma as {
+        PrismaClientKnownRequestError: typeof MockPrismaClientKnownRequestError;
+      }
+    ).PrismaClientKnownRequestError('Unique constraint failed', {
+      code: 'P2002',
     });
-    expect(result).toBe(paginated);
-  });
+    (prismaMock.link.findFirst as jest.Mock)
+      .mockResolvedValueOnce(null) // initial existence check
+      .mockResolvedValueOnce(null); // recovery query after P2002
+    (prismaMock.link.create as jest.Mock).mockRejectedValue(p2002);
 
-  it('findOne delegates to LinksQueryService', async () => {
-    const link = makeLink();
-    (linksQueryMock.findOne as jest.Mock).mockResolvedValue(link);
-
-    const result = await service.findOne(USER_ID, LINK_ID);
-
-    expect(linksQueryMock.findOne).toHaveBeenCalledWith(USER_ID, LINK_ID);
-    expect(result).toBe(link);
-  });
-
-  it('stumble delegates to LinksQueryService', async () => {
-    (linksQueryMock.stumble as jest.Mock).mockResolvedValue({ url: LINK_URL });
-
-    const result = await service.stumble(USER_ID);
-
-    expect(linksQueryMock.stumble).toHaveBeenCalledWith(USER_ID);
-    expect(result).toEqual({ url: LINK_URL });
-  });
-
-  it('getRandom delegates to LinksQueryService', async () => {
-    const link = makeLink();
-    (linksQueryMock.getRandom as jest.Mock).mockResolvedValue(link);
-
-    const result = await service.getRandom(USER_ID, true);
-
-    expect(linksQueryMock.getRandom).toHaveBeenCalledWith(USER_ID, true);
-    expect(result).toBe(link);
+    await expect(service.create(USER_ID, { url: LINK_URL })).rejects.toThrow(
+      'Unique constraint failed',
+    );
   });
 
   // ──────────────────────────────────────────────

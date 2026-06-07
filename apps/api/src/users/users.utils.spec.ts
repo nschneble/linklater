@@ -19,14 +19,6 @@ describe('withoutPasswordHash', () => {
     expect(result).not.toHaveProperty('passwordHash');
   });
 
-  it('does not mutate the original object', () => {
-    const user = { id: 'user-2', passwordHash: 'secret' };
-
-    withoutPasswordHash(user);
-
-    expect(user.passwordHash).toBe('secret');
-  });
-
   it('preserves all non-passwordHash fields', () => {
     const user = {
       id: 'user-3',

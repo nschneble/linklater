@@ -18,10 +18,10 @@ export default function HeroSection() {
       >
         Linklater
       </h1>
-      <p className="mb-5 text-lg sm:text-xl font-medium text-confused select-none">
+      <p className="mb-5 text-lg sm:text-xl font-medium text-dazed select-none">
         Save links now, read them later.
       </p>
-      <p className="max-w-sm sm:max-w-md mb-10 text-sm text-confused text-balance leading-relaxed select-none">
+      <p className="max-w-sm sm:max-w-md mb-10 text-sm text-dazed text-balance leading-relaxed select-none">
         Most curious adults come across dozens of interesting articles on any
         given day. Do they have time to read them all? Nope. Do they often
         forget about them? Totally.

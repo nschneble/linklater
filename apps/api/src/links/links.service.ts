@@ -2,22 +2,19 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { PrismaService, Prisma } from '../prisma/index.js';
 import { QueueService, QUEUES } from '../queue/index.js';
-import { LinksQueryService, type LinksQuery } from './links-query.service.js';
 
 /** Minimum fields required to create a link. */
 export interface CreateLinkInput {
   url: string;
 }
 
-export type { LinksQuery } from './links-query.service.js';
-
 /**
- * All business logic for saving, fetching, marking read/unread, and deleting links.
+ * Write operations for links: creating, marking read/unread, and deleting.
  * Every method is scoped to a specific `userId` — the service never
  * operates on links belonging to a different user.
  *
- * Read operations are delegated to `LinksQueryService`. This service retains
- * write operations: creating, updating, marking read/unread, and deleting.
+ * Read operations live in `LinksQueryService`. `LinksController` injects
+ * both services and routes accordingly.
  */
 @Injectable()
 export class LinksService {
@@ -26,7 +23,6 @@ export class LinksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly queueService: QueueService,
-    private readonly linksQuery: LinksQueryService,
   ) {}
 
   /**
@@ -99,31 +95,6 @@ export class LinksService {
       });
 
     return link;
-  }
-
-  /**
-   * Returns a paginated list of links for the given user. When `search` is
-   * provided, delegates to PostgreSQL full-text search for relevance ranking.
-   * Otherwise uses a simple `ORDER BY createdAt DESC` query.
-   *
-   * @param userId - The UUID of the authenticated user.
-   * @param query - Filtering, pagination, and search parameters.
-   * @returns `{ data, total, page, limit }` where `data` is the current page of results.
-   */
-  async findAll(userId: string, query: LinksQuery) {
-    return this.linksQuery.findAll(userId, query);
-  }
-
-  /**
-   * Retrieves a single link by its UUID, scoped to the given user.
-   *
-   * @param userId - The UUID of the authenticated user.
-   * @param id - The UUID of the link.
-   * @returns The link with its `meta` relation included.
-   * @throws {NotFoundException} When no link with that ID belongs to this user.
-   */
-  async findOne(userId: string, id: string) {
-    return this.linksQuery.findOne(userId, id);
   }
 
   /**
@@ -233,31 +204,5 @@ export class LinksService {
       where: { userId, readAt: { not: null } },
     });
     return { count: result.count };
-  }
-
-  /**
-   * Atomically selects a random unread link and marks it as read. Used by
-   * the `/stumble` route to replace the current browser tab with a random
-   * link from the user's unread backlog.
-   *
-   * @param userId - The UUID of the authenticated user.
-   * @returns `{ url }` when a link is found and marked read, or `null`
-   *   when the user has no unread links.
-   */
-  async stumble(userId: string): Promise<{ url: string } | null> {
-    return this.linksQuery.stumble(userId);
-  }
-
-  /**
-   * Returns a single randomly selected link from the user's collection.
-   * Uses `ORDER BY RANDOM()` in a raw query for true randomness without
-   * loading the full collection into memory.
-   *
-   * @param userId - The UUID of the authenticated user.
-   * @param read - When `true`, picks from read links; when `false` (default), picks from unread links.
-   * @returns The randomly selected link with metadata, or `null` if no matching links exist.
-   */
-  async getRandom(userId: string, read = false) {
-    return this.linksQuery.getRandom(userId, read);
   }
 }

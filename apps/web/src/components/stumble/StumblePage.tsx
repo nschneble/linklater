@@ -1,5 +1,7 @@
-import StumbleEmptyView from './StumbleEmptyView';
 import { stumbleLink } from '../../lib/api';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
+import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
+import StumbleEmptyView from './StumbleEmptyView';
 import { useEffect, useRef, useState } from 'react';
 
 type StumbleState = 'loading' | 'empty';
@@ -14,6 +16,7 @@ type StumbleState = 'loading' | 'empty';
  * When no unread links exist, renders `StumbleEmptyView` instead.
  */
 export default function StumblePage() {
+  useDocumentTitle('Stumble — Linklater');
   const [state, setState] = useState<StumbleState>('loading');
   const isMountedReference = useRef(true);
 
@@ -28,7 +31,7 @@ export default function StumblePage() {
     stumbleLink()
       .then((result) => {
         if (!isMountedReference.current) return;
-        if (result.url) {
+        if (isSafeRedirectUrl(result.url)) {
           window.location.replace(result.url);
         } else {
           setState('empty');

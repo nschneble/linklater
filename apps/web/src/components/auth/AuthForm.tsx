@@ -117,6 +117,20 @@ export default function AuthForm() {
           variant="success"
         />
       )}
+      {/*
+        Pre-mounted live region for the visual Toast above. Some SRs miss
+        `role="status"` on a freshly-mounted node; keeping this span in the
+        DOM always and swapping its text via state ensures the announcement
+        fires reliably.
+      */}
+      <span
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {notice ?? ''}
+      </span>
     </>
   );
 }
