@@ -1,4 +1,4 @@
-name: visual-regression
+name: Tuffgal
 
 on:
   push:
