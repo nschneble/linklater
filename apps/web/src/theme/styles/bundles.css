@@ -59,6 +59,16 @@
   /* alert / warn / info / success default palettes mirror the rose /
    * amber / blue / emerald hues that the legacy components used inline,
    * so themes that have not migrated keep their existing appearance. */
+  /* NOTE: SC 1.4.11 conformance is enforced by per-theme bundle overrides,
+   * not by these defaults. The values below mirror the legacy Tailwind hues
+   * (rose-200 / amber-300 / blue-300 / emerald-300) that the inline classes
+   * used pre-bundle, so themes that have not yet migrated keep their
+   * existing appearance during the rolling migration. Border-vs-bg ratios
+   * here run ~1.3-1.5:1 and DO NOT meet WCAG 2.2 SC 1.4.11; per-theme
+   * blocks below MUST override these to clear the >=3:1 contract (SC 1.4.11
+   * for border/bg and 1.4.3 for text/bg, both verified against --base-bg).
+   * Once all themes migrate, this default block can be retired or hardened.
+   */
   --alert-bg: #fff1f2;
   --alert-border: #fecdd3;
   --alert-text: #be123c;
@@ -152,11 +162,11 @@
   --warn-alt-text: #f0d090;
   --warn-highlight: #e0a040;
 
-  --info-bg: #1f2520;
-  --info-border: #88b070;
-  --info-text: #e0f0d0;
-  --info-alt-text: #c4dab0;
-  --info-highlight: #8eb070;
+  --info-bg: #2a2218;
+  --info-border: #d4a868;
+  --info-text: #f5e4c8;
+  --info-alt-text: #e8d2a8;
+  --info-highlight: #d4a868;
 
   --success-bg: #16261a;
   --success-border: #70b070;
@@ -196,11 +206,11 @@
   --warn-alt-text: #5a3814;
   --warn-highlight: #a06820;
 
-  --info-bg: #e0e7da;
-  --info-border: #4a6a3a;
-  --info-text: #1a2a14;
-  --info-alt-text: #28401c;
-  --info-highlight: #4a7038;
+  --info-bg: #e8e0d0;
+  --info-border: #6a5238;
+  --info-text: #2a1e0c;
+  --info-alt-text: #3e2c14;
+  --info-highlight: #7a5828;
 
   --success-bg: #d8e8d2;
   --success-border: #3e6a3e;

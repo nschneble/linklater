@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import Alert from './Alert';
 
@@ -8,7 +8,30 @@ import Alert from './Alert';
 // against `bundles.css`; this file only verifies the class strings the
 // component emits.
 
+vi.mock('../../theme/ThemeContext', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../theme/ThemeContext')
+  >('../../theme/ThemeContext');
+  return {
+    ...actual,
+    useThemeStyling: vi.fn(() => ({
+      baseTheme: 'scanner-darkly',
+      mode: 'light',
+    })),
+  };
+});
+
+const { useThemeStyling } = await import('../../theme/ThemeContext');
+const mockedUseThemeStyling = vi.mocked(useThemeStyling);
+
 describe('Alert', () => {
+  afterEach(() => {
+    mockedUseThemeStyling.mockReturnValue({
+      baseTheme: 'scanner-darkly',
+      mode: 'light',
+    });
+  });
+
   describe('default theme branch (non-Apollo, non-Nouvelle Vague)', () => {
     it('uses the alert bundle tokens for the error variant', () => {
       const { getByRole } = render(<Alert variant="error">Boom</Alert>);
@@ -54,6 +77,110 @@ describe('Alert', () => {
       );
       expect(container.querySelector('i.fa-skull')).toBeTruthy();
       expect(container.querySelector('i.fa-circle-exclamation')).toBeFalsy();
+    });
+  });
+
+  describe('apollo-10-1-2 theme branch', () => {
+    it('uses the apollo state-danger tokens for the error variant in dark mode', () => {
+      mockedUseThemeStyling.mockReturnValue({
+        baseTheme: 'apollo-10-1-2',
+        mode: 'dark',
+      });
+      const { getByRole } = render(<Alert variant="error">Boom</Alert>);
+      const className = getByRole('alert').className;
+      expect(className).toContain('bg-[var(--state-danger)]/15');
+      expect(className).toContain('border-l-4');
+      expect(className).toContain('border-[var(--state-danger)]');
+      expect(className).toContain('text-[var(--state-danger-fg)]');
+    });
+
+    it('uses the apollo state-danger tokens for the error variant in light mode', () => {
+      mockedUseThemeStyling.mockReturnValue({
+        baseTheme: 'apollo-10-1-2',
+        mode: 'light',
+      });
+      const { getByRole } = render(<Alert variant="error">Boom</Alert>);
+      const className = getByRole('alert').className;
+      expect(className).toContain('bg-[var(--state-danger)]/15');
+      expect(className).toContain('border-l-4');
+      expect(className).toContain('border-[var(--state-danger)]');
+      expect(className).toContain('text-[#9a3447]');
+    });
+
+    it('uses the apollo state-success tokens for the success variant in dark mode', () => {
+      mockedUseThemeStyling.mockReturnValue({
+        baseTheme: 'apollo-10-1-2',
+        mode: 'dark',
+      });
+      const { getByRole } = render(<Alert variant="success">OK</Alert>);
+      const className = getByRole('status').className;
+      expect(className).toContain('bg-[var(--state-success)]/15');
+      expect(className).toContain('border-l-4');
+      expect(className).toContain('border-[var(--accent)]');
+      expect(className).toContain('text-[var(--accent)]');
+    });
+
+    it('uses the apollo state-success tokens for the success variant in light mode', () => {
+      mockedUseThemeStyling.mockReturnValue({
+        baseTheme: 'apollo-10-1-2',
+        mode: 'light',
+      });
+      const { getByRole } = render(<Alert variant="success">OK</Alert>);
+      const className = getByRole('status').className;
+      expect(className).toContain('bg-[var(--state-success)]/15');
+      expect(className).toContain('border-l-4');
+      expect(className).toContain('border-[var(--accent)]');
+      expect(className).toContain('text-[var(--accent)]');
+    });
+  });
+
+  describe('nouvelle-vague theme branch', () => {
+    it('uses the grayscale palette for the error variant in dark mode', () => {
+      mockedUseThemeStyling.mockReturnValue({
+        baseTheme: 'nouvelle-vague',
+        mode: 'dark',
+      });
+      const { getByRole } = render(<Alert variant="error">Boom</Alert>);
+      const className = getByRole('alert').className;
+      expect(className).toContain('bg-gray-900/40');
+      expect(className).toContain('border-gray-700');
+      expect(className).toContain('text-gray-400');
+    });
+
+    it('uses the grayscale palette for the error variant in light mode', () => {
+      mockedUseThemeStyling.mockReturnValue({
+        baseTheme: 'nouvelle-vague',
+        mode: 'light',
+      });
+      const { getByRole } = render(<Alert variant="error">Boom</Alert>);
+      const className = getByRole('alert').className;
+      expect(className).toContain('bg-gray-100');
+      expect(className).toContain('border-gray-300');
+      expect(className).toContain('text-gray-700');
+    });
+
+    it('uses the grayscale palette for the success variant in dark mode', () => {
+      mockedUseThemeStyling.mockReturnValue({
+        baseTheme: 'nouvelle-vague',
+        mode: 'dark',
+      });
+      const { getByRole } = render(<Alert variant="success">OK</Alert>);
+      const className = getByRole('status').className;
+      expect(className).toContain('bg-gray-900/40');
+      expect(className).toContain('border-gray-700');
+      expect(className).toContain('text-gray-400');
+    });
+
+    it('uses the grayscale palette for the success variant in light mode', () => {
+      mockedUseThemeStyling.mockReturnValue({
+        baseTheme: 'nouvelle-vague',
+        mode: 'light',
+      });
+      const { getByRole } = render(<Alert variant="success">OK</Alert>);
+      const className = getByRole('status').className;
+      expect(className).toContain('bg-gray-100');
+      expect(className).toContain('border-gray-300');
+      expect(className).toContain('text-gray-600');
     });
   });
 
