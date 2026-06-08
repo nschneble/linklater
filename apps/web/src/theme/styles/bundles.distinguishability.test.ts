@@ -96,6 +96,16 @@ const APOLLO_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='apollo-10-1-2'][data-mode='dark']",
   'base-bg',
 );
+const BEFORE_MIDNIGHT_LIGHT_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='before-midnight'][data-mode='light']",
+  'base-bg',
+);
+const BEFORE_MIDNIGHT_DARK_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='before-midnight'][data-mode='dark']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -127,6 +137,16 @@ const FIXTURES: readonly CascadeFixture[] = [
     label: 'apollo-10-1-2 dark',
     selector: "[data-theme='apollo-10-1-2'][data-mode='dark']",
     pageBg: APOLLO_DARK_PAGE_BG,
+  },
+  {
+    label: 'before-midnight light',
+    selector: "[data-theme='before-midnight'][data-mode='light']",
+    pageBg: BEFORE_MIDNIGHT_LIGHT_PAGE_BG,
+  },
+  {
+    label: 'before-midnight dark',
+    selector: "[data-theme='before-midnight'][data-mode='dark']",
+    pageBg: BEFORE_MIDNIGHT_DARK_PAGE_BG,
   },
 ];
 
@@ -239,6 +259,8 @@ const CASCADE_SLUGS: Record<string, string> = {
   "[data-theme='school-of-rock'][data-mode='dark']": 'school-of-rock-dark',
   "[data-theme='apollo-10-1-2'][data-mode='light']": 'apollo-10-1-2-light',
   "[data-theme='apollo-10-1-2'][data-mode='dark']": 'apollo-10-1-2-dark',
+  "[data-theme='before-midnight'][data-mode='light']": 'before-midnight-light',
+  "[data-theme='before-midnight'][data-mode='dark']": 'before-midnight-dark',
 };
 
 function waiverKey(selector: string, first: Bundle, second: Bundle): string {
