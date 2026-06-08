@@ -4,11 +4,15 @@
  *
  * A bundle is a complete set of values for one kind of UI surface:
  *
- *     --{bundle}-bg         background fill
- *     --{bundle}-border     border / divider
- *     --{bundle}-text       primary readable text
- *     --{bundle}-alt-text   secondary text (labels, captions)
- *     --{bundle}-highlight  accent pop inside the bundle (links, badges)
+ *     --{bundle}-bg              background fill
+ *     --{bundle}-border          border / divider
+ *     --{bundle}-text            primary readable text
+ *     --{bundle}-alt-text        secondary text (labels, captions)
+ *     --{bundle}-highlight       accent pop inside the bundle (links, badges)
+ *     --{bundle}-highlight-fg    foreground for filled surfaces that use
+ *                                --{bundle}-highlight as their bg
+ *     --{bundle}-highlight-hover bg for the :hover state of those filled
+ *                                surfaces; foreground stays --highlight-fg
  *
  * The 7 bundles map onto the UI's narrative surfaces:
  *
@@ -21,8 +25,13 @@
  *     success   verified badges, notifications
  *
  * Each bundle MUST satisfy WCAG 2.2:
- *     text/bg, alt-text/bg     >= 4.5:1   (SC 1.4.3)
- *     border/bg, highlight/bg  >= 3:1     (SC 1.4.11)
+ *     text/bg, alt-text/bg                 >= 4.5:1   (SC 1.4.3)
+ *     border/bg, highlight/bg              >= 3:1     (SC 1.4.11)
+ *     highlight-fg/highlight,
+ *     highlight-fg/highlight-hover         >= 4.5:1   (SC 1.4.3)
+ * The last contract holds across BOTH the base and hover states of a
+ * filled-button surface (e.g. IconButton danger-filled), so the same
+ * foreground stays legible through the hover transition.
  * Card-style bundles (mount, orbit, alert, warn, info, success) must also
  * clear 3:1 between their border and the PAGE background --base-bg, since
  * the border touches the page surface.
@@ -91,6 +100,19 @@
   --success-text: #065f46;
   --success-alt-text: #064e3b;
   --success-highlight: #059669;
+
+  /* Highlight foreground + hover slots — used by filled-button consumers
+   * (e.g. IconButton danger-filled). Mirrors the 5-slot bundle contract
+   * by adding a foreground that clears 4.5:1 against --{bundle}-highlight,
+   * plus a hover state that clears 4.5:1 against the same foreground. */
+  --alert-highlight-fg: #ffffff;
+  --alert-highlight-hover: #be1c40;
+  --warn-highlight-fg: #3a1a05;
+  --warn-highlight-hover: #ea8a0c;
+  --info-highlight-fg: #ffffff;
+  --info-highlight-hover: #1d4ed8;
+  --success-highlight-fg: #001a10;
+  --success-highlight-hover: #10b981;
 }
 
 [data-mode='dark'] {
@@ -117,6 +139,15 @@
   --success-text: #6ee7b7;
   --success-alt-text: #a7f3d0;
   --success-highlight: #34d399;
+
+  --alert-highlight-fg: #2a0810;
+  --alert-highlight-hover: #fb7185;
+  --warn-highlight-fg: #3a1a05;
+  --warn-highlight-hover: #fbbf24;
+  --info-highlight-fg: #0a1f3a;
+  --info-highlight-hover: #93c5fd;
+  --success-highlight-fg: #001a10;
+  --success-highlight-hover: #6ee7b7;
 }
 
 /* ---------- school-of-rock ---------- *
@@ -172,6 +203,15 @@
   --success-text: #d0eed0;
   --success-alt-text: #b0d8b0;
   --success-highlight: #70a070;
+
+  --alert-highlight-fg: #1f0808;
+  --alert-highlight-hover: #f56040;
+  --warn-highlight-fg: #3a2810;
+  --warn-highlight-hover: #e8b560;
+  --info-highlight-fg: #2a2218;
+  --info-highlight-hover: #dcb888;
+  --success-highlight-fg: #16261a;
+  --success-highlight-hover: #88b888;
 }
 
 [data-theme='school-of-rock'][data-mode='light'] {
@@ -203,7 +243,10 @@
   --warn-border: #8a5c1f;
   --warn-text: #3e2810;
   --warn-alt-text: #5a3814;
-  --warn-highlight: #a06820;
+  /* CHANGED: was #a06820 — cannot host any safe fg at >=4.5:1 with margin.
+   * Bumped to #8a5c1f (matches --warn-border light) so --warn-highlight-fg: #ffffff
+   * clears at 5.78:1. */
+  --warn-highlight: #8a5c1f;
 
   --info-bg: #e8e0d0;
   --info-border: #6a5238;
@@ -216,4 +259,13 @@
   --success-text: #0d2a12;
   --success-alt-text: #1c401c;
   --success-highlight: #2a5a2a;
+
+  --alert-highlight-fg: #fadcd6;
+  --alert-highlight-hover: #7e1808;
+  --warn-highlight-fg: #ffffff;
+  --warn-highlight-hover: #6f4a18;
+  --info-highlight-fg: #ffffff;
+  --info-highlight-hover: #604620;
+  --success-highlight-fg: #ffffff;
+  --success-highlight-hover: #1f4520;
 }
