@@ -17,10 +17,13 @@
  * so any regression — a hex tweak that drops below the threshold, a
  * forgotten composite, a typo in an alpha value — surfaces in CI.
  *
- * Apollo + Nouvelle Vague are intentionally excluded: they predate the
- * bundle contract and still use legacy --state-* tokens / bespoke
- * grayscale. They will be folded in when their CVD-aware bundle palettes
- * land (see PR #24 deferred list).
+ * Nouvelle Vague is intentionally excluded: the whole theme is
+ * grayscale by design and uses bespoke per-component overrides rather
+ * than the bundle cascade.
+ *
+ * Apollo migrated to the bundle cascade in wave 8 (CVD-mandated palette
+ * verified per-pair against axis A + axis B distinguishability) and is
+ * covered by its own FIXTURES entries below.
  *
  * Soft assertions are used so a single run reports every failing pair,
  * not just the first.
@@ -114,6 +117,16 @@ const SCHOOL_OF_ROCK_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='school-of-rock'][data-mode='dark']",
   'base-bg',
 );
+const APOLLO_LIGHT_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='apollo-10-1-2'][data-mode='light']",
+  'base-bg',
+);
+const APOLLO_DARK_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='apollo-10-1-2'][data-mode='dark']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -140,6 +153,18 @@ const FIXTURES: readonly CascadeFixture[] = [
     pageBg: SCHOOL_OF_ROCK_DARK_PAGE_BG,
     checkAdjacency: true,
   },
+  {
+    label: 'apollo-10-1-2 light',
+    selector: "[data-theme='apollo-10-1-2'][data-mode='light']",
+    pageBg: APOLLO_LIGHT_PAGE_BG,
+    checkAdjacency: true,
+  },
+  {
+    label: 'apollo-10-1-2 dark',
+    selector: "[data-theme='apollo-10-1-2'][data-mode='dark']",
+    pageBg: APOLLO_DARK_PAGE_BG,
+    checkAdjacency: true,
+  },
 ];
 
 /*
@@ -154,9 +179,10 @@ const FIXTURES: readonly CascadeFixture[] = [
  * theme lands, add it here. If a theme is migrated to its own bundle
  * palette, remove it (its own cascade will be covered by FIXTURES).
  *
- * Apollo + Nouvelle Vague are intentionally excluded (see top-of-file
- * preamble): they predate the bundle contract and still use legacy
- * --state-* tokens, so the default cascade never paints under them.
+ * Apollo + Nouvelle Vague are intentionally excluded: Apollo has its
+ * own per-theme bundle cascade (covered by FIXTURES); Nouvelle Vague
+ * uses bespoke grayscale overrides in components rather than the
+ * cascade.
  */
 const UN_MIGRATED_LIGHT_BGS: Record<string, string> = {
   boyhood: '#d0cf93',

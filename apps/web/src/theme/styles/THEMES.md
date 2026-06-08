@@ -47,8 +47,9 @@ use neutral rose/amber/blue/emerald hues with a light/dark switch.
 Per-theme bundle palettes shipped so far:
 
 - `school-of-rock` (pilot — both modes)
+- `apollo-10-1-2` (CVD-mandated — both modes)
 
-The remaining 9 themes use the default bundle palettes until each is
+The remaining 8 themes use the default bundle palettes until each is
 migrated.
 
 ### Bundle contrast targets (WCAG 2.2)
@@ -85,23 +86,11 @@ Font Awesome class name (e.g. `fa-rocket`) that is overlaid on the accent
 color dot in the theme picker for quick visual identification without
 relying on color alone.
 
-## Apollo 10½ state variables
+## Apollo 10½ CVD palette
 
-The Apollo 10½ theme (`apollo-10-1-2.css`) is the only theme that defines
-`--state-*` variables. These are Apollo-specific overrides used by
-`Alert`, `StatusBadge`, and `Toast` to ensure CVD-distinguishable
-status colors; they are not part of the shared 11-variable contract above.
-
-| Variable             | Purpose                                |
-| -------------------- | -------------------------------------- |
-| `--state-danger`     | Background for danger / error states   |
-| `--state-danger-fg`  | Foreground text on danger backgrounds  |
-| `--state-success`    | Background for success states          |
-| `--state-success-fg` | Foreground text on success backgrounds |
-| `--state-warning`    | Background for warning states          |
-| `--state-warning-fg` | Foreground text on warning backgrounds |
-| `--state-info`       | Background for informational states    |
-| `--state-info-fg`    | Foreground text on info backgrounds    |
-
-Other themes do not declare these variables; components fall back to
-hue-only accent colors on all non-Apollo themes.
+Apollo's CVD-distinguishable status colors now live in the standard
+bundle cascade (`bundles.css`), not in per-component overrides. The
+palette is hand-tuned to satisfy the bundle distinguishability contract
+without any `SHAPE_REDUNDANCY_WAIVERS` entries — every state-pair passes
+axis A (dE2000 ≥ 10 under all three dichromacies) or axis B (luminance
+gap ≥ 1.4x).

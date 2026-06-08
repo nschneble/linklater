@@ -44,24 +44,21 @@ const defaultIcons: Record<AlertProps['variant'], string> = {
 // The `default` branch routes through the alert/success color bundles
 // (see `theme/styles/bundles.css`). Themes that have not been migrated to
 // per-theme bundle palettes fall through to the default bundle values,
-// which mirror the previous rose / emerald inline hues. Apollo and
-// Nouvelle Vague keep their bespoke overrides until they get full bundle
-// palettes; Apollo because its `--state-*` tokens are CVD-tuned, Nouvelle
-// Vague because the whole theme is grayscale by design.
+// which mirror the previous rose / emerald inline hues. Nouvelle Vague
+// keeps its bespoke grayscale override — the whole theme is grayscale by
+// design. Apollo's wave-8 migration moved its CVD-tuned palette into the
+// bundle cascade, so it falls through the default branch like every other
+// migrated theme.
 const variantClasses: Record<AlertProps['variant'], ThemeClassMap> = {
   error: {
     dark: {
       default:
         'bg-[var(--alert-bg)] border-[var(--alert-border)] text-[var(--alert-text)]',
-      'apollo-10-1-2':
-        'bg-[var(--state-danger)]/15 border-l-4 border-[var(--state-danger)] text-[var(--state-danger-fg)]',
       'nouvelle-vague': 'bg-gray-900/40 border-gray-700 text-gray-400',
     },
     light: {
       default:
         'bg-[var(--alert-bg)] border-[var(--alert-border)] text-[var(--alert-text)]',
-      'apollo-10-1-2':
-        'bg-[var(--state-danger)]/15 border-l-4 border-[var(--state-danger)] text-[#9a3447]',
       'nouvelle-vague': 'bg-gray-100 border-gray-300 text-gray-700',
     },
   },
@@ -69,15 +66,11 @@ const variantClasses: Record<AlertProps['variant'], ThemeClassMap> = {
     dark: {
       default:
         'bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-text)]',
-      'apollo-10-1-2':
-        'bg-[var(--state-success)]/15 border-l-4 border-[var(--accent)] text-[var(--accent)]',
       'nouvelle-vague': 'bg-gray-900/40 border-gray-700 text-gray-400',
     },
     light: {
       default:
         'bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-text)]',
-      'apollo-10-1-2':
-        'bg-[var(--state-success)]/15 border-l-4 border-[var(--accent)] text-[var(--accent)]',
       'nouvelle-vague': 'bg-gray-100 border-gray-300 text-gray-600',
     },
   },

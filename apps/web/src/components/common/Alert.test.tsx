@@ -80,57 +80,53 @@ describe('Alert', () => {
     });
   });
 
-  describe('apollo-10-1-2 theme branch', () => {
-    it('uses the apollo state-danger tokens for the error variant in dark mode', () => {
+  describe('apollo-10-1-2 theme branch (post-wave-8: uses bundle tokens)', () => {
+    it('resolves the alert bundle tokens for the error variant in dark mode', () => {
       mockedUseThemeStyling.mockReturnValue({
         baseTheme: 'apollo-10-1-2',
         mode: 'dark',
       });
       const { getByRole } = render(<Alert variant="error">Boom</Alert>);
       const className = getByRole('alert').className;
-      expect(className).toContain('bg-[var(--state-danger)]/15');
-      expect(className).toContain('border-l-4');
-      expect(className).toContain('border-[var(--state-danger)]');
-      expect(className).toContain('text-[var(--state-danger-fg)]');
+      expect(className).toContain('bg-[var(--alert-bg)]');
+      expect(className).toContain('border-[var(--alert-border)]');
+      expect(className).toContain('text-[var(--alert-text)]');
     });
 
-    it('uses the apollo state-danger tokens for the error variant in light mode', () => {
+    it('resolves the alert bundle tokens for the error variant in light mode', () => {
       mockedUseThemeStyling.mockReturnValue({
         baseTheme: 'apollo-10-1-2',
         mode: 'light',
       });
       const { getByRole } = render(<Alert variant="error">Boom</Alert>);
       const className = getByRole('alert').className;
-      expect(className).toContain('bg-[var(--state-danger)]/15');
-      expect(className).toContain('border-l-4');
-      expect(className).toContain('border-[var(--state-danger)]');
-      expect(className).toContain('text-[#9a3447]');
+      expect(className).toContain('bg-[var(--alert-bg)]');
+      expect(className).toContain('border-[var(--alert-border)]');
+      expect(className).toContain('text-[var(--alert-text)]');
     });
 
-    it('uses the apollo state-success tokens for the success variant in dark mode', () => {
+    it('resolves the success bundle tokens for the success variant in dark mode', () => {
       mockedUseThemeStyling.mockReturnValue({
         baseTheme: 'apollo-10-1-2',
         mode: 'dark',
       });
       const { getByRole } = render(<Alert variant="success">OK</Alert>);
       const className = getByRole('status').className;
-      expect(className).toContain('bg-[var(--state-success)]/15');
-      expect(className).toContain('border-l-4');
-      expect(className).toContain('border-[var(--accent)]');
-      expect(className).toContain('text-[var(--accent)]');
+      expect(className).toContain('bg-[var(--success-bg)]');
+      expect(className).toContain('border-[var(--success-border)]');
+      expect(className).toContain('text-[var(--success-text)]');
     });
 
-    it('uses the apollo state-success tokens for the success variant in light mode', () => {
+    it('resolves the success bundle tokens for the success variant in light mode', () => {
       mockedUseThemeStyling.mockReturnValue({
         baseTheme: 'apollo-10-1-2',
         mode: 'light',
       });
       const { getByRole } = render(<Alert variant="success">OK</Alert>);
       const className = getByRole('status').className;
-      expect(className).toContain('bg-[var(--state-success)]/15');
-      expect(className).toContain('border-l-4');
-      expect(className).toContain('border-[var(--accent)]');
-      expect(className).toContain('text-[var(--accent)]');
+      expect(className).toContain('bg-[var(--success-bg)]');
+      expect(className).toContain('border-[var(--success-border)]');
+      expect(className).toContain('text-[var(--success-text)]');
     });
   });
 

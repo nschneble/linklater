@@ -1,12 +1,3 @@
-[data-theme='apollo-10-1-2'] {
-  --state-danger: #b04053;
-  --state-danger-fg: #f4f1ec;
-  --state-success: var(--accent);
-  --state-success-fg: var(--accent-fg);
-  --state-info: #76636f;
-  --state-info-fg: #f4f1ec;
-}
-
 [data-theme='apollo-10-1-2'][data-mode='dark'] {
   --bg: #0d1426;
   --bg-surface: #223366;
@@ -19,8 +10,6 @@
   --accent: #96b2e5;
   --accent-hover: oklch(from var(--accent) calc(l + 0.1) c h);
   --accent-fg: #000000;
-  --state-warning: #f7d080;
-  --state-warning-fg: #0d1426;
   --focus-ring: #70b0e0;
 }
 
@@ -36,7 +25,5 @@
   --accent: #28537e;
   --accent-hover: oklch(from var(--accent) calc(l - 0.1) c h);
   --accent-fg: #f4f1ec;
-  --state-warning: #6b4f10;
-  --state-warning-fg: #000000;
   --focus-ring: var(--accent);
 }

@@ -34,16 +34,12 @@ const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
         'bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-text)]',
       'nouvelle-vague':
         'bg-[var(--accent)] border-[var(--accent)] text-[var(--accent-fg)] font-medium',
-      'apollo-10-1-2':
-        'bg-[var(--state-success)]/15 border-[1.5px] border-[var(--state-success)] text-[var(--state-success-fg)]',
     },
     light: {
       default:
         'bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-text)]',
       'nouvelle-vague':
         'bg-[var(--accent)] border-[var(--accent)] text-[var(--accent-fg)] font-medium',
-      'apollo-10-1-2':
-        'bg-[var(--state-success)]/15 border-[1.5px] border-[var(--state-success)] text-[var(--state-success-fg)]',
     },
   },
   warning: {
@@ -52,16 +48,12 @@ const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
         'bg-[var(--warn-bg)] border-[var(--warn-border)] text-[var(--warn-text)]',
       'nouvelle-vague':
         'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]',
-      'apollo-10-1-2':
-        'bg-[var(--state-warning)]/15 border-[1.5px] border-[var(--state-warning)] text-[var(--state-warning)]',
     },
     light: {
       default:
         'bg-[var(--warn-bg)] border-[var(--warn-border)] text-[var(--warn-text)]',
       'nouvelle-vague':
         'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]',
-      'apollo-10-1-2':
-        'bg-[var(--state-warning)]/15 border-[1.5px] border-[var(--state-warning)] text-[var(--state-warning)]',
     },
   },
   info: {
@@ -70,16 +62,12 @@ const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
         'bg-[var(--info-bg)] border-[var(--info-border)] text-[var(--info-text)]',
       'nouvelle-vague':
         'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]',
-      'apollo-10-1-2':
-        'bg-[var(--state-info)]/15 border-[1.5px] border-[var(--state-info)] text-[var(--state-info-fg)]',
     },
     light: {
       default:
         'bg-[var(--info-bg)] border-[var(--info-border)] text-[var(--info-text)]',
       'nouvelle-vague':
         'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]',
-      'apollo-10-1-2':
-        'bg-[var(--state-info)]/15 border-[1.5px] border-[var(--state-info)] text-[var(--state-info-fg)]',
     },
   },
 };
