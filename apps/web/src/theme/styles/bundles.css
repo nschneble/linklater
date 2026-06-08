@@ -69,13 +69,17 @@
    * amber / blue / emerald hues that the legacy components used inline,
    * so themes that have not migrated keep their existing appearance. */
   /* Border defaults are tuned for cross-theme SC 1.4.11 compliance: the
-   * rose-800 / amber-800 / blue-800 / emerald-700 stops clear >=3:1
+   * rose-800 / amber-800 / blue-800 / emerald-800 stops clear >=3:1
    * against every un-migrated theme's --base-bg (verified worst-case
-   * against `before-midnight` light --bg #ccc095). Backgrounds and text
-   * stay on the legacy soft hues so per-theme palettes can still tune
-   * the bundle's narrative hue without re-deriving accessibility math.
-   * --success-border uses emerald-700 (#15803d), NOT emerald-800
-   * (#065f46), which would collide with --success-text.
+   * against `before-midnight` light --bg #ccc095, where --success-border
+   * #166534 lands at 3.92:1). Backgrounds and text stay on the legacy
+   * soft hues so per-theme palettes can still tune the bundle's
+   * narrative hue without re-deriving accessibility math.
+   * --success-border uses emerald-800 (#166534), distinct from
+   * --success-text #065f46 (also emerald family but a darker stop). The
+   * wave-2 emerald-700 pick (#15803d) was retired in wave 5 after the
+   * bundle-contrast test's cross-theme adjacency check surfaced its
+   * failure against before-midnight (#ccc095).
    */
   --alert-bg: #fff1f2;
   --alert-border: #9f1239;
@@ -87,7 +91,7 @@
   --warn-border: #92400e;
   --warn-text: #92400e;
   --warn-alt-text: #78350f;
-  --warn-highlight: #d97706;
+  --warn-highlight: #b45309;
 
   --info-bg: #dbeafe;
   --info-border: #1e40af;
@@ -96,7 +100,7 @@
   --info-highlight: #2563eb;
 
   --success-bg: #d1fae5;
-  --success-border: #15803d;
+  --success-border: #166534;
   --success-text: #065f46;
   --success-alt-text: #064e3b;
   --success-highlight: #059669;
@@ -107,8 +111,8 @@
    * plus a hover state that clears 4.5:1 against the same foreground. */
   --alert-highlight-fg: #ffffff;
   --alert-highlight-hover: #be1c40;
-  --warn-highlight-fg: #3a1a05;
-  --warn-highlight-hover: #ea8a0c;
+  --warn-highlight-fg: #fffbeb;
+  --warn-highlight-hover: #92400e;
   --info-highlight-fg: #ffffff;
   --info-highlight-hover: #1d4ed8;
   --success-highlight-fg: #001a10;
