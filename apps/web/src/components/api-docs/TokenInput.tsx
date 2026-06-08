@@ -139,7 +139,7 @@ export default function TokenInput({ value, onChange }: TokenInputProps) {
         <code className="text-[var(--text)] font-mono">ltk_</code>.
       </p>
       <p
-        className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 text-xs"
+        className="text-[var(--alert-text)] text-xs"
         id="api-docs-token-error"
         role="alert"
       >

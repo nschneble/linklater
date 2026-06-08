@@ -15,29 +15,33 @@ interface SettingsGroupProps {
   children: ReactNode;
 }
 
+// The `danger` variant routes through the `alert` bundle (see
+// `theme/styles/bundles.css`). Nouvelle Vague keeps its grayscale overrides
+// inline — same pattern as the AppShell verification banner — until it gets
+// a full bundle palette of its own.
 const VARIANT_CLASSES = {
   default:
     "bg-[var(--bg-surface)] border border-[var(--border)] [[data-theme='nouvelle-vague']_&]:bg-gray-50 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-gray-900/20",
   danger:
-    "bg-rose-50 [[data-mode='dark']_&]:bg-rose-950/20 [[data-theme='nouvelle-vague']_&]:bg-gray-100 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-gray-900/20 border border-rose-200 [[data-mode='dark']_&]:border-rose-800/50 [[data-theme='nouvelle-vague']_&]:border-gray-300 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-gray-700/50",
+    "bg-[var(--alert-bg)] [[data-theme='nouvelle-vague']_&]:bg-gray-100 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-gray-900/20 border border-[var(--alert-border)] [[data-theme='nouvelle-vague']_&]:border-gray-300 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-gray-700/50",
 } as const;
 
 const HEADING_CLASSES = {
   default: 'text-[var(--text)]',
   danger:
-    "text-rose-700 [[data-mode='dark']_&]:text-rose-400 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400",
+    "text-[var(--alert-text)] [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400",
 } as const;
 
 const ICON_CLASSES = {
   default: 'text-[var(--text-subtle)]',
   danger:
-    "text-rose-500 [[data-mode='dark']_&]:text-rose-400 [[data-theme='nouvelle-vague']_&]:text-gray-500 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-500",
+    "text-[var(--alert-highlight)] [[data-theme='nouvelle-vague']_&]:text-gray-500 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-500",
 } as const;
 
 const DESCRIPTION_CLASSES = {
   default: 'text-[var(--text-muted)]',
   danger:
-    "text-rose-600/80 [[data-mode='dark']_&]:text-rose-300/80 [[data-theme='nouvelle-vague']_&]:text-gray-600/80 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400/80",
+    "text-[var(--alert-alt-text)] [[data-theme='nouvelle-vague']_&]:text-gray-600/80 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400/80",
 } as const;
 
 /**

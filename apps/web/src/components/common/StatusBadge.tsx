@@ -30,14 +30,16 @@ const variantShape: Record<StatusBadgeProps['variant'], string> = {
 const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
   success: {
     dark: {
-      default: 'bg-emerald-950/20 border-emerald-800/40 text-emerald-400',
+      default:
+        'bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-text)]',
       'nouvelle-vague':
         'bg-[var(--accent)] border-[var(--accent)] text-[var(--accent-fg)] font-medium',
       'apollo-10-1-2':
         'bg-[var(--state-success)]/15 border-[1.5px] border-[var(--state-success)] text-[var(--state-success-fg)]',
     },
     light: {
-      default: 'bg-emerald-100 border-emerald-300 text-emerald-700',
+      default:
+        'bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-text)]',
       'nouvelle-vague':
         'bg-[var(--accent)] border-[var(--accent)] text-[var(--accent-fg)] font-medium',
       'apollo-10-1-2':
@@ -46,14 +48,16 @@ const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
   },
   warning: {
     dark: {
-      default: 'bg-amber-950/20 border-amber-800/40 text-amber-300',
+      default:
+        'bg-[var(--warn-bg)] border-[var(--warn-border)] text-[var(--warn-text)]',
       'nouvelle-vague':
         'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]',
       'apollo-10-1-2':
         'bg-[var(--state-warning)]/15 border-[1.5px] border-[var(--state-warning)] text-[var(--state-warning)]',
     },
     light: {
-      default: 'bg-amber-100 border-amber-300 text-amber-700',
+      default:
+        'bg-[var(--warn-bg)] border-[var(--warn-border)] text-[var(--warn-text)]',
       'nouvelle-vague':
         'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]',
       'apollo-10-1-2':
