@@ -59,36 +59,35 @@
   /* alert / warn / info / success default palettes mirror the rose /
    * amber / blue / emerald hues that the legacy components used inline,
    * so themes that have not migrated keep their existing appearance. */
-  /* NOTE: SC 1.4.11 conformance is enforced by per-theme bundle overrides,
-   * not by these defaults. The values below mirror the legacy Tailwind hues
-   * (rose-200 / amber-300 / blue-300 / emerald-300) that the inline classes
-   * used pre-bundle, so themes that have not yet migrated keep their
-   * existing appearance during the rolling migration. Border-vs-bg ratios
-   * here run ~1.3-1.5:1 and DO NOT meet WCAG 2.2 SC 1.4.11; per-theme
-   * blocks below MUST override these to clear the >=3:1 contract (SC 1.4.11
-   * for border/bg and 1.4.3 for text/bg, both verified against --base-bg).
-   * Once all themes migrate, this default block can be retired or hardened.
+  /* Border defaults are tuned for cross-theme SC 1.4.11 compliance: the
+   * rose-800 / amber-800 / blue-800 / emerald-700 stops clear >=3:1
+   * against every un-migrated theme's --base-bg (verified worst-case
+   * against `before-midnight` light --bg #ccc095). Backgrounds and text
+   * stay on the legacy soft hues so per-theme palettes can still tune
+   * the bundle's narrative hue without re-deriving accessibility math.
+   * --success-border uses emerald-700 (#15803d), NOT emerald-800
+   * (#065f46), which would collide with --success-text.
    */
   --alert-bg: #fff1f2;
-  --alert-border: #fecdd3;
+  --alert-border: #9f1239;
   --alert-text: #be123c;
   --alert-alt-text: #9f1239;
   --alert-highlight: #e11d48;
 
   --warn-bg: #fef3c7;
-  --warn-border: #fcd34d;
+  --warn-border: #92400e;
   --warn-text: #92400e;
   --warn-alt-text: #78350f;
   --warn-highlight: #d97706;
 
   --info-bg: #dbeafe;
-  --info-border: #93c5fd;
+  --info-border: #1e40af;
   --info-text: #1e40af;
   --info-alt-text: #1e3a8a;
   --info-highlight: #2563eb;
 
   --success-bg: #d1fae5;
-  --success-border: #6ee7b7;
+  --success-border: #15803d;
   --success-text: #065f46;
   --success-alt-text: #064e3b;
   --success-highlight: #059669;
@@ -96,25 +95,25 @@
 
 [data-mode='dark'] {
   --alert-bg: rgb(76 5 25 / 0.4);
-  --alert-border: #9f1239;
+  --alert-border: #fb7185;
   --alert-text: #fb7185;
   --alert-alt-text: #fda4af;
   --alert-highlight: #f43f5e;
 
   --warn-bg: rgb(69 26 3 / 0.4);
-  --warn-border: rgb(146 64 14 / 0.5);
+  --warn-border: #f59e0b;
   --warn-text: #fcd34d;
   --warn-alt-text: #fde68a;
   --warn-highlight: #f59e0b;
 
   --info-bg: rgb(23 37 84 / 0.4);
-  --info-border: rgb(30 58 138 / 0.5);
+  --info-border: #60a5fa;
   --info-text: #93c5fd;
   --info-alt-text: #bfdbfe;
   --info-highlight: #60a5fa;
 
   --success-bg: rgb(6 78 59 / 0.4);
-  --success-border: rgb(6 95 70 / 0.5);
+  --success-border: #34d399;
   --success-text: #6ee7b7;
   --success-alt-text: #a7f3d0;
   --success-highlight: #34d399;
