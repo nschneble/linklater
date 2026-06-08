@@ -64,6 +64,10 @@ const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
         'bg-[var(--state-warning)]/15 border-[1.5px] border-[var(--state-warning)] text-[var(--state-warning)]',
     },
   },
+  // `info` keeps the legacy Tailwind blues until the bundle defaults
+  // (`--info-bg`/`--info-border`/`--info-text` in `bundles.css`) are
+  // WCAG-verified against `--base-bg` for every un-migrated theme.
+  // Hold is a compliance checkpoint, not a missing palette.
   info: {
     dark: {
       default: 'bg-blue-950/20 border-blue-800/40 text-blue-400',

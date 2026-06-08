@@ -58,7 +58,7 @@ export default function BookmarkletRegenerateButton({
               className="flex items-center gap-4 shrink-0"
               ref={confirmReference}
             >
-              <span className="text-[var(--alert-text)] [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400 text-xs">
+              <span className="text-xs text-[var(--alert-text)] [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400">
                 Sure?
               </span>
               <div className="space-x-2">
