@@ -17,7 +17,7 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /**
    * Visual style.
    * - `'default'` — bordered, used for most toolbar actions.
-   * - `'danger'` — rose-tinted border, for irreversible actions needing caution.
+   * - `'danger'` — alert-bundle tinted border, for irreversible actions needing caution.
    * - `'danger-filled'` — solid rose, for confirmed destructive actions.
    * - `'ghost'` — bordered with muted text, for secondary/cancel actions.
    * - `'elevated'` — surface background, used for the floating action buttons in `LinksToolbar`.
@@ -33,7 +33,12 @@ const variantClasses: Record<
   string
 > = {
   default: `${SMALL_PADDING} hover:bg-[var(--bg-elevated)] disabled:bg-inherit ring-1 ring-[var(--border)] text-[var(--text)] ${FOCUS_RING} disabled:active:scale-100`,
-  danger: `${SMALL_PADDING} hover:bg-rose-100 [[data-mode='dark']_&]:hover:bg-rose-900/40 ring-1 ring-rose-400 [[data-mode='dark']_&]:ring-rose-700 text-rose-700 [[data-mode='dark']_&]:text-rose-300 [[data-theme='nouvelle-vague']_&]:hover:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague']_&]:ring-[var(--border)] [[data-theme='nouvelle-vague']_&]:text-[var(--text)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:hover:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:ring-[var(--border)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-[var(--text)] [[data-theme='nouvelle-vague']_&]:focus-visible:ring-[var(--accent)] ${FOCUS_RING_DANGER}`,
+  danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] [[data-theme='nouvelle-vague']_&]:hover:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague']_&]:ring-[var(--border)] [[data-theme='nouvelle-vague']_&]:text-[var(--text)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:hover:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:ring-[var(--border)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-[var(--text)] [[data-theme='nouvelle-vague']_&]:focus-visible:ring-[var(--accent)] ${FOCUS_RING_DANGER}`,
+  // `danger-filled` keeps the legacy Tailwind rose-600 saturation until the
+  // bundle architecture adds a `--{bundle}-highlight-fg` foreground slot
+  // across all state bundles. Today the only candidate foreground (`--alert-bg`)
+  // is alpha-on-page in dark mode and cannot guarantee a deterministic
+  // contrast ratio against `--alert-highlight`. Deferral, not omission.
   'danger-filled': `${SMALL_PADDING} bg-rose-600 hover:bg-rose-500 ring-1 ring-rose-600 hover:ring-rose-500 text-rose-50 [[data-theme='nouvelle-vague']_&]:bg-[var(--accent)] [[data-theme='nouvelle-vague']_&]:hover:bg-[var(--accent-hover)] [[data-theme='nouvelle-vague']_&]:ring-[var(--accent)] [[data-theme='nouvelle-vague']_&]:hover:ring-[var(--accent-hover)] [[data-theme='nouvelle-vague']_&]:text-[var(--accent-fg)] [[data-theme='nouvelle-vague']_&]:focus-visible:ring-[var(--accent)] ${FOCUS_RING_DANGER}`,
   ghost: `${SMALL_PADDING} ring-1 ring-[var(--border)] text-[var(--text-muted)] ${FOCUS_RING}`,
   elevated: `pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] disabled:bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] font-semibold disabled:active:scale-100`,

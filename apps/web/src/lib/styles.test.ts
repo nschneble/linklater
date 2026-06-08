@@ -79,8 +79,10 @@ describe('FOCUS_RING_DANGER', () => {
     expect(FOCUS_RING_DANGER).toContain('focus-visible:ring-2');
   });
 
-  it('contains the rose ring color', () => {
-    expect(FOCUS_RING_DANGER).toContain('focus-visible:ring-rose-400');
+  it('contains the alert highlight color', () => {
+    expect(FOCUS_RING_DANGER).toContain(
+      'focus-visible:ring-[var(--alert-highlight)]',
+    );
   });
 });
 

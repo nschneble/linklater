@@ -20,11 +20,12 @@ export const FOCUS_RING =
 export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';
 
 /**
- * Variant of `FOCUS_RING` for destructive actions. Uses a rose ring instead
- * of the accent color to stay visually consistent with danger-tinted buttons.
+ * Variant of `FOCUS_RING` for destructive actions. Maps to the alert bundle's
+ * highlight slot so the ring tracks per-theme palettes alongside the rest of
+ * the alert surface.
  */
 export const FOCUS_RING_DANGER =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--alert-highlight)]';
 
 /**
  * Inline style object for an animated menu/panel reveal.
