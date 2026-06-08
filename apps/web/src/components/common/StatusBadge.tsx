@@ -64,24 +64,18 @@ const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
         'bg-[var(--state-warning)]/15 border-[1.5px] border-[var(--state-warning)] text-[var(--state-warning)]',
     },
   },
-  // `info` keeps the legacy Tailwind blues until the bundle defaults
-  // (`--info-bg`/`--info-border`/`--info-text` in `bundles.css`) are
-  // WCAG-verified against `--base-bg` for every un-migrated theme.
-  // Hold is a compliance checkpoint, not a missing palette.
-  // 2026-06-08 verification: with the wave-2 defaults hardening,
-  // `--info-border` (#1e40af light / #60a5fa dark) now clears 3:1 against
-  // `--bg` in every un-migrated theme. Migration is unblocked but bundled
-  // separately to keep this commit's scope tight to alert-bundle work.
   info: {
     dark: {
-      default: 'bg-blue-950/20 border-blue-800/40 text-blue-400',
+      default:
+        'bg-[var(--info-bg)] border-[var(--info-border)] text-[var(--info-text)]',
       'nouvelle-vague':
         'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]',
       'apollo-10-1-2':
         'bg-[var(--state-info)]/15 border-[1.5px] border-[var(--state-info)] text-[var(--state-info-fg)]',
     },
     light: {
-      default: 'bg-blue-100 border-blue-300 text-blue-700',
+      default:
+        'bg-[var(--info-bg)] border-[var(--info-border)] text-[var(--info-text)]',
       'nouvelle-vague':
         'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]',
       'apollo-10-1-2':
