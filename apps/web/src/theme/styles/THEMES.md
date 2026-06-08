@@ -1,6 +1,12 @@
 # Linklater Themes
 
-There are eight themes, each with light and dark variants. Each theme variant is comprised of 11 individual color styles:
+There are ten themes, each with light and dark variants. Two parallel
+token systems are active:
+
+## 1. Flat tokens (legacy, all 10 themes)
+
+Each theme variant defines 11 flat color variables that the bulk of the
+UI still reads:
 
 | Variable         | Purpose                                                     |
 | ---------------- | ----------------------------------------------------------- |
@@ -15,6 +21,47 @@ There are eight themes, each with light and dark variants. Each theme variant is
 | `--accent`       | Primary brand color: active indicators, icons, focus rings  |
 | `--accent-hover` | Accent hover state                                          |
 | `--accent-fg`    | Foreground text on accent-colored backgrounds               |
+
+## 2. Color bundles (in-progress migration)
+
+A **bundle** is a complete palette for one kind of UI surface. The system
+exposes seven bundles, each carrying five values:
+
+| Bundle    | Where it's used         |
+| --------- | ----------------------- |
+| `base`    | Page chrome             |
+| `mount`   | Cards, settings panels  |
+| `orbit`   | Menus, dropdowns        |
+| `alert`   | Errors, danger zones    |
+| `warn`    | Yellow banners          |
+| `info`    | Tips, hints             |
+| `success` | Verified badges, toasts |
+
+For bundle `X` the variables are `--X-bg`, `--X-border`, `--X-text`,
+`--X-alt-text`, and `--X-highlight`. See `bundles.css` for the full
+definition. Bundle tokens that aren't theme-overridden fall through to
+sensible defaults: `base`/`mount`/`orbit` track the flat
+`--bg`/`--bg-surface`/`--bg-elevated`, and `alert`/`warn`/`info`/`success`
+use neutral rose/amber/blue/emerald hues with a light/dark switch.
+
+Per-theme bundle palettes shipped so far:
+
+- `school-of-rock` (pilot — both modes)
+
+The remaining 9 themes use the default bundle palettes until each is
+migrated.
+
+### Bundle contrast targets (WCAG 2.2)
+
+When tuning a per-theme bundle palette, every pair must clear:
+
+- `--X-text` and `--X-alt-text` on `--X-bg`: **AA** (≥ 4.5 : 1)
+- `--X-border` and `--X-highlight` on `--X-bg`: **3 : 1** (SC 1.4.11)
+- `--X-border` on `--base-bg` (when the bundle renders as a card on the
+  page): **3 : 1** — the most-missed check
+
+Verify per-pair with a contrast calculator; visually eyeballing borders
+fails reliably.
 
 ## Contrast targets
 

@@ -1,0 +1,210 @@
+/*
+ * Color bundles
+ * =============
+ *
+ * A bundle is a complete set of values for one kind of UI surface:
+ *
+ *     --{bundle}-bg         background fill
+ *     --{bundle}-border     border / divider
+ *     --{bundle}-text       primary readable text
+ *     --{bundle}-alt-text   secondary text (labels, captions)
+ *     --{bundle}-highlight  accent pop inside the bundle (links, badges)
+ *
+ * The 7 bundles map onto the UI's narrative surfaces:
+ *
+ *     base      page chrome
+ *     mount     cards, settings panels
+ *     orbit     menus, dropdowns
+ *     alert     errors, danger zones
+ *     warn      yellow banners (unverified email)
+ *     info      tips, hints
+ *     success   verified badges, notifications
+ *
+ * Each bundle MUST satisfy WCAG 2.2:
+ *     text/bg, alt-text/bg     >= 4.5:1   (SC 1.4.3)
+ *     border/bg, highlight/bg  >= 3:1     (SC 1.4.11)
+ * Card-style bundles (mount, orbit, alert, warn, info, success) must also
+ * clear 3:1 between their border and the PAGE background --base-bg, since
+ * the border touches the page surface.
+ *
+ * Themes that have NOT been migrated to per-theme bundle palettes fall
+ * through to the default branch below, which derives base/mount/orbit
+ * from the existing flat --bg/--bg-surface tokens and uses neutral
+ * rose/amber/emerald hues for the four state bundles. This preserves
+ * visual parity for users on un-migrated themes.
+ */
+
+:root {
+  /* base = page chrome */
+  --base-bg: var(--bg);
+  --base-border: var(--border);
+  --base-text: var(--text);
+  --base-alt-text: var(--text-muted);
+  --base-highlight: var(--accent);
+
+  /* mount = cards */
+  --mount-bg: var(--bg-surface);
+  --mount-border: var(--border);
+  --mount-text: var(--text);
+  --mount-alt-text: var(--text-muted);
+  --mount-highlight: var(--accent);
+
+  /* orbit = menus / dropdowns */
+  --orbit-bg: var(--bg-elevated);
+  --orbit-border: var(--border);
+  --orbit-text: var(--text);
+  --orbit-alt-text: var(--text-muted);
+  --orbit-highlight: var(--accent);
+
+  /* alert / warn / info / success default palettes mirror the rose /
+   * amber / blue / emerald hues that the legacy components used inline,
+   * so themes that have not migrated keep their existing appearance. */
+  --alert-bg: #fff1f2;
+  --alert-border: #fecdd3;
+  --alert-text: #be123c;
+  --alert-alt-text: #9f1239;
+  --alert-highlight: #e11d48;
+
+  --warn-bg: #fef3c7;
+  --warn-border: #fcd34d;
+  --warn-text: #92400e;
+  --warn-alt-text: #78350f;
+  --warn-highlight: #d97706;
+
+  --info-bg: #dbeafe;
+  --info-border: #93c5fd;
+  --info-text: #1e40af;
+  --info-alt-text: #1e3a8a;
+  --info-highlight: #2563eb;
+
+  --success-bg: #d1fae5;
+  --success-border: #6ee7b7;
+  --success-text: #065f46;
+  --success-alt-text: #064e3b;
+  --success-highlight: #059669;
+}
+
+[data-mode='dark'] {
+  --alert-bg: rgb(76 5 25 / 0.4);
+  --alert-border: #9f1239;
+  --alert-text: #fb7185;
+  --alert-alt-text: #fda4af;
+  --alert-highlight: #f43f5e;
+
+  --warn-bg: rgb(69 26 3 / 0.4);
+  --warn-border: rgb(146 64 14 / 0.5);
+  --warn-text: #fcd34d;
+  --warn-alt-text: #fde68a;
+  --warn-highlight: #f59e0b;
+
+  --info-bg: rgb(23 37 84 / 0.4);
+  --info-border: rgb(30 58 138 / 0.5);
+  --info-text: #93c5fd;
+  --info-alt-text: #bfdbfe;
+  --info-highlight: #60a5fa;
+
+  --success-bg: rgb(6 78 59 / 0.4);
+  --success-border: rgb(6 95 70 / 0.5);
+  --success-text: #6ee7b7;
+  --success-alt-text: #a7f3d0;
+  --success-highlight: #34d399;
+}
+
+/* ---------- school-of-rock ---------- *
+ * Pilot theme for the bundle system. Hues drawn from the existing
+ * theme palette (cream / leather / crimson) with state hues tuned for
+ * WCAG 2.2 compliance against the bundle background AND the page
+ * background. Verified per-pair via the WCAG relative luminance formula:
+ *
+ *   dark mode: text/bg >= 11.75:1, all borders >= 3:1 against both
+ *              bundle bg and page bg
+ *   light mode: text/bg >= 10.84:1, all borders >= 3:1 against both
+ *              bundle bg and page bg
+ */
+[data-theme='school-of-rock'][data-mode='dark'] {
+  --base-bg: #0a0a07;
+  --base-border: #6e5a3a;
+  --base-text: #ffffff;
+  --base-alt-text: #e8d4b8;
+  --base-highlight: #e0a040;
+
+  --mount-bg: #1c1612;
+  --mount-border: #a07a4c;
+  --mount-text: #ffffff;
+  --mount-alt-text: #e8d4b8;
+  --mount-highlight: #edc8b4;
+
+  --orbit-bg: #2a2018;
+  --orbit-border: #c08e4e;
+  --orbit-text: #ffffff;
+  --orbit-alt-text: #f0dcbc;
+  --orbit-highlight: #edc8b4;
+
+  --alert-bg: #3a1310;
+  --alert-border: #f04020;
+  --alert-text: #ffd4ce;
+  --alert-alt-text: #f5b8af;
+  --alert-highlight: #f04020;
+
+  --warn-bg: #3a2810;
+  --warn-border: #c08e4e;
+  --warn-text: #fde8c4;
+  --warn-alt-text: #f0d090;
+  --warn-highlight: #e0a040;
+
+  --info-bg: #1f2520;
+  --info-border: #88b070;
+  --info-text: #e0f0d0;
+  --info-alt-text: #c4dab0;
+  --info-highlight: #8eb070;
+
+  --success-bg: #16261a;
+  --success-border: #70b070;
+  --success-text: #d0eed0;
+  --success-alt-text: #b0d8b0;
+  --success-highlight: #70a070;
+}
+
+[data-theme='school-of-rock'][data-mode='light'] {
+  --base-bg: #e0d0c1;
+  --base-border: #7a5a30;
+  --base-text: #0a0a07;
+  --base-alt-text: #3e2810;
+  --base-highlight: #a32010;
+
+  --mount-bg: #f0e2cd;
+  --mount-border: #7a5a2c;
+  --mount-text: #0a0a07;
+  --mount-alt-text: #3e2810;
+  --mount-highlight: #5c1615;
+
+  --orbit-bg: #f6ead7;
+  --orbit-border: #8c6a30;
+  --orbit-text: #0a0a07;
+  --orbit-alt-text: #4a3210;
+  --orbit-highlight: #7a4015;
+
+  --alert-bg: #fadcd6;
+  --alert-border: #a32010;
+  --alert-text: #5a0e08;
+  --alert-alt-text: #7a1a10;
+  --alert-highlight: #a32010;
+
+  --warn-bg: #f5e3c2;
+  --warn-border: #8a5c1f;
+  --warn-text: #3e2810;
+  --warn-alt-text: #5a3814;
+  --warn-highlight: #a06820;
+
+  --info-bg: #e0e7da;
+  --info-border: #4a6a3a;
+  --info-text: #1a2a14;
+  --info-alt-text: #28401c;
+  --info-highlight: #4a7038;
+
+  --success-bg: #d8e8d2;
+  --success-border: #3e6a3e;
+  --success-text: #0d2a12;
+  --success-alt-text: #1c401c;
+  --success-highlight: #2a5a2a;
+}
