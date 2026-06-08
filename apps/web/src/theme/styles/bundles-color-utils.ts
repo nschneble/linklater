@@ -8,6 +8,12 @@
  * Not a runtime dependency of the app. Tests-only.
  */
 
+import {
+  differenceCiede2000,
+  filterDeficiencyDeuter,
+  filterDeficiencyProt,
+  filterDeficiencyTrit,
+} from 'culori';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -225,4 +231,46 @@ export function readPageBg(
 
 export function describeRatio(ratio: number): string {
   return `${ratio.toFixed(2)}:1`;
+}
+
+export const CVD_TYPES = ['protanopia', 'deuteranopia', 'tritanopia'] as const;
+export type CvdType = (typeof CVD_TYPES)[number];
+
+/*
+ * culori's CVD filters expect a color object; build one per call (they're
+ * lightweight) so the public surface stays a plain RGB-tuple → number.
+ *
+ * Severity 1 = full dichromacy (protan-/deuter-/tritan-OPIA, not the milder
+ * -OMALY variants). Worst-case is what we want to guarantee against.
+ */
+const cvdFilters = {
+  protanopia: filterDeficiencyProt(1),
+  deuteranopia: filterDeficiencyDeuter(1),
+  tritanopia: filterDeficiencyTrit(1),
+} as const;
+
+const deltaE2000 = differenceCiede2000();
+
+function rgbToCuloriColor([red, green, blue]: Rgb) {
+  return {
+    mode: 'rgb' as const,
+    r: red / 255,
+    g: green / 255,
+    b: blue / 255,
+  };
+}
+
+/*
+ * Delta-E 2000 between two sRGB colors after both are simulated through the
+ * given CVD transform. Returns a perceptual distance in CIE Lab65 — higher =
+ * more distinguishable to a viewer with that deficiency.
+ */
+export function cvdDeltaE(first: Rgb, second: Rgb, cvd: CvdType): number {
+  const filter = cvdFilters[cvd];
+  const firstSimulated = filter(rgbToCuloriColor(first));
+  const secondSimulated = filter(rgbToCuloriColor(second));
+  if (firstSimulated === undefined || secondSimulated === undefined) {
+    throw new Error(`CVD filter ${cvd} returned undefined`);
+  }
+  return deltaE2000(firstSimulated, secondSimulated);
 }

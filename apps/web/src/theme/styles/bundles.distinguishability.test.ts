@@ -1,40 +1,56 @@
 /*
- * Bundle CVD-distinguishability contract — automated luminance-gap check.
+ * Bundle CVD-distinguishability contract — automated two-axis check.
  *
- * Encodes axis B of feedback-bundle-hue-separation:
+ * Encodes feedback-bundle-hue-separation:
  *
  *   Within a single theme, every pair of state bundles (alert / warn /
  *   info / success) MUST be distinguishable on at least one of two axes:
  *
- *     Axis A — hue family that survives all four CVD simulations
- *              (protanopia, deuteranopia, tritanopia, monochromatism).
- *     Axis B — luminance gap of >=1.4x between the two bundles' borders
- *              AND between their backgrounds.
+ *     Axis A — hue family that survives all three dichromacy simulations
+ *              (protanopia, deuteranopia, tritanopia), measured as delta-E
+ *              2000 >= 10 between the simulated bg's OR border's of the
+ *              two bundles. Monochromatism is covered by axis B (a
+ *              luminance gap large enough to survive grayscale projection).
+ *     Axis B — symmetric luminance ratio of >=1.4x between the two bundles'
+ *              backgrounds OR their borders.
  *
  *   When neither axis is satisfied, the consuming component MUST carry
  *   redundant non-color signal: distinct icon glyph, prefix label, or
- *   structural marker.
- *
- * Axis A is deferred (needs Brettel/Vienot CVD-simulation matrices) — see
- * deferred-future-work note at bottom. This file mechanizes axis B; pairs
- * that fail B without a documented shape-redundancy waiver soft-fail.
+ *   structural marker. Those waivers live in SHAPE_REDUNDANCY_WAIVERS.
  *
  * Sister suite: bundles.contrast.test.ts encodes WCAG SC 1.4.3 + 1.4.11.
- * Shared color parsing + WCAG helpers live in bundles-color-utils.ts.
+ * Shared color parsing, WCAG helpers, and CVD math live in
+ * bundles-color-utils.ts.
  *
- * A note on the luminance metric: distinguishability uses a SYMMETRIC
- * `lighter / darker` ratio (no +0.05 offset). The WCAG +0.05 is calibrated
- * for text/bg legibility, not for surface-vs-surface separability. Two
- * adjacent panels with identical luminance are indistinguishable by
- * luminance alone — ratio 1.0 — which is what we test against.
+ * A note on the luminance metric: axis B uses a SYMMETRIC `lighter / darker`
+ * ratio (no +0.05 offset). The WCAG +0.05 is calibrated for text/bg
+ * legibility, not for surface-vs-surface separability. Two adjacent panels
+ * with identical luminance are indistinguishable by luminance alone — ratio
+ * 1.0 — which is what we test against.
+ *
+ * A note on the delta-E threshold: axis A uses delta-E 2000 >= 10. JND
+ * (just-noticeable difference) is ~1; "clearly distinct" sits around 3-5;
+ * categorical-color CVD palettes commonly require >=10 so two surfaces are
+ * UNAMBIGUOUSLY different (not just barely-perceptible) to a viewer with
+ * full dichromacy. Sources:
+ *   https://colorfyi.com/blog/what-is-delta-e/
+ *   https://en.wikipedia.org/wiki/Color_difference#CIEDE2000
+ *   https://timbrica.com/en/colorblind-palette (uses dE2000 >= 10 for
+ *     CVD-simulated pairs in palette generation).
+ *
+ * CVD simulation uses the culori library (MIT) — its filterDeficiency{Prot,
+ * Deuter, Trit}(1) functions implement validated Brettel/Vienot transforms
+ * for full dichromacy. Severity 1 = worst-case (-opia, not -omaly).
  */
 
 import { describe, expect, it } from 'vitest';
 import {
   BUNDLES_CSS,
+  CVD_TYPES,
   DEFAULT_CSS,
   STATE_BUNDLES,
   compositeOverBg,
+  cvdDeltaE,
   describeRatio,
   extractBlock,
   getSlot,
@@ -46,6 +62,7 @@ import {
 import type { Bundle, Rgb } from './bundles-color-utils';
 
 const LUMINANCE_GAP_THRESHOLD = 1.4;
+const CVD_DELTA_E_THRESHOLD = 10;
 
 interface CascadeFixture {
   readonly label: string;
@@ -98,6 +115,10 @@ const FIXTURES: readonly CascadeFixture[] = [
  * (Alert.tsx + StatusBadge.tsx) carry shape redundancy that satisfies the
  * axis-A/axis-B fallback of feedback-bundle-hue-separation.
  *
+ * Each remaining waiver below fails BOTH axes today — verified by the
+ * waiver-hygiene meta-test. A pair must collapse on luminance AND collapse
+ * under at least one dichromacy to land here.
+ *
  * Key format: `${cascade-slug}::${bundleA}-${bundleB}` (sorted alphabetically
  * by bundle name so each pair has a single canonical entry).
  *
@@ -130,48 +151,64 @@ const FIXTURES: readonly CascadeFixture[] = [
  * test today AND has verifiable shape redundancy in real consumers. Don't
  * preemptively waive — that defeats the test.
  *
- * Removing a waiver: when a palette change closes the luminance gap (a
- * theme re-hue that pushes a pair past 1.4x), drop its entry here. The
- * test will then enforce the gap going forward.
+ * Removing a waiver: the waiver-hygiene meta-test auto-detects when a
+ * palette change closes either axis, and forces the corresponding entry
+ * to be dropped. Don't pre-emptively edit; let the test guide.
  */
 const SHAPE_REDUNDANCY_WAIVERS: ReadonlySet<string> = new Set([
-  // :root (default light) — all 6 state pairs collapse on bg + border.
-  // Default state-bundle palette mirrors the rose / amber / blue / emerald
-  // tints that legacy components used inline. The bg's all land around
-  // L* 96 (rose-50/amber-100/blue-100/emerald-100), borders around L* 30
-  // (rose-800/amber-800/blue-800/emerald-800) — distinctness comes from
-  // hue, not luminance. Alert.tsx + StatusBadge.tsx icons + pill shapes
-  // carry the CVD fallback.
+  // :root (default light) — 3 warm-vs-warm or red-green pairs survive
+  //   axis A pruning from wave 7:
+  //   - alert-warn: rose-50/amber-100 bg's collapse under tritanopia
+  //     (dE 4.4 bg / 4.2 border, well under 10); rose-800/amber-800
+  //     borders are warm-on-warm so luminance gap also collapses.
+  //   - alert-success: classic red-green pair; bg's collapse under
+  //     deuteranopia (dE 2.5 bg / 9.6 border, just under 10).
+  //   - success-warn: emerald vs amber bg's collapse under protanopia
+  //     (dE 8.8 bg / 8.0 border, both under 10).
+  //   alert-info, info-warn, info-success were waived in wave 6 because
+  //   they collapsed on luminance — wave 7's CVD math proves blue stays
+  //   distinct from rose/amber/emerald under all three dichromacies, so
+  //   those three waivers were dropped.
   'root::alert-warn',
-  'root::alert-info',
   'root::alert-success',
-  'root::info-warn',
   'root::success-warn',
-  'root::info-success',
 
-  // [data-mode='dark'] (default dark) — 3 of 6 pairs fail by both axes:
-  //   alert-warn, alert-info, info-warn — saturated -400 stops at similar
-  //   lightness on alpha-tinted page bg's at similar lightness.
-  // The other 3 pairs pass axis B unwaived:
-  //   alert-success (border 1.40), success-warn (bg 1.93), info-success (bg 1.80).
+  // [data-mode='dark'] (default dark) — 1 warm-vs-warm pair survives.
+  //   - alert-warn: rose-400 vs amber-400 borders collapse under tritan
+  //     (dE 7.9 border); both bg's are alpha-tinted page bg at similar
+  //     lightness so luminance gap also fails.
+  //   alert-info and info-warn were waived in wave 6 — wave 7 proves
+  //   blue-400 stays distinct from rose-400 / amber-400 under all three
+  //   dichromacies, so both waivers were dropped.
   'dark::alert-warn',
-  'dark::alert-info',
-  'dark::info-warn',
 
-  // school-of-rock light — 4 of 6 pairs fail. Palette is leather/cream
-  // earth tones by design (no blues). Per the precedent in
-  // feedback-bundle-hue-separation: info was originally green, re-hued to
-  // brown by a11y-lead because success was already green. Pairs that
-  // share a bundle with warn (alert-warn, info-warn) pass on the border
-  // axis (warn-border #8a5c1f sits darker than the brown info-border and
-  // lighter than the red alert-border); the rest collapse.
+  // school-of-rock light — 3 of 4 wave-6 waivers survive. Palette is
+  // leather/cream earth tones by design (no blues); info was re-hued to
+  // brown because success was originally green (per the school-of-rock
+  // re-hue documented in feedback-bundle-hue-separation). Without a
+  // blue/cool anchor, three pairs collapse on both axes:
+  //   - alert-info: red vs brown bg's are identical (#fadcd6, dE 0);
+  //     borders separate barely on protan (dE 14.6) but bg has no signal.
+  //     Test passes if EITHER bg or border survives — here only border
+  //     does for protan/deuter, and tritan fails outright (border dE 7.5).
+  //   - success-warn: cream vs cream bg's (dE 2.4-4.8 across CVDs);
+  //     brown vs amber borders survive protan (13.1) but tritan border
+  //     also fails (need >=10 under ALL three).
+  //   - info-success: brown vs cream bg + brown vs green border; deuter
+  //     border 1.86 dE, protan border 5.89 — collapses on both bg and
+  //     border under multiple dichromacies.
+  //   alert-success was waived in wave 6 — wave 7 proves the red-vs-green
+  //   border passes (alert-border #a32010 vs success-border survives
+  //   tritan); waiver dropped.
   'school-of-rock-light::alert-info',
-  'school-of-rock-light::alert-success',
   'school-of-rock-light::success-warn',
   'school-of-rock-light::info-success',
 
-  // school-of-rock dark — only info/success fails axis B. The other 5
-  // pairs pass via bg or border luminance.
+  // school-of-rock dark — info vs success collapses under protan
+  //   (bg dE 0.6, border dE 3.1) and deuter (border dE 9.7, just under
+  //   threshold). The brown vs green pair survives tritan (dE 43.9
+  //   border) but axis A requires ALL three. Other 5 pairs pass via
+  //   axis A or axis B unwaived.
   'school-of-rock-dark::info-success',
 ]);
 
@@ -200,49 +237,138 @@ function statePairs(): readonly StatePair[] {
   return pairs;
 }
 
-describe('bundle CVD-distinguishability (axis B: luminance gap >=1.4x)', () => {
+interface PairColors {
+  readonly firstBg: Rgb;
+  readonly secondBg: Rgb;
+  readonly firstBorder: Rgb;
+  readonly secondBorder: Rgb;
+}
+
+function resolvePairColors(
+  declarations: Map<string, string>,
+  pageBg: Rgb,
+  first: Bundle,
+  second: Bundle,
+): PairColors | null {
+  const firstBgRaw = getSlot(declarations, first, 'bg');
+  const secondBgRaw = getSlot(declarations, second, 'bg');
+  const firstBorderRaw = getSlot(declarations, first, 'border');
+  const secondBorderRaw = getSlot(declarations, second, 'border');
+  if (
+    firstBgRaw === null ||
+    secondBgRaw === null ||
+    firstBorderRaw === null ||
+    secondBorderRaw === null
+  ) {
+    return null;
+  }
+  return {
+    firstBg: compositeOverBg(firstBgRaw, pageBg),
+    secondBg: compositeOverBg(secondBgRaw, pageBg),
+    firstBorder: resolveFg(firstBorderRaw),
+    secondBorder: resolveFg(secondBorderRaw),
+  };
+}
+
+interface PairDistinguishability {
+  readonly bgLuminanceRatio: number;
+  readonly borderLuminanceRatio: number;
+  readonly passesAxisB: boolean;
+  readonly cvdDeltaEs: Readonly<
+    Record<(typeof CVD_TYPES)[number], { bg: number; border: number }>
+  >;
+  readonly passesAxisA: boolean;
+}
+
+function evaluatePair(colors: PairColors): PairDistinguishability {
+  const bgLuminanceRatio = luminanceRatio(colors.firstBg, colors.secondBg);
+  const borderLuminanceRatio = luminanceRatio(
+    colors.firstBorder,
+    colors.secondBorder,
+  );
+  const passesAxisB =
+    bgLuminanceRatio >= LUMINANCE_GAP_THRESHOLD ||
+    borderLuminanceRatio >= LUMINANCE_GAP_THRESHOLD;
+
+  const cvdDeltaEs = Object.fromEntries(
+    CVD_TYPES.map((cvd) => [
+      cvd,
+      {
+        bg: cvdDeltaE(colors.firstBg, colors.secondBg, cvd),
+        border: cvdDeltaE(colors.firstBorder, colors.secondBorder, cvd),
+      },
+    ]),
+  ) as PairDistinguishability['cvdDeltaEs'];
+
+  /*
+   * Pair survives a single CVD type if EITHER bg or border stays distinct
+   * after simulation — mirrors axis B's "bg OR border" disjunction. Pair
+   * passes axis A only if it survives ALL three dichromacies.
+   */
+  const passesAxisA = CVD_TYPES.every(
+    (cvd) =>
+      cvdDeltaEs[cvd].bg >= CVD_DELTA_E_THRESHOLD ||
+      cvdDeltaEs[cvd].border >= CVD_DELTA_E_THRESHOLD,
+  );
+
+  return {
+    bgLuminanceRatio,
+    borderLuminanceRatio,
+    passesAxisB,
+    cvdDeltaEs,
+    passesAxisA,
+  };
+}
+
+function describePairFailure(
+  result: PairDistinguishability,
+  first: Bundle,
+  second: Bundle,
+  fixtureLabel: string,
+  key: string,
+): string {
+  const cvdSummary = CVD_TYPES.map((cvd) => {
+    const { bg, border } = result.cvdDeltaEs[cvd];
+    return `${cvd} dE bg ${bg.toFixed(1)} / border ${border.toFixed(1)}`;
+  }).join('; ');
+  return (
+    `${first}/${second} pair (${fixtureLabel}): ` +
+    `axis B bg ${describeRatio(result.bgLuminanceRatio)}, border ${describeRatio(result.borderLuminanceRatio)} (need >=${LUMINANCE_GAP_THRESHOLD}x); ` +
+    `axis A ${cvdSummary} (need >=${CVD_DELTA_E_THRESHOLD} under all three). ` +
+    `Both axes fail. ` +
+    `Verify shape redundancy in consuming components (and add "${key}" to SHAPE_REDUNDANCY_WAIVERS with a citation) OR re-hue one bundle.`
+  );
+}
+
+describe('bundle CVD-distinguishability (axis A: CVD-simulated dE2000 >=10; axis B: luminance gap >=1.4x)', () => {
   for (const fixture of FIXTURES) {
     const block = extractBlock(BUNDLES_CSS, fixture.selector);
     const declarations = parseDeclarations(block);
 
     describe(`${fixture.label}`, () => {
       for (const [first, second] of statePairs()) {
-        const firstBgRaw = getSlot(declarations, first, 'bg');
-        const secondBgRaw = getSlot(declarations, second, 'bg');
-        const firstBorderRaw = getSlot(declarations, first, 'border');
-        const secondBorderRaw = getSlot(declarations, second, 'border');
-
-        if (
-          firstBgRaw === null ||
-          secondBgRaw === null ||
-          firstBorderRaw === null ||
-          secondBorderRaw === null
-        ) {
+        const colors = resolvePairColors(
+          declarations,
+          fixture.pageBg,
+          first,
+          second,
+        );
+        if (colors === null) {
           continue;
         }
 
-        const firstBg = compositeOverBg(firstBgRaw, fixture.pageBg);
-        const secondBg = compositeOverBg(secondBgRaw, fixture.pageBg);
-        const firstBorder = resolveFg(firstBorderRaw);
-        const secondBorder = resolveFg(secondBorderRaw);
-
-        const bgRatio = luminanceRatio(firstBg, secondBg);
-        const borderRatio = luminanceRatio(firstBorder, secondBorder);
-        const passesLuminance =
-          bgRatio >= LUMINANCE_GAP_THRESHOLD ||
-          borderRatio >= LUMINANCE_GAP_THRESHOLD;
-
+        const result = evaluatePair(colors);
         const key = waiverKey(fixture.selector, first, second);
         const waived = SHAPE_REDUNDANCY_WAIVERS.has(key);
 
-        it(`${first}/${second} pair: luminance gap or documented waiver`, () => {
-          if (passesLuminance) {
+        it(`${first}/${second} pair: axis A, axis B, or documented waiver`, () => {
+          if (result.passesAxisA || result.passesAxisB) {
             return;
           }
           expect
             .soft(
               waived,
-              `${first}/${second} pair (${fixture.label}): bg ratio ${describeRatio(bgRatio)}, border ratio ${describeRatio(borderRatio)}. Both below ${LUMINANCE_GAP_THRESHOLD}x luminance gap. Verify shape redundancy in consuming components (and add "${key}" to SHAPE_REDUNDANCY_WAIVERS with a citation) OR re-hue one bundle.`,
+              describePairFailure(result, first, second, fixture.label, key),
             )
             .toBe(true);
         });
@@ -252,41 +378,31 @@ describe('bundle CVD-distinguishability (axis B: luminance gap >=1.4x)', () => {
 
   /*
    * Stale-waiver guard: every entry in SHAPE_REDUNDANCY_WAIVERS must
-   * correspond to a (cascade × pair) that currently fails axis B. If a
-   * palette change closes the gap, the waiver becomes a lie — the test
-   * would pass either way, so the human reading the waivers list would
-   * believe shape redundancy is load-bearing when in fact luminance has
-   * taken over. Force the waiver entry to be deleted when no longer needed.
+   * correspond to a (cascade × pair) that currently fails BOTH axes. If
+   * a palette change closes a gap on either axis, the waiver becomes a
+   * lie — the test would pass either way, so a human reading the waivers
+   * list would believe shape redundancy is load-bearing when in fact
+   * luminance or hue separation has taken over. Force the waiver entry
+   * to be deleted when no longer needed.
    */
   describe('waiver hygiene', () => {
-    it('every documented waiver corresponds to a pair that fails the luminance gap today', () => {
+    it('every documented waiver corresponds to a pair that fails both axes today', () => {
       const reachableFailingKeys = new Set<string>();
       for (const fixture of FIXTURES) {
         const block = extractBlock(BUNDLES_CSS, fixture.selector);
         const declarations = parseDeclarations(block);
         for (const [first, second] of statePairs()) {
-          const firstBgRaw = getSlot(declarations, first, 'bg');
-          const secondBgRaw = getSlot(declarations, second, 'bg');
-          const firstBorderRaw = getSlot(declarations, first, 'border');
-          const secondBorderRaw = getSlot(declarations, second, 'border');
-          if (
-            firstBgRaw === null ||
-            secondBgRaw === null ||
-            firstBorderRaw === null ||
-            secondBorderRaw === null
-          ) {
+          const colors = resolvePairColors(
+            declarations,
+            fixture.pageBg,
+            first,
+            second,
+          );
+          if (colors === null) {
             continue;
           }
-          const firstBg = compositeOverBg(firstBgRaw, fixture.pageBg);
-          const secondBg = compositeOverBg(secondBgRaw, fixture.pageBg);
-          const firstBorder = resolveFg(firstBorderRaw);
-          const secondBorder = resolveFg(secondBorderRaw);
-          const bgRatio = luminanceRatio(firstBg, secondBg);
-          const borderRatio = luminanceRatio(firstBorder, secondBorder);
-          if (
-            bgRatio < LUMINANCE_GAP_THRESHOLD &&
-            borderRatio < LUMINANCE_GAP_THRESHOLD
-          ) {
+          const result = evaluatePair(colors);
+          if (!result.passesAxisA && !result.passesAxisB) {
             reachableFailingKeys.add(
               waiverKey(fixture.selector, first, second),
             );
@@ -300,36 +416,9 @@ describe('bundle CVD-distinguishability (axis B: luminance gap >=1.4x)', () => {
       expect
         .soft(
           stale,
-          `Stale waivers (pair now clears ${LUMINANCE_GAP_THRESHOLD}x gap; drop from SHAPE_REDUNDANCY_WAIVERS): ${stale.join(', ')}`,
+          `Stale waivers (pair now passes axis A or axis B; drop from SHAPE_REDUNDANCY_WAIVERS): ${stale.join(', ')}`,
         )
         .toEqual([]);
     });
   });
 });
-
-/*
- * Future work — axis A (CVD-hue distinctness)
- * ===========================================
- *
- * Axis A requires simulating the four CVD types and checking that the
- * a-channel + b-channel directions in L*a*b* projection remain visibly
- * distinct after simulation. Concrete options:
- *
- *   1. Brettel / Vienot / Mollon dichromatic simulation matrices
- *      (https://daltonlens.org/understanding-cvd-simulation/) — three
- *      3x3 matrices in linear-sRGB for protanopia / deuteranopia /
- *      tritanopia, plus a grayscale projection for monochromatism. Pure
- *      math, no dependencies. Pair-distance metric: delta-E 2000 in
- *      L*a*b* after simulation, with a threshold around 10 (JND) or
- *      higher for state-bundle separation.
- *
- *   2. `culori` (npm, MIT) — already-validated CVD simulation + delta-E
- *      under the hood. Trades a runtime dep for less code.
- *
- *   3. `daltonlens-python` reference implementation — port to TS if more
- *      perceptual fidelity is needed than Brettel offers.
- *
- * When axis A lands, the waivers in SHAPE_REDUNDANCY_WAIVERS need to be
- * re-audited: pairs that survive axis A no longer need shape redundancy,
- * even if they fail axis B.
- */
