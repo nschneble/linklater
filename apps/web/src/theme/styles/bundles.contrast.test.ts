@@ -24,50 +24,30 @@
  *
  * Soft assertions are used so a single run reports every failing pair,
  * not just the first.
+ *
+ * Sister suite: bundles.distinguishability.test.ts encodes the
+ * CVD-distinguishability invariant from feedback-bundle-hue-separation.
+ * Shared color parsing + WCAG helpers live in bundles-color-utils.ts.
  */
 
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-
-type Rgb = readonly [number, number, number];
-type Rgba = readonly [number, number, number, number];
-
-const STYLES_DIR = dirname(fileURLToPath(import.meta.url));
-const BUNDLES_CSS = readFileSync(resolve(STYLES_DIR, 'bundles.css'), 'utf8');
-const DEFAULT_CSS = readFileSync(resolve(STYLES_DIR, 'default.css'), 'utf8');
-
-const BUNDLES = [
-  'base',
-  'mount',
-  'orbit',
-  'alert',
-  'warn',
-  'info',
-  'success',
-] as const;
-type Bundle = (typeof BUNDLES)[number];
-
-const CARD_BUNDLES: readonly Bundle[] = [
-  'mount',
-  'orbit',
-  'alert',
-  'warn',
-  'info',
-  'success',
-];
-
-const SLOTS = [
-  'bg',
-  'border',
-  'text',
-  'alt-text',
-  'highlight',
-  'highlight-fg',
-  'highlight-hover',
-] as const;
-type Slot = (typeof SLOTS)[number];
+import {
+  BUNDLES,
+  BUNDLES_CSS,
+  CARD_BUNDLES,
+  DEFAULT_CSS,
+  bundleIsFullyDefined,
+  compositeOverBg,
+  contrastRatio,
+  describeRatio,
+  extractBlock,
+  getSlot,
+  parseColor,
+  parseDeclarations,
+  readPageBg,
+  resolveFg,
+} from './bundles-color-utils';
+import type { Rgb, Slot } from './bundles-color-utils';
 
 const AA_NORMAL = 4.5;
 const AA_NON_TEXT = 3;
@@ -87,134 +67,6 @@ const CONTRACT: readonly ContractPair[] = [
   { fg: 'highlight-fg', bg: 'highlight-hover', threshold: AA_NORMAL },
 ];
 
-function srgbToLinear(channel: number): number {
-  const normalized = channel / 255;
-  if (normalized <= 0.03928) {
-    return normalized / 12.92;
-  }
-  return Math.pow((normalized + 0.055) / 1.055, 2.4);
-}
-
-function relativeLuminance([red, green, blue]: Rgb): number {
-  return (
-    0.2126 * srgbToLinear(red) +
-    0.7152 * srgbToLinear(green) +
-    0.0722 * srgbToLinear(blue)
-  );
-}
-
-function contrastRatio(foreground: Rgb, background: Rgb): number {
-  const foregroundLuminance = relativeLuminance(foreground);
-  const backgroundLuminance = relativeLuminance(background);
-  const lighter = Math.max(foregroundLuminance, backgroundLuminance);
-  const darker = Math.min(foregroundLuminance, backgroundLuminance);
-  return (lighter + 0.05) / (darker + 0.05);
-}
-
-function parseHex(hex: string): Rgb {
-  const normalized = hex.startsWith('#') ? hex.slice(1) : hex;
-  const expanded =
-    normalized.length === 3
-      ? normalized
-          .split('')
-          .map((character) => character + character)
-          .join('')
-      : normalized;
-  if (expanded.length !== 6) {
-    throw new Error(`Cannot parse hex color: ${hex}`);
-  }
-  const red = parseInt(expanded.slice(0, 2), 16);
-  const green = parseInt(expanded.slice(2, 4), 16);
-  const blue = parseInt(expanded.slice(4, 6), 16);
-  return [red, green, blue];
-}
-
-function parseRgb(value: string): Rgba {
-  const match = value.match(
-    /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)(?:[\s,/]+([\d.]+))?\s*\)$/i,
-  );
-  if (!match) {
-    throw new Error(`Cannot parse rgb color: ${value}`);
-  }
-  const red = Number(match[1]);
-  const green = Number(match[2]);
-  const blue = Number(match[3]);
-  const alpha = match[4] === undefined ? 1 : Number(match[4]);
-  return [red, green, blue, alpha];
-}
-
-function parseColor(value: string): Rgba {
-  const trimmed = value.trim();
-  if (trimmed.startsWith('#')) {
-    const [red, green, blue] = parseHex(trimmed);
-    return [red, green, blue, 1];
-  }
-  if (trimmed.toLowerCase().startsWith('rgb')) {
-    return parseRgb(trimmed);
-  }
-  throw new Error(`Unsupported color value: ${trimmed}`);
-}
-
-function compositeOverBg(foreground: Rgba, background: Rgb): Rgb {
-  const alpha = foreground[3];
-  if (alpha >= 1) {
-    return [foreground[0], foreground[1], foreground[2]];
-  }
-  const blend = (channel: number, baseChannel: number): number =>
-    Math.round(alpha * channel + (1 - alpha) * baseChannel);
-  return [
-    blend(foreground[0], background[0]),
-    blend(foreground[1], background[1]),
-    blend(foreground[2], background[2]),
-  ];
-}
-
-function extractBlock(source: string, selector: string): string {
-  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const pattern = new RegExp(`${escaped}\\s*\\{([\\s\\S]*?)\\n\\}`, 'm');
-  const match = source.match(pattern);
-  if (!match) {
-    throw new Error(`Cascade block not found: ${selector}`);
-  }
-  return match[1];
-}
-
-function parseDeclarations(block: string): Map<string, string> {
-  const declarations = new Map<string, string>();
-  const pattern = /--([a-z-]+)\s*:\s*([^;]+);/g;
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(block)) !== null) {
-    declarations.set(match[1], match[2].trim());
-  }
-  return declarations;
-}
-
-function getSlot(
-  declarations: Map<string, string>,
-  bundle: Bundle,
-  slot: Slot,
-): Rgba | null {
-  const value = declarations.get(`${bundle}-${slot}`);
-  if (value === undefined) {
-    return null;
-  }
-  if (value.includes('var(')) {
-    return null;
-  }
-  return parseColor(value);
-}
-
-function bundleIsFullyDefined(
-  declarations: Map<string, string>,
-  bundle: Bundle,
-): boolean {
-  return SLOTS.every((slot) => getSlot(declarations, bundle, slot) !== null);
-}
-
-function resolveFg(value: Rgba): Rgb {
-  return [value[0], value[1], value[2]];
-}
-
 interface CascadeFixture {
   readonly label: string;
   readonly selector: string;
@@ -232,17 +84,6 @@ interface CascadeFixture {
    * on cross-theme worst-case verification).
    */
   readonly checkAdjacency: boolean;
-}
-
-function readPageBg(themeCss: string, selector: string, variable: string): Rgb {
-  const block = extractBlock(themeCss, selector);
-  const declarations = parseDeclarations(block);
-  const bg = declarations.get(variable);
-  if (bg === undefined) {
-    throw new Error(`No --${variable} in ${selector}`);
-  }
-  const color = parseColor(bg);
-  return [color[0], color[1], color[2]];
 }
 
 /*
@@ -337,10 +178,6 @@ const UN_MIGRATED_DARK_BGS: Record<string, string> = {
   'dazed-and-confused': '#2a201d',
   'scanner-darkly': '#0f0b1b',
 };
-
-function describeRatio(ratio: number): string {
-  return `${ratio.toFixed(2)}:1`;
-}
 
 describe('bundle contrast contract', () => {
   for (const fixture of FIXTURES) {

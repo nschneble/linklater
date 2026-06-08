@@ -30,6 +30,14 @@
   // suites still pass and ESLint catches obvious issues. Re-including these
   // would surface ~150 errors that need a dedicated test-mock refresh pass
   // before `tsc -b` can stay green. Track that as a separate cleanup.
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+  //
+  // bundles-color-utils.ts is a test-only shared helper (imports node:fs
+  // for parsing bundles.css). Excluded for the same reason — it never
+  // ships in the bundle.
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/theme/styles/bundles-color-utils.ts",
+  ],
   "include": ["src"]
 }

@@ -1,0 +1,228 @@
+/*
+ * Shared color parsing + WCAG luminance helpers for bundle-level tests.
+ *
+ * Extracted from `bundles.contrast.test.ts` when `bundles.distinguishability.test.ts`
+ * landed — both tests parse the same cascade blocks and need the same hex /
+ * rgba / composite math, so the utilities moved here.
+ *
+ * Not a runtime dependency of the app. Tests-only.
+ */
+
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+export type Rgb = readonly [number, number, number];
+export type Rgba = readonly [number, number, number, number];
+
+export const BUNDLES = [
+  'base',
+  'mount',
+  'orbit',
+  'alert',
+  'warn',
+  'info',
+  'success',
+] as const;
+export type Bundle = (typeof BUNDLES)[number];
+
+export const STATE_BUNDLES: readonly Bundle[] = [
+  'alert',
+  'warn',
+  'info',
+  'success',
+];
+
+export const CARD_BUNDLES: readonly Bundle[] = [
+  'mount',
+  'orbit',
+  'alert',
+  'warn',
+  'info',
+  'success',
+];
+
+export const SLOTS = [
+  'bg',
+  'border',
+  'text',
+  'alt-text',
+  'highlight',
+  'highlight-fg',
+  'highlight-hover',
+] as const;
+export type Slot = (typeof SLOTS)[number];
+
+const STYLES_DIR = dirname(fileURLToPath(import.meta.url));
+export const BUNDLES_CSS = readFileSync(
+  resolve(STYLES_DIR, 'bundles.css'),
+  'utf8',
+);
+export const DEFAULT_CSS = readFileSync(
+  resolve(STYLES_DIR, 'default.css'),
+  'utf8',
+);
+
+function srgbToLinear(channel: number): number {
+  const normalized = channel / 255;
+  if (normalized <= 0.03928) {
+    return normalized / 12.92;
+  }
+  return Math.pow((normalized + 0.055) / 1.055, 2.4);
+}
+
+export function relativeLuminance([red, green, blue]: Rgb): number {
+  return (
+    0.2126 * srgbToLinear(red) +
+    0.7152 * srgbToLinear(green) +
+    0.0722 * srgbToLinear(blue)
+  );
+}
+
+export function contrastRatio(foreground: Rgb, background: Rgb): number {
+  const foregroundLuminance = relativeLuminance(foreground);
+  const backgroundLuminance = relativeLuminance(background);
+  const lighter = Math.max(foregroundLuminance, backgroundLuminance);
+  const darker = Math.min(foregroundLuminance, backgroundLuminance);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/*
+ * Symmetric luminance ratio — used for distinguishability checks where the
+ * "+0.05" offset of contrastRatio is wrong (it models text/bg perception, not
+ * surface-vs-surface separability). Two surfaces with identical luminance
+ * have a luminance ratio of exactly 1.
+ */
+export function luminanceRatio(first: Rgb, second: Rgb): number {
+  const firstLuminance = relativeLuminance(first);
+  const secondLuminance = relativeLuminance(second);
+  const lighter = Math.max(firstLuminance, secondLuminance);
+  const darker = Math.min(firstLuminance, secondLuminance);
+  if (darker === 0) {
+    return Infinity;
+  }
+  return lighter / darker;
+}
+
+function parseHex(hex: string): Rgb {
+  const normalized = hex.startsWith('#') ? hex.slice(1) : hex;
+  const expanded =
+    normalized.length === 3
+      ? normalized
+          .split('')
+          .map((character) => character + character)
+          .join('')
+      : normalized;
+  if (expanded.length !== 6) {
+    throw new Error(`Cannot parse hex color: ${hex}`);
+  }
+  const red = parseInt(expanded.slice(0, 2), 16);
+  const green = parseInt(expanded.slice(2, 4), 16);
+  const blue = parseInt(expanded.slice(4, 6), 16);
+  return [red, green, blue];
+}
+
+function parseRgb(value: string): Rgba {
+  const match = value.match(
+    /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)(?:[\s,/]+([\d.]+))?\s*\)$/i,
+  );
+  if (!match) {
+    throw new Error(`Cannot parse rgb color: ${value}`);
+  }
+  const red = Number(match[1]);
+  const green = Number(match[2]);
+  const blue = Number(match[3]);
+  const alpha = match[4] === undefined ? 1 : Number(match[4]);
+  return [red, green, blue, alpha];
+}
+
+export function parseColor(value: string): Rgba {
+  const trimmed = value.trim();
+  if (trimmed.startsWith('#')) {
+    const [red, green, blue] = parseHex(trimmed);
+    return [red, green, blue, 1];
+  }
+  if (trimmed.toLowerCase().startsWith('rgb')) {
+    return parseRgb(trimmed);
+  }
+  throw new Error(`Unsupported color value: ${trimmed}`);
+}
+
+export function compositeOverBg(foreground: Rgba, background: Rgb): Rgb {
+  const alpha = foreground[3];
+  if (alpha >= 1) {
+    return [foreground[0], foreground[1], foreground[2]];
+  }
+  const blend = (channel: number, baseChannel: number): number =>
+    Math.round(alpha * channel + (1 - alpha) * baseChannel);
+  return [
+    blend(foreground[0], background[0]),
+    blend(foreground[1], background[1]),
+    blend(foreground[2], background[2]),
+  ];
+}
+
+export function resolveFg(value: Rgba): Rgb {
+  return [value[0], value[1], value[2]];
+}
+
+export function extractBlock(source: string, selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`${escaped}\\s*\\{([\\s\\S]*?)\\n\\}`, 'm');
+  const match = source.match(pattern);
+  if (!match) {
+    throw new Error(`Cascade block not found: ${selector}`);
+  }
+  return match[1];
+}
+
+export function parseDeclarations(block: string): Map<string, string> {
+  const declarations = new Map<string, string>();
+  const pattern = /--([a-z-]+)\s*:\s*([^;]+);/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(block)) !== null) {
+    declarations.set(match[1], match[2].trim());
+  }
+  return declarations;
+}
+
+export function getSlot(
+  declarations: Map<string, string>,
+  bundle: Bundle,
+  slot: Slot,
+): Rgba | null {
+  const value = declarations.get(`${bundle}-${slot}`);
+  if (value === undefined) {
+    return null;
+  }
+  if (value.includes('var(')) {
+    return null;
+  }
+  return parseColor(value);
+}
+
+export function bundleIsFullyDefined(
+  declarations: Map<string, string>,
+  bundle: Bundle,
+): boolean {
+  return SLOTS.every((slot) => getSlot(declarations, bundle, slot) !== null);
+}
+
+export function readPageBg(
+  themeCss: string,
+  selector: string,
+  variable: string,
+): Rgb {
+  const block = extractBlock(themeCss, selector);
+  const declarations = parseDeclarations(block);
+  const value = declarations.get(variable);
+  if (value === undefined) {
+    throw new Error(`No --${variable} in ${selector}`);
+  }
+  const color = parseColor(value);
+  return [color[0], color[1], color[2]];
+}
+
+export function describeRatio(ratio: number): string {
+  return `${ratio.toFixed(2)}:1`;
+}
