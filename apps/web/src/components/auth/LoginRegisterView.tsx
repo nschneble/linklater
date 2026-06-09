@@ -124,6 +124,7 @@ export default function LoginRegisterView({
               id="auth-email"
               ref={emailReference}
               type="email"
+              surface="mount"
               autoComplete="email"
               onChange={(event) => onEmailChange(event.target.value)}
               value={email}
@@ -141,6 +142,7 @@ export default function LoginRegisterView({
               id="auth-password"
               ref={passwordReference}
               type="password"
+              surface="mount"
               autoComplete={
                 mode === 'login' ? 'current-password' : 'new-password'
               }

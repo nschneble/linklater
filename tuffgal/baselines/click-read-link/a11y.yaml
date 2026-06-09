@@ -34,4 +34,9 @@
     - button "Mark unread"
     - link "Test Link 1 — example.test, opens in new tab":
       - /url: https://example.test/read/1
+    - paragraph: Test Link 1
+    - paragraph: example.test
+    - button "Mark unread"
+    - link "Test Link 1 — example.test, opens in new tab":
+      - /url: https://example.test/1
   - status

@@ -101,7 +101,7 @@ export default function LinksToolbar({
       <div className="flex items-center gap-2 mt-3 sm:mt-4 mb-3">
         <input
           ref={searchInputReference}
-          className="flex-1 min-w-0 px-3 py-2 bg-[var(--base-input-bg)] border border-[var(--base-border)] text-[var(--base-text)] text-sm placeholder:text-[var(--base-alt-text)] focus:outline-none focus:ring focus:ring-[var(--focus-ring)] focus:border-[var(--focus-ring)] rounded-lg"
+          className="flex-1 min-w-0 px-3 py-2 bg-[var(--base-input-bg)] border border-[var(--base-border)] text-[var(--base-text)] text-sm placeholder:text-[var(--base-alt-text)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--focus-ring)] rounded-lg"
           type="search"
           placeholder={
             filter === 'unread' ? 'Search unread links' : 'Search read links'

@@ -5,7 +5,7 @@
   - button "User menu (testing-ui@linklater.test)"
 - main:
   - heading "Theme editor" [level=1]
-  - paragraph: Edit the 49 bundle tokens of the active theme and see changes live. Resets when you navigate away.
+  - paragraph: Edit the 52 bundle tokens of the active theme and see changes live. Resets when you navigate away.
   - combobox "Select theme":
     - option "Apollo 10½"
     - option "A Scanner Darkly" [selected]
@@ -22,7 +22,7 @@
     - button "light"
   - button "Reset all"
   - heading "Colors" [level=2]
-  - paragraph: 7 bundles · 49 tokens
+  - paragraph: 7 bundles · 52 tokens
   - button "Expand all"
   - region "Base Page chrome":
     - heading "Base Page chrome" [level=3]:
@@ -70,6 +70,18 @@
     - textbox "Value for Base highlight hover":
       - /placeholder: "#000000"
       - text: "#f5a878"
+    - textbox "Color picker for Base subtle text": "#bcdc6f"
+    - paragraph: Subtle text
+    - paragraph: "--base-subtle-text"
+    - textbox "Value for Base subtle text":
+      - /placeholder: "#000000"
+      - text: "#bcdc6f"
+    - textbox "Color picker for Base input background": "#201e43"
+    - paragraph: Input background
+    - paragraph: "--base-input-bg"
+    - textbox "Value for Base input background":
+      - /placeholder: "#000000"
+      - text: "#201e43"
   - region "Mount Cards, panels":
     - heading "Mount Cards, panels" [level=3]:
       - button "Mount Cards, panels"
@@ -96,9 +108,9 @@
     - button "Reset Success bundle"
   - heading "Contrast (WCAG 2.1)" [level=2]
   - status:
-    - paragraph: All 32 pairs passing
+    - paragraph: All 33 pairs passing
     - button "Show all" [pressed]
-  - paragraph: No failing pairs. Toggle “Show all” to see all 32 pairs.
+  - paragraph: No failing pairs. Toggle “Show all” to see all 33 pairs.
   - heading "Components" [level=2]
   - heading "Bundles" [level=3]
   - article "base bundle preview":
@@ -137,9 +149,11 @@
     - paragraph: Alt text sample
     - text: Highlight
   - heading "Typography" [level=3]
-  - paragraph: Primary text
-  - paragraph: Muted — labels and captions
-  - paragraph: Subtle — hints and URLs
+  - paragraph: Card primary
+  - paragraph: Card alt — labels, captions, helper hints
+  - paragraph: Page primary
+  - paragraph: Page alt — section nav, descriptions
+  - paragraph: Page subtle — kbd legends, chevrons, hints
   - heading "Buttons" [level=3]
   - button "Add link"
   - button "Stumble!"

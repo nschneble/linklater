@@ -107,6 +107,7 @@ export default function ResetPasswordPage() {
             <FormInput
               id="reset-password"
               type="password"
+              surface="mount"
               autoComplete="new-password"
               onChange={(event) => setPassword(event.target.value)}
               value={password}
@@ -123,6 +124,7 @@ export default function ResetPasswordPage() {
             <FormInput
               id="reset-confirm"
               type="password"
+              surface="mount"
               autoComplete="new-password"
               onChange={(event) => setConfirm(event.target.value)}
               value={confirm}

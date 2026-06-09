@@ -83,6 +83,7 @@ export default function MfaView({
           id={isRecovery ? 'mfa-recovery-code' : 'mfa-totp-code'}
           ref={mfaInputReference}
           type="text"
+          surface="mount"
           inputMode={isRecovery ? 'text' : 'numeric'}
           autoComplete={isRecovery ? 'off' : 'one-time-code'}
           maxLength={isRecovery ? undefined : 7}

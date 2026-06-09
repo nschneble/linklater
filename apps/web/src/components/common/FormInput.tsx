@@ -12,12 +12,13 @@ import { forwardRef, type InputHTMLAttributes } from 'react';
  * using `htmlFor` / `id` or by wrapping the input in a `<label>`.
  *
  * The `surface` prop selects between the base bundle (page chrome, default)
- * and the mount bundle (cards / settings panels). Auth pages and the link
- * form sit on page chrome — they take the default. Forms rendered inside a
- * `SettingsGroup` card pass `surface="mount"`. Picking the right surface
- * keeps the input's fill, border, text, and placeholder colors coherent with
- * the host surface and satisfies the bundle-contrast contract verified in
- * `bundles.contrast.test.ts` (input bundle contract describe block).
+ * and the mount bundle (cards / settings panels). Forms rendered inside a
+ * `SettingsGroup` or `AuthCard` pass `surface="mount"`. Inputs rendered
+ * directly on the page (e.g. `TokenInput` in ApiDocs, the `LinkForm`) take
+ * the default. Picking the right surface keeps the input's fill, border,
+ * text, and placeholder colors coherent with the host surface and satisfies
+ * the bundle-contrast contract verified in `bundles.contrast.test.ts`
+ * (input bundle contract describe block).
  */
 interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
   /** Which bundle surface hosts this input. Defaults to `'base'`. */

@@ -199,7 +199,7 @@
 
 /* Modal backdrop. Single source of truth for the universal scrim used
  * by every overlay (WelcomeModal, KeyboardShortcutsModal, LinksView
- * bulk-action sheet, MobileBottomSheet). Today the literal value is
+ * link-form backdrop, MobileBottomSheet). Today the literal value is
  * theme-independent; promote to `var(--scrim, rgb(0 0 0 / 0.5))` when
  * a theme needs to opt out. */
 @utility scrim {

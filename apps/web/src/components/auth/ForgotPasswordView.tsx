@@ -57,6 +57,7 @@ export default function ForgotPasswordView({
             id="forgot-email"
             ref={emailReference}
             type="email"
+            surface="mount"
             autoComplete="email"
             onChange={(event) => onEmailChange(event.target.value)}
             value={email}

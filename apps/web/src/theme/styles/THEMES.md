@@ -5,8 +5,8 @@ token systems are active:
 
 ## 1. Flat tokens (legacy, all 10 themes)
 
-Each theme variant defines 10 flat color variables that the bulk of the
-UI still reads:
+Each theme variant defines 10 flat color variables that the un-migrated
+parts of the UI still read:
 
 | Variable         | Purpose                                                     |
 | ---------------- | ----------------------------------------------------------- |
@@ -21,14 +21,14 @@ UI still reads:
 | `--accent-hover` | Accent hover state                                          |
 | `--accent-fg`    | Foreground text on accent-colored backgrounds               |
 
-`--bg-input` was retired in wave 23 of the theme refactor. Form input
-backgrounds now live on the bundle slots `--base-input-bg` and
-`--mount-input-bg` (see Section 2 below).
+`--bg-input` was retired in wave 23. Form input backgrounds now live on
+the bundle slots `--base-input-bg` and `--mount-input-bg` — see
+Section 2.
 
-## 2. Color bundles (in-progress migration)
+## 2. Color bundles (all 10 themes migrated)
 
-A **bundle** is a complete palette for one kind of UI surface. The system
-exposes seven bundles, each carrying five values:
+A **bundle** is a complete palette for one kind of UI surface. The seven
+bundles map onto the UI's narrative surfaces:
 
 | Bundle    | Where it's used         |
 | --------- | ----------------------- |
@@ -40,60 +40,97 @@ exposes seven bundles, each carrying five values:
 | `info`    | Tips, hints             |
 | `success` | Verified badges, toasts |
 
-For bundle `X` the variables are `--X-bg`, `--X-border`, `--X-text`,
-`--X-alt-text`, and `--X-highlight`. See `bundles.css` for the full
-definition. Bundle tokens that aren't theme-overridden fall through to
-sensible defaults: `base`/`mount`/`orbit` track the flat
-`--bg`/`--bg-surface`/`--bg-elevated`, and `alert`/`warn`/`info`/`success`
-use neutral rose/amber/blue/emerald hues with a light/dark switch.
+For bundle `X` the slots are `--X-bg`, `--X-border`, `--X-text`,
+`--X-alt-text`, `--X-highlight`, `--X-highlight-fg`, and
+`--X-highlight-hover`. `bundles.css` is the source of truth — its
+preamble documents the per-slot WCAG contracts and the highlight-fg /
+hover pair contract.
 
-Per-theme bundle palettes shipped so far:
+Three slots are bundle-restricted:
 
-- `school-of-rock` (pilot — both modes)
-- `apollo-10-1-2` (CVD-mandated — both modes)
+- `--base-subtle-text` — lowest-emphasis page-chrome text (kbd legends,
+  hints, chevrons). Base bundle only.
+- `--base-input-bg`, `--mount-input-bg` — per-surface form-input fill.
+  Base and mount bundles only; orbit and state bundles don't host inputs.
 
-The remaining 8 themes use the default bundle palettes until each is
-migrated.
+All 10 themes ship per-theme bundle palettes. The default cascade in
+`bundles.css :root` exists as a fallback for the synthetic "no theme
+set" case and to alias bundle slots onto the flat tokens for any code
+path that runs before a theme attribute is set on `<html>`.
 
 ### Bundle contrast targets (WCAG 2.2)
 
 When tuning a per-theme bundle palette, every pair must clear:
 
-- `--X-text` and `--X-alt-text` on `--X-bg`: **AA** (≥ 4.5 : 1)
-- `--X-border` and `--X-highlight` on `--X-bg`: **3 : 1** (SC 1.4.11)
-- `--X-border` on `--base-bg` (when the bundle renders as a card on the
-  page): **3 : 1** — the most-missed check
+- `--X-text`, `--X-alt-text`, `--base-subtle-text` on `--X-bg`: **AA**
+  (≥ 4.5 : 1, SC 1.4.3)
+- `--X-border`, `--X-highlight` on `--X-bg`: **3 : 1** (SC 1.4.11)
+- `--X-highlight-fg` on `--X-highlight` AND on `--X-highlight-hover`:
+  **AA** (≥ 4.5 : 1, SC 1.4.3) — same fg legible through hover
+- `--X-border` on `--base-bg` for card-style bundles (mount, orbit,
+  alert, warn, info, success): **3 : 1** — the most-missed check
+- `--X-text`, `--X-alt-text`, `--X-border` on `--X-input-bg` for base
+  and mount: **AA / AA / 3 : 1** (input contract added wave 22b)
 
-Verify per-pair with a contrast calculator; visually eyeballing borders
-fails reliably.
+`bundles.contrast.test.ts` mechanizes every contract above for every
+shipped theme. Eyeballing borders fails reliably — let the test catch
+drift.
 
-## Contrast targets
+## 3. Universal focus ring (`--focus-ring`)
 
-When adding or tuning a theme, meet these WCAG thresholds:
+Every theme variant defines `--focus-ring` — a single slot driving the
+`:focus-visible` ring color across all surfaces. Aliased to `--accent`
+on every theme today except apollo-10-1-2 dark, where the default
+accent collapses against `--orbit-bg` and an explicit hex is used.
+Per-bundle overrides via the consumer-side pattern
+(`--focus-ring-on-{bundle}`) are supported but currently unused —
+culori verification (wave 21) confirms the universal value clears 3 : 1
+against every surface.
+
+## 4. The `surface` prop pattern
+
+Several common components (`FormInput`, `SlidingTabBar`, `TabButton`)
+expose a `surface` prop that selects which bundle's tokens drive the
+component's colors. The pattern keeps a component's fill / border /
+text coherent with the bundle it visually sits on:
+
+- `surface="base"` — page chrome (default for `FormInput`)
+- `surface="mount"` — inside a card (default for `SlidingTabBar` and
+  `TabButton`; used by every settings-form `FormInput`)
+- `surface="orbit"` — inside a lifted menu or a tab bar nested in a
+  card (used by `LoginRegisterView` inside `AuthCard`)
+
+Picking the wrong surface breaks the bundle-contrast contract — the
+component reads tokens validated against the wrong bg. When adding a
+new bundle-aware component, follow this pattern and add a clause to
+`bundles.contrast.test.ts` if a new fg/bg pair is introduced.
+
+## 5. Apollo 10½ CVD palette
+
+Apollo's CVD-distinguishable status colors live in the standard bundle
+cascade, not in per-component overrides. The palette is hand-tuned to
+satisfy the bundle distinguishability contract without any
+`SHAPE_REDUNDANCY_WAIVERS` entries — every state-pair passes axis A
+(dE2000 ≥ 10 under all three dichromacies) or axis B (luminance gap
+≥ 1.4×).
+
+## Flat-token contrast targets
+
+When adding or tuning a theme, the legacy flat tokens must also meet:
 
 - `--text` and `--text-muted` on `--bg` / `--bg-surface`: **AAA**
   (≥ 7 : 1 for normal text, ≥ 4.5 : 1 for large text)
 - `--accent-fg` on `--accent` and `--accent-hover`: **AA**
-  (≥ 4.5 : 1 for normal text)
+  (≥ 4.5 : 1)
 
-Verify with any WCAG contrast checker (e.g. https://webaim.org/resources/contrastchecker/).
-The `--text-subtle` token is intentionally lower-contrast — it is
-used only for de-emphasized metadata (URLs, hints, dividers), not
-primary readable content.
+`--text-subtle` is intentionally lower-contrast — it is used only for
+de-emphasized metadata (URLs, hints, dividers), never for primary
+readable content.
 
 ## `swatchIcon` field
 
 Every entry in the `THEMES` array (defined in
 `apps/web/src/theme/ThemeContext.tsx`) carries a `swatchIcon` field — a
-Font Awesome class name (e.g. `fa-rocket`) that is overlaid on the accent
-color dot in the theme picker for quick visual identification without
-relying on color alone.
-
-## Apollo 10½ CVD palette
-
-Apollo's CVD-distinguishable status colors now live in the standard
-bundle cascade (`bundles.css`), not in per-component overrides. The
-palette is hand-tuned to satisfy the bundle distinguishability contract
-without any `SHAPE_REDUNDANCY_WAIVERS` entries — every state-pair passes
-axis A (dE2000 ≥ 10 under all three dichromacies) or axis B (luminance
-gap ≥ 1.4x).
+Font Awesome class name (e.g. `fa-rocket`) overlaid on the accent color
+dot in the theme picker, so the picker stays usable without relying on
+color alone.

@@ -92,9 +92,11 @@ const SLOT_LABELS: Record<Slot | BaseOnlySlot | BaseAndMountOnlySlot, string> =
   };
 
 /**
- * 52 bundle tokens (7 bundles × 7 slots + 1 base-only `subtle-text` slot
- * + 2 base/mount `input-bg` slots). Each theme defines values for these
- * in `bundles.css`; the editor exposes them as overrides.
+ * 52 bundle tokens the editor can override (7 bundles × 7 slots = 49,
+ * plus 1 base-only `subtle-text` slot + 2 base/mount `input-bg` slots).
+ * Per-bundle, `bundles.css` may declare fewer — base/mount/orbit omit
+ * `highlight-fg` / `highlight-hover`. The editor still exposes overrides
+ * for those so users can add them.
  */
 export const EDITABLE_VARS = [
   ...BUNDLES.flatMap((bundle) =>
