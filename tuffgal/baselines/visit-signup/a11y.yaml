@@ -12,3 +12,4 @@
   - button "Sign up with magic link"
 - text: or continue with
 - button "Continue with Google"
+- status
