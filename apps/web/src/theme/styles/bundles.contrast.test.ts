@@ -187,6 +187,16 @@ const BEFORE_SUNSET_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='before-sunset'][data-mode='dark']",
   'base-bg',
 );
+const BEFORE_SUNRISE_LIGHT_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='before-sunrise'][data-mode='light']",
+  'base-bg',
+);
+const BEFORE_SUNRISE_DARK_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='before-sunrise'][data-mode='dark']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -297,6 +307,18 @@ const FIXTURES: readonly CascadeFixture[] = [
     pageBg: BEFORE_SUNSET_DARK_PAGE_BG,
     checkAdjacency: true,
   },
+  {
+    label: 'before-sunrise light',
+    selector: "[data-theme='before-sunrise'][data-mode='light']",
+    pageBg: BEFORE_SUNRISE_LIGHT_PAGE_BG,
+    checkAdjacency: true,
+  },
+  {
+    label: 'before-sunrise dark',
+    selector: "[data-theme='before-sunrise'][data-mode='dark']",
+    pageBg: BEFORE_SUNRISE_DARK_PAGE_BG,
+    checkAdjacency: true,
+  },
 ];
 
 /*
@@ -316,13 +338,10 @@ const FIXTURES: readonly CascadeFixture[] = [
  * uses bespoke grayscale overrides in components rather than the
  * cascade.
  */
-const UN_MIGRATED_LIGHT_BGS: Record<string, string> = {
-  'before-sunrise': '#f3ecd3',
-};
+const UN_MIGRATED_LIGHT_BGS: Record<string, string> = {};
 
 const UN_MIGRATED_DARK_BGS: Record<string, string> = {
   default: '#0f0b1b',
-  'before-sunrise': '#3c1e0e',
 };
 
 describe('bundle contrast contract', () => {
@@ -414,57 +433,69 @@ describe('bundle contrast contract', () => {
     const darkBlock = extractBlock(BUNDLES_CSS, "[data-mode='dark']");
     const darkDeclarations = parseDeclarations(darkBlock);
 
-    describe(':root (light) borders', () => {
-      for (const bundle of CARD_BUNDLES) {
-        const border = getSlot(lightDeclarations, bundle, 'border');
-        if (border === null) {
-          continue;
+    /*
+     * Guard each cross-theme describe block on the corresponding UN_MIGRATED
+     * map being non-empty. When the last un-migrated theme in a mode is
+     * migrated to its own bundle cascade (covered by FIXTURES above), the
+     * map empties out and this block would otherwise register a parent
+     * describe with no `it` children — vitest treats that as a failure.
+     * Skip the whole sub-suite when there's nothing left to check.
+     */
+    if (Object.keys(UN_MIGRATED_LIGHT_BGS).length > 0) {
+      describe(':root (light) borders', () => {
+        for (const bundle of CARD_BUNDLES) {
+          const border = getSlot(lightDeclarations, bundle, 'border');
+          if (border === null) {
+            continue;
+          }
+
+          for (const [theme, bg] of Object.entries(UN_MIGRATED_LIGHT_BGS)) {
+            const pageBg = resolveFg(parseColor(bg));
+
+            it(`${bundle}-border on ${theme} --bg #${bg.slice(1)} >= 3:1`, () => {
+              const ratio = contrastRatio(resolveFg(border), pageBg);
+              expect
+                .soft(
+                  ratio,
+                  `${bundle}-border on ${theme} light --bg ${bg}: got ${describeRatio(ratio)}`,
+                )
+                .toBeGreaterThanOrEqual(AA_NON_TEXT);
+            });
+          }
         }
+      });
+    }
 
-        for (const [theme, bg] of Object.entries(UN_MIGRATED_LIGHT_BGS)) {
-          const pageBg = resolveFg(parseColor(bg));
+    if (Object.keys(UN_MIGRATED_DARK_BGS).length > 0) {
+      describe("[data-mode='dark'] borders", () => {
+        for (const bundle of CARD_BUNDLES) {
+          const border = getSlot(darkDeclarations, bundle, 'border');
+          if (border === null) {
+            continue;
+          }
 
-          it(`${bundle}-border on ${theme} --bg #${bg.slice(1)} >= 3:1`, () => {
-            const ratio = contrastRatio(resolveFg(border), pageBg);
-            expect
-              .soft(
-                ratio,
-                `${bundle}-border on ${theme} light --bg ${bg}: got ${describeRatio(ratio)}`,
-              )
-              .toBeGreaterThanOrEqual(AA_NON_TEXT);
-          });
+          for (const [theme, bg] of Object.entries(UN_MIGRATED_DARK_BGS)) {
+            const pageBg = resolveFg(parseColor(bg));
+            /*
+             * Dark-mode bundle bgs are alpha-on-page (e.g.
+             * `rgb(76 5 25 / 0.4)`). The card-border itself is opaque, so
+             * the page-bg adjacency check uses the raw theme --bg with no
+             * composite — the border sits on top of the page surface, not
+             * the bundle bg.
+             */
+
+            it(`${bundle}-border on ${theme} dark --bg #${bg.slice(1)} >= 3:1`, () => {
+              const ratio = contrastRatio(resolveFg(border), pageBg);
+              expect
+                .soft(
+                  ratio,
+                  `${bundle}-border on ${theme} dark --bg ${bg}: got ${describeRatio(ratio)}`,
+                )
+                .toBeGreaterThanOrEqual(AA_NON_TEXT);
+            });
+          }
         }
-      }
-    });
-
-    describe("[data-mode='dark'] borders", () => {
-      for (const bundle of CARD_BUNDLES) {
-        const border = getSlot(darkDeclarations, bundle, 'border');
-        if (border === null) {
-          continue;
-        }
-
-        for (const [theme, bg] of Object.entries(UN_MIGRATED_DARK_BGS)) {
-          const pageBg = resolveFg(parseColor(bg));
-          /*
-           * Dark-mode bundle bgs are alpha-on-page (e.g.
-           * `rgb(76 5 25 / 0.4)`). The card-border itself is opaque, so
-           * the page-bg adjacency check uses the raw theme --bg with no
-           * composite — the border sits on top of the page surface, not
-           * the bundle bg.
-           */
-
-          it(`${bundle}-border on ${theme} dark --bg #${bg.slice(1)} >= 3:1`, () => {
-            const ratio = contrastRatio(resolveFg(border), pageBg);
-            expect
-              .soft(
-                ratio,
-                `${bundle}-border on ${theme} dark --bg ${bg}: got ${describeRatio(ratio)}`,
-              )
-              .toBeGreaterThanOrEqual(AA_NON_TEXT);
-          });
-        }
-      }
-    });
+      });
+    }
   });
 });

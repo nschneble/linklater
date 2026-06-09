@@ -1586,3 +1586,204 @@
   --success-highlight-fg: #04140e;
   --success-highlight-hover: #bce8d4;
 }
+
+/* ---------- before-sunrise ---------- *
+ * Wave 15 migration to per-theme bundle palette. The legacy flat tokens
+ * (in before-sunrise.css) stay intact for un-migrated consumers.
+ *
+ * APOLLO-CLASS WARM-ONLY theme (sister to before-sunset wave 14). PRD-
+ * allowed hues are rust + amber-gold; no greens, no blues. State bundles
+ * need PRD breaks for info (purple) and success (emerald light / cream-
+ * mint dark) to carry the conventional categorical signal under CVD —
+ * hit-man wave 13 / Apollo wave 8 / scanner-darkly wave 12 / before-
+ * sunset wave 14 precedent.
+ *
+ * Card-style choice: calm path. Mount/orbit bgs are calm cream gradations
+ * off the page bg in light mode and warm brown gradations off the dark
+ * page bg in dark mode — keeps the surface stack quiet so state bundles
+ * do the categorical work.
+ *
+ * Critical divergence from before-sunset wave 14: DARK page-bg #3c1e0e
+ * (rel lum ~0.019) sits ABOVE the 0.005 alpha-lift threshold (vs before-
+ * sunset's #050404 at ~0.0007). Standard alpha 0.55 holds — no alpha
+ * lift to 0.65 needed. See feedback-warm-only-theme-template move #5.
+ *
+ * Brief / a11y-lead verification (a11y-lead disclosed no culori in their
+ * reasoning loop — culori-verified independently per feedback-verify-
+ * upstream-gate-claims):
+ *   - Brief's LIGHT base-highlight #8a4520 razor (4.6:1 vs hl-fg) estimate
+ *     wrong; verified 7.11:1 — comfortable headroom. M-L3 NOT applied.
+ *   - Brief's DARK orbit-border #e09060 vs orbit-bg #5a3422 razor (3.2:1)
+ *     estimate also conservative; verified 4.27:1. M-D2 NOT applied;
+ *     unified base/mount/orbit border preserved for surface-stack
+ *     coherence.
+ *   - LIGHT alert/warn tritan border briefed at 9.8 razor — verified 9.8
+ *     dE (under threshold) but axis B bg lum 1.43 clears 1.4 gate. M-L1
+ *     NOT needed.
+ *   - DARK alert/warn tritan border briefed at 7.7 — verified 7.7 dE
+ *     (under threshold) but axis B bg lum 1.56 clears. M-D1/M-D3 NOT
+ *     needed.
+ *   - DARK alert/info axis B fails (bg lum 1.27, border lum 1.14) but
+ *     axis A clears under all three dichromacies (min tritan bg dE 11.8).
+ *     Pair passes via axis A.
+ *
+ * Cleanest template application yet — three modules of the warm-only
+ * Apollo-class shape have now shipped (before-sunset, this wave), and
+ * this is the first to need ZERO staged mitigations. Template is
+ * production-ready per feedback-warm-only-theme-template.
+ *
+ * Intentional palette breaks vs before-sunrise.css flat tokens / PRD:
+ *   - LIGHT --info bundle = PURPLE (Apollo-class PRD break; orchestrator
+ *     picked Option A / template purple over Option B / PRD slate-blue
+ *     #677d8e — slate desaturates under deuter, can't anchor the cool
+ *     end of the categorical palette).
+ *   - LIGHT --success bundle = EMERALD (Apollo-class PRD break; warm-only
+ *     PRD palette has no green).
+ *   - LIGHT --alert-bg #e4c4a8 pre-darkened (canonical 5x precedent:
+ *     scanner-darkly / hit-man / dazed-and-confused / boyhood / before-
+ *     sunset) to close the alert/warn bg axis B that would otherwise
+ *     collapse on the warm-only palette. Verified bg lum 1.43, clears.
+ *   - LIGHT --warn-border #6a4510 NOT PRD-style gold #b8854b (SC 1.4.11
+ *     would fail against warn-bg #f8ecc8).
+ *   - DARK --info bundle = LAVENDER (Apollo-class PRD break).
+ *   - DARK --success bundle = CREAM-MINT (Apollo-class PRD break;
+ *     before-sunset wave 14 precedent). High-lum mint cream outruns warn-
+ *     gold under tritanopia.
+ *   - DARK alpha = 0.55 standard (page-bg rel lum 0.019 > 0.005
+ *     threshold; no alpha lift needed unlike before-sunset wave 14).
+ *
+ * No SHAPE_REDUNDANCY_WAIVERS entries needed — both modes clear all six
+ * state pairs on axis A or axis B with zero mitigations applied.
+ */
+[data-theme='before-sunrise'][data-mode='light'] {
+  --base-bg: #f3ecd3;
+  --base-border: #5a3018;
+  --base-text: #1a0e08;
+  --base-alt-text: #341b0d;
+  --base-highlight: #8a4520;
+  --base-highlight-fg: #ffffff;
+  --base-highlight-hover: #6a3415;
+
+  --mount-bg: #e8dcb8;
+  --mount-border: #5a3018;
+  --mount-text: #1a0e08;
+  --mount-alt-text: #341b0d;
+  --mount-highlight: #8a4520;
+  --mount-highlight-fg: #ffffff;
+  --mount-highlight-hover: #6a3415;
+
+  --orbit-bg: #ddcfa0;
+  --orbit-border: #5a3018;
+  --orbit-text: #1a0e08;
+  --orbit-alt-text: #341b0d;
+  --orbit-highlight: #8a4520;
+  --orbit-highlight-fg: #ffffff;
+  --orbit-highlight-hover: #6a3415;
+
+  /* --alert-bg pre-darkened (canonical 5x precedent: scanner-darkly /
+   * hit-man / dazed-and-confused / boyhood / before-sunset) to close
+   * the alert/warn bg axis B on the warm-only palette. */
+  --alert-bg: #e4c4a8;
+  --alert-border: #8a2818;
+  --alert-text: #5a1408;
+  --alert-alt-text: #7a1c10;
+  --alert-highlight: #b02818;
+  --alert-highlight-fg: #ffffff;
+  --alert-highlight-hover: #8a2010;
+
+  --warn-bg: #f8ecc8;
+  --warn-border: #6a4510;
+  --warn-text: #4a3008;
+  --warn-alt-text: #6a4810;
+  --warn-highlight: #6a4510;
+  --warn-highlight-fg: #ffffff;
+  --warn-highlight-hover: #523510;
+
+  /* info — PURPLE (Apollo-class PRD break; orchestrator picked Option A /
+   * template purple over Option B / PRD slate-blue). Carries the cool
+   * anchor that survives CVD vs the warm-only PRD palette. */
+  --info-bg: #e2d8ec;
+  --info-border: #3a2640;
+  --info-text: #1a0e20;
+  --info-alt-text: #3a2640;
+  --info-highlight: #3a2640;
+  --info-highlight-fg: #ffffff;
+  --info-highlight-hover: #2a1a30;
+
+  /* success — EMERALD (Apollo-class PRD break). The warm-only PRD palette
+   * has no green; emerald carries the conventional "green = success"
+   * affordance. */
+  --success-bg: #d8e8d0;
+  --success-border: #1c4028;
+  --success-text: #0a2818;
+  --success-alt-text: #1a3e28;
+  --success-highlight: #1c4028;
+  --success-highlight-fg: #ffffff;
+  --success-highlight-hover: #142e1c;
+}
+
+[data-theme='before-sunrise'][data-mode='dark'] {
+  --base-bg: #3c1e0e;
+  --base-border: #e09060;
+  --base-text: #f3ecd3;
+  --base-alt-text: #e6c89a;
+  --base-highlight: #e8854a;
+  --base-highlight-fg: #1a0e02;
+  --base-highlight-hover: #c46d34;
+
+  --mount-bg: #4c2818;
+  --mount-border: #e09060;
+  --mount-text: #f3ecd3;
+  --mount-alt-text: #e6c89a;
+  --mount-highlight: #e8854a;
+  --mount-highlight-fg: #1a0e02;
+  --mount-highlight-hover: #c46d34;
+
+  --orbit-bg: #5a3422;
+  --orbit-border: #e09060;
+  --orbit-text: #f3ecd3;
+  --orbit-alt-text: #e6c89a;
+  --orbit-highlight: #e8854a;
+  --orbit-highlight-fg: #1a0e02;
+  --orbit-highlight-hover: #c46d34;
+
+  /* dazed-wave-11 / scanner-darkly-wave-12 / hit-man-wave-13 / before-
+   * sunset-wave-14 precedent: punchy hl + dark hl-fg for fill-on-fill
+   * alert buttons. Alpha 0.55 standard (page-bg rel lum 0.019 > 0.005
+   * threshold). */
+  --alert-bg: rgb(80 22 12 / 0.55);
+  --alert-border: #f08868;
+  --alert-text: #f5c8b8;
+  --alert-alt-text: #e8b0a0;
+  --alert-highlight: #ee5050;
+  --alert-highlight-fg: #1c0608;
+  --alert-highlight-hover: #f06868;
+
+  --warn-bg: rgb(82 58 10 / 0.55);
+  --warn-border: #ebb327;
+  --warn-text: #f5dc80;
+  --warn-alt-text: #f0d090;
+  --warn-highlight: #ebb327;
+  --warn-highlight-fg: #1c1408;
+  --warn-highlight-hover: #f5c440;
+
+  /* info — LAVENDER (Apollo-class PRD break). */
+  --info-bg: rgb(40 28 56 / 0.55);
+  --info-border: #b08cd0;
+  --info-text: #e0ccf0;
+  --info-alt-text: #c8b0e0;
+  --info-highlight: #b08cd0;
+  --info-highlight-fg: #1a0e28;
+  --info-highlight-hover: #c4a4dc;
+
+  /* success — CREAM-MINT (Apollo-class PRD break; before-sunset wave 14
+   * precedent). High-luminance mint cream outruns warn-gold under
+   * tritanopia. */
+  --success-bg: rgb(20 50 30 / 0.55);
+  --success-border: #a8e8d0;
+  --success-text: #c0e0d4;
+  --success-alt-text: #a0d0c0;
+  --success-highlight: #a8e8d0;
+  --success-highlight-fg: #04140e;
+  --success-highlight-hover: #bce8d4;
+}
