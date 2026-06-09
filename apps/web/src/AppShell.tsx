@@ -48,10 +48,10 @@ export default function AppShell() {
       </a>
       {isEmailUnverified && (
         <div
-          className="px-4 py-2 bg-[var(--warn-bg)] [[data-theme='nouvelle-vague']_&]:bg-gray-100 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-gray-900/30 border-b border-[var(--warn-border)] [[data-theme='nouvelle-vague']_&]:border-gray-300 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-gray-700/50 text-center"
+          className="px-4 py-2 bg-[var(--warn-bg)] border-b border-[var(--warn-border)] text-center"
           role="status"
         >
-          <p className="text-[var(--warn-text)] [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400 text-xs font-medium">
+          <p className="text-[var(--warn-text)] text-xs font-medium">
             <i
               className="fa-solid fa-triangle-exclamation mr-1.5"
               aria-hidden="true"

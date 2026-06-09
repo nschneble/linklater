@@ -1,5 +1,3 @@
-import { useThemeStyling } from '../../theme/ThemeContext';
-import { resolveThemeClasses, type ThemeClassMap } from '../../lib/styles';
 import type { ReactNode } from 'react';
 
 interface StatusBadgeProps {
@@ -27,49 +25,12 @@ const variantShape: Record<StatusBadgeProps['variant'], string> = {
   info: 'rounded-sm',
 };
 
-const variantClasses: Record<StatusBadgeProps['variant'], ThemeClassMap> = {
-  success: {
-    dark: {
-      default:
-        'bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-text)]',
-      'nouvelle-vague':
-        'bg-[var(--accent)] border-[var(--accent)] text-[var(--accent-fg)] font-medium',
-    },
-    light: {
-      default:
-        'bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-text)]',
-      'nouvelle-vague':
-        'bg-[var(--accent)] border-[var(--accent)] text-[var(--accent-fg)] font-medium',
-    },
-  },
-  warning: {
-    dark: {
-      default:
-        'bg-[var(--warn-bg)] border-[var(--warn-border)] text-[var(--warn-text)]',
-      'nouvelle-vague':
-        'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]',
-    },
-    light: {
-      default:
-        'bg-[var(--warn-bg)] border-[var(--warn-border)] text-[var(--warn-text)]',
-      'nouvelle-vague':
-        'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]',
-    },
-  },
-  info: {
-    dark: {
-      default:
-        'bg-[var(--info-bg)] border-[var(--info-border)] text-[var(--info-text)]',
-      'nouvelle-vague':
-        'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]',
-    },
-    light: {
-      default:
-        'bg-[var(--info-bg)] border-[var(--info-border)] text-[var(--info-text)]',
-      'nouvelle-vague':
-        'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]',
-    },
-  },
+const variantClasses: Record<StatusBadgeProps['variant'], string> = {
+  success:
+    'bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-text)]',
+  warning:
+    'bg-[var(--warn-bg)] border-[var(--warn-border)] text-[var(--warn-text)]',
+  info: 'bg-[var(--info-bg)] border-[var(--info-border)] text-[var(--info-text)]',
 };
 
 /**
@@ -87,18 +48,11 @@ export default function StatusBadge({
   icon,
   children,
 }: StatusBadgeProps) {
-  const { baseTheme, mode } = useThemeStyling();
-
   const resolvedIcon = icon ?? defaultIcons[variant];
-  const resolvedClasses = resolveThemeClasses(
-    variantClasses[variant],
-    mode,
-    baseTheme,
-  );
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 border text-xs ${resolvedClasses} ${variantShape[variant]}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 border text-xs ${variantClasses[variant]} ${variantShape[variant]}`}
     >
       <i className={`${resolvedIcon} text-[0.6rem]`} aria-hidden="true" />
       {children}

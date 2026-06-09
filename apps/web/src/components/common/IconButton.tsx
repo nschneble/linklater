@@ -33,13 +33,13 @@ const variantClasses: Record<
   string
 > = {
   default: `${SMALL_PADDING} hover:bg-[var(--bg-elevated)] disabled:bg-inherit ring-1 ring-[var(--border)] text-[var(--text)] ${FOCUS_RING} disabled:active:scale-100`,
-  danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] [[data-theme='nouvelle-vague']_&]:hover:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague']_&]:ring-[var(--border)] [[data-theme='nouvelle-vague']_&]:text-[var(--text)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:hover:bg-[var(--bg-elevated)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:ring-[var(--border)] [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-[var(--text)] [[data-theme='nouvelle-vague']_&]:focus-visible:ring-[var(--accent)] ${FOCUS_RING_DANGER}`,
+  danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING_DANGER}`,
   // `danger-filled` consumes the alert bundle's highlight slot for both fill
   // and label. The mode-aware bundle flip means dark mode now shows rose-500
   // instead of the legacy rose-600 used in both modes — a deliberate alignment
   // with Alert.tsx and the `danger` variant above, both of which already flip
-  // per --data-mode. Nouvelle Vague stays on --accent as a grayscale theme.
-  'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] [[data-theme='nouvelle-vague']_&]:bg-[var(--accent)] [[data-theme='nouvelle-vague']_&]:hover:bg-[var(--accent-hover)] [[data-theme='nouvelle-vague']_&]:ring-[var(--accent)] [[data-theme='nouvelle-vague']_&]:hover:ring-[var(--accent-hover)] [[data-theme='nouvelle-vague']_&]:text-[var(--accent-fg)] [[data-theme='nouvelle-vague']_&]:focus-visible:ring-[var(--accent)] ${FOCUS_RING_DANGER}`,
+  // per --data-mode.
+  'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER}`,
   ghost: `${SMALL_PADDING} ring-1 ring-[var(--border)] text-[var(--text-muted)] ${FOCUS_RING}`,
   elevated: `pl-3.5 pr-4 py-2 bg-[var(--bg-elevated)] disabled:bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border-shadow hover:border-shadow text-[var(--text)] font-semibold disabled:active:scale-100`,
 };

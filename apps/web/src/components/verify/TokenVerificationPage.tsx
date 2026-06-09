@@ -98,7 +98,7 @@ export default function TokenVerificationPage({
           <>
             <p className="mb-6 text-[var(--text-muted)]">
               <i
-                className="fa-solid fa-circle-check mr-2 text-[var(--success-highlight)] [[data-theme='nouvelle-vague']_&]:text-[var(--accent)]"
+                className="fa-solid fa-circle-check mr-2 text-[var(--success-highlight)]"
                 aria-hidden="true"
               />
               {successText}

@@ -166,6 +166,16 @@ const BEFORE_SUNRISE_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='before-sunrise'][data-mode='dark']",
   'base-bg',
 );
+const NOUVELLE_VAGUE_LIGHT_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='nouvelle-vague'][data-mode='light']",
+  'base-bg',
+);
+const NOUVELLE_VAGUE_DARK_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='nouvelle-vague'][data-mode='dark']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -267,6 +277,16 @@ const FIXTURES: readonly CascadeFixture[] = [
     label: 'before-sunrise dark',
     selector: "[data-theme='before-sunrise'][data-mode='dark']",
     pageBg: BEFORE_SUNRISE_DARK_PAGE_BG,
+  },
+  {
+    label: 'nouvelle-vague light',
+    selector: "[data-theme='nouvelle-vague'][data-mode='light']",
+    pageBg: NOUVELLE_VAGUE_LIGHT_PAGE_BG,
+  },
+  {
+    label: 'nouvelle-vague dark',
+    selector: "[data-theme='nouvelle-vague'][data-mode='dark']",
+    pageBg: NOUVELLE_VAGUE_DARK_PAGE_BG,
   },
 ];
 
@@ -370,6 +390,47 @@ const SHAPE_REDUNDANCY_WAIVERS: ReadonlySet<string> = new Set([
   //   border) but axis A requires ALL three. Other 5 pairs pass via
   //   axis A or axis B unwaived.
   'school-of-rock-dark::info-success',
+
+  // nouvelle-vague (light + dark) — grayscale-by-design theme (PRD
+  // footnote). The whole palette is true neutrals; axis A is definitionally
+  // near-zero (Brettel maps monochromatic → monochromatic) so axis B
+  // (luminance ratio) carries every state-pair separation. State pairs
+  // that share identical hex values collapse both axes and require shape
+  // redundancy from the consuming components:
+  //
+  //   - Alert.tsx renders `error` with fa-circle-exclamation and `success`
+  //     with fa-circle-check unconditionally (not gated by theme). Both
+  //     glyphs ship across every theme; nouvelle-vague's wave-16 .tsx
+  //     cleanup removes the per-theme branch but the unconditional icon
+  //     selection stays — the redundancy citation remains valid.
+  //   - StatusBadge.tsx renders `info` with fa-circle-info + rounded-sm
+  //     pill shape, `warning` with fa-triangle-exclamation + rounded pill,
+  //     and `success` with fa-circle-check + rounded-full pill. All three
+  //     shape/icon combinations are unconditional, so the info-warn
+  //     redundancy holds across every theme including nouvelle-vague.
+  //
+  // Three pairs land here (matches the brief's pre-flight estimate, well
+  // under the 8-12 hedge band):
+  //   light: alert-success — alert/success share #393939 border and #1a1a1a
+  //          highlight by design (no available darker neutral that clears
+  //          WCAG against the bundle bg #ebebeb).
+  //   dark:  alert-success — alert/success share #aaaaaa border by design
+  //          (no available lighter neutral that clears WCAG against the
+  //          composited dark bundle bg).
+  //   dark:  info-warn      — info/warn share #878787 border by design.
+  //
+  // The unwaived light pairs separate via axis B alone:
+  //   alert/warn       border lum 2.22x (#393939 vs #555555)
+  //   alert/info       border lum 3.59x (#393939 vs #6b6b6b)
+  //   warn/info        border lum 1.62x (#555555 vs #6b6b6b — brief flagged
+  //                    as razor 1.41 +0.01, verified 1.62, M-L1 NOT applied)
+  //   warn/success     border lum 2.22x (#555555 vs #393939)
+  //   info/success     border lum 3.59x (#6b6b6b vs #393939)
+  // The unwaived dark pairs each clear axis B at 1.66x via the
+  // #aaaaaa-vs-#878787 border split.
+  'nouvelle-vague-light::alert-success',
+  'nouvelle-vague-dark::alert-success',
+  'nouvelle-vague-dark::info-warn',
 ]);
 
 const CASCADE_SLUGS: Record<string, string> = {
@@ -395,6 +456,8 @@ const CASCADE_SLUGS: Record<string, string> = {
   "[data-theme='before-sunset'][data-mode='dark']": 'before-sunset-dark',
   "[data-theme='before-sunrise'][data-mode='light']": 'before-sunrise-light',
   "[data-theme='before-sunrise'][data-mode='dark']": 'before-sunrise-dark',
+  "[data-theme='nouvelle-vague'][data-mode='light']": 'nouvelle-vague-light',
+  "[data-theme='nouvelle-vague'][data-mode='dark']": 'nouvelle-vague-dark',
 };
 
 function waiverKey(selector: string, first: Bundle, second: Bundle): string {

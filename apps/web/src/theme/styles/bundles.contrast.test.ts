@@ -17,13 +17,14 @@
  * so any regression — a hex tweak that drops below the threshold, a
  * forgotten composite, a typo in an alpha value — surfaces in CI.
  *
- * Nouvelle Vague is intentionally excluded: the whole theme is
- * grayscale by design and uses bespoke per-component overrides rather
- * than the bundle cascade.
- *
  * Apollo migrated to the bundle cascade in wave 8 (CVD-mandated palette
  * verified per-pair against axis A + axis B distinguishability) and is
  * covered by its own FIXTURES entries below.
+ *
+ * Nouvelle Vague migrated in wave 16 (final). The palette is grayscale
+ * by design, so categorical separation between state bundles is carried
+ * by axis B (luminance ratio) plus three SHAPE_REDUNDANCY_WAIVERS entries
+ * documented in the sister suite — see bundles.distinguishability.test.ts.
  *
  * Soft assertions are used so a single run reports every failing pair,
  * not just the first.
@@ -197,6 +198,16 @@ const BEFORE_SUNRISE_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='before-sunrise'][data-mode='dark']",
   'base-bg',
 );
+const NOUVELLE_VAGUE_LIGHT_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='nouvelle-vague'][data-mode='light']",
+  'base-bg',
+);
+const NOUVELLE_VAGUE_DARK_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='nouvelle-vague'][data-mode='dark']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -319,6 +330,18 @@ const FIXTURES: readonly CascadeFixture[] = [
     pageBg: BEFORE_SUNRISE_DARK_PAGE_BG,
     checkAdjacency: true,
   },
+  {
+    label: 'nouvelle-vague light',
+    selector: "[data-theme='nouvelle-vague'][data-mode='light']",
+    pageBg: NOUVELLE_VAGUE_LIGHT_PAGE_BG,
+    checkAdjacency: true,
+  },
+  {
+    label: 'nouvelle-vague dark',
+    selector: "[data-theme='nouvelle-vague'][data-mode='dark']",
+    pageBg: NOUVELLE_VAGUE_DARK_PAGE_BG,
+    checkAdjacency: true,
+  },
 ];
 
 /*
@@ -333,10 +356,11 @@ const FIXTURES: readonly CascadeFixture[] = [
  * theme lands, add it here. If a theme is migrated to its own bundle
  * palette, remove it (its own cascade will be covered by FIXTURES).
  *
- * Apollo + Nouvelle Vague are intentionally excluded: Apollo has its
- * own per-theme bundle cascade (covered by FIXTURES); Nouvelle Vague
- * uses bespoke grayscale overrides in components rather than the
- * cascade.
+ * Apollo + Nouvelle Vague are intentionally excluded: both have their
+ * own per-theme bundle cascades (covered by FIXTURES). After the wave-16
+ * nouvelle-vague migration, every shipped theme has its own cascade —
+ * only `default` remains in the un-migrated dark map (and the un-migrated
+ * light map is empty).
  */
 const UN_MIGRATED_LIGHT_BGS: Record<string, string> = {};
 

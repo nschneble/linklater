@@ -16,32 +16,26 @@ interface SettingsGroupProps {
 }
 
 // The `danger` variant routes through the `alert` bundle (see
-// `theme/styles/bundles.css`). Nouvelle Vague keeps its grayscale overrides
-// inline — same pattern as the AppShell verification banner — until it gets
-// a full bundle palette of its own.
+// `theme/styles/bundles.css`). Every theme — including Nouvelle Vague's
+// grayscale-by-design palette — defines its own bundle cascade.
 const VARIANT_CLASSES = {
-  default:
-    "bg-[var(--bg-surface)] border border-[var(--border)] [[data-theme='nouvelle-vague']_&]:bg-gray-50 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-gray-900/20",
-  danger:
-    "bg-[var(--alert-bg)] [[data-theme='nouvelle-vague']_&]:bg-gray-100 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-gray-900/20 border border-[var(--alert-border)] [[data-theme='nouvelle-vague']_&]:border-gray-300 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-gray-700/50",
+  default: 'bg-[var(--bg-surface)] border border-[var(--border)]',
+  danger: 'bg-[var(--alert-bg)] border border-[var(--alert-border)]',
 } as const;
 
 const HEADING_CLASSES = {
   default: 'text-[var(--text)]',
-  danger:
-    "text-[var(--alert-text)] [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400",
+  danger: 'text-[var(--alert-text)]',
 } as const;
 
 const ICON_CLASSES = {
   default: 'text-[var(--text-subtle)]',
-  danger:
-    "text-[var(--alert-highlight)] [[data-theme='nouvelle-vague']_&]:text-gray-500 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-500",
+  danger: 'text-[var(--alert-highlight)]',
 } as const;
 
 const DESCRIPTION_CLASSES = {
   default: 'text-[var(--text-muted)]',
-  danger:
-    "text-[var(--alert-alt-text)] [[data-theme='nouvelle-vague']_&]:text-gray-600/80 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400/80",
+  danger: 'text-[var(--alert-alt-text)]',
 } as const;
 
 /**

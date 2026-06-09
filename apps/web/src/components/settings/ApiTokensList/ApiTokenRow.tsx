@@ -63,7 +63,7 @@ export default function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
                   className="flex items-center gap-4 shrink-0"
                   ref={confirmReference}
                 >
-                  <span className="text-xs text-[var(--alert-text)] [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400">
+                  <span className="text-xs text-[var(--alert-text)]">
                     Sure?
                   </span>
                   <div className="space-x-2">

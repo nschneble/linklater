@@ -222,7 +222,7 @@ export default function DangerZone() {
             ref={confirmReference}
             className="flex gap-2 items-center justify-between text-xs"
           >
-            <span className="text-[var(--alert-text)] [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400">
+            <span className="text-[var(--alert-text)]">
               Are you sure? This is permanent.
             </span>
             <div className="space-x-2">
