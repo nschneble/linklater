@@ -561,3 +561,177 @@
   --success-highlight-fg: #04140e;
   --success-highlight-hover: #bce8d4;
 }
+
+/* ---------- boyhood ---------- *
+ * Wave 10 migration to per-theme bundle palette. The legacy flat tokens
+ * (in boyhood.css) stay intact for un-migrated consumers.
+ *
+ * State-hue allocation: alert = rust, warn = amber/gold (PRD palette break
+ * from boyhood's mustard-olive #637628 — amber sits in the same family
+ * before-midnight chose for its warn slot and carries the conventional
+ * "yellow = warn" affordance more legibly under CVD), info = cool blue,
+ * success = forest green.
+ *
+ * Intentional palette breaks vs boyhood.css flat tokens:
+ *   - warn uses amber/gold (light #8a6010, dark #ebb327 reused from
+ *     before-midnight's known-good warn hue) instead of mustard-olive,
+ *     for stronger separation from success-green under CVD and the
+ *     conventional yellow=warn affordance.
+ *   - mount/orbit bgs use calmer cream-sand (#dad8a0, #e2dfb0 light;
+ *     #1a2410, #243018 dark) instead of the flat --bg-surface
+ *     (#bcd068) / --bg-elevated (#a8bc48). Apollo precedent: bundle
+ *     bg's are tuned for state-bundle adjacency, not blindly mirrored
+ *     from the flat surface tokens.
+ *
+ * Brief flags that culori verification surfaced (a11y-lead disclosed no
+ * culori in their reasoning loop):
+ *   - LIGHT --alert-border #8a2820 vs page bg #d0cf93 verifies at 3.65:1,
+ *     not the 3.0:1 estimated in the brief. M-L1 NOT needed.
+ *   - LIGHT alert/success collapsed both axes with the briefed
+ *     --success-border #335215 (axis B bg 1.01 / br 1.03; axis A deut
+ *     border dE 3.2). The brief did NOT pre-stage a mitigation for this.
+ *     Resolved by darkening --success-border from #335215 to #1c3608,
+ *     which lifts axis B border luminance ratio to 2.42x against
+ *     --alert-border #8a2820. Side effect: success-border no longer
+ *     unified with base/mount/orbit border (#335215) — acceptable, state
+ *     bundles should stand out. Border still clears SC 1.4.11 vs page bg
+ *     (8.24:1) and vs --success-bg #d8e0b8 (9.66:1). --success-highlight
+ *     and --success-highlight-hover updated to match the new border
+ *     family.
+ *   - DARK warn/success collapsed both axes with the briefed
+ *     --success-border #99ba48 (axis B br 1.18; axis A prot 4.1 deut 7.8
+ *     border) — textbook tritan amber-vs-lime collapse. M-D1 applied:
+ *     --success-border / --success-highlight / --success-alt-text bumped
+ *     to #d0e8a8 (light mint-cream), pushing axis B border to 1.48x. The
+ *     a11y-lead estimate of 1.63x was 9% optimistic but the mitigation
+ *     still clears the 1.4x threshold with 0.08 headroom. --success-text
+ *     stays #d0e8a8 from the briefed palette; --success-alt-text
+ *     collapses to the same value per a11y-lead's M-D1 spec.
+ *
+ * No SHAPE_REDUNDANCY_WAIVERS entries needed — both modes clear all six
+ * state pairs on axis A or axis B post-mitigation.
+ */
+[data-theme='boyhood'][data-mode='light'] {
+  --base-bg: #d0cf93;
+  --base-border: #335215;
+  --base-text: #0d150d;
+  --base-alt-text: #2d3414;
+  --base-highlight: #5a2d29;
+  --base-highlight-fg: #ffffff;
+  --base-highlight-hover: #7a3d35;
+
+  --mount-bg: #dad8a0;
+  --mount-border: #335215;
+  --mount-text: #0d150d;
+  --mount-alt-text: #2d3414;
+  --mount-highlight: #5a2d29;
+  --mount-highlight-fg: #ffffff;
+  --mount-highlight-hover: #7a3d35;
+
+  --orbit-bg: #e2dfb0;
+  --orbit-border: #335215;
+  --orbit-text: #0d150d;
+  --orbit-alt-text: #2d3414;
+  --orbit-highlight: #5a2d29;
+  --orbit-highlight-fg: #ffffff;
+  --orbit-highlight-hover: #7a3d35;
+
+  --alert-bg: #f0d8d4;
+  --alert-border: #8a2820;
+  --alert-text: #5a1408;
+  --alert-alt-text: #7a1c10;
+  --alert-highlight: #8a2820;
+  --alert-highlight-fg: #ffffff;
+  --alert-highlight-hover: #6f2018;
+
+  --warn-bg: #f5e3a8;
+  --warn-border: #8a6010;
+  --warn-text: #4a3408;
+  --warn-alt-text: #6a4810;
+  --warn-highlight: #8a6010;
+  --warn-highlight-fg: #ffffff;
+  --warn-highlight-hover: #6f4d10;
+
+  --info-bg: #c8d8e8;
+  --info-border: #2d5173;
+  --info-text: #0a2040;
+  --info-alt-text: #1a3858;
+  --info-highlight: #2d5173;
+  --info-highlight-fg: #ffffff;
+  --info-highlight-hover: #1f3e5a;
+
+  /* --success-border darkened from a11y-lead's #335215 to #1c3608 to
+   * widen axis B luminance ratio vs --alert-border #8a2820 from 1.03 to
+   * 2.42 — closes the deuteranopia border collapse (dE 3.2 under brief's
+   * hex) that would otherwise force a SHAPE_REDUNDANCY_WAIVERS entry. */
+  --success-bg: #d8e0b8;
+  --success-border: #1c3608;
+  --success-text: #0d2010;
+  --success-alt-text: #1a3414;
+  --success-highlight: #1c3608;
+  --success-highlight-fg: #ffffff;
+  --success-highlight-hover: #142808;
+}
+
+[data-theme='boyhood'][data-mode='dark'] {
+  --base-bg: #0d150d;
+  --base-border: #87973c;
+  --base-text: #e8e7c3;
+  --base-alt-text: #d4d4a8;
+  --base-highlight: #aacb50;
+  --base-highlight-fg: #0d150d;
+  --base-highlight-hover: #8eb338;
+
+  --mount-bg: #1a2410;
+  --mount-border: #87973c;
+  --mount-text: #e8e7c3;
+  --mount-alt-text: #d4d4a8;
+  --mount-highlight: #aacb50;
+  --mount-highlight-fg: #0d150d;
+  --mount-highlight-hover: #8eb338;
+
+  --orbit-bg: #243018;
+  --orbit-border: #99ba48;
+  --orbit-text: #e8e7c3;
+  --orbit-alt-text: #d4d4a8;
+  --orbit-highlight: #aacb50;
+  --orbit-highlight-fg: #0d150d;
+  --orbit-highlight-hover: #8eb338;
+
+  --alert-bg: rgb(76 20 14 / 0.55);
+  --alert-border: #d87858;
+  --alert-text: #f5c8b8;
+  --alert-alt-text: #e8b0a0;
+  --alert-highlight: #d87858;
+  --alert-highlight-fg: #1c0604;
+  --alert-highlight-hover: #e08868;
+
+  --warn-bg: rgb(60 44 8 / 0.55);
+  --warn-border: #ebb327;
+  --warn-text: #f5dc80;
+  --warn-alt-text: #f0d090;
+  --warn-highlight: #ebb327;
+  --warn-highlight-fg: #1c1408;
+  --warn-highlight-hover: #f5c440;
+
+  --info-bg: rgb(20 36 64 / 0.55);
+  --info-border: #5988b0;
+  --info-text: #c8dcf0;
+  --info-alt-text: #a8c4e0;
+  --info-highlight: #5988b0;
+  --info-highlight-fg: #081628;
+  --info-highlight-hover: #7098c0;
+
+  /* M-D1 applied: --success-border / --success-highlight bumped from
+   * a11y-lead's #99ba48 (lime) to #d0e8a8 (light mint-cream) — closes
+   * the tritan amber-vs-lime collapse vs --warn-border #ebb327 (axis B
+   * border luminance ratio 1.18 → 1.48, clears 1.4 threshold). --alt-text
+   * collapses to the same value per M-D1 spec. */
+  --success-bg: rgb(20 50 24 / 0.55);
+  --success-border: #d0e8a8;
+  --success-text: #d0e8a8;
+  --success-alt-text: #d0e8a8;
+  --success-highlight: #d0e8a8;
+  --success-highlight-fg: #0a1a04;
+  --success-highlight-hover: #c0d898;
+}

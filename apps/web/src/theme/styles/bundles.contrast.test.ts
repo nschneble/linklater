@@ -137,6 +137,16 @@ const BEFORE_MIDNIGHT_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='before-midnight'][data-mode='dark']",
   'base-bg',
 );
+const BOYHOOD_LIGHT_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='boyhood'][data-mode='light']",
+  'base-bg',
+);
+const BOYHOOD_DARK_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='boyhood'][data-mode='dark']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -187,6 +197,18 @@ const FIXTURES: readonly CascadeFixture[] = [
     pageBg: BEFORE_MIDNIGHT_DARK_PAGE_BG,
     checkAdjacency: true,
   },
+  {
+    label: 'boyhood light',
+    selector: "[data-theme='boyhood'][data-mode='light']",
+    pageBg: BOYHOOD_LIGHT_PAGE_BG,
+    checkAdjacency: true,
+  },
+  {
+    label: 'boyhood dark',
+    selector: "[data-theme='boyhood'][data-mode='dark']",
+    pageBg: BOYHOOD_DARK_PAGE_BG,
+    checkAdjacency: true,
+  },
 ];
 
 /*
@@ -207,7 +229,6 @@ const FIXTURES: readonly CascadeFixture[] = [
  * cascade.
  */
 const UN_MIGRATED_LIGHT_BGS: Record<string, string> = {
-  boyhood: '#d0cf93',
   'hit-man': '#f0c870',
   'dazed-and-confused': '#f3f0ed',
   'before-sunrise': '#f3ecd3',
@@ -217,7 +238,6 @@ const UN_MIGRATED_LIGHT_BGS: Record<string, string> = {
 
 const UN_MIGRATED_DARK_BGS: Record<string, string> = {
   default: '#0f0b1b',
-  boyhood: '#0d150d',
   'hit-man': '#1a150e',
   'before-sunset': '#050404',
   'before-sunrise': '#3c1e0e',
