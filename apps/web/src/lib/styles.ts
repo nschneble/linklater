@@ -9,7 +9,7 @@ import type { CSSProperties } from 'react';
  * keyboard navigation, not on mouse clicks.
  */
 export const FOCUS_RING =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]';
 
 /**
  * Shared Tailwind CSS class string for disabled button states.

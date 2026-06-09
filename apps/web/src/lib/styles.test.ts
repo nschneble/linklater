@@ -65,8 +65,8 @@ describe('FOCUS_RING', () => {
     expect(FOCUS_RING).toContain('focus-visible:ring-2');
   });
 
-  it('contains the accent color ring', () => {
-    expect(FOCUS_RING).toContain('focus-visible:ring-[var(--accent)]');
+  it('contains the focus-ring color', () => {
+    expect(FOCUS_RING).toContain('focus-visible:ring-[var(--focus-ring)]');
   });
 });
 

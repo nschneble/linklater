@@ -325,7 +325,7 @@ export default function ContrastChecker({ colorValues }: ContrastCheckerProps) {
           type="button"
           onClick={() => setFailuresOnly((previous) => !previous)}
           aria-pressed={failuresOnly}
-          className="text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] aria-pressed:text-[var(--mount-text)] aria-pressed:font-semibold text-[0.6rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded cursor-pointer"
+          className="text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] aria-pressed:text-[var(--mount-text)] aria-pressed:font-semibold text-[0.6rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded cursor-pointer"
         >
           {failuresOnly ? 'Show all' : 'Failures only'}
         </button>
@@ -353,7 +353,7 @@ export default function ContrastChecker({ colorValues }: ContrastCheckerProps) {
                 aria-expanded={isOpen}
                 aria-controls={contentId}
                 onClick={() => toggleBundle(result.bundle)}
-                className="group w-full flex items-center gap-2 py-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded cursor-pointer"
+                className="group w-full flex items-center gap-2 py-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded cursor-pointer"
               >
                 <i
                   className="fa-solid fa-chevron-right text-[0.5rem] text-[var(--mount-alt-text)] group-aria-expanded:rotate-90 transition-transform duration-150"

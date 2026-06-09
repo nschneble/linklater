@@ -14,7 +14,7 @@ export default function StumbleSection() {
     <div
       id="stumble"
       tabIndex={-1}
-      className="scroll-mt-24 max-w-md space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-lg"
+      className="scroll-mt-24 max-w-md space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded-lg"
     >
       <h3
         id="stumble-heading"

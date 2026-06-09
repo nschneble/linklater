@@ -62,7 +62,7 @@ export default function BookmarkletSection() {
     <div
       id="bookmarklet"
       tabIndex={-1}
-      className="scroll-mt-24 max-w-md space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+      className="scroll-mt-24 max-w-md space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
     >
       <div className="flex items-center justify-between gap-3">
         <h3

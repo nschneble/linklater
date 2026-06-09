@@ -78,7 +78,7 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
       <div
         aria-hidden="true"
         data-testid="modal-backdrop"
-        className="fixed inset-0 z-20 w-full h-full bg-black/50 backdrop-blur-sm cursor-default"
+        className="fixed inset-0 z-20 w-full h-full scrim backdrop-blur-sm cursor-default"
         onClick={onClose}
       />
       <div

@@ -74,7 +74,7 @@ export default function SettingsLayout({
           <a
             href={`#${firstHash}`}
             onClick={handleSkipClick}
-            className="sr-only focus:not-sr-only focus:inline-flex focus:items-center focus:px-3 focus:py-1.5 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-xs focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:outline-none"
+            className="sr-only focus:not-sr-only focus:inline-flex focus:items-center focus:px-3 focus:py-1.5 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-xs focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none"
           >
             Skip settings navigation
           </a>
@@ -83,7 +83,7 @@ export default function SettingsLayout({
           <h1
             id={HEADING_ID}
             tabIndex={-1}
-            className="text-[var(--base-text)] text-2xl font-semibold text-balance focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-lg"
+            className="text-[var(--base-text)] text-2xl font-semibold text-balance focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded-lg"
           >
             Settings
           </h1>
@@ -98,7 +98,7 @@ export default function SettingsLayout({
           <button
             type="button"
             onClick={handleBackToTop}
-            className="group flex items-center gap-2 min-h-10 px-3 py-2 hover:bg-[var(--mount-bg)] text-[var(--base-alt-text)] hover:text-[var(--base-text)] text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-lg motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] cursor-pointer"
+            className="group flex items-center gap-2 min-h-10 px-3 py-2 hover:bg-[var(--mount-bg)] text-[var(--base-alt-text)] hover:text-[var(--base-text)] text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded-lg motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] cursor-pointer"
           >
             <i
               className="fa-solid fa-arrow-up text-[var(--base-subtle-text)] text-xs"

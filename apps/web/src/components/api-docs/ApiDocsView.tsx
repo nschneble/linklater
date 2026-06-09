@@ -110,7 +110,7 @@ export default function ApiDocsView() {
       </section>
 
       <a
-        className="sr-only focus:not-sr-only focus:inline-flex focus:px-3 focus:py-1.5 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-xs focus:rounded-full focus:ring-2 focus:ring-[var(--accent)]"
+        className="sr-only focus:not-sr-only focus:inline-flex focus:px-3 focus:py-1.5 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-xs focus:rounded-full focus:ring-2 focus:ring-[var(--focus-ring)]"
         href="#after-api-reference"
       >
         Skip past the API reference

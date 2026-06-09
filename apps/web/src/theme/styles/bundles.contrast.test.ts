@@ -34,6 +34,9 @@
  * Shared color parsing + WCAG helpers live in bundles-color-utils.ts.
  */
 
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   BUNDLES,
@@ -375,6 +378,114 @@ describe('bundle contrast contract', () => {
       }
     });
   }
+
+  /*
+   * --focus-ring is a UNIVERSAL chrome token (not a per-bundle slot).
+   * SC 1.4.11 requires the focus indicator clear 3:1 against every
+   * surface a focused element can sit on: base-bg, mount-bg, orbit-bg,
+   * and each state bundle's composited bg. Mechanizes the wave 21
+   * contract that the brief verified by hand.
+   *
+   * Most themes alias `--focus-ring: var(--accent);`. To resolve the
+   * alias for testing, we read the matching theme's per-mode --accent
+   * from its <theme>.css. apollo dark's explicit hex bypasses this
+   * resolution path.
+   */
+  describe('focus-ring on every surface', () => {
+    const SURFACES_TO_CHECK = [
+      'base-bg',
+      'mount-bg',
+      'orbit-bg',
+      'alert-bg',
+      'warn-bg',
+      'info-bg',
+      'success-bg',
+    ] as const;
+
+    function resolveFocusRing(
+      declarations: Map<string, string>,
+      themeCss: string | null,
+      mode: 'light' | 'dark' | null,
+    ): string | null {
+      const value = declarations.get('focus-ring');
+      if (value === undefined) {
+        return null;
+      }
+      if (value.startsWith('#')) {
+        return value;
+      }
+      if (value === 'var(--accent)' && themeCss && mode) {
+        const blockRe = new RegExp(
+          `\\[data-theme='[^']+'\\]\\[data-mode='${mode}'\\]\\s*\\{([\\s\\S]*?)\\n\\}`,
+        );
+        const m = themeCss.match(blockRe);
+        if (!m) return null;
+        const accentMatch = m[1].match(/--accent:\s*([^;]+);/);
+        return accentMatch ? accentMatch[1].trim() : null;
+      }
+      return null;
+    }
+
+    function themeAndModeFromSelector(
+      selector: string,
+    ): { theme: string; mode: 'light' | 'dark' } | null {
+      const m = selector.match(
+        /\[data-theme='([^']+)'\]\[data-mode='(light|dark)'\]/,
+      );
+      if (!m) return null;
+      return { theme: m[1], mode: m[2] as 'light' | 'dark' };
+    }
+
+    for (const fixture of FIXTURES) {
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+      const themeMode = themeAndModeFromSelector(fixture.selector);
+      let themeCss: string | null = null;
+      if (themeMode) {
+        const stylesDir = dirname(fileURLToPath(import.meta.url));
+        try {
+          themeCss = readFileSync(
+            resolve(stylesDir, `${themeMode.theme}.css`),
+            'utf8',
+          );
+        } catch {
+          themeCss = null;
+        }
+      }
+      const focusRing = resolveFocusRing(
+        declarations,
+        themeCss,
+        themeMode?.mode ?? null,
+      );
+      if (focusRing === null) {
+        continue;
+      }
+
+      describe(`${fixture.label}`, () => {
+        for (const surface of SURFACES_TO_CHECK) {
+          const surfaceRaw = declarations.get(surface);
+          if (surfaceRaw === undefined || surfaceRaw.includes('var(')) {
+            continue;
+          }
+
+          it(`focus-ring on ${surface} >= 3:1`, () => {
+            const foreground = resolveFg(parseColor(focusRing));
+            const background = compositeOverBg(
+              parseColor(surfaceRaw),
+              fixture.pageBg,
+            );
+            const ratio = contrastRatio(foreground, background);
+            expect
+              .soft(
+                ratio,
+                `focus-ring on ${surface} (${fixture.label}): got ${describeRatio(ratio)}`,
+              )
+              .toBeGreaterThanOrEqual(AA_NON_TEXT);
+          });
+        }
+      });
+    }
+  });
 
   /*
    * --base-subtle-text is a BASE-only slot (no equivalent on mount/orbit/

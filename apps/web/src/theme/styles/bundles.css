@@ -47,6 +47,15 @@
  */
 
 :root {
+  /* Universal focus-visible ring color. Aliased to --accent on every
+   * theme today; per-theme bundle blocks may override (apollo dark
+   * picks an explicit hex because the default accent collapses against
+   * orbit-bg). Per-bundle overrides (`--focus-ring-on-{bundle}`) are
+   * supported via the consumer-side pattern but currently unused —
+   * every theme/mode clears 3:1 against every surface with the
+   * universal value alone (culori-verified wave 21). */
+  --focus-ring: var(--accent);
+
   /* base = page chrome */
   --base-bg: var(--bg);
   --base-border: var(--border);
@@ -180,6 +189,15 @@
   filter: var(--asset-filter);
 }
 
+/* Modal backdrop. Single source of truth for the universal scrim used
+ * by every overlay (WelcomeModal, KeyboardShortcutsModal, LinksView
+ * bulk-action sheet, MobileBottomSheet). Today the literal value is
+ * theme-independent; promote to `var(--scrim, rgb(0 0 0 / 0.5))` when
+ * a theme needs to opt out. */
+@utility scrim {
+  background-color: rgb(0 0 0 / 0.5);
+}
+
 /* Suppress the asset filter under Windows High Contrast / forced-colors.
  * The OS already chose the user's palette; running day-for-night on top
  * produces a double-inversion artifact. */
@@ -209,6 +227,8 @@
  * axis-B luminance gap vs --info-border #223366 (monochromatism safety).
  */
 [data-theme='apollo-10-1-2'][data-mode='dark'] {
+  --focus-ring: #70b0e0;
+
   --base-bg: #0d1426;
   --base-border: #9e8b97;
   --base-text: #f4f1ec;
@@ -290,6 +310,8 @@
  *              bundle bg and page bg
  */
 [data-theme='school-of-rock'][data-mode='dark'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #0a0a07;
   --base-border: #6e5a3a;
   --base-text: #ffffff;
@@ -344,6 +366,8 @@
 }
 
 [data-theme='school-of-rock'][data-mode='light'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #e0d0c1;
   --base-border: #7a5a30;
   --base-text: #0a0a07;
@@ -401,6 +425,8 @@
 }
 
 [data-theme='apollo-10-1-2'][data-mode='light'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #f4f1ec;
   --base-border: #76636f;
   --base-text: #0d1426;
@@ -487,6 +513,8 @@
  * axis A or axis B in both modes.
  */
 [data-theme='before-midnight'][data-mode='light'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #ccc095;
   --base-border: #11637a;
   --base-text: #20303d;
@@ -546,6 +574,8 @@
 }
 
 [data-theme='before-midnight'][data-mode='dark'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #1c2c38;
   --base-border: #569ca8;
   --base-text: #e8dccd;
@@ -654,6 +684,8 @@
  * state pairs on axis A or axis B post-mitigation.
  */
 [data-theme='boyhood'][data-mode='light'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #d0cf93;
   --base-border: #335215;
   --base-text: #0d150d;
@@ -717,6 +749,8 @@
 }
 
 [data-theme='boyhood'][data-mode='dark'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #0d150d;
   --base-border: #87973c;
   --base-text: #e8e7c3;
@@ -861,6 +895,8 @@
  * state pairs on axis A or axis B post-mitigation.
  */
 [data-theme='dazed-and-confused'][data-mode='light'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #f3f0ed;
   --base-border: #5d7984;
   --base-text: #2a201d;
@@ -926,6 +962,8 @@
 }
 
 [data-theme='dazed-and-confused'][data-mode='dark'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #2a201d;
   --base-border: #26aad0;
   --base-text: #f3f0ed;
@@ -1077,6 +1115,8 @@
  * state pairs on axis A or axis B post-mitigation.
  */
 [data-theme='scanner-darkly'][data-mode='light'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #eeeedf;
   --base-border: #3b376a;
   --base-text: #0f0b1b;
@@ -1148,6 +1188,8 @@
 }
 
 [data-theme='scanner-darkly'][data-mode='dark'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #0f0b1b;
   --base-border: #847ecc;
   --base-text: #eeeedf;
@@ -1289,6 +1331,8 @@
  * state pairs on axis A or axis B post-mitigation.
  */
 [data-theme='hit-man'][data-mode='light'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #ecdcb0;
   --base-border: #4e2c14;
   --base-text: #1a150e;
@@ -1357,6 +1401,8 @@
 }
 
 [data-theme='hit-man'][data-mode='dark'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #1a150e;
   --base-border: #efb88e;
   --base-text: #f8eae2;
@@ -1501,6 +1547,8 @@
  * state pairs on axis A or axis B post-mitigation.
  */
 [data-theme='before-sunset'][data-mode='light'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #e8e5d7;
   --base-border: #5e4227;
   --base-text: #050404;
@@ -1569,6 +1617,8 @@
 }
 
 [data-theme='before-sunset'][data-mode='dark'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #050404;
   --base-border: #b6745c;
   --base-text: #e8e5d7;
@@ -1708,6 +1758,8 @@
  * state pairs on axis A or axis B with zero mitigations applied.
  */
 [data-theme='before-sunrise'][data-mode='light'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #f3ecd3;
   --base-border: #5a3018;
   --base-text: #1a0e08;
@@ -1776,6 +1828,8 @@
 }
 
 [data-theme='before-sunrise'][data-mode='dark'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #3c1e0e;
   --base-border: #e09060;
   --base-text: #f3ecd3;
@@ -1910,6 +1964,8 @@
  * follow-on .tsx cleanup pass.
  */
 [data-theme='nouvelle-vague'][data-mode='light'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #f8f8f8;
   --base-border: #878787;
   --base-text: #0f0f0f;
@@ -1969,6 +2025,8 @@
 }
 
 [data-theme='nouvelle-vague'][data-mode='dark'] {
+  --focus-ring: var(--accent);
+
   --base-bg: #0a0a0a;
   --base-border: #757575;
   --base-text: #f2f2f2;

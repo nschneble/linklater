@@ -78,7 +78,7 @@ export default function Alert({
       id={id}
       ref={ref}
       tabIndex={tabIndex}
-      className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] ${variantClasses[variant]} ${className}`}
+      className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] ${variantClasses[variant]} ${className}`}
       role={variantRoles[variant]}
     >
       <i className={`fa-solid ${resolvedIcon} text-xs`} aria-hidden="true" />

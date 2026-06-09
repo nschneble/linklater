@@ -155,7 +155,7 @@ export default function MobileBottomSheet({
           Opacity transition is motion-safe so reduced-motion users get an
           instant scrim swap to match the instant panel snap. */}
       <div
-        className="fixed inset-0 z-40 bg-black/50 motion-safe:transition-opacity motion-safe:duration-300 data-[open=false]:opacity-0 data-[open=false]:pointer-events-none"
+        className="fixed inset-0 z-40 scrim motion-safe:transition-opacity motion-safe:duration-300 data-[open=false]:opacity-0 data-[open=false]:pointer-events-none"
         aria-hidden="true"
         data-open={isOpen}
         onClick={onClose}

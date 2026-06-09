@@ -121,7 +121,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
           <button
             type="button"
             aria-label="Close form"
-            className="fixed inset-0 z-20 w-full h-full bg-black/50 backdrop-blur-sm cursor-default"
+            className="fixed inset-0 z-20 w-full h-full scrim backdrop-blur-sm cursor-default"
             onClick={view.handleToggleForm}
           />,
           document.body,
