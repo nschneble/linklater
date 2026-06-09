@@ -1167,3 +1167,206 @@
   --success-highlight-fg: #1a2008;
   --success-highlight-hover: #a8c860;
 }
+
+/* ---------- hit-man ---------- *
+ * Wave 13 migration to per-theme bundle palette. The legacy flat tokens
+ * (in hit-man.css) stay intact for un-migrated consumers.
+ *
+ * APOLLO-CLASS WARM-ONLY theme: no greens, no blues in the base palette
+ * (PRD-allowed hues are red-rust + amber-gold). State bundles need PRD
+ * breaks for info (purple) and success (emerald light / cream-mint dark)
+ * to carry the conventional categorical signal under CVD — Apollo wave 8
+ * + scanner-darkly wave 12 + boyhood / dazed-and-confused precedent.
+ *
+ * Card-style choice: calm path. Mount/orbit bgs are warm cream
+ * gradations off the lifted page bg in light mode and warm brown
+ * gradations off the deep page bg in dark mode — keeps the surface
+ * stack quiet so state bundles do the categorical work.
+ *
+ * Intentional palette breaks vs hit-man.css flat tokens:
+ *   - LIGHT --base-bg #ecdcb0 NOT the flat --bg #f0c870. Calmer cream
+ *     bundle-layer override; lets the warn-bundle gold stay distinct
+ *     from the page chrome. flat --bg untouched in hit-man.css for
+ *     un-migrated consumers.
+ *   - LIGHT --warn-border #6a4510 NOT the PRD gold #eba622 (SC 1.4.11
+ *     vs warn-bg fails by wide margin).
+ *   - LIGHT --info bundle = PURPLE (Apollo-class break; scanner-darkly
+ *     wave 12 precedent). The PRD has no blue; purple carries the cool
+ *     anchor needed for unambiguous separation from alert / warn /
+ *     success under all three dichromacies.
+ *   - LIGHT --success bundle = EMERALD (Apollo-class break; Apollo wave 8
+ *     precedent). The PRD has no green; emerald carries the conventional
+ *     "green = success" affordance and survives CVD vs purple info /
+ *     red alert / gold warn (all six pairs clean).
+ *   - DARK --info bundle = LAVENDER (Apollo-class break).
+ *   - DARK --success bundle = CREAM-MINT (boyhood wave 10 / dazed wave 11
+ *     precedent). High-luminance mint cream outruns warn-gold under
+ *     tritanopia.
+ *   - DARK --alert-highlight #ee5050 paired with dark fg #1c0608 = dazed
+ *     wave 11 / scanner-darkly wave 12 / school-of-rock precedent for
+ *     fill-on-fill alert buttons.
+ *   - DARK --warn-border #ebb327 = before-midnight known-good amber (NOT
+ *     the PRD #eba622, but the same family).
+ *
+ * Brief flags that culori verification surfaced (a11y-lead disclosed no
+ * culori in their reasoning loop):
+ *   - LIGHT alert/warn collapsed BOTH AXES with brief's --alert-bg
+ *     #f5dccc (bg lum 1.12, border lum 1.03; deuter dE bg 5.1 border 4.5;
+ *     tritan dE bg 4.8 border 9.6). NOT pre-flagged in the brief. NOVEL
+ *     MITIGATION applied: darken --alert-bg from briefed #f5dccc to
+ *     #e4c4a8 (scanner-darkly wave 12 precedent). Widens alert/warn bg
+ *     luminance ratio from 1.12 to 1.43 — clears axis B with 0.03
+ *     headroom. WCAG cascade: alert hl/bg drops from 3.99 to 3.18 (still
+ *     clears SC 1.4.11 3:1); alert text/bg drops from 10.40 to 8.29
+ *     (comfortable).
+ *   - LIGHT info/success border lum ratio briefed at 1.05 (Axis B fail).
+ *     Verified at 1.53 — comfortable Axis B headroom. PLUS Axis A
+ *     clears under all three dichromacies (purple-vs-emerald, min
+ *     border dE 17.8 protan / 17.8 deuter / 31.9 tritan). M-L1 NOT
+ *     needed.
+ *   - LIGHT warn/success tritan razor-edge briefed at dE ~10. Verified
+ *     at border dE 40.0 tritan, comfortably above threshold. Axis A
+ *     clears (min protan border dE 11.3). M-L3 NOT needed.
+ *   - DARK alert hl #ee5050 vs composited alert-bg briefed at 4.1:1 with
+ *     dazed-wave-11 false-positive risk flagged. Verified at 4.70:1 —
+ *     comfortable. M-D-alert-hl NOT needed.
+ *   - DARK alert/warn briefed as border dE ~6 < 10 razor-edge. Verified
+ *     bg dE 6.9-9.9 / border dE 7.7-17.8 under CVDs, with axis B bg lum
+ *     1.95 — clears axis B comfortably from the briefed 0.55 alpha
+ *     warn-bg. M-D1 NOT needed.
+ *   - DARK warn/info bg lum briefed at razor-edge 1.36. Verified at 2.12.
+ *     M-D2 NOT needed.
+ *
+ * No SHAPE_REDUNDANCY_WAIVERS entries needed — both modes clear all six
+ * state pairs on axis A or axis B post-mitigation.
+ */
+[data-theme='hit-man'][data-mode='light'] {
+  --base-bg: #ecdcb0;
+  --base-border: #4e2c14;
+  --base-text: #1a150e;
+  --base-alt-text: #4e2c14;
+  --base-highlight: #7c421d;
+  --base-highlight-fg: #ffffff;
+  --base-highlight-hover: #5e3115;
+
+  --mount-bg: #e5d39c;
+  --mount-border: #4e2c14;
+  --mount-text: #1a150e;
+  --mount-alt-text: #4e2c14;
+  --mount-highlight: #7c421d;
+  --mount-highlight-fg: #ffffff;
+  --mount-highlight-hover: #5e3115;
+
+  --orbit-bg: #ddc888;
+  --orbit-border: #4e2c14;
+  --orbit-text: #1a150e;
+  --orbit-alt-text: #4e2c14;
+  --orbit-highlight: #7c421d;
+  --orbit-highlight-fg: #ffffff;
+  --orbit-highlight-hover: #5e3115;
+
+  /* --alert-bg darkened from briefed #f5dccc to #e4c4a8 to close the
+   * alert/warn both-axes collapse (bg lum 1.12 -> 1.43, clears axis B).
+   * Scanner-darkly wave 12 precedent. */
+  --alert-bg: #e4c4a8;
+  --alert-border: #8a2a18;
+  --alert-text: #5a1408;
+  --alert-alt-text: #7a1c10;
+  --alert-highlight: #cc310d;
+  --alert-highlight-fg: #ffffff;
+  --alert-highlight-hover: #a82a0a;
+
+  --warn-bg: #f8ecc8;
+  --warn-border: #6a4510;
+  --warn-text: #4a3008;
+  --warn-alt-text: #6a4810;
+  --warn-highlight: #6a4510;
+  --warn-highlight-fg: #ffffff;
+  --warn-highlight-hover: #523510;
+
+  /* info — PURPLE (Apollo-class PRD break; scanner-darkly wave 12
+   * precedent). Required to carry a cool anchor that survives CVD vs
+   * the warm-only PRD palette. */
+  --info-bg: #e2d8ec;
+  --info-border: #3a2640;
+  --info-text: #1a0e20;
+  --info-alt-text: #3a2640;
+  --info-highlight: #3a2640;
+  --info-highlight-fg: #ffffff;
+  --info-highlight-hover: #2a1a30;
+
+  /* success — EMERALD (Apollo-class PRD break; Apollo wave 8 precedent).
+   * The warm-only PRD palette has no green; emerald carries the
+   * conventional "green = success" affordance. */
+  --success-bg: #d8e8d0;
+  --success-border: #1c4028;
+  --success-text: #0a2818;
+  --success-alt-text: #1a3e28;
+  --success-highlight: #1c4028;
+  --success-highlight-fg: #ffffff;
+  --success-highlight-hover: #142e1c;
+}
+
+[data-theme='hit-man'][data-mode='dark'] {
+  --base-bg: #1a150e;
+  --base-border: #efb88e;
+  --base-text: #f8eae2;
+  --base-alt-text: #f0efbe;
+  --base-highlight: #eba622;
+  --base-highlight-fg: #1a0e02;
+  --base-highlight-hover: #d4901a;
+
+  --mount-bg: #2a1f14;
+  --mount-border: #efb88e;
+  --mount-text: #f8eae2;
+  --mount-alt-text: #f0efbe;
+  --mount-highlight: #eba622;
+  --mount-highlight-fg: #1a0e02;
+  --mount-highlight-hover: #d4901a;
+
+  --orbit-bg: #3a2a1c;
+  --orbit-border: #efb88e;
+  --orbit-text: #f8eae2;
+  --orbit-alt-text: #f0efbe;
+  --orbit-highlight: #eba622;
+  --orbit-highlight-fg: #1a0e02;
+  --orbit-highlight-hover: #d4901a;
+
+  /* dazed-wave-11 / scanner-darkly-wave-12 precedent: punchy hl + dark
+   * hl-fg for fill-on-fill alert buttons. */
+  --alert-bg: rgb(76 18 8 / 0.55);
+  --alert-border: #f08868;
+  --alert-text: #f5c8b8;
+  --alert-alt-text: #e8b0a0;
+  --alert-highlight: #ee5050;
+  --alert-highlight-fg: #1c0608;
+  --alert-highlight-hover: #f06868;
+
+  --warn-bg: rgb(82 58 10 / 0.55);
+  --warn-border: #ebb327;
+  --warn-text: #f5dc80;
+  --warn-alt-text: #f0d090;
+  --warn-highlight: #ebb327;
+  --warn-highlight-fg: #1c1408;
+  --warn-highlight-hover: #f5c440;
+
+  /* info — LAVENDER (Apollo-class PRD break). */
+  --info-bg: rgb(40 28 56 / 0.55);
+  --info-border: #b08cd0;
+  --info-text: #e0ccf0;
+  --info-alt-text: #c8b0e0;
+  --info-highlight: #b08cd0;
+  --info-highlight-fg: #1a0e28;
+  --info-highlight-hover: #c4a4dc;
+
+  /* success — CREAM-MINT (Apollo-class PRD break; boyhood wave 10 /
+   * dazed wave 11 precedent). High-luminance mint cream outruns
+   * warn-gold under tritanopia. */
+  --success-bg: rgb(20 50 30 / 0.55);
+  --success-border: #a8e8d0;
+  --success-text: #c0e0d4;
+  --success-alt-text: #a0d0c0;
+  --success-highlight: #a8e8d0;
+  --success-highlight-fg: #04140e;
+  --success-highlight-hover: #bce8d4;
+}
