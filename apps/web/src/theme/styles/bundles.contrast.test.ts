@@ -49,6 +49,7 @@ import {
   describeRatio,
   extractBlock,
   getSlot,
+  luminanceRatio,
   parseColor,
   parseDeclarations,
   readPageBg,
@@ -402,6 +403,33 @@ describe('bundle contrast contract', () => {
       'success-bg',
     ] as const;
 
+    /*
+     * Resolve `--focus-ring` to a literal hex.
+     *
+     * Legitimate shapes today:
+     *  1. Undefined (no `--focus-ring` declared in this fixture's block) —
+     *     return null so the caller can skip the fixture cleanly. Some
+     *     test fixtures (e.g. the default :root cascade) deliberately do
+     *     not declare a focus ring; only per-theme blocks do.
+     *  2. `var(--accent)` with no themeCss/mode supplied — happens for
+     *     the default cascade fixtures (`:root`, `[data-mode='dark']`)
+     *     where there is no per-theme stylesheet to chase. Return null
+     *     so the caller skips the fixture cleanly; the per-theme cascade
+     *     fixtures cover the same alias.
+     *  3. Literal hex (e.g. apollo dark's explicit `#c8b896`).
+     *  4. `var(--{alias})` for a per-theme cascade — chase the alias
+     *     through the corresponding theme stylesheet's per-mode block.
+     *     Today the only alias in use is `var(--accent)`; the
+     *     generalized resolver below handles any future
+     *     `var(--mount-highlight)` / `var(--base-text)` etc. without
+     *     requiring a new branch here.
+     *
+     * Anything else (a misspelled function, an unknown literal in a
+     * per-theme block) gets returned as `'__UNRESOLVED__'` so the caller
+     * can fail loud rather than silently skip the fixture and lose
+     * coverage. See a11y-lead MINOR in wave 23.1 gang findings — silent-
+     * skip on aliases was the bug.
+     */
     function resolveFocusRing(
       declarations: Map<string, string>,
       themeCss: string | null,
@@ -414,16 +442,38 @@ describe('bundle contrast contract', () => {
       if (value.startsWith('#')) {
         return value;
       }
-      if (value === 'var(--accent)' && themeCss && mode) {
-        const blockRe = new RegExp(
-          `\\[data-theme='[^']+'\\]\\[data-mode='${mode}'\\]\\s*\\{([\\s\\S]*?)\\n\\}`,
-        );
-        const m = themeCss.match(blockRe);
-        if (!m) return null;
-        const accentMatch = m[1].match(/--accent:\s*([^;]+);/);
-        return accentMatch ? accentMatch[1].trim() : null;
+      const aliasMatch = value.match(/^var\(--([a-z-]+)\)$/);
+      if (!aliasMatch) {
+        return '__UNRESOLVED__';
       }
-      return null;
+      if (!themeCss || !mode) {
+        // Default cascade fixtures (:root, [data-mode='dark']) ship a
+        // `var(--accent)` alias but have no per-theme stylesheet to
+        // chase. The per-theme cascades exercise the same alias under a
+        // resolvable context.
+        return null;
+      }
+      const aliasName = aliasMatch[1];
+      const blockRe = new RegExp(
+        `\\[data-theme='[^']+'\\]\\[data-mode='${mode}'\\]\\s*\\{([\\s\\S]*?)\\n\\}`,
+      );
+      const m = themeCss.match(blockRe);
+      if (!m) {
+        return '__UNRESOLVED__';
+      }
+      const aliasDeclRe = new RegExp(`--${aliasName}:\\s*([^;]+);`);
+      const aliasDecl = m[1].match(aliasDeclRe);
+      if (!aliasDecl) {
+        return '__UNRESOLVED__';
+      }
+      const resolved = aliasDecl[1].trim();
+      // Only hex-literal aliases are supported. A nested var() would
+      // require multi-hop resolution that no theme uses today; fail loud
+      // rather than skip.
+      if (!resolved.startsWith('#')) {
+        return '__UNRESOLVED__';
+      }
+      return resolved;
     }
 
     function themeAndModeFromSelector(
@@ -462,6 +512,19 @@ describe('bundle contrast contract', () => {
       }
 
       describe(`${fixture.label}`, () => {
+        if (focusRing === '__UNRESOLVED__') {
+          // Fail loud per a11y-lead MINOR — silent skip would mask a
+          // future alias the resolver does not know how to chase.
+          const raw = declarations.get('focus-ring') ?? '<undeclared>';
+          it(`focus-ring resolves to a hex literal`, () => {
+            expect.fail(
+              `Could not resolve --focus-ring (${raw}) for ${fixture.label}. ` +
+                `Either extend resolveFocusRing to chase the new alias or ` +
+                `inline a hex value in the cascade block.`,
+            );
+          });
+          return;
+        }
         for (const surface of SURFACES_TO_CHECK) {
           const surfaceRaw = declarations.get(surface);
           if (surfaceRaw === undefined || surfaceRaw.includes('var(')) {
@@ -646,6 +709,74 @@ describe('bundle contrast contract', () => {
         }
       });
     }
+  });
+
+  /*
+   * Wave 22b documented two distinct intents for `--base-input-bg` vs
+   * `--base-bg` on dark themes whose --base-border sits at the WCAG
+   * razor-edge (~3:1 vs base-bg):
+   *
+   *   - school-of-rock dark: luminance-match-with-tint. The input-bg is
+   *     a subtle warm-brown sitting inside the base-bg's luminance band
+   *     so the border carries the entire SC 1.4.11 load. The visual
+   *     distinction reads as "bordered shape on a near-uniform dark
+   *     surface" — focus ring carries the focus affordance.
+   *
+   *   - boyhood dark: visible separation. The base-border #87973c is
+   *     bright lime-olive (rel lum ~0.276) leaving comfortable headroom
+   *     for darken-direction Recovery A; the input-bg #243618 sits well
+   *     below the base-bg.
+   *
+   * These two themes are the only ones whose bundles.css comments
+   * explicitly call out the intent. Mechanizing only those two keeps the
+   * assertion set tight — every other theme's input-bg/base-bg
+   * relationship is incidental and should not be retro-fitted with a
+   * threshold. See chemist NICE-TO-HAVE in wave 23.1 gang findings.
+   */
+  describe('input-bg vs base-bg luminance intent (wave 22b)', () => {
+    it('school-of-rock dark — base-input-bg matches base-bg luminance band (ratio <= 1.5)', () => {
+      const block = extractBlock(
+        BUNDLES_CSS,
+        "[data-theme='school-of-rock'][data-mode='dark']",
+      );
+      const declarations = parseDeclarations(block);
+      const inputBg = declarations.get('base-input-bg');
+      const baseBg = declarations.get('base-bg');
+      if (inputBg === undefined || baseBg === undefined) {
+        throw new Error(
+          'school-of-rock dark cascade missing base-input-bg or base-bg',
+        );
+      }
+      const ratio = luminanceRatio(parseColor(inputBg), parseColor(baseBg));
+      expect
+        .soft(
+          ratio,
+          `school-of-rock dark base-input-bg vs base-bg: got ${ratio.toFixed(3)}`,
+        )
+        .toBeLessThanOrEqual(1.5);
+    });
+
+    it('boyhood dark — base-input-bg visibly separates from base-bg (ratio >= 1.4)', () => {
+      const block = extractBlock(
+        BUNDLES_CSS,
+        "[data-theme='boyhood'][data-mode='dark']",
+      );
+      const declarations = parseDeclarations(block);
+      const inputBg = declarations.get('base-input-bg');
+      const baseBg = declarations.get('base-bg');
+      if (inputBg === undefined || baseBg === undefined) {
+        throw new Error(
+          'boyhood dark cascade missing base-input-bg or base-bg',
+        );
+      }
+      const ratio = luminanceRatio(parseColor(inputBg), parseColor(baseBg));
+      expect
+        .soft(
+          ratio,
+          `boyhood dark base-input-bg vs base-bg: got ${ratio.toFixed(3)}`,
+        )
+        .toBeGreaterThanOrEqual(1.4);
+    });
   });
 
   describe('card-style border vs page --base-bg', () => {

@@ -334,7 +334,8 @@
    * #0b0804 lands at border 3.03:1, text/input 19.99:1, alt-text/input
    * 13.84:1 — passes the bundle-contrast test with the same razor-edge
    * SC 1.4.11 headroom as the existing base-border/base-bg pair. Visual
-   * distinction vs base-bg is sub-threshold (~1.008:1 luminance ratio);
+   * distinction vs base-bg is sub-threshold (~1.17:1 luminance ratio,
+   * well below the 3:1 separability threshold of SC 1.4.11);
    * input fields read as bordered shapes on a near-uniform dark surface,
    * with the focus ring carrying the focus affordance. The mathematical
    * impossibility of "comfortable headroom (>3.5:1)" with the current
@@ -796,7 +797,7 @@
    * lime-olive (rel lum 0.276) leaving comfortable headroom for darken-
    * direction Recovery A. #243618 (deep olive-shadow) lands at border
    * 4.04:1 (comfortable >3.5), text/input 10.30:1, alt-text/input 8.53:1,
-   * with bg/base-bg luminance ratio 1.43 (visible distinction from the
+   * with bg/base-bg luminance ratio 4.73 (visible distinction from the
    * deep-green base-bg #0d150d). Olive hue preserves the boyhood vibe. */
   --base-input-bg: #243618;
   --base-text: #e8e7c3;

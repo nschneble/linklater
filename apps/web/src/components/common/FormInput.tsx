@@ -11,17 +11,24 @@ import { forwardRef, type InputHTMLAttributes } from 'react';
  * Does not include a `<label>` — callers are responsible for associating one
  * using `htmlFor` / `id` or by wrapping the input in a `<label>`.
  *
- * The `surface` prop selects between the base bundle (page chrome, default)
- * and the mount bundle (cards / settings panels). Forms rendered inside a
- * `SettingsGroup` or `AuthCard` pass `surface="mount"`. Inputs rendered
- * directly on the page (e.g. `TokenInput` in ApiDocs, the `LinkForm`) take
- * the default. Picking the right surface keeps the input's fill, border,
- * text, and placeholder colors coherent with the host surface and satisfies
- * the bundle-contrast contract verified in `bundles.contrast.test.ts`
- * (input bundle contract describe block).
+ * The `surface` prop names the bundle of the parent surface — i.e. which
+ * bundle hosts this input. The component paints itself from that bundle's
+ * input/border/text/alt-text slots. Forms rendered inside a `SettingsGroup`
+ * or `AuthCard` (both mount-tier surfaces) pass `surface="mount"`. Inputs
+ * rendered directly on the page (e.g. `TokenInput` in ApiDocs, the
+ * `LinkForm`) take the default `'base'`. Picking the right surface keeps
+ * the input's fill, border, text, and placeholder colors coherent with the
+ * host surface and satisfies the bundle-contrast contract verified in
+ * `bundles.contrast.test.ts` (input bundle contract describe block).
+ *
+ * Same `surface` semantics as `SlidingTabBar` and `TabButton`: the prop
+ * names the host bundle, the component derives its own paint internally.
  */
 interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
-  /** Which bundle surface hosts this input. Defaults to `'base'`. */
+  /**
+   * Which bundle surface hosts this input (i.e. the bundle of the parent
+   * surface). Defaults to `'base'`.
+   */
   surface?: 'base' | 'mount';
 }
 

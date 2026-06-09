@@ -87,7 +87,7 @@ export default function LoginRegisterView({
             ariaLabel="Authentication mode"
             activeIndex={mode === 'register' ? 1 : 0}
             className="mb-[24.5px]"
-            surface="orbit"
+            surface="mount"
             tabClassName="py-2 text-sm"
             tabs={[
               {
