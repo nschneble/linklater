@@ -136,7 +136,7 @@ function ColorRow({
         onChange={handleTextChange}
         onBlur={handleTextBlur}
         aria-label={textAriaLabel}
-        className="w-28 px-2 py-1 bg-[var(--bg-input)] border border-[var(--mount-border)] text-[var(--mount-text)] text-[0.65rem] font-mono focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] focus:border-transparent rounded-md"
+        className="w-28 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-[0.65rem] font-mono focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] focus:border-transparent rounded-md"
         placeholder="#000000"
         spellCheck={false}
       />

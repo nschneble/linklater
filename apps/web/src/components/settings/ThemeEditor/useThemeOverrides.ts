@@ -49,6 +49,15 @@ export type Slot = (typeof SLOTS)[number];
 const BASE_ONLY_SLOTS = ['subtle-text'] as const;
 export type BaseOnlySlot = (typeof BASE_ONLY_SLOTS)[number];
 
+/**
+ * Slots that only exist on base + mount bundles. `input-bg` is the form
+ * input fill — tuned per-surface so inputs read as inset against either
+ * page chrome (base) or card surface (mount). Orbit/state bundles don't
+ * host form inputs.
+ */
+const BASE_AND_MOUNT_ONLY_SLOTS = ['input-bg'] as const;
+export type BaseAndMountOnlySlot = (typeof BASE_AND_MOUNT_ONLY_SLOTS)[number];
+
 const BUNDLE_LABELS: Record<Bundle, string> = {
   base: 'Base',
   mount: 'Mount',
@@ -69,27 +78,32 @@ const BUNDLE_DESCRIPTIONS: Record<Bundle, string> = {
   success: 'Verified, notifications',
 };
 
-const SLOT_LABELS: Record<Slot | BaseOnlySlot, string> = {
-  bg: 'Background',
-  border: 'Border',
-  text: 'Text',
-  'alt-text': 'Alt text',
-  'subtle-text': 'Subtle text',
-  highlight: 'Highlight',
-  'highlight-fg': 'Highlight foreground',
-  'highlight-hover': 'Highlight hover',
-};
+const SLOT_LABELS: Record<Slot | BaseOnlySlot | BaseAndMountOnlySlot, string> =
+  {
+    bg: 'Background',
+    border: 'Border',
+    text: 'Text',
+    'alt-text': 'Alt text',
+    'subtle-text': 'Subtle text',
+    'input-bg': 'Input background',
+    highlight: 'Highlight',
+    'highlight-fg': 'Highlight foreground',
+    'highlight-hover': 'Highlight hover',
+  };
 
 /**
- * 50 bundle tokens (7 bundles × 7 slots + 1 base-only `subtle-text` slot).
- * Each theme defines values for these in `bundles.css`; the editor exposes
- * them as overrides.
+ * 52 bundle tokens (7 bundles × 7 slots + 1 base-only `subtle-text` slot
+ * + 2 base/mount `input-bg` slots). Each theme defines values for these
+ * in `bundles.css`; the editor exposes them as overrides.
  */
 export const EDITABLE_VARS = [
   ...BUNDLES.flatMap((bundle) =>
     SLOTS.map((slot) => `--${bundle}-${slot}` as const),
   ),
   ...BASE_ONLY_SLOTS.map((slot) => `--base-${slot}` as const),
+  ...BASE_AND_MOUNT_ONLY_SLOTS.flatMap(
+    (slot) => [`--base-${slot}`, `--mount-${slot}`] as const,
+  ),
 ];
 
 /** The union of all CSS variable names that the editor can modify. */
@@ -105,7 +119,7 @@ export interface BundleGroup {
   description: string;
   items: Array<{
     variable: ThemeVariable;
-    slot: Slot | BaseOnlySlot;
+    slot: Slot | BaseOnlySlot | BaseAndMountOnlySlot;
     label: string;
   }>;
 }
@@ -123,6 +137,13 @@ export const VAR_GROUPS: BundleGroup[] = BUNDLES.map((bundle) => ({
     ...(bundle === 'base'
       ? BASE_ONLY_SLOTS.map((slot) => ({
           variable: `--base-${slot}` as ThemeVariable,
+          slot,
+          label: SLOT_LABELS[slot],
+        }))
+      : []),
+    ...(bundle === 'base' || bundle === 'mount'
+      ? BASE_AND_MOUNT_ONLY_SLOTS.map((slot) => ({
+          variable: `--${bundle}-${slot}` as ThemeVariable,
           slot,
           label: SLOT_LABELS[slot],
         }))
@@ -179,6 +200,11 @@ function clearBundleInlineOverrides(bundle: Bundle): void {
   if (bundle === 'base') {
     for (const slot of BASE_ONLY_SLOTS) {
       root.style.removeProperty(`--base-${slot}`);
+    }
+  }
+  if (bundle === 'base' || bundle === 'mount') {
+    for (const slot of BASE_AND_MOUNT_ONLY_SLOTS) {
+      root.style.removeProperty(`--${bundle}-${slot}`);
     }
   }
 }

@@ -62,6 +62,7 @@
   --base-text: var(--text);
   --base-alt-text: var(--text-muted);
   --base-subtle-text: var(--text-subtle);
+  --base-input-bg: var(--bg-input);
   --base-highlight: var(--accent);
 
   /* mount = cards */
@@ -69,6 +70,7 @@
   --mount-border: var(--border);
   --mount-text: var(--text);
   --mount-alt-text: var(--text-muted);
+  --mount-input-bg: var(--bg-input);
   --mount-highlight: var(--accent);
 
   /* orbit = menus / dropdowns */
@@ -237,6 +239,7 @@
   --base-highlight: #96b2e5;
 
   --mount-bg: #223366;
+  --mount-input-bg: #223366;
   --mount-border: #c1bbb5;
   --mount-text: #f4f1ec;
   --mount-alt-text: #d5dcee;
@@ -320,6 +323,7 @@
   --base-highlight: #e0a040;
 
   --mount-bg: #1c1612;
+  --mount-input-bg: #1c1612;
   --mount-border: #a07a4c;
   --mount-text: #ffffff;
   --mount-alt-text: #e8d4b8;
@@ -376,6 +380,7 @@
   --base-highlight: #a32010;
 
   --mount-bg: #f0e2cd;
+  --mount-input-bg: #f0e2cd;
   --mount-border: #7a5a2c;
   --mount-text: #0a0a07;
   --mount-alt-text: #3e2810;
@@ -435,6 +440,7 @@
   --base-highlight: #28537e;
 
   --mount-bg: #e8e2d8;
+  --mount-input-bg: #f4ece0;
   --mount-border: #4f361a;
   --mount-text: #0d1426;
   --mount-alt-text: #4f361a;
@@ -525,6 +531,7 @@
   --base-highlight-hover: #8a3d20;
 
   --mount-bg: #d8cda8;
+  --mount-input-bg: #d8cda8;
   --mount-border: #11637a;
   --mount-text: #20303d;
   --mount-alt-text: #2d3419;
@@ -586,6 +593,7 @@
   --base-highlight-hover: #d4a020;
 
   --mount-bg: #243846;
+  --mount-input-bg: #243846;
   --mount-border: #569ca8;
   --mount-text: #e8dccd;
   --mount-alt-text: #d4cab5;
@@ -696,6 +704,7 @@
   --base-highlight-hover: #7a3d35;
 
   --mount-bg: #dad8a0;
+  --mount-input-bg: #dad8a0;
   --mount-border: #335215;
   --mount-text: #0d150d;
   --mount-alt-text: #2d3414;
@@ -761,6 +770,7 @@
   --base-highlight-hover: #8eb338;
 
   --mount-bg: #1a2410;
+  --mount-input-bg: #1a2410;
   --mount-border: #87973c;
   --mount-text: #e8e7c3;
   --mount-alt-text: #d4d4a8;
@@ -907,6 +917,7 @@
   --base-highlight-hover: #7e3e34;
 
   --mount-bg: #ebe6df;
+  --mount-input-bg: #ebe6df;
   --mount-border: #5d7984;
   --mount-text: #2a201d;
   --mount-alt-text: #4a3a32;
@@ -974,6 +985,7 @@
   --base-highlight-hover: #f5b094;
 
   --mount-bg: #3a2e2a;
+  --mount-input-bg: #3a2e2a;
   --mount-border: #26aad0;
   --mount-text: #f3f0ed;
   --mount-alt-text: #d8d2c8;
@@ -1127,6 +1139,7 @@
   --base-highlight-hover: #6f1c08;
 
   --mount-bg: #e6e2d0;
+  --mount-input-bg: #e6e2d0;
   --mount-border: #3b376a;
   --mount-text: #0f0b1b;
   --mount-alt-text: #4c2413;
@@ -1200,6 +1213,7 @@
   --base-highlight-hover: #f5a878;
 
   --mount-bg: #201e43;
+  --mount-input-bg: #201e43;
   --mount-border: #847ecc;
   --mount-text: #eeeedf;
   --mount-alt-text: #ebcaae;
@@ -1343,6 +1357,7 @@
   --base-highlight-hover: #5e3115;
 
   --mount-bg: #e5d39c;
+  --mount-input-bg: #e5d39c;
   --mount-border: #4e2c14;
   --mount-text: #1a150e;
   --mount-alt-text: #4e2c14;
@@ -1413,6 +1428,7 @@
   --base-highlight-hover: #d4901a;
 
   --mount-bg: #2a1f14;
+  --mount-input-bg: #2a1f14;
   --mount-border: #efb88e;
   --mount-text: #f8eae2;
   --mount-alt-text: #f0efbe;
@@ -1559,6 +1575,7 @@
   --base-highlight-hover: #5e3010;
 
   --mount-bg: #ddd8c4;
+  --mount-input-bg: #ddd8c4;
   --mount-border: #5e4227;
   --mount-text: #050404;
   --mount-alt-text: #2f221a;
@@ -1629,6 +1646,7 @@
   --base-highlight-hover: #b87a38;
 
   --mount-bg: #2f221a;
+  --mount-input-bg: #2f221a;
   --mount-border: #b6745c;
   --mount-text: #e8e5d7;
   --mount-alt-text: #e6c99a;
@@ -1770,6 +1788,7 @@
   --base-highlight-hover: #6a3415;
 
   --mount-bg: #e8dcb8;
+  --mount-input-bg: #e8dcb8;
   --mount-border: #5a3018;
   --mount-text: #1a0e08;
   --mount-alt-text: #341b0d;
@@ -1840,6 +1859,7 @@
   --base-highlight-hover: #c46d34;
 
   --mount-bg: #4c2818;
+  --mount-input-bg: #4c2818;
   --mount-border: #e09060;
   --mount-text: #f3ecd3;
   --mount-alt-text: #e6c89a;
@@ -1976,6 +1996,7 @@
   --base-highlight-hover: #393939;
 
   --mount-bg: #ffffff;
+  --mount-input-bg: #ffffff;
   --mount-border: #878787;
   --mount-text: #0f0f0f;
   --mount-alt-text: #4a4a4a;
@@ -2037,6 +2058,7 @@
   --base-highlight-hover: #b8b8b8;
 
   --mount-bg: #1a1a1a;
+  --mount-input-bg: #1a1a1a;
   --mount-border: #757575;
   --mount-text: #f2f2f2;
   --mount-alt-text: #b8b8b8;

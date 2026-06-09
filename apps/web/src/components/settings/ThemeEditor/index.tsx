@@ -13,9 +13,9 @@ import { useThemeOverrides } from './useThemeOverrides';
  * Full-page theme editor accessible from the user menu under "Theme
  * editor".
  *
- * Live-edits the 50 bundle tokens (7 bundles × 7 slots + 1 base-only
- * subtle-text slot) that make up the active theme. Changes are applied
- * immediately as inline overrides on
+ * Live-edits the 52 bundle tokens (7 bundles × 7 slots + 1 base-only
+ * subtle-text slot + 2 base/mount input-bg slots) that make up the
+ * active theme. Changes are applied immediately as inline overrides on
  * `document.documentElement` (via `useThemeOverrides`) and reset when the
  * user navigates away.
  *
@@ -64,7 +64,7 @@ export default function ThemeEditor() {
             Theme editor
           </h1>
           <p className="mt-0.5 text-[var(--base-alt-text)] text-xs">
-            Edit the 50 bundle tokens of the active theme and see changes live.
+            Edit the 52 bundle tokens of the active theme and see changes live.
             Resets when you navigate away.
           </p>
         </div>

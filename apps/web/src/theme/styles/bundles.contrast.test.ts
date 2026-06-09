@@ -576,6 +576,76 @@ describe('bundle contrast contract', () => {
     }
   });
 
+  /*
+   * --base-input-bg and --mount-input-bg are base/mount-only slots
+   * tuning the form-input fill per host surface. Wave 22a adds the
+   * slots + mount-input-bg per-theme values (consumed by ColorEditor).
+   * Wave 22b will add per-theme --base-input-bg values + migrate
+   * FormInput + LinksToolbar.
+   *
+   * Contract per slot:
+   *   {surface}-text on {surface}-input-bg          >= 4.5:1 (SC 1.4.3)
+   *   {surface}-alt-text on {surface}-input-bg      >= 4.5:1 (SC 1.4.3)
+   *     (covers placeholder usage; placeholders are functional text)
+   *   {surface}-border on {surface}-input-bg        >= 3:1   (SC 1.4.11)
+   *     (input boundary visible against its own fill)
+   *
+   * Fixtures whose --{surface}-input-bg is still aliased
+   * (`var(--bg-input)`) skip — the legacy alias is verified by the
+   * existing flat-token contract review.
+   */
+  describe('input bundle contract', () => {
+    const INPUT_PAIRS = [
+      { surface: 'base', fg: 'base-text', threshold: AA_NORMAL },
+      { surface: 'base', fg: 'base-alt-text', threshold: AA_NORMAL },
+      { surface: 'base', fg: 'base-border', threshold: AA_NON_TEXT },
+      { surface: 'mount', fg: 'mount-text', threshold: AA_NORMAL },
+      { surface: 'mount', fg: 'mount-alt-text', threshold: AA_NORMAL },
+      { surface: 'mount', fg: 'mount-border', threshold: AA_NON_TEXT },
+    ] as const;
+
+    for (const fixture of FIXTURES) {
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+
+      const usablePairs = INPUT_PAIRS.filter((pair) => {
+        const inputBg = declarations.get(`${pair.surface}-input-bg`);
+        const fg = declarations.get(pair.fg);
+        return (
+          inputBg !== undefined &&
+          fg !== undefined &&
+          !inputBg.includes('var(') &&
+          !fg.includes('var(')
+        );
+      });
+      if (usablePairs.length === 0) {
+        continue;
+      }
+
+      describe(`${fixture.label}`, () => {
+        for (const pair of usablePairs) {
+          const inputBg = declarations.get(`${pair.surface}-input-bg`)!;
+          const fg = declarations.get(pair.fg)!;
+
+          it(`${pair.fg} on ${pair.surface}-input-bg >= ${pair.threshold}:1`, () => {
+            const foreground = resolveFg(parseColor(fg));
+            const background = compositeOverBg(
+              parseColor(inputBg),
+              fixture.pageBg,
+            );
+            const ratio = contrastRatio(foreground, background);
+            expect
+              .soft(
+                ratio,
+                `${pair.fg} on ${pair.surface}-input-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+              )
+              .toBeGreaterThanOrEqual(pair.threshold);
+          });
+        }
+      });
+    }
+  });
+
   describe('card-style border vs page --base-bg', () => {
     for (const fixture of FIXTURES) {
       if (!fixture.checkAdjacency) {

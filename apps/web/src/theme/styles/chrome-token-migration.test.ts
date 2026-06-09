@@ -59,11 +59,13 @@ const MIGRATED_FILES = [
  *
  * Not included:
  *   --accent / --accent-fg / --accent-hover  — universally-defined legacy
- *     aliases still used by buttons (ExtensionAuthorizePage) and focus
- *     rings (universal). Defer to wave 20 when --orbit-highlight-fg lands
- *     on every theme.
- *   --bg-input                                — input-bg slot deferred to
- *     wave 20; only ColorEditor still references it and that is intentional.
+ *     aliases still used by buttons (ExtensionAuthorizePage). --accent-fg
+ *     and --accent-hover stay until --orbit-highlight-fg / -hover land on
+ *     default + apollo + school-of-rock (deferred). --accent itself is
+ *     the active-state outline anchor (SettingsGroup data-[active=true]:
+ *     outline-[var(--accent)]) — outline indicator, not focus ring.
+ *   --focus-ring                              — universal slot (wave 21).
+ *     Migrated chrome files use it; not a legacy alias.
  */
 const LEGACY_TOKENS = [
   'var(--text)',
@@ -72,6 +74,7 @@ const LEGACY_TOKENS = [
   'var(--bg)',
   'var(--bg-surface)',
   'var(--bg-elevated)',
+  'var(--bg-input)',
   'var(--border)',
 ] as const;
 
