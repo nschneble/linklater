@@ -82,6 +82,7 @@ export default function ApiDocsView() {
       <div className="flex flex-col gap-2">
         <LinkButton
           className="self-start"
+          surface="base"
           onClick={() => navigate('/settings')}
         >
           Back to Settings

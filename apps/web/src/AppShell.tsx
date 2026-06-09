@@ -59,6 +59,7 @@ export default function AppShell() {
             Please verify your email address.{' '}
             <LinkButton
               className="hidden sm:inline-flex"
+              surface="warn"
               onClick={() => shell.navigate('/settings')}
             >
               Need to resend the verification email?

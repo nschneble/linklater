@@ -108,6 +108,7 @@ export default function TokenInput({ value, onChange }: TokenInputProps) {
         </div>
         <IconButton
           className="group"
+          surface="base"
           aria-pressed={showToken}
           aria-label={showToken ? 'Hide token' : 'Show token'}
           onClick={() => setShowToken((shown) => !shown)}
@@ -121,12 +122,13 @@ export default function TokenInput({ value, onChange }: TokenInputProps) {
             className="fa-solid fa-eye-slash text-[0.7rem] hidden group-aria-pressed:inline"
           />
         </IconButton>
-        <IconButton onClick={() => void handlePaste()}>
+        <IconButton surface="base" onClick={() => void handlePaste()}>
           <i aria-hidden="true" className="fa-solid fa-paste text-[0.7rem]" />
           Paste from clipboard
         </IconButton>
         <IconButton
           variant="ghost"
+          surface="base"
           onClick={handleClear}
           aria-disabled={value.length === 0 || undefined}
           disabled={value.length === 0}

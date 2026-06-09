@@ -104,11 +104,11 @@ export default function CopyRevealPanel({
         tabIndex: -1,
         'aria-labelledby': headingId,
         className:
-          'space-y-4 -mx-6 my-6 p-6 pb-2 border-y border-[var(--border)] border-dotted focus:outline-none',
+          'space-y-4 -mx-6 my-6 p-6 pb-2 border-y border-[var(--mount-border)] border-dotted focus:outline-none',
       }
     : {
         className:
-          'space-y-4 -mx-6 my-6 p-6 pb-2 border-y border-[var(--border)] border-dotted',
+          'space-y-4 -mx-6 my-6 p-6 pb-2 border-y border-[var(--mount-border)] border-dotted',
       };
 
   const isSingle = secrets.length === 1;
@@ -117,17 +117,19 @@ export default function CopyRevealPanel({
     <div {...containerProps}>
       <p
         id={headingId}
-        className="mb-3 text-[var(--text-muted)] text-xs"
+        className="mb-3 text-[var(--mount-alt-text)] text-xs"
         role="status"
       >
-        <span className="text-[var(--text)] font-semibold">{headingText}</span>{' '}
+        <span className="text-[var(--mount-text)] font-semibold">
+          {headingText}
+        </span>{' '}
         {bodyText}
       </p>
       {isSingle ? (
         <div className="flex flex-col items-start gap-4">
           <code
             aria-label={secretAriaLabel}
-            className="w-full block px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-xs font-mono rounded select-all"
+            className="w-full block px-3 py-2 bg-[var(--orbit-bg)] border border-[var(--orbit-border)] text-[var(--orbit-text)] text-xs font-mono rounded select-all"
           >
             {secrets[0]}
           </code>
@@ -144,7 +146,7 @@ export default function CopyRevealPanel({
               <li
                 key={secret}
                 aria-label={secretAriaLabel}
-                className="px-3 py-1.5 bg-[var(--bg-elevated)] border-shadow text-[var(--text)] text-xs font-mono rounded break-all"
+                className="px-3 py-1.5 bg-[var(--orbit-bg)] border-shadow text-[var(--orbit-text)] text-xs font-mono rounded break-all"
               >
                 {secret}
               </li>
@@ -176,6 +178,7 @@ function CopyButton({ label, copied, onCopy }: CopyButtonProps) {
   return (
     <IconButton
       className="group"
+      surface="mount"
       data-copied={copied ? 'true' : undefined}
       aria-label={label}
       onClick={() => void onCopy?.()}

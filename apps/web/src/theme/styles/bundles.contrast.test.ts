@@ -807,4 +807,115 @@ describe('bundle contrast contract', () => {
       });
     }
   });
+
+  /*
+   * `--orbit-border` over `--mount-bg` is the structural pair for the
+   * elevated lift inside a mount-host card: IconButton variant="elevated"
+   * on a mount surface paints `--orbit-bg` filled with `--orbit-border`
+   * and sits on `--mount-bg`. SC 1.4.11 (3:1) applies on the border, not
+   * on the bg-on-bg adjacency (`--orbit-bg` vs `--mount-bg` is
+   * intentionally low across every theme — 1.07-1.46:1 — with the border
+   * carrying the visual lift). Wave 24 mechanizes this pair so any
+   * future palette tweak to either slot is caught.
+   *
+   * Brief originally listed `--orbit-bg` vs `--mount-bg >= 3:1`; that
+   * pair fails every theme/mode by design and is not the WCAG-load-
+   * bearing pair. Replaced with the structural border-on-host check per
+   * [[feedback-verify-upstream-gate-claims]].
+   */
+  describe('orbit-border on mount-bg (elevated lift)', () => {
+    for (const fixture of FIXTURES) {
+      if (!fixture.checkAdjacency) {
+        continue;
+      }
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+      const orbitBorder = getSlot(declarations, 'orbit', 'border');
+      const mountBg = getSlot(declarations, 'mount', 'bg');
+      if (orbitBorder === null || mountBg === null) {
+        continue;
+      }
+
+      it(`${fixture.label} >= 3:1`, () => {
+        const ratio = contrastRatio(
+          resolveFg(orbitBorder),
+          compositeOverBg(mountBg, fixture.pageBg),
+        );
+        expect
+          .soft(
+            ratio,
+            `orbit-border on mount-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+          )
+          .toBeGreaterThanOrEqual(AA_NON_TEXT);
+      });
+    }
+  });
+
+  /*
+   * Alert idle paint on host surfaces — the IconButton `danger` variant
+   * paints `--alert-text` + `--alert-border` directly on its host bg (no
+   * `--alert-bg` wrapper) at rest. The hover transient does fill
+   * `--alert-bg`, but the idle pair is what the consumer reads most of
+   * the time.
+   *
+   * Scoped to alert only — the `danger` variant is the only intrinsic
+   * state-bundle IconButton variant, and Alert.tsx/StatusBadge.tsx
+   * always pair `--{state}-border` with `--{state}-bg` (the in-bundle
+   * CONTRACT iteration above covers those). Warn/info/success on host
+   * bg are not real consumer pairs today; if a future consumer adds
+   * one, expand this block.
+   *
+   * Mirrors the wave-20 `state-text on base-bg` block above
+   * ([[feedback-state-text-on-base-bg-test-pair]]) extended to the
+   * mount and orbit tiers an IconButton can ride. Wave 24 mechanized
+   * after a culori pre-flight cleared the matrix worst-case at 3.275:1
+   * (alert-border on orbit-bg, before-midnight dark).
+   */
+  describe('alert idle paint on host surfaces', () => {
+    const HOST_PAIRS = [
+      { host: 'mount' as const, threshold: AA_NORMAL, slot: 'text' as const },
+      { host: 'orbit' as const, threshold: AA_NORMAL, slot: 'text' as const },
+      {
+        host: 'mount' as const,
+        threshold: AA_NON_TEXT,
+        slot: 'border' as const,
+      },
+      {
+        host: 'orbit' as const,
+        threshold: AA_NON_TEXT,
+        slot: 'border' as const,
+      },
+    ];
+
+    for (const fixture of FIXTURES) {
+      if (!fixture.checkAdjacency) {
+        continue;
+      }
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+
+      describe(`${fixture.label}`, () => {
+        for (const { host, threshold, slot } of HOST_PAIRS) {
+          const hostBg = getSlot(declarations, host, 'bg');
+          if (hostBg === null) continue;
+
+          const stateSlot = getSlot(declarations, 'alert', slot);
+          if (stateSlot === null) continue;
+
+          it(`alert-${slot} on ${host}-bg >= ${threshold}:1`, () => {
+            const ratio = contrastRatio(
+              resolveFg(stateSlot),
+              compositeOverBg(hostBg, fixture.pageBg),
+            );
+            expect
+              .soft(
+                ratio,
+                `alert-${slot} on ${host}-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+              )
+              .toBeGreaterThanOrEqual(threshold);
+          });
+        }
+      });
+    }
+  });
 });

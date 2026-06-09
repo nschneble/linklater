@@ -88,6 +88,7 @@ export default function StumblePage() {
         <IconButton
           ref={retryButtonReference}
           variant="elevated"
+          surface="base"
           onClick={tryStumble}
         >
           <i className="fa-solid fa-arrows-rotate text-xs" aria-hidden="true" />

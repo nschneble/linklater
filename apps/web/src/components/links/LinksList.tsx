@@ -147,7 +147,7 @@ export default function LinksList({
         pagination.total - links.length > 1 &&
         !loadingLinks && (
           <div className="flex justify-center pt-2">
-            <IconButton variant="elevated" onClick={onLoadMore}>
+            <IconButton variant="elevated" surface="base" onClick={onLoadMore}>
               {`Load more (${pagination.total - links.length} remaining)`}
             </IconButton>
           </div>

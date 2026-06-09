@@ -50,6 +50,7 @@ export default function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
                   aria-label={`Revoke ${token.name}`}
                   className="relative shrink-0 z-30"
                   variant="danger"
+                  surface="orbit"
                   onClick={openConfirm}
                 >
                   <i
@@ -71,6 +72,7 @@ export default function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
                       aria-label={`Confirm revoke ${token.name}`}
                       disabled={pending}
                       variant="danger-filled"
+                      surface="orbit"
                       onClick={runConfirm}
                     >
                       {pending ? 'Revoking…' : 'Yes, revoke'}
@@ -78,6 +80,7 @@ export default function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
                     <IconButton
                       aria-label={`Cancel revoke ${token.name}`}
                       variant="ghost"
+                      surface="orbit"
                       disabled={pending}
                       onClick={closeConfirm}
                     >

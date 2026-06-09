@@ -37,6 +37,7 @@ export default function StumbleEmptyView() {
 
       <IconButton
         variant="elevated"
+        surface="base"
         className="mt-8"
         onClick={() => navigate('/unread')}
       >

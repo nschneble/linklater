@@ -403,6 +403,11 @@ const SHAPE_REDUNDANCY_WAIVERS: ReadonlySet<string> = new Set([
   //     glyphs ship across every theme; nouvelle-vague's wave-16 .tsx
   //     cleanup removes the per-theme branch but the unconditional icon
   //     selection stays — the redundancy citation remains valid.
+  //   - Toast.tsx (wave 24) repaints onto the same alert-highlight /
+  //     success-highlight slots and reuses the same icon-glyph pair
+  //     (fa-circle-exclamation for error variant, fa-circle-check for
+  //     success variant). The shape-redundancy proof from Alert.tsx
+  //     extends to Toast unchanged.
   //   - StatusBadge.tsx renders `info` with fa-circle-info + rounded-sm
   //     pill shape, `warning` with fa-triangle-exclamation + rounded pill,
   //     and `success` with fa-circle-check + rounded-full pill. All three

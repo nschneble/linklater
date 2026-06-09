@@ -1,0 +1,173 @@
+/*
+ * Tests for IconButton — the shared small-pill action button.
+ *
+ * Three contracts pinned here:
+ * 1. The `surface` prop drives the host-tier paint for `default`, `ghost`,
+ *    and `elevated` variants. Intrinsic variants (`danger`, `danger-filled`)
+ *    paint the alert bundle regardless of host.
+ * 2. The `hidden` prop makes the button non-interactive AND non-announced:
+ *    `disabled`, `aria-hidden`, `tabIndex={-1}`, and `pointer-events-none`
+ *    must all coexist so screen readers + keyboard nav + pointer interactions
+ *    all ignore the invisible affordance. A regression on any one of those
+ *    flags would re-leak the hidden button.
+ * 3. The disabled `:opacity-60` rule is suppressed when hidden so the
+ *    `opacity-0` visibility class wins specificity (commented in source).
+ */
+
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import IconButton from './IconButton';
+
+describe('IconButton', () => {
+  it('defaults to mount surface — default variant paints from the mount bundle', () => {
+    render(<IconButton>label</IconButton>);
+    const button = screen.getByRole('button', { name: 'label' });
+    expect(button.getAttribute('data-surface')).toBe('mount');
+    expect(button.className).toContain('ring-[var(--mount-border)]');
+    expect(button.className).toContain('text-[var(--mount-text)]');
+    expect(button.className).toContain('hover:bg-[var(--orbit-bg)]');
+  });
+
+  it('surface="base" lifts the default-variant hover-bg from base → mount', () => {
+    render(<IconButton surface="base">label</IconButton>);
+    const button = screen.getByRole('button', { name: 'label' });
+    expect(button.getAttribute('data-surface')).toBe('base');
+    expect(button.className).toContain('ring-[var(--base-border)]');
+    expect(button.className).toContain('text-[var(--base-text)]');
+    expect(button.className).toContain('hover:bg-[var(--mount-bg)]');
+  });
+
+  it('surface="orbit" carries no hover-bg on default — no over-orbit slot exists', () => {
+    render(<IconButton surface="orbit">label</IconButton>);
+    const button = screen.getByRole('button', { name: 'label' });
+    expect(button.getAttribute('data-surface')).toBe('orbit');
+    expect(button.className).toContain('ring-[var(--orbit-border)]');
+    expect(button.className).toContain('text-[var(--orbit-text)]');
+    expect(button.className).not.toContain('hover:bg-[var(--');
+  });
+
+  it('ghost variant reads the host bundle alt-text slot (mount default)', () => {
+    render(<IconButton variant="ghost">cancel</IconButton>);
+    const button = screen.getByRole('button', { name: 'cancel' });
+    expect(button.className).toContain('text-[var(--mount-alt-text)]');
+    expect(button.className).toContain('ring-[var(--mount-border)]');
+  });
+
+  it('ghost variant on base host reads the base bundle alt-text slot', () => {
+    render(
+      <IconButton variant="ghost" surface="base">
+        cancel
+      </IconButton>,
+    );
+    const button = screen.getByRole('button', { name: 'cancel' });
+    expect(button.className).toContain('text-[var(--base-alt-text)]');
+    expect(button.className).toContain('ring-[var(--base-border)]');
+  });
+
+  it('danger variant is intrinsic — alert tokens regardless of surface', () => {
+    const { rerender } = render(
+      <IconButton variant="danger" surface="base">
+        delete
+      </IconButton>,
+    );
+    let button = screen.getByRole('button', { name: 'delete' });
+    expect(button.className).toContain('text-[var(--alert-text)]');
+    expect(button.className).toContain('ring-[var(--alert-border)]');
+    expect(button.className).toContain('hover:bg-[var(--alert-bg)]');
+
+    rerender(
+      <IconButton variant="danger" surface="orbit">
+        delete
+      </IconButton>,
+    );
+    button = screen.getByRole('button', { name: 'delete' });
+    expect(button.className).toContain('text-[var(--alert-text)]');
+    expect(button.className).toContain('ring-[var(--alert-border)]');
+  });
+
+  it('danger-filled variant is intrinsic — alert-highlight regardless of surface', () => {
+    render(
+      <IconButton variant="danger-filled" surface="mount">
+        confirm
+      </IconButton>,
+    );
+    const button = screen.getByRole('button', { name: 'confirm' });
+    expect(button.className).toContain('bg-[var(--alert-highlight)]');
+    expect(button.className).toContain('text-[var(--alert-highlight-fg)]');
+    expect(button.className).toContain(
+      'hover:bg-[var(--alert-highlight-hover)]',
+    );
+  });
+
+  it('elevated variant on mount host lifts to orbit bg + mount on hover', () => {
+    render(<IconButton variant="elevated">go</IconButton>);
+    const button = screen.getByRole('button', { name: 'go' });
+    expect(button.className).toContain('bg-[var(--orbit-bg)]');
+    expect(button.className).toContain('hover:bg-[var(--mount-bg)]');
+    expect(button.className).toContain('text-[var(--orbit-text)]');
+  });
+
+  it('elevated variant on base host lifts to mount bg + orbit on hover', () => {
+    render(
+      <IconButton variant="elevated" surface="base">
+        go
+      </IconButton>,
+    );
+    const button = screen.getByRole('button', { name: 'go' });
+    expect(button.className).toContain('bg-[var(--mount-bg)]');
+    expect(button.className).toContain('hover:bg-[var(--orbit-bg)]');
+    expect(button.className).toContain('text-[var(--mount-text)]');
+  });
+
+  it('hidden=true seals AT exposure: disabled, aria-hidden, tabIndex=-1, pointer-events-none', () => {
+    render(<IconButton hidden>secret</IconButton>);
+    const button = screen.getByRole('button', { hidden: true });
+    expect(button).toBeDisabled();
+    expect(button.getAttribute('aria-hidden')).toBe('true');
+    expect(button.getAttribute('tabIndex')).toBe('-1');
+    expect(button.className).toContain('pointer-events-none');
+    expect(button.className).toContain('opacity-0');
+  });
+
+  it('hidden=true suppresses the disabled:opacity-60 rule so opacity-0 wins specificity', () => {
+    render(<IconButton hidden>secret</IconButton>);
+    const button = screen.getByRole('button', { hidden: true });
+    // DISABLED applies disabled:opacity-60 — must be ABSENT when hidden
+    expect(button.className).not.toContain('disabled:opacity-60');
+  });
+
+  it('disabled (but not hidden) keeps the DISABLED utility on the className', () => {
+    render(<IconButton disabled>blocked</IconButton>);
+    const button = screen.getByRole('button', { name: 'blocked' });
+    expect(button).toBeDisabled();
+    expect(button.getAttribute('aria-hidden')).toBe(null);
+    expect(button.className).toContain('disabled:opacity-60');
+  });
+
+  it('hidden=false leaves the button focusable and announced', () => {
+    render(<IconButton hidden={false}>visible</IconButton>);
+    const button = screen.getByRole('button', { name: 'visible' });
+    expect(button.getAttribute('aria-hidden')).toBe(null);
+    expect(button.className).toContain('opacity-100');
+  });
+
+  it('forwards onClick and arbitrary native attributes', () => {
+    const handleClick = vi.fn();
+    render(
+      <IconButton onClick={handleClick} data-testid="my-button">
+        click me
+      </IconButton>,
+    );
+    const button = screen.getByRole('button', { name: 'click me' });
+    expect(button.getAttribute('data-testid')).toBe('my-button');
+    fireEvent.click(button);
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('default type is button — guards against accidental form submission', () => {
+    render(<IconButton>safe</IconButton>);
+    expect(
+      screen.getByRole('button', { name: 'safe' }).getAttribute('type'),
+    ).toBe('button');
+  });
+});
