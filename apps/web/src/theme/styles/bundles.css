@@ -8,6 +8,8 @@
  *     --{bundle}-border          border / divider
  *     --{bundle}-text            primary readable text
  *     --{bundle}-alt-text        secondary text (labels, captions)
+ *     --{bundle}-subtle-text     lowest-emphasis text (kbd legends, hints,
+ *                                chevrons) — BASE bundle only
  *     --{bundle}-highlight       accent pop inside the bundle (links, badges)
  *     --{bundle}-highlight-fg    foreground for filled surfaces that use
  *                                --{bundle}-highlight as their bg
@@ -25,7 +27,8 @@
  *     success   verified badges, notifications
  *
  * Each bundle MUST satisfy WCAG 2.2:
- *     text/bg, alt-text/bg                 >= 4.5:1   (SC 1.4.3)
+ *     text/bg, alt-text/bg,
+ *     subtle-text/bg (base only)           >= 4.5:1   (SC 1.4.3)
  *     border/bg, highlight/bg              >= 3:1     (SC 1.4.11)
  *     highlight-fg/highlight,
  *     highlight-fg/highlight-hover         >= 4.5:1   (SC 1.4.3)

@@ -184,7 +184,9 @@ export default function ColorEditor({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-[var(--mount-alt-text)] text-[0.6rem]">
-          {VAR_GROUPS.length} bundles · {VAR_GROUPS.length * 7} tokens
+          {VAR_GROUPS.length} bundles ·{' '}
+          {VAR_GROUPS.reduce((total, group) => total + group.items.length, 0)}{' '}
+          tokens
         </p>
         <button
           type="button"

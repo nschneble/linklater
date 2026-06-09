@@ -98,12 +98,7 @@ body {
   --color-confused: #9b92c8; /* Slightly desaturated blue */
 }
 
-/*
- * Landing page background. Despite the name, this utility paints the
- * unauthenticated marketing page regardless of theme — the brand surface
- * is intentionally theme-independent on /. Used only by
- * apps/web/src/components/LandingPage/index.tsx.
- */
+/* Landing page background — theme-independent brand surface on /. */
 @utility bg-hit-man {
   background: radial-gradient(ellipse at 50% 0%, #14103a 0%, #0a0812 70%);
 }

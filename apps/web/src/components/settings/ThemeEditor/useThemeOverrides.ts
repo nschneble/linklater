@@ -40,6 +40,15 @@ const SLOTS = [
 ] as const;
 export type Slot = (typeof SLOTS)[number];
 
+/**
+ * Slots that only exist on the base bundle. `subtle-text` is the
+ * lowest-emphasis text tier used by page chrome (kbd legends, helper hints,
+ * chevrons) — see bundles.css preamble. Mount/orbit/state bundles do not
+ * carry this slot by design.
+ */
+const BASE_ONLY_SLOTS = ['subtle-text'] as const;
+export type BaseOnlySlot = (typeof BASE_ONLY_SLOTS)[number];
+
 const BUNDLE_LABELS: Record<Bundle, string> = {
   base: 'Base',
   mount: 'Mount',
@@ -60,23 +69,28 @@ const BUNDLE_DESCRIPTIONS: Record<Bundle, string> = {
   success: 'Verified, notifications',
 };
 
-const SLOT_LABELS: Record<Slot, string> = {
+const SLOT_LABELS: Record<Slot | BaseOnlySlot, string> = {
   bg: 'Background',
   border: 'Border',
   text: 'Text',
   'alt-text': 'Alt text',
+  'subtle-text': 'Subtle text',
   highlight: 'Highlight',
   'highlight-fg': 'Highlight foreground',
   'highlight-hover': 'Highlight hover',
 };
 
 /**
- * 49 bundle tokens (7 bundles × 7 slots). Each theme defines values for
- * these in `bundles.css`; the editor exposes them as overrides.
+ * 50 bundle tokens (7 bundles × 7 slots + 1 base-only `subtle-text` slot).
+ * Each theme defines values for these in `bundles.css`; the editor exposes
+ * them as overrides.
  */
-export const EDITABLE_VARS = BUNDLES.flatMap((bundle) =>
-  SLOTS.map((slot) => `--${bundle}-${slot}` as const),
-);
+export const EDITABLE_VARS = [
+  ...BUNDLES.flatMap((bundle) =>
+    SLOTS.map((slot) => `--${bundle}-${slot}` as const),
+  ),
+  ...BASE_ONLY_SLOTS.map((slot) => `--base-${slot}` as const),
+];
 
 /** The union of all CSS variable names that the editor can modify. */
 export type ThemeVariable = (typeof EDITABLE_VARS)[number];
@@ -89,18 +103,31 @@ export interface BundleGroup {
   bundle: Bundle;
   label: string;
   description: string;
-  items: Array<{ variable: ThemeVariable; slot: Slot; label: string }>;
+  items: Array<{
+    variable: ThemeVariable;
+    slot: Slot | BaseOnlySlot;
+    label: string;
+  }>;
 }
 
 export const VAR_GROUPS: BundleGroup[] = BUNDLES.map((bundle) => ({
   bundle,
   label: BUNDLE_LABELS[bundle],
   description: BUNDLE_DESCRIPTIONS[bundle],
-  items: SLOTS.map((slot) => ({
-    variable: `--${bundle}-${slot}` as ThemeVariable,
-    slot,
-    label: SLOT_LABELS[slot],
-  })),
+  items: [
+    ...SLOTS.map((slot) => ({
+      variable: `--${bundle}-${slot}` as ThemeVariable,
+      slot,
+      label: SLOT_LABELS[slot],
+    })),
+    ...(bundle === 'base'
+      ? BASE_ONLY_SLOTS.map((slot) => ({
+          variable: `--base-${slot}` as ThemeVariable,
+          slot,
+          label: SLOT_LABELS[slot],
+        }))
+      : []),
+  ],
 }));
 
 /**
@@ -148,6 +175,11 @@ function clearBundleInlineOverrides(bundle: Bundle): void {
   const root = document.documentElement;
   for (const slot of SLOTS) {
     root.style.removeProperty(`--${bundle}-${slot}`);
+  }
+  if (bundle === 'base') {
+    for (const slot of BASE_ONLY_SLOTS) {
+      root.style.removeProperty(`--base-${slot}`);
+    }
   }
 }
 

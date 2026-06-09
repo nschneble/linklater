@@ -28,9 +28,7 @@ const HEADING_CLASSES = {
   danger: 'text-[var(--alert-text)]',
 } as const;
 
-// Mount bundle has no subtle-text slot by design; the icon collapses to the
-// alt-text tier (one step brighter than the legacy --text-subtle pick). See
-// wave 19 brief Q1 / section 4.7.
+// Mount has no subtle-text slot; icons fall back to the alt-text tier.
 const ICON_CLASSES = {
   default: 'text-[var(--mount-alt-text)]',
   danger: 'text-[var(--alert-highlight)]',

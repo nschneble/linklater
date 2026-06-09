@@ -76,16 +76,28 @@ export default function ComponentShowcase() {
       </ShowcaseSection>
 
       <ShowcaseSection title="Typography">
-        <div className="space-y-1.5 px-3 py-3 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-lg">
-          <p className="text-[var(--mount-text)] text-sm font-semibold">
-            Primary text
-          </p>
-          <p className="text-[var(--mount-alt-text)] text-sm">
-            Muted — labels and captions
-          </p>
-          <p className="text-[var(--mount-alt-text)] text-sm">
-            Subtle — hints and URLs
-          </p>
+        <div className="space-y-2">
+          <div className="space-y-1.5 px-3 py-3 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-lg">
+            <p className="text-[var(--mount-text)] text-sm font-semibold">
+              Card primary
+            </p>
+            <p className="text-[var(--mount-alt-text)] text-sm">
+              Card alt — labels, captions, helper hints
+            </p>
+          </div>
+          {/* Base-only subtle-text tier is rendered against the page surface,
+              not the card, because its 4.5:1 contract targets --base-bg. */}
+          <div className="space-y-1.5 px-3 py-3 bg-[var(--base-bg)] border border-[var(--base-border)] rounded-lg">
+            <p className="text-[var(--base-text)] text-sm font-semibold">
+              Page primary
+            </p>
+            <p className="text-[var(--base-alt-text)] text-sm">
+              Page alt — section nav, descriptions
+            </p>
+            <p className="text-[var(--base-subtle-text)] text-sm">
+              Page subtle — kbd legends, chevrons, hints
+            </p>
+          </div>
         </div>
       </ShowcaseSection>
 

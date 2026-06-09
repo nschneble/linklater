@@ -91,6 +91,17 @@ function pairsForBundle(bundle: Bundle): ContrastPair[] {
       threshold: 3,
     });
   }
+  if (bundle === 'base') {
+    // BASE-only --base-subtle-text slot (lowest-emphasis page-chrome text).
+    // Mount/orbit/state bundles do not carry this slot by design.
+    pairs.push({
+      label: 'subtle-text / bg',
+      foreground: '--base-subtle-text',
+      background: '--base-bg',
+      criterion: '1.4.3',
+      threshold: 4.5,
+    });
+  }
   return pairs;
 }
 

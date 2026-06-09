@@ -195,7 +195,7 @@ export default function SettingsView({
       >
         <DangerZone />
       </SettingsGroup>
-      <div className="flex items-center justify-center mt-500">
+      <div className="flex items-center justify-center mt-12">
         <i
           className="fa-solid fa-cat text-[var(--base-subtle-text)]"
           title="meow"
