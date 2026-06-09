@@ -52,6 +52,7 @@ export default function ApiTokensSection() {
           <FormInput
             ref={apiTokens.nameInputReference}
             id="token-name"
+            surface="mount"
             type="text"
             disabled={apiTokens.creating}
             placeholder="e.g. Claude, Twilio"

@@ -113,6 +113,7 @@ export default function ReauthForm({
           <FormInput
             id="reauth-password"
             ref={passwordReference}
+            surface="mount"
             type="password"
             autoComplete="current-password"
             aria-describedby={describedBy}
@@ -134,6 +135,7 @@ export default function ReauthForm({
       <FormInput
         id="reauth-code"
         ref={codeReference}
+        surface="mount"
         type="text"
         maxLength={17}
         inputMode="numeric"

@@ -62,6 +62,7 @@ export default function AddPasswordForm({ refreshUser }: AddPasswordFormProps) {
       </label>
       <FormInput
         id="add-password-input"
+        surface="mount"
         type="password"
         value={newPassword}
         onChange={(event) => setNewPassword(event.target.value)}

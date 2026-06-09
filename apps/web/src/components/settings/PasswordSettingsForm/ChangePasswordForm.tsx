@@ -63,6 +63,7 @@ export default function ChangePasswordForm() {
       </label>
       <FormInput
         id="new-password"
+        surface="mount"
         type="password"
         autoComplete="new-password"
         placeholder="Leave blank to keep current password"
@@ -85,6 +86,7 @@ export default function ChangePasswordForm() {
         </label>
         <FormInput
           id="current-password"
+          surface="mount"
           type="password"
           autoComplete="current-password"
           placeholder="Required to confirm password change"

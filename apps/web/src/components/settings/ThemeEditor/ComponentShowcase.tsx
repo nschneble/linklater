@@ -144,6 +144,7 @@ export default function ComponentShowcase() {
 
       <ShowcaseSection title="Form input">
         <FormInput
+          surface="mount"
           type="text"
           placeholder="Paste a URL to save…"
           aria-label="Demo URL input"

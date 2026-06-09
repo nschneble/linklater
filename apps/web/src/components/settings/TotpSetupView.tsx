@@ -102,6 +102,7 @@ export default function TotpSetupView({
         <FormInput
           id="totp-code"
           ref={codeInputReference}
+          surface="mount"
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"

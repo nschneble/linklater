@@ -233,6 +233,7 @@
 
   --base-bg: #0d1426;
   --base-border: #9e8b97;
+  --base-input-bg: #1a274d;
   --base-text: #f4f1ec;
   --base-alt-text: #e1dbd5;
   --base-subtle-text: #d5dcee;
@@ -317,6 +318,23 @@
 
   --base-bg: #0a0a07;
   --base-border: #6e5a3a;
+  /* Wave 22b Recovery A: legacy --bg-input #4c310b fails border/input
+   * SC 1.4.11 (1.82:1 vs base-border #6e5a3a). The math is razor-edge —
+   * base-border itself is at 3.008:1 vs base-bg, so the luminance band
+   * available between base-bg lum 0.00297 and the 3:1 input-ceiling lum
+   * 0.00311 is essentially zero. Recovery A by LIFT (lighter input-bg)
+   * forces text/input below 4.5:1; only viable option is to match the
+   * base-bg luminance band with a subtle warm-brown chromatic tint.
+   * #0b0804 lands at border 3.03:1, text/input 19.99:1, alt-text/input
+   * 13.84:1 — passes the bundle-contrast test with the same razor-edge
+   * SC 1.4.11 headroom as the existing base-border/base-bg pair. Visual
+   * distinction vs base-bg is sub-threshold (~1.008:1 luminance ratio);
+   * input fields read as bordered shapes on a near-uniform dark surface,
+   * with the focus ring carrying the focus affordance. The mathematical
+   * impossibility of "comfortable headroom (>3.5:1)" with the current
+   * base-border #6e5a3a is documented in feedback-recovery-a-math-ceiling
+   * (new memory this wave). */
+  --base-input-bg: #0b0804;
   --base-text: #ffffff;
   --base-alt-text: #e8d4b8;
   --base-subtle-text: #ffffff;
@@ -374,6 +392,7 @@
 
   --base-bg: #e0d0c1;
   --base-border: #7a5a30;
+  --base-input-bg: #e0d0c1;
   --base-text: #0a0a07;
   --base-alt-text: #3e2810;
   --base-subtle-text: #040301;
@@ -434,6 +453,7 @@
 
   --base-bg: #f4f1ec;
   --base-border: #76636f;
+  --base-input-bg: #ffffff;
   --base-text: #0d1426;
   --base-alt-text: #4f361a;
   --base-subtle-text: #493444;
@@ -523,6 +543,7 @@
 
   --base-bg: #ccc095;
   --base-border: #11637a;
+  --base-input-bg: #ccc095;
   --base-text: #20303d;
   --base-alt-text: #2d3419;
   --base-subtle-text: #2d3419;
@@ -585,6 +606,7 @@
 
   --base-bg: #1c2c38;
   --base-border: #569ca8;
+  --base-input-bg: #4e4435;
   --base-text: #e8dccd;
   --base-alt-text: #d4cab5;
   --base-subtle-text: #c3e8b0;
@@ -696,6 +718,7 @@
 
   --base-bg: #d0cf93;
   --base-border: #335215;
+  --base-input-bg: #d0cf93;
   --base-text: #0d150d;
   --base-alt-text: #2d3414;
   --base-subtle-text: #252a15;
@@ -762,6 +785,14 @@
 
   --base-bg: #0d150d;
   --base-border: #87973c;
+  /* Wave 22b Recovery A: legacy --bg-input #335215 fails border/input
+   * SC 1.4.11 (2.77:1 vs base-border #87973c). Border #87973c is bright
+   * lime-olive (rel lum 0.276) leaving comfortable headroom for darken-
+   * direction Recovery A. #243618 (deep olive-shadow) lands at border
+   * 4.04:1 (comfortable >3.5), text/input 10.30:1, alt-text/input 8.53:1,
+   * with bg/base-bg luminance ratio 1.43 (visible distinction from the
+   * deep-green base-bg #0d150d). Olive hue preserves the boyhood vibe. */
+  --base-input-bg: #243618;
   --base-text: #e8e7c3;
   --base-alt-text: #d4d4a8;
   --base-subtle-text: #e1eaaa;
@@ -909,6 +940,7 @@
 
   --base-bg: #f3f0ed;
   --base-border: #5d7984;
+  --base-input-bg: #f3f0ed;
   --base-text: #2a201d;
   --base-alt-text: #4a3a32;
   --base-subtle-text: #192526;
@@ -977,6 +1009,12 @@
 
   --base-bg: #2a201d;
   --base-border: #26aad0;
+  /* Brief flagged legacy --bg-input #7a3028 as failing border/input SC
+   * 1.4.11 (estimated 2.07:1). Culori verification produced 3.39:1 — PASS
+   * with comfortable headroom. Legacy value held verbatim per
+   * feedback-verify-upstream-gate-claims (looper spot-checks brief
+   * numerical claims). */
+  --base-input-bg: #7a3028;
   --base-text: #f3f0ed;
   --base-alt-text: #d8d2c8;
   --base-subtle-text: #c8e6f2;
@@ -1131,6 +1169,7 @@
 
   --base-bg: #eeeedf;
   --base-border: #3b376a;
+  --base-input-bg: #eeeedf;
   --base-text: #0f0b1b;
   --base-alt-text: #4c2413;
   --base-subtle-text: #2f2b52;
@@ -1205,6 +1244,7 @@
 
   --base-bg: #0f0b1b;
   --base-border: #847ecc;
+  --base-input-bg: #201e43;
   --base-text: #eeeedf;
   --base-alt-text: #ebcaae;
   --base-subtle-text: #bcdc6f;
@@ -1349,6 +1389,7 @@
 
   --base-bg: #ecdcb0;
   --base-border: #4e2c14;
+  --base-input-bg: #f0c870;
   --base-text: #1a150e;
   --base-alt-text: #4e2c14;
   --base-subtle-text: #1e1607;
@@ -1420,6 +1461,11 @@
 
   --base-bg: #1a150e;
   --base-border: #efb88e;
+  /* Brief flagged legacy --bg-input #4e2c14 as failing border/input SC
+   * 1.4.11 (estimated 2.55:1). Culori verification produced 7.03:1 — PASS
+   * with very comfortable headroom. Legacy value held verbatim per
+   * feedback-verify-upstream-gate-claims. */
+  --base-input-bg: #4e2c14;
   --base-text: #f8eae2;
   --base-alt-text: #f0efbe;
   --base-subtle-text: #f1ebeb;
@@ -1567,6 +1613,7 @@
 
   --base-bg: #e8e5d7;
   --base-border: #5e4227;
+  --base-input-bg: #e8e5d7;
   --base-text: #050404;
   --base-alt-text: #2f221a;
   --base-subtle-text: #4a3015;
@@ -1638,6 +1685,7 @@
 
   --base-bg: #050404;
   --base-border: #b6745c;
+  --base-input-bg: #2f221a;
   --base-text: #e8e5d7;
   --base-alt-text: #e6c99a;
   --base-subtle-text: #e5c7ba;
@@ -1780,6 +1828,7 @@
 
   --base-bg: #f3ecd3;
   --base-border: #5a3018;
+  --base-input-bg: #f3ecd3;
   --base-text: #1a0e08;
   --base-alt-text: #341b0d;
   --base-subtle-text: #2c200b;
@@ -1851,6 +1900,11 @@
 
   --base-bg: #3c1e0e;
   --base-border: #e09060;
+  /* Brief flagged legacy --bg-input #6a3c22 as failing border/input SC
+   * 1.4.11 (estimated 2.40:1). Culori verification produced 3.65:1 — PASS
+   * with comfortable headroom. Legacy value held verbatim per
+   * feedback-verify-upstream-gate-claims. */
+  --base-input-bg: #6a3c22;
   --base-text: #f3ecd3;
   --base-alt-text: #e6c89a;
   --base-subtle-text: #c89968;
@@ -1988,6 +2042,7 @@
 
   --base-bg: #f8f8f8;
   --base-border: #878787;
+  --base-input-bg: #f8f8f8;
   --base-text: #0f0f0f;
   --base-alt-text: #4a4a4a;
   --base-subtle-text: #4d4d4d;
@@ -2050,6 +2105,7 @@
 
   --base-bg: #0a0a0a;
   --base-border: #757575;
+  --base-input-bg: #141414;
   --base-text: #f2f2f2;
   --base-alt-text: #b8b8b8;
   --base-subtle-text: #b8b8b8;

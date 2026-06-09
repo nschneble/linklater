@@ -23,6 +23,7 @@ const MIGRATED_FILES = [
   'src/App.tsx',
   'src/AppShell.tsx',
   'src/components/Header.tsx',
+  'src/components/common/FormInput.tsx',
   'src/components/common/IconListButton.tsx',
   'src/components/api-docs/ApiDocsView.tsx',
   'src/components/api-docs/TokenInput.tsx',
@@ -30,6 +31,10 @@ const MIGRATED_FILES = [
   // but its `bg-gradient-to-b from-text-muted via-text-muted to-text` page
   // wrapper is deferred to wave 20 alongside the login bg gradient — see
   // wave 19 brief Q9. Re-add once the gradient lands on bundle tokens.
+  //
+  // LinksToolbar.tsx partially migrated in wave 22b (search input moved to
+  // --base-* slots) but still references --bg-surface on the SlidingTabBar
+  // wrapper. Re-add once the tab bar bg lands on --mount-bg in wave 23.
   'src/components/settings/ApiTokensList/ApiTokenRow.tsx',
   'src/components/settings/ApiTokensList/index.tsx',
   'src/components/settings/ApiTokensSection/index.tsx',

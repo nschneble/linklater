@@ -149,6 +149,7 @@ export default function EmailSettingsForm() {
       </label>
       <FormInput
         id="change-email"
+        surface="mount"
         type="email"
         placeholder={`Leave blank to keep ${user?.email ?? 'current email'}`}
         value={emailInput}
@@ -168,6 +169,7 @@ export default function EmailSettingsForm() {
           </label>
           <FormInput
             id="email-change-mfa"
+            surface="mount"
             type="text"
             maxLength={17}
             placeholder="Required to confirm email change"
