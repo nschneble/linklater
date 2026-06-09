@@ -147,6 +147,16 @@ const BOYHOOD_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='boyhood'][data-mode='dark']",
   'base-bg',
 );
+const DAZED_AND_CONFUSED_LIGHT_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='dazed-and-confused'][data-mode='light']",
+  'base-bg',
+);
+const DAZED_AND_CONFUSED_DARK_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='dazed-and-confused'][data-mode='dark']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -209,6 +219,18 @@ const FIXTURES: readonly CascadeFixture[] = [
     pageBg: BOYHOOD_DARK_PAGE_BG,
     checkAdjacency: true,
   },
+  {
+    label: 'dazed-and-confused light',
+    selector: "[data-theme='dazed-and-confused'][data-mode='light']",
+    pageBg: DAZED_AND_CONFUSED_LIGHT_PAGE_BG,
+    checkAdjacency: true,
+  },
+  {
+    label: 'dazed-and-confused dark',
+    selector: "[data-theme='dazed-and-confused'][data-mode='dark']",
+    pageBg: DAZED_AND_CONFUSED_DARK_PAGE_BG,
+    checkAdjacency: true,
+  },
 ];
 
 /*
@@ -230,7 +252,6 @@ const FIXTURES: readonly CascadeFixture[] = [
  */
 const UN_MIGRATED_LIGHT_BGS: Record<string, string> = {
   'hit-man': '#f0c870',
-  'dazed-and-confused': '#f3f0ed',
   'before-sunrise': '#f3ecd3',
   'before-sunset': '#e8e5d7',
   'scanner-darkly': '#eeeedf',
@@ -241,7 +262,6 @@ const UN_MIGRATED_DARK_BGS: Record<string, string> = {
   'hit-man': '#1a150e',
   'before-sunset': '#050404',
   'before-sunrise': '#3c1e0e',
-  'dazed-and-confused': '#2a201d',
   'scanner-darkly': '#0f0b1b',
 };
 
