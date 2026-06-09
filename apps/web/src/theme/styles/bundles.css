@@ -117,6 +117,16 @@
   --info-highlight-hover: #1d4ed8;
   --success-highlight-fg: #001a10;
   --success-highlight-hover: #10b981;
+
+  /* Asset filter (day-for-night). Opt-in via .themed-asset utility on
+   * individual <img> elements. Light mode is identity (no transform);
+   * dark mode applies the canonical day-for-night `hue-rotate(180deg)
+   * invert(1)` per https://unsung.aresluna.org/day-for-night/. Themes
+   * may override per-mode in their own cascade blocks (Nouvelle Vague
+   * forces grayscale in both modes per its B&W vibe). HARD EXCLUDE:
+   * QR codes, secrets, captchas (filter destroys scannability). Apply
+   * with care to anything containing faces, brand logos, or text. */
+  --asset-filter: none;
 }
 
 [data-mode='dark'] {
@@ -152,6 +162,28 @@
   --info-highlight-hover: #93c5fd;
   --success-highlight-fg: #001a10;
   --success-highlight-hover: #6ee7b7;
+
+  --asset-filter: hue-rotate(180deg) invert(1);
+}
+
+/* Asset filter opt-in utility. Applies the current cascade's
+ * --asset-filter to an <img> element. Day-for-night in dark mode for
+ * every theme except Nouvelle Vague (which forces grayscale). Default
+ * is identity in light mode + identity under Windows High Contrast
+ * (the forced-colors palette already inverts; double-inverting is a
+ * regression). */
+@utility themed-asset {
+  filter: var(--asset-filter);
+}
+
+/* Suppress the asset filter under Windows High Contrast / forced-colors.
+ * The OS already chose the user's palette; running day-for-night on top
+ * produces a double-inversion artifact. */
+@media (forced-colors: active) {
+  :root,
+  [data-mode='dark'] {
+    --asset-filter: none;
+  }
 }
 
 /* ---------- apollo-10-1-2 ---------- *

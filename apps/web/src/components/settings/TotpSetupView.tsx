@@ -72,6 +72,11 @@ export default function TotpSetupView({
        * QR image is decorative (`alt=""`): a screen-reader user cannot scan
        * it, so the manual secret below is the canonical pathway and the
        * surrounding copy already explains both options.
+       *
+       * Do NOT add `themed-asset` to this img — the day-for-night filter
+       * (hue-rotate + invert) breaks QR scannability in camera apps, which
+       * read finder-pattern polarity. Hard exclusion per
+       * `[[feedback-asset-filter-exclusion]]`.
        */}
       <img
         src={qrCodeDataUrl}

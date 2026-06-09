@@ -10,6 +10,7 @@
   --accent: #d4d4d4;
   --accent-hover: oklch(from var(--accent) calc(l + 0.08) c h);
   --accent-fg: #0a0a0a;
+  --asset-filter: grayscale(100%);
 }
 
 [data-theme='nouvelle-vague'][data-mode='light'] {
@@ -24,9 +25,5 @@
   --accent: #1f1f1f;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #f8f8f8;
-}
-
-[data-theme='nouvelle-vague'] img,
-[data-theme='nouvelle-vague'] .theme-color-dot {
-  filter: grayscale(100%);
+  --asset-filter: grayscale(100%);
 }
