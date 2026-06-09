@@ -177,6 +177,16 @@ const HIT_MAN_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='hit-man'][data-mode='dark']",
   'base-bg',
 );
+const BEFORE_SUNSET_LIGHT_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='before-sunset'][data-mode='light']",
+  'base-bg',
+);
+const BEFORE_SUNSET_DARK_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='before-sunset'][data-mode='dark']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -275,6 +285,18 @@ const FIXTURES: readonly CascadeFixture[] = [
     pageBg: HIT_MAN_DARK_PAGE_BG,
     checkAdjacency: true,
   },
+  {
+    label: 'before-sunset light',
+    selector: "[data-theme='before-sunset'][data-mode='light']",
+    pageBg: BEFORE_SUNSET_LIGHT_PAGE_BG,
+    checkAdjacency: true,
+  },
+  {
+    label: 'before-sunset dark',
+    selector: "[data-theme='before-sunset'][data-mode='dark']",
+    pageBg: BEFORE_SUNSET_DARK_PAGE_BG,
+    checkAdjacency: true,
+  },
 ];
 
 /*
@@ -296,12 +318,10 @@ const FIXTURES: readonly CascadeFixture[] = [
  */
 const UN_MIGRATED_LIGHT_BGS: Record<string, string> = {
   'before-sunrise': '#f3ecd3',
-  'before-sunset': '#e8e5d7',
 };
 
 const UN_MIGRATED_DARK_BGS: Record<string, string> = {
   default: '#0f0b1b',
-  'before-sunset': '#050404',
   'before-sunrise': '#3c1e0e',
 };
 

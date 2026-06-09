@@ -146,6 +146,16 @@ const HIT_MAN_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='hit-man'][data-mode='dark']",
   'base-bg',
 );
+const BEFORE_SUNSET_LIGHT_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='before-sunset'][data-mode='light']",
+  'base-bg',
+);
+const BEFORE_SUNSET_DARK_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='before-sunset'][data-mode='dark']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -227,6 +237,16 @@ const FIXTURES: readonly CascadeFixture[] = [
     label: 'hit-man dark',
     selector: "[data-theme='hit-man'][data-mode='dark']",
     pageBg: HIT_MAN_DARK_PAGE_BG,
+  },
+  {
+    label: 'before-sunset light',
+    selector: "[data-theme='before-sunset'][data-mode='light']",
+    pageBg: BEFORE_SUNSET_LIGHT_PAGE_BG,
+  },
+  {
+    label: 'before-sunset dark',
+    selector: "[data-theme='before-sunset'][data-mode='dark']",
+    pageBg: BEFORE_SUNSET_DARK_PAGE_BG,
   },
 ];
 
@@ -351,6 +371,8 @@ const CASCADE_SLUGS: Record<string, string> = {
   "[data-theme='scanner-darkly'][data-mode='dark']": 'scanner-darkly-dark',
   "[data-theme='hit-man'][data-mode='light']": 'hit-man-light',
   "[data-theme='hit-man'][data-mode='dark']": 'hit-man-dark',
+  "[data-theme='before-sunset'][data-mode='light']": 'before-sunset-light',
+  "[data-theme='before-sunset'][data-mode='dark']": 'before-sunset-dark',
 };
 
 function waiverKey(selector: string, first: Bundle, second: Bundle): string {
