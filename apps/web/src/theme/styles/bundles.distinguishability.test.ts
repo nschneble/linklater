@@ -126,6 +126,16 @@ const DAZED_AND_CONFUSED_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='dazed-and-confused'][data-mode='dark']",
   'base-bg',
 );
+const SCANNER_DARKLY_LIGHT_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='scanner-darkly'][data-mode='light']",
+  'base-bg',
+);
+const SCANNER_DARKLY_DARK_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='scanner-darkly'][data-mode='dark']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -187,6 +197,16 @@ const FIXTURES: readonly CascadeFixture[] = [
     label: 'dazed-and-confused dark',
     selector: "[data-theme='dazed-and-confused'][data-mode='dark']",
     pageBg: DAZED_AND_CONFUSED_DARK_PAGE_BG,
+  },
+  {
+    label: 'scanner-darkly light',
+    selector: "[data-theme='scanner-darkly'][data-mode='light']",
+    pageBg: SCANNER_DARKLY_LIGHT_PAGE_BG,
+  },
+  {
+    label: 'scanner-darkly dark',
+    selector: "[data-theme='scanner-darkly'][data-mode='dark']",
+    pageBg: SCANNER_DARKLY_DARK_PAGE_BG,
   },
 ];
 
@@ -307,6 +327,8 @@ const CASCADE_SLUGS: Record<string, string> = {
     'dazed-and-confused-light',
   "[data-theme='dazed-and-confused'][data-mode='dark']":
     'dazed-and-confused-dark',
+  "[data-theme='scanner-darkly'][data-mode='light']": 'scanner-darkly-light',
+  "[data-theme='scanner-darkly'][data-mode='dark']": 'scanner-darkly-dark',
 };
 
 function waiverKey(selector: string, first: Bundle, second: Bundle): string {

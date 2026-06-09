@@ -157,6 +157,16 @@ const DAZED_AND_CONFUSED_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='dazed-and-confused'][data-mode='dark']",
   'base-bg',
 );
+const SCANNER_DARKLY_LIGHT_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='scanner-darkly'][data-mode='light']",
+  'base-bg',
+);
+const SCANNER_DARKLY_DARK_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='scanner-darkly'][data-mode='dark']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -231,6 +241,18 @@ const FIXTURES: readonly CascadeFixture[] = [
     pageBg: DAZED_AND_CONFUSED_DARK_PAGE_BG,
     checkAdjacency: true,
   },
+  {
+    label: 'scanner-darkly light',
+    selector: "[data-theme='scanner-darkly'][data-mode='light']",
+    pageBg: SCANNER_DARKLY_LIGHT_PAGE_BG,
+    checkAdjacency: true,
+  },
+  {
+    label: 'scanner-darkly dark',
+    selector: "[data-theme='scanner-darkly'][data-mode='dark']",
+    pageBg: SCANNER_DARKLY_DARK_PAGE_BG,
+    checkAdjacency: true,
+  },
 ];
 
 /*
@@ -254,7 +276,6 @@ const UN_MIGRATED_LIGHT_BGS: Record<string, string> = {
   'hit-man': '#f0c870',
   'before-sunrise': '#f3ecd3',
   'before-sunset': '#e8e5d7',
-  'scanner-darkly': '#eeeedf',
 };
 
 const UN_MIGRATED_DARK_BGS: Record<string, string> = {
@@ -262,7 +283,6 @@ const UN_MIGRATED_DARK_BGS: Record<string, string> = {
   'hit-man': '#1a150e',
   'before-sunset': '#050404',
   'before-sunrise': '#3c1e0e',
-  'scanner-darkly': '#0f0b1b',
 };
 
 describe('bundle contrast contract', () => {
