@@ -578,10 +578,12 @@ describe('bundle contrast contract', () => {
 
   /*
    * --base-input-bg and --mount-input-bg are base/mount-only slots
-   * tuning the form-input fill per host surface. Wave 22a adds the
+   * tuning the form-input fill per host surface. Wave 22a added the
    * slots + mount-input-bg per-theme values (consumed by ColorEditor).
-   * Wave 22b will add per-theme --base-input-bg values + migrate
-   * FormInput + LinksToolbar.
+   * Wave 22b added per-theme --base-input-bg values + migrated
+   * FormInput / LinksToolbar / 11 indirect consumers. Wave 23 retired
+   * the legacy --bg-input flat token and dropped the default-cascade
+   * aliases from bundles.css :root.
    *
    * Contract per slot:
    *   {surface}-text on {surface}-input-bg          >= 4.5:1 (SC 1.4.3)
@@ -590,9 +592,9 @@ describe('bundle contrast contract', () => {
    *   {surface}-border on {surface}-input-bg        >= 3:1   (SC 1.4.11)
    *     (input boundary visible against its own fill)
    *
-   * Fixtures whose --{surface}-input-bg is still aliased
-   * (`var(--bg-input)`) skip — the legacy alias is verified by the
-   * existing flat-token contract review.
+   * The default :root / [data-mode='dark'] cascades no longer declare
+   * the input slots — every shipped theme defines them per-theme. Those
+   * fixtures skip the contract via the undefined-slot guard below.
    */
   describe('input bundle contract', () => {
     const INPUT_PAIRS = [

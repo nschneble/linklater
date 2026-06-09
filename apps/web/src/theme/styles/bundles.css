@@ -62,7 +62,6 @@
   --base-text: var(--text);
   --base-alt-text: var(--text-muted);
   --base-subtle-text: var(--text-subtle);
-  --base-input-bg: var(--bg-input);
   --base-highlight: var(--accent);
 
   /* mount = cards */
@@ -70,8 +69,15 @@
   --mount-border: var(--border);
   --mount-text: var(--text);
   --mount-alt-text: var(--text-muted);
-  --mount-input-bg: var(--bg-input);
   --mount-highlight: var(--accent);
+
+  /* --base-input-bg / --mount-input-bg deliberately omitted from the
+   * default cascade — every shipped theme defines its own per-theme
+   * values in the per-theme blocks below (wave 22a + 22b). The legacy
+   * --bg-input flat token was retired in wave 23 alongside this. The
+   * synthetic "no theme set" condition falls through harmlessly:
+   * consumers (FormInput, ColorEditor, LinksToolbar search input) only
+   * render after a theme is active, so the slots always resolve. */
 
   /* orbit = menus / dropdowns */
   --orbit-bg: var(--bg-elevated);

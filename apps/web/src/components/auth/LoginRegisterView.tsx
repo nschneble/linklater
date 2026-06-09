@@ -86,7 +86,8 @@ export default function LoginRegisterView({
           <SlidingTabBar
             ariaLabel="Authentication mode"
             activeIndex={mode === 'register' ? 1 : 0}
-            className="mb-[24.5px] bg-[var(--bg-elevated)]"
+            className="mb-[24.5px]"
+            surface="orbit"
             tabClassName="py-2 text-sm"
             tabs={[
               {

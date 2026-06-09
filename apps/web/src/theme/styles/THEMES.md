@@ -5,7 +5,7 @@ token systems are active:
 
 ## 1. Flat tokens (legacy, all 10 themes)
 
-Each theme variant defines 11 flat color variables that the bulk of the
+Each theme variant defines 10 flat color variables that the bulk of the
 UI still reads:
 
 | Variable         | Purpose                                                     |
@@ -13,7 +13,6 @@ UI still reads:
 | `--bg`           | Base background                                             |
 | `--bg-surface`   | Raised surfaces: cards, panels, modals                      |
 | `--bg-elevated`  | Further elevated: drop-downs, skeletons, inactive tab fills |
-| `--bg-input`     | Form input backgrounds                                      |
 | `--text`         | Primary readable text                                       |
 | `--text-muted`   | Secondary/supporting text: labels, subtitles, placeholders  |
 | `--text-subtle`  | De-emphasized text: urls, helper hints, section dividers    |
@@ -21,6 +20,10 @@ UI still reads:
 | `--accent`       | Primary brand color: active indicators, icons, focus rings  |
 | `--accent-hover` | Accent hover state                                          |
 | `--accent-fg`    | Foreground text on accent-colored backgrounds               |
+
+`--bg-input` was retired in wave 23 of the theme refactor. Form input
+backgrounds now live on the bundle slots `--base-input-bg` and
+`--mount-input-bg` (see Section 2 below).
 
 ## 2. Color bundles (in-progress migration)
 
