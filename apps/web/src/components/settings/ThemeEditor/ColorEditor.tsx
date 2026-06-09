@@ -104,11 +104,11 @@ function ColorRow({
   return (
     <div className="flex items-center gap-2">
       <label
-        className="relative flex-shrink-0 cursor-pointer rounded-md aria-disabled:cursor-not-allowed focus-within:ring-2 focus-within:ring-[var(--accent)] focus-within:ring-offset-1 focus-within:ring-offset-[var(--bg-surface)]"
+        className="relative flex-shrink-0 cursor-pointer rounded-md aria-disabled:cursor-not-allowed focus-within:ring-2 focus-within:ring-[var(--accent)] focus-within:ring-offset-1 focus-within:ring-offset-[var(--mount-bg)]"
         aria-disabled={isAlpha}
       >
         <span
-          className="block w-7 h-7 border border-[var(--border)] rounded-md shadow-sm aria-disabled:opacity-60"
+          className="block w-7 h-7 border border-[var(--mount-border)] rounded-md shadow-sm aria-disabled:opacity-60"
           style={{ backgroundColor: swatchBackground }}
           aria-disabled={isAlpha}
         />
@@ -124,8 +124,8 @@ function ColorRow({
       </label>
 
       <div className="flex-1 min-w-0">
-        <p className="text-[var(--text)] text-xs font-medium">{label}</p>
-        <p className="text-[var(--text-subtle)] text-[0.65rem] font-mono truncate">
+        <p className="text-[var(--mount-text)] text-xs font-medium">{label}</p>
+        <p className="text-[var(--mount-alt-text)] text-[0.65rem] font-mono truncate">
           {variable}
         </p>
       </div>
@@ -136,7 +136,7 @@ function ColorRow({
         onChange={handleTextChange}
         onBlur={handleTextBlur}
         aria-label={textAriaLabel}
-        className="w-28 px-2 py-1 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-[0.65rem] font-mono focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-transparent rounded-md"
+        className="w-28 px-2 py-1 bg-[var(--bg-input)] border border-[var(--mount-border)] text-[var(--mount-text)] text-[0.65rem] font-mono focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-transparent rounded-md"
         placeholder="#000000"
         spellCheck={false}
       />
@@ -183,13 +183,13 @@ export default function ColorEditor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-[var(--text-subtle)] text-[0.6rem]">
+        <p className="text-[var(--mount-alt-text)] text-[0.6rem]">
           {VAR_GROUPS.length} bundles · {VAR_GROUPS.length * 7} tokens
         </p>
         <button
           type="button"
           onClick={allOpen ? collapseAll : expandAll}
-          className="text-[var(--text-muted)] hover:text-[var(--text)] text-[0.65rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded cursor-pointer"
+          className="text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] text-[0.65rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded cursor-pointer"
         >
           {allOpen ? 'Collapse all' : 'Expand all'}
         </button>
@@ -203,12 +203,12 @@ export default function ColorEditor({
           <section
             key={group.bundle}
             aria-labelledby={headingId}
-            className="border-b border-[var(--border)] last:border-0 pb-3 last:pb-0"
+            className="border-b border-[var(--mount-border)] last:border-0 pb-3 last:pb-0"
           >
             <div className="flex items-center gap-1">
               <h3
                 id={headingId}
-                className="flex-1 m-0 text-[var(--text)] text-xs font-semibold"
+                className="flex-1 m-0 text-[var(--mount-text)] text-xs font-semibold"
               >
                 <button
                   type="button"
@@ -218,11 +218,11 @@ export default function ColorEditor({
                   className="group w-full flex items-center gap-2 py-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded cursor-pointer"
                 >
                   <i
-                    className="fa-solid fa-chevron-right text-[0.55rem] text-[var(--text-subtle)] group-aria-expanded:rotate-90 transition-transform duration-150"
+                    className="fa-solid fa-chevron-right text-[0.55rem] text-[var(--mount-alt-text)] group-aria-expanded:rotate-90 transition-transform duration-150"
                     aria-hidden="true"
                   />
                   <span>{group.label}</span>
-                  <span className="flex-1 text-[var(--text-subtle)] text-[0.65rem] font-normal truncate">
+                  <span className="flex-1 text-[var(--mount-alt-text)] text-[0.65rem] font-normal truncate">
                     {group.description}
                   </span>
                 </button>
@@ -231,7 +231,7 @@ export default function ColorEditor({
                 type="button"
                 onClick={() => onResetBundle(group.bundle)}
                 aria-label={`Reset ${group.label} bundle`}
-                className="px-1.5 py-1 text-[var(--text-subtle)] hover:text-[var(--text)] text-[0.65rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded cursor-pointer"
+                className="px-1.5 py-1 text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] text-[0.65rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded cursor-pointer"
               >
                 <i
                   className="fa-solid fa-arrow-rotate-left"

@@ -89,11 +89,11 @@ export default function ApiDocsView() {
         <h1 className="sr-only">API documentation</h1>
         <p
           aria-hidden="true"
-          className="text-[var(--text)] text-2xl font-semibold text-balance"
+          className="text-[var(--base-text)] text-2xl font-semibold text-balance"
         >
           API documentation
         </p>
-        <p className="text-[var(--text-muted)] text-sm text-pretty">
+        <p className="text-[var(--base-alt-text)] text-sm text-pretty">
           Personal access tokens unlock the link-management endpoints below.
           Paste a token to try requests live against your own account.
         </p>
@@ -101,7 +101,7 @@ export default function ApiDocsView() {
 
       <section aria-labelledby="api-docs-auth-heading" className="space-y-3">
         <h2
-          className="text-[var(--text)] text-base font-semibold"
+          className="text-[var(--base-text)] text-base font-semibold"
           id="api-docs-auth-heading"
         >
           Authenticate
@@ -110,7 +110,7 @@ export default function ApiDocsView() {
       </section>
 
       <a
-        className="sr-only focus:not-sr-only focus:inline-flex focus:px-3 focus:py-1.5 focus:bg-[var(--bg-surface)] focus:text-[var(--text)] focus:text-xs focus:rounded-full focus:ring-2 focus:ring-[var(--accent)]"
+        className="sr-only focus:not-sr-only focus:inline-flex focus:px-3 focus:py-1.5 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-xs focus:rounded-full focus:ring-2 focus:ring-[var(--accent)]"
         href="#after-api-reference"
       >
         Skip past the API reference

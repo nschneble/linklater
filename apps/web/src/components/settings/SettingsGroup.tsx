@@ -19,22 +19,25 @@ interface SettingsGroupProps {
 // `theme/styles/bundles.css`). Every theme — including Nouvelle Vague's
 // grayscale-by-design palette — defines its own bundle cascade.
 const VARIANT_CLASSES = {
-  default: 'bg-[var(--bg-surface)] border border-[var(--border)]',
+  default: 'bg-[var(--mount-bg)] border border-[var(--mount-border)]',
   danger: 'bg-[var(--alert-bg)] border border-[var(--alert-border)]',
 } as const;
 
 const HEADING_CLASSES = {
-  default: 'text-[var(--text)]',
+  default: 'text-[var(--mount-text)]',
   danger: 'text-[var(--alert-text)]',
 } as const;
 
+// Mount bundle has no subtle-text slot by design; the icon collapses to the
+// alt-text tier (one step brighter than the legacy --text-subtle pick). See
+// wave 19 brief Q1 / section 4.7.
 const ICON_CLASSES = {
-  default: 'text-[var(--text-subtle)]',
+  default: 'text-[var(--mount-alt-text)]',
   danger: 'text-[var(--alert-highlight)]',
 } as const;
 
 const DESCRIPTION_CLASSES = {
-  default: 'text-[var(--text-muted)]',
+  default: 'text-[var(--mount-alt-text)]',
   danger: 'text-[var(--alert-alt-text)]',
 } as const;
 

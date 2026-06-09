@@ -86,7 +86,7 @@ export default function Header({
   }, [isUserMenuOpen, onUserMenuClose]);
 
   return (
-    <header className="bg-[var(--bg-elevated)] border-b border-[var(--border)]">
+    <header className="bg-[var(--orbit-bg)] border-b border-[var(--orbit-border)]">
       <div className="flex items-center justify-between max-w-4xl mx-auto px-4 py-3">
         <button
           type="button"
@@ -103,10 +103,10 @@ export default function Header({
             aria-hidden="true"
           />
           <div className="text-left">
-            <div className="text-[var(--text)] text-sm font-semibold">
+            <div className="text-[var(--orbit-text)] text-sm font-semibold">
               Linklater
             </div>
-            <div className="text-[var(--text-muted)] text-xs">
+            <div className="text-[var(--orbit-alt-text)] text-xs">
               Save links now, read them later.
             </div>
           </div>

@@ -405,6 +405,44 @@ describe('bundle contrast contract', () => {
     });
   }
 
+  /*
+   * --base-subtle-text is a BASE-only slot (no equivalent on mount/orbit/
+   * state bundles). It expresses the lowest-emphasis text tier used by
+   * page-chrome consumers — kbd legends, helper hints, chevrons, the
+   * descriptive line under section nav pills. Contract: clears 4.5:1
+   * against --base-bg per SC 1.4.3.
+   *
+   * Lives outside the CONTRACT iteration above because that loop applies
+   * the same slot set to all 7 bundles; introducing a base-only slot
+   * cannot use that shape. See wave 19 brief Q1.
+   */
+  describe('base-subtle-text on base-bg', () => {
+    for (const fixture of FIXTURES) {
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+      const subtleText = declarations.get('base-subtle-text');
+      const baseBg = declarations.get('base-bg');
+      if (subtleText === undefined || baseBg === undefined) {
+        continue;
+      }
+      if (subtleText.includes('var(') || baseBg.includes('var(')) {
+        continue;
+      }
+
+      it(`${fixture.label} >= 4.5:1`, () => {
+        const foreground = resolveFg(parseColor(subtleText));
+        const background = compositeOverBg(parseColor(baseBg), fixture.pageBg);
+        const ratio = contrastRatio(foreground, background);
+        expect
+          .soft(
+            ratio,
+            `base-subtle-text on base-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+          )
+          .toBeGreaterThanOrEqual(AA_NORMAL);
+      });
+    }
+  });
+
   describe('card-style border vs page --base-bg', () => {
     for (const fixture of FIXTURES) {
       if (!fixture.checkAdjacency) {

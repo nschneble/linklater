@@ -61,8 +61,8 @@ export default function TotpSetupView({
 
   return (
     <div className="space-y-4">
-      <p className="text-[var(--text-muted)] text-xs">
-        <span className="text-[var(--text)] font-semibold">
+      <p className="text-[var(--mount-alt-text)] text-xs">
+        <span className="text-[var(--mount-text)] font-semibold">
           Scan the QR code to add Linklater to your authenticator app.
         </span>{' '}
         You can also enter the secret manually if you enjoy doing things the
@@ -81,11 +81,11 @@ export default function TotpSetupView({
       <img
         src={qrCodeDataUrl}
         alt=""
-        className="w-40 h-40 rounded border border-[var(--border)]"
+        className="w-40 h-40 rounded border border-[var(--mount-border)]"
       />
       <code
         aria-label="TOTP secret"
-        className="block px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] text-xs font-mono rounded select-all"
+        className="block px-3 py-2 bg-[var(--orbit-bg)] border border-[var(--orbit-border)] text-[var(--orbit-text)] text-xs font-mono rounded select-all"
       >
         {secret}
       </code>
@@ -93,8 +93,8 @@ export default function TotpSetupView({
         <label className="sr-only" htmlFor="totp-code">
           Verification code
         </label>
-        <p className="text-[var(--text-subtle)] text-xs" id="totp-code-hint">
-          <span className="text-[var(--text)] font-semibold">
+        <p className="text-[var(--mount-alt-text)] text-xs" id="totp-code-hint">
+          <span className="text-[var(--mount-text)] font-semibold">
             Enter the 6-digit code from your authenticator app.
           </span>{' '}
           We'll verify it automatically after you finish typing.

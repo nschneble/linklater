@@ -28,7 +28,7 @@ export default function SettingsSectionNav({
   return (
     <nav
       aria-label="Settings sections (compact)"
-      className="md:hidden sticky top-2 z-10 -mx-4 px-4 py-2 bg-[var(--bg)]"
+      className="md:hidden sticky top-2 z-10 -mx-4 px-4 py-2 bg-[var(--base-bg)]"
     >
       <ul className="flex gap-2 overflow-x-auto snap-x snap-mandatory scroll-px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {sections.map((section) => (
@@ -37,10 +37,10 @@ export default function SettingsSectionNav({
               type="button"
               aria-current={activeSection === section.hash ? 'page' : undefined}
               onClick={() => onSelectSection(section.hash)}
-              className={`group inline-flex items-center gap-1.5 min-h-10 px-3.5 py-2 bg-transparent text-[var(--text-muted)] hover:text-[var(--text)] ring-1 ring-[var(--border)]/60 font-medium aria-[current]:bg-[var(--bg-elevated)] aria-[current]:text-[var(--text)] aria-[current]:ring-[var(--border)] aria-[current]:font-semibold text-xs ${FOCUS_RING} rounded-full cursor-pointer motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] whitespace-nowrap`}
+              className={`group inline-flex items-center gap-1.5 min-h-10 px-3.5 py-2 bg-transparent text-[var(--base-alt-text)] hover:text-[var(--base-text)] ring-1 ring-[var(--base-border)]/60 font-medium aria-[current]:bg-[var(--orbit-bg)] aria-[current]:text-[var(--orbit-text)] aria-[current]:ring-[var(--orbit-border)] aria-[current]:font-semibold text-xs ${FOCUS_RING} rounded-full cursor-pointer motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] whitespace-nowrap`}
             >
               <i
-                className={`fa-solid ${section.icon} text-[var(--text-subtle)] group-aria-[current]:text-[var(--accent)] text-[0.65rem]`}
+                className={`fa-solid ${section.icon} text-[var(--base-subtle-text)] group-aria-[current]:text-[var(--orbit-highlight)] text-[0.65rem]`}
                 aria-hidden="true"
               />
               {section.label}

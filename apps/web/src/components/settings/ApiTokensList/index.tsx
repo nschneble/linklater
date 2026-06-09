@@ -12,7 +12,7 @@ export default function ApiTokensList({
 }: ApiTokensListProps) {
   if (tokens.length === 0) {
     return (
-      <p className="mb-8 text-[var(--text-subtle)] text-xs">
+      <p className="mb-8 text-[var(--mount-alt-text)] text-xs">
         You haven't created any tokens
       </p>
     );

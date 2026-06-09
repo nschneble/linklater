@@ -103,13 +103,15 @@ export default function EmailSettingsForm() {
     >
       <h3
         id="email-settings-heading"
-        className="mb-0 text-[var(--text)] text-sm font-semibold text-balance"
+        className="mb-0 text-[var(--mount-text)] text-sm font-semibold text-balance"
       >
         Email
       </h3>
 
       <div className="flex items-center gap-2">
-        <span className="text-[var(--text-muted)] text-xs">{user?.email}</span>
+        <span className="text-[var(--mount-alt-text)] text-xs">
+          {user?.email}
+        </span>
         {isVerified ? (
           <StatusBadge variant="success" icon="fa-solid fa-circle-check">
             Verified
@@ -140,7 +142,7 @@ export default function EmailSettingsForm() {
       )}
 
       <label
-        className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+        className="block mb-0 text-[var(--mount-alt-text)] text-xs font-medium"
         htmlFor="change-email"
       >
         New email
@@ -159,7 +161,7 @@ export default function EmailSettingsForm() {
       {user?.multiFactorMethod && (
         <>
           <label
-            className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+            className="block mb-0 text-[var(--mount-alt-text)] text-xs font-medium"
             htmlFor="email-change-mfa"
           >
             Authenticator or recovery code

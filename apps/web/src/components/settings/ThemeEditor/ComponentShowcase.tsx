@@ -76,14 +76,14 @@ export default function ComponentShowcase() {
       </ShowcaseSection>
 
       <ShowcaseSection title="Typography">
-        <div className="space-y-1.5 px-3 py-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg">
-          <p className="text-[var(--text)] text-sm font-semibold">
+        <div className="space-y-1.5 px-3 py-3 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-lg">
+          <p className="text-[var(--mount-text)] text-sm font-semibold">
             Primary text
           </p>
-          <p className="text-[var(--text-muted)] text-sm">
+          <p className="text-[var(--mount-alt-text)] text-sm">
             Muted — labels and captions
           </p>
-          <p className="text-[var(--text-subtle)] text-sm">
+          <p className="text-[var(--mount-alt-text)] text-sm">
             Subtle — hints and URLs
           </p>
         </div>
@@ -144,10 +144,10 @@ export default function ComponentShowcase() {
             (no role="tab"/"tablist") so we don't advertise a tablist that
             controls no panel. mirrors TabButton's active style + circle-dot
             indicator + no-width-shift grid via aria-pressed. */}
-        <div className="relative grid grid-cols-2 p-1 bg-[var(--bg-surface)] border-shadow hover:border-shadow text-xs rounded-full">
+        <div className="relative grid grid-cols-2 p-1 bg-[var(--mount-bg)] border-shadow hover:border-shadow text-xs rounded-full">
           <div
             aria-hidden="true"
-            className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-[var(--text)] rounded-full"
+            className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-[var(--mount-text)] rounded-full"
             style={{
               transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
               transform:
@@ -160,7 +160,7 @@ export default function ComponentShowcase() {
               type="button"
               aria-pressed={activeTab === tab}
               onClick={() => setActiveTab(tab)}
-              className="group relative z-10 px-3 py-1.5 text-[var(--text-muted)] font-semibold aria-pressed:text-[var(--bg)] aria-pressed:font-extrabold rounded-full transition-colors duration-200 cursor-pointer"
+              className="group relative z-10 px-3 py-1.5 text-[var(--mount-alt-text)] font-semibold aria-pressed:text-[var(--mount-bg)] aria-pressed:font-extrabold rounded-full transition-colors duration-200 cursor-pointer"
             >
               <span className="grid justify-center">
                 <span
@@ -194,24 +194,24 @@ export default function ComponentShowcase() {
       </ShowcaseSection>
 
       <ShowcaseSection title="Card">
-        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border)] border-l-2 border-l-[var(--accent)] rounded-xl">
+        <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] border-l-2 border-l-[var(--mount-highlight)] rounded-xl">
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-[var(--bg-elevated)] rounded-md">
+            <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-[var(--orbit-bg)] rounded-md">
               <i
-                className="fa-solid fa-link text-[var(--text-subtle)] text-[0.7rem]"
+                className="fa-solid fa-link text-[var(--orbit-alt-text)] text-[0.7rem]"
                 aria-hidden="true"
               />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[var(--text)] text-sm font-medium truncate">
+              <p className="text-[var(--mount-text)] text-sm font-medium truncate">
                 Example saved link
               </p>
-              <p className="text-[var(--text-subtle)] text-xs truncate">
+              <p className="text-[var(--mount-alt-text)] text-xs truncate">
                 example.com
               </p>
             </div>
           </div>
-          <p className="mt-2 text-[var(--text-muted)] text-xs line-clamp-2">
+          <p className="mt-2 text-[var(--mount-alt-text)] text-xs line-clamp-2">
             A brief description of the saved link. This shows how muted text
             looks within a card surface in the current theme.
           </p>

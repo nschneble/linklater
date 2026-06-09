@@ -74,7 +74,7 @@ export default function ProviderRow({
               className="flex items-center gap-2 shrink-0 text-xs"
               ref={confirmReference}
             >
-              <span className="text-[var(--text-muted)]">Sure?</span>
+              <span className="text-[var(--mount-alt-text)]">Sure?</span>
               <IconButton
                 aria-label={`Confirm disconnect ${label}`}
                 variant="danger-filled"
@@ -113,10 +113,10 @@ function ProviderLabel({ icon, label, providerEmail }: ProviderLabelProps) {
         aria-hidden="true"
       />
       <div className="flex flex-col min-w-0">
-        <span className="text-[var(--text)] text-sm">{label}</span>
+        <span className="text-[var(--mount-text)] text-sm">{label}</span>
         {providerEmail && (
           <span
-            className="w-full text-[var(--text-muted)] text-xs truncate"
+            className="w-full text-[var(--mount-alt-text)] text-xs truncate"
             title={providerEmail}
           >
             <span className="sr-only">Connected as </span>

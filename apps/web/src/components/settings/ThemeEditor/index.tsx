@@ -59,10 +59,10 @@ export default function ThemeEditor() {
     <div className="max-w-5xl mx-auto">
       <div className="flex flex-wrap items-start gap-3 mb-4">
         <div className="flex-1 min-w-0">
-          <h1 className="text-[var(--text)] text-lg font-semibold">
+          <h1 className="text-[var(--base-text)] text-lg font-semibold">
             Theme editor
           </h1>
-          <p className="mt-0.5 text-[var(--text-muted)] text-xs">
+          <p className="mt-0.5 text-[var(--base-alt-text)] text-xs">
             Edit the 49 bundle tokens of the active theme and see changes live.
             Resets when you navigate away.
           </p>
@@ -120,8 +120,8 @@ export default function ThemeEditor() {
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-shrink-0 w-full lg:w-80 space-y-4">
-          <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
-            <h2 className="mb-4 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
+          <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
+            <h2 className="mb-4 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
               Colors
             </h2>
             <ColorEditor
@@ -131,16 +131,16 @@ export default function ThemeEditor() {
             />
           </div>
 
-          <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
-            <h2 className="mb-3 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
+          <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
+            <h2 className="mb-3 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
               Contrast (WCAG 2.1)
             </h2>
             <ContrastChecker colorValues={colorValues} />
           </div>
         </div>
 
-        <div className="flex-1 min-w-0 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
-          <h2 className="mb-6 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
+        <div className="flex-1 min-w-0 p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
+          <h2 className="mb-6 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
             Components
           </h2>
           <ComponentShowcase />

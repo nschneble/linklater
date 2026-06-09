@@ -98,14 +98,14 @@ export default function ReauthForm({
   return (
     <form className="mt-[23px] space-y-4" onSubmit={onSubmit}>
       {srOnlyHeading && <h3 className="sr-only">{srOnlyHeading}</h3>}
-      <p id={promptId} className="text-[var(--text-muted)] text-xs">
+      <p id={promptId} className="text-[var(--mount-alt-text)] text-xs">
         {prompt}
       </p>
 
       {hasPassword && (
         <>
           <label
-            className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+            className="block mb-0 text-[var(--mount-alt-text)] text-xs font-medium"
             htmlFor="reauth-password"
           >
             Current password
@@ -124,7 +124,7 @@ export default function ReauthForm({
       )}
 
       <label
-        className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+        className="block mb-0 text-[var(--mount-alt-text)] text-xs font-medium"
         htmlFor="reauth-code"
       >
         {hasPassword

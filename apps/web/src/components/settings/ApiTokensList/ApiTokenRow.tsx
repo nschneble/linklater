@@ -15,7 +15,7 @@ import type { ApiTokenRowProps } from './types';
  */
 export default function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
   return (
-    <li className="relative overflow-visible px-5 py-4 bg-[var(--bg-surface)] border-l-4 border-[var(--accent)] border-shadow hover:border-shadow rounded-r-xl">
+    <li className="relative overflow-visible px-5 py-4 bg-[var(--orbit-bg)] border-l-4 border-[var(--accent)] border-shadow hover:border-shadow rounded-r-xl">
       <ActionGuard
         className="space-y-1"
         errorFallback="Failed to revoke token"
@@ -34,10 +34,10 @@ export default function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
           <>
             <div className="flex items-start gap-3">
               <div className="flex flex-col items-start min-w-0 flex-1">
-                <p className="text-[var(--text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1">
+                <p className="text-[var(--orbit-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1">
                   {token.name}
                 </p>
-                <p className="w-full text-[var(--text-subtle)] text-xs truncate">
+                <p className="w-full text-[var(--orbit-alt-text)] text-xs truncate">
                   Created{' '}
                   <time dateTime={token.createdAt}>
                     {formatRelativeTimeFuzzy(token.createdAt)}
@@ -87,7 +87,7 @@ export default function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
                 </div>
               )}
             </div>
-            <p className="text-[var(--text-muted)] text-xs text-pretty tracking-tight sm:tracking-normal line-clamp-2">
+            <p className="text-[var(--orbit-alt-text)] text-xs text-pretty tracking-tight sm:tracking-normal line-clamp-2">
               {token.lastUsedAt ? (
                 <>
                   This token was last used{' '}

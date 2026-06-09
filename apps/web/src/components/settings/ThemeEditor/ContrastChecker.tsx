@@ -189,22 +189,22 @@ interface BundleRowProps {
 
 function BundleRow({ pair, ratio }: BundleRowProps) {
   return (
-    <div className="flex items-center gap-2 py-1 border-b border-[var(--border)] last:border-0">
+    <div className="flex items-center gap-2 py-1 border-b border-[var(--mount-border)] last:border-0">
       <div className="flex-1 min-w-0">
-        <p className="text-[var(--text)] text-[0.65rem] truncate">
+        <p className="text-[var(--mount-text)] text-[0.65rem] truncate">
           {pair.label}
         </p>
       </div>
       {ratio === null ? (
         <span
-          className="text-[var(--text-subtle)] text-[0.6rem]"
+          className="text-[var(--mount-alt-text)] text-[0.6rem]"
           title="Alpha or invalid value — see compiled tests"
         >
           —
         </span>
       ) : (
         <div className="flex items-center gap-1 flex-shrink-0">
-          <span className="w-9 text-[var(--text-muted)] text-[0.6rem] text-right font-mono">
+          <span className="w-9 text-[var(--mount-alt-text)] text-[0.6rem] text-right font-mono">
             {ratio.toFixed(2)}
           </span>
           <PassBadge pair={pair} ratio={ratio} />
@@ -305,7 +305,7 @@ export default function ContrastChecker({ colorValues }: ContrastCheckerProps) {
         aria-atomic="true"
         className="flex items-center justify-between gap-2"
       >
-        <p className="text-[var(--text-muted)] text-[0.65rem]">
+        <p className="text-[var(--mount-alt-text)] text-[0.65rem]">
           {totalFailures === 0
             ? `All ${totalPairs} pairs passing`
             : `${totalFailures} of ${totalPairs} pairs failing`}
@@ -314,7 +314,7 @@ export default function ContrastChecker({ colorValues }: ContrastCheckerProps) {
           type="button"
           onClick={() => setFailuresOnly((previous) => !previous)}
           aria-pressed={failuresOnly}
-          className="text-[var(--text-muted)] hover:text-[var(--text)] aria-pressed:text-[var(--text)] aria-pressed:font-semibold text-[0.6rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded cursor-pointer"
+          className="text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] aria-pressed:text-[var(--mount-text)] aria-pressed:font-semibold text-[0.6rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded cursor-pointer"
         >
           {failuresOnly ? 'Show all' : 'Failures only'}
         </button>
@@ -334,7 +334,7 @@ export default function ContrastChecker({ colorValues }: ContrastCheckerProps) {
           <section
             key={result.bundle}
             aria-labelledby={headingId}
-            className="border-b border-[var(--border)] last:border-0 pb-1.5 last:pb-0"
+            className="border-b border-[var(--mount-border)] last:border-0 pb-1.5 last:pb-0"
           >
             <h3 id={headingId} className="m-0">
               <button
@@ -345,13 +345,13 @@ export default function ContrastChecker({ colorValues }: ContrastCheckerProps) {
                 className="group w-full flex items-center gap-2 py-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded cursor-pointer"
               >
                 <i
-                  className="fa-solid fa-chevron-right text-[0.5rem] text-[var(--text-subtle)] group-aria-expanded:rotate-90 transition-transform duration-150"
+                  className="fa-solid fa-chevron-right text-[0.5rem] text-[var(--mount-alt-text)] group-aria-expanded:rotate-90 transition-transform duration-150"
                   aria-hidden="true"
                 />
-                <span className="text-[var(--text)] text-[0.65rem] font-semibold">
+                <span className="text-[var(--mount-text)] text-[0.65rem] font-semibold">
                   {result.label}
                 </span>
-                <span className="flex-1 text-[var(--text-subtle)] text-[0.6rem] text-right">
+                <span className="flex-1 text-[var(--mount-alt-text)] text-[0.6rem] text-right">
                   {result.failureCount === 0
                     ? `${result.totalCount} / ${result.totalCount}`
                     : `${result.totalCount - result.failureCount} / ${result.totalCount}`}
@@ -374,7 +374,7 @@ export default function ContrastChecker({ colorValues }: ContrastCheckerProps) {
       })}
 
       {failuresOnly && totalFailures === 0 && (
-        <p className="text-[var(--text-subtle)] text-[0.65rem] italic">
+        <p className="text-[var(--mount-alt-text)] text-[0.65rem] italic">
           No failing pairs. Toggle &ldquo;Show all&rdquo; to see all{' '}
           {totalPairs} pairs.
         </p>

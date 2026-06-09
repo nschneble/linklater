@@ -37,15 +37,15 @@ export default function ExtensionAuthorizePage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
-        <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow text-center rounded-2xl">
-          <h1 className="mb-2 text-[var(--text)] text-2xl font-bold">
+        <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow text-center rounded-2xl">
+          <h1 className="mb-2 text-[var(--mount-text)] text-2xl font-bold">
             Sign in to authorize
           </h1>
-          <p className="mb-6 text-[var(--text-muted)] text-sm">
+          <p className="mb-6 text-[var(--mount-alt-text)] text-sm">
             Sign in to your Linklater account to authorize the extension.
           </p>
           <a
-            className={`inline-block px-4 py-2 bg-[var(--accent)] text-white text-sm font-semibold rounded-lg ${FOCUS_RING}`}
+            className={`inline-block px-4 py-2 bg-[var(--accent)] text-[var(--accent-fg)] text-sm font-semibold rounded-lg ${FOCUS_RING}`}
             href="/login"
           >
             Sign in
@@ -57,21 +57,23 @@ export default function ExtensionAuthorizePage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
-      <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow text-center space-y-4 rounded-2xl">
-        <h1 className="text-[var(--text)] text-2xl font-bold">
+      <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow text-center space-y-4 rounded-2xl">
+        <h1 className="text-[var(--mount-text)] text-2xl font-bold">
           Authorize Linklater Extension?
         </h1>
-        <p className="text-[var(--text-muted)] text-sm">
+        <p className="text-[var(--mount-alt-text)] text-sm">
           Signed in as{' '}
-          <span className="text-[var(--text)] font-medium">{user.email}</span>
+          <span className="text-[var(--mount-text)] font-medium">
+            {user.email}
+          </span>
         </p>
-        <p className="text-[var(--text-muted)] text-xs">
+        <p className="text-[var(--mount-alt-text)] text-xs">
           The extension will be able to save and manage your links.
         </p>
 
         <div className="flex gap-3 justify-center">
           <button
-            className={`px-4 py-2 bg-[var(--accent)] text-white text-sm font-semibold rounded-lg ${FOCUS_RING} disabled:opacity-50`}
+            className={`px-4 py-2 bg-[var(--accent)] text-[var(--accent-fg)] text-sm font-semibold rounded-lg ${FOCUS_RING} disabled:opacity-50`}
             disabled={status === 'authorizing'}
             type="button"
             onClick={() => void handleAuthorize()}
@@ -79,7 +81,7 @@ export default function ExtensionAuthorizePage() {
             {status === 'authorizing' ? 'Authorizing…' : 'Authorize'}
           </button>
           <button
-            className={`px-4 py-2 bg-[var(--bg-elevated)] text-[var(--text-muted)] text-sm rounded-lg ${FOCUS_RING}`}
+            className={`px-4 py-2 bg-[var(--orbit-bg)] text-[var(--orbit-text)] text-sm rounded-lg ${FOCUS_RING}`}
             disabled={status === 'authorizing'}
             type="button"
             onClick={() => window.close()}

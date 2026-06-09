@@ -50,13 +50,13 @@ export default function ChangePasswordForm() {
     >
       <h3
         id="password-settings-heading"
-        className="text-[var(--text)] text-sm font-semibold text-balance"
+        className="text-[var(--mount-text)] text-sm font-semibold text-balance"
       >
         Password
       </h3>
 
       <label
-        className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+        className="block mb-0 text-[var(--mount-alt-text)] text-xs font-medium"
         htmlFor="new-password"
       >
         New password
@@ -78,7 +78,7 @@ export default function ChangePasswordForm() {
       */}
       <div hidden={!password}>
         <label
-          className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+          className="block mb-0 text-[var(--mount-alt-text)] text-xs font-medium"
           htmlFor="current-password"
         >
           Current password

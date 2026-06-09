@@ -39,10 +39,10 @@ export default function AppShell() {
   const isEmailUnverified = !user.emailVerifiedAt;
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] select-none">
+    <div className="min-h-screen bg-[var(--base-bg)] text-[var(--base-text)] select-none">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--bg-surface)] focus:text-[var(--text)] focus:text-sm focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-sm focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:outline-none"
       >
         Skip to main content
       </a>
@@ -95,7 +95,7 @@ export default function AppShell() {
               fallback={
                 <p
                   aria-live="polite"
-                  className="text-[var(--text-muted)] text-sm"
+                  className="text-[var(--base-alt-text)] text-sm"
                 >
                   Loading API docs…
                 </p>

@@ -49,6 +49,7 @@
   --base-border: var(--border);
   --base-text: var(--text);
   --base-alt-text: var(--text-muted);
+  --base-subtle-text: var(--text-subtle);
   --base-highlight: var(--accent);
 
   /* mount = cards */
@@ -209,6 +210,7 @@
   --base-border: #9e8b97;
   --base-text: #f4f1ec;
   --base-alt-text: #e1dbd5;
+  --base-subtle-text: #d5dcee;
   --base-highlight: #96b2e5;
 
   --mount-bg: #223366;
@@ -289,6 +291,7 @@
   --base-border: #6e5a3a;
   --base-text: #ffffff;
   --base-alt-text: #e8d4b8;
+  --base-subtle-text: #ffffff;
   --base-highlight: #e0a040;
 
   --mount-bg: #1c1612;
@@ -342,6 +345,7 @@
   --base-border: #7a5a30;
   --base-text: #0a0a07;
   --base-alt-text: #3e2810;
+  --base-subtle-text: #040301;
   --base-highlight: #a32010;
 
   --mount-bg: #f0e2cd;
@@ -398,6 +402,7 @@
   --base-border: #76636f;
   --base-text: #0d1426;
   --base-alt-text: #4f361a;
+  --base-subtle-text: #493444;
   --base-highlight: #28537e;
 
   --mount-bg: #e8e2d8;
@@ -483,6 +488,7 @@
   --base-border: #11637a;
   --base-text: #20303d;
   --base-alt-text: #2d3419;
+  --base-subtle-text: #2d3419;
   --base-highlight: #a04a30;
   --base-highlight-fg: #ffffff;
   --base-highlight-hover: #8a3d20;
@@ -541,6 +547,7 @@
   --base-border: #569ca8;
   --base-text: #e8dccd;
   --base-alt-text: #d4cab5;
+  --base-subtle-text: #c3e8b0;
   --base-highlight: #ebb327;
   --base-highlight-fg: #1c2c38;
   --base-highlight-hover: #d4a020;
@@ -648,6 +655,7 @@
   --base-border: #335215;
   --base-text: #0d150d;
   --base-alt-text: #2d3414;
+  --base-subtle-text: #252a15;
   --base-highlight: #5a2d29;
   --base-highlight-fg: #ffffff;
   --base-highlight-hover: #7a3d35;
@@ -710,6 +718,7 @@
   --base-border: #87973c;
   --base-text: #e8e7c3;
   --base-alt-text: #d4d4a8;
+  --base-subtle-text: #e1eaaa;
   --base-highlight: #aacb50;
   --base-highlight-fg: #0d150d;
   --base-highlight-hover: #8eb338;
@@ -853,6 +862,7 @@
   --base-border: #5d7984;
   --base-text: #2a201d;
   --base-alt-text: #4a3a32;
+  --base-subtle-text: #192526;
   --base-highlight: #a15144;
   --base-highlight-fg: #f3f0ed;
   --base-highlight-hover: #7e3e34;
@@ -917,6 +927,7 @@
   --base-border: #26aad0;
   --base-text: #f3f0ed;
   --base-alt-text: #d8d2c8;
+  --base-subtle-text: #c8e6f2;
   --base-highlight: #e79d7f;
   --base-highlight-fg: #2a201d;
   --base-highlight-hover: #f5b094;
@@ -1067,6 +1078,7 @@
   --base-border: #3b376a;
   --base-text: #0f0b1b;
   --base-alt-text: #4c2413;
+  --base-subtle-text: #2f2b52;
   --base-highlight: #8f2610;
   --base-highlight-fg: #eeeedf;
   --base-highlight-hover: #6f1c08;
@@ -1137,6 +1149,7 @@
   --base-border: #847ecc;
   --base-text: #eeeedf;
   --base-alt-text: #ebcaae;
+  --base-subtle-text: #bcdc6f;
   --base-highlight: #ed9156;
   --base-highlight-fg: #1a0e08;
   --base-highlight-hover: #f5a878;
@@ -1277,6 +1290,7 @@
   --base-border: #4e2c14;
   --base-text: #1a150e;
   --base-alt-text: #4e2c14;
+  --base-subtle-text: #1e1607;
   --base-highlight: #7c421d;
   --base-highlight-fg: #ffffff;
   --base-highlight-hover: #5e3115;
@@ -1344,6 +1358,7 @@
   --base-border: #efb88e;
   --base-text: #f8eae2;
   --base-alt-text: #f0efbe;
+  --base-subtle-text: #f1ebeb;
   --base-highlight: #eba622;
   --base-highlight-fg: #1a0e02;
   --base-highlight-hover: #d4901a;
@@ -1487,6 +1502,7 @@
   --base-border: #5e4227;
   --base-text: #050404;
   --base-alt-text: #2f221a;
+  --base-subtle-text: #4a3015;
   --base-highlight: #7a3f15;
   --base-highlight-fg: #ffffff;
   --base-highlight-hover: #5e3010;
@@ -1554,6 +1570,7 @@
   --base-border: #b6745c;
   --base-text: #e8e5d7;
   --base-alt-text: #e6c99a;
+  --base-subtle-text: #e5c7ba;
   --base-highlight: #d7974f;
   --base-highlight-fg: #1a0e02;
   --base-highlight-hover: #b87a38;
@@ -1692,6 +1709,7 @@
   --base-border: #5a3018;
   --base-text: #1a0e08;
   --base-alt-text: #341b0d;
+  --base-subtle-text: #2c200b;
   --base-highlight: #8a4520;
   --base-highlight-fg: #ffffff;
   --base-highlight-hover: #6a3415;
@@ -1759,6 +1777,7 @@
   --base-border: #e09060;
   --base-text: #f3ecd3;
   --base-alt-text: #e6c89a;
+  --base-subtle-text: #c89968;
   --base-highlight: #e8854a;
   --base-highlight-fg: #1a0e02;
   --base-highlight-hover: #c46d34;
@@ -1892,6 +1911,7 @@
   --base-border: #878787;
   --base-text: #0f0f0f;
   --base-alt-text: #4a4a4a;
+  --base-subtle-text: #4d4d4d;
   --base-highlight: #1f1f1f;
   --base-highlight-fg: #f8f8f8;
   --base-highlight-hover: #393939;
@@ -1950,6 +1970,7 @@
   --base-border: #757575;
   --base-text: #f2f2f2;
   --base-alt-text: #b8b8b8;
+  --base-subtle-text: #b8b8b8;
   --base-highlight: #d4d4d4;
   --base-highlight-fg: #0a0a0a;
   --base-highlight-hover: #b8b8b8;

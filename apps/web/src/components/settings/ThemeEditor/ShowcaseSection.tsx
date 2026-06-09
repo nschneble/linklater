@@ -14,7 +14,7 @@ export default function ShowcaseSection({
 }) {
   return (
     <section>
-      <h3 className="mb-3 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
+      <h3 className="mb-3 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
         {title}
       </h3>
       {children}

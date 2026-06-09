@@ -79,7 +79,7 @@ export default function TokenInput({ value, onChange }: TokenInputProps) {
   return (
     <div className="space-y-2">
       <label
-        className="block text-[var(--text-muted)] text-xs font-medium"
+        className="block text-[var(--base-alt-text)] text-xs font-medium"
         htmlFor="api-docs-token-input"
       >
         Personal access token
@@ -134,9 +134,12 @@ export default function TokenInput({ value, onChange }: TokenInputProps) {
           Clear
         </IconButton>
       </div>
-      <p className="text-[var(--text-muted)] text-xs" id="api-docs-token-help">
+      <p
+        className="text-[var(--base-alt-text)] text-xs"
+        id="api-docs-token-help"
+      >
         This token is remembered for this tab only. Tokens start with{' '}
-        <code className="text-[var(--text)] font-mono">ltk_</code>.
+        <code className="text-[var(--base-text)] font-mono">ltk_</code>.
       </p>
       <p
         className="text-[var(--alert-text)] text-xs"

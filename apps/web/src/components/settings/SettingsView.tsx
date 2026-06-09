@@ -197,7 +197,7 @@ export default function SettingsView({
       </SettingsGroup>
       <div className="flex items-center justify-center mt-500">
         <i
-          className="fa-solid fa-cat text-[var(--text-subtle)]"
+          className="fa-solid fa-cat text-[var(--base-subtle-text)]"
           title="meow"
           aria-hidden="true"
         />
