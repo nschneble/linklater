@@ -81,11 +81,11 @@ interface CascadeFixture {
    */
   readonly pageBg: Rgb;
   /*
-   * Whether to run the border-vs-page-bg adjacency check. Only set when
-   * the cascade self-contains a concrete --base-bg. The default cascade
-   * aliases --base-bg to `var(--bg)`, so adjacency is theme-dependent and
-   * verified separately in code review (see bundles.css preamble notes
-   * on cross-theme worst-case verification).
+   * Whether to run the border-vs-page-bg adjacency check. False for the
+   * `:root` + `[data-mode='dark']` defensive defaults (no runtime
+   * consumer paints them — all 10 themes have per-theme cascades).
+   * True for every per-theme fixture, which self-contains a concrete
+   * --base-bg.
    */
   readonly checkAdjacency: boolean;
 }
@@ -94,18 +94,13 @@ interface CascadeFixture {
  * Default cascade (`:root`, `[data-mode='dark']`) does not redefine
  * --base-bg — the bundles cascade aliases it to `var(--bg)`. So the
  * page background for the default cascade comes from default.css's
- * `:root --bg`. (The default theme's --bg is the same regardless of
- * mode — `[data-mode='dark']` overrides only the state bundles.)
- * The school-of-rock cascade defines --base-bg directly as hex, so
- * we can read it straight out of bundles.css.
- *
- * The default cascade also paints under every un-migrated theme (any
- * theme that has not redefined its bundle palette). The un-migrated
- * theme's --bg becomes the page background under the default cascade's
- * bundle-borders. We hardcode the worst-case un-migrated --bg values
- * below so the default-cascade border tokens can be validated against
- * every un-migrated theme they will ever paint under. See
- * `cross-theme border vs un-migrated theme --bg` block.
+ * `:root --bg`. The default cascade's state-bundle borders are pure
+ * defensive fallback now that all 10 shipped themes carry their own
+ * per-theme bundle cascades — `checkAdjacency: false` skips the border
+ * adjacency assertions for `:root` + `[data-mode='dark']` since no
+ * runtime consumer paints the default cascade's state borders.
+ * Per-theme cascades define --base-bg directly as hex; we read it
+ * straight out of bundles.css for each FIXTURES entry.
  */
 const DEFAULT_PAGE_BG: Rgb = readPageBg(DEFAULT_CSS, ':root', 'bg');
 const SCHOOL_OF_ROCK_LIGHT_PAGE_BG: Rgb = readPageBg(
@@ -344,30 +339,6 @@ const FIXTURES: readonly CascadeFixture[] = [
   },
 ];
 
-/*
- * Worst-case un-migrated theme --bg values for cross-theme adjacency.
- *
- * Used to validate the default cascade's --{bundle}-border clears 3:1
- * (SC 1.4.11) against every un-migrated theme it will paint under.
- *
- * Hardcoded rather than read from each theme stylesheet so the test
- * file documents the contract explicitly: "these are the eight page
- * backgrounds the default-cascade bundle-borders must clear." If a new
- * theme lands, add it here. If a theme is migrated to its own bundle
- * palette, remove it (its own cascade will be covered by FIXTURES).
- *
- * Apollo + Nouvelle Vague are intentionally excluded: both have their
- * own per-theme bundle cascades (covered by FIXTURES). After the wave-16
- * nouvelle-vague migration, every shipped theme has its own cascade —
- * only `default` remains in the un-migrated dark map (and the un-migrated
- * light map is empty).
- */
-const UN_MIGRATED_LIGHT_BGS: Record<string, string> = {};
-
-const UN_MIGRATED_DARK_BGS: Record<string, string> = {
-  default: '#0f0b1b',
-};
-
 describe('bundle contrast contract', () => {
   for (const fixture of FIXTURES) {
     const block = extractBlock(BUNDLES_CSS, fixture.selector);
@@ -467,95 +438,6 @@ describe('bundle contrast contract', () => {
               )
               .toBeGreaterThanOrEqual(AA_NON_TEXT);
           });
-        }
-      });
-    }
-  });
-
-  /*
-   * Cross-theme adjacency for the default cascade.
-   *
-   * The default cascade aliases --base-bg to var(--bg), which means the
-   * actual page background under default-cascade bundle-borders is
-   * whichever un-migrated theme is active. The fixture-based adjacency
-   * check above cannot validate this — it only runs against cascades
-   * that self-contain a concrete --base-bg.
-   *
-   * This block closes that gap: for every (bundle, un-migrated theme)
-   * pair, assert the default-cascade --{bundle}-border clears 3:1
-   * against that theme's --bg.
-   *
-   * This is the check that catches "wave 2's hardened-default border
-   * passes against the default theme's --bg but silently fails against
-   * `before-midnight` light" — i.e. the wave-5 success-border defect.
-   */
-  describe('cross-theme: default-cascade border vs un-migrated theme --bg', () => {
-    const lightBlock = extractBlock(BUNDLES_CSS, ':root');
-    const lightDeclarations = parseDeclarations(lightBlock);
-    const darkBlock = extractBlock(BUNDLES_CSS, "[data-mode='dark']");
-    const darkDeclarations = parseDeclarations(darkBlock);
-
-    /*
-     * Guard each cross-theme describe block on the corresponding UN_MIGRATED
-     * map being non-empty. When the last un-migrated theme in a mode is
-     * migrated to its own bundle cascade (covered by FIXTURES above), the
-     * map empties out and this block would otherwise register a parent
-     * describe with no `it` children — vitest treats that as a failure.
-     * Skip the whole sub-suite when there's nothing left to check.
-     */
-    if (Object.keys(UN_MIGRATED_LIGHT_BGS).length > 0) {
-      describe(':root (light) borders', () => {
-        for (const bundle of CARD_BUNDLES) {
-          const border = getSlot(lightDeclarations, bundle, 'border');
-          if (border === null) {
-            continue;
-          }
-
-          for (const [theme, bg] of Object.entries(UN_MIGRATED_LIGHT_BGS)) {
-            const pageBg = resolveFg(parseColor(bg));
-
-            it(`${bundle}-border on ${theme} --bg #${bg.slice(1)} >= 3:1`, () => {
-              const ratio = contrastRatio(resolveFg(border), pageBg);
-              expect
-                .soft(
-                  ratio,
-                  `${bundle}-border on ${theme} light --bg ${bg}: got ${describeRatio(ratio)}`,
-                )
-                .toBeGreaterThanOrEqual(AA_NON_TEXT);
-            });
-          }
-        }
-      });
-    }
-
-    if (Object.keys(UN_MIGRATED_DARK_BGS).length > 0) {
-      describe("[data-mode='dark'] borders", () => {
-        for (const bundle of CARD_BUNDLES) {
-          const border = getSlot(darkDeclarations, bundle, 'border');
-          if (border === null) {
-            continue;
-          }
-
-          for (const [theme, bg] of Object.entries(UN_MIGRATED_DARK_BGS)) {
-            const pageBg = resolveFg(parseColor(bg));
-            /*
-             * Dark-mode bundle bgs are alpha-on-page (e.g.
-             * `rgb(76 5 25 / 0.4)`). The card-border itself is opaque, so
-             * the page-bg adjacency check uses the raw theme --bg with no
-             * composite — the border sits on top of the page surface, not
-             * the bundle bg.
-             */
-
-            it(`${bundle}-border on ${theme} dark --bg #${bg.slice(1)} >= 3:1`, () => {
-              const ratio = contrastRatio(resolveFg(border), pageBg);
-              expect
-                .soft(
-                  ratio,
-                  `${bundle}-border on ${theme} dark --bg ${bg}: got ${describeRatio(ratio)}`,
-                )
-                .toBeGreaterThanOrEqual(AA_NON_TEXT);
-            });
-          }
         }
       });
     }
