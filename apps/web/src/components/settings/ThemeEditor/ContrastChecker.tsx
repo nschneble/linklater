@@ -1,7 +1,14 @@
-import type { ThemeVariable } from './useThemeOverrides';
+import { useMemo, useState } from 'react';
+import {
+  BUNDLES,
+  CARD_BUNDLES,
+  VAR_GROUPS,
+  type Bundle,
+  type ThemeVariable,
+} from './useThemeOverrides';
 
 interface ContrastCheckerProps {
-  /** The current (possibly overridden) hex values for all editable CSS variables. */
+  /** The current (possibly overridden) values for all editable CSS variables. */
   colorValues: Record<ThemeVariable, string>;
 }
 
@@ -13,33 +20,79 @@ interface ContrastPair {
   foreground: ThemeVariable;
   /** The CSS variable name of the background color. */
   background: ThemeVariable;
+  /** WCAG success criterion this pair satisfies. */
+  criterion: '1.4.3' | '1.4.11';
+  /** Minimum contrast ratio to pass the criterion. */
+  threshold: number;
 }
 
-const CONTRAST_PAIRS: ContrastPair[] = [
-  { label: 'Text / Background', foreground: '--text', background: '--bg' },
-  { label: 'Text / Surface', foreground: '--text', background: '--bg-surface' },
-  {
-    label: 'Text / Elevated',
-    foreground: '--text',
-    background: '--bg-elevated',
-  },
-  {
-    label: 'Muted / Background',
-    foreground: '--text-muted',
-    background: '--bg',
-  },
-  {
-    label: 'Subtle / Background',
-    foreground: '--text-subtle',
-    background: '--bg',
-  },
-  { label: 'Text / Input', foreground: '--text', background: '--bg-input' },
-  {
-    label: 'Accent fg / Accent',
-    foreground: '--accent-fg',
-    background: '--accent',
-  },
-];
+const SC_LABELS: Record<ContrastPair['criterion'], string> = {
+  '1.4.3': 'SC 1.4.3 Contrast (Minimum)',
+  '1.4.11': 'SC 1.4.11 Non-text Contrast',
+};
+
+/**
+ * Builds the 6 or 7 WCAG contrast pairs the bundle distinguishability
+ * contract enforces per bundle. Card bundles (everything except base) add
+ * a border/base-bg adjacency check because their border touches the page
+ * surface.
+ */
+function pairsForBundle(bundle: Bundle): ContrastPair[] {
+  const pairs: ContrastPair[] = [
+    {
+      label: 'text / bg',
+      foreground: `--${bundle}-text`,
+      background: `--${bundle}-bg`,
+      criterion: '1.4.3',
+      threshold: 4.5,
+    },
+    {
+      label: 'alt-text / bg',
+      foreground: `--${bundle}-alt-text`,
+      background: `--${bundle}-bg`,
+      criterion: '1.4.3',
+      threshold: 4.5,
+    },
+    {
+      label: 'border / bg',
+      foreground: `--${bundle}-border`,
+      background: `--${bundle}-bg`,
+      criterion: '1.4.11',
+      threshold: 3,
+    },
+    {
+      label: 'highlight / bg',
+      foreground: `--${bundle}-highlight`,
+      background: `--${bundle}-bg`,
+      criterion: '1.4.11',
+      threshold: 3,
+    },
+    {
+      label: 'hl-fg / hl',
+      foreground: `--${bundle}-highlight-fg`,
+      background: `--${bundle}-highlight`,
+      criterion: '1.4.3',
+      threshold: 4.5,
+    },
+    {
+      label: 'hl-fg / hl-hover',
+      foreground: `--${bundle}-highlight-fg`,
+      background: `--${bundle}-highlight-hover`,
+      criterion: '1.4.3',
+      threshold: 4.5,
+    },
+  ];
+  if (CARD_BUNDLES.includes(bundle)) {
+    pairs.push({
+      label: 'border / base-bg',
+      foreground: `--${bundle}-border`,
+      background: '--base-bg',
+      criterion: '1.4.11',
+      threshold: 3,
+    });
+  }
+  return pairs;
+}
 
 /**
  * Converts a single 8-bit sRGB channel value (0–1) to its linear light
@@ -54,7 +107,7 @@ function linearizeColorComponent(component: number): number {
 /**
  * Computes the WCAG 2.1 relative luminance of a hex color string.
  * Supports 3-digit and 6-digit hex (with or without `#`).
- * Returns `null` if the input is not a valid hex color.
+ * Returns `null` if the input is not a parseable hex color.
  */
 function hexToRelativeLuminance(hex: string): number | null {
   const clean = hex.replace('#', '');
@@ -80,9 +133,10 @@ function hexToRelativeLuminance(hex: string): number | null {
 }
 
 /**
- * Computes the WCAG 2.1 contrast ratio between two hex colors.
- * Returns `null` if either color is invalid.
- * A ratio of 4.5:1 meets WCAG AA for normal text; 7:1 meets AAA.
+ * Computes the WCAG 2.1 contrast ratio between two hex colors. Returns
+ * `null` if either color is invalid or uses alpha (alpha tokens require
+ * composite math the v1 editor does not perform — the compiled bundle
+ * tests in `bundles.contrast.test.ts` cover this rigorously).
  */
 function computeContrastRatio(hexA: string, hexB: string): number | null {
   const luminanceA = hexToRelativeLuminance(hexA);
@@ -94,75 +148,237 @@ function computeContrastRatio(hexA: string, hexB: string): number | null {
 }
 
 interface PassBadgeProps {
-  /** The WCAG level label, e.g. `'AA'` or `'AAA'`. */
-  label: string;
-  /** The minimum contrast ratio required to pass this level. */
-  threshold: number;
-  /** The actual computed contrast ratio to test against the threshold. */
+  pair: ContrastPair;
   ratio: number;
 }
 
 /**
- * A small badge showing whether a contrast ratio meets a given WCAG threshold.
- * Green when passing, red when failing.
+ * A small badge showing whether a contrast ratio meets its WCAG criterion.
+ * Pass/fail visual is reinforced by an icon (color-independent meaning).
+ * Uses fixed inline styles so the badge stays readable when the user edits
+ * the alert/success bundles to invalid values mid-session.
  */
-function PassBadge({ label, threshold, ratio }: PassBadgeProps) {
-  const passes = ratio >= threshold;
+function PassBadge({ pair, ratio }: PassBadgeProps) {
+  const passes = ratio >= pair.threshold;
+  const ariaLabel = passes
+    ? `${SC_LABELS[pair.criterion]}: pass (${ratio.toFixed(2)} of ${pair.threshold} required)`
+    : `${SC_LABELS[pair.criterion]}: fail (${ratio.toFixed(2)} of ${pair.threshold} required)`;
   return (
     <span
-      aria-label={passes ? `${label}: pass` : `${label}: fail`}
-      className={`inline-flex items-center px-1.5 py-0.5 text-[0.6rem] font-semibold rounded ${
+      aria-label={ariaLabel}
+      style={
         passes
-          ? 'bg-[var(--success-bg)] text-[var(--success-text)]'
-          : 'bg-[var(--alert-bg)] text-[var(--alert-text)]'
-      }`}
+          ? { backgroundColor: '#166534', color: '#ffffff' }
+          : { backgroundColor: '#991b1b', color: '#ffffff' }
+      }
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[0.55rem] font-semibold rounded"
     >
-      {label}
+      <i
+        className={`fa-solid ${passes ? 'fa-check' : 'fa-xmark'} text-[0.5rem]`}
+        aria-hidden="true"
+      />
+      {pair.criterion}
     </span>
   );
 }
 
+interface BundleRowProps {
+  pair: ContrastPair;
+  ratio: number | null;
+}
+
+function BundleRow({ pair, ratio }: BundleRowProps) {
+  return (
+    <div className="flex items-center gap-2 py-1 border-b border-[var(--border)] last:border-0">
+      <div className="flex-1 min-w-0">
+        <p className="text-[var(--text)] text-[0.65rem] truncate">
+          {pair.label}
+        </p>
+      </div>
+      {ratio === null ? (
+        <span
+          className="text-[var(--text-subtle)] text-[0.6rem]"
+          title="Alpha or invalid value — see compiled tests"
+        >
+          —
+        </span>
+      ) : (
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <span className="w-9 text-[var(--text-muted)] text-[0.6rem] text-right font-mono">
+            {ratio.toFixed(2)}
+          </span>
+          <PassBadge pair={pair} ratio={ratio} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface BundleResult {
+  bundle: Bundle;
+  label: string;
+  pairs: Array<{ pair: ContrastPair; ratio: number | null }>;
+  failureCount: number;
+  totalCount: number;
+}
+
 /**
- * Displays WCAG 2.1 AA and AAA contrast ratios for the key color pairs used
- * in the Linklater UI. Re-evaluates automatically whenever `colorValues` changes
- * (i.e. on every live edit in the theme editor).
+ * Computes WCAG contrast results for every bundle's contract pairs.
+ * Memoized on colorValues so live edits trigger a single recompute.
+ */
+function useBundleResults(
+  colorValues: Record<ThemeVariable, string>,
+): BundleResult[] {
+  return useMemo(
+    () =>
+      BUNDLES.map((bundle) => {
+        const pairs = pairsForBundle(bundle).map((pair) => ({
+          pair,
+          ratio: computeContrastRatio(
+            colorValues[pair.foreground],
+            colorValues[pair.background],
+          ),
+        }));
+        const failureCount = pairs.filter(
+          ({ pair, ratio }) => ratio !== null && ratio < pair.threshold,
+        ).length;
+        const totalCount = pairs.filter(({ ratio }) => ratio !== null).length;
+        return {
+          bundle,
+          label:
+            VAR_GROUPS.find((group) => group.bundle === bundle)?.label ??
+            bundle,
+          pairs,
+          failureCount,
+          totalCount,
+        };
+      }),
+    [colorValues],
+  );
+}
+
+/**
+ * Displays WCAG 2.1 contrast ratios for every bundle's contract pairs,
+ * grouped by bundle in collapsible disclosures. Default view shows only
+ * failing pairs so the editor stays scannable at 48 pairs.
+ *
+ * A live-updating summary at the top announces regressions to screen-reader
+ * users (`aria-live="polite"`).
+ *
+ * Alpha tokens (e.g. dark-mode state bundle bgs `rgb(R G B / α)`) show "—"
+ * because the v1 editor does not perform composite math. The compiled
+ * bundle tests in `bundles.contrast.test.ts` cover those rigorously.
  */
 export default function ContrastChecker({ colorValues }: ContrastCheckerProps) {
+  const bundleResults = useBundleResults(colorValues);
+  const [failuresOnly, setFailuresOnly] = useState(true);
+  const [openBundles, setOpenBundles] = useState<Set<Bundle>>(
+    () => new Set(BUNDLES),
+  );
+
+  const totalFailures = bundleResults.reduce(
+    (sum, result) => sum + result.failureCount,
+    0,
+  );
+  const totalPairs = bundleResults.reduce(
+    (sum, result) => sum + result.totalCount,
+    0,
+  );
+
+  function toggleBundle(bundle: Bundle) {
+    setOpenBundles((previous) => {
+      const next = new Set(previous);
+      if (next.has(bundle)) {
+        next.delete(bundle);
+      } else {
+        next.add(bundle);
+      }
+      return next;
+    });
+  }
+
   return (
-    <div className="space-y-1">
-      {CONTRAST_PAIRS.map((pair) => {
-        const ratio = computeContrastRatio(
-          colorValues[pair.foreground],
-          colorValues[pair.background],
-        );
+    <div className="space-y-2">
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="flex items-center justify-between gap-2"
+      >
+        <p className="text-[var(--text-muted)] text-[0.65rem]">
+          {totalFailures === 0
+            ? `All ${totalPairs} pairs passing`
+            : `${totalFailures} of ${totalPairs} pairs failing`}
+        </p>
+        <button
+          type="button"
+          onClick={() => setFailuresOnly((previous) => !previous)}
+          aria-pressed={failuresOnly}
+          className="text-[var(--text-muted)] hover:text-[var(--text)] aria-pressed:text-[var(--text)] aria-pressed:font-semibold text-[0.6rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded cursor-pointer"
+        >
+          {failuresOnly ? 'Show all' : 'Failures only'}
+        </button>
+      </div>
 
+      {bundleResults.map((result) => {
+        const visiblePairs = failuresOnly
+          ? result.pairs.filter(
+              ({ pair, ratio }) => ratio !== null && ratio < pair.threshold,
+            )
+          : result.pairs;
+        if (visiblePairs.length === 0) return null;
+        const isOpen = openBundles.has(result.bundle);
+        const contentId = `contrast-${result.bundle}-content`;
+        const headingId = `contrast-${result.bundle}-heading`;
         return (
-          <div
-            key={pair.label}
-            className="flex items-center gap-2 py-1.5 border-b border-[var(--border)] last:border-0"
+          <section
+            key={result.bundle}
+            aria-labelledby={headingId}
+            className="border-b border-[var(--border)] last:border-0 pb-1.5 last:pb-0"
           >
-            <div className="flex-1 min-w-0">
-              <p className="text-[var(--text)] text-xs truncate">
-                {pair.label}
-              </p>
-            </div>
-
-            {ratio === null ? (
-              <span className="text-[var(--text-subtle)] text-[0.65rem]">
-                —
-              </span>
-            ) : (
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <span className="w-8 text-[var(--text-muted)] text-[0.65rem] text-right font-mono">
-                  {ratio.toFixed(1)}
+            <h3 id={headingId} className="m-0">
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                aria-controls={contentId}
+                onClick={() => toggleBundle(result.bundle)}
+                className="group w-full flex items-center gap-2 py-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded cursor-pointer"
+              >
+                <i
+                  className="fa-solid fa-chevron-right text-[0.5rem] text-[var(--text-subtle)] group-aria-expanded:rotate-90 transition-transform duration-150"
+                  aria-hidden="true"
+                />
+                <span className="text-[var(--text)] text-[0.65rem] font-semibold">
+                  {result.label}
                 </span>
-                <PassBadge label="AA" threshold={4.5} ratio={ratio} />
-                <PassBadge label="AAA" threshold={7} ratio={ratio} />
+                <span className="flex-1 text-[var(--text-subtle)] text-[0.6rem] text-right">
+                  {result.failureCount === 0
+                    ? `${result.totalCount} / ${result.totalCount}`
+                    : `${result.totalCount - result.failureCount} / ${result.totalCount}`}
+                </span>
+              </button>
+            </h3>
+            {isOpen && (
+              <div id={contentId} className="pl-4">
+                {visiblePairs.map(({ pair, ratio }) => (
+                  <BundleRow
+                    key={`${result.bundle}-${pair.label}`}
+                    pair={pair}
+                    ratio={ratio}
+                  />
+                ))}
               </div>
             )}
-          </div>
+          </section>
         );
       })}
+
+      {failuresOnly && totalFailures === 0 && (
+        <p className="text-[var(--text-subtle)] text-[0.65rem] italic">
+          No failing pairs. Toggle &ldquo;Show all&rdquo; to see all{' '}
+          {totalPairs} pairs.
+        </p>
+      )}
     </div>
   );
 }

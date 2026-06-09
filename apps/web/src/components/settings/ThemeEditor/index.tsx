@@ -10,27 +10,34 @@ import ContrastChecker from './ContrastChecker';
 import { useThemeOverrides } from './useThemeOverrides';
 
 /**
- * Full-page theme editor accessible from the user menu under "Theme editor".
+ * Full-page theme editor accessible from the user menu under "Theme
+ * editor".
  *
- * Allows the user to live-edit any of the ten CSS color variables that make up
- * a theme. Changes are applied immediately as inline overrides on
- * `document.documentElement` (via `useThemeOverrides`) and reset when the user
- * navigates away.
+ * Live-edits the 49 bundle tokens (7 bundles × 7 slots) that make up the
+ * active theme. Changes are applied immediately as inline overrides on
+ * `document.documentElement` (via `useThemeOverrides`) and reset when the
+ * user navigates away.
  *
- * The editor also supports switching between themes (using the base theme from
- * `ThemeContext`) and toggling light/dark mode — both of which clear any active
- * overrides so the new theme's values are the new baseline.
+ * The editor also supports switching between themes (using the base theme
+ * from `ThemeContext`) and toggling light/dark mode — both of which clear
+ * any active overrides so the new theme's values are the new baseline.
  *
- * Layout: a left panel with `ColorEditor` and `ContrastChecker`, and a right
- * panel with `ComponentShowcase` for a live preview of key UI components.
+ * Layout: a left panel with `ColorEditor` and `ContrastChecker`, and a
+ * right panel with `ComponentShowcase` for a live preview of the bundle
+ * tokens and key UI components.
+ *
+ * Reset, theme select, and mode toggle use fixed neutral colors instead
+ * of bundle tokens so they remain readable as escape hatches when the
+ * user edits the bundles to invalid values mid-session.
  *
  * NOTE: Changes made in the editor are not persisted. They only affect the
- * current browser session. Theme selection (via the UserMenu) is the persistent
- * preference.
+ * current browser session. Theme selection (via the UserMenu) is the
+ * persistent preference.
  */
 export default function ThemeEditor() {
   const { baseTheme, mode, setBaseTheme, setMode } = useTheme();
-  const { colorValues, setOverride, resetOverrides } = useThemeOverrides();
+  const { colorValues, setOverride, resetOverrides, resetBundle } =
+    useThemeOverrides();
 
   function handleThemeChange(event: React.ChangeEvent<HTMLSelectElement>) {
     setBaseTheme(event.target.value as BaseTheme);
@@ -40,16 +47,24 @@ export default function ThemeEditor() {
     setMode(nextMode);
   }
 
+  // Fixed neutral palette for the editor's own critical controls. Bundle
+  // edits cannot affect these, so the user always has a visible escape.
+  const escapeHatchStyle = {
+    backgroundColor: '#fafafa',
+    color: '#0a0a0a',
+    borderColor: '#404040',
+  } as const;
+
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex flex-wrap items-start gap-3 mb-8">
+      <div className="flex flex-wrap items-start gap-3 mb-4">
         <div className="flex-1 min-w-0">
           <h1 className="text-[var(--text)] text-lg font-semibold">
             Theme editor
           </h1>
           <p className="mt-0.5 text-[var(--text-muted)] text-xs">
-            Edit color variables and see changes live. Resets when you navigate
-            away.
+            Edit the 49 bundle tokens of the active theme and see changes live.
+            Resets when you navigate away.
           </p>
         </div>
 
@@ -57,7 +72,8 @@ export default function ThemeEditor() {
           <select
             value={baseTheme}
             onChange={handleThemeChange}
-            className="px-2.5 py-1.5 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-transparent rounded-lg cursor-pointer"
+            style={escapeHatchStyle}
+            className="px-2.5 py-1.5 border text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg cursor-pointer"
             aria-label="Select theme"
           >
             {THEMES.map((theme) => (
@@ -68,7 +84,8 @@ export default function ThemeEditor() {
           </select>
 
           <div
-            className="relative inline-flex p-0.5 bg-[var(--bg-surface)] border border-[var(--border)] rounded-full"
+            style={escapeHatchStyle}
+            className="relative inline-flex p-0.5 border rounded-full"
             role="group"
             aria-label="Color mode"
           >
@@ -77,7 +94,12 @@ export default function ThemeEditor() {
                 key={modeOption}
                 type="button"
                 onClick={() => handleModeToggle(modeOption)}
-                className="relative z-10 px-2.5 py-1 text-[var(--text-muted)] text-xs capitalize aria-pressed:bg-[var(--text)] aria-pressed:text-[var(--bg)] aria-pressed:font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded-full transition-colors duration-150 cursor-pointer"
+                style={
+                  mode === modeOption
+                    ? { backgroundColor: '#0a0a0a', color: '#fafafa' }
+                    : { color: '#0a0a0a' }
+                }
+                className="relative z-10 px-2.5 py-1 text-xs capitalize aria-pressed:font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-full transition-colors duration-150 cursor-pointer"
                 aria-pressed={mode === modeOption}
               >
                 {modeOption}
@@ -88,20 +110,25 @@ export default function ThemeEditor() {
           <button
             type="button"
             onClick={resetOverrides}
-            className="px-2.5 py-1.5 bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-muted)] text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] rounded-lg transition-colors active:scale-[0.96] cursor-pointer"
+            style={escapeHatchStyle}
+            className="px-2.5 py-1.5 border text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg active:scale-[0.96] cursor-pointer"
           >
-            Reset
+            Reset all
           </button>
         </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        <div className="flex-shrink-0 w-full lg:w-72 space-y-4">
+        <div className="flex-shrink-0 w-full lg:w-80 space-y-4">
           <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
             <h2 className="mb-4 text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-wide font-semibold">
               Colors
             </h2>
-            <ColorEditor colorValues={colorValues} onOverride={setOverride} />
+            <ColorEditor
+              colorValues={colorValues}
+              onOverride={setOverride}
+              onResetBundle={resetBundle}
+            />
           </div>
 
           <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">

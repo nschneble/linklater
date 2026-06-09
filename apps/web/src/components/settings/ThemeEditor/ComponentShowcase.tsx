@@ -1,43 +1,76 @@
 import ShowcaseSection from './ShowcaseSection';
+import { BUNDLES } from './useThemeOverrides';
 import { useState } from 'react';
 import Alert from '../../common/Alert';
 import FormInput from '../../common/FormInput';
 import IconButton from '../../common/IconButton';
 import PrimaryButton from '../../common/PrimaryButton';
 
-const SURFACE_ITEMS = [
-  { label: 'Background', variable: '--bg' },
-  { label: 'Surface', variable: '--bg-surface' },
-  { label: 'Elevated', variable: '--bg-elevated' },
-  { label: 'Input', variable: '--bg-input' },
-] as const;
+const BUNDLE_DEMO_TEXT: Record<(typeof BUNDLES)[number], string> = {
+  base: 'Page chrome',
+  mount: 'Card surface',
+  orbit: 'Menu surface',
+  alert: 'Error / danger',
+  warn: 'Warning banner',
+  info: 'Tip or hint',
+  success: 'Verified, confirmed',
+};
 
 /**
  * A read-only preview panel showing all major UI components styled with the
- * current theme. Used in the theme editor so changes to CSS variables are
+ * current theme. Used in the theme editor so changes to bundle tokens are
  * immediately visible in realistic context.
  *
- * The tab switcher in this showcase is interactive (controlled by local state)
- * so users can verify that active/inactive tab styles look correct.
+ * The tab switcher in this showcase is interactive (controlled by local
+ * state) so users can verify that active/inactive tab styles look correct.
  */
 export default function ComponentShowcase() {
   const [activeTab, setActiveTab] = useState<'unread' | 'read'>('unread');
 
   return (
     <div className="space-y-6">
-      <ShowcaseSection title="Surfaces">
-        <div className="grid grid-cols-2 gap-2">
-          {SURFACE_ITEMS.map(({ label, variable }) => (
-            <div
-              key={variable}
-              className="px-3 py-2.5 border border-[var(--border)] rounded-lg"
-              style={{ backgroundColor: `var(${variable})` }}
+      <ShowcaseSection title="Bundles">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {BUNDLES.map((bundle) => (
+            <article
+              key={bundle}
+              aria-label={`${bundle} bundle preview`}
+              className="px-3 py-2.5 border rounded-lg"
+              style={{
+                backgroundColor: `var(--${bundle}-bg)`,
+                borderColor: `var(--${bundle}-border)`,
+              }}
             >
-              <p className="text-[var(--text)] text-xs font-medium">{label}</p>
-              <p className="text-[var(--text-muted)] text-[0.65rem] font-mono">
-                {variable}
+              <h4
+                className="text-[0.65rem] uppercase tracking-wide font-semibold"
+                style={{ color: `var(--${bundle}-text)` }}
+              >
+                {bundle}
+              </h4>
+              <p
+                className="text-[0.7rem]"
+                style={{ color: `var(--${bundle}-text)` }}
+              >
+                {BUNDLE_DEMO_TEXT[bundle]}
               </p>
-            </div>
+              <p
+                className="text-[0.6rem]"
+                style={{ color: `var(--${bundle}-alt-text)` }}
+              >
+                Alt text sample
+              </p>
+              <div className="mt-1.5 inline-flex items-center px-1.5 py-0.5 text-[0.6rem] font-semibold rounded">
+                <span
+                  style={{
+                    backgroundColor: `var(--${bundle}-highlight)`,
+                    color: `var(--${bundle}-highlight-fg)`,
+                  }}
+                  className="px-1.5 py-0.5 rounded"
+                >
+                  Highlight
+                </span>
+              </div>
+            </article>
           ))}
         </div>
       </ShowcaseSection>
