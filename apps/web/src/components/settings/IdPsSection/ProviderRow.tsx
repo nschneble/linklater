@@ -109,7 +109,7 @@ function ProviderLabel({ icon, label, providerEmail }: ProviderLabelProps) {
   return (
     <div className="flex items-center gap-2 min-w-0 flex-1">
       <i
-        className={`shrink-0 fa-brands ${icon} text-[0.7rem]`}
+        className={`shrink-0 fa-brands ${icon} text-[var(--mount-text)] text-[0.7rem]`}
         aria-hidden="true"
       />
       <div className="flex flex-col min-w-0">

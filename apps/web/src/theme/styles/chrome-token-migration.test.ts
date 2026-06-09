@@ -23,6 +23,7 @@ const MIGRATED_FILES = [
   'src/App.tsx',
   'src/AppShell.tsx',
   'src/components/Header.tsx',
+  'src/components/common/IconListButton.tsx',
   'src/components/api-docs/ApiDocsView.tsx',
   'src/components/api-docs/TokenInput.tsx',
   // ExtensionAuthorizePage.tsx is partially migrated (card, headings, buttons)

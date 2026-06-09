@@ -414,6 +414,57 @@ describe('bundle contrast contract', () => {
     }
   });
 
+  /*
+   * State-bundle text rendered DIRECTLY on the page background (no
+   * `--{state}-bg` wrapper). Real consumers: TokenInput validation error
+   * paragraph, AppShell warn banner text fallback under specific media
+   * queries. The text/bg-in-bundle contract above covers `--alert-text`
+   * over `--alert-bg`; this block covers `--alert-text` over `--base-bg`
+   * which has no equivalent in the per-bundle CONTRACT iteration.
+   *
+   * Pattern is monotonically safer than text-on-bundle-bg because state
+   * bgs sit at the lightness extreme adjacent to `--base-bg`, but a hex
+   * tweak to either token could silently regress without mechanization.
+   * See [[feedback-state-text-on-base-bg-test-pair]].
+   */
+  describe('state-text on base-bg', () => {
+    for (const fixture of FIXTURES) {
+      if (!fixture.checkAdjacency) {
+        continue;
+      }
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+      const baseBg = declarations.get('base-bg');
+      if (baseBg === undefined || baseBg.includes('var(')) {
+        continue;
+      }
+
+      describe(`${fixture.label}`, () => {
+        for (const bundle of ['alert', 'warn', 'info', 'success'] as const) {
+          const stateText = declarations.get(`${bundle}-text`);
+          if (stateText === undefined || stateText.includes('var(')) {
+            continue;
+          }
+
+          it(`${bundle}-text on base-bg >= 4.5:1`, () => {
+            const foreground = resolveFg(parseColor(stateText));
+            const background = compositeOverBg(
+              parseColor(baseBg),
+              fixture.pageBg,
+            );
+            const ratio = contrastRatio(foreground, background);
+            expect
+              .soft(
+                ratio,
+                `${bundle}-text on base-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+              )
+              .toBeGreaterThanOrEqual(AA_NORMAL);
+          });
+        }
+      });
+    }
+  });
+
   describe('card-style border vs page --base-bg', () => {
     for (const fixture of FIXTURES) {
       if (!fixture.checkAdjacency) {
