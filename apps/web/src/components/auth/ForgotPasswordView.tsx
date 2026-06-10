@@ -30,10 +30,10 @@ export default function ForgotPasswordView({
 }: ForgotPasswordViewProps) {
   return (
     <AuthCard>
-      <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold text-balance">
+      <h1 className="mb-2 text-[var(--mount-text)] text-center text-2xl font-bold text-balance">
         You forgot?
       </h1>
-      <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
+      <p className="mb-6 text-[var(--mount-alt-text)] text-center text-sm">
         Silly goose. We'll send you a reset link! Unless you don't have an
         account. Then this isn't gonna do much.
       </p>
@@ -48,7 +48,7 @@ export default function ForgotPasswordView({
       ) : (
         <form className="space-y-4" onSubmit={onSubmit}>
           <label
-            className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+            className="block mb-0 text-[var(--mount-alt-text)] text-sm font-medium"
             htmlFor="forgot-email"
           >
             Email

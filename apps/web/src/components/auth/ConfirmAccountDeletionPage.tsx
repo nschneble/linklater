@@ -1,7 +1,7 @@
 import Alert from '../common/Alert';
+import LinkButton from '../common/LinkButton';
 import { confirmAccountDeletion } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import { FOCUS_RING } from '../../lib/styles';
 import { setAuthNotice } from '../../auth/authNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
@@ -85,16 +85,16 @@ export default function ConfirmAccountDeletionPage() {
       tabIndex={-1}
       className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]"
     >
-      <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl text-center select-none">
+      <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl text-center select-none">
         {status === 'verifying' && (
           <>
-            <h1 className="mb-4 text-[var(--text)] text-2xl font-bold">
+            <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
               Verifying deletion link
             </h1>
             <p
               role="status"
               aria-live="polite"
-              className="text-[var(--text-muted)] animate-pulse"
+              className="text-[var(--mount-alt-text)] animate-pulse"
             >
               Verifying your deletion link…
             </p>
@@ -103,26 +103,25 @@ export default function ConfirmAccountDeletionPage() {
 
         {status === 'success' && (
           <>
-            <h1 className="mb-4 text-[var(--text)] text-2xl font-bold">
+            <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
               Account deleted
             </h1>
             <Alert className="mb-4" icon="fa-circle-check" variant="success">
               Your account has been permanently deleted.
             </Alert>
-            <button
+            <LinkButton
               ref={continueButtonReference}
-              type="button"
-              className={`text-[var(--accent)] underline text-sm rounded ${FOCUS_RING}`}
+              surface="mount"
               onClick={handleContinue}
             >
               Continue to sign-in
-            </button>
+            </LinkButton>
           </>
         )}
 
         {status === 'error' && (
           <>
-            <h1 className="mb-4 text-[var(--text)] text-2xl font-bold">
+            <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
               This link can't be used
             </h1>
             <Alert
@@ -132,18 +131,17 @@ export default function ConfirmAccountDeletionPage() {
             >
               {errorMessage}
             </Alert>
-            <p className="mb-6 text-[var(--text-muted)] text-sm">
+            <p className="mb-6 text-[var(--mount-alt-text)] text-sm">
               If you still want to delete your account, sign in and start the
               deletion flow again from Settings.
             </p>
-            <button
+            <LinkButton
               ref={backButtonReference}
-              type="button"
-              className={`text-[var(--accent)] underline text-sm rounded ${FOCUS_RING}`}
+              surface="mount"
               onClick={() => navigate('/', { replace: true })}
             >
               Back to home
-            </button>
+            </LinkButton>
           </>
         )}
       </div>

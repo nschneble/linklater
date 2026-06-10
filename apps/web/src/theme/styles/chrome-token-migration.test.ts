@@ -23,6 +23,13 @@ const MIGRATED_FILES = [
   'src/App.tsx',
   'src/AppShell.tsx',
   'src/components/Header.tsx',
+  'src/components/auth/AuthCard.tsx',
+  'src/components/auth/AuthErrorPanel.tsx',
+  'src/components/auth/AuthForm.tsx',
+  'src/components/auth/ForgotPasswordView.tsx',
+  'src/components/auth/LoginRegisterView.tsx',
+  'src/components/auth/LogoutPage.tsx',
+  'src/components/auth/MfaView.tsx',
   'src/components/common/CopyRevealPanel.tsx',
   'src/components/common/FormInput.tsx',
   'src/components/common/IconButton.tsx',
@@ -43,10 +50,15 @@ const MIGRATED_FILES = [
   'src/components/UserMenu/index.tsx',
   'src/components/api-docs/ApiDocsView.tsx',
   'src/components/api-docs/TokenInput.tsx',
-  // ExtensionAuthorizePage.tsx is partially migrated (card, headings, buttons)
-  // but its `bg-gradient-to-b from-text-muted via-text-muted to-text` page
-  // wrapper is deferred to wave 20 alongside the login bg gradient — see
-  // wave 19 brief Q9. Re-add once the gradient lands on bundle tokens.
+  // The following auth pages are partially migrated (card, headings, paragraphs,
+  // buttons) but their `bg-gradient-to-b from-text-muted via-text-muted to-text`
+  // page wrappers are deferred per wave 19 brief Q9. Re-add each once the
+  // gradient lands on bundle tokens:
+  //   - src/components/auth/ConfirmAccountDeletionPage.tsx (wave 27)
+  //   - src/components/auth/ExtensionAuthorizePage.tsx (wave 19)
+  //   - src/components/auth/OAuthCallbackPage.tsx (wave 27)
+  //   - src/components/auth/ResetPasswordPage.tsx (wave 27)
+  //   - src/components/auth/VerifyLoginPage.tsx (wave 27)
   'src/components/settings/ApiTokensList/ApiTokenRow.tsx',
   'src/components/settings/ApiTokensList/index.tsx',
   'src/components/settings/ApiTokensSection/index.tsx',

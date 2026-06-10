@@ -63,10 +63,10 @@ export default function LoginRegisterView({
 }: LoginRegisterViewProps) {
   return (
     <AuthCard>
-      <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold text-balance">
+      <h1 className="mb-2 text-[var(--mount-text)] text-center text-3xl font-bold text-balance">
         Linklater
       </h1>
-      <p className="mb-6 text-[var(--text-muted)] text-center">
+      <p className="mb-6 text-[var(--mount-alt-text)] text-center">
         Save links now, read them later.
       </p>
 
@@ -115,7 +115,7 @@ export default function LoginRegisterView({
             onSubmit={onSubmit}
           >
             <label
-              className="block text-[var(--text-muted)] text-sm font-medium"
+              className="block text-[var(--mount-alt-text)] text-sm font-medium"
               htmlFor="auth-email"
             >
               Email
@@ -133,7 +133,7 @@ export default function LoginRegisterView({
             />
 
             <label
-              className="block text-[var(--text-muted)] text-sm font-medium"
+              className="block text-[var(--mount-alt-text)] text-sm font-medium"
               htmlFor="auth-password"
             >
               Password
@@ -181,10 +181,10 @@ export default function LoginRegisterView({
                   className="absolute inset-0 flex items-center"
                   aria-hidden="true"
                 >
-                  <div className="w-full border-t border-[var(--border)]" />
+                  <div className="w-full border-t border-[var(--mount-border)]" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="px-3 bg-[var(--bg-surface)] text-[var(--text-muted)] text-xs">
+                  <span className="px-3 bg-[var(--mount-bg)] text-[var(--mount-alt-text)] text-xs">
                     or continue with
                   </span>
                 </div>

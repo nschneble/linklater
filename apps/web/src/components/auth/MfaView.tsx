@@ -55,10 +55,10 @@ export default function MfaView({
 
   return (
     <AuthCard>
-      <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold text-balance">
+      <h1 className="mb-2 text-[var(--mount-text)] text-center text-2xl font-bold text-balance">
         {isRecovery ? 'Enter a recovery code' : 'Multi-factor authentication'}
       </h1>
-      <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
+      <p className="mb-6 text-[var(--mount-alt-text)] text-center text-sm">
         {isRecovery
           ? 'Enter one of your saved recovery codes.'
           : 'Enter the code from your authenticator app.'}
@@ -66,14 +66,15 @@ export default function MfaView({
 
       <form ref={formReference} className="space-y-4" onSubmit={onSubmit}>
         <label
-          className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+          className="block mb-0 text-[var(--mount-alt-text)] text-sm font-medium"
           htmlFor={isRecovery ? 'mfa-recovery-code' : 'mfa-totp-code'}
         >
           {isRecovery ? 'Recovery code' : 'Authenticator code'}
         </label>
         {!isRecovery && (
+          // --*-subtle-text is BASE-only by design; mount hints collapse to alt-text
           <p
-            className="text-[var(--text-subtle)] text-xs"
+            className="text-[var(--mount-alt-text)] text-xs"
             id="mfa-totp-code-hint"
           >
             We'll verify it automatically after the 6th digit.
