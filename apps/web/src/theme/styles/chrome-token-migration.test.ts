@@ -69,9 +69,10 @@ const MIGRATED_FILES = [
   'src/components/UserMenu/index.tsx',
   'src/components/api-docs/ApiDocsView.tsx',
   'src/components/api-docs/TokenInput.tsx',
-  // The following pages are partially migrated (card, headings, paragraphs,
-  // buttons) but their `bg-gradient-to-b from-text-muted via-text-muted to-text`
-  // page wrappers are deferred per wave 19 brief Q9. Re-add each once the
+  // The following pages are partially migrated (card, headings,
+  // paragraphs, buttons) but their
+  // `bg-gradient-to-b from-text-muted via-text-muted to-text` page
+  // wrappers are deferred per wave 19 brief Q9. Re-add each once the
   // gradient lands on bundle tokens:
   //   - src/components/auth/ConfirmAccountDeletionPage.tsx (wave 27)
   //   - src/components/auth/ExtensionAuthorizePage.tsx (wave 19)

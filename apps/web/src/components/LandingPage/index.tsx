@@ -19,9 +19,14 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-hit-man">
+      {/* Skip link is brand-locked to white-on-navy: bg-hit-man is a fixed
+          radial gradient (~#14103a → #0a0812) that doesn't honor user themes,
+          so the user-theme --focus-ring may not clear 3:1 against it for
+          warm light themes (a11y-lead M-1, wave 30 gang pass). White ring
+          on white body clears 16:1+ vs the navy gradient. */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-sm focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-white focus:text-[#14103a] focus:text-sm focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-white focus:outline-none"
       >
         Skip to main content
       </a>

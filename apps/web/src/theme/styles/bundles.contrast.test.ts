@@ -852,6 +852,45 @@ describe('bundle contrast contract', () => {
   });
 
   /*
+   * `--orbit-border` over `--orbit-bg` is the structural pair for inner
+   * lifted sub-surfaces inside an orbit-tier panel: WelcomeModal feature
+   * tiles + KeyboardShortcutsModal kbd legends both sit on the orbit
+   * panel with `border-[var(--orbit-border)]` carrying separation.
+   * Wave 30 surfaced this pair via the diamantaire's gang-pass review —
+   * the previous "orbit-border on mount-bg" pair did not cover the
+   * sub-surface case because the host bg is now orbit, not mount.
+   * Wave 30.1 mechanizes the pair so future palette tweaks are caught.
+   * Tightest theme: before-sunset dark at ~3.017:1 (+0.017 over floor).
+   */
+  describe('orbit-border on orbit-bg (sub-surface on orbit panel)', () => {
+    for (const fixture of FIXTURES) {
+      if (!fixture.checkAdjacency) {
+        continue;
+      }
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+      const orbitBorder = getSlot(declarations, 'orbit', 'border');
+      const orbitBg = getSlot(declarations, 'orbit', 'bg');
+      if (orbitBorder === null || orbitBg === null) {
+        continue;
+      }
+
+      it(`${fixture.label} >= 3:1`, () => {
+        const ratio = contrastRatio(
+          resolveFg(orbitBorder),
+          compositeOverBg(orbitBg, fixture.pageBg),
+        );
+        expect
+          .soft(
+            ratio,
+            `orbit-border on orbit-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+          )
+          .toBeGreaterThanOrEqual(AA_NON_TEXT);
+      });
+    }
+  });
+
+  /*
    * Alert idle paint on host surfaces — the IconButton `danger` variant
    * paints `--alert-text` + `--alert-border` directly on its host bg (no
    * `--alert-bg` wrapper) at rest. The hover transient does fill

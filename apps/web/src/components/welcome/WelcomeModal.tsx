@@ -1,4 +1,4 @@
-import IconButton from '../common/IconButton';
+import PrimaryButton from '../common/PrimaryButton';
 import { createPortal } from 'react-dom';
 import { FOCUS_RING } from '../../lib/styles';
 import { useEffect, useRef } from 'react';
@@ -132,9 +132,7 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                     save the link directly to Linklater.
                   </span>
                 </p>
-                <IconButton
-                  variant="default"
-                  surface="orbit"
+                <PrimaryButton
                   className="w-full mt-4"
                   onClick={() =>
                     handleNavigate('/settings', {
@@ -147,7 +145,7 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                     aria-hidden="true"
                   />
                   Get the bookmarklet
-                </IconButton>
+                </PrimaryButton>
               </div>
             </div>
             <div className="flex items-start gap-4 p-4 bg-[var(--orbit-bg)] border border-[var(--orbit-border)] rounded-xl animate-fade-in-up [animation-delay:200ms]">
@@ -166,9 +164,7 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                     your collection.
                   </span>
                 </p>
-                <IconButton
-                  variant="default"
-                  surface="orbit"
+                <PrimaryButton
                   className="w-full mt-4"
                   onClick={() => handleNavigate('/stumble')}
                 >
@@ -177,7 +173,7 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                     aria-hidden="true"
                   />
                   Try Stumble!
-                </IconButton>
+                </PrimaryButton>
               </div>
             </div>
           </div>
