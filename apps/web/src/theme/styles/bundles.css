@@ -88,15 +88,17 @@
   --orbit-highlight: var(--accent);
 
   /* alert / warn / info / success default palettes mirror the rose /
-   * amber / blue / emerald hues that the legacy components used inline,
-   * so themes that have not migrated keep their existing appearance. */
-  /* Border defaults are tuned for cross-theme SC 1.4.11 compliance: the
+   * amber / blue / emerald hues the legacy components used inline. Every
+   * shipped theme overrides these in its own block, so the defaults here
+   * are the synthetic no-theme-set fallback — they only render during the
+   * pre-theme-attribute window (see preamble). */
+  /* Border defaults are still tuned for cross-theme SC 1.4.11 compliance
+   * so the synthetic fallback stays accessible if it ever paints: the
    * rose-800 / amber-800 / blue-800 / emerald-800 stops clear >=3:1
-   * against every un-migrated theme's --base-bg (verified worst-case
-   * against `before-midnight` light --bg #ccc095, where --success-border
-   * #166534 lands at 3.92:1). Backgrounds and text stay on the legacy
-   * soft hues so per-theme palettes can still tune the bundle's
-   * narrative hue without re-deriving accessibility math.
+   * against the fallback --base-bg derived from the flat --bg token.
+   * Backgrounds and text stay on the legacy soft hues so per-theme
+   * palettes can tune the bundle's narrative hue without re-deriving
+   * accessibility math.
    * --success-border uses emerald-800 (#166534), distinct from
    * --success-text #065f46 (also emerald family but a darker stop). The
    * wave-2 emerald-700 pick (#15803d) was retired in wave 5 after the

@@ -136,8 +136,10 @@ body {
   outline-offset: 2px;
   /* Anchor the outer halo to --base-bg so the CVD focus ring reads through
      the bundle vocabulary, consistent with the wave-31 chrome migration.
-     Today resolves identically to the legacy --bg alias; the bundle binding
-     future-proofs against per-scope --bg overrides. */
+     Resolves identically to --bg on every theme variant except hit-man
+     light, where the bundle binding intentionally diverges (--base-bg
+     #ecdcb0 vs flat --bg #f0c870; see bundles.css:1339). The bundle
+     binding also future-proofs against per-scope --bg overrides. */
   box-shadow: 0 0 0 5px var(--base-bg);
 }
 
