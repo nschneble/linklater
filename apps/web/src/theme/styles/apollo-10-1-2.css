@@ -1,7 +1,6 @@
 [data-theme='apollo-10-1-2'][data-mode='dark'] {
   --bg: #0d1426;
   --bg-surface: #223366;
-  --bg-elevated: #2c4180;
   --text: #f4f1ec;
   --text-muted: #e1dbd5;
   --text-subtle: #d5dcee;
@@ -15,7 +14,6 @@
 [data-theme='apollo-10-1-2'][data-mode='light'] {
   --bg: #f4f1ec;
   --bg-surface: #e8e2d8;
-  --bg-elevated: #d4ccc0;
   --text: #0d1426;
   --text-muted: #4f361a;
   --text-subtle: #493444;

@@ -1,7 +1,6 @@
 [data-theme='before-sunrise'][data-mode='dark'] {
   --bg: #3c1e0e;
   --bg-surface: #6a3c22;
-  --bg-elevated: #7a4e30;
   --text: #f3ecd3;
   --text-muted: #e6c89a;
   --text-subtle: #c89968;
@@ -14,7 +13,6 @@
 [data-theme='before-sunrise'][data-mode='light'] {
   --bg: #f3ecd3;
   --bg-surface: #dcc8a4;
-  --bg-elevated: #c8a870;
   --text: #341b0d;
   --text-muted: #2b1f0a;
   --text-subtle: #2c200b;

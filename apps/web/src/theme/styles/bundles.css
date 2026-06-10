@@ -79,8 +79,10 @@
    * consumers (FormInput, ColorEditor, LinksToolbar search input) only
    * render after a theme is active, so the slots always resolve. */
 
-  /* orbit = menus / dropdowns */
-  --orbit-bg: var(--bg-elevated);
+  /* orbit = menus / dropdowns. --bg-elevated retired wave 32 alongside
+   * --bg-input wave 23 retirement. Synthetic "no theme set" condition
+   * leaves --orbit-bg undefined here; UI never renders without an
+   * active theme so this falls through harmlessly. */
   --orbit-border: var(--border);
   --orbit-text: var(--text);
   --orbit-alt-text: var(--text-muted);

@@ -1,7 +1,6 @@
 [data-theme='nouvelle-vague'][data-mode='dark'] {
   --bg: #0a0a0a;
   --bg-surface: #1a1a1a;
-  --bg-elevated: #2c2c2c;
   --text: #f2f2f2;
   --text-muted: #b8b8b8;
   --text-subtle: #b8b8b8;
@@ -15,7 +14,6 @@
 [data-theme='nouvelle-vague'][data-mode='light'] {
   --bg: #f8f8f8;
   --bg-surface: #ffffff;
-  --bg-elevated: #ebebeb;
   --text: #0f0f0f;
   --text-muted: #4a4a4a;
   --text-subtle: #4d4d4d;

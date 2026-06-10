@@ -1,7 +1,6 @@
 [data-theme='hit-man'][data-mode='dark'] {
   --bg: #1a150e;
   --bg-surface: #4e2c14;
-  --bg-elevated: #594c3f;
   --text: #f8eae2;
   --text-muted: #f0efbe;
   --text-subtle: #f1ebeb;
@@ -14,7 +13,6 @@
 [data-theme='hit-man'][data-mode='light'] {
   --bg: #f0c870;
   --bg-surface: #c4a860;
-  --bg-elevated: #d09848;
   --text: #1a150e;
   --text-muted: #201508;
   --text-subtle: #1e1607;

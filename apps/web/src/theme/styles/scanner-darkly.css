@@ -1,7 +1,6 @@
 [data-theme='scanner-darkly'][data-mode='dark'] {
   --bg: #0f0b1b;
   --bg-surface: #201e43;
-  --bg-elevated: #3b376a;
   --text: #eeeedf;
   --text-muted: #ebcaae;
   --text-subtle: #bcdc6f;
@@ -14,7 +13,6 @@
 [data-theme='scanner-darkly'][data-mode='light'] {
   --bg: #eeeedf;
   --bg-surface: #e8d4a0;
-  --bg-elevated: #d0bc78;
   --text: #0f0b1b;
   --text-muted: #4c2413;
   --text-subtle: #2f2b52;
