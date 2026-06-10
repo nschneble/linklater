@@ -74,8 +74,9 @@ const variantClassesByHost: Record<Surface, Record<Variant, string>> = {
   base: {
     default: `${SMALL_PADDING} hover:bg-[var(--mount-bg)] disabled:bg-inherit ring-1 ring-[var(--base-border)] text-[var(--base-text)] ${FOCUS_RING} disabled:active:scale-100`,
     danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING_DANGER}`,
-    // danger-filled paints --alert-highlight as its fill, so the focus ring
-    // must switch to --alert-highlight-fg (Recovery A, wave-24 Toast precedent).
+    // danger-filled paints --alert-highlight as its fill, so the focus
+    // ring switches to --alert-highlight-fg — a same-color ring would
+    // paint 1:1 invisible. Recovery A, wave-24 Toast precedent.
     'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER_FILLED}`,
     ghost: `${SMALL_PADDING} ring-1 ring-[var(--base-border)] text-[var(--base-alt-text)] ${FOCUS_RING}`,
     elevated: `pl-3.5 pr-4 py-2 bg-[var(--mount-bg)] disabled:bg-[var(--mount-bg)] hover:bg-[var(--orbit-bg)] border-shadow hover:border-shadow text-[var(--mount-text)] font-semibold disabled:active:scale-100`,

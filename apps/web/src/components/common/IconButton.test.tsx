@@ -156,10 +156,10 @@ describe('IconButton', () => {
   });
 
   it('danger-filled variant carries the alert-highlight-fg focus-ring (Recovery A)', () => {
-    // The danger-filled fill IS --alert-highlight; using --alert-highlight for
-    // the focus ring would paint a 1:1 invisible ring against the variant's
-    // own background. Recovery A switches the ring to --alert-highlight-fg,
-    // which inherits 4.5:1 vs --alert-highlight from the bundle contract.
+    // The danger-filled fill IS --alert-highlight; a same-color ring
+    // would paint 1:1 invisible against the variant's own background.
+    // Recovery A switches the ring to --alert-highlight-fg, which
+    // inherits 4.5:1 vs --alert-highlight from the bundle contract.
     render(<IconButton variant="danger-filled">confirm</IconButton>);
     const button = screen.getByRole('button', { name: 'confirm' });
     expect(button.className).toContain(

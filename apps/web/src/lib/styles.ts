@@ -8,10 +8,10 @@ import type { CSSProperties } from 'react';
  * Uses `focus-visible` (not `focus`) so that the ring only appears during
  * keyboard navigation, not on mouse clicks.
  *
- * `forced-colors:focus-visible:outline-*` is the Windows High Contrast Mode
- * fallback: HCM strips background colors (including the ring), so we paint
- * a system-color outline as a second-channel focus indicator. Keeps SC 2.4.7
- * intact for HCM keyboard users.
+ * `forced-colors:focus-visible:outline-*` is the Windows High Contrast
+ * Mode fallback: HCM strips background colors (including the ring), so we
+ * paint a system-color outline as a second-channel focus indicator. Keeps
+ * SC 2.4.7 intact for HCM keyboard users.
  */
 export const FOCUS_RING =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText]';
@@ -36,9 +36,9 @@ export const FOCUS_RING_DANGER =
 
 /**
  * Variant of `FOCUS_RING_DANGER` for destructive buttons whose fill IS
- * `--alert-highlight`. Recovery Option A from wave-24 Toast precedent:
- * `--alert-highlight` ring against an `--alert-highlight` background paints
- * as a 1:1 invisible ring, breaking SC 1.4.11 + 2.4.7. The highlight-fg
+ * `--alert-highlight`. Recovery Option A from wave-24 Toast precedent: an
+ * `--alert-highlight` ring against an `--alert-highlight` background
+ * paints 1:1 invisible, breaking SC 1.4.11 + 2.4.7. The highlight-fg
  * slot inherits a 4.5:1 floor against highlight from the bundle contract
  * (see `bundles.contrast.test.ts` `highlight-fg/highlight` pair), so the
  * ring is comfortably visible by construction regardless of per-theme
