@@ -1,5 +1,10 @@
 import type { ButtonHTMLAttributes, Ref } from 'react';
-import { DISABLED, FOCUS_RING, FOCUS_RING_DANGER } from '../../lib/styles';
+import {
+  DISABLED,
+  FOCUS_RING,
+  FOCUS_RING_DANGER,
+  FOCUS_RING_DANGER_FILLED,
+} from '../../lib/styles';
 
 /**
  * Small pill-shaped button used for secondary actions throughout the app.
@@ -69,14 +74,16 @@ const variantClassesByHost: Record<Surface, Record<Variant, string>> = {
   base: {
     default: `${SMALL_PADDING} hover:bg-[var(--mount-bg)] disabled:bg-inherit ring-1 ring-[var(--base-border)] text-[var(--base-text)] ${FOCUS_RING} disabled:active:scale-100`,
     danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING_DANGER}`,
-    'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER}`,
+    // danger-filled paints --alert-highlight as its fill, so the focus ring
+    // must switch to --alert-highlight-fg (Recovery A, wave-24 Toast precedent).
+    'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER_FILLED}`,
     ghost: `${SMALL_PADDING} ring-1 ring-[var(--base-border)] text-[var(--base-alt-text)] ${FOCUS_RING}`,
     elevated: `pl-3.5 pr-4 py-2 bg-[var(--mount-bg)] disabled:bg-[var(--mount-bg)] hover:bg-[var(--orbit-bg)] border-shadow hover:border-shadow text-[var(--mount-text)] font-semibold disabled:active:scale-100`,
   },
   mount: {
     default: `${SMALL_PADDING} hover:bg-[var(--orbit-bg)] disabled:bg-inherit ring-1 ring-[var(--mount-border)] text-[var(--mount-text)] ${FOCUS_RING} disabled:active:scale-100`,
     danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING_DANGER}`,
-    'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER}`,
+    'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER_FILLED}`,
     ghost: `${SMALL_PADDING} ring-1 ring-[var(--mount-border)] text-[var(--mount-alt-text)] ${FOCUS_RING}`,
     elevated: `pl-3.5 pr-4 py-2 bg-[var(--orbit-bg)] disabled:bg-[var(--orbit-bg)] hover:bg-[var(--mount-bg)] border-shadow hover:border-shadow text-[var(--orbit-text)] font-semibold disabled:active:scale-100`,
   },
@@ -89,7 +96,7 @@ const variantClassesByHost: Record<Surface, Record<Variant, string>> = {
     // [[feedback-bundle-slot-add-reverify]] — do not silently fall back.
     default: `${SMALL_PADDING} disabled:bg-inherit ring-1 ring-[var(--orbit-border)] text-[var(--orbit-text)] ${FOCUS_RING} disabled:active:scale-100`,
     danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING_DANGER}`,
-    'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER}`,
+    'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER_FILLED}`,
     ghost: `${SMALL_PADDING} ring-1 ring-[var(--orbit-border)] text-[var(--orbit-alt-text)] ${FOCUS_RING}`,
     // `elevated` on orbit host has no over-orbit slot. Marked unsupported;
     // no consumer reaches this combination.

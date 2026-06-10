@@ -3,6 +3,7 @@ import {
   DISABLED,
   FOCUS_RING,
   FOCUS_RING_DANGER,
+  FOCUS_RING_DANGER_FILLED,
   menuRevealStyle,
 } from './styles';
 
@@ -68,6 +69,16 @@ describe('FOCUS_RING', () => {
   it('contains the focus-ring color', () => {
     expect(FOCUS_RING).toContain('focus-visible:ring-[var(--focus-ring)]');
   });
+
+  it('carries the Windows HCM outline fallback (forced-colors)', () => {
+    // Forced Colors Mode strips background colors including the ring; the
+    // system-color outline is the second-channel focus indicator for HCM
+    // keyboard users per SC 2.4.7.
+    expect(FOCUS_RING).toContain('forced-colors:focus-visible:outline-2');
+    expect(FOCUS_RING).toContain(
+      'forced-colors:focus-visible:outline-[ButtonText]',
+    );
+  });
 });
 
 describe('FOCUS_RING_DANGER', () => {
@@ -82,6 +93,47 @@ describe('FOCUS_RING_DANGER', () => {
   it('contains the alert highlight color', () => {
     expect(FOCUS_RING_DANGER).toContain(
       'focus-visible:ring-[var(--alert-highlight)]',
+    );
+  });
+
+  it('carries the Windows HCM outline fallback (forced-colors)', () => {
+    expect(FOCUS_RING_DANGER).toContain(
+      'forced-colors:focus-visible:outline-2',
+    );
+    expect(FOCUS_RING_DANGER).toContain(
+      'forced-colors:focus-visible:outline-[ButtonText]',
+    );
+  });
+});
+
+describe('FOCUS_RING_DANGER_FILLED', () => {
+  it('contains focus-visible:outline-none', () => {
+    expect(FOCUS_RING_DANGER_FILLED).toContain('focus-visible:outline-none');
+  });
+
+  it('contains focus-visible:ring-2', () => {
+    expect(FOCUS_RING_DANGER_FILLED).toContain('focus-visible:ring-2');
+  });
+
+  it('uses --alert-highlight-fg (NOT --alert-highlight) for the ring color', () => {
+    // Recovery A (wave-24 Toast precedent): danger-filled buttons paint
+    // --alert-highlight as their fill. A --alert-highlight ring would render
+    // 1:1 invisible against that fill, breaking SC 2.4.7. --alert-highlight-fg
+    // inherits 4.5:1 vs --alert-highlight from the bundle contract.
+    expect(FOCUS_RING_DANGER_FILLED).toContain(
+      'focus-visible:ring-[var(--alert-highlight-fg)]',
+    );
+    expect(FOCUS_RING_DANGER_FILLED).not.toContain(
+      'focus-visible:ring-[var(--alert-highlight)]',
+    );
+  });
+
+  it('carries the Windows HCM outline fallback (forced-colors)', () => {
+    expect(FOCUS_RING_DANGER_FILLED).toContain(
+      'forced-colors:focus-visible:outline-2',
+    );
+    expect(FOCUS_RING_DANGER_FILLED).toContain(
+      'forced-colors:focus-visible:outline-[ButtonText]',
     );
   });
 });

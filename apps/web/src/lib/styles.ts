@@ -7,9 +7,14 @@ import type { CSSProperties } from 'react';
  *
  * Uses `focus-visible` (not `focus`) so that the ring only appears during
  * keyboard navigation, not on mouse clicks.
+ *
+ * `forced-colors:focus-visible:outline-*` is the Windows High Contrast Mode
+ * fallback: HCM strips background colors (including the ring), so we paint
+ * a system-color outline as a second-channel focus indicator. Keeps SC 2.4.7
+ * intact for HCM keyboard users.
  */
 export const FOCUS_RING =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText]';
 
 /**
  * Shared Tailwind CSS class string for disabled button states.
@@ -19,12 +24,28 @@ export const FOCUS_RING =
 export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';
 
 /**
- * Variant of `FOCUS_RING` for destructive actions. Maps to the alert bundle's
- * highlight slot so the ring tracks per-theme palettes alongside the rest of
- * the alert surface.
+ * Variant of `FOCUS_RING` for destructive actions that paint on the host
+ * bundle bg (not the alert-highlight fill). Maps to the alert bundle's
+ * highlight slot so the ring tracks per-theme palettes alongside the rest
+ * of the alert surface. Safe wherever the button bg is NOT
+ * `--alert-highlight`; for solid-alert-highlight fills, use
+ * `FOCUS_RING_DANGER_FILLED` instead.
  */
 export const FOCUS_RING_DANGER =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--alert-highlight)]';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--alert-highlight)] forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText]';
+
+/**
+ * Variant of `FOCUS_RING_DANGER` for destructive buttons whose fill IS
+ * `--alert-highlight`. Recovery Option A from wave-24 Toast precedent:
+ * `--alert-highlight` ring against an `--alert-highlight` background paints
+ * as a 1:1 invisible ring, breaking SC 1.4.11 + 2.4.7. The highlight-fg
+ * slot inherits a 4.5:1 floor against highlight from the bundle contract
+ * (see `bundles.contrast.test.ts` `highlight-fg/highlight` pair), so the
+ * ring is comfortably visible by construction regardless of per-theme
+ * variance.
+ */
+export const FOCUS_RING_DANGER_FILLED =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--alert-highlight-fg)] forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText]';
 
 /**
  * Inline style object for an animated menu/panel reveal.
