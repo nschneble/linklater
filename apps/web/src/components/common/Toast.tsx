@@ -14,8 +14,16 @@ import { useCallback, useEffect, useState } from 'react';
  * for removing the `<Toast>` from the tree once `onDismiss` fires.
  *
  * Toast is `position: fixed` at the viewport bottom and intentionally takes no
- * `surface` prop — the variant alone drives the paint via state-bundle
- * highlight slots. CVD distinguishability rests on the icon-glyph redundancy
+ * `surface` prop. The `variant` drives THREE coupled axes — icon glyph, ARIA
+ * live politeness, and bundle paint (`success-highlight` vs
+ * `alert-highlight`). Coupling matters for a11y: the highlight color is not
+ * decorative, it pairs with the icon glyph as the second channel of
+ * meaning. A future contributor must not split these — e.g. allowing
+ * `variant="error"` with `aria-live="polite"`, or a neutral background
+ * paint, would break the icon+color redundancy that lets CVD users
+ * distinguish error from success at a glance.
+ *
+ * CVD distinguishability rests on the icon-glyph redundancy
  * (`fa-circle-check` vs `fa-circle-exclamation`), the same pattern Alert.tsx
  * uses; the alert/success waiver pairs in `bundles.distinguishability.test.ts`
  * cite both components.
@@ -81,12 +89,13 @@ export default function Toast({
 
   // Focus indicator on the dismiss button is `--{state}-highlight-fg` (the
   // bundle's own highlight-fg) rather than the universal `--focus-ring`.
-  // Recovery Option A per a11y-lead brief: `--focus-ring` aliases the
-  // theme `--accent`, which is near-identical luminance to the
-  // state-highlights on every theme (verified 20/20 fail 3:1 against
-  // success-highlight + alert-highlight). The highlight-fg color already
-  // clears 4.5:1 against highlight by the existing bundle contract, so the
-  // ring inherits a comfortable SC 1.4.11 margin by construction.
+  // Recovery Option A per a11y-lead brief: the dismiss button paints on the
+  // toast's `--{state}-highlight` background; `--focus-ring` (aliases
+  // `--accent`) failed 3:1 against `--{state}-highlight` on most themes
+  // per looper culori verification. The highlight-fg color already clears
+  // 4.5:1 against highlight by the existing bundle contract, so the ring
+  // inherits a comfortable SC 1.4.11 margin by construction — an
+  // unconditional uplift regardless of per-theme variance.
   return (
     <div
       role={role}
@@ -104,7 +113,7 @@ export default function Toast({
         type="button"
         aria-label="Dismiss"
         onClick={dismiss}
-        className={`p-1.5 -m-1.5 ml-0.5 opacity-60 hover:opacity-100 transition-opacity active:scale-[0.96] cursor-pointer focus-visible:outline-none focus-visible:ring-2 ${variantDismissRingClasses[variant]} rounded-full`}
+        className={`p-1.5 -m-1.5 ml-0.5 opacity-60 hover:opacity-100 transition-opacity active:scale-[0.96] cursor-pointer focus-visible:outline-none focus-visible:ring-2 ${variantDismissRingClasses[variant]} forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded-full`}
       >
         <i className="fa-solid fa-xmark text-xs" aria-hidden="true" />
       </button>

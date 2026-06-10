@@ -26,12 +26,11 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    */
   hidden?: boolean;
   /**
-   * Visual style.
-   * - `'default'` — bordered, used for most toolbar actions.
-   * - `'danger'` — alert-bundle tinted border, for irreversible actions needing caution.
-   * - `'danger-filled'` — solid alert-highlight, for confirmed destructive actions.
-   * - `'ghost'` — bordered with muted text, for secondary/cancel actions.
-   * - `'elevated'` — surface background, used for the floating action buttons in `LinksToolbar`.
+   * Visual style. `default`/`ghost`/`elevated` paint from the host bundle
+   * (driven by `surface`); `danger`/`danger-filled` paint from the alert
+   * bundle regardless of host. `elevated` lifts one tier up from the host
+   * for its fill (used by the floating action buttons in
+   * `LinksControls`/`LinksMobileControls`/`StumblePage`).
    */
   variant?: 'default' | 'danger' | 'danger-filled' | 'ghost' | 'elevated';
   /**

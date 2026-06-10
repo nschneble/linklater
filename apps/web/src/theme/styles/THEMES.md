@@ -89,16 +89,30 @@ against every surface.
 
 ## 4. The `surface` prop pattern
 
-Several common components (`FormInput`, `SlidingTabBar`, `TabButton`)
-expose a `surface` prop that selects which bundle's tokens drive the
-component's colors. The pattern keeps a component's fill / border /
-text coherent with the bundle it visually sits on:
+Several common components (`FormInput`, `SlidingTabBar`, `TabButton`,
+`IconButton`, `LinkButton`) expose a `surface` prop that selects which
+bundle's tokens drive the component's colors. The pattern keeps a
+component's fill / border / text coherent with the bundle it visually
+sits on:
 
-- `surface="base"` — page chrome (default for `FormInput`)
-- `surface="mount"` — inside a card (default for `SlidingTabBar` and
-  `TabButton`; used by every settings-form `FormInput`)
+- `surface="base"` — page chrome (default for `FormInput`; used by
+  `LinksList`'s load-more button, `StumblePage`, `ApiDocsView`,
+  `TokenInput`)
+- `surface="mount"` — inside a card (default for `SlidingTabBar`,
+  `TabButton`, `IconButton`, `LinkButton`; used by every settings-form
+  `FormInput`)
 - `surface="orbit"` — inside a lifted menu or a tab bar nested in a
-  card (used by `LoginRegisterView` inside `AuthCard`)
+  card (used by `LoginRegisterView` inside `AuthCard`, and by
+  `ApiTokenRow` IconButtons inside the orbit-tier row)
+- `surface="warn"` (LinkButton only) — inside the email verification
+  banner in `AppShell`
+
+`IconButton` adds a second axis: the `variant` prop splits into
+host-driven variants (`default`/`ghost`/`elevated` paint from the
+`surface`) and intrinsic variants (`danger`/`danger-filled` paint from
+the alert bundle regardless of host). `Toast` deliberately omits the
+prop — it is viewport-fixed and the `variant` drives the paint via the
+state-bundle highlight slots.
 
 Picking the wrong surface breaks the bundle-contrast contract — the
 component reads tokens validated against the wrong bg. When adding a

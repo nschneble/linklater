@@ -233,6 +233,15 @@ export default function DangerZone() {
               >
                 {pending ? 'Deleting…' : 'Yes, delete'}
               </IconButton>
+              {/* Ghost on alert-bg host (SettingsGroup variant="danger"
+                  paints --alert-bg). IconButton default surface="mount"
+                  paints --mount-border / --mount-alt-text against --alert-bg.
+                  Intentional — adding 'alert' to IconButton's surface union
+                  would require a new bundle slot per
+                  [[feedback-bundle-slot-add-reverify]] and is deferred to
+                  a future wave. Pre-existing in legacy code (was
+                  --text-muted, similar effect). Do not "fix" by adding an
+                  explicit surface override here. */}
               <IconButton
                 variant="ghost"
                 disabled={pending}

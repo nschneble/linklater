@@ -1,5 +1,4 @@
-import type { ButtonHTMLAttributes, Ref } from 'react';
-import { type ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import { FOCUS_RING } from '../../lib/styles';
 
 /**
@@ -9,12 +8,18 @@ import { FOCUS_RING } from '../../lib/styles';
  *
  * The `surface` prop names the bundle of the parent surface — i.e. which
  * bundle hosts this link. Idle text reads `--{host}-alt-text`; hover
- * elevates to `--{host}-text` (no accent flip — the permanent underline is
- * the link affordance). The `warn` surface is supported because the email
- * verification banner in `AppShell` renders a LinkButton inside a
- * `--warn-bg` region; warn keeps a single text color (no idle/hover
- * differentiation beyond the underline) because the warn bundle's
- * `alt-text` slot is not load-bearing here. Defaults to `'mount'`.
+ * elevates to `--{host}-text`. DESIGN DECISION: hover deliberately does
+ * not flip to `--accent` — the permanent underline alone carries the link
+ * affordance, and the alt→text luminance lift confirms the hover state.
+ * An accent flip would compete with `PrimaryButton` for visual weight on
+ * forms and break the "links are quiet" rule. Do not "fix" this by
+ * reintroducing accent on hover.
+ *
+ * The `warn` surface is supported because the email verification banner
+ * in `AppShell` renders a LinkButton inside a `--warn-bg` region; warn
+ * keeps a single text color (no idle/hover differentiation beyond the
+ * underline) because the warn bundle's `alt-text` slot is not
+ * load-bearing here. Defaults to `'mount'`.
  *
  * Same `surface` semantics as the rest of the common kit (`FormInput`,
  * `IconButton`, etc.): the prop names the host bundle, the component

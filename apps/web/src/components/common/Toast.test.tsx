@@ -14,7 +14,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import Toast from './Toast';
 
 describe('Toast', () => {
@@ -86,19 +86,29 @@ describe('Toast', () => {
       'animate-fade-out-down',
     );
     expect(handleDismiss).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(150);
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
     expect(handleDismiss).toHaveBeenCalledTimes(1);
   });
 
   it('auto-dismisses after 3000ms total (3000ms + 150ms exit tail)', () => {
     const handleDismiss = vi.fn();
     render(<Toast message="x" onDismiss={handleDismiss} />);
-    vi.advanceTimersByTime(2999);
+    act(() => {
+      vi.advanceTimersByTime(2999);
+    });
     expect(handleDismiss).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(1);
+    // Crossing the 3000ms boundary fires the auto-dismiss timer, which
+    // triggers a React state update (setExiting(true)) — wrap in act().
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
     // exit animation kicked in but onDismiss not yet
     expect(handleDismiss).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(150);
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
     expect(handleDismiss).toHaveBeenCalledTimes(1);
   });
 

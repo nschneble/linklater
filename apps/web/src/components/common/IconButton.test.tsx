@@ -86,16 +86,83 @@ describe('IconButton', () => {
   });
 
   it('danger-filled variant is intrinsic — alert-highlight regardless of surface', () => {
-    render(
+    const { rerender } = render(
       <IconButton variant="danger-filled" surface="mount">
         confirm
       </IconButton>,
     );
-    const button = screen.getByRole('button', { name: 'confirm' });
+    let button = screen.getByRole('button', { name: 'confirm' });
     expect(button.className).toContain('bg-[var(--alert-highlight)]');
     expect(button.className).toContain('text-[var(--alert-highlight-fg)]');
     expect(button.className).toContain(
       'hover:bg-[var(--alert-highlight-hover)]',
+    );
+
+    rerender(
+      <IconButton variant="danger-filled" surface="base">
+        confirm
+      </IconButton>,
+    );
+    button = screen.getByRole('button', { name: 'confirm' });
+    expect(button.className).toContain('bg-[var(--alert-highlight)]');
+    expect(button.className).toContain('text-[var(--alert-highlight-fg)]');
+
+    rerender(
+      <IconButton variant="danger-filled" surface="orbit">
+        confirm
+      </IconButton>,
+    );
+    button = screen.getByRole('button', { name: 'confirm' });
+    expect(button.className).toContain('bg-[var(--alert-highlight)]');
+    expect(button.className).toContain('text-[var(--alert-highlight-fg)]');
+  });
+
+  it('default variant carries the universal --focus-ring', () => {
+    render(<IconButton>label</IconButton>);
+    const button = screen.getByRole('button', { name: 'label' });
+    expect(button.className).toContain(
+      'focus-visible:ring-[var(--focus-ring)]',
+    );
+  });
+
+  it('ghost variant carries the universal --focus-ring', () => {
+    render(<IconButton variant="ghost">cancel</IconButton>);
+    const button = screen.getByRole('button', { name: 'cancel' });
+    expect(button.className).toContain(
+      'focus-visible:ring-[var(--focus-ring)]',
+    );
+  });
+
+  it('elevated variant uses the border-shadow focus indicator (not ring)', () => {
+    // elevated carries its own card-shadow border affordance for focus
+    // instead of the FOCUS_RING utility — visual hierarchy choice.
+    render(<IconButton variant="elevated">go</IconButton>);
+    const button = screen.getByRole('button', { name: 'go' });
+    expect(button.className).toContain('border-shadow');
+    expect(button.className).not.toContain(
+      'focus-visible:ring-[var(--focus-ring)]',
+    );
+  });
+
+  it('danger variant carries the alert-highlight focus-ring (FOCUS_RING_DANGER)', () => {
+    render(<IconButton variant="danger">delete</IconButton>);
+    const button = screen.getByRole('button', { name: 'delete' });
+    expect(button.className).toContain(
+      'focus-visible:ring-[var(--alert-highlight)]',
+    );
+    expect(button.className).not.toContain(
+      'focus-visible:ring-[var(--focus-ring)]',
+    );
+  });
+
+  it('danger-filled variant carries the alert-highlight focus-ring (FOCUS_RING_DANGER)', () => {
+    render(<IconButton variant="danger-filled">confirm</IconButton>);
+    const button = screen.getByRole('button', { name: 'confirm' });
+    expect(button.className).toContain(
+      'focus-visible:ring-[var(--alert-highlight)]',
+    );
+    expect(button.className).not.toContain(
+      'focus-visible:ring-[var(--focus-ring)]',
     );
   });
 
