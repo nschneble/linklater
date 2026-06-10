@@ -61,7 +61,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
           // entirely, which is worse than omitting it.
           aria-describedby={error ? 'link-form-error' : undefined}
         />
-        <p className="hidden sm:inline-flex mt-1.5 text-[var(--text-subtle)] text-xs">
+        <p className="hidden sm:inline-flex mt-1.5 text-[var(--base-subtle-text)] text-xs">
           Tip: Paste a link anywhere on the page to save it instantly
         </p>
       </div>

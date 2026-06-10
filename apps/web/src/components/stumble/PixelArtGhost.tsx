@@ -18,7 +18,7 @@ interface PixelArtGhostProps {
 }
 
 export default function PixelArtGhost({
-  bodyColor = 'var(--text)',
+  bodyColor = 'var(--base-text)',
   eyeColor = 'var(--accent)',
 }: PixelArtGhostProps) {
   function ghostColorOf(cell: number): string | null {

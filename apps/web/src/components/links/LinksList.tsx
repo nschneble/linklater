@@ -95,7 +95,7 @@ export default function LinksList({
         className="flex flex-col items-center justify-center py-9 text-center animate-fade-in-up"
       >
         <i
-          className={`text-4xl text-[var(--text-subtle)] mb-[7px] fa-solid ${
+          className={`text-4xl text-[var(--base-subtle-text)] mb-[7px] fa-solid ${
             search !== '' || debouncedSearch !== ''
               ? 'fa-magnifying-glass'
               : filter === 'read'
@@ -104,7 +104,7 @@ export default function LinksList({
           }`}
           aria-hidden="true"
         />
-        <p className="mb-6 text-[var(--text-muted)] text-sm font-medium">
+        <p className="mb-6 text-[var(--base-alt-text)] text-sm font-medium">
           {filter === 'read' ? 'No read links' : 'No unread links'}
         </p>
         {isUnreadEmpty && <SuggestionCallout inNewTab={true} />}

@@ -116,7 +116,7 @@ export default function LinkCardLayout({
     <div
       ref={cardReference}
       aria-busy={!link.meta?.fetchedAt || undefined}
-      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--accent)]/60' : ''}`}
+      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--mount-border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--accent)]/60' : ''}`}
     >
       {link.meta?.fetchedAt ? (
         <div className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none">
@@ -150,7 +150,7 @@ export default function LinkCardLayout({
           className="absolute inset-0 pointer-events-none animate-pulse z-20"
         >
           <div className="absolute top-0 bottom-0 left-0 -translate-x-full w-1 bg-[var(--accent)]" />
-          <span className="absolute left-0 top-4 -translate-x-1/2 z-10 block w-8 h-8 bg-[var(--accent)] ring-2 ring-[var(--bg-surface)] rounded-2xl" />
+          <span className="absolute left-0 top-4 -translate-x-1/2 z-10 block w-8 h-8 bg-[var(--accent)] ring-2 ring-[var(--mount-bg)] rounded-2xl" />
         </div>
       )}
 
@@ -170,21 +170,22 @@ export default function LinkCardLayout({
           ) : (
             <div
               aria-hidden="true"
-              className="w-[60px] sm:w-[120px] h-[31.5px] sm:h-[63px] shrink-0 rounded-md bg-[var(--bg-elevated)]"
+              className="w-[60px] sm:w-[120px] h-[31.5px] sm:h-[63px] shrink-0 rounded-md bg-[var(--orbit-bg)]"
             />
           )}
 
           <div className="flex flex-col items-start min-w-0 ml-3">
             <p
               style={childStyle(1)}
-              className={`text-[var(--text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
+              className={`text-[var(--mount-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
             >
               {displayTitle}
             </p>
 
+            {/* --*-subtle-text is BASE-only by design; mount hints collapse to alt-text */}
             <p
               style={childStyle(0)}
-              className={`w-full text-[var(--text-subtle)] text-xs truncate ${CARD_ENTER_CLASS}`}
+              className={`w-full text-[var(--mount-alt-text)] text-xs truncate ${CARD_ENTER_CLASS}`}
             >
               {displaySiteName}
             </p>
@@ -197,7 +198,7 @@ export default function LinkCardLayout({
             className={`relative flex items-start gap-3 overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS} z-20 pointer-events-none`}
           >
             {displayDescription && (
-              <p className="flex-1 min-w-0 text-[var(--text-muted)] text-xs text-pretty tracking-tight sm:tracking-normal line-clamp-2">
+              <p className="flex-1 min-w-0 text-[var(--mount-alt-text)] text-xs text-pretty tracking-tight sm:tracking-normal line-clamp-2">
                 {displayDescription}
               </p>
             )}
