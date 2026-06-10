@@ -1,11 +1,12 @@
 /*
- * Anti-regression tripwire for the Wave 19 chrome bundle migration.
+ * Anti-regression tripwire for the chrome bundle migration (Wave 19+).
  *
- * Asserts that the page-chrome + settings files migrated in Wave 19 contain
- * no references to the legacy pre-bundle CSS custom properties. Legacy
- * tokens still appear in auth pages, common components, feature views, and
- * UserMenu chrome (deferred to wave 20+) — this guard is scoped only to
- * files Wave 19 owned.
+ * Asserts that migrated files contain no references to the legacy
+ * pre-bundle CSS custom properties. Started in wave 19 with page-chrome +
+ * settings; extended each subsequent wave (common components, UserMenu,
+ * auth pages, feature views) as files were migrated. Files NOT yet in
+ * `MIGRATED_FILES` are intentional deferrals (modals, errors, landing,
+ * CVD-mode rules, and the page-gradient consumers listed at the bottom).
  *
  * Fires before the WCAG contrast suite runs, so a regression here is
  * caught as a flat string mismatch rather than a downstream contract
@@ -125,7 +126,7 @@ const FILE_CASES = MIGRATED_FILES.map((relativePath) => ({
   source: readFileSync(resolve(ROOT, relativePath), 'utf8'),
 }));
 
-describe('Wave 19: chrome files contain no pre-bundle CSS variables', () => {
+describe('chrome bundle migration: migrated files contain no pre-bundle CSS variables', () => {
   describe.each(FILE_CASES)('$relativePath', ({ source }) => {
     it.each(LEGACY_TOKENS)('does not reference %s', (token) => {
       expect(source).not.toContain(token);
