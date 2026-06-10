@@ -1,14 +1,12 @@
 import { CVD_BASE_THEME, THEMES } from '../../theme/ThemeContext';
-import { menuRevealStyle } from '../../lib/styles';
-import { useState } from 'react';
+import { FOCUS_RING, menuRevealStyle } from '../../lib/styles';
 import { useTheme } from '../../theme/ThemeContext';
 import type { BaseTheme } from '../../theme/ThemeContext';
 import type { RefObject } from 'react';
 
 /**
  * Props for `ThemeSubmenu`. All hover/mouse coordination state is owned by
- * `UserMenu` and passed down. `ThemeSubmenu` only owns local hover highlight
- * state (`hoveredThemeId`) for the flyout buttons.
+ * `UserMenu` and passed down.
  */
 interface ThemeSubmenuProps {
   /** The currently active base theme. */
@@ -25,11 +23,6 @@ interface ThemeSubmenuProps {
    * the right. Computed by `UserMenu` by checking remaining viewport width.
    */
   submenuOnLeft: boolean;
-  /**
-   * When `true`, the trigger row is highlighted. Driven by whether the mouse
-   * is anywhere within the theme row + flyout area.
-   */
-  isPointerOver: boolean;
   /** Called when the trigger row is clicked (on mobile / keyboard). */
   onTriggerClick: () => void;
   /**
@@ -81,7 +74,6 @@ export default function ThemeSubmenu({
   previewTheme,
   showSubmenu,
   submenuOnLeft,
-  isPointerOver,
   onTriggerClick,
   onKeyboardOpen,
   onApplyPreview,
@@ -91,8 +83,6 @@ export default function ThemeSubmenu({
   flyoutReference,
 }: ThemeSubmenuProps) {
   const { isCvdMode } = useTheme();
-
-  const [hoveredThemeId, setHoveredThemeId] = useState<string | null>(null);
 
   function handleOpenOrFocusFlyout() {
     if (showSubmenu) {
@@ -117,9 +107,7 @@ export default function ThemeSubmenu({
         role="menuitem"
         aria-haspopup="menu"
         aria-expanded={showSubmenu}
-        className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus-visible:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-default ${
-          isPointerOver ? 'bg-[var(--bg-surface)]' : ''
-        }`}
+        className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 text-[var(--orbit-text)] text-left ${FOCUS_RING} cursor-default`}
         onMouseEnter={(event) => {
           event.currentTarget.focus();
         }}
@@ -144,17 +132,17 @@ export default function ThemeSubmenu({
         }}
       >
         <i
-          className="fa-solid fa-palette text-[var(--text-muted)] text-[0.75rem]"
+          className="fa-solid fa-palette text-[var(--orbit-alt-text)] text-[0.75rem]"
           aria-hidden="true"
         />
         <div className="flex-1">
           <div>Theme</div>
-          <div className="mt-0.5 text-[var(--text-muted)] line-clamp-1">
+          <div className="mt-0.5 text-[var(--orbit-alt-text)] line-clamp-1">
             {currentLabel}
           </div>
         </div>
         <i
-          className="fa-solid fa-chevron-right text-[var(--text-subtle)] text-[0.6rem]"
+          className="fa-solid fa-chevron-right text-[var(--orbit-alt-text)] text-[0.6rem]"
           aria-hidden="true"
         />
       </button>
@@ -163,7 +151,7 @@ export default function ThemeSubmenu({
         ref={flyoutReference}
         role="menu"
         aria-label="Theme"
-        className={`absolute top-0 z-50 w-56 py-2 bg-[var(--bg-elevated)] border-shadow rounded-lg ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
+        className={`absolute top-0 z-50 w-56 py-2 bg-[var(--orbit-bg)] border-shadow rounded-lg ${submenuOnLeft ? 'right-[calc(100%-1px)] origin-right' : 'left-[calc(100%-1px)] origin-left'}`}
         inert={!showSubmenu ? true : undefined}
         style={menuRevealStyle(showSubmenu)}
         onBlur={(event) => {
@@ -174,7 +162,7 @@ export default function ThemeSubmenu({
           const isDisabled = isCvdMode && theme.id !== CVD_BASE_THEME;
           return (
             <button
-              className={`flex items-center gap-2 w-full px-3 py-2 ${hoveredThemeId === theme.id ? 'bg-[var(--bg-surface)]' : ''} focus:outline-none text-[var(--text)] text-left cursor-pointer aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
+              className={`flex items-center gap-2 w-full px-3 py-2 text-[var(--orbit-text)] text-left ${FOCUS_RING} cursor-pointer aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
               data-submenu-item
               role="menuitemradio"
               aria-checked={baseTheme === theme.id}
@@ -192,16 +180,12 @@ export default function ThemeSubmenu({
               }}
               onMouseEnter={(event) => {
                 if (!isDisabled) {
-                  setHoveredThemeId(theme.id);
                   onApplyPreview(theme.id);
                   event.currentTarget.focus();
                 }
               }}
-              onMouseLeave={() => setHoveredThemeId(null)}
-              onBlur={() => setHoveredThemeId(null)}
               onFocus={() => {
                 if (!isDisabled) {
-                  setHoveredThemeId(theme.id);
                   onApplyPreview(theme.id);
                 }
               }}
@@ -218,7 +202,7 @@ export default function ThemeSubmenu({
               <span className="flex-1">{theme.label}</span>
               {baseTheme === theme.id && (
                 <i
-                  className="fa-solid fa-check text-[var(--accent)]"
+                  className="fa-solid fa-check text-[var(--orbit-highlight)]"
                   aria-hidden="true"
                 />
               )}

@@ -58,7 +58,6 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
     clearResetHandles,
     flyoutReference,
     handleThemeRowEnter,
-    isThemeAreaPointerOver,
     previewTheme,
     setIsThemeAreaPointerOver,
     setShowThemeSubmenu,
@@ -128,7 +127,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
   return (
     <div className="relative">
       <button
-        className={`group flex items-center gap-2 p-1.5 bg-[var(--bg-elevated)] border-shadow hover:border-shadow ${FOCUS_RING} rounded-4xl transition cursor-pointer`}
+        className={`group flex items-center gap-2 p-1.5 bg-[var(--orbit-bg)] border-shadow hover:border-shadow ${FOCUS_RING} rounded-4xl transition cursor-pointer`}
         ref={(node) => {
           avatarReference.current = node;
           if (typeof forwardedReference === 'function') {
@@ -155,7 +154,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
         />
         <span className="hidden sm:inline-flex">
           <i
-            className="fa-solid fa-chevron-down text-[var(--text-muted)] text-[0.6rem] group-aria-expanded:-rotate-180 transition-transform duration-200 ease-out"
+            className="fa-solid fa-chevron-down text-[var(--orbit-alt-text)] text-[0.6rem] group-aria-expanded:-rotate-180 transition-transform duration-200 ease-out"
             aria-hidden="true"
           />
         </span>
@@ -167,7 +166,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
         aria-hidden={!isOpen}
         tabIndex={-1}
         inert={!isOpen ? true : undefined}
-        className="hidden md:block absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--bg-elevated)] border-shadow text-xs rounded-lg focus:outline-none"
+        className="hidden md:block absolute right-0 z-50 origin-top-right w-64 mt-2 py-2 bg-[var(--orbit-bg)] border-shadow text-xs rounded-lg focus:outline-none"
         style={menuRevealStyle(isOpen)}
         onMouseLeave={() => {
           if (!themeRowReference.current?.contains(document.activeElement)) {
@@ -177,7 +176,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
       >
         <div onMouseEnter={() => menuReference.current?.focus()}>
           <MenuSection label="Logged in as" className="px-3">
-            <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
+            <p className="mt-0.5 text-[var(--orbit-text)] text-xs tracking-tight font-medium truncate">
               {user.email}
             </p>
           </MenuSection>
@@ -221,7 +220,6 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
               previewTheme={previewTheme}
               showSubmenu={showThemeSubmenu}
               submenuOnLeft={themeSubmenuOnLeft}
-              isPointerOver={isThemeAreaPointerOver || showThemeSubmenu}
               flyoutReference={flyoutReference}
               onTriggerBlur={() => {
                 setShowThemeSubmenu(false);
