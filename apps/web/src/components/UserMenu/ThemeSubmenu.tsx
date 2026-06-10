@@ -5,7 +5,7 @@ import type { BaseTheme } from '../../theme/ThemeContext';
 import type { RefObject } from 'react';
 
 /**
- * Props for `ThemeSubmenu`. All hover/mouse coordination state is owned by
+ * Props for `ThemeSubmenu`. Submenu visibility + preview state are owned by
  * `UserMenu` and passed down.
  */
 interface ThemeSubmenuProps {

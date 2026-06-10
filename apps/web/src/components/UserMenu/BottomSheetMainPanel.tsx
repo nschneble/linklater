@@ -1,4 +1,5 @@
 import { THEMES } from '../../theme/ThemeContext';
+import { FOCUS_RING } from '../../lib/styles';
 import MenuItem from './MenuItem';
 import MenuSection from './MenuSection';
 import NavMenuItems from './NavMenuItems';
@@ -79,7 +80,7 @@ export default function BottomSheetMainPanel({
           role="menuitem"
           aria-haspopup="menu"
           aria-expanded={showThemeSubview}
-          className="flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:outline-none text-[var(--orbit-text)] text-left cursor-pointer"
+          className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 text-[var(--orbit-text)] text-left cursor-pointer ${FOCUS_RING}`}
           onMouseEnter={(event) => event.currentTarget.focus()}
           onMouseDown={(event) => event.preventDefault()}
           onClick={onShowThemeSubview}

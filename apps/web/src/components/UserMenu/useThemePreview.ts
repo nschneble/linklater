@@ -21,9 +21,7 @@ interface UseThemePreviewResult {
    * row — opens the submenu and recalculates which side it
    * should open on. */
   handleThemeRowEnter: () => void;
-  isThemeAreaPointerOver: boolean;
   previewTheme: string | null;
-  setIsThemeAreaPointerOver: (value: boolean) => void;
   setShowThemeSubmenu: (value: boolean) => void;
   showThemeSubmenu: boolean;
   /** set to `true` before opening the submenu via a keyboard
@@ -56,7 +54,6 @@ interface UseThemePreviewResult {
  * the first flyout item when the submenu opens via keyboard.
  */
 export function useThemePreview(): UseThemePreviewResult {
-  const [isThemeAreaPointerOver, setIsThemeAreaPointerOver] = useState(false);
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
   const [showThemeSubmenu, setShowThemeSubmenu] = useState(false);
   const [themeSubmenuOnLeft, setThemeSubmenuOnLeft] = useState(true);
@@ -176,9 +173,7 @@ export function useThemePreview(): UseThemePreviewResult {
     flyoutReference,
     handlePreviewChange,
     handleThemeRowEnter,
-    isThemeAreaPointerOver,
     previewTheme,
-    setIsThemeAreaPointerOver,
     setShowThemeSubmenu,
     showThemeSubmenu,
     submenuOpenedByKeyboard,

@@ -59,7 +59,6 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
     flyoutReference,
     handleThemeRowEnter,
     previewTheme,
-    setIsThemeAreaPointerOver,
     setShowThemeSubmenu,
     showThemeSubmenu,
     submenuOpenedByKeyboard,
@@ -103,7 +102,6 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
   useEffect(() => {
     if (!isOpen) {
       setShowThemeSubmenu(false);
-      setIsThemeAreaPointerOver(false);
       return;
     }
     if (openedByKeyboard.current) {
@@ -117,7 +115,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
       // useMenuNavigation without visually pre-selecting any item
       menuReference.current?.focus();
     }
-  }, [isOpen, setIsThemeAreaPointerOver, setShowThemeSubmenu]);
+  }, [isOpen, setShowThemeSubmenu]);
 
   const handleThemeSelect = (theme: BaseTheme) => {
     onThemeSelect(theme);
@@ -194,12 +192,8 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
           <div
             ref={themeRowReference}
             className="relative"
-            onMouseEnter={() => {
-              setIsThemeAreaPointerOver(true);
-              handleThemeRowEnter();
-            }}
+            onMouseEnter={handleThemeRowEnter}
             onMouseLeave={(event) => {
-              setIsThemeAreaPointerOver(false);
               if (previewTheme !== null) {
                 resetPreview(baseTheme);
               }

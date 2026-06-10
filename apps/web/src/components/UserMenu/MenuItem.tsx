@@ -3,7 +3,8 @@ import { FOCUS_RING } from '../../lib/styles';
 /**
  * A single action item within a `role="menu"` container.
  * Renders a full-width `<button>` with `role="menuitem"`, a Font Awesome icon,
- * and a text label. The icon is tinted accent when `active` is true.
+ * and a text label. The icon is tinted with the orbit-tier highlight when
+ * `active` is true.
  */
 interface MenuItemProps {
   /** Font Awesome icon class without the `fa-solid` prefix (e.g. `'fa-bookmark'`). */
@@ -13,8 +14,8 @@ interface MenuItemProps {
   /** Called when the item is clicked. */
   onClick: () => void;
   /**
-   * When `true`, the icon is rendered in the accent color to indicate the
-   * current active view.
+   * When `true`, the icon is rendered in the orbit-tier highlight color to
+   * indicate the current active view.
    *
    * @default false
    */
