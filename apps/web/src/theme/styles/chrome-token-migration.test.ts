@@ -23,6 +23,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const MIGRATED_FILES = [
   'src/App.tsx',
   'src/AppShell.tsx',
+  'src/components/FailWhalePage/index.tsx',
   'src/components/Header.tsx',
   'src/components/auth/AuthCard.tsx',
   'src/components/auth/AuthErrorPanel.tsx',
@@ -39,6 +40,8 @@ const MIGRATED_FILES = [
   'src/components/common/SlidingTabBar.tsx',
   'src/components/common/TabButton.tsx',
   'src/components/common/Toast.tsx',
+  'src/components/errors/ErrorBoundary.tsx',
+  'src/components/errors/NotFoundView.tsx',
   'src/components/links/LinkCard/index.tsx',
   'src/components/links/LinkCard/LinkCardSkeleton.tsx',
   'src/components/links/LinkCardLayout.tsx',

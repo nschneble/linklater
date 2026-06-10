@@ -13,13 +13,13 @@ export default function NotFoundView() {
   }, [location.pathname, navigate]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-[var(--bg)] text-[var(--text)] text-center select-none">
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-[var(--base-bg)] text-[var(--base-text)] text-center select-none">
       <i
-        className="fa-solid fa-person-digging text-4xl text-[var(--text-subtle)] mb-4"
+        className="fa-solid fa-person-digging text-4xl text-[var(--base-subtle-text)] mb-4"
         aria-hidden="true"
       />
       <h1 className="mb-2 text-lg font-semibold">Page not found</h1>
-      <p className="mb-6 text-[var(--text-muted)] text-sm">
+      <p className="mb-6 text-[var(--base-alt-text)] text-sm">
         That page doesn't exist. <span className="italic">Maybe a typo?</span>
       </p>
 
