@@ -39,11 +39,15 @@
  * clear 3:1 between their border and the PAGE background --base-bg, since
  * the border touches the page surface.
  *
- * Themes that have NOT been migrated to per-theme bundle palettes fall
- * through to the default branch below, which derives base/mount/orbit
- * from the existing flat --bg/--bg-surface tokens and uses neutral
- * rose/amber/emerald hues for the four state bundles. This preserves
- * visual parity for users on un-migrated themes.
+ * All 10 shipped themes define per-theme bundle palettes in their own
+ * blocks below. The :root default cascade is the synthetic fallback for
+ * the pre-theme-attribute window (any code path that runs before
+ * `<html data-theme=...>` is set). It derives base/mount/orbit from the
+ * flat --bg/--bg-surface tokens and uses neutral rose/amber/blue/emerald
+ * hues for the state bundles. The input-bg and orbit-bg slots are
+ * deliberately omitted from this fallback (see the in-place breadcrumbs
+ * below): consumers only render after a theme is active, so the slots
+ * always resolve from a per-theme block.
  */
 
 :root {
@@ -71,18 +75,13 @@
   --mount-alt-text: var(--text-muted);
   --mount-highlight: var(--accent);
 
-  /* --base-input-bg / --mount-input-bg deliberately omitted from the
-   * default cascade — every shipped theme defines its own per-theme
-   * values in the per-theme blocks below (wave 22a + 22b). The legacy
-   * --bg-input flat token was retired in wave 23 alongside this. The
-   * synthetic "no theme set" condition falls through harmlessly:
-   * consumers (FormInput, ColorEditor, LinksToolbar search input) only
-   * render after a theme is active, so the slots always resolve. */
+  /* --base-input-bg / --mount-input-bg omitted from the synthetic
+   * fallback — defined per-theme (wave 22a + 22b); legacy --bg-input
+   * retired wave 23. See preamble. */
 
-  /* orbit = menus / dropdowns. --bg-elevated retired wave 32 alongside
-   * --bg-input wave 23 retirement. Synthetic "no theme set" condition
-   * leaves --orbit-bg undefined here; UI never renders without an
-   * active theme so this falls through harmlessly. */
+  /* orbit = menus / dropdowns. --orbit-bg omitted from the synthetic
+   * fallback — defined per-theme; legacy --bg-elevated retired wave 32.
+   * See preamble. */
   --orbit-border: var(--border);
   --orbit-text: var(--text);
   --orbit-alt-text: var(--text-muted);

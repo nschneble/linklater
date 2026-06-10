@@ -6,7 +6,7 @@
  * settings; extended each subsequent wave (common components, UserMenu,
  * auth pages, feature views) as files were migrated. Files NOT yet in
  * `MIGRATED_FILES` are intentional deferrals (modals, errors, landing,
- * CVD-mode rules, and the page-gradient consumers listed at the bottom).
+ * and the page-gradient consumers listed at the bottom).
  *
  * Fires before the WCAG contrast suite runs, so a regression here is
  * caught as a flat string mismatch rather than a downstream contract
@@ -23,6 +23,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const MIGRATED_FILES = [
   'src/App.tsx',
   'src/AppShell.tsx',
+  'src/index.css',
   'src/components/FailWhalePage/index.tsx',
   'src/components/Header.tsx',
   'src/components/LandingPage/index.tsx',

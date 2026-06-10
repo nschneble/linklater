@@ -102,10 +102,11 @@ value is theme-independent today (`rgb(0 0 0 / 0.5)`); promote to
 
 ## 5. The `surface` prop pattern
 
-Four common components (`FormInput`, `SlidingTabBar`, `IconButton`,
-`LinkButton`) expose a `surface` prop that selects which bundle's tokens
-drive the component's colors. The pattern keeps a component's fill /
-border / text coherent with the bundle it visually sits on:
+Four common components expose a `surface` prop (`FormInput`,
+`SlidingTabBar`, `IconButton`, `LinkButton`); a fifth, `TabButton`,
+infers its host from its parent — see the paragraph below. The prop
+selects which bundle's tokens drive the component's colors, keeping
+fill / border / text coherent with the bundle it visually sits on:
 
 - `surface="base"` — page chrome (default for `FormInput` and
   `SlidingTabBar`; used by `LinkForm`, `LinksList`'s load-more button,
@@ -114,9 +115,11 @@ border / text coherent with the bundle it visually sits on:
 - `surface="mount"` — inside a card (default for `IconButton` and
   `LinkButton`; used by every settings-form `FormInput`, `AuthForm`
   inputs inside `AuthCard`, and most in-card buttons)
-- `surface="orbit"` — inside a lifted menu, modal, or row (used by
-  `ApiTokenRow` IconButtons inside the orbit-tier row, and by
-  `WelcomeModal` CTA IconButtons inside the modal panel)
+- `surface="orbit"` — inside a lifted menu or row (used by
+  `ApiTokenRow` IconButtons inside the orbit-tier row). `WelcomeModal`
+  and `KeyboardShortcutsModal` are also orbit-tier surfaces but paint
+  directly off `--orbit-bg` / `--orbit-text` / `--orbit-alt-text`
+  rather than going through `surface`-aware components.
 - `surface="warn"` (LinkButton only) — inside the email verification
   banner in `AppShell`
 

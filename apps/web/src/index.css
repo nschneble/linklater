@@ -134,9 +134,10 @@ body {
 [data-cvd='on'] *:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
-  /* Outer halo punches through to the page surface — explicit --base-bg
-     reference so CVD mode focus ring stays page-tier under orbit/mount
-     hosts where var(--bg) would otherwise resolve via legacy alias. */
+  /* Anchor the outer halo to --base-bg so the CVD focus ring reads through
+     the bundle vocabulary, consistent with the wave-31 chrome migration.
+     Today resolves identically to the legacy --bg alias; the bundle binding
+     future-proofs against per-scope --bg overrides. */
   box-shadow: 0 0 0 5px var(--base-bg);
 }
 
@@ -160,5 +161,6 @@ body {
 
 [data-cvd='on'] [aria-selected='true'],
 [data-cvd='on'] [aria-checked='true'] {
+  /* --accent retained pending system-wide --accent retirement PR */
   box-shadow: inset 3px 0 0 var(--accent);
 }
