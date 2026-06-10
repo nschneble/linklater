@@ -134,7 +134,10 @@ body {
 [data-cvd='on'] *:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
-  box-shadow: 0 0 0 5px var(--bg);
+  /* Outer halo punches through to the page surface — explicit --base-bg
+     reference so CVD mode focus ring stays page-tier under orbit/mount
+     hosts where var(--bg) would otherwise resolve via legacy alias. */
+  box-shadow: 0 0 0 5px var(--base-bg);
 }
 
 [data-cvd='on'] :disabled,
@@ -144,10 +147,10 @@ body {
     51deg,
     transparent,
     transparent 4px,
-    var(--border) 4px,
-    var(--border) 5px
+    var(--base-border) 4px,
+    var(--base-border) 5px
   );
-  color: var(--text-muted);
+  color: var(--base-alt-text);
 }
 
 [data-cvd='on'] a {
