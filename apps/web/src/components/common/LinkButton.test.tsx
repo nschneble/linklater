@@ -6,6 +6,7 @@
  * because JSDOM does not exercise CSS `:hover`.
  */
 
+import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import LinkButton from './LinkButton';
@@ -90,6 +91,17 @@ describe('LinkButton', () => {
     expect(button.className).toContain('disabled:opacity-50');
     fireEvent.click(button);
     expect(handleClick).not.toHaveBeenCalled();
+  });
+
+  it('forwards ref to the underlying button — load-bearing for post-action focus (wave 27 ConfirmAccountDeletionPage)', () => {
+    const reference = createRef<HTMLButtonElement>();
+    render(
+      <LinkButton ref={reference} onClick={() => {}}>
+        link
+      </LinkButton>,
+    );
+    expect(reference.current).toBeInstanceOf(HTMLButtonElement);
+    expect(reference.current?.textContent).toBe('link');
   });
 
   it('preserves caller className alongside the surface paint', () => {

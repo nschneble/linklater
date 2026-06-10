@@ -52,11 +52,13 @@ export default function LinkButton({
   className = '',
   disabled,
   onClick,
+  ref,
   surface = 'mount',
   ...props
 }: LinkButtonProps) {
   return (
     <button
+      ref={ref}
       type="button"
       data-surface={surface}
       className={`${SURFACE_CLASSES[surface]} text-xs underline underline-offset-3 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-[0.96] ${FOCUS_RING} rounded transition duration-200 ${className}`}
