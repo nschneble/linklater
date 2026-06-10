@@ -67,7 +67,7 @@ export default function KeyboardShortcutsModal({
       />
       <div
         ref={dialogReference}
-        className="fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs p-6 bg-[var(--bg-surface)] border-shadow rounded-xl select-none animate-fade-in-up"
+        className="fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs p-6 bg-[var(--orbit-bg)] border-shadow rounded-xl select-none animate-fade-in-up"
         role="dialog"
         aria-modal="true"
         aria-labelledby={HEADING_ID}
@@ -77,13 +77,14 @@ export default function KeyboardShortcutsModal({
             ref={headingReference}
             id={HEADING_ID}
             tabIndex={-1}
-            className="text-sm font-semibold text-[var(--text)] text-balance focus:outline-none"
+            className="text-sm font-semibold text-[var(--orbit-text)] text-balance focus:outline-none"
           >
             Keyboard shortcuts
           </h2>
+          {/* --*-subtle-text is BASE-only by design; orbit hints collapse to alt-text */}
           <button
             type="button"
-            className={`flex items-center justify-center w-8 h-8 -mr-1 text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors active:scale-[0.96] transition-transform cursor-pointer rounded-full ${FOCUS_RING}`}
+            className={`flex items-center justify-center w-8 h-8 -mr-1 text-[var(--orbit-alt-text)] hover:text-[var(--orbit-text)] transition-colors active:scale-[0.96] transition-transform cursor-pointer rounded-full ${FOCUS_RING}`}
             onClick={onClose}
             aria-label="Close keyboard shortcuts"
           >
@@ -93,10 +94,10 @@ export default function KeyboardShortcutsModal({
         <ul className="space-y-3">
           {shortcuts.map(({ key, description }) => (
             <li key={key} className="flex items-center justify-between">
-              <span className="text-[var(--text-muted)] text-sm">
+              <span className="text-[var(--orbit-alt-text)] text-sm">
                 {description}
               </span>
-              <kbd className="px-2 py-0.5 bg-[var(--bg-elevated)] border-shadow text-[var(--text)] text-xs rounded-md font-mono">
+              <kbd className="px-2 py-0.5 bg-[var(--orbit-bg)] border-shadow text-[var(--orbit-text)] text-xs rounded-md font-mono">
                 {key}
               </kbd>
             </li>

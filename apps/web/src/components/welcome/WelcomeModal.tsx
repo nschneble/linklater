@@ -83,17 +83,18 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
       />
       <div
         ref={dialogReference}
-        className="fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-7 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none animate-fade-in-up"
+        className="fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-7 bg-[var(--orbit-bg)] border-shadow rounded-2xl select-none animate-fade-in-up"
         role="dialog"
         aria-modal="true"
         aria-labelledby={HEADING_ID}
         aria-describedby={DESCRIPTION_ID}
       >
+        {/* --*-subtle-text is BASE-only by design; orbit hints collapse to alt-text */}
         <button
           type="button"
           onClick={onClose}
           aria-label="Close welcome"
-          className={`absolute top-4 right-4 flex items-center justify-center w-8 h-8 text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors active:scale-[0.96] cursor-pointer rounded-full ${FOCUS_RING}`}
+          className={`absolute top-4 right-4 flex items-center justify-center w-8 h-8 text-[var(--orbit-alt-text)] hover:text-[var(--orbit-text)] transition-colors active:scale-[0.96] cursor-pointer rounded-full ${FOCUS_RING}`}
         >
           <i className="fa-solid fa-xmark text-sm" aria-hidden="true" />
         </button>
@@ -103,36 +104,37 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
               ref={headingReference}
               id={HEADING_ID}
               tabIndex={-1}
-              className="text-[var(--text)] text-2xl font-bold text-balance focus:outline-none"
+              className="text-[var(--orbit-text)] text-2xl font-bold text-balance focus:outline-none"
             >
               Welcome to Linklater!
             </h2>
             <p
               id={DESCRIPTION_ID}
-              className="text-[var(--text-muted)] text-sm text-pretty"
+              className="text-[var(--orbit-alt-text)] text-sm text-pretty"
             >
               Two features worth knowing before you dive in.
             </p>
           </div>
           <div className="space-y-4">
-            <div className="flex items-start gap-4 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl animate-fade-in-up [animation-delay:120ms]">
+            <div className="flex items-start gap-4 p-4 bg-[var(--orbit-bg)] border border-[var(--orbit-border)] rounded-xl animate-fade-in-up [animation-delay:120ms]">
               <i
-                className="mt-0.5 text-[var(--text-subtle)] text-2xl fa-solid fa-book-bookmark"
+                className="mt-0.5 text-[var(--orbit-alt-text)] text-2xl fa-solid fa-book-bookmark"
                 aria-hidden="true"
               />
               <div className="flex-1">
                 <p className="text-sm text-pretty">
-                  <span className="text-[var(--text)] font-semibold">
+                  <span className="text-[var(--orbit-text)] font-semibold">
                     The Linklater bookmarklet is a pretty sweet way to save
                     links.{' '}
                   </span>
-                  <span className="text-[var(--text-muted)]">
+                  <span className="text-[var(--orbit-alt-text)]">
                     Drag it to your bookmarks bar, then click it on any page to
                     save the link directly to Linklater.
                   </span>
                 </p>
                 <IconButton
-                  variant="elevated"
+                  variant="default"
+                  surface="orbit"
                   className="w-full mt-4"
                   onClick={() =>
                     handleNavigate('/settings', {
@@ -148,24 +150,25 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                 </IconButton>
               </div>
             </div>
-            <div className="flex items-start gap-4 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl animate-fade-in-up [animation-delay:200ms]">
+            <div className="flex items-start gap-4 p-4 bg-[var(--orbit-bg)] border border-[var(--orbit-border)] rounded-xl animate-fade-in-up [animation-delay:200ms]">
               <i
-                className="mt-0.5 text-[var(--text-subtle)] text-2xl fa-solid fa-dice"
+                className="mt-0.5 text-[var(--orbit-alt-text)] text-2xl fa-solid fa-dice"
                 aria-hidden="true"
               />
               <div className="flex-1">
                 <p className="text-sm text-pretty">
-                  <span className="text-[var(--text)] font-semibold">
+                  <span className="text-[var(--orbit-text)] font-semibold">
                     The Linklater "Stumble!" feature brings back the casual fun
                     of discovery.{' '}
                   </span>
-                  <span className="text-[var(--text-muted)]">
+                  <span className="text-[var(--orbit-alt-text)]">
                     Visit the page to instantly open a random unread link from
                     your collection.
                   </span>
                 </p>
                 <IconButton
-                  variant="elevated"
+                  variant="default"
+                  surface="orbit"
                   className="w-full mt-4"
                   onClick={() => handleNavigate('/stumble')}
                 >
