@@ -54,13 +54,14 @@
  */
 
 :root {
-  /* Universal focus-visible ring color. Aliased to --accent on every
-   * theme today; per-theme bundle blocks may override (apollo dark
-   * picks an explicit hex because the default accent collapses against
-   * orbit-bg). Per-bundle overrides (`--focus-ring-on-{bundle}`) are
-   * supported via the consumer-side pattern but currently unused —
-   * every theme/mode clears 3:1 against every surface with the
-   * universal value alone (culori-verified wave 21). */
+  /* Universal focus-visible ring color. Cascades through to per-theme
+   * --accent via this :root alias; per-theme bundle blocks may override
+   * (apollo dark picks an explicit hex because the default accent
+   * collapses against orbit-bg). Per-bundle overrides
+   * (`--focus-ring-on-{bundle}`) are supported via the consumer-side
+   * pattern but currently unused — every theme/mode clears 3:1 against
+   * every surface with the universal value alone (culori-verified
+   * wave 21). */
   --focus-ring: var(--accent);
 
   /* base = page chrome. Explicit hex chosen so the pre-theme-attribute

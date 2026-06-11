@@ -35,7 +35,6 @@
   --accent: #ebb327;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #1c2c38;
-  --focus-ring: var(--accent);
 
   /* Bundle palette. */
   --base-bg: #1c2c38;
@@ -49,8 +48,8 @@
   --base-highlight-hover: #d4a020;
 
   --mount-bg: #243846;
-  --mount-input-bg: #243846;
   --mount-border: #569ca8;
+  --mount-input-bg: #243846;
   --mount-text: #e8dccd;
   --mount-alt-text: #d4cab5;
   --mount-highlight: #ebb327;
@@ -105,7 +104,6 @@
   --accent: #562315;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #ffffff;
-  --focus-ring: var(--accent);
 
   /* Bundle palette. */
   --base-bg: #ccc095;
@@ -119,8 +117,8 @@
   --base-highlight-hover: #8a3d20;
 
   --mount-bg: #d8cda8;
-  --mount-input-bg: #d8cda8;
   --mount-border: #11637a;
+  --mount-input-bg: #d8cda8;
   --mount-text: #20303d;
   --mount-alt-text: #2d3419;
   --mount-highlight: #a04a30;
