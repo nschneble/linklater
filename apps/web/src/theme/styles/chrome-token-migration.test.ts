@@ -5,14 +5,13 @@
  * pre-bundle CSS custom properties. Started in wave 19 with page-chrome +
  * settings; extended each subsequent wave (common components, UserMenu,
  * auth pages, feature views) as files were migrated. Files NOT yet in
- * `MIGRATED_FILES` are intentional deferrals (modals, errors, landing,
- * and the page-gradient consumers listed at the bottom).
+ * `MIGRATED_FILES` are intentional deferrals (modals, errors, landing).
  *
- * As of wave 36, four of the legacy tokens (`--bg`, `--bg-surface`,
- * `--text-subtle`, `--border`) are fully retired from the codebase —
- * not declared anywhere. The tripwire still lists them to prevent
- * re-introduction (sister to `--bg-input` wave 23 + `--bg-elevated`
- * wave 32 retirements).
+ * As of wave 40, six of the legacy tokens (`--bg`, `--bg-surface`,
+ * `--text`, `--text-muted`, `--text-subtle`, `--border`) are fully
+ * retired from the codebase — not declared anywhere. The tripwire still
+ * lists them to prevent re-introduction (sister to `--bg-input` wave 23
+ * + `--bg-elevated` wave 32 retirements).
  *
  * Fires before the WCAG contrast suite runs, so a regression here is
  * caught as a flat string mismatch rather than a downstream contract

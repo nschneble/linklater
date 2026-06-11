@@ -37,6 +37,8 @@
   --base-alt-text: #e1dbd5;
   --base-subtle-text: #d5dcee;
   --base-highlight: #96b2e5;
+  --base-highlight-fg: #000000;
+  --base-highlight-hover: #a8c0eb;
 
   --mount-bg: #223366;
   --mount-border: #c1bbb5;
@@ -44,12 +46,16 @@
   --mount-text: #f4f1ec;
   --mount-alt-text: #d5dcee;
   --mount-highlight: #83acc5;
+  --mount-highlight-fg: #000000;
+  --mount-highlight-hover: #9bbcd2;
 
   --orbit-bg: #2c4180;
   --orbit-border: #c1bbb5;
   --orbit-text: #f4f1ec;
   --orbit-alt-text: #d5dcee;
   --orbit-highlight: #83acc5;
+  --orbit-highlight-fg: #000000;
+  --orbit-highlight-hover: #9bbcd2;
 
   --alert-bg: rgb(76 12 24 / 0.6);
   --alert-border: #e08090;
@@ -120,6 +126,8 @@
   --base-alt-text: #4f361a;
   --base-subtle-text: #493444;
   --base-highlight: #28537e;
+  --base-highlight-fg: #ffffff;
+  --base-highlight-hover: #1d4068;
 
   --mount-bg: #e8e2d8;
   --mount-border: #4f361a;
@@ -127,12 +135,16 @@
   --mount-text: #0d1426;
   --mount-alt-text: #4f361a;
   --mount-highlight: #345f96;
+  --mount-highlight-fg: #ffffff;
+  --mount-highlight-hover: #26487a;
 
   --orbit-bg: #d4ccc0;
   --orbit-border: #4f361a;
   --orbit-text: #0d1426;
   --orbit-alt-text: #4f361a;
   --orbit-highlight: #223366;
+  --orbit-highlight-fg: #ffffff;
+  --orbit-highlight-hover: #161f47;
 
   --alert-bg: #f8e0e4;
   --alert-border: #8a2030;

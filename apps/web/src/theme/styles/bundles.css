@@ -111,40 +111,57 @@
    * bundle-contrast test's cross-theme adjacency check surfaced its
    * failure against before-midnight (#ccc095).
    */
+  /* --base-highlight-fg / --base-highlight-hover are defensive fallback
+   * values for the synthetic `:root` cascade. The base bundle's
+   * `bundleIsFullyDefined` check returns false here because
+   * `--base-highlight: var(--accent)` resolves through an alias rather
+   * than a literal hex, so the bundle-contrast contract iteration skips
+   * the synthetic base bundle in `bundles.contrast.test.ts`. These slots
+   * still ship so any pre-theme-attribute window painting a filled
+   * `--base-highlight`-bg consumer (e.g. IconButton primary-filled)
+   * resolves to a legible foreground + hover. mount + orbit omit the
+   * slots entirely — those bundles cascade through `var(--accent)` /
+   * `var(--accent-fg)` / `var(--accent-hover)` aliases via the legacy
+   * chrome plumbing during the same pre-theme window. */
+  --base-highlight-fg: #ffffff;
+  --base-highlight-hover: #d8521e;
+
+  /* State bundles below interleave -fg/-hover with the other slots per
+   * wave-38 per-theme convention. Each block carries the full 7-slot
+   * contract (bg/border/text/alt-text/highlight/highlight-fg/highlight-
+   * hover) — used by filled-button consumers (e.g. IconButton
+   * danger-filled). Mirrors the 5-slot bundle contract by adding a
+   * foreground that clears 4.5:1 against --{bundle}-highlight, plus a
+   * hover state that clears 4.5:1 against the same foreground. */
   --alert-bg: #fff1f2;
   --alert-border: #9f1239;
   --alert-text: #be123c;
   --alert-alt-text: #9f1239;
   --alert-highlight: #e11d48;
+  --alert-highlight-fg: #ffffff;
+  --alert-highlight-hover: #be1c40;
 
   --warn-bg: #fef3c7;
   --warn-border: #92400e;
   --warn-text: #92400e;
   --warn-alt-text: #78350f;
   --warn-highlight: #b45309;
+  --warn-highlight-fg: #fffbeb;
+  --warn-highlight-hover: #92400e;
 
   --info-bg: #dbeafe;
   --info-border: #1e40af;
   --info-text: #1e40af;
   --info-alt-text: #1e3a8a;
   --info-highlight: #2563eb;
+  --info-highlight-fg: #ffffff;
+  --info-highlight-hover: #1d4ed8;
 
   --success-bg: #d1fae5;
   --success-border: #166534;
   --success-text: #065f46;
   --success-alt-text: #064e3b;
   --success-highlight: #059669;
-
-  /* Highlight foreground + hover slots — used by filled-button consumers
-   * (e.g. IconButton danger-filled). Mirrors the 5-slot bundle contract
-   * by adding a foreground that clears 4.5:1 against --{bundle}-highlight,
-   * plus a hover state that clears 4.5:1 against the same foreground. */
-  --alert-highlight-fg: #ffffff;
-  --alert-highlight-hover: #be1c40;
-  --warn-highlight-fg: #fffbeb;
-  --warn-highlight-hover: #92400e;
-  --info-highlight-fg: #ffffff;
-  --info-highlight-hover: #1d4ed8;
   --success-highlight-fg: #001a10;
   --success-highlight-hover: #10b981;
 
@@ -189,31 +206,30 @@
   --alert-text: #fda4af;
   --alert-alt-text: #fda4af;
   --alert-highlight: #f43f5e;
+  --alert-highlight-fg: #2a0810;
+  --alert-highlight-hover: #fb7185;
 
   --warn-bg: rgb(69 26 3 / 0.4);
   --warn-border: #f59e0b;
   --warn-text: #fcd34d;
   --warn-alt-text: #fde68a;
   --warn-highlight: #f59e0b;
+  --warn-highlight-fg: #3a1a05;
+  --warn-highlight-hover: #fbbf24;
 
   --info-bg: rgb(23 37 84 / 0.4);
   --info-border: #60a5fa;
   --info-text: #93c5fd;
   --info-alt-text: #bfdbfe;
   --info-highlight: #60a5fa;
+  --info-highlight-fg: #0a1f3a;
+  --info-highlight-hover: #93c5fd;
 
   --success-bg: rgb(6 78 59 / 0.4);
   --success-border: #34d399;
   --success-text: #6ee7b7;
   --success-alt-text: #a7f3d0;
   --success-highlight: #34d399;
-
-  --alert-highlight-fg: #2a0810;
-  --alert-highlight-hover: #fb7185;
-  --warn-highlight-fg: #3a1a05;
-  --warn-highlight-hover: #fbbf24;
-  --info-highlight-fg: #0a1f3a;
-  --info-highlight-hover: #93c5fd;
   --success-highlight-fg: #001a10;
   --success-highlight-hover: #6ee7b7;
 
