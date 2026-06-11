@@ -23,7 +23,11 @@ export default function NotFoundView() {
         That page doesn't exist. <span className="italic">Maybe a typo?</span>
       </p>
 
-      <PrimaryButton type="button" onClick={() => navigate('/unread')}>
+      <PrimaryButton
+        type="button"
+        surface="base"
+        onClick={() => navigate('/unread')}
+      >
         <i className="fa-solid fa-arrow-left text-xs" aria-hidden="true" />
         Back to Linklater
       </PrimaryButton>

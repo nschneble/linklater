@@ -86,7 +86,10 @@ export default class ErrorBoundary extends Component<
             <span className="italic">usually</span> fixes it.
           </p>
 
-          <PrimaryButton onClick={() => window.location.reload()}>
+          <PrimaryButton
+            surface="base"
+            onClick={() => window.location.reload()}
+          >
             <i
               className="fa-solid fa-arrow-rotate-right text-xs"
               aria-hidden="true"

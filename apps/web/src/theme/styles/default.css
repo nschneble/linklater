@@ -1,7 +1,5 @@
 :root {
   --accent: #c03812;
-  --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #eeeedf;
   --theme-transition-duration: 80ms;
   --theme-transition-easing: ease;
 }

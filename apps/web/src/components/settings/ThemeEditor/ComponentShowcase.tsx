@@ -232,13 +232,16 @@ export default function ComponentShowcase() {
       </ShowcaseSection>
 
       <ShowcaseSection title="Accent">
+        {/* Preview hosted on mount tier — paints --mount-highlight-fg on
+            --accent (the universal active-state outline anchor). Wave 42
+            retired --accent-fg in favor of per-bundle highlight foregrounds. */}
         <div className="flex items-center gap-3">
           <div className="flex-1 px-3 py-2.5 bg-[var(--accent)] rounded-lg">
-            <p className="text-[var(--accent-fg)] text-xs font-semibold">
+            <p className="text-[var(--mount-highlight-fg)] text-xs font-semibold">
               Accent surface
             </p>
-            <p className="text-[var(--accent-fg)] text-[0.65rem]">
-              --accent-fg on --accent
+            <p className="text-[var(--mount-highlight-fg)] text-[0.65rem]">
+              --mount-highlight-fg on --accent
             </p>
           </div>
           <div
@@ -246,7 +249,7 @@ export default function ComponentShowcase() {
             style={{ backgroundColor: 'var(--accent)' }}
           >
             <i
-              className="fa-solid fa-palette text-[var(--accent-fg)] text-sm"
+              className="fa-solid fa-palette text-[var(--mount-highlight-fg)] text-sm"
               aria-hidden="true"
             />
           </div>

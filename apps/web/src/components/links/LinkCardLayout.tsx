@@ -38,14 +38,16 @@ const CARD_ENTER_CLASS = 'animate-card-enter';
 
 /**
  * Generates a placeholder image URL using placehold.co, colored to match the
- * current theme's accent and accent-fg CSS variables. Falls back gracefully
- * if CSS variables are not defined.
+ * current theme's mount-highlight pair. Card lives on a mount-host surface,
+ * so the bg/fg pair (`--mount-highlight` / `--mount-highlight-fg`) gives
+ * the placeholder a coherent fill+foreground against neighboring chrome.
+ * Falls back gracefully if CSS variables are not defined.
  */
 function getPlaceholderUrl(url: string) {
   const style = getComputedStyle(document.documentElement);
   const accent = style.getPropertyValue('--accent').trim().replace('#', '');
   const accentFg = style
-    .getPropertyValue('--accent-fg')
+    .getPropertyValue('--mount-highlight-fg')
     .trim()
     .replace('#', '');
   return `https://placehold.co/240x126/${accent}/${accentFg}?text=${hostnameOf(url)}`;

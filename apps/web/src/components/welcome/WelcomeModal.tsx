@@ -133,6 +133,7 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                   </span>
                 </p>
                 <PrimaryButton
+                  surface="orbit"
                   className="w-full mt-4"
                   onClick={() =>
                     handleNavigate('/settings', {
@@ -165,6 +166,7 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
                   </span>
                 </p>
                 <PrimaryButton
+                  surface="orbit"
                   className="w-full mt-4"
                   onClick={() => handleNavigate('/stumble')}
                 >

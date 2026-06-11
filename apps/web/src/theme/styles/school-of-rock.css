@@ -12,8 +12,6 @@
 [data-theme='school-of-rock'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #edc8b4;
-  --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #000000;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #fffffe;
@@ -101,8 +99,6 @@
 [data-theme='school-of-rock'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #5c1615;
-  --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
-  --accent-fg: #ffffff;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #040301;

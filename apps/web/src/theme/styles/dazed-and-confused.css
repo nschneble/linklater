@@ -81,8 +81,6 @@
 [data-theme='dazed-and-confused'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #e9a4ae;
-  --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #000000;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #ede392;
@@ -174,8 +172,6 @@
 [data-theme='dazed-and-confused'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #7e1f1f;
-  --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
-  --accent-fg: #f3f0ed;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #421410;

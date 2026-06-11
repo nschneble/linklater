@@ -111,14 +111,12 @@ const MIGRATED_FILES = [
  * Legacy tokens that should NOT appear in any wave-19 migrated chrome file.
  *
  * Not included:
- *   --accent / --accent-fg / --accent-hover  — universally-defined legacy
- *     aliases still used by buttons (ExtensionAuthorizePage). --accent-fg
- *     and --accent-hover stay until --orbit-highlight-fg / -hover land on
- *     default + apollo + school-of-rock (deferred). --accent itself is
- *     the active-state outline anchor (SettingsGroup data-[active=true]:
- *     outline-[var(--accent)]) — outline indicator, not focus ring.
- *   --focus-ring                              — universal slot (wave 21).
- *     Migrated chrome files use it; not a legacy alias.
+ *   --accent          — still the active-state outline anchor (SettingsGroup
+ *                       data-[active=true]:outline-[var(--accent)]) and the
+ *                       universal --focus-ring alias. Outline indicator,
+ *                       not focus ring; retirement deferred to a later wave.
+ *   --focus-ring      — universal slot (wave 21). Migrated chrome files
+ *                       use it; not a legacy alias.
  */
 const LEGACY_TOKENS = [
   'var(--text)',
@@ -129,6 +127,8 @@ const LEGACY_TOKENS = [
   'var(--bg-elevated)',
   'var(--bg-input)',
   'var(--border)',
+  'var(--accent-fg)',
+  'var(--accent-hover)',
 ] as const;
 
 const FILE_CASES = MIGRATED_FILES.map((relativePath) => ({

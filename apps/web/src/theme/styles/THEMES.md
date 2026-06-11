@@ -5,16 +5,14 @@ token systems are active:
 
 ## 1. Flat tokens (legacy, all 10 themes)
 
-Each theme variant defines three flat color variables that the
+Each theme variant defines one surviving flat color variable that the
 un-migrated accent-outline consumers still read:
 
-| Variable         | Purpose                                                    |
-| ---------------- | ---------------------------------------------------------- |
-| `--accent`       | Primary brand color: active indicators, icons, focus rings |
-| `--accent-hover` | Accent hover state                                         |
-| `--accent-fg`    | Foreground text on accent-colored backgrounds              |
+| Variable   | Purpose                                                              |
+| ---------- | -------------------------------------------------------------------- |
+| `--accent` | Active-state outline anchor + universal `--focus-ring` alias         |
 
-Eight flat tokens have been retired:
+Ten flat tokens have been retired:
 
 - `--bg-input` (wave 23) — form input backgrounds now live on the bundle
   slots `--base-input-bg` and `--mount-input-bg`. See Section 2.
@@ -26,8 +24,12 @@ Eight flat tokens have been retired:
   `--base-text` / `--mount-text` / `--orbit-text` and their `-alt-text`
   pairs. Page-gradient consumers read `--page-gradient-from`,
   `--page-gradient-via`, `--page-gradient-to` directly per theme.
+- `--accent-fg`, `--accent-hover` (wave 42) — primary-button foreground
+  + hover now resolve per host tier via `--{base,mount,orbit}-highlight-fg`
+  and `--{base,mount,orbit}-highlight-hover`. `PrimaryButton` gained a
+  `surface` prop to pick the right pair. See Section 5.
 
-The `chrome-token-migration.test.ts` tripwire keeps all eight in its
+The `chrome-token-migration.test.ts` tripwire keeps all ten in its
 `LEGACY_TOKENS` list to prevent re-introduction.
 
 ## 2. Color bundles (all 10 themes migrated)
@@ -104,22 +106,26 @@ value is theme-independent today (`rgb(0 0 0 / 0.5)`); promote to
 
 ## 5. The `surface` prop pattern
 
-Four common components expose a `surface` prop (`FormInput`,
-`SlidingTabBar`, `IconButton`, `LinkButton`); a fifth, `TabButton`,
-infers its host from its parent — see the paragraph below. The prop
-selects which bundle's tokens drive the component's colors, keeping
-fill / border / text coherent with the bundle it visually sits on:
+Five common components expose a `surface` prop (`FormInput`,
+`SlidingTabBar`, `IconButton`, `LinkButton`, `PrimaryButton`); a sixth,
+`TabButton`, infers its host from its parent — see the paragraph below.
+The prop selects which bundle's tokens drive the component's colors,
+keeping fill / border / text coherent with the bundle it visually sits on:
 
 - `surface="base"` — page chrome (default for `FormInput` and
   `SlidingTabBar`; used by `LinkForm`, `LinksList`'s load-more button,
   `LinksToolbar`, `StumblePage`, `StumbleEmptyView`, `ApiDocsView`,
-  `TokenInput`)
-- `surface="mount"` — inside a card (default for `IconButton` and
-  `LinkButton`; used by every settings-form `FormInput`, `AuthForm`
-  inputs inside `AuthCard`, and most in-card buttons)
+  `TokenInput`, and the `PrimaryButton`s in `FailWhalePage`,
+  `ErrorBoundary`, `NotFoundView`, `LinksControls`,
+  `LinksMobileControls`, `LinkForm`)
+- `surface="mount"` — inside a card (default for `IconButton`,
+  `LinkButton`, and `PrimaryButton`; used by every settings-form
+  `FormInput`, `AuthForm` inputs inside `AuthCard`, and most in-card
+  buttons)
 - `surface="orbit"` — inside a lifted menu or row (used by
-  `ApiTokenRow` IconButtons inside the orbit-tier row). `WelcomeModal`
-  and `KeyboardShortcutsModal` are also orbit-tier surfaces but paint
+  `ApiTokenRow` IconButtons inside the orbit-tier row, and the
+  `WelcomeModal` `PrimaryButton`s painting on its orbit-tier callout
+  cards). `KeyboardShortcutsModal` is also orbit-tier but paints
   directly off `--orbit-bg` / `--orbit-text` / `--orbit-alt-text`
   rather than going through `surface`-aware components.
 - `surface="warn"` (LinkButton only) — inside the email verification
@@ -153,12 +159,6 @@ satisfy the bundle distinguishability contract without any
 `SHAPE_REDUNDANCY_WAIVERS` entries — every state-pair passes axis A
 (dE2000 ≥ 10 under all three dichromacies) or axis B (luminance gap
 ≥ 1.4×).
-
-## Flat-token contrast targets
-
-When adding or tuning a theme, the surviving flat tokens must also meet:
-
-- `--accent-fg` on `--accent` and `--accent-hover`: **AA** (≥ 4.5 : 1)
 
 ## `swatchIcon` field
 

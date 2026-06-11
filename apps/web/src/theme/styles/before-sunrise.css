@@ -69,8 +69,6 @@
 [data-theme='before-sunrise'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #e8854a;
-  --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #2a1408;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #e6c89a;
@@ -153,8 +151,6 @@
 [data-theme='before-sunrise'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #623618;
-  --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
-  --accent-fg: #f3ecd3;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #2b1f0a;

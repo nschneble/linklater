@@ -19,8 +19,6 @@
 [data-theme='apollo-10-1-2'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #96b2e5;
-  --accent-hover: oklch(from var(--accent) calc(l + 0.1) c h);
-  --accent-fg: #000000;
   --focus-ring: #70b0e0;
 
   /* Page-gradient stops — see bundles.css preamble. Carry the wave-39
@@ -110,8 +108,6 @@
 [data-theme='apollo-10-1-2'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #28537e;
-  --accent-hover: oklch(from var(--accent) calc(l - 0.1) c h);
-  --accent-fg: #f4f1ec;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #4f361a;

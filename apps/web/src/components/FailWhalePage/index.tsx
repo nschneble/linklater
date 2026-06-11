@@ -66,6 +66,7 @@ export default function FailWhalePage() {
         </p>
         <PrimaryButton
           type="button"
+          surface="base"
           aria-describedby="crash-help"
           onClick={() => setShouldCrash(true)}
         >

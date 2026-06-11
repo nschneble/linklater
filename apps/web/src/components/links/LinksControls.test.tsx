@@ -1,10 +1,11 @@
 /*
  * Tests for LinksControls — desktop action buttons inside LinksToolbar.
  *
- * Host-bundle contract — every IconButton paints with `surface="base"`
- * via the data-surface attribute. LinksToolbar lives at page level on
- * `--base-bg`, so a silent revert to the IconButton default `surface="mount"`
- * would mis-tier the elevated lift. Wave 28 caught this; this test locks it.
+ * Host-bundle contract — every IconButton AND PrimaryButton paints with
+ * `surface="base"` via the data-surface attribute. LinksToolbar lives at
+ * page level on `--base-bg`, so a silent revert to either default
+ * (`mount`) would mis-tier the elevated lift / primary fill. Wave 28
+ * caught this for IconButton; wave 42 extended to PrimaryButton.
  */
 
 import { describe, expect, it, vi } from 'vitest';
@@ -32,6 +33,12 @@ describe('LinksControls', () => {
   it('Remove-all-read button declares surface="base"', () => {
     render(<LinksControls {...baseProps} filter="read" />);
     const button = screen.getByRole('button', { name: /remove all read/i });
+    expect(button.getAttribute('data-surface')).toBe('base');
+  });
+
+  it('Add-link PrimaryButton declares surface="base"', () => {
+    render(<LinksControls {...baseProps} />);
+    const button = screen.getByRole('button', { name: /add link/i });
     expect(button.getAttribute('data-surface')).toBe('base');
   });
 });

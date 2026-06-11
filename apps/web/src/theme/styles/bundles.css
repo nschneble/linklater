@@ -111,20 +111,23 @@
    * bundle-contrast test's cross-theme adjacency check surfaced its
    * failure against before-midnight (#ccc095).
    */
-  /* --base-highlight-fg / --base-highlight-hover are defensive fallback
-   * values for the synthetic `:root` cascade. The base bundle's
-   * `bundleIsFullyDefined` check returns false here because
-   * `--base-highlight: var(--accent)` resolves through an alias rather
-   * than a literal hex, so the bundle-contrast contract iteration skips
-   * the synthetic base bundle in `bundles.contrast.test.ts`. These slots
-   * still ship so any pre-theme-attribute window painting a filled
-   * `--base-highlight`-bg consumer (e.g. IconButton primary-filled)
-   * resolves to a legible foreground + hover. mount + orbit omit the
-   * slots entirely — those bundles cascade through `var(--accent)` /
-   * `var(--accent-fg)` / `var(--accent-hover)` aliases via the legacy
-   * chrome plumbing during the same pre-theme window. */
+  /* `--{base,mount,orbit}-highlight-fg` / `-hover` are defensive fallback
+   * values for the synthetic `:root` cascade. Each `--{tier}-highlight`
+   * resolves through `var(--accent)` rather than a literal hex, so the
+   * bundle-contrast contract iteration skips the synthetic block in
+   * `bundles.contrast.test.ts`. The slots still ship so any pre-theme-
+   * attribute window painting a filled `--{tier}-highlight`-bg consumer
+   * (e.g. `PrimaryButton`, IconButton danger-filled) resolves to a
+   * legible foreground + hover. Wave 42 retired `--accent-fg` /
+   * `--accent-hover` (universal fg/hover aliases) — every consumer now
+   * pulls its foreground + hover from the per-tier slots below, so the
+   * mount + orbit defaults are no longer optional. */
   --base-highlight-fg: #ffffff;
   --base-highlight-hover: #d8521e;
+  --mount-highlight-fg: #ffffff;
+  --mount-highlight-hover: #d8521e;
+  --orbit-highlight-fg: #ffffff;
+  --orbit-highlight-hover: #d8521e;
 
   /* State bundles below interleave -fg/-hover with the other slots per
    * wave-38 per-theme convention. Each block carries the full 7-slot

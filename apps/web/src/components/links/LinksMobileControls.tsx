@@ -55,6 +55,7 @@ export default function LinksMobileControls({
           </IconButton>
           <PrimaryButton
             type="button"
+            surface="base"
             aria-label={showLinkForm ? 'Hide form' : 'Add link'}
             aria-expanded={showLinkForm}
             aria-controls={LINK_FORM_ID}

@@ -52,6 +52,7 @@ export default function LinksControls({
 
         <PrimaryButton
           type="button"
+          surface="base"
           hidden={filter !== 'unread'}
           onClick={onToggleForm}
           aria-label={showLinkForm ? 'Hide form' : 'Add link'}

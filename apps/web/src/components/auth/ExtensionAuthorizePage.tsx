@@ -1,5 +1,6 @@
-import { useAuth } from '../../auth/AuthContext';
+import PrimaryButton from '../common/PrimaryButton';
 import { FOCUS_RING } from '../../lib/styles';
+import { useAuth } from '../../auth/AuthContext';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -45,7 +46,7 @@ export default function ExtensionAuthorizePage() {
             Sign in to your Linklater account to authorize the extension.
           </p>
           <a
-            className={`inline-block px-4 py-2 bg-[var(--accent)] text-[var(--accent-fg)] text-sm font-semibold rounded-lg ${FOCUS_RING}`}
+            className={`inline-block px-4 py-2 bg-[var(--mount-highlight)] text-[var(--mount-highlight-fg)] text-sm font-semibold rounded-lg ${FOCUS_RING}`}
             href="/login"
           >
             Sign in
@@ -72,14 +73,13 @@ export default function ExtensionAuthorizePage() {
         </p>
 
         <div className="flex gap-3 justify-center">
-          <button
-            className={`px-4 py-2 bg-[var(--accent)] text-[var(--accent-fg)] text-sm font-semibold rounded-lg ${FOCUS_RING} disabled:opacity-50`}
-            disabled={status === 'authorizing'}
+          <PrimaryButton
             type="button"
+            disabled={status === 'authorizing'}
             onClick={() => void handleAuthorize()}
           >
             {status === 'authorizing' ? 'Authorizing…' : 'Authorize'}
-          </button>
+          </PrimaryButton>
           <button
             className={`px-4 py-2 bg-[var(--orbit-bg)] text-[var(--orbit-text)] text-sm rounded-lg ${FOCUS_RING}`}
             disabled={status === 'authorizing'}

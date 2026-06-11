@@ -50,8 +50,6 @@
 [data-theme='boyhood'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #aacb50;
-  --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #0d150d;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #e0ebac;
@@ -134,8 +132,6 @@
 [data-theme='boyhood'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #5a2d29;
-  --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
-  --accent-fg: #ffffff;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #1e2a0a;

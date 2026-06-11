@@ -38,6 +38,12 @@ describe('LinksMobileControls', () => {
     expect(button.getAttribute('data-surface')).toBe('base');
   });
 
+  it('Add-link PrimaryButton declares surface="base" on unread tab', () => {
+    render(<LinksMobileControls {...baseProps} />);
+    const button = screen.getByRole('button', { name: /add link/i });
+    expect(button.getAttribute('data-surface')).toBe('base');
+  });
+
   it('on unread tab — renders Stumble + Add link, omits trash entirely', () => {
     render(<LinksMobileControls {...baseProps} />);
     expect(

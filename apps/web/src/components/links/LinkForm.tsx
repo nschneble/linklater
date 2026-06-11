@@ -66,6 +66,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
         </p>
       </div>
       <PrimaryButton
+        surface="base"
         disabled={saving}
         className="w-full sm:w-auto my-1 sm:my-[7.5px]"
       >
