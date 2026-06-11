@@ -45,9 +45,10 @@ bundles map onto the UI's narrative surfaces:
 
 For bundle `X` the slots are `--X-bg`, `--X-border`, `--X-text`,
 `--X-alt-text`, `--X-highlight`, `--X-highlight-fg`, and
-`--X-highlight-hover`. `bundles.css` is the source of truth — its
-preamble documents the per-slot WCAG contracts and the highlight-fg /
-hover pair contract.
+`--X-highlight-hover`. `bundles.css` documents the per-slot WCAG
+contracts and the highlight-fg / hover pair contract; each theme's
+per-theme `.css` file in this directory hosts that theme's bundle
+palette block.
 
 Three slots are bundle-restricted:
 
@@ -56,10 +57,11 @@ Three slots are bundle-restricted:
 - `--base-input-bg`, `--mount-input-bg` — per-surface form-input fill.
   Base and mount bundles only; orbit and state bundles don't host inputs.
 
-All 10 themes ship per-theme bundle palettes. The default cascade in
-`bundles.css :root` exists as a fallback for the synthetic "no theme
-set" case — explicit hex pins for any code path that runs before a
-theme attribute is set on `<html>`.
+All 10 themes ship per-theme bundle palettes — each lives in the
+corresponding per-theme `.css` file (e.g. `apollo-10-1-2.css`). The
+default cascade in `bundles.css :root` exists as a fallback for the
+synthetic "no theme set" case — explicit hex pins for any code path
+that runs before a theme attribute is set on `<html>`.
 
 ### Bundle contrast targets (WCAG 2.2)
 

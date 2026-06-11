@@ -60,10 +60,37 @@ export const SLOTS = [
 export type Slot = (typeof SLOTS)[number];
 
 const STYLES_DIR = dirname(fileURLToPath(import.meta.url));
-export const BUNDLES_CSS = readFileSync(
-  resolve(STYLES_DIR, 'bundles.css'),
-  'utf8',
-);
+
+/*
+ * Combined CSS source the contrast + distinguishability suites scan.
+ * `bundles.css` holds the `:root` + `[data-mode='dark']` synthetic
+ * fallbacks; each per-theme `.css` file holds that theme's
+ * `[data-theme='X'][data-mode='Y']` blocks (wave 37 split). Concatenating
+ * them preserves the test API — `extractBlock(BUNDLES_CSS, selector)`
+ * resolves any per-theme selector regardless of which file it lives in.
+ * No within-file source-order semantics rely on this concatenation: every
+ * per-theme selector has specificity (0, 2, 0) vs the (0, 1, 0) of the
+ * bundles.css fallbacks, so cascade order is governed by specificity.
+ */
+const PER_THEME_FILES = [
+  'apollo-10-1-2.css',
+  'before-midnight.css',
+  'before-sunrise.css',
+  'before-sunset.css',
+  'boyhood.css',
+  'dazed-and-confused.css',
+  'hit-man.css',
+  'nouvelle-vague.css',
+  'scanner-darkly.css',
+  'school-of-rock.css',
+] as const;
+
+export const BUNDLES_CSS = [
+  readFileSync(resolve(STYLES_DIR, 'bundles.css'), 'utf8'),
+  ...PER_THEME_FILES.map((file) =>
+    readFileSync(resolve(STYLES_DIR, file), 'utf8'),
+  ),
+].join('\n');
 
 function srgbToLinear(channel: number): number {
   const normalized = channel / 255;

@@ -1,15 +1,160 @@
+/* ---------- school-of-rock ---------- *
+ * Pilot theme for the bundle system. Hues drawn from the existing
+ * theme palette (cream / leather / crimson) with state hues tuned for
+ * WCAG 2.2 compliance against the bundle background AND the page
+ * background. Verified per-pair via the WCAG relative luminance formula:
+ *
+ *   dark mode: text/bg >= 11.75:1, all borders >= 3:1 against both
+ *              bundle bg and page bg
+ *   light mode: text/bg >= 10.84:1, all borders >= 3:1 against both
+ *              bundle bg and page bg
+ */
 [data-theme='school-of-rock'][data-mode='dark'] {
+  /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --text: #ffffff;
   --text-muted: #fffffe;
   --accent: #edc8b4;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #000000;
+  --focus-ring: var(--accent);
+
+  /* Bundle palette. */
+  --base-bg: #0a0a07;
+  --base-border: #6e5a3a;
+  /* Wave 22b Recovery A: legacy --bg-input #4c310b fails border/input
+   * SC 1.4.11 (1.82:1 vs base-border #6e5a3a). The math is razor-edge —
+   * base-border itself is at 3.008:1 vs base-bg, so the luminance band
+   * available between base-bg lum 0.00297 and the 3:1 input-ceiling lum
+   * 0.00311 is essentially zero. Recovery A by LIFT (lighter input-bg)
+   * forces text/input below 4.5:1; only viable option is to match the
+   * base-bg luminance band with a subtle warm-brown chromatic tint.
+   * #0b0804 lands at border 3.03:1, text/input 19.99:1, alt-text/input
+   * 13.84:1 — passes the bundle-contrast test with the same razor-edge
+   * SC 1.4.11 headroom as the existing base-border/base-bg pair. Visual
+   * distinction vs base-bg is sub-threshold (~1.17:1 luminance ratio,
+   * well below the 3:1 separability threshold of SC 1.4.11);
+   * input fields read as bordered shapes on a near-uniform dark surface,
+   * with the focus ring carrying the focus affordance. The mathematical
+   * impossibility of "comfortable headroom (>3.5:1)" with the current
+   * base-border #6e5a3a is documented in feedback-recovery-a-math-ceiling
+   * (new memory this wave). */
+  --base-input-bg: #0b0804;
+  --base-text: #ffffff;
+  --base-alt-text: #e8d4b8;
+  --base-subtle-text: #ffffff;
+  --base-highlight: #e0a040;
+
+  --mount-bg: #1c1612;
+  --mount-input-bg: #1c1612;
+  --mount-border: #a07a4c;
+  --mount-text: #ffffff;
+  --mount-alt-text: #e8d4b8;
+  --mount-highlight: #edc8b4;
+
+  --orbit-bg: #2a2018;
+  --orbit-border: #c08e4e;
+  --orbit-text: #ffffff;
+  --orbit-alt-text: #f0dcbc;
+  --orbit-highlight: #edc8b4;
+
+  --alert-bg: #3a1310;
+  --alert-border: #f04020;
+  --alert-text: #ffd4ce;
+  --alert-alt-text: #f5b8af;
+  --alert-highlight: #f04020;
+
+  --warn-bg: #3a2810;
+  --warn-border: #c08e4e;
+  --warn-text: #fde8c4;
+  --warn-alt-text: #f0d090;
+  --warn-highlight: #e0a040;
+
+  --info-bg: #2a2218;
+  --info-border: #d4a868;
+  --info-text: #f5e4c8;
+  --info-alt-text: #e8d2a8;
+  --info-highlight: #d4a868;
+
+  --success-bg: #16261a;
+  --success-border: #70b070;
+  --success-text: #d0eed0;
+  --success-alt-text: #b0d8b0;
+  --success-highlight: #70a070;
+
+  --alert-highlight-fg: #1f0808;
+  --alert-highlight-hover: #f56040;
+  --warn-highlight-fg: #3a2810;
+  --warn-highlight-hover: #e8b560;
+  --info-highlight-fg: #2a2218;
+  --info-highlight-hover: #dcb888;
+  --success-highlight-fg: #16261a;
+  --success-highlight-hover: #88b888;
 }
 
 [data-theme='school-of-rock'][data-mode='light'] {
+  /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --text: #000000;
   --text-muted: #040301;
   --accent: #5c1615;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #ffffff;
+  --focus-ring: var(--accent);
+
+  /* Bundle palette. */
+  --base-bg: #e0d0c1;
+  --base-border: #7a5a30;
+  --base-input-bg: #e0d0c1;
+  --base-text: #0a0a07;
+  --base-alt-text: #3e2810;
+  --base-subtle-text: #040301;
+  --base-highlight: #a32010;
+
+  --mount-bg: #f0e2cd;
+  --mount-input-bg: #f0e2cd;
+  --mount-border: #7a5a2c;
+  --mount-text: #0a0a07;
+  --mount-alt-text: #3e2810;
+  --mount-highlight: #5c1615;
+
+  --orbit-bg: #f6ead7;
+  --orbit-border: #8c6a30;
+  --orbit-text: #0a0a07;
+  --orbit-alt-text: #4a3210;
+  --orbit-highlight: #7a4015;
+
+  --alert-bg: #fadcd6;
+  --alert-border: #a32010;
+  --alert-text: #5a0e08;
+  --alert-alt-text: #7a1a10;
+  --alert-highlight: #a32010;
+
+  --warn-bg: #f5e3c2;
+  --warn-border: #8a5c1f;
+  --warn-text: #3e2810;
+  --warn-alt-text: #5a3814;
+  /* CHANGED: was #a06820 — cannot host any safe fg at >=4.5:1 with margin.
+   * Bumped to #8a5c1f (matches --warn-border light) so --warn-highlight-fg: #ffffff
+   * clears at 5.78:1. */
+  --warn-highlight: #8a5c1f;
+
+  --info-bg: #e8e0d0;
+  --info-border: #6a5238;
+  --info-text: #2a1e0c;
+  --info-alt-text: #3e2c14;
+  --info-highlight: #7a5828;
+
+  --success-bg: #d8e8d2;
+  --success-border: #3e6a3e;
+  --success-text: #0d2a12;
+  --success-alt-text: #1c401c;
+  --success-highlight: #2a5a2a;
+
+  --alert-highlight-fg: #fadcd6;
+  --alert-highlight-hover: #7e1808;
+  --warn-highlight-fg: #ffffff;
+  --warn-highlight-hover: #6f4a18;
+  --info-highlight-fg: #ffffff;
+  --info-highlight-hover: #604620;
+  --success-highlight-fg: #ffffff;
+  --success-highlight-hover: #1f4520;
 }

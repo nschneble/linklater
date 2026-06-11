@@ -1,15 +1,238 @@
+/* ---------- scanner-darkly ---------- *
+ * Wave 12 migration to per-theme bundle palette. The legacy flat tokens
+ * stay intact for un-migrated consumers.
+ *
+ * Card-style choice: calm path (orchestrator approved). Mount/orbit bgs
+ * sit on warm cream gradations off the page bg in light mode and on
+ * deep-purple gradations of the purple-black page in dark mode — keeps
+ * the surface stack quiet so state bundles do the categorical work.
+ *
+ * State-hue allocation:
+ *   LIGHT: alert = rust, warn = gold, info = purple, success = olive.
+ *     Purple (the theme's signature) lives in base/mount/orbit borders
+ *     AND in the info bundle. The rust/gold/olive states have to do
+ *     extra CVD work because they're all warm-warm on the deuter/protan
+ *     axis — see the M-L2 mitigation block below.
+ *   DARK: alert = peach-red, warn = amber/gold, info = CYAN (orchestrator-
+ *     approved break from the theme's signature purple — base-border is
+ *     already purple #847ecc and an info-purple bundle would collide on
+ *     adjacency), success = lime/olive.
+ *
+ * Intentional palette breaks vs scanner-darkly flat tokens:
+ *   - LIGHT --warn-border #6a4810 NOT the scanner PRD's #806023 border
+ *     (warn-bundle gold must clash less with base-bundle purple borders,
+ *     and the darker stop also clears SC 1.4.11 on the warn-bg with
+ *     comfortable headroom).
+ *   - LIGHT --base/mount/orbit-border #3b376a (deep purple anchored on
+ *     the scanner PRD's subtle-text) NOT the PRD's #806023 (warm gold,
+ *     would collide with the warn bundle).
+ *   - LIGHT --mount-bg #e6e2d0, --orbit-bg #ddd6c0: warm cream gradations
+ *     off the page-bg cream, NOT the scanner PRD's #e8d4a0 / #d0bc78
+ *     (both yellow-gold, would collide with warn).
+ *   - DARK --info bundle = cyan (orchestrator-approved break from the
+ *     theme's purple signature; required to avoid base/info collision).
+ *   - DARK --orbit-border #b8b2e8 NOT the scanner PRD's #847ecc border
+ *     (which would fail SC 1.4.11 vs orbit-bg #3b376a, the deeper purple).
+ *   - DARK --alert-highlight #ee5050 + dark fg #1c0608 = dazed-and-
+ *     confused wave-11 / school-of-rock precedent for fill-on-fill alert
+ *     buttons.
+ *   - DARK --alert/warn/info/success-bg = rgb(... / 0.55) composited
+ *     panels = dazed wave-11 precedent.
+ *
+ * Brief flags that culori verification surfaced (a11y-lead disclosed no
+ * culori in their reasoning loop):
+ *   - LIGHT alert hl #a73210 vs alert-bg #f5dccc verified at 5.15:1, not
+ *     the brief's 3.8:1 estimate. M-L1 NOT needed.
+ *   - DARK mount border #847ecc vs mount-bg #201e43 verified at 4.40:1,
+ *     not the brief's 4.0:1 estimate. M-D1 NOT needed.
+ *   - LIGHT briefed palette had THREE state-pair CVD failures, not just
+ *     the one (warn/success) the brief pre-flagged:
+ *       1. alert/warn collapsed both axes (axis B bg 1.05; deuter dE 5.1
+ *          bg / 4.8 border). NOT pre-flagged. NOVEL MITIGATION applied:
+ *          darken --alert-bg from briefed #f5dccc to #e8c8b0. Widens
+ *          alert/warn bg luminance ratio from 1.05 to 1.43, clears axis B
+ *          alone. Alert text/bg still clears 8.13:1 (briefed 10.19:1) —
+ *          headroom drops but stays comfortable.
+ *       2. alert/success collapsed both axes (axis B bg 1.01 / border
+ *          1.12; deuter bg dE 0.4 border 4.0). NOT pre-flagged. The M-L2
+ *          Option A success-border darken AND the M-L2 Option C warn-bg
+ *          lift both incidentally close this pair too — border lum ratio
+ *          climbs to 1.93 (clears axis B).
+ *       3. warn/success collapsed both axes per pre-staged M-L2. Applied
+ *          Option A (darken --success-border to #2a3c10) AND Option C
+ *          (lift --warn-bg to #f8ecc8). Combined fix gives warn/success
+ *          border lum ratio 2.06 (clears axis B) and bg lum ratio 1.11.
+ *     Cascading mitigations: --success-border #2a3c10 also propagates to
+ *     --success-highlight and --success-highlight-hover #1f2c0c. The
+ *     briefed --success-alt-text #2a3c10 happens to equal the new border
+ *     value already.
+ *   - DARK palette: every state-pair clears axis A or axis B unmitigated.
+ *     M-D2 / M-D3 NOT needed. The brief's pre-flagged dark warn/success
+ *     tritan collapse (est dE ~8) verifies at lum ratio 1.66 bg and 1.90
+ *     border — clears axis B comfortably.
+ *
+ * No SHAPE_REDUNDANCY_WAIVERS entries needed — both modes clear all six
+ * state pairs on axis A or axis B post-mitigation.
+ */
 [data-theme='scanner-darkly'][data-mode='dark'] {
+  /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --text: #eeeedf;
   --text-muted: #ebcaae;
   --accent: #ed9156;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #000000;
+  --focus-ring: var(--accent);
+
+  /* Bundle palette. */
+  --base-bg: #0f0b1b;
+  --base-border: #847ecc;
+  --base-input-bg: #201e43;
+  --base-text: #eeeedf;
+  --base-alt-text: #ebcaae;
+  --base-subtle-text: #bcdc6f;
+  --base-highlight: #ed9156;
+  --base-highlight-fg: #1a0e08;
+  --base-highlight-hover: #f5a878;
+
+  --mount-bg: #201e43;
+  --mount-input-bg: #201e43;
+  --mount-border: #847ecc;
+  --mount-text: #eeeedf;
+  --mount-alt-text: #ebcaae;
+  --mount-highlight: #ed9156;
+  --mount-highlight-fg: #1a0e08;
+  --mount-highlight-hover: #f5a878;
+
+  /* --orbit-border lifted from briefed #847ecc (the flat --border) to
+   * #b8b2e8 to clear SC 1.4.11 (3:1) against orbit-bg #3b376a, the
+   * deeper purple. */
+  --orbit-bg: #3b376a;
+  --orbit-border: #b8b2e8;
+  --orbit-text: #eeeedf;
+  --orbit-alt-text: #ebcaae;
+  --orbit-highlight: #ed9156;
+  --orbit-highlight-fg: #1a0e08;
+  --orbit-highlight-hover: #f5a878;
+
+  --alert-bg: rgb(76 14 8 / 0.55);
+  --alert-border: #f08868;
+  --alert-text: #f5c8b8;
+  --alert-alt-text: #e8b0a0;
+  --alert-highlight: #ee5050;
+  --alert-highlight-fg: #1c0608;
+  --alert-highlight-hover: #f06868;
+
+  --warn-bg: rgb(82 58 10 / 0.55);
+  --warn-border: #d58c32;
+  --warn-text: #f5dc80;
+  --warn-alt-text: #f0d090;
+  --warn-highlight: #d58c32;
+  --warn-highlight-fg: #1c1408;
+  --warn-highlight-hover: #e5a040;
+
+  /* info — CYAN BREAK from the theme's purple signature (orchestrator-
+   * approved). A purple info bundle would collide with the purple base/
+   * mount/orbit borders on adjacency; cyan keeps the cool-end categorical
+   * separation from warn-gold and success-lime while staying tonally
+   * compatible with the deep-purple page chrome. */
+  --info-bg: rgb(8 32 56 / 0.55);
+  --info-border: #69c4e3;
+  --info-text: #c8e8f3;
+  --info-alt-text: #a8d8e8;
+  --info-highlight: #69c4e3;
+  --info-highlight-fg: #04222c;
+  --info-highlight-hover: #88d4ec;
+
+  /* success — lime/olive (anchored on the scanner PRD's subtle-text
+   * #bcdc6f), lifted to high luminance for tritan separation from
+   * warn-gold. */
+  --success-bg: rgb(28 50 18 / 0.55);
+  --success-border: #bcdc6f;
+  --success-text: #d4e8a0;
+  --success-alt-text: #c0d488;
+  --success-highlight: #bcdc6f;
+  --success-highlight-fg: #1a2008;
+  --success-highlight-hover: #a8c860;
 }
 
 [data-theme='scanner-darkly'][data-mode='light'] {
+  /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --text: #0f0b1b;
   --text-muted: #4c2413;
   --accent: #8f2610;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #eeeedf;
+  --focus-ring: var(--accent);
+
+  /* Bundle palette. */
+  --base-bg: #eeeedf;
+  --base-border: #3b376a;
+  --base-input-bg: #eeeedf;
+  --base-text: #0f0b1b;
+  --base-alt-text: #4c2413;
+  --base-subtle-text: #2f2b52;
+  --base-highlight: #8f2610;
+  --base-highlight-fg: #eeeedf;
+  --base-highlight-hover: #6f1c08;
+
+  --mount-bg: #e6e2d0;
+  --mount-input-bg: #e6e2d0;
+  --mount-border: #3b376a;
+  --mount-text: #0f0b1b;
+  --mount-alt-text: #4c2413;
+  --mount-highlight: #8f2610;
+  --mount-highlight-fg: #ffffff;
+  --mount-highlight-hover: #6f1c08;
+
+  --orbit-bg: #ddd6c0;
+  --orbit-border: #3b376a;
+  --orbit-text: #0f0b1b;
+  --orbit-alt-text: #4c2413;
+  --orbit-highlight: #8f2610;
+  --orbit-highlight-fg: #ffffff;
+  --orbit-highlight-hover: #6f1c08;
+
+  /* --alert-bg darkened from briefed #f5dccc to #e4c4a8 to widen the
+   * alert/warn bg luminance ratio from 1.05 (axis B fail) to 1.43
+   * (clears axis B). Alert-text contrast headroom drops from 10.19:1 to
+   * ~7.4:1 — still comfortable. */
+  --alert-bg: #e4c4a8;
+  --alert-border: #8f2610;
+  --alert-text: #5a1808;
+  --alert-alt-text: #7a2008;
+  --alert-highlight: #a73210;
+  --alert-highlight-fg: #ffffff;
+  --alert-highlight-hover: #7e2008;
+
+  /* --warn-bg lifted from briefed #f5e4b8 to #f8ecc8 (M-L2 Option C) to
+   * widen alert/warn AND warn/success bg luminance gaps. */
+  --warn-bg: #f8ecc8;
+  --warn-border: #6a4810;
+  --warn-text: #4a3408;
+  --warn-alt-text: #6a4814;
+  --warn-highlight: #6a4810;
+  --warn-highlight-fg: #ffffff;
+  --warn-highlight-hover: #523608;
+
+  /* info — purple (NEW HUE FAMILY in light, complements purple base-border). */
+  --info-bg: #dcd8ec;
+  --info-border: #2f2b52;
+  --info-text: #1a1838;
+  --info-alt-text: #2f2b52;
+  --info-highlight: #3b376a;
+  --info-highlight-fg: #ffffff;
+  --info-highlight-hover: #2f2b52;
+
+  /* --success-border darkened from briefed #3f581b to #2a3c10 (M-L2
+   * Option A) to widen warn/success AND alert/success border luminance
+   * gaps. Cascades: --success-highlight #2a3c10, --success-highlight-
+   * hover #1f2c0c. --success-alt-text already #2a3c10 in the brief, so
+   * no change there. */
+  --success-bg: #e0e4cc;
+  --success-border: #2a3c10;
+  --success-text: #1c2808;
+  --success-alt-text: #2a3c10;
+  --success-highlight: #2a3c10;
+  --success-highlight-fg: #ffffff;
+  --success-highlight-hover: #1f2c0c;
 }
