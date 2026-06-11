@@ -158,8 +158,23 @@ body {
 
 [data-cvd='on'] [aria-selected='true'],
 [data-cvd='on'] [aria-checked='true'] {
-  /* Universal indicator — anchors to --base-highlight so the inset bar
-   * carries the bundle-contrast ≥3:1 guarantee against --base-bg
-   * regardless of which surface the selected/checked control lives on. */
+  /* Universal indicator using --base-highlight. `box-shadow: inset` paints
+   * inside the host element, so the bar visually sits over whatever paints
+   * behind it at the host's left edge — NOT --base-bg. Consumer geometries:
+   *
+   *   - InlineThemeList + ThemeSubmenu menuitemradio buttons (no own bg)
+   *     inside an --orbit-bg menu surface → bar paints over --orbit-bg.
+   *     Mechanized as `base-highlight on orbit-bg` in the cross-bundle
+   *     highlight describe block in bundles.contrast.test.ts.
+   *
+   *   - CvdModeToggle role="switch" (aria-checked flips its own bg from
+   *     --orbit-bg to --orbit-highlight via Tailwind variant). Bar paints
+   *     over --orbit-highlight when the toggle is active. Not a mechanized
+   *     contract pair; the toggle itself is the CVD-mode affordance, the
+   *     bar reinforces an already-explicit switch position.
+   *
+   *   - SlidingTabBar TabButton (no own bg; sits z-10 above an absolutely
+   *     positioned --{lift}-text "pill"). Bar paints over --mount-text or
+   *     --orbit-text (the pill color). Not mechanized; visual lift only. */
   box-shadow: inset 3px 0 0 var(--base-highlight);
 }
