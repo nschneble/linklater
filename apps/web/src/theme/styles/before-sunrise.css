@@ -69,6 +69,7 @@
 [data-theme='before-sunrise'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #e8854a;
+  --focus-ring: #e8854a;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #e6c89a;
@@ -151,6 +152,7 @@
 [data-theme='before-sunrise'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #623618;
+  --focus-ring: #623618;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #2b1f0a;

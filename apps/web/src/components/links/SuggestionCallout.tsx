@@ -213,7 +213,7 @@ function SuggestionCalloutSkeleton() {
         <div className="w-11/12 h-[13px] bg-[var(--mount-alt-text)]/50 rounded-xs"></div>
         <div className="w-9/12 h-[13px] bg-[var(--mount-alt-text)]/50 rounded-xs"></div>
       </div>
-      <div className="w-[129.5px] h-[31px] bg-[var(--accent)]/50 border-shadow rounded-full"></div>
+      <div className="w-[129.5px] h-[31px] bg-[var(--mount-highlight)]/50 border-shadow rounded-full"></div>
     </div>
   );
 }

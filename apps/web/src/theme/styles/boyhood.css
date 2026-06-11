@@ -50,6 +50,7 @@
 [data-theme='boyhood'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #aacb50;
+  --focus-ring: #aacb50;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #e0ebac;
@@ -132,6 +133,7 @@
 [data-theme='boyhood'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #5a2d29;
+  --focus-ring: #5a2d29;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #1e2a0a;

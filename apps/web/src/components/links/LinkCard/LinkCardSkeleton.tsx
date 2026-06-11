@@ -9,9 +9,9 @@ export default function LinkCardSkeleton() {
     <div
       role="status"
       aria-label="Loading link"
-      className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 border-[var(--accent)] rounded-r-xl"
+      className="relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] rounded-r-xl"
     >
-      <div className="absolute left-0 top-4 -translate-x-1/2 w-8 h-8 rounded-2xl bg-[var(--accent)]" />
+      <div className="absolute left-0 top-4 -translate-x-1/2 w-8 h-8 rounded-2xl bg-[var(--mount-highlight)]" />
       <div className="space-y-1 animate-pulse">
         <div className="flex flex-row items-center">
           <div className="w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] rounded-md bg-[var(--orbit-bg)] shrink-0" />

@@ -108,6 +108,7 @@
 [data-theme='apollo-10-1-2'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #28537e;
+  --focus-ring: #28537e;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #4f361a;

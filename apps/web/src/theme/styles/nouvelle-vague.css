@@ -68,6 +68,7 @@
 [data-theme='nouvelle-vague'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #d4d4d4;
+  --focus-ring: #d4d4d4;
   --asset-filter: grayscale(100%);
 
   /* Page-gradient stops — see bundles.css preamble. */
@@ -139,6 +140,7 @@
 [data-theme='nouvelle-vague'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #1f1f1f;
+  --focus-ring: #1f1f1f;
   --asset-filter: grayscale(100%);
 
   /* Page-gradient stops — see bundles.css preamble. */

@@ -159,6 +159,8 @@ body {
 
 [data-cvd='on'] [aria-selected='true'],
 [data-cvd='on'] [aria-checked='true'] {
-  /* --accent retained pending system-wide --accent retirement PR */
-  box-shadow: inset 3px 0 0 var(--accent);
+  /* Universal indicator — anchors to --base-highlight so the inset bar
+   * carries the bundle-contrast ≥3:1 guarantee against --base-bg
+   * regardless of which surface the selected/checked control lives on. */
+  box-shadow: inset 3px 0 0 var(--base-highlight);
 }

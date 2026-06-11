@@ -48,16 +48,19 @@ const DESCRIPTION_CLASSES = {
  * SettingsView scroll effect move focus here so screen-reader users land on
  * the group when they follow a deep link.
  *
- * When `activeSection === id`, the card gains a 3px accent `outline` plus an
- * accent border color. The outline renders just outside the border edge,
- * against the page background `--base-bg` — the highest-contrast pairing
- * for `--accent` across every theme. (An accent indicator on the card
- * surface fails WCAG 1.4.11 in dark themes where `--accent` and `--mount-bg`
- * are close in luminance.) At 3px the indicator clears the WCAG non-text
- * "thick line" consideration, and its presence/absence — not just its hue —
- * signals the active state, satisfying 1.4.1 (use of color). It is driven off
- * the `data-active` attribute via a Tailwind `data-[active=true]:` variant so
- * visual and data state stay locked together.
+ * When `activeSection === id`, the card gains a 3px `outline` plus a matching
+ * border color, both painted from `--base-highlight`. The outline renders
+ * just outside the border edge against the page background `--base-bg` —
+ * the bundle-contrast contract pins `--base-highlight` at ≥3:1 against
+ * `--base-bg`, the highest-confidence pairing for an active-state indicator
+ * across every theme. (A mount-tier indicator on the card surface would
+ * couple to the `--mount-highlight` / `--mount-bg` 3:1 pair instead; the
+ * card edge sits on `--base-bg`, so the base-tier slot is the right anchor.)
+ * At 3px the indicator clears the WCAG non-text "thick line" consideration,
+ * and its presence/absence — not just its hue — signals the active state,
+ * satisfying 1.4.1 (use of color). It is driven off the `data-active`
+ * attribute via a Tailwind `data-[active=true]:` variant so visual and data
+ * state stay locked together.
  *
  * The active `outline` and the keyboard focus `ring-2` live on different
  * layers and never merge: `focus-visible:outline-none` drops the active
@@ -83,7 +86,7 @@ export default function SettingsGroup({
       tabIndex={-1}
       aria-labelledby={headingId}
       data-active={activeSection === id}
-      className={`relative scroll-mt-[111px] p-5 sm:p-6 ${VARIANT_CLASSES[variant]} data-[active=true]:border-[var(--accent)] data-[active=true]:outline data-[active=true]:outline-[3px] data-[active=true]:outline-[var(--accent)] forced-colors:data-[active=true]:outline-[Highlight] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] forced-colors:focus-visible:outline forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded-2xl motion-safe:transition-[border-color,outline-color]`}
+      className={`relative scroll-mt-[111px] p-5 sm:p-6 ${VARIANT_CLASSES[variant]} data-[active=true]:border-[var(--base-highlight)] data-[active=true]:outline data-[active=true]:outline-[3px] data-[active=true]:outline-[var(--base-highlight)] forced-colors:data-[active=true]:outline-[Highlight] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] forced-colors:focus-visible:outline forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded-2xl motion-safe:transition-[border-color,outline-color]`}
     >
       <header className={description ? 'mb-5' : 'mb-4'}>
         <h2

@@ -77,6 +77,7 @@
 [data-theme='scanner-darkly'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #ed9156;
+  --focus-ring: #ed9156;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #ebcaae;
@@ -158,6 +159,7 @@
 [data-theme='scanner-darkly'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #8f2610;
+  --focus-ring: #8f2610;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #4c2413;

@@ -45,12 +45,15 @@ const CARD_ENTER_CLASS = 'animate-card-enter';
  */
 function getPlaceholderUrl(url: string) {
   const style = getComputedStyle(document.documentElement);
-  const accent = style.getPropertyValue('--accent').trim().replace('#', '');
-  const accentFg = style
+  const highlight = style
+    .getPropertyValue('--mount-highlight')
+    .trim()
+    .replace('#', '');
+  const highlightFg = style
     .getPropertyValue('--mount-highlight-fg')
     .trim()
     .replace('#', '');
-  return `https://placehold.co/240x126/${accent}/${accentFg}?text=${hostnameOf(url)}`;
+  return `https://placehold.co/240x126/${highlight}/${highlightFg}?text=${hostnameOf(url)}`;
 }
 
 /**
@@ -118,7 +121,7 @@ export default function LinkCardLayout({
     <div
       ref={cardReference}
       aria-busy={!link.meta?.fetchedAt || undefined}
-      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--mount-border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--accent)]/60' : ''}`}
+      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--mount-highlight)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--mount-border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
     >
       {link.meta?.fetchedAt ? (
         <div className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none">
@@ -139,7 +142,7 @@ export default function LinkCardLayout({
                 aria-hidden="true"
               >
                 <i
-                  className="fa-solid fa-bookmark text-[var(--accent)] text-lg"
+                  className="fa-solid fa-bookmark text-[var(--mount-highlight)] text-lg"
                   aria-hidden="true"
                 />
               </div>
@@ -151,8 +154,8 @@ export default function LinkCardLayout({
           aria-hidden="true"
           className="absolute inset-0 pointer-events-none animate-pulse z-20"
         >
-          <div className="absolute top-0 bottom-0 left-0 -translate-x-full w-1 bg-[var(--accent)]" />
-          <span className="absolute left-0 top-4 -translate-x-1/2 z-10 block w-8 h-8 bg-[var(--accent)] ring-2 ring-[var(--mount-bg)] rounded-2xl" />
+          <div className="absolute top-0 bottom-0 left-0 -translate-x-full w-1 bg-[var(--mount-highlight)]" />
+          <span className="absolute left-0 top-4 -translate-x-1/2 z-10 block w-8 h-8 bg-[var(--mount-highlight)] ring-2 ring-[var(--mount-bg)] rounded-2xl" />
         </div>
       )}
 

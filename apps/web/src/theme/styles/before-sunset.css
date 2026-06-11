@@ -80,6 +80,7 @@
 [data-theme='before-sunset'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #d7974f;
+  --focus-ring: #d7974f;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #e6c99a;
@@ -162,6 +163,7 @@
 [data-theme='before-sunset'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #7a3f15;
+  --focus-ring: #7a3f15;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #2f221a;

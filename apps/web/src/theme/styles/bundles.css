@@ -54,10 +54,13 @@
  */
 
 :root {
-  /* Universal focus-visible ring color. Cascades through to per-theme
-   * --accent via this :root alias; per-theme bundle blocks may override
-   * (apollo dark picks an explicit hex because the default accent
-   * collapses against orbit-bg). Per-bundle overrides
+  /* Universal focus-visible ring color. Every per-theme cascade ships
+   * an explicit `--focus-ring` hex (wave 43 broke the prior alias to
+   * `--accent` so the wave-44 `--accent` retirement does not sever the
+   * focus indicator on the per-theme cascades). This `:root` declaration
+   * still aliases `var(--accent)` as a defensive fallback for the
+   * pre-theme-attribute window; wave 44 will inline the resolved hex
+   * here alongside the broader `--accent` cleanup. Per-bundle overrides
    * (`--focus-ring-on-{bundle}`) are supported via the consumer-side
    * pattern but currently unused — every theme/mode clears 3:1 against
    * every surface with the universal value alone (culori-verified

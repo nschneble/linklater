@@ -73,6 +73,7 @@
 [data-theme='hit-man'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #f2b186;
+  --focus-ring: #f2b186;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #f0efbe;
@@ -153,6 +154,7 @@
 [data-theme='hit-man'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #70180d;
+  --focus-ring: #70180d;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #201508;

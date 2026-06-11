@@ -12,6 +12,7 @@
 [data-theme='school-of-rock'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #edc8b4;
+  --focus-ring: #edc8b4;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #fffffe;
@@ -99,6 +100,7 @@
 [data-theme='school-of-rock'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
   --accent: #5c1615;
+  --focus-ring: #5c1615;
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #040301;

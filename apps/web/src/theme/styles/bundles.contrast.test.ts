@@ -386,10 +386,12 @@ describe('bundle contrast contract', () => {
    * and each state bundle's composited bg. Mechanizes the wave 21
    * contract that the brief verified by hand.
    *
-   * Most themes alias `--focus-ring: var(--accent);`. To resolve the
-   * alias for testing, we read the matching theme's per-mode --accent
-   * from its <theme>.css. apollo dark's explicit hex bypasses this
-   * resolution path.
+   * Every per-theme cascade now ships an explicit `--focus-ring: #...`
+   * hex (wave 43 broke the prior `var(--accent)` alias in preparation
+   * for the wave-44 `--accent` retirement). The `:root` synthetic
+   * fallback in `bundles.css` still aliases `var(--accent)` — the
+   * resolver below returns null for that fixture so the per-theme
+   * cascades carry the contract.
    */
   describe('focus-ring on every surface', () => {
     const SURFACES_TO_CHECK = [
@@ -414,14 +416,15 @@ describe('bundle contrast contract', () => {
      *     the default cascade fixtures (`:root`, `[data-mode='dark']`)
      *     where there is no per-theme stylesheet to chase. Return null
      *     so the caller skips the fixture cleanly; the per-theme cascade
-     *     fixtures cover the same alias.
-     *  3. Literal hex (e.g. apollo dark's explicit `#c8b896`).
+     *     fixtures all carry explicit hex post-wave-43, so the contract
+     *     is still mechanized end-to-end.
+     *  3. Literal hex (e.g. every per-theme block post-wave-43). This is
+     *     the common path now; per-theme cascades all ship explicit hex.
      *  4. `var(--{alias})` for a per-theme cascade — chase the alias
      *     through the corresponding theme stylesheet's per-mode block.
-     *     Today the only alias in use is `var(--accent)`; the
-     *     generalized resolver below handles any future
-     *     `var(--mount-highlight)` / `var(--base-text)` etc. without
-     *     requiring a new branch here.
+     *     No per-theme cascade uses this shape today; the generalized
+     *     resolver remains in place so future aliases
+     *     (`var(--mount-highlight)` etc.) don't require a new branch.
      *
      * Anything else (a misspelled function, an unknown literal in a
      * per-theme block) gets returned as `'__UNRESOLVED__'` so the caller
@@ -448,8 +451,9 @@ describe('bundle contrast contract', () => {
       if (!themeCss || !mode) {
         // Default cascade fixtures (:root, [data-mode='dark']) ship a
         // `var(--accent)` alias but have no per-theme stylesheet to
-        // chase. The per-theme cascades exercise the same alias under a
-        // resolvable context.
+        // chase. Every per-theme cascade carries an explicit
+        // `--focus-ring` hex post-wave-43, so contract coverage is
+        // complete without the synthetic-fallback alias.
         return null;
       }
       const aliasName = aliasMatch[1];

@@ -1,16 +1,18 @@
 # Linklater Themes
 
-There are ten themes, each with light and dark variants. Two parallel
-token systems are active:
+There are ten themes, each with light and dark variants. Every consumer
+now paints from the bundle vocabulary (Section 2) or the universal
+`--focus-ring` slot (Section 3); the legacy flat-token surface has been
+retired in stages.
 
-## 1. Flat tokens (legacy, all 10 themes)
+## 1. Flat tokens (legacy, fully retired in chrome)
 
-Each theme variant defines one surviving flat color variable that the
-un-migrated accent-outline consumers still read:
-
-| Variable   | Purpose                                                              |
-| ---------- | -------------------------------------------------------------------- |
-| `--accent` | Active-state outline anchor + universal `--focus-ring` alias         |
+Wave 43 migrated the last `--accent` consumers to bundle slots:
+`--mount-highlight`, `--base-highlight`, and `--orbit-highlight`
+depending on host. `--accent` itself remains declared per-theme one wave
+longer so the `LEGACY_TOKENS` tripwire can land in the same commit that
+deletes the declarations (wave 44). Until then, no chrome file reads
+`var(--accent)` directly.
 
 Ten flat tokens have been retired:
 
@@ -29,8 +31,9 @@ Ten flat tokens have been retired:
   and `--{base,mount,orbit}-highlight-hover`. `PrimaryButton` gained a
   `surface` prop to pick the right pair. See Section 5.
 
-The `chrome-token-migration.test.ts` tripwire keeps all ten in its
-`LEGACY_TOKENS` list to prevent re-introduction.
+The `chrome-token-migration.test.ts` tripwire keeps the retired tokens
+in its `LEGACY_TOKENS` list to prevent re-introduction. `--accent` joins
+the list in wave 44 alongside the deletion of its per-theme declarations.
 
 ## 2. Color bundles (all 10 themes migrated)
 
@@ -88,9 +91,12 @@ drift.
 ## 3. Universal focus ring (`--focus-ring`)
 
 Every theme variant defines `--focus-ring` — a single slot driving the
-`:focus-visible` ring color across all surfaces. Aliased to `--accent`
-on every theme today except apollo-10-1-2 dark, where the default
-accent collapses against `--orbit-bg` and an explicit hex is used.
+`:focus-visible` ring color across all surfaces. Every theme-mode block
+ships an explicit hex (wave 43 broke the prior `--focus-ring: var(--accent)`
+alias in preparation for the `--accent` retirement); apollo-10-1-2 dark
+diverges from its mode's `--accent` hex because the original accent
+collapses against `--orbit-bg`.
+
 Per-bundle overrides via the consumer-side pattern
 (`--focus-ring-on-{bundle}`) are supported but currently unused —
 culori verification (wave 21) confirms the universal value clears 3 : 1

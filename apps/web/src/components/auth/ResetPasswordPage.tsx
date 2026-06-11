@@ -70,7 +70,7 @@ export default function ResetPasswordPage() {
           {success ? (
             <>
               Your Password Has Been{' '}
-              <span className="underline underline-offset-3 decoration-[var(--accent)]">
+              <span className="underline underline-offset-3 decoration-[var(--mount-highlight)]">
                 Reset
               </span>
             </>

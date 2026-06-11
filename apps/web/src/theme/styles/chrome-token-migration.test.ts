@@ -4,14 +4,13 @@
  * Asserts that migrated files contain no references to the legacy
  * pre-bundle CSS custom properties. Started in wave 19 with page-chrome +
  * settings; extended each subsequent wave (common components, UserMenu,
- * auth pages, feature views) as files were migrated. Files NOT yet in
- * `MIGRATED_FILES` are intentional deferrals (modals, errors, landing).
+ * auth pages, feature views) as files were migrated.
  *
- * As of wave 40, six of the legacy tokens (`--bg`, `--bg-surface`,
- * `--text`, `--text-muted`, `--text-subtle`, `--border`) are fully
- * retired from the codebase — not declared anywhere. The tripwire still
- * lists them to prevent re-introduction (sister to `--bg-input` wave 23
- * + `--bg-elevated` wave 32 retirements).
+ * As of wave 42, eight of the legacy tokens (`--bg`, `--bg-surface`,
+ * `--text`, `--text-muted`, `--text-subtle`, `--border`, `--accent-fg`,
+ * `--accent-hover`) are fully retired from the codebase — not declared
+ * anywhere. The tripwire still lists them to prevent re-introduction
+ * (sister to `--bg-input` wave 23 + `--bg-elevated` wave 32 retirements).
  *
  * Fires before the WCAG contrast suite runs, so a regression here is
  * caught as a flat string mismatch rather than a downstream contract
@@ -111,10 +110,11 @@ const MIGRATED_FILES = [
  * Legacy tokens that should NOT appear in any wave-19 migrated chrome file.
  *
  * Not included:
- *   --accent          — still the active-state outline anchor (SettingsGroup
- *                       data-[active=true]:outline-[var(--accent)]) and the
- *                       universal --focus-ring alias. Outline indicator,
- *                       not focus ring; retirement deferred to a later wave.
+ *   --accent          — wave 43 migrated every chrome consumer to bundle
+ *                       slots, but the per-theme declarations still ship
+ *                       to keep the alias chain in the bundles.css :root
+ *                       synthetic fallback intact. Joins the list in
+ *                       wave 44 when the declarations are deleted.
  *   --focus-ring      — universal slot (wave 21). Migrated chrome files
  *                       use it; not a legacy alias.
  */

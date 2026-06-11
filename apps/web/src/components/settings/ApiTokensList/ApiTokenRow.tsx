@@ -15,7 +15,7 @@ import type { ApiTokenRowProps } from './types';
  */
 export default function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
   return (
-    <li className="relative overflow-visible px-5 py-4 bg-[var(--orbit-bg)] border-l-4 border-[var(--accent)] border-shadow hover:border-shadow rounded-r-xl">
+    <li className="relative overflow-visible px-5 py-4 bg-[var(--orbit-bg)] border-l-4 border-[var(--orbit-highlight)] border-shadow hover:border-shadow rounded-r-xl">
       <ActionGuard
         className="space-y-1"
         errorFallback="Failed to revoke token"
