@@ -2,7 +2,7 @@
   "action": "create-api-token",
   "parameters": ["tokenName"],
   "steps": [
-    { "kind": "navigate", "path": "/settings" },
+    { "kind": "navigate", "path": "/settings", "waitUntil": "domcontentloaded" },
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Generate new token" }

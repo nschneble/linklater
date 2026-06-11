@@ -1,7 +1,7 @@
 {
   "action": "resend-verification-email",
   "steps": [
-    { "kind": "navigate", "path": "/settings" },
+    { "kind": "navigate", "path": "/settings", "waitUntil": "domcontentloaded" },
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Resend verification email" }
