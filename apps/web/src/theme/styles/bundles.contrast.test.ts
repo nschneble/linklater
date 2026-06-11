@@ -957,4 +957,66 @@ describe('bundle contrast contract', () => {
       });
     }
   });
+
+  /*
+   * Cross-bundle highlight adjacencies — `--{tier}-highlight` painted on a
+   * DIFFERENT tier's bg. Per-bundle CONTRACT above covers highlight on its
+   * own bg; these four pairs cover the consumer geometries where a highlight
+   * slot lives on a foreign host. SC 1.4.11 (3:1) per pair.
+   *
+   *   1. mount-highlight on base-bg — LinkCardLayout loading-bar geometry
+   *      (`-translate-x-full` shifts the bar off the card's left edge so it
+   *      paints on the page, not on the card's mount-bg). LinkCardLayout.tsx:157-158.
+   *   2. orbit-highlight on mount-bg — CvdModeToggle aria-checked capsule
+   *      bg painted inside a SettingsGroup mount-host. CvdModeToggle.tsx:78.
+   *   3. base-highlight on mount-bg — SettingsGroup data-active=true border
+   *      painted on the section's own mount-bg fill (the matching outline
+   *      sits on base-bg and is covered by the CONTRACT loop's
+   *      `base-highlight on base-bg`). SettingsGroup.tsx:89.
+   *   4. base-highlight on orbit-bg — `[data-cvd='on'] [aria-checked='true']`
+   *      inset 3px box-shadow bar painted on orbit-host menu items (InlineThemeList
+   *      inside MobileBottomSheet). index.css:159-164, InlineThemeList.tsx:28.
+   *
+   * Pre-flight (wave 47) cleared the matrix worst-case at 3.282:1
+   * (mount-highlight on base-bg, before-midnight light). Diamantaire nit from
+   * waves 41-44 flagged pair 1 specifically — wave 43 verified ad-hoc but
+   * left the contract un-mechanized.
+   */
+  describe('cross-bundle highlight adjacencies', () => {
+    const CROSS_PAIRS = [
+      { fgBundle: 'mount' as const, hostBundle: 'base' as const },
+      { fgBundle: 'orbit' as const, hostBundle: 'mount' as const },
+      { fgBundle: 'base' as const, hostBundle: 'mount' as const },
+      { fgBundle: 'base' as const, hostBundle: 'orbit' as const },
+    ];
+
+    for (const fixture of FIXTURES) {
+      if (!fixture.checkAdjacency) {
+        continue;
+      }
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+
+      describe(`${fixture.label}`, () => {
+        for (const { fgBundle, hostBundle } of CROSS_PAIRS) {
+          const highlight = getSlot(declarations, fgBundle, 'highlight');
+          const hostBg = getSlot(declarations, hostBundle, 'bg');
+          if (highlight === null || hostBg === null) continue;
+
+          it(`${fgBundle}-highlight on ${hostBundle}-bg >= 3:1`, () => {
+            const ratio = contrastRatio(
+              resolveFg(highlight),
+              compositeOverBg(hostBg, fixture.pageBg),
+            );
+            expect
+              .soft(
+                ratio,
+                `${fgBundle}-highlight on ${hostBundle}-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+              )
+              .toBeGreaterThanOrEqual(AA_NON_TEXT);
+          });
+        }
+      });
+    }
+  });
 });
