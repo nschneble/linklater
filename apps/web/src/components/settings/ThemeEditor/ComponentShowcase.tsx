@@ -59,7 +59,7 @@ export default function ComponentShowcase() {
               >
                 Alt text sample
               </p>
-              <div className="mt-1.5 inline-flex items-center px-1.5 py-0.5 text-[0.6rem] font-semibold rounded">
+              <div className="inline-flex items-center mt-1.5 px-1.5 py-0.5 text-[0.6rem] font-semibold rounded">
                 <span
                   style={{
                     backgroundColor: `var(--${bundle}-highlight)`,
@@ -209,7 +209,7 @@ export default function ComponentShowcase() {
       <ShowcaseSection title="Card">
         <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] border-l-2 border-l-[var(--mount-highlight)] rounded-xl">
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-[var(--orbit-bg)] rounded-md">
+            <div className="flex shrink-0 items-center justify-center w-8 h-8 bg-[var(--orbit-bg)] rounded-md">
               <i
                 className="fa-solid fa-link text-[var(--orbit-alt-text)] text-[0.7rem]"
                 aria-hidden="true"

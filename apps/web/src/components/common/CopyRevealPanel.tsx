@@ -135,7 +135,7 @@ export default function CopyRevealPanel({
         <div className="flex flex-col items-start gap-4">
           <code
             aria-label={secretAriaLabel}
-            className="w-full block px-3 py-2 bg-[var(--orbit-bg)] border border-[var(--orbit-border)] text-[var(--orbit-text)] text-xs font-mono rounded select-all"
+            className="block w-full px-3 py-2 bg-[var(--orbit-bg)] border border-[var(--orbit-border)] text-[var(--orbit-text)] text-xs font-mono rounded select-all"
           >
             {secrets[0]}
           </code>

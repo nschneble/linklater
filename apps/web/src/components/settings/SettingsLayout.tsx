@@ -74,7 +74,7 @@ export default function SettingsLayout({
           <a
             href={`#${firstHash}`}
             onClick={handleSkipClick}
-            className="sr-only focus:not-sr-only focus:inline-flex focus:items-center focus:px-3 focus:py-1.5 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-xs focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none"
+            className="sr-only focus:not-sr-only focus:inline-flex focus:items-center focus:px-3 focus:py-1.5 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-xs focus:font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:rounded-lg"
           >
             Skip settings navigation
           </a>

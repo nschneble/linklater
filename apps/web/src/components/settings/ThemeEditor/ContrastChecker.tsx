@@ -214,7 +214,7 @@ function BundleRow({ pair, ratio }: BundleRowProps) {
           —
         </span>
       ) : (
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex shrink-0 items-center gap-1">
           <span className="w-9 text-[var(--mount-alt-text)] text-[0.6rem] text-right font-mono">
             {ratio.toFixed(2)}
           </span>

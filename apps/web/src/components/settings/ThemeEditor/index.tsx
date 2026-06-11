@@ -69,7 +69,7 @@ export default function ThemeEditor() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
           <select
             value={baseTheme}
             onChange={handleThemeChange}
@@ -120,7 +120,7 @@ export default function ThemeEditor() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        <div className="flex-shrink-0 w-full lg:w-80 space-y-4">
+        <div className="shrink-0 w-full lg:w-80 space-y-4">
           <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
             <h2 className="mb-4 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
               Colors

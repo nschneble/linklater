@@ -119,7 +119,7 @@ export default function MfaView({
         </PrimaryButton>
       </form>
 
-      <div className="mt-4 flex flex-col items-center gap-2 text-center">
+      <div className="flex flex-col items-center gap-2 mt-4 text-center">
         {!isRecovery && (
           <LinkButton onClick={onSwitchToRecovery}>
             Use a recovery code

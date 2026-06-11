@@ -28,7 +28,7 @@ function FooterLink({ href, label, newTab = false }: FooterLinkProps) {
  */
 export default function FooterSection() {
   return (
-    <footer className="flex items-center justify-center gap-6 py-8 px-6 select-none">
+    <footer className="flex items-center justify-center gap-6 px-6 py-8 select-none">
       <nav aria-label="Footer">
         <ul className="flex items-center gap-6 list-none">
           <li>

@@ -75,7 +75,7 @@ export default function CvdModeToggle() {
           aria-describedby="cvd-description"
           disabled={loading}
           onClick={handleToggle}
-          className="group relative shrink-0 mt-0.5 inline-flex h-6 w-11 items-center bg-[var(--orbit-bg)] border border-[var(--orbit-border)] aria-checked:bg-[var(--orbit-highlight)] aria-checked:border-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] rounded-full transition-colors duration-200 cursor-pointer"
+          className="group relative inline-flex shrink-0 items-center w-11 h-6 mt-0.5 bg-[var(--orbit-bg)] aria-checked:bg-[var(--orbit-highlight)] border border-[var(--orbit-border)] aria-checked:border-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] rounded-full transition-colors duration-200 cursor-pointer"
         >
           <span className="inline-block h-4 w-4 translate-x-1 group-aria-checked:translate-x-6 bg-white rounded-full shadow-sm transition-transform duration-200" />
           <span className="sr-only">{isCvdMode ? 'On' : 'Off'}</span>

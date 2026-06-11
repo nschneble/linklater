@@ -42,13 +42,13 @@ export default function FailWhalePage() {
     <div className="min-h-screen bg-[var(--base-bg)] text-[var(--base-text)]">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-sm focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-sm focus:font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:rounded-lg"
       >
         Skip to main content
       </a>
       <main
         id="main-content"
-        className="flex flex-col items-center justify-center min-h-screen mx-auto max-w-md px-4 text-center"
+        className="flex flex-col items-center justify-center min-h-screen max-w-md mx-auto px-4 text-center"
       >
         <pre
           aria-hidden="true"

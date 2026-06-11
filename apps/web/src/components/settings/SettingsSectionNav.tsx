@@ -28,7 +28,7 @@ export default function SettingsSectionNav({
   return (
     <nav
       aria-label="Settings sections (compact)"
-      className="md:hidden sticky top-2 z-10 -mx-4 px-4 py-2 bg-[var(--base-bg)]"
+      className="sticky md:hidden top-2 z-10 -mx-4 px-4 py-2 bg-[var(--base-bg)]"
     >
       <ul className="flex gap-2 overflow-x-auto snap-x snap-mandatory scroll-px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {sections.map((section) => (

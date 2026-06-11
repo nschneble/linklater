@@ -73,7 +73,7 @@ export default function LinksList({
         id={LINKS_LIST_ID}
         role="tabpanel"
         aria-labelledby={tabPanelLabelId}
-        className="mt-6 grid grid-cols-1 gap-6"
+        className="grid grid-cols-1 gap-6 mt-6"
       >
         <LinkCardSkeleton />
       </div>
@@ -117,7 +117,7 @@ export default function LinksList({
       id={LINKS_LIST_ID}
       role="tabpanel"
       aria-labelledby={tabPanelLabelId}
-      className="mt-6 mb-28 grid grid-cols-1 gap-6"
+      className="grid grid-cols-1 gap-6 mt-6 mb-28"
     >
       {links.map((link, index) => (
         <div

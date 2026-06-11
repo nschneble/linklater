@@ -220,7 +220,7 @@ export default function DangerZone() {
         ) : (
           <div
             ref={confirmReference}
-            className="flex gap-2 items-center justify-between text-xs"
+            className="flex items-center justify-between gap-2 text-xs"
           >
             <span className="text-[var(--alert-text)]">
               Are you sure? This is permanent.

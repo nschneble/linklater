@@ -237,7 +237,7 @@ export default function LoginRegisterView({
           <div
             aria-hidden={mode !== 'login' ? true : undefined}
             inert={mode !== 'login' ? true : undefined}
-            className="mt-4 flex flex-col items-center gap-2 text-center transition-opacity duration-200 aria-hidden:opacity-0 aria-hidden:pointer-events-none"
+            className="flex flex-col items-center gap-2 mt-4 text-center transition-opacity duration-200 aria-hidden:opacity-0 aria-hidden:pointer-events-none"
           >
             <LinkButton
               tabIndex={mode !== 'login' ? -1 : undefined}

@@ -104,7 +104,7 @@ function ColorRow({
   return (
     <div className="flex items-center gap-2">
       <label
-        className="relative flex-shrink-0 cursor-pointer rounded-md aria-disabled:cursor-not-allowed focus-within:ring-2 focus-within:ring-[var(--focus-ring)] focus-within:ring-offset-1 focus-within:ring-offset-[var(--mount-bg)]"
+        className="relative shrink-0 focus-within:ring-2 focus-within:ring-[var(--focus-ring)] focus-within:ring-offset-1 focus-within:ring-offset-[var(--mount-bg)] rounded-md cursor-pointer aria-disabled:cursor-not-allowed"
         aria-disabled={isAlpha}
       >
         <span
