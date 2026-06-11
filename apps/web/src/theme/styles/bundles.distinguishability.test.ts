@@ -47,7 +47,6 @@ import { describe, expect, it } from 'vitest';
 import {
   BUNDLES_CSS,
   CVD_TYPES,
-  DEFAULT_CSS,
   STATE_BUNDLES,
   compositeOverBg,
   cvdDeltaE,
@@ -75,7 +74,7 @@ interface CascadeFixture {
   readonly pageBg: Rgb;
 }
 
-const DEFAULT_PAGE_BG: Rgb = readPageBg(DEFAULT_CSS, ':root', 'bg');
+const DEFAULT_PAGE_BG: Rgb = readPageBg(BUNDLES_CSS, ':root', 'base-bg');
 const SCHOOL_OF_ROCK_LIGHT_PAGE_BG: Rgb = readPageBg(
   BUNDLES_CSS,
   "[data-theme='school-of-rock'][data-mode='light']",

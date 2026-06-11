@@ -1,22 +1,14 @@
 [data-theme='before-sunrise'][data-mode='dark'] {
-  --bg: #3c1e0e;
-  --bg-surface: #6a3c22;
   --text: #f3ecd3;
   --text-muted: #e6c89a;
-  --text-subtle: #c89968;
-  --border: #d18a55;
   --accent: #e8854a;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #2a1408;
 }
 
 [data-theme='before-sunrise'][data-mode='light'] {
-  --bg: #f3ecd3;
-  --bg-surface: #dcc8a4;
   --text: #341b0d;
   --text-muted: #2b1f0a;
-  --text-subtle: #2c200b;
-  --border: #6e5624;
   --accent: #623618;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #f3ecd3;

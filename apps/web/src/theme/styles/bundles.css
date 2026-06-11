@@ -42,12 +42,12 @@
  * All 10 shipped themes define per-theme bundle palettes in their own
  * blocks below. The :root default cascade is the synthetic fallback for
  * the pre-theme-attribute window (any code path that runs before
- * `<html data-theme=...>` is set). It derives base/mount/orbit from the
- * flat --bg/--bg-surface tokens and uses neutral rose/amber/blue/emerald
- * hues for the state bundles. The input-bg and orbit-bg slots are
- * deliberately omitted from this fallback (see the in-place breadcrumbs
- * below): consumers only render after a theme is active, so the slots
- * always resolve from a per-theme block.
+ * `<html data-theme=...>` is set). It pins base/mount/orbit to explicit
+ * hex (default.css's dark palette) and uses neutral rose/amber/blue/
+ * emerald hues for the state bundles. The input-bg and orbit-bg slots
+ * are deliberately omitted from this fallback (see the in-place
+ * breadcrumbs below): consumers only render after a theme is active,
+ * so the slots always resolve from a per-theme block.
  */
 
 :root {
@@ -60,17 +60,18 @@
    * universal value alone (culori-verified wave 21). */
   --focus-ring: var(--accent);
 
-  /* base = page chrome */
-  --base-bg: var(--bg);
-  --base-border: var(--border);
+  /* base = page chrome. Synthetic-fallback hex matches default.css's
+   * dark palette; per-theme blocks below override every slot. */
+  --base-bg: #0f0b1b;
+  --base-border: #47419d;
   --base-text: var(--text);
   --base-alt-text: var(--text-muted);
-  --base-subtle-text: var(--text-subtle);
+  --base-subtle-text: #8db030;
   --base-highlight: var(--accent);
 
   /* mount = cards */
-  --mount-bg: var(--bg-surface);
-  --mount-border: var(--border);
+  --mount-bg: #201e43;
+  --mount-border: #47419d;
   --mount-text: var(--text);
   --mount-alt-text: var(--text-muted);
   --mount-highlight: var(--accent);
@@ -82,7 +83,7 @@
   /* orbit = menus / dropdowns. --orbit-bg omitted from the synthetic
    * fallback — defined per-theme; legacy --bg-elevated retired wave 32.
    * See preamble. */
-  --orbit-border: var(--border);
+  --orbit-border: #47419d;
   --orbit-text: var(--text);
   --orbit-alt-text: var(--text-muted);
   --orbit-highlight: var(--accent);
@@ -95,7 +96,7 @@
   /* Border defaults are still tuned for cross-theme SC 1.4.11 compliance
    * so the synthetic fallback stays accessible if it ever paints: the
    * rose-800 / amber-800 / blue-800 / emerald-800 stops clear >=3:1
-   * against the fallback --base-bg derived from the flat --bg token.
+   * against the fallback --base-bg #0f0b1b.
    * Backgrounds and text stay on the legacy soft hues so per-theme
    * palettes can tune the bundle's narrative hue without re-deriving
    * accessibility math.
@@ -690,10 +691,10 @@
  *     for stronger separation from success-green under CVD and the
  *     conventional yellow=warn affordance.
  *   - mount/orbit bgs use calmer cream-sand (#dad8a0, #e2dfb0 light;
- *     #1a2410, #243018 dark) instead of the flat --bg-surface
- *     (#bcd068) / --bg-elevated (#a8bc48). Apollo precedent: bundle
- *     bg's are tuned for state-bundle adjacency, not blindly mirrored
- *     from the flat surface tokens.
+ *     #1a2410, #243018 dark) instead of the boyhood PRD's flat surface
+ *     tones (#bcd068 / #a8bc48). Apollo precedent: bundle bgs are tuned
+ *     for state-bundle adjacency, not blindly mirrored from the
+ *     pre-bundle surface tokens.
  *
  * Brief flags that culori verification surfaced (a11y-lead disclosed no
  * culori in their reasoning loop):
@@ -881,12 +882,12 @@
  *
  * Intentional palette breaks vs dazed-and-confused.css flat tokens:
  *   - mount/orbit bgs: calm cream (#ebe6df, #e3dcd2) / calm brown
- *     (#3a2e2a, #4a3a34) rather than the flat --bg-surface / --bg-elevated
- *     peach/steel tints. Apollo + boyhood precedent: bundle bgs are tuned
- *     for state-bundle adjacency, not blindly mirrored from flat surface
- *     tokens.
+ *     (#3a2e2a, #4a3a34) rather than the dazed PRD's peach/steel surface
+ *     tints. Apollo + boyhood precedent: bundle bgs are tuned for
+ *     state-bundle adjacency, not blindly mirrored from pre-bundle
+ *     surface tokens.
  *   - base/mount/orbit borders: slate #5d7984 (light) / cyan #26aad0
- *     (dark), NOT the flat-token brown that would clash with warn-bundle
+ *     (dark), NOT the dazed PRD's brown that would clash with warn-bundle
  *     gold.
  *   - LIGHT --warn-border #6f4810 NOT the PRD's amber #ecb518 (SC 1.4.11
  *     against page bg fails by wide margin) — already darkened in the
@@ -1119,20 +1120,20 @@
  *     adjacency), success = lime/olive.
  *
  * Intentional palette breaks vs scanner-darkly.css flat tokens:
- *   - LIGHT --warn-border #6a4810 NOT the PRD's flat --border #806023
+ *   - LIGHT --warn-border #6a4810 NOT the scanner PRD's #806023 border
  *     (warn-bundle gold must clash less with base-bundle purple borders,
  *     and the darker stop also clears SC 1.4.11 on the warn-bg with
  *     comfortable headroom).
- *   - LIGHT --base/mount/orbit-border #3b376a (deep purple from the
- *     theme's flat --text-subtle) NOT the flat --border #806023 (warm
- *     gold, would collide with the warn bundle).
+ *   - LIGHT --base/mount/orbit-border #3b376a (deep purple anchored on
+ *     the scanner PRD's subtle-text) NOT the PRD's #806023 (warm gold,
+ *     would collide with the warn bundle).
  *   - LIGHT --mount-bg #e6e2d0, --orbit-bg #ddd6c0: warm cream gradations
- *     off the page-bg cream, NOT the flat --bg-surface #e8d4a0 / --bg-
- *     elevated #d0bc78 (both yellow-gold, would collide with warn).
+ *     off the page-bg cream, NOT the scanner PRD's #e8d4a0 / #d0bc78
+ *     (both yellow-gold, would collide with warn).
  *   - DARK --info bundle = cyan (orchestrator-approved break from the
  *     theme's purple signature; required to avoid base/info collision).
- *   - DARK --orbit-border #b8b2e8 NOT the flat --border #847ecc (which
- *     would fail SC 1.4.11 vs orbit-bg #3b376a, the deeper purple).
+ *   - DARK --orbit-border #b8b2e8 NOT the scanner PRD's #847ecc border
+ *     (which would fail SC 1.4.11 vs orbit-bg #3b376a, the deeper purple).
  *   - DARK --alert-highlight #ee5050 + dark fg #1c0608 = dazed-and-
  *     confused wave-11 / school-of-rock precedent for fill-on-fill alert
  *     buttons.
@@ -1311,8 +1312,9 @@
   --info-highlight-fg: #04222c;
   --info-highlight-hover: #88d4ec;
 
-  /* success — lime/olive (PRD --text-subtle anchor #bcdc6f), lifted to
-   * high luminance for tritan separation from warn-gold. */
+  /* success — lime/olive (anchored on the scanner PRD's subtle-text
+   * #bcdc6f), lifted to high luminance for tritan separation from
+   * warn-gold. */
   --success-bg: rgb(28 50 18 / 0.55);
   --success-border: #bcdc6f;
   --success-text: #d4e8a0;

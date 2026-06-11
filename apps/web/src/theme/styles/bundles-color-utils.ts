@@ -64,10 +64,6 @@ export const BUNDLES_CSS = readFileSync(
   resolve(STYLES_DIR, 'bundles.css'),
   'utf8',
 );
-export const DEFAULT_CSS = readFileSync(
-  resolve(STYLES_DIR, 'default.css'),
-  'utf8',
-);
 
 function srgbToLinear(channel: number): number {
   const normalized = channel / 255;

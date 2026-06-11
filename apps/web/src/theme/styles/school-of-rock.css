@@ -1,22 +1,14 @@
 [data-theme='school-of-rock'][data-mode='dark'] {
-  --bg: #0a0a07;
-  --bg-surface: #4c310b;
   --text: #ffffff;
   --text-muted: #fffffe;
-  --text-subtle: #ffffff;
-  --border: #d59d82;
   --accent: #edc8b4;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #000000;
 }
 
 [data-theme='school-of-rock'][data-mode='light'] {
-  --bg: #e0d0c1;
-  --bg-surface: #d4b07a;
   --text: #000000;
   --text-muted: #040301;
-  --text-subtle: #040301;
-  --border: #5e4517;
   --accent: #5c1615;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #ffffff;

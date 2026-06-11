@@ -50,10 +50,10 @@ const DESCRIPTION_CLASSES = {
  *
  * When `activeSection === id`, the card gains a 3px accent `outline` plus an
  * accent border color. The outline renders just outside the border edge,
- * against the page background `--bg` — the highest-contrast pairing for
- * `--accent` across every theme. (An accent indicator on the card surface
- * fails WCAG 1.4.11 in dark themes where `--accent` and `--bg-surface` are
- * close in luminance.) At 3px the indicator clears the WCAG non-text
+ * against the page background `--base-bg` — the highest-contrast pairing
+ * for `--accent` across every theme. (An accent indicator on the card
+ * surface fails WCAG 1.4.11 in dark themes where `--accent` and `--mount-bg`
+ * are close in luminance.) At 3px the indicator clears the WCAG non-text
  * "thick line" consideration, and its presence/absence — not just its hue —
  * signals the active state, satisfying 1.4.1 (use of color). It is driven off
  * the `data-active` attribute via a Tailwind `data-[active=true]:` variant so

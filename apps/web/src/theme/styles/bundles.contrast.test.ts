@@ -42,7 +42,6 @@ import {
   BUNDLES,
   BUNDLES_CSS,
   CARD_BUNDLES,
-  DEFAULT_CSS,
   bundleIsFullyDefined,
   compositeOverBg,
   contrastRatio,
@@ -80,8 +79,8 @@ interface CascadeFixture {
   readonly selector: string;
   /*
    * Page background to composite alpha bundle-bgs over. For the default
-   * cascade this is the default theme's `:root --bg`. For school-of-rock,
-   * it's the cascade's own --base-bg.
+   * cascade this is `bundles.css :root --base-bg`. For each per-theme
+   * cascade, it's the cascade's own --base-bg.
    */
   readonly pageBg: Rgb;
   /*
@@ -95,18 +94,17 @@ interface CascadeFixture {
 }
 
 /*
- * Default cascade (`:root`, `[data-mode='dark']`) does not redefine
- * --base-bg — the bundles cascade aliases it to `var(--bg)`. So the
- * page background for the default cascade comes from default.css's
- * `:root --bg`. The default cascade's state-bundle borders are pure
- * defensive fallback now that all 10 shipped themes carry their own
- * per-theme bundle cascades — `checkAdjacency: false` skips the border
- * adjacency assertions for `:root` + `[data-mode='dark']` since no
- * runtime consumer paints the default cascade's state borders.
- * Per-theme cascades define --base-bg directly as hex; we read it
- * straight out of bundles.css for each FIXTURES entry.
+ * Default cascade (`:root`, `[data-mode='dark']`) pins --base-bg to an
+ * explicit hex in `bundles.css :root` (wave 36 retired the legacy
+ * `--bg` flat-token alias). The default cascade's state-bundle borders
+ * are pure defensive fallback now that all 10 shipped themes carry
+ * their own per-theme bundle cascades — `checkAdjacency: false` skips
+ * the border adjacency assertions for `:root` + `[data-mode='dark']`
+ * since no runtime consumer paints the default cascade's state
+ * borders. Per-theme cascades define --base-bg directly as hex; we
+ * read it straight out of bundles.css for each FIXTURES entry.
  */
-const DEFAULT_PAGE_BG: Rgb = readPageBg(DEFAULT_CSS, ':root', 'bg');
+const DEFAULT_PAGE_BG: Rgb = readPageBg(BUNDLES_CSS, ':root', 'base-bg');
 const SCHOOL_OF_ROCK_LIGHT_PAGE_BG: Rgb = readPageBg(
   BUNDLES_CSS,
   "[data-theme='school-of-rock'][data-mode='light']",

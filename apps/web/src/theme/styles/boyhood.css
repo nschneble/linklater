@@ -1,22 +1,14 @@
 [data-theme='boyhood'][data-mode='dark'] {
-  --bg: #0d150d;
-  --bg-surface: #335215;
   --text: #e8e7c3;
   --text-muted: #e0ebac;
-  --text-subtle: #e1eaaa;
-  --border: #60a818;
   --accent: #aacb50;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #0d150d;
 }
 
 [data-theme='boyhood'][data-mode='light'] {
-  --bg: #d0cf93;
-  --bg-surface: #bcd068;
   --text: #0d150d;
   --text-muted: #1e2a0a;
-  --text-subtle: #252a15;
-  --border: #536620;
   --accent: #5a2d29;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #ffffff;

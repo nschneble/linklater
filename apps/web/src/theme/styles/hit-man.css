@@ -1,22 +1,14 @@
 [data-theme='hit-man'][data-mode='dark'] {
-  --bg: #1a150e;
-  --bg-surface: #4e2c14;
   --text: #f8eae2;
   --text-muted: #f0efbe;
-  --text-subtle: #f1ebeb;
-  --border: #e2843c;
   --accent: #f2b186;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #000000;
 }
 
 [data-theme='hit-man'][data-mode='light'] {
-  --bg: #f0c870;
-  --bg-surface: #c4a860;
   --text: #1a150e;
   --text-muted: #201508;
-  --text-subtle: #1e1607;
-  --border: #7c421d;
   --accent: #70180d;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #ffffff;

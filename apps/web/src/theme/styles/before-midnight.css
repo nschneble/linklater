@@ -1,22 +1,14 @@
 [data-theme='before-midnight'][data-mode='dark'] {
-  --bg: #1c2c38;
-  --bg-surface: #4e4435;
   --text: #e8dccd;
   --text-muted: #cee1dc;
-  --text-subtle: #c3e8b0;
-  --border: #119fb6;
   --accent: #ebb327;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #1c2c38;
 }
 
 [data-theme='before-midnight'][data-mode='light'] {
-  --bg: #ccc095;
-  --bg-surface: #c2dada;
   --text: #20303d;
   --text-muted: #323223;
-  --text-subtle: #2d3419;
-  --border: #11637a;
   --accent: #562315;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #ffffff;

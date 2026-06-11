@@ -5,29 +5,27 @@ token systems are active:
 
 ## 1. Flat tokens (legacy, all 10 themes)
 
-Each theme variant defines nine flat color variables that the un-migrated
-parts of the UI still read:
+Each theme variant defines five flat color variables that the un-migrated
+parts of the UI still read (page-gradient consumers, accent outlines):
 
 | Variable         | Purpose                                                    |
 | ---------------- | ---------------------------------------------------------- |
-| `--bg`           | Base background                                            |
-| `--bg-surface`   | Raised surfaces: cards, panels, modals                     |
 | `--text`         | Primary readable text                                      |
 | `--text-muted`   | Secondary/supporting text: labels, subtitles, placeholders |
-| `--text-subtle`  | De-emphasized text: urls, helper hints, section dividers   |
-| `--border`       | All borders and dividers                                   |
 | `--accent`       | Primary brand color: active indicators, icons, focus rings |
 | `--accent-hover` | Accent hover state                                         |
 | `--accent-fg`    | Foreground text on accent-colored backgrounds              |
 
-Two flat tokens have been retired:
+Six flat tokens have been retired:
 
 - `--bg-input` (wave 23) — form input backgrounds now live on the bundle
   slots `--base-input-bg` and `--mount-input-bg`. See Section 2.
 - `--bg-elevated` (wave 32) — over-card surfaces (drop-downs, skeletons,
   inactive tab fills) now lift one tier via `--orbit-bg`. See Section 2.
+- `--bg`, `--bg-surface`, `--text-subtle`, `--border` (wave 36) — fully
+  superseded by the `--base-*` / `--mount-*` / `--orbit-*` bundle slots.
 
-The `chrome-token-migration.test.ts` tripwire keeps both in its
+The `chrome-token-migration.test.ts` tripwire keeps all six in its
 `LEGACY_TOKENS` list to prevent re-introduction.
 
 ## 2. Color bundles (all 10 themes migrated)
@@ -60,8 +58,8 @@ Three slots are bundle-restricted:
 
 All 10 themes ship per-theme bundle palettes. The default cascade in
 `bundles.css :root` exists as a fallback for the synthetic "no theme
-set" case and to alias bundle slots onto the flat tokens for any code
-path that runs before a theme attribute is set on `<html>`.
+set" case — explicit hex pins for any code path that runs before a
+theme attribute is set on `<html>`.
 
 ### Bundle contrast targets (WCAG 2.2)
 
@@ -154,16 +152,14 @@ satisfy the bundle distinguishability contract without any
 
 ## Flat-token contrast targets
 
-When adding or tuning a theme, the legacy flat tokens must also meet:
+When adding or tuning a theme, the surviving flat tokens must also meet:
 
-- `--text` and `--text-muted` on `--bg` / `--bg-surface`: **AAA**
-  (≥ 7 : 1 for normal text, ≥ 4.5 : 1 for large text)
+- `--text` and `--text-muted` on `--base-bg` / `--mount-bg`: **AAA**
+  (≥ 7 : 1 for normal text, ≥ 4.5 : 1 for large text). The page-gradient
+  consumers (auth pages, ExtensionAuthorize, TokenVerification) read
+  `--text` and `--text-muted` directly on the page surface.
 - `--accent-fg` on `--accent` and `--accent-hover`: **AA**
   (≥ 4.5 : 1)
-
-`--text-subtle` is intentionally lower-contrast — it is used only for
-de-emphasized metadata (URLs, hints, dividers), never for primary
-readable content.
 
 ## `swatchIcon` field
 
