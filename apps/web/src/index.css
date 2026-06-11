@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import './theme/styles/default.css';
 @import './theme/styles/border-shadow.css';
 @import './theme/styles/apollo-10-1-2.css';
 @import './theme/styles/before-sunrise.css';

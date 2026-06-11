@@ -10,7 +10,7 @@
  *     --{bundle}-alt-text        secondary text (labels, captions)
  *     --{bundle}-subtle-text     lowest-emphasis text (kbd legends, hints,
  *                                chevrons) — BASE bundle only
- *     --{bundle}-highlight       accent pop inside the bundle (links, badges)
+ *     --{bundle}-highlight       accent pop inside the bundle (filled buttons, links, badges)
  *     --{bundle}-highlight-fg    foreground for filled surfaces that use
  *                                --{bundle}-highlight as their bg
  *     --{bundle}-highlight-hover bg for the :hover state of those filled
@@ -45,36 +45,33 @@
  * attribute window (any code path that runs before `<html data-theme=...>`
  * is set). It pins base/mount/orbit to explicit hex chosen so the
  * pre-theme-attribute window paints a usable dark surface, and uses
- * neutral rose/amber/blue/emerald hues for the state bundles. Several
- * slots are deliberately omitted from this fallback (see the in-place
- * breadcrumbs below): `--orbit-bg`, `--base-input-bg`,
- * `--mount-input-bg`, `--focus-ring`, `--{base,mount,orbit}-highlight`,
- * and their dependent `--{base,mount,orbit}-highlight-fg` / `-hover`
- * pairs. Consumers only render after a theme is active, so the slots
- * always resolve from a per-theme block. Per-theme blocks beat these
- * defaults on specificity regardless of CSS source order.
+ * neutral rose/amber/blue/emerald hues for the state bundles.
+ *
+ * Slots deliberately omitted from the synthetic fallback (per-theme
+ * cascades carry the full contract):
+ *
+ *   --orbit-bg, --base-input-bg, --mount-input-bg, --focus-ring,
+ *   --{base,mount,orbit}-highlight (wave 44 — inlining the prior
+ *   `var(--accent)` resolution would fail SC 1.4.11 against --mount-bg
+ *   #201e43 at 2.87:1), and their dependent --{base,mount,orbit}-
+ *   highlight-fg / -hover pairs.
+ *
+ * Per-theme blocks beat these defaults on specificity regardless of CSS
+ * source order. Consumers only render after a theme is active, so the
+ * omitted slots always resolve from a per-theme block.
  */
 
 :root {
-  /* --focus-ring and --base/mount/orbit-highlight omitted from the
-   * synthetic fallback — defined per-theme. Wave 44 retired the
-   * var(--accent) alias chain that previously fed these slots here;
-   * inlining the resolved hex would activate the bundle-contrast
-   * iteration against the synthetic base/mount/orbit bgs and fail SC
-   * 1.4.11 (the prior --accent hex against --mount-bg #201e43 paints
-   * 2.87:1). Per-theme blocks carry the contract — every theme/mode
-   * ships explicit hex for these four slots (wave 43 for focus-ring,
-   * waves 1-41 for the per-tier highlights). Consumers only render
-   * after a theme is active, so omitting from the synthetic fallback is
-   * safe (mirrors --orbit-bg + --base/mount-input-bg precedent — see
-   * preamble). Per-bundle overrides (--focus-ring-on-{bundle}) are
-   * supported via the consumer-side pattern but currently unused —
-   * every theme/mode clears 3:1 against every surface with the
-   * universal value alone (culori-verified wave 21). */
+  /* Theme-transition timing (wave 44.1 collapse of default.css). Drives
+   * the universal background/color/border-color transition in
+   * index.css's @layer base. */
+  --theme-transition-duration: 80ms;
+  --theme-transition-easing: ease;
 
-  /* base = page chrome. Explicit hex chosen so the pre-theme-attribute
-   * window paints a usable dark surface; per-theme blocks below override
-   * every slot. */
+  /* --focus-ring and --base/mount/orbit-highlight omitted from the
+   * synthetic fallback — defined per-theme; see preamble. */
+
+  /* base = page chrome. Pre-theme-attribute fallback hex. */
   --base-bg: #0f0b1b;
   --base-border: #47419d;
   --base-text: #eeeedf;
@@ -87,49 +84,26 @@
   --mount-text: #eeeedf;
   --mount-alt-text: #e09d3a;
 
-  /* --base-input-bg / --mount-input-bg omitted from the synthetic
-   * fallback — defined per-theme (wave 22a + 22b); legacy --bg-input
-   * retired wave 23. See preamble. */
+  /* --base-input-bg / --mount-input-bg per-theme only (waves 22a+22b;
+   * legacy --bg-input retired wave 23). See preamble. */
 
-  /* orbit = menus / dropdowns. --orbit-bg omitted from the synthetic
-   * fallback — defined per-theme; legacy --bg-elevated retired wave 32.
-   * See preamble. */
+  /* orbit = menus / dropdowns. --orbit-bg per-theme only (legacy
+   * --bg-elevated retired wave 32). See preamble. */
   --orbit-border: #47419d;
   --orbit-text: #eeeedf;
   --orbit-alt-text: #e09d3a;
 
-  /* alert / warn / info / success default palettes mirror the rose /
-   * amber / blue / emerald hues the legacy components used inline. Every
-   * shipped theme overrides these in its own block, so the defaults here
-   * are the synthetic no-theme-set fallback — they only render during the
-   * pre-theme-attribute window (see preamble). */
-  /* Border defaults are still tuned for cross-theme SC 1.4.11 compliance
-   * so the synthetic fallback stays accessible if it ever paints: the
-   * rose-800 / amber-800 / blue-800 / emerald-800 stops clear >=3:1
-   * against the fallback --base-bg #0f0b1b.
-   * Backgrounds and text stay on the legacy soft hues so per-theme
-   * palettes can tune the bundle's narrative hue without re-deriving
-   * accessibility math.
-   * --success-border uses emerald-800 (#166534), distinct from
-   * --success-text #065f46 (also emerald family but a darker stop). The
-   * wave-2 emerald-700 pick (#15803d) was retired in wave 5 after the
-   * bundle-contrast test's cross-theme adjacency check surfaced its
-   * failure against before-midnight (#ccc095).
-   */
-  /* `--{base,mount,orbit}-highlight-fg` / `-hover` omitted from the
-   * synthetic fallback. Wave 44 retired their parent `--{tier}-highlight`
-   * slots (omitted above) — without a highlight bg for the foreground
-   * to paint on, the fg/hover slots are inert. Per-theme cascades carry
-   * the full pair contract for every filled-highlight consumer
-   * (`PrimaryButton`, IconButton danger-filled). */
-
-  /* State bundles below interleave -fg/-hover with the other slots per
-   * wave-38 per-theme convention. Each block carries the full 7-slot
-   * contract (bg/border/text/alt-text/highlight/highlight-fg/highlight-
-   * hover) — used by filled-button consumers (e.g. IconButton
-   * danger-filled). Mirrors the 5-slot bundle contract by adding a
-   * foreground that clears 4.5:1 against --{bundle}-highlight, plus a
-   * hover state that clears 4.5:1 against the same foreground. */
+  /* alert / warn / info / success synthetic-fallback palettes — rose /
+   * amber / blue / emerald hues. Borders pinned to the -800 stop so
+   * each clears 3:1 against the fallback --base-bg. Per-theme blocks
+   * carry the contract for every shipped theme. See preamble.
+   *
+   * State bundles ship the full 7-slot contract here (bg / border /
+   * text / alt-text / highlight / highlight-fg / highlight-hover) —
+   * filled-button consumers (PrimaryButton, IconButton danger-filled)
+   * paint the highlight pair against any tier. `--{base,mount,orbit}-
+   * highlight-fg` / `-hover` are intentionally omitted (their parent
+   * `-highlight` slots are omitted from the fallback — see preamble). */
   --alert-bg: #fff1f2;
   --alert-border: #9f1239;
   --alert-text: #be123c;
@@ -186,6 +160,11 @@
    * alias `var(--text-muted)` / `var(--text)`, retiring those flat tokens).
    * The fallback values below paint a familiar 2-tone gradient during the
    * pre-theme-attribute window.
+   *
+   * --page-gradient-via is intentionally identical to --page-gradient-from
+   * in every shipped theme today — kept as a tinting hook so a future
+   * theme can ship a true 3-stop palette without re-plumbing the
+   * consumers.
    *
    * NOT a WCAG-load-bearing contract. The card's edge separation
    * doesn't depend on these stops vs --mount-border. The perceptual-

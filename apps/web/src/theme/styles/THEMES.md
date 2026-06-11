@@ -27,8 +27,9 @@ Eleven flat tokens have been retired:
   `--mount-highlight`, `--base-highlight`, and `--orbit-highlight`
   depending on host; wave 44 deleted the per-theme `--accent`
   declarations and removed the alias chain in the `bundles.css :root`
-  synthetic fallback. `default.css` now only carries the
-  `--theme-transition-duration` / `--theme-transition-easing` slots.
+  synthetic fallback. Wave 44.1 fully sunset `default.css` (its last
+  two slots — `--theme-transition-duration` /
+  `--theme-transition-easing` — moved to `bundles.css :root`).
 
 The `chrome-token-migration.test.ts` tripwire keeps every retired token
 in its `LEGACY_TOKENS` list to prevent re-introduction.
@@ -117,9 +118,11 @@ value is theme-independent today (`rgb(0 0 0 / 0.5)`); promote to
 
 Five common components expose a `surface` prop (`FormInput`,
 `SlidingTabBar`, `IconButton`, `LinkButton`, `PrimaryButton`); a sixth,
-`TabButton`, infers its host from its parent — see the paragraph below.
-The prop selects which bundle's tokens drive the component's colors,
-keeping fill / border / text coherent with the bundle it visually sits on:
+`TabButton`, picks up its host from its parent `SlidingTabBar`'s
+`data-surface` attribute via Tailwind `group-data-*` variants — see the
+paragraph below. The prop selects which bundle's tokens drive the
+component's colors, keeping fill / border / text coherent with the
+bundle it visually sits on:
 
 - `surface="base"` — page chrome (default for `FormInput` and
   `SlidingTabBar`; used by `LinkForm`, `LinksList`'s load-more button,

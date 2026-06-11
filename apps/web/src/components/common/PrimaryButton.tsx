@@ -15,9 +15,8 @@ import { DISABLED, FOCUS_RING } from '../../lib/styles';
  * `-highlight-hover`). Defaults to `'mount'` — most consumers live inside a
  * `SettingsGroup`, `AuthCard`, or modal panel.
  *
- * Same `surface` semantics as `IconButton`/`FormInput`/`SlidingTabBar`/
- * `TabButton`: the prop names the host bundle, the component derives its own
- * paint internally.
+ * Same `surface` semantics as `IconButton` / `LinkButton` / `FormInput` /
+ * `SlidingTabBar` / `TabButton`.
  */
 interface PrimaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /**
