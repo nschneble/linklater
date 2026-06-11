@@ -2,7 +2,7 @@
  * Bundle contrast contract — automated WCAG verification.
  *
  * Parses bundles.css and asserts every bundle pair clears the threshold
- * documented in the file's preamble (lines 1-44):
+ * documented in the file's preamble:
  *
  *     text/bg, alt-text/bg                       >= 4.5:1   (SC 1.4.3)
  *     border/bg, highlight/bg                    >= 3:1     (SC 1.4.11)
@@ -102,7 +102,8 @@ interface CascadeFixture {
  * the border adjacency assertions for `:root` + `[data-mode='dark']`
  * since no runtime consumer paints the default cascade's state
  * borders. Per-theme cascades define --base-bg directly as hex; we
- * read it straight out of bundles.css for each FIXTURES entry.
+ * read it from the per-theme `.css` files via the concatenated
+ * `BUNDLES_CSS` source for each FIXTURES entry.
  */
 const DEFAULT_PAGE_BG: Rgb = readPageBg(BUNDLES_CSS, ':root', 'base-bg');
 const SCHOOL_OF_ROCK_LIGHT_PAGE_BG: Rgb = readPageBg(

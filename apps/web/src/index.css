@@ -137,10 +137,9 @@ body {
   outline-offset: 2px;
   /* Anchor the outer halo to --base-bg so the CVD focus ring reads through
      the bundle vocabulary, consistent with the wave-31 chrome migration.
-     Resolves identically to --bg on every theme variant except hit-man
-     light, where the bundle binding intentionally diverges (--base-bg
-     #ecdcb0 vs flat --bg #f0c870; see bundles.css:1339). The bundle
-     binding also future-proofs against per-scope --bg overrides. */
+     Most themes set --base-bg identical to the historical flat --bg
+     (retired wave 36); hit-man light intentionally diverges (--base-bg
+     #ecdcb0 vs the per-theme --base-input-bg #f0c870; see hit-man.css). */
   box-shadow: 0 0 0 5px var(--base-bg);
 }
 

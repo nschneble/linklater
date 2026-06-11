@@ -43,13 +43,14 @@
  * directory (apollo-10-1-2.css, school-of-rock.css, etc.). The :root
  * default cascade below is the synthetic fallback for the pre-theme-
  * attribute window (any code path that runs before `<html data-theme=...>`
- * is set). It pins base/mount/orbit to explicit hex (default.css's dark
- * palette) and uses neutral rose/amber/blue/emerald hues for the state
- * bundles. The input-bg and orbit-bg slots are deliberately omitted from
- * this fallback (see the in-place breadcrumbs below): consumers only
- * render after a theme is active, so the slots always resolve from a
- * per-theme block. Per-theme blocks beat these defaults on specificity
- * regardless of CSS source order.
+ * is set). It pins base/mount/orbit to explicit hex chosen so the
+ * pre-theme-attribute window paints a usable dark surface, and uses
+ * neutral rose/amber/blue/emerald hues for the state bundles. The
+ * input-bg and orbit-bg slots are deliberately omitted from this
+ * fallback (see the in-place breadcrumbs below): consumers only render
+ * after a theme is active, so the slots always resolve from a per-theme
+ * block. Per-theme blocks beat these defaults on specificity regardless
+ * of CSS source order.
  */
 
 :root {
@@ -62,8 +63,9 @@
    * universal value alone (culori-verified wave 21). */
   --focus-ring: var(--accent);
 
-  /* base = page chrome. Synthetic-fallback hex matches default.css's
-   * dark palette; per-theme blocks below override every slot. */
+  /* base = page chrome. Explicit hex chosen so the pre-theme-attribute
+   * window paints a usable dark surface; per-theme blocks below override
+   * every slot. */
   --base-bg: #0f0b1b;
   --base-border: #47419d;
   --base-text: var(--text);

@@ -1,6 +1,5 @@
 /* ---------- hit-man ---------- *
- * Wave 13 migration to per-theme bundle palette. The legacy flat tokens
- * stay intact for un-migrated consumers.
+ * Wave 13 migration to per-theme bundle palette.
  *
  * APOLLO-CLASS WARM-ONLY theme: no greens, no blues in the base palette
  * (PRD-allowed hues are red-rust + amber-gold). State bundles need PRD
@@ -13,11 +12,12 @@
  * gradations off the deep page bg in dark mode — keeps the surface
  * stack quiet so state bundles do the categorical work.
  *
- * Intentional palette breaks vs hit-man flat tokens:
- *   - LIGHT --base-bg #ecdcb0 NOT the flat --bg #f0c870. Calmer cream
- *     bundle-layer override; lets the warn-bundle gold stay distinct
- *     from the page chrome. flat --bg untouched for un-migrated
- *     consumers.
+ * Intentional palette breaks vs hit-man's wave-13 starting point:
+ *   - LIGHT --base-bg #ecdcb0. Wave 13 split LIGHT --base-bg from the
+ *     then-extant flat --bg #f0c870 (calmer cream vs the eye-bleeding
+ *     gold) so the warn-bundle gold could stay distinct from the page
+ *     chrome. The flat --bg token was retired entirely in wave 36; the
+ *     #f0c870 hex now lives only on hit-man light's --base-input-bg.
  *   - LIGHT --warn-border #6a4510 NOT the PRD gold #eba622 (SC 1.4.11
  *     vs warn-bg fails by wide margin).
  *   - LIGHT --info bundle = PURPLE (Apollo-class break; scanner-darkly
