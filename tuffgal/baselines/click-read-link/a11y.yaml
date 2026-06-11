@@ -23,15 +23,20 @@
     - paragraph: example.test
     - button "Mark unread"
     - link "Test Link 1 — example.test, opens in new tab":
-      - /url: https://example.test/read/1
-    - paragraph: Test Link 2
-    - paragraph: example.test
-    - button "Mark unread"
-    - link "Test Link 2 — example.test, opens in new tab":
-      - /url: https://example.test/read/2
+      - /url: https://example.test/1
     - paragraph: Test Link 3
     - paragraph: example.test
     - button "Mark unread"
     - link "Test Link 3 — example.test, opens in new tab":
       - /url: https://example.test/read/3
+    - paragraph: Test Link 2
+    - paragraph: example.test
+    - button "Mark unread"
+    - link "Test Link 2 — example.test, opens in new tab":
+      - /url: https://example.test/read/2
+    - paragraph: Test Link 1
+    - paragraph: example.test
+    - button "Mark unread"
+    - link "Test Link 1 — example.test, opens in new tab":
+      - /url: https://example.test/read/1
   - status

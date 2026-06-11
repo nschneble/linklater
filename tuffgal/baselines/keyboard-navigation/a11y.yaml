@@ -22,8 +22,8 @@
   - status
 - button "Close shortcuts"
 - dialog "Keyboard shortcuts":
-  - heading "Keyboard shortcuts" [level=2]
   - button "Close keyboard shortcuts"
+  - heading "Keyboard shortcuts" [level=2]
   - list:
     - listitem: Navigate links / menu ↑ / ↓
     - listitem: Switch tabs ← / →
