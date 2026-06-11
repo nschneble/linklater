@@ -17,8 +17,8 @@
  * axis-B luminance gap vs --info-border #223366 (monochromatism safety).
  */
 [data-theme='apollo-10-1-2'][data-mode='dark'] {
-  /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --accent: #96b2e5;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
   --focus-ring: #70b0e0;
 
   /* Page-gradient stops — see bundles.css preamble. Carry the wave-39
@@ -106,8 +106,8 @@
 }
 
 [data-theme='apollo-10-1-2'][data-mode='light'] {
-  /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --accent: #28537e;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
   --focus-ring: #28537e;
 
   /* Page-gradient stops — see bundles.css preamble. */

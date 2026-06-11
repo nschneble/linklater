@@ -34,9 +34,6 @@
  * Shared color parsing + WCAG helpers live in bundles-color-utils.ts.
  */
 
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   BUNDLES,
@@ -386,12 +383,11 @@ describe('bundle contrast contract', () => {
    * and each state bundle's composited bg. Mechanizes the wave 21
    * contract that the brief verified by hand.
    *
-   * Every per-theme cascade now ships an explicit `--focus-ring: #...`
-   * hex (wave 43 broke the prior `var(--accent)` alias in preparation
-   * for the wave-44 `--accent` retirement). The `:root` synthetic
-   * fallback in `bundles.css` still aliases `var(--accent)` — the
-   * resolver below returns null for that fixture so the per-theme
-   * cascades carry the contract.
+   * Every per-theme cascade ships an explicit `--focus-ring: #...` hex
+   * (wave 43). The `:root` synthetic fallback in `bundles.css` omits
+   * the slot (wave 44 retirement of `--accent` collapsed the prior
+   * alias chain) — the resolver returns null for that fixture so the
+   * per-theme cascades carry the contract.
    */
   describe('focus-ring on every surface', () => {
     const SURFACES_TO_CHECK = [
@@ -409,33 +405,23 @@ describe('bundle contrast contract', () => {
      *
      * Legitimate shapes today:
      *  1. Undefined (no `--focus-ring` declared in this fixture's block) —
-     *     return null so the caller can skip the fixture cleanly. Some
-     *     test fixtures (e.g. the default :root cascade) deliberately do
-     *     not declare a focus ring; only per-theme blocks do.
-     *  2. `var(--accent)` with no themeCss/mode supplied — happens for
-     *     the default cascade fixtures (`:root`, `[data-mode='dark']`)
-     *     where there is no per-theme stylesheet to chase. Return null
-     *     so the caller skips the fixture cleanly; the per-theme cascade
-     *     fixtures all carry explicit hex post-wave-43, so the contract
-     *     is still mechanized end-to-end.
-     *  3. Literal hex (e.g. every per-theme block post-wave-43). This is
-     *     the common path now; per-theme cascades all ship explicit hex.
-     *  4. `var(--{alias})` for a per-theme cascade — chase the alias
-     *     through the corresponding theme stylesheet's per-mode block.
-     *     No per-theme cascade uses this shape today; the generalized
-     *     resolver remains in place so future aliases
-     *     (`var(--mount-highlight)` etc.) don't require a new branch.
+     *     return null so the caller can skip the fixture cleanly. The
+     *     synthetic `:root` / `[data-mode='dark']` cascades omit the
+     *     slot post-wave-44 (the prior `var(--accent)` alias chain was
+     *     retired). Only per-theme blocks declare it.
+     *  2. Literal hex (every per-theme block post-wave-43). This is the
+     *     only resolved path today.
      *
-     * Anything else (a misspelled function, an unknown literal in a
-     * per-theme block) gets returned as `'__UNRESOLVED__'` so the caller
-     * can fail loud rather than silently skip the fixture and lose
-     * coverage. See a11y-lead MINOR in wave 23.1 gang findings — silent-
-     * skip on aliases was the bug.
+     * Wave 44 retired the `var(--accent)` alias chase that previously
+     * lived here — the resolver's state space collapsed to undefined →
+     * null and hex → hex. Anything else (an unexpected alias, a
+     * misspelled function) gets returned as `'__UNRESOLVED__'` so the
+     * caller can fail loud rather than silently skip the fixture and
+     * lose coverage. See a11y-lead MINOR in wave 23.1 gang findings —
+     * silent-skip on aliases was the bug.
      */
     function resolveFocusRing(
       declarations: Map<string, string>,
-      themeCss: string | null,
-      mode: 'light' | 'dark' | null,
     ): string | null {
       const value = declarations.get('focus-ring');
       if (value === undefined) {
@@ -444,72 +430,13 @@ describe('bundle contrast contract', () => {
       if (value.startsWith('#')) {
         return value;
       }
-      const aliasMatch = value.match(/^var\(--([a-z-]+)\)$/);
-      if (!aliasMatch) {
-        return '__UNRESOLVED__';
-      }
-      if (!themeCss || !mode) {
-        // Default cascade fixtures (:root, [data-mode='dark']) ship a
-        // `var(--accent)` alias but have no per-theme stylesheet to
-        // chase. Every per-theme cascade carries an explicit
-        // `--focus-ring` hex post-wave-43, so contract coverage is
-        // complete without the synthetic-fallback alias.
-        return null;
-      }
-      const aliasName = aliasMatch[1];
-      const blockRe = new RegExp(
-        `\\[data-theme='[^']+'\\]\\[data-mode='${mode}'\\]\\s*\\{([\\s\\S]*?)\\n\\}`,
-      );
-      const m = themeCss.match(blockRe);
-      if (!m) {
-        return '__UNRESOLVED__';
-      }
-      const aliasDeclRe = new RegExp(`--${aliasName}:\\s*([^;]+);`);
-      const aliasDecl = m[1].match(aliasDeclRe);
-      if (!aliasDecl) {
-        return '__UNRESOLVED__';
-      }
-      const resolved = aliasDecl[1].trim();
-      // Only hex-literal aliases are supported. A nested var() would
-      // require multi-hop resolution that no theme uses today; fail loud
-      // rather than skip.
-      if (!resolved.startsWith('#')) {
-        return '__UNRESOLVED__';
-      }
-      return resolved;
-    }
-
-    function themeAndModeFromSelector(
-      selector: string,
-    ): { theme: string; mode: 'light' | 'dark' } | null {
-      const m = selector.match(
-        /\[data-theme='([^']+)'\]\[data-mode='(light|dark)'\]/,
-      );
-      if (!m) return null;
-      return { theme: m[1], mode: m[2] as 'light' | 'dark' };
+      return '__UNRESOLVED__';
     }
 
     for (const fixture of FIXTURES) {
       const block = extractBlock(BUNDLES_CSS, fixture.selector);
       const declarations = parseDeclarations(block);
-      const themeMode = themeAndModeFromSelector(fixture.selector);
-      let themeCss: string | null = null;
-      if (themeMode) {
-        const stylesDir = dirname(fileURLToPath(import.meta.url));
-        try {
-          themeCss = readFileSync(
-            resolve(stylesDir, `${themeMode.theme}.css`),
-            'utf8',
-          );
-        } catch {
-          themeCss = null;
-        }
-      }
-      const focusRing = resolveFocusRing(
-        declarations,
-        themeCss,
-        themeMode?.mode ?? null,
-      );
+      const focusRing = resolveFocusRing(declarations);
       if (focusRing === null) {
         continue;
       }

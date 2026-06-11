@@ -9,11 +9,11 @@ import { FOCUS_RING } from '../../lib/styles';
  * The `surface` prop names the bundle of the parent surface — i.e. which
  * bundle hosts this link. Idle text reads `--{host}-alt-text`; hover
  * elevates to `--{host}-text`. DESIGN DECISION: hover deliberately does
- * not flip to `--accent` — the permanent underline alone carries the link
- * affordance, and the alt→text luminance lift confirms the hover state.
- * An accent flip would compete with `PrimaryButton` for visual weight on
- * forms and break the "links are quiet" rule. Do not "fix" this by
- * reintroducing accent on hover.
+ * not flip to `--{host}-highlight` — the permanent underline alone
+ * carries the link affordance, and the alt→text luminance lift confirms
+ * the hover state. A highlight flip would compete with `PrimaryButton`
+ * for visual weight on forms and break the "links are quiet" rule. Do
+ * not "fix" this by reintroducing a highlight flip on hover.
  *
  * The `warn` surface is supported because the email verification banner
  * in `AppShell` renders a LinkButton inside a `--warn-bg` region; warn

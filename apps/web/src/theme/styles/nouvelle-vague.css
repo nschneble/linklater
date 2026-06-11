@@ -66,8 +66,8 @@
  * follow-on .tsx cleanup pass.
  */
 [data-theme='nouvelle-vague'][data-mode='dark'] {
-  /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --accent: #d4d4d4;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
   --focus-ring: #d4d4d4;
   --asset-filter: grayscale(100%);
 
@@ -138,8 +138,8 @@
 }
 
 [data-theme='nouvelle-vague'][data-mode='light'] {
-  /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --accent: #1f1f1f;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
   --focus-ring: #1f1f1f;
   --asset-filter: grayscale(100%);
 

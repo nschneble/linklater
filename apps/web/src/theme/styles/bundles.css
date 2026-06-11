@@ -45,27 +45,32 @@
  * attribute window (any code path that runs before `<html data-theme=...>`
  * is set). It pins base/mount/orbit to explicit hex chosen so the
  * pre-theme-attribute window paints a usable dark surface, and uses
- * neutral rose/amber/blue/emerald hues for the state bundles. The
- * input-bg and orbit-bg slots are deliberately omitted from this
- * fallback (see the in-place breadcrumbs below): consumers only render
- * after a theme is active, so the slots always resolve from a per-theme
- * block. Per-theme blocks beat these defaults on specificity regardless
- * of CSS source order.
+ * neutral rose/amber/blue/emerald hues for the state bundles. Several
+ * slots are deliberately omitted from this fallback (see the in-place
+ * breadcrumbs below): `--orbit-bg`, `--base-input-bg`,
+ * `--mount-input-bg`, `--focus-ring`, `--{base,mount,orbit}-highlight`,
+ * and their dependent `--{base,mount,orbit}-highlight-fg` / `-hover`
+ * pairs. Consumers only render after a theme is active, so the slots
+ * always resolve from a per-theme block. Per-theme blocks beat these
+ * defaults on specificity regardless of CSS source order.
  */
 
 :root {
-  /* Universal focus-visible ring color. Every per-theme cascade ships
-   * an explicit `--focus-ring` hex (wave 43 broke the prior alias to
-   * `--accent` so the wave-44 `--accent` retirement does not sever the
-   * focus indicator on the per-theme cascades). This `:root` declaration
-   * still aliases `var(--accent)` as a defensive fallback for the
-   * pre-theme-attribute window; wave 44 will inline the resolved hex
-   * here alongside the broader `--accent` cleanup. Per-bundle overrides
-   * (`--focus-ring-on-{bundle}`) are supported via the consumer-side
-   * pattern but currently unused — every theme/mode clears 3:1 against
-   * every surface with the universal value alone (culori-verified
-   * wave 21). */
-  --focus-ring: var(--accent);
+  /* --focus-ring and --base/mount/orbit-highlight omitted from the
+   * synthetic fallback — defined per-theme. Wave 44 retired the
+   * var(--accent) alias chain that previously fed these slots here;
+   * inlining the resolved hex would activate the bundle-contrast
+   * iteration against the synthetic base/mount/orbit bgs and fail SC
+   * 1.4.11 (the prior --accent hex against --mount-bg #201e43 paints
+   * 2.87:1). Per-theme blocks carry the contract — every theme/mode
+   * ships explicit hex for these four slots (wave 43 for focus-ring,
+   * waves 1-41 for the per-tier highlights). Consumers only render
+   * after a theme is active, so omitting from the synthetic fallback is
+   * safe (mirrors --orbit-bg + --base/mount-input-bg precedent — see
+   * preamble). Per-bundle overrides (--focus-ring-on-{bundle}) are
+   * supported via the consumer-side pattern but currently unused —
+   * every theme/mode clears 3:1 against every surface with the
+   * universal value alone (culori-verified wave 21). */
 
   /* base = page chrome. Explicit hex chosen so the pre-theme-attribute
    * window paints a usable dark surface; per-theme blocks below override
@@ -75,14 +80,12 @@
   --base-text: #eeeedf;
   --base-alt-text: #e09d3a;
   --base-subtle-text: #8db030;
-  --base-highlight: var(--accent);
 
   /* mount = cards */
   --mount-bg: #201e43;
   --mount-border: #47419d;
   --mount-text: #eeeedf;
   --mount-alt-text: #e09d3a;
-  --mount-highlight: var(--accent);
 
   /* --base-input-bg / --mount-input-bg omitted from the synthetic
    * fallback — defined per-theme (wave 22a + 22b); legacy --bg-input
@@ -94,7 +97,6 @@
   --orbit-border: #47419d;
   --orbit-text: #eeeedf;
   --orbit-alt-text: #e09d3a;
-  --orbit-highlight: var(--accent);
 
   /* alert / warn / info / success default palettes mirror the rose /
    * amber / blue / emerald hues the legacy components used inline. Every
@@ -114,23 +116,12 @@
    * bundle-contrast test's cross-theme adjacency check surfaced its
    * failure against before-midnight (#ccc095).
    */
-  /* `--{base,mount,orbit}-highlight-fg` / `-hover` are defensive fallback
-   * values for the synthetic `:root` cascade. Each `--{tier}-highlight`
-   * resolves through `var(--accent)` rather than a literal hex, so the
-   * bundle-contrast contract iteration skips the synthetic block in
-   * `bundles.contrast.test.ts`. The slots still ship so any pre-theme-
-   * attribute window painting a filled `--{tier}-highlight`-bg consumer
-   * (e.g. `PrimaryButton`, IconButton danger-filled) resolves to a
-   * legible foreground + hover. Wave 42 retired `--accent-fg` /
-   * `--accent-hover` (universal fg/hover aliases) — every consumer now
-   * pulls its foreground + hover from the per-tier slots below, so the
-   * mount + orbit defaults are no longer optional. */
-  --base-highlight-fg: #ffffff;
-  --base-highlight-hover: #d8521e;
-  --mount-highlight-fg: #ffffff;
-  --mount-highlight-hover: #d8521e;
-  --orbit-highlight-fg: #ffffff;
-  --orbit-highlight-hover: #d8521e;
+  /* `--{base,mount,orbit}-highlight-fg` / `-hover` omitted from the
+   * synthetic fallback. Wave 44 retired their parent `--{tier}-highlight`
+   * slots (omitted above) — without a highlight bg for the foreground
+   * to paint on, the fg/hover slots are inert. Per-theme cascades carry
+   * the full pair contract for every filled-highlight consumer
+   * (`PrimaryButton`, IconButton danger-filled). */
 
   /* State bundles below interleave -fg/-hover with the other slots per
    * wave-38 per-theme convention. Each block carries the full 7-slot

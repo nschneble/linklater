@@ -67,8 +67,8 @@
  * state pairs on axis A or axis B with zero mitigations applied.
  */
 [data-theme='before-sunrise'][data-mode='dark'] {
-  /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --accent: #e8854a;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
   --focus-ring: #e8854a;
 
   /* Page-gradient stops — see bundles.css preamble. */
@@ -150,8 +150,8 @@
 }
 
 [data-theme='before-sunrise'][data-mode='light'] {
-  /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --accent: #623618;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
   --focus-ring: #623618;
 
   /* Page-gradient stops — see bundles.css preamble. */

@@ -7,14 +7,7 @@ retired in stages.
 
 ## 1. Flat tokens (legacy, fully retired in chrome)
 
-Wave 43 migrated the last `--accent` consumers to bundle slots:
-`--mount-highlight`, `--base-highlight`, and `--orbit-highlight`
-depending on host. `--accent` itself remains declared per-theme one wave
-longer so the `LEGACY_TOKENS` tripwire can land in the same commit that
-deletes the declarations (wave 44). Until then, no chrome file reads
-`var(--accent)` directly.
-
-Ten flat tokens have been retired:
+Eleven flat tokens have been retired:
 
 - `--bg-input` (wave 23) — form input backgrounds now live on the bundle
   slots `--base-input-bg` and `--mount-input-bg`. See Section 2.
@@ -30,10 +23,15 @@ Ten flat tokens have been retired:
   + hover now resolve per host tier via `--{base,mount,orbit}-highlight-fg`
   and `--{base,mount,orbit}-highlight-hover`. `PrimaryButton` gained a
   `surface` prop to pick the right pair. See Section 5.
+- `--accent` (wave 44) — wave 43 migrated the last chrome consumers to
+  `--mount-highlight`, `--base-highlight`, and `--orbit-highlight`
+  depending on host; wave 44 deleted the per-theme `--accent`
+  declarations and removed the alias chain in the `bundles.css :root`
+  synthetic fallback. `default.css` now only carries the
+  `--theme-transition-duration` / `--theme-transition-easing` slots.
 
-The `chrome-token-migration.test.ts` tripwire keeps the retired tokens
-in its `LEGACY_TOKENS` list to prevent re-introduction. `--accent` joins
-the list in wave 44 alongside the deletion of its per-theme declarations.
+The `chrome-token-migration.test.ts` tripwire keeps every retired token
+in its `LEGACY_TOKENS` list to prevent re-introduction.
 
 ## 2. Color bundles (all 10 themes migrated)
 
@@ -92,10 +90,15 @@ drift.
 
 Every theme variant defines `--focus-ring` — a single slot driving the
 `:focus-visible` ring color across all surfaces. Every theme-mode block
-ships an explicit hex (wave 43 broke the prior `--focus-ring: var(--accent)`
-alias in preparation for the `--accent` retirement); apollo-10-1-2 dark
-diverges from its mode's `--accent` hex because the original accent
-collapses against `--orbit-bg`.
+ships an explicit hex (wave 43 broke the prior
+`--focus-ring: var(--accent)` alias; wave 44 retired `--accent`
+entirely). Most theme-mode blocks pick the same hex their `--accent`
+historically used; apollo-10-1-2 dark uses `#70b0e0` instead — the
+original accent collapsed against `--orbit-bg`. The `bundles.css :root`
+synthetic fallback omits the slot (no consumer paints before a theme
+attribute is set on `<html>`); `bundles.contrast.test.ts` returns null
+for that fixture and lets the per-theme cascades carry the SC 1.4.11
+contract.
 
 Per-bundle overrides via the consumer-side pattern
 (`--focus-ring-on-{bundle}`) are supported but currently unused —

@@ -90,12 +90,13 @@ export default function Toast({
   // Focus indicator on the dismiss button is `--{state}-highlight-fg` (the
   // bundle's own highlight-fg) rather than the universal `--focus-ring`.
   // Recovery Option A per a11y-lead brief: the dismiss button paints on the
-  // toast's `--{state}-highlight` background; `--focus-ring` (aliases
-  // `--accent`) failed 3:1 against `--{state}-highlight` on most themes
-  // per looper culori verification. The highlight-fg color already clears
-  // 4.5:1 against highlight by the existing bundle contract, so the ring
-  // inherits a comfortable SC 1.4.11 margin by construction — an
-  // unconditional uplift regardless of per-theme variance.
+  // toast's `--{state}-highlight` background; the per-theme `--focus-ring`
+  // hex (historically aliased to `--accent`, retired wave 44) failed 3:1
+  // against `--{state}-highlight` on most themes per looper culori
+  // verification. The highlight-fg color already clears 4.5:1 against
+  // highlight by the existing bundle contract, so the ring inherits a
+  // comfortable SC 1.4.11 margin by construction — an unconditional
+  // uplift regardless of per-theme variance.
   return (
     <div
       role={role}

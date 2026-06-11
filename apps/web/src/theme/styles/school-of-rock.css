@@ -10,8 +10,8 @@
  *              bundle bg and page bg
  */
 [data-theme='school-of-rock'][data-mode='dark'] {
-  /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --accent: #edc8b4;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
   --focus-ring: #edc8b4;
 
   /* Page-gradient stops — see bundles.css preamble. */
@@ -98,8 +98,8 @@
 }
 
 [data-theme='school-of-rock'][data-mode='light'] {
-  /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --accent: #5c1615;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
   --focus-ring: #5c1615;
 
   /* Page-gradient stops — see bundles.css preamble. */

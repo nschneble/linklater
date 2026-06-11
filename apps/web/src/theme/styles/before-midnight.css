@@ -29,8 +29,8 @@
  * axis A or axis B in both modes.
  */
 [data-theme='before-midnight'][data-mode='dark'] {
-  /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --accent: #ebb327;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
   --focus-ring: #ebb327;
 
   /* Page-gradient stops — see bundles.css preamble. */
@@ -100,8 +100,8 @@
 }
 
 [data-theme='before-midnight'][data-mode='light'] {
-  /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --accent: #562315;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
   --focus-ring: #562315;
 
   /* Page-gradient stops — see bundles.css preamble. */

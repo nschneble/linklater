@@ -6,11 +6,12 @@
  * settings; extended each subsequent wave (common components, UserMenu,
  * auth pages, feature views) as files were migrated.
  *
- * As of wave 42, eight of the legacy tokens (`--bg`, `--bg-surface`,
+ * As of wave 44, nine of the legacy tokens (`--bg`, `--bg-surface`,
  * `--text`, `--text-muted`, `--text-subtle`, `--border`, `--accent-fg`,
- * `--accent-hover`) are fully retired from the codebase — not declared
- * anywhere. The tripwire still lists them to prevent re-introduction
- * (sister to `--bg-input` wave 23 + `--bg-elevated` wave 32 retirements).
+ * `--accent-hover`, `--accent`) are fully retired from the codebase —
+ * not declared anywhere. The tripwire still lists them to prevent
+ * re-introduction (sister to `--bg-input` wave 23 + `--bg-elevated`
+ * wave 32 retirements).
  *
  * Fires before the WCAG contrast suite runs, so a regression here is
  * caught as a flat string mismatch rather than a downstream contract
@@ -110,11 +111,6 @@ const MIGRATED_FILES = [
  * Legacy tokens that should NOT appear in any wave-19 migrated chrome file.
  *
  * Not included:
- *   --accent          — wave 43 migrated every chrome consumer to bundle
- *                       slots, but the per-theme declarations still ship
- *                       to keep the alias chain in the bundles.css :root
- *                       synthetic fallback intact. Joins the list in
- *                       wave 44 when the declarations are deleted.
  *   --focus-ring      — universal slot (wave 21). Migrated chrome files
  *                       use it; not a legacy alias.
  */
@@ -127,6 +123,7 @@ const LEGACY_TOKENS = [
   'var(--bg-elevated)',
   'var(--bg-input)',
   'var(--border)',
+  'var(--accent)',
   'var(--accent-fg)',
   'var(--accent-hover)',
 ] as const;
