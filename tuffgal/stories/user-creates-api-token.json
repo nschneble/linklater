@@ -3,6 +3,7 @@
   "flow": "create an API token",
   "needs": ["logged-in"],
   "actions": [
+    { "action": "intercept-instant-bookmarklet-token" },
     {
       "action": "create-api-token",
       "parameters": { "tokenName": "ci-smoke-test" }

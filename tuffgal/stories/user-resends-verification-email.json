@@ -4,6 +4,7 @@
   "needs": ["logged-in"],
   "actions": [
     { "action": "intercept-no-api-tokens" },
+    { "action": "intercept-instant-bookmarklet-token" },
     { "action": "intercept-me-unverified" },
     { "action": "intercept-noop-resend-verification" },
     { "action": "resend-verification-email" }
