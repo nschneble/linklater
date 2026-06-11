@@ -10,6 +10,5 @@
   ],
   "expect": {
     "anyOf": [{ "selector": "[role=\"switch\"][aria-checked=\"true\"]" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

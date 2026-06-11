@@ -12,6 +12,5 @@
   "expect": {
     "anyOf": [{ "text": "Your recovery codes have been generated" }]
   },
-  "mask": [{ "selector": "[role='status']" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "[role='status']" }]
 }

@@ -14,6 +14,5 @@
       }
     ]
   },
-  "mask": [{ "selector": "[role='status']" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "[role='status']" }]
 }

@@ -23,6 +23,5 @@
       { "selector": "[role='alert']:has-text('Internal server error')" }
     ]
   },
-  "mask": [{ "selector": "[role='alert']" }, { "selector": "time" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "[role='alert']" }, { "selector": "time" }]
 }

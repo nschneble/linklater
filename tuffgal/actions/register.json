@@ -23,6 +23,5 @@
     "anyOf": [{ "role": "heading", "text": "Welcome to Linklater!" }],
     "timeoutMs": 20000
   },
-  "mask": [{ "selector": "#suggestion-callout-title" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "#suggestion-callout-title" }]
 }

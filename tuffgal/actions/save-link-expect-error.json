@@ -20,6 +20,5 @@
   "expect": {
     "anyOf": [{ "role": "alert" }]
   },
-  "mask": [{ "selector": "#suggestion-callout-title" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "#suggestion-callout-title" }]
 }

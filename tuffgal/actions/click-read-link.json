@@ -9,6 +9,5 @@
   ],
   "expect": {
     "anyOf": [{ "role": "link", "text": "Test Link 1" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

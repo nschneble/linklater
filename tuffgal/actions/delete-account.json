@@ -10,6 +10,5 @@
   ],
   "expect": {
     "anyOf": [{ "role": "button", "text": "Cancel account deletion" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

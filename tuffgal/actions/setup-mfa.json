@@ -15,6 +15,5 @@
   "mask": [
     { "selector": "img[alt='']" },
     { "selector": "[aria-label='TOTP secret']" }
-  ],
-  "diff": { "maxDiffRatio": 0.02 }
+  ]
 }

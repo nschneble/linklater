@@ -15,6 +15,5 @@
   ],
   "expect": {
     "anyOf": [{ "text": "Check your email for a login link" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

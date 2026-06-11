@@ -13,6 +13,5 @@
     "anyOf": [{ "selector": "#links-list a[aria-label*='Test Link 1']" }],
     "timeoutMs": 20000
   },
-  "mask": [{ "selector": "#suggestion-callout-title" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "#suggestion-callout-title" }]
 }

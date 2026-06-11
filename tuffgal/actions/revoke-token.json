@@ -28,6 +28,5 @@
   "expect": {
     "anyOf": [{ "text": "You haven't created any tokens" }]
   },
-  "mask": [{ "selector": "[role='status']" }, { "selector": "time" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "[role='status']" }, { "selector": "time" }]
 }

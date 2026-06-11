@@ -26,6 +26,5 @@
   "expect": {
     "anyOf": [{ "selector": "html[data-theme='apollo-10-1-2']" }]
   },
-  "mask": [{ "selector": "#suggestion-callout-title" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "#suggestion-callout-title" }]
 }

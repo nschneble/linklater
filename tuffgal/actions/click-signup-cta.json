@@ -11,6 +11,5 @@
   "expect": {
     "anyOf": [{ "role": "button", "text": "Sign up" }],
     "timeoutMs": 10000
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

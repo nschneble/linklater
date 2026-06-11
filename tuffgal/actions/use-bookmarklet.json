@@ -23,6 +23,5 @@
   "expect": {
     "anyOf": [{ "selector": "[aria-label='Regenerate bookmarklet token']" }],
     "timeoutMs": 15000
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

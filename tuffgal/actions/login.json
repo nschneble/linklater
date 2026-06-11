@@ -21,6 +21,5 @@
   "expect": {
     "anyOf": [{ "role": "heading", "text": "Your links" }]
   },
-  "mask": [{ "selector": "[aria-live='polite']" }, { "selector": "#suggestion-callout-title" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "[aria-live='polite']" }, { "selector": "#suggestion-callout-title" }]
 }

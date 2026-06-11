@@ -26,6 +26,5 @@
   "mask": [
     { "selector": "[aria-label*=\"Personal access token\"]" },
     { "selector": "button[aria-label*=\"Revoke\"]" }
-  ],
-  "diff": { "maxDiffRatio": 0.02 }
+  ]
 }

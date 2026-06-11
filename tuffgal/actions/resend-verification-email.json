@@ -12,6 +12,5 @@
     "anyOf": [{ "text": "Verification email sent" }],
     "timeoutMs": 10000
   },
-  "mask": [{ "selector": "[role='status']" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "[role='status']" }]
 }

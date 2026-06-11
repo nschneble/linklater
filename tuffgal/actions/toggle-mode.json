@@ -20,6 +20,5 @@
       { "role": "button", "text": "User menu (testing-ui@linklater.test)" }
     ]
   },
-  "mask": [{ "selector": "#suggestion-callout-title" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "#suggestion-callout-title" }]
 }
