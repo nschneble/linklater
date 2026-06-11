@@ -81,7 +81,7 @@ export default function TokenVerificationPage({
   }, [onSuccess, searchParameters, verifyFn]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] via-[var(--page-gradient-via)] to-[var(--page-gradient-to)]">
       <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl text-center select-none">
         <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
           {title}

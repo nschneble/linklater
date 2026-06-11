@@ -76,17 +76,13 @@ const MIGRATED_FILES = [
   'src/components/UserMenu/index.tsx',
   'src/components/api-docs/ApiDocsView.tsx',
   'src/components/api-docs/TokenInput.tsx',
-  // The following pages are partially migrated (card, headings,
-  // paragraphs, buttons) but their
-  // `bg-gradient-to-b from-text-muted via-text-muted to-text` page
-  // wrappers are deferred per wave 19 brief Q9. Re-add each once the
-  // gradient lands on bundle tokens:
-  //   - src/components/auth/ConfirmAccountDeletionPage.tsx (wave 27)
-  //   - src/components/auth/ExtensionAuthorizePage.tsx (wave 19)
-  //   - src/components/auth/OAuthCallbackPage.tsx (wave 27)
-  //   - src/components/auth/ResetPasswordPage.tsx (wave 27)
-  //   - src/components/auth/VerifyLoginPage.tsx (wave 27)
-  //   - src/components/verify/TokenVerificationPage.tsx (wave 30)
+  'src/components/auth/ConfirmAccountDeletionPage.tsx',
+  'src/components/auth/ExtensionAuthorizePage.tsx',
+  'src/components/auth/OAuthCallbackPage.tsx',
+  'src/components/auth/ResetPasswordPage.tsx',
+  'src/components/auth/VerifyLoginPage.tsx',
+  'src/components/verify/TokenVerificationPage.tsx',
+  'src/routes/Unauthenticated.tsx',
   'src/components/settings/ApiTokensList/ApiTokenRow.tsx',
   'src/components/settings/ApiTokensList/index.tsx',
   'src/components/settings/ApiTokensSection/index.tsx',

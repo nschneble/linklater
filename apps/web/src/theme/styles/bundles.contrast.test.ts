@@ -890,6 +890,77 @@ describe('bundle contrast contract', () => {
   });
 
   /*
+   * Card-on-gradient lift — perceptual separation between each page-
+   * gradient stop and the card's --mount-bg surface. Consumers paint
+   * `bg-gradient-to-b from-[var(--page-gradient-from)] via-[var(--page-
+   * gradient-via)] to-[var(--page-gradient-to)]` behind a centered
+   * AuthCard whose edge is conveyed by `border-shadow` (a box-shadow
+   * utility), NOT by `border-[var(--mount-border)]`.
+   *
+   * NOT a WCAG SC 1.4.11 contract — the card edge does not depend on
+   * stop-vs-mount-border separation. This is a design tripwire: if a
+   * future theme tweak collapses the gradient-bg-vs-mount-bg luminance
+   * gap to imperceptible, the card stops feeling lifted off the page.
+   * Threshold 3.0 luminance ratio (perceptual separation, mirrors the
+   * axis B pattern in [[feedback-bundle-hue-separation]]).
+   *
+   * The :root cascade aliases the stops to `var(--text-muted)` /
+   * `var(--text)`. Each per-theme cascade carries its own concrete
+   * --text / --text-muted hex, so we resolve per theme/mode by reading
+   * the matching cascade's text tokens. Pre-flight (wave 39) cleared the
+   * matrix at 14.603:1 floor (nouvelle-vague light from-stop), so every
+   * theme passes with massive headroom.
+   *
+   * Skips :root / [data-mode='dark'] fallback cascades — they alias to
+   * --text / --text-muted which are not declared in bundles.css, so
+   * no concrete value exists to check. Per-theme cascades cover every
+   * runtime-painted combination.
+   */
+  describe('card-on-gradient lift (page-gradient stops vs --mount-bg)', () => {
+    const STOP_TO_TEXT_TOKEN = [
+      { stop: 'page-gradient-from', textToken: 'text-muted' },
+      { stop: 'page-gradient-via', textToken: 'text-muted' },
+      { stop: 'page-gradient-to', textToken: 'text' },
+    ] as const;
+
+    for (const fixture of FIXTURES) {
+      if (!fixture.checkAdjacency) {
+        continue;
+      }
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+      const mountBg = declarations.get('mount-bg');
+      if (mountBg === undefined || mountBg.includes('var(')) {
+        continue;
+      }
+
+      describe(`${fixture.label}`, () => {
+        for (const { stop, textToken } of STOP_TO_TEXT_TOKEN) {
+          const stopValue = declarations.get(textToken);
+          if (stopValue === undefined || stopValue.includes('var(')) {
+            continue;
+          }
+
+          it(`${stop} luminance ratio vs --mount-bg >= 3.0`, () => {
+            const stopRgb = resolveFg(parseColor(stopValue));
+            const background = compositeOverBg(
+              parseColor(mountBg),
+              fixture.pageBg,
+            );
+            const ratio = luminanceRatio(stopRgb, background);
+            expect
+              .soft(
+                ratio,
+                `${stop} (via --${textToken}) vs --mount-bg (${fixture.label}): got ${ratio.toFixed(3)}`,
+              )
+              .toBeGreaterThanOrEqual(3.0);
+          });
+        }
+      });
+    }
+  });
+
+  /*
    * Alert idle paint on host surfaces — the IconButton `danger` variant
    * paints `--alert-text` + `--alert-border` directly on its host bg (no
    * `--alert-bg` wrapper) at rest. The hover transient does fill

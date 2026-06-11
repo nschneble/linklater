@@ -157,6 +157,31 @@
    * QR codes, secrets, captchas (filter destroys scannability). Apply
    * with care to anything containing faces, brand logos, or text. */
   --asset-filter: none;
+
+  /* Page-gradient stops — universal slots consumed by full-page auth /
+   * verify wrappers (`bg-gradient-to-b from-[var(--page-gradient-from)]
+   * via-[var(--page-gradient-via)] to-[var(--page-gradient-to)]`). The
+   * gradient paints behind a centered AuthCard whose edge is conveyed by
+   * `border-shadow` (a box-shadow utility), NOT by `border-[var(--mount-
+   * border)]`. Consumers: ConfirmAccountDeletionPage, ExtensionAuthorize-
+   * Page, OAuthCallbackPage, ResetPasswordPage, VerifyLoginPage,
+   * TokenVerificationPage, routes/Unauthenticated.
+   *
+   * Aliased to the legacy text tokens so every theme inherits a
+   * familiar 2-tone gradient (--text-muted at top fading into --text at
+   * bottom) without per-theme overrides. The aliases live at the :root
+   * tier so per-theme cascades resolve them against each theme's own
+   * `--text` + `--text-muted` (these tokens are still alive at the
+   * alias layer per the wave 40 handoff).
+   *
+   * NOT a WCAG-load-bearing contract. The card's edge separation
+   * doesn't depend on these stops vs --mount-border. The perceptual-
+   * separation tripwire in bundles.contrast.test.ts enforces a 3.0
+   * luminance ratio against --mount-bg as a design guard, not a
+   * regulatory pair. See wave 39. */
+  --page-gradient-from: var(--text-muted);
+  --page-gradient-via: var(--text-muted);
+  --page-gradient-to: var(--text);
 }
 
 [data-mode='dark'] {
