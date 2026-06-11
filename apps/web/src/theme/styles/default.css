@@ -1,6 +1,4 @@
 :root {
-  --text: #eeeedf;
-  --text-muted: #e09d3a;
   --accent: #c03812;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #eeeedf;

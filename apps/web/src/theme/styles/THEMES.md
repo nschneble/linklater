@@ -5,18 +5,16 @@ token systems are active:
 
 ## 1. Flat tokens (legacy, all 10 themes)
 
-Each theme variant defines five flat color variables that the un-migrated
-parts of the UI still read (page-gradient consumers, accent outlines):
+Each theme variant defines three flat color variables that the
+un-migrated accent-outline consumers still read:
 
 | Variable         | Purpose                                                    |
 | ---------------- | ---------------------------------------------------------- |
-| `--text`         | Primary readable text                                      |
-| `--text-muted`   | Secondary/supporting text: labels, subtitles, placeholders |
 | `--accent`       | Primary brand color: active indicators, icons, focus rings |
 | `--accent-hover` | Accent hover state                                         |
 | `--accent-fg`    | Foreground text on accent-colored backgrounds              |
 
-Six flat tokens have been retired:
+Eight flat tokens have been retired:
 
 - `--bg-input` (wave 23) — form input backgrounds now live on the bundle
   slots `--base-input-bg` and `--mount-input-bg`. See Section 2.
@@ -24,8 +22,12 @@ Six flat tokens have been retired:
   inactive tab fills) now lift one tier via `--orbit-bg`. See Section 2.
 - `--bg`, `--bg-surface`, `--text-subtle`, `--border` (wave 36) — fully
   superseded by the `--base-*` / `--mount-*` / `--orbit-*` bundle slots.
+- `--text`, `--text-muted` (wave 40) — page-chrome text now lives on
+  `--base-text` / `--mount-text` / `--orbit-text` and their `-alt-text`
+  pairs. Page-gradient consumers read `--page-gradient-from`,
+  `--page-gradient-via`, `--page-gradient-to` directly per theme.
 
-The `chrome-token-migration.test.ts` tripwire keeps all six in its
+The `chrome-token-migration.test.ts` tripwire keeps all eight in its
 `LEGACY_TOKENS` list to prevent re-introduction.
 
 ## 2. Color bundles (all 10 themes migrated)
@@ -156,12 +158,7 @@ satisfy the bundle distinguishability contract without any
 
 When adding or tuning a theme, the surviving flat tokens must also meet:
 
-- `--text` and `--text-muted` on `--base-bg` / `--mount-bg`: **AAA**
-  (≥ 7 : 1 for normal text, ≥ 4.5 : 1 for large text). The page-gradient
-  consumers (auth pages, ExtensionAuthorize, TokenVerification) read
-  `--text` and `--text-muted` directly on the page surface.
-- `--accent-fg` on `--accent` and `--accent-hover`: **AA**
-  (≥ 4.5 : 1)
+- `--accent-fg` on `--accent` and `--accent-hover`: **AA** (≥ 4.5 : 1)
 
 ## `swatchIcon` field
 

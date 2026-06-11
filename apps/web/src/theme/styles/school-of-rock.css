@@ -11,11 +11,14 @@
  */
 [data-theme='school-of-rock'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --text: #ffffff;
-  --text-muted: #fffffe;
   --accent: #edc8b4;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #000000;
+
+  /* Page-gradient stops — see bundles.css preamble. */
+  --page-gradient-from: #fffffe;
+  --page-gradient-via: #fffffe;
+  --page-gradient-to: #ffffff;
 
   /* Bundle palette. */
   --base-bg: #0a0a07;
@@ -91,11 +94,14 @@
 
 [data-theme='school-of-rock'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --text: #000000;
-  --text-muted: #040301;
   --accent: #5c1615;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #ffffff;
+
+  /* Page-gradient stops — see bundles.css preamble. */
+  --page-gradient-from: #040301;
+  --page-gradient-via: #040301;
+  --page-gradient-to: #000000;
 
   /* Bundle palette. */
   --base-bg: #e0d0c1;

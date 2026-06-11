@@ -18,12 +18,16 @@
  */
 [data-theme='apollo-10-1-2'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --text: #f4f1ec;
-  --text-muted: #e1dbd5;
   --accent: #96b2e5;
   --accent-hover: oklch(from var(--accent) calc(l + 0.1) c h);
   --accent-fg: #000000;
   --focus-ring: #70b0e0;
+
+  /* Page-gradient stops — see bundles.css preamble. Carry the wave-39
+   * two-tone tinting forward post-wave-40 (--text / --text-muted retired). */
+  --page-gradient-from: #e1dbd5;
+  --page-gradient-via: #e1dbd5;
+  --page-gradient-to: #f4f1ec;
 
   /* Bundle palette. */
   --base-bg: #0d1426;
@@ -99,11 +103,14 @@
 
 [data-theme='apollo-10-1-2'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --text: #0d1426;
-  --text-muted: #4f361a;
   --accent: #28537e;
   --accent-hover: oklch(from var(--accent) calc(l - 0.1) c h);
   --accent-fg: #f4f1ec;
+
+  /* Page-gradient stops — see bundles.css preamble. */
+  --page-gradient-from: #4f361a;
+  --page-gradient-via: #4f361a;
+  --page-gradient-to: #0d1426;
 
   /* Bundle palette. */
   --base-bg: #f4f1ec;

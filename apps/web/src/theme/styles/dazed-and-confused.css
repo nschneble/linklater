@@ -80,11 +80,14 @@
  */
 [data-theme='dazed-and-confused'][data-mode='dark'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --text: #f3f0ed;
-  --text-muted: #ede392;
   --accent: #e9a4ae;
   --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
   --accent-fg: #000000;
+
+  /* Page-gradient stops — see bundles.css preamble. */
+  --page-gradient-from: #ede392;
+  --page-gradient-via: #ede392;
+  --page-gradient-to: #f3f0ed;
 
   /* Bundle palette. */
   --base-bg: #2a201d;
@@ -170,11 +173,14 @@
 
 [data-theme='dazed-and-confused'][data-mode='light'] {
   /* Legacy flat tokens (still consumed by un-migrated chrome). */
-  --text: #2a201d;
-  --text-muted: #421410;
   --accent: #7e1f1f;
   --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
   --accent-fg: #f3f0ed;
+
+  /* Page-gradient stops — see bundles.css preamble. */
+  --page-gradient-from: #421410;
+  --page-gradient-via: #421410;
+  --page-gradient-to: #2a201d;
 
   /* Bundle palette. */
   --base-bg: #f3f0ed;

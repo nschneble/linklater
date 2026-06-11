@@ -904,23 +904,22 @@ describe('bundle contrast contract', () => {
    * Threshold 3.0 luminance ratio (perceptual separation, mirrors the
    * axis B pattern in [[feedback-bundle-hue-separation]]).
    *
-   * The :root cascade aliases the stops to `var(--text-muted)` /
-   * `var(--text)`. Each per-theme cascade carries its own concrete
-   * --text / --text-muted hex, so we resolve per theme/mode by reading
-   * the matching cascade's text tokens. Pre-flight (wave 39) cleared the
-   * matrix at 14.603:1 floor (nouvelle-vague light from-stop), so every
-   * theme passes with massive headroom.
+   * Wave 40 retired the --text / --text-muted aliases the stops used to
+   * resolve through; each per-theme cascade now declares its own
+   * --page-gradient-{from,via,to} hex directly. Pre-flight (wave 39)
+   * cleared the matrix at 14.603:1 floor (nouvelle-vague light from-stop),
+   * so every theme passes with massive headroom.
    *
-   * Skips :root / [data-mode='dark'] fallback cascades — they alias to
-   * --text / --text-muted which are not declared in bundles.css, so
-   * no concrete value exists to check. Per-theme cascades cover every
-   * runtime-painted combination.
+   * Skips :root / [data-mode='dark'] fallback cascades — the :root
+   * declares default stops but `checkAdjacency: false` already excludes
+   * those fixtures. Per-theme cascades cover every runtime-painted
+   * combination.
    */
   describe('card-on-gradient lift (page-gradient stops vs --mount-bg)', () => {
-    const STOP_TO_TEXT_TOKEN = [
-      { stop: 'page-gradient-from', textToken: 'text-muted' },
-      { stop: 'page-gradient-via', textToken: 'text-muted' },
-      { stop: 'page-gradient-to', textToken: 'text' },
+    const STOPS = [
+      'page-gradient-from',
+      'page-gradient-via',
+      'page-gradient-to',
     ] as const;
 
     for (const fixture of FIXTURES) {
@@ -935,8 +934,8 @@ describe('bundle contrast contract', () => {
       }
 
       describe(`${fixture.label}`, () => {
-        for (const { stop, textToken } of STOP_TO_TEXT_TOKEN) {
-          const stopValue = declarations.get(textToken);
+        for (const stop of STOPS) {
+          const stopValue = declarations.get(stop);
           if (stopValue === undefined || stopValue.includes('var(')) {
             continue;
           }
@@ -951,7 +950,7 @@ describe('bundle contrast contract', () => {
             expect
               .soft(
                 ratio,
-                `${stop} (via --${textToken}) vs --mount-bg (${fixture.label}): got ${ratio.toFixed(3)}`,
+                `${stop} vs --mount-bg (${fixture.label}): got ${ratio.toFixed(3)}`,
               )
               .toBeGreaterThanOrEqual(3.0);
           });

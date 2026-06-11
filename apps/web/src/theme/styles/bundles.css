@@ -69,16 +69,16 @@
    * every slot. */
   --base-bg: #0f0b1b;
   --base-border: #47419d;
-  --base-text: var(--text);
-  --base-alt-text: var(--text-muted);
+  --base-text: #eeeedf;
+  --base-alt-text: #e09d3a;
   --base-subtle-text: #8db030;
   --base-highlight: var(--accent);
 
   /* mount = cards */
   --mount-bg: #201e43;
   --mount-border: #47419d;
-  --mount-text: var(--text);
-  --mount-alt-text: var(--text-muted);
+  --mount-text: #eeeedf;
+  --mount-alt-text: #e09d3a;
   --mount-highlight: var(--accent);
 
   /* --base-input-bg / --mount-input-bg omitted from the synthetic
@@ -89,8 +89,8 @@
    * fallback — defined per-theme; legacy --bg-elevated retired wave 32.
    * See preamble. */
   --orbit-border: #47419d;
-  --orbit-text: var(--text);
-  --orbit-alt-text: var(--text-muted);
+  --orbit-text: #eeeedf;
+  --orbit-alt-text: #e09d3a;
   --orbit-highlight: var(--accent);
 
   /* alert / warn / info / success default palettes mirror the rose /
@@ -167,21 +167,20 @@
    * Page, OAuthCallbackPage, ResetPasswordPage, VerifyLoginPage,
    * TokenVerificationPage, routes/Unauthenticated.
    *
-   * Aliased to the legacy text tokens so every theme inherits a
-   * familiar 2-tone gradient (--text-muted at top fading into --text at
-   * bottom) without per-theme overrides. The aliases live at the :root
-   * tier so per-theme cascades resolve them against each theme's own
-   * `--text` + `--text-muted` (these tokens are still alive at the
-   * alias layer per the wave 40 handoff).
+   * Each shipped theme carries its own --page-gradient-{from,via,to} in
+   * the per-theme `.css` cascade (wave 40 inlined the values that used to
+   * alias `var(--text-muted)` / `var(--text)`, retiring those flat tokens).
+   * The fallback values below paint a familiar 2-tone gradient during the
+   * pre-theme-attribute window.
    *
    * NOT a WCAG-load-bearing contract. The card's edge separation
    * doesn't depend on these stops vs --mount-border. The perceptual-
    * separation tripwire in bundles.contrast.test.ts enforces a 3.0
    * luminance ratio against --mount-bg as a design guard, not a
    * regulatory pair. See wave 39. */
-  --page-gradient-from: var(--text-muted);
-  --page-gradient-via: var(--text-muted);
-  --page-gradient-to: var(--text);
+  --page-gradient-from: #e09d3a;
+  --page-gradient-via: #e09d3a;
+  --page-gradient-to: #eeeedf;
 }
 
 [data-mode='dark'] {
