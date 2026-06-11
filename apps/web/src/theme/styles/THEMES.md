@@ -179,7 +179,7 @@ satisfy the bundle distinguishability contract without any
 ## `swatchIcon` field
 
 Every entry in the `THEMES` array (defined in
-`apps/web/src/theme/ThemeContext.tsx`) carries a `swatchIcon` field — a
+`apps/web/src/theme/constants.ts`) carries a `swatchIcon` field — a
 Font Awesome class name (e.g. `fa-rocket`) overlaid on the accent color
 dot in the theme picker, so the picker stays usable without relying on
 color alone.
