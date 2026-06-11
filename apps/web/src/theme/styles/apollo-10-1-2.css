@@ -24,7 +24,6 @@
   /* Page-gradient stops — see bundles.css preamble. Carry the wave-39
    * two-tone tinting forward post-wave-40 (--text / --text-muted retired). */
   --page-gradient-from: #e1dbd5;
-  --page-gradient-via: #e1dbd5;
   --page-gradient-to: #f4f1ec;
 
   /* Bundle palette. */
@@ -112,7 +111,6 @@
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #4f361a;
-  --page-gradient-via: #4f361a;
   --page-gradient-to: #0d1426;
 
   /* Bundle palette. */

@@ -83,7 +83,7 @@ export default function ConfirmAccountDeletionPage() {
     <main
       id="main-content"
       tabIndex={-1}
-      className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] via-[var(--page-gradient-via)] to-[var(--page-gradient-to)]"
+      className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]"
     >
       <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl text-center select-none">
         {status === 'verifying' && (

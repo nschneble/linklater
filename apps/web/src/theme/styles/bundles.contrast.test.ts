@@ -823,10 +823,10 @@ describe('bundle contrast contract', () => {
   /*
    * Card-on-gradient lift — perceptual separation between each page-
    * gradient stop and the card's --mount-bg surface. Consumers paint
-   * `bg-gradient-to-b from-[var(--page-gradient-from)] via-[var(--page-
-   * gradient-via)] to-[var(--page-gradient-to)]` behind a centered
-   * AuthCard whose edge is conveyed by `border-shadow` (a box-shadow
-   * utility), NOT by `border-[var(--mount-border)]`.
+   * `bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-
+   * gradient-to)]` behind a centered AuthCard whose edge is conveyed by
+   * `border-shadow` (a box-shadow utility), NOT by
+   * `border-[var(--mount-border)]`.
    *
    * NOT a WCAG SC 1.4.11 contract — the card edge does not depend on
    * stop-vs-mount-border separation. This is a design tripwire: if a
@@ -837,9 +837,11 @@ describe('bundle contrast contract', () => {
    *
    * Wave 40 retired the --text / --text-muted aliases the stops used to
    * resolve through; each per-theme cascade now declares its own
-   * --page-gradient-{from,via,to} hex directly. Pre-flight (wave 39)
-   * cleared the matrix at 14.603:1 floor (nouvelle-vague light from-stop),
-   * so every theme passes with massive headroom.
+   * --page-gradient-{from,to} hex directly. Wave 49 retired the
+   * --page-gradient-via mid-stop that was byte-identical to
+   * --page-gradient-from in every theme. Pre-flight (wave 39) cleared
+   * the matrix at 14.603:1 floor (nouvelle-vague light from-stop), so
+   * every theme passes with massive headroom.
    *
    * Skips :root / [data-mode='dark'] fallback cascades — the :root
    * declares default stops but `checkAdjacency: false` already excludes
@@ -847,11 +849,7 @@ describe('bundle contrast contract', () => {
    * combination.
    */
   describe('card-on-gradient lift (page-gradient stops vs --mount-bg)', () => {
-    const STOPS = [
-      'page-gradient-from',
-      'page-gradient-via',
-      'page-gradient-to',
-    ] as const;
+    const STOPS = ['page-gradient-from', 'page-gradient-to'] as const;
 
     for (const fixture of FIXTURES) {
       if (!fixture.checkAdjacency) {

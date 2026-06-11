@@ -148,23 +148,20 @@
 
   /* Page-gradient stops — universal slots consumed by full-page auth /
    * verify wrappers (`bg-gradient-to-b from-[var(--page-gradient-from)]
-   * via-[var(--page-gradient-via)] to-[var(--page-gradient-to)]`). The
-   * gradient paints behind a centered AuthCard whose edge is conveyed by
-   * `border-shadow` (a box-shadow utility), NOT by `border-[var(--mount-
-   * border)]`. Consumers: ConfirmAccountDeletionPage, ExtensionAuthorize-
-   * Page, OAuthCallbackPage, ResetPasswordPage, VerifyLoginPage,
-   * TokenVerificationPage, routes/Unauthenticated.
+   * to-[var(--page-gradient-to)]`). The gradient paints behind a centered
+   * AuthCard whose edge is conveyed by `border-shadow` (a box-shadow
+   * utility), NOT by `border-[var(--mount-border)]`. Consumers:
+   * ConfirmAccountDeletionPage, ExtensionAuthorizePage, OAuthCallbackPage,
+   * ResetPasswordPage, VerifyLoginPage, TokenVerificationPage,
+   * routes/Unauthenticated.
    *
-   * Each shipped theme carries its own --page-gradient-{from,via,to} in
-   * the per-theme `.css` cascade (wave 40 inlined the values that used to
-   * alias `var(--text-muted)` / `var(--text)`, retiring those flat tokens).
-   * The fallback values below paint a familiar 2-tone gradient during the
-   * pre-theme-attribute window.
-   *
-   * --page-gradient-via is intentionally identical to --page-gradient-from
-   * in every shipped theme today — kept as a tinting hook so a future
-   * theme can ship a true 3-stop palette without re-plumbing the
-   * consumers.
+   * Each shipped theme carries its own --page-gradient-{from,to} in the
+   * per-theme `.css` cascade (wave 40 inlined the values that used to
+   * alias `var(--text-muted)` / `var(--text)`, retiring those flat tokens;
+   * wave 49 retired the --page-gradient-via mid-stop that was byte-
+   * identical to --page-gradient-from in every theme). The fallback values
+   * below paint a familiar 2-tone gradient during the pre-theme-attribute
+   * window.
    *
    * NOT a WCAG-load-bearing contract. The card's edge separation
    * doesn't depend on these stops vs --mount-border. The perceptual-
@@ -172,7 +169,6 @@
    * luminance ratio against --mount-bg as a design guard, not a
    * regulatory pair. See wave 39. */
   --page-gradient-from: #e09d3a;
-  --page-gradient-via: #e09d3a;
   --page-gradient-to: #eeeedf;
 }
 

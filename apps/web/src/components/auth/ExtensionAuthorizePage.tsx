@@ -37,7 +37,7 @@ export default function ExtensionAuthorizePage() {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] via-[var(--page-gradient-via)] to-[var(--page-gradient-to)]">
+      <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
         <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow text-center rounded-2xl">
           <h1 className="mb-2 text-[var(--mount-text)] text-2xl font-bold">
             Sign in to authorize
@@ -57,7 +57,7 @@ export default function ExtensionAuthorizePage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] via-[var(--page-gradient-via)] to-[var(--page-gradient-to)]">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
       <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow text-center space-y-4 rounded-2xl">
         <h1 className="text-[var(--mount-text)] text-2xl font-bold">
           Authorize Linklater Extension?

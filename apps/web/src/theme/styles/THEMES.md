@@ -7,7 +7,7 @@ retired in stages.
 
 ## 1. Flat tokens (legacy, fully retired in chrome)
 
-Eleven flat tokens have been retired:
+Twelve flat tokens have been retired:
 
 - `--bg-input` (wave 23) — form input backgrounds now live on the bundle
   slots `--base-input-bg` and `--mount-input-bg`. See Section 2.
@@ -17,8 +17,8 @@ Eleven flat tokens have been retired:
   superseded by the `--base-*` / `--mount-*` / `--orbit-*` bundle slots.
 - `--text`, `--text-muted` (wave 40) — page-chrome text now lives on
   `--base-text` / `--mount-text` / `--orbit-text` and their `-alt-text`
-  pairs. Page-gradient consumers read `--page-gradient-from`,
-  `--page-gradient-via`, `--page-gradient-to` directly per theme.
+  pairs. Page-gradient consumers read `--page-gradient-from` and
+  `--page-gradient-to` directly per theme.
 - `--accent-fg`, `--accent-hover` (wave 42) — primary-button foreground
   + hover now resolve per host tier via `--{base,mount,orbit}-highlight-fg`
   and `--{base,mount,orbit}-highlight-hover`. `PrimaryButton` gained a
@@ -30,6 +30,10 @@ Eleven flat tokens have been retired:
   synthetic fallback. Wave 44.1 fully sunset `default.css` (its last
   two slots — `--theme-transition-duration` /
   `--theme-transition-easing` — moved to `bundles.css :root`).
+- `--page-gradient-via` (wave 49) — the mid-stop was byte-identical to
+  `--page-gradient-from` in every shipped theme, so the auth / verify
+  page-gradient wrappers collapsed to a 2-stop `bg-gradient-to-b
+  from-{from} to-{to}` and the slot was retired across all 10 themes.
 
 The `chrome-token-migration.test.ts` tripwire keeps every retired token
 in its `LEGACY_TOKENS` list to prevent re-introduction.

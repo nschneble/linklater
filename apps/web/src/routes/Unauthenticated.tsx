@@ -3,7 +3,7 @@ import { Navigate, Route, useLocation } from 'react-router-dom';
 
 function AuthFormWrapper() {
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] via-[var(--page-gradient-via)] to-[var(--page-gradient-to)]">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
       <AuthForm />
     </div>
   );

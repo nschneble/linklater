@@ -85,7 +85,6 @@
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #ede392;
-  --page-gradient-via: #ede392;
   --page-gradient-to: #f3f0ed;
 
   /* Bundle palette. */
@@ -177,7 +176,6 @@
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #421410;
-  --page-gradient-via: #421410;
   --page-gradient-to: #2a201d;
 
   /* Bundle palette. */
