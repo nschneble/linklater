@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTheme } from '../../../theme/ThemeContext';
+import type { CSSProperties } from 'react';
 
 /**
  * The 7 bundles in importance order: page chrome first, then card variants
@@ -179,85 +180,99 @@ function readAllComputedVars(): Record<ThemeVariable, string> {
   ) as Record<ThemeVariable, string>;
 }
 
-/**
- * Removes all inline style overrides from `document.documentElement`,
- * restoring the values defined by the active theme stylesheet.
- */
-function clearAllInlineOverrides(): void {
-  const root = document.documentElement;
-  for (const variable of EDITABLE_VARS) {
-    root.style.removeProperty(variable);
-  }
-}
-
-/**
- * Removes inline style overrides for a single bundle's 7 slots, leaving
- * the other bundles untouched. Used by per-bundle reset controls.
- */
-function clearBundleInlineOverrides(bundle: Bundle): void {
-  const root = document.documentElement;
-  for (const slot of SLOTS) {
-    root.style.removeProperty(`--${bundle}-${slot}`);
-  }
-  if (bundle === 'base') {
-    for (const slot of BASE_ONLY_SLOTS) {
-      root.style.removeProperty(`--base-${slot}`);
-    }
-  }
-  if (bundle === 'base' || bundle === 'mount') {
-    for (const slot of BASE_AND_MOUNT_ONLY_SLOTS) {
-      root.style.removeProperty(`--${bundle}-${slot}`);
-    }
-  }
+export interface UseThemeOverridesResult {
+  /** Current (possibly overridden) values for all editable variables. */
+  colorValues: Record<ThemeVariable, string>;
+  /**
+   * Inline style object containing only the variables the user has actively
+   * overridden. Spread onto a wrapper element that scopes the live preview;
+   * the editor chrome continues to inherit from the active theme at `:root`
+   * so a hostile bundle edit can't lock the user out of the editor itself.
+   */
+  overrideStyle: CSSProperties;
+  setOverride: (variable: ThemeVariable, value: string) => void;
+  resetOverrides: () => void;
+  resetBundle: (bundle: Bundle) => void;
 }
 
 /**
  * Manages live CSS variable overrides for the theme editor.
  *
- * Overrides are applied by setting inline styles on
- * `document.documentElement`. This takes precedence over stylesheet-defined
- * variables so changes are immediately visible across the entire page.
+ * Overrides live in React state only — the hook never mutates
+ * `document.documentElement.style`. Consumers spread `overrideStyle` onto
+ * the wrapper element that owns the live preview (typically the showcase
+ * column). The editor chrome itself continues to paint from the active
+ * theme at `:root`, so the user can never edit themselves into an
+ * unrecoverable state by setting bundle slots to unreadable values.
  *
- * Overrides are cleared automatically when:
- * - The base theme or mode changes (so the new theme's values are used as
- *   the new baseline).
- * - The component unmounts (cleanup effect) so navigating away from the
- *   editor restores the page to the selected theme.
+ * Overrides are cleared automatically when the base theme or mode changes
+ * (so the new theme's values are used as the new baseline).
  *
- * @returns
- * - `colorValues` — current (possibly overridden) values for all editable variables.
- * - `setOverride` — applies a single variable override immediately.
- * - `resetOverrides` — removes all overrides and re-reads the computed values.
- * - `resetBundle` — removes overrides for a single bundle's 7 slots.
+ * @returns See `UseThemeOverridesResult`.
  */
-export function useThemeOverrides() {
+export function useThemeOverrides(): UseThemeOverridesResult {
   const { baseTheme, mode } = useTheme();
   const [colorValues, setColorValues] =
     useState<Record<ThemeVariable, string>>(readAllComputedVars);
+  const [overrides, setOverrides] = useState<
+    Partial<Record<ThemeVariable, string>>
+  >({});
 
   useEffect(() => {
-    clearAllInlineOverrides();
+    setOverrides({});
     setColorValues(readAllComputedVars());
   }, [baseTheme, mode]);
 
-  useEffect(() => {
-    return clearAllInlineOverrides;
-  }, []);
-
   const setOverride = useCallback((variable: ThemeVariable, value: string) => {
-    document.documentElement.style.setProperty(variable, value);
+    setOverrides((previous) => ({ ...previous, [variable]: value }));
     setColorValues((previous) => ({ ...previous, [variable]: value }));
   }, []);
 
   const resetOverrides = useCallback(() => {
-    clearAllInlineOverrides();
+    setOverrides({});
     setColorValues(readAllComputedVars());
   }, []);
 
   const resetBundle = useCallback((bundle: Bundle) => {
-    clearBundleInlineOverrides(bundle);
-    setColorValues(readAllComputedVars());
+    const slotsForBundle: Array<string> = [...SLOTS];
+    if (bundle === 'base') {
+      slotsForBundle.push(...BASE_ONLY_SLOTS);
+    }
+    if (bundle === 'base' || bundle === 'mount') {
+      slotsForBundle.push(...BASE_AND_MOUNT_ONLY_SLOTS);
+    }
+    const variablesForBundle = slotsForBundle.map(
+      (slot) => `--${bundle}-${slot}` as ThemeVariable,
+    );
+
+    setOverrides((previous) => {
+      const next = { ...previous };
+      for (const variable of variablesForBundle) {
+        delete next[variable];
+      }
+      return next;
+    });
+
+    // Re-read computed vars so colorValues for this bundle reflect the theme
+    // defaults again. Only replace this bundle's values; preserve any
+    // in-progress edits to other bundles.
+    const fresh = readAllComputedVars();
+    setColorValues((previous) => {
+      const next = { ...previous };
+      for (const variable of variablesForBundle) {
+        next[variable] = fresh[variable];
+      }
+      return next;
+    });
   }, []);
 
-  return { colorValues, setOverride, resetOverrides, resetBundle };
+  const overrideStyle = useMemo(() => overrides as CSSProperties, [overrides]);
+
+  return {
+    colorValues,
+    overrideStyle,
+    setOverride,
+    resetOverrides,
+    resetBundle,
+  };
 }

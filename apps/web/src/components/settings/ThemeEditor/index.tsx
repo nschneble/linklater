@@ -15,9 +15,11 @@ import { useThemeOverrides } from './useThemeOverrides';
  *
  * Live-edits the 52 bundle tokens (7 bundles × 7 slots + 1 base-only
  * subtle-text slot + 2 base/mount input-bg slots) that make up the
- * active theme. Changes are applied immediately as inline overrides on
- * `document.documentElement` (via `useThemeOverrides`) and reset when the
- * user navigates away.
+ * active theme. Overrides live in React state inside `useThemeOverrides`
+ * and are applied as inline custom-property styles on a wrapper that
+ * scopes the showcase column only — the editor chrome inherits from the
+ * active theme at `:root`, so the user can never edit themselves into an
+ * unrecoverable state. Overrides reset when the user navigates away.
  *
  * The editor also supports switching between themes (using the base theme
  * from `ThemeContext`) and toggling light/dark mode — both of which clear
@@ -37,8 +39,13 @@ import { useThemeOverrides } from './useThemeOverrides';
  */
 export default function ThemeEditor() {
   const { baseTheme, mode, setBaseTheme, setMode } = useTheme();
-  const { colorValues, setOverride, resetOverrides, resetBundle } =
-    useThemeOverrides();
+  const {
+    colorValues,
+    overrideStyle,
+    setOverride,
+    resetOverrides,
+    resetBundle,
+  } = useThemeOverrides();
 
   function handleThemeChange(event: React.ChangeEvent<HTMLSelectElement>) {
     setBaseTheme(event.target.value as BaseTheme);
@@ -144,7 +151,13 @@ export default function ThemeEditor() {
           <h2 className="mb-6 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
             Components
           </h2>
-          <ComponentShowcase />
+          {/* Override scope: bundle edits apply to the showcase subtree only,
+              so a hostile bundle value can't lock the user out of the editor
+              chrome (panel headings, color rows, contrast pairs). The chrome
+              inherits from :root via the active theme, unaffected. */}
+          <div style={overrideStyle}>
+            <ComponentShowcase />
+          </div>
         </div>
       </div>
     </div>
