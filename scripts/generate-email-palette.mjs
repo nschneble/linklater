@@ -10,15 +10,15 @@ const OUTPUT_PATH = join(ROOT, 'apps/api/src/email/email-palette.ts');
 const FALLBACK_THEME = 'scanner-darkly';
 
 const CSS_VAR_TO_PALETTE_KEY = {
-  accent: 'accent',
-  'accent-fg': 'accentFg',
-  bg: 'bg',
-  'bg-elevated': 'bgElevated',
-  'bg-surface': 'bgSurface',
-  border: 'border',
-  text: 'text',
-  'text-muted': 'textMuted',
-  'text-subtle': 'textSubtle',
+  'base-highlight': 'accent',
+  'base-highlight-fg': 'accentFg',
+  'base-bg': 'bg',
+  'orbit-bg': 'bgElevated',
+  'mount-bg': 'bgSurface',
+  'base-border': 'border',
+  'base-text': 'text',
+  'base-alt-text': 'textMuted',
+  'base-subtle-text': 'textSubtle',
 };
 
 const EXPECTED_CSS_VARS = Object.keys(CSS_VAR_TO_PALETTE_KEY);
