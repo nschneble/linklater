@@ -107,6 +107,48 @@ describe('SuggestionCallout inNewTab refetch after Add-and-Read', () => {
     expect(screen.queryByText('First Suggestion')).not.toBeInTheDocument();
   });
 
+  it('leaves the prior suggestion mounted when the refetch returns an empty result', async () => {
+    vi.mocked(apiModule.getSuggestions)
+      .mockResolvedValueOnce({
+        sourceName: 'Wikipedia',
+        suggestions: [makeSuggestion({ title: 'First Suggestion' })],
+      })
+      .mockResolvedValueOnce({
+        sourceName: 'Aeon',
+        suggestions: [],
+      });
+    vi.mocked(apiModule.createLink).mockResolvedValue(makeLink());
+    vi.mocked(apiModule.readLink).mockResolvedValue(makeLink());
+
+    await act(async () => {
+      render(<SuggestionCallout inNewTab={true} />);
+    });
+
+    expect(await screen.findByText('First Suggestion')).toBeInTheDocument();
+
+    const button = screen.getByRole('button', {
+      name: /add and read \(opens in new tab\)/i,
+    });
+    await act(async () => {
+      button.click();
+    });
+
+    await waitFor(() => {
+      expect(apiModule.getSuggestions).toHaveBeenCalledTimes(2);
+    });
+
+    // Prior suggestion is still mounted. An empty refetch result must NOT
+    // unmount the populated card — doing so would drop focus from the
+    // "Add and read" button to <body> (WCAG 2.4.3).
+    expect(screen.getByText('First Suggestion')).toBeInTheDocument();
+    // "Add and read" button is still present (anchor of focus).
+    expect(
+      screen.getByRole('button', {
+        name: /add and read \(opens in new tab\)/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
   it('leaves the prior suggestion mounted when the refetch fails', async () => {
     vi.mocked(apiModule.getSuggestions)
       .mockResolvedValueOnce({

@@ -73,21 +73,33 @@ export default function SuggestionCallout({
   // flip `loading` / `fetchFailed` and unmount the populated card.
   const isInitialFetchRef = useRef(true);
 
-  const fetchSuggestion = useCallback(() => {
-    let cancelled = false;
+  // Tracks mount state so both the useEffect-driven initial fetch AND the
+  // imperative refetch from `handleAddAndRead` skip their state updates if
+  // the component unmounted mid-flight. A per-call `cancelled` closure
+  // would only protect the mount-effect path; the imperative call from the
+  // success branch of Add-and-Read discards its returned cleanup.
+  const isMountedRef = useRef(true);
 
+  const fetchSuggestion = useCallback(() => {
     getSuggestions(1)
       .then((response) => {
-        if (cancelled) return;
-        setSuggestion(response.suggestions[0] ?? null);
-        setSourceName(response.sourceName);
+        if (!isMountedRef.current) return;
+        const next = response.suggestions[0] ?? null;
         if (isInitialFetchRef.current) {
+          setSuggestion(next);
+          setSourceName(response.sourceName);
           setLoading(false);
           isInitialFetchRef.current = false;
+        } else if (next) {
+          // Refetch path: only swap when we got a non-null result. An empty
+          // refetch leaves the prior populated card mounted so focus stays
+          // on the "Add and read" button (WCAG 2.4.3).
+          setSuggestion(next);
+          setSourceName(response.sourceName);
         }
       })
       .catch((caught) => {
-        if (cancelled) return;
+        if (!isMountedRef.current) return;
         if (import.meta.env.DEV) {
           console.warn('SuggestionCallout: fetch failed', caught);
         }
@@ -100,14 +112,17 @@ export default function SuggestionCallout({
         // focus stays on the "Add and read" button. Silent fallback by
         // design — the user already navigated to the article in a new tab.
       });
+  }, []);
 
+  useEffect(() => {
+    isMountedRef.current = true;
     return () => {
-      cancelled = true;
+      isMountedRef.current = false;
     };
   }, []);
 
   useEffect(() => {
-    return fetchSuggestion();
+    fetchSuggestion();
   }, [fetchSuggestion]);
 
   function handleAddAndRead() {
