@@ -70,6 +70,7 @@
    * wave 44 retired `--accent`). */
   --focus-ring: #d4d4d4;
   --asset-filter: grayscale(100%);
+  --safe-asset-filter: grayscale(100%);
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #b8b8b8;
@@ -141,6 +142,7 @@
    * wave 44 retired `--accent`). */
   --focus-ring: #1f1f1f;
   --asset-filter: grayscale(100%);
+  --safe-asset-filter: grayscale(100%);
 
   /* Page-gradient stops — see bundles.css preamble. */
   --page-gradient-from: #4a4a4a;

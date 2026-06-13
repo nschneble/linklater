@@ -144,14 +144,11 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
         aria-haspopup="menu"
         aria-label={`User menu (${user.email})`}
       >
-        {/* Gravatar gets .themed-asset by explicit user request, despite the
-            color-fidelity-critical user-content carve-out in
-            feedback-asset-filter-exclusion. Do not remove without confirming. */}
         <img
           src={avatarUrl}
           alt=""
           aria-hidden="true"
-          className="themed-asset w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-[26px]"
+          className="safe-themed-asset w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-[26px]"
         />
         <span className="hidden sm:inline-flex">
           <i

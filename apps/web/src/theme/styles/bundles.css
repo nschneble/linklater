@@ -145,6 +145,7 @@
    * QR codes, secrets, captchas (filter destroys scannability). Apply
    * with care to anything containing faces, brand logos, or text. */
   --asset-filter: none;
+  --safe-asset-filter: none;
 
   /* Page-gradient stops — universal slots consumed by full-page auth /
    * verify wrappers (`bg-gradient-to-b from-[var(--page-gradient-from)]
@@ -206,6 +207,7 @@
   --success-highlight-hover: #6ee7b7;
 
   --asset-filter: hue-rotate(180deg) invert(1);
+  --safe-asset-filter: none;
 }
 
 /* Asset filter opt-in utility. Applies the current cascade's
@@ -216,6 +218,10 @@
  * regression). */
 @utility themed-asset {
   filter: var(--asset-filter);
+}
+
+@utility safe-themed-asset {
+  filter: var(--safe-asset-filter);
 }
 
 /* Modal backdrop. Single source of truth for the universal scrim used
@@ -234,5 +240,6 @@
   :root,
   [data-mode='dark'] {
     --asset-filter: none;
+    --safe-asset-filter: none;
   }
 }

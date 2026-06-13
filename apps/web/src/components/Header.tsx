@@ -97,7 +97,7 @@ export default function Header({
           }}
         >
           <img
-            className="themed-asset hidden sm:inline-flex w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-4xl"
+            className="safe-themed-asset hidden sm:inline-flex w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-4xl"
             src="/assets/img/linklater.jpg"
             alt=""
             aria-hidden="true"
