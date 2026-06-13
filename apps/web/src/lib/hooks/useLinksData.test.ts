@@ -257,6 +257,108 @@ describe('useLinksData re-fetch on filter change', () => {
   });
 });
 
+describe('useLinksData hasSettledOnce', () => {
+  it('starts false and flips to true after the first fetch settles', async () => {
+    vi.mocked(apiModule.getLinks).mockResolvedValue(
+      makePaginated([makeLink()]),
+    );
+
+    const { result } = renderHook(() => useLinksData('unread', ''));
+
+    expect(result.current.hasSettledOnce).toBe(false);
+
+    await waitFor(() => expect(result.current.hasSettledOnce).toBe(true));
+  });
+
+  it('flips to true even when the first fetch fails', async () => {
+    vi.mocked(apiModule.getLinks).mockRejectedValue(new Error('boom'));
+
+    const { result } = renderHook(() => useLinksData('unread', ''));
+
+    await waitFor(() => expect(result.current.hasSettledOnce).toBe(true));
+  });
+
+  it('keeps the prior list mounted while a search re-fetch is pending', async () => {
+    const original = makeLink({ id: 'a' });
+    let resolveSecond: ((value: PaginatedLinks) => void) | null = null;
+
+    vi.mocked(apiModule.getLinks)
+      .mockResolvedValueOnce(makePaginated([original]))
+      .mockImplementationOnce(
+        () =>
+          new Promise<PaginatedLinks>((resolve) => {
+            resolveSecond = resolve;
+          }),
+      );
+
+    const { result, rerender } = renderHook(
+      ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
+        useLinksData(filter, search),
+      { initialProps: { filter: 'unread' as const, search: '' } },
+    );
+
+    await waitFor(() => expect(result.current.hasSettledOnce).toBe(true));
+    expect(result.current.links).toHaveLength(1);
+
+    rerender({ filter: 'unread', search: 'query' });
+
+    // Loading flag flips on for the second fetch, but the previous list
+    // remains mounted instead of being cleared to [] mid-fetch.
+    await waitFor(() => expect(result.current.loadingLinks).toBe(true));
+    expect(result.current.links).toHaveLength(1);
+    expect(result.current.links[0].id).toBe('a');
+    expect(result.current.hasSettledOnce).toBe(true);
+
+    await act(async () => {
+      resolveSecond!(makePaginated([makeLink({ id: 'b' })]));
+    });
+
+    await waitFor(() => expect(result.current.loadingLinks).toBe(false));
+    expect(result.current.links[0].id).toBe('b');
+  });
+
+  it('keeps the prior list mounted then transitions to empty on a no-match settle', async () => {
+    let resolveSecond: ((value: PaginatedLinks) => void) | null = null;
+
+    vi.mocked(apiModule.getLinks)
+      .mockResolvedValueOnce(
+        makePaginated([
+          makeLink({ id: 'a' }),
+          makeLink({ id: 'b' }),
+          makeLink({ id: 'c' }),
+        ]),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise<PaginatedLinks>((resolve) => {
+            resolveSecond = resolve;
+          }),
+      );
+
+    const { result, rerender } = renderHook(
+      ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
+        useLinksData(filter, search),
+      { initialProps: { filter: 'unread' as const, search: '' } },
+    );
+
+    await waitFor(() => expect(result.current.links).toHaveLength(3));
+
+    rerender({ filter: 'unread', search: 'no-match' });
+
+    await waitFor(() => expect(result.current.loadingLinks).toBe(true));
+    // No mid-fetch flash to empty: the prior three items remain rendered
+    // until the second response arrives.
+    expect(result.current.links).toHaveLength(3);
+
+    await act(async () => {
+      resolveSecond!(makePaginated([], { total: 0 }));
+    });
+
+    await waitFor(() => expect(result.current.links).toHaveLength(0));
+    expect(result.current.loadingLinks).toBe(false);
+  });
+});
+
 describe('useLinksData handleLoadMore', () => {
   it('appends the next page results to existing links', async () => {
     const page1 = makeLink({ id: 'p1' });

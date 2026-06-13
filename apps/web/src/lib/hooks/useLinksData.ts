@@ -67,6 +67,14 @@ export interface UseLinksDataResult {
   clearLinks: () => void;
   fetchError: string | null;
   handleLoadMore: () => void;
+  /**
+   * `true` after the very first fetch has settled (success or failure). Used
+   * by the view layer to suppress the skeleton flash on subsequent
+   * filter/search re-fetches — once the user has seen real content, we keep
+   * the stale list mounted until the new response arrives instead of clearing
+   * back to a skeleton on every keystroke.
+   */
+  hasSettledOnce: boolean;
   links: Link[];
   loadingLinks: boolean;
   /**
@@ -121,6 +129,14 @@ export function useLinksData(
     PaginatedLinks,
     'total' | 'limit'
   > | null>(null);
+  const [hasSettledOnce, setHasSettledOnce] = useState(false);
+
+  // Ref-mirror of `hasSettledOnce` so the fetch effect can branch on its
+  // latest value without re-running on every settle. Reading state directly
+  // inside the effect would either be stale (closed over an old value) or
+  // require adding `hasSettledOnce` to the dep array, which would re-fire the
+  // fetch on first settle and produce an unwanted double-request.
+  const hasSettledOnceReference = useRef(false);
 
   const [fetchParams, dispatchFetchParams] = useReducer(fetchParamsReducer, {
     filter,
@@ -135,7 +151,14 @@ export function useLinksData(
   useEffect(() => {
     let cancelled = false;
 
-    if (fetchParams.page === 1) setLinks([]);
+    // Only blank the list on the very first page-1 fetch. After the user has
+    // seen real content once, keep the stale list mounted across re-fetches
+    // so search/filter changes don't flash a skeleton between keystrokes.
+    // `setLinks(result.data)` below still overwrites the list on settle, so
+    // an empty result still transitions to the empty state.
+    if (fetchParams.page === 1 && !hasSettledOnceReference.current) {
+      setLinks([]);
+    }
     setLoadingLinks(true);
 
     const load = async () => {
@@ -162,6 +185,8 @@ export function useLinksData(
       } finally {
         if (!cancelled) {
           setLoadingLinks(false);
+          hasSettledOnceReference.current = true;
+          setHasSettledOnce(true);
         }
       }
     };
@@ -299,6 +324,7 @@ export function useLinksData(
     clearLinks,
     fetchError,
     handleLoadMore,
+    hasSettledOnce,
     links,
     loadingLinks,
     newLinksAnnouncement,
