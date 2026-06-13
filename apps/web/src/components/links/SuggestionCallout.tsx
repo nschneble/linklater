@@ -3,7 +3,7 @@ import PrimaryButton from '../common/PrimaryButton';
 import { createLink, getSuggestions, readLink } from '../../lib/api';
 import type { Suggestion } from '../../lib/api';
 import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 interface SuggestionCalloutProps {
@@ -66,7 +66,14 @@ export default function SuggestionCallout({
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Distinguishes the mount-time fetch from a post-Add-and-Read refetch.
+  // Refetch failures intentionally leave the prior suggestion mounted (the
+  // populated card branch must stay rendered to preserve WCAG 2.4.3 focus
+  // on the "Add and read" button), so only the initial fetch is allowed to
+  // flip `loading` / `fetchFailed` and unmount the populated card.
+  const isInitialFetchRef = useRef(true);
+
+  const fetchSuggestion = useCallback(() => {
     let cancelled = false;
 
     getSuggestions(1)
@@ -74,21 +81,34 @@ export default function SuggestionCallout({
         if (cancelled) return;
         setSuggestion(response.suggestions[0] ?? null);
         setSourceName(response.sourceName);
-        setLoading(false);
+        if (isInitialFetchRef.current) {
+          setLoading(false);
+          isInitialFetchRef.current = false;
+        }
       })
       .catch((caught) => {
         if (cancelled) return;
         if (import.meta.env.DEV) {
           console.warn('SuggestionCallout: fetch failed', caught);
         }
-        setFetchFailed(true);
-        setLoading(false);
+        if (isInitialFetchRef.current) {
+          setFetchFailed(true);
+          setLoading(false);
+          isInitialFetchRef.current = false;
+        }
+        // Refetch failure: leave prior suggestion + sourceName mounted so
+        // focus stays on the "Add and read" button. Silent fallback by
+        // design — the user already navigated to the article in a new tab.
       });
 
     return () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    return fetchSuggestion();
+  }, [fetchSuggestion]);
 
   function handleAddAndRead() {
     if (!suggestion || adding) return;
@@ -120,8 +140,13 @@ export default function SuggestionCallout({
           window.location.assign(url);
         } else {
           // Tab is already open; clear the busy state so a returning user
-          // sees the original callout in its idle state.
+          // sees the original callout in its idle state, then refetch a
+          // fresh suggestion so the just-added (now read) article isn't
+          // recommended back to them next time they look. The populated
+          // card stays mounted during the refetch — see `fetchSuggestion`
+          // — so focus stays on the "Add and read" button (WCAG 2.4.3).
           setAdding(false);
+          fetchSuggestion();
         }
       } catch (caught) {
         setError(
