@@ -43,7 +43,7 @@ export default function MenuItem({
 }: MenuItemProps) {
   return (
     <button
-      className={`group flex items-center gap-2 w-full pl-2.5 pr-3 py-2 text-[var(--orbit-text)] text-left ${FOCUS_RING} cursor-pointer ${className}`}
+      className={`group flex items-center gap-2 w-full pl-2.5 pr-3 py-2 hover:bg-[color-mix(in_oklch,var(--orbit-text)_8%,transparent)] focus-visible:bg-[color-mix(in_oklch,var(--orbit-text)_8%,transparent)] hover:inset-ring-1 hover:inset-ring-[var(--orbit-border)] focus-visible:inset-ring-1 focus-visible:inset-ring-[var(--orbit-border)] text-[var(--orbit-text)] text-left ${FOCUS_RING} cursor-pointer ${className}`}
       type="button"
       role="menuitem"
       aria-current={active ? 'page' : undefined}
