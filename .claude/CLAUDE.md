@@ -250,6 +250,15 @@ import { useEffect, useState } from 'react';
 
   Ternaries still correct for pure JS state with no DOM representation (e.g. `mode === 'login'`, animation gates, internal hover coordination across non-nested elements) — + for setting ARIA attribute itself (e.g. `aria-current={isActive ? 'page' : undefined}`).
 
+## Theme System (Bundles)
+
+- 7-bundle architecture in `apps/web/src/theme/styles/bundles.css`: `base`, `mount`, `orbit`, `alert`, `warn`, `info`, `success`. Token shape: `--{bundle}-{slot}` (e.g. `--mount-border`).
+- Slots: `bg`, `border`, `text`, `alt-text`, `highlight`, `highlight-fg`, `highlight-hover`. Base adds `subtle-text`. Base+mount add `input-bg`. Orbit omits its `bg` from the synthetic fallback (per-theme only).
+- Shared components consume bundles via a `surface: 'base' | 'mount' | 'orbit'` prop (`FormInput`, `SlidingTabBar`, `IconButton`, `LinkButton`, `PrimaryButton`); `TabButton` picks up its host from its parent `SlidingTabBar`'s `data-surface` attribute via `group-data-*` variants. The host bundle is the rendering parent's surface, NOT the importing module's directory.
+- `chrome-token-migration.test.ts` is an anti-regression tripwire — don't reintroduce legacy flat tokens (`--bg-input`, `--text-muted`, `--bg-surface`, etc) on migrated files. Add new migrated files to `MIGRATED_FILES`.
+- `.themed-asset` utility opts an `<img>` into `--asset-filter` (day-for-night in dark mode). NEVER apply to QR codes, captchas, secrets, brand logos, or color-fidelity-critical user content.
+- WCAG contract enforced in `bundles.contrast.test.ts`. CVD distinguishability in `bundles.distinguishability.test.ts` (culori, delta-E 2000 ≥ 10).
+
 ## Gotchas
 
 - **TypeScript build errors on the frontend**: pre-existing `tsc` errors exist in `apps/web`. `vite build` (not `tsc`) is true correctness check — use to validate frontend code.

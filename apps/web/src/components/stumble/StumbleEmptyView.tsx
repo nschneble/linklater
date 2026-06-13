@@ -18,7 +18,7 @@ export default function StumbleEmptyView() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12 bg-[var(--bg)] text-[var(--text)] text-center select-none">
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12 bg-[var(--base-bg)] text-[var(--base-text)] text-center select-none">
       <div className="mb-8">
         <PixelArtGhost />
       </div>
@@ -29,7 +29,7 @@ export default function StumbleEmptyView() {
 
       <SuggestionCallout
         fallback={
-          <p className="mb-8 text-[var(--text-subtle)] text-xs italic">
+          <p className="mb-8 text-[var(--base-subtle-text)] text-xs italic">
             (Suggestions are napping too.)
           </p>
         }
@@ -37,6 +37,7 @@ export default function StumbleEmptyView() {
 
       <IconButton
         variant="elevated"
+        surface="base"
         className="mt-8"
         onClick={() => navigate('/unread')}
       >

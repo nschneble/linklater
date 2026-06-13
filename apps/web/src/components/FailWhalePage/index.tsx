@@ -39,33 +39,34 @@ export default function FailWhalePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+    <div className="min-h-screen bg-[var(--base-bg)] text-[var(--base-text)]">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--bg-surface)] focus:text-[var(--text)] focus:text-sm focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-sm focus:font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:rounded-lg"
       >
         Skip to main content
       </a>
       <main
         id="main-content"
-        className="flex flex-col items-center justify-center min-h-screen mx-auto max-w-md px-4 text-center"
+        className="flex flex-col items-center justify-center min-h-screen max-w-md mx-auto px-4 text-center"
       >
         <pre
           aria-hidden="true"
-          className="mb-6 text-[var(--text-muted)] text-xs leading-snug select-none"
+          className="mb-6 text-[var(--base-alt-text)] text-xs leading-snug select-none"
         >
           {FAILWHALE_ASCII}
         </pre>
-        <h1 className="mb-3 text-[var(--text)] text-2xl font-bold text-balance">
+        <h1 className="mb-3 text-[var(--base-text)] text-2xl font-bold text-balance">
           You found the failwhale!
         </h1>
-        <p className="mb-6 text-[var(--text-muted)] text-sm text-balance">
+        <p className="mb-6 text-[var(--base-alt-text)] text-sm text-balance">
           This is a dead end on purpose. Press the button below and Linklater
           will throw a render error so you can see the app's error screen
           firsthand.
         </p>
         <PrimaryButton
           type="button"
+          surface="base"
           aria-describedby="crash-help"
           onClick={() => setShouldCrash(true)}
         >
@@ -73,7 +74,7 @@ export default function FailWhalePage() {
         </PrimaryButton>
         <p
           id="crash-help"
-          className="mt-4 text-[var(--text-subtle)] text-xs text-balance"
+          className="mt-4 text-[var(--base-subtle-text)] text-xs text-balance"
         >
           Triggers the app's error screen. Reload the page to recover.
         </p>

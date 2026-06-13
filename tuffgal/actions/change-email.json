@@ -2,7 +2,7 @@
   "action": "change-email",
   "parameters": ["newEmail"],
   "steps": [
-    { "kind": "navigate", "path": "/settings" },
+    { "kind": "navigate", "path": "/settings", "waitUntil": "domcontentloaded" },
     {
       "kind": "input",
       "hint": { "selector": "#change-email" },
@@ -17,6 +17,5 @@
   "expect": {
     "anyOf": [{ "selector": "[role='status']" }]
   },
-  "mask": [{ "selector": "[role='status']" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "[role='status']" }]
 }

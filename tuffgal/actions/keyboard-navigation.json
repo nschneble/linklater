@@ -13,6 +13,5 @@
     "anyOf": [{ "role": "dialog", "text": "Keyboard shortcuts" }],
     "timeoutMs": 15000
   },
-  "mask": [{ "selector": "#suggestion-callout-title" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "#suggestion-callout-title" }]
 }

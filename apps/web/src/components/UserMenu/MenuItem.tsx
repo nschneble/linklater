@@ -1,7 +1,10 @@
+import { FOCUS_RING } from '../../lib/styles';
+
 /**
  * A single action item within a `role="menu"` container.
  * Renders a full-width `<button>` with `role="menuitem"`, a Font Awesome icon,
- * and a text label. The icon is tinted accent when `active` is true.
+ * and a text label. The icon is tinted with the orbit-tier highlight when
+ * `active` is true.
  */
 interface MenuItemProps {
   /** Font Awesome icon class without the `fa-solid` prefix (e.g. `'fa-bookmark'`). */
@@ -11,8 +14,8 @@ interface MenuItemProps {
   /** Called when the item is clicked. */
   onClick: () => void;
   /**
-   * When `true`, the icon is rendered in the accent color to indicate the
-   * current active view.
+   * When `true`, the icon is rendered in the orbit-tier highlight color to
+   * indicate the current active view.
    *
    * @default false
    */
@@ -40,7 +43,7 @@ export default function MenuItem({
 }: MenuItemProps) {
   return (
     <button
-      className={`group flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:bg-[var(--bg-surface)] focus:outline-none text-[var(--text)] text-left cursor-pointer ${className}`}
+      className={`group flex items-center gap-2 w-full pl-2.5 pr-3 py-2 text-[var(--orbit-text)] text-left ${FOCUS_RING} cursor-pointer ${className}`}
       type="button"
       role="menuitem"
       aria-current={active ? 'page' : undefined}
@@ -57,7 +60,7 @@ export default function MenuItem({
       onClick={onClick}
     >
       <i
-        className={`fa-solid ${icon} text-[var(--text-muted)] group-aria-[current=page]:text-[var(--accent)] text-[0.75rem]`}
+        className={`fa-solid ${icon} text-[var(--orbit-alt-text)] group-aria-[current=page]:text-[var(--orbit-highlight)] text-[0.75rem]`}
         aria-hidden="true"
       />
       <span>{label}</span>

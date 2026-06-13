@@ -26,6 +26,7 @@ export default function LinksControls({
     <div className="flex flex-1 justify-between gap-3">
       <IconButton
         variant="elevated"
+        surface="base"
         disabled={isClearingRead}
         hidden={filter === 'unread' || linksCount === 0}
         onClick={onClearRead}
@@ -37,6 +38,7 @@ export default function LinksControls({
       <div className="flex gap-3">
         <IconButton
           variant="elevated"
+          surface="base"
           disabled={randomLoading}
           hidden={filter !== 'unread'}
           onClick={onRandom}
@@ -50,6 +52,7 @@ export default function LinksControls({
 
         <PrimaryButton
           type="button"
+          surface="base"
           hidden={filter !== 'unread'}
           onClick={onToggleForm}
           aria-label={showLinkForm ? 'Hide form' : 'Add link'}

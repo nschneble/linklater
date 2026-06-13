@@ -63,10 +63,10 @@ export default function LoginRegisterView({
 }: LoginRegisterViewProps) {
   return (
     <AuthCard>
-      <h1 className="mb-2 text-[var(--text)] text-center text-3xl font-bold text-balance">
+      <h1 className="mb-2 text-[var(--mount-text)] text-center text-3xl font-bold text-balance">
         Linklater
       </h1>
-      <p className="mb-6 text-[var(--text-muted)] text-center">
+      <p className="mb-6 text-[var(--mount-alt-text)] text-center">
         Save links now, read them later.
       </p>
 
@@ -86,7 +86,8 @@ export default function LoginRegisterView({
           <SlidingTabBar
             ariaLabel="Authentication mode"
             activeIndex={mode === 'register' ? 1 : 0}
-            className="mb-[24.5px] bg-[var(--bg-elevated)]"
+            className="mb-[24.5px]"
+            surface="mount"
             tabClassName="py-2 text-sm"
             tabs={[
               {
@@ -114,7 +115,7 @@ export default function LoginRegisterView({
             onSubmit={onSubmit}
           >
             <label
-              className="block text-[var(--text-muted)] text-sm font-medium"
+              className="block text-[var(--mount-alt-text)] text-sm font-medium"
               htmlFor="auth-email"
             >
               Email
@@ -123,6 +124,7 @@ export default function LoginRegisterView({
               id="auth-email"
               ref={emailReference}
               type="email"
+              surface="mount"
               autoComplete="email"
               onChange={(event) => onEmailChange(event.target.value)}
               value={email}
@@ -131,7 +133,7 @@ export default function LoginRegisterView({
             />
 
             <label
-              className="block text-[var(--text-muted)] text-sm font-medium"
+              className="block text-[var(--mount-alt-text)] text-sm font-medium"
               htmlFor="auth-password"
             >
               Password
@@ -140,6 +142,7 @@ export default function LoginRegisterView({
               id="auth-password"
               ref={passwordReference}
               type="password"
+              surface="mount"
               autoComplete={
                 mode === 'login' ? 'current-password' : 'new-password'
               }
@@ -178,10 +181,10 @@ export default function LoginRegisterView({
                   className="absolute inset-0 flex items-center"
                   aria-hidden="true"
                 >
-                  <div className="w-full border-t border-[var(--border)]" />
+                  <div className="w-full border-t border-[var(--mount-border)]" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="px-3 bg-[var(--bg-surface)] text-[var(--text-muted)] text-xs">
+                  <span className="px-3 bg-[var(--mount-bg)] text-[var(--mount-alt-text)] text-xs">
                     or continue with
                   </span>
                 </div>
@@ -234,7 +237,7 @@ export default function LoginRegisterView({
           <div
             aria-hidden={mode !== 'login' ? true : undefined}
             inert={mode !== 'login' ? true : undefined}
-            className="mt-4 flex flex-col items-center gap-2 text-center transition-opacity duration-200 aria-hidden:opacity-0 aria-hidden:pointer-events-none"
+            className="flex flex-col items-center gap-2 mt-4 text-center transition-opacity duration-200 aria-hidden:opacity-0 aria-hidden:pointer-events-none"
           >
             <LinkButton
               tabIndex={mode !== 'login' ? -1 : undefined}

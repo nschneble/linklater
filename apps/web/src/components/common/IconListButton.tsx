@@ -43,7 +43,7 @@ export default function IconListButton({
 
   return (
     <button
-      className={`group flex items-center gap-2.5 w-full min-h-10 px-3 py-2 hover:bg-[var(--bg-surface)] aria-[current]:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text)] aria-[current]:text-[var(--text)] text-sm font-medium aria-[current]:font-semibold ${FOCUS_RING} rounded-lg motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] cursor-pointer ${disabledClasses} ${visibilityClasses} ${className}`}
+      className={`group flex items-center gap-2.5 w-full min-h-10 px-3 py-2 hover:bg-[var(--mount-bg)] aria-[current]:bg-[var(--orbit-bg)] aria-[current]:ring-1 aria-[current]:ring-[var(--orbit-border)] text-[var(--base-alt-text)] hover:text-[var(--base-text)] aria-[current]:text-[var(--orbit-text)] text-sm font-medium aria-[current]:font-semibold ${FOCUS_RING} rounded-lg motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] cursor-pointer ${disabledClasses} ${visibilityClasses} ${className}`}
       type="button"
       // GOTCHA: `disabled` + `aria-hidden` together give complete AT isolation:
       // `disabled` removes the button from the tab order and interactive AT tree;
@@ -57,7 +57,7 @@ export default function IconListButton({
     >
       {icon && (
         <i
-          className={`fa-solid ${icon} text-[var(--text-subtle)] group-aria-[current]:text-[var(--accent)] text-xs`}
+          className={`fa-solid ${icon} text-[var(--base-subtle-text)] group-aria-[current]:text-[var(--orbit-highlight)] text-xs`}
           aria-hidden="true"
         />
       )}

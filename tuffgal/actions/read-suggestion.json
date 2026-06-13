@@ -27,6 +27,5 @@
   "mask": [
     { "selector": "#suggestion-callout-title" },
     { "selector": "[aria-live='polite']" }
-  ],
-  "diff": { "maxDiffRatio": 0.02 }
+  ]
 }

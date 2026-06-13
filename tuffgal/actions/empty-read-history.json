@@ -11,6 +11,5 @@
   "expect": {
     "anyOf": [{ "text": "No read links" }],
     "timeoutMs": 10000
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

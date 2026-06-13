@@ -116,9 +116,9 @@ export default function VerifyLoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
-      <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl text-center select-none">
-        <h1 className="mb-4 text-[var(--text)] text-2xl font-bold">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
+      <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl text-center select-none">
+        <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
           Logging in…
         </h1>
 
@@ -126,7 +126,7 @@ export default function VerifyLoginPage() {
           <p
             role="status"
             aria-live="polite"
-            className="text-[var(--text-muted)] animate-pulse"
+            className="text-[var(--mount-alt-text)] animate-pulse"
           >
             Verifying your login link…
           </p>

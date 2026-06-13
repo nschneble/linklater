@@ -34,14 +34,14 @@ export default function MenuSection({
 
   return (
     <div
-      className={`pb-2 mb-2 border-b border-[var(--border)] ${className}`}
+      className={`pb-2 mb-2 border-b border-[var(--orbit-border)] ${className}`}
       role={label ? 'group' : undefined}
       aria-labelledby={label ? labelId : undefined}
     >
       {label && (
         <p
           id={labelId}
-          className={`text-[var(--text-subtle)] text-[0.65rem] uppercase tracking-tight font-semibold ${labelClassName}`}
+          className={`text-[var(--orbit-alt-text)] text-[0.65rem] uppercase tracking-tight font-semibold ${labelClassName}`}
         >
           {label}
         </p>

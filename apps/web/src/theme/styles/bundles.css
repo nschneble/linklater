@@ -1,0 +1,238 @@
+/*
+ * Color bundles
+ * =============
+ *
+ * A bundle is a complete set of values for one kind of UI surface:
+ *
+ *     --{bundle}-bg              background fill
+ *     --{bundle}-border          border / divider
+ *     --{bundle}-text            primary readable text
+ *     --{bundle}-alt-text        secondary text (labels, captions)
+ *     --{bundle}-subtle-text     lowest-emphasis text (kbd legends, hints,
+ *                                chevrons) — BASE bundle only
+ *     --{bundle}-highlight       accent pop inside the bundle (filled buttons, links, badges)
+ *     --{bundle}-highlight-fg    foreground for filled surfaces that use
+ *                                --{bundle}-highlight as their bg
+ *     --{bundle}-highlight-hover bg for the :hover state of those filled
+ *                                surfaces; foreground stays --highlight-fg
+ *
+ * The 7 bundles map onto the UI's narrative surfaces:
+ *
+ *     base      page chrome
+ *     mount     cards, settings panels
+ *     orbit     menus, dropdowns
+ *     alert     errors, danger zones
+ *     warn      yellow banners (unverified email)
+ *     info      tips, hints
+ *     success   verified badges, notifications
+ *
+ * Each bundle MUST satisfy WCAG 2.2:
+ *     text/bg, alt-text/bg,
+ *     subtle-text/bg (base only)           >= 4.5:1   (SC 1.4.3)
+ *     border/bg, highlight/bg              >= 3:1     (SC 1.4.11)
+ *     highlight-fg/highlight,
+ *     highlight-fg/highlight-hover         >= 4.5:1   (SC 1.4.3)
+ * The last contract holds across BOTH the base and hover states of a
+ * filled-button surface (e.g. IconButton danger-filled), so the same
+ * foreground stays legible through the hover transition.
+ * Card-style bundles (mount, orbit, alert, warn, info, success) must also
+ * clear 3:1 between their border and the PAGE background --base-bg, since
+ * the border touches the page surface.
+ *
+ * Per-theme bundle palettes live in each theme's own `.css` file in this
+ * directory (apollo-10-1-2.css, school-of-rock.css, etc.). The :root
+ * default cascade below is the synthetic fallback for the pre-theme-
+ * attribute window (any code path that runs before `<html data-theme=...>`
+ * is set). It pins base/mount/orbit to explicit hex chosen so the
+ * pre-theme-attribute window paints a usable dark surface, and uses
+ * neutral rose/amber/blue/emerald hues for the state bundles.
+ *
+ * Slots deliberately omitted from the synthetic fallback (per-theme
+ * cascades carry the full contract):
+ *
+ *   --orbit-bg, --base-input-bg, --mount-input-bg, --focus-ring,
+ *   --{base,mount,orbit}-highlight (wave 44 — inlining the prior
+ *   `var(--accent)` resolution would fail SC 1.4.11 against --mount-bg
+ *   #201e43 at 2.87:1), and their dependent --{base,mount,orbit}-
+ *   highlight-fg / -hover pairs.
+ *
+ * Per-theme blocks beat these defaults on specificity regardless of CSS
+ * source order. Consumers only render after a theme is active, so the
+ * omitted slots always resolve from a per-theme block.
+ */
+
+:root {
+  /* Theme-transition timing (wave 44.1 collapse of default.css). Drives
+   * the universal background/color/border-color transition in
+   * index.css's @layer base. */
+  --theme-transition-duration: 80ms;
+  --theme-transition-easing: ease;
+
+  /* --focus-ring and --base/mount/orbit-highlight omitted from the
+   * synthetic fallback — defined per-theme; see preamble. */
+
+  /* base = page chrome. Pre-theme-attribute fallback hex. */
+  --base-bg: #0f0b1b;
+  --base-border: #47419d;
+  --base-text: #eeeedf;
+  --base-alt-text: #e09d3a;
+  --base-subtle-text: #8db030;
+
+  /* mount = cards */
+  --mount-bg: #201e43;
+  --mount-border: #47419d;
+  --mount-text: #eeeedf;
+  --mount-alt-text: #e09d3a;
+
+  /* --base-input-bg / --mount-input-bg per-theme only (waves 22a+22b;
+   * legacy --bg-input retired wave 23). See preamble. */
+
+  /* orbit = menus / dropdowns. --orbit-bg per-theme only (legacy
+   * --bg-elevated retired wave 32). See preamble. */
+  --orbit-border: #47419d;
+  --orbit-text: #eeeedf;
+  --orbit-alt-text: #e09d3a;
+
+  /* alert / warn / info / success synthetic-fallback palettes — rose /
+   * amber / blue / emerald hues. Borders pinned to the -800 stop so
+   * each clears 3:1 against the fallback --base-bg. Per-theme blocks
+   * carry the contract for every shipped theme. See preamble.
+   *
+   * State bundles ship the full 7-slot contract here (bg / border /
+   * text / alt-text / highlight / highlight-fg / highlight-hover) —
+   * filled-button consumers (PrimaryButton, IconButton danger-filled)
+   * paint the highlight pair against any tier. `--{base,mount,orbit}-
+   * highlight-fg` / `-hover` are intentionally omitted (their parent
+   * `-highlight` slots are omitted from the fallback — see preamble). */
+  --alert-bg: #fff1f2;
+  --alert-border: #9f1239;
+  --alert-text: #be123c;
+  --alert-alt-text: #9f1239;
+  --alert-highlight: #e11d48;
+  --alert-highlight-fg: #ffffff;
+  --alert-highlight-hover: #be1c40;
+
+  --warn-bg: #fef3c7;
+  --warn-border: #92400e;
+  --warn-text: #92400e;
+  --warn-alt-text: #78350f;
+  --warn-highlight: #b45309;
+  --warn-highlight-fg: #fffbeb;
+  --warn-highlight-hover: #92400e;
+
+  --info-bg: #dbeafe;
+  --info-border: #1e40af;
+  --info-text: #1e40af;
+  --info-alt-text: #1e3a8a;
+  --info-highlight: #2563eb;
+  --info-highlight-fg: #ffffff;
+  --info-highlight-hover: #1d4ed8;
+
+  --success-bg: #d1fae5;
+  --success-border: #166534;
+  --success-text: #065f46;
+  --success-alt-text: #064e3b;
+  --success-highlight: #059669;
+  --success-highlight-fg: #001a10;
+  --success-highlight-hover: #10b981;
+
+  /* Asset filter (day-for-night). Opt-in via .themed-asset utility on
+   * individual <img> elements. Light mode is identity (no transform);
+   * dark mode applies the canonical day-for-night `hue-rotate(180deg)
+   * invert(1)` per https://unsung.aresluna.org/day-for-night/. Themes
+   * may override per-mode in their own cascade blocks (Nouvelle Vague
+   * forces grayscale in both modes per its B&W vibe). HARD EXCLUDE:
+   * QR codes, secrets, captchas (filter destroys scannability). Apply
+   * with care to anything containing faces, brand logos, or text. */
+  --asset-filter: none;
+
+  /* Page-gradient stops — universal slots consumed by full-page auth /
+   * verify wrappers (`bg-gradient-to-b from-[var(--page-gradient-from)]
+   * to-[var(--page-gradient-to)]`). The gradient paints behind a centered
+   * AuthCard whose edge is conveyed by `border-shadow` (a box-shadow
+   * utility), NOT by `border-[var(--mount-border)]`. Consumers:
+   * ConfirmAccountDeletionPage, ExtensionAuthorizePage, OAuthCallbackPage,
+   * ResetPasswordPage, VerifyLoginPage, TokenVerificationPage,
+   * routes/Unauthenticated.
+   *
+   * Each shipped theme carries its own --page-gradient-{from,to} in the
+   * per-theme `.css` cascade (wave 40 inlined the values that used to
+   * alias `var(--text-muted)` / `var(--text)`, retiring those flat tokens;
+   * wave 49 retired the --page-gradient-via mid-stop that was byte-
+   * identical to --page-gradient-from in every theme). The fallback values
+   * below paint a familiar 2-tone gradient during the pre-theme-attribute
+   * window.
+   *
+   * NOT a WCAG-load-bearing contract. The card's edge separation
+   * doesn't depend on these stops vs --mount-border. The perceptual-
+   * separation tripwire in bundles.contrast.test.ts enforces a 3.0
+   * luminance ratio against --mount-bg as a design guard, not a
+   * regulatory pair. See wave 39. */
+  --page-gradient-from: #e09d3a;
+  --page-gradient-to: #eeeedf;
+}
+
+[data-mode='dark'] {
+  --alert-bg: rgb(76 5 25 / 0.4);
+  --alert-border: #fb7185;
+  --alert-text: #fda4af;
+  --alert-alt-text: #fda4af;
+  --alert-highlight: #f43f5e;
+  --alert-highlight-fg: #2a0810;
+  --alert-highlight-hover: #fb7185;
+
+  --warn-bg: rgb(69 26 3 / 0.4);
+  --warn-border: #f59e0b;
+  --warn-text: #fcd34d;
+  --warn-alt-text: #fde68a;
+  --warn-highlight: #f59e0b;
+  --warn-highlight-fg: #3a1a05;
+  --warn-highlight-hover: #fbbf24;
+
+  --info-bg: rgb(23 37 84 / 0.4);
+  --info-border: #60a5fa;
+  --info-text: #93c5fd;
+  --info-alt-text: #bfdbfe;
+  --info-highlight: #60a5fa;
+  --info-highlight-fg: #0a1f3a;
+  --info-highlight-hover: #93c5fd;
+
+  --success-bg: rgb(6 78 59 / 0.4);
+  --success-border: #34d399;
+  --success-text: #6ee7b7;
+  --success-alt-text: #a7f3d0;
+  --success-highlight: #34d399;
+  --success-highlight-fg: #001a10;
+  --success-highlight-hover: #6ee7b7;
+
+  --asset-filter: hue-rotate(180deg) invert(1);
+}
+
+/* Asset filter opt-in utility. Applies the current cascade's
+ * --asset-filter to an <img> element. Day-for-night in dark mode for
+ * every theme except Nouvelle Vague (which forces grayscale). Default
+ * is identity in light mode + identity under Windows High Contrast
+ * (the forced-colors palette already inverts; double-inverting is a
+ * regression). */
+@utility themed-asset {
+  filter: var(--asset-filter);
+}
+
+/* Modal backdrop. Single source of truth for the universal scrim used
+ * by every overlay (WelcomeModal, KeyboardShortcutsModal, LinksView
+ * link-form backdrop, MobileBottomSheet). Today the literal value is
+ * theme-independent; promote to `var(--scrim, rgb(0 0 0 / 0.5))` when
+ * a theme needs to opt out. */
+@utility scrim {
+  background-color: rgb(0 0 0 / 0.5);
+}
+
+/* Suppress the asset filter under Windows High Contrast / forced-colors.
+ * The OS already chose the user's palette; running day-for-night on top
+ * produces a double-inversion artifact. */
+@media (forced-colors: active) {
+  :root,
+  [data-mode='dark'] {
+    --asset-filter: none;
+  }
+}

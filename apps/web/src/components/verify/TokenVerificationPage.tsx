@@ -1,4 +1,5 @@
 import Alert from '../common/Alert';
+import LinkButton from '../common/LinkButton';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getErrorMessage } from '../../lib/errors';
@@ -80,15 +81,17 @@ export default function TokenVerificationPage({
   }, [onSuccess, searchParameters, verifyFn]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
-      <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl text-center select-none">
-        <h1 className="mb-4 text-[var(--text)] text-2xl font-bold">{title}</h1>
+    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
+      <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl text-center select-none">
+        <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
+          {title}
+        </h1>
 
         {status === 'verifying' && (
           <p
             role="status"
             aria-live="polite"
-            className="text-[var(--text-muted)] animate-pulse"
+            className="text-[var(--mount-alt-text)] animate-pulse"
           >
             {verifyingText}
           </p>
@@ -96,20 +99,20 @@ export default function TokenVerificationPage({
 
         {status === 'success' && (
           <>
-            <p className="mb-6 text-[var(--text-muted)]">
+            <p className="mb-6 text-[var(--mount-alt-text)]">
               <i
-                className="fa-solid fa-circle-check mr-2 text-emerald-500 [[data-theme='nouvelle-vague']_&]:text-[var(--accent)]"
+                className="fa-solid fa-circle-check mr-2 text-[var(--success-highlight)]"
                 aria-hidden="true"
               />
               {successText}
             </p>
-            <button
-              type="button"
-              className="text-[var(--accent)] underline text-sm"
+            <LinkButton
+              surface="mount"
+              className="text-sm"
               onClick={() => navigate('/unread')}
             >
               Go to Linklater
-            </button>
+            </LinkButton>
           </>
         )}
 
@@ -122,14 +125,16 @@ export default function TokenVerificationPage({
             >
               {errorMessage}
             </Alert>
-            <p className="mb-6 text-[var(--text-muted)] text-sm">{helpText}</p>
-            <button
-              type="button"
-              className="text-[var(--accent)] underline text-sm"
+            <p className="mb-6 text-[var(--mount-alt-text)] text-sm">
+              {helpText}
+            </p>
+            <LinkButton
+              surface="mount"
+              className="text-sm"
               onClick={() => navigate('/unread')}
             >
               Back to Linklater
-            </button>
+            </LinkButton>
           </>
         )}
       </div>

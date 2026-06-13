@@ -14,24 +14,16 @@
   - button "Add link"
   - searchbox "Search through your links"
   - tabpanel "Unread":
-    - paragraph: (No title)
-    - paragraph: httpforever.com
-    - paragraph: http://httpforever.com/
-    - link "(No title) — httpforever.com, opens in new tab":
-      - /url: http://httpforever.com/
-    - paragraph: Test Link 3
-    - paragraph: example.test
-    - link "Test Link 3 — example.test, opens in new tab":
-      - /url: https://example.test/3
-    - paragraph: Test Link 2
-    - paragraph: example.test
-    - link "Test Link 2 — example.test, opens in new tab":
-      - /url: https://example.test/2
+    - paragraph: No unread links
+    - paragraph: How about something from Testing Fixture?
+    - paragraph: Testing-UI Determinism
+    - paragraph: A frozen sample article used by the testing-ui harness so screenshot diffs only flag genuine UI changes.
+    - button "Add and read (opens in new tab)": Add and read
   - status
 - button "Close shortcuts"
 - dialog "Keyboard shortcuts":
-  - heading "Keyboard shortcuts" [level=2]
   - button "Close keyboard shortcuts"
+  - heading "Keyboard shortcuts" [level=2]
   - list:
     - listitem: Navigate links / menu ↑ / ↓
     - listitem: Switch tabs ← / →

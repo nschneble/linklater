@@ -57,19 +57,20 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--text-muted)] via-[var(--text-muted)] to-[var(--text)]">
-      <div className="w-full max-w-md mx-auto p-8 bg-[var(--bg-surface)] border-shadow rounded-2xl select-none">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
+      <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl select-none">
         {success && (
+          // --*-subtle-text is BASE-only by design; mount hints collapse to alt-text
           <i
-            className="block mb-4 fa-solid fa-circle-check text-4xl text-[var(--text-subtle)] animate-bounce text-center"
+            className="block mb-4 fa-solid fa-circle-check text-4xl text-[var(--mount-alt-text)] animate-bounce text-center"
             aria-hidden="true"
           />
         )}
-        <h1 className="mb-2 text-[var(--text)] text-center text-2xl font-bold">
+        <h1 className="mb-2 text-[var(--mount-text)] text-center text-2xl font-bold">
           {success ? (
             <>
               Your Password Has Been{' '}
-              <span className="underline underline-offset-3 decoration-[var(--accent)]">
+              <span className="underline underline-offset-3 decoration-[var(--mount-highlight)]">
                 Reset
               </span>
             </>
@@ -77,7 +78,7 @@ export default function ResetPasswordPage() {
             'Reset Password'
           )}
         </h1>
-        <p className="mb-6 text-[var(--text-muted)] text-center text-sm">
+        <p className="mb-6 text-[var(--mount-alt-text)] text-center text-sm">
           {success
             ? "I'm so proud of you."
             : 'No one liked your old password, anyways.'}
@@ -99,7 +100,7 @@ export default function ResetPasswordPage() {
         ) : (
           <form className="space-y-4" onSubmit={handleSubmit}>
             <label
-              className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+              className="block mb-0 text-[var(--mount-alt-text)] text-sm font-medium"
               htmlFor="reset-password"
             >
               New password
@@ -107,6 +108,7 @@ export default function ResetPasswordPage() {
             <FormInput
               id="reset-password"
               type="password"
+              surface="mount"
               autoComplete="new-password"
               onChange={(event) => setPassword(event.target.value)}
               value={password}
@@ -115,7 +117,7 @@ export default function ResetPasswordPage() {
             />
 
             <label
-              className="block mb-0 text-[var(--text-muted)] text-sm font-medium"
+              className="block mb-0 text-[var(--mount-alt-text)] text-sm font-medium"
               htmlFor="reset-confirm"
             >
               Confirm new password
@@ -123,6 +125,7 @@ export default function ResetPasswordPage() {
             <FormInput
               id="reset-confirm"
               type="password"
+              surface="mount"
               autoComplete="new-password"
               onChange={(event) => setConfirm(event.target.value)}
               value={confirm}

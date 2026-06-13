@@ -9,6 +9,5 @@
       { "role": "button", "text": "Log in" },
       { "role": "heading", "text": "Linklater" }
     ]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

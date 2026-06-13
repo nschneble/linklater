@@ -38,17 +38,22 @@ const CARD_ENTER_CLASS = 'animate-card-enter';
 
 /**
  * Generates a placeholder image URL using placehold.co, colored to match the
- * current theme's accent and accent-fg CSS variables. Falls back gracefully
- * if CSS variables are not defined.
+ * current theme's mount-highlight pair. Card lives on a mount-host surface,
+ * so the bg/fg pair (`--mount-highlight` / `--mount-highlight-fg`) gives
+ * the placeholder a coherent fill+foreground against neighboring chrome.
+ * Falls back gracefully if CSS variables are not defined.
  */
 function getPlaceholderUrl(url: string) {
   const style = getComputedStyle(document.documentElement);
-  const accent = style.getPropertyValue('--accent').trim().replace('#', '');
-  const accentFg = style
-    .getPropertyValue('--accent-fg')
+  const highlight = style
+    .getPropertyValue('--mount-highlight')
     .trim()
     .replace('#', '');
-  return `https://placehold.co/240x126/${accent}/${accentFg}?text=${hostnameOf(url)}`;
+  const highlightFg = style
+    .getPropertyValue('--mount-highlight-fg')
+    .trim()
+    .replace('#', '');
+  return `https://placehold.co/240x126/${highlight}/${highlightFg}?text=${hostnameOf(url)}`;
 }
 
 /**
@@ -116,7 +121,7 @@ export default function LinkCardLayout({
     <div
       ref={cardReference}
       aria-busy={!link.meta?.fetchedAt || undefined}
-      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--accent)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--accent)]/60' : ''}`}
+      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--mount-highlight)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--mount-border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
     >
       {link.meta?.fetchedAt ? (
         <div className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none">
@@ -125,7 +130,7 @@ export default function LinkCardLayout({
               <img
                 src={link.meta.faviconUrl}
                 alt=""
-                className="w-8 h-8 bg-white outline outline-black/10 -outline-offset-1 rounded-4xl object-cover"
+                className="themed-asset w-8 h-8 bg-white outline outline-black/10 -outline-offset-1 rounded-4xl object-cover"
                 aria-hidden="true"
                 onError={(event) => {
                   (event.target as HTMLImageElement).style.display = 'none';
@@ -137,7 +142,7 @@ export default function LinkCardLayout({
                 aria-hidden="true"
               >
                 <i
-                  className="fa-solid fa-bookmark text-[var(--accent)] text-lg"
+                  className="fa-solid fa-bookmark text-[var(--mount-highlight)] text-lg"
                   aria-hidden="true"
                 />
               </div>
@@ -149,8 +154,8 @@ export default function LinkCardLayout({
           aria-hidden="true"
           className="absolute inset-0 pointer-events-none animate-pulse z-20"
         >
-          <div className="absolute top-0 bottom-0 left-0 -translate-x-full w-1 bg-[var(--accent)]" />
-          <span className="absolute left-0 top-4 -translate-x-1/2 z-10 block w-8 h-8 bg-[var(--accent)] ring-2 ring-[var(--bg-surface)] rounded-2xl" />
+          <div className="absolute top-0 bottom-0 left-0 -translate-x-full w-1 bg-[var(--mount-highlight)]" />
+          <span className="absolute left-0 top-4 -translate-x-1/2 z-10 block w-8 h-8 bg-[var(--mount-highlight)] ring-2 ring-[var(--mount-bg)] rounded-2xl" />
         </div>
       )}
 
@@ -162,7 +167,7 @@ export default function LinkCardLayout({
               alt=""
               aria-hidden="true"
               style={childStyle(3)}
-              className={`w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0 bg-white object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
+              className={`themed-asset w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0 bg-white object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
               onError={(event) => {
                 (event.target as HTMLImageElement).src = placeholderUrl;
               }}
@@ -170,21 +175,22 @@ export default function LinkCardLayout({
           ) : (
             <div
               aria-hidden="true"
-              className="w-[60px] sm:w-[120px] h-[31.5px] sm:h-[63px] shrink-0 rounded-md bg-[var(--bg-elevated)]"
+              className="w-[60px] sm:w-[120px] h-[31.5px] sm:h-[63px] shrink-0 rounded-md bg-[var(--orbit-bg)]"
             />
           )}
 
           <div className="flex flex-col items-start min-w-0 ml-3">
             <p
               style={childStyle(1)}
-              className={`text-[var(--text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
+              className={`text-[var(--mount-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
             >
               {displayTitle}
             </p>
 
+            {/* --*-subtle-text is BASE-only by design; mount hints collapse to alt-text */}
             <p
               style={childStyle(0)}
-              className={`w-full text-[var(--text-subtle)] text-xs truncate ${CARD_ENTER_CLASS}`}
+              className={`w-full text-[var(--mount-alt-text)] text-xs truncate ${CARD_ENTER_CLASS}`}
             >
               {displaySiteName}
             </p>
@@ -197,7 +203,7 @@ export default function LinkCardLayout({
             className={`relative flex items-start gap-3 overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS} z-20 pointer-events-none`}
           >
             {displayDescription && (
-              <p className="flex-1 min-w-0 text-[var(--text-muted)] text-xs text-pretty tracking-tight sm:tracking-normal line-clamp-2">
+              <p className="flex-1 min-w-0 text-[var(--mount-alt-text)] text-xs text-pretty tracking-tight sm:tracking-normal line-clamp-2">
                 {displayDescription}
               </p>
             )}

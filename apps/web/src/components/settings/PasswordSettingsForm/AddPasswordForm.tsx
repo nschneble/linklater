@@ -44,24 +44,25 @@ export default function AddPasswordForm({ refreshUser }: AddPasswordFormProps) {
     >
       <h3
         id="add-password-heading"
-        className="mb-0 text-[var(--text)] text-sm font-semibold text-balance"
+        className="mb-0 text-[var(--mount-text)] text-sm font-semibold text-balance"
       >
         Password
       </h3>
       <div className="flex items-center gap-2">
-        <span className="my-0.75 text-[var(--text-muted)] text-xs">
+        <span className="my-0.75 text-[var(--mount-alt-text)] text-xs">
           No password has been set
         </span>
       </div>
 
       <label
-        className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+        className="block mb-0 text-[var(--mount-alt-text)] text-xs font-medium"
         htmlFor="add-password-input"
       >
         Password
       </label>
       <FormInput
         id="add-password-input"
+        surface="mount"
         type="password"
         value={newPassword}
         onChange={(event) => setNewPassword(event.target.value)}

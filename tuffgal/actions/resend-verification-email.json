@@ -1,7 +1,7 @@
 {
   "action": "resend-verification-email",
   "steps": [
-    { "kind": "navigate", "path": "/settings" },
+    { "kind": "navigate", "path": "/settings", "waitUntil": "domcontentloaded" },
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Resend verification email" }
@@ -12,6 +12,5 @@
     "anyOf": [{ "text": "Verification email sent" }],
     "timeoutMs": 10000
   },
-  "mask": [{ "selector": "[role='status']" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "[role='status']" }]
 }

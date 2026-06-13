@@ -1,3 +1,4 @@
+import { FOCUS_RING } from '../../lib/styles';
 import { THEMES, type BaseTheme } from '../../theme/ThemeContext';
 
 interface InlineThemeListProps {
@@ -25,7 +26,7 @@ export default function InlineThemeList({
           type="button"
           role="menuitemradio"
           aria-checked={baseTheme === theme.id}
-          className="flex items-center gap-3 w-full px-4 py-3 text-[var(--text)] text-left focus:bg-[var(--bg-surface)] focus:outline-none cursor-pointer"
+          className={`flex items-center gap-3 w-full px-4 py-3 text-[var(--orbit-text)] text-left ${FOCUS_RING} cursor-pointer`}
           onClick={() => onSelect(theme.id)}
         >
           <span
@@ -40,7 +41,7 @@ export default function InlineThemeList({
           <span className="flex-1">{theme.label}</span>
           {baseTheme === theme.id && (
             <i
-              className="fa-solid fa-check text-[var(--accent)]"
+              className="fa-solid fa-check text-[var(--orbit-highlight)]"
               aria-hidden="true"
             />
           )}

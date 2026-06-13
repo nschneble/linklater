@@ -71,7 +71,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         <h1 className="text-lg font-semibold">Your links</h1>
         <button
           type="button"
-          className="hidden sm:inline-flex text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors cursor-help"
+          className="hidden sm:inline-flex text-[var(--base-subtle-text)] hover:text-[var(--base-text)] transition-colors cursor-help"
           onClick={view.onToggleShortcuts}
           aria-label="Show keyboard shortcuts"
           title="Keyboard shortcuts"
@@ -79,7 +79,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
           <i className="fa-solid fa-keyboard text-sm" aria-hidden="true" />
         </button>
       </div>
-      <p className="text-[var(--text-muted)] text-xs">
+      <p className="text-[var(--base-alt-text)] text-xs">
         <span className="hidden sm:inline-flex">
           {view.filter === 'read'
             ? 'Read links are automatically removed after seven days.'
@@ -121,7 +121,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
           <button
             type="button"
             aria-label="Close form"
-            className="fixed inset-0 z-20 w-full h-full bg-black/50 backdrop-blur-sm cursor-default"
+            className="fixed inset-0 z-20 w-full h-full scrim backdrop-blur-sm cursor-default"
             onClick={view.handleToggleForm}
           />,
           document.body,

@@ -1,27 +1,169 @@
+/* ---------- before-midnight ---------- *
+ * Wave 9 migration to per-theme bundle palette. The legacy flat tokens
+ * stay intact for un-migrated consumers.
+ *
+ * State-hue allocation: info = blue-leaning deep teal, success = green-
+ * leaning bright mint. The two hues are intentionally split across the
+ * teal continuum so they survive all three dichromacies — a medium-teal
+ * vs medium-teal pairing collapses under tritanopia, which is why the
+ * dark-mode --success-border lands on the lighter mint #a8e8d0 instead
+ * of the brief's first-pass #5cb098.
+ *
+ * Brief flags that culori verification surfaced (a11y-lead had no culori
+ * in their reasoning loop):
+ *   - LIGHT --base-highlight bumped from #b75638 (2.62:1 vs page bg) to
+ *     #a04a30 (3.28:1). #b75638 was the brief's first-pass value but
+ *     failed SC 1.4.11 on --base-bg #ccc095. The shifted hex also
+ *     cascades to --base-highlight-hover #8a3d20 (was #a04a30).
+ *   - DARK --success-border bumped from #5cb098 to #a8e8d0. The brief's
+ *     Recovery Option A first-pass (#5cc4a0) still both-failed the
+ *     info/success pair (border dE 7.1 protan / 7.5 deuter, both under
+ *     10; axis B border lum 1.00). #a8e8d0 widens the lightness split
+ *     vs --info-border #88bbb6 (lum ratio 1.60, clears axis B) while
+ *     simultaneously surviving axis A on all three CVDs (min border dE
+ *     10.4 tritan). Verified pair-clean against alert (dE >=25), warn
+ *     (>=25), info (>=10) under Brettel/CIEDE2000 via culori.
+ *   - LIGHT --alert-border #8a3d20 confirmed (4.17:1 vs page bg).
+ *
+ * No SHAPE_REDUNDANCY_WAIVERS entries needed — every state pair clears
+ * axis A or axis B in both modes.
+ */
 [data-theme='before-midnight'][data-mode='dark'] {
-  --bg: #1c2c38;
-  --bg-surface: #4e4435;
-  --bg-elevated: #354828;
-  --bg-input: #4e4435;
-  --text: #e8dccd;
-  --text-muted: #cee1dc;
-  --text-subtle: #c3e8b0;
-  --border: #119fb6;
-  --accent: #ebb327;
-  --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #1c2c38;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
+  --focus-ring: #ebb327;
+
+  /* Page-gradient stops — see bundles.css preamble. */
+  --page-gradient-from: #cee1dc;
+  --page-gradient-to: #e8dccd;
+
+  /* Bundle palette. */
+  --base-bg: #1c2c38;
+  --base-border: #569ca8;
+  --base-input-bg: #4e4435;
+  --base-text: #e8dccd;
+  --base-alt-text: #d4cab5;
+  --base-subtle-text: #c3e8b0;
+  --base-highlight: #ebb327;
+  --base-highlight-fg: #1c2c38;
+  --base-highlight-hover: #d4a020;
+
+  --mount-bg: #243846;
+  --mount-border: #569ca8;
+  --mount-input-bg: #243846;
+  --mount-text: #e8dccd;
+  --mount-alt-text: #d4cab5;
+  --mount-highlight: #ebb327;
+  --mount-highlight-fg: #1c2c38;
+  --mount-highlight-hover: #d4a020;
+
+  --orbit-bg: #2d4452;
+  --orbit-border: #569ca8;
+  --orbit-text: #e8dccd;
+  --orbit-alt-text: #d4cab5;
+  --orbit-highlight: #ebb327;
+  --orbit-highlight-fg: #1c2c38;
+  --orbit-highlight-hover: #d4a020;
+
+  --alert-bg: rgb(76 26 14 / 0.5);
+  --alert-border: #d87858;
+  --alert-text: #f5c8b8;
+  --alert-alt-text: #e8b0a0;
+  --alert-highlight: #d87858;
+  --alert-highlight-fg: #1c0a04;
+  --alert-highlight-hover: #e08868;
+
+  --warn-bg: rgb(70 50 8 / 0.5);
+  --warn-border: #ebb327;
+  --warn-text: #f5dc80;
+  --warn-alt-text: #f0d090;
+  --warn-highlight: #ebb327;
+  --warn-highlight-fg: #1c1408;
+  --warn-highlight-hover: #f5c440;
+
+  --info-bg: rgb(8 40 50 / 0.5);
+  --info-border: #88bbb6;
+  --info-text: #c8e2e0;
+  --info-alt-text: #aad0cc;
+  --info-highlight: #88bbb6;
+  --info-highlight-fg: #08222a;
+  --info-highlight-hover: #a0c8c4;
+
+  --success-bg: rgb(20 50 42 / 0.55);
+  --success-border: #a8e8d0;
+  --success-text: #c0e0d4;
+  --success-alt-text: #a0d0c0;
+  --success-highlight: #a8e8d0;
+  --success-highlight-fg: #04140e;
+  --success-highlight-hover: #bce8d4;
 }
 
 [data-theme='before-midnight'][data-mode='light'] {
-  --bg: #ccc095;
-  --bg-surface: #c2dada;
-  --bg-elevated: #a0c8b0;
-  --bg-input: #ccc095;
-  --text: #20303d;
-  --text-muted: #323223;
-  --text-subtle: #2d3419;
-  --border: #11637a;
-  --accent: #562315;
-  --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
-  --accent-fg: #ffffff;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
+  --focus-ring: #562315;
+
+  /* Page-gradient stops — see bundles.css preamble. */
+  --page-gradient-from: #323223;
+  --page-gradient-to: #20303d;
+
+  /* Bundle palette. */
+  --base-bg: #ccc095;
+  --base-border: #11637a;
+  --base-input-bg: #ccc095;
+  --base-text: #20303d;
+  --base-alt-text: #2d3419;
+  --base-subtle-text: #2d3419;
+  --base-highlight: #a04a30;
+  --base-highlight-fg: #ffffff;
+  --base-highlight-hover: #8a3d20;
+
+  --mount-bg: #d8cda8;
+  --mount-border: #11637a;
+  --mount-input-bg: #d8cda8;
+  --mount-text: #20303d;
+  --mount-alt-text: #2d3419;
+  --mount-highlight: #a04a30;
+  --mount-highlight-fg: #ffffff;
+  --mount-highlight-hover: #8a3d20;
+
+  --orbit-bg: #e3d9b9;
+  --orbit-border: #11637a;
+  --orbit-text: #20303d;
+  --orbit-alt-text: #2d3419;
+  --orbit-highlight: #a04a30;
+  --orbit-highlight-fg: #ffffff;
+  --orbit-highlight-hover: #8a3d20;
+
+  --alert-bg: #f0d8cc;
+  --alert-border: #8a3d20;
+  --alert-text: #4a1808;
+  --alert-alt-text: #6a2410;
+  --alert-highlight: #8a3d20;
+  --alert-highlight-fg: #ffffff;
+  --alert-highlight-hover: #6f3018;
+
+  --warn-bg: #f5e5b8;
+  --warn-border: #8a5c10;
+  --warn-text: #4a3008;
+  --warn-alt-text: #6a4410;
+  --warn-highlight: #8a5c10;
+  --warn-highlight-fg: #ffffff;
+  --warn-highlight-hover: #6f4810;
+
+  --info-bg: #c8dde2;
+  --info-border: #0d4e60;
+  --info-text: #082e3a;
+  --info-alt-text: #0d4e60;
+  --info-highlight: #0d4e60;
+  --info-highlight-fg: #ffffff;
+  --info-highlight-hover: #0a3d4a;
+
+  --success-bg: #d4e3df;
+  --success-border: #2c6056;
+  --success-text: #0e2a25;
+  --success-alt-text: #1a4038;
+  --success-highlight: #2c6056;
+  --success-highlight-fg: #ffffff;
+  --success-highlight-hover: #234a42;
 }

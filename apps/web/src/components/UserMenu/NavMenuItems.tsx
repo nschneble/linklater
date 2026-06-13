@@ -31,7 +31,6 @@ export default function NavMenuItems({
       <MenuItem
         icon="fa-bookmark"
         label="Your links"
-        className="focus:bg-transparent! sm:focus:bg-[var(--bg-surface)]!"
         onClick={() => {
           onViewChange('links');
           onClose();
@@ -42,7 +41,6 @@ export default function NavMenuItems({
       <MenuItem
         icon="fa-gear"
         label="Settings"
-        className="focus:bg-transparent! sm:focus:bg-[var(--bg-surface)]!"
         onClick={() => {
           onViewChange('settings');
           onClose();
@@ -53,14 +51,12 @@ export default function NavMenuItems({
       <MenuItem
         icon={mode === 'light' ? 'fa-moon' : 'fa-sun'}
         label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
-        className="focus:bg-transparent! sm:focus:bg-[var(--bg-surface)]!"
         onClick={onModeToggle}
       />
 
       <MenuItem
         icon="fa-paintbrush"
         label="Theme editor"
-        className="focus:bg-transparent! sm:focus:bg-[var(--bg-surface)]!"
         onClick={() => {
           onViewChange('theme-editor');
           onClose();

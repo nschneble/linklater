@@ -39,19 +39,19 @@ export default function AppShell() {
   const isEmailUnverified = !user.emailVerifiedAt;
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] select-none">
+    <div className="min-h-screen bg-[var(--base-bg)] text-[var(--base-text)] select-none">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--bg-surface)] focus:text-[var(--text)] focus:text-sm focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-sm focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none"
       >
         Skip to main content
       </a>
       {isEmailUnverified && (
         <div
-          className="px-4 py-2 bg-amber-100 [[data-mode='dark']_&]:bg-amber-950/25 [[data-theme='nouvelle-vague']_&]:bg-gray-100 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:bg-gray-900/30 border-b border-amber-300 [[data-mode='dark']_&]:border-amber-800/50 [[data-theme='nouvelle-vague']_&]:border-gray-300 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:border-gray-700/50 text-center"
+          className="px-4 py-2 bg-[var(--warn-bg)] border-b border-[var(--warn-border)] text-center"
           role="status"
         >
-          <p className="text-amber-800 [[data-mode='dark']_&]:text-amber-300 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400 text-xs font-medium">
+          <p className="text-[var(--warn-text)] text-xs font-medium">
             <i
               className="fa-solid fa-triangle-exclamation mr-1.5"
               aria-hidden="true"
@@ -59,6 +59,7 @@ export default function AppShell() {
             Please verify your email address.{' '}
             <LinkButton
               className="hidden sm:inline-flex"
+              surface="warn"
               onClick={() => shell.navigate('/settings')}
             >
               Need to resend the verification email?
@@ -95,7 +96,7 @@ export default function AppShell() {
               fallback={
                 <p
                   aria-live="polite"
-                  className="text-[var(--text-muted)] text-sm"
+                  className="text-[var(--base-alt-text)] text-sm"
                 >
                   Loading API docs…
                 </p>

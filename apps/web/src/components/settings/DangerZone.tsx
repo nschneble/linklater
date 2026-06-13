@@ -220,9 +220,9 @@ export default function DangerZone() {
         ) : (
           <div
             ref={confirmReference}
-            className="flex gap-2 items-center justify-between text-xs"
+            className="flex items-center justify-between gap-2 text-xs"
           >
-            <span className="text-rose-700 [[data-mode='dark']_&]:text-rose-300 [[data-theme='nouvelle-vague']_&]:text-gray-700 [[data-theme='nouvelle-vague'][data-mode='dark']_&]:text-gray-400">
+            <span className="text-[var(--alert-text)]">
               Are you sure? This is permanent.
             </span>
             <div className="space-x-2">
@@ -233,6 +233,15 @@ export default function DangerZone() {
               >
                 {pending ? 'Deleting…' : 'Yes, delete'}
               </IconButton>
+              {/* Ghost on alert-bg host (SettingsGroup variant="danger"
+                  paints --alert-bg). IconButton default surface="mount"
+                  paints --mount-border / --mount-alt-text against --alert-bg.
+                  Intentional — adding 'alert' to IconButton's surface union
+                  would require a new bundle slot per
+                  [[feedback-bundle-slot-add-reverify]] and is deferred to
+                  a future wave. Pre-existing in legacy code (was
+                  --text-muted, similar effect). Do not "fix" by adding an
+                  explicit surface override here. */}
               <IconButton
                 variant="ghost"
                 disabled={pending}

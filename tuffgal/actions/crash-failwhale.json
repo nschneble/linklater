@@ -9,6 +9,5 @@
   ],
   "expect": {
     "anyOf": [{ "role": "heading", "text": "Something went wrong" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

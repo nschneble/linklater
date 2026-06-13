@@ -18,11 +18,9 @@
       color-mix(in srgb, var(--border-shadow-color, #000000) 6%, transparent);
 }
 
-@media (prefers-color-scheme: dark) {
-  .border-shadow,
-  .hover\:border-shadow:hover {
-    --border-shadow-color: #ffffff;
-  }
+[data-mode='dark'] .border-shadow,
+[data-mode='dark'] .hover\:border-shadow:hover {
+  --border-shadow-color: #ffffff;
 }
 
 @utility border-shadow-* {

@@ -17,6 +17,5 @@
   "expect": {
     "anyOf": [{ "text": "verification code is required" }]
   },
-  "mask": [{ "selector": "[role='alert']" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "[role='alert']" }]
 }

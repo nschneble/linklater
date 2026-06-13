@@ -4,6 +4,7 @@
   "needs": ["logged-in"],
   "actions": [
     { "action": "intercept-noop-user-patch" },
+    { "action": "intercept-instant-bookmarklet-token" },
     { "action": "toggle-cvd-mode" }
   ]
 }

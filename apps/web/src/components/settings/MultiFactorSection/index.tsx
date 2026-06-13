@@ -67,7 +67,7 @@ export default function MultiFactorSection() {
       {!mfa.reauthAction && mfa.multiFactorMethod && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)] text-xs">
+            <span className="text-[var(--mount-alt-text)] text-xs">
               Authenticator app
             </span>
             <StatusBadge variant="success" icon="fa-solid fa-circle-check">
@@ -127,7 +127,7 @@ export default function MultiFactorSection() {
         !mfa.totpSetup &&
         mfa.multiFactorPending && (
           <div className="space-y-3">
-            <p className="text-[var(--text-muted)] text-xs">
+            <p className="text-[var(--mount-alt-text)] text-xs">
               Authenticator app setup is in progress.
             </p>
             {mfa.error && <Alert variant="error">{mfa.error}</Alert>}
@@ -156,7 +156,7 @@ export default function MultiFactorSection() {
       {/* State A — MFA not enabled */}
       {mfa.inStateA && (
         <div className="space-y-3">
-          <p className="text-[var(--text-muted)] text-xs">
+          <p className="text-[var(--mount-alt-text)] text-xs">
             MFA is currently off.
           </p>
           {mfa.error && <Alert variant="error">{mfa.error}</Alert>}

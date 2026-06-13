@@ -2,6 +2,7 @@
   "story": "As a logged-in user, I can revoke an API token — and if revocation fails on the server, I see an error.",
   "needs": ["logged-in"],
   "actions": [
+    { "action": "intercept-instant-bookmarklet-token" },
     { "action": "intercept-one-api-token" },
     { "action": "intercept-token-revoke-ok" },
     { "action": "revoke-token" },

@@ -1,7 +1,7 @@
 {
   "action": "setup-mfa",
   "steps": [
-    { "kind": "navigate", "path": "/settings" },
+    { "kind": "navigate", "path": "/settings", "waitUntil": "domcontentloaded" },
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Add authenticator app" }
@@ -15,6 +15,5 @@
   "mask": [
     { "selector": "img[alt='']" },
     { "selector": "[aria-label='TOTP secret']" }
-  ],
-  "diff": { "maxDiffRatio": 0.02 }
+  ]
 }

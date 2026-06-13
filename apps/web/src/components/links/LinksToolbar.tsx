@@ -66,7 +66,7 @@ export default function LinksToolbar({
         <SlidingTabBar
           ariaLabel="Links filter"
           activeIndex={filter === 'read' ? 1 : 0}
-          className="shrink-0 bg-[var(--bg-surface)] border-shadow hover:border-shadow text-xs"
+          className="shrink-0 border-shadow hover:border-shadow text-xs"
           tabClassName="px-3 py-1.5"
           tabs={[
             {
@@ -101,7 +101,7 @@ export default function LinksToolbar({
       <div className="flex items-center gap-2 mt-3 sm:mt-4 mb-3">
         <input
           ref={searchInputReference}
-          className="flex-1 min-w-0 px-3 py-2 bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] text-sm placeholder:text-[var(--text-subtle)] focus:outline-none focus:ring focus:ring-[var(--accent)] focus:border-[var(--accent)] rounded-lg"
+          className="flex-1 min-w-0 px-3 py-2 bg-[var(--base-input-bg)] border border-[var(--base-border)] text-[var(--base-text)] text-sm placeholder:text-[var(--base-alt-text)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--focus-ring)] rounded-lg"
           type="search"
           placeholder={
             filter === 'unread' ? 'Search unread links' : 'Search read links'

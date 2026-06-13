@@ -1,27 +1,239 @@
+/* ---------- before-sunset ---------- *
+ * Wave 14 migration to per-theme bundle palette. The legacy flat tokens
+ * stay intact for un-migrated consumers.
+ *
+ * APOLLO-CLASS WARM-ONLY theme: no greens, no blues in the base palette
+ * (PRD-allowed hues are rust + amber-gold). State bundles need PRD breaks
+ * for info (purple) and success (emerald light / cream-mint dark) to carry
+ * the conventional categorical signal under CVD — hit-man wave 13 / Apollo
+ * wave 8 / scanner-darkly wave 12 precedent.
+ *
+ * Card-style choice: calm path. Mount/orbit bgs are calm cream gradations
+ * off the page bg in light mode and warm brown gradations off the
+ * extremely-dark page bg in dark mode — keeps the surface stack quiet so
+ * state bundles do the categorical work.
+ *
+ * Critical divergence from hit-man wave 13: DARK page-bg #050404 (rel lum
+ * ~0.0007) is 10x darker than hit-man's #1a150e (~0.0072). Standard alpha
+ * 0.55 over this page-bg collapses composited state bgs to near-identical
+ * near-black. Lifting alpha to 0.65 (instead of more aggressive RGB-triplet
+ * lift at 0.55) preserves stronger state-bg separation: alert/warn bg lum
+ * ratio 1.98 vs 1.71 at 0.55; warn/info 2.67 vs 2.56; warn/success 1.95
+ * vs 1.77. Both paths culori-verified clean; 0.65 picked for headroom.
+ *
+ * Intentional palette breaks vs before-sunset flat tokens:
+ *   - LIGHT --base-border #5e4227 darker than flat --border #6b4a18,
+ *     unifies base/mount/orbit border on a deeper brown for consistent
+ *     SC 1.4.11 against the cream page bg.
+ *   - LIGHT --info bundle = PURPLE (Apollo-class break; hit-man wave 13 /
+ *     scanner-darkly wave 12 precedent). The PRD has no blue; purple
+ *     carries the cool anchor needed for unambiguous separation from
+ *     alert / warn / success under all three dichromacies.
+ *   - LIGHT --success bundle = EMERALD (Apollo-class break; Apollo wave 8
+ *     / hit-man wave 13 precedent). The PRD has no green; emerald carries
+ *     the conventional "green = success" affordance.
+ *   - LIGHT --alert-bg #e4c4a8 pre-darkened (canonical 4x precedent
+ *     scanner-darkly / hit-man / dazed-and-confused / boyhood) to close
+ *     the alert/warn bg axis B that would otherwise collapse on the
+ *     warm-only palette.
+ *   - LIGHT --warn-border #6a4510 NOT the PRD-style amber (SC 1.4.11
+ *     would fail by wide margin vs warn-bg #f8ecc8).
+ *   - DARK --info bundle = LAVENDER (Apollo-class break).
+ *   - DARK --success bundle = CREAM-MINT (boyhood / dazed / hit-man
+ *     precedent). High-luminance mint cream outruns warn-gold under
+ *     tritanopia.
+ *   - DARK --alert-highlight #ee5050 paired with dark fg #1c0608 = dazed
+ *     wave 11 / scanner-darkly wave 12 / hit-man wave 13 / school-of-rock
+ *     precedent for fill-on-fill alert buttons.
+ *   - DARK alpha = 0.65 (NOT the 0.55 wave-11/12/13 precedent) — required
+ *     by the 10x darker page bg vs hit-man. Fallback D-F5 path (alpha
+ *     0.55 + RGB-lifted triplets) culori-verifies clean too, but 0.65
+ *     carries more axis B headroom and more text-contrast headroom on
+ *     composited state bgs.
+ *
+ * Brief flags that culori verification surfaced (a11y-lead disclosed no
+ * culori in their reasoning loop):
+ *   - LIGHT --alert-highlight #b02818 vs alert-bg #e4c4a8 verified at
+ *     4.03:1, not the brief's 3.4:1 razor estimate. L-F1 NOT needed.
+ *   - LIGHT alert/warn tritan border briefed at dE 12 razor. Verified at
+ *     border dE 9.8 tritan (slightly under threshold) — but axis B bg lum
+ *     1.43 clears the test. L-F2 NOT needed.
+ *   - DARK --orbit-border #b6745c vs orbit-bg #4a3818 verified at 3.02:1,
+ *     above the brief's 3.1:1 razor estimate but still within 0.02 of
+ *     the SC 1.4.11 threshold. Passes the contract test. D-F1 staged but
+ *     not applied — the unified base/mount/orbit border maintains
+ *     surface-stack coherence and the test passes.
+ *   - DARK alert/warn tritan border briefed at dE 12 razor. Verified at
+ *     border dE 7.7 tritan (under threshold) — but axis B bg lum 1.98
+ *     clears comfortably. D-F3 NOT needed.
+ *   - DARK warn/success border CVD: verified protan dE 25.3 / deuter dE
+ *     26.9 / tritan dE 48.8 — all well above 10 threshold (axis A clears
+ *     comfortably). The briefed gold-vs-mint highest-risk pair has full
+ *     headroom. D-F2 NOT needed.
+ *   - DARK alert/info axis B briefed unstated. Verified bg lum 1.34 (axis
+ *     B fails) but axis A clears under all three dichromacies (min tritan
+ *     bg dE 19.5). Pair passes via axis A.
+ *
+ * No SHAPE_REDUNDANCY_WAIVERS entries needed — both modes clear all six
+ * state pairs on axis A or axis B post-mitigation.
+ */
 [data-theme='before-sunset'][data-mode='dark'] {
-  --bg: #050404;
-  --bg-surface: #2f221a;
-  --bg-elevated: #4a3818;
-  --bg-input: #2f221a;
-  --text: #e8e5d7;
-  --text-muted: #e6c99a;
-  --text-subtle: #e5c7ba;
-  --border: #b6745c;
-  --accent: #d7974f;
-  --accent-hover: oklch(from var(--accent) calc(l - 0.12) c h);
-  --accent-fg: #000000;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
+  --focus-ring: #d7974f;
+
+  /* Page-gradient stops — see bundles.css preamble. */
+  --page-gradient-from: #e6c99a;
+  --page-gradient-to: #e8e5d7;
+
+  /* Bundle palette. */
+  --base-bg: #050404;
+  --base-border: #b6745c;
+  --base-input-bg: #2f221a;
+  --base-text: #e8e5d7;
+  --base-alt-text: #e6c99a;
+  --base-subtle-text: #e5c7ba;
+  --base-highlight: #d7974f;
+  --base-highlight-fg: #1a0e02;
+  --base-highlight-hover: #b87a38;
+
+  --mount-bg: #2f221a;
+  --mount-border: #b6745c;
+  --mount-input-bg: #2f221a;
+  --mount-text: #e8e5d7;
+  --mount-alt-text: #e6c99a;
+  --mount-highlight: #d7974f;
+  --mount-highlight-fg: #1a0e02;
+  --mount-highlight-hover: #b87a38;
+
+  /* --orbit-border #b6745c vs orbit-bg #4a3818 = 3.02:1, razor against
+   * SC 1.4.11 but passes. Unified base/mount/orbit border preserved for
+   * surface-stack coherence; D-F1 (#c8856a, 3.75:1) staged but not
+   * applied. */
+  --orbit-bg: #4a3818;
+  --orbit-border: #b6745c;
+  --orbit-text: #e8e5d7;
+  --orbit-alt-text: #e6c99a;
+  --orbit-highlight: #d7974f;
+  --orbit-highlight-fg: #1a0e02;
+  --orbit-highlight-hover: #b87a38;
+
+  /* dazed-wave-11 / scanner-darkly-wave-12 / hit-man-wave-13 precedent:
+   * punchy hl + dark hl-fg for fill-on-fill alert buttons.
+   * --alert-bg alpha = 0.65 (NOT the wave-11/12/13 0.55) — required by
+   * the 10x darker page bg #050404. */
+  --alert-bg: rgb(96 26 14 / 0.65);
+  --alert-border: #f08868;
+  --alert-text: #f5c8b8;
+  --alert-alt-text: #e8b0a0;
+  --alert-highlight: #ee5050;
+  --alert-highlight-fg: #1c0608;
+  --alert-highlight-hover: #f06868;
+
+  --warn-bg: rgb(96 68 14 / 0.65);
+  --warn-border: #ebb327;
+  --warn-text: #f5dc80;
+  --warn-alt-text: #f0d090;
+  --warn-highlight: #ebb327;
+  --warn-highlight-fg: #1c1408;
+  --warn-highlight-hover: #f5c440;
+
+  /* info — LAVENDER (Apollo-class PRD break). */
+  --info-bg: rgb(48 34 64 / 0.65);
+  --info-border: #b08cd0;
+  --info-text: #e0ccf0;
+  --info-alt-text: #c8b0e0;
+  --info-highlight: #b08cd0;
+  --info-highlight-fg: #1a0e28;
+  --info-highlight-hover: #c4a4dc;
+
+  /* success — CREAM-MINT (Apollo-class PRD break; boyhood / dazed /
+   * hit-man precedent). High-luminance mint cream outruns warn-gold
+   * under tritanopia. */
+  --success-bg: rgb(24 56 34 / 0.65);
+  --success-border: #a8e8d0;
+  --success-text: #c0e0d4;
+  --success-alt-text: #a0d0c0;
+  --success-highlight: #a8e8d0;
+  --success-highlight-fg: #04140e;
+  --success-highlight-hover: #bce8d4;
 }
 
 [data-theme='before-sunset'][data-mode='light'] {
-  --bg: #e8e5d7;
-  --bg-surface: #d4b06a;
-  --bg-elevated: #b89030;
-  --bg-input: #e8e5d7;
-  --text: #050404;
-  --text-muted: #2f221a;
-  --text-subtle: #4a3015;
-  --border: #6b4a18;
-  --accent: #7a3f15;
-  --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
-  --accent-fg: #e8e5d7;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
+  --focus-ring: #7a3f15;
+
+  /* Page-gradient stops — see bundles.css preamble. */
+  --page-gradient-from: #2f221a;
+  --page-gradient-to: #050404;
+
+  /* Bundle palette. */
+  --base-bg: #e8e5d7;
+  --base-border: #5e4227;
+  --base-input-bg: #e8e5d7;
+  --base-text: #050404;
+  --base-alt-text: #2f221a;
+  --base-subtle-text: #4a3015;
+  --base-highlight: #7a3f15;
+  --base-highlight-fg: #ffffff;
+  --base-highlight-hover: #5e3010;
+
+  --mount-bg: #ddd8c4;
+  --mount-border: #5e4227;
+  --mount-input-bg: #ddd8c4;
+  --mount-text: #050404;
+  --mount-alt-text: #2f221a;
+  --mount-highlight: #7a3f15;
+  --mount-highlight-fg: #ffffff;
+  --mount-highlight-hover: #5e3010;
+
+  --orbit-bg: #d2cdb6;
+  --orbit-border: #5e4227;
+  --orbit-text: #050404;
+  --orbit-alt-text: #2f221a;
+  --orbit-highlight: #7a3f15;
+  --orbit-highlight-fg: #ffffff;
+  --orbit-highlight-hover: #5e3010;
+
+  /* --alert-bg pre-darkened (canonical 4x precedent: scanner-darkly /
+   * hit-man / dazed-and-confused / boyhood) to close the alert/warn bg
+   * axis B (bg lum 1.43, clears 1.4). */
+  --alert-bg: #e4c4a8;
+  --alert-border: #8a2818;
+  --alert-text: #5a1408;
+  --alert-alt-text: #7a1c10;
+  --alert-highlight: #b02818;
+  --alert-highlight-fg: #ffffff;
+  --alert-highlight-hover: #8a2010;
+
+  --warn-bg: #f8ecc8;
+  --warn-border: #6a4510;
+  --warn-text: #4a3008;
+  --warn-alt-text: #6a4810;
+  --warn-highlight: #6a4510;
+  --warn-highlight-fg: #ffffff;
+  --warn-highlight-hover: #523510;
+
+  /* info — PURPLE (Apollo-class PRD break; hit-man wave 13 / scanner-
+   * darkly wave 12 precedent). Carries the cool anchor that survives CVD
+   * vs the warm-only PRD palette. */
+  --info-bg: #e2d8ec;
+  --info-border: #3a2640;
+  --info-text: #1a0e20;
+  --info-alt-text: #3a2640;
+  --info-highlight: #3a2640;
+  --info-highlight-fg: #ffffff;
+  --info-highlight-hover: #2a1a30;
+
+  /* success — EMERALD (Apollo-class PRD break; Apollo wave 8 / hit-man
+   * wave 13 precedent). The warm-only PRD palette has no green; emerald
+   * carries the conventional "green = success" affordance. */
+  --success-bg: #d8e8d0;
+  --success-border: #1c4028;
+  --success-text: #0a2818;
+  --success-alt-text: #1a3e28;
+  --success-highlight: #1c4028;
+  --success-highlight-fg: #ffffff;
+  --success-highlight-hover: #142e1c;
 }

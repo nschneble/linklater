@@ -73,7 +73,7 @@ export default function LinksList({
         id={LINKS_LIST_ID}
         role="tabpanel"
         aria-labelledby={tabPanelLabelId}
-        className="mt-6 grid grid-cols-1 gap-6"
+        className="grid grid-cols-1 gap-6 mt-6"
       >
         <LinkCardSkeleton />
       </div>
@@ -95,7 +95,7 @@ export default function LinksList({
         className="flex flex-col items-center justify-center py-9 text-center animate-fade-in-up"
       >
         <i
-          className={`text-4xl text-[var(--text-subtle)] mb-[7px] fa-solid ${
+          className={`text-4xl text-[var(--base-subtle-text)] mb-[7px] fa-solid ${
             search !== '' || debouncedSearch !== ''
               ? 'fa-magnifying-glass'
               : filter === 'read'
@@ -104,7 +104,7 @@ export default function LinksList({
           }`}
           aria-hidden="true"
         />
-        <p className="mb-6 text-[var(--text-muted)] text-sm font-medium">
+        <p className="mb-6 text-[var(--base-alt-text)] text-sm font-medium">
           {filter === 'read' ? 'No read links' : 'No unread links'}
         </p>
         {isUnreadEmpty && <SuggestionCallout inNewTab={true} />}
@@ -117,7 +117,7 @@ export default function LinksList({
       id={LINKS_LIST_ID}
       role="tabpanel"
       aria-labelledby={tabPanelLabelId}
-      className="mt-6 mb-28 grid grid-cols-1 gap-6"
+      className="grid grid-cols-1 gap-6 mt-6 mb-28"
     >
       {links.map((link, index) => (
         <div
@@ -147,7 +147,7 @@ export default function LinksList({
         pagination.total - links.length > 1 &&
         !loadingLinks && (
           <div className="flex justify-center pt-2">
-            <IconButton variant="elevated" onClick={onLoadMore}>
+            <IconButton variant="elevated" surface="base" onClick={onLoadMore}>
               {`Load more (${pagination.total - links.length} remaining)`}
             </IconButton>
           </div>

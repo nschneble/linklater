@@ -2,7 +2,7 @@
   "action": "create-api-token",
   "parameters": ["tokenName"],
   "steps": [
-    { "kind": "navigate", "path": "/settings" },
+    { "kind": "navigate", "path": "/settings", "waitUntil": "domcontentloaded" },
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Generate new token" }
@@ -26,6 +26,5 @@
   "mask": [
     { "selector": "[aria-label*=\"Personal access token\"]" },
     { "selector": "button[aria-label*=\"Revoke\"]" }
-  ],
-  "diff": { "maxDiffRatio": 0.02 }
+  ]
 }

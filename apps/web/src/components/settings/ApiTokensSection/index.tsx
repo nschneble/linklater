@@ -23,7 +23,7 @@ export default function ApiTokensSection() {
   return (
     <div className="max-w-md space-y-3">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+        <h3 className="text-[var(--mount-text)] text-sm font-semibold text-balance">
           API Tokens
         </h3>
         {!apiTokens.showCreate && !apiTokens.newToken && (
@@ -40,11 +40,11 @@ export default function ApiTokensSection() {
 
       {apiTokens.showCreate && (
         <form
-          className="space-y-4 -mx-6 my-6 p-6 border-y border-[var(--border)] border-dotted"
+          className="space-y-4 -mx-6 my-6 p-6 border-y border-[var(--mount-border)] border-dotted"
           onSubmit={(event: FormEvent) => void apiTokens.handleCreate(event)}
         >
           <label
-            className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+            className="block mb-0 text-[var(--mount-alt-text)] text-xs font-medium"
             htmlFor="token-name"
           >
             New token name
@@ -52,6 +52,7 @@ export default function ApiTokensSection() {
           <FormInput
             ref={apiTokens.nameInputReference}
             id="token-name"
+            surface="mount"
             type="text"
             disabled={apiTokens.creating}
             placeholder="e.g. Claude, Twilio"

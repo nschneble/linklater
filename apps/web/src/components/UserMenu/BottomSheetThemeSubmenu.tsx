@@ -43,7 +43,7 @@ export default function BottomSheetThemeSubmenu({
           icon="fa-chevron-left"
           label=""
           aria-label="Back to main menu"
-          className="flex-0 focus:bg-transparent!"
+          className="flex-0"
           onClick={onBack}
         />
         <p className="font-semibold">Themes</p>

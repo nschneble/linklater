@@ -1,4 +1,5 @@
 import { THEMES } from '../../theme/ThemeContext';
+import { FOCUS_RING } from '../../lib/styles';
 import MenuItem from './MenuItem';
 import MenuSection from './MenuSection';
 import NavMenuItems from './NavMenuItems';
@@ -59,7 +60,7 @@ export default function BottomSheetMainPanel({
       inert={showThemeSubview ? true : undefined}
     >
       <MenuSection label="Logged in as" className="px-4 pt-2">
-        <p className="mt-0.5 text-[var(--text)] text-xs tracking-tight font-medium truncate">
+        <p className="mt-0.5 text-[var(--orbit-text)] text-xs tracking-tight font-medium truncate">
           {user.email}
         </p>
       </MenuSection>
@@ -79,23 +80,23 @@ export default function BottomSheetMainPanel({
           role="menuitem"
           aria-haspopup="menu"
           aria-expanded={showThemeSubview}
-          className="flex items-center gap-2 w-full pl-2.5 pr-3 py-2 focus:outline-none text-[var(--text)] text-left cursor-pointer"
+          className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 text-[var(--orbit-text)] text-left cursor-pointer ${FOCUS_RING}`}
           onMouseEnter={(event) => event.currentTarget.focus()}
           onMouseDown={(event) => event.preventDefault()}
           onClick={onShowThemeSubview}
         >
           <i
-            className="fa-solid fa-palette text-[var(--text-muted)] text-[0.75rem]"
+            className="fa-solid fa-palette text-[var(--orbit-alt-text)] text-[0.75rem]"
             aria-hidden="true"
           />
           <div className="flex-1">
             <div>Theme</div>
-            <div className="mt-0.5 text-[var(--text-muted)] line-clamp-1">
+            <div className="mt-0.5 text-[var(--orbit-alt-text)] line-clamp-1">
               {currentThemeLabel}
             </div>
           </div>
           <i
-            className="fa-solid fa-chevron-right text-[var(--text-subtle)] text-[0.6rem]"
+            className="fa-solid fa-chevron-right text-[var(--orbit-alt-text)] text-[0.6rem]"
             aria-hidden="true"
           />
         </button>
@@ -104,7 +105,7 @@ export default function BottomSheetMainPanel({
       <MenuItem
         icon="fa-right-from-bracket"
         label="Log out"
-        className="mt-2 focus:bg-transparent!"
+        className="mt-2"
         onClick={() => {
           onLogout();
           onClose();

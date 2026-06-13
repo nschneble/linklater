@@ -1,32 +1,208 @@
+/* ---------- nouvelle-vague ---------- *
+ * Wave 16 (final) migration to per-theme bundle palette. The legacy flat
+ * tokens stay intact for un-migrated consumers.
+ *
+ * GRAYSCALE-BY-DESIGN theme (PRD footnote). The entire palette is true
+ * neutrals — no chroma anywhere. This means the bundle-distinguishability
+ * contract behaves uniquely:
+ *
+ *   Axis A (CVD-simulated dE2000): for grayscale stimuli, Brettel's
+ *     dichromacy transform maps monochromatic input to monochromatic
+ *     output — dE under CVD ~= photopic dE for any pair of grays. The
+ *     axis effectively reduces to "are these two grays distinguishable
+ *     at all". That's still a useful measure (and culori-verified clean
+ *     for the pairs that pass), but the categorical separation work
+ *     happens on axis B.
+ *
+ *   Axis B (luminance ratio >=1.4x): the LOAD-BEARING axis here. State
+ *     pairs that share identical color values cannot be separated by
+ *     luminance, and require SHAPE_REDUNDANCY_WAIVERS entries citing the
+ *     icon/shape redundancy already shipped in Alert.tsx + StatusBadge.tsx.
+ *
+ * State-pair audit (verified via culori Brettel+CIEDE2000):
+ *   LIGHT:
+ *     alert/warn        PASS (border lum 2.22x — alert #393939 vs warn #555555)
+ *     alert/info        PASS (border lum 3.59x — alert #393939 vs info #6b6b6b)
+ *     alert/success     FAIL  → waived (identical hexes by design;
+ *                              SHAPE_REDUNDANCY_WAIVERS:
+ *                                Alert.tsx fa-circle-exclamation vs
+ *                                fa-circle-check carries the redundancy)
+ *     warn/info         PASS (border lum 1.62x — warn #555555 vs info #6b6b6b;
+ *                              brief flagged this as razor 1.41x +0.01; verified
+ *                              1.62x. M-L1 mitigation pre-staged but NOT applied —
+ *                              comfortable headroom.)
+ *     warn/success      PASS (border lum 2.22x — warn #555555 vs success #393939)
+ *     info/success      PASS (border lum 3.59x — info #6b6b6b vs success #393939)
+ *   DARK:
+ *     alert/warn        PASS (border lum 1.66x — alert #aaaaaa vs warn #878787)
+ *     alert/info        PASS (border lum 1.66x — alert #aaaaaa vs info #878787)
+ *     alert/success     FAIL  → waived (identical hexes by design;
+ *                              SHAPE_REDUNDANCY_WAIVERS:
+ *                                Alert.tsx glyph redundancy as above)
+ *     warn/info         FAIL  → waived (identical hexes by design;
+ *                              SHAPE_REDUNDANCY_WAIVERS:
+ *                                StatusBadge.tsx fa-triangle-exclamation /
+ *                                rounded (warn) vs fa-circle-info /
+ *                                rounded-sm (info))
+ *     warn/success      PASS (border lum 1.66x — warn #878787 vs success #aaaaaa)
+ *     info/success      PASS (border lum 1.66x — info #878787 vs success #aaaaaa)
+ *
+ * WCAG audit (verified via culori): every text/bg, alt-text/bg, border/bg,
+ * highlight/bg, highlight-fg/highlight, highlight-fg/highlight-hover, and
+ * card-style border/page-bg pair clears the contract by a wide margin. The
+ * tightest ratio is LIGHT base border/bg at 3.38:1 (vs threshold 3.0).
+ *
+ * Brief flags reconciled:
+ *   - LIGHT warn/info border lum ratio briefed at 1.41 razor (+0.01). Verified
+ *     at 1.62x. Brief's mitigation M-L1 (--info-border #717171, lum 1.80x)
+ *     NOT applied — comfortable axis B headroom at the briefed values.
+ *
+ * Waiver count: 3 (matches the brief's pre-flight estimate, well under the
+ * 8-12 hedge band). All three pairs collapse because the palette intentionally
+ * reuses the same gray for visual unity — the shape-redundancy contract is
+ * carried by per-component icon and shape variation that ships uniformly
+ * across themes (not gated by data-theme), so the waivers stay valid after
+ * the per-component nouvelle-vague theme branches are removed in the
+ * follow-on .tsx cleanup pass.
+ */
 [data-theme='nouvelle-vague'][data-mode='dark'] {
-  --bg: #0a0a0a;
-  --bg-surface: #1a1a1a;
-  --bg-elevated: #2c2c2c;
-  --bg-input: #141414;
-  --text: #f2f2f2;
-  --text-muted: #b8b8b8;
-  --text-subtle: #b8b8b8;
-  --border: #757575;
-  --accent: #d4d4d4;
-  --accent-hover: oklch(from var(--accent) calc(l + 0.08) c h);
-  --accent-fg: #0a0a0a;
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
+  --focus-ring: #d4d4d4;
+  --asset-filter: grayscale(100%);
+
+  /* Page-gradient stops — see bundles.css preamble. */
+  --page-gradient-from: #b8b8b8;
+  --page-gradient-to: #f2f2f2;
+
+  /* Bundle palette. */
+  --base-bg: #0a0a0a;
+  --base-border: #757575;
+  --base-input-bg: #141414;
+  --base-text: #f2f2f2;
+  --base-alt-text: #b8b8b8;
+  --base-subtle-text: #b8b8b8;
+  --base-highlight: #d4d4d4;
+  --base-highlight-fg: #0a0a0a;
+  --base-highlight-hover: #b8b8b8;
+
+  --mount-bg: #1a1a1a;
+  --mount-border: #757575;
+  --mount-input-bg: #1a1a1a;
+  --mount-text: #f2f2f2;
+  --mount-alt-text: #b8b8b8;
+  --mount-highlight: #d4d4d4;
+  --mount-highlight-fg: #0a0a0a;
+  --mount-highlight-hover: #b8b8b8;
+
+  --orbit-bg: #2c2c2c;
+  --orbit-border: #878787;
+  --orbit-text: #f2f2f2;
+  --orbit-alt-text: #b8b8b8;
+  --orbit-highlight: #d4d4d4;
+  --orbit-highlight-fg: #0a0a0a;
+  --orbit-highlight-hover: #b8b8b8;
+
+  --alert-bg: rgb(60 60 60 / 0.4);
+  --alert-border: #aaaaaa;
+  --alert-text: #e3e3e3;
+  --alert-alt-text: #c6c6c6;
+  --alert-highlight: #aaaaaa;
+  --alert-highlight-fg: #0a0a0a;
+  --alert-highlight-hover: #c6c6c6;
+
+  --warn-bg: rgb(60 60 60 / 0.4);
+  --warn-border: #878787;
+  --warn-text: #e3e3e3;
+  --warn-alt-text: #c6c6c6;
+  --warn-highlight: #878787;
+  --warn-highlight-fg: #0a0a0a;
+  --warn-highlight-hover: #aaaaaa;
+
+  --info-bg: rgb(60 60 60 / 0.4);
+  --info-border: #878787;
+  --info-text: #e3e3e3;
+  --info-alt-text: #c6c6c6;
+  --info-highlight: #878787;
+  --info-highlight-fg: #0a0a0a;
+  --info-highlight-hover: #aaaaaa;
+
+  --success-bg: rgb(60 60 60 / 0.4);
+  --success-border: #aaaaaa;
+  --success-text: #e3e3e3;
+  --success-alt-text: #c6c6c6;
+  --success-highlight: #aaaaaa;
+  --success-highlight-fg: #0a0a0a;
+  --success-highlight-hover: #c6c6c6;
 }
 
 [data-theme='nouvelle-vague'][data-mode='light'] {
-  --bg: #f8f8f8;
-  --bg-surface: #ffffff;
-  --bg-elevated: #ebebeb;
-  --bg-input: #f8f8f8;
-  --text: #0f0f0f;
-  --text-muted: #4a4a4a;
-  --text-subtle: #4d4d4d;
-  --border: #878787;
-  --accent: #1f1f1f;
-  --accent-hover: oklch(from var(--accent) calc(l + 0.12) c h);
-  --accent-fg: #f8f8f8;
-}
+  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
+   * wave 44 retired `--accent`). */
+  --focus-ring: #1f1f1f;
+  --asset-filter: grayscale(100%);
 
-[data-theme='nouvelle-vague'] img,
-[data-theme='nouvelle-vague'] .theme-color-dot {
-  filter: grayscale(100%);
+  /* Page-gradient stops — see bundles.css preamble. */
+  --page-gradient-from: #4a4a4a;
+  --page-gradient-to: #0f0f0f;
+
+  /* Bundle palette. */
+  --base-bg: #f8f8f8;
+  --base-border: #878787;
+  --base-input-bg: #f8f8f8;
+  --base-text: #0f0f0f;
+  --base-alt-text: #4a4a4a;
+  --base-subtle-text: #4d4d4d;
+  --base-highlight: #1f1f1f;
+  --base-highlight-fg: #f8f8f8;
+  --base-highlight-hover: #393939;
+
+  --mount-bg: #ffffff;
+  --mount-border: #878787;
+  --mount-input-bg: #ffffff;
+  --mount-text: #0f0f0f;
+  --mount-alt-text: #4a4a4a;
+  --mount-highlight: #1f1f1f;
+  --mount-highlight-fg: #ffffff;
+  --mount-highlight-hover: #393939;
+
+  --orbit-bg: #ebebeb;
+  --orbit-border: #6b6b6b;
+  --orbit-text: #0f0f0f;
+  --orbit-alt-text: #4a4a4a;
+  --orbit-highlight: #1f1f1f;
+  --orbit-highlight-fg: #f8f8f8;
+  --orbit-highlight-hover: #393939;
+
+  --alert-bg: #ebebeb;
+  --alert-border: #393939;
+  --alert-text: #1a1a1a;
+  --alert-alt-text: #393939;
+  --alert-highlight: #1a1a1a;
+  --alert-highlight-fg: #f8f8f8;
+  --alert-highlight-hover: #393939;
+
+  --warn-bg: #ebebeb;
+  --warn-border: #555555;
+  --warn-text: #1a1a1a;
+  --warn-alt-text: #393939;
+  --warn-highlight: #393939;
+  --warn-highlight-fg: #f8f8f8;
+  --warn-highlight-hover: #555555;
+
+  --info-bg: #ebebeb;
+  --info-border: #6b6b6b;
+  --info-text: #1f1f1f;
+  --info-alt-text: #4a4a4a;
+  --info-highlight: #393939;
+  --info-highlight-fg: #f8f8f8;
+  --info-highlight-hover: #555555;
+
+  --success-bg: #ebebeb;
+  --success-border: #393939;
+  --success-text: #1a1a1a;
+  --success-alt-text: #393939;
+  --success-highlight: #1a1a1a;
+  --success-highlight-fg: #f8f8f8;
+  --success-highlight-hover: #393939;
 }

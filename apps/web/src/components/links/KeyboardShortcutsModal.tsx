@@ -1,8 +1,4 @@
-import { createPortal } from 'react-dom';
-import { useEffect, useRef } from 'react';
-import { FOCUS_RING } from '../../lib/styles';
-import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
-import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
+import Modal from '../common/Modal';
 
 interface KeyboardShortcutsModalProps {
   /** Called when the user presses Escape or clicks the close button or backdrop. */
@@ -27,83 +23,42 @@ const HEADING_ID = 'keyboard-shortcuts-heading';
 
 /**
  * Modal dialog listing all keyboard shortcuts available in `LinksView`.
- * Rendered via `createPortal` into `document.body` so it layers above all
- * other content.
  *
- * Accessibility:
- * - `role="dialog"` with `aria-modal="true"` and `aria-labelledby`.
- * - Focus is moved to the first focusable element on open and restored to the
- *   previously focused element on close.
- * - Tab key is trapped within the modal.
- * - Escape key closes the modal.
- *
- * Lazy-loaded from `LinksView` to keep it out of the initial bundle.
+ * ARIA wiring, focus management, body-scroll lock, and the close + backdrop
+ * buttons are owned by `<Modal>` — see `Modal.tsx`. Lazy-loaded from
+ * `LinksView` to keep it out of the initial bundle.
  */
 export default function KeyboardShortcutsModal({
   onClose,
 }: KeyboardShortcutsModalProps) {
-  const dialogReference = useRef<HTMLDivElement>(null);
-  const headingReference = useRef<HTMLHeadingElement>(null);
-
-  useFocusReturn(true);
-
-  // Focus the heading on mount (tabIndex=-1 keeps it out of the tab cycle).
-  // Tab from the heading moves into the close button, which is the natural
-  // next stop for a reference-only modal with no form inputs.
-  useEffect(() => {
-    headingReference.current?.focus();
-  }, []);
-
-  useFocusTrap(dialogReference, { onEscape: onClose });
-
-  return createPortal(
-    <>
-      <button
-        type="button"
-        aria-label="Close shortcuts"
-        data-testid="modal-backdrop"
-        className="fixed inset-0 z-20 w-full h-full bg-black/50 backdrop-blur-sm cursor-default"
-        onClick={onClose}
-      />
-      <div
-        ref={dialogReference}
-        className="fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs p-6 bg-[var(--bg-surface)] border-shadow rounded-xl select-none animate-fade-in-up"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={HEADING_ID}
+  return (
+    <Modal
+      labelledBy={HEADING_ID}
+      onClose={onClose}
+      closeLabel="Close keyboard shortcuts"
+      backdropLabel="Close shortcuts"
+      panelClassName="max-w-xs pt-12 px-6 pb-6 rounded-xl"
+    >
+      <h2
+        id={HEADING_ID}
+        tabIndex={-1}
+        data-modal-initial-focus
+        className="mb-7.5 text-sm font-semibold text-[var(--orbit-text)] text-balance focus:outline-none"
       >
-        <div className="flex items-center justify-between mb-7.5">
-          <h2
-            ref={headingReference}
-            id={HEADING_ID}
-            tabIndex={-1}
-            className="text-sm font-semibold text-[var(--text)] text-balance focus:outline-none"
-          >
-            Keyboard shortcuts
-          </h2>
-          <button
-            type="button"
-            className={`flex items-center justify-center w-8 h-8 -mr-1 text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors active:scale-[0.96] transition-transform cursor-pointer rounded-full ${FOCUS_RING}`}
-            onClick={onClose}
-            aria-label="Close keyboard shortcuts"
-          >
-            <i className="fa-solid fa-xmark text-sm" aria-hidden="true" />
-          </button>
-        </div>
-        <ul className="space-y-3">
-          {shortcuts.map(({ key, description }) => (
-            <li key={key} className="flex items-center justify-between">
-              <span className="text-[var(--text-muted)] text-sm">
-                {description}
-              </span>
-              <kbd className="px-2 py-0.5 bg-[var(--bg-elevated)] border-shadow text-[var(--text)] text-xs rounded-md font-mono">
-                {key}
-              </kbd>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </>,
-    document.body,
+        Keyboard shortcuts
+      </h2>
+      <ul className="space-y-3">
+        {shortcuts.map(({ key, description }) => (
+          <li key={key} className="flex items-center justify-between">
+            <span className="text-[var(--orbit-alt-text)] text-sm">
+              {description}
+            </span>
+            <kbd className="px-2 py-0.5 bg-[var(--orbit-bg)] border-shadow text-[var(--orbit-text)] text-xs rounded-md font-mono">
+              {key}
+            </kbd>
+          </li>
+        ))}
+      </ul>
+    </Modal>
   );
 }

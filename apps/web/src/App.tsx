@@ -68,9 +68,9 @@ export default function App() {
     return (
       <div
         role="status"
-        className="flex items-center justify-center min-h-screen bg-[var(--bg)] text-[var(--text)] select-none"
+        className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-text)] select-none"
       >
-        <div className="text-slate-400 text-sm animate-pulse">
+        <div className="text-[var(--base-alt-text)] text-sm animate-pulse">
           Defrosting Linklater in the microwave…
         </div>
       </div>

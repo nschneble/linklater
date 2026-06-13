@@ -1,5 +1,5 @@
 import Alert from '../common/Alert';
-import { FOCUS_RING } from '../../lib/styles';
+import LinkButton from '../common/LinkButton';
 
 interface AuthErrorPanelProps {
   errorMessage: string | null;
@@ -28,14 +28,10 @@ export default function AuthErrorPanel({
       <Alert className="mb-2" icon="fa-triangle-exclamation" variant="error">
         {errorMessage}
       </Alert>
-      <p className="mb-6 text-[var(--text-muted)] text-sm">{explanation}</p>
-      <button
-        type="button"
-        className={`text-[var(--accent)] underline text-sm rounded ${FOCUS_RING}`}
-        onClick={onBackToLogin}
-      >
+      <p className="mb-6 text-[var(--mount-alt-text)] text-sm">{explanation}</p>
+      <LinkButton surface="mount" onClick={onBackToLogin}>
         {backLabel}
-      </button>
+      </LinkButton>
     </>
   );
 }

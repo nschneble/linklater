@@ -1,7 +1,7 @@
 {
   "action": "toggle-cvd-mode",
   "steps": [
-    { "kind": "navigate", "path": "/settings" },
+    { "kind": "navigate", "path": "/settings", "waitUntil": "domcontentloaded" },
     {
       "kind": "click",
       "hint": { "role": "switch", "text": "Color Vision Deficiency" }
@@ -10,6 +10,5 @@
   ],
   "expect": {
     "anyOf": [{ "selector": "[role=\"switch\"][aria-checked=\"true\"]" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

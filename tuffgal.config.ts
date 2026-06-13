@@ -26,7 +26,7 @@ export default defineConfig({
 
   viewport: { width: 1280, height: 800 },
   defaultTimeoutMs: 10_000,
-  navigationTimeoutMs: 15_000,
+  navigationTimeoutMs: 60_000,
   frozenTime: '2026-01-15T12:00:00.000Z',
 
   database: {

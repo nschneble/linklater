@@ -18,6 +18,5 @@
   "expect": {
     "anyOf": [{ "role": "button", "text": "Log in" }],
     "timeoutMs": 10000
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

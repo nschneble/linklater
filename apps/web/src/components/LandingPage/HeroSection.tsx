@@ -14,14 +14,14 @@ export default function HeroSection() {
       </div>
       <h1
         id="hero-heading"
-        className="mb-3 text-5xl sm:text-6xl font-bold tracking-tight select-none bg-gradient-to-br from-dazed to-sunrise bg-clip-text text-transparent"
+        className="mb-3 bg-gradient-to-br from-dazed to-sunrise bg-clip-text text-5xl sm:text-6xl text-transparent font-bold tracking-tight select-none"
       >
         Linklater
       </h1>
       <p className="mb-5 text-lg sm:text-xl font-medium text-dazed select-none">
         Save links now, read them later.
       </p>
-      <p className="max-w-sm sm:max-w-md mb-10 text-sm text-dazed text-balance leading-relaxed select-none">
+      <p className="max-w-sm sm:max-w-md mb-10 text-dazed text-sm text-balance leading-relaxed select-none">
         Most curious adults come across dozens of interesting articles on any
         given day. Do they have time to read them all? Nope. Do they often
         forget about them? Totally.

@@ -1,5 +1,3 @@
-import { useThemeStyling } from '../../theme/ThemeContext';
-import { resolveThemeClasses, type ThemeClassMap } from '../../lib/styles';
 import type { ReactNode, Ref } from 'react';
 
 /**
@@ -41,35 +39,15 @@ const defaultIcons: Record<AlertProps['variant'], string> = {
   success: 'fa-circle-check',
 };
 
-const variantClasses: Record<AlertProps['variant'], ThemeClassMap> = {
-  error: {
-    dark: {
-      default: 'bg-rose-950/40 border-rose-800 text-rose-400',
-      'apollo-10-1-2':
-        'bg-[var(--state-danger)]/15 border-l-4 border-[var(--state-danger)] text-[var(--state-danger-fg)]',
-      'nouvelle-vague': 'bg-gray-900/40 border-gray-700 text-gray-400',
-    },
-    light: {
-      default: 'bg-rose-50 border-rose-200 text-rose-700',
-      'apollo-10-1-2':
-        'bg-[var(--state-danger)]/15 border-l-4 border-[var(--state-danger)] text-[#9a3447]',
-      'nouvelle-vague': 'bg-gray-100 border-gray-300 text-gray-700',
-    },
-  },
-  success: {
-    dark: {
-      default: 'bg-emerald-950/40 border-emerald-700 text-emerald-300',
-      'apollo-10-1-2':
-        'bg-[var(--state-success)]/15 border-l-4 border-[var(--accent)] text-[var(--accent)]',
-      'nouvelle-vague': 'bg-gray-900/40 border-gray-700 text-gray-400',
-    },
-    light: {
-      default: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-      'apollo-10-1-2':
-        'bg-[var(--state-success)]/15 border-l-4 border-[var(--accent)] text-[var(--accent)]',
-      'nouvelle-vague': 'bg-gray-100 border-gray-300 text-gray-600',
-    },
-  },
+// All themes route through the alert/success color bundles (see
+// `theme/styles/bundles.css`). Per-theme overrides previously lived here as
+// inline Tailwind branches; now every theme — including Nouvelle Vague's
+// grayscale-by-design palette — defines its own bundle cascade.
+const variantClasses: Record<AlertProps['variant'], string> = {
+  error:
+    'bg-[var(--alert-bg)] border-[var(--alert-border)] text-[var(--alert-text)]',
+  success:
+    'bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-text)]',
 };
 
 const variantRoles: Record<AlertProps['variant'], string> = {
@@ -86,8 +64,6 @@ export default function Alert({
   tabIndex,
   variant,
 }: AlertProps) {
-  const { baseTheme, mode } = useThemeStyling();
-
   // When no content is provided, keep the element in the DOM so any
   // `aria-describedby` pointing at `id` is never a dangling reference, but
   // hide it visually and from assistive technology.
@@ -96,18 +72,13 @@ export default function Alert({
   }
 
   const resolvedIcon = icon ?? defaultIcons[variant];
-  const resolvedClasses = resolveThemeClasses(
-    variantClasses[variant],
-    mode,
-    baseTheme,
-  );
 
   return (
     <p
       id={id}
       ref={ref}
       tabIndex={tabIndex}
-      className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] ${resolvedClasses} ${className}`}
+      className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] ${variantClasses[variant]} ${className}`}
       role={variantRoles[variant]}
     >
       <i className={`fa-solid ${resolvedIcon} text-xs`} aria-hidden="true" />

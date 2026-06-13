@@ -4,6 +4,7 @@
   "actions": [
     { "action": "intercept-no-links" },
     { "action": "intercept-no-api-tokens" },
+    { "action": "intercept-instant-bookmarklet-token" },
     { "action": "visit-unread" },
     { "action": "visit-read" },
     { "action": "visit-stumble-empty" },

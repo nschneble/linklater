@@ -155,14 +155,14 @@ export default function MobileBottomSheet({
           Opacity transition is motion-safe so reduced-motion users get an
           instant scrim swap to match the instant panel snap. */}
       <div
-        className="fixed inset-0 z-40 bg-black/50 motion-safe:transition-opacity motion-safe:duration-300 data-[open=false]:opacity-0 data-[open=false]:pointer-events-none"
+        className="fixed inset-0 z-40 scrim motion-safe:transition-opacity motion-safe:duration-300 data-[open=false]:opacity-0 data-[open=false]:pointer-events-none"
         aria-hidden="true"
         data-open={isOpen}
         onClick={onClose}
       />
 
       <div
-        className={`fixed bottom-0 inset-x-0 z-50 max-h-[85svh] overflow-y-auto bg-[var(--bg-elevated)] rounded-t-2xl pb-[env(safe-area-inset-bottom)] ${
+        className={`fixed bottom-0 inset-x-0 z-50 max-h-[85svh] overflow-y-auto bg-[var(--orbit-bg)] rounded-t-2xl pb-[env(safe-area-inset-bottom)] ${
           isOpen
             ? 'motion-safe:[transition:transform_300ms_ease-out]'
             : 'motion-safe:[transition:transform_250ms_ease-in]'
@@ -179,12 +179,12 @@ export default function MobileBottomSheet({
         onTransitionEnd={handleSheetTransitionEnd}
       >
         <div
-          className="sticky top-0 z-10 flex justify-center pt-3 pb-2 bg-[var(--bg-elevated)] cursor-grab active:cursor-grabbing"
+          className="sticky top-0 z-10 flex justify-center pt-3 pb-2 bg-[var(--orbit-bg)] cursor-grab active:cursor-grabbing"
           onTouchStart={handleDragHandleTouchStart}
           onTouchEnd={handleDragHandleTouchEnd}
         >
           <div
-            className="w-10 h-1 rounded-full bg-[var(--border)]"
+            className="w-10 h-1 rounded-full bg-[var(--orbit-border)]"
             aria-hidden="true"
           />
         </div>

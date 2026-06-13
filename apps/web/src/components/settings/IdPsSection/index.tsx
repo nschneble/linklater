@@ -72,7 +72,7 @@ export default function IdPsSection({
 
   return (
     <div className="mt-8 space-y-4">
-      <h3 className="text-[var(--text)] text-sm font-semibold text-balance">
+      <h3 className="text-[var(--mount-text)] text-sm font-semibold text-balance">
         Other ways to log in
       </h3>
 

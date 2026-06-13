@@ -27,6 +27,7 @@ export default function LinksMobileControls({
       {filter === 'read' && (
         <IconButton
           variant="elevated"
+          surface="base"
           disabled={isClearingRead || linksCount === 0}
           aria-label="Remove all read links"
           title="Permanently remove all read links"
@@ -40,6 +41,7 @@ export default function LinksMobileControls({
         <>
           <IconButton
             variant="elevated"
+            surface="base"
             disabled={randomLoading}
             aria-label="Stumble!"
             title="Open a random unread link and marks it as read"
@@ -53,6 +55,7 @@ export default function LinksMobileControls({
           </IconButton>
           <PrimaryButton
             type="button"
+            surface="base"
             aria-label={showLinkForm ? 'Hide form' : 'Add link'}
             aria-expanded={showLinkForm}
             aria-controls={LINK_FORM_ID}

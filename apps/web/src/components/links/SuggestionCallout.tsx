@@ -141,7 +141,7 @@ export default function SuggestionCallout({
   return (
     <>
       <p
-        className="mb-2 text-[var(--text-muted)] text-xs font-medium animate-card-enter"
+        className="mb-2 text-[var(--base-alt-text)] text-xs font-medium animate-card-enter"
         aria-live="polite"
         aria-atomic="true"
       >
@@ -153,10 +153,10 @@ export default function SuggestionCallout({
       </p>
       {loading && <SuggestionCalloutSkeleton />}
       {!loading && !fetchFailed && suggestion && (
-        <div className="mt-2 mx-auto w-full max-w-md pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-shadow hover:border-shadow rounded-xl text-left">
+        <div className="mt-2 mx-auto w-full max-w-md pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-shadow hover:border-shadow rounded-xl text-left">
           <p
             style={{ animationDelay: '60ms' }}
-            className="mb-1 text-[var(--text)] text-sm font-semibold text-balance line-clamp-1 animate-card-enter"
+            className="mb-1 text-[var(--mount-text)] text-sm font-semibold text-balance line-clamp-1 animate-card-enter"
             id="suggestion-callout-title"
           >
             {suggestion.title}
@@ -164,7 +164,7 @@ export default function SuggestionCallout({
           {suggestion.description && (
             <p
               style={{ animationDelay: '120ms' }}
-              className="mb-3 text-[var(--text-muted)] text-xs text-pretty line-clamp-2 animate-card-enter"
+              className="mb-3 text-[var(--mount-alt-text)] text-xs text-pretty line-clamp-2 animate-card-enter"
             >
               {suggestion.description}
             </p>
@@ -204,16 +204,16 @@ export default function SuggestionCallout({
 function SuggestionCalloutSkeleton() {
   return (
     <div
-      className="mt-6 mx-auto w-full max-w-md pl-10 pr-8 py-4 bg-[var(--bg-surface)] border-shadow hover:border-shadow rounded-xl text-left animate-pulse"
+      className="mt-6 mx-auto w-full max-w-md pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-shadow hover:border-shadow rounded-xl text-left animate-pulse"
       aria-hidden="true"
       aria-busy="true"
     >
-      <div className="w-10/12 h-5 mb-1 bg-[var(--text)]/50 rounded-xs"></div>
+      <div className="w-10/12 h-5 mb-1 bg-[var(--mount-text)]/50 rounded-xs"></div>
       <div className="flex flex-col items-start gap-1 mb-3">
-        <div className="w-11/12 h-[13px] bg-[var(--text-muted)]/50 rounded-xs"></div>
-        <div className="w-9/12 h-[13px] bg-[var(--text-muted)]/50 rounded-xs"></div>
+        <div className="w-11/12 h-[13px] bg-[var(--mount-alt-text)]/50 rounded-xs"></div>
+        <div className="w-9/12 h-[13px] bg-[var(--mount-alt-text)]/50 rounded-xs"></div>
       </div>
-      <div className="w-[129.5px] h-[31px] bg-[var(--accent)]/50 border-shadow rounded-full"></div>
+      <div className="w-[129.5px] h-[31px] bg-[var(--mount-highlight)]/50 border-shadow rounded-full"></div>
     </div>
   );
 }

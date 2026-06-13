@@ -23,6 +23,5 @@
       { "role": "heading", "text": "Multi-factor authentication" }
     ]
   },
-  "mask": [{ "selector": "[aria-live='polite']" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "[aria-live='polite']" }]
 }

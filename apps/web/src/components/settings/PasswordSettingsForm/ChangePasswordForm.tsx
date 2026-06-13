@@ -50,19 +50,20 @@ export default function ChangePasswordForm() {
     >
       <h3
         id="password-settings-heading"
-        className="text-[var(--text)] text-sm font-semibold text-balance"
+        className="text-[var(--mount-text)] text-sm font-semibold text-balance"
       >
         Password
       </h3>
 
       <label
-        className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+        className="block mb-0 text-[var(--mount-alt-text)] text-xs font-medium"
         htmlFor="new-password"
       >
         New password
       </label>
       <FormInput
         id="new-password"
+        surface="mount"
         type="password"
         autoComplete="new-password"
         placeholder="Leave blank to keep current password"
@@ -78,13 +79,14 @@ export default function ChangePasswordForm() {
       */}
       <div hidden={!password}>
         <label
-          className="block mb-0 text-[var(--text-muted)] text-xs font-medium"
+          className="block mb-0 text-[var(--mount-alt-text)] text-xs font-medium"
           htmlFor="current-password"
         >
           Current password
         </label>
         <FormInput
           id="current-password"
+          surface="mount"
           type="password"
           autoComplete="current-password"
           placeholder="Required to confirm password change"

@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import './theme/styles/default.css';
 @import './theme/styles/border-shadow.css';
 @import './theme/styles/apollo-10-1-2.css';
 @import './theme/styles/before-sunrise.css';
@@ -11,6 +10,8 @@
 @import './theme/styles/nouvelle-vague.css';
 @import './theme/styles/scanner-darkly.css';
 @import './theme/styles/school-of-rock.css';
+/* bundles.css last by convention; specificity (not source order) governs cascade resolution for per-theme overrides. */
+@import './theme/styles/bundles.css';
 
 body {
   -webkit-font-smoothing: antialiased;
@@ -73,7 +74,18 @@ body {
   --animate-card-exit: card-exit 280ms ease-in forwards;
   --animate-fade-out-down: fade-out-down 150ms ease-in forwards;
 
-  /* marketing page colors */
+  /*
+   * Marketing palette for the unauthenticated <LandingPage> only.
+   *
+   * Hardcoded here (not in theme/styles/) because Tailwind v4 generates
+   * utility classes (bg-midnight, text-sunrise, etc.) from --color-* tokens
+   * inside @theme at build time. Moving these into per-theme cascades would
+   * break utility generation. The landing page is theme-independent by
+   * design — it ships the brand palette regardless of the user's saved
+   * theme — so global declaration is correct.
+   *
+   * Consumers: apps/web/src/components/LandingPage/{Hero,Features,Footer}Section.tsx
+   */
   --color-midnight: #1a1530; /* Very dark (mostly black) blue */
   --color-boyhood: #2e2855; /* Very dark desaturated blue */
   --color-sunrise: #c03812; /* Strong red */
@@ -82,6 +94,7 @@ body {
   --color-confused: #9b92c8; /* Slightly desaturated blue */
 }
 
+/* Landing page background — theme-independent brand surface on /. */
 @utility bg-hit-man {
   background: radial-gradient(ellipse at 50% 0%, #14103a 0%, #0a0812 70%);
 }
@@ -115,9 +128,14 @@ body {
 }
 
 [data-cvd='on'] *:focus-visible {
-  outline: 3px solid var(--focus-ring, var(--accent));
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
-  box-shadow: 0 0 0 5px var(--bg);
+  /* Anchor the outer halo to --base-bg so the CVD focus ring reads through
+     the bundle vocabulary, consistent with the wave-31 chrome migration.
+     Most themes set --base-bg identical to the historical flat --bg
+     (retired wave 36); hit-man light intentionally diverges (--base-bg
+     #ecdcb0 vs the per-theme --base-input-bg #f0c870; see hit-man.css). */
+  box-shadow: 0 0 0 5px var(--base-bg);
 }
 
 [data-cvd='on'] :disabled,
@@ -127,10 +145,10 @@ body {
     51deg,
     transparent,
     transparent 4px,
-    var(--border) 4px,
-    var(--border) 5px
+    var(--base-border) 4px,
+    var(--base-border) 5px
   );
-  color: var(--text-muted);
+  color: var(--base-alt-text);
 }
 
 [data-cvd='on'] a {
@@ -140,5 +158,23 @@ body {
 
 [data-cvd='on'] [aria-selected='true'],
 [data-cvd='on'] [aria-checked='true'] {
-  box-shadow: inset 3px 0 0 var(--accent);
+  /* Universal indicator using --base-highlight. `box-shadow: inset` paints
+   * inside the host element, so the bar visually sits over whatever paints
+   * behind it at the host's left edge — NOT --base-bg. Consumer geometries:
+   *
+   *   - InlineThemeList + ThemeSubmenu menuitemradio buttons (no own bg)
+   *     inside an --orbit-bg menu surface → bar paints over --orbit-bg.
+   *     Mechanized as `base-highlight on orbit-bg` in the cross-bundle
+   *     highlight describe block in bundles.contrast.test.ts.
+   *
+   *   - CvdModeToggle role="switch" (aria-checked flips its own bg from
+   *     --orbit-bg to --orbit-highlight via Tailwind variant). Bar paints
+   *     over --orbit-highlight when the toggle is active. Not a mechanized
+   *     contract pair; the toggle itself is the CVD-mode affordance, the
+   *     bar reinforces an already-explicit switch position.
+   *
+   *   - SlidingTabBar TabButton (no own bg; sits z-10 above an absolutely
+   *     positioned --{lift}-text "pill"). Bar paints over --mount-text or
+   *     --orbit-text (the pill color). Not mechanized; visual lift only. */
+  box-shadow: inset 3px 0 0 var(--base-highlight);
 }
