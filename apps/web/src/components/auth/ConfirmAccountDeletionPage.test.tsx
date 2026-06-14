@@ -87,17 +87,31 @@ beforeEach(() => {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('ConfirmAccountDeletionPage verifying state', () => {
-  it('shows a status message while verifying', () => {
+  it('renders a polite sr-only status message while verifying', () => {
     vi.mocked(apiModule.confirmAccountDeletion).mockReturnValue(
       new Promise(() => {}),
     );
 
     renderPage();
 
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    const status = screen.getByRole('status');
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveTextContent(/verifying your deletion link/i);
+    // The status node carries `sr-only` — verifying state is visually a bare
+    // spinner. The card heading is reserved for the error state.
+    expect(status).toHaveClass('sr-only');
+  });
+
+  it('does not render the legacy "Verifying deletion link" card heading', () => {
+    vi.mocked(apiModule.confirmAccountDeletion).mockReturnValue(
+      new Promise(() => {}),
+    );
+
+    renderPage();
+
     expect(
-      screen.getByText(/verifying your deletion link/i),
-    ).toBeInTheDocument();
+      screen.queryByRole('heading', { name: /verifying deletion link/i }),
+    ).not.toBeInTheDocument();
   });
 });
 

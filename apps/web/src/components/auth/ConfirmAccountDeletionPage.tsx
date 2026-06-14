@@ -84,6 +84,30 @@ export default function ConfirmAccountDeletionPage() {
     }
   }, [status]);
 
+  // Verifying state mirrors StumblePage: a single centered spinning icon with
+  // an sr-only polite status, no card chrome. The full card flashed visibly
+  // for sub-second windows on success before the auto-redirect fired, which
+  // looked like "page loaded and immediately bounced." A bare spinner reads
+  // as a single in-flight operation that either resolves to the destination
+  // page or, on failure, expands into the full error card below.
+  if (status === 'verifying') {
+    return (
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none"
+      >
+        <p role="status" aria-live="polite" className="sr-only">
+          Verifying your deletion link…
+        </p>
+        <i
+          className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+          aria-hidden="true"
+        />
+      </main>
+    );
+  }
+
   return (
     <main
       id="main-content"
@@ -91,46 +115,23 @@ export default function ConfirmAccountDeletionPage() {
       className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]"
     >
       <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl text-center select-none">
-        {status === 'verifying' && (
-          <>
-            <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
-              Verifying deletion link
-            </h1>
-            <p
-              role="status"
-              aria-live="polite"
-              className="text-[var(--mount-alt-text)] animate-pulse"
-            >
-              Verifying your deletion link…
-            </p>
-          </>
-        )}
-
-        {status === 'error' && (
-          <>
-            <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
-              This link can't be used
-            </h1>
-            <Alert
-              className="mb-2"
-              icon="fa-triangle-exclamation"
-              variant="error"
-            >
-              {errorMessage}
-            </Alert>
-            <p className="mb-6 text-[var(--mount-alt-text)] text-sm">
-              If you still want to delete your account, sign in and start the
-              deletion flow again from Settings.
-            </p>
-            <LinkButton
-              ref={backButtonReference}
-              surface="mount"
-              onClick={() => navigate('/', { replace: true })}
-            >
-              Back to home
-            </LinkButton>
-          </>
-        )}
+        <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
+          This link can't be used
+        </h1>
+        <Alert className="mb-2" icon="fa-triangle-exclamation" variant="error">
+          {errorMessage}
+        </Alert>
+        <p className="mb-6 text-[var(--mount-alt-text)] text-sm">
+          If you still want to delete your account, sign in and start the
+          deletion flow again from Settings.
+        </p>
+        <LinkButton
+          ref={backButtonReference}
+          surface="mount"
+          onClick={() => navigate('/', { replace: true })}
+        >
+          Back to home
+        </LinkButton>
       </div>
     </main>
   );

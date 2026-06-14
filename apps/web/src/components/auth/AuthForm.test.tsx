@@ -62,6 +62,7 @@ function makeHookResult(
     handleSubmit: vi.fn(),
     handleVerifyOtp: vi.fn(),
     loading: false,
+    magicLinkSentJustNow: false,
     mfaChallenge: overrides.mfaChallenge ?? null,
     mfaCode: '',
     mfaInputReference,

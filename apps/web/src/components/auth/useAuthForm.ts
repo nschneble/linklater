@@ -25,10 +25,11 @@ export function useAuthForm() {
 
   const emailReference = useRef<HTMLInputElement>(null);
   const errorReference = useRef<HTMLParagraphElement>(null);
-  // WARN-4: timeout id for the post-magic-link loading hold. Stored in a ref
-  // so the mode-change effect can clear a pending release if the user
-  // navigates away before the 1500ms window elapses.
-  const magicLinkHoldTimeoutReference = useRef<ReturnType<
+  // WARN-4: timeout id for the post-magic-link success-state hold. The button
+  // and toast must stay in sync — both render the "magic link sent" state
+  // for the toast's 3000ms auto-dismiss window. The ref lets the mode-change
+  // effect cancel the pending release if the user navigates away first.
+  const magicLinkSentJustNowReference = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
   const mfaInputReference = useRef<HTMLInputElement>(null);
@@ -38,6 +39,13 @@ export function useAuthForm() {
   const [error, setError] = useState<string | null>(null);
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Mirrors the toast's lifecycle for magic-link success. Drives the submit
+  // button's "Magic link sent!" label, check-mark icon, and disabled state
+  // for the same 3000ms the toast is visible. Holding the button in a
+  // success state (rather than re-enabling immediately) prevents the user
+  // from re-clicking and triggering a second magic-link request while the
+  // first email is still arriving.
+  const [magicLinkSentJustNow, setMagicLinkSentJustNow] = useState(false);
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaToken, setMfaToken] = useState<string | null>(null);
@@ -77,13 +85,14 @@ export function useAuthForm() {
   // fire in declaration order — see
   // [[feedback-peek-before-consume-effect-order]].
   useEffect(() => {
-    if (magicLinkHoldTimeoutReference.current !== null) {
-      clearTimeout(magicLinkHoldTimeoutReference.current);
-      magicLinkHoldTimeoutReference.current = null;
+    if (magicLinkSentJustNowReference.current !== null) {
+      clearTimeout(magicLinkSentJustNowReference.current);
+      magicLinkSentJustNowReference.current = null;
     }
     setPassword('');
     setError(null);
     setLoading(false);
+    setMagicLinkSentJustNow(false);
     setForgotPasswordSent(false);
 
     // Skip auto-focus when a pending notice is queued — focusing a text
@@ -126,12 +135,6 @@ export function useAuthForm() {
     setError(null);
     setLoading(true);
 
-    // WARN-4: when a magic-link request succeeds the loading state stays
-    // true for 1500ms so the submit button cannot be re-clicked
-    // immediately. Set only after a successful await, so a throw still
-    // funnels through the standard finally-block reset.
-    let magicLinkHoldEngaged = false;
-
     try {
       if ((mode === 'login' || mode === 'register') && password.length === 0) {
         if (mode === 'login') {
@@ -141,11 +144,20 @@ export function useAuthForm() {
           await registerMagicLink(email);
           setNotice('Check your email to complete signup.');
         }
-        magicLinkHoldEngaged = true;
-        magicLinkHoldTimeoutReference.current = setTimeout(() => {
-          setLoading(false);
-          magicLinkHoldTimeoutReference.current = null;
-        }, 1500);
+        // WARN-4: on success, release loading immediately so the button no
+        // longer reads "Working…" while the toast is already announcing the
+        // outcome — that desync is what made the prior flow look
+        // contradictory. The button then enters the success-state hold
+        // (`magicLinkSentJustNow`) for 3000ms, matching the toast's own
+        // auto-dismiss window. The hold also prevents a second click during
+        // that window. A throw skips this block entirely and falls through
+        // to the finally reset.
+        setLoading(false);
+        setMagicLinkSentJustNow(true);
+        magicLinkSentJustNowReference.current = setTimeout(() => {
+          setMagicLinkSentJustNow(false);
+          magicLinkSentJustNowReference.current = null;
+        }, 3000);
         return;
       }
 
@@ -173,9 +185,7 @@ export function useAuthForm() {
         ),
       );
     } finally {
-      if (!magicLinkHoldEngaged) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
@@ -215,6 +225,7 @@ export function useAuthForm() {
     handleSubmit,
     handleVerifyOtp,
     loading,
+    magicLinkSentJustNow,
     mfaChallenge,
     mfaCode,
     mfaInputReference,

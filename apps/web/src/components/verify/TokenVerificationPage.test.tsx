@@ -122,7 +122,7 @@ beforeEach(() => {
 // ─── Verifying state ─────────────────────────────────────────────────────────
 
 describe('TokenVerificationPage verifying state', () => {
-  it('shows a polite status message while the API call is in flight', () => {
+  it('renders a polite sr-only status message while the API call is in flight', () => {
     const verifyFn = vi.fn().mockReturnValue(new Promise(() => {}));
 
     renderPage({ verifyFn, verifyingText: 'Verifying your email…' });
@@ -130,16 +130,34 @@ describe('TokenVerificationPage verifying state', () => {
     const status = screen.getByRole('status');
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent(/verifying your email/i);
+    // The verifying state is a bare spinner; the polite-status text lives
+    // in an sr-only live region. The card heading is reserved for the
+    // error state.
+    expect(status).toHaveClass('sr-only');
   });
 
-  it('renders the configured page title', () => {
+  it('does not render a card heading during the verifying state', () => {
     const verifyFn = vi.fn().mockReturnValue(new Promise(() => {}));
 
     renderPage({ verifyFn, title: 'Email Change' });
 
     expect(
-      screen.getByRole('heading', { name: /email change/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole('heading', { name: /email change/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders the configured page title in the error state', async () => {
+    const verifyFn = vi.fn().mockRejectedValue(new Error('expired'));
+
+    await act(async () => {
+      renderPage({ verifyFn, title: 'Email Change' });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: /email change/i }),
+      ).toBeInTheDocument();
+    });
   });
 });
 

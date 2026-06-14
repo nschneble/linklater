@@ -20,9 +20,14 @@ type Status = 'verifying' | 'error';
  * only the user-visible text and the success-time notice keys differ.
  */
 interface TokenVerificationPageProps {
-  /** Page heading shown during verifying + error states. */
+  /** Page heading shown in the error state. */
   title: string;
-  /** Text shown while the API call is in flight. */
+  /**
+   * Polite sr-only status text announced while the API call is in flight.
+   * The verifying state renders a centered spinning icon only — this text
+   * lives in an sr-only live region so screen-reader users still hear the
+   * per-flow context.
+   */
   verifyingText: string;
   /**
    * Pending-notice key queued when the user is authenticated at success
@@ -133,44 +138,43 @@ export default function TokenVerificationPage({
     verifyFn,
   ]);
 
+  // Verifying state mirrors StumblePage: a single centered spinning icon with
+  // an sr-only polite status, no card chrome. The full card flashed visibly
+  // on success before the auto-redirect fired, which looked like
+  // "page loaded and immediately bounced." A bare spinner reads as a single
+  // in-flight operation that either resolves to the destination page or, on
+  // failure, expands into the full error card below.
+  if (status === 'verifying') {
+    return (
+      <main className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
+        <p role="status" aria-live="polite" className="sr-only">
+          {verifyingText}
+        </p>
+        <i
+          className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+          aria-hidden="true"
+        />
+      </main>
+    );
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
       <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl text-center select-none">
         <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
           {title}
         </h1>
-
-        {status === 'verifying' && (
-          <p
-            role="status"
-            aria-live="polite"
-            className="text-[var(--mount-alt-text)] animate-pulse"
-          >
-            {verifyingText}
-          </p>
-        )}
-
-        {status === 'error' && (
-          <>
-            <Alert
-              className="mb-2"
-              icon="fa-triangle-exclamation"
-              variant="error"
-            >
-              {errorMessage}
-            </Alert>
-            <p className="mb-6 text-[var(--mount-alt-text)] text-sm">
-              {helpText}
-            </p>
-            <LinkButton
-              surface="mount"
-              className="text-sm"
-              onClick={() => navigate('/unread')}
-            >
-              Back to Linklater
-            </LinkButton>
-          </>
-        )}
+        <Alert className="mb-2" icon="fa-triangle-exclamation" variant="error">
+          {errorMessage}
+        </Alert>
+        <p className="mb-6 text-[var(--mount-alt-text)] text-sm">{helpText}</p>
+        <LinkButton
+          surface="mount"
+          className="text-sm"
+          onClick={() => navigate('/unread')}
+        >
+          Back to Linklater
+        </LinkButton>
       </div>
     </div>
   );

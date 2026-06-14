@@ -14,9 +14,15 @@ type LoginRegisterMode = 'login' | 'register';
 
 function submitLabel(
   loading: boolean,
+  magicLinkSentJustNow: boolean,
   isMagicLink: boolean,
   mode: LoginRegisterMode,
 ): string {
+  // Success-state label takes precedence over loading because loading is
+  // released to false the instant the magic-link request resolves; the
+  // 3000ms `magicLinkSentJustNow` window is the success indicator that
+  // stays in sync with the toast's own visible lifetime.
+  if (magicLinkSentJustNow) return 'Magic link sent!';
   if (loading) return 'Working…';
   if (isMagicLink) {
     return mode === 'login'
@@ -32,6 +38,13 @@ interface LoginRegisterViewProps {
   error: string | null;
   errorReference: RefObject<HTMLParagraphElement | null>;
   loading: boolean;
+  /**
+   * True for the 3000ms window after a successful magic-link request. Holds
+   * the submit button in a "Magic link sent!" success state — kept in sync
+   * with the toast's auto-dismiss lifetime so the two surfaces never read
+   * as contradictory.
+   */
+  magicLinkSentJustNow: boolean;
   mode: LoginRegisterMode;
   onEmailChange: (email: string) => void;
   onForgotPassword: () => void;
@@ -48,6 +61,7 @@ export default function LoginRegisterView({
   error,
   errorReference,
   loading,
+  magicLinkSentJustNow,
   mode,
   onEmailChange,
   onForgotPassword,
@@ -148,12 +162,20 @@ export default function LoginRegisterView({
           {error}
         </Alert>
 
-        <PrimaryButton disabled={loading} className="w-full py-2.5">
+        <PrimaryButton
+          disabled={loading || magicLinkSentJustNow}
+          className="w-full py-2.5"
+        >
           <i
-            className={`fa-solid ${password.length === 0 ? 'fa-wand-magic-sparkles' : 'fa-right-to-bracket'} text-xs`}
+            className={`fa-solid ${magicLinkSentJustNow ? 'fa-circle-check' : password.length === 0 ? 'fa-wand-magic-sparkles' : 'fa-right-to-bracket'} text-xs`}
             aria-hidden="true"
           />
-          {submitLabel(loading, password.length === 0, mode)}
+          {submitLabel(
+            loading,
+            magicLinkSentJustNow,
+            password.length === 0,
+            mode,
+          )}
         </PrimaryButton>
       </form>
 

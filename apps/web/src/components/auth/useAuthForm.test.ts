@@ -300,10 +300,12 @@ describe('useAuthForm', () => {
     });
   });
 
-  // WARN-4: a successful magic-link request must hold `loading` true for
-  // ~1500ms so the user cannot immediately re-click the submit button. The
-  // hold is independent of the toast's own auto-dismiss timer.
-  describe('WARN-4 — magic-link loading hold', () => {
+  // WARN-4: a successful magic-link request releases `loading` immediately
+  // (so the button doesn't read "Working…" while the toast is announcing
+  // the outcome) and engages `magicLinkSentJustNow` for the toast's full
+  // 3000ms auto-dismiss window. The button stays disabled during that
+  // window via the success-state label, preventing a second click.
+  describe('WARN-4 — magic-link success-state hold', () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
@@ -312,7 +314,7 @@ describe('useAuthForm', () => {
       vi.useRealTimers();
     });
 
-    it('keeps loading true immediately after a successful magic-link request', async () => {
+    it('releases loading to false immediately after a successful magic-link request', async () => {
       vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
       const { result } = renderAuthFormHook('/login');
 
@@ -323,30 +325,71 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      expect(result.current.loading).toBe(true);
-    });
-
-    it('releases loading to false after the 1500ms hold elapses', async () => {
-      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
-      const { result } = renderAuthFormHook('/login');
-
-      act(() => result.current.setEmail(USER_EMAIL));
-
-      await act(async () => {
-        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
-        await result.current.handleSubmit(event);
-      });
-
-      expect(result.current.loading).toBe(true);
-
-      act(() => {
-        vi.advanceTimersByTime(1500);
-      });
-
+      // Loading is released as soon as the API resolves so the button can
+      // flip into its success-state label without a "Working…" flash that
+      // contradicts the freshly-shown toast.
       expect(result.current.loading).toBe(false);
     });
 
-    it('releases loading normally (no hold) when the magic-link request throws', async () => {
+    it('sets magicLinkSentJustNow to true immediately after a successful magic-link request', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.magicLinkSentJustNow).toBe(true);
+    });
+
+    it('releases magicLinkSentJustNow to false after the 3000ms hold elapses (toast lifetime)', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.magicLinkSentJustNow).toBe(true);
+
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+
+      expect(result.current.magicLinkSentJustNow).toBe(false);
+    });
+
+    it('keeps magicLinkSentJustNow true until the full 3000ms elapses', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      // 1500ms in — old behavior would have released the hold here.
+      act(() => {
+        vi.advanceTimersByTime(1500);
+      });
+      expect(result.current.magicLinkSentJustNow).toBe(true);
+
+      // Past 3000ms — hold releases.
+      act(() => {
+        vi.advanceTimersByTime(1500);
+      });
+      expect(result.current.magicLinkSentJustNow).toBe(false);
+    });
+
+    it('does not set magicLinkSentJustNow when the magic-link request throws', async () => {
       vi.mocked(apiModule.requestMagicLink).mockRejectedValue(
         new Error('Network down'),
       );
@@ -360,18 +403,16 @@ describe('useAuthForm', () => {
       });
 
       expect(result.current.loading).toBe(false);
+      expect(result.current.magicLinkSentJustNow).toBe(false);
       expect(result.current.error).toBe('Network down');
     });
 
-    // C2: a mode change BEFORE the 1500ms hold expires must clear the
-    // pending timer synchronously and reset loading to false. Otherwise
-    // the stale timeout fires later and calls setLoading(false) on a hook
-    // that has already moved on — either harmlessly redundant or, if a
-    // subsequent submit re-engages loading, a race that releases the
-    // user's spinner mid-submission.
-    it('clears the magic-link hold timer synchronously when the user changes mode mid-hold', async () => {
+    // C2: a mode change BEFORE the 3000ms hold expires must clear the
+    // pending timer synchronously and reset magicLinkSentJustNow to false.
+    // Otherwise the stale timeout fires later on a hook that has already
+    // moved on, or worse races with a subsequent magic-link submission.
+    it('clears the success-state timer synchronously when the user changes mode mid-hold', async () => {
       vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
-      const setLoadingSpy = vi.fn();
       const { result } = renderAuthFormHook('/login');
 
       act(() => result.current.setEmail(USER_EMAIL));
@@ -382,34 +423,25 @@ describe('useAuthForm', () => {
       });
 
       // Hold is engaged.
-      expect(result.current.loading).toBe(true);
-
-      // Wrap the spy around setLoading so we can count post-mode-change
-      // calls. handleModeChange triggers the mode-change effect, which
-      // synchronously clears the pending timer AND resets loading=false.
-      const originalSetLoading = result.current.setMfaCode; // throwaway reference
-      void originalSetLoading;
+      expect(result.current.magicLinkSentJustNow).toBe(true);
 
       await act(async () => {
         result.current.handleModeChange('register');
       });
 
-      // Synchronously after the mode change, loading should already be
-      // false — the effect resets it without waiting for the 1500ms timer.
-      expect(result.current.loading).toBe(false);
+      // Synchronously after the mode change, the hold is released — the
+      // effect resets it without waiting for the 3000ms timer.
+      expect(result.current.magicLinkSentJustNow).toBe(false);
 
-      // Now advance time past the original 1500ms window. If the timer
-      // were still pending, it would call setLoading(false) again — but
-      // we've already observed loading=false, so we instead assert that
-      // the timer truly did not fire by tracking subsequent state. The
-      // strongest assertion available without instrumenting React
-      // internals is: loading stays false and no errors are thrown.
-      setLoadingSpy.mockClear();
+      // Advance past the original 3000ms window. If the timer were still
+      // pending, it would call setMagicLinkSentJustNow(false) again — but
+      // since we've already observed false, this asserts the state stays
+      // false without spurious flips.
       act(() => {
-        vi.advanceTimersByTime(1500);
+        vi.advanceTimersByTime(3000);
       });
 
-      expect(result.current.loading).toBe(false);
+      expect(result.current.magicLinkSentJustNow).toBe(false);
     });
   });
 
