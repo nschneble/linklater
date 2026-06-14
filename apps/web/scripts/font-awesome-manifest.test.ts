@@ -158,10 +158,15 @@ function scanSources(): Map<string, ScanHit> {
   const hits = new Map<string, ScanHit>();
 
   for (const file of files) {
-    const raw = readFileSync(file, 'utf8');
+    const fileSource = readFileSync(file, 'utf8');
     // index.html doesn't carry JS/TS comments; stripping is a no-op but
     // harmless. Other .html files (none today) would behave the same way.
-    const contents = file.endsWith('.html') ? raw : stripComments(raw);
+    let contents;
+    if (file.endsWith('.html')) {
+      contents = fileSource;
+    } else {
+      contents = stripComments(fileSource);
+    }
     for (const match of contents.matchAll(FA_TOKEN_PATTERN)) {
       const token = match[1];
       let hit = hits.get(token);
@@ -265,5 +270,31 @@ describe('font-awesome-manifest.json sync', () => {
         'real FA Free icon. Likely a grep artifact, truncated string, or typo. ' +
         'Either fix the source or extend NON_ICON_UTILITY_PREFIXES in this test.',
     ).toEqual([]);
+  });
+
+  // Catch silent-empty regressions (subset-font failure or wrong source path
+  // writes a header-only ~700-900 byte file) and manifest-bloat regressions
+  // (someone adds half the catalog). Ceilings give 3-4x headroom over current
+  // sizes so adding a single icon doesn't trip the test.
+  it('subsetted woff2 files are within expected size range', () => {
+    const solidPath = resolve(
+      webRoot,
+      'public/assets/fontawesome/webfonts/fa-solid-900.woff2',
+    );
+    const brandsPath = resolve(
+      webRoot,
+      'public/assets/fontawesome/webfonts/fa-brands-400.woff2',
+    );
+    const solidBytes = statSync(solidPath).size;
+    const brandsBytes = statSync(brandsPath).size;
+    const guidance =
+      'If this fails after a manifest change, rerun `npm run subset-fa` and ' +
+      'recheck the new sizes. If sizes are way off, the subset script may have ' +
+      'silently produced a 0-glyph woff2 (header-only ~700-900 bytes).';
+
+    expect(solidBytes, guidance).toBeGreaterThan(2000);
+    expect(solidBytes, guidance).toBeLessThan(25000);
+    expect(brandsBytes, guidance).toBeGreaterThan(800);
+    expect(brandsBytes, guidance).toBeLessThan(5000);
   });
 });

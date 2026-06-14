@@ -61,7 +61,12 @@ async function parseCodepoints(cssFile) {
     const selectorList = match[1];
     const hex = match[2];
     const literal = match[3];
-    const codepoint = hex ? parseInt(hex, 16) : literal.codePointAt(0);
+    let codepoint;
+    if (hex) {
+      codepoint = parseInt(hex, 16);
+    } else {
+      codepoint = literal.codePointAt(0);
+    }
 
     for (const selector of selectorList.split(',')) {
       const name = selector.trim().replace(/^\.fa-/, '');
@@ -91,6 +96,11 @@ async function subsetFamily(family, names) {
   const text = String.fromCodePoint(...wanted);
 
   const sourceBuffer = await readFile(config.source);
+  // Byte-stable output across runs (verified empirically) depends on the
+  // lockfile-pinned `subset-font` version. The package doesn't contract for
+  // byte stability across minor versions, so a future bump could re-shuffle
+  // harfbuzz tables and produce CI diff noise without any manifest change.
+  // If that happens, this is the call to inspect.
   const subsetBuffer = await subsetFont(sourceBuffer, text, {
     targetFormat: 'woff2',
   });
@@ -121,7 +131,9 @@ async function main() {
   }
 
   for (const result of results) {
-    const percent = ((result.outputBytes / result.sourceBytes) * 100).toFixed(1);
+    const percent = ((result.outputBytes / result.sourceBytes) * 100).toFixed(
+      1,
+    );
     console.log(
       `${result.family.padEnd(7)} ${String(result.glyphCount).padStart(3)} glyphs  ` +
         `${result.sourceBytes} -> ${result.outputBytes} bytes (${percent}% of source)`,

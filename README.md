@@ -63,6 +63,8 @@ Click on an image to open it full-size in a new browser tab:
 - **Linting**: ESLint + Prettier
 - **Testing**: Vitest (front-end) + Jest (back-end)
 
+Font Awesome Free (SIL OFL 1.1 fonts, CC BY 4.0 icons) is self-hosted under `apps/web/public/assets/fontawesome/`. License headers ship verbatim in the vendored CSS.
+
 ## Monorepo structure
 
 It’s a majestic modular monorepo!
