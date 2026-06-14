@@ -95,6 +95,16 @@ describe('setPendingNotice / consumePendingNotice', () => {
     expect(hasPendingNotice()).toBe(false);
   });
 
+  it('round-trips login-link-invalid as an error-variant entry (short copy — /login is the recovery destination)', () => {
+    setPendingNotice('login-link-invalid');
+    expect(hasPendingNotice()).toBe(true);
+    expect(consumePendingNotice()).toEqual({
+      message: 'Login link expired. Request a new one below.',
+      variant: 'error',
+    });
+    expect(hasPendingNotice()).toBe(false);
+  });
+
   it('returns null when no notice has been set', () => {
     expect(consumePendingNotice()).toBeNull();
   });
@@ -201,6 +211,7 @@ describe('catalog drift guard', () => {
     'deletion-link-invalid',
     'verification-link-invalid',
     'email-change-link-invalid',
+    'login-link-invalid',
   ];
 
   for (const key of ALL_KEYS) {

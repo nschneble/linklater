@@ -2,7 +2,15 @@
  * Tests for VerifyLoginPage.
  *
  * On mount, reads ?token= from the URL and calls verifyMagicLink().
- * State machine: verifying → success (navigate /unread) | error | mfa (MfaView)
+ * State machine:
+ *   - verifying → success → navigate('/unread') (NO toast — login is login)
+ *   - verifying → MFA → MfaView mounted
+ *   - verifying → failure → setPendingNotice('login-link-invalid') +
+ *     navigate('/login') (AuthForm surfaces the toast)
+ *
+ * Per Wave 7: no error card is rendered anymore. All verify-link failures
+ * redirect to /login with an error-variant pending notice. The MFA branch
+ * is unchanged and still mounts MfaView for OTP entry.
  */
 
 import VerifyLoginPage from './VerifyLoginPage';
@@ -15,6 +23,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('../../lib/api', () => ({
   verifyMagicLink: vi.fn(),
   verifyOtp: vi.fn(),
+}));
+
+vi.mock('../../lib/pendingNotice', () => ({
+  setPendingNotice: vi.fn(),
 }));
 
 vi.mock('../../auth/AuthContext', () => ({
@@ -37,6 +49,7 @@ vi.mock('react-router-dom', async () => {
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import * as apiModule from '../../lib/api';
+import * as pendingNoticeModule from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -79,18 +92,32 @@ beforeEach(() => {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe('VerifyLoginPage loading state', () => {
-  it('shows a verifying status message while the API call is pending', () => {
+describe('VerifyLoginPage verifying state', () => {
+  it('renders a polite sr-only status message while verifying', () => {
     vi.mocked(apiModule.verifyMagicLink).mockReturnValue(new Promise(() => {}));
 
     renderPage();
 
-    expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.getByText(/verifying your login link/i)).toBeInTheDocument();
+    const status = screen.getByRole('status');
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveTextContent(/verifying your login link/i);
+    // The status node carries `sr-only` — verifying state is visually a bare
+    // spinner. No card heading is rendered (errors redirect to /login).
+    expect(status).toHaveClass('sr-only');
+  });
+
+  it('does not render the legacy "Logging in" card heading', () => {
+    vi.mocked(apiModule.verifyMagicLink).mockReturnValue(new Promise(() => {}));
+
+    renderPage();
+
+    expect(
+      screen.queryByRole('heading', { name: /logging in/i }),
+    ).not.toBeInTheDocument();
   });
 });
 
-describe('VerifyLoginPage success path', () => {
+describe('VerifyLoginPage success path (no toast — login is login)', () => {
   it('calls verifyMagicLink with the token from the URL', async () => {
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-abc',
@@ -123,7 +150,7 @@ describe('VerifyLoginPage success path', () => {
     });
   });
 
-  it('navigates to /unread after successful verification', async () => {
+  it('navigates to /unread with replace:true after successful verification', async () => {
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-abc',
       refreshToken: 'refresh-abc',
@@ -137,22 +164,41 @@ describe('VerifyLoginPage success path', () => {
       expect(navigate).toHaveBeenCalledWith('/unread', { replace: true });
     });
   });
+
+  it('does NOT queue a pending notice on success (magic-link login is just login)', async () => {
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      accessToken: 'jwt-abc',
+      refreshToken: 'refresh-abc',
+    });
+
+    await act(async () => {
+      renderPage();
+    });
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/unread', { replace: true });
+    });
+
+    expect(pendingNoticeModule.setPendingNotice).not.toHaveBeenCalled();
+  });
 });
 
-describe('VerifyLoginPage error paths', () => {
-  it('shows an error when no token is in the URL', async () => {
+describe('VerifyLoginPage error paths — redirect to /login with toast', () => {
+  it('queues login-link-invalid + navigates to /login when no token is present', async () => {
     await act(async () => {
       renderPage('');
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'login-link-invalid',
+      );
     });
-
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
     expect(apiModule.verifyMagicLink).not.toHaveBeenCalled();
   });
 
-  it('shows an error when verifyMagicLink rejects', async () => {
+  it('queues login-link-invalid + navigates to /login when verifyMagicLink rejects', async () => {
     vi.mocked(apiModule.verifyMagicLink).mockRejectedValue(
       new Error('Link expired'),
     );
@@ -162,13 +208,31 @@ describe('VerifyLoginPage error paths', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'login-link-invalid',
+      );
     });
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
   });
 
-  it('shows error message text when the API rejects with an Error', async () => {
+  it('queues login-link-invalid + navigates to /login even when a non-Error is thrown', async () => {
+    vi.mocked(apiModule.verifyMagicLink).mockRejectedValue('boom');
+
+    await act(async () => {
+      renderPage();
+    });
+
+    await waitFor(() => {
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'login-link-invalid',
+      );
+    });
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+  });
+
+  it('does not render the legacy error card (no alert role, no AuthErrorPanel)', async () => {
     vi.mocked(apiModule.verifyMagicLink).mockRejectedValue(
-      new Error('Link already used'),
+      new Error('Link expired'),
     );
 
     await act(async () => {
@@ -176,8 +240,13 @@ describe('VerifyLoginPage error paths', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/link already used/i);
+      expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
     });
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /back to login/i }),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -196,5 +265,23 @@ describe('VerifyLoginPage MFA challenge', () => {
       // MfaView renders a TOTP input
       expect(screen.getByRole('textbox')).toBeInTheDocument();
     });
+  });
+
+  it('does NOT queue a notice or navigate when the MFA branch is taken (handled by handleVerifyOtp)', async () => {
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      mfaToken: 'mfa-tok-123',
+      mfaMethod: 'totp',
+    });
+
+    await act(async () => {
+      renderPage();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('textbox')).toBeInTheDocument();
+    });
+
+    expect(pendingNoticeModule.setPendingNotice).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
   });
 });

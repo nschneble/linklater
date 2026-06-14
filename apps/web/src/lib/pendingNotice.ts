@@ -36,7 +36,8 @@ export type PendingNotice =
   | 'email-change-verified-please-sign-in'
   | 'deletion-link-invalid'
   | 'verification-link-invalid'
-  | 'email-change-link-invalid';
+  | 'email-change-link-invalid'
+  | 'login-link-invalid';
 
 export interface NoticeEntry {
   message: string;
@@ -47,9 +48,9 @@ export interface NoticeEntry {
 // carry an inline recovery hint per WCAG 3.3.3 (Error Suggestion). The actual
 // recovery path (Settings → request a fresh verification email) lives behind
 // auth, so the toast surfaces the hint at the error moment rather than relying
-// on the destination page to spell it out. Deletion-link-invalid recovery
-// (sign in → Settings → re-trigger delete) lives on the page the user lands
-// on, so the toast copy stays short.
+// on the destination page to spell it out. Deletion-link-invalid and
+// login-link-invalid recovery lives on the page the user lands on (/login),
+// so those toast copies stay short.
 const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
   'account-deleted': {
     message: 'Your account has been deleted.',
@@ -83,6 +84,10 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
   'email-change-link-invalid': {
     message:
       'Email change link expired. Sign in and request a new one from Settings.',
+    variant: 'error',
+  },
+  'login-link-invalid': {
+    message: 'Login link expired. Request a new one below.',
     variant: 'error',
   },
 };
