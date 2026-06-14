@@ -15,20 +15,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 type Status = 'verifying' | 'error';
 
 /**
- * Catalog keys for the post-redirect toast. The auth-state branch is decided
- * at success time: signed-in users land on /unread; signed-out users land on
- * /login. The destination's `usePendingNotice` hook consumes the keyed
- * message and surfaces it via the shared toast + sr-only mirror channel.
- */
-interface SuccessNotices {
-  signedIn: PendingNotice;
-  signedOut: PendingNotice;
-}
-
-/**
  * Props that configure the page copy for each specific verification flow.
  * The logic is identical for email verification and email-change verification —
- * only the user-visible text and the success-time notice catalog keys differ.
+ * only the user-visible text and the success-time notice keys differ.
  */
 interface TokenVerificationPageProps {
   /** Page heading shown during verifying + error states. */
@@ -36,12 +25,17 @@ interface TokenVerificationPageProps {
   /** Text shown while the API call is in flight. */
   verifyingText: string;
   /**
-   * Two `PendingNotice` keys: the `signedIn` key is queued when the user is
-   * authenticated at success time (destination /unread); the `signedOut` key
-   * is queued otherwise (destination /login). Both messages get surfaced via
-   * the destination page's toast + sr-only mirror.
+   * Pending-notice key queued when the user is authenticated at success
+   * time (destination /unread). Surfaced via the destination page's toast +
+   * sr-only mirror.
    */
-  successNotices: SuccessNotices;
+  signedInNotice: PendingNotice;
+  /**
+   * Pending-notice key queued when the user is NOT authenticated at
+   * success time (destination /login). Surfaced via the destination page's
+   * toast + sr-only mirror.
+   */
+  signedOutNotice: PendingNotice;
   /** Text shown below the error message to guide the user. */
   helpText: string;
   /**
@@ -77,7 +71,8 @@ interface TokenVerificationPageProps {
 export default function TokenVerificationPage({
   title,
   verifyingText,
-  successNotices,
+  signedInNotice,
+  signedOutNotice,
   helpText,
   verifyFn,
   onSuccess,
@@ -88,6 +83,19 @@ export default function TokenVerificationPage({
   const [status, setStatus] = useState<Status>('verifying');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const hasVerified = useRef(false);
+
+  // Mirror `user` into a ref so the auth-state branch inside the
+  // verifyFn().then() callback reads the LATEST value rather than the
+  // render-time closure. Today's verify endpoints don't issue session
+  // cookies (apps/api/src/auth/auth.controller.ts), so the closure is
+  // safe by accident — this ref makes correctness independent of that
+  // server behavior. If a future verify endpoint creates a session via
+  // onSuccess (e.g. await refreshUser() flipping user from null → non-null),
+  // the post-await read will see the new value and route correctly.
+  const userReference = useRef(user);
+  useEffect(() => {
+    userReference.current = user;
+  }, [user]);
 
   useEffect(() => {
     if (hasVerified.current) return;
@@ -106,10 +114,8 @@ export default function TokenVerificationPage({
         // destination page renders against the latest user profile (e.g.
         // post-verification `emailVerifiedAt` timestamp or updated email).
         await onSuccess?.();
-        const isSignedIn = user !== null;
-        const noticeKey = isSignedIn
-          ? successNotices.signedIn
-          : successNotices.signedOut;
+        const isSignedIn = userReference.current !== null;
+        const noticeKey = isSignedIn ? signedInNotice : signedOutNotice;
         const destination = isSignedIn ? '/unread' : '/login';
         setPendingNotice(noticeKey);
         navigate(destination, { replace: true });
@@ -118,7 +124,14 @@ export default function TokenVerificationPage({
         setStatus('error');
         setErrorMessage(getErrorMessage(error, 'Verification failed.'));
       });
-  }, [navigate, onSuccess, searchParameters, successNotices, user, verifyFn]);
+  }, [
+    navigate,
+    onSuccess,
+    searchParameters,
+    signedInNotice,
+    signedOutNotice,
+    verifyFn,
+  ]);
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">

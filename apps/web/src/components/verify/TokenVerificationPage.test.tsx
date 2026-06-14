@@ -5,8 +5,8 @@
  * State machine: verifying → (auto-redirect on success) | error
  *
  * Success path is auth-aware:
- *   - Signed-IN user  → setPendingNotice(signedIn key)  + navigate('/unread')
- *   - Signed-OUT user → setPendingNotice(signedOut key) + navigate('/login')
+ *   - Signed-IN user  → setPendingNotice(signedInNotice key)  + navigate('/unread')
+ *   - Signed-OUT user → setPendingNotice(signedOutNotice key) + navigate('/login')
  *
  * Error path keeps the full interstitial card (Wave 4 scope unchanged).
  */
@@ -15,6 +15,7 @@ import TokenVerificationPage from './TokenVerificationPage';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { PendingNotice } from '../../lib/pendingNotice';
 import type { User } from '../../auth/AuthContext';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
@@ -87,35 +88,22 @@ interface RenderOptions {
   title?: string;
   verifyingText?: string;
   helpText?: string;
-  successNotices?: {
-    signedIn:
-      | 'email-verified'
-      | 'email-change-verified'
-      | 'email-verified-please-sign-in'
-      | 'email-change-verified-please-sign-in'
-      | 'account-deleted';
-    signedOut:
-      | 'email-verified'
-      | 'email-change-verified'
-      | 'email-verified-please-sign-in'
-      | 'email-change-verified-please-sign-in'
-      | 'account-deleted';
-  };
+  signedInNotice?: PendingNotice;
+  signedOutNotice?: PendingNotice;
 }
 
 function renderPage(options: RenderOptions = {}) {
   const search = options.search ?? '?token=valid-token';
   const verifyFn = options.verifyFn ?? vi.fn().mockResolvedValue(undefined);
-  const successNotices = options.successNotices ?? {
-    signedIn: 'email-verified' as const,
-    signedOut: 'email-verified-please-sign-in' as const,
-  };
   return render(
     <MemoryRouter initialEntries={[`/verify-email${search}`]}>
       <TokenVerificationPage
         title={options.title ?? 'Email Verification'}
         verifyingText={options.verifyingText ?? 'Verifying your email…'}
-        successNotices={successNotices}
+        signedInNotice={options.signedInNotice ?? 'email-verified'}
+        signedOutNotice={
+          options.signedOutNotice ?? 'email-verified-please-sign-in'
+        }
         helpText={options.helpText ?? 'The link may have expired.'}
         verifyFn={verifyFn}
         onSuccess={options.onSuccess}
@@ -177,10 +165,8 @@ describe('TokenVerificationPage success path — signed-in user', () => {
   it('queues the signed-in notice key on success', async () => {
     await act(async () => {
       renderPage({
-        successNotices: {
-          signedIn: 'email-verified',
-          signedOut: 'email-verified-please-sign-in',
-        },
+        signedInNotice: 'email-verified',
+        signedOutNotice: 'email-verified-please-sign-in',
       });
     });
 
@@ -201,27 +187,43 @@ describe('TokenVerificationPage success path — signed-in user', () => {
     });
   });
 
-  it('awaits onSuccess BEFORE queuing the notice and navigating', async () => {
-    const order: string[] = [];
-    const onSuccess = vi.fn().mockImplementation(async () => {
-      order.push('onSuccess');
+  it('awaits onSuccess BEFORE queuing the notice and navigating (deferred-promise pattern)', async () => {
+    // C5: the resolved-order test below uses a deferred promise so we can
+    // observe that setPendingNotice + navigate are NOT called while
+    // onSuccess is still pending. The previous ordering-array trick would
+    // have passed even if the awaits ran in parallel; this version
+    // proves the await sequence.
+    let resolveOnSuccess!: () => void;
+    const onSuccessPromise = new Promise<void>((resolve) => {
+      resolveOnSuccess = resolve;
     });
-    vi.mocked(pendingNoticeModule.setPendingNotice).mockImplementation(() => {
-      order.push('setPendingNotice');
-    });
-    navigate.mockImplementation(() => {
-      order.push('navigate');
-    });
+    const onSuccess = vi.fn().mockReturnValue(onSuccessPromise);
 
     await act(async () => {
       renderPage({ onSuccess });
     });
 
+    // Let the verifyFn().then() callback run up to the awaited onSuccess call,
+    // which is now pending on resolveOnSuccess.
     await waitFor(() => {
-      expect(navigate).toHaveBeenCalled();
+      expect(onSuccess).toHaveBeenCalled();
     });
 
-    expect(order).toEqual(['onSuccess', 'setPendingNotice', 'navigate']);
+    // Critical assertion: while onSuccess is still pending, neither the
+    // notice queue nor the navigation has fired yet. This catches the
+    // bug where the await is missing or accidentally fire-and-forget.
+    expect(pendingNoticeModule.setPendingNotice).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+
+    // Now resolve onSuccess and confirm the post-await steps fire.
+    await act(async () => {
+      resolveOnSuccess();
+    });
+
+    await waitFor(() => {
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalled();
+    });
+    expect(navigate).toHaveBeenCalled();
   });
 
   it('does not render a success card after the API resolves', async () => {
@@ -253,10 +255,8 @@ describe('TokenVerificationPage success path — signed-out user', () => {
   it('queues the signed-out notice key on success', async () => {
     await act(async () => {
       renderPage({
-        successNotices: {
-          signedIn: 'email-verified',
-          signedOut: 'email-verified-please-sign-in',
-        },
+        signedInNotice: 'email-verified',
+        signedOutNotice: 'email-verified-please-sign-in',
       });
     });
 
@@ -280,10 +280,8 @@ describe('TokenVerificationPage success path — signed-out user', () => {
   it('uses the email-change signed-out key for the email-change flow', async () => {
     await act(async () => {
       renderPage({
-        successNotices: {
-          signedIn: 'email-change-verified',
-          signedOut: 'email-change-verified-please-sign-in',
-        },
+        signedInNotice: 'email-change-verified',
+        signedOutNotice: 'email-change-verified-please-sign-in',
       });
     });
 

@@ -4,12 +4,13 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useLinksView } from '../../lib/hooks/useLinksView';
 import { usePendingNotice } from '../../lib/hooks/usePendingNotice';
 import Alert from '../common/Alert';
+import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
 import Toast from '../common/Toast';
 import LinkForm from './LinkForm';
 import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';
 import { LINK_FORM_ID } from './constants';
-import { lazy, Suspense, useEffect, useRef } from 'react';
+import { lazy, Suspense, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 /**
@@ -36,15 +37,6 @@ const KeyboardShortcutsModal = lazy(() => import('./KeyboardShortcutsModal'));
 
 interface LinksViewProps {
   onCloseUserMenu?: () => void;
-  /**
-   * Ref to the `<main>` landmark wrapping this view (owned by `AppShell`).
-   * When a cross-route pending notice is consumed on mount, focus moves to
-   * this landmark so screen-reader users have a predictable Tab origin
-   * after hearing the toast announcement (WARN-5). Optional — falls back
-   * to no-op when not provided (e.g. unit tests rendering LinksView
-   * standalone).
-   */
-  mainReference?: React.RefObject<HTMLElement | null>;
 }
 
 /**
@@ -60,11 +52,17 @@ interface LinksViewProps {
  * - Portals a backdrop `<button>` when the link form is open so that clicking
  *   outside the form closes it.
  * - Resets search and the `isClearingRead` flag whenever the filter changes.
+ *
+ * Cross-route pending notices (FLAG-1) — e.g. arriving on /unread after a
+ * verify-email redirect — are consumed via `usePendingNotice` and surfaced
+ * by `PendingNoticeAnnouncer` (toast + sr-only mirror). The announcer IS
+ * the announcement; no focus shift to the <main> landmark is performed on
+ * notice arrival, since (a) NVDA/JAWS can interrupt a polite live region
+ * when focus moves into an unrelated landmark mid-announce, and (b) the
+ * <main> landmark already carries `aria-label="Links"` in AppShell so
+ * keyboard users get a named landing point via the existing skip link.
  */
-export default function LinksView({
-  onCloseUserMenu,
-  mainReference,
-}: LinksViewProps = {}) {
+export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
   const view = useLinksView({ onCloseUserMenu });
   const pendingNotice = usePendingNotice();
 
@@ -78,19 +76,6 @@ export default function LinksView({
 
   useFocusTrap(dialogReference);
   useFocusReturn(view.showLinkForm);
-
-  // WARN-5: when a cross-route pending notice is consumed on this mount
-  // (e.g. arriving on /unread after a verify-email redirect), move focus
-  // to the <main> landmark so SR users have a predictable Tab origin
-  // after the toast announcement. AppShell's view-change effect already
-  // focuses <main> on most in-app navigation, but skips on first render
-  // — and a direct-landing flow (link opened in a new tab) IS a first
-  // render. So LinksView owns its own consume-triggered focus shift.
-  useEffect(() => {
-    if (pendingNotice.notice !== null) {
-      mainReference?.current?.focus();
-    }
-  }, [pendingNotice.notice, mainReference]);
 
   return (
     <>
@@ -191,22 +176,6 @@ export default function LinksView({
       )}
 
       {/*
-        Cross-route pending-notice toast (FLAG-1). Separate from
-        view.toastMessage above, which handles in-session events like
-        "Link saved!". This toast surfaces messages queued by another
-        flow (e.g. account-deleted) when this view is the first mount
-        after the redirect. Variant="success" matches AuthForm's
-        equivalent toast so the visual language stays consistent.
-      */}
-      {pendingNotice.notice && (
-        <Toast
-          message={pendingNotice.notice}
-          onDismiss={pendingNotice.dismiss}
-          variant="success"
-        />
-      )}
-
-      {/*
         Polite live region announcing links that arrive via a background
         visibility refresh (e.g. saved via the bookmarklet on another tab).
         The visual Toast above already carries its own role="status"
@@ -218,24 +187,16 @@ export default function LinksView({
       </span>
 
       {/*
-        FLAG-1: pre-mounted live region mirror for the cross-route
-        pending-notice toast above. Cross-route navigation creates a
-        freshly-mounted component tree where NVDA/JAWS can skip the
-        conditional toast's role="status" announcement. Keeping this
-        span in the DOM always and swapping its text via state ensures
-        the empty → populated transition fires reliably. Co-existing
-        with newLinksAnnouncement is fine: this region fires at most
-        once per route mount (consumePendingNotice clears sessionStorage)
-        so practical collision is near-zero. Mirrors AuthForm's pattern.
+        Cross-route pending-notice surface (FLAG-1). Separate from
+        view.toastMessage above, which handles in-session events like
+        "Link saved!". This surfaces messages queued by another flow
+        (e.g. account-deleted, email-verified) when this view is the
+        first mount after the redirect.
       */}
-      <span
-        className="sr-only"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {pendingNotice.notice ?? ''}
-      </span>
+      <PendingNoticeAnnouncer
+        notice={pendingNotice.notice}
+        onDismiss={pendingNotice.dismiss}
+      />
     </>
   );
 }

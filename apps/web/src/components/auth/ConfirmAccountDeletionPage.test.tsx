@@ -5,7 +5,7 @@
  * Token-from-URL paths:
  *   - No token → error state without API call
  *   - Valid token → confirmAccountDeletion() → setPendingNotice + logout +
- *     navigate('/auth') fire automatically; no success card is rendered
+ *     navigate('/login') fire automatically; no success card is rendered
  *   - API error → error state with full interstitial card
  */
 
@@ -141,13 +141,13 @@ describe('ConfirmAccountDeletionPage success path (auto-redirect)', () => {
     });
   });
 
-  it('navigates to /auth with replace:true automatically on success', async () => {
+  it('navigates to /login with replace:true automatically on success', async () => {
     await act(async () => {
       renderPage();
     });
 
     await waitFor(() => {
-      expect(navigate).toHaveBeenCalledWith('/auth', { replace: true });
+      expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
     });
   });
 
@@ -159,7 +159,7 @@ describe('ConfirmAccountDeletionPage success path (auto-redirect)', () => {
     // Wait for navigate to fire, then confirm no success heading was rendered
     // along the way (state collapses verifying → auto-redirect).
     await waitFor(() => {
-      expect(navigate).toHaveBeenCalledWith('/auth', { replace: true });
+      expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
     });
 
     expect(

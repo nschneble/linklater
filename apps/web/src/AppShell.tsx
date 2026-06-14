@@ -88,6 +88,7 @@ export default function AppShell() {
         id="main-content"
         ref={shell.mainReference}
         tabIndex={-1}
+        aria-label="Links"
         className="max-w-3xl mx-auto px-4 py-6 sm:py-12 space-y-6 focus:outline-none"
       >
         <ErrorBoundary fallback={null} resetKey={shell.view}>
@@ -114,10 +115,7 @@ export default function AppShell() {
             <ThemeEditor />
           </Suspense>
         ) : shell.view === 'api-docs' ? null : (
-          <LinksView
-            onCloseUserMenu={shell.handleUserMenuClose}
-            mainReference={shell.mainReference}
-          />
+          <LinksView onCloseUserMenu={shell.handleUserMenuClose} />
         )}
       </main>
 

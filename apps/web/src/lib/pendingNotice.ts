@@ -44,8 +44,9 @@ export function setPendingNotice(notice: PendingNotice): void {
   if (typeof window === 'undefined') return;
   try {
     window.sessionStorage.setItem(PENDING_NOTICE_KEY, notice);
-  } catch {
-    // Best-effort — private browsing / blocked storage.
+  } catch (error) {
+    // SecurityError in private browsing / blocked storage — best-effort write.
+    void error;
   }
 }
 
@@ -63,7 +64,9 @@ export function consumePendingNotice(): string | null {
       return NOTICE_MESSAGES[raw as PendingNotice];
     }
     return null;
-  } catch {
+  } catch (error) {
+    // SecurityError in private browsing / blocked storage — best-effort read.
+    void error;
     return null;
   }
 }

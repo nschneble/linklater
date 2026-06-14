@@ -21,7 +21,7 @@ const TITLES: Record<Status, string> = {
  * requested deletion. The page mounts and POSTs the token to the API.
  *
  * On success: queues the `account-deleted` notice, logs out, and redirects
- * to `/auth` — the AuthForm surfaces the confirmation via its existing
+ * to `/login` — the AuthForm surfaces the confirmation via its existing
  * toast + sr-only mirror channel. WCAG 3.2.5 is satisfied via implicit
  * request (the user clicked the emailed link expecting completion); no
  * extra confirmation click is required because the actual checked
@@ -62,7 +62,10 @@ export default function ConfirmAccountDeletionPage() {
       .then(() => {
         setPendingNotice('account-deleted');
         logout();
-        navigate('/auth', { replace: true });
+        // `/login` is the actual destination — `/auth` was not a registered
+        // route, so it fell through to the catch-all redirect at
+        // `routes/Unauthenticated.tsx` and added an extra history entry.
+        navigate('/login', { replace: true });
       })
       .catch((error: unknown) => {
         setStatus('error');

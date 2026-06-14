@@ -1,7 +1,7 @@
 import ForgotPasswordView from './ForgotPasswordView';
 import LoginRegisterView from './LoginRegisterView';
 import MfaView from './MfaView';
-import Toast from '../common/Toast';
+import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
 import { useAuthForm } from './useAuthForm';
 
 /**
@@ -101,27 +101,10 @@ export default function AuthForm() {
   return (
     <>
       {view}
-      {notice && (
-        <Toast
-          message={notice}
-          onDismiss={() => setNotice(null)}
-          variant="success"
-        />
-      )}
-      {/*
-        Pre-mounted live region for the visual Toast above. Some SRs miss
-        `role="status"` on a freshly-mounted node; keeping this span in the
-        DOM always and swapping its text via state ensures the announcement
-        fires reliably.
-      */}
-      <span
-        className="sr-only"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {notice ?? ''}
-      </span>
+      <PendingNoticeAnnouncer
+        notice={notice}
+        onDismiss={() => setNotice(null)}
+      />
     </>
   );
 }

@@ -17,10 +17,8 @@ export default function VerifyEmailPage() {
     <TokenVerificationPage
       title="Email Verification"
       verifyingText="Verifying your email…"
-      successNotices={{
-        signedIn: 'email-verified',
-        signedOut: 'email-verified-please-sign-in',
-      }}
+      signedInNotice="email-verified"
+      signedOutNotice="email-verified-please-sign-in"
       helpText="The link may have expired. Request a new verification email from the Settings page."
       verifyFn={verifyEmail}
       onSuccess={refreshUser}
