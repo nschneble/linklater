@@ -36,7 +36,7 @@ import { useAuthForm } from './useAuthForm';
 interface MakeHookOverrides {
   mode?: Mode;
   mfaChallenge?: MfaChallenge | null;
-  notice?: string | null;
+  notice?: { message: string; variant: 'success' | 'error' } | null;
   setNotice?: ReturnType<typeof vi.fn>;
 }
 
@@ -57,7 +57,7 @@ function makeHookResult(
     emailReference,
     error: null,
     errorReference,
-    forgotPasswordSent: false,
+    forgotPasswordSentJustNow: false,
     handleModeChange: vi.fn(),
     handleSubmit: vi.fn(),
     handleVerifyOtp: vi.fn(),
@@ -99,7 +99,12 @@ beforeEach(() => {
 describe('AuthForm — pending-notice surface', () => {
   it('renders the PendingNoticeAnnouncer toast when notice is non-null', () => {
     vi.mocked(useAuthForm).mockReturnValue(
-      makeHookResult({ notice: 'Your account has been deleted.' }),
+      makeHookResult({
+        notice: {
+          message: 'Your account has been deleted.',
+          variant: 'success',
+        },
+      }),
     );
 
     renderAuthForm();
@@ -134,7 +139,12 @@ describe('AuthForm — pending-notice surface', () => {
     expect(initialMirror?.textContent).toBe('');
 
     vi.mocked(useAuthForm).mockReturnValue(
-      makeHookResult({ notice: 'Your email has been verified.' }),
+      makeHookResult({
+        notice: {
+          message: 'Your email has been verified.',
+          variant: 'success',
+        },
+      }),
     );
     rerender(
       <MemoryRouter initialEntries={['/login']}>
@@ -148,11 +158,37 @@ describe('AuthForm — pending-notice surface', () => {
     expect(updatedMirror?.textContent).toBe('Your email has been verified.');
   });
 
+  it('routes an error-variant notice into the alert/assertive mirror shape', () => {
+    vi.mocked(useAuthForm).mockReturnValue(
+      makeHookResult({
+        notice: {
+          message: 'Verification link expired.',
+          variant: 'error',
+        },
+      }),
+    );
+
+    renderAuthForm();
+
+    // Mirror picks up the assertive shape when the notice carries
+    // variant='error'. Without this routing the toast (assertive) and the
+    // mirror (polite) would race on the SR announcement queue with
+    // mismatched priorities.
+    const mirror = document.querySelector(
+      'span.sr-only[role="alert"][aria-live="assertive"][aria-atomic="true"]',
+    );
+    expect(mirror).toBeInTheDocument();
+    expect(mirror?.textContent).toBe('Verification link expired.');
+  });
+
   it('passes a setNotice-clearing onDismiss to the announcer', () => {
     const setNotice = vi.fn();
     vi.mocked(useAuthForm).mockReturnValue(
       makeHookResult({
-        notice: 'Your email has been verified.',
+        notice: {
+          message: 'Your email has been verified.',
+          variant: 'success',
+        },
         setNotice,
       }),
     );

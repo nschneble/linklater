@@ -18,6 +18,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 export type Mode = 'login' | 'register' | 'forgot-password';
 export type MfaChallenge = 'totp' | 'recovery';
 
+interface FormNotice {
+  message: string;
+  variant: 'success' | 'error';
+}
+
 export function useAuthForm() {
   const { login, refreshUser, register } = useAuth();
   const location = useLocation();
@@ -25,11 +30,15 @@ export function useAuthForm() {
 
   const emailReference = useRef<HTMLInputElement>(null);
   const errorReference = useRef<HTMLParagraphElement>(null);
-  // WARN-4: timeout id for the post-magic-link success-state hold. The button
-  // and toast must stay in sync — both render the "magic link sent" state
-  // for the toast's 3000ms auto-dismiss window. The ref lets the mode-change
-  // effect cancel the pending release if the user navigates away first.
+  // WARN-4: timeout ids for post-magic-link / post-forgot-password
+  // success-state holds. The submit button and toast must stay in sync —
+  // both render the "sent!" success state for the toast's 3000ms auto-
+  // dismiss window. The refs let the mode-change effect cancel pending
+  // releases if the user navigates away first.
   const magicLinkSentJustNowReference = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const forgotPasswordSentJustNowReference = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
   const mfaInputReference = useRef<HTMLInputElement>(null);
@@ -37,7 +46,6 @@ export function useAuthForm() {
 
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
   const [loading, setLoading] = useState(false);
   // Mirrors the toast's lifecycle for magic-link success. Drives the submit
   // button's "Magic link sent!" label, check-mark icon, and disabled state
@@ -46,6 +54,12 @@ export function useAuthForm() {
   // from re-clicking and triggering a second magic-link request while the
   // first email is still arriving.
   const [magicLinkSentJustNow, setMagicLinkSentJustNow] = useState(false);
+  // Same shape as magicLinkSentJustNow but for the forgot-password flow.
+  // The "Send password reset link" → "Working…" → "Reset link sent!" arc
+  // mirrors the magic-link button's three-state lifecycle and holds for
+  // the toast's 3000ms window so the two surfaces never disagree.
+  const [forgotPasswordSentJustNow, setForgotPasswordSentJustNow] =
+    useState(false);
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaToken, setMfaToken] = useState<string | null>(null);
@@ -64,7 +78,10 @@ export function useAuthForm() {
   // sessionStorage key. See [[feedback-peek-before-consume-effect-order]].
   // `LinksView` consumes via the `usePendingNotice` hook because it has
   // no peek requirement.
-  const [notice, setNotice] = useState<string | null>(null);
+  //
+  // Notice now carries a variant so error-keyed entries (e.g.
+  // `verification-link-invalid`) render with assertive ARIA + error paint.
+  const [notice, setNotice] = useState<FormNotice | null>(null);
   const [password, setPassword] = useState('');
 
   function resolveMode(): Mode {
@@ -89,11 +106,15 @@ export function useAuthForm() {
       clearTimeout(magicLinkSentJustNowReference.current);
       magicLinkSentJustNowReference.current = null;
     }
+    if (forgotPasswordSentJustNowReference.current !== null) {
+      clearTimeout(forgotPasswordSentJustNowReference.current);
+      forgotPasswordSentJustNowReference.current = null;
+    }
     setPassword('');
     setError(null);
     setLoading(false);
     setMagicLinkSentJustNow(false);
-    setForgotPasswordSent(false);
+    setForgotPasswordSentJustNow(false);
 
     // Skip auto-focus when a pending notice is queued — focusing a text
     // input switches NVDA/JAWS into forms mode and can swallow the polite
@@ -132,6 +153,21 @@ export function useAuthForm() {
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
+
+    // Part D: coalesce-on-submit. If a cross-route error toast is still
+    // visible when the user attempts a new auth action, dismiss it so the
+    // upcoming form-level error Alert is the sole assertive announcement.
+    // Without this coalesce, the user would receive two simultaneous
+    // assertive announcements (toast + Alert) on the same channel — see
+    // WCAG 4.1.3 status messages and ARIA 1.2 §5.2.8.4 (live region
+    // politeness must be honored predictably; stacking two assertive
+    // regions in the same tick is implementation-defined on most SRs).
+    // Success-variant toasts stay visible: they don't fight an upcoming
+    // form alert because the channels (polite vs assertive) don't overlap.
+    if (notice !== null && notice.variant === 'error') {
+      setNotice(null);
+    }
+
     setError(null);
     setLoading(true);
 
@@ -139,10 +175,16 @@ export function useAuthForm() {
       if ((mode === 'login' || mode === 'register') && password.length === 0) {
         if (mode === 'login') {
           await requestMagicLink(email);
-          setNotice('Check your email for a login link.');
+          setNotice({
+            message: 'Check your email for a login link.',
+            variant: 'success',
+          });
         } else {
           await registerMagicLink(email);
-          setNotice('Check your email to complete signup.');
+          setNotice({
+            message: 'Check your email to complete signup.',
+            variant: 'success',
+          });
         }
         // WARN-4: on success, release loading immediately so the button no
         // longer reads "Working…" while the toast is already announcing the
@@ -172,12 +214,30 @@ export function useAuthForm() {
         await register(email, password);
       } else {
         await apiForgotPassword(email);
-        setForgotPasswordSent(true);
+        // Forgot-password success mirrors the magic-link flow: fire the toast
+        // and hold the submit button in a "Reset link sent!" success state
+        // for the toast's 3000ms auto-dismiss window so the two surfaces
+        // never read as contradictory. The hold also prevents a second
+        // click during that window — re-submitting before the email arrives
+        // would just queue a duplicate reset request.
+        setNotice({
+          message: 'Check your email for a reset link.',
+          variant: 'success',
+        });
+        setLoading(false);
+        setForgotPasswordSentJustNow(true);
+        forgotPasswordSentJustNowReference.current = setTimeout(() => {
+          setForgotPasswordSentJustNow(false);
+          forgotPasswordSentJustNowReference.current = null;
+        }, 3000);
+        return;
       }
 
-      if (mode !== 'forgot-password') {
-        navigate(postLoginDestination(), { replace: true });
-      }
+      // Both login (no MFA) and register fall through to here; the
+      // forgot-password branch returned early above, so the prior
+      // `mode !== 'forgot-password'` guard is now an unconditional
+      // navigate to the post-login destination.
+      navigate(postLoginDestination(), { replace: true });
     } catch (caught: unknown) {
       setError(
         capitalizeFirst(
@@ -220,7 +280,7 @@ export function useAuthForm() {
     emailReference,
     error,
     errorReference,
-    forgotPasswordSent,
+    forgotPasswordSentJustNow,
     handleModeChange,
     handleSubmit,
     handleVerifyOtp,

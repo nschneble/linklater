@@ -2,13 +2,18 @@
  * Tests for TokenVerificationPage (shared between VerifyEmailPage and
  * VerifyEmailChangePage).
  *
- * State machine: verifying → (auto-redirect on success) | error
+ * State machine: verifying → auto-redirect (success OR failure).
  *
  * Success path is auth-aware:
- *   - Signed-IN user  → setPendingNotice(signedInNotice key)  + navigate('/unread')
- *   - Signed-OUT user → setPendingNotice(signedOutNotice key) + navigate('/login')
+ *   - Signed-IN user  → setPendingNotice(signedInNotice)  + navigate('/unread')
+ *   - Signed-OUT user → setPendingNotice(signedOutNotice) + navigate('/login')
  *
- * Error path keeps the full interstitial card (Wave 4 scope unchanged).
+ * Error path (missing token, expired token, server rejection):
+ *   - setPendingNotice(invalidNotice) + navigate('/login')
+ *
+ * Per Wave 6: the page no longer renders an error card. All failure paths
+ * redirect to /login, where the AuthForm surfaces the queued error-variant
+ * notice as an assertive toast.
  */
 
 import TokenVerificationPage from './TokenVerificationPage';
@@ -85,11 +90,10 @@ interface RenderOptions {
   search?: string;
   verifyFn?: ReturnType<typeof vi.fn>;
   onSuccess?: ReturnType<typeof vi.fn>;
-  title?: string;
   verifyingText?: string;
-  helpText?: string;
   signedInNotice?: PendingNotice;
   signedOutNotice?: PendingNotice;
+  invalidNotice?: PendingNotice;
 }
 
 function renderPage(options: RenderOptions = {}) {
@@ -98,13 +102,12 @@ function renderPage(options: RenderOptions = {}) {
   return render(
     <MemoryRouter initialEntries={[`/verify-email${search}`]}>
       <TokenVerificationPage
-        title={options.title ?? 'Email Verification'}
         verifyingText={options.verifyingText ?? 'Verifying your email…'}
         signedInNotice={options.signedInNotice ?? 'email-verified'}
         signedOutNotice={
           options.signedOutNotice ?? 'email-verified-please-sign-in'
         }
-        helpText={options.helpText ?? 'The link may have expired.'}
+        invalidNotice={options.invalidNotice ?? 'verification-link-invalid'}
         verifyFn={verifyFn}
         onSuccess={options.onSuccess}
       />
@@ -131,33 +134,17 @@ describe('TokenVerificationPage verifying state', () => {
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent(/verifying your email/i);
     // The verifying state is a bare spinner; the polite-status text lives
-    // in an sr-only live region. The card heading is reserved for the
-    // error state.
+    // in an sr-only live region. No card heading is rendered (errors
+    // redirect to /login).
     expect(status).toHaveClass('sr-only');
   });
 
-  it('does not render a card heading during the verifying state', () => {
+  it('does not render any card heading during the verifying state', () => {
     const verifyFn = vi.fn().mockReturnValue(new Promise(() => {}));
 
-    renderPage({ verifyFn, title: 'Email Change' });
+    renderPage({ verifyFn, verifyingText: 'Confirming your new email…' });
 
-    expect(
-      screen.queryByRole('heading', { name: /email change/i }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('renders the configured page title in the error state', async () => {
-    const verifyFn = vi.fn().mockRejectedValue(new Error('expired'));
-
-    await act(async () => {
-      renderPage({ verifyFn, title: 'Email Change' });
-    });
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: /email change/i }),
-      ).toBeInTheDocument();
-    });
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
   });
 });
 
@@ -311,68 +298,88 @@ describe('TokenVerificationPage success path — signed-out user', () => {
   });
 });
 
-// ─── Error paths ─────────────────────────────────────────────────────────────
+// ─── Error paths — redirect to /login with toast ──────────────────────────────
 
-describe('TokenVerificationPage error paths', () => {
-  it('shows an error alert when no token is present in the URL', async () => {
+describe('TokenVerificationPage error paths — redirect to /login with toast', () => {
+  it('queues the invalidNotice + navigates to /login when no token is present', async () => {
     const verifyFn = vi.fn();
 
     await act(async () => {
-      renderPage({ search: '', verifyFn });
-    });
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-    });
-
-    expect(verifyFn).not.toHaveBeenCalled();
-    expect(pendingNoticeModule.setPendingNotice).not.toHaveBeenCalled();
-    expect(navigate).not.toHaveBeenCalled();
-  });
-
-  it('shows the API error message when verifyFn rejects', async () => {
-    const verifyFn = vi.fn().mockRejectedValue(new Error('Token expired'));
-
-    await act(async () => {
-      renderPage({ verifyFn });
-    });
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/token expired/i);
-    });
-
-    expect(pendingNoticeModule.setPendingNotice).not.toHaveBeenCalled();
-    expect(navigate).not.toHaveBeenCalled();
-  });
-
-  it('shows the fallback error message when a non-Error is thrown', async () => {
-    const verifyFn = vi.fn().mockRejectedValue('boom');
-
-    await act(async () => {
-      renderPage({ verifyFn });
-    });
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(
-        /verification failed/i,
-      );
-    });
-  });
-
-  it('renders the configured help text in the error state', async () => {
-    const verifyFn = vi.fn().mockRejectedValue(new Error('expired'));
-
-    await act(async () => {
       renderPage({
+        search: '',
         verifyFn,
-        helpText: 'Request a new verification email from Settings.',
+        invalidNotice: 'verification-link-invalid',
       });
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/request a new verification email from settings/i),
-      ).toBeInTheDocument();
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'verification-link-invalid',
+      );
     });
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+    expect(verifyFn).not.toHaveBeenCalled();
+  });
+
+  it('queues the invalidNotice + navigates to /login when verifyFn rejects', async () => {
+    const verifyFn = vi.fn().mockRejectedValue(new Error('Token expired'));
+
+    await act(async () => {
+      renderPage({ verifyFn, invalidNotice: 'verification-link-invalid' });
+    });
+
+    await waitFor(() => {
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'verification-link-invalid',
+      );
+    });
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+  });
+
+  it('queues the invalidNotice + navigates to /login when a non-Error is thrown', async () => {
+    const verifyFn = vi.fn().mockRejectedValue('boom');
+
+    await act(async () => {
+      renderPage({ verifyFn, invalidNotice: 'verification-link-invalid' });
+    });
+
+    await waitFor(() => {
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'verification-link-invalid',
+      );
+    });
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+  });
+
+  it('uses the email-change-link-invalid key for the email-change flow', async () => {
+    const verifyFn = vi.fn().mockRejectedValue(new Error('expired'));
+
+    await act(async () => {
+      renderPage({ verifyFn, invalidNotice: 'email-change-link-invalid' });
+    });
+
+    await waitFor(() => {
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'email-change-link-invalid',
+      );
+    });
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+  });
+
+  it('does not render the legacy error card (no alert role, no help text, no back button)', async () => {
+    const verifyFn = vi.fn().mockRejectedValue(new Error('expired'));
+
+    await act(async () => {
+      renderPage({ verifyFn });
+    });
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+    });
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /back to linklater/i }),
+    ).not.toBeInTheDocument();
   });
 });

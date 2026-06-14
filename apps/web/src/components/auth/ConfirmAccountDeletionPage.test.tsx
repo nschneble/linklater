@@ -1,17 +1,20 @@
 /**
  * Tests for ConfirmAccountDeletionPage.
  *
- * State machine: verifying → (auto-redirect on success) | error
+ * State machine: verifying → auto-redirect to /login (success OR failure).
  * Token-from-URL paths:
- *   - No token → error state without API call
- *   - Valid token → confirmAccountDeletion() → setPendingNotice + logout +
- *     navigate('/login') fire automatically; no success card is rendered
- *   - API error → error state with full interstitial card
+ *   - No token → setPendingNotice('deletion-link-invalid') + navigate('/login')
+ *   - Valid token → confirmAccountDeletion() → setPendingNotice('account-deleted')
+ *     + logout() + navigate('/login')
+ *   - API error → setPendingNotice('deletion-link-invalid') + navigate('/login')
+ *
+ * Per Wave 6: the page no longer renders an error card. All failure paths
+ * redirect to /login, where the AuthForm surfaces the queued error-variant
+ * notice as an assertive toast.
  */
 
 import ConfirmAccountDeletionPage from './ConfirmAccountDeletionPage';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -98,7 +101,7 @@ describe('ConfirmAccountDeletionPage verifying state', () => {
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent(/verifying your deletion link/i);
     // The status node carries `sr-only` — verifying state is visually a bare
-    // spinner. The card heading is reserved for the error state.
+    // spinner. No card heading is rendered (errors redirect to /login).
     expect(status).toHaveClass('sr-only');
   });
 
@@ -185,32 +188,22 @@ describe('ConfirmAccountDeletionPage success path (auto-redirect)', () => {
   });
 });
 
-describe('ConfirmAccountDeletionPage error paths', () => {
-  it('shows an error when no token is in the URL', async () => {
+describe('ConfirmAccountDeletionPage error paths — redirect to /login with toast', () => {
+  it('queues deletion-link-invalid + navigates to /login when no token is present', async () => {
     await act(async () => {
       renderPage('');
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'deletion-link-invalid',
+      );
     });
-
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
     expect(apiModule.confirmAccountDeletion).not.toHaveBeenCalled();
   });
 
-  it('shows error heading when the token is missing', async () => {
-    await act(async () => {
-      renderPage('');
-    });
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: /this link can't be used/i }),
-      ).toBeInTheDocument();
-    });
-  });
-
-  it('shows an error when confirmAccountDeletion rejects', async () => {
+  it('queues deletion-link-invalid + navigates to /login when confirmAccountDeletion rejects', async () => {
     vi.mocked(apiModule.confirmAccountDeletion).mockRejectedValue(
       new Error('Token expired'),
     );
@@ -220,11 +213,14 @@ describe('ConfirmAccountDeletionPage error paths', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/token expired/i);
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'deletion-link-invalid',
+      );
     });
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
   });
 
-  it('shows the fallback error when a non-Error is thrown', async () => {
+  it('queues deletion-link-invalid + navigates to /login even when a non-Error is thrown', async () => {
     vi.mocked(apiModule.confirmAccountDeletion).mockRejectedValue('boom');
 
     await act(async () => {
@@ -232,13 +228,14 @@ describe('ConfirmAccountDeletionPage error paths', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(
-        /invalid, expired, or has already been used/i,
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'deletion-link-invalid',
       );
     });
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
   });
 
-  it('does not queue an auth notice or log out when the API rejects', async () => {
+  it('does not call logout when the API rejects (no session was confirmed deleted)', async () => {
     const logout = vi.fn();
     vi.mocked(useAuth).mockReturnValue(makeAuthContext({ logout }));
     vi.mocked(apiModule.confirmAccountDeletion).mockRejectedValue(
@@ -250,14 +247,14 @@ describe('ConfirmAccountDeletionPage error paths', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'deletion-link-invalid',
+      );
     });
-
-    expect(pendingNoticeModule.setPendingNotice).not.toHaveBeenCalled();
     expect(logout).not.toHaveBeenCalled();
   });
 
-  it('"Back to home" button navigates to home', async () => {
+  it('does not render the legacy error card (no alert role, no back-to-home button)', async () => {
     vi.mocked(apiModule.confirmAccountDeletion).mockRejectedValue(
       new Error('expired'),
     );
@@ -267,13 +264,15 @@ describe('ConfirmAccountDeletionPage error paths', () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /back to home/i }),
-      ).toBeInTheDocument();
+      expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /back to home/i }));
-
-    expect(navigate).toHaveBeenCalledWith('/', { replace: true });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /this link can't be used/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /back to home/i }),
+    ).not.toBeInTheDocument();
   });
 });

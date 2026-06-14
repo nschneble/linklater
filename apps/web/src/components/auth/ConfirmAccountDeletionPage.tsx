@@ -1,19 +1,9 @@
-import Alert from '../common/Alert';
-import LinkButton from '../common/LinkButton';
 import { confirmAccountDeletion } from '../../lib/api';
-import { getErrorMessage } from '../../lib/errors';
 import { setPendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-
-type Status = 'verifying' | 'error';
-
-const TITLES: Record<Status, string> = {
-  verifying: 'Account deletion — Linklater',
-  error: 'Deletion link error — Linklater',
-};
 
 /**
  * Handles the `/account/confirm-deletion?token=…` route. Reached by clicking
@@ -32,20 +22,20 @@ const TITLES: Record<Status, string> = {
  * browsers, or never been signed in on this device. `logout()` is
  * idempotent (no harm if there was no session).
  *
- * On error: keeps the richer interstitial card with help text and a
- * recovery path back to home, so failure modes are not condensed into a
- * disappearing toast.
+ * On error: queues the `deletion-link-invalid` error-variant notice and
+ * redirects to `/login`. The toast carries the short error copy ("This
+ * deletion link is invalid or expired."); the recovery path (sign in →
+ * Settings → re-trigger delete) lives on the page the user lands on, so
+ * the toast copy stays short. Mirrors the redirect-on-error pattern shared
+ * with `TokenVerificationPage`.
  */
 export default function ConfirmAccountDeletionPage() {
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const [status, setStatus] = useState<Status>('verifying');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const hasConfirmed = useRef(false);
-  const backButtonReference = useRef<HTMLButtonElement>(null);
 
-  useDocumentTitle(TITLES[status]);
+  useDocumentTitle('Account deletion — Linklater');
 
   useEffect(() => {
     if (hasConfirmed.current) return;
@@ -53,8 +43,8 @@ export default function ConfirmAccountDeletionPage() {
 
     const token = searchParameters.get('token');
     if (!token) {
-      setStatus('error');
-      setErrorMessage('No confirmation token found in the link.');
+      setPendingNotice('deletion-link-invalid');
+      navigate('/login', { replace: true });
       return;
     }
 
@@ -68,71 +58,31 @@ export default function ConfirmAccountDeletionPage() {
         navigate('/login', { replace: true });
       })
       .catch((error: unknown) => {
-        setStatus('error');
-        setErrorMessage(
-          getErrorMessage(
-            error,
-            'This deletion link is invalid, expired, or has already been used.',
-          ),
-        );
+        void error;
+        setPendingNotice('deletion-link-invalid');
+        navigate('/login', { replace: true });
       });
   }, [logout, navigate, searchParameters]);
 
-  useEffect(() => {
-    if (status === 'error') {
-      backButtonReference.current?.focus();
-    }
-  }, [status]);
-
-  // Verifying state mirrors StumblePage: a single centered spinning icon with
-  // an sr-only polite status, no card chrome. The full card flashed visibly
-  // for sub-second windows on success before the auto-redirect fired, which
-  // looked like "page loaded and immediately bounced." A bare spinner reads
-  // as a single in-flight operation that either resolves to the destination
-  // page or, on failure, expands into the full error card below.
-  if (status === 'verifying') {
-    return (
-      <main
-        id="main-content"
-        tabIndex={-1}
-        className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none"
-      >
-        <p role="status" aria-live="polite" className="sr-only">
-          Verifying your deletion link…
-        </p>
-        <i
-          className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
-          aria-hidden="true"
-        />
-      </main>
-    );
-  }
-
+  // The page is purely transient: spinner while the API call is in flight,
+  // then an unconditional redirect to /login (success or failure). The
+  // verifying state mirrors StumblePage — a single centered spinning icon
+  // with an sr-only polite status, no card chrome. Card chrome would flash
+  // visibly for sub-second windows before the redirect fires, which looks
+  // like "page loaded and immediately bounced."
   return (
     <main
       id="main-content"
       tabIndex={-1}
-      className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]"
+      className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none"
     >
-      <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl text-center select-none">
-        <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
-          This link can't be used
-        </h1>
-        <Alert className="mb-2" icon="fa-triangle-exclamation" variant="error">
-          {errorMessage}
-        </Alert>
-        <p className="mb-6 text-[var(--mount-alt-text)] text-sm">
-          If you still want to delete your account, sign in and start the
-          deletion flow again from Settings.
-        </p>
-        <LinkButton
-          ref={backButtonReference}
-          surface="mount"
-          onClick={() => navigate('/', { replace: true })}
-        >
-          Back to home
-        </LinkButton>
-      </div>
+      <p role="status" aria-live="polite" className="sr-only">
+        Verifying your deletion link…
+      </p>
+      <i
+        className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+        aria-hidden="true"
+      />
     </main>
   );
 }

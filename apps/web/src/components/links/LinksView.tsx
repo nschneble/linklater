@@ -195,6 +195,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       */}
       <PendingNoticeAnnouncer
         notice={pendingNotice.notice}
+        variant={pendingNotice.variant}
         onDismiss={pendingNotice.dismiss}
       />
     </>

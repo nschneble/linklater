@@ -20,7 +20,7 @@ export default function AuthForm() {
     emailReference,
     error,
     errorReference,
-    forgotPasswordSent,
+    forgotPasswordSentJustNow,
     handleModeChange,
     handleSubmit,
     handleVerifyOtp,
@@ -49,7 +49,7 @@ export default function AuthForm() {
         emailReference={emailReference}
         error={error}
         errorReference={errorReference}
-        forgotPasswordSent={forgotPasswordSent}
+        forgotPasswordSentJustNow={forgotPasswordSentJustNow}
         loading={loading}
         onBack={() => handleModeChange('login')}
         onEmailChange={setEmail}
@@ -104,7 +104,8 @@ export default function AuthForm() {
     <>
       {view}
       <PendingNoticeAnnouncer
-        notice={notice}
+        notice={notice?.message ?? null}
+        variant={notice?.variant ?? 'success'}
         onDismiss={() => setNotice(null)}
       />
     </>

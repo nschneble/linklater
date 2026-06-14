@@ -110,6 +110,7 @@ beforeEach(() => {
   vi.mocked(useLinksView).mockReturnValue(makeViewResult());
   vi.mocked(usePendingNotice).mockReturnValue({
     notice: null,
+    variant: 'success',
     dismiss: vi.fn(),
   });
 });
@@ -120,6 +121,7 @@ describe('LinksView — cross-route pending notice surface', () => {
   it('renders the PendingNoticeAnnouncer toast when usePendingNotice returns a notice', () => {
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: 'Your email has been verified.',
+      variant: 'success',
       dismiss: vi.fn(),
     });
 
@@ -136,6 +138,7 @@ describe('LinksView — cross-route pending notice surface', () => {
   it('omits the toast when no notice is queued', () => {
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: null,
+      variant: 'success',
       dismiss: vi.fn(),
     });
 
@@ -168,6 +171,7 @@ describe('LinksView — cross-route pending notice surface', () => {
     // is what triggers SR announcement on NVDA/JAWS.
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: 'Your account has been deleted.',
+      variant: 'success',
       dismiss: vi.fn(),
     });
     rerender(
@@ -191,6 +195,7 @@ describe('LinksView — cross-route pending notice surface', () => {
     // a future contributor reintroduces a focus shift here, it'll fail.
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: 'Your email has been verified.',
+      variant: 'success',
       dismiss: vi.fn(),
     });
 

@@ -15,11 +15,10 @@ export default function VerifyEmailChangePage() {
   const { refreshUser } = useAuth();
   return (
     <TokenVerificationPage
-      title="Email Change"
       verifyingText="Confirming your new email…"
       signedInNotice="email-change-verified"
       signedOutNotice="email-change-verified-please-sign-in"
-      helpText="The link may have expired. Request a new email change from the Settings page."
+      invalidNotice="email-change-link-invalid"
       verifyFn={verifyEmailChange}
       onSuccess={refreshUser}
     />

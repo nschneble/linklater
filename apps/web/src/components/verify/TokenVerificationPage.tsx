@@ -1,27 +1,14 @@
-import Alert from '../common/Alert';
-import LinkButton from '../common/LinkButton';
-import { getErrorMessage } from '../../lib/errors';
 import { setPendingNotice, type PendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 /**
- * The two persistent states of a token verification flow. On success we no
- * longer render a card — we queue a pending notice and immediately redirect
- * to the destination page, which surfaces the message via toast + sr-only
- * mirror. Mirrors the auto-redirect pattern in ConfirmAccountDeletionPage.
- */
-type Status = 'verifying' | 'error';
-
-/**
- * Props that configure the page copy for each specific verification flow.
- * The logic is identical for email verification and email-change verification —
- * only the user-visible text and the success-time notice keys differ.
+ * Props that configure the per-flow notice keys and verifying-state copy.
+ * The logic is identical for email verification and email-change
+ * verification — only the user-visible text and the notice keys differ.
  */
 interface TokenVerificationPageProps {
-  /** Page heading shown in the error state. */
-  title: string;
   /**
    * Polite sr-only status text announced while the API call is in flight.
    * The verifying state renders a centered spinning icon only — this text
@@ -41,8 +28,13 @@ interface TokenVerificationPageProps {
    * toast + sr-only mirror.
    */
   signedOutNotice: PendingNotice;
-  /** Text shown below the error message to guide the user. */
-  helpText: string;
+  /**
+   * Pending-notice key queued when verification fails (missing token,
+   * expired token, server rejection). Error-variant in the catalog so the
+   * surfacing toast rides assertive + alert; copy carries the recovery hint
+   * inline because the actual recovery path lives behind auth (WCAG 3.3.3).
+   */
+  invalidNotice: PendingNotice;
   /**
    * The verification API function to call. Receives the token from the
    * `?token=` query parameter. Should resolve on success and reject with
@@ -60,33 +52,31 @@ interface TokenVerificationPageProps {
 
 /**
  * Generic full-page token verification UI. Reads `?token=` from the URL,
- * calls `verifyFn`, and renders one of two persistent states: verifying or
- * error.
+ * calls `verifyFn`, and unconditionally redirects (replace) to `/unread`
+ * (signed-in success), `/login` (signed-out success), or `/login` (any
+ * failure). The destination page consumes the queued notice via
+ * `usePendingNotice` and surfaces it as a toast + sr-only mirror.
  *
- * On success the page does NOT render a confirmation card — instead it
- * queues a pending notice keyed by current auth state and immediately
- * redirects (replace) to either `/unread` (signed-in) or `/login`
- * (signed-out). The destination page consumes the notice via
- * `usePendingNotice` and surfaces it as a toast + sr-only mirror. Mirrors
- * the auto-redirect pattern shipped in Wave 2 (`ConfirmAccountDeletionPage`).
+ * The verifying state is a bare centered spinner with an sr-only polite
+ * status — the page is purely transient and any card chrome would flash
+ * visibly for sub-second windows before the redirect fires, which reads as
+ * "page loaded and immediately bounced." Failures surface as error-variant
+ * toasts on /login rather than a full error card.
  *
  * Used by `VerifyEmailPage` (for initial email verification) and
  * `VerifyEmailChangePage` (for email-change confirmation).
  */
 export default function TokenVerificationPage({
-  title,
   verifyingText,
   signedInNotice,
   signedOutNotice,
-  helpText,
+  invalidNotice,
   verifyFn,
   onSuccess,
 }: TokenVerificationPageProps) {
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [status, setStatus] = useState<Status>('verifying');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const hasVerified = useRef(false);
 
   // Mirror `user` into a ref so the auth-state branch inside the
@@ -108,8 +98,8 @@ export default function TokenVerificationPage({
 
     const token = searchParameters.get('token');
     if (!token) {
-      setStatus('error');
-      setErrorMessage('No verification token found in the link.');
+      setPendingNotice(invalidNotice);
+      navigate('/login', { replace: true });
       return;
     }
 
@@ -126,10 +116,12 @@ export default function TokenVerificationPage({
         navigate(destination, { replace: true });
       })
       .catch((error: unknown) => {
-        setStatus('error');
-        setErrorMessage(getErrorMessage(error, 'Verification failed.'));
+        void error;
+        setPendingNotice(invalidNotice);
+        navigate('/login', { replace: true });
       });
   }, [
+    invalidNotice,
     navigate,
     onSuccess,
     searchParameters,
@@ -138,44 +130,15 @@ export default function TokenVerificationPage({
     verifyFn,
   ]);
 
-  // Verifying state mirrors StumblePage: a single centered spinning icon with
-  // an sr-only polite status, no card chrome. The full card flashed visibly
-  // on success before the auto-redirect fired, which looked like
-  // "page loaded and immediately bounced." A bare spinner reads as a single
-  // in-flight operation that either resolves to the destination page or, on
-  // failure, expands into the full error card below.
-  if (status === 'verifying') {
-    return (
-      <main className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
-        <p role="status" aria-live="polite" className="sr-only">
-          {verifyingText}
-        </p>
-        <i
-          className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
-          aria-hidden="true"
-        />
-      </main>
-    );
-  }
-
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
-      <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl text-center select-none">
-        <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
-          {title}
-        </h1>
-        <Alert className="mb-2" icon="fa-triangle-exclamation" variant="error">
-          {errorMessage}
-        </Alert>
-        <p className="mb-6 text-[var(--mount-alt-text)] text-sm">{helpText}</p>
-        <LinkButton
-          surface="mount"
-          className="text-sm"
-          onClick={() => navigate('/unread')}
-        >
-          Back to Linklater
-        </LinkButton>
-      </div>
-    </div>
+    <main className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
+      <p role="status" aria-live="polite" className="sr-only">
+        {verifyingText}
+      </p>
+      <i
+        className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+        aria-hidden="true"
+      />
+    </main>
   );
 }

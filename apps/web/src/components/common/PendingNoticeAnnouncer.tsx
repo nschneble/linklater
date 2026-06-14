@@ -8,6 +8,16 @@ interface PendingNoticeAnnouncerProps {
    */
   notice: string | null;
   /**
+   * Controls icon, ARIA live shape, AND bundle paint on both the visible
+   * Toast and the sr-only mirror. `'success'` rides `role="status"` +
+   * `aria-live="polite"`; `'error'` rides `role="alert"` +
+   * `aria-live="assertive"`. The mirror MUST match the Toast — divergence
+   * (e.g. polite mirror under an assertive Toast) is worse than either
+   * channel alone, because the two regions race on the SR's announcement
+   * queue with mismatched priorities.
+   */
+  variant: 'success' | 'error';
+  /**
    * Called when the toast is dismissed (user click or 3s auto-dismiss).
    */
   onDismiss: () => void;
@@ -15,22 +25,28 @@ interface PendingNoticeAnnouncerProps {
 
 /**
  * Surfaces a one-shot cross-route pending notice as a `<Toast>` plus a
- * pre-mounted sr-only `aria-live="polite"` mirror. The pairing is
- * load-bearing accessibility logic — keeping them in a single primitive
- * locks them together so a future contributor cannot drift one without the
- * other (e.g. ship the toast without the mirror, or change one variant's
+ * pre-mounted sr-only live mirror. The pairing is load-bearing
+ * accessibility logic — keeping them in a single primitive locks them
+ * together so a future contributor cannot drift one without the other
+ * (e.g. ship the toast without the mirror, or change one variant's
  * ARIA shape).
  *
  * Why the mirror exists: cross-route navigation creates a freshly-mounted
  * component tree where NVDA/JAWS can skip the conditional Toast's
- * `role="status"` announcement (the live region is treated as part of
+ * live-region announcement (the live region is treated as part of
  * page load when it appears already populated on first paint). Keeping
  * this mirror span in the DOM always and swapping its text via state
  * ensures the empty → populated transition fires reliably across all
  * major screen readers.
  *
+ * The mirror's role/aria-live track the `variant` so the two channels
+ * agree (success → polite/status, error → alert/assertive). They MUST
+ * agree per a11y-lead: a polite mirror under an assertive Toast lets
+ * the assertive announcement get pre-empted or queued out of order on
+ * NVDA.
+ *
  * `aria-atomic="true"` so the full message is re-announced as a single
- * unit rather than the diff of the swap. Co-existing with other polite
+ * unit rather than the diff of the swap. Co-existing with other live
  * regions on the same page is fine: this mirror fires at most once per
  * route mount (`consumePendingNotice` clears sessionStorage), so practical
  * collision is near-zero.
@@ -41,17 +57,21 @@ interface PendingNoticeAnnouncerProps {
  */
 export default function PendingNoticeAnnouncer({
   notice,
+  variant,
   onDismiss,
 }: PendingNoticeAnnouncerProps) {
+  const mirrorRole = variant === 'error' ? 'alert' : 'status';
+  const mirrorAriaLive = variant === 'error' ? 'assertive' : 'polite';
+
   return (
     <>
       {notice && (
-        <Toast message={notice} onDismiss={onDismiss} variant="success" />
+        <Toast message={notice} onDismiss={onDismiss} variant={variant} />
       )}
       <span
         className="sr-only"
-        role="status"
-        aria-live="polite"
+        role={mirrorRole}
+        aria-live={mirrorAriaLive}
         aria-atomic="true"
       >
         {notice ?? ''}

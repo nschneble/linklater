@@ -14,6 +14,12 @@
  * survive across tabs or persist beyond the current browser session, and
  * (not `location.state`) because the implicit catch-all redirect from
  * authenticated routes to `/login` would overwrite any router state.
+ *
+ * Each entry carries a `variant` so the surfacing UI (toast + sr-only
+ * mirror) can pick the right ARIA shape and bundle paint. Success
+ * variants ride `role="status"` + `aria-live="polite"`; error variants
+ * ride `role="alert"` + `aria-live="assertive"` — both channels MUST
+ * match per a11y-lead (divergence is worse than either channel alone).
  */
 
 // The key value is intentionally renamed (was `linklater_auth_notice`) so
@@ -27,16 +33,58 @@ export type PendingNotice =
   | 'email-verified'
   | 'email-verified-please-sign-in'
   | 'email-change-verified'
-  | 'email-change-verified-please-sign-in';
+  | 'email-change-verified-please-sign-in'
+  | 'deletion-link-invalid'
+  | 'verification-link-invalid'
+  | 'email-change-link-invalid';
 
-const NOTICE_MESSAGES: Record<PendingNotice, string> = {
-  'account-deleted': 'Your account has been deleted.',
-  'email-verified': 'Your email has been verified.',
-  'email-verified-please-sign-in':
-    'Your email has been verified. Please sign in.',
-  'email-change-verified': 'Your email has been updated.',
-  'email-change-verified-please-sign-in':
-    'Your email has been updated. Please sign in.',
+export interface NoticeEntry {
+  message: string;
+  variant: 'success' | 'error';
+}
+
+// Error-variant copies for verification-link-invalid + email-change-link-invalid
+// carry an inline recovery hint per WCAG 3.3.3 (Error Suggestion). The actual
+// recovery path (Settings → request a fresh verification email) lives behind
+// auth, so the toast surfaces the hint at the error moment rather than relying
+// on the destination page to spell it out. Deletion-link-invalid recovery
+// (sign in → Settings → re-trigger delete) lives on the page the user lands
+// on, so the toast copy stays short.
+const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
+  'account-deleted': {
+    message: 'Your account has been deleted.',
+    variant: 'success',
+  },
+  'email-verified': {
+    message: 'Your email has been verified.',
+    variant: 'success',
+  },
+  'email-verified-please-sign-in': {
+    message: 'Your email has been verified. Please sign in.',
+    variant: 'success',
+  },
+  'email-change-verified': {
+    message: 'Your email has been updated.',
+    variant: 'success',
+  },
+  'email-change-verified-please-sign-in': {
+    message: 'Your email has been updated. Please sign in.',
+    variant: 'success',
+  },
+  'deletion-link-invalid': {
+    message: 'This deletion link is invalid or expired.',
+    variant: 'error',
+  },
+  'verification-link-invalid': {
+    message:
+      'Verification link expired. Sign in and request a new one from Settings.',
+    variant: 'error',
+  },
+  'email-change-link-invalid': {
+    message:
+      'Email change link expired. Sign in and request a new one from Settings.',
+    variant: 'error',
+  },
 };
 
 /** Safely writes a notice. No-op when sessionStorage is unavailable. */
@@ -51,17 +99,18 @@ export function setPendingNotice(notice: PendingNotice): void {
 }
 
 /**
- * Reads and clears the pending notice in one step. Returns the human-readable
- * message, or `null` when no notice is queued or the value is unknown.
+ * Reads and clears the pending notice in one step. Returns the full
+ * `{message, variant}` entry, or `null` when no notice is queued or the
+ * value is unknown.
  */
-export function consumePendingNotice(): string | null {
+export function consumePendingNotice(): NoticeEntry | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = window.sessionStorage.getItem(PENDING_NOTICE_KEY);
     if (raw === null) return null;
     window.sessionStorage.removeItem(PENDING_NOTICE_KEY);
-    if (raw in NOTICE_MESSAGES) {
-      return NOTICE_MESSAGES[raw as PendingNotice];
+    if (raw in NOTICE_CATALOG) {
+      return NOTICE_CATALOG[raw as PendingNotice];
     }
     return null;
   } catch (error) {

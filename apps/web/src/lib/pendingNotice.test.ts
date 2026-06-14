@@ -3,6 +3,7 @@ import {
   consumePendingNotice,
   hasPendingNotice,
   setPendingNotice,
+  type PendingNotice,
 } from './pendingNotice';
 
 afterEach(() => {
@@ -11,40 +12,86 @@ afterEach(() => {
 });
 
 describe('setPendingNotice / consumePendingNotice', () => {
-  it('round-trips a known notice into a human-readable message', () => {
+  it('round-trips a known notice into a message + variant entry', () => {
     setPendingNotice('account-deleted');
-    expect(consumePendingNotice()).toBe('Your account has been deleted.');
+    expect(consumePendingNotice()).toEqual({
+      message: 'Your account has been deleted.',
+      variant: 'success',
+    });
   });
 
   it('round-trips email-verified', () => {
     setPendingNotice('email-verified');
     expect(hasPendingNotice()).toBe(true);
-    expect(consumePendingNotice()).toBe('Your email has been verified.');
+    expect(consumePendingNotice()).toEqual({
+      message: 'Your email has been verified.',
+      variant: 'success',
+    });
     expect(hasPendingNotice()).toBe(false);
   });
 
   it('round-trips email-verified-please-sign-in', () => {
     setPendingNotice('email-verified-please-sign-in');
     expect(hasPendingNotice()).toBe(true);
-    expect(consumePendingNotice()).toBe(
-      'Your email has been verified. Please sign in.',
-    );
+    expect(consumePendingNotice()).toEqual({
+      message: 'Your email has been verified. Please sign in.',
+      variant: 'success',
+    });
     expect(hasPendingNotice()).toBe(false);
   });
 
   it('round-trips email-change-verified', () => {
     setPendingNotice('email-change-verified');
     expect(hasPendingNotice()).toBe(true);
-    expect(consumePendingNotice()).toBe('Your email has been updated.');
+    expect(consumePendingNotice()).toEqual({
+      message: 'Your email has been updated.',
+      variant: 'success',
+    });
     expect(hasPendingNotice()).toBe(false);
   });
 
   it('round-trips email-change-verified-please-sign-in', () => {
     setPendingNotice('email-change-verified-please-sign-in');
     expect(hasPendingNotice()).toBe(true);
-    expect(consumePendingNotice()).toBe(
-      'Your email has been updated. Please sign in.',
-    );
+    expect(consumePendingNotice()).toEqual({
+      message: 'Your email has been updated. Please sign in.',
+      variant: 'success',
+    });
+    expect(hasPendingNotice()).toBe(false);
+  });
+
+  // Wave 6 — error-variant entries surfaced as assertive toasts on /login
+  // after a redirect from ConfirmAccountDeletionPage or TokenVerificationPage.
+
+  it('round-trips deletion-link-invalid as an error-variant entry', () => {
+    setPendingNotice('deletion-link-invalid');
+    expect(hasPendingNotice()).toBe(true);
+    expect(consumePendingNotice()).toEqual({
+      message: 'This deletion link is invalid or expired.',
+      variant: 'error',
+    });
+    expect(hasPendingNotice()).toBe(false);
+  });
+
+  it('round-trips verification-link-invalid as an error-variant entry with inline recovery hint', () => {
+    setPendingNotice('verification-link-invalid');
+    expect(hasPendingNotice()).toBe(true);
+    expect(consumePendingNotice()).toEqual({
+      message:
+        'Verification link expired. Sign in and request a new one from Settings.',
+      variant: 'error',
+    });
+    expect(hasPendingNotice()).toBe(false);
+  });
+
+  it('round-trips email-change-link-invalid as an error-variant entry with inline recovery hint', () => {
+    setPendingNotice('email-change-link-invalid');
+    expect(hasPendingNotice()).toBe(true);
+    expect(consumePendingNotice()).toEqual({
+      message:
+        'Email change link expired. Sign in and request a new one from Settings.',
+      variant: 'error',
+    });
     expect(hasPendingNotice()).toBe(false);
   });
 
@@ -105,10 +152,13 @@ describe('hasPendingNotice', () => {
     expect(hasPendingNotice()).toBe(true);
   });
 
-  it('does not consume the notice — consumePendingNotice still returns the message after peeking', () => {
+  it('does not consume the notice — consumePendingNotice still returns the entry after peeking', () => {
     setPendingNotice('account-deleted');
     expect(hasPendingNotice()).toBe(true);
-    expect(consumePendingNotice()).toBe('Your account has been deleted.');
+    expect(consumePendingNotice()).toEqual({
+      message: 'Your account has been deleted.',
+      variant: 'success',
+    });
   });
 
   it('returns false after consumePendingNotice clears the notice', () => {
@@ -130,4 +180,37 @@ describe('hasPendingNotice', () => {
       window.sessionStorage.getItem = originalGetItem;
     }
   });
+});
+
+// Wave 6 — drift guard. Every key in the PendingNotice union MUST round-trip
+// through the catalog with a non-empty message and a valid variant. Without
+// this, a future contributor adding a new key but forgetting to register it
+// in the catalog would ship a silently-dropped notice (consumePendingNotice
+// returns null for unknown keys per the forward-compat guard above).
+describe('catalog drift guard', () => {
+  // Enumerated explicitly because TypeScript erases the union at runtime —
+  // the only way to assert every member is covered is to write them out and
+  // let the compiler trip if PendingNotice gains a new member without this
+  // list being updated.
+  const ALL_KEYS: readonly PendingNotice[] = [
+    'account-deleted',
+    'email-verified',
+    'email-verified-please-sign-in',
+    'email-change-verified',
+    'email-change-verified-please-sign-in',
+    'deletion-link-invalid',
+    'verification-link-invalid',
+    'email-change-link-invalid',
+  ];
+
+  for (const key of ALL_KEYS) {
+    it(`'${key}' has both a non-empty message and a valid variant`, () => {
+      setPendingNotice(key);
+      const entry = consumePendingNotice();
+      expect(entry).not.toBeNull();
+      expect(typeof entry?.message).toBe('string');
+      expect((entry?.message ?? '').length).toBeGreaterThan(0);
+      expect(['success', 'error']).toContain(entry?.variant);
+    });
+  }
 });
