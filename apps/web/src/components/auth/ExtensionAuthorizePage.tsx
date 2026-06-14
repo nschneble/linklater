@@ -1,3 +1,4 @@
+import IconButton from '../common/IconButton';
 import PrimaryButton from '../common/PrimaryButton';
 import { FOCUS_RING } from '../../lib/styles';
 import { useAuth } from '../../auth/AuthContext';
@@ -80,14 +81,13 @@ export default function ExtensionAuthorizePage() {
           >
             {status === 'authorizing' ? 'Authorizing…' : 'Authorize'}
           </PrimaryButton>
-          <button
-            className={`px-4 py-2 bg-[var(--orbit-bg)] text-[var(--orbit-text)] text-sm rounded-lg ${FOCUS_RING}`}
+          <IconButton
+            variant="elevated"
             disabled={status === 'authorizing'}
-            type="button"
             onClick={() => window.close()}
           >
             Cancel
-          </button>
+          </IconButton>
         </div>
       </div>
     </div>
