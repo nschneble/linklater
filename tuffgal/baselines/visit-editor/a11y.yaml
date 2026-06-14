@@ -22,6 +22,10 @@
     - button "light"
   - button "Reset all"
   - heading "Colors" [level=2]
+  - search:
+    - text: Search tokens
+    - searchbox "Search tokens"
+    - status
   - paragraph: 7 bundles · 52 tokens
   - button "Expand all"
   - region "Base Page chrome":
