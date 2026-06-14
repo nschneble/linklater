@@ -26,6 +26,7 @@ vi.mock('../../auth/AuthContext', () => ({
 
 vi.mock('../../auth/authNotice', () => ({
   consumeAuthNotice: vi.fn().mockReturnValue(null),
+  hasAuthNotice: vi.fn().mockReturnValue(false),
 }));
 
 // ─── Imports after mocks ─────────────────────────────────────────────────────
@@ -75,6 +76,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
   vi.mocked(authNoticeModule.consumeAuthNotice).mockReturnValue(null);
+  vi.mocked(authNoticeModule.hasAuthNotice).mockReturnValue(false);
 });
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -402,6 +404,75 @@ describe('useAuthForm', () => {
       });
 
       expect(focusSpy).toHaveBeenCalled();
+    });
+
+    // FLAG-2: when a pending notice is queued (e.g. account-deleted toast
+    // about to be surfaced by AuthForm), the mode-change effect must NOT
+    // auto-focus the email input — focusing a text input switches NVDA/JAWS
+    // into forms mode and can swallow the polite announcement mid-read.
+    it('does not auto-focus the email input on mount when hasAuthNotice is true', async () => {
+      vi.mocked(authNoticeModule.hasAuthNotice).mockReturnValue(true);
+
+      // Render with a ref pre-wired so we can observe focus calls during
+      // the initial mode-change effect on mount.
+      const emailInput = document.createElement('input');
+      const focusSpy = vi.spyOn(emailInput, 'focus');
+
+      const { result } = renderHook(
+        () => {
+          const hook = useAuthForm();
+          // Assign the input to the ref before the effect runs (refs are
+          // wired during render commit, so this mirrors what happens when
+          // the real input mounts).
+          if (hook.emailReference.current === null) {
+            hook.emailReference.current = emailInput;
+          }
+          return hook;
+        },
+        {
+          wrapper: ({ children }) =>
+            MemoryRouter({ children, initialEntries: ['/login'] }),
+        },
+      );
+
+      // Allow effects to flush
+      await act(async () => {});
+
+      expect(focusSpy).not.toHaveBeenCalled();
+      // Sanity: the hook itself rendered successfully
+      expect(result.current.mode).toBe('login');
+    });
+
+    it('does not auto-focus the password input on mount when hasAuthNotice is true (prefilled-email branch)', async () => {
+      vi.mocked(authNoticeModule.hasAuthNotice).mockReturnValue(true);
+
+      const emailInput = document.createElement('input');
+      emailInput.value = USER_EMAIL;
+      const passwordInput = document.createElement('input');
+      const emailFocusSpy = vi.spyOn(emailInput, 'focus');
+      const passwordFocusSpy = vi.spyOn(passwordInput, 'focus');
+
+      renderHook(
+        () => {
+          const hook = useAuthForm();
+          if (hook.emailReference.current === null) {
+            hook.emailReference.current = emailInput;
+          }
+          if (hook.passwordReference.current === null) {
+            hook.passwordReference.current = passwordInput;
+          }
+          return hook;
+        },
+        {
+          wrapper: ({ children }) =>
+            MemoryRouter({ children, initialEntries: ['/login'] }),
+        },
+      );
+
+      await act(async () => {});
+
+      expect(emailFocusSpy).not.toHaveBeenCalled();
+      expect(passwordFocusSpy).not.toHaveBeenCalled();
     });
   });
 

@@ -1,21 +1,17 @@
 /**
  * Tests for ConfirmAccountDeletionPage.
  *
- * State machine: verifying → success | error
+ * State machine: verifying → (auto-redirect on success) | error
  * Token-from-URL paths:
  *   - No token → error state without API call
- *   - Valid token → confirmAccountDeletion() → success
- *   - API error → error state
+ *   - Valid token → confirmAccountDeletion() → setAuthNotice + logout +
+ *     navigate('/auth') fire automatically; no success card is rendered
+ *   - API error → error state with full interstitial card
  */
 
 import ConfirmAccountDeletionPage from './ConfirmAccountDeletionPage';
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -49,6 +45,7 @@ vi.mock('react-router-dom', async () => {
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import * as apiModule from '../../lib/api';
+import * as authNoticeModule from '../../auth/authNotice';
 import { useAuth } from '../../auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -104,7 +101,7 @@ describe('ConfirmAccountDeletionPage verifying state', () => {
   });
 });
 
-describe('ConfirmAccountDeletionPage success path', () => {
+describe('ConfirmAccountDeletionPage success path (auto-redirect)', () => {
   it('calls confirmAccountDeletion with the token from the URL', async () => {
     vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue(undefined);
 
@@ -119,31 +116,19 @@ describe('ConfirmAccountDeletionPage success path', () => {
     });
   });
 
-  it('shows "Account deleted" heading after successful confirmation', async () => {
+  it('queues the account-deleted notice automatically on success', async () => {
     await act(async () => {
       renderPage();
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: /account deleted/i }),
-      ).toBeInTheDocument();
-    });
-  });
-
-  it('shows a success alert message', async () => {
-    await act(async () => {
-      renderPage();
-    });
-
-    await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(
-        /permanently deleted/i,
+      expect(authNoticeModule.setAuthNotice).toHaveBeenCalledWith(
+        'account-deleted',
       );
     });
   });
 
-  it('"Continue to sign-in" button calls logout', async () => {
+  it('calls logout automatically on success', async () => {
     const logout = vi.fn();
     vi.mocked(useAuth).mockReturnValue(makeAuthContext({ logout }));
 
@@ -152,34 +137,37 @@ describe('ConfirmAccountDeletionPage success path', () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /continue to sign-in/i }),
-      ).toBeInTheDocument();
+      expect(logout).toHaveBeenCalled();
     });
-
-    fireEvent.click(
-      screen.getByRole('button', { name: /continue to sign-in/i }),
-    );
-
-    expect(logout).toHaveBeenCalled();
   });
 
-  it('"Continue to sign-in" button navigates to /auth', async () => {
+  it('navigates to /auth with replace:true automatically on success', async () => {
     await act(async () => {
       renderPage();
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /continue to sign-in/i }),
-      ).toBeInTheDocument();
+      expect(navigate).toHaveBeenCalledWith('/auth', { replace: true });
+    });
+  });
+
+  it('does not render an "Account deleted" success card after the API resolves', async () => {
+    await act(async () => {
+      renderPage();
     });
 
-    fireEvent.click(
-      screen.getByRole('button', { name: /continue to sign-in/i }),
-    );
+    // Wait for navigate to fire, then confirm no success heading was rendered
+    // along the way (state collapses verifying → auto-redirect).
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/auth', { replace: true });
+    });
 
-    expect(navigate).toHaveBeenCalledWith('/auth', { replace: true });
+    expect(
+      screen.queryByRole('heading', { name: /account deleted/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /continue to sign-in/i }),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -234,6 +222,25 @@ describe('ConfirmAccountDeletionPage error paths', () => {
         /invalid, expired, or has already been used/i,
       );
     });
+  });
+
+  it('does not queue an auth notice or log out when the API rejects', async () => {
+    const logout = vi.fn();
+    vi.mocked(useAuth).mockReturnValue(makeAuthContext({ logout }));
+    vi.mocked(apiModule.confirmAccountDeletion).mockRejectedValue(
+      new Error('expired'),
+    );
+
+    await act(async () => {
+      renderPage();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    expect(authNoticeModule.setAuthNotice).not.toHaveBeenCalled();
+    expect(logout).not.toHaveBeenCalled();
   });
 
   it('"Back to home" button navigates to home', async () => {

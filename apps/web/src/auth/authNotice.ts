@@ -45,3 +45,20 @@ export function consumeAuthNotice(): string | null {
     return null;
   }
 }
+
+/**
+ * Peeks at the pending notice without consuming it. Returns `true` when any
+ * value is queued (even an unknown one). Used by effects that need to branch
+ * on the presence of a pending notice before the consumer effect clears it —
+ * e.g. AuthForm's mode-change effect skips auto-focusing the email input when
+ * a notice is queued, so the focus shift doesn't switch a screen reader into
+ * forms mode mid-announcement.
+ */
+export function hasAuthNotice(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.sessionStorage.getItem(AUTH_NOTICE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}

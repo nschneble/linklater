@@ -8,26 +8,33 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-type Status = 'verifying' | 'success' | 'error';
+type Status = 'verifying' | 'error';
 
 const TITLES: Record<Status, string> = {
   verifying: 'Account deletion — Linklater',
-  success: 'Account deleted — Linklater',
   error: 'Deletion link error — Linklater',
 };
 
 /**
  * Handles the `/account/confirm-deletion?token=…` route. Reached by clicking
  * the confirmation link emailed to magic-link-only-no-MFA accounts that
- * requested deletion. The page mounts, POSTs the token to the API, then
- * shows one of three states.
+ * requested deletion. The page mounts and POSTs the token to the API.
+ *
+ * On success: queues the `account-deleted` notice, logs out, and redirects
+ * to `/auth` — the AuthForm surfaces the confirmation via its existing
+ * toast + sr-only mirror channel. WCAG 3.2.5 is satisfied via implicit
+ * request (the user clicked the emailed link expecting completion); no
+ * extra confirmation click is required because the actual checked
+ * confirmation already happened in Settings DangerZone before the email
+ * was sent.
  *
  * Reachable while logged out — the recipient may have signed out, switched
- * browsers, or never been signed in on this device. Logout is called on
- * the Continue button click rather than on success-state mount so the call
- * is idempotent (no harm if there was no session) and the user controls
- * the transition (better for screen-reader announcement timing per WCAG
- * 2.2.1 / 2.4.13).
+ * browsers, or never been signed in on this device. `logout()` is
+ * idempotent (no harm if there was no session).
+ *
+ * On error: keeps the richer interstitial card with help text and a
+ * recovery path back to home, so failure modes are not condensed into a
+ * disappearing toast.
  */
 export default function ConfirmAccountDeletionPage() {
   const [searchParameters] = useSearchParams();
@@ -36,7 +43,6 @@ export default function ConfirmAccountDeletionPage() {
   const [status, setStatus] = useState<Status>('verifying');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const hasConfirmed = useRef(false);
-  const continueButtonReference = useRef<HTMLButtonElement>(null);
   const backButtonReference = useRef<HTMLButtonElement>(null);
 
   useDocumentTitle(TITLES[status]);
@@ -53,7 +59,11 @@ export default function ConfirmAccountDeletionPage() {
     }
 
     confirmAccountDeletion(token)
-      .then(() => setStatus('success'))
+      .then(() => {
+        setAuthNotice('account-deleted');
+        logout();
+        navigate('/auth', { replace: true });
+      })
       .catch((error: unknown) => {
         setStatus('error');
         setErrorMessage(
@@ -63,21 +73,13 @@ export default function ConfirmAccountDeletionPage() {
           ),
         );
       });
-  }, [searchParameters]);
+  }, [logout, navigate, searchParameters]);
 
   useEffect(() => {
-    if (status === 'success') {
-      continueButtonReference.current?.focus();
-    } else if (status === 'error') {
+    if (status === 'error') {
       backButtonReference.current?.focus();
     }
   }, [status]);
-
-  const handleContinue = () => {
-    setAuthNotice('account-deleted');
-    logout();
-    navigate('/auth', { replace: true });
-  };
 
   return (
     <main
@@ -98,24 +100,6 @@ export default function ConfirmAccountDeletionPage() {
             >
               Verifying your deletion link…
             </p>
-          </>
-        )}
-
-        {status === 'success' && (
-          <>
-            <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
-              Account deleted
-            </h1>
-            <Alert className="mb-4" icon="fa-circle-check" variant="success">
-              Your account has been permanently deleted.
-            </Alert>
-            <LinkButton
-              ref={continueButtonReference}
-              surface="mount"
-              onClick={handleContinue}
-            >
-              Continue to sign-in
-            </LinkButton>
           </>
         )}
 

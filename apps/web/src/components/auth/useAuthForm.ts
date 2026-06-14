@@ -4,7 +4,7 @@ import {
   requestMagicLink,
   verifyOtp,
 } from '../../lib/api';
-import { consumeAuthNotice } from '../../auth/authNotice';
+import { consumeAuthNotice, hasAuthNotice } from '../../auth/authNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { getErrorMessage } from '../../lib/errors';
 import { capitalizeFirst } from '../../lib/strings';
@@ -47,11 +47,6 @@ export function useAuthForm() {
   const [notice, setNotice] = useState<string | null>(null);
   const [password, setPassword] = useState('');
 
-  useEffect(() => {
-    const pending = consumeAuthNotice();
-    if (pending !== null) setNotice(pending);
-  }, []);
-
   function resolveMode(): Mode {
     if (location.pathname === '/signup') return 'register';
     if (location.pathname === '/forgot-password') return 'forgot-password';
@@ -63,6 +58,10 @@ export function useAuthForm() {
     return (location.state as { from?: string })?.from ?? '/unread';
   }
 
+  // Declared before the consume effect below so that on mount this peek
+  // sees the queued notice before consumeAuthNotice clears it. After this
+  // effect returns, the consume effect fires and the next mode change
+  // will (correctly) get hasAuthNotice() === false.
   useEffect(() => {
     if (magicLinkHoldTimeoutReference.current !== null) {
       clearTimeout(magicLinkHoldTimeoutReference.current);
@@ -73,6 +72,12 @@ export function useAuthForm() {
     setLoading(false);
     setForgotPasswordSent(false);
 
+    // Skip auto-focus when a pending notice is queued — focusing a text
+    // input switches NVDA/JAWS into forms mode and can swallow the polite
+    // announcement mid-read (WCAG 4.1.3 status messages). The user can
+    // Tab in deliberately after hearing the toast.
+    if (hasAuthNotice()) return;
+
     const emailInputValue = emailReference.current?.value ?? '';
     if (mode !== 'forgot-password' && emailInputValue.length > 0) {
       passwordReference.current?.focus();
@@ -80,6 +85,11 @@ export function useAuthForm() {
     }
     emailReference.current?.focus();
   }, [mode]);
+
+  useEffect(() => {
+    const pending = consumeAuthNotice();
+    if (pending !== null) setNotice(pending);
+  }, []);
 
   useEffect(() => {
     if (mfaChallenge) {
