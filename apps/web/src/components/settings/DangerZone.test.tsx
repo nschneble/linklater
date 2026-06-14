@@ -28,8 +28,8 @@ vi.mock('../../lib/api', () => ({
   cancelPendingAccountDeletion: vi.fn(),
 }));
 
-vi.mock('../../auth/authNotice', () => ({
-  setAuthNotice: vi.fn(),
+vi.mock('../../lib/pendingNotice', () => ({
+  setPendingNotice: vi.fn(),
 }));
 
 vi.mock('../../auth/AuthContext', () => ({

@@ -4,7 +4,7 @@
  * State machine: verifying → (auto-redirect on success) | error
  * Token-from-URL paths:
  *   - No token → error state without API call
- *   - Valid token → confirmAccountDeletion() → setAuthNotice + logout +
+ *   - Valid token → confirmAccountDeletion() → setPendingNotice + logout +
  *     navigate('/auth') fire automatically; no success card is rendered
  *   - API error → error state with full interstitial card
  */
@@ -21,8 +21,8 @@ vi.mock('../../lib/api', () => ({
   confirmAccountDeletion: vi.fn(),
 }));
 
-vi.mock('../../auth/authNotice', () => ({
-  setAuthNotice: vi.fn(),
+vi.mock('../../lib/pendingNotice', () => ({
+  setPendingNotice: vi.fn(),
 }));
 
 vi.mock('../../auth/AuthContext', () => ({
@@ -45,7 +45,7 @@ vi.mock('react-router-dom', async () => {
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import * as apiModule from '../../lib/api';
-import * as authNoticeModule from '../../auth/authNotice';
+import * as pendingNoticeModule from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ describe('ConfirmAccountDeletionPage success path (auto-redirect)', () => {
     });
 
     await waitFor(() => {
-      expect(authNoticeModule.setAuthNotice).toHaveBeenCalledWith(
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
         'account-deleted',
       );
     });
@@ -239,7 +239,7 @@ describe('ConfirmAccountDeletionPage error paths', () => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
 
-    expect(authNoticeModule.setAuthNotice).not.toHaveBeenCalled();
+    expect(pendingNoticeModule.setPendingNotice).not.toHaveBeenCalled();
     expect(logout).not.toHaveBeenCalled();
   });
 

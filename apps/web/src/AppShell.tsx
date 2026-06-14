@@ -114,7 +114,10 @@ export default function AppShell() {
             <ThemeEditor />
           </Suspense>
         ) : shell.view === 'api-docs' ? null : (
-          <LinksView onCloseUserMenu={shell.handleUserMenuClose} />
+          <LinksView
+            onCloseUserMenu={shell.handleUserMenuClose}
+            mainReference={shell.mainReference}
+          />
         )}
       </main>
 

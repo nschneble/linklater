@@ -2,7 +2,7 @@ import Alert from '../common/Alert';
 import LinkButton from '../common/LinkButton';
 import { confirmAccountDeletion } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
-import { setAuthNotice } from '../../auth/authNotice';
+import { setPendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useEffect, useRef, useState } from 'react';
@@ -60,7 +60,7 @@ export default function ConfirmAccountDeletionPage() {
 
     confirmAccountDeletion(token)
       .then(() => {
-        setAuthNotice('account-deleted');
+        setPendingNotice('account-deleted');
         logout();
         navigate('/auth', { replace: true });
       })

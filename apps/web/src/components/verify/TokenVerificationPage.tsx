@@ -1,24 +1,47 @@
 import Alert from '../common/Alert';
 import LinkButton from '../common/LinkButton';
+import { getErrorMessage } from '../../lib/errors';
+import { setPendingNotice, type PendingNotice } from '../../lib/pendingNotice';
+import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getErrorMessage } from '../../lib/errors';
 
-/** The three states of a token verification flow. */
-type Status = 'verifying' | 'success' | 'error';
+/**
+ * The two persistent states of a token verification flow. On success we no
+ * longer render a card — we queue a pending notice and immediately redirect
+ * to the destination page, which surfaces the message via toast + sr-only
+ * mirror. Mirrors the auto-redirect pattern in ConfirmAccountDeletionPage.
+ */
+type Status = 'verifying' | 'error';
+
+/**
+ * Catalog keys for the post-redirect toast. The auth-state branch is decided
+ * at success time: signed-in users land on /unread; signed-out users land on
+ * /login. The destination's `usePendingNotice` hook consumes the keyed
+ * message and surfaces it via the shared toast + sr-only mirror channel.
+ */
+interface SuccessNotices {
+  signedIn: PendingNotice;
+  signedOut: PendingNotice;
+}
 
 /**
  * Props that configure the page copy for each specific verification flow.
  * The logic is identical for email verification and email-change verification —
- * only the user-visible text differs.
+ * only the user-visible text and the success-time notice catalog keys differ.
  */
 interface TokenVerificationPageProps {
-  /** Page heading (e.g. "Email Verification", "Email Change"). */
+  /** Page heading shown during verifying + error states. */
   title: string;
   /** Text shown while the API call is in flight. */
   verifyingText: string;
-  /** Text shown after a successful verification. */
-  successText: string;
+  /**
+   * Two `PendingNotice` keys: the `signedIn` key is queued when the user is
+   * authenticated at success time (destination /unread); the `signedOut` key
+   * is queued otherwise (destination /login). Both messages get surfaced via
+   * the destination page's toast + sr-only mirror.
+   */
+  successNotices: SuccessNotices;
   /** Text shown below the error message to guide the user. */
   helpText: string;
   /**
@@ -31,15 +54,22 @@ interface TokenVerificationPageProps {
    * Called immediately after a successful verification, before the user
    * navigates away. Use to refresh stale auth state (e.g. re-fetch the
    * user profile so email changes/verifications are reflected on return).
+   * Awaited so the destination page sees the freshest auth state.
    */
   onSuccess?: () => void | Promise<void>;
 }
 
 /**
  * Generic full-page token verification UI. Reads `?token=` from the URL,
- * calls `verifyFn`, and renders one of three states: verifying, success, or
- * error. On success or error, a "Go to Linklater" / "Back to Linklater" button
- * navigates to `/`.
+ * calls `verifyFn`, and renders one of two persistent states: verifying or
+ * error.
+ *
+ * On success the page does NOT render a confirmation card — instead it
+ * queues a pending notice keyed by current auth state and immediately
+ * redirects (replace) to either `/unread` (signed-in) or `/login`
+ * (signed-out). The destination page consumes the notice via
+ * `usePendingNotice` and surfaces it as a toast + sr-only mirror. Mirrors
+ * the auto-redirect pattern shipped in Wave 2 (`ConfirmAccountDeletionPage`).
  *
  * Used by `VerifyEmailPage` (for initial email verification) and
  * `VerifyEmailChangePage` (for email-change confirmation).
@@ -47,13 +77,14 @@ interface TokenVerificationPageProps {
 export default function TokenVerificationPage({
   title,
   verifyingText,
-  successText,
+  successNotices,
   helpText,
   verifyFn,
   onSuccess,
 }: TokenVerificationPageProps) {
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [status, setStatus] = useState<Status>('verifying');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const hasVerified = useRef(false);
@@ -70,15 +101,24 @@ export default function TokenVerificationPage({
     }
 
     verifyFn(token)
-      .then(() => {
-        setStatus('success');
-        onSuccess?.();
+      .then(async () => {
+        // Refresh auth state BEFORE queuing the notice + navigating so the
+        // destination page renders against the latest user profile (e.g.
+        // post-verification `emailVerifiedAt` timestamp or updated email).
+        await onSuccess?.();
+        const isSignedIn = user !== null;
+        const noticeKey = isSignedIn
+          ? successNotices.signedIn
+          : successNotices.signedOut;
+        const destination = isSignedIn ? '/unread' : '/login';
+        setPendingNotice(noticeKey);
+        navigate(destination, { replace: true });
       })
       .catch((error: unknown) => {
         setStatus('error');
         setErrorMessage(getErrorMessage(error, 'Verification failed.'));
       });
-  }, [onSuccess, searchParameters, verifyFn]);
+  }, [navigate, onSuccess, searchParameters, successNotices, user, verifyFn]);
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
@@ -95,25 +135,6 @@ export default function TokenVerificationPage({
           >
             {verifyingText}
           </p>
-        )}
-
-        {status === 'success' && (
-          <>
-            <p className="mb-6 text-[var(--mount-alt-text)]">
-              <i
-                className="fa-solid fa-circle-check mr-2 text-[var(--success-highlight)]"
-                aria-hidden="true"
-              />
-              {successText}
-            </p>
-            <LinkButton
-              surface="mount"
-              className="text-sm"
-              onClick={() => navigate('/unread')}
-            >
-              Go to Linklater
-            </LinkButton>
-          </>
         )}
 
         {status === 'error' && (

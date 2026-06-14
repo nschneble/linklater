@@ -17,7 +17,10 @@ export default function VerifyEmailChangePage() {
     <TokenVerificationPage
       title="Email Change"
       verifyingText="Confirming your new email…"
-      successText="Your email has been updated. You're good to go!"
+      successNotices={{
+        signedIn: 'email-change-verified',
+        signedOut: 'email-change-verified-please-sign-in',
+      }}
       helpText="The link may have expired. Request a new email change from the Settings page."
       verifyFn={verifyEmailChange}
       onSuccess={refreshUser}

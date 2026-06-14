@@ -4,7 +4,10 @@ import {
   requestMagicLink,
   verifyOtp,
 } from '../../lib/api';
-import { consumeAuthNotice, hasAuthNotice } from '../../auth/authNotice';
+import {
+  consumePendingNotice,
+  hasPendingNotice,
+} from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { getErrorMessage } from '../../lib/errors';
 import { capitalizeFirst } from '../../lib/strings';
@@ -38,12 +41,21 @@ export function useAuthForm() {
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaToken, setMfaToken] = useState<string | null>(null);
-  // The deletion-confirmation notice is read once and surfaced on the next
-  // tick rather than synchronously during render. Screen readers (NVDA and
-  // sometimes JAWS) only announce an aria-live region when its content
-  // changes after mount — content present on first paint is treated as part
-  // of page load and skipped. Deferring the read guarantees the region
+  // The cross-route notice (e.g. account-deleted) is read once on mount.
+  // Deferred to a useEffect (not synchronous render) because NVDA and
+  // sometimes JAWS only announce an aria-live region when its content
+  // changes after mount — content present on first paint is treated as
+  // part of page load and skipped. Deferring guarantees the region
   // transitions empty → populated, which all major SRs announce reliably.
+  //
+  // useAuthForm reads this directly via `consumePendingNotice` (not via
+  // the `usePendingNotice` hook) so the peek-before-consume ordering with
+  // the mode-change effect below stays intact — effects fire in
+  // declaration order, and the peek (`hasPendingNotice()` inside the
+  // mode-change effect) must run BEFORE this consume effect clears the
+  // sessionStorage key. See [[feedback-peek-before-consume-effect-order]].
+  // `LinksView` consumes via the `usePendingNotice` hook because it has
+  // no peek requirement.
   const [notice, setNotice] = useState<string | null>(null);
   const [password, setPassword] = useState('');
 
@@ -59,9 +71,11 @@ export function useAuthForm() {
   }
 
   // Declared before the consume effect below so that on mount this peek
-  // sees the queued notice before consumeAuthNotice clears it. After this
-  // effect returns, the consume effect fires and the next mode change
-  // will (correctly) get hasAuthNotice() === false.
+  // sees the queued notice before consumePendingNotice clears it. After
+  // this effect returns, the consume effect fires and the next mode
+  // change will (correctly) get hasPendingNotice() === false. Effects
+  // fire in declaration order — see
+  // [[feedback-peek-before-consume-effect-order]].
   useEffect(() => {
     if (magicLinkHoldTimeoutReference.current !== null) {
       clearTimeout(magicLinkHoldTimeoutReference.current);
@@ -76,7 +90,7 @@ export function useAuthForm() {
     // input switches NVDA/JAWS into forms mode and can swallow the polite
     // announcement mid-read (WCAG 4.1.3 status messages). The user can
     // Tab in deliberately after hearing the toast.
-    if (hasAuthNotice()) return;
+    if (hasPendingNotice()) return;
 
     const emailInputValue = emailReference.current?.value ?? '';
     if (mode !== 'forgot-password' && emailInputValue.length > 0) {
@@ -87,7 +101,7 @@ export function useAuthForm() {
   }, [mode]);
 
   useEffect(() => {
-    const pending = consumeAuthNotice();
+    const pending = consumePendingNotice();
     if (pending !== null) setNotice(pending);
   }, []);
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { cancelPendingAccountDeletion, deleteMe } from '../../lib/api';
-import { setAuthNotice } from '../../auth/authNotice';
+import { setPendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { getErrorMessage } from '../../lib/errors';
 import ActionGuard from '../common/ActionGuard';
@@ -83,7 +83,7 @@ export default function DangerZone() {
             currentPassword: password || undefined,
             code: code || undefined,
           });
-          setAuthNotice('account-deleted');
+          setPendingNotice('account-deleted');
           logout();
         } catch (error) {
           setReauthError(getErrorMessage(error, 'Failed to delete account'));
@@ -101,7 +101,7 @@ export default function DangerZone() {
     } else {
       // Defensive fallback: if the API ever deletes on the email path,
       // finish cleanly rather than leave the user in a stale UI.
-      setAuthNotice('account-deleted');
+      setPendingNotice('account-deleted');
       logout();
     }
   }, [logout]);

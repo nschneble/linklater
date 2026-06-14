@@ -24,16 +24,16 @@ vi.mock('../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('../../auth/authNotice', () => ({
-  consumeAuthNotice: vi.fn().mockReturnValue(null),
-  hasAuthNotice: vi.fn().mockReturnValue(false),
+vi.mock('../../lib/pendingNotice', () => ({
+  consumePendingNotice: vi.fn().mockReturnValue(null),
+  hasPendingNotice: vi.fn().mockReturnValue(false),
 }));
 
 // ─── Imports after mocks ─────────────────────────────────────────────────────
 
 import { useAuthForm } from './useAuthForm';
 import { useAuth } from '../../auth/AuthContext';
-import * as authNoticeModule from '../../auth/authNotice';
+import * as pendingNoticeModule from '../../lib/pendingNotice';
 import * as apiModule from '../../lib/api';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -75,8 +75,8 @@ function renderAuthFormHook(initialPath = '/login') {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
-  vi.mocked(authNoticeModule.consumeAuthNotice).mockReturnValue(null);
-  vi.mocked(authNoticeModule.hasAuthNotice).mockReturnValue(false);
+  vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue(null);
+  vi.mocked(pendingNoticeModule.hasPendingNotice).mockReturnValue(false);
 });
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -106,8 +106,8 @@ describe('useAuthForm', () => {
       expect(result.current.notice).toBeNull();
     });
 
-    it('is populated after effects flush when consumeAuthNotice returns a string', async () => {
-      vi.mocked(authNoticeModule.consumeAuthNotice).mockReturnValue(
+    it('is populated after effects flush when consumePendingNotice returns a string', async () => {
+      vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue(
         'Your account has been deleted.',
       );
       const { result } = renderAuthFormHook();
@@ -116,8 +116,8 @@ describe('useAuthForm', () => {
       });
     });
 
-    it('stays null after effects flush when consumeAuthNotice returns null', async () => {
-      vi.mocked(authNoticeModule.consumeAuthNotice).mockReturnValue(null);
+    it('stays null after effects flush when consumePendingNotice returns null', async () => {
+      vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue(null);
       const { result } = renderAuthFormHook();
       await act(async () => {});
       expect(result.current.notice).toBeNull();
@@ -410,8 +410,8 @@ describe('useAuthForm', () => {
     // about to be surfaced by AuthForm), the mode-change effect must NOT
     // auto-focus the email input — focusing a text input switches NVDA/JAWS
     // into forms mode and can swallow the polite announcement mid-read.
-    it('does not auto-focus the email input on mount when hasAuthNotice is true', async () => {
-      vi.mocked(authNoticeModule.hasAuthNotice).mockReturnValue(true);
+    it('does not auto-focus the email input on mount when hasPendingNotice is true', async () => {
+      vi.mocked(pendingNoticeModule.hasPendingNotice).mockReturnValue(true);
 
       // Render with a ref pre-wired so we can observe focus calls during
       // the initial mode-change effect on mount.
@@ -443,8 +443,8 @@ describe('useAuthForm', () => {
       expect(result.current.mode).toBe('login');
     });
 
-    it('does not auto-focus the password input on mount when hasAuthNotice is true (prefilled-email branch)', async () => {
-      vi.mocked(authNoticeModule.hasAuthNotice).mockReturnValue(true);
+    it('does not auto-focus the password input on mount when hasPendingNotice is true (prefilled-email branch)', async () => {
+      vi.mocked(pendingNoticeModule.hasPendingNotice).mockReturnValue(true);
 
       const emailInput = document.createElement('input');
       emailInput.value = USER_EMAIL;
