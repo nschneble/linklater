@@ -56,9 +56,6 @@ export default function EmailSettingsForm() {
       setPendingEmail(requestedEmail);
       setEmailInput(user?.email ?? '');
       setMfaEmailCode('');
-      setEmailMessage(
-        `Verification email sent to ${requestedEmail}. Check your inbox to confirm the change.`,
-      );
     } catch (caughtError: unknown) {
       if (caughtError instanceof ApiError && caughtError.status === 403) {
         setEmailError(

@@ -262,3 +262,79 @@ describe('EmailSettingsForm verified state', () => {
     ).not.toBeInTheDocument();
   });
 });
+
+// Regression: a prior implementation set a transient `emailMessage` AND wrote
+// the new address into `user.pendingEmail`, so the success-path UI rendered
+// two near-identical polite-status Alerts back-to-back — once from the
+// ephemeral state, once from server-state. Screen reader users heard the
+// "verification email sent" announcement twice (WCAG 1.3.1, 4.1.3).
+//
+// The form now relies solely on the persistent `hasPendingEmail` Alert.
+describe('EmailSettingsForm post-submit notice — no duplicate', () => {
+  it('renders exactly one verification notice after a successful submit', async () => {
+    // Stateful mock: when `setPendingEmail` fires, re-render `useAuth` with
+    // the updated `user.pendingEmail` so the persistent Alert appears (same
+    // behavior the real AuthContext provides).
+    let currentUser: User = makeUser({ pendingEmail: null });
+    const setPendingEmail = vi.fn((pending: string) => {
+      currentUser = { ...currentUser, pendingEmail: pending };
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ setPendingEmail, user: currentUser }),
+      );
+    });
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ setPendingEmail, user: currentUser }),
+    );
+
+    const { container, rerender } = renderForm();
+
+    fireEvent.change(screen.getByLabelText(/new email/i), {
+      target: { value: 'new@example.com' },
+    });
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    // Re-render so the form picks up the mutated `useAuth` return value.
+    rerender(<EmailSettingsForm />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/verification email sent to/i)).toHaveLength(
+        1,
+      );
+    });
+  });
+
+  it('exposes the verification notice via role="status" only — no role="alert" on success', async () => {
+    let currentUser: User = makeUser({ pendingEmail: null });
+    const setPendingEmail = vi.fn((pending: string) => {
+      currentUser = { ...currentUser, pendingEmail: pending };
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ setPendingEmail, user: currentUser }),
+      );
+    });
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ setPendingEmail, user: currentUser }),
+    );
+
+    const { container, rerender } = renderForm();
+
+    fireEvent.change(screen.getByLabelText(/new email/i), {
+      target: { value: 'new@example.com' },
+    });
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    rerender(<EmailSettingsForm />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /verification email sent to/i,
+      );
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+});
