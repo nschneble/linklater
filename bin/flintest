@@ -10,9 +10,9 @@ cd "$ROOT_DIR" || exit
 # ── Arguments ───────────────────────────────────────────────────────────────────
 usage() {
   cat <<'USAGE'
-Usage: bin/flintest [--update]
+Usage: bin/flintest [--update | --tuffgal]
 
-Runs the project quality gate in order:
+Default runs the project quality gate in order:
   npm install
   node scripts/generate-email-palette.mjs
   npm run subset-fa --workspace @linklater/web
@@ -24,15 +24,25 @@ Runs the project quality gate in order:
 
 Options:
   --update   Run npm update before npm install.
+  --tuffgal  Replace the default chain with the visual regression run that
+             mirrors .github/workflows/visual-regression.yml:
+               npm install
+               npx playwright install chromium
+               npm run test:ui:setup
+               npx tuffgal run --manage-servers
   -h, --help Show this help.
 USAGE
 }
 
 RUN_UPDATE=false
+RUN_TUFFGAL=false
 for arg in "$@"; do
   case "$arg" in
     --update)
       RUN_UPDATE=true
+      ;;
+    --tuffgal)
+      RUN_TUFFGAL=true
       ;;
     -h|--help)
       usage
@@ -45,6 +55,12 @@ for arg in "$@"; do
       ;;
   esac
 done
+
+if [[ "$RUN_UPDATE" == true && "$RUN_TUFFGAL" == true ]]; then
+  printf '%s\n\n' '--update and --tuffgal cannot be combined.' >&2
+  usage >&2
+  exit 64
+fi
 
 # ── Terminal capability ─────────────────────────────────────────────────────────
 TTY_AVAILABLE=false
@@ -64,7 +80,9 @@ SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
 TICK=✓  CROSS=✗  CIRC=○
 
 # ── Layout constants ────────────────────────────────────────────────────────────
-if [[ "$RUN_UPDATE" == true ]]; then
+if [[ "$RUN_TUFFGAL" == true ]]; then
+  STEPS=(Install Browsers Setup Visual)
+elif [[ "$RUN_UPDATE" == true ]]; then
   STEPS=(Update Install Generate Subset\ FA Format Lint Lint\ Migrations Test Build)
 else
   STEPS=(Install Generate Subset\ FA Format Lint Lint\ Migrations Test Build)
@@ -187,12 +205,89 @@ run_step() {
   fi
 }
 
+# ── Visual regression summary ───────────────────────────────────────────────────
+# Mirrors the "Parse harness outcome" step in tuffgal-action: pulls the totals
+# out of results.json so the final status line can show pass/changed/failed
+# even when the harness exited 0. Empty string when no results.json was
+# written (e.g. tuffgal crashed before producing one).
+tuffgal_summary() {
+  local results="$ROOT_DIR/tuffgal/report/results.json"
+  if [[ ! -f "$results" ]]; then
+    return
+  fi
+  node -e '
+    const path = process.argv[1];
+    const raw = require("fs").readFileSync(path, "utf8");
+    const totals = JSON.parse(raw).totals ?? {};
+    const passed = totals.passed ?? 0;
+    const changed = totals.changed ?? 0;
+    const failed = totals.failed ?? 0;
+    const stories = totals.stories ?? 0;
+    process.stdout.write(`${passed}/${stories} passed, ${changed} changed, ${failed} failed`);
+  ' "$results" 2>/dev/null
+}
+
 # ── Main ────────────────────────────────────────────────────────────────────────
 hide_cursor
 draw_ui
 
 FAILED_STEP=""
 FAILED_OUTPUT=""
+
+if [[ "$RUN_TUFFGAL" == true ]]; then
+  # Visual regression chain. `--manage-servers` hands API+web lifecycle to
+  # tuffgal itself (per tuffgal.config.ts `devServers` block), so flintest does
+  # not need to spawn or tear down dev:test. `--with-deps` from the GH Action
+  # is Linux-only (apt); omitted here so this runs cleanly on macOS too.
+  if ! run_step 0 npm install; then
+    FAILED_STEP="Install"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+
+  if [[ -z "$FAILED_STEP" ]]; then
+    if ! run_step 1 npx playwright install chromium; then
+      FAILED_STEP="Browsers"
+      FAILED_OUTPUT="$STEP_OUTPUT"
+    fi
+  fi
+
+  if [[ -z "$FAILED_STEP" ]]; then
+    if ! run_step 2 npm run test:ui:setup; then
+      FAILED_STEP="Setup"
+      FAILED_OUTPUT="$STEP_OUTPUT"
+    fi
+  fi
+
+  if [[ -z "$FAILED_STEP" ]]; then
+    if ! run_step 3 npx tuffgal run --manage-servers; then
+      FAILED_STEP="Visual"
+      FAILED_OUTPUT="$STEP_OUTPUT"
+    fi
+  fi
+
+  TUFFGAL_SUMMARY=$(tuffgal_summary)
+
+  if [[ -z "$FAILED_STEP" ]]; then
+    if [[ -n "$TUFFGAL_SUMMARY" ]]; then
+      set_status "${GRN}${BLD}Visual regression passed.${RST} ${DIM}${TUFFGAL_SUMMARY}${RST}"
+    else
+      set_status "${GRN}${BLD}Visual regression passed.${RST}"
+    fi
+    [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
+    exit 0
+  else
+    if [[ -n "$TUFFGAL_SUMMARY" ]]; then
+      set_status "${RED}${BLD}${FAILED_STEP} failed – see below.${RST} ${DIM}${TUFFGAL_SUMMARY}${RST}"
+    else
+      set_status "${RED}${BLD}${FAILED_STEP} failed – see below.${RST}"
+    fi
+    [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
+    printf '\n'
+    printf '%s\n' "$FAILED_OUTPUT" | sed 's/^/  /'
+    printf '\n'
+    exit 1
+  fi
+fi
 
 # Build step index offset based on whether --update was requested
 STEP_OFFSET=0
