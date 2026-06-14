@@ -14,6 +14,8 @@ Usage: bin/flintest [--update]
 
 Runs the project quality gate in order:
   npm install
+  node scripts/generate-email-palette.mjs
+  npm run subset-fa --workspace @linklater/web
   npm run format
   npm run lint
   npm run lint:migrations
@@ -63,9 +65,9 @@ TICK=✓  CROSS=✗  CIRC=○
 
 # ── Layout constants ────────────────────────────────────────────────────────────
 if [[ "$RUN_UPDATE" == true ]]; then
-  STEPS=(Update Install Generate Format Lint Lint\ Migrations Test Build)
+  STEPS=(Update Install Generate Subset\ FA Format Lint Lint\ Migrations Test Build)
 else
-  STEPS=(Install Generate Format Lint Lint\ Migrations Test Build)
+  STEPS=(Install Generate Subset\ FA Format Lint Lint\ Migrations Test Build)
 fi
 NS=${#STEPS[@]}
 
@@ -218,35 +220,42 @@ if [[ -z "$FAILED_STEP" ]]; then
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 2 )) npm run format; then
+  if ! run_step $(( STEP_OFFSET + 2 )) npm run subset-fa --workspace @linklater/web; then
+    FAILED_STEP="Subset FA"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step $(( STEP_OFFSET + 3 )) npm run format; then
     FAILED_STEP="Format"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 3 )) npm run lint; then
+  if ! run_step $(( STEP_OFFSET + 4 )) npm run lint; then
     FAILED_STEP="Lint"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 4 )) npm run lint:migrations; then
+  if ! run_step $(( STEP_OFFSET + 5 )) npm run lint:migrations; then
     FAILED_STEP="Lint Migrations"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 5 )) npm run test:cov; then
+  if ! run_step $(( STEP_OFFSET + 6 )) npm run test:cov; then
     FAILED_STEP="Test"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 6 )) npm run build; then
+  if ! run_step $(( STEP_OFFSET + 7 )) npm run build; then
     FAILED_STEP="Build"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi

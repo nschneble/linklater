@@ -143,6 +143,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
 
       <LinksList
         filter={view.filter}
+        hasSettledOnce={view.hasSettledOnce}
         isClearingRead={view.isClearingRead}
         links={view.links}
         loadingLinks={view.loadingLinks}

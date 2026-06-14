@@ -148,7 +148,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
           src={avatarUrl}
           alt=""
           aria-hidden="true"
-          className="w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-[26px]"
+          className="safe-themed-asset w-8 h-8 outline outline-black/10 -outline-offset-1 rounded-[26px]"
         />
         <span className="hidden sm:inline-flex">
           <i

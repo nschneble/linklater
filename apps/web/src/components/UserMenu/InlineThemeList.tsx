@@ -30,7 +30,7 @@ export default function InlineThemeList({
           onClick={() => onSelect(theme.id)}
         >
           <span
-            className="relative shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full theme-color-dot"
+            className="relative shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full"
             style={{ backgroundColor: theme.accent }}
           >
             <i

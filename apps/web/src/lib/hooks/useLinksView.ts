@@ -57,6 +57,8 @@ export interface UseLinksViewResult {
   handleRandom: () => Promise<void>;
   handleToggleForm: () => void;
   handleToggleRead: ReturnType<typeof useLinks>['handleToggleRead'];
+  /** See `UseLinksDataResult.hasSettledOnce`. */
+  hasSettledOnce: boolean;
   links: ReturnType<typeof useLinks>['links'];
   loadingLinks: boolean;
   newLinksAnnouncement: string;
@@ -261,6 +263,7 @@ export function useLinksView({
     handleRandom: linksResult.handleRandom,
     handleToggleForm: linksResult.handleToggleForm,
     handleToggleRead: linksResult.handleToggleRead,
+    hasSettledOnce: linksResult.hasSettledOnce,
     isClearingRead,
     links: linksResult.links,
     loadingLinks: linksResult.loadingLinks,

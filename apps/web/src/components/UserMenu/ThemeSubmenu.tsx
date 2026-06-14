@@ -107,7 +107,7 @@ export default function ThemeSubmenu({
         role="menuitem"
         aria-haspopup="menu"
         aria-expanded={showSubmenu}
-        className={`flex items-center gap-2 w-full pl-2.5 pr-3 py-2 text-[var(--orbit-text)] text-left ${FOCUS_RING} cursor-default`}
+        className={`group flex items-center gap-2 w-full pl-2.5 pr-3 py-2 hover:bg-[var(--orbit-highlight)]/80 border-y border-transparent hover:border-[var(--orbit-highlight-hover)]/80 text-[var(--orbit-text)] hover:text-[var(--orbit-highlight-fg)] text-left ${FOCUS_RING} cursor-default`}
         onMouseEnter={(event) => {
           event.currentTarget.focus();
         }}
@@ -132,17 +132,19 @@ export default function ThemeSubmenu({
         }}
       >
         <i
-          className="fa-solid fa-palette text-[var(--orbit-alt-text)] text-[0.75rem]"
+          className="fa-solid fa-palette text-[var(--orbit-alt-text)] group-hover:text-[var(--orbit-highlight-fg)]/80 text-[0.75rem] motion-safe:[transition:color_40ms]"
           aria-hidden="true"
         />
         <div className="flex-1">
-          <div>Theme</div>
-          <div className="mt-0.5 text-[var(--orbit-alt-text)] line-clamp-1">
+          <div className="text-[var(--orbit-text)] group-hover:text-[var(--orbit-highlight-fg)] motion-safe:[transition:color_80ms]">
+            Theme
+          </div>
+          <div className="mt-0.5 text-[var(--orbit-alt-text)] group-hover:text-[var(--orbit-highlight-fg)]/80 line-clamp-1 motion-safe:[transition:color_80ms]">
             {currentLabel}
           </div>
         </div>
         <i
-          className="fa-solid fa-chevron-right text-[var(--orbit-alt-text)] text-[0.6rem]"
+          className="fa-solid fa-chevron-right text-[var(--orbit-alt-text)] group-hover:text-[var(--orbit-highlight-fg)]/80 text-[0.6rem] motion-safe:[transition:color_40ms]"
           aria-hidden="true"
         />
       </button>
@@ -162,15 +164,11 @@ export default function ThemeSubmenu({
           const isDisabled = isCvdMode && theme.id !== CVD_BASE_THEME;
           return (
             <button
-              className={`flex items-center gap-2 w-full px-3 py-2 text-[var(--orbit-text)] text-left ${FOCUS_RING} cursor-pointer aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
+              className={`group flex items-center gap-2 w-full px-3 py-2 hover:bg-[var(--orbit-highlight)]/80 border-y border-transparent hover:border-[var(--orbit-highlight-hover)]/80 text-[var(--orbit-text)] hover:text-[var(--orbit-highlight-fg)] text-left ${FOCUS_RING} cursor-pointer aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
               data-submenu-item
               role="menuitemradio"
               aria-checked={baseTheme === theme.id}
               aria-disabled={isDisabled ? 'true' : undefined}
-              style={{
-                transitionDuration:
-                  '150ms, var(--theme-transition-duration), var(--theme-transition-duration)',
-              }}
               key={theme.id}
               type="button"
               onMouseDown={(event) => event.preventDefault()}
@@ -190,19 +188,16 @@ export default function ThemeSubmenu({
                 }
               }}
             >
-              <span
-                className="relative shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full theme-color-dot"
-                style={{ backgroundColor: theme.accent }}
-              >
+              <span className="relative shrink-0 inline-flex items-center justify-center w-3.75 h-3.75 bg-[var(--orbit-alt-text)] group-hover:bg-[var(--orbit-highlight-fg)]/80 rounded-full">
                 <i
-                  className={`absolute fa-solid ${theme.swatchIcon} text-white text-[0.5rem]`}
+                  className={`absolute fa-solid ${theme.swatchIcon} text-[var(--orbit-bg)] group-hover:text-[var(--orbit-highlight)]/80 text-[0.5rem]`}
                   aria-hidden="true"
                 />
               </span>
               <span className="flex-1">{theme.label}</span>
               {baseTheme === theme.id && (
                 <i
-                  className="fa-solid fa-check text-[var(--orbit-highlight)]"
+                  className="fa-solid fa-check text-[var(--orbit-highlight)] group-hover:text-[var(--orbit-highlight-fg)]"
                   aria-hidden="true"
                 />
               )}

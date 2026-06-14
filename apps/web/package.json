@@ -9,9 +9,10 @@
   "scripts": {
     "build": "tsc -b && vite build",
     "dev": "vite",
-    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "lint": "eslint \"src/**/*.{ts,tsx}\" --max-warnings=0",
+    "format": "prettier --write \"{src,scripts}/**/*.{ts,tsx,mjs}\"",
+    "lint": "eslint \"{src,scripts}/**/*.{ts,tsx,mjs}\" --max-warnings=0",
     "preview": "vite preview",
+    "subset-fa": "node scripts/subset-fa-fonts.mjs",
     "test": "NODE_OPTIONS=\"--disable-warning=DEP0205\" vitest --run",
     "test:cov": "NODE_OPTIONS=\"--disable-warning=DEP0205\" vitest --run --coverage"
   },
@@ -44,6 +45,7 @@
     "eslint-plugin-vitest": "^0.5.4",
     "globals": "^16.5.0",
     "jsdom": "^27.3.0",
+    "subset-font": "^2.5.0",
     "tailwindcss": "^4.1.17",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",

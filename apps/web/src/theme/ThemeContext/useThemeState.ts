@@ -1,4 +1,11 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   CVD_BASE_THEME,
@@ -72,20 +79,54 @@ export function useThemeState(): ThemeContextValue {
     [isCvdMode],
   );
 
-  const setMode = useCallback((newMode: Mode) => {
-    setModeState(newMode);
-    window.localStorage.setItem(MODE_STORAGE_KEY, newMode);
-    window.localStorage.setItem(MODE_UPDATED_AT_KEY, Date.now().toString());
+  // Animates the page-wide background/color/border swap when light/dark mode
+  // toggles. Without this, mode swaps use the default 80ms transition, which
+  // feels abrupt next to the 150ms/600ms transitions used by the theme picker.
+  const modeTransitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const applyModeTransition = useCallback(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    root.style.setProperty('--theme-transition-duration', '300ms');
+    root.style.setProperty('--theme-transition-easing', 'ease-out');
+    if (modeTransitionTimeoutRef.current) {
+      clearTimeout(modeTransitionTimeoutRef.current);
+    }
+    modeTransitionTimeoutRef.current = setTimeout(() => {
+      root.style.removeProperty('--theme-transition-duration');
+      root.style.removeProperty('--theme-transition-easing');
+      modeTransitionTimeoutRef.current = null;
+    }, 350);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (modeTransitionTimeoutRef.current) {
+        clearTimeout(modeTransitionTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const setMode = useCallback(
+    (newMode: Mode) => {
+      applyModeTransition();
+      setModeState(newMode);
+      window.localStorage.setItem(MODE_STORAGE_KEY, newMode);
+      window.localStorage.setItem(MODE_UPDATED_AT_KEY, Date.now().toString());
+    },
+    [applyModeTransition],
+  );
+
   const toggleMode = useCallback(() => {
+    applyModeTransition();
     setModeState((current) => {
       const next = current === 'light' ? 'dark' : 'light';
       window.localStorage.setItem(MODE_STORAGE_KEY, next);
       window.localStorage.setItem(MODE_UPDATED_AT_KEY, Date.now().toString());
       return next;
     });
-  }, []);
+  }, [applyModeTransition]);
 
   const applyServerTheme = useCallback((theme: BaseTheme) => {
     const updatedAt = parseInt(

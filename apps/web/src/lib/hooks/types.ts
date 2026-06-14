@@ -20,6 +20,8 @@ export interface UseLinksResult {
   handleRandom: () => Promise<void>;
   handleToggleRead: (link: Link) => Promise<void>;
   handleToggleForm: () => void;
+  /** See `UseLinksDataResult.hasSettledOnce`. */
+  hasSettledOnce: boolean;
   links: Link[];
   loadingLinks: boolean;
   newLinksAnnouncement: string;

@@ -3,7 +3,7 @@ import PrimaryButton from '../common/PrimaryButton';
 import { createLink, getSuggestions, readLink } from '../../lib/api';
 import type { Suggestion } from '../../lib/api';
 import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 interface SuggestionCalloutProps {
@@ -66,29 +66,64 @@ export default function SuggestionCallout({
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  // Distinguishes the mount-time fetch from a post-Add-and-Read refetch.
+  // Refetch failures intentionally leave the prior suggestion mounted (the
+  // populated card branch must stay rendered to preserve WCAG 2.4.3 focus
+  // on the "Add and read" button), so only the initial fetch is allowed to
+  // flip `loading` / `fetchFailed` and unmount the populated card.
+  const isInitialFetchRef = useRef(true);
 
+  // Tracks mount state so both the useEffect-driven initial fetch AND the
+  // imperative refetch from `handleAddAndRead` skip their state updates if
+  // the component unmounted mid-flight. A per-call `cancelled` closure
+  // would only protect the mount-effect path; the imperative call from the
+  // success branch of Add-and-Read discards its returned cleanup.
+  const isMountedRef = useRef(true);
+
+  const fetchSuggestion = useCallback(() => {
     getSuggestions(1)
       .then((response) => {
-        if (cancelled) return;
-        setSuggestion(response.suggestions[0] ?? null);
-        setSourceName(response.sourceName);
-        setLoading(false);
+        if (!isMountedRef.current) return;
+        const next = response.suggestions[0] ?? null;
+        if (isInitialFetchRef.current) {
+          setSuggestion(next);
+          setSourceName(response.sourceName);
+          setLoading(false);
+          isInitialFetchRef.current = false;
+        } else if (next) {
+          // Refetch path: only swap when we got a non-null result. An empty
+          // refetch leaves the prior populated card mounted so focus stays
+          // on the "Add and read" button (WCAG 2.4.3).
+          setSuggestion(next);
+          setSourceName(response.sourceName);
+        }
       })
       .catch((caught) => {
-        if (cancelled) return;
+        if (!isMountedRef.current) return;
         if (import.meta.env.DEV) {
           console.warn('SuggestionCallout: fetch failed', caught);
         }
-        setFetchFailed(true);
-        setLoading(false);
+        if (isInitialFetchRef.current) {
+          setFetchFailed(true);
+          setLoading(false);
+          isInitialFetchRef.current = false;
+        }
+        // Refetch failure: leave prior suggestion + sourceName mounted so
+        // focus stays on the "Add and read" button. Silent fallback by
+        // design — the user already navigated to the article in a new tab.
       });
+  }, []);
 
+  useEffect(() => {
+    isMountedRef.current = true;
     return () => {
-      cancelled = true;
+      isMountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    fetchSuggestion();
+  }, [fetchSuggestion]);
 
   function handleAddAndRead() {
     if (!suggestion || adding) return;
@@ -120,8 +155,13 @@ export default function SuggestionCallout({
           window.location.assign(url);
         } else {
           // Tab is already open; clear the busy state so a returning user
-          // sees the original callout in its idle state.
+          // sees the original callout in its idle state, then refetch a
+          // fresh suggestion so the just-added (now read) article isn't
+          // recommended back to them next time they look. The populated
+          // card stays mounted during the refetch — see `fetchSuggestion`
+          // — so focus stays on the "Add and read" button (WCAG 2.4.3).
           setAdding(false);
+          fetchSuggestion();
         }
       } catch (caught) {
         setError(

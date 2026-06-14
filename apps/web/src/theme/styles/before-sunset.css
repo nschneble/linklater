@@ -106,12 +106,17 @@
   --mount-highlight-fg: #1a0e02;
   --mount-highlight-hover: #b87a38;
 
-  /* --orbit-border #b6745c vs orbit-bg #4a3818 = 3.02:1, razor against
-   * SC 1.4.11 but passes. Unified base/mount/orbit border preserved for
-   * surface-stack coherence; D-F1 (#c8856a, 3.75:1) staged but not
-   * applied. */
+  /* --orbit-border lifted from #b6745c to #c18974 (Wave 6a). Original
+   * #b6745c vs orbit-bg #4a3818 = 3.02:1 cleared SC 1.4.11 by 0.02 but
+   * MenuItem's hover/focus-visible inset-ring (rendered over an
+   * orbit-text alpha overlay) measured 2.44:1 — same-hue alpha overlay
+   * pulled both layers toward identical hue, reducing perceived contrast.
+   * #c18974 lifts ring-vs-effective-bg to 3.07:1. Base/mount borders
+   * kept at #b6745c (surface-stack still coherent at the card level;
+   * the ring case is local to orbit-tier menu rows). See
+   * [[feedback-overlay-same-hue-trap]]. */
   --orbit-bg: #4a3818;
-  --orbit-border: #b6745c;
+  --orbit-border: #c18974;
   --orbit-text: #e8e5d7;
   --orbit-alt-text: #e6c99a;
   --orbit-highlight: #d7974f;

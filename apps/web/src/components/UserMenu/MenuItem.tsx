@@ -43,7 +43,7 @@ export default function MenuItem({
 }: MenuItemProps) {
   return (
     <button
-      className={`group flex items-center gap-2 w-full pl-2.5 pr-3 py-2 text-[var(--orbit-text)] text-left ${FOCUS_RING} cursor-pointer ${className}`}
+      className={`group flex items-center gap-2 w-full pl-2.5 pr-3 py-2 hover:bg-[var(--orbit-highlight)]/80 border-y border-transparent hover:border-[var(--orbit-highlight-hover)]/80 text-[var(--orbit-text)] hover:text-[var(--orbit-highlight-fg)] text-left ${FOCUS_RING} cursor-pointer ${className}`}
       type="button"
       role="menuitem"
       aria-current={active ? 'page' : undefined}
@@ -60,7 +60,7 @@ export default function MenuItem({
       onClick={onClick}
     >
       <i
-        className={`fa-solid ${icon} text-[var(--orbit-alt-text)] group-aria-[current=page]:text-[var(--orbit-highlight)] text-[0.75rem]`}
+        className={`fa-solid ${icon} text-[var(--orbit-alt-text)] group-hover:text-[var(--orbit-highlight-fg)]/80 group-aria-[current=page]:text-[var(--orbit-highlight)] group-hover:group-aria-[current=page]:text-[var(--orbit-highlight-fg)] text-[0.75rem]`}
         aria-hidden="true"
       />
       <span>{label}</span>

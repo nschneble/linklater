@@ -37,7 +37,7 @@ export default function KeyboardShortcutsModal({
       onClose={onClose}
       closeLabel="Close keyboard shortcuts"
       backdropLabel="Close shortcuts"
-      panelClassName="max-w-xs pt-12 px-6 pb-6 rounded-xl"
+      panelClassName="max-w-xs pt-5.5 px-6 pb-6 rounded-xl"
     >
       <h2
         id={HEADING_ID}

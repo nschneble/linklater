@@ -49,6 +49,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     handleRandom: actions.handleRandom,
     handleToggleRead: actions.handleToggleRead,
     handleToggleForm: form.handleToggleForm,
+    hasSettledOnce: data.hasSettledOnce,
     links: data.links,
     loadingLinks: data.loadingLinks,
     newLinksAnnouncement: data.newLinksAnnouncement,
