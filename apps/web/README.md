@@ -154,3 +154,5 @@ Environment variables are documented in `.env.example`
 The API reference is available at `/settings/api` when the app is running
 
 The CVD accessibility hook (`data-cvd="on"`) is implemented in `src/theme/ThemeContext/` and drives a set of global CSS rules defined in `src/index.css`
+
+Font Awesome Free is self-hosted under `public/assets/fontawesome/`. The shipped `.woff2` files are subset to only the glyphs the app actually paints; the unsubsetted source webfonts live alongside the build script at `scripts/font-awesome-source/`. To add a new icon, add its name (without the `fa-` prefix) to the `solid` or `brands` array in `scripts/font-awesome-manifest.json`, then run `npm run subset-fa` and commit the regenerated `.woff2` files. A vitest in `scripts/font-awesome-manifest.test.ts` enforces sync between the manifest and the icons referenced in `src/` and `index.html`.
