@@ -25,7 +25,6 @@ export default function AuthForm() {
     handleSubmit,
     handleVerifyOtp,
     loading,
-    magicLinkSent,
     mfaChallenge,
     mfaCode,
     mfaInputReference,
@@ -37,7 +36,6 @@ export default function AuthForm() {
     setMfaChallenge,
     setMfaCode,
     setError,
-    setMagicLinkSent,
     setNotice,
     setPassword,
   } = useAuthForm();
@@ -88,16 +86,9 @@ export default function AuthForm() {
         error={error}
         errorReference={errorReference}
         loading={loading}
-        magicLinkSent={magicLinkSent}
         mode={mode}
         onEmailChange={setEmail}
         onForgotPassword={() => handleModeChange('forgot-password')}
-        onMagicLinkBack={() => {
-          setMagicLinkSent(false);
-          if (mode === 'register') {
-            handleModeChange('login');
-          }
-        }}
         onModeChange={handleModeChange}
         onPasswordChange={setPassword}
         onSubmit={handleSubmit}

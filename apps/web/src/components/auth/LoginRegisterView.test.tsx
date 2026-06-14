@@ -6,7 +6,7 @@
  *   - Stable aria-describedby="auth-form-error" on both form fields (new
  *     always-mounted Alert pattern means the reference is never dangling)
  *   - Error text appears in the role="alert" element when provided
- *   - Magic-link-sent state renders the confirmation message
+ *   - The form always renders — no interstitial branch
  *   - Mode-change tabs wire up correctly (login / sign up labels visible)
  *   - Forgot-password link present in login mode
  */
@@ -23,12 +23,10 @@ interface Props {
   email?: string;
   error?: string | null;
   loading?: boolean;
-  magicLinkSent?: boolean;
   mode?: 'login' | 'register';
   password?: string;
   onEmailChange?: (email: string) => void;
   onForgotPassword?: () => void;
-  onMagicLinkBack?: () => void;
   onModeChange?: (mode: 'login' | 'register') => void;
   onPasswordChange?: (password: string) => void;
   onSubmit?: (event: React.FormEvent) => void;
@@ -49,11 +47,9 @@ function renderView(props: Props = {}) {
       error={props.error ?? null}
       errorReference={errorReference}
       loading={props.loading ?? false}
-      magicLinkSent={props.magicLinkSent ?? false}
       mode={props.mode ?? 'login'}
       onEmailChange={props.onEmailChange ?? vi.fn()}
       onForgotPassword={props.onForgotPassword ?? vi.fn()}
-      onMagicLinkBack={props.onMagicLinkBack ?? vi.fn()}
       onModeChange={props.onModeChange ?? vi.fn()}
       onPasswordChange={props.onPasswordChange ?? vi.fn()}
       onSubmit={props.onSubmit ?? vi.fn()}
@@ -168,41 +164,31 @@ describe('LoginRegisterView forgot password link', () => {
   });
 });
 
-describe('LoginRegisterView magic-link-sent state', () => {
-  it('shows "Check your email" confirmation in login mode after magic link sent', () => {
-    renderView({ mode: 'login', magicLinkSent: true });
+describe('LoginRegisterView always renders the form', () => {
+  it('renders the email and password inputs in login mode', () => {
+    renderView({ mode: 'login' });
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+  });
+
+  it('renders the email and password inputs in register mode', () => {
+    renderView({ mode: 'register' });
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+  });
+
+  it('does not render the legacy "Back to login" interstitial button', () => {
+    renderView({ mode: 'login' });
     expect(
-      screen.getByText(/check your email for a login link/i),
-    ).toBeInTheDocument();
+      screen.queryByRole('button', { name: /back to login/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it('shows "Check your email to complete signup" in register mode after magic link sent', () => {
-    renderView({ mode: 'register', magicLinkSent: true });
+  it('does not render the legacy "Check your email" interstitial copy', () => {
+    renderView({ mode: 'login' });
     expect(
-      screen.getByText(/check your email to complete signup/i),
-    ).toBeInTheDocument();
-  });
-
-  it('shows "Back to login" button in magic-link-sent state', () => {
-    renderView({ magicLinkSent: true });
-    expect(
-      screen.getByRole('button', { name: /back to login/i }),
-    ).toBeInTheDocument();
-  });
-
-  it('"Back to login" button calls onMagicLinkBack', () => {
-    const onMagicLinkBack = vi.fn();
-    renderView({ magicLinkSent: true, onMagicLinkBack });
-
-    fireEvent.click(screen.getByRole('button', { name: /back to login/i }));
-
-    expect(onMagicLinkBack).toHaveBeenCalled();
-  });
-
-  it('hides the form inputs in magic-link-sent state', () => {
-    renderView({ magicLinkSent: true });
-    expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
+      screen.queryByText(/check your email for a login link/i),
+    ).not.toBeInTheDocument();
   });
 });
 

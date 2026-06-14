@@ -22,6 +22,12 @@ export function useAuthForm() {
 
   const emailReference = useRef<HTMLInputElement>(null);
   const errorReference = useRef<HTMLParagraphElement>(null);
+  // WARN-4: timeout id for the post-magic-link loading hold. Stored in a ref
+  // so the mode-change effect can clear a pending release if the user
+  // navigates away before the 1500ms window elapses.
+  const magicLinkHoldTimeoutReference = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const mfaInputReference = useRef<HTMLInputElement>(null);
   const passwordReference = useRef<HTMLInputElement>(null);
 
@@ -29,7 +35,6 @@ export function useAuthForm() {
   const [error, setError] = useState<string | null>(null);
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaToken, setMfaToken] = useState<string | null>(null);
@@ -59,11 +64,14 @@ export function useAuthForm() {
   }
 
   useEffect(() => {
+    if (magicLinkHoldTimeoutReference.current !== null) {
+      clearTimeout(magicLinkHoldTimeoutReference.current);
+      magicLinkHoldTimeoutReference.current = null;
+    }
     setPassword('');
     setError(null);
     setLoading(false);
     setForgotPasswordSent(false);
-    setMagicLinkSent(false);
 
     const emailInputValue = emailReference.current?.value ?? '';
     if (mode !== 'forgot-password' && emailInputValue.length > 0) {
@@ -94,14 +102,26 @@ export function useAuthForm() {
     setError(null);
     setLoading(true);
 
+    // WARN-4: when a magic-link request succeeds the loading state stays
+    // true for 1500ms so the submit button cannot be re-clicked
+    // immediately. Set only after a successful await, so a throw still
+    // funnels through the standard finally-block reset.
+    let magicLinkHoldEngaged = false;
+
     try {
       if ((mode === 'login' || mode === 'register') && password.length === 0) {
         if (mode === 'login') {
           await requestMagicLink(email);
+          setNotice('Check your email for a login link.');
         } else {
           await registerMagicLink(email);
+          setNotice('Check your email to complete signup.');
         }
-        setMagicLinkSent(true);
+        magicLinkHoldEngaged = true;
+        magicLinkHoldTimeoutReference.current = setTimeout(() => {
+          setLoading(false);
+          magicLinkHoldTimeoutReference.current = null;
+        }, 1500);
         return;
       }
 
@@ -129,7 +149,9 @@ export function useAuthForm() {
         ),
       );
     } finally {
-      setLoading(false);
+      if (!magicLinkHoldEngaged) {
+        setLoading(false);
+      }
     }
   };
 
@@ -169,7 +191,6 @@ export function useAuthForm() {
     handleSubmit,
     handleVerifyOtp,
     loading,
-    magicLinkSent,
     mfaChallenge,
     mfaCode,
     mfaInputReference,
@@ -181,7 +202,6 @@ export function useAuthForm() {
     setMfaChallenge,
     setMfaCode,
     setError,
-    setMagicLinkSent,
     setNotice,
     setPassword,
   };

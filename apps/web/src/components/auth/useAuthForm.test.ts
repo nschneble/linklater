@@ -8,7 +8,7 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FormEvent } from 'react';
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
@@ -123,8 +123,8 @@ describe('useAuthForm', () => {
   });
 
   describe('handleSubmit — 9 branches', () => {
-    // Branch 1: login + no password → requestMagicLink
-    it('calls requestMagicLink when login mode has no password', async () => {
+    // Branch 1: login + no password → requestMagicLink → success notice
+    it('calls requestMagicLink and sets a login notice when login mode has no password', async () => {
       vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
       const { result } = renderAuthFormHook('/login');
 
@@ -136,11 +136,11 @@ describe('useAuthForm', () => {
       });
 
       expect(apiModule.requestMagicLink).toHaveBeenCalledWith(USER_EMAIL);
-      expect(result.current.magicLinkSent).toBe(true);
+      expect(result.current.notice).toBe('Check your email for a login link.');
     });
 
-    // Branch 2: register + no password → registerMagicLink
-    it('calls registerMagicLink when register mode has no password', async () => {
+    // Branch 2: register + no password → registerMagicLink → success notice
+    it('calls registerMagicLink and sets a signup notice when register mode has no password', async () => {
       vi.mocked(apiModule.registerMagicLink).mockResolvedValue(undefined);
       const { result } = renderAuthFormHook('/signup');
 
@@ -152,7 +152,9 @@ describe('useAuthForm', () => {
       });
 
       expect(apiModule.registerMagicLink).toHaveBeenCalledWith(USER_EMAIL);
-      expect(result.current.magicLinkSent).toBe(true);
+      expect(result.current.notice).toBe(
+        'Check your email to complete signup.',
+      );
     });
 
     // Branch 3: login + password → login returns MFA challenge
@@ -293,6 +295,70 @@ describe('useAuthForm', () => {
       });
 
       expect(result.current.error).toBe('Something went dreadfully wrong');
+    });
+  });
+
+  // WARN-4: a successful magic-link request must hold `loading` true for
+  // ~1500ms so the user cannot immediately re-click the submit button. The
+  // hold is independent of the toast's own auto-dismiss timer.
+  describe('WARN-4 — magic-link loading hold', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('keeps loading true immediately after a successful magic-link request', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.loading).toBe(true);
+    });
+
+    it('releases loading to false after the 1500ms hold elapses', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.loading).toBe(true);
+
+      act(() => {
+        vi.advanceTimersByTime(1500);
+      });
+
+      expect(result.current.loading).toBe(false);
+    });
+
+    it('releases loading normally (no hold) when the magic-link request throws', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockRejectedValue(
+        new Error('Network down'),
+      );
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.loading).toBe(false);
+      expect(result.current.error).toBe('Network down');
     });
   });
 
