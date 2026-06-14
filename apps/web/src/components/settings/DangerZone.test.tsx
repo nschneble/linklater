@@ -137,6 +137,16 @@ describe('DangerZone credentialed branch (hasPassword: true)', () => {
     expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
   });
 
+  it('does not render the MFA code field for password-only accounts', () => {
+    renderDangerZone();
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/authenticator or recovery code/i),
+    ).not.toBeInTheDocument();
+  });
+
   it('submitting the reauth form with a password calls deleteMe with that password', async () => {
     vi.mocked(apiModule.deleteMe).mockResolvedValue({ success: true });
     const { container } = renderDangerZone();
@@ -222,6 +232,46 @@ describe('DangerZone credentialed branch (hasPassword: true)', () => {
     expect(
       screen.getByRole('button', { name: /delete my account/i }),
     ).toBeInTheDocument();
+  });
+});
+
+describe('DangerZone credentialed branch (MFA-only: hasPassword=false, multiFactorMethod=totp)', () => {
+  beforeEach(() => {
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({
+        user: makeUser({ hasPassword: false, multiFactorMethod: 'totp' }),
+      }),
+    );
+  });
+
+  it('reveals only the code field — no password input', () => {
+    renderDangerZone();
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    expect(
+      screen.getByLabelText(/authenticator or recovery code/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/current password/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it('submitting the reauth form with a code calls deleteMe with that code', async () => {
+    vi.mocked(apiModule.deleteMe).mockResolvedValue({ success: true });
+    const { container } = renderDangerZone();
+
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+    fireEvent.change(screen.getByLabelText(/authenticator or recovery code/i), {
+      target: { value: '123456' },
+    });
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    expect(apiModule.deleteMe).toHaveBeenCalledWith(
+      expect.objectContaining({ code: '123456' }),
+    );
   });
 });
 
