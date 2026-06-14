@@ -132,17 +132,19 @@ export default function ThemeSubmenu({
         }}
       >
         <i
-          className="fa-solid fa-palette text-[var(--orbit-alt-text)] group-hover:text-[var(--orbit-highlight-fg)]/80 text-[0.75rem]"
+          className="fa-solid fa-palette text-[var(--orbit-alt-text)] group-hover:text-[var(--orbit-highlight-fg)]/80 text-[0.75rem] motion-safe:[transition:color_40ms]"
           aria-hidden="true"
         />
         <div className="flex-1">
-          <div>Theme</div>
-          <div className="mt-0.5 text-[var(--orbit-alt-text)] group-hover:text-[var(--orbit-highlight-fg)]/80 line-clamp-1">
+          <div className="text-[var(--orbit-text)] group-hover:text-[var(--orbit-highlight-fg)] motion-safe:[transition:color_80ms]">
+            Theme
+          </div>
+          <div className="mt-0.5 text-[var(--orbit-alt-text)] group-hover:text-[var(--orbit-highlight-fg)]/80 line-clamp-1 motion-safe:[transition:color_80ms]">
             {currentLabel}
           </div>
         </div>
         <i
-          className="fa-solid fa-chevron-right text-[var(--orbit-alt-text)] group-hover:text-[var(--orbit-highlight-fg)]/80 text-[0.6rem]"
+          className="fa-solid fa-chevron-right text-[var(--orbit-alt-text)] group-hover:text-[var(--orbit-highlight-fg)]/80 text-[0.6rem] motion-safe:[transition:color_40ms]"
           aria-hidden="true"
         />
       </button>
@@ -167,10 +169,6 @@ export default function ThemeSubmenu({
               role="menuitemradio"
               aria-checked={baseTheme === theme.id}
               aria-disabled={isDisabled ? 'true' : undefined}
-              style={{
-                transitionDuration:
-                  '150ms, var(--theme-transition-duration), var(--theme-transition-duration)',
-              }}
               key={theme.id}
               type="button"
               onMouseDown={(event) => event.preventDefault()}
