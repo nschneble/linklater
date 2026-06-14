@@ -1,4 +1,5 @@
 .desloppify/
+.DS_Store
 apps/api/certs/
 local/
 node_modules/
