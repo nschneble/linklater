@@ -1,6 +1,6 @@
 import { setPendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
-import { verifyMagicLink, verifyOtp } from '../../lib/api';
+import { revokeAllSessions, verifyMagicLink, verifyOtp } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import MfaView from './MfaView';
@@ -14,15 +14,30 @@ type MfaChallenge = 'totp' | 'recovery';
  * Handles the `/verify-login?token=…` route for magic-link login.
  *
  * Reads the `?token=` query parameter, calls `POST /auth/verify-magic-link`,
- * stores the returned JWT via `loginWithToken`, and navigates to `/unread`.
+ * and routes one of three ways based on the relationship between the
+ * current session and the user the magic link belongs to:
  *
- * Success has no toast — magic-link login is just login (equivalent to
- * typing a password), and the destination /unread page is itself the
- * confirmation that auth succeeded. Failures redirect to /login with an
- * error-variant pending notice; the AuthForm surfaces it as an assertive
- * toast. /login is also where the user immediately retries (request a new
- * link), so the toast copy stays short (WCAG 3.3.3 — recovery destination
- * is the page the user lands on).
+ *   1. No prior session → standard login: store the returned tokens via
+ *      `loginWithToken`, navigate `/unread`, no toast (the destination is
+ *      the confirmation that auth succeeded).
+ *   2. Already signed in as the same user → keep the existing session,
+ *      discard the returned tokens, queue `already-logged-in` toast,
+ *      navigate `/unread`. The server-side magic-link token is still
+ *      single-use (it was just consumed by the verify call), but we
+ *      don't disturb the current JWT — open tabs stay valid.
+ *   3. Signed in as a different user (cross-account click) → call
+ *      `revokeAllSessions()` first (uses the OLD user's bearer to DELETE
+ *      /auth/sessions), then `loginWithToken` with the new tokens,
+ *      queue `account-switched` warn toast, navigate `/unread`. The
+ *      logout-then-login sequence is bypassed at the React-state level
+ *      (we never flip `user` to `null` mid-flow) so the catch-all
+ *      auth-redirect cannot race in and bounce us to `/login`.
+ *
+ * Failures redirect to /login with an error-variant pending notice; the
+ * AuthForm surfaces it as an assertive toast. /login is also where the
+ * user immediately retries (request a new link), so the toast copy stays
+ * short (WCAG 3.3.3 — recovery destination is the page the user lands
+ * on).
  *
  * MFA-enabled accounts authenticated via magic link still need to clear
  * the OTP challenge; that branch mounts `MfaView` and is unchanged.
@@ -31,7 +46,15 @@ export default function VerifyLoginPage() {
   useDocumentTitle('Verifying sign in — Linklater');
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
-  const { loginWithToken, refreshUser } = useAuth();
+  const { loginWithToken, refreshUser, user } = useAuth();
+  // The verify effect reads `user` once on mount and routes based on
+  // whether the magic-link userId matches. Mirror into a ref so the
+  // post-await branch sees the value from the moment the effect fired,
+  // not a stale closure capture if the user state mutates mid-flow.
+  const userReference = useRef(user);
+  useEffect(() => {
+    userReference.current = user;
+  }, [user]);
   const [isInMfa, setIsInMfa] = useState(false);
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge>('totp');
@@ -67,6 +90,37 @@ export default function VerifyLoginPage() {
           setIsInMfa(true);
           return;
         }
+
+        const currentUser = userReference.current;
+        const isSameAccount =
+          currentUser !== null && currentUser.userId === result.userId;
+        const isAccountSwitch =
+          currentUser !== null && currentUser.userId !== result.userId;
+
+        if (isSameAccount) {
+          // Server already consumed the magic-link token (single-use intact),
+          // but the existing session is still valid — discard the freshly
+          // issued tokens rather than rotating the JWT in open tabs.
+          setPendingNotice('already-logged-in');
+          navigate('/unread', { replace: true });
+          return;
+        }
+
+        if (isAccountSwitch) {
+          // Revoke the OLD user's sessions FIRST (uses the current bearer,
+          // which still points at the old user because we have not called
+          // loginWithToken yet). Then swap in the new tokens. This sequence
+          // never lets the React `user` state flip to null, so the catch-all
+          // auth-redirect cannot race in and bounce us to `/login` mid-flow.
+          await revokeAllSessions();
+          await loginWithToken(result.accessToken, result.refreshToken);
+          setPendingNotice('account-switched');
+          navigate('/unread', { replace: true });
+          return;
+        }
+
+        // No prior session — standard fresh login, no toast (the destination
+        // is the confirmation that auth succeeded).
         await loginWithToken(result.accessToken, result.refreshToken);
         navigate('/unread', { replace: true });
       })

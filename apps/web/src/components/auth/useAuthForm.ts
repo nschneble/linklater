@@ -20,7 +20,7 @@ export type MfaChallenge = 'totp' | 'recovery';
 
 interface FormNotice {
   message: string;
-  variant: 'success' | 'error';
+  variant: 'success' | 'warning' | 'error';
 }
 
 export function useAuthForm() {

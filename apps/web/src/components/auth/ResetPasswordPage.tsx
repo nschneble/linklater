@@ -1,21 +1,34 @@
 import { resetPassword } from '../../lib/api';
+import { setPendingNotice } from '../../lib/pendingNotice';
 import { getErrorMessage } from '../../lib/errors';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
+// Brief pre-navigation announcement window. Lets the sr-only status
+// region populate and start its polite utterance before we route to
+// /login; otherwise the route change can race the announcement and
+// drop it on some SR/browser combos (per a11y-lead). The visible Toast
+// on /login is the reinforcement, not the sole channel.
+const RESET_SUCCESS_REDIRECT_DELAY_MS = 800;
 
 /**
  * Handles the `/reset-password?token=...` route. Renders a form for the user
  * to choose a new password. Validates that both password fields match
  * client-side before calling `POST /auth/reset-password`.
  *
- * On success, switches to a confirmation view with a link back to the login
- * screen. The token is read from the `?token=` query parameter and is only
- * valid for 1 hour after the forgot-password email is sent.
+ * On success, queues a `password-reset-success` pending notice and redirects
+ * to /login after a brief sr-only announcement window — the destination
+ * surfaces the notice as a Toast + sr-only mirror, so a screen reader gets
+ * the confirmation from both the source page (sr-only status) and the
+ * destination (mirror), never silently in between.
+ *
+ * The token is read from the `?token=` query parameter and is only valid
+ * for 1 hour after the forgot-password email is sent.
  *
  * This route is always accessible without authentication.
  */
@@ -29,6 +42,15 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimer.current !== null) {
+        clearTimeout(redirectTimer.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
@@ -49,9 +71,12 @@ export default function ResetPasswordPage() {
     try {
       await resetPassword(token, password);
       setSuccess(true);
+      setPendingNotice('password-reset-success');
+      redirectTimer.current = setTimeout(() => {
+        navigate('/login', { replace: true });
+      }, RESET_SUCCESS_REDIRECT_DELAY_MS);
     } catch (caughtError: unknown) {
       setError(getErrorMessage(caughtError, 'Password reset failed.'));
-    } finally {
       setLoading(false);
     }
   };
@@ -59,44 +84,26 @@ export default function ResetPasswordPage() {
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
       <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl select-none">
-        {success && (
-          // --*-subtle-text is BASE-only by design; mount hints collapse to alt-text
-          <i
-            className="block mb-4 fa-solid fa-circle-check text-4xl text-[var(--mount-alt-text)] animate-bounce text-center"
-            aria-hidden="true"
-          />
-        )}
         <h1 className="mb-2 text-[var(--mount-text)] text-center text-2xl font-bold">
-          {success ? (
-            <>
-              Your Password Has Been{' '}
-              <span className="underline underline-offset-3 decoration-[var(--mount-highlight)]">
-                Reset
-              </span>
-            </>
-          ) : (
-            'Reset Password'
-          )}
+          Reset Password
         </h1>
         <p className="mb-6 text-[var(--mount-alt-text)] text-center text-sm">
-          {success
-            ? "I'm so proud of you."
-            : 'No one liked your old password, anyways.'}
+          No one liked your old password, anyways.
         </p>
 
         {success ? (
-          <div className="text-center space-y-4">
-            <PrimaryButton
-              className="w-full py-2.5"
-              onClick={() => navigate('/login')}
-            >
-              <i
-                className="fa-solid fa-right-to-bracket text-xs"
-                aria-hidden="true"
-              />
-              I'd like to log in now
-            </PrimaryButton>
-          </div>
+          // Minimal sr-only-driven confirmation window before the redirect
+          // fires. Avoids a flashy card flip (bouncing checkmark, "I'd like
+          // to log in now" button) and lets the polite status start its
+          // utterance before the route change — the destination /login
+          // page's pending-notice mirror picks up where this one leaves off.
+          <p
+            role="status"
+            aria-live="polite"
+            className="text-[var(--mount-alt-text)] text-center text-sm"
+          >
+            Password updated. Signing you in…
+          </p>
         ) : (
           <form className="space-y-4" onSubmit={handleSubmit}>
             <label

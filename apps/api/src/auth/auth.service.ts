@@ -138,7 +138,16 @@ export class AuthService {
     const user = await this.magicLinkService.verifyToken(token);
     // Route through login() so TOTP-enrolled accounts hit the MFA gate
     // instead of getting a session directly from a magic-link click.
-    return this.login(user.id);
+    const result = await this.login(user.id);
+    // Surface the resolved userId on the non-MFA branch so the SPA can
+    // detect a cross-account click (logged into B, link is for A) and
+    // revoke B's sessions before swapping. MFA path stays unchanged —
+    // the userId is bound to the mfaToken via the nonce and surfaced
+    // after verifyOtp resolves.
+    if ('accessToken' in result) {
+      return { ...result, userId: user.id };
+    }
+    return result;
   }
 
   async verifyOtp(

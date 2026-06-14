@@ -925,6 +925,7 @@ describe('AuthService', () => {
       );
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
+      expect(result).toHaveProperty('userId', USER_ID);
     });
 
     it('returns an MFA challenge instead of a full session when MFA is enabled', async () => {

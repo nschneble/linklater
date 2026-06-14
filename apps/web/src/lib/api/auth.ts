@@ -6,13 +6,22 @@ import {
 } from './core';
 
 /**
- * The two shapes `POST /auth/login` (and the magic-link verifier) can return.
- * Accounts without MFA get a session token pair; accounts with TOTP enrolled
- * get an `mfaToken` challenge instead and must complete `verifyOtp` to finish
- * authenticating.
+ * The two shapes `POST /auth/login` can return. Accounts without MFA get a
+ * session token pair; accounts with TOTP enrolled get an `mfaToken`
+ * challenge instead and must complete `verifyOtp` to finish authenticating.
  */
 export type LoginResponse =
   | { accessToken: string; refreshToken: string }
+  | { mfaToken: string; mfaMethod: 'totp' };
+
+/**
+ * `POST /auth/verify-magic-link` shape. Adds `userId` on the non-MFA branch
+ * so the SPA can detect a cross-account click (logged into B, link is for A)
+ * and revoke B's sessions before swapping. MFA path stays unchanged — the
+ * userId is bound to the mfaToken via the nonce and not exposed here.
+ */
+export type MagicLinkVerifyResponse =
+  | { accessToken: string; refreshToken: string; userId: string }
   | { mfaToken: string; mfaMethod: 'totp' };
 
 /**
@@ -214,22 +223,19 @@ export async function requestMagicLink(email: string): Promise<void> {
   );
 }
 
-export async function verifyMagicLink(token: string): Promise<LoginResponse> {
-  // The server routes magic-link verification through the same `login()`
-  // helper as password sign-in, so an MFA-enabled account answering a magic
-  // link gets back an `mfaToken` challenge instead of an access token.
-  // Returning `LoginResponse` keeps that branch visible to the caller and
-  // prevents a silent destructure failure for users with TOTP turned on.
-  const data = await apiFetchRequired<LoginResponse>(
+export async function verifyMagicLink(
+  token: string,
+): Promise<MagicLinkVerifyResponse> {
+  // Does NOT auto-store the returned token pair. The caller (VerifyLoginPage)
+  // first compares the returned `userId` against the currently signed-in
+  // user, and may keep the existing session (same-account click) or revoke
+  // B's sessions first (cross-account click). The server still consumes the
+  // magic-link token on every call — single-use semantics hold.
+  return apiFetchRequired<MagicLinkVerifyResponse>(
     '/auth/verify-magic-link',
     { body: JSON.stringify({ token }), method: 'POST' },
     false,
   );
-
-  if ('accessToken' in data) {
-    setStoredToken(data.accessToken, data.refreshToken);
-  }
-  return data;
 }
 
 export async function verifyOtp(

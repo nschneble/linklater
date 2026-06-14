@@ -5,7 +5,8 @@
  * Token-from-URL paths:
  *   - No token → client-side error before API call
  *   - Password mismatch → client-side error before API call
- *   - API success → success view
+ *   - API success → sr-only status + queue 'password-reset-success' notice +
+ *     navigate('/login', { replace: true }) after a brief announcement window
  *   - API error → error in role="alert"
  */
 
@@ -26,9 +27,27 @@ vi.mock('../../lib/api', () => ({
   resetPassword: vi.fn(),
 }));
 
+vi.mock('../../lib/pendingNotice', () => ({
+  setPendingNotice: vi.fn(),
+}));
+
+const navigate = vi.fn();
+
+vi.mock('react-router-dom', async () => {
+  const actual =
+    await vi.importActual<typeof import('react-router-dom')>(
+      'react-router-dom',
+    );
+  return {
+    ...actual,
+    useNavigate: () => navigate,
+  };
+});
+
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import * as apiModule from '../../lib/api';
+import * as pendingNoticeModule from '../../lib/pendingNotice';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -109,7 +128,7 @@ describe('ResetPasswordPage success path', () => {
     );
   });
 
-  it('transitions to success view after a successful reset', async () => {
+  it('renders an sr-only polite confirmation after a successful reset', async () => {
     vi.mocked(apiModule.resetPassword).mockResolvedValue(undefined);
     const { container } = renderPage();
 
@@ -125,10 +144,84 @@ describe('ResetPasswordPage success path', () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /i'd like to log in now/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent(/password updated/i);
     });
+  });
+
+  it('does NOT render the legacy "I\'d like to log in now" button or bouncing checkmark', async () => {
+    vi.mocked(apiModule.resetPassword).mockResolvedValue(undefined);
+    const { container } = renderPage();
+
+    fireEvent.change(screen.getByLabelText(/^new password/i), {
+      target: { value: 'correct-horse-battery' },
+    });
+    fireEvent.change(screen.getByLabelText(/confirm new password/i), {
+      target: { value: 'correct-horse-battery' },
+    });
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByRole('button', { name: /i'd like to log in now/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("queues 'password-reset-success' pending notice on successful reset", async () => {
+    vi.mocked(apiModule.resetPassword).mockResolvedValue(undefined);
+    const { container } = renderPage();
+
+    fireEvent.change(screen.getByLabelText(/^new password/i), {
+      target: { value: 'correct-horse-battery' },
+    });
+    fireEvent.change(screen.getByLabelText(/confirm new password/i), {
+      target: { value: 'correct-horse-battery' },
+    });
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    await waitFor(() => {
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'password-reset-success',
+      );
+    });
+  });
+
+  it('navigates to /login with replace:true after the announcement delay', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(apiModule.resetPassword).mockResolvedValue(undefined);
+      const { container } = renderPage();
+
+      fireEvent.change(screen.getByLabelText(/^new password/i), {
+        target: { value: 'correct-horse-battery' },
+      });
+      fireEvent.change(screen.getByLabelText(/confirm new password/i), {
+        target: { value: 'correct-horse-battery' },
+      });
+
+      await act(async () => {
+        fireEvent.submit(container.querySelector('form')!);
+      });
+
+      // Pre-delay: navigation has NOT yet fired (the sr-only status is
+      // mounted and given time to start its polite utterance).
+      expect(navigate).not.toHaveBeenCalled();
+
+      await act(async () => {
+        vi.advanceTimersByTime(800);
+      });
+
+      expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

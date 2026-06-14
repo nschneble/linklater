@@ -3,7 +3,13 @@
  *
  * On mount, reads ?token= from the URL and calls verifyMagicLink().
  * State machine:
- *   - verifying → success → navigate('/unread') (NO toast — login is login)
+ *   - verifying → no prior session → loginWithToken + navigate('/unread')
+ *     (NO toast — login is login)
+ *   - verifying → SAME account as current session → keep existing tokens,
+ *     setPendingNotice('already-logged-in') + navigate('/unread')
+ *   - verifying → DIFFERENT account from current session → revokeAllSessions
+ *     (revokes B's sessions via current bearer) → loginWithToken (swaps to A) →
+ *     setPendingNotice('account-switched') + navigate('/unread')
  *   - verifying → MFA → MfaView mounted
  *   - verifying → failure → setPendingNotice('login-link-invalid') +
  *     navigate('/login') (AuthForm surfaces the toast)
@@ -21,6 +27,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 
 vi.mock('../../lib/api', () => ({
+  revokeAllSessions: vi.fn().mockResolvedValue(undefined),
   verifyMagicLink: vi.fn(),
   verifyOtp: vi.fn(),
 }));
@@ -58,6 +65,7 @@ function makeAuthContext(
   overrides: Partial<{
     loginWithToken: ReturnType<typeof vi.fn>;
     refreshUser: ReturnType<typeof vi.fn>;
+    user: { userId: string } | null;
   }> = {},
 ) {
   return {
@@ -122,6 +130,7 @@ describe('VerifyLoginPage success path (no toast — login is login)', () => {
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-abc',
       refreshToken: 'refresh-abc',
+      userId: 'user-1',
     });
 
     await act(async () => {
@@ -139,6 +148,7 @@ describe('VerifyLoginPage success path (no toast — login is login)', () => {
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-abc',
       refreshToken: 'refresh-abc',
+      userId: 'user-1',
     });
 
     await act(async () => {
@@ -154,6 +164,7 @@ describe('VerifyLoginPage success path (no toast — login is login)', () => {
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-abc',
       refreshToken: 'refresh-abc',
+      userId: 'user-1',
     });
 
     await act(async () => {
@@ -169,6 +180,7 @@ describe('VerifyLoginPage success path (no toast — login is login)', () => {
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-abc',
       refreshToken: 'refresh-abc',
+      userId: 'user-1',
     });
 
     await act(async () => {
@@ -180,6 +192,139 @@ describe('VerifyLoginPage success path (no toast — login is login)', () => {
     });
 
     expect(pendingNoticeModule.setPendingNotice).not.toHaveBeenCalled();
+  });
+});
+
+describe('VerifyLoginPage same-account branch (already signed in as the link recipient)', () => {
+  it('does NOT call loginWithToken when current user matches the magic-link userId', async () => {
+    const loginWithToken = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ loginWithToken, user: { userId: 'user-1' } }),
+    );
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      accessToken: 'jwt-abc',
+      refreshToken: 'refresh-abc',
+      userId: 'user-1',
+    });
+
+    await act(async () => {
+      renderPage();
+    });
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/unread', { replace: true });
+    });
+    expect(loginWithToken).not.toHaveBeenCalled();
+  });
+
+  it("queues 'already-logged-in' pending notice when the link is for the current user", async () => {
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ user: { userId: 'user-1' } }),
+    );
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      accessToken: 'jwt-abc',
+      refreshToken: 'refresh-abc',
+      userId: 'user-1',
+    });
+
+    await act(async () => {
+      renderPage();
+    });
+
+    await waitFor(() => {
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'already-logged-in',
+      );
+    });
+  });
+
+  it('does NOT call revokeAllSessions on the same-account branch', async () => {
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ user: { userId: 'user-1' } }),
+    );
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      accessToken: 'jwt-abc',
+      refreshToken: 'refresh-abc',
+      userId: 'user-1',
+    });
+
+    await act(async () => {
+      renderPage();
+    });
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/unread', { replace: true });
+    });
+    expect(apiModule.revokeAllSessions).not.toHaveBeenCalled();
+  });
+});
+
+describe('VerifyLoginPage account-switch branch (logged in as B, link is for A)', () => {
+  it('calls revokeAllSessions BEFORE loginWithToken so the bearer is still B', async () => {
+    const callOrder: string[] = [];
+    vi.mocked(apiModule.revokeAllSessions).mockImplementation(async () => {
+      callOrder.push('revokeAllSessions');
+    });
+    const loginWithToken = vi.fn().mockImplementation(async () => {
+      callOrder.push('loginWithToken');
+    });
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ loginWithToken, user: { userId: 'user-b' } }),
+    );
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      accessToken: 'jwt-a',
+      refreshToken: 'refresh-a',
+      userId: 'user-a',
+    });
+
+    await act(async () => {
+      renderPage();
+    });
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/unread', { replace: true });
+    });
+    expect(callOrder).toEqual(['revokeAllSessions', 'loginWithToken']);
+  });
+
+  it("queues 'account-switched' pending notice when the link is for a different user", async () => {
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ user: { userId: 'user-b' } }),
+    );
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      accessToken: 'jwt-a',
+      refreshToken: 'refresh-a',
+      userId: 'user-a',
+    });
+
+    await act(async () => {
+      renderPage();
+    });
+
+    await waitFor(() => {
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'account-switched',
+      );
+    });
+  });
+
+  it('navigates to /unread after the account swap completes', async () => {
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ user: { userId: 'user-b' } }),
+    );
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      accessToken: 'jwt-a',
+      refreshToken: 'refresh-a',
+      userId: 'user-a',
+    });
+
+    await act(async () => {
+      renderPage();
+    });
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/unread', { replace: true });
+    });
   });
 });
 

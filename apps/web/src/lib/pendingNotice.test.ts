@@ -105,6 +105,40 @@ describe('setPendingNotice / consumePendingNotice', () => {
     expect(hasPendingNotice()).toBe(false);
   });
 
+  // Magic-link cross-account / same-account / password-reset entries —
+  // queued after the verifyMagicLink and resetPassword flows finish.
+
+  it('round-trips account-switched as a warning-variant entry (magic link consumed for a different account)', () => {
+    setPendingNotice('account-switched');
+    expect(hasPendingNotice()).toBe(true);
+    expect(consumePendingNotice()).toEqual({
+      message:
+        'Signed in to a different account. Your previous session was ended.',
+      variant: 'warning',
+    });
+    expect(hasPendingNotice()).toBe(false);
+  });
+
+  it('round-trips already-logged-in as a success-variant entry (magic link is for the current user)', () => {
+    setPendingNotice('already-logged-in');
+    expect(hasPendingNotice()).toBe(true);
+    expect(consumePendingNotice()).toEqual({
+      message: "You're already signed in.",
+      variant: 'success',
+    });
+    expect(hasPendingNotice()).toBe(false);
+  });
+
+  it('round-trips password-reset-success as a success-variant entry (surfaced on /login after redirect)', () => {
+    setPendingNotice('password-reset-success');
+    expect(hasPendingNotice()).toBe(true);
+    expect(consumePendingNotice()).toEqual({
+      message: 'Password updated. Please sign in.',
+      variant: 'success',
+    });
+    expect(hasPendingNotice()).toBe(false);
+  });
+
   it('returns null when no notice has been set', () => {
     expect(consumePendingNotice()).toBeNull();
   });
@@ -204,10 +238,13 @@ describe('catalog drift guard', () => {
   // list being updated.
   const ALL_KEYS: readonly PendingNotice[] = [
     'account-deleted',
+    'account-switched',
+    'already-logged-in',
     'email-verified',
     'email-verified-please-sign-in',
     'email-change-verified',
     'email-change-verified-please-sign-in',
+    'password-reset-success',
     'deletion-link-invalid',
     'verification-link-invalid',
     'email-change-link-invalid',
@@ -221,7 +258,7 @@ describe('catalog drift guard', () => {
       expect(entry).not.toBeNull();
       expect(typeof entry?.message).toBe('string');
       expect((entry?.message ?? '').length).toBeGreaterThan(0);
-      expect(['success', 'error']).toContain(entry?.variant);
+      expect(['success', 'warning', 'error']).toContain(entry?.variant);
     });
   }
 });

@@ -956,8 +956,18 @@ describe('registerMagicLink', () => {
 });
 
 describe('verifyMagicLink', () => {
-  it('POSTs to /auth/verify-magic-link with token and stores the access token', async () => {
-    const fetchMock = mockFetch({ accessToken: 'ml-jwt' });
+  // verifyMagicLink does NOT auto-store the returned token pair anymore — the
+  // VerifyLoginPage caller first compares the returned `userId` against the
+  // currently signed-in user and decides whether to swap sessions, keep the
+  // existing one (same-account click), or revoke B's sessions first
+  // (cross-account click). The server still consumes the magic-link token
+  // on every call — single-use semantics hold at the API layer.
+  it('POSTs to /auth/verify-magic-link with token and returns the response without storing', async () => {
+    const fetchMock = mockFetch({
+      accessToken: 'ml-jwt',
+      refreshToken: 'ml-refresh',
+      userId: 'user-1',
+    });
 
     const result = await verifyMagicLink('my-token');
 
@@ -967,8 +977,12 @@ describe('verifyMagicLink', () => {
       token: string;
     };
     expect(body.token).toBe('my-token');
-    expect(result).toEqual({ accessToken: 'ml-jwt' });
-    expect(getStoredToken()).toBe('ml-jwt');
+    expect(result).toEqual({
+      accessToken: 'ml-jwt',
+      refreshToken: 'ml-refresh',
+      userId: 'user-1',
+    });
+    expect(getStoredToken()).toBeNull();
   });
 
   // MFA-enabled accounts hitting a magic link get a challenge back from

@@ -9,16 +9,19 @@ interface PendingNoticeAnnouncerProps {
   notice: string | null;
   /**
    * Controls icon, ARIA live shape, AND bundle paint on both the visible
-   * Toast and the sr-only mirror. `'success'` rides `role="status"` +
-   * `aria-live="polite"`; `'error'` rides `role="alert"` +
-   * `aria-live="assertive"`. The mirror MUST match the Toast — divergence
+   * Toast and the sr-only mirror. `'success'` and `'warning'` both ride
+   * `role="status"` + `aria-live="polite"`; `'error'` rides `role="alert"`
+   * + `aria-live="assertive"`. The mirror MUST match the Toast — divergence
    * (e.g. polite mirror under an assertive Toast) is worse than either
    * channel alone, because the two regions race on the SR's announcement
-   * queue with mismatched priorities.
+   * queue with mismatched priorities. Warning shares the polite channel
+   * with success because the underlying user action was intentional; the
+   * warn paint + icon glyph carry the side-effect signal redundantly.
    */
-  variant: 'success' | 'error';
+  variant: 'success' | 'warning' | 'error';
   /**
-   * Called when the toast is dismissed (user click or 3s auto-dismiss).
+   * Called when the toast is dismissed (user click or auto-dismiss timer —
+   * 3s for success/error, 5s for warning).
    */
   onDismiss: () => void;
 }

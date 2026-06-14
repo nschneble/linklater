@@ -16,10 +16,13 @@
  * authenticated routes to `/login` would overwrite any router state.
  *
  * Each entry carries a `variant` so the surfacing UI (toast + sr-only
- * mirror) can pick the right ARIA shape and bundle paint. Success
- * variants ride `role="status"` + `aria-live="polite"`; error variants
- * ride `role="alert"` + `aria-live="assertive"` — both channels MUST
- * match per a11y-lead (divergence is worse than either channel alone).
+ * mirror) can pick the right ARIA shape and bundle paint. Success AND
+ * warning variants ride `role="status"` + `aria-live="polite"`; error
+ * variants ride `role="alert"` + `aria-live="assertive"` — both channels
+ * MUST match per a11y-lead (divergence is worse than either channel
+ * alone). Warning shares the polite channel with success because the
+ * underlying user action was intentional; the warn paint + icon glyph
+ * carry the "heads-up, side-effect happened" signal redundantly.
  */
 
 // The key value is intentionally renamed (was `linklater_auth_notice`) so
@@ -30,10 +33,13 @@ const PENDING_NOTICE_KEY = 'linklater_pending_notice';
 
 export type PendingNotice =
   | 'account-deleted'
+  | 'account-switched'
+  | 'already-logged-in'
   | 'email-verified'
   | 'email-verified-please-sign-in'
   | 'email-change-verified'
   | 'email-change-verified-please-sign-in'
+  | 'password-reset-success'
   | 'deletion-link-invalid'
   | 'verification-link-invalid'
   | 'email-change-link-invalid'
@@ -41,7 +47,7 @@ export type PendingNotice =
 
 export interface NoticeEntry {
   message: string;
-  variant: 'success' | 'error';
+  variant: 'success' | 'warning' | 'error';
 }
 
 // Error-variant copies for verification-link-invalid + email-change-link-invalid
@@ -54,6 +60,19 @@ export interface NoticeEntry {
 const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
   'account-deleted': {
     message: 'Your account has been deleted.',
+    variant: 'success',
+  },
+  // Generic copy (not "signed in as X@Y") per a11y-lead: the 3s toast
+  // auto-dismiss is too short for SRs to parse a full email address mid
+  // route transition. The /unread destination already surfaces the now-
+  // current account identity in the header avatar/menu.
+  'account-switched': {
+    message:
+      'Signed in to a different account. Your previous session was ended.',
+    variant: 'warning',
+  },
+  'already-logged-in': {
+    message: "You're already signed in.",
     variant: 'success',
   },
   'email-verified': {
@@ -70,6 +89,10 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
   },
   'email-change-verified-please-sign-in': {
     message: 'Your email has been updated. Please sign in.',
+    variant: 'success',
+  },
+  'password-reset-success': {
+    message: 'Password updated. Please sign in.',
     variant: 'success',
   },
   'deletion-link-invalid': {
