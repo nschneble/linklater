@@ -125,27 +125,27 @@ graph TD
 
 ## Where the wild components are
 
-| I want to…                             | I should open…                                         |
-| -------------------------------------- | ------------------------------------------------------ |
-| Add a new authenticated route          | `src/routes/`, `AppShell.tsx`, `src/lib/navigation.ts` |
-| Add a new hook                         | `src/lib/hooks/`                                       |
-| Add or change auth flows               | `src/components/auth/`                                 |
-| Adjust auth context                    | `src/auth/AuthContext/`                                |
-| Change link card layout                | `src/components/links/LinkCard/`                       |
-| Change Settings page sections          | `src/components/settings/`                             |
-| Change the marketing page              | `src/components/LandingPage/`                          |
-| Edit theme styles                      | `src/theme/`, `src/theme/styles/`                      |
-| Edit the API reference UI              | `src/components/api-docs/`                             |
-| Edit the crash/error fallback page     | `src/components/FailWhalePage/`                        |
-| Edit the error boundary or 404 page    | `src/components/errors/`                               |
-| Edit the extension OAuth authorize page | `src/components/auth/`                                |
-| Edit the post-signup welcome modal     | `src/components/welcome/`                              |
-| Edit the Stumble! flow                 | `src/components/stumble/`                              |
-| Find a shared UI primitive             | `src/components/common/`                               |
-| Touch API client behavior              | `src/lib/api/`                                         |
-| Tweak email / login verification pages | `src/components/verify/`                               |
-| Tweak the menu navigation              | `src/components/UserMenu/`                             |
-| Wire up CVD / accessibility CSS        | `src/index.css`, `src/theme/ThemeContext/`             |
+| I want to…                              | I should open…                                         |
+| --------------------------------------- | ------------------------------------------------------ |
+| Add a new authenticated route           | `src/routes/`, `AppShell.tsx`, `src/lib/navigation.ts` |
+| Add a new hook                          | `src/lib/hooks/`                                       |
+| Add or change auth flows                | `src/components/auth/`                                 |
+| Adjust auth context                     | `src/auth/AuthContext/`                                |
+| Change link card layout                 | `src/components/links/LinkCard/`                       |
+| Change Settings page sections           | `src/components/settings/`                             |
+| Change the marketing page               | `src/components/LandingPage/`                          |
+| Edit theme styles                       | `src/theme/`, `src/theme/styles/`                      |
+| Edit the API reference UI               | `src/components/api-docs/`                             |
+| Edit the crash/error fallback page      | `src/components/FailWhalePage/`                        |
+| Edit the error boundary or 404 page     | `src/components/errors/`                               |
+| Edit the extension OAuth authorize page | `src/components/auth/`                                 |
+| Edit the post-signup welcome modal      | `src/components/welcome/`                              |
+| Edit the Stumble! flow                  | `src/components/stumble/`                              |
+| Find a shared UI primitive              | `src/components/common/`                               |
+| Touch API client behavior               | `src/lib/api/`                                         |
+| Tweak email / login verification pages  | `src/components/verify/`                               |
+| Tweak the menu navigation               | `src/components/UserMenu/`                             |
+| Wire up CVD / accessibility CSS         | `src/index.css`, `src/theme/ThemeContext/`             |
 
 ## A few explanations
 
@@ -154,5 +154,3 @@ Environment variables are documented in `.env.example`
 The API reference is available at `/settings/api` when the app is running
 
 The CVD accessibility hook (`data-cvd="on"`) is implemented in `src/theme/ThemeContext/` and drives a set of global CSS rules defined in `src/index.css`
-
-Font Awesome Free is self-hosted under `public/assets/fontawesome/`. The shipped `.woff2` files are subset to only the glyphs the app actually paints; the unsubsetted source webfonts live alongside the build script at `scripts/font-awesome-source/`. To add a new icon, add its name (without the `fa-` prefix) to the `solid` or `brands` array in `scripts/font-awesome-manifest.json`, then run `npm run subset-fa` and commit the regenerated `.woff2` files. A vitest in `scripts/font-awesome-manifest.test.ts` enforces sync between the manifest and the icons referenced in `src/` and `index.html`.

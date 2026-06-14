@@ -63,8 +63,6 @@ Click on an image to open it full-size in a new browser tab:
 - **Linting**: ESLint + Prettier
 - **Testing**: Vitest (front-end) + Jest (back-end)
 
-Font Awesome Free (SIL OFL 1.1 fonts, CC BY 4.0 icons) is self-hosted under `apps/web/public/assets/fontawesome/`. License headers ship verbatim in the vendored CSS.
-
 ## Monorepo structure
 
 It’s a majestic modular monorepo!
@@ -215,6 +213,20 @@ CSS escape hatches (`:focus`, `:has-text()`) for behavioral assertions.
 
 Reference: [npmjs.com/package/tuffgal](https://www.npmjs.com/package/tuffgal)
 · [github.com/nschneble/tuffgal](https://github.com/nschneble/tuffgal)
+
+### Font Awesome
+
+Font Awesome Free is self-hosted under `public/assets/fontawesome/`. The
+shipped `.woff2` files are a subset of what's actually used in the app. The
+full webfonts live alongside the build script at
+`scripts/font-awesome-source/`.
+
+To add a new icon, add its name (without the `fa-` prefix) to the `solid`
+or `brands` array in `scripts/font-awesome-manifest.json`, then run
+`npm run subset-fa` and commit the regenerated `.woff2` files.
+
+A vitest in `scripts/font-awesome-manifest.test.ts` enforces the sync
+between the manifest and icons referenced in `src/` and `index.html`.
 
 ### Versioning
 
