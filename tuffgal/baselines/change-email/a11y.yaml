@@ -29,6 +29,7 @@
       - heading "Email" [level=3]
       - text: testing-ui@linklater.test Verified
       - status: Verification link sent to moved@linklater.test
+      - button "Resend verification email"
       - text: New email
       - textbox "New email":
         - /placeholder: Leave blank to keep testing-ui@linklater.test
@@ -78,7 +79,9 @@
     - heading "API Tokens" [level=3]
     - button "Generate new token"
     - paragraph: You haven't created any tokens
-    - button "View the API documentation"
+    - link "View the API documentation in a new tab":
+      - /url: /settings/api
+      - text: View the API documentation
   - region "Danger zone":
     - heading "Danger zone" [level=2]
     - paragraph: Beware all ye who enter. Deleting your account will remove all your saved links. This cannot be undone.
