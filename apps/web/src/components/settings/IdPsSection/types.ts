@@ -11,8 +11,6 @@ export interface IdPsSectionProps {
   googleEnabled?: boolean;
   // set from `link_error` query param on OAuth redirect return
   linkError?: string | null;
-  // set from `linked` query param when OAuth linking completes
-  linkedMessage?: string | null;
 }
 
 /** Props for a single OAuth provider row. */

@@ -11,6 +11,7 @@ import SettingsLayout from './SettingsLayout';
 import IdPsSection from './IdPsSection';
 import StumbleSection from '../stumble/StumbleSection';
 import MultiFactorSection from './MultiFactorSection';
+import Toast from '../common/Toast';
 import { setActiveSettingsSection } from './settingsScroll';
 import { useSettingsActiveSection } from './useSettingsActiveSection';
 import type { SettingsSection } from './settingsSections';
@@ -41,25 +42,33 @@ export default function SettingsView({
   const navigate = useNavigate();
   const [searchParameters, setSearchParameters] = useSearchParams();
 
-  // Capture flash messages from query params on mount and store them in state
-  // so they survive after the URL is cleaned up.
-  const [linkedMessage] = useState<string | null>(() => {
-    const provider = searchParameters.get('linked');
-    return provider
-      ? (LINKED_MESSAGES[provider] ?? `${provider} account connected.`)
-      : null;
-  });
+  // Flash messages from `?linked=…` / `?link_error=…`. The success path
+  // surfaces as a `<Toast>` (this view owns it) and the error path passes
+  // down to `<IdPsSection>` as an inline `<Alert>`.
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
-  const [linkError] = useState<string | null>(() => {
-    const errorCode = searchParameters.get('link_error');
-    return errorCode
-      ? (LINK_ERROR_MESSAGES[errorCode] ?? 'Failed to connect account.')
-      : null;
-  });
-
-  // Clean the flash params from the URL so they don't reappear on refresh.
+  // Read the flash params, derive their messages, then strip them from the
+  // URL — all in a single mount-effect. Deferring the success read to an
+  // effect (rather than reading synchronously in a `useState` initializer)
+  // produces the empty → populated transition that NVDA/JAWS need to
+  // announce the Toast's `aria-live="polite"` region; content present on
+  // first paint is treated as page load and skipped. Same rationale as
+  // `usePendingNotice`.
   useEffect(() => {
-    if (searchParameters.get('linked') || searchParameters.get('link_error')) {
+    const provider = searchParameters.get('linked');
+    if (provider) {
+      setToastMessage(
+        LINKED_MESSAGES[provider] ?? `${provider} account connected.`,
+      );
+    }
+    const errorCode = searchParameters.get('link_error');
+    if (errorCode) {
+      setLinkError(
+        LINK_ERROR_MESSAGES[errorCode] ?? 'Failed to connect account.',
+      );
+    }
+    if (provider || errorCode) {
       setSearchParameters({}, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -138,7 +147,6 @@ export default function SettingsView({
           <IdPsSection
             appleEnabled={appleEnabled}
             googleEnabled={googleEnabled}
-            linkedMessage={linkedMessage}
             linkError={linkError}
           />
         )}
@@ -202,6 +210,9 @@ export default function SettingsView({
           aria-hidden="true"
         />
       </div>
+      {toastMessage && (
+        <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
+      )}
     </SettingsLayout>
   );
 }
