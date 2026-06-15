@@ -7,7 +7,7 @@ import PrimaryButton from '../../common/PrimaryButton';
 import ApiTokensList from '../ApiTokensList';
 import { useApiTokens } from './useApiTokens';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 /**
  * Settings section for managing personal access tokens (PATs).
@@ -17,7 +17,6 @@ import { useNavigate } from 'react-router-dom';
  * the API docs link.
  */
 export default function ApiTokensSection() {
-  const navigate = useNavigate();
   const apiTokens = useApiTokens();
 
   return (
@@ -108,9 +107,15 @@ export default function ApiTokensSection() {
         tokens={apiTokens.tokens}
       />
 
-      <LinkButton onClick={() => navigate('/settings/api')}>
+      <Link
+        className="inline-block text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] text-xs underline underline-offset-3 transition-transform active:scale-[0.96]"
+        to="/settings/api"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="View the API documentation in a new tab"
+      >
         View the API documentation
-      </LinkButton>
+      </Link>
     </div>
   );
 }
