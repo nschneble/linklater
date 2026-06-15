@@ -94,7 +94,7 @@ describe('IdPsSection error rendering', () => {
   });
 
   it('renders no success element — toast is now owned by SettingsView', () => {
-    render(
+    const { container } = render(
       <IdPsSection
         appleEnabled={false}
         googleEnabled={true}
@@ -103,8 +103,12 @@ describe('IdPsSection error rendering', () => {
     );
 
     // No role="alert" (no error) and no role="status" (toast lifted out).
+    // The `[aria-live]` query is belt-and-suspenders: it catches a regression
+    // that reintroduces a bare `<div aria-live="polite">` with no role,
+    // which the role queries above would silently false-pass.
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.queryByRole('status')).toBeNull();
+    expect(container.querySelector('[aria-live]')).toBeNull();
   });
 });
 

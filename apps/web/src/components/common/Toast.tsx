@@ -96,10 +96,11 @@ export default function Toast({
 
   // Mirror onDismiss into a ref so the auto-dismiss timer doesn't restart
   // every time a parent re-renders with a fresh inline arrow. Consumers
-  // (AuthForm, LinksView, BookmarkletSection) pass `onDismiss={() => ...}`
-  // — without this ref the timer would extend each time the parent's
-  // local state flips mid-window (e.g. forgot-password sentinel-hold
-  // 5000ms after success → 5+5 = ~10s visible toast).
+  // (AuthForm, LinksView, BookmarkletSection, SettingsView) pass
+  // `onDismiss={() => ...}` — without this ref the timer would extend
+  // each time the parent's local state flips mid-window (e.g.
+  // forgot-password sentinel-hold 5000ms after success → 5+5 = ~10s
+  // visible toast).
   const onDismissReference = useRef(onDismiss);
   onDismissReference.current = onDismiss;
 

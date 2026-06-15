@@ -112,6 +112,13 @@ describe('SettingsView OAuth-link flash toast', () => {
   // The mount-effect then flips state, and the empty → populated
   // transition that NVDA/JAWS require is observable via the deferred
   // `findByRole('status')` in the next test.
+  //
+  // A DOM-level synchronous peek BEFORE the `findByRole` await is not
+  // achievable here: RTL's `render()` flushes mount-effects inside its
+  // internal `act()` before returning, so by the time test code sees
+  // the result the toast is already in the DOM. The structural
+  // argument above (useState initialized to `null`) is the load-bearing
+  // proof for this half of the contract.
 
   it('renders the success Toast after the mount-effect flushes (deferred announce for SR a11y)', async () => {
     renderAt('/settings?linked=google');

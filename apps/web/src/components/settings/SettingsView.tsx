@@ -55,6 +55,18 @@ export default function SettingsView({
   // announce the Toast's `aria-live="polite"` region; content present on
   // first paint is treated as page load and skipped. Same rationale as
   // `usePendingNotice`.
+  //
+  // Intentionally mount-only (no [searchParameters] deps). Browser-back to
+  // `?linked=…` updates location in place without remounting SettingsView,
+  // so the toast correctly does not re-appear — don't "fix" this by adding
+  // `searchParameters` to the deps array.
+  //
+  // The URL is itself the consumed sentinel — making this idempotent under
+  // React StrictMode's double-invoke of mount-effects: the second invocation
+  // reads `null` from both params, so neither `setToastMessage` nor the
+  // `setSearchParameters({}, {})` strip re-fires (react-router short-circuits
+  // the strip against an already-empty query). Same idiom as
+  // usePendingNotice's sessionStorage clear.
   useEffect(() => {
     const provider = searchParameters.get('linked');
     if (provider) {
