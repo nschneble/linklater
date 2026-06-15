@@ -157,7 +157,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Reset password using the emailed token' })
   @ApiResponse({
     status: 200,
-    description: 'Password updated. Returns a session token pair or MFA challenge.',
+    description:
+      'Password updated. Returns a session token pair or MFA challenge.',
   })
   @ApiResponse({ status: 400, description: 'Token is invalid or expired.' })
   @ApiResponse({ status: 429, description: 'Too many reset attempts.' })

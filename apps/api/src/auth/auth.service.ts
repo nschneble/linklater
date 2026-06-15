@@ -57,6 +57,8 @@ export class AuthService {
         totpVerifiedAt: _totpVerifiedAt,
         magicLinkToken: _magicLinkToken,
         magicLinkTokenExpiresAt: _magicLinkTokenExpiresAt,
+        accountDeletionToken,
+        accountDeletionTokenExpiresAt,
         ...rest
       },
       oauthAccounts,
@@ -71,12 +73,17 @@ export class AuthService {
       providerEmail: account.providerEmail,
       connectedAt: account.connectedAt,
     }));
+    const accountDeletionPending =
+      !!accountDeletionToken &&
+      !!accountDeletionTokenExpiresAt &&
+      accountDeletionTokenExpiresAt > new Date();
 
     return {
       userId: id,
       ...rest,
       multiFactorMethod,
       multiFactorPending: !!totpSecret && !totpEnabledAt,
+      accountDeletionPending,
       connectedProviders,
     };
   }

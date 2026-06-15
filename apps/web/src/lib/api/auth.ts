@@ -44,6 +44,7 @@ export interface MeResponse {
   theme: string;
   multiFactorMethod: 'totp' | null;
   multiFactorPending: boolean;
+  accountDeletionPending: boolean;
   userId: string;
   welcomedAt: string | null;
 }

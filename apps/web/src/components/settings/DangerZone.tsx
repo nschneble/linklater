@@ -10,7 +10,7 @@ import IconButton from '../common/IconButton';
 import LinkButton from '../common/LinkButton';
 import ReauthForm from './ReauthForm';
 
-type Phase = 'idle' | 'reauth' | 'reauth-pending' | 'email-sent';
+type Phase = 'idle' | 'reauth' | 'reauth-pending';
 
 /**
  * Settings section for permanently deleting the account. Forks by credential
@@ -24,19 +24,28 @@ type Phase = 'idle' | 'reauth' | 'reauth-pending' | 'email-sent';
  *   focus contract as the two-step row.
  * - **Email-confirm branch** (magic-link-only-no-MFA accounts): the existing
  *   two-step `ActionGuard` row stays. Confirming fires `deleteMe()` with no
- *   body; the API returns `requiresEmailConfirmation: true` and DangerZone
- *   swaps to a "Check your email" panel with a "Never mind, keep my account"
- *   `LinkButton` that calls `DELETE /auth/account-deletion/pending` and
- *   reverts to the idle trigger. No logout in this branch — the email
- *   click finishes the deletion.
+ *   body; the API returns `requiresEmailConfirmation: true`, we refresh the
+ *   user, and the `user.accountDeletionPending` server flag flips the UI
+ *   into a "Check your email" panel with a "Never mind, keep my account"
+ *   `LinkButton`. Never mind calls `DELETE /auth/account-deletion/pending`,
+ *   refreshes the user (flag clears), and the panel unmounts back to the
+ *   idle trigger. Driving the panel off the server flag (not local state)
+ *   keeps the in-flight state across navigation away from Settings and back.
+ *   No logout in this branch — the email click finishes the deletion.
  *
  * While `useAuth()` is still loading, branch-specific UI is suppressed —
  * the section renders only a disabled idle trigger to avoid flickering the
  * magic-link-default branch for a user who is actually credentialed.
  */
 export default function DangerZone() {
-  const { logout, user, loading } = useAuth();
+  const { logout, refreshUser, user, loading } = useAuth();
   const triggerReference = useRef<HTMLButtonElement>(null);
+  // Set by handleNeverMind before the async refreshUser flips
+  // accountDeletionPending → false. The effect below catches the next render
+  // that lands on the idle trigger and returns focus there. Without this,
+  // the CheckYourEmailPanel unmounts and focus falls to <body>, dropping
+  // keyboard + screen-reader users out of context.
+  const shouldFocusTriggerOnIdle = useRef(false);
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [reauthError, setReauthError] = useState<string | null>(null);
@@ -45,6 +54,16 @@ export default function DangerZone() {
 
   const isCredentialed = !!(user?.hasPassword || user?.multiFactorMethod);
   const branchReady = !loading && !!user;
+  const accountDeletionPending = !!user?.accountDeletionPending;
+  const emailBranchIdle =
+    branchReady && !isCredentialed && !accountDeletionPending;
+
+  useEffect(() => {
+    if (shouldFocusTriggerOnIdle.current && emailBranchIdle) {
+      triggerReference.current?.focus();
+      shouldFocusTriggerOnIdle.current = false;
+    }
+  }, [emailBranchIdle]);
 
   const closeReauth = useCallback(() => {
     setPhase('idle');
@@ -97,14 +116,17 @@ export default function DangerZone() {
   const handleEmailConfirmConfirm = useCallback(async () => {
     const response = await deleteMe();
     if ('requiresEmailConfirmation' in response) {
-      setPhase('email-sent');
+      // The server now holds an unexpired deletion token, so refreshUser
+      // flips accountDeletionPending to true and the CheckYourEmailPanel
+      // renders. Its own mount effect handles focus.
+      await refreshUser();
     } else {
       // Defensive fallback: if the API ever deletes on the email path,
       // finish cleanly rather than leave the user in a stale UI.
       setPendingNotice('account-deleted');
       logout();
     }
-  }, [logout]);
+  }, [logout, refreshUser]);
 
   const handleNeverMind = useCallback(() => {
     void (async () => {
@@ -115,10 +137,18 @@ export default function DangerZone() {
         // pending, but the user clicked Never mind. We revert the UI
         // either way; the worst case is the email link still works.
       }
-      setPhase('idle');
-      requestAnimationFrame(() => triggerReference.current?.focus());
+      // Arm the focus-return effect before refreshUser commits the idle
+      // branch — raf-after-await races React commit; the effect locks
+      // focus to the actual mount of the trigger button.
+      shouldFocusTriggerOnIdle.current = true;
+      try {
+        await refreshUser();
+      } catch {
+        // stale user state resolves on next navigation; intent ref clears
+        // on the next idle render either way
+      }
     })();
-  }, []);
+  }, [refreshUser]);
 
   if (!branchReady) {
     return (
@@ -183,7 +213,7 @@ export default function DangerZone() {
     );
   }
 
-  if (phase === 'email-sent') {
+  if (accountDeletionPending) {
     return (
       <CheckYourEmailPanel email={user!.email} onNeverMind={handleNeverMind} />
     );
@@ -274,7 +304,7 @@ function CheckYourEmailPanel({ email, onNeverMind }: CheckYourEmailPanelProps) {
     <section
       ref={sectionReference}
       tabIndex={-1}
-      aria-labelledby="check-email-heading"
+      aria-label="Account deletion link sent"
       className="space-y-3 focus:outline-none"
     >
       <Alert variant="success">Account deletion link sent to {email}</Alert>

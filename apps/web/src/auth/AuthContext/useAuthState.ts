@@ -67,6 +67,7 @@ function mapMeToUser(me: MeResponse): User {
     theme: narrowTheme(me.theme),
     multiFactorMethod: me.multiFactorMethod,
     multiFactorPending: me.multiFactorPending,
+    accountDeletionPending: me.accountDeletionPending,
     userId: me.userId,
     welcomedAt: me.welcomedAt,
   };

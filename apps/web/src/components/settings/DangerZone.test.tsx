@@ -19,6 +19,7 @@ import {
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useEffect, useState } from 'react';
 import type { User } from '../../auth/AuthContext/types';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
@@ -55,6 +56,7 @@ function makeUser(overrides: Partial<User> = {}): User {
     theme: 'scanner-darkly',
     multiFactorMethod: null,
     multiFactorPending: false,
+    accountDeletionPending: false,
     userId: 'user-1',
     welcomedAt: null,
     ...overrides,
@@ -276,12 +278,45 @@ describe('DangerZone credentialed branch (MFA-only: hasPassword=false, multiFact
 });
 
 describe('DangerZone email-confirm branch (magic-link-only: hasPassword=false, no MFA)', () => {
+  // The email-confirm branch is driven by `user.accountDeletionPending` (a
+  // server-derived flag) so the panel survives navigation away from
+  // Settings and back. Tests in this branch model that contract: the
+  // useAuth mock is wired stateful so refreshUser actually mutates the
+  // user object the component reads on re-render.
+  function setupStatefulAuth(initialPending: boolean) {
+    let currentUser = makeUser({
+      hasPassword: false,
+      multiFactorMethod: null,
+      accountDeletionPending: initialPending,
+    });
+    let listeners: Array<() => void> = [];
+    const logout = vi.fn();
+    const refreshUser = vi.fn(async () => {
+      // Server source of truth: a pending deletion token from deleteMe;
+      // Never mind clears it via cancelPendingAccountDeletion.
+      const deleteCalls = vi.mocked(apiModule.deleteMe).mock.calls.length;
+      const cancelCalls = vi.mocked(apiModule.cancelPendingAccountDeletion).mock
+        .calls.length;
+      const pending = deleteCalls > cancelCalls;
+      currentUser = { ...currentUser, accountDeletionPending: pending };
+      listeners.forEach((listener) => listener());
+    });
+    vi.mocked(useAuth).mockImplementation(() => {
+      const [, setVersion] = useState(0);
+      useEffect(() => {
+        const listener = () => setVersion((version) => version + 1);
+        listeners.push(listener);
+        return () => {
+          listeners = listeners.filter((each) => each !== listener);
+        };
+      }, []);
+      return makeAuthContext({ user: currentUser, logout, refreshUser });
+    });
+    return { logout, refreshUser };
+  }
+
   beforeEach(() => {
-    vi.mocked(useAuth).mockReturnValue(
-      makeAuthContext({
-        user: makeUser({ hasPassword: false, multiFactorMethod: null }),
-      }),
-    );
+    setupStatefulAuth(false);
   });
 
   it('shows the "Delete my account" trigger in the email-confirm branch', () => {
@@ -314,8 +349,22 @@ describe('DangerZone email-confirm branch (magic-link-only: hasPassword=false, n
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/account deletion link sent/i),
+      ).toBeInTheDocument();
     });
+  });
+
+  it('renders the email-sent panel on mount when the server flag is already pending', () => {
+    setupStatefulAuth(true);
+    renderDangerZone();
+
+    expect(screen.getByText(/account deletion link sent/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: /never mind, i want to keep my account/i,
+      }),
+    ).toBeInTheDocument();
   });
 
   it('"Never mind" button calls cancelPendingAccountDeletion and reverts to idle', async () => {
@@ -332,12 +381,16 @@ describe('DangerZone email-confirm branch (magic-link-only: hasPassword=false, n
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/account deletion link sent/i),
+      ).toBeInTheDocument();
     });
 
     await act(async () => {
       fireEvent.click(
-        screen.getByRole('button', { name: /never mind, keep my account/i }),
+        screen.getByRole('button', {
+          name: /never mind, i want to keep my account/i,
+        }),
       );
     });
 
@@ -367,12 +420,16 @@ describe('DangerZone email-confirm branch (magic-link-only: hasPassword=false, n
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/account deletion link sent/i),
+      ).toBeInTheDocument();
     });
 
     await act(async () => {
       fireEvent.click(
-        screen.getByRole('button', { name: /never mind, keep my account/i }),
+        screen.getByRole('button', {
+          name: /never mind, i want to keep my account/i,
+        }),
       );
     });
 

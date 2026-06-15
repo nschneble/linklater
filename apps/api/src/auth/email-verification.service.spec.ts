@@ -235,7 +235,10 @@ describe('EmailVerificationService', () => {
         undefined,
       );
 
-      const result = await service.resetPassword(RESET_TOKEN, 'new-password-123');
+      const result = await service.resetPassword(
+        RESET_TOKEN,
+        'new-password-123',
+      );
 
       expect(usersServiceMock.resetPasswordWithToken).toHaveBeenCalledWith(
         USER_ID,

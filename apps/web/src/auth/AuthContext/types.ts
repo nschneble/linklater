@@ -32,6 +32,13 @@ export interface User {
   multiFactorMethod: 'totp' | null;
   /** `true` when the user has started TOTP setup but not yet verified it. */
   multiFactorPending: boolean;
+  /**
+   * `true` when the user has an unexpired email-confirmation token outstanding
+   * from a magic-link-account deletion request. Drives the "Check your email"
+   * panel in `DangerZone` so the in-flight state survives navigation away
+   * from settings and back.
+   */
+  accountDeletionPending: boolean;
   /** The user's UUID (renamed from `id` to `userId` by `GET /auth/me`). */
   userId: string;
   /**
