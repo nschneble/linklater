@@ -157,7 +157,7 @@ describe('useAuthForm', () => {
 
       expect(apiModule.requestMagicLink).toHaveBeenCalledWith(USER_EMAIL);
       expect(result.current.notice).toEqual({
-        message: 'Check your email for a login link.',
+        message: 'Magic link sent!',
         variant: 'success',
       });
     });
@@ -176,7 +176,7 @@ describe('useAuthForm', () => {
 
       expect(apiModule.registerMagicLink).toHaveBeenCalledWith(USER_EMAIL);
       expect(result.current.notice).toEqual({
-        message: 'Check your email to complete signup.',
+        message: 'Magic link sent!',
         variant: 'success',
       });
     });
@@ -259,7 +259,7 @@ describe('useAuthForm', () => {
 
       expect(apiModule.forgotPassword).toHaveBeenCalledWith(USER_EMAIL);
       expect(result.current.notice).toEqual({
-        message: 'Check your email for a reset link.',
+        message: 'Reset link sent!',
         variant: 'success',
       });
     });
@@ -647,7 +647,7 @@ describe('useAuthForm', () => {
       // it would also clobber the success notice fired later in the same
       // handler).
       expect(result.current.notice).toEqual({
-        message: 'Check your email for a login link.',
+        message: 'Magic link sent!',
         variant: 'success',
       });
     });

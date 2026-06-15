@@ -132,9 +132,7 @@ export default function EmailSettingsForm() {
 
       {hasPendingEmail && (
         <Alert variant="success">
-          Verification email sent to{' '}
-          <span className="font-medium">{user?.pendingEmail}</span>. Check your
-          inbox to confirm the change.
+          Verification link sent to {user?.pendingEmail}
         </Alert>
       )}
 

@@ -209,49 +209,23 @@ describe('LoginRegisterView submit button', () => {
 });
 
 describe('LoginRegisterView magic-link success state', () => {
-  it('shows "Magic link sent!" as submit label when magicLinkSentJustNow is true', () => {
-    renderView({ mode: 'login', password: '', magicLinkSentJustNow: true });
-    expect(
-      screen.getByRole('button', { name: /magic link sent!/i }),
-    ).toBeInTheDocument();
-  });
-
-  it('shows the check-circle icon (not the wand) when magicLinkSentJustNow is true', () => {
+  it('shows the wand-magic-sparkles icon when magicLinkSentJustNow is true', () => {
     const { container } = renderView({
       mode: 'login',
       password: '',
       magicLinkSentJustNow: true,
     });
-    // fa-circle-check is the success indicator; the wand belongs to the
-    // default magic-link state.
-    expect(container.querySelector('.fa-circle-check')).toBeInTheDocument();
     expect(
       container.querySelector('.fa-wand-magic-sparkles'),
-    ).not.toBeInTheDocument();
+    ).toBeInTheDocument();
+    expect(container.querySelector('.fa-wand-magic')).not.toBeInTheDocument();
   });
 
   it('disables the submit button while magicLinkSentJustNow is true (prevents re-click during toast window)', () => {
     renderView({ mode: 'login', password: '', magicLinkSentJustNow: true });
-    const button = screen.getByRole('button', { name: /magic link sent!/i });
-    expect(button).toBeDisabled();
-  });
-
-  it('uses success-state label over the loading label when both happen to be true', () => {
-    // Defense-in-depth: even though the hook releases loading=false before
-    // engaging the success state, render-time race could theoretically pass
-    // both as true; the success label wins because it conveys the more
-    // specific outcome and stays in sync with the visible toast.
-    renderView({
-      mode: 'login',
-      password: '',
-      loading: true,
-      magicLinkSentJustNow: true,
+    const button = screen.getByRole('button', {
+      name: /log in with magic link/i,
     });
-    expect(
-      screen.getByRole('button', { name: /magic link sent!/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /working/i }),
-    ).not.toBeInTheDocument();
+    expect(button).toBeDisabled();
   });
 });

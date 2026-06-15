@@ -300,9 +300,7 @@ describe('EmailSettingsForm post-submit notice — no duplicate', () => {
     rerender(<EmailSettingsForm />);
 
     await waitFor(() => {
-      expect(screen.getAllByText(/verification email sent to/i)).toHaveLength(
-        1,
-      );
+      expect(screen.getAllByText(/verification link sent to/i)).toHaveLength(1);
     });
   });
 
@@ -332,7 +330,7 @@ describe('EmailSettingsForm post-submit notice — no duplicate', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('status')).toHaveTextContent(
-        /verification email sent to/i,
+        /verification link sent to/i,
       );
     });
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();

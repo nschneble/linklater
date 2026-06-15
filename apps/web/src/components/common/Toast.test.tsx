@@ -96,7 +96,7 @@ describe('Toast', () => {
     const handleDismiss = vi.fn();
     render(<Toast message="x" onDismiss={handleDismiss} />);
     act(() => {
-      vi.advanceTimersByTime(2999);
+      vi.advanceTimersByTime(4999);
     });
     expect(handleDismiss).not.toHaveBeenCalled();
     // Crossing the 3000ms boundary fires the auto-dismiss timer, which

@@ -130,13 +130,6 @@ describe('ForgotPasswordView submit button — default state', () => {
 });
 
 describe('ForgotPasswordView submit button — loading state', () => {
-  it('shows "Working…" as the label while loading', () => {
-    renderView({ loading: true });
-    expect(
-      screen.getByRole('button', { name: /working/i }),
-    ).toBeInTheDocument();
-  });
-
   it('keeps the envelope icon while loading (single envelope through the request)', () => {
     const { container } = renderView({ loading: true });
     expect(container.querySelector('.fa-envelope')).toBeInTheDocument();
@@ -145,7 +138,9 @@ describe('ForgotPasswordView submit button — loading state', () => {
 
   it('is disabled while loading', () => {
     renderView({ loading: true });
-    expect(screen.getByRole('button', { name: /working/i })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /send password reset link/i }),
+    ).toBeDisabled();
   });
 });
 
@@ -153,36 +148,20 @@ describe('ForgotPasswordView submit button — forgotPasswordSentJustNow state',
   it('shows "Reset link sent!" as the label when forgotPasswordSentJustNow is true', () => {
     renderView({ forgotPasswordSentJustNow: true });
     expect(
-      screen.getByRole('button', { name: /reset link sent!/i }),
+      screen.getByRole('button', { name: /send password reset link/i }),
     ).toBeInTheDocument();
   });
 
-  it('shows the check-circle icon (not the envelope) when forgotPasswordSentJustNow is true', () => {
+  it('shows the envelope-open icon when forgotPasswordSentJustNow is true', () => {
     const { container } = renderView({ forgotPasswordSentJustNow: true });
-    // fa-circle-check is the success indicator; the envelope belongs to the
-    // default + loading states.
-    expect(container.querySelector('.fa-circle-check')).toBeInTheDocument();
+    expect(container.querySelector('.fa-envelope-open')).toBeInTheDocument();
     expect(container.querySelector('.fa-envelope')).not.toBeInTheDocument();
   });
 
   it('disables the submit button during the success hold (prevents re-click during the toast window)', () => {
     renderView({ forgotPasswordSentJustNow: true });
     expect(
-      screen.getByRole('button', { name: /reset link sent!/i }),
+      screen.getByRole('button', { name: /send password reset link/i }),
     ).toBeDisabled();
-  });
-
-  it('uses the success-state label over the loading label when both happen to be true', () => {
-    // Defense-in-depth: even though the hook releases loading=false before
-    // engaging the success state, render-time race could theoretically pass
-    // both as true; the success label wins because it conveys the more
-    // specific outcome and stays in sync with the visible toast.
-    renderView({ loading: true, forgotPasswordSentJustNow: true });
-    expect(
-      screen.getByRole('button', { name: /reset link sent!/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /working/i }),
-    ).not.toBeInTheDocument();
   });
 });

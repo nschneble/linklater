@@ -24,7 +24,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     setPendingNotice('email-verified');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message: 'Your email has been verified.',
+      message: 'Your email address has been verified',
       variant: 'success',
     });
     expect(hasPendingNotice()).toBe(false);
@@ -34,7 +34,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     setPendingNotice('email-verified-please-sign-in');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message: 'Your email has been verified. Please sign in.',
+      message: 'Your email address has been verified',
       variant: 'success',
     });
     expect(hasPendingNotice()).toBe(false);
@@ -44,7 +44,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     setPendingNotice('email-change-verified');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message: 'Your email has been updated.',
+      message: 'Your email address has been updated',
       variant: 'success',
     });
     expect(hasPendingNotice()).toBe(false);
@@ -54,20 +54,17 @@ describe('setPendingNotice / consumePendingNotice', () => {
     setPendingNotice('email-change-verified-please-sign-in');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message: 'Your email has been updated. Please sign in.',
+      message: 'Your email address has been updated',
       variant: 'success',
     });
     expect(hasPendingNotice()).toBe(false);
   });
 
-  // Wave 6 — error-variant entries surfaced as assertive toasts on /login
-  // after a redirect from ConfirmAccountDeletionPage or TokenVerificationPage.
-
   it('round-trips deletion-link-invalid as an error-variant entry', () => {
     setPendingNotice('deletion-link-invalid');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message: 'This deletion link is invalid or expired.',
+      message: 'Account deletion link has expired',
       variant: 'error',
     });
     expect(hasPendingNotice()).toBe(false);
@@ -77,8 +74,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     setPendingNotice('verification-link-invalid');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message:
-        'Verification link expired. Sign in and request a new one from Settings.',
+      message: 'Verification link has expired',
       variant: 'error',
     });
     expect(hasPendingNotice()).toBe(false);
@@ -88,8 +84,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     setPendingNotice('email-change-link-invalid');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message:
-        'Email change link expired. Sign in and request a new one from Settings.',
+      message: 'Confirmation link has expired',
       variant: 'error',
     });
     expect(hasPendingNotice()).toBe(false);
@@ -99,7 +94,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     setPendingNotice('login-link-invalid');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message: 'Login link expired. Request a new one below.',
+      message: 'Login link has expired',
       variant: 'error',
     });
     expect(hasPendingNotice()).toBe(false);
