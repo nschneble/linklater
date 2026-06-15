@@ -75,6 +75,7 @@ function makeAuthContext(
     logout: vi.fn(),
     register: vi.fn(),
     refreshUser: vi.fn().mockResolvedValue(undefined),
+    resendEmailChangeVerification: vi.fn(),
     resendVerificationEmail: vi.fn(),
     setPendingEmail: vi.fn(),
     markWelcomed: vi.fn(),

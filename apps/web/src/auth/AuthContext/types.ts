@@ -74,6 +74,12 @@ export interface AuthContextValue {
   /** Resends the email verification message to the current user's address. */
   resendVerificationEmail: () => Promise<void>;
   /**
+   * Resends the email-change verification link to the address stored in
+   * `pendingEmail`. The server rotates the token but does not re-check MFA —
+   * MFA was enforced when the pending change was created.
+   */
+  resendEmailChangeVerification: () => Promise<void>;
+  /**
    * Optimistically updates the `pendingEmail` field in auth state without
    * re-fetching from the server. Called by `AccountSettingsForm` immediately
    * after a successful `requestEmailChange` response.

@@ -63,6 +63,7 @@ function makeAuthContext(
     logout: vi.fn(),
     register: vi.fn(),
     refreshUser: vi.fn(),
+    resendEmailChangeVerification: vi.fn(),
     resendVerificationEmail: vi.fn(),
     setPendingEmail: vi.fn(),
     markWelcomed: vi.fn(),

@@ -359,6 +359,54 @@ describe('EmailVerificationService', () => {
     });
   });
 
+  describe('resendEmailChange', () => {
+    it('rotates the pending-email token and sends the link to the pending address', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        pendingEmail: NEW_EMAIL,
+        theme: 'boyhood',
+      });
+      (userTokensServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (
+        emailServiceMock.sendEmailChangeVerification as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await service.resendEmailChange(USER_ID);
+
+      expect(userTokensServiceMock.updatePendingEmail).toHaveBeenCalledWith(
+        USER_ID,
+        NEW_EMAIL,
+        expect.any(String),
+        expect.any(Date),
+      );
+      expect(emailServiceMock.sendEmailChangeVerification).toHaveBeenCalledWith(
+        NEW_EMAIL,
+        expect.any(String),
+        'boyhood',
+      );
+    });
+
+    it('throws BadRequestException when no email change is pending', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        pendingEmail: null,
+        theme: 'boyhood',
+      });
+
+      await expect(service.resendEmailChange(USER_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(userTokensServiceMock.updatePendingEmail).not.toHaveBeenCalled();
+      expect(
+        emailServiceMock.sendEmailChangeVerification,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
   describe('requestEmailChange', () => {
     const makeUserNoMultiFactor = (overrides = {}) => ({
       id: USER_ID,

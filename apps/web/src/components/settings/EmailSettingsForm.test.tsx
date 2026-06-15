@@ -71,6 +71,7 @@ function makeUser(overrides: Partial<User> = {}): User {
 function makeAuthContext(
   overrides: Partial<{
     user: User | null;
+    resendEmailChangeVerification: ReturnType<typeof vi.fn>;
     resendVerificationEmail: ReturnType<typeof vi.fn>;
     setPendingEmail: ReturnType<typeof vi.fn>;
   }> = {},
@@ -82,6 +83,7 @@ function makeAuthContext(
     logout: vi.fn(),
     register: vi.fn(),
     refreshUser: vi.fn(),
+    resendEmailChangeVerification: vi.fn().mockResolvedValue(undefined),
     resendVerificationEmail: vi.fn().mockResolvedValue(undefined),
     setPendingEmail: vi.fn(),
     markWelcomed: vi.fn(),
@@ -255,11 +257,86 @@ describe('EmailSettingsForm unverified state', () => {
 });
 
 describe('EmailSettingsForm verified state', () => {
-  it('does not show the "Resend verification email" button for verified accounts', () => {
+  it('does not show the "Resend verification email" button for verified accounts with no pending change', () => {
     renderForm();
     expect(
       screen.queryByRole('button', { name: /resend verification email/i }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('EmailSettingsForm pending-email resend', () => {
+  function makePendingAuth(
+    overrides: Partial<{
+      resendEmailChangeVerification: ReturnType<typeof vi.fn>;
+    }> = {},
+  ) {
+    return makeAuthContext({
+      user: makeUser({ pendingEmail: 'new@example.com' }),
+      ...overrides,
+    });
+  }
+
+  it('shows the "Resend verification email" button when an email change is pending', () => {
+    vi.mocked(useAuth).mockReturnValue(makePendingAuth());
+    renderForm();
+    expect(
+      screen.getByRole('button', { name: /resend verification email/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('button is wired to the pending-email notice via aria-describedby', () => {
+    vi.mocked(useAuth).mockReturnValue(makePendingAuth());
+    renderForm();
+    const button = screen.getByRole('button', {
+      name: /resend verification email/i,
+    });
+    expect(button).toHaveAttribute('aria-describedby', 'pending-email-notice');
+    expect(document.getElementById('pending-email-notice')).toHaveTextContent(
+      /verification link sent to new@example\.com/i,
+    );
+  });
+
+  it('calls resendEmailChangeVerification on click and shows a success message', async () => {
+    const resendEmailChangeVerification = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useAuth).mockReturnValue(
+      makePendingAuth({ resendEmailChangeVerification }),
+    );
+    renderForm();
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: /resend verification email/i }),
+      );
+    });
+
+    expect(resendEmailChangeVerification).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      const success = screen
+        .getAllByText(/verification email sent/i)
+        .find((node) => /new address/i.test(node.textContent ?? ''));
+      expect(success).toBeTruthy();
+    });
+  });
+
+  it('shows an error in role="alert" when the resend rejects', async () => {
+    const resendEmailChangeVerification = vi
+      .fn()
+      .mockRejectedValue(new Error('Rate limited'));
+    vi.mocked(useAuth).mockReturnValue(
+      makePendingAuth({ resendEmailChangeVerification }),
+    );
+    renderForm();
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: /resend verification email/i }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/rate limited/i);
+    });
   });
 });
 

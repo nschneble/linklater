@@ -138,6 +138,10 @@ export async function requestEmailChange(
   });
 }
 
+export async function resendEmailChangeVerification(): Promise<void> {
+  await apiFetch('/auth/resend-email-change', { method: 'POST' });
+}
+
 export async function verifyEmailChange(token: string): Promise<void> {
   await apiFetch(
     '/auth/verify-email-change',

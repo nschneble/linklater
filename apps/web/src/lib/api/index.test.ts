@@ -44,6 +44,7 @@ import {
   registerMagicLink,
   requestEmailChange,
   requestMagicLink,
+  resendEmailChangeVerification,
   resendVerificationEmail,
   resetPassword,
   revokeAllSessions,
@@ -673,6 +674,19 @@ describe('requestEmailChange', () => {
       unknown
     >;
     expect(body['code']).toBeUndefined();
+  });
+});
+
+describe('resendEmailChangeVerification', () => {
+  it('POSTs to /auth/resend-email-change with auth', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await resendEmailChangeVerification();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/resend-email-change');
+    expect(options.method).toBe('POST');
   });
 });
 

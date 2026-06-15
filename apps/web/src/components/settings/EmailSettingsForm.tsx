@@ -19,7 +19,12 @@ import type { FormEvent } from 'react';
  * fires its screen-reader announcement reliably.
  */
 export default function EmailSettingsForm() {
-  const { resendVerificationEmail, setPendingEmail, user } = useAuth();
+  const {
+    resendEmailChangeVerification,
+    resendVerificationEmail,
+    setPendingEmail,
+    user,
+  } = useAuth();
 
   const [emailInput, setEmailInput] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -29,6 +34,13 @@ export default function EmailSettingsForm() {
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [resendError, setResendError] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
+  const [resendPendingMessage, setResendPendingMessage] = useState<
+    string | null
+  >(null);
+  const [resendPendingError, setResendPendingError] = useState<string | null>(
+    null,
+  );
+  const [resendingPending, setResendingPending] = useState(false);
 
   const formReference = useRef<HTMLFormElement>(null);
   const isVerified = Boolean(user?.emailVerifiedAt);
@@ -45,6 +57,8 @@ export default function EmailSettingsForm() {
 
     setEmailError(null);
     setEmailMessage(null);
+    setResendPendingError(null);
+    setResendPendingMessage(null);
     setEmailSaving(true);
 
     try {
@@ -91,6 +105,25 @@ export default function EmailSettingsForm() {
     }
   }
 
+  async function handleResendPending() {
+    setResendPendingError(null);
+    setResendPendingMessage(null);
+    setResendingPending(true);
+
+    try {
+      await resendEmailChangeVerification();
+      setResendPendingMessage(
+        'Verification email sent. Check your inbox at the new address.',
+      );
+    } catch (caughtError: unknown) {
+      setResendPendingError(
+        getErrorMessage(caughtError, 'Failed to resend verification email'),
+      );
+    } finally {
+      setResendingPending(false);
+    }
+  }
+
   return (
     <form
       className="space-y-4"
@@ -131,9 +164,24 @@ export default function EmailSettingsForm() {
       )}
 
       {hasPendingEmail && (
-        <Alert variant="success">
-          Verification link sent to {user?.pendingEmail}
-        </Alert>
+        <div className="space-y-2 mb-8">
+          <Alert id="pending-email-notice" variant="success">
+            Verification link sent to {user?.pendingEmail}
+          </Alert>
+          {resendPendingMessage && (
+            <Alert variant="success">{resendPendingMessage}</Alert>
+          )}
+          {resendPendingError && (
+            <Alert variant="error">{resendPendingError}</Alert>
+          )}
+          <LinkButton
+            aria-describedby="pending-email-notice"
+            disabled={resendingPending}
+            onClick={handleResendPending}
+          >
+            {resendingPending ? 'Resending…' : 'Resend verification email'}
+          </LinkButton>
+        </div>
       )}
 
       <label

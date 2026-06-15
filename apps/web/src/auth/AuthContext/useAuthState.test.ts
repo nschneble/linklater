@@ -20,6 +20,7 @@ vi.mock('../../lib/api', () => ({
   login: vi.fn(),
   logout: vi.fn(),
   register: vi.fn(),
+  resendEmailChangeVerification: vi.fn(),
   resendVerificationEmail: vi.fn(),
   setStoredToken: vi.fn(),
 }));

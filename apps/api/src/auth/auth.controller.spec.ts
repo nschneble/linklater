@@ -79,6 +79,7 @@ describe('AuthController', () => {
     confirmEmailChange: jest.fn(),
     forgotPassword: jest.fn(),
     requestEmailChange: jest.fn(),
+    resendEmailChange: jest.fn(),
     resendVerificationEmail: jest.fn(),
     resetPassword: jest.fn(),
     verifyEmail: jest.fn(),
@@ -323,6 +324,33 @@ describe('AuthController', () => {
       expect(
         emailVerificationServiceMock.requestEmailChange,
       ).toHaveBeenCalledWith(USER_ID, NEW_EMAIL, '123456');
+    });
+  });
+
+  describe('resendEmailChange', () => {
+    it('applies JwtAuthGuard before CustomThrottlerGuard so only authenticated users can trigger the resend', () => {
+      const guards: unknown[] = Reflect.getMetadata(
+        '__guards__',
+        AuthController.prototype.resendEmailChange,
+      );
+      expect(guards).toContain(JwtAuthGuard);
+      expect(guards).toContain(CustomThrottlerGuard);
+      expect(guards.indexOf(JwtAuthGuard)).toBeLessThan(
+        guards.indexOf(CustomThrottlerGuard),
+      );
+    });
+
+    it('delegates to EmailVerificationService.resendEmailChange with the userId', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      (
+        emailVerificationServiceMock.resendEmailChange as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await controller.resendEmailChange(request);
+
+      expect(
+        emailVerificationServiceMock.resendEmailChange,
+      ).toHaveBeenCalledWith(USER_ID);
     });
   });
 

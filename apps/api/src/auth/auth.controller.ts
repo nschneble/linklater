@@ -227,6 +227,27 @@ export class AuthController {
   }
 
   /**
+   * Re-sends the email-change verification link to the address stored in
+   * `pendingEmail`. Used when the original link is lost or expired. MFA is not
+   * re-checked here — it was enforced when `pendingEmail` was set. Rate-limited
+   * to 3 requests per 60 seconds per IP.
+   */
+  @ApiOperation({ summary: 'Resend the email-change verification link' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Verification email resent.' })
+  @ApiResponse({ status: 400, description: 'No email change is pending.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({ status: 429, description: 'Too many resend attempts.' })
+  @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
+  @Throttle({ 'auth-resend-email-change': { ttl: 60000, limit: 3 } })
+  @ThrottleMessage('Too many resend attempts')
+  @Post('resend-email-change')
+  @HttpCode(200)
+  async resendEmailChange(@Req() request: AuthRequest) {
+    await this.emailVerificationService.resendEmailChange(request.user.userId);
+  }
+
+  /**
    * Confirms the email change by consuming the token sent to the new address.
    * Promotes `pendingEmail` to the primary email. Rate-limited to 10 requests
    * per 60 seconds per IP.
