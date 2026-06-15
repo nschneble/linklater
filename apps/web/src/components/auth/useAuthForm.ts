@@ -32,7 +32,7 @@ export function useAuthForm() {
   const errorReference = useRef<HTMLParagraphElement>(null);
   // WARN-4: timeout ids for post-magic-link / post-forgot-password
   // success-state holds. The submit button and toast must stay in sync —
-  // both render the "sent!" success state for the toast's 3000ms auto-
+  // both render the "sent!" success state for the toast's 5000ms auto-
   // dismiss window. The refs let the mode-change effect cancel pending
   // releases if the user navigates away first.
   const magicLinkSentJustNowReference = useRef<ReturnType<
@@ -49,7 +49,7 @@ export function useAuthForm() {
   const [loading, setLoading] = useState(false);
   // Mirrors the toast's lifecycle for magic-link success. Drives the submit
   // button's "Magic link sent!" label, check-mark icon, and disabled state
-  // for the same 3000ms the toast is visible. Holding the button in a
+  // for the same 5000ms the toast is visible. Holding the button in a
   // success state (rather than re-enabling immediately) prevents the user
   // from re-clicking and triggering a second magic-link request while the
   // first email is still arriving.
@@ -57,7 +57,7 @@ export function useAuthForm() {
   // Same shape as magicLinkSentJustNow but for the forgot-password flow.
   // The "Send password reset link" → "Working…" → "Reset link sent!" arc
   // mirrors the magic-link button's three-state lifecycle and holds for
-  // the toast's 3000ms window so the two surfaces never disagree.
+  // the toast's 5000ms window so the two surfaces never disagree.
   const [forgotPasswordSentJustNow, setForgotPasswordSentJustNow] =
     useState(false);
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
@@ -186,7 +186,7 @@ export function useAuthForm() {
         // longer reads "Working…" while the toast is already announcing the
         // outcome — that desync is what made the prior flow look
         // contradictory. The button then enters the success-state hold
-        // (`magicLinkSentJustNow`) for 3000ms, matching the toast's own
+        // (`magicLinkSentJustNow`) for 5000ms, matching the toast's own
         // auto-dismiss window. The hold also prevents a second click during
         // that window. A throw skips this block entirely and falls through
         // to the finally reset.
@@ -195,7 +195,7 @@ export function useAuthForm() {
         magicLinkSentJustNowReference.current = setTimeout(() => {
           setMagicLinkSentJustNow(false);
           magicLinkSentJustNowReference.current = null;
-        }, 3000);
+        }, 5000);
         return;
       }
 
@@ -212,7 +212,7 @@ export function useAuthForm() {
         await apiForgotPassword(email);
         // Forgot-password success mirrors the magic-link flow: fire the toast
         // and hold the submit button in a "Reset link sent!" success state
-        // for the toast's 3000ms auto-dismiss window so the two surfaces
+        // for the toast's 5000ms auto-dismiss window so the two surfaces
         // never read as contradictory. The hold also prevents a second
         // click during that window — re-submitting before the email arrives
         // would just queue a duplicate reset request.

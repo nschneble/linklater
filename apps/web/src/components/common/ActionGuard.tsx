@@ -40,7 +40,7 @@ interface ActionGuardProps {
   errorFallback: string;
   /**
    * When set, announced via a polite sr-only live region on success and
-   * cleared after 3s so a repeat action re-announces.
+   * cleared after 5s so a repeat action re-announces.
    */
   successAnnouncement?: string;
   /** Outer wrapper class — e.g. `'space-y-2'` or `'space-y-3'`. */
@@ -121,10 +121,10 @@ export default function ActionGuard({
     }
   }, [error, errorId]);
 
-  // Always-mounted live region: clear the message after 3s so repeats
+  // Always-mounted live region: clear the message after 5s so repeats
   // re-announce cleanly. Mounting/unmounting the region itself can cause
   // some screen readers to miss the first announcement.
-  useTransientState(announcement, '', setAnnouncement, 3000);
+  useTransientState(announcement, '', setAnnouncement, 5000);
 
   // Global Escape closes the confirm row — matches user expectation that
   // Escape always backs out, regardless of where focus currently is.

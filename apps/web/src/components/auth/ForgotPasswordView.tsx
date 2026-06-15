@@ -11,7 +11,7 @@ interface ForgotPasswordViewProps {
   error: string | null;
   errorReference: RefObject<HTMLParagraphElement | null>;
   /**
-   * True for the 3000ms window after a successful forgot-password request.
+   * True for the 5000ms window after a successful forgot-password request.
    * Holds the submit button in a "Reset link sent!" success state — kept in
    * sync with the toast's auto-dismiss lifetime so the two surfaces never
    * read as contradictory. Mirrors the magic-link button's success hold.

@@ -329,7 +329,7 @@ describe('useAuthForm', () => {
   // WARN-4: a successful magic-link request releases `loading` immediately
   // (so the button doesn't read "Working…" while the toast is announcing
   // the outcome) and engages `magicLinkSentJustNow` for the toast's full
-  // 3000ms auto-dismiss window. The button stays disabled during that
+  // 5000ms auto-dismiss window. The button stays disabled during that
   // window via the success-state label, preventing a second click.
   describe('WARN-4 — magic-link success-state hold', () => {
     beforeEach(() => {
@@ -371,7 +371,7 @@ describe('useAuthForm', () => {
       expect(result.current.magicLinkSentJustNow).toBe(true);
     });
 
-    it('releases magicLinkSentJustNow to false after the 3000ms hold elapses (toast lifetime)', async () => {
+    it('releases magicLinkSentJustNow to false after the 5000ms hold elapses (toast lifetime)', async () => {
       vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
       const { result } = renderAuthFormHook('/login');
 
@@ -385,13 +385,13 @@ describe('useAuthForm', () => {
       expect(result.current.magicLinkSentJustNow).toBe(true);
 
       act(() => {
-        vi.advanceTimersByTime(3000);
+        vi.advanceTimersByTime(5000);
       });
 
       expect(result.current.magicLinkSentJustNow).toBe(false);
     });
 
-    it('keeps magicLinkSentJustNow true until the full 3000ms elapses', async () => {
+    it('keeps magicLinkSentJustNow true until the full 5000ms elapses', async () => {
       vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
       const { result } = renderAuthFormHook('/login');
 
@@ -402,15 +402,15 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // 1500ms in — old behavior would have released the hold here.
+      // 2500ms in — old behavior would have released the hold here.
       act(() => {
-        vi.advanceTimersByTime(1500);
+        vi.advanceTimersByTime(2500);
       });
       expect(result.current.magicLinkSentJustNow).toBe(true);
 
-      // Past 3000ms — hold releases.
+      // Past 5000ms — hold releases.
       act(() => {
-        vi.advanceTimersByTime(1500);
+        vi.advanceTimersByTime(2500);
       });
       expect(result.current.magicLinkSentJustNow).toBe(false);
     });
@@ -433,7 +433,7 @@ describe('useAuthForm', () => {
       expect(result.current.error).toBe('Network down');
     });
 
-    // C2: a mode change BEFORE the 3000ms hold expires must clear the
+    // C2: a mode change BEFORE the 5000ms hold expires must clear the
     // pending timer synchronously and reset magicLinkSentJustNow to false.
     // Otherwise the stale timeout fires later on a hook that has already
     // moved on, or worse races with a subsequent magic-link submission.
@@ -456,15 +456,15 @@ describe('useAuthForm', () => {
       });
 
       // Synchronously after the mode change, the hold is released — the
-      // effect resets it without waiting for the 3000ms timer.
+      // effect resets it without waiting for the 5000ms timer.
       expect(result.current.magicLinkSentJustNow).toBe(false);
 
-      // Advance past the original 3000ms window. If the timer were still
+      // Advance past the original 5000ms window. If the timer were still
       // pending, it would call setMagicLinkSentJustNow(false) again — but
       // since we've already observed false, this asserts the state stays
       // false without spurious flips.
       act(() => {
-        vi.advanceTimersByTime(3000);
+        vi.advanceTimersByTime(5000);
       });
 
       expect(result.current.magicLinkSentJustNow).toBe(false);
@@ -473,7 +473,7 @@ describe('useAuthForm', () => {
 
   // Mirrors the WARN-4 magic-link suite for the forgot-password flow. The
   // submit button and toast must stay in sync — both render the "Reset link
-  // sent!" state for the toast's 3000ms auto-dismiss window. A mode change
+  // sent!" state for the toast's 5000ms auto-dismiss window. A mode change
   // mid-hold cancels the timer synchronously.
   describe('Wave 6 — forgot-password success-state hold', () => {
     beforeEach(() => {
@@ -512,7 +512,7 @@ describe('useAuthForm', () => {
       expect(result.current.forgotPasswordSentJustNow).toBe(true);
     });
 
-    it('releases forgotPasswordSentJustNow to false after the 3000ms hold elapses (toast lifetime)', async () => {
+    it('releases forgotPasswordSentJustNow to false after the 5000ms hold elapses (toast lifetime)', async () => {
       vi.mocked(apiModule.forgotPassword).mockResolvedValue(undefined);
       const { result } = renderAuthFormHook('/forgot-password');
 
@@ -526,13 +526,13 @@ describe('useAuthForm', () => {
       expect(result.current.forgotPasswordSentJustNow).toBe(true);
 
       act(() => {
-        vi.advanceTimersByTime(3000);
+        vi.advanceTimersByTime(5000);
       });
 
       expect(result.current.forgotPasswordSentJustNow).toBe(false);
     });
 
-    it('keeps forgotPasswordSentJustNow true until the full 3000ms elapses', async () => {
+    it('keeps forgotPasswordSentJustNow true until the full 5000ms elapses', async () => {
       vi.mocked(apiModule.forgotPassword).mockResolvedValue(undefined);
       const { result } = renderAuthFormHook('/forgot-password');
 
@@ -543,15 +543,15 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // 1500ms in — half the hold window.
+      // 2500ms in — half the hold window.
       act(() => {
-        vi.advanceTimersByTime(1500);
+        vi.advanceTimersByTime(2500);
       });
       expect(result.current.forgotPasswordSentJustNow).toBe(true);
 
-      // Past 3000ms — hold releases.
+      // Past 5000ms — hold releases.
       act(() => {
-        vi.advanceTimersByTime(1500);
+        vi.advanceTimersByTime(2500);
       });
       expect(result.current.forgotPasswordSentJustNow).toBe(false);
     });
@@ -574,7 +574,7 @@ describe('useAuthForm', () => {
       expect(result.current.error).toBe('Network down');
     });
 
-    // Carry-over from the magic-link hold: a mode change BEFORE the 3000ms
+    // Carry-over from the magic-link hold: a mode change BEFORE the 5000ms
     // hold expires must clear the pending timer synchronously and reset
     // forgotPasswordSentJustNow to false. Otherwise the stale timeout fires
     // later on a hook that has already moved on, or worse races with a
@@ -600,9 +600,9 @@ describe('useAuthForm', () => {
       // Synchronously after the mode change, the hold is released.
       expect(result.current.forgotPasswordSentJustNow).toBe(false);
 
-      // Advance past the original 3000ms window — assert no spurious flips.
+      // Advance past the original 5000ms window — assert no spurious flips.
       act(() => {
-        vi.advanceTimersByTime(3000);
+        vi.advanceTimersByTime(5000);
       });
 
       expect(result.current.forgotPasswordSentJustNow).toBe(false);

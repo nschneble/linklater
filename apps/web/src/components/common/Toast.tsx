@@ -99,7 +99,7 @@ export default function Toast({
   // (AuthForm, LinksView, BookmarkletSection) pass `onDismiss={() => ...}`
   // — without this ref the timer would extend each time the parent's
   // local state flips mid-window (e.g. forgot-password sentinel-hold
-  // 3000ms after success → 3+5 = ~8s visible toast).
+  // 5000ms after success → 5+5 = ~10s visible toast).
   const onDismissReference = useRef(onDismiss);
   onDismissReference.current = onDismiss;
 

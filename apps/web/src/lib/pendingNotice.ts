@@ -62,10 +62,10 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
     message: 'Your account has been deleted.',
     variant: 'success',
   },
-  // Generic copy (not "signed in as X@Y") per a11y-lead: the 3s toast
-  // auto-dismiss is too short for SRs to parse a full email address mid
-  // route transition. The /unread destination already surfaces the now-
-  // current account identity in the header avatar/menu.
+  // Generic copy (not "signed in as X@Y") per a11y-lead: the toast
+  // auto-dismiss window is too short for SRs to parse a full email address
+  // mid route transition. The /unread destination already surfaces the
+  // now-current account identity in the header avatar/menu.
   'account-switched': {
     message: "You're now signed in to a different account",
     variant: 'warning',

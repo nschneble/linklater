@@ -28,7 +28,7 @@ interface LoginRegisterViewProps {
   errorReference: RefObject<HTMLParagraphElement | null>;
   loading: boolean;
   /**
-   * True for the 3000ms window after a successful magic-link request. Holds
+   * True for the 5000ms window after a successful magic-link request. Holds
    * the submit button in a "Magic link sent!" success state — kept in sync
    * with the toast's auto-dismiss lifetime so the two surfaces never read
    * as contradictory.

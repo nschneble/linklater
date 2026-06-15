@@ -21,7 +21,7 @@ interface PendingNoticeAnnouncerProps {
   variant: 'success' | 'warning' | 'error';
   /**
    * Called when the toast is dismissed (user click or auto-dismiss timer —
-   * 3s for success/error, 5s for warning).
+   * 5s for success, 6s for warning/error).
    */
   onDismiss: () => void;
 }

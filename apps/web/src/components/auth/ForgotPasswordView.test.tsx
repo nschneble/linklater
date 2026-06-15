@@ -5,7 +5,7 @@
  * useAuthForm (tested separately). Wave 6 dropped the "Check your email"
  * interstitial branch — the form always renders, the success path fires a
  * toast via PendingNoticeAnnouncer and holds the submit button in a
- * "Reset link sent!" state for the toast's 3000ms window.
+ * "Reset link sent!" state for the toast's 5000ms window.
  *
  * Coverage:
  *   - Form (email input + submit button) always renders

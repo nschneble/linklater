@@ -122,7 +122,7 @@ describe('Toast', () => {
 
     function Wrapper({ tick }: { tick: number }) {
       // new inline arrow each render — mirrors the AuthForm consumer pattern
-      // where setForgotPasswordSentJustNow(false) fires 3000ms after success
+      // where setForgotPasswordSentJustNow(false) fires 5000ms after success
       // and causes the parent to hand Toast a fresh onDismiss identity
       return (
         <Toast message={`tick ${tick}`} onDismiss={() => handleDismiss(tick)} />
@@ -133,7 +133,7 @@ describe('Toast', () => {
 
     // mid-window parent re-render with NEW onDismiss identity
     act(() => {
-      vi.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(5000);
     });
     rerender(<Wrapper tick={1} />);
 
