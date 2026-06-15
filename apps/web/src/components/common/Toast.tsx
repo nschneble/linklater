@@ -101,9 +101,7 @@ export default function Toast({
   // local state flips mid-window (e.g. forgot-password sentinel-hold
   // 3000ms after success → 3+5 = ~8s visible toast).
   const onDismissReference = useRef(onDismiss);
-  useEffect(() => {
-    onDismissReference.current = onDismiss;
-  });
+  onDismissReference.current = onDismiss;
 
   const dismiss = useCallback(() => {
     setExiting(true);
