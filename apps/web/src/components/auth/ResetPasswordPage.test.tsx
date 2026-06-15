@@ -1,13 +1,20 @@
 /**
  * Tests for ResetPasswordPage.
  *
- * State machine: form → (loading) → success | error
+ * State machine: form → (loading spinner) → success-redirect | error → form
  * Token-from-URL paths:
  *   - No token → client-side error before API call
  *   - Password mismatch → client-side error before API call
- *   - API success → sr-only status + queue 'password-reset-success' notice +
- *     navigate('/login', { replace: true }) after a brief announcement window
- *   - API error → error in role="alert"
+ *   - API success → refreshUser hydrates auth, queue 'password-reset-success',
+ *     navigate('/unread', { replace: true })
+ *   - API success with MFA → mount MfaView, verifyOtp on submit, then queue
+ *     'password-reset-success' + navigate('/unread')
+ *   - API error → error in role="alert", form re-mounts
+ *
+ * The submit-in-flight surface is a bare centered spinner with an sr-only
+ * polite status — matches VerifyLoginPage / TokenVerificationPage. The
+ * destination /unread surfaces the 'password-reset-success' toast via the
+ * pending-notice mirror.
  */
 
 import ResetPasswordPage from './ResetPasswordPage';
@@ -25,10 +32,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../lib/api', () => ({
   resetPassword: vi.fn(),
+  verifyOtp: vi.fn(),
 }));
 
 vi.mock('../../lib/pendingNotice', () => ({
   setPendingNotice: vi.fn(),
+}));
+
+const refreshUser = vi.fn();
+
+vi.mock('../../auth/AuthContext', () => ({
+  useAuth: () => ({ refreshUser }),
 }));
 
 const navigate = vi.fn();
@@ -59,18 +73,30 @@ function renderPage(search = '?token=valid-token') {
   );
 }
 
+function fillForm() {
+  fireEvent.change(screen.getByLabelText(/^new password/i), {
+    target: { value: 'correct-horse-battery' },
+  });
+  fireEvent.change(screen.getByLabelText(/confirm new password/i), {
+    target: { value: 'correct-horse-battery' },
+  });
+}
+
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(apiModule.resetPassword).mockResolvedValue(undefined);
+  vi.mocked(apiModule.resetPassword).mockResolvedValue({
+    accessToken: 'fresh-jwt',
+    refreshToken: 'fresh-refresh',
+  });
+  refreshUser.mockResolvedValue(undefined);
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('ResetPasswordPage client-side validation', () => {
   it('shows an error when no token is in the URL', async () => {
-    renderPage('');
     const { container } = render(
       <MemoryRouter initialEntries={['/reset-password']}>
         <ResetPasswordPage />
@@ -106,17 +132,11 @@ describe('ResetPasswordPage client-side validation', () => {
   });
 });
 
-describe('ResetPasswordPage success path', () => {
+describe('ResetPasswordPage success path (non-MFA)', () => {
   it('calls resetPassword with the token and new password', async () => {
-    vi.mocked(apiModule.resetPassword).mockResolvedValue(undefined);
     const { container } = renderPage('?token=test-token-abc');
 
-    fireEvent.change(screen.getByLabelText(/^new password/i), {
-      target: { value: 'correct-horse-battery' },
-    });
-    fireEvent.change(screen.getByLabelText(/confirm new password/i), {
-      target: { value: 'correct-horse-battery' },
-    });
+    fillForm();
 
     await act(async () => {
       fireEvent.submit(container.querySelector('form')!);
@@ -128,59 +148,66 @@ describe('ResetPasswordPage success path', () => {
     );
   });
 
-  it('renders an sr-only polite confirmation after a successful reset', async () => {
-    vi.mocked(apiModule.resetPassword).mockResolvedValue(undefined);
+  it('renders an sr-only polite status while the reset is in flight', async () => {
+    // Hold the API call open so the loading state stays mounted.
+    let resolveReset: (value: {
+      accessToken: string;
+      refreshToken: string;
+    }) => void = () => {};
+    vi.mocked(apiModule.resetPassword).mockReturnValue(
+      new Promise((resolve) => {
+        resolveReset = resolve;
+      }),
+    );
     const { container } = renderPage();
 
-    fireEvent.change(screen.getByLabelText(/^new password/i), {
-      target: { value: 'correct-horse-battery' },
-    });
-    fireEvent.change(screen.getByLabelText(/confirm new password/i), {
-      target: { value: 'correct-horse-battery' },
-    });
+    fillForm();
 
     await act(async () => {
       fireEvent.submit(container.querySelector('form')!);
     });
 
-    await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(/password updated/i);
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /resetting your password/i,
+    );
+
+    await act(async () => {
+      resolveReset({ accessToken: 'a', refreshToken: 'r' });
     });
   });
 
-  it('does NOT render the legacy "I\'d like to log in now" button or bouncing checkmark', async () => {
-    vi.mocked(apiModule.resetPassword).mockResolvedValue(undefined);
+  it('does NOT render a "Signing you in" success card or "I\'d like to log in now" button', async () => {
+    let resolveReset: (value: {
+      accessToken: string;
+      refreshToken: string;
+    }) => void = () => {};
+    vi.mocked(apiModule.resetPassword).mockReturnValue(
+      new Promise((resolve) => {
+        resolveReset = resolve;
+      }),
+    );
     const { container } = renderPage();
 
-    fireEvent.change(screen.getByLabelText(/^new password/i), {
-      target: { value: 'correct-horse-battery' },
-    });
-    fireEvent.change(screen.getByLabelText(/confirm new password/i), {
-      target: { value: 'correct-horse-battery' },
-    });
+    fillForm();
 
     await act(async () => {
       fireEvent.submit(container.querySelector('form')!);
     });
 
-    await waitFor(() => {
-      expect(screen.getByRole('status')).toBeInTheDocument();
-    });
+    expect(screen.queryByText(/signing you in/i)).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /i'd like to log in now/i }),
     ).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveReset({ accessToken: 'a', refreshToken: 'r' });
+    });
   });
 
   it("queues 'password-reset-success' pending notice on successful reset", async () => {
-    vi.mocked(apiModule.resetPassword).mockResolvedValue(undefined);
     const { container } = renderPage();
 
-    fireEvent.change(screen.getByLabelText(/^new password/i), {
-      target: { value: 'correct-horse-battery' },
-    });
-    fireEvent.change(screen.getByLabelText(/confirm new password/i), {
-      target: { value: 'correct-horse-battery' },
-    });
+    fillForm();
 
     await act(async () => {
       fireEvent.submit(container.querySelector('form')!);
@@ -193,35 +220,79 @@ describe('ResetPasswordPage success path', () => {
     });
   });
 
-  it('navigates to /login with replace:true after the announcement delay', async () => {
-    vi.useFakeTimers();
-    try {
-      vi.mocked(apiModule.resetPassword).mockResolvedValue(undefined);
-      const { container } = renderPage();
+  it('hydrates the auth context and navigates to /unread after a successful reset', async () => {
+    const { container } = renderPage();
 
-      fireEvent.change(screen.getByLabelText(/^new password/i), {
-        target: { value: 'correct-horse-battery' },
-      });
-      fireEvent.change(screen.getByLabelText(/confirm new password/i), {
-        target: { value: 'correct-horse-battery' },
-      });
+    fillForm();
 
-      await act(async () => {
-        fireEvent.submit(container.querySelector('form')!);
-      });
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
 
-      // Pre-delay: navigation has NOT yet fired (the sr-only status is
-      // mounted and given time to start its polite utterance).
-      expect(navigate).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/unread', { replace: true });
+    });
+    expect(refreshUser).toHaveBeenCalled();
+  });
+});
 
-      await act(async () => {
-        vi.advanceTimersByTime(800);
-      });
+describe('ResetPasswordPage MFA path', () => {
+  it('mounts MfaView when the server returns an MFA challenge', async () => {
+    vi.mocked(apiModule.resetPassword).mockResolvedValue({
+      mfaToken: 'mfa-tok',
+      mfaMethod: 'totp',
+    });
+    const { container } = renderPage();
 
-      expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
-    } finally {
-      vi.useRealTimers();
-    }
+    fillForm();
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: /multi-factor authentication/i }),
+      ).toBeInTheDocument();
+    });
+    expect(refreshUser).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('queues the success notice and navigates to /unread after a valid OTP', async () => {
+    vi.mocked(apiModule.resetPassword).mockResolvedValue({
+      mfaToken: 'mfa-tok',
+      mfaMethod: 'totp',
+    });
+    vi.mocked(apiModule.verifyOtp).mockResolvedValue({
+      accessToken: 'a',
+      refreshToken: 'r',
+    });
+    const { container } = renderPage();
+
+    fillForm();
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    fireEvent.change(screen.getByLabelText(/code/i), {
+      target: { value: '123456' },
+    });
+
+    await waitFor(() => {
+      expect(apiModule.verifyOtp).toHaveBeenCalledWith(
+        'mfa-tok',
+        '123456',
+        'totp',
+      );
+    });
+    await waitFor(() => {
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'password-reset-success',
+      );
+    });
+    expect(navigate).toHaveBeenCalledWith('/unread', { replace: true });
   });
 });
 
@@ -232,12 +303,7 @@ describe('ResetPasswordPage error path', () => {
     );
     const { container } = renderPage();
 
-    fireEvent.change(screen.getByLabelText(/^new password/i), {
-      target: { value: 'correct-horse-battery' },
-    });
-    fireEvent.change(screen.getByLabelText(/confirm new password/i), {
-      target: { value: 'correct-horse-battery' },
-    });
+    fillForm();
 
     await act(async () => {
       fireEvent.submit(container.querySelector('form')!);
@@ -246,18 +312,14 @@ describe('ResetPasswordPage error path', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(/token expired/i);
     });
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it('shows fallback error message for non-Error rejections', async () => {
     vi.mocked(apiModule.resetPassword).mockRejectedValue('boom');
     const { container } = renderPage();
 
-    fireEvent.change(screen.getByLabelText(/^new password/i), {
-      target: { value: 'correct-horse-battery' },
-    });
-    fireEvent.change(screen.getByLabelText(/confirm new password/i), {
-      target: { value: 'correct-horse-battery' },
-    });
+    fillForm();
 
     await act(async () => {
       fireEvent.submit(container.querySelector('form')!);

@@ -112,8 +112,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     setPendingNotice('account-switched');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message:
-        'Signed in to a different account. Your previous session was ended.',
+      message: "You're now signed in to a different account",
       variant: 'warning',
     });
     expect(hasPendingNotice()).toBe(false);
@@ -123,17 +122,17 @@ describe('setPendingNotice / consumePendingNotice', () => {
     setPendingNotice('already-logged-in');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message: "You're already signed in.",
+      message: "You're already signed in",
       variant: 'success',
     });
     expect(hasPendingNotice()).toBe(false);
   });
 
-  it('round-trips password-reset-success as a success-variant entry (surfaced on /login after redirect)', () => {
+  it('round-trips password-reset-success as a success-variant entry (surfaced on /unread after auto-login)', () => {
     setPendingNotice('password-reset-success');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message: 'Password updated. Please sign in.',
+      message: 'Your password has been updated',
       variant: 'success',
     });
     expect(hasPendingNotice()).toBe(false);

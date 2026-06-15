@@ -145,15 +145,28 @@ export async function verifyEmailChange(token: string): Promise<void> {
   );
 }
 
+/**
+ * Resets the password using the emailed reset token. On success the server
+ * issues a session (or an MFA challenge for TOTP-enrolled accounts) so the
+ * user lands signed in without having to retype credentials. Mirrors the
+ * `login()` token-storage side-effect: the access/refresh tokens are stored
+ * automatically on the non-MFA branch; the MFA branch is returned for the
+ * caller to surface MfaView.
+ */
 export async function resetPassword(
   token: string,
   password: string,
-): Promise<void> {
-  await apiFetch(
+): Promise<LoginResponse> {
+  const data = await apiFetchRequired<LoginResponse>(
     '/auth/reset-password',
     { body: JSON.stringify({ token, password }), method: 'POST' },
     false,
   );
+
+  if ('accessToken' in data) {
+    setStoredToken(data.accessToken, data.refreshToken);
+  }
+  return data;
 }
 
 /**

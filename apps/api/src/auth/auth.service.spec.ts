@@ -55,6 +55,7 @@ describe('AuthService', () => {
   } as unknown as JwtService;
 
   const emailVerificationServiceMock = {
+    resetPassword: jest.fn(),
     sendVerificationEmail: jest.fn(),
   } as unknown as EmailVerificationService;
 
@@ -347,6 +348,47 @@ describe('AuthService', () => {
       });
 
       const result = await service.login(USER_ID);
+
+      expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
+      expect(refreshTokenServiceMock.issueTokenPair).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('delegates to EmailVerificationService.resetPassword then issues a session via login', async () => {
+      (
+        emailVerificationServiceMock.resetPassword as jest.Mock
+      ).mockResolvedValue({ userId: USER_ID });
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpEnabledAt: null,
+      });
+
+      const result = await service.resetPassword('reset-token', NEW_PASSWORD);
+
+      expect(emailVerificationServiceMock.resetPassword).toHaveBeenCalledWith(
+        'reset-token',
+        NEW_PASSWORD,
+      );
+      expect(refreshTokenServiceMock.issueTokenPair).toHaveBeenCalledWith(
+        USER_ID,
+        USER_EMAIL,
+      );
+      expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
+    });
+
+    it('routes through the MFA gate when the user has TOTP enrolled', async () => {
+      (
+        emailVerificationServiceMock.resetPassword as jest.Mock
+      ).mockResolvedValue({ userId: USER_ID });
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpEnabledAt: new Date(),
+      });
+
+      const result = await service.resetPassword('reset-token', NEW_PASSWORD);
 
       expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
       expect(refreshTokenServiceMock.issueTokenPair).not.toHaveBeenCalled();

@@ -225,7 +225,7 @@ describe('EmailVerificationService', () => {
   });
 
   describe('resetPassword', () => {
-    it('updates the password and clears the reset token when valid', async () => {
+    it('updates the password, clears the reset token, and returns the userId when valid', async () => {
       (userTokensServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
         id: USER_ID,
         resetToken: RESET_TOKEN,
@@ -235,13 +235,14 @@ describe('EmailVerificationService', () => {
         undefined,
       );
 
-      await service.resetPassword(RESET_TOKEN, 'new-password-123');
+      const result = await service.resetPassword(RESET_TOKEN, 'new-password-123');
 
       expect(usersServiceMock.resetPasswordWithToken).toHaveBeenCalledWith(
         USER_ID,
         expect.any(String),
         expect.any(Boolean),
       );
+      expect(result).toEqual({ userId: USER_ID });
     });
 
     it('throws BadRequestException when the reset token is not found', async () => {

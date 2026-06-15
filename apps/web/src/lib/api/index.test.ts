@@ -691,7 +691,10 @@ describe('verifyEmailChange', () => {
 
 describe('resetPassword', () => {
   it('POSTs to /auth/reset-password with token and password', async () => {
-    const fetchMock = mockFetch({});
+    const fetchMock = mockFetch({
+      accessToken: 'fresh-jwt',
+      refreshToken: 'fresh-refresh',
+    });
 
     await resetPassword('reset-token', 'newpass123');
 
@@ -703,6 +706,24 @@ describe('resetPassword', () => {
     };
     expect(body.token).toBe('reset-token');
     expect(body.password).toBe('newpass123');
+  });
+
+  it('stores the returned access and refresh tokens on the non-MFA branch', async () => {
+    mockFetch({ accessToken: 'reset-jwt', refreshToken: 'reset-refresh' });
+
+    await resetPassword('reset-token', 'newpass123');
+
+    expect(getStoredToken()).toBe('reset-jwt');
+    expect(getStoredRefreshToken()).toBe('reset-refresh');
+  });
+
+  it('does not store a token when the server returns an MFA challenge', async () => {
+    mockFetch({ mfaToken: 'mfa-tok', mfaMethod: 'totp' });
+
+    const result = await resetPassword('reset-token', 'newpass123');
+
+    expect(getStoredToken()).toBeNull();
+    expect(result).toEqual({ mfaToken: 'mfa-tok', mfaMethod: 'totp' });
   });
 });
 

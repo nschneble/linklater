@@ -62,6 +62,10 @@ describe('AuthController', () => {
     register: jest.fn(),
     registerMagicLink: jest.fn(),
     requestMagicLink: jest.fn(),
+    resetPassword: jest.fn().mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    }),
     revokeAllRefreshTokens: jest.fn().mockResolvedValue(undefined),
     setFirstPassword: jest.fn(),
     verifyMagicLink: jest.fn(),
@@ -243,20 +247,25 @@ describe('AuthController', () => {
   });
 
   describe('resetPassword', () => {
-    it('delegates to EmailVerificationService.resetPassword with token and password', async () => {
-      (
-        emailVerificationServiceMock.resetPassword as jest.Mock
-      ).mockResolvedValue(undefined);
+    it('delegates to AuthService.resetPassword with token and password and returns the session', async () => {
+      (authServiceMock.resetPassword as jest.Mock).mockResolvedValue({
+        accessToken: ACCESS_TOKEN,
+        refreshToken: REFRESH_TOKEN,
+      });
 
-      await controller.resetPassword({
+      const result = await controller.resetPassword({
         token: RESET_TOKEN,
         password: 'new-password-123',
       });
 
-      expect(emailVerificationServiceMock.resetPassword).toHaveBeenCalledWith(
+      expect(authServiceMock.resetPassword).toHaveBeenCalledWith(
         RESET_TOKEN,
         'new-password-123',
       );
+      expect(result).toEqual({
+        accessToken: ACCESS_TOKEN,
+        refreshToken: REFRESH_TOKEN,
+      });
     });
   });
 

@@ -149,11 +149,16 @@ export class AuthController {
   }
 
   /**
-   * Replaces the user's password using the one-time reset token. The token
-   * expires after 1 hour. Rate-limited to 5 requests per 60 seconds per IP.
+   * Replaces the user's password using the one-time reset token, then issues
+   * a session so the user lands signed in (or in the MFA challenge, for
+   * TOTP-enrolled accounts). The token expires after 1 hour. Rate-limited to
+   * 5 requests per 60 seconds per IP.
    */
   @ApiOperation({ summary: 'Reset password using the emailed token' })
-  @ApiResponse({ status: 200, description: 'Password updated successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password updated. Returns a session token pair or MFA challenge.',
+  })
   @ApiResponse({ status: 400, description: 'Token is invalid or expired.' })
   @ApiResponse({ status: 429, description: 'Too many reset attempts.' })
   @UseGuards(CustomThrottlerGuard)
@@ -162,10 +167,7 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(200)
   async resetPassword(@Body() body: ResetPasswordDto) {
-    await this.emailVerificationService.resetPassword(
-      body.token,
-      body.password,
-    );
+    return this.authService.resetPassword(body.token, body.password);
   }
 
   /**

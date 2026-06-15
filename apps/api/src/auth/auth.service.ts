@@ -134,6 +134,20 @@ export class AuthService {
     await this.magicLinkService.requestSignup(email);
   }
 
+  /**
+   * Resets the password using the emailed reset token, then issues a session
+   * for the same user so the user lands signed in (or in the MFA challenge,
+   * for TOTP-enrolled accounts). Routes through `login()` so MFA cannot be
+   * bypassed by a password-reset click.
+   */
+  async resetPassword(rawToken: string, newPassword: string) {
+    const { userId } = await this.emailVerificationService.resetPassword(
+      rawToken,
+      newPassword,
+    );
+    return this.login(userId);
+  }
+
   async verifyMagicLink(token: string) {
     const user = await this.magicLinkService.verifyToken(token);
     // Route through login() so TOTP-enrolled accounts hit the MFA gate

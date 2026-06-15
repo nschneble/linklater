@@ -79,7 +79,10 @@ export class EmailVerificationService {
     await this.emailService.sendPasswordReset(email, rawToken, user.theme);
   }
 
-  async resetPassword(rawToken: string, newPassword: string) {
+  async resetPassword(
+    rawToken: string,
+    newPassword: string,
+  ): Promise<{ userId: string }> {
     const bcrypt = await import('bcryptjs');
     const user = await this.userTokensService.findByResetToken(
       sha256Hex(rawToken),
@@ -99,6 +102,8 @@ export class EmailVerificationService {
       newPasswordHash,
       !user.emailVerifiedAt,
     );
+
+    return { userId: user.id };
   }
 
   async requestEmailChange(userId: string, newEmail: string, code?: string) {

@@ -67,20 +67,19 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
   // route transition. The /unread destination already surfaces the now-
   // current account identity in the header avatar/menu.
   'account-switched': {
-    message:
-      'Signed in to a different account. Your previous session was ended.',
+    message: "You're now signed in to a different account",
     variant: 'warning',
   },
   'already-logged-in': {
-    message: "You're already signed in.",
+    message: "You're already signed in",
     variant: 'success',
   },
   'email-verified': {
-    message: 'Your email has been verified',
+    message: 'Your email address has been verified',
     variant: 'success',
   },
   'email-verified-please-sign-in': {
-    message: 'Your email has been verified. Please sign in.',
+    message: 'Your email address has been verified',
     variant: 'success',
   },
   'email-change-verified': {
@@ -88,11 +87,11 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
     variant: 'success',
   },
   'email-change-verified-please-sign-in': {
-    message: 'Your email has been updated. Please sign in.',
+    message: 'Your email address has been updated',
     variant: 'success',
   },
   'password-reset-success': {
-    message: 'Password updated. Please sign in.',
+    message: 'Your password has been updated',
     variant: 'success',
   },
   'deletion-link-invalid': {

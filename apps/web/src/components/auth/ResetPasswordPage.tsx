@@ -1,31 +1,33 @@
-import { resetPassword } from '../../lib/api';
+import { resetPassword, verifyOtp } from '../../lib/api';
 import { setPendingNotice } from '../../lib/pendingNotice';
+import { useAuth } from '../../auth/AuthContext';
 import { getErrorMessage } from '../../lib/errors';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
+import MfaView from './MfaView';
 import PrimaryButton from '../common/PrimaryButton';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-// Brief pre-navigation announcement window. Lets the sr-only status
-// region populate and start its polite utterance before we route to
-// /login; otherwise the route change can race the announcement and
-// drop it on some SR/browser combos (per a11y-lead). The visible Toast
-// on /login is the reinforcement, not the sole channel.
-const RESET_SUCCESS_REDIRECT_DELAY_MS = 800;
+type MfaChallenge = 'totp' | 'recovery';
 
 /**
  * Handles the `/reset-password?token=...` route. Renders a form for the user
  * to choose a new password. Validates that both password fields match
  * client-side before calling `POST /auth/reset-password`.
  *
- * On success, queues a `password-reset-success` pending notice and redirects
- * to /login after a brief sr-only announcement window — the destination
- * surfaces the notice as a Toast + sr-only mirror, so a screen reader gets
- * the confirmation from both the source page (sr-only status) and the
- * destination (mirror), never silently in between.
+ * On success the server issues a session — the user lands signed in on
+ * `/unread` without having to retype credentials. TOTP-enrolled accounts hit
+ * the MFA challenge first (same surface as login/magic-link MFA). The
+ * destination page surfaces a `password-reset-success` toast via the
+ * pending-notice mirror.
+ *
+ * The submit-in-flight window swaps the form out for a bare centered spinner
+ * (matching `TokenVerificationPage` / `VerifyLoginPage`) so the post-submit
+ * moment reads as transient routing rather than a card flash before the
+ * redirect.
  *
  * The token is read from the `?token=` query parameter and is only valid
  * for 1 hour after the forgot-password email is sent.
@@ -37,20 +39,26 @@ export default function ResetPasswordPage() {
 
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [isInMfa, setIsInMfa] = useState(false);
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge>('totp');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [mfaError, setMfaError] = useState<string | null>(null);
+  const mfaErrorReference = useRef<HTMLParagraphElement>(null);
+  const mfaInputReference = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    return () => {
-      if (redirectTimer.current !== null) {
-        clearTimeout(redirectTimer.current);
-      }
-    };
-  }, []);
+    if (mfaError) {
+      mfaErrorReference.current?.focus();
+    }
+  }, [mfaError]);
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
@@ -69,17 +77,82 @@ export default function ResetPasswordPage() {
 
     setLoading(true);
     try {
-      await resetPassword(token, password);
-      setSuccess(true);
+      const result = await resetPassword(token, password);
+      if ('mfaToken' in result) {
+        setMfaToken(result.mfaToken);
+        setMfaChallenge(result.mfaMethod);
+        setIsInMfa(true);
+        setLoading(false);
+        return;
+      }
+      // Server already issued a session and the api wrapper stored the
+      // tokens. Hydrate the auth context and route to the signed-in surface.
+      await refreshUser();
       setPendingNotice('password-reset-success');
-      redirectTimer.current = setTimeout(() => {
-        navigate('/login', { replace: true });
-      }, RESET_SUCCESS_REDIRECT_DELAY_MS);
+      navigate('/unread', { replace: true });
     } catch (caughtError: unknown) {
       setError(getErrorMessage(caughtError, 'Password reset failed.'));
       setLoading(false);
     }
   };
+
+  const handleVerifyOtp = async (formEvent: FormEvent) => {
+    formEvent.preventDefault();
+    if (!mfaToken) return;
+    setMfaError(null);
+    setMfaLoading(true);
+    try {
+      await verifyOtp(mfaToken, mfaCode, mfaChallenge);
+      await refreshUser();
+      setMfaCode('');
+      setPendingNotice('password-reset-success');
+      navigate('/unread', { replace: true });
+    } catch (caughtError: unknown) {
+      setMfaError(getErrorMessage(caughtError, 'Invalid code'));
+      setMfaCode('');
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  if (isInMfa) {
+    return (
+      <MfaView
+        error={mfaError}
+        errorReference={mfaErrorReference}
+        loading={mfaLoading}
+        mfaChallenge={mfaChallenge}
+        mfaCode={mfaCode}
+        mfaInputReference={mfaInputReference}
+        onMfaCodeChange={setMfaCode}
+        onSubmit={handleVerifyOtp}
+        onSwitchToRecovery={() => {
+          setMfaChallenge('recovery');
+          setMfaCode('');
+          setMfaError(null);
+        }}
+        onSwitchToTotp={() => {
+          setMfaChallenge('totp');
+          setMfaCode('');
+          setMfaError(null);
+        }}
+      />
+    );
+  }
+
+  if (loading) {
+    return (
+      <main className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
+        <p role="status" aria-live="polite" className="sr-only">
+          Resetting your password…
+        </p>
+        <i
+          className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+          aria-hidden="true"
+        />
+      </main>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
@@ -91,68 +164,53 @@ export default function ResetPasswordPage() {
           No one liked your old password, anyways.
         </p>
 
-        {success ? (
-          // Minimal sr-only-driven confirmation window before the redirect
-          // fires. Avoids a flashy card flip (bouncing checkmark, "I'd like
-          // to log in now" button) and lets the polite status start its
-          // utterance before the route change — the destination /login
-          // page's pending-notice mirror picks up where this one leaves off.
-          <p
-            role="status"
-            aria-live="polite"
-            className="text-[var(--mount-alt-text)] text-center text-sm"
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <label
+            className="block mb-0 text-[var(--mount-alt-text)] text-sm font-medium"
+            htmlFor="reset-password"
           >
-            Password updated. Signing you in…
+            New password
+          </label>
+          <FormInput
+            id="reset-password"
+            type="password"
+            surface="mount"
+            autoComplete="new-password"
+            onChange={(event) => setPassword(event.target.value)}
+            value={password}
+            required
+            minLength={12}
+          />
+
+          <label
+            className="block mb-0 text-[var(--mount-alt-text)] text-sm font-medium"
+            htmlFor="reset-confirm"
+          >
+            Confirm new password
+          </label>
+          <FormInput
+            id="reset-confirm"
+            type="password"
+            surface="mount"
+            autoComplete="new-password"
+            onChange={(event) => setConfirm(event.target.value)}
+            value={confirm}
+            required
+          />
+
+          {error && <Alert variant="error">{error}</Alert>}
+
+          <PrimaryButton className="w-full py-2.5">
+            <i className="fa-solid fa-lock text-xs" aria-hidden="true" />
+            Reset password
+          </PrimaryButton>
+
+          <p className="text-center">
+            <LinkButton onClick={() => navigate('/login')}>
+              Back to login
+            </LinkButton>
           </p>
-        ) : (
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <label
-              className="block mb-0 text-[var(--mount-alt-text)] text-sm font-medium"
-              htmlFor="reset-password"
-            >
-              New password
-            </label>
-            <FormInput
-              id="reset-password"
-              type="password"
-              surface="mount"
-              autoComplete="new-password"
-              onChange={(event) => setPassword(event.target.value)}
-              value={password}
-              required
-              minLength={12}
-            />
-
-            <label
-              className="block mb-0 text-[var(--mount-alt-text)] text-sm font-medium"
-              htmlFor="reset-confirm"
-            >
-              Confirm new password
-            </label>
-            <FormInput
-              id="reset-confirm"
-              type="password"
-              surface="mount"
-              autoComplete="new-password"
-              onChange={(event) => setConfirm(event.target.value)}
-              value={confirm}
-              required
-            />
-
-            {error && <Alert variant="error">{error}</Alert>}
-
-            <PrimaryButton disabled={loading} className="w-full py-2.5">
-              <i className="fa-solid fa-lock text-xs" aria-hidden="true" />
-              Reset password
-            </PrimaryButton>
-
-            <p className="text-center">
-              <LinkButton onClick={() => navigate('/login')}>
-                Back to login
-              </LinkButton>
-            </p>
-          </form>
-        )}
+        </form>
       </div>
     </div>
   );
