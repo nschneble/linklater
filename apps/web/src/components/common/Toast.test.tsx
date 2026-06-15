@@ -76,6 +76,20 @@ describe('Toast', () => {
     );
   });
 
+  // Windows High Contrast / forced-colors mode overrides the arbitrary bg
+  // paint to system Canvas and strips the box-shadow that border-shadow
+  // produces. Without a forced-colors-visible border the toast would lose
+  // every visible boundary against the page (WCAG 1.4.11 Non-text Contrast).
+  // CanvasText is the system foreground token; ButtonText is reserved for
+  // the interactive dismiss button's outline.
+  it('paints a CanvasText border + text fallback in forced-colors mode', () => {
+    render(<Toast message="x" onDismiss={() => {}} />);
+    const toast = screen.getByRole('status');
+    expect(toast.className).toContain('forced-colors:border');
+    expect(toast.className).toContain('forced-colors:border-[CanvasText]');
+    expect(toast.className).toContain('forced-colors:text-[CanvasText]');
+  });
+
   it('clicking dismiss triggers the exit animation and fires onDismiss after 150ms', () => {
     const handleDismiss = vi.fn();
     render(<Toast message="x" onDismiss={handleDismiss} />);

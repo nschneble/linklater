@@ -33,7 +33,6 @@ const MIGRATED_FILES = [
   'src/components/Header.tsx',
   'src/components/LandingPage/index.tsx',
   'src/components/auth/AuthCard.tsx',
-  'src/components/auth/AuthErrorPanel.tsx',
   'src/components/auth/AuthForm.tsx',
   'src/components/auth/ForgotPasswordView.tsx',
   'src/components/auth/LoginRegisterView.tsx',

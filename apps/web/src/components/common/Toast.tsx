@@ -130,7 +130,7 @@ export default function Toast({
     <div
       role={role}
       aria-live={ariaLive}
-      className={`fixed bottom-6 inset-x-0 mx-auto w-fit z-50 flex items-center gap-2 px-4 py-2.5 ${variantContainerClasses[variant]} border-shadow text-sm font-medium rounded-full ${
+      className={`fixed bottom-6 inset-x-0 mx-auto w-fit z-50 flex items-center gap-2 px-4 py-2.5 ${variantContainerClasses[variant]} border-shadow forced-colors:border forced-colors:border-[CanvasText] forced-colors:text-[CanvasText] text-sm font-medium rounded-full ${
         exiting ? 'animate-fade-out-down' : 'animate-fade-in-up'
       }`}
     >

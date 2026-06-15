@@ -100,6 +100,16 @@ describe('setPendingNotice / consumePendingNotice', () => {
     expect(hasPendingNotice()).toBe(false);
   });
 
+  it('round-trips oauth-failed as an error-variant entry (generic copy — provider message dropped)', () => {
+    setPendingNotice('oauth-failed');
+    expect(hasPendingNotice()).toBe(true);
+    expect(consumePendingNotice()).toEqual({
+      message: "We couldn't sign you in. Please try again.",
+      variant: 'error',
+    });
+    expect(hasPendingNotice()).toBe(false);
+  });
+
   // Magic-link cross-account / same-account / password-reset entries —
   // queued after the verifyMagicLink and resetPassword flows finish.
 
@@ -243,6 +253,7 @@ describe('catalog drift guard', () => {
     'verification-link-invalid',
     'email-change-link-invalid',
     'login-link-invalid',
+    'oauth-failed',
   ];
 
   for (const key of ALL_KEYS) {

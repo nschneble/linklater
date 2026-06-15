@@ -376,7 +376,7 @@ describe('VerifyLoginPage error paths — redirect to /login with toast', () => 
     expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
   });
 
-  it('does not render the legacy error card (no alert role, no AuthErrorPanel)', async () => {
+  it('does not render a legacy error card (no alert role, no back-to-login button)', async () => {
     vi.mocked(apiModule.verifyMagicLink).mockRejectedValue(
       new Error('Link expired'),
     );

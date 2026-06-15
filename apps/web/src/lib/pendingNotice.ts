@@ -43,7 +43,8 @@ export type PendingNotice =
   | 'deletion-link-invalid'
   | 'verification-link-invalid'
   | 'email-change-link-invalid'
-  | 'login-link-invalid';
+  | 'login-link-invalid'
+  | 'oauth-failed';
 
 export interface NoticeEntry {
   message: string;
@@ -108,6 +109,14 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
   },
   'login-link-invalid': {
     message: 'Login link has expired',
+    variant: 'error',
+  },
+  // Generic copy (not the provider's raw error) per a11y-lead: the toast
+  // auto-dismiss window is too short for SRs to parse a free-form provider
+  // message, and the recovery path is identical regardless of the underlying
+  // OAuth failure (retry sign-in on /login).
+  'oauth-failed': {
+    message: "We couldn't sign you in. Please try again.",
     variant: 'error',
   },
 };
