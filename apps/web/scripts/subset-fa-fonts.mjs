@@ -3,79 +3,40 @@
 // scripts/font-awesome-source/webfonts/. Outputs overwrite the woff2 files
 // served by Vite under public/assets/fontawesome/webfonts/.
 //
-// To add a new icon: list it in scripts/font-awesome-manifest.json (in the
-// solid or brands array, no `fa-` prefix), then rerun `npm run subset-fa`.
+// The manifest itself is rewritten from the source scan by sync-fa-manifest.mjs,
+// which is chained ahead of this script via `npm run subset-fa`. To add a new
+// icon, just use its class in source — the next subset-fa picks it up.
 //
-// Codepoints are sourced from the vendored FA CSS so the script never drifts
-// from the font binaries it subsets. The CSS rules look like:
-//
-//   .fa-check{--fa:"\f00c"}
-//   .fa-rotate-back,.fa-rotate-backward,.fa-rotate-left,.fa-undo-alt{--fa:"\f2ea"}
-//   .fa-plus{--fa:"\+"}
-//
-// Two CSS escape shapes appear: `\HEX` (1-6 hex digits) maps to that unicode
-// codepoint; `\X` for any other character X maps to that literal ASCII char.
-// Multiple selectors per rule are common (aliases); we register every alias
-// against the same codepoint so the manifest can use canonical OR alias names.
+// CSS rule shape lives in fa-scan.mjs (parseCodepoints). Two escape kinds:
+// `\HEX` (1-6 hex digits) maps to that unicode codepoint; `\X` for any other
+// character X maps to that literal ASCII char. Multiple selectors per rule
+// are common (aliases); aliases share a codepoint so the manifest can use
+// canonical OR alias names.
 
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import subsetFont from 'subset-font';
+import { parseCodepoints, paths } from './fa-scan.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const webRoot = resolve(here, '..');
-
-const manifestPath = resolve(here, 'font-awesome-manifest.json');
 const sourceDir = resolve(here, 'font-awesome-source/webfonts');
-const outputDir = resolve(webRoot, 'public/assets/fontawesome/webfonts');
-const cssDir = resolve(webRoot, 'public/assets/fontawesome/css');
+const outputDir = resolve(paths.webRoot, 'public/assets/fontawesome/webfonts');
 
 const families = {
   brands: {
-    cssFile: resolve(cssDir, 'brands.min.css'),
+    cssFile: paths.brandsCssPath,
     source: resolve(sourceDir, 'fa-brands-400.woff2'),
     output: resolve(outputDir, 'fa-brands-400.woff2'),
   },
   solid: {
     // fontawesome.min.css holds the canonical solid icon -> codepoint map.
     // solid.min.css only registers the family + @font-face.
-    cssFile: resolve(cssDir, 'fontawesome.min.css'),
+    cssFile: paths.solidCssPath,
     source: resolve(sourceDir, 'fa-solid-900.woff2'),
     output: resolve(outputDir, 'fa-solid-900.woff2'),
   },
 };
-
-/**
- * Parse all `.fa-NAME[, .fa-OTHER]*{--fa:"\HEX"}` rules out of an FA CSS file
- * and return a flat `Map<iconName, codepoint>`. Aliases share a codepoint.
- */
-async function parseCodepoints(cssFile) {
-  const css = await readFile(cssFile, 'utf8');
-  // Captures: (1) selector list, (2) hex escape OR (3) literal-char escape.
-  const rulePattern =
-    /(\.fa-[a-z0-9-]+(?:\s*,\s*\.fa-[a-z0-9-]+)*)\s*\{[^}]*--fa:\s*"\\(?:([0-9a-f]{1,6})|([^0-9a-f]))"/gi;
-  const codepoints = new Map();
-
-  for (const match of css.matchAll(rulePattern)) {
-    const selectorList = match[1];
-    const hex = match[2];
-    const literal = match[3];
-    let codepoint;
-    if (hex) {
-      codepoint = parseInt(hex, 16);
-    } else {
-      codepoint = literal.codePointAt(0);
-    }
-
-    for (const selector of selectorList.split(',')) {
-      const name = selector.trim().replace(/^\.fa-/, '');
-      codepoints.set(name, codepoint);
-    }
-  }
-
-  return codepoints;
-}
 
 async function subsetFamily(family, names) {
   const config = families[family];
@@ -116,7 +77,7 @@ async function subsetFamily(family, names) {
 }
 
 async function main() {
-  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  const manifest = JSON.parse(await readFile(paths.manifestPath, 'utf8'));
 
   const results = [];
   for (const family of Object.keys(families)) {

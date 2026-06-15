@@ -32,6 +32,13 @@ export interface User {
   multiFactorMethod: 'totp' | null;
   /** `true` when the user has started TOTP setup but not yet verified it. */
   multiFactorPending: boolean;
+  /**
+   * `true` when the user has an unexpired email-confirmation token outstanding
+   * from a magic-link-account deletion request. Drives the "Check your email"
+   * panel in `DangerZone` so the in-flight state survives navigation away
+   * from settings and back.
+   */
+  accountDeletionPending: boolean;
   /** The user's UUID (renamed from `id` to `userId` by `GET /auth/me`). */
   userId: string;
   /**
@@ -66,6 +73,12 @@ export interface AuthContextValue {
   register: (email: string, password: string) => Promise<void>;
   /** Resends the email verification message to the current user's address. */
   resendVerificationEmail: () => Promise<void>;
+  /**
+   * Resends the email-change verification link to the address stored in
+   * `pendingEmail`. The server rotates the token but does not re-check MFA —
+   * MFA was enforced when the pending change was created.
+   */
+  resendEmailChangeVerification: () => Promise<void>;
   /**
    * Optimistically updates the `pendingEmail` field in auth state without
    * re-fetching from the server. Called by `AccountSettingsForm` immediately

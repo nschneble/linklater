@@ -64,6 +64,31 @@ export class EmailVerificationService {
     await this.issueVerificationEmail(userId, user.email, user.theme);
   }
 
+  async resendEmailChange(userId: string) {
+    const user = await this.usersService.findById(userId);
+
+    if (!user.pendingEmail) {
+      throw new BadRequestException('No email change is pending');
+    }
+
+    // MFA was already enforced at request time; rotating the token to the
+    // same pendingEmail does not need a fresh OTP.
+    const rawToken = generateHexToken();
+    const tokenHash = sha256Hex(rawToken);
+    const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
+    await this.userTokensService.updatePendingEmail(
+      userId,
+      user.pendingEmail,
+      tokenHash,
+      expiresAt,
+    );
+    await this.emailService.sendEmailChangeVerification(
+      user.pendingEmail,
+      rawToken,
+      user.theme,
+    );
+  }
+
   async forgotPassword(email: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) return;
@@ -79,7 +104,10 @@ export class EmailVerificationService {
     await this.emailService.sendPasswordReset(email, rawToken, user.theme);
   }
 
-  async resetPassword(rawToken: string, newPassword: string) {
+  async resetPassword(
+    rawToken: string,
+    newPassword: string,
+  ): Promise<{ userId: string }> {
     const bcrypt = await import('bcryptjs');
     const user = await this.userTokensService.findByResetToken(
       sha256Hex(rawToken),
@@ -99,6 +127,8 @@ export class EmailVerificationService {
       newPasswordHash,
       !user.emailVerifiedAt,
     );
+
+    return { userId: user.id };
   }
 
   async requestEmailChange(userId: string, newEmail: string, code?: string) {

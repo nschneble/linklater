@@ -1,7 +1,7 @@
 import ForgotPasswordView from './ForgotPasswordView';
 import LoginRegisterView from './LoginRegisterView';
 import MfaView from './MfaView';
-import Toast from '../common/Toast';
+import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
 import { useAuthForm } from './useAuthForm';
 
 /**
@@ -20,12 +20,12 @@ export default function AuthForm() {
     emailReference,
     error,
     errorReference,
-    forgotPasswordSent,
+    forgotPasswordSentJustNow,
     handleModeChange,
     handleSubmit,
     handleVerifyOtp,
     loading,
-    magicLinkSent,
+    magicLinkSentJustNow,
     mfaChallenge,
     mfaCode,
     mfaInputReference,
@@ -37,7 +37,6 @@ export default function AuthForm() {
     setMfaChallenge,
     setMfaCode,
     setError,
-    setMagicLinkSent,
     setNotice,
     setPassword,
   } = useAuthForm();
@@ -50,7 +49,7 @@ export default function AuthForm() {
         emailReference={emailReference}
         error={error}
         errorReference={errorReference}
-        forgotPasswordSent={forgotPasswordSent}
+        forgotPasswordSentJustNow={forgotPasswordSentJustNow}
         loading={loading}
         onBack={() => handleModeChange('login')}
         onEmailChange={setEmail}
@@ -88,16 +87,10 @@ export default function AuthForm() {
         error={error}
         errorReference={errorReference}
         loading={loading}
-        magicLinkSent={magicLinkSent}
+        magicLinkSentJustNow={magicLinkSentJustNow}
         mode={mode}
         onEmailChange={setEmail}
         onForgotPassword={() => handleModeChange('forgot-password')}
-        onMagicLinkBack={() => {
-          setMagicLinkSent(false);
-          if (mode === 'register') {
-            handleModeChange('login');
-          }
-        }}
         onModeChange={handleModeChange}
         onPasswordChange={setPassword}
         onSubmit={handleSubmit}
@@ -110,27 +103,11 @@ export default function AuthForm() {
   return (
     <>
       {view}
-      {notice && (
-        <Toast
-          message={notice}
-          onDismiss={() => setNotice(null)}
-          variant="success"
-        />
-      )}
-      {/*
-        Pre-mounted live region for the visual Toast above. Some SRs miss
-        `role="status"` on a freshly-mounted node; keeping this span in the
-        DOM always and swapping its text via state ensures the announcement
-        fires reliably.
-      */}
-      <span
-        className="sr-only"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {notice ?? ''}
-      </span>
+      <PendingNoticeAnnouncer
+        notice={notice?.message ?? null}
+        variant={notice?.variant ?? 'success'}
+        onDismiss={() => setNotice(null)}
+      />
     </>
   );
 }

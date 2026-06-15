@@ -14,6 +14,6 @@
     { "kind": "wait", "ms": 800 }
   ],
   "expect": {
-    "anyOf": [{ "text": "Check your email for a login link" }]
+    "anyOf": [{ "text": "Magic link sent!" }]
   }
 }

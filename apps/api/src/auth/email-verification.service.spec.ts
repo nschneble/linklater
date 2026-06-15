@@ -225,7 +225,7 @@ describe('EmailVerificationService', () => {
   });
 
   describe('resetPassword', () => {
-    it('updates the password and clears the reset token when valid', async () => {
+    it('updates the password, clears the reset token, and returns the userId when valid', async () => {
       (userTokensServiceMock.findByResetToken as jest.Mock).mockResolvedValue({
         id: USER_ID,
         resetToken: RESET_TOKEN,
@@ -235,13 +235,17 @@ describe('EmailVerificationService', () => {
         undefined,
       );
 
-      await service.resetPassword(RESET_TOKEN, 'new-password-123');
+      const result = await service.resetPassword(
+        RESET_TOKEN,
+        'new-password-123',
+      );
 
       expect(usersServiceMock.resetPasswordWithToken).toHaveBeenCalledWith(
         USER_ID,
         expect.any(String),
         expect.any(Boolean),
       );
+      expect(result).toEqual({ userId: USER_ID });
     });
 
     it('throws BadRequestException when the reset token is not found', async () => {
@@ -352,6 +356,54 @@ describe('EmailVerificationService', () => {
       await expect(service.resendVerificationEmail(USER_ID)).rejects.toThrow(
         BadRequestException,
       );
+    });
+  });
+
+  describe('resendEmailChange', () => {
+    it('rotates the pending-email token and sends the link to the pending address', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        pendingEmail: NEW_EMAIL,
+        theme: 'boyhood',
+      });
+      (userTokensServiceMock.updatePendingEmail as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (
+        emailServiceMock.sendEmailChangeVerification as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await service.resendEmailChange(USER_ID);
+
+      expect(userTokensServiceMock.updatePendingEmail).toHaveBeenCalledWith(
+        USER_ID,
+        NEW_EMAIL,
+        expect.any(String),
+        expect.any(Date),
+      );
+      expect(emailServiceMock.sendEmailChangeVerification).toHaveBeenCalledWith(
+        NEW_EMAIL,
+        expect.any(String),
+        'boyhood',
+      );
+    });
+
+    it('throws BadRequestException when no email change is pending', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        pendingEmail: null,
+        theme: 'boyhood',
+      });
+
+      await expect(service.resendEmailChange(USER_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(userTokensServiceMock.updatePendingEmail).not.toHaveBeenCalled();
+      expect(
+        emailServiceMock.sendEmailChangeVerification,
+      ).not.toHaveBeenCalled();
     });
   });
 

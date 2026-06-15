@@ -65,6 +65,7 @@ function makeAuthContext(overrides = {}) {
     markWelcomed: vi.fn(),
     refreshUser: vi.fn(),
     register: vi.fn(),
+    resendEmailChangeVerification: vi.fn(),
     resendVerificationEmail: vi.fn(),
     setPendingEmail: vi.fn(),
     user: makeUser(),

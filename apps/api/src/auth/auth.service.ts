@@ -57,6 +57,8 @@ export class AuthService {
         totpVerifiedAt: _totpVerifiedAt,
         magicLinkToken: _magicLinkToken,
         magicLinkTokenExpiresAt: _magicLinkTokenExpiresAt,
+        accountDeletionToken,
+        accountDeletionTokenExpiresAt,
         ...rest
       },
       oauthAccounts,
@@ -71,12 +73,17 @@ export class AuthService {
       providerEmail: account.providerEmail,
       connectedAt: account.connectedAt,
     }));
+    const accountDeletionPending =
+      !!accountDeletionToken &&
+      !!accountDeletionTokenExpiresAt &&
+      accountDeletionTokenExpiresAt > new Date();
 
     return {
       userId: id,
       ...rest,
       multiFactorMethod,
       multiFactorPending: !!totpSecret && !totpEnabledAt,
+      accountDeletionPending,
       connectedProviders,
     };
   }
@@ -134,11 +141,34 @@ export class AuthService {
     await this.magicLinkService.requestSignup(email);
   }
 
+  /**
+   * Resets the password using the emailed reset token, then issues a session
+   * for the same user so the user lands signed in (or in the MFA challenge,
+   * for TOTP-enrolled accounts). Routes through `login()` so MFA cannot be
+   * bypassed by a password-reset click.
+   */
+  async resetPassword(rawToken: string, newPassword: string) {
+    const { userId } = await this.emailVerificationService.resetPassword(
+      rawToken,
+      newPassword,
+    );
+    return this.login(userId);
+  }
+
   async verifyMagicLink(token: string) {
     const user = await this.magicLinkService.verifyToken(token);
     // Route through login() so TOTP-enrolled accounts hit the MFA gate
     // instead of getting a session directly from a magic-link click.
-    return this.login(user.id);
+    const result = await this.login(user.id);
+    // Surface the resolved userId on the non-MFA branch so the SPA can
+    // detect a cross-account click (logged into B, link is for A) and
+    // revoke B's sessions before swapping. MFA path stays unchanged —
+    // the userId is bound to the mfaToken via the nonce and surfaced
+    // after verifyOtp resolves.
+    if ('accessToken' in result) {
+      return { ...result, userId: user.id };
+    }
+    return result;
   }
 
   async verifyOtp(

@@ -1,11 +1,17 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Fixed-position notification that appears at the bottom of the screen and
- * auto-dismisses after 3 seconds.
+ * auto-dismisses after 5 seconds (6 seconds for the warning and error
+ * variants — their default copy is longer and the SR announcement needs
+ * the extra read window).
  *
- * - `'success'` uses `role="status"` and `aria-live="polite"` so screen
- *   readers announce the message without interrupting the current read flow.
+ * - `'success'` and `'warning'` both use `role="status"` and
+ *   `aria-live="polite"` so screen readers announce the message without
+ *   interrupting the current read flow. Warning shares the polite channel
+ *   with success because the underlying user action was intentional; the
+ *   warn-highlight paint + `fa-triangle-exclamation` glyph carry the
+ *   "heads-up, side-effect happened" signal redundantly.
  * - `'error'` uses `role="alert"` and `aria-live="assertive"` for immediate
  *   announcement — reserved for genuine errors that require user attention.
  *
@@ -15,18 +21,18 @@ import { useCallback, useEffect, useState } from 'react';
  *
  * Toast is `position: fixed` at the viewport bottom and intentionally takes no
  * `surface` prop. The `variant` drives THREE coupled axes — icon glyph, ARIA
- * live politeness, and bundle paint (`success-highlight` vs
- * `alert-highlight`). Coupling matters for a11y: the highlight color is not
- * decorative, it pairs with the icon glyph as the second channel of
+ * live politeness, and bundle paint (`success-highlight` vs `warn-highlight`
+ * vs `alert-highlight`). Coupling matters for a11y: the highlight color is
+ * not decorative, it pairs with the icon glyph as the second channel of
  * meaning. A future contributor must not split these — e.g. allowing
  * `variant="error"` with `aria-live="polite"`, or a neutral background
  * paint, would break the icon+color redundancy that lets CVD users
- * distinguish error from success at a glance.
+ * distinguish error from success from warning at a glance.
  *
  * CVD distinguishability rests on the icon-glyph redundancy
- * (`fa-circle-check` vs `fa-circle-exclamation`), the same pattern Alert.tsx
- * uses; the alert/success waiver pairs in `bundles.distinguishability.test.ts`
- * cite both components.
+ * (`fa-circle-check` vs `fa-triangle-exclamation` vs `fa-circle-exclamation`),
+ * the same pattern Alert.tsx uses; the alert/warn/success waiver pairs in
+ * `bundles.distinguishability.test.ts` cite both components.
  */
 interface ToastProps {
   message: string;
@@ -40,14 +46,17 @@ interface ToastProps {
    * Controls icon, ARIA live region behavior, AND bundle paint.
    * `'success'` (default): `fa-circle-check` icon, `aria-live="polite"`,
    *   success-highlight fill.
+   * `'warning'`: `fa-triangle-exclamation` icon, `aria-live="polite"`,
+   *   warn-highlight fill, 6s auto-dismiss (vs 5s for success).
    * `'error'`: `fa-circle-exclamation` icon, `aria-live="assertive"`,
-   *   alert-highlight fill.
+   *   alert-highlight fill, 6s auto-dismiss (vs 5s for success).
    */
-  variant?: 'success' | 'error';
+  variant?: 'success' | 'warning' | 'error';
 }
 
 const variantIcons: Record<NonNullable<ToastProps['variant']>, string> = {
   success: 'fa-circle-check',
+  warning: 'fa-triangle-exclamation',
   error: 'fa-circle-exclamation',
 };
 
@@ -56,6 +65,7 @@ const variantContainerClasses: Record<
   string
 > = {
   success: 'bg-[var(--success-highlight)] text-[var(--success-highlight-fg)]',
+  warning: 'bg-[var(--warn-highlight)] text-[var(--warn-highlight-fg)]',
   error: 'bg-[var(--alert-highlight)] text-[var(--alert-highlight-fg)]',
 };
 
@@ -64,7 +74,17 @@ const variantDismissRingClasses: Record<
   string
 > = {
   success: 'focus-visible:ring-[var(--success-highlight-fg)]',
+  warning: 'focus-visible:ring-[var(--warn-highlight-fg)]',
   error: 'focus-visible:ring-[var(--alert-highlight-fg)]',
+};
+
+const variantDismissDelayMs: Record<
+  NonNullable<ToastProps['variant']>,
+  number
+> = {
+  success: 5000,
+  warning: 6000,
+  error: 6000,
 };
 
 export default function Toast({
@@ -74,15 +94,24 @@ export default function Toast({
 }: ToastProps) {
   const [exiting, setExiting] = useState(false);
 
+  // Mirror onDismiss into a ref so the auto-dismiss timer doesn't restart
+  // every time a parent re-renders with a fresh inline arrow. Consumers
+  // (AuthForm, LinksView, BookmarkletSection) pass `onDismiss={() => ...}`
+  // — without this ref the timer would extend each time the parent's
+  // local state flips mid-window (e.g. forgot-password sentinel-hold
+  // 5000ms after success → 5+5 = ~10s visible toast).
+  const onDismissReference = useRef(onDismiss);
+  onDismissReference.current = onDismiss;
+
   const dismiss = useCallback(() => {
     setExiting(true);
-    setTimeout(onDismiss, 150);
-  }, [onDismiss]);
+    setTimeout(() => onDismissReference.current(), 150);
+  }, []);
 
   useEffect(() => {
-    const timer = setTimeout(dismiss, 3000);
+    const timer = setTimeout(dismiss, variantDismissDelayMs[variant]);
     return () => clearTimeout(timer);
-  }, [dismiss]);
+  }, [dismiss, variant]);
 
   const ariaLive = variant === 'error' ? 'assertive' : 'polite';
   const role = variant === 'error' ? 'alert' : 'status';
@@ -106,7 +135,7 @@ export default function Toast({
       }`}
     >
       <i
-        className={`fa-solid ${variantIcons[variant]} text-xs`}
+        className={`fa-solid ${variantIcons[variant]} text-sm`}
         aria-hidden="true"
       />
       {message}

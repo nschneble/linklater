@@ -1,26 +1,40 @@
-import Alert from '../common/Alert';
-import LinkButton from '../common/LinkButton';
-import { useEffect, useRef, useState } from 'react';
+import { setPendingNotice, type PendingNotice } from '../../lib/pendingNotice';
+import { useAuth } from '../../auth/AuthContext';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getErrorMessage } from '../../lib/errors';
-
-/** The three states of a token verification flow. */
-type Status = 'verifying' | 'success' | 'error';
 
 /**
- * Props that configure the page copy for each specific verification flow.
- * The logic is identical for email verification and email-change verification —
- * only the user-visible text differs.
+ * Props that configure the per-flow notice keys and verifying-state copy.
+ * The logic is identical for email verification and email-change
+ * verification — only the user-visible text and the notice keys differ.
  */
 interface TokenVerificationPageProps {
-  /** Page heading (e.g. "Email Verification", "Email Change"). */
-  title: string;
-  /** Text shown while the API call is in flight. */
+  /**
+   * Polite sr-only status text announced while the API call is in flight.
+   * The verifying state renders a centered spinning icon only — this text
+   * lives in an sr-only live region so screen-reader users still hear the
+   * per-flow context.
+   */
   verifyingText: string;
-  /** Text shown after a successful verification. */
-  successText: string;
-  /** Text shown below the error message to guide the user. */
-  helpText: string;
+  /**
+   * Pending-notice key queued when the user is authenticated at success
+   * time (destination /unread). Surfaced via the destination page's toast +
+   * sr-only mirror.
+   */
+  signedInNotice: PendingNotice;
+  /**
+   * Pending-notice key queued when the user is NOT authenticated at
+   * success time (destination /login). Surfaced via the destination page's
+   * toast + sr-only mirror.
+   */
+  signedOutNotice: PendingNotice;
+  /**
+   * Pending-notice key queued when verification fails (missing token,
+   * expired token, server rejection). Error-variant in the catalog so the
+   * surfacing toast rides assertive + alert; copy carries the recovery hint
+   * inline because the actual recovery path lives behind auth (WCAG 3.3.3).
+   */
+  invalidNotice: PendingNotice;
   /**
    * The verification API function to call. Receives the token from the
    * `?token=` query parameter. Should resolve on success and reject with
@@ -31,32 +45,52 @@ interface TokenVerificationPageProps {
    * Called immediately after a successful verification, before the user
    * navigates away. Use to refresh stale auth state (e.g. re-fetch the
    * user profile so email changes/verifications are reflected on return).
+   * Awaited so the destination page sees the freshest auth state.
    */
   onSuccess?: () => void | Promise<void>;
 }
 
 /**
  * Generic full-page token verification UI. Reads `?token=` from the URL,
- * calls `verifyFn`, and renders one of three states: verifying, success, or
- * error. On success or error, a "Go to Linklater" / "Back to Linklater" button
- * navigates to `/`.
+ * calls `verifyFn`, and unconditionally redirects (replace) to `/unread`
+ * (signed-in success), `/login` (signed-out success), or `/login` (any
+ * failure). The destination page consumes the queued notice via
+ * `usePendingNotice` and surfaces it as a toast + sr-only mirror.
+ *
+ * The verifying state is a bare centered spinner with an sr-only polite
+ * status — the page is purely transient and any card chrome would flash
+ * visibly for sub-second windows before the redirect fires, which reads as
+ * "page loaded and immediately bounced." Failures surface as error-variant
+ * toasts on /login rather than a full error card.
  *
  * Used by `VerifyEmailPage` (for initial email verification) and
  * `VerifyEmailChangePage` (for email-change confirmation).
  */
 export default function TokenVerificationPage({
-  title,
   verifyingText,
-  successText,
-  helpText,
+  signedInNotice,
+  signedOutNotice,
+  invalidNotice,
   verifyFn,
   onSuccess,
 }: TokenVerificationPageProps) {
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<Status>('verifying');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { user } = useAuth();
   const hasVerified = useRef(false);
+
+  // Mirror `user` into a ref so the auth-state branch inside the
+  // verifyFn().then() callback reads the LATEST value rather than the
+  // render-time closure. Today's verify endpoints don't issue session
+  // cookies (apps/api/src/auth/auth.controller.ts), so the closure is
+  // safe by accident — this ref makes correctness independent of that
+  // server behavior. If a future verify endpoint creates a session via
+  // onSuccess (e.g. await refreshUser() flipping user from null → non-null),
+  // the post-await read will see the new value and route correctly.
+  const userReference = useRef(user);
+  useEffect(() => {
+    userReference.current = user;
+  }, [user]);
 
   useEffect(() => {
     if (hasVerified.current) return;
@@ -64,80 +98,47 @@ export default function TokenVerificationPage({
 
     const token = searchParameters.get('token');
     if (!token) {
-      setStatus('error');
-      setErrorMessage('No verification token found in the link.');
+      setPendingNotice(invalidNotice);
+      navigate('/login', { replace: true });
       return;
     }
 
     verifyFn(token)
-      .then(() => {
-        setStatus('success');
-        onSuccess?.();
+      .then(async () => {
+        // Refresh auth state BEFORE queuing the notice + navigating so the
+        // destination page renders against the latest user profile (e.g.
+        // post-verification `emailVerifiedAt` timestamp or updated email).
+        await onSuccess?.();
+        const isSignedIn = userReference.current !== null;
+        const noticeKey = isSignedIn ? signedInNotice : signedOutNotice;
+        const destination = isSignedIn ? '/unread' : '/login';
+        setPendingNotice(noticeKey);
+        navigate(destination, { replace: true });
       })
       .catch((error: unknown) => {
-        setStatus('error');
-        setErrorMessage(getErrorMessage(error, 'Verification failed.'));
+        void error;
+        setPendingNotice(invalidNotice);
+        navigate('/login', { replace: true });
       });
-  }, [onSuccess, searchParameters, verifyFn]);
+  }, [
+    invalidNotice,
+    navigate,
+    onSuccess,
+    searchParameters,
+    signedInNotice,
+    signedOutNotice,
+    verifyFn,
+  ]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
-      <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl text-center select-none">
-        <h1 className="mb-4 text-[var(--mount-text)] text-2xl font-bold">
-          {title}
-        </h1>
-
-        {status === 'verifying' && (
-          <p
-            role="status"
-            aria-live="polite"
-            className="text-[var(--mount-alt-text)] animate-pulse"
-          >
-            {verifyingText}
-          </p>
-        )}
-
-        {status === 'success' && (
-          <>
-            <p className="mb-6 text-[var(--mount-alt-text)]">
-              <i
-                className="fa-solid fa-circle-check mr-2 text-[var(--success-highlight)]"
-                aria-hidden="true"
-              />
-              {successText}
-            </p>
-            <LinkButton
-              surface="mount"
-              className="text-sm"
-              onClick={() => navigate('/unread')}
-            >
-              Go to Linklater
-            </LinkButton>
-          </>
-        )}
-
-        {status === 'error' && (
-          <>
-            <Alert
-              className="mb-2"
-              icon="fa-triangle-exclamation"
-              variant="error"
-            >
-              {errorMessage}
-            </Alert>
-            <p className="mb-6 text-[var(--mount-alt-text)] text-sm">
-              {helpText}
-            </p>
-            <LinkButton
-              surface="mount"
-              className="text-sm"
-              onClick={() => navigate('/unread')}
-            >
-              Back to Linklater
-            </LinkButton>
-          </>
-        )}
-      </div>
-    </div>
+    <main className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
+      <p role="status" aria-live="polite" className="sr-only">
+        {verifyingText}
+      </p>
+      <i
+        className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+        aria-hidden="true"
+      />
+    </main>
   );
 }

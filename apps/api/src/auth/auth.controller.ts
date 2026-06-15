@@ -149,11 +149,17 @@ export class AuthController {
   }
 
   /**
-   * Replaces the user's password using the one-time reset token. The token
-   * expires after 1 hour. Rate-limited to 5 requests per 60 seconds per IP.
+   * Replaces the user's password using the one-time reset token, then issues
+   * a session so the user lands signed in (or in the MFA challenge, for
+   * TOTP-enrolled accounts). The token expires after 1 hour. Rate-limited to
+   * 5 requests per 60 seconds per IP.
    */
   @ApiOperation({ summary: 'Reset password using the emailed token' })
-  @ApiResponse({ status: 200, description: 'Password updated successfully.' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Password updated. Returns a session token pair or MFA challenge.',
+  })
   @ApiResponse({ status: 400, description: 'Token is invalid or expired.' })
   @ApiResponse({ status: 429, description: 'Too many reset attempts.' })
   @UseGuards(CustomThrottlerGuard)
@@ -162,10 +168,7 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(200)
   async resetPassword(@Body() body: ResetPasswordDto) {
-    await this.emailVerificationService.resetPassword(
-      body.token,
-      body.password,
-    );
+    return this.authService.resetPassword(body.token, body.password);
   }
 
   /**
@@ -221,6 +224,27 @@ export class AuthController {
       body.email,
       body.code,
     );
+  }
+
+  /**
+   * Re-sends the email-change verification link to the address stored in
+   * `pendingEmail`. Used when the original link is lost or expired. MFA is not
+   * re-checked here — it was enforced when `pendingEmail` was set. Rate-limited
+   * to 3 requests per 60 seconds per IP.
+   */
+  @ApiOperation({ summary: 'Resend the email-change verification link' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Verification email resent.' })
+  @ApiResponse({ status: 400, description: 'No email change is pending.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({ status: 429, description: 'Too many resend attempts.' })
+  @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
+  @Throttle({ 'auth-resend-email-change': { ttl: 60000, limit: 3 } })
+  @ThrottleMessage('Too many resend attempts')
+  @Post('resend-email-change')
+  @HttpCode(200)
+  async resendEmailChange(@Req() request: AuthRequest) {
+    await this.emailVerificationService.resendEmailChange(request.user.userId);
   }
 
   /**

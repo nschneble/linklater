@@ -52,7 +52,19 @@ interface ReauthFormProps {
   error: string | null;
   password: string;
   code: string;
+  /**
+   * Whether the user has a password set. Gates the "Current password" input.
+   * Callers must guarantee `hasPassword || hasMfa` so the form has at least
+   * one credential to collect.
+   */
   hasPassword: boolean;
+  /**
+   * Whether the user has multi-factor authentication enrolled. Gates the
+   * "Authenticator or recovery code" input. Without this gate, password-only
+   * users see a code field they cannot fill — see `DangerZone`'s credentialed
+   * branch, which admits any user with `hasPassword || multiFactorMethod`.
+   */
+  hasMfa: boolean;
   onPasswordChange: (value: string) => void;
   onCodeChange: (value: string) => void;
   onSubmit: (formEvent: FormEvent) => void;
@@ -64,6 +76,7 @@ export default function ReauthForm({
   code,
   error,
   focusOnMount = false,
+  hasMfa,
   hasPassword,
   loading,
   onCancel,
@@ -85,8 +98,8 @@ export default function ReauthForm({
   useEffect(() => {
     if (!focusOnMount) return;
     if (hasPassword) passwordReference.current?.focus();
-    else codeReference.current?.focus();
-  }, [focusOnMount, hasPassword]);
+    else if (hasMfa) codeReference.current?.focus();
+  }, [focusOnMount, hasMfa, hasPassword]);
 
   useEffect(() => {
     if (error) alertReference.current?.focus();
@@ -116,6 +129,7 @@ export default function ReauthForm({
             surface="mount"
             type="password"
             autoComplete="current-password"
+            required={!hasMfa}
             aria-describedby={describedBy}
             aria-invalid={isInvalid}
             value={password}
@@ -124,37 +138,43 @@ export default function ReauthForm({
         </>
       )}
 
-      <label
-        className="block mb-0 text-[var(--mount-alt-text)] text-xs font-medium"
-        htmlFor="reauth-code"
-      >
-        {hasPassword
-          ? 'Or enter an authenticator or recovery code'
-          : 'Authenticator or recovery code'}
-      </label>
-      <FormInput
-        id="reauth-code"
-        ref={codeReference}
-        surface="mount"
-        type="text"
-        maxLength={17}
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        aria-describedby={describedBy}
-        aria-invalid={isInvalid}
-        value={TOTP_SHAPE.test(code) ? formatTotpCode(code) : code}
-        onChange={(event) => {
-          const raw = event.target.value;
-          if (DIGITS_AND_SPACES_ONLY.test(raw)) {
-            // TOTP path: store digits-only, cap at 6 so the field cannot
-            // exceed an authenticator code length even on paste.
-            onCodeChange(raw.replace(/\D/g, '').slice(0, 6));
-          } else {
-            // Recovery path: hyphen or letter detected — leave verbatim.
-            onCodeChange(raw);
-          }
-        }}
-      />
+      {hasMfa && (
+        <>
+          <label
+            className="block mb-0 text-[var(--mount-alt-text)] text-xs font-medium"
+            htmlFor="reauth-code"
+          >
+            {hasPassword
+              ? 'Or enter an authenticator or recovery code'
+              : 'Authenticator or recovery code'}
+          </label>
+          <FormInput
+            id="reauth-code"
+            ref={codeReference}
+            surface="mount"
+            type="text"
+            maxLength={17}
+            placeholder="000 000"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            required={!hasPassword}
+            aria-describedby={describedBy}
+            aria-invalid={isInvalid}
+            value={TOTP_SHAPE.test(code) ? formatTotpCode(code) : code}
+            onChange={(event) => {
+              const raw = event.target.value;
+              if (DIGITS_AND_SPACES_ONLY.test(raw)) {
+                // TOTP path: store digits-only, cap at 6 so the field cannot
+                // exceed an authenticator code length even on paste.
+                onCodeChange(raw.replace(/\D/g, '').slice(0, 6));
+              } else {
+                // Recovery path: hyphen or letter detected — leave verbatim.
+                onCodeChange(raw);
+              }
+            }}
+          />
+        </>
+      )}
 
       {error && (
         <Alert id={errorId} ref={alertReference} tabIndex={-1} variant="error">

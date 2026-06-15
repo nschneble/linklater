@@ -2,7 +2,9 @@ import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
 import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useLinksView } from '../../lib/hooks/useLinksView';
+import { usePendingNotice } from '../../lib/hooks/usePendingNotice';
 import Alert from '../common/Alert';
+import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
 import Toast from '../common/Toast';
 import LinkForm from './LinkForm';
 import LinksList from './LinksList';
@@ -50,9 +52,19 @@ interface LinksViewProps {
  * - Portals a backdrop `<button>` when the link form is open so that clicking
  *   outside the form closes it.
  * - Resets search and the `isClearingRead` flag whenever the filter changes.
+ *
+ * Cross-route pending notices (FLAG-1) — e.g. arriving on /unread after a
+ * verify-email redirect — are consumed via `usePendingNotice` and surfaced
+ * by `PendingNoticeAnnouncer` (toast + sr-only mirror). The announcer IS
+ * the announcement; no focus shift to the <main> landmark is performed on
+ * notice arrival, since (a) NVDA/JAWS can interrupt a polite live region
+ * when focus moves into an unrelated landmark mid-announce, and (b) the
+ * <main> landmark already carries `aria-label="Links"` in AppShell so
+ * keyboard users get a named landing point via the existing skip link.
  */
 export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
   const view = useLinksView({ onCloseUserMenu });
+  const pendingNotice = usePendingNotice();
 
   useDocumentTitle(
     view.filter === 'unread'
@@ -173,6 +185,19 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       <span className="sr-only" role="status">
         {view.newLinksAnnouncement}
       </span>
+
+      {/*
+        Cross-route pending-notice surface (FLAG-1). Separate from
+        view.toastMessage above, which handles in-session events like
+        "Link saved!". This surfaces messages queued by another flow
+        (e.g. account-deleted, email-verified) when this view is the
+        first mount after the redirect.
+      */}
+      <PendingNoticeAnnouncer
+        notice={pendingNotice.notice}
+        variant={pendingNotice.variant}
+        onDismiss={pendingNotice.dismiss}
+      />
     </>
   );
 }

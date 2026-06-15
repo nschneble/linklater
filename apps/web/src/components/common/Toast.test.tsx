@@ -92,14 +92,14 @@ describe('Toast', () => {
     expect(handleDismiss).toHaveBeenCalledTimes(1);
   });
 
-  it('auto-dismisses after 3000ms total (3000ms + 150ms exit tail)', () => {
+  it('auto-dismisses after 5000ms total (5000ms + 150ms exit tail)', () => {
     const handleDismiss = vi.fn();
     render(<Toast message="x" onDismiss={handleDismiss} />);
     act(() => {
-      vi.advanceTimersByTime(2999);
+      vi.advanceTimersByTime(4999);
     });
     expect(handleDismiss).not.toHaveBeenCalled();
-    // Crossing the 3000ms boundary fires the auto-dismiss timer, which
+    // Crossing the 5000ms boundary fires the auto-dismiss timer, which
     // triggers a React state update (setExiting(true)) — wrap in act().
     act(() => {
       vi.advanceTimersByTime(1);
@@ -115,5 +115,33 @@ describe('Toast', () => {
   it('renders the message text', () => {
     render(<Toast message="Hello world" onDismiss={() => {}} />);
     expect(screen.getByRole('status').textContent).toContain('Hello world');
+  });
+
+  it('does not extend auto-dismiss when parent re-renders mid-window', () => {
+    const handleDismiss = vi.fn();
+
+    function Wrapper({ tick }: { tick: number }) {
+      // new inline arrow each render — mirrors the AuthForm consumer pattern
+      // where setForgotPasswordSentJustNow(false) fires 5000ms after success
+      // and causes the parent to hand Toast a fresh onDismiss identity
+      return (
+        <Toast message={`tick ${tick}`} onDismiss={() => handleDismiss(tick)} />
+      );
+    }
+
+    const { rerender } = render(<Wrapper tick={0} />);
+
+    // mid-window parent re-render with NEW onDismiss identity
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    rerender(<Wrapper tick={1} />);
+
+    // remaining time to hit 5000ms total + 150ms exit animation tick
+    act(() => {
+      vi.advanceTimersByTime(2000 + 150);
+    });
+
+    expect(handleDismiss).toHaveBeenCalledTimes(1);
   });
 });

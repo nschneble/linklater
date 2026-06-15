@@ -10,7 +10,13 @@ interface ForgotPasswordViewProps {
   emailReference: RefObject<HTMLInputElement | null>;
   error: string | null;
   errorReference: RefObject<HTMLParagraphElement | null>;
-  forgotPasswordSent: boolean;
+  /**
+   * True for the 5000ms window after a successful forgot-password request.
+   * Holds the submit button in a "Reset link sent!" success state — kept in
+   * sync with the toast's auto-dismiss lifetime so the two surfaces never
+   * read as contradictory. Mirrors the magic-link button's success hold.
+   */
+  forgotPasswordSentJustNow: boolean;
   loading: boolean;
   onBack: () => void;
   onEmailChange: (email: string) => void;
@@ -22,7 +28,7 @@ export default function ForgotPasswordView({
   emailReference,
   error,
   errorReference,
-  forgotPasswordSent,
+  forgotPasswordSentJustNow,
   loading,
   onBack,
   onEmailChange,
@@ -38,53 +44,50 @@ export default function ForgotPasswordView({
         account. Then this isn't gonna do much.
       </p>
 
-      {forgotPasswordSent ? (
-        <div className="text-center space-y-4">
-          <Alert icon="fa-envelope" variant="success">
-            Check your email for a reset link
-          </Alert>
-          <LinkButton onClick={onBack}>Back to login</LinkButton>
-        </div>
-      ) : (
-        <form className="space-y-4" onSubmit={onSubmit}>
-          <label
-            className="block mb-0 text-[var(--mount-alt-text)] text-sm font-medium"
-            htmlFor="forgot-email"
+      <form className="space-y-4" onSubmit={onSubmit}>
+        <label
+          className="block mb-0 text-[var(--mount-alt-text)] text-sm font-medium"
+          htmlFor="forgot-email"
+        >
+          Email
+        </label>
+        <FormInput
+          id="forgot-email"
+          ref={emailReference}
+          type="email"
+          surface="mount"
+          autoComplete="email"
+          onChange={(event) => onEmailChange(event.target.value)}
+          value={email}
+          required
+        />
+
+        {error && (
+          <Alert
+            ref={errorReference}
+            icon="fa-triangle-exclamation"
+            tabIndex={-1}
+            variant="error"
           >
-            Email
-          </label>
-          <FormInput
-            id="forgot-email"
-            ref={emailReference}
-            type="email"
-            surface="mount"
-            autoComplete="email"
-            onChange={(event) => onEmailChange(event.target.value)}
-            value={email}
-            required
+            {error}
+          </Alert>
+        )}
+
+        <PrimaryButton
+          disabled={loading || forgotPasswordSentJustNow}
+          className="w-full py-2.5"
+        >
+          <i
+            className={`fa-solid ${forgotPasswordSentJustNow ? 'fa-envelope-open' : 'fa-envelope'} text-xs`}
+            aria-hidden="true"
           />
+          Send password reset link
+        </PrimaryButton>
 
-          {error && (
-            <Alert
-              ref={errorReference}
-              icon="fa-triangle-exclamation"
-              tabIndex={-1}
-              variant="error"
-            >
-              {error}
-            </Alert>
-          )}
-
-          <PrimaryButton disabled={loading} className="w-full py-2.5">
-            <i className="fa-solid fa-envelope text-xs" aria-hidden="true" />
-            Send password reset link
-          </PrimaryButton>
-
-          <p className="text-center">
-            <LinkButton onClick={onBack}>Back to login</LinkButton>
-          </p>
-        </form>
-      )}
+        <p className="text-center">
+          <LinkButton onClick={onBack}>Back to login</LinkButton>
+        </p>
+      </form>
     </AuthCard>
   );
 }

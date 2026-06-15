@@ -12,7 +12,8 @@
     "format": "prettier --write \"{src,scripts}/**/*.{ts,tsx,mjs}\"",
     "lint": "eslint \"{src,scripts}/**/*.{ts,tsx,mjs}\" --max-warnings=0",
     "preview": "vite preview",
-    "subset-fa": "node scripts/subset-fa-fonts.mjs",
+    "subset-fa": "npm run sync-fa && node scripts/subset-fa-fonts.mjs",
+    "sync-fa": "node scripts/sync-fa-manifest.mjs",
     "test": "NODE_OPTIONS=\"--disable-warning=DEP0205\" vitest --run",
     "test:cov": "NODE_OPTIONS=\"--disable-warning=DEP0205\" vitest --run --coverage"
   },

@@ -1,3 +1,4 @@
+import IconListButton from '../common/IconListButton';
 import SettingsSectionNav from './SettingsSectionNav';
 import SettingsSidebar from './SettingsSidebar';
 import {
@@ -94,18 +95,10 @@ export default function SettingsLayout({
           onSelectSection={onSelectSection}
         />
         {children}
-        <div className="md:hidden flex justify-center">
-          <button
-            type="button"
-            onClick={handleBackToTop}
-            className="group flex items-center gap-2 min-h-10 px-3 py-2 hover:bg-[var(--mount-bg)] text-[var(--base-alt-text)] hover:text-[var(--base-text)] text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded-lg motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] cursor-pointer"
-          >
-            <i
-              className="fa-solid fa-arrow-up text-[var(--base-subtle-text)] text-xs"
-              aria-hidden="true"
-            />
+        <div className="md:hidden">
+          <IconListButton icon="fa-arrow-up" onClick={handleBackToTop}>
             Back to top
-          </button>
+          </IconListButton>
         </div>
       </div>
     </div>

@@ -1,21 +1,20 @@
 /**
  * Tests for ConfirmAccountDeletionPage.
  *
- * State machine: verifying → success | error
+ * State machine: verifying → auto-redirect to /login (success OR failure).
  * Token-from-URL paths:
- *   - No token → error state without API call
- *   - Valid token → confirmAccountDeletion() → success
- *   - API error → error state
+ *   - No token → setPendingNotice('deletion-link-invalid') + navigate('/login')
+ *   - Valid token → confirmAccountDeletion() → setPendingNotice('account-deleted')
+ *     + logout() + navigate('/login')
+ *   - API error → setPendingNotice('deletion-link-invalid') + navigate('/login')
+ *
+ * Per Wave 6: the page no longer renders an error card. All failure paths
+ * redirect to /login, where the AuthForm surfaces the queued error-variant
+ * notice as an assertive toast.
  */
 
 import ConfirmAccountDeletionPage from './ConfirmAccountDeletionPage';
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -25,8 +24,8 @@ vi.mock('../../lib/api', () => ({
   confirmAccountDeletion: vi.fn(),
 }));
 
-vi.mock('../../auth/authNotice', () => ({
-  setAuthNotice: vi.fn(),
+vi.mock('../../lib/pendingNotice', () => ({
+  setPendingNotice: vi.fn(),
 }));
 
 vi.mock('../../auth/AuthContext', () => ({
@@ -49,6 +48,7 @@ vi.mock('react-router-dom', async () => {
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import * as apiModule from '../../lib/api';
+import * as pendingNoticeModule from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -63,6 +63,7 @@ function makeAuthContext(
     logout: vi.fn(),
     register: vi.fn(),
     refreshUser: vi.fn(),
+    resendEmailChangeVerification: vi.fn(),
     resendVerificationEmail: vi.fn(),
     setPendingEmail: vi.fn(),
     markWelcomed: vi.fn(),
@@ -90,21 +91,35 @@ beforeEach(() => {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('ConfirmAccountDeletionPage verifying state', () => {
-  it('shows a status message while verifying', () => {
+  it('renders a polite sr-only status message while verifying', () => {
     vi.mocked(apiModule.confirmAccountDeletion).mockReturnValue(
       new Promise(() => {}),
     );
 
     renderPage();
 
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    const status = screen.getByRole('status');
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveTextContent(/verifying your deletion link/i);
+    // The status node carries `sr-only` — verifying state is visually a bare
+    // spinner. No card heading is rendered (errors redirect to /login).
+    expect(status).toHaveClass('sr-only');
+  });
+
+  it('does not render the legacy "Verifying deletion link" card heading', () => {
+    vi.mocked(apiModule.confirmAccountDeletion).mockReturnValue(
+      new Promise(() => {}),
+    );
+
+    renderPage();
+
     expect(
-      screen.getByText(/verifying your deletion link/i),
-    ).toBeInTheDocument();
+      screen.queryByRole('heading', { name: /verifying deletion link/i }),
+    ).not.toBeInTheDocument();
   });
 });
 
-describe('ConfirmAccountDeletionPage success path', () => {
+describe('ConfirmAccountDeletionPage success path (auto-redirect)', () => {
   it('calls confirmAccountDeletion with the token from the URL', async () => {
     vi.mocked(apiModule.confirmAccountDeletion).mockResolvedValue(undefined);
 
@@ -119,31 +134,19 @@ describe('ConfirmAccountDeletionPage success path', () => {
     });
   });
 
-  it('shows "Account deleted" heading after successful confirmation', async () => {
+  it('queues the account-deleted notice automatically on success', async () => {
     await act(async () => {
       renderPage();
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: /account deleted/i }),
-      ).toBeInTheDocument();
-    });
-  });
-
-  it('shows a success alert message', async () => {
-    await act(async () => {
-      renderPage();
-    });
-
-    await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(
-        /permanently deleted/i,
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'account-deleted',
       );
     });
   });
 
-  it('"Continue to sign-in" button calls logout', async () => {
+  it('calls logout automatically on success', async () => {
     const logout = vi.fn();
     vi.mocked(useAuth).mockReturnValue(makeAuthContext({ logout }));
 
@@ -152,63 +155,56 @@ describe('ConfirmAccountDeletionPage success path', () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /continue to sign-in/i }),
-      ).toBeInTheDocument();
+      expect(logout).toHaveBeenCalled();
     });
-
-    fireEvent.click(
-      screen.getByRole('button', { name: /continue to sign-in/i }),
-    );
-
-    expect(logout).toHaveBeenCalled();
   });
 
-  it('"Continue to sign-in" button navigates to /auth', async () => {
+  it('navigates to /login with replace:true automatically on success', async () => {
     await act(async () => {
       renderPage();
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /continue to sign-in/i }),
-      ).toBeInTheDocument();
+      expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+    });
+  });
+
+  it('does not render an "Account deleted" success card after the API resolves', async () => {
+    await act(async () => {
+      renderPage();
     });
 
-    fireEvent.click(
-      screen.getByRole('button', { name: /continue to sign-in/i }),
-    );
+    // Wait for navigate to fire, then confirm no success heading was rendered
+    // along the way (state collapses verifying → auto-redirect).
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+    });
 
-    expect(navigate).toHaveBeenCalledWith('/auth', { replace: true });
+    expect(
+      screen.queryByRole('heading', { name: /account deleted/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /continue to sign-in/i }),
+    ).not.toBeInTheDocument();
   });
 });
 
-describe('ConfirmAccountDeletionPage error paths', () => {
-  it('shows an error when no token is in the URL', async () => {
+describe('ConfirmAccountDeletionPage error paths — redirect to /login with toast', () => {
+  it('queues deletion-link-invalid + navigates to /login when no token is present', async () => {
     await act(async () => {
       renderPage('');
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'deletion-link-invalid',
+      );
     });
-
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
     expect(apiModule.confirmAccountDeletion).not.toHaveBeenCalled();
   });
 
-  it('shows error heading when the token is missing', async () => {
-    await act(async () => {
-      renderPage('');
-    });
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: /this link can't be used/i }),
-      ).toBeInTheDocument();
-    });
-  });
-
-  it('shows an error when confirmAccountDeletion rejects', async () => {
+  it('queues deletion-link-invalid + navigates to /login when confirmAccountDeletion rejects', async () => {
     vi.mocked(apiModule.confirmAccountDeletion).mockRejectedValue(
       new Error('Token expired'),
     );
@@ -218,11 +214,14 @@ describe('ConfirmAccountDeletionPage error paths', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/token expired/i);
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'deletion-link-invalid',
+      );
     });
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
   });
 
-  it('shows the fallback error when a non-Error is thrown', async () => {
+  it('queues deletion-link-invalid + navigates to /login even when a non-Error is thrown', async () => {
     vi.mocked(apiModule.confirmAccountDeletion).mockRejectedValue('boom');
 
     await act(async () => {
@@ -230,13 +229,16 @@ describe('ConfirmAccountDeletionPage error paths', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(
-        /invalid, expired, or has already been used/i,
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'deletion-link-invalid',
       );
     });
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
   });
 
-  it('"Back to home" button navigates to home', async () => {
+  it('does not call logout when the API rejects (no session was confirmed deleted)', async () => {
+    const logout = vi.fn();
+    vi.mocked(useAuth).mockReturnValue(makeAuthContext({ logout }));
     vi.mocked(apiModule.confirmAccountDeletion).mockRejectedValue(
       new Error('expired'),
     );
@@ -246,13 +248,32 @@ describe('ConfirmAccountDeletionPage error paths', () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /back to home/i }),
-      ).toBeInTheDocument();
+      expect(pendingNoticeModule.setPendingNotice).toHaveBeenCalledWith(
+        'deletion-link-invalid',
+      );
+    });
+    expect(logout).not.toHaveBeenCalled();
+  });
+
+  it('does not render the legacy error card (no alert role, no back-to-home button)', async () => {
+    vi.mocked(apiModule.confirmAccountDeletion).mockRejectedValue(
+      new Error('expired'),
+    );
+
+    await act(async () => {
+      renderPage();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /back to home/i }));
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+    });
 
-    expect(navigate).toHaveBeenCalledWith('/', { replace: true });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /this link can't be used/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /back to home/i }),
+    ).not.toBeInTheDocument();
   });
 });

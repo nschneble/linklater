@@ -55,6 +55,7 @@ describe('AuthService', () => {
   } as unknown as JwtService;
 
   const emailVerificationServiceMock = {
+    resetPassword: jest.fn(),
     sendVerificationEmail: jest.fn(),
   } as unknown as EmailVerificationService;
 
@@ -155,6 +156,8 @@ describe('AuthService', () => {
         totpVerifiedAt: null,
         magicLinkToken: null,
         magicLinkTokenExpiresAt: null,
+        accountDeletionToken: null,
+        accountDeletionTokenExpiresAt: null,
       });
 
       const result = await service.me(USER_ID);
@@ -165,8 +168,48 @@ describe('AuthService', () => {
       expect(result.email).toBe(USER_EMAIL);
       expect(result.multiFactorMethod).toBeNull();
       expect(result.multiFactorPending).toBe(false);
+      expect(result.accountDeletionPending).toBe(false);
       expect(result).not.toHaveProperty('totpSecret');
       expect(result).not.toHaveProperty('magicLinkToken');
+      expect(result).not.toHaveProperty('accountDeletionToken');
+      expect(result).not.toHaveProperty('accountDeletionTokenExpiresAt');
+    });
+
+    it('returns accountDeletionPending true when an unexpired deletion token is set', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpSecret: null,
+        totpEnabledAt: null,
+        totpVerifiedAt: null,
+        magicLinkToken: null,
+        magicLinkTokenExpiresAt: null,
+        accountDeletionToken: 'hashed-token',
+        accountDeletionTokenExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      });
+
+      const result = await service.me(USER_ID);
+
+      expect(result.accountDeletionPending).toBe(true);
+      expect(result).not.toHaveProperty('accountDeletionToken');
+    });
+
+    it('returns accountDeletionPending false when the deletion token has expired', async () => {
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpSecret: null,
+        totpEnabledAt: null,
+        totpVerifiedAt: null,
+        magicLinkToken: null,
+        magicLinkTokenExpiresAt: null,
+        accountDeletionToken: 'hashed-token',
+        accountDeletionTokenExpiresAt: new Date(Date.now() - 1000),
+      });
+
+      const result = await service.me(USER_ID);
+
+      expect(result.accountDeletionPending).toBe(false);
     });
 
     it('returns multiFactorMethod totp when totpEnabledAt is set', async () => {
@@ -347,6 +390,47 @@ describe('AuthService', () => {
       });
 
       const result = await service.login(USER_ID);
+
+      expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
+      expect(refreshTokenServiceMock.issueTokenPair).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('delegates to EmailVerificationService.resetPassword then issues a session via login', async () => {
+      (
+        emailVerificationServiceMock.resetPassword as jest.Mock
+      ).mockResolvedValue({ userId: USER_ID });
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpEnabledAt: null,
+      });
+
+      const result = await service.resetPassword('reset-token', NEW_PASSWORD);
+
+      expect(emailVerificationServiceMock.resetPassword).toHaveBeenCalledWith(
+        'reset-token',
+        NEW_PASSWORD,
+      );
+      expect(refreshTokenServiceMock.issueTokenPair).toHaveBeenCalledWith(
+        USER_ID,
+        USER_EMAIL,
+      );
+      expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
+    });
+
+    it('routes through the MFA gate when the user has TOTP enrolled', async () => {
+      (
+        emailVerificationServiceMock.resetPassword as jest.Mock
+      ).mockResolvedValue({ userId: USER_ID });
+      (usersServiceMock.findById as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        totpEnabledAt: new Date(),
+      });
+
+      const result = await service.resetPassword('reset-token', NEW_PASSWORD);
 
       expect(result).toEqual({ mfaToken: SIGNED_TOKEN, mfaMethod: 'totp' });
       expect(refreshTokenServiceMock.issueTokenPair).not.toHaveBeenCalled();
@@ -925,6 +1009,7 @@ describe('AuthService', () => {
       );
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
+      expect(result).toHaveProperty('userId', USER_ID);
     });
 
     it('returns an MFA challenge instead of a full session when MFA is enabled', async () => {

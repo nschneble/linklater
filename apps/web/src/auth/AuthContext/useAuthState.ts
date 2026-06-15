@@ -6,6 +6,7 @@ import {
   login as apiLogin,
   logout as apiLogout,
   register as apiRegister,
+  resendEmailChangeVerification as apiResendEmailChangeVerification,
   resendVerificationEmail as apiResendVerificationEmail,
   setStoredToken,
 } from '../../lib/api';
@@ -67,6 +68,7 @@ function mapMeToUser(me: MeResponse): User {
     theme: narrowTheme(me.theme),
     multiFactorMethod: me.multiFactorMethod,
     multiFactorPending: me.multiFactorPending,
+    accountDeletionPending: me.accountDeletionPending,
     userId: me.userId,
     welcomedAt: me.welcomedAt,
   };
@@ -150,6 +152,7 @@ export function useAuthState(): AuthContextValue {
   // stable so a `useCallback` wrapper would add no value beyond the
   // reference itself.
   const resendVerificationEmail = apiResendVerificationEmail;
+  const resendEmailChangeVerification = apiResendEmailChangeVerification;
 
   /**
    * Optimistically updates `user.pendingEmail` after the user submits an
@@ -220,6 +223,7 @@ export function useAuthState(): AuthContextValue {
       markWelcomed,
       refreshUser,
       register,
+      resendEmailChangeVerification,
       resendVerificationEmail,
       setPendingEmail,
       user,
@@ -232,6 +236,7 @@ export function useAuthState(): AuthContextValue {
       markWelcomed,
       refreshUser,
       register,
+      resendEmailChangeVerification,
       resendVerificationEmail,
       setPendingEmail,
       user,

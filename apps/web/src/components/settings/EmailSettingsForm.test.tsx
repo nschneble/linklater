@@ -71,6 +71,7 @@ function makeUser(overrides: Partial<User> = {}): User {
 function makeAuthContext(
   overrides: Partial<{
     user: User | null;
+    resendEmailChangeVerification: ReturnType<typeof vi.fn>;
     resendVerificationEmail: ReturnType<typeof vi.fn>;
     setPendingEmail: ReturnType<typeof vi.fn>;
   }> = {},
@@ -82,6 +83,7 @@ function makeAuthContext(
     logout: vi.fn(),
     register: vi.fn(),
     refreshUser: vi.fn(),
+    resendEmailChangeVerification: vi.fn().mockResolvedValue(undefined),
     resendVerificationEmail: vi.fn().mockResolvedValue(undefined),
     setPendingEmail: vi.fn(),
     markWelcomed: vi.fn(),
@@ -255,10 +257,159 @@ describe('EmailSettingsForm unverified state', () => {
 });
 
 describe('EmailSettingsForm verified state', () => {
-  it('does not show the "Resend verification email" button for verified accounts', () => {
+  it('does not show the "Resend verification email" button for verified accounts with no pending change', () => {
     renderForm();
     expect(
       screen.queryByRole('button', { name: /resend verification email/i }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('EmailSettingsForm pending-email resend', () => {
+  function makePendingAuth(
+    overrides: Partial<{
+      resendEmailChangeVerification: ReturnType<typeof vi.fn>;
+    }> = {},
+  ) {
+    return makeAuthContext({
+      user: makeUser({ pendingEmail: 'new@example.com' }),
+      ...overrides,
+    });
+  }
+
+  it('shows the "Resend verification email" button when an email change is pending', () => {
+    vi.mocked(useAuth).mockReturnValue(makePendingAuth());
+    renderForm();
+    expect(
+      screen.getByRole('button', { name: /resend verification email/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('button is wired to the pending-email notice via aria-describedby', () => {
+    vi.mocked(useAuth).mockReturnValue(makePendingAuth());
+    renderForm();
+    const button = screen.getByRole('button', {
+      name: /resend verification email/i,
+    });
+    expect(button).toHaveAttribute('aria-describedby', 'pending-email-notice');
+    expect(document.getElementById('pending-email-notice')).toHaveTextContent(
+      /verification link sent to new@example\.com/i,
+    );
+  });
+
+  it('calls resendEmailChangeVerification on click and shows a success message', async () => {
+    const resendEmailChangeVerification = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useAuth).mockReturnValue(
+      makePendingAuth({ resendEmailChangeVerification }),
+    );
+    renderForm();
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: /resend verification email/i }),
+      );
+    });
+
+    expect(resendEmailChangeVerification).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      const success = screen
+        .getAllByText(/verification email sent/i)
+        .find((node) => /new address/i.test(node.textContent ?? ''));
+      expect(success).toBeTruthy();
+    });
+  });
+
+  it('shows an error in role="alert" when the resend rejects', async () => {
+    const resendEmailChangeVerification = vi
+      .fn()
+      .mockRejectedValue(new Error('Rate limited'));
+    vi.mocked(useAuth).mockReturnValue(
+      makePendingAuth({ resendEmailChangeVerification }),
+    );
+    renderForm();
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: /resend verification email/i }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/rate limited/i);
+    });
+  });
+});
+
+// Regression: a prior implementation set a transient `emailMessage` AND wrote
+// the new address into `user.pendingEmail`, so the success-path UI rendered
+// two near-identical polite-status Alerts back-to-back — once from the
+// ephemeral state, once from server-state. Screen reader users heard the
+// "verification email sent" announcement twice (WCAG 1.3.1, 4.1.3).
+//
+// The form now relies solely on the persistent `hasPendingEmail` Alert.
+describe('EmailSettingsForm post-submit notice — no duplicate', () => {
+  it('renders exactly one verification notice after a successful submit', async () => {
+    // Stateful mock: when `setPendingEmail` fires, re-render `useAuth` with
+    // the updated `user.pendingEmail` so the persistent Alert appears (same
+    // behavior the real AuthContext provides).
+    let currentUser: User = makeUser({ pendingEmail: null });
+    const setPendingEmail = vi.fn((pending: string) => {
+      currentUser = { ...currentUser, pendingEmail: pending };
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ setPendingEmail, user: currentUser }),
+      );
+    });
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ setPendingEmail, user: currentUser }),
+    );
+
+    const { container, rerender } = renderForm();
+
+    fireEvent.change(screen.getByLabelText(/new email/i), {
+      target: { value: 'new@example.com' },
+    });
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    // Re-render so the form picks up the mutated `useAuth` return value.
+    rerender(<EmailSettingsForm />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/verification link sent to/i)).toHaveLength(1);
+    });
+  });
+
+  it('exposes the verification notice via role="status" only — no role="alert" on success', async () => {
+    let currentUser: User = makeUser({ pendingEmail: null });
+    const setPendingEmail = vi.fn((pending: string) => {
+      currentUser = { ...currentUser, pendingEmail: pending };
+      vi.mocked(useAuth).mockReturnValue(
+        makeAuthContext({ setPendingEmail, user: currentUser }),
+      );
+    });
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ setPendingEmail, user: currentUser }),
+    );
+
+    const { container, rerender } = renderForm();
+
+    fireEvent.change(screen.getByLabelText(/new email/i), {
+      target: { value: 'new@example.com' },
+    });
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    rerender(<EmailSettingsForm />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /verification link sent to/i,
+      );
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

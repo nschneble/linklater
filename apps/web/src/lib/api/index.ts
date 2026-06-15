@@ -15,6 +15,7 @@ export {
   registerMagicLink,
   requestEmailChange,
   requestMagicLink,
+  resendEmailChangeVerification,
   resendVerificationEmail,
   resetPassword,
   revokeAllSessions,

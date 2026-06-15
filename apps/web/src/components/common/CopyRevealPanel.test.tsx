@@ -9,7 +9,7 @@
  *    edges, `--mount-text`/`--mount-alt-text` for the heading copy).
  * 2. Controlled vs uncontrolled copy state: when the parent passes
  *    `copied`, the parent owns reset; when omitted, the component owns
- *    state + reset (3000ms via useTransientState).
+ *    state + reset (5000ms via useTransientState).
  * 3. focusOnMount focuses the panel and wires aria-labelledby so screen
  *    readers announce the reveal heading on mount.
  */

@@ -8,7 +8,7 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FormEvent } from 'react';
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
@@ -24,15 +24,16 @@ vi.mock('../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('../../auth/authNotice', () => ({
-  consumeAuthNotice: vi.fn().mockReturnValue(null),
+vi.mock('../../lib/pendingNotice', () => ({
+  consumePendingNotice: vi.fn().mockReturnValue(null),
+  hasPendingNotice: vi.fn().mockReturnValue(false),
 }));
 
 // ─── Imports after mocks ─────────────────────────────────────────────────────
 
 import { useAuthForm } from './useAuthForm';
 import { useAuth } from '../../auth/AuthContext';
-import * as authNoticeModule from '../../auth/authNotice';
+import * as pendingNoticeModule from '../../lib/pendingNotice';
 import * as apiModule from '../../lib/api';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -54,6 +55,7 @@ function makeAuthContext(
     logout: vi.fn(),
     refreshUser: vi.fn().mockResolvedValue(undefined),
     register: vi.fn().mockResolvedValue(undefined),
+    resendEmailChangeVerification: vi.fn(),
     resendVerificationEmail: vi.fn(),
     setPendingEmail: vi.fn(),
     user: null,
@@ -74,7 +76,8 @@ function renderAuthFormHook(initialPath = '/login') {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
-  vi.mocked(authNoticeModule.consumeAuthNotice).mockReturnValue(null);
+  vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue(null);
+  vi.mocked(pendingNoticeModule.hasPendingNotice).mockReturnValue(false);
 });
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -104,18 +107,36 @@ describe('useAuthForm', () => {
       expect(result.current.notice).toBeNull();
     });
 
-    it('is populated after effects flush when consumeAuthNotice returns a string', async () => {
-      vi.mocked(authNoticeModule.consumeAuthNotice).mockReturnValue(
-        'Your account has been deleted.',
-      );
+    it('is populated after effects flush when consumePendingNotice returns a success entry', async () => {
+      vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
+        message: 'Your account has been deleted.',
+        variant: 'success',
+      });
       const { result } = renderAuthFormHook();
       await waitFor(() => {
-        expect(result.current.notice).toBe('Your account has been deleted.');
+        expect(result.current.notice).toEqual({
+          message: 'Your account has been deleted.',
+          variant: 'success',
+        });
       });
     });
 
-    it('stays null after effects flush when consumeAuthNotice returns null', async () => {
-      vi.mocked(authNoticeModule.consumeAuthNotice).mockReturnValue(null);
+    it('is populated after effects flush when consumePendingNotice returns an error entry', async () => {
+      vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
+        message: 'Verification link expired.',
+        variant: 'error',
+      });
+      const { result } = renderAuthFormHook();
+      await waitFor(() => {
+        expect(result.current.notice).toEqual({
+          message: 'Verification link expired.',
+          variant: 'error',
+        });
+      });
+    });
+
+    it('stays null after effects flush when consumePendingNotice returns null', async () => {
+      vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue(null);
       const { result } = renderAuthFormHook();
       await act(async () => {});
       expect(result.current.notice).toBeNull();
@@ -123,8 +144,8 @@ describe('useAuthForm', () => {
   });
 
   describe('handleSubmit — 9 branches', () => {
-    // Branch 1: login + no password → requestMagicLink
-    it('calls requestMagicLink when login mode has no password', async () => {
+    // Branch 1: login + no password → requestMagicLink → success notice
+    it('calls requestMagicLink and sets a login notice when login mode has no password', async () => {
       vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
       const { result } = renderAuthFormHook('/login');
 
@@ -136,11 +157,14 @@ describe('useAuthForm', () => {
       });
 
       expect(apiModule.requestMagicLink).toHaveBeenCalledWith(USER_EMAIL);
-      expect(result.current.magicLinkSent).toBe(true);
+      expect(result.current.notice).toEqual({
+        message: 'Magic link sent!',
+        variant: 'success',
+      });
     });
 
-    // Branch 2: register + no password → registerMagicLink
-    it('calls registerMagicLink when register mode has no password', async () => {
+    // Branch 2: register + no password → registerMagicLink → success notice
+    it('calls registerMagicLink and sets a signup notice when register mode has no password', async () => {
       vi.mocked(apiModule.registerMagicLink).mockResolvedValue(undefined);
       const { result } = renderAuthFormHook('/signup');
 
@@ -152,7 +176,10 @@ describe('useAuthForm', () => {
       });
 
       expect(apiModule.registerMagicLink).toHaveBeenCalledWith(USER_EMAIL);
-      expect(result.current.magicLinkSent).toBe(true);
+      expect(result.current.notice).toEqual({
+        message: 'Magic link sent!',
+        variant: 'success',
+      });
     });
 
     // Branch 3: login + password → login returns MFA challenge
@@ -219,8 +246,8 @@ describe('useAuthForm', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // Branch 6: forgot-password → apiForgotPassword → setForgotPasswordSent
-    it('calls forgotPassword and sets forgotPasswordSent in forgot-password mode', async () => {
+    // Branch 6: forgot-password → apiForgotPassword → success toast + hold
+    it('calls forgotPassword and fires the success toast notice in forgot-password mode', async () => {
       vi.mocked(apiModule.forgotPassword).mockResolvedValue(undefined);
 
       const { result } = renderAuthFormHook('/forgot-password');
@@ -232,7 +259,10 @@ describe('useAuthForm', () => {
       });
 
       expect(apiModule.forgotPassword).toHaveBeenCalledWith(USER_EMAIL);
-      expect(result.current.forgotPasswordSent).toBe(true);
+      expect(result.current.notice).toEqual({
+        message: 'Reset link sent!',
+        variant: 'success',
+      });
     });
 
     // Branch 7: handleSubmit throws → setError with Error.message
@@ -296,6 +326,373 @@ describe('useAuthForm', () => {
     });
   });
 
+  // WARN-4: a successful magic-link request releases `loading` immediately
+  // (so the button doesn't read "Working…" while the toast is announcing
+  // the outcome) and engages `magicLinkSentJustNow` for the toast's full
+  // 5000ms auto-dismiss window. The button stays disabled during that
+  // window via the success-state label, preventing a second click.
+  describe('WARN-4 — magic-link success-state hold', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('releases loading to false immediately after a successful magic-link request', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      // Loading is released as soon as the API resolves so the button can
+      // flip into its success-state label without a "Working…" flash that
+      // contradicts the freshly-shown toast.
+      expect(result.current.loading).toBe(false);
+    });
+
+    it('sets magicLinkSentJustNow to true immediately after a successful magic-link request', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.magicLinkSentJustNow).toBe(true);
+    });
+
+    it('releases magicLinkSentJustNow to false after the 5000ms hold elapses (toast lifetime)', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.magicLinkSentJustNow).toBe(true);
+
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
+
+      expect(result.current.magicLinkSentJustNow).toBe(false);
+    });
+
+    it('keeps magicLinkSentJustNow true until the full 5000ms elapses', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      // 2500ms in — old behavior would have released the hold here.
+      act(() => {
+        vi.advanceTimersByTime(2500);
+      });
+      expect(result.current.magicLinkSentJustNow).toBe(true);
+
+      // Past 5000ms — hold releases.
+      act(() => {
+        vi.advanceTimersByTime(2500);
+      });
+      expect(result.current.magicLinkSentJustNow).toBe(false);
+    });
+
+    it('does not set magicLinkSentJustNow when the magic-link request throws', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockRejectedValue(
+        new Error('Network down'),
+      );
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.loading).toBe(false);
+      expect(result.current.magicLinkSentJustNow).toBe(false);
+      expect(result.current.error).toBe('Network down');
+    });
+
+    // C2: a mode change BEFORE the 5000ms hold expires must clear the
+    // pending timer synchronously and reset magicLinkSentJustNow to false.
+    // Otherwise the stale timeout fires later on a hook that has already
+    // moved on, or worse races with a subsequent magic-link submission.
+    it('clears the success-state timer synchronously when the user changes mode mid-hold', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      // Hold is engaged.
+      expect(result.current.magicLinkSentJustNow).toBe(true);
+
+      await act(async () => {
+        result.current.handleModeChange('register');
+      });
+
+      // Synchronously after the mode change, the hold is released — the
+      // effect resets it without waiting for the 5000ms timer.
+      expect(result.current.magicLinkSentJustNow).toBe(false);
+
+      // Advance past the original 5000ms window. If the timer were still
+      // pending, it would call setMagicLinkSentJustNow(false) again — but
+      // since we've already observed false, this asserts the state stays
+      // false without spurious flips.
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
+
+      expect(result.current.magicLinkSentJustNow).toBe(false);
+    });
+  });
+
+  // Mirrors the WARN-4 magic-link suite for the forgot-password flow. The
+  // submit button and toast must stay in sync — both render the "Reset link
+  // sent!" state for the toast's 5000ms auto-dismiss window. A mode change
+  // mid-hold cancels the timer synchronously.
+  describe('Wave 6 — forgot-password success-state hold', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('releases loading to false immediately after a successful forgot-password request', async () => {
+      vi.mocked(apiModule.forgotPassword).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/forgot-password');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.loading).toBe(false);
+    });
+
+    it('sets forgotPasswordSentJustNow to true immediately after a successful forgot-password request', async () => {
+      vi.mocked(apiModule.forgotPassword).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/forgot-password');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.forgotPasswordSentJustNow).toBe(true);
+    });
+
+    it('releases forgotPasswordSentJustNow to false after the 5000ms hold elapses (toast lifetime)', async () => {
+      vi.mocked(apiModule.forgotPassword).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/forgot-password');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.forgotPasswordSentJustNow).toBe(true);
+
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
+
+      expect(result.current.forgotPasswordSentJustNow).toBe(false);
+    });
+
+    it('keeps forgotPasswordSentJustNow true until the full 5000ms elapses', async () => {
+      vi.mocked(apiModule.forgotPassword).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/forgot-password');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      // 2500ms in — half the hold window.
+      act(() => {
+        vi.advanceTimersByTime(2500);
+      });
+      expect(result.current.forgotPasswordSentJustNow).toBe(true);
+
+      // Past 5000ms — hold releases.
+      act(() => {
+        vi.advanceTimersByTime(2500);
+      });
+      expect(result.current.forgotPasswordSentJustNow).toBe(false);
+    });
+
+    it('does not set forgotPasswordSentJustNow when the forgot-password request throws', async () => {
+      vi.mocked(apiModule.forgotPassword).mockRejectedValue(
+        new Error('Network down'),
+      );
+      const { result } = renderAuthFormHook('/forgot-password');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.loading).toBe(false);
+      expect(result.current.forgotPasswordSentJustNow).toBe(false);
+      expect(result.current.error).toBe('Network down');
+    });
+
+    // Carry-over from the magic-link hold: a mode change BEFORE the 5000ms
+    // hold expires must clear the pending timer synchronously and reset
+    // forgotPasswordSentJustNow to false. Otherwise the stale timeout fires
+    // later on a hook that has already moved on, or worse races with a
+    // subsequent forgot-password submission.
+    it('clears the forgot-password success-state timer synchronously when the user changes mode mid-hold', async () => {
+      vi.mocked(apiModule.forgotPassword).mockResolvedValue(undefined);
+      const { result } = renderAuthFormHook('/forgot-password');
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      // Hold is engaged.
+      expect(result.current.forgotPasswordSentJustNow).toBe(true);
+
+      await act(async () => {
+        result.current.handleModeChange('login');
+      });
+
+      // Synchronously after the mode change, the hold is released.
+      expect(result.current.forgotPasswordSentJustNow).toBe(false);
+
+      // Advance past the original 5000ms window — assert no spurious flips.
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
+
+      expect(result.current.forgotPasswordSentJustNow).toBe(false);
+    });
+  });
+
+  // Part D: when a cross-route error toast is still visible at submit time,
+  // the form must dismiss it before firing its own form-level error Alert.
+  // Otherwise the user receives two simultaneous assertive announcements
+  // on the same SR channel (toast role="alert" + Alert role="alert"), which
+  // is implementation-defined on most SRs per ARIA 1.2 §5.2.8.4. The
+  // success channel doesn't have this collision (polite + assertive don't
+  // overlap), so a queued success notice is preserved.
+  describe('Wave 6 — coalesce-on-submit (error toast dismissed at handleSubmit start)', () => {
+    it('dismisses a queued error-variant notice at the top of handleSubmit', async () => {
+      vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
+        message: 'Verification link expired.',
+        variant: 'error',
+      });
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+
+      const { result } = renderAuthFormHook('/login');
+
+      // Wait for the consume effect to populate the notice from the mocked
+      // pendingNotice read.
+      await waitFor(() => {
+        expect(result.current.notice).toEqual({
+          message: 'Verification link expired.',
+          variant: 'error',
+        });
+      });
+
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      // After submit, the queued error notice is gone — but the new
+      // success notice from the magic-link request has taken its place,
+      // proving the dismiss happened at the TOP of handleSubmit (otherwise
+      // it would also clobber the success notice fired later in the same
+      // handler).
+      expect(result.current.notice).toEqual({
+        message: 'Magic link sent!',
+        variant: 'success',
+      });
+    });
+
+    it('preserves a queued success-variant notice across handleSubmit (no collision with the form Alert channel)', async () => {
+      vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
+        message: 'Your email has been verified.',
+        variant: 'success',
+      });
+      const loginMock = vi
+        .fn()
+        .mockRejectedValue(new Error('Invalid credentials'));
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const { result } = renderAuthFormHook('/login');
+
+      await waitFor(() => {
+        expect(result.current.notice).toEqual({
+          message: 'Your email has been verified.',
+          variant: 'success',
+        });
+      });
+
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      // The success notice should still be present — only error-variant
+      // notices are coalesced. The form-level error Alert is the assertive
+      // channel; the success toast is polite, so they don't collide.
+      expect(result.current.notice).toEqual({
+        message: 'Your email has been verified.',
+        variant: 'success',
+      });
+      expect(result.current.error).toBe('Invalid credentials');
+    });
+  });
+
   describe('focus management — mode change', () => {
     it('focuses emailReference when email is empty on mode change', async () => {
       const { result } = renderAuthFormHook('/login');
@@ -334,6 +731,104 @@ describe('useAuthForm', () => {
       await act(async () => {
         result.current.handleModeChange('register');
       });
+
+      expect(focusSpy).toHaveBeenCalled();
+    });
+
+    // FLAG-2: when a pending notice is queued (e.g. account-deleted toast
+    // about to be surfaced by AuthForm), the mode-change effect must NOT
+    // auto-focus the email input — focusing a text input switches NVDA/JAWS
+    // into forms mode and can swallow the polite announcement mid-read.
+    it('does not auto-focus the email input on mount when hasPendingNotice is true', async () => {
+      vi.mocked(pendingNoticeModule.hasPendingNotice).mockReturnValue(true);
+
+      // Render with a ref pre-wired so we can observe focus calls during
+      // the initial mode-change effect on mount.
+      const emailInput = document.createElement('input');
+      const focusSpy = vi.spyOn(emailInput, 'focus');
+
+      const { result } = renderHook(
+        () => {
+          const hook = useAuthForm();
+          // Assign the input to the ref before the effect runs (refs are
+          // wired during render commit, so this mirrors what happens when
+          // the real input mounts).
+          if (hook.emailReference.current === null) {
+            hook.emailReference.current = emailInput;
+          }
+          return hook;
+        },
+        {
+          wrapper: ({ children }) =>
+            MemoryRouter({ children, initialEntries: ['/login'] }),
+        },
+      );
+
+      // Allow effects to flush
+      await act(async () => {});
+
+      expect(focusSpy).not.toHaveBeenCalled();
+      // Sanity: the hook itself rendered successfully
+      expect(result.current.mode).toBe('login');
+    });
+
+    it('does not auto-focus the password input on mount when hasPendingNotice is true (prefilled-email branch)', async () => {
+      vi.mocked(pendingNoticeModule.hasPendingNotice).mockReturnValue(true);
+
+      const emailInput = document.createElement('input');
+      emailInput.value = USER_EMAIL;
+      const passwordInput = document.createElement('input');
+      const emailFocusSpy = vi.spyOn(emailInput, 'focus');
+      const passwordFocusSpy = vi.spyOn(passwordInput, 'focus');
+
+      renderHook(
+        () => {
+          const hook = useAuthForm();
+          if (hook.emailReference.current === null) {
+            hook.emailReference.current = emailInput;
+          }
+          if (hook.passwordReference.current === null) {
+            hook.passwordReference.current = passwordInput;
+          }
+          return hook;
+        },
+        {
+          wrapper: ({ children }) =>
+            MemoryRouter({ children, initialEntries: ['/login'] }),
+        },
+      );
+
+      await act(async () => {});
+
+      expect(emailFocusSpy).not.toHaveBeenCalled();
+      expect(passwordFocusSpy).not.toHaveBeenCalled();
+    });
+
+    // C4: negative control for FLAG-2 — when NO pending notice is queued,
+    // focus MUST fire as normal. Proves the guard is wired correctly
+    // (gated on hasPendingNotice), not just "focus happens to be absent
+    // here because the test setup is broken."
+    it('DOES auto-focus the email input on mount when hasPendingNotice is false (negative control)', async () => {
+      vi.mocked(pendingNoticeModule.hasPendingNotice).mockReturnValue(false);
+
+      const emailInput = document.createElement('input');
+      const focusSpy = vi.spyOn(emailInput, 'focus');
+
+      renderHook(
+        () => {
+          const hook = useAuthForm();
+          if (hook.emailReference.current === null) {
+            hook.emailReference.current = emailInput;
+          }
+          return hook;
+        },
+        {
+          wrapper: ({ children }) =>
+            MemoryRouter({ children, initialEntries: ['/login'] }),
+        },
+      );
+
+      await act(async () => {});
 
       expect(focusSpy).toHaveBeenCalled();
     });

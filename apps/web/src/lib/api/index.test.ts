@@ -44,6 +44,7 @@ import {
   registerMagicLink,
   requestEmailChange,
   requestMagicLink,
+  resendEmailChangeVerification,
   resendVerificationEmail,
   resetPassword,
   revokeAllSessions,
@@ -676,6 +677,19 @@ describe('requestEmailChange', () => {
   });
 });
 
+describe('resendEmailChangeVerification', () => {
+  it('POSTs to /auth/resend-email-change with auth', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({});
+
+    await resendEmailChangeVerification();
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/resend-email-change');
+    expect(options.method).toBe('POST');
+  });
+});
+
 describe('verifyEmailChange', () => {
   it('POSTs to /auth/verify-email-change without auth', async () => {
     const fetchMock = mockFetch({});
@@ -691,7 +705,10 @@ describe('verifyEmailChange', () => {
 
 describe('resetPassword', () => {
   it('POSTs to /auth/reset-password with token and password', async () => {
-    const fetchMock = mockFetch({});
+    const fetchMock = mockFetch({
+      accessToken: 'fresh-jwt',
+      refreshToken: 'fresh-refresh',
+    });
 
     await resetPassword('reset-token', 'newpass123');
 
@@ -703,6 +720,24 @@ describe('resetPassword', () => {
     };
     expect(body.token).toBe('reset-token');
     expect(body.password).toBe('newpass123');
+  });
+
+  it('stores the returned access and refresh tokens on the non-MFA branch', async () => {
+    mockFetch({ accessToken: 'reset-jwt', refreshToken: 'reset-refresh' });
+
+    await resetPassword('reset-token', 'newpass123');
+
+    expect(getStoredToken()).toBe('reset-jwt');
+    expect(getStoredRefreshToken()).toBe('reset-refresh');
+  });
+
+  it('does not store a token when the server returns an MFA challenge', async () => {
+    mockFetch({ mfaToken: 'mfa-tok', mfaMethod: 'totp' });
+
+    const result = await resetPassword('reset-token', 'newpass123');
+
+    expect(getStoredToken()).toBeNull();
+    expect(result).toEqual({ mfaToken: 'mfa-tok', mfaMethod: 'totp' });
   });
 });
 
@@ -956,8 +991,18 @@ describe('registerMagicLink', () => {
 });
 
 describe('verifyMagicLink', () => {
-  it('POSTs to /auth/verify-magic-link with token and stores the access token', async () => {
-    const fetchMock = mockFetch({ accessToken: 'ml-jwt' });
+  // verifyMagicLink does NOT auto-store the returned token pair anymore — the
+  // VerifyLoginPage caller first compares the returned `userId` against the
+  // currently signed-in user and decides whether to swap sessions, keep the
+  // existing one (same-account click), or revoke B's sessions first
+  // (cross-account click). The server still consumes the magic-link token
+  // on every call — single-use semantics hold at the API layer.
+  it('POSTs to /auth/verify-magic-link with token and returns the response without storing', async () => {
+    const fetchMock = mockFetch({
+      accessToken: 'ml-jwt',
+      refreshToken: 'ml-refresh',
+      userId: 'user-1',
+    });
 
     const result = await verifyMagicLink('my-token');
 
@@ -967,8 +1012,12 @@ describe('verifyMagicLink', () => {
       token: string;
     };
     expect(body.token).toBe('my-token');
-    expect(result).toEqual({ accessToken: 'ml-jwt' });
-    expect(getStoredToken()).toBe('ml-jwt');
+    expect(result).toEqual({
+      accessToken: 'ml-jwt',
+      refreshToken: 'ml-refresh',
+      userId: 'user-1',
+    });
+    expect(getStoredToken()).toBeNull();
   });
 
   // MFA-enabled accounts hitting a magic link get a challenge back from

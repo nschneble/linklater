@@ -62,6 +62,10 @@ describe('AuthController', () => {
     register: jest.fn(),
     registerMagicLink: jest.fn(),
     requestMagicLink: jest.fn(),
+    resetPassword: jest.fn().mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    }),
     revokeAllRefreshTokens: jest.fn().mockResolvedValue(undefined),
     setFirstPassword: jest.fn(),
     verifyMagicLink: jest.fn(),
@@ -75,6 +79,7 @@ describe('AuthController', () => {
     confirmEmailChange: jest.fn(),
     forgotPassword: jest.fn(),
     requestEmailChange: jest.fn(),
+    resendEmailChange: jest.fn(),
     resendVerificationEmail: jest.fn(),
     resetPassword: jest.fn(),
     verifyEmail: jest.fn(),
@@ -243,20 +248,25 @@ describe('AuthController', () => {
   });
 
   describe('resetPassword', () => {
-    it('delegates to EmailVerificationService.resetPassword with token and password', async () => {
-      (
-        emailVerificationServiceMock.resetPassword as jest.Mock
-      ).mockResolvedValue(undefined);
+    it('delegates to AuthService.resetPassword with token and password and returns the session', async () => {
+      (authServiceMock.resetPassword as jest.Mock).mockResolvedValue({
+        accessToken: ACCESS_TOKEN,
+        refreshToken: REFRESH_TOKEN,
+      });
 
-      await controller.resetPassword({
+      const result = await controller.resetPassword({
         token: RESET_TOKEN,
         password: 'new-password-123',
       });
 
-      expect(emailVerificationServiceMock.resetPassword).toHaveBeenCalledWith(
+      expect(authServiceMock.resetPassword).toHaveBeenCalledWith(
         RESET_TOKEN,
         'new-password-123',
       );
+      expect(result).toEqual({
+        accessToken: ACCESS_TOKEN,
+        refreshToken: REFRESH_TOKEN,
+      });
     });
   });
 
@@ -314,6 +324,33 @@ describe('AuthController', () => {
       expect(
         emailVerificationServiceMock.requestEmailChange,
       ).toHaveBeenCalledWith(USER_ID, NEW_EMAIL, '123456');
+    });
+  });
+
+  describe('resendEmailChange', () => {
+    it('applies JwtAuthGuard before CustomThrottlerGuard so only authenticated users can trigger the resend', () => {
+      const guards: unknown[] = Reflect.getMetadata(
+        '__guards__',
+        AuthController.prototype.resendEmailChange,
+      );
+      expect(guards).toContain(JwtAuthGuard);
+      expect(guards).toContain(CustomThrottlerGuard);
+      expect(guards.indexOf(JwtAuthGuard)).toBeLessThan(
+        guards.indexOf(CustomThrottlerGuard),
+      );
+    });
+
+    it('delegates to EmailVerificationService.resendEmailChange with the userId', async () => {
+      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
+      (
+        emailVerificationServiceMock.resendEmailChange as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await controller.resendEmailChange(request);
+
+      expect(
+        emailVerificationServiceMock.resendEmailChange,
+      ).toHaveBeenCalledWith(USER_ID);
     });
   });
 

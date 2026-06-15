@@ -48,6 +48,7 @@ export default function MultiFactorSection() {
           code={mfa.reauthCode}
           error={mfa.error}
           hasPassword={user?.hasPassword ?? false}
+          hasMfa={true}
           loading={mfa.loading}
           onCancel={mfa.handleCancelReauth}
           onCodeChange={mfa.setReauthCode}
