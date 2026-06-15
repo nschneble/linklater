@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Fixed-position notification that appears at the bottom of the screen and
- * auto-dismisses after 3 seconds (5 seconds for the warning variant — its
- * default copy is longer and the polite SR announcement needs the extra
- * read window).
+ * auto-dismisses after 5 seconds (6 seconds for the warning and error
+ * variants — their default copy is longer and the SR announcement needs
+ * the extra read window).
  *
  * - `'success'` and `'warning'` both use `role="status"` and
  *   `aria-live="polite"` so screen readers announce the message without
@@ -47,9 +47,9 @@ interface ToastProps {
    * `'success'` (default): `fa-circle-check` icon, `aria-live="polite"`,
    *   success-highlight fill.
    * `'warning'`: `fa-triangle-exclamation` icon, `aria-live="polite"`,
-   *   warn-highlight fill, 5s auto-dismiss (vs 3s for success/error).
+   *   warn-highlight fill, 6s auto-dismiss (vs 5s for success).
    * `'error'`: `fa-circle-exclamation` icon, `aria-live="assertive"`,
-   *   alert-highlight fill.
+   *   alert-highlight fill, 6s auto-dismiss (vs 5s for success).
    */
   variant?: 'success' | 'warning' | 'error';
 }
@@ -94,10 +94,21 @@ export default function Toast({
 }: ToastProps) {
   const [exiting, setExiting] = useState(false);
 
+  // Mirror onDismiss into a ref so the auto-dismiss timer doesn't restart
+  // every time a parent re-renders with a fresh inline arrow. Consumers
+  // (AuthForm, LinksView, BookmarkletSection) pass `onDismiss={() => ...}`
+  // — without this ref the timer would extend each time the parent's
+  // local state flips mid-window (e.g. forgot-password sentinel-hold
+  // 3000ms after success → 3+5 = ~8s visible toast).
+  const onDismissReference = useRef(onDismiss);
+  useEffect(() => {
+    onDismissReference.current = onDismiss;
+  });
+
   const dismiss = useCallback(() => {
     setExiting(true);
-    setTimeout(onDismiss, 150);
-  }, [onDismiss]);
+    setTimeout(() => onDismissReference.current(), 150);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(dismiss, variantDismissDelayMs[variant]);

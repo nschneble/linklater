@@ -116,4 +116,32 @@ describe('Toast', () => {
     render(<Toast message="Hello world" onDismiss={() => {}} />);
     expect(screen.getByRole('status').textContent).toContain('Hello world');
   });
+
+  it('does not extend auto-dismiss when parent re-renders mid-window', () => {
+    const handleDismiss = vi.fn();
+
+    function Wrapper({ tick }: { tick: number }) {
+      // new inline arrow each render — mirrors the AuthForm consumer pattern
+      // where setForgotPasswordSentJustNow(false) fires 3000ms after success
+      // and causes the parent to hand Toast a fresh onDismiss identity
+      return (
+        <Toast message={`tick ${tick}`} onDismiss={() => handleDismiss(tick)} />
+      );
+    }
+
+    const { rerender } = render(<Wrapper tick={0} />);
+
+    // mid-window parent re-render with NEW onDismiss identity
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    rerender(<Wrapper tick={1} />);
+
+    // remaining time to hit 5000ms total + 150ms exit animation tick
+    act(() => {
+      vi.advanceTimersByTime(2000 + 150);
+    });
+
+    expect(handleDismiss).toHaveBeenCalledTimes(1);
+  });
 });
