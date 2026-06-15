@@ -78,15 +78,13 @@ const variantDismissRingClasses: Record<
   error: 'focus-visible:ring-[var(--alert-highlight-fg)]',
 };
 
-// Warning copy is longer than success/error and rides the polite channel,
-// so SRs may not finish reading before a 3s dismiss. Bump warn-only to 5s.
 const variantDismissDelayMs: Record<
   NonNullable<ToastProps['variant']>,
   number
 > = {
-  success: 3000,
-  warning: 5000,
-  error: 3000,
+  success: 5000,
+  warning: 6000,
+  error: 6000,
 };
 
 export default function Toast({
@@ -128,7 +126,7 @@ export default function Toast({
       }`}
     >
       <i
-        className={`fa-solid ${variantIcons[variant]} text-xs`}
+        className={`fa-solid ${variantIcons[variant]} text-sm`}
         aria-hidden="true"
       />
       {message}
