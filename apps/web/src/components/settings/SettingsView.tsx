@@ -1,36 +1,51 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
+import { useFlashQueryParams } from '../../lib/hooks/useFlashQueryParams';
+import { useToast } from '../../lib/hooks/useToast';
+import Toast from '../common/Toast';
+import StumbleSection from '../stumble/StumbleSection';
 import AccountSettingsForm from './AccountSettingsForm';
 import ApiTokensSection from './ApiTokensSection';
 import BookmarkletSection from './BookmarkletSection';
 import CvdModeToggle from './CvdModeToggle';
 import DangerZone from './DangerZone';
+import IdPsSection from './IdPsSection';
+import MultiFactorSection from './MultiFactorSection';
 import SettingsGroup from './SettingsGroup';
 import SettingsLayout from './SettingsLayout';
-import IdPsSection from './IdPsSection';
-import StumbleSection from '../stumble/StumbleSection';
-import MultiFactorSection from './MultiFactorSection';
-import Toast from '../common/Toast';
+import { LINK_ERROR_MESSAGES, LINKED_MESSAGES } from './oauthFlashMessages';
 import { setActiveSettingsSection } from './settingsScroll';
 import { useSettingsActiveSection } from './useSettingsActiveSection';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { SettingsSection } from './settingsSections';
+
+interface FlashMessages {
+  toastMessage: string | null;
+  linkError: string | null;
+}
+
+function readOAuthFlashMessages(
+  parameters: URLSearchParams,
+): FlashMessages | null {
+  const provider = parameters.get('linked');
+  const errorCode = parameters.get('link_error');
+  if (!provider && !errorCode) {
+    return null;
+  }
+  return {
+    toastMessage: provider
+      ? (LINKED_MESSAGES[provider] ?? 'Account connected.')
+      : null,
+    linkError: errorCode
+      ? (LINK_ERROR_MESSAGES[errorCode] ?? 'Failed to connect account.')
+      : null,
+  };
+}
 
 interface SettingsViewProps {
   appleEnabled?: boolean;
   googleEnabled?: boolean;
 }
-
-const LINKED_MESSAGES: Record<string, string> = {
-  google: 'Google account connected successfully.',
-};
-
-const LINK_ERROR_MESSAGES: Record<string, string> = {
-  already_linked:
-    'That account is already linked to another user. Try a different one.',
-  unknown:
-    'Something went wrong connecting that account. Please try again in a moment.',
-};
 
 export default function SettingsView({
   appleEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true',
@@ -40,51 +55,27 @@ export default function SettingsView({
 
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParameters, setSearchParameters] = useSearchParams();
 
-  // Flash messages from `?linked=…` / `?link_error=…`. The success path
-  // surfaces as a `<Toast>` (this view owns it) and the error path passes
-  // down to `<IdPsSection>` as an inline `<Alert>`.
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // Flash messages from `?linked=…` / `?link_error=…`. `useFlashQueryParams`
+  // owns the deferred-read + URL-strip dance (see its WHY block for the
+  // SR-announce, no-deps, and StrictMode rationale). The hook returns
+  // `null` synchronously on first paint, then the parsed flash once,
+  // stable thereafter — preserving the empty → populated transition NVDA
+  // and JAWS need to announce the Toast.
+  const flash = useFlashQueryParams(readOAuthFlashMessages, [
+    'linked',
+    'link_error',
+  ]);
+  const toast = useToast();
   const [linkError, setLinkError] = useState<string | null>(null);
-
-  // Read the flash params, derive their messages, then strip them from the
-  // URL — all in a single mount-effect. Deferring the success read to an
-  // effect (rather than reading synchronously in a `useState` initializer)
-  // produces the empty → populated transition that NVDA/JAWS need to
-  // announce the Toast's `aria-live="polite"` region; content present on
-  // first paint is treated as page load and skipped. Same rationale as
-  // `usePendingNotice`.
-  //
-  // Intentionally mount-only (no [searchParameters] deps). Browser-back to
-  // `?linked=…` updates location in place without remounting SettingsView,
-  // so the toast correctly does not re-appear — don't "fix" this by adding
-  // `searchParameters` to the deps array.
-  //
-  // The URL is itself the consumed sentinel — making this idempotent under
-  // React StrictMode's double-invoke of mount-effects: the second invocation
-  // reads `null` from both params, so neither `setToastMessage` nor the
-  // `setSearchParameters({}, {})` strip re-fires (react-router short-circuits
-  // the strip against an already-empty query). Same idiom as
-  // usePendingNotice's sessionStorage clear.
   useEffect(() => {
-    const provider = searchParameters.get('linked');
-    if (provider) {
-      setToastMessage(
-        LINKED_MESSAGES[provider] ?? `${provider} account connected.`,
-      );
-    }
-    const errorCode = searchParameters.get('link_error');
-    if (errorCode) {
-      setLinkError(
-        LINK_ERROR_MESSAGES[errorCode] ?? 'Failed to connect account.',
-      );
-    }
-    if (provider || errorCode) {
-      setSearchParameters({}, { replace: true });
-    }
+    if (!flash) return;
+    if (flash.toastMessage) toast.show(flash.toastMessage);
+    if (flash.linkError) setLinkError(flash.linkError);
+    // Run once when the flash settles. `toast` is a stable hook return
+    // by construction; `flash` flips null → value exactly once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [flash]);
 
   const showIdPs = googleEnabled || appleEnabled;
 
@@ -222,8 +213,8 @@ export default function SettingsView({
           aria-hidden="true"
         />
       </div>
-      {toastMessage && (
-        <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
+      {toast.message && (
+        <Toast message={toast.message} onDismiss={toast.dismiss} />
       )}
     </SettingsLayout>
   );

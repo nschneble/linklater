@@ -124,9 +124,7 @@ describe('SettingsView OAuth-link flash toast', () => {
     renderAt('/settings?linked=google');
 
     const toast = await screen.findByRole('status');
-    expect(toast.textContent).toContain(
-      'Google account connected successfully.',
-    );
+    expect(toast.textContent).toContain('Google account connected.');
   });
 
   it('does not focus the Toast or its dismiss button on arrival (no unsolicited focus shift)', async () => {
@@ -144,7 +142,7 @@ describe('SettingsView OAuth-link flash toast', () => {
     renderAt('/settings?linked=plurkmail');
 
     const toast = await screen.findByRole('status');
-    expect(toast.textContent).toContain('plurkmail account connected.');
+    expect(toast.textContent).toContain('Account connected.');
   });
 
   it('passes the linkError text down to IdPsSection inline Alert (no Toast)', async () => {

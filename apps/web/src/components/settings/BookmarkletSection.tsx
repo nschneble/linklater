@@ -1,5 +1,6 @@
 import { getBookmarkletToken, regenerateBookmarkletToken } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
+import { useToast } from '../../lib/hooks/useToast';
 import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
 import Toast from '../common/Toast';
@@ -20,7 +21,7 @@ export default function BookmarkletSection() {
   const bookmarkletReference = useRef<HTMLAnchorElement>(null);
   const [rawToken, setRawToken] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toast = useToast();
 
   useEffect(() => {
     let cancelled = false;
@@ -76,7 +77,7 @@ export default function BookmarkletSection() {
             regenerate={regenerateBookmarkletToken}
             onRegenerated={(token) => {
               setRawToken(token);
-              setToastMessage('Bookmarklet regenerated');
+              toast.show('Bookmarklet regenerated');
             }}
           />
         )}
@@ -117,8 +118,8 @@ export default function BookmarkletSection() {
         Your auth token is embedded in this bookmarklet. It never expires, but
         it can be regenerated if someone else gains access to it.
       </p>
-      {toastMessage && (
-        <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
+      {toast.message && (
+        <Toast message={toast.message} onDismiss={toast.dismiss} />
       )}
     </div>
   );
