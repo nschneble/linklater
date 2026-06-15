@@ -76,7 +76,7 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
     variant: 'success',
   },
   'email-verified': {
-    message: 'Your email has been verified.',
+    message: 'Your email has been verified',
     variant: 'success',
   },
   'email-verified-please-sign-in': {
@@ -84,7 +84,7 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
     variant: 'success',
   },
   'email-change-verified': {
-    message: 'Your email has been updated.',
+    message: 'Your email address has been updated',
     variant: 'success',
   },
   'email-change-verified-please-sign-in': {
@@ -96,21 +96,19 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
     variant: 'success',
   },
   'deletion-link-invalid': {
-    message: 'This deletion link is invalid or expired.',
+    message: 'Account deletion link has expired',
     variant: 'error',
   },
   'verification-link-invalid': {
-    message:
-      'Verification link expired. Sign in and request a new one from Settings.',
+    message: 'Verification link has expired',
     variant: 'error',
   },
   'email-change-link-invalid': {
-    message:
-      'Email change link expired. Sign in and request a new one from Settings.',
+    message: 'Confirmation link has expired',
     variant: 'error',
   },
   'login-link-invalid': {
-    message: 'Login link expired. Request a new one below.',
+    message: 'Login link has expired',
     variant: 'error',
   },
 };

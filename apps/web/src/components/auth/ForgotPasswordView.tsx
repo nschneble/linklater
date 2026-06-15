@@ -23,19 +23,6 @@ interface ForgotPasswordViewProps {
   onSubmit: (event: FormEvent) => void;
 }
 
-function submitLabel(
-  loading: boolean,
-  forgotPasswordSentJustNow: boolean,
-): string {
-  // Success-state label takes precedence over loading because loading is
-  // released to false the instant the forgot-password request resolves; the
-  // 3000ms `forgotPasswordSentJustNow` window is the success indicator
-  // that stays in sync with the toast's own visible lifetime.
-  if (forgotPasswordSentJustNow) return 'Reset link sent!';
-  if (loading) return 'Working…';
-  return 'Send password reset link';
-}
-
 export default function ForgotPasswordView({
   email,
   emailReference,
@@ -91,10 +78,10 @@ export default function ForgotPasswordView({
           className="w-full py-2.5"
         >
           <i
-            className={`fa-solid ${forgotPasswordSentJustNow ? 'fa-circle-check' : 'fa-envelope'} text-xs`}
+            className={`fa-solid ${forgotPasswordSentJustNow ? 'fa-envelope-open' : 'fa-envelope'} text-xs`}
             aria-hidden="true"
           />
-          {submitLabel(loading, forgotPasswordSentJustNow)}
+          Send password reset link
         </PrimaryButton>
 
         <p className="text-center">

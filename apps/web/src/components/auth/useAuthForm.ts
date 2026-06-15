@@ -175,17 +175,13 @@ export function useAuthForm() {
       if ((mode === 'login' || mode === 'register') && password.length === 0) {
         if (mode === 'login') {
           await requestMagicLink(email);
-          setNotice({
-            message: 'Check your email for a login link.',
-            variant: 'success',
-          });
         } else {
           await registerMagicLink(email);
-          setNotice({
-            message: 'Check your email to complete signup.',
-            variant: 'success',
-          });
         }
+        setNotice({
+          message: 'Magic link sent!',
+          variant: 'success',
+        });
         // WARN-4: on success, release loading immediately so the button no
         // longer reads "Working…" while the toast is already announcing the
         // outcome — that desync is what made the prior flow look
@@ -221,7 +217,7 @@ export function useAuthForm() {
         // click during that window — re-submitting before the email arrives
         // would just queue a duplicate reset request.
         setNotice({
-          message: 'Check your email for a reset link.',
+          message: 'Reset link sent!',
           variant: 'success',
         });
         setLoading(false);

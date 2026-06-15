@@ -12,18 +12,7 @@ const appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true';
 
 type LoginRegisterMode = 'login' | 'register';
 
-function submitLabel(
-  loading: boolean,
-  magicLinkSentJustNow: boolean,
-  isMagicLink: boolean,
-  mode: LoginRegisterMode,
-): string {
-  // Success-state label takes precedence over loading because loading is
-  // released to false the instant the magic-link request resolves; the
-  // 3000ms `magicLinkSentJustNow` window is the success indicator that
-  // stays in sync with the toast's own visible lifetime.
-  if (magicLinkSentJustNow) return 'Magic link sent!';
-  if (loading) return 'Working…';
+function submitLabel(isMagicLink: boolean, mode: LoginRegisterMode): string {
   if (isMagicLink) {
     return mode === 'login'
       ? 'Log in with magic link'
@@ -144,7 +133,7 @@ export default function LoginRegisterView({
           surface="mount"
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           onChange={(event) => onPasswordChange(event.target.value)}
-          placeholder="Leave blank to use magic link"
+          placeholder="Leave blank to use a magic link"
           value={password}
           required={false}
           aria-describedby="auth-form-error"
@@ -167,15 +156,10 @@ export default function LoginRegisterView({
           className="w-full py-2.5"
         >
           <i
-            className={`fa-solid ${magicLinkSentJustNow ? 'fa-circle-check' : password.length === 0 ? 'fa-wand-magic-sparkles' : 'fa-right-to-bracket'} text-xs`}
+            className={`fa-solid ${magicLinkSentJustNow ? 'fa-wand-magic-sparkles' : password.length === 0 ? 'fa-wand-magic' : 'fa-right-to-bracket'} text-xs`}
             aria-hidden="true"
           />
-          {submitLabel(
-            loading,
-            magicLinkSentJustNow,
-            password.length === 0,
-            mode,
-          )}
+          {submitLabel(password.length === 0, mode)}
         </PrimaryButton>
       </form>
 
