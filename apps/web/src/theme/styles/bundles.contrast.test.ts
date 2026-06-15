@@ -520,11 +520,11 @@ describe('bundle contrast contract', () => {
 
   /*
    * State-bundle text rendered DIRECTLY on the page background (no
-   * `--{state}-bg` wrapper). Real consumers: TokenInput validation error
-   * paragraph, AppShell warn banner text fallback under specific media
-   * queries. The text/bg-in-bundle contract above covers `--alert-text`
-   * over `--alert-bg`; this block covers `--alert-text` over `--base-bg`
-   * which has no equivalent in the per-bundle CONTRACT iteration.
+   * `--{state}-bg` wrapper). Real consumer: AppShell warn banner text
+   * fallback under specific media queries. The text/bg-in-bundle contract
+   * above covers `--alert-text` over `--alert-bg`; this block covers
+   * `--alert-text` over `--base-bg` which has no equivalent in the
+   * per-bundle CONTRACT iteration.
    *
    * Pattern is monotonically safer than text-on-bundle-bg because state
    * bgs sit at the lightness extreme adjacent to `--base-bg`, but a hex

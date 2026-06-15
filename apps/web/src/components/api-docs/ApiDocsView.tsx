@@ -1,46 +1,14 @@
 import BrandTokenInput from './BrandTokenInput';
 import { useApiDocsToken } from './useApiDocsToken';
+import { useScalarConfiguration } from './useScalarConfiguration';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { ApiReferenceReact } from '@scalar/api-reference-react';
 import '@scalar/api-reference-react/style.css';
-import { useMemo } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 
 const OPENAPI_PATH = '/openapi.json';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
-
-/**
- * Style overrides concatenated into Scalar's `customCss` so the rules live
- * inside its style scope.
- *
- * REDUCED_MOTION_CSS — collapses every animation/transition inside the embed
- * under `prefers-reduced-motion: reduce`.
- *
- * HIDE_SPEC_TITLE_CSS — hides Scalar's own h1 (the spec's `info.title`), so
- * the brand page banner is the sole visible H1. The selector is the h1
- * rendered by Scalar's `IntroductionLayout` component, which wraps
- * `info.title` in `<SectionHeaderTag level="1">`. That emits
- * `<h1 class="section-header-label">` inside an ancestor with the
- * `.introduction-section` class (verified in `@scalar/api-reference@0.9.46`
- * dist sources). Only the introduction h1 is hidden; operation/section
- * headings (h2, h3, …) elsewhere in the embed remain visible.
- */
-const REDUCED_MOTION_CSS = `
-@media (prefers-reduced-motion: reduce) {
-  .scalar-app *,
-  .scalar-app *::before,
-  .scalar-app *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-`;
-
-const HIDE_SPEC_TITLE_CSS = `
-.scalar-app .introduction-section h1.section-header-label {
-  display: none;
-}
-`;
 
 /**
  * Standalone page at `/settings/api`. Carries the landing/marketing brand
@@ -64,44 +32,26 @@ export default function ApiDocsView() {
     return `${API_BASE_URL}${OPENAPI_PATH}`;
   }, []);
 
-  // Memoize the configuration so Scalar does not re-mount on unrelated renders
-  // (e.g. a parent component re-rendering without changing openapiUrl or
-  // token). A new object is returned — and Scalar sees a changed prop —
-  // whenever openapiUrl or token changes (including each keystroke in
-  // BrandTokenInput).
-  const scalarConfiguration = useMemo(
-    () => ({
-      url: openapiUrl,
-      layout: 'modern' as const,
-      hideDarkModeToggle: true,
-      // Force dark unconditionally: the brand chrome is dark regardless of
-      // the user's theme.
-      darkMode: true,
-      hideModels: false,
-      customCss: REDUCED_MOTION_CSS + HIDE_SPEC_TITLE_CSS,
-      authentication: {
-        preferredSecurityScheme: 'pat',
-        securitySchemes: {
-          pat: {
-            type: 'http' as const,
-            scheme: 'bearer' as const,
-            token,
-          },
-        },
-      },
-    }),
-    [openapiUrl, token],
-  );
+  const scalarConfiguration = useScalarConfiguration(openapiUrl, token);
 
   return (
-    // Locally redeclare `--base-bg` so the global `[data-cvd='on']
-    // *:focus-visible` halo (defined in index.css) paints near-gradient color
-    // on this brand-chrome page instead of the user-theme base bg. The
-    // override is invisible-on-purpose — it doesn't define a bundle, it
-    // just keeps the CVD halo from clashing with the navy gradient.
+    // Locally redeclare `--base-bg` AND `--focus-ring` so the global
+    // `[data-cvd='on'] *:focus-visible` halo (defined in index.css) and its
+    // inner outline both paint brand-locked colors on this page instead of
+    // the user-theme tokens. Some themes set `--focus-ring` to a hue that
+    // fails SC 1.4.11 vs the navy gradient (e.g. before-sunrise dark), so
+    // pin it to `--color-dazed` (#eeeede, ~16:1 vs #0a0812) — the same
+    // brand-ring color used by skip-links and focus-visible:ring-dazed on
+    // BrandTokenInput. The override is invisible-on-purpose: it doesn't
+    // define a bundle, it just keeps the CVD halo coherent with the chrome.
     <div
       className="min-h-screen bg-hit-man"
-      style={{ ['--base-bg' as string]: '#0a0812' }}
+      style={
+        {
+          '--base-bg': '#0a0812',
+          '--focus-ring': '#eeeede',
+        } as CSSProperties & Record<string, string>
+      }
     >
       {/*
        * Skip link mirrors the LandingPage pattern: brand-locked white-on-navy
@@ -138,7 +88,7 @@ export default function ApiDocsView() {
       </header>
 
       <a
-        className="sr-only focus:not-sr-only focus:inline-flex focus:mx-auto focus:px-3 focus:py-1.5 focus:bg-white focus:text-[#14103a] focus:text-xs focus:font-semibold focus:rounded-full focus:ring-2 focus:ring-white"
+        className="sr-only focus:not-sr-only focus:inline-flex focus:mx-auto focus:px-3 focus:py-1.5 focus:bg-white focus:text-[#14103a] focus:text-xs focus:font-semibold focus:outline-none focus:ring-2 focus:ring-white focus:rounded-full"
         href="#after-api-reference"
       >
         Skip past the API reference

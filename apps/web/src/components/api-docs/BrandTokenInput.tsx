@@ -128,12 +128,12 @@ export default function BrandTokenInput({
                 : 'api-docs-token-help'
             }
             aria-invalid={hasValidationError || undefined}
-            className="block w-full px-3 py-2 bg-midnight border border-confused placeholder:text-confused text-dazed text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed rounded-lg transition duration-200"
+            className="block w-full px-3 py-2 bg-midnight border border-confused text-dazed placeholder:text-confused text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed rounded-lg transition duration-200"
           />
         </div>
         <button
           type="button"
-          className="group inline-flex items-center gap-2 px-3 py-2 border border-confused hover:border-dazed text-confused hover:text-dazed text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed rounded-lg transition duration-200 active:scale-[0.96] cursor-pointer"
+          className="group inline-flex items-center gap-2 px-3 py-2 active:scale-[0.96] border border-confused hover:border-dazed text-confused hover:text-dazed text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed rounded-lg transition duration-200 cursor-pointer"
           aria-pressed={showToken}
           aria-label={showToken ? 'Hide token' : 'Show token'}
           onClick={() => setShowToken((shown) => !shown)}
@@ -149,7 +149,7 @@ export default function BrandTokenInput({
         </button>
         <button
           type="button"
-          className="inline-flex items-center gap-2 px-3 py-2 border border-confused hover:border-dazed text-confused hover:text-dazed text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed rounded-lg transition duration-200 active:scale-[0.96] cursor-pointer"
+          className="inline-flex items-center gap-2 px-3 py-2 active:scale-[0.96] border border-confused hover:border-dazed text-confused hover:text-dazed text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed rounded-lg transition duration-200 cursor-pointer"
           onClick={() => void handlePaste()}
         >
           <i aria-hidden="true" className="fa-solid fa-paste text-[0.7rem]" />
@@ -157,7 +157,7 @@ export default function BrandTokenInput({
         </button>
         <button
           type="button"
-          className="inline-flex items-center gap-2 px-3 py-2 text-confused hover:text-dazed aria-disabled:text-confused/60 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed rounded-lg transition duration-200 active:scale-[0.96] cursor-pointer aria-disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-3 py-2 active:scale-[0.96] text-confused hover:text-dazed aria-disabled:text-confused/60 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed rounded-lg transition duration-200 cursor-pointer aria-disabled:cursor-not-allowed"
           onClick={handleClear}
           aria-disabled={isClearDisabled || undefined}
           disabled={isClearDisabled}
