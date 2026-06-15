@@ -8,12 +8,12 @@ import { type AppView } from './lib/navigation';
 /**
  * Maps the current URL pathname to the active `AppView`.
  *
- * `/settings/api` renders the dedicated API docs view (Scalar lazy bundle).
  * `/settings` renders the settings view; sections within it are reached by
- * scrolling or the in-page sidebar nav, not by URL.
+ * scrolling or the in-page sidebar nav, not by URL. `/settings/api` is a
+ * standalone brand-chrome route handled outside `AppShell` entirely, so it
+ * does not appear here.
  */
 function viewFromPath(pathname: string): AppView {
-  if (pathname === '/settings/api') return 'api-docs';
   if (pathname === '/settings') return 'settings';
   if (pathname === '/editor') return 'theme-editor';
   return 'links';
@@ -87,7 +87,6 @@ export function useAppShell() {
 
   useEffect(() => {
     const titles: Record<AppView, string> = {
-      'api-docs': 'API documentation – Linklater',
       links: 'Your links – Linklater',
       settings: 'Settings – Linklater',
       'theme-editor': 'Theme editor – Linklater',

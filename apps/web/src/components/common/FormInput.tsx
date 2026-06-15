@@ -15,8 +15,8 @@ import { forwardRef, type InputHTMLAttributes } from 'react';
  * bundle hosts this input. The component paints itself from that bundle's
  * input/border/text/alt-text slots. Forms rendered inside a `SettingsGroup`
  * or `AuthCard` (both mount-tier surfaces) pass `surface="mount"`. Inputs
- * rendered directly on the page (e.g. `TokenInput` in ApiDocs, the
- * `LinkForm`) take the default `'base'`. Picking the right surface keeps
+ * rendered directly on the page (e.g. the `LinkForm`) take the default
+ * `'base'`. Picking the right surface keeps
  * the input's fill, border, text, and placeholder colors coherent with the
  * host surface and satisfies the bundle-contrast contract verified in
  * `bundles.contrast.test.ts` (input bundle contract describe block).

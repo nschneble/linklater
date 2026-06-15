@@ -1,9 +1,7 @@
-import FormInput from '../common/FormInput';
-import IconButton from '../common/IconButton';
 import { useState, type ChangeEvent } from 'react';
 import { useTransientState } from '../../lib/hooks/useTransientState';
 
-interface TokenInputProps {
+interface BrandTokenInputProps {
   /** Current token value (controlled). */
   value: string;
   /** Called when the value changes (typed, pasted, or cleared). */
@@ -16,6 +14,13 @@ type ClearState = 'idle' | 'cleared';
 /**
  * Personal access token input for the API docs page.
  *
+ * Renders against the landing/marketing brand chrome (`bg-hit-man` gradient,
+ * `midnight`/`boyhood`/`dazed`/`confused`/`sunrise` palette) rather than the
+ * authenticated app's bundle vocabulary. Self-contained — does NOT use the
+ * shared `FormInput` / `IconButton` components or the `surface` plumbing,
+ * because the user-selected theme cannot meet WCAG against the fixed
+ * gradient (a11y-lead wave 22b-style brand-locked path).
+ *
  * Always renders masked on mount (show/hide state is not persisted) and
  * delegates value persistence to the parent (which writes to sessionStorage).
  * Validates only on blur to avoid spamming screen-reader announcements
@@ -23,8 +28,25 @@ type ClearState = 'idle' | 'cleared';
  *
  * Live-region announcements are intentionally generic ("pasted", "cleared")
  * and never include the token value itself.
+ *
+ * Contrast pairs (worst-case gradient stop `#0a0812`):
+ * - label `text-dazed` 16.4:1 (SC 1.4.3)
+ * - help / code `text-confused` 6.4:1 / `text-dazed` 16.4:1
+ * - input border `border-confused` 6.4:1 (SC 1.4.11 — NOT `border-boyhood`,
+ *   which fails at 2.0:1)
+ * - input fill `bg-midnight` (#1a1530), text inside 14.0:1
+ * - placeholder `placeholder:text-confused` 5.0:1
+ * - focus ring `focus-visible:ring-dazed` 16.4:1 (NEVER `ring-sunrise` —
+ *   fails 1.4.11 at 2.93:1 on the gradient)
+ * - default button ring `ring-confused` 6.4:1
+ * - error icon-prefixed `text-dazed` (16.4:1) + `border-l-2 border-sunrise`
+ *   (shape redundancy carries SC 1.4.11; sunrise body text would fail at
+ *   2.93:1).
  */
-export default function TokenInput({ value, onChange }: TokenInputProps) {
+export default function BrandTokenInput({
+  value,
+  onChange,
+}: BrandTokenInputProps) {
   const [showToken, setShowToken] = useState(false);
   const [hasBlurred, setHasBlurred] = useState(false);
   const [pasteState, setPasteState] = useState<PasteState>('idle');
@@ -76,17 +98,19 @@ export default function TokenInput({ value, onChange }: TokenInputProps) {
     setClearState('cleared');
   };
 
+  const isClearDisabled = value.length === 0;
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <label
-        className="block text-[var(--base-alt-text)] text-xs font-medium"
+        className="block text-dazed text-sm font-medium"
         htmlFor="api-docs-token-input"
       >
         Personal access token
       </label>
       <div className="flex flex-wrap items-stretch gap-2">
         <div className="grow basis-64">
-          <FormInput
+          <input
             id="api-docs-token-input"
             type={showToken ? 'text' : 'password'}
             value={value}
@@ -104,11 +128,12 @@ export default function TokenInput({ value, onChange }: TokenInputProps) {
                 : 'api-docs-token-help'
             }
             aria-invalid={hasValidationError || undefined}
+            className="block w-full px-3 py-2 bg-midnight border border-confused placeholder:text-confused text-dazed text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed rounded-lg transition duration-200"
           />
         </div>
-        <IconButton
-          className="group"
-          surface="base"
+        <button
+          type="button"
+          className="group inline-flex items-center gap-2 px-3 py-2 border border-confused hover:border-dazed text-confused hover:text-dazed text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed rounded-lg transition duration-200 active:scale-[0.96] cursor-pointer"
           aria-pressed={showToken}
           aria-label={showToken ? 'Hide token' : 'Show token'}
           onClick={() => setShowToken((shown) => !shown)}
@@ -121,40 +146,45 @@ export default function TokenInput({ value, onChange }: TokenInputProps) {
             aria-hidden="true"
             className="fa-solid fa-eye-slash text-[0.7rem] hidden group-aria-pressed:inline"
           />
-        </IconButton>
-        <IconButton surface="base" onClick={() => void handlePaste()}>
+        </button>
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 px-3 py-2 border border-confused hover:border-dazed text-confused hover:text-dazed text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed rounded-lg transition duration-200 active:scale-[0.96] cursor-pointer"
+          onClick={() => void handlePaste()}
+        >
           <i aria-hidden="true" className="fa-solid fa-paste text-[0.7rem]" />
           Paste from clipboard
-        </IconButton>
-        <IconButton
-          variant="ghost"
-          surface="base"
+        </button>
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 px-3 py-2 text-confused hover:text-dazed aria-disabled:text-confused/60 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed rounded-lg transition duration-200 active:scale-[0.96] cursor-pointer aria-disabled:cursor-not-allowed"
           onClick={handleClear}
-          aria-disabled={value.length === 0 || undefined}
-          disabled={value.length === 0}
+          aria-disabled={isClearDisabled || undefined}
+          disabled={isClearDisabled}
         >
           Clear
-        </IconButton>
+        </button>
       </div>
-      <p
-        className="text-[var(--base-alt-text)] text-xs"
-        id="api-docs-token-help"
-      >
+      <p className="text-confused text-xs" id="api-docs-token-help">
         This token is remembered for this tab only. Tokens start with{' '}
-        <code className="text-[var(--base-text)] font-mono">ltk_</code>.
+        <code className="text-dazed font-mono">ltk_</code>.
       </p>
-      <p
-        className="text-[var(--alert-text)] text-xs"
-        id="api-docs-token-error"
-        role="alert"
-      >
-        {hasValidationError && (
-          <>
+      {hasValidationError && (
+        <p
+          className="flex items-start gap-2 pl-2 border-l-2 border-sunrise text-dazed text-xs"
+          id="api-docs-token-error"
+          role="alert"
+        >
+          <i
+            aria-hidden="true"
+            className="fa-solid fa-triangle-exclamation mt-0.5 text-sunrise text-[0.7rem]"
+          />
+          <span>
             Personal access tokens start with{' '}
             <code className="font-mono">ltk_</code>.
-          </>
-        )}
-      </p>
+          </span>
+        </p>
+      )}
       <span aria-atomic="true" className="sr-only" role="status">
         {announcement}
       </span>

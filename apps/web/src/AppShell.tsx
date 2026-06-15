@@ -10,10 +10,6 @@ import { useAppShell } from './useAppShell';
 // color-math utilities add non-trivial weight to the bundle.
 const ThemeEditor = lazy(() => import('./components/settings/ThemeEditor'));
 
-// ApiDocsView is lazy-loaded because Scalar's bundle is heavy (~300KB
-// gzipped) and only visitors to /settings/api should pay that cost.
-const ApiDocsView = lazy(() => import('./components/api-docs/ApiDocsView'));
-
 // WelcomeModal is lazy-loaded because it shows once per user and would
 // otherwise be dead weight in the initial bundle for every session.
 const WelcomeModal = lazy(() => import('./components/welcome/WelcomeModal'));
@@ -92,31 +88,16 @@ export default function AppShell() {
         className="max-w-3xl mx-auto px-4 py-6 sm:py-12 space-y-6 focus:outline-none"
       >
         <ErrorBoundary fallback={null} resetKey={shell.view}>
-          {shell.view === 'api-docs' ? (
-            <Suspense
-              fallback={
-                <p
-                  aria-live="polite"
-                  className="text-[var(--base-alt-text)] text-sm"
-                >
-                  Loading API docs…
-                </p>
-              }
-            >
-              <ApiDocsView />
+          {shell.view === 'settings' ? (
+            <SettingsView />
+          ) : shell.view === 'theme-editor' ? (
+            <Suspense>
+              <ThemeEditor />
             </Suspense>
-          ) : null}
+          ) : (
+            <LinksView onCloseUserMenu={shell.handleUserMenuClose} />
+          )}
         </ErrorBoundary>
-
-        {shell.view === 'settings' ? (
-          <SettingsView />
-        ) : shell.view === 'theme-editor' ? (
-          <Suspense>
-            <ThemeEditor />
-          </Suspense>
-        ) : shell.view === 'api-docs' ? null : (
-          <LinksView onCloseUserMenu={shell.handleUserMenuClose} />
-        )}
       </main>
 
       {user.welcomedAt === null && shell.isDesktop && (
