@@ -225,7 +225,7 @@ export function useAuthForm() {
         forgotPasswordSentJustNowReference.current = setTimeout(() => {
           setForgotPasswordSentJustNow(false);
           forgotPasswordSentJustNowReference.current = null;
-        }, 3000);
+        }, 5000);
         return;
       }
 
