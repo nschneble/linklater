@@ -15,6 +15,18 @@ import { useMemo } from 'react';
  * `.introduction-section` class (verified in `@scalar/api-reference@0.9.46`
  * dist sources). Only the introduction h1 is hidden; operation/section
  * headings (h2, h3, …) elsewhere in the embed remain visible.
+ *
+ * MODAL_SCROLL_LOCK_CSS — pins the page scroll while Scalar's Test Request
+ * modal is open. Scalar's built-in `useScrollLock` (see
+ * `@scalar/api-client/dist/v2/features/modal/Modal.vue.script.js`) sets
+ * `body.style.overflow = 'hidden'` on open, but on a standards-mode page the
+ * scrolling element is `<html>`, not `<body>` — so wheel/arrow/Page Down
+ * events still scroll the page underneath the modal (WCAG 2.4.3, 1.4.10).
+ * `:has()` makes the lock conditional on Scalar's own `.scalar-client--open`
+ * state class (added by `ModalClientContainer`), so the lock auto-releases
+ * the instant the modal closes — no JS lifecycle to manage, no risk of a
+ * leaked lock after close. The Scalar modal's internal scroll containers
+ * are untouched, so modal content scrolls normally.
  */
 const REDUCED_MOTION_CSS = `
 @media (prefers-reduced-motion: reduce) {
@@ -30,6 +42,12 @@ const REDUCED_MOTION_CSS = `
 const HIDE_SPEC_TITLE_CSS = `
 .scalar-app .introduction-section h1.section-header-label {
   display: none;
+}
+`;
+
+const MODAL_SCROLL_LOCK_CSS = `
+html:has(.scalar-container.scalar-client--open) {
+  overflow: hidden;
 }
 `;
 
@@ -54,7 +72,8 @@ export function useScalarConfiguration(openapiUrl: string, token: string) {
       hideDarkModeToggle: true,
       darkMode: true,
       hideModels: true,
-      customCss: REDUCED_MOTION_CSS + HIDE_SPEC_TITLE_CSS,
+      customCss:
+        REDUCED_MOTION_CSS + HIDE_SPEC_TITLE_CSS + MODAL_SCROLL_LOCK_CSS,
       authentication: {
         preferredSecurityScheme: 'pat',
         securitySchemes: {
