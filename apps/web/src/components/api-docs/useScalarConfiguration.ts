@@ -1,3 +1,4 @@
+import BRAND_CSS from './scalarBrandCss';
 import { useMemo } from 'react';
 
 /**
@@ -73,7 +74,10 @@ export function useScalarConfiguration(openapiUrl: string, token: string) {
       darkMode: true,
       hideModels: true,
       customCss:
-        REDUCED_MOTION_CSS + HIDE_SPEC_TITLE_CSS + MODAL_SCROLL_LOCK_CSS,
+        REDUCED_MOTION_CSS +
+        HIDE_SPEC_TITLE_CSS +
+        MODAL_SCROLL_LOCK_CSS +
+        BRAND_CSS,
       authentication: {
         preferredSecurityScheme: 'pat',
         securitySchemes: {
