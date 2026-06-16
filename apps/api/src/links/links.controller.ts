@@ -19,6 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import { ApiUnauthorized } from '../auth/api-unauthorized.decorator.js';
 import { AnyAuthGuard, type AuthRequest } from '../auth/index.js';
 import { LinksQueryService } from './links-query.service.js';
 import { LinksService } from './links.service.js';
@@ -65,10 +66,7 @@ export class LinksController {
     description:
       'The URL is missing the `http://` or `https://` protocol, points to a private network address, or fails URL parsing.',
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Missing or invalid token (JWT or PAT).',
-  })
+  @ApiUnauthorized()
   @Post()
   async create(@Req() request: AuthRequest, @Body() body: CreateLinkDto) {
     const userId = request.user.userId;
@@ -113,10 +111,7 @@ export class LinksController {
       'One page of links plus the total count, current page, and page size. When `search` is supplied, results are ordered by relevance; otherwise newest first.',
     type: PaginatedLinksResponseDto,
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Missing or invalid token (JWT or PAT).',
-  })
+  @ApiUnauthorized()
   @Get()
   async findAll(
     @Req() request: AuthRequest,
@@ -163,10 +158,7 @@ export class LinksController {
       'A randomly chosen link wrapped in `{ link }`. The link is returned as-is — its read state is not changed. `link` is `null` when no links match the filter.',
     type: RandomLinkResponseDto,
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Missing or invalid token (JWT or PAT).',
-  })
+  @ApiUnauthorized()
   @Get('random')
   async random(@Req() request: AuthRequest, @Query('read') read?: string) {
     const userId = request.user.userId;
@@ -196,10 +188,7 @@ export class LinksController {
       'The URL of the freshly stumbled link, wrapped in `{ url }`. The link is already marked read by the time the response returns. `url` is `null` when there are no unread links left.',
     type: StumbleResponseDto,
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Missing or invalid token (JWT or PAT).',
-  })
+  @ApiUnauthorized()
   @HttpCode(200)
   @Post('stumble')
   async stumble(@Req() request: AuthRequest) {
@@ -220,10 +209,7 @@ export class LinksController {
     description: 'The requested link with its metadata.',
     type: LinkResponseDto,
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Missing or invalid token (JWT or PAT).',
-  })
+  @ApiUnauthorized()
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @Get(':id')
   async findOne(@Req() request: AuthRequest, @Param('id') id: string) {
@@ -243,10 +229,7 @@ export class LinksController {
     description: 'The updated link with `readAt` set.',
     type: LinkResponseDto,
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Missing or invalid token (JWT or PAT).',
-  })
+  @ApiUnauthorized()
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @HttpCode(200)
   @Post(':id/read')
@@ -267,10 +250,7 @@ export class LinksController {
     description: 'The updated link with `readAt` cleared.',
     type: LinkResponseDto,
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Missing or invalid token (JWT or PAT).',
-  })
+  @ApiUnauthorized()
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @HttpCode(200)
   @Post(':id/unread')
@@ -293,17 +273,14 @@ export class LinksController {
       'The number of links removed, wrapped in `{ count }`. `count` is `0` when there were no read links to delete.',
     type: BulkDeleteResultDto,
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Missing or invalid token (JWT or PAT).',
-  })
+  @ApiUnauthorized()
   @Delete('read')
   async removeAllRead(@Req() request: AuthRequest) {
     const userId = request.user.userId;
     return this.linksService.removeAllRead(userId);
   }
 
-  /** Permanently deletes a single link by its UUID. */
+  /** Permanently deletes a single link by its ID. */
   @ApiOperation({ summary: 'Permanently delete a single link' })
   @ApiParam({
     name: 'id',
@@ -315,10 +292,7 @@ export class LinksController {
     description: 'Confirmation that the link was deleted: `{ success: true }`.',
     type: DeleteResultDto,
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Missing or invalid token (JWT or PAT).',
-  })
+  @ApiUnauthorized()
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @Delete(':id')
   async remove(@Req() request: AuthRequest, @Param('id') id: string) {

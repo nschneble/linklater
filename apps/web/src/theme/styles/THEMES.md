@@ -134,8 +134,8 @@ bundle it visually sits on:
   `PrimaryButton`s in `FailWhalePage`, `ErrorBoundary`, `NotFoundView`,
   `LinksControls`, `LinksMobileControls`, `LinkForm`). `ApiDocsView`
   paints from the landing-page brand palette (`bg-hit-man` gradient,
-  `dazed` / `confused` / `midnight`) rather than bundle slots, so it
-  carries its own `BrandTokenInput` and does NOT use a bundle surface.
+  `dazed` / `confused` / `midnight`) rather than bundle slots, and does
+  NOT use a bundle surface.
 - `surface="mount"` — inside a card (default for `IconButton`,
   `LinkButton`, and `PrimaryButton`; used by every settings-form
   `FormInput`, `AuthForm` inputs inside `AuthCard`, and most in-card

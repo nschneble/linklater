@@ -34,9 +34,9 @@ export default function ApiDocsView() {
     // the user-theme tokens. Some themes set `--focus-ring` to a hue that
     // fails SC 1.4.11 vs the navy gradient (e.g. before-sunrise dark), so
     // pin it to `--color-dazed` (#eeeede, ~16:1 vs #0a0812) — the same
-    // brand-ring color used by skip-links and focus-visible:ring-dazed on
-    // BrandTokenInput. The override is invisible-on-purpose: it doesn't
-    // define a bundle, it just keeps the CVD halo coherent with the chrome.
+    // brand-ring color used by the skip-link above. The override is
+    // invisible-on-purpose: it doesn't define a bundle, it just keeps the
+    // CVD halo coherent with the chrome.
     <div
       className="min-h-screen bg-hit-man"
       style={
@@ -78,20 +78,20 @@ export default function ApiDocsView() {
         >
           <Link
             to="/"
-            className="text-dazed hover:text-sunrise focus-visible:ring-2 focus-visible:ring-dazed focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0812] focus-visible:outline-none focus-visible:rounded"
+            className="text-dazed hover:text-[#ff9170] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0812] focus-visible:rounded"
           >
             &larr; Linklater
           </Link>
           <Link
             to="/settings"
             state={{ scrollTo: 'integrations' }}
-            className="text-dazed hover:text-sunrise focus-visible:ring-2 focus-visible:ring-dazed focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0812] focus-visible:outline-none focus-visible:rounded"
+            className="text-dazed hover:text-[#ff9170] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0812] focus-visible:rounded"
           >
             Manage tokens &rarr;
           </Link>
         </nav>
         <div className="flex flex-col gap-3">
-          <h1 className="bg-gradient-to-br from-dazed to-sunrise bg-clip-text text-4xl sm:text-5xl text-transparent font-bold tracking-tight text-balance">
+          <h1 className="bg-gradient-to-br from-dazed to-sunrise bg-clip-text text-transparent text-4xl sm:text-5xl font-bold tracking-tight text-balance">
             Linklater API
           </h1>
           <p className="max-w-2xl text-dazed text-base sm:text-lg text-pretty leading-relaxed">
@@ -116,7 +116,7 @@ export default function ApiDocsView() {
          * embed's interior border (see scalarBrandCss.ts `--scalar-border-
          * color`) so the inner-and-outer edge read as one coherent frame.
          */}
-        <div className="border border-[#7d6ec0] rounded-2xl overflow-hidden animate-fade-in-up">
+        <div className="overflow-hidden border border-[#7d6ec0] rounded-2xl animate-fade-in-up">
           {/* https://scalar.com/products/api-references/integrations/react */}
           <ApiReferenceReact configuration={scalarConfiguration} />
         </div>
