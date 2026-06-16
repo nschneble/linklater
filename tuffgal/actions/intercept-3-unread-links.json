@@ -17,10 +17,10 @@
               "readAt": null,
               "meta": {
                 "title": "Test Link 1",
-                "description": null,
-                "imageUrl": null,
-                "faviconUrl": null,
-                "siteName": null,
+                "description": "Practical notes on building durable software — concrete examples, minimal jargon, hard-won lessons from teams that ship slowly.",
+                "imageUrl": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 126'><rect width='240' height='126' fill='%231e3a8a'/><text x='120' y='72' font-size='22' text-anchor='middle' font-family='sans-serif' fill='white'>Slow Software</text></svg>",
+                "faviconUrl": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%232563eb'/><text x='16' y='22' font-size='18' text-anchor='middle' font-family='sans-serif' fill='white'>S</text></svg>",
+                "siteName": "Slow Software Weekly",
                 "source": null,
                 "fetchedAt": "2026-01-01T12:00:00.000Z"
               }
@@ -33,10 +33,10 @@
               "readAt": null,
               "meta": {
                 "title": "Test Link 2",
-                "description": null,
-                "imageUrl": null,
-                "faviconUrl": null,
-                "siteName": null,
+                "description": "A long-form essay on the quiet renaissance of typography on the web — how line-height, optical sizing, and tabular numerals reshape reading.",
+                "imageUrl": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 126'><rect width='240' height='126' fill='%2392400e'/><text x='120' y='72' font-size='22' text-anchor='middle' font-family='sans-serif' fill='white'>Press Daily</text></svg>",
+                "faviconUrl": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23b45309'/><text x='16' y='22' font-size='18' text-anchor='middle' font-family='sans-serif' fill='white'>P</text></svg>",
+                "siteName": "Press Daily",
                 "source": null,
                 "fetchedAt": "2026-01-01T12:00:00.000Z"
               }
@@ -49,10 +49,10 @@
               "readAt": null,
               "meta": {
                 "title": "Test Link 3",
-                "description": null,
-                "imageUrl": null,
-                "faviconUrl": null,
-                "siteName": null,
+                "description": "Reference docs for the platform’s public APIs, covering authentication, idempotency keys, and the conventions every integrator needs.",
+                "imageUrl": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 126'><rect width='240' height='126' fill='%23064e3b'/><text x='120' y='72' font-size='22' text-anchor='middle' font-family='sans-serif' fill='white'>Docs Reference</text></svg>",
+                "faviconUrl": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23059669'/><text x='16' y='22' font-size='18' text-anchor='middle' font-family='sans-serif' fill='white'>D</text></svg>",
+                "siteName": "Docs Reference",
                 "source": null,
                 "fetchedAt": "2026-01-01T12:00:00.000Z"
               }

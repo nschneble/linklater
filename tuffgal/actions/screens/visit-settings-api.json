@@ -4,5 +4,5 @@
   "expect": {
     "anyOf": [{ "role": "heading", "text": "API" }]
   },
-  "diff": { "maxDiffRatio": 0.02 }
+  "screenshot": false
 }

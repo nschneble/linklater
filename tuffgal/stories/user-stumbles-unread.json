@@ -1,7 +1,8 @@
 {
   "story": "As a logged-in user, I can Stumble! upon an unread link.",
   "flow": "stumble! upon an unread link",
-  "needs": ["logged-in"],
+  "needs": ["logged-in", "db-link-mutator-4"],
+  "produces": ["db-link-mutator-5"],
   "fixtures": ["user-with-3-links"],
   "actions": [
     { "action": "intercept-3-unread-links" },

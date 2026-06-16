@@ -1,7 +1,8 @@
 {
   "story": "As a logged-in user, I can search through my unread links to find one quickly.",
   "flow": "search through unread links",
-  "needs": ["logged-in"],
+  "needs": ["logged-in", "db-link-mutator-3"],
+  "produces": ["db-link-mutator-4"],
   "fixtures": ["user-with-3-links"],
   "actions": [
     {

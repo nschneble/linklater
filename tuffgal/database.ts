@@ -60,11 +60,12 @@ export async function resetTestDatabase(): Promise<void> {
  * `Meta.title`).
  */
 export async function userWithLinksFixture(): Promise<void> {
-  const links = [
-    { id: 'fixture-link-0000000000000001', metaId: 'fixture-meta-0000000000000001', title: 'Test Link 1', url: 'https://example.test/1' },
-    { id: 'fixture-link-0000000000000002', metaId: 'fixture-meta-0000000000000002', title: 'Test Link 2', url: 'https://example.test/2' },
-    { id: 'fixture-link-0000000000000003', metaId: 'fixture-meta-0000000000000003', title: 'Test Link 3', url: 'https://example.test/3' },
-  ];
+  const links = FIXTURE_META.map((entry, index) => ({
+    ...entry,
+    id: `fixture-link-000000000000000${index + 1}`,
+    metaId: `fixture-meta-000000000000000${index + 1}`,
+    url: `https://example.test/${index + 1}`,
+  }));
   await applyLinks(links, null);
 }
 
@@ -74,11 +75,12 @@ export async function userWithLinksFixture(): Promise<void> {
  * violating the `Link_userId_url_key` constraint.
  */
 export async function userWithReadHistoryFixture(): Promise<void> {
-  const links = [
-    { id: 'fixture-read-0000000000000001', metaId: 'fixture-readmeta-000000000001', title: 'Test Link 1', url: 'https://example.test/read/1' },
-    { id: 'fixture-read-0000000000000002', metaId: 'fixture-readmeta-000000000002', title: 'Test Link 2', url: 'https://example.test/read/2' },
-    { id: 'fixture-read-0000000000000003', metaId: 'fixture-readmeta-000000000003', title: 'Test Link 3', url: 'https://example.test/read/3' },
-  ];
+  const links = FIXTURE_META.map((entry, index) => ({
+    ...entry,
+    id: `fixture-read-000000000000000${index + 1}`,
+    metaId: `fixture-readmeta-00000000000${index + 1}`,
+    url: `https://example.test/read/${index + 1}`,
+  }));
   await applyLinks(links, FIXED_READ_DATE);
 }
 
@@ -87,6 +89,72 @@ interface FixtureLink {
   metaId: string;
   title: string;
   url: string;
+  description: string;
+  faviconUrl: string;
+  imageUrl: string;
+  siteName: string;
+}
+
+/**
+ * Realistic Meta payload per Test Link slot. Each entry mirrors what a
+ * real OpenGraph scrape returns — title, description, siteName, and two
+ * inline-SVG data URLs for favicon + hero image. Inline data URLs keep
+ * the cards visually deterministic without depending on placeholder
+ * image services (network flake) or shipping fixture PNGs. The titles
+ * are preserved as "Test Link N" because action selectors elsewhere in
+ * the suite resolve cards by that exact role+text.
+ */
+const FIXTURE_META: ReadonlyArray<{
+  title: string;
+  description: string;
+  siteName: string;
+  faviconUrl: string;
+  imageUrl: string;
+}> = [
+  {
+    title: 'Test Link 1',
+    description:
+      'Practical notes on building durable software — concrete examples, minimal jargon, hard-won lessons from teams that ship slowly.',
+    siteName: 'Slow Software Weekly',
+    faviconUrl: buildFaviconDataUrl('S', '#2563eb'),
+    imageUrl: buildImageDataUrl('Slow Software', '#1e3a8a'),
+  },
+  {
+    title: 'Test Link 2',
+    description:
+      'A long-form essay on the quiet renaissance of typography on the web — how line-height, optical sizing, and tabular numerals reshape reading.',
+    siteName: 'Press Daily',
+    faviconUrl: buildFaviconDataUrl('P', '#b45309'),
+    imageUrl: buildImageDataUrl('Press Daily', '#92400e'),
+  },
+  {
+    title: 'Test Link 3',
+    description:
+      'Reference docs for the platform’s public APIs, covering authentication, idempotency keys, and the conventions every integrator needs.',
+    siteName: 'Docs Reference',
+    faviconUrl: buildFaviconDataUrl('D', '#059669'),
+    imageUrl: buildImageDataUrl('Docs Reference', '#064e3b'),
+  },
+];
+
+function buildFaviconDataUrl(letter: string, color: string): string {
+  const hex = color.replace('#', '%23');
+  return (
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' " +
+    `viewBox='0 0 32 32'><rect width='32' height='32' fill='${hex}'/>` +
+    `<text x='16' y='22' font-size='18' text-anchor='middle' ` +
+    `font-family='sans-serif' fill='white'>${letter}</text></svg>`
+  );
+}
+
+function buildImageDataUrl(label: string, color: string): string {
+  const hex = color.replace('#', '%23');
+  return (
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' " +
+    `viewBox='0 0 240 126'><rect width='240' height='126' fill='${hex}'/>` +
+    `<text x='120' y='72' font-size='22' text-anchor='middle' ` +
+    `font-family='sans-serif' fill='white'>${label}</text></svg>`
+  );
 }
 
 async function applyLinks(
@@ -99,6 +167,14 @@ async function applyLinks(
   try {
     await client.query('BEGIN');
     try {
+      // Wipe any prior story's links + cascading Meta rows for this user
+      // before reapplying. ON CONFLICT on row id keeps a fixture's own
+      // rows idempotent across reruns but leaves stale rows written by
+      // API-driven stories (save-link, bookmarklet), which then leak
+      // into later stories and drift their screenshots.
+      await client.query(`DELETE FROM "Link" WHERE "userId" = $1`, [
+        TEST_USER.id,
+      ]);
       for (const link of links) {
         // Compute searchVector inline + refresh on conflict so the index
         // never gets out of sync with url + title when fixture data is
@@ -124,15 +200,29 @@ async function applyLinks(
         await client.query(
           `
           INSERT INTO "Meta"
-            ("id", "linkId", "title", "createdAt", "updatedAt", "fetchedAt")
-          VALUES ($1, $2, $3, $4, $4, $4)
+            ("id", "linkId", "title", "description", "faviconUrl",
+             "imageUrl", "siteName", "createdAt", "updatedAt", "fetchedAt")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $8)
           ON CONFLICT ("id") DO UPDATE
-            SET "linkId"    = EXCLUDED."linkId",
-                "title"     = EXCLUDED."title",
-                "updatedAt" = EXCLUDED."updatedAt",
-                "fetchedAt" = EXCLUDED."fetchedAt"
+            SET "linkId"      = EXCLUDED."linkId",
+                "title"       = EXCLUDED."title",
+                "description" = EXCLUDED."description",
+                "faviconUrl"  = EXCLUDED."faviconUrl",
+                "imageUrl"    = EXCLUDED."imageUrl",
+                "siteName"    = EXCLUDED."siteName",
+                "updatedAt"   = EXCLUDED."updatedAt",
+                "fetchedAt"   = EXCLUDED."fetchedAt"
           `,
-          [link.metaId, link.id, link.title, FIXED_DATE],
+          [
+            link.metaId,
+            link.id,
+            link.title,
+            link.description,
+            link.faviconUrl,
+            link.imageUrl,
+            link.siteName,
+            FIXED_DATE,
+          ],
         );
       }
       await client.query('COMMIT');
