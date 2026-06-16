@@ -6,7 +6,7 @@ import StumblePage from '../components/stumble/StumblePage';
 
 // ApiDocsView is lazy-loaded because Scalar's bundle is heavy (~300KB
 // gzipped) and only visitors to /settings/api should pay that cost.
-const ApiDocsView = lazy(() => import('../components/api-docs/ApiDocsView'));
+const ApiDocsView = lazy(() => import('../components/api-docs'));
 
 function UnreadRedirect() {
   return <Navigate to="/unread" replace />;

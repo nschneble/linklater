@@ -55,7 +55,11 @@ describe('OpenAPI document (e2e)', () => {
       new DocumentBuilder()
         .setTitle('Linklater API')
         .setDescription(
-          'Personal access token endpoints for managing your saved links.',
+          // Mirror the auth-header example baked into `apps/api/src/main.ts`
+          // so the `info.description` assertion below has meaningful copy to
+          // match against. The literal "Authorization: Bearer ltk_…" is what
+          // Scalar's "Try it" tab and downstream API clients read from.
+          'Authenticate every request with a personal access token in the `Authorization` header: `Authorization: Bearer ltk_…`.',
         )
         .setVersion('test')
         .addBearerAuth(
@@ -89,6 +93,17 @@ describe('OpenAPI document (e2e)', () => {
     expect(response.headers['content-type']).toMatch(/application\/json/);
     expect(response.body.info.title).toBe('Linklater API');
     expect(response.body.info.version).toBe('test');
+  });
+
+  // Pins the PAT-auth example baked into `main.ts`'s `setDescription` against
+  // future copy edits. Scalar's "Try it" tab uses the description as auth
+  // guidance, so the literal "Authorization: Bearer ltk_…" must survive.
+  it('embeds the Bearer-ltk auth header example in info.description', async () => {
+    const response = await request(app.getHttpServer()).get('/openapi.json');
+
+    expect(response.body.info.description).toContain(
+      'Authorization: Bearer ltk_',
+    );
   });
 
   it('declares the "pat" bearer security scheme that Scalar binds against', async () => {

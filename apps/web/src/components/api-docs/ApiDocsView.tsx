@@ -76,18 +76,25 @@ export default function ApiDocsView() {
           aria-label="API docs"
           className="flex items-center justify-between gap-3 text-sm"
         >
+          {/*
+           * Arrow glyphs are wrapped in aria-hidden spans so they don't leak
+           * into the accessible name of each link (SC 1.1.1, SC 2.4.4). The
+           * non-breaking space inside each span keeps the visual gap between
+           * arrow and word even when the surrounding text node is collapsed
+           * away by the screen reader.
+           */}
           <Link
             to="/"
             className="text-dazed hover:text-[#ff9170] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0812] focus-visible:rounded"
           >
-            &larr; Linklater
+            <span aria-hidden="true">&larr;&nbsp;</span>Linklater
           </Link>
           <Link
             to="/settings"
             state={{ scrollTo: 'integrations' }}
             className="text-dazed hover:text-[#ff9170] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0812] focus-visible:rounded"
           >
-            Manage tokens &rarr;
+            Manage tokens<span aria-hidden="true">&nbsp;&rarr;</span>
           </Link>
         </nav>
         <div className="flex flex-col gap-3">
