@@ -33,16 +33,17 @@ const HIDE_SPEC_TITLE_CSS = `
 }
 `;
 
+interface OperationSortValue {
+  method: string;
+  path: string;
+}
+
 /**
- * Builds the memoized configuration object passed to `<ApiReferenceReact>`.
+ * Builds the Scalar configuration object.
  *
- * Memoization keeps Scalar from re-mounting on unrelated renders (e.g. a
- * parent component re-rendering without changing `openapiUrl` or `token`).
- * A new object is returned — and Scalar sees a changed prop — whenever
- * `openapiUrl` or `token` changes (including each keystroke in
- * `BrandTokenInput`).
+ * https://scalar.com/products/api-references/configuration#configuration-options
  *
- * Dark mode is forced on unconditionally: the brand chrome is dark
+ * Dark mode is on unconditionally since the brand chrome is dark
  * regardless of the user's theme.
  */
 export function useScalarConfiguration(openapiUrl: string, token: string) {
@@ -52,7 +53,7 @@ export function useScalarConfiguration(openapiUrl: string, token: string) {
       layout: 'modern' as const,
       hideDarkModeToggle: true,
       darkMode: true,
-      hideModels: false,
+      hideModels: true,
       customCss: REDUCED_MOTION_CSS + HIDE_SPEC_TITLE_CSS,
       authentication: {
         preferredSecurityScheme: 'pat',
@@ -63,6 +64,21 @@ export function useScalarConfiguration(openapiUrl: string, token: string) {
             token,
           },
         },
+      },
+      showDeveloperTools: 'never' as const,
+      showSidebar: false,
+      withDefaultFonts: false,
+      agent: { disabled: true },
+      documentDownloadType: 'none' as const,
+      isLoading: true,
+      operationsSorter: (a: OperationSortValue, b: OperationSortValue) => {
+        const methodOrder = ['get', 'post', 'put', 'delete'];
+        const methodComparison =
+          methodOrder.indexOf(a.method) - methodOrder.indexOf(b.method);
+        if (methodComparison !== 0) {
+          return methodComparison;
+        }
+        return a.path.localeCompare(b.path);
       },
     }),
     [openapiUrl, token],
