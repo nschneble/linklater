@@ -3,7 +3,7 @@
 - banner:
   - button "Go to your links": Linklater Save links now, read them later.
   - button "User menu (testing-ui@linklater.test)"
-- main:
+- main "Links":
   - navigation "Settings sections":
     - list:
       - listitem:
@@ -61,7 +61,7 @@
     - paragraph: Drag this button to your bookmarks bar. Click it on any page to save the link directly to Linklater.
     - status
     - link "Save to Linklater — drag to your bookmarks bar, or click on any page to save that link":
-      - /url: "javascript:(function(){var t=\"ltk_FfbkaeHpv5d6cg5MiSEWL-G2q8-1m5xh\",a=\"https://localhost:3000\";function n(m,k){var e=document.createElement('div');e.textContent=m;e.setAttribute('role',k?'status':'alert');e.setAttribute('aria-live',k?'polite':'assertive');e.style.cssText='position:fixed;top:16px;right:16px;padding:12px 18px;border-radius:8px;font:600 14px/1 system-ui;z-index:2147483647;box-shadow:0 4px 16px rgba(0,0,0,.35);transition:opacity .3s;color:'+(k?'#020617':'#fff')+';background:'+(k?'#34d399':'#ef4444');document.body.appendChild(e);setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.remove()},350)},2500)}fetch(a+'/links',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({url:location.href})}).then(function(r){r.ok?n('✓ Saved to Linklater',true):r.text().then(function(m){var p;try{p=JSON.parse(m).message;if(p&&p.join)p=p.join(', ')}catch(_){}n('⚠ '+(p||m||'Error saving link'),false)})}).catch(function(){n('⚠ Could not reach Linklater',false)})})();"
+      - /url: "javascript:(function(){var t=\"ltk_bookmarklet_stub_token_for_visual_regression\",a=\"https://localhost:3000\";function n(m,k){var e=document.createElement('div');e.textContent=m;e.setAttribute('role',k?'status':'alert');e.setAttribute('aria-live',k?'polite':'assertive');e.style.cssText='position:fixed;top:16px;right:16px;padding:12px 18px;border-radius:8px;font:600 14px/1 system-ui;z-index:2147483647;box-shadow:0 4px 16px rgba(0,0,0,.35);transition:opacity .3s;color:'+(k?'#020617':'#fff')+';background:'+(k?'#34d399':'#ef4444');document.body.appendChild(e);setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.remove()},350)},2500)}fetch(a+'/links',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({url:location.href})}).then(function(r){r.ok?n('✓ Saved to Linklater',true):r.text().then(function(m){var p;try{p=JSON.parse(m).message;if(p&&p.join)p=p.join(', ')}catch(_){}n('⚠ '+(p||m||'Error saving link'),false)})}).catch(function(){n('⚠ Could not reach Linklater',false)})})();"
       - text: Save to Linklater
     - paragraph: Your auth token is embedded in this bookmarklet. It never expires, but it can be regenerated if someone else gains access to it.
     - heading "Stumble!" [level=3]
@@ -74,7 +74,7 @@
     - paragraph: Use personal access tokens (PATs) to connect Linklater with external tools and services.
     - heading "API Tokens" [level=3]
     - status: Your new token has been created. It'll only be shown once, so make sure you copy it down before navigating away from this page!
-    - code: ltk_JpwIQTdt3TChVZE-U_tODi2ahYRi3k5k
+    - code: ltk_SyPFR41j_OOLFleqHRMvkbbJ7wd_2cnH
     - button "Copy to clipboard"
     - status
     - list:
@@ -86,7 +86,9 @@
           - time: a few seconds ago
         - button "Revoke ci-smoke-test": Revoke
         - paragraph: This token has never been used.
-    - button "View the API documentation"
+    - link "View the API documentation in a new tab":
+      - /url: /settings/api
+      - text: View the API documentation
   - region "Danger zone":
     - heading "Danger zone" [level=2]
     - paragraph: Beware all ye who enter. Deleting your account will remove all your saved links. This cannot be undone.

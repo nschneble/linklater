@@ -3,7 +3,7 @@
 - banner:
   - button "Go to your links": Linklater Save links now, read them later.
   - button "User menu (testing-ui@linklater.test)"
-- main:
+- main "Links":
   - heading "Your links" [level=1]
   - button "Show keyboard shortcuts"
   - paragraph: Add, search, or stumble upon something random.
@@ -15,7 +15,9 @@
   - searchbox "Search through your links"
   - tabpanel "Unread":
     - paragraph: Test Link 1
-    - paragraph: example.test
-    - link "Test Link 1 — example.test, opens in new tab":
+    - paragraph: Slow Software Weekly
+    - paragraph: Practical notes on building durable software — concrete examples, minimal jargon, hard-won lessons from teams that ship slowly.
+    - link "Test Link 1 — Slow Software Weekly, opens in new tab":
       - /url: https://example.test/read/1
+  - status
   - status

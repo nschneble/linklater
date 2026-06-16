@@ -13,31 +13,23 @@
   - button "Remove all read"
   - searchbox "Search through your links"
   - tabpanel "Read":
-    - paragraph: (No title)
-    - paragraph: example.test
-    - paragraph: https://example.test/articles/testing-ui-determinism
-    - button "Mark unread"
-    - link "(No title) — example.test, opens in new tab":
-      - /url: https://example.test/articles/testing-ui-determinism
     - paragraph: Test Link 3
-    - paragraph: example.test
+    - paragraph: Docs Reference
+    - paragraph: Reference docs for the platform’s public APIs, covering authentication, idempotency keys, and the conventions every integrator needs.
     - button "Mark unread"
-    - link "Test Link 3 — example.test, opens in new tab":
+    - link "Test Link 3 — Docs Reference, opens in new tab":
       - /url: https://example.test/read/3
     - paragraph: Test Link 2
-    - paragraph: example.test
+    - paragraph: Press Daily
+    - paragraph: A long-form essay on the quiet renaissance of typography on the web — how line-height, optical sizing, and tabular numerals reshape reading.
     - button "Mark unread"
-    - link "Test Link 2 — example.test, opens in new tab":
+    - link "Test Link 2 — Press Daily, opens in new tab":
       - /url: https://example.test/read/2
     - paragraph: Test Link 1
-    - paragraph: example.test
+    - paragraph: Slow Software Weekly
+    - paragraph: Practical notes on building durable software — concrete examples, minimal jargon, hard-won lessons from teams that ship slowly.
     - button "Mark unread"
-    - link "Test Link 1 — example.test, opens in new tab":
+    - link "Test Link 1 — Slow Software Weekly, opens in new tab":
       - /url: https://example.test/read/1
-    - paragraph: Test Link 1
-    - paragraph: example.test
-    - button "Mark unread"
-    - link "Test Link 1 — example.test, opens in new tab":
-      - /url: https://example.test/1
   - status
   - status
