@@ -57,10 +57,14 @@ export class LinksController {
   @ApiResponse({
     status: 201,
     description:
-      'Link created or re-added to the unread list. Metadata fetch queued.',
+      'The saved link. Its metadata (title, description, image) is fetched in the background and may be `null` on the first response.',
     type: LinkResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'URL is not a valid URL.' })
+  @ApiResponse({
+    status: 400,
+    description:
+      'The URL is missing the `http://` or `https://` protocol, points to a private network address, or fails URL parsing.',
+  })
   @ApiResponse({
     status: 401,
     description: 'Missing or invalid token (JWT or PAT).',
@@ -83,27 +87,30 @@ export class LinksController {
   @ApiQuery({
     name: 'search',
     required: false,
-    description: 'Full-text search term.',
+    description:
+      'Full-text search over titles, descriptions, and URLs. Accent- and case-insensitive.',
   })
   @ApiQuery({
     name: 'read',
     required: false,
     enum: ['true', 'false'],
-    description: 'Filter by read status. Omit to return all.',
+    description:
+      'Restrict results to read (`true`) or unread (`false`) links. Omit for both.',
   })
   @ApiQuery({
     name: 'page',
     required: false,
-    description: 'Page number (1-based). Defaults to 1.',
+    description: 'Page number, starting at 1. Defaults to 1.',
   })
   @ApiQuery({
     name: 'limit',
     required: false,
-    description: 'Results per page. Defaults to 10. Max 100.',
+    description: 'Results per page. Defaults to 10. Capped at 100.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Paginated result set: { data, total, page, limit }.',
+    description:
+      'One page of links plus the total count, current page, and page size. When `search` is supplied, results are ordered by relevance; otherwise newest first.',
     type: PaginatedLinksResponseDto,
   })
   @ApiResponse({
@@ -147,11 +154,13 @@ export class LinksController {
     name: 'read',
     required: false,
     enum: ['true', 'false'],
-    description: 'When true, returns a random read link.',
+    description:
+      'Pick from read (`true`) or unread (`false`) links. Defaults to unread.',
   })
   @ApiResponse({
     status: 200,
-    description: '{ link: Link | null } — null when no links match the filter.',
+    description:
+      'A randomly chosen link wrapped in `{ link }`. The link is returned as-is — its read state is not changed. `link` is `null` when no links match the filter.',
     type: RandomLinkResponseDto,
   })
   @ApiResponse({
@@ -184,7 +193,7 @@ export class LinksController {
   @ApiResponse({
     status: 200,
     description:
-      '{ url: string } when a link is found; { url: null } when the unread list is empty.',
+      'The URL of the freshly stumbled link, wrapped in `{ url }`. The link is already marked read by the time the response returns. `url` is `null` when there are no unread links left.',
     type: StumbleResponseDto,
   })
   @ApiResponse({
@@ -199,9 +208,13 @@ export class LinksController {
     return { url: result?.url ?? null };
   }
 
-  /** Returns a single link by its UUID, scoped to the authenticated user. */
+  /** Returns a single link by its ID, scoped to the authenticated user. */
   @ApiOperation({ summary: 'Get a single link by ID' })
-  @ApiParam({ name: 'id', description: 'UUID of the link.' })
+  @ApiParam({
+    name: 'id',
+    description: 'Identifier of the link, as returned in the `id` field.',
+    example: 'clz1xyz456',
+  })
   @ApiResponse({
     status: 200,
     description: 'The requested link with its metadata.',
@@ -220,7 +233,11 @@ export class LinksController {
 
   /** Marks a link as read by setting `readAt` to the current timestamp. */
   @ApiOperation({ summary: 'Mark a link as read' })
-  @ApiParam({ name: 'id', description: 'UUID of the link.' })
+  @ApiParam({
+    name: 'id',
+    description: 'Identifier of the link, as returned in the `id` field.',
+    example: 'clz1xyz456',
+  })
   @ApiResponse({
     status: 200,
     description: 'The updated link with `readAt` set.',
@@ -240,7 +257,11 @@ export class LinksController {
 
   /** Removes the read timestamp from a link, returning it to the unread list. */
   @ApiOperation({ summary: 'Mark a link as unread' })
-  @ApiParam({ name: 'id', description: 'UUID of the link.' })
+  @ApiParam({
+    name: 'id',
+    description: 'Identifier of the link, as returned in the `id` field.',
+    example: 'clz1xyz456',
+  })
   @ApiResponse({
     status: 200,
     description: 'The updated link with `readAt` cleared.',
@@ -268,7 +289,8 @@ export class LinksController {
   @ApiOperation({ summary: 'Permanently delete all read links' })
   @ApiResponse({
     status: 200,
-    description: '{ count: number } — the number of links deleted.',
+    description:
+      'The number of links removed, wrapped in `{ count }`. `count` is `0` when there were no read links to delete.',
     type: BulkDeleteResultDto,
   })
   @ApiResponse({
@@ -283,10 +305,14 @@ export class LinksController {
 
   /** Permanently deletes a single link by its UUID. */
   @ApiOperation({ summary: 'Permanently delete a single link' })
-  @ApiParam({ name: 'id', description: 'UUID of the link.' })
+  @ApiParam({
+    name: 'id',
+    description: 'Identifier of the link, as returned in the `id` field.',
+    example: 'clz1xyz456',
+  })
   @ApiResponse({
     status: 200,
-    description: '{ success: true }',
+    description: 'Confirmation that the link was deleted: `{ success: true }`.',
     type: DeleteResultDto,
   })
   @ApiResponse({

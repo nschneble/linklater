@@ -119,7 +119,13 @@ async function bootstrap() {
     new DocumentBuilder()
       .setTitle('Linklater API')
       .setDescription(
-        'Personal access token endpoints for managing your saved links.',
+        [
+          'Save, browse, and stumble through your reading list from outside the Linklater web app — from a browser extension, a script, or your terminal.',
+          '',
+          'Authenticate every request with a personal access token in the `Authorization` header: `Authorization: Bearer ltk_…`. Create a token under **Settings → API Tokens**; tokens are shown once at creation and can be revoked from the same page.',
+          '',
+          'All responses are JSON. Successes use the conventional `2xx` status codes (`200` for reads and idempotent updates, `201` for create). Errors return a standard NestJS error body — `{ statusCode, message, error }` — with the matching HTTP status (`400` for invalid input, `401` for a missing or invalid token, `404` for links that do not exist or are not yours).',
+        ].join('\n'),
       )
       .setVersion(process.env.npm_package_version ?? '0.0.0')
       .addBearerAuth(
