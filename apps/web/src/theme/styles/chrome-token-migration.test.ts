@@ -74,7 +74,6 @@ const MIGRATED_FILES = [
   'src/components/UserMenu/ThemeSubmenu.tsx',
   'src/components/UserMenu/index.tsx',
   'src/components/api-docs/ApiDocsView.tsx',
-  'src/components/api-docs/BrandTokenInput.tsx',
   'src/components/auth/ConfirmAccountDeletionPage.tsx',
   'src/components/auth/ExtensionAuthorizePage.tsx',
   'src/components/auth/OAuthCallbackPage.tsx',

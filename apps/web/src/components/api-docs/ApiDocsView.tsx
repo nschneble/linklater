@@ -17,7 +17,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
  */
 export default function ApiDocsView() {
   useDocumentTitle('API documentation – Linklater');
-  const [token, setToken] = useApiDocsToken();
+  const [token] = useApiDocsToken();
 
   const openapiUrl = useMemo(() => {
     if (!API_BASE_URL) return OPENAPI_PATH;
