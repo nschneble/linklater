@@ -4,6 +4,7 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { ApiReferenceReact } from '@scalar/api-reference-react';
 import '@scalar/api-reference-react/style.css';
 import { useMemo, type CSSProperties } from 'react';
+import { Link } from 'react-router-dom';
 
 const OPENAPI_PATH = '/openapi.json';
 
@@ -58,6 +59,37 @@ export default function ApiDocsView() {
       </a>
 
       <header className="max-w-6xl mx-auto px-6 sm:px-8 pt-12 sm:pt-16 pb-8 sm:pb-10 space-y-6 select-none">
+        {/*
+         * Back/forward navigation pair. ONE <nav> landmark wraps both links
+         * so AT users land on a single "API docs" region with two items, not
+         * two unlabeled landmarks. Sits above the h1 in DOM order so a Tab
+         * from the skip link visits the back-affordance before page identity
+         * (SC 2.4.3). Plain text (not button-styled) keeps the h1 as focal
+         * point. The "Manage tokens" link returns to /settings via router
+         * state (NOT a #fragment), because SettingsView reads `scrollTo`
+         * from `location.state` to activate + scroll its sections; a plain
+         * hash would scroll the browser but never wake the activation
+         * machinery. The state convention matches WelcomeModal's "Go to
+         * bookmarks" link (see SettingsView lines 109-121).
+         */}
+        <nav
+          aria-label="API docs"
+          className="flex items-center justify-between gap-3 text-sm"
+        >
+          <Link
+            to="/"
+            className="text-dazed hover:text-sunrise focus-visible:ring-2 focus-visible:ring-dazed focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0812] focus-visible:outline-none focus-visible:rounded"
+          >
+            &larr; Linklater
+          </Link>
+          <Link
+            to="/settings"
+            state={{ scrollTo: 'integrations' }}
+            className="text-dazed hover:text-sunrise focus-visible:ring-2 focus-visible:ring-dazed focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0812] focus-visible:outline-none focus-visible:rounded"
+          >
+            Manage tokens &rarr;
+          </Link>
+        </nav>
         <div className="flex flex-col gap-3">
           <h1 className="bg-gradient-to-br from-dazed to-sunrise bg-clip-text text-4xl sm:text-5xl text-transparent font-bold tracking-tight text-balance">
             Linklater API
@@ -76,7 +108,15 @@ export default function ApiDocsView() {
         <h2 className="sr-only" id="api-docs-reference-heading">
           API documentation
         </h2>
-        <div className="border border-boyhood rounded-2xl overflow-hidden animate-fade-in-up">
+        {/*
+         * Border #7d6ec0 clears SC 1.4.11 vs the bg-hit-man radial: 4.17:1 vs
+         * the gradient top (#14103a) and 4.60:1 vs the base (#0a0812). The
+         * prior `border-boyhood` (#2e2855) sat at ~1.4:1 on both stops — a
+         * non-perceivable edge for low-vision users. Same hex as the Scalar
+         * embed's interior border (see scalarBrandCss.ts `--scalar-border-
+         * color`) so the inner-and-outer edge read as one coherent frame.
+         */}
+        <div className="border border-[#7d6ec0] rounded-2xl overflow-hidden animate-fade-in-up">
           {/* https://scalar.com/products/api-references/integrations/react */}
           <ApiReferenceReact configuration={scalarConfiguration} />
         </div>
