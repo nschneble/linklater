@@ -1,10 +1,11 @@
-import { useApiDocsToken } from './useApiDocsToken';
-import { useScalarConfiguration } from './useScalarConfiguration';
-import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { ApiReferenceReact } from '@scalar/api-reference-react';
 import '@scalar/api-reference-react/style.css';
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
+import { useApiDocsToken } from './useApiDocsToken';
+import { useScalarConfiguration } from './useScalarConfiguration';
+import type { CSSProperties } from 'react';
 
 const OPENAPI_PATH = '/openapi.json';
 
