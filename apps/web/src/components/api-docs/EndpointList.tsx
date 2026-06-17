@@ -1,5 +1,6 @@
 import EndpointCard from './EndpointCard';
 import { fetchOpenApi, resolveOpenApiUrl } from '../../lib/openapi';
+import { useApiDocsToken } from './useApiDocsToken';
 import { useEffect, useState } from 'react';
 import type { NormalizedApi } from '../../lib/openapi';
 
@@ -35,6 +36,7 @@ type LoadState =
 
 export default function EndpointList({ apiBaseUrl }: EndpointListProps) {
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
+  const { token, loading: tokenLoading, error: tokenError } = useApiDocsToken();
 
   useEffect(() => {
     let isActive = true;
@@ -61,7 +63,12 @@ export default function EndpointList({ apiBaseUrl }: EndpointListProps) {
       <p role="status" aria-live="polite" className="sr-only">
         {describeLoadState(loadState)}
       </p>
-      <EndpointListBody loadState={loadState} />
+      <EndpointListBody
+        loadState={loadState}
+        token={token}
+        tokenLoading={tokenLoading}
+        tokenError={tokenError}
+      />
     </>
   );
 }
@@ -90,6 +97,12 @@ function describeLoadState(loadState: LoadState): string {
 
 interface EndpointListBodyProps {
   loadState: LoadState;
+  /** Raw `ltk_` token for the "try it out" forms; '' when logged out. */
+  token: string;
+  /** True while the token is still loading. */
+  tokenLoading: boolean;
+  /** Token-fetch error, or null. */
+  tokenError: string | null;
 }
 
 /**
@@ -97,7 +110,12 @@ interface EndpointListBodyProps {
  * announcer above is the sole source of AT announcements, so this content is
  * purely visual (the error/loading text is conveyed sighted only).
  */
-function EndpointListBody({ loadState }: EndpointListBodyProps) {
+function EndpointListBody({
+  loadState,
+  token,
+  tokenLoading,
+  tokenError,
+}: EndpointListBodyProps) {
   if (loadState.status === 'loading') {
     return (
       <p
@@ -137,6 +155,10 @@ function EndpointListBody({ loadState }: EndpointListBodyProps) {
         <EndpointCard
           key={`${endpoint.method}-${endpoint.path}`}
           endpoint={endpoint}
+          serverOrigin={loadState.api.serverOrigin}
+          token={token}
+          tokenLoading={tokenLoading}
+          tokenError={tokenError}
         />
       ))}
     </ul>

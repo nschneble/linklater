@@ -33,6 +33,12 @@ vi.mock('../../lib/openapi', async (importOriginal) => {
   };
 });
 
+// The "try it out" forms each consume the API-docs token; stub the hook so
+// these header-contract tests need neither the auth provider nor the network.
+vi.mock('./useApiDocsToken', () => ({
+  useApiDocsToken: () => ({ token: '', loading: false, error: null }),
+}));
+
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import ApiDocsView from './ApiDocsView';

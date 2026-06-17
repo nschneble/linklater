@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 
 /**
  * Reusable disclosure (CONSTRAINT R1/E1). A <button aria-expanded aria-controls>
@@ -27,11 +27,15 @@ interface DisclosureProps {
   /** Whether the panel starts expanded. Defaults to collapsed. */
   defaultExpanded?: boolean;
   /**
-   * Focus-return hook (CONSTRAINT K2, off this wave): called after the panel
-   * collapses so a later wave can return focus before contents leave the tree.
-   * Unused while panels are read-only.
+   * Focus-return hook (CONSTRAINT K2/§7): called after the panel collapses so
+   * the caller can return focus to the toggle when focus was inside the panel
+   * as it hides. Wave 5 (`RequestForm`) is the first consumer.
    */
   onAfterCollapse?: () => void;
+  /** Forwarded to the toggle <button> so a caller can return focus to it. */
+  toggleRef?: Ref<HTMLButtonElement>;
+  /** Forwarded to the panel <div> so a caller can check focus containment. */
+  panelRef?: Ref<HTMLDivElement>;
 }
 
 export default function Disclosure({
@@ -39,6 +43,8 @@ export default function Disclosure({
   children,
   defaultExpanded = false,
   onAfterCollapse,
+  toggleRef,
+  panelRef,
 }: DisclosureProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const panelId = useId();
@@ -64,6 +70,7 @@ export default function Disclosure({
   return (
     <div>
       <button
+        ref={toggleRef}
         type="button"
         aria-expanded={isExpanded}
         aria-controls={panelId}
@@ -76,7 +83,12 @@ export default function Disclosure({
           className="fa-solid fa-chevron-down text-sm group-aria-expanded:-rotate-180 transition-transform motion-reduce:transition-none"
         />
       </button>
-      <div id={panelId} hidden={!isExpanded} className="px-4 pb-4">
+      <div
+        ref={panelRef}
+        id={panelId}
+        hidden={!isExpanded}
+        className="px-4 pb-4"
+      >
         {children}
       </div>
     </div>

@@ -1,4 +1,5 @@
 import EndpointCard from './EndpointCard';
+import { MemoryRouter } from 'react-router-dom';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -23,11 +24,35 @@ function makeEndpoint(
   };
 }
 
-function renderInList(endpoint: NormalizedEndpoint) {
+interface RenderInListOptions {
+  token?: string;
+  tokenLoading?: boolean;
+  tokenError?: string | null;
+  serverOrigin?: string;
+}
+
+function renderInList(
+  endpoint: NormalizedEndpoint,
+  options: RenderInListOptions = {},
+) {
+  const {
+    token = 'ltk_test_token',
+    tokenLoading = false,
+    tokenError = null,
+    serverOrigin = 'https://api.example.com',
+  } = options;
   return render(
-    <ul>
-      <EndpointCard endpoint={endpoint} />
-    </ul>,
+    <MemoryRouter>
+      <ul>
+        <EndpointCard
+          endpoint={endpoint}
+          serverOrigin={serverOrigin}
+          token={token}
+          tokenLoading={tokenLoading}
+          tokenError={tokenError}
+        />
+      </ul>
+    </MemoryRouter>,
   );
 }
 
@@ -115,5 +140,31 @@ describe('EndpointCard', () => {
     expect(
       screen.queryByRole('table', { name: 'Path & query parameters' }),
     ).toBeNull();
+  });
+
+  it('renders the "try it out" form inside the expanded panel (§1)', async () => {
+    const user = userEvent.setup();
+    renderInList(makeEndpoint());
+
+    await user.click(screen.getByRole('button', { name: 'GET /links' }));
+    expect(
+      screen.getByRole('button', { name: /send request/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('returns focus to the toggle when the panel collapses with focus inside it (§7)', async () => {
+    const user = userEvent.setup();
+    renderInList(makeEndpoint());
+
+    const toggle = screen.getByRole('button', { name: 'GET /links' });
+    await user.click(toggle); // expand
+
+    // Move focus INTO the panel, then collapse via keyboard from the toggle.
+    const sendButton = screen.getByRole('button', { name: /send request/i });
+    sendButton.focus();
+    expect(sendButton).toHaveFocus();
+
+    await user.click(toggle); // collapse
+    expect(toggle).toHaveFocus();
   });
 });

@@ -1,7 +1,9 @@
 import Disclosure from './Disclosure';
 import MethodBadge from './MethodBadge';
 import ParameterTable from './ParameterTable';
+import RequestForm from './RequestForm';
 import SchemaTable from './SchemaTable';
+import { useRef, useState } from 'react';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
 /**
@@ -17,11 +19,24 @@ import type { NormalizedEndpoint } from '../../lib/openapi';
  * dangling references.
  *
  * Schema regions (request body, each response) render as <SchemaTable>s with
- * their own captions rather than h4s (CONSTRAINT H3). Colors are brand-locked.
+ * their own captions rather than h4s (CONSTRAINT H3). Below them sits the
+ * interactive <RequestForm> "try it out" explorer (Wave 5). The form's sr-only
+ * status announcer is portaled into `statusContainerRef` — a node OUTSIDE the
+ * collapsible panel (CONSTRAINT §5/§7) — so an in-flight announcement survives
+ * a collapse. `onAfterCollapse` returns focus to the toggle when focus was
+ * inside the panel as it hides (CONSTRAINT §7). Colors are brand-locked.
  */
 
 interface EndpointCardProps {
   endpoint: NormalizedEndpoint;
+  /** Origin the "try it out" form targets; empty string means same-origin. */
+  serverOrigin: string;
+  /** Raw `ltk_` token; empty string ⇒ logged-out. Header-only, never rendered. */
+  token: string;
+  /** True while the token is still loading. */
+  tokenLoading: boolean;
+  /** Token-fetch error, or null. */
+  tokenError: string | null;
 }
 
 /** Slug suitable for an id, e.g. `get-links`, `delete-links-id`. */
@@ -33,9 +48,31 @@ function toEndpointId(method: string, path: string): string {
   return `endpoint-${slug}`;
 }
 
-export default function EndpointCard({ endpoint }: EndpointCardProps) {
+export default function EndpointCard({
+  endpoint,
+  serverOrigin,
+  token,
+  tokenLoading,
+  tokenError,
+}: EndpointCardProps) {
   const headingId = toEndpointId(endpoint.method, endpoint.path);
   const accessibleMethod = endpoint.method.toUpperCase();
+
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [statusContainer, setStatusContainer] = useState<HTMLElement | null>(
+    null,
+  );
+
+  // Return focus to the toggle when the panel collapses while focus is still
+  // within the panel (CONSTRAINT §7) — otherwise focus would orphan onto a
+  // hidden element. If focus already moved elsewhere, leave it alone.
+  function handleAfterCollapse() {
+    const panel = panelRef.current;
+    if (panel && panel.contains(document.activeElement)) {
+      toggleRef.current?.focus();
+    }
+  }
 
   return (
     <li>
@@ -43,7 +80,17 @@ export default function EndpointCard({ endpoint }: EndpointCardProps) {
         aria-labelledby={headingId}
         className="border border-[#7d6ec0] rounded-xl"
       >
+        {/*
+         * The form's sr-only status announcer portals here — OUTSIDE the
+         * collapsible panel — so it stays mounted (and its announcement is not
+         * cut off) when the panel collapses mid-request (CONSTRAINT §5/§7).
+         */}
+        <div ref={setStatusContainer} />
+
         <Disclosure
+          toggleRef={toggleRef}
+          panelRef={panelRef}
+          onAfterCollapse={handleAfterCollapse}
           header={
             <span className="flex items-center gap-3">
               <MethodBadge method={endpoint.method} />
@@ -108,6 +155,16 @@ export default function EndpointCard({ endpoint }: EndpointCardProps) {
               )}
             </div>
           ))}
+
+          <RequestForm
+            endpoint={endpoint}
+            headingId={headingId}
+            serverOrigin={serverOrigin}
+            token={token}
+            loading={tokenLoading}
+            error={tokenError}
+            statusContainer={statusContainer}
+          />
         </Disclosure>
       </article>
     </li>

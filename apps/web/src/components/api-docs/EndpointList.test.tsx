@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom';
 import { render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NormalizedApi, NormalizedEndpoint } from '../../lib/openapi';
@@ -12,7 +13,21 @@ vi.mock('../../lib/openapi', async (importOriginal) => {
   };
 });
 
+// The "try it out" forms each consume the API-docs token; stub the hook so
+// these list-level tests don't need the auth provider or network.
+vi.mock('./useApiDocsToken', () => ({
+  useApiDocsToken: () => ({ token: '', loading: false, error: null }),
+}));
+
 import EndpointList from './EndpointList';
+
+function renderList(apiBaseUrl: string | undefined) {
+  return render(
+    <MemoryRouter>
+      <EndpointList apiBaseUrl={apiBaseUrl} />
+    </MemoryRouter>,
+  );
+}
 
 function makeEndpoint(
   overrides: Partial<NormalizedEndpoint> = {},
@@ -46,7 +61,7 @@ afterEach(() => {
 describe('EndpointList', () => {
   it('shows a polite loading status while the spec is in flight', () => {
     fetchOpenApiMock.mockReturnValue(new Promise(() => {}));
-    render(<EndpointList apiBaseUrl={undefined} />);
+    renderList(undefined);
     expect(screen.getByRole('status')).toHaveTextContent(/Loading/);
   });
 
@@ -54,7 +69,7 @@ describe('EndpointList', () => {
     fetchOpenApiMock.mockRejectedValue(
       new Error('Failed to load the API specification (HTTP 500).'),
     );
-    render(<EndpointList apiBaseUrl={undefined} />);
+    renderList(undefined);
     const status = screen.getByRole('status');
     await vi.waitFor(() => {
       expect(status).toHaveTextContent(/Failed to load the API specification/);
@@ -70,21 +85,27 @@ describe('EndpointList', () => {
         makeEndpoint({ method: 'post', path: '/links' }),
       ]),
     );
-    render(<EndpointList apiBaseUrl={undefined} />);
+    renderList(undefined);
     await screen.findByRole('list');
-    expect(screen.getByRole('status')).toHaveTextContent('2 endpoints loaded.');
+    // Each "try it out" form also mounts a polite status node, so scope the
+    // assertion to the one carrying the list-level count.
+    expect(
+      screen.getByText('2 endpoints loaded.', { selector: '[role="status"]' }),
+    ).toBeInTheDocument();
   });
 
   it('announces a singular endpoint count for a one-endpoint spec', async () => {
     fetchOpenApiMock.mockResolvedValue(makeApi([makeEndpoint()]));
-    render(<EndpointList apiBaseUrl={undefined} />);
+    renderList(undefined);
     await screen.findByRole('list');
-    expect(screen.getByRole('status')).toHaveTextContent('1 endpoint loaded.');
+    expect(
+      screen.getByText('1 endpoint loaded.', { selector: '[role="status"]' }),
+    ).toBeInTheDocument();
   });
 
   it('restores list semantics with role="list" (S2)', async () => {
     fetchOpenApiMock.mockResolvedValue(makeApi([makeEndpoint()]));
-    render(<EndpointList apiBaseUrl={undefined} />);
+    renderList(undefined);
     const list = await screen.findByRole('list');
     expect(list.tagName).toBe('UL');
   });
@@ -97,7 +118,7 @@ describe('EndpointList', () => {
         makeEndpoint({ method: 'delete', path: '/links/{id}' }),
       ]),
     );
-    render(<EndpointList apiBaseUrl={undefined} />);
+    renderList(undefined);
     const list = await screen.findByRole('list');
     expect(within(list).getAllByRole('listitem')).toHaveLength(3);
   });
@@ -111,7 +132,7 @@ describe('EndpointList', () => {
         makeEndpoint({ method: 'delete', path: '/links/{id}' }),
       ]),
     );
-    const { container } = render(<EndpointList apiBaseUrl={undefined} />);
+    const { container } = renderList(undefined);
     await screen.findByRole('list');
 
     const ids = Array.from(container.querySelectorAll('[id]')).map(
@@ -121,9 +142,51 @@ describe('EndpointList', () => {
     expect(uniqueIds.size).toBe(ids.length);
   });
 
+  it('emits NO duplicate ids across endpoints whose "try it out" forms are expanded (E4)', async () => {
+    const userEvent = (await import('@testing-library/user-event')).default;
+    const user = userEvent.setup();
+    const paramEndpoint = (method: string): NormalizedEndpoint => ({
+      method,
+      path: '/links/{id}',
+      parameters: [
+        {
+          name: 'id',
+          location: 'path',
+          required: true,
+          schema: { type: 'string' },
+        },
+      ],
+      requestBody: {
+        required: true,
+        schema: { type: 'object', properties: { url: { type: 'string' } } },
+      },
+      responses: [{ statusCode: '200' }],
+    });
+    fetchOpenApiMock.mockResolvedValue(
+      makeApi([paramEndpoint('put'), paramEndpoint('post')]),
+    );
+    const { container } = renderList(undefined);
+    await screen.findByRole('list');
+
+    // Expand every endpoint so all field/error/description ids render.
+    for (const toggle of screen.getAllByRole('button', {
+      name: /\/links\/\{id\}/i,
+    })) {
+      await user.click(toggle);
+    }
+
+    const ids = Array.from(container.querySelectorAll('[id]')).map(
+      (node) => node.id,
+    );
+    expect(new Set(ids).size).toBe(ids.length);
+    // Sanity: the deterministic field ids actually rendered.
+    expect(ids).toContain('endpoint-put-links-id-param-path-id');
+    expect(ids).toContain('endpoint-post-links-id-param-path-id');
+  });
+
   it('renders empty-state text when the spec documents no endpoints', async () => {
     fetchOpenApiMock.mockResolvedValue(makeApi([]));
-    render(<EndpointList apiBaseUrl={undefined} />);
+    renderList(undefined);
     // The text appears in both the sr-only announcer and the visible
     // (aria-hidden) body, so scope the visible assertion to the hidden node.
     await vi.waitFor(() => {
