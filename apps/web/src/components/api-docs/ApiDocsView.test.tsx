@@ -7,31 +7,31 @@
  * most of this without DOM-poking; we use jsdom for the deferred bits
  * (document.title, link-state round-trip via MemoryRouter).
  *
- * The Scalar bundle is mocked to a stub component because:
- *   1. `@scalar/api-reference-react` is ~300KB gzipped — running it in jsdom
- *      is slow and provides no a11y signal at this layer.
- *   2. The stub also asserts its parent has the labelled-section attrs so we
- *      verify the embed lives inside the correct accessible region.
+ * The OpenAPI fetch is mocked to a representative multi-endpoint `/links`
+ * fixture so the endpoint list renders without a network round-trip and the
+ * labelled-region assertion can confirm the list lives inside the correct
+ * accessible region.
  */
 
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { NormalizedApi } from '../../lib/openapi';
 
 // ─── Module mocks (must precede import of ApiDocsView) ────────────────────────
 
-// Scalar's React embed is heavy and irrelevant here. The stub asserts its
-// nearest section ancestor carries the labelled-region attrs (assertion 10).
-vi.mock('@scalar/api-reference-react', () => ({
-  ApiReferenceReact: () => {
-    return <div data-testid="scalar-stub-marker">scalar-stub</div>;
-  },
-}));
+const fetchOpenApiMock = vi.fn<() => Promise<NormalizedApi>>();
 
-// Bare CSS import has no value in the test environment; mock as no-op so the
-// `import '@scalar/api-reference-react/style.css'` statement doesn't fail.
-vi.mock('@scalar/api-reference-react/style.css', () => ({}));
+// Stub the spec fetch so the endpoint list renders deterministically. The real
+// `parseOpenApi`/`resolveOpenApiUrl` stay intact (only `fetchOpenApi` swapped).
+vi.mock('../../lib/openapi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../lib/openapi')>();
+  return {
+    ...actual,
+    fetchOpenApi: () => fetchOpenApiMock(),
+  };
+});
 
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
@@ -63,10 +63,55 @@ function renderApiDocs() {
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
+/** Representative multi-endpoint fixture so list + region assertions hold. */
+const linksApi: NormalizedApi = {
+  info: { title: 'Linklater API', version: '1.0.0' },
+  serverOrigin: '',
+  endpoints: [
+    {
+      method: 'get',
+      path: '/links',
+      summary: 'List links',
+      parameters: [],
+      responses: [
+        {
+          statusCode: '200',
+          schema: { type: 'object', properties: { id: { type: 'string' } } },
+        },
+      ],
+    },
+    {
+      method: 'post',
+      path: '/links',
+      summary: 'Create a link',
+      parameters: [],
+      requestBody: {
+        required: true,
+        schema: {
+          type: 'object',
+          required: ['url'],
+          properties: { url: { type: 'string' } },
+        },
+      },
+      responses: [
+        {
+          statusCode: '201',
+          schema: { type: 'object', properties: { id: { type: 'string' } } },
+        },
+      ],
+    },
+  ],
+};
+
 beforeEach(() => {
   // Each test starts from a known title so the SC 2.4.2 assertion is honest.
   document.title = 'unset';
   window.sessionStorage.clear();
+  fetchOpenApiMock.mockReset();
+  // Default to a never-settling fetch so the structural chrome tests assert
+  // against the loading state and never trigger a post-test state update (act
+  // warning). The one test that needs the rendered list opts into `linksApi`.
+  fetchOpenApiMock.mockReturnValue(new Promise(() => {}));
 });
 
 afterEach(() => {
@@ -167,11 +212,28 @@ describe('ApiDocsView a11y contract', () => {
     expect(document.title).toBe('API documentation – Linklater');
   });
 
-  it('mounts the Scalar embed inside the labelled api-docs region', () => {
+  it('keeps the aria-labelledby h2 target present (H1)', () => {
     renderApiDocs();
 
-    const stub = screen.getByTestId('scalar-stub-marker');
-    const section = stub.closest('section');
+    const heading = screen.getByRole('heading', {
+      level: 2,
+      name: 'API documentation',
+    });
+    expect(heading).toHaveAttribute('id', 'api-docs-reference-heading');
+
+    const region = screen.getByRole('region', { name: 'API documentation' });
+    expect(region).toHaveAttribute(
+      'aria-labelledby',
+      'api-docs-reference-heading',
+    );
+  });
+
+  it('renders the endpoint list inside the labelled api-docs region', async () => {
+    fetchOpenApiMock.mockResolvedValue(linksApi);
+    renderApiDocs();
+
+    const list = await screen.findByRole('list');
+    const section = list.closest('section');
     expect(section).not.toBeNull();
     expect(section).toHaveAttribute('id', 'api-docs');
     expect(section).toHaveAttribute(

@@ -1,32 +1,18 @@
-import { ApiReferenceReact } from '@scalar/api-reference-react';
-import '@scalar/api-reference-react/style.css';
-import { useMemo } from 'react';
+import EndpointList from './EndpointList';
 import { Link } from 'react-router-dom';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
-import { useApiDocsToken } from './useApiDocsToken';
-import { useScalarConfiguration } from './useScalarConfiguration';
 import type { CSSProperties } from 'react';
-
-const OPENAPI_PATH = '/openapi.json';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
 
 /**
  * API documentation. Carries the landing/marketing brand chrome instead of
- * the user's current theme. Token storage is sessionStorage-scoped, masked
- * by default, and never logged or URL-encoded. The docs are always in dark
- * mode to remain visually consistent against the dark brand chrome.
+ * the user's current theme. The docs render as custom React components against
+ * the normalized OpenAPI model and stay in dark mode to remain visually
+ * consistent against the dark brand chrome.
  */
 export default function ApiDocsView() {
   useDocumentTitle('API documentation – Linklater');
-  const [token] = useApiDocsToken();
-
-  const openapiUrl = useMemo(() => {
-    if (!API_BASE_URL) return OPENAPI_PATH;
-    return `${API_BASE_URL}${OPENAPI_PATH}`;
-  }, []);
-
-  const scalarConfiguration = useScalarConfiguration(openapiUrl, token);
 
   return (
     // Locally redeclare `--base-bg` AND `--focus-ring` so the global
@@ -120,13 +106,14 @@ export default function ApiDocsView() {
          * Border #7d6ec0 clears SC 1.4.11 vs the bg-hit-man radial: 4.17:1 vs
          * the gradient top (#14103a) and 4.60:1 vs the base (#0a0812). The
          * prior `border-boyhood` (#2e2855) sat at ~1.4:1 on both stops — a
-         * non-perceivable edge for low-vision users. Same hex as the Scalar
-         * embed's interior border (see scalarBrandCss.ts `--scalar-border-
-         * color`) so the inner-and-outer edge read as one coherent frame.
+         * non-perceivable edge for low-vision users.
+         *
+         * `animate-fade-in-up` carries `motion-reduce:animate-none` so the
+         * enter animation collapses to instant for users who prefer reduced
+         * motion (CONSTRAINT M1).
          */}
-        <div className="overflow-hidden border border-[#7d6ec0] rounded-2xl animate-fade-in-up">
-          {/* https://scalar.com/products/api-references/integrations/react */}
-          <ApiReferenceReact configuration={scalarConfiguration} />
+        <div className="overflow-hidden border border-[#7d6ec0] rounded-2xl animate-fade-in-up motion-reduce:animate-none">
+          <EndpointList apiBaseUrl={API_BASE_URL} />
         </div>
       </section>
     </div>
