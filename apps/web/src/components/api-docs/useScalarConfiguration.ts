@@ -66,9 +66,18 @@ interface OperationSortValue {
  * regardless of the user's theme.
  */
 export function useScalarConfiguration(openapiUrl: string, token: string) {
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    // The OpenAPI document declares no `servers`, so Scalar would default
+    // "try it out" requests to the docs-page origin (the web app) — where no
+    // API routes exist, yielding 404s. Pin the server to the spec's own
+    // origin by stripping the `/openapi.json` suffix: an absolute spec URL
+    // resolves to the API origin, a relative one to '' (same origin behind a
+    // proxy), which is correct in both deployments.
+    const serverUrl = openapiUrl.replace(/\/openapi\.json$/, '');
+
+    return {
       url: openapiUrl,
+      servers: [{ url: serverUrl }],
       layout: 'modern' as const,
       hideDarkModeToggle: true,
       darkMode: true,
@@ -103,7 +112,6 @@ export function useScalarConfiguration(openapiUrl: string, token: string) {
         }
         return a.path.localeCompare(b.path);
       },
-    }),
-    [openapiUrl, token],
-  );
+    };
+  }, [openapiUrl, token]);
 }

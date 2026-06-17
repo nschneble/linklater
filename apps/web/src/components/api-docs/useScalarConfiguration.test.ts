@@ -71,6 +71,27 @@ describe('useScalarConfiguration', () => {
     expect(result.current.authentication.preferredSecurityScheme).toBe('pat');
   });
 
+  it('points the test-request server at the spec origin, not the docs page', () => {
+    // Scalar sends "try it out" requests to the spec's declared server. The
+    // Linklater OpenAPI document declares none, so without this override
+    // Scalar falls back to the docs-page origin (the web app) and every
+    // request 404s. Deriving the server from the spec URL (minus the
+    // `/openapi.json` suffix) targets the API origin instead.
+    const { result } = renderHook(() =>
+      useScalarConfiguration(OPENAPI_URL, TOKEN),
+    );
+
+    expect(result.current.servers).toEqual([{ url: 'https://example.test' }]);
+  });
+
+  it('derives a same-origin server when the spec URL is relative', () => {
+    const { result } = renderHook(() =>
+      useScalarConfiguration('/openapi.json', TOKEN),
+    );
+
+    expect(result.current.servers).toEqual([{ url: '' }]);
+  });
+
   it('passes an empty token through without throwing', () => {
     const { result } = renderHook(() =>
       useScalarConfiguration(OPENAPI_URL, ''),
