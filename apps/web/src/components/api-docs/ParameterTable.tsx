@@ -13,7 +13,8 @@ import type { NormalizedParameter } from '../../lib/openapi';
  * <SchemaTable> (it adds an "In" column for path vs query and has no nested
  * rows), which is why this is a focused sibling rather than a parameterized
  * SchemaTable. The Type column reuses the shared `describeType` helper so type
- * labels read identically across both tables. All colors are brand-locked.
+ * labels read identically across both tables. Colors consume `--mount-*`
+ * bundle tokens (brand literals when logged out, active theme when logged in).
  */
 
 interface ParameterTableProps {
@@ -24,15 +25,15 @@ interface ParameterTableProps {
 }
 
 const CELL_CLASS =
-  'px-3 py-2 border border-[#7d6ec0] text-dazed text-sm align-top';
+  'px-3 py-2 border border-[var(--mount-border)] text-[var(--mount-text)] text-sm align-top';
 
 export default function ParameterTable({
   caption,
   parameters,
 }: ParameterTableProps) {
   return (
-    <table className="w-full border border-[#7d6ec0] border-collapse text-left">
-      <caption className="pb-2 text-dazed text-sm font-semibold text-left">
+    <table className="w-full border border-[var(--mount-border)] border-collapse text-left">
+      <caption className="pb-2 text-[var(--mount-text)] text-sm font-semibold text-left">
         {caption}
       </caption>
       <thead>

@@ -14,8 +14,9 @@ import type { OpenAPIV3 } from 'openapi-types';
  * deeper shows a text note. An empty schema renders a text fallback rather
  * than an empty table (CONSTRAINT T5).
  *
- * Text is #eeeede (~16:1 on the navy chrome); the 1px gridlines are the sole
- * delimiter and use #7d6ec0 (≥4.17:1) (CONSTRAINT T6). All brand-locked.
+ * Text + gridlines consume the `--mount-text` / `--mount-border` bundle tokens
+ * (CONSTRAINT T6) — brand literals when logged out, the active theme when
+ * logged in.
  */
 
 interface SchemaTableProps {
@@ -28,7 +29,7 @@ interface SchemaTableProps {
 }
 
 const CELL_CLASS =
-  'px-3 py-2 border border-[#7d6ec0] text-dazed text-sm align-top';
+  'px-3 py-2 border border-[var(--mount-border)] text-[var(--mount-text)] text-sm align-top';
 
 export default function SchemaTable({
   caption,
@@ -39,15 +40,15 @@ export default function SchemaTable({
 
   if (rows.length === 0) {
     return (
-      <p className="text-dazed text-sm">
+      <p className="text-[var(--mount-text)] text-sm">
         <span className="font-semibold">{caption}:</span> No properties.
       </p>
     );
   }
 
   return (
-    <table className="w-full border border-[#7d6ec0] border-collapse text-left">
-      <caption className="pb-2 text-dazed text-sm font-semibold text-left">
+    <table className="w-full border border-[var(--mount-border)] border-collapse text-left">
+      <caption className="pb-2 text-[var(--mount-text)] text-sm font-semibold text-left">
         {caption}
       </caption>
       <thead>

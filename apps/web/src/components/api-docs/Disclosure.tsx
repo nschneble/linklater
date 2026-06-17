@@ -75,7 +75,7 @@ export default function Disclosure({
         aria-expanded={isExpanded}
         aria-controls={panelId}
         onClick={handleToggle}
-        className="group flex items-center justify-between gap-3 w-full px-4 py-3 text-left text-dazed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed cursor-pointer"
+        className="group flex items-center justify-between gap-3 w-full px-4 py-3 text-left text-[var(--mount-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] cursor-pointer"
       >
         {header}
         <i

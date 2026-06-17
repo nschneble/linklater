@@ -19,6 +19,13 @@ vi.mock('./useApiDocsToken', () => ({
   useApiDocsToken: () => ({ token: '', loading: false, error: null }),
 }));
 
+// EndpointList → EndpointCard → MethodBadge reads `useAuth()` to pick its
+// brand/themed paint. Mock it to a logged-out user (brand) — these tests cover
+// list structure + announcements, not the badge color branch.
+vi.mock('../../auth/AuthContext', () => ({
+  useAuth: () => ({ user: null }),
+}));
+
 import EndpointList from './EndpointList';
 
 function renderList(apiBaseUrl: string | undefined) {

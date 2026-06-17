@@ -1,37 +1,50 @@
 import EndpointList from './EndpointList';
+import { BRAND_CHROME_STYLE } from '../../lib/apiDocs/apiDocsColors';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
-import type { CSSProperties } from 'react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
 
 /**
- * API documentation. Carries the landing/marketing brand chrome instead of
- * the user's current theme. The docs render as custom React components against
- * the normalized OpenAPI model and stay in dark mode to remain visually
- * consistent against the dark brand chrome.
+ * API documentation. A single token-driven component tree that paints two
+ * ways depending on auth (Wave 6):
+ *
+ *   - Logged OUT (`user === null`): the landing/marketing BRAND chrome. The
+ *     wrapper pins `bg-hit-man`, forces dark `color-scheme`, and supplies the
+ *     brand literals to every bundle slot the child components consume
+ *     (`BRAND_CHROME_STYLE`) so the now-token-driven tree resolves to the
+ *     brand palette. The CVD focus-halo override + `--focus-ring` pin live in
+ *     this branch only.
+ *
+ *   - Logged IN (`user !== null`): the user's ACTIVE theme. `ThemeProvider`
+ *     already sets `data-theme`/`data-mode` on `<html>` above the router
+ *     (`main.tsx`), so every `var(--…)` bundle token cascades here for free.
+ *     No inline token pins, no `bg-hit-man`; `color-scheme` follows the mode.
+ *
+ * The child components read bundle tokens via `var(--…)` in both branches —
+ * the brand branch just pins those tokens to brand literals, so one styling
+ * path serves both modes.
  */
 export default function ApiDocsView() {
   useDocumentTitle('API documentation – Linklater');
+  const { user } = useAuth();
+  const isBrand = user === null;
 
   return (
-    // Locally redeclare `--base-bg` AND `--focus-ring` so the global
-    // `[data-cvd='on'] *:focus-visible` halo (defined in index.css) and its
-    // inner outline both paint brand-locked colors on this page instead of
-    // the user-theme tokens. Some themes set `--focus-ring` to a hue that
-    // fails SC 1.4.11 vs the navy gradient (e.g. before-sunrise dark), so
-    // pin it to `--color-dazed` (#eeeede, ~16:1 vs #0a0812) — the same
-    // brand-ring color used by the skip-link above. The override is
-    // invisible-on-purpose: it doesn't define a bundle, it just keeps the
-    // CVD halo coherent with the chrome.
+    // BRAND branch only: pin `bg-hit-man` and the brand token literals so the
+    // token-driven children paint the marketing palette, and force dark
+    // `color-scheme`. The wrapper also redeclares `--base-bg` AND
+    // `--focus-ring` (inside `BRAND_CHROME_STYLE`) so the global
+    // `[data-cvd='on'] *:focus-visible` halo (index.css) paints brand colors:
+    // some themes set `--focus-ring` to a hue that fails SC 1.4.11 vs the navy
+    // gradient (e.g. before-sunrise dark), so it pins `--color-dazed`
+    // (#eeeede, ~16:1 vs #0a0812). THEMED branch: no pins — the `<html>`
+    // cascade supplies every slot, the theme's own `--focus-ring` wins, and
+    // `color-scheme` follows the active mode.
     <div
-      className="min-h-screen bg-hit-man"
-      style={
-        {
-          '--base-bg': '#0a0812',
-          '--focus-ring': '#eeeede',
-        } as CSSProperties & Record<string, string>
-      }
+      className={`min-h-screen ${isBrand ? 'bg-hit-man [color-scheme:dark]' : ''}`}
+      style={isBrand ? BRAND_CHROME_STYLE : undefined}
     >
       {/*
        * Skip link mirrors the LandingPage pattern: brand-locked white-on-navy
@@ -72,23 +85,35 @@ export default function ApiDocsView() {
            */}
           <Link
             to="/"
-            className="text-dazed hover:text-[#ff9170] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0812] focus-visible:rounded"
+            className="text-[var(--base-text)] hover:text-[var(--base-highlight)] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--base-bg)] focus-visible:rounded"
           >
             <span aria-hidden="true">&larr;&nbsp;</span>Linklater
           </Link>
           <Link
             to="/settings"
             state={{ scrollTo: 'integrations' }}
-            className="text-dazed hover:text-[#ff9170] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dazed focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0812] focus-visible:rounded"
+            className="text-[var(--base-text)] hover:text-[var(--base-highlight)] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--base-bg)] focus-visible:rounded"
           >
             Manage tokens<span aria-hidden="true">&nbsp;&rarr;</span>
           </Link>
         </nav>
         <div className="flex flex-col gap-3">
-          <h1 className="bg-gradient-to-br from-dazed to-sunrise bg-clip-text text-transparent text-4xl sm:text-5xl font-bold tracking-tight text-balance">
+          {/*
+           * BRAND branch keeps the marketing gradient h1 (dazed→sunrise clip).
+           * THEMED branch renders a solid `--base-text` h1 — a per-theme
+           * gradient is not part of the bundle vocabulary, and the page
+           * identity reads cleaner as solid theme text.
+           */}
+          <h1
+            className={
+              isBrand
+                ? 'bg-gradient-to-br from-dazed to-sunrise bg-clip-text text-transparent text-4xl sm:text-5xl font-bold tracking-tight text-balance'
+                : 'text-[var(--base-text)] text-4xl sm:text-5xl font-bold tracking-tight text-balance'
+            }
+          >
             Linklater API
           </h1>
-          <p className="max-w-2xl text-dazed text-base sm:text-lg text-pretty leading-relaxed">
+          <p className="max-w-2xl text-[var(--base-text)] text-base sm:text-lg text-pretty leading-relaxed">
             Learn how to save, read, and delete links from your collection.
           </p>
         </div>
@@ -97,22 +122,24 @@ export default function ApiDocsView() {
       <section
         aria-labelledby="api-docs-reference-heading"
         id="api-docs"
-        className="max-w-7xl mx-auto px-4 sm:px-6 pb-16 [color-scheme:dark] select-none"
+        className="max-w-7xl mx-auto px-4 sm:px-6 pb-16 select-none"
       >
         <h2 className="sr-only" id="api-docs-reference-heading">
           API documentation
         </h2>
         {/*
-         * Border #7d6ec0 clears SC 1.4.11 vs the bg-hit-man radial: 4.17:1 vs
-         * the gradient top (#14103a) and 4.60:1 vs the base (#0a0812). The
-         * prior `border-boyhood` (#2e2855) sat at ~1.4:1 on both stops — a
-         * non-perceivable edge for low-vision users.
+         * Outer list border consumes `--mount-border` (§2: the list is the
+         * card surface). In the BRAND branch this pins to #7d6ec0, which clears
+         * SC 1.4.11 vs the bg-hit-man radial (4.17:1 vs the gradient top
+         * #14103a, 4.60:1 vs the base #0a0812); in the THEMED branch the
+         * theme's own `--mount-border` carries the contract, mechanized by the
+         * card-style-border-vs-page-base-bg test in bundles.contrast.test.ts.
          *
          * `animate-fade-in-up` carries `motion-reduce:animate-none` so the
          * enter animation collapses to instant for users who prefer reduced
          * motion (CONSTRAINT M1).
          */}
-        <div className="overflow-hidden border border-[#7d6ec0] rounded-2xl animate-fade-in-up motion-reduce:animate-none">
+        <div className="overflow-hidden border border-[var(--mount-border)] rounded-2xl animate-fade-in-up motion-reduce:animate-none">
           <EndpointList apiBaseUrl={API_BASE_URL} />
         </div>
       </section>

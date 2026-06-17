@@ -24,7 +24,8 @@ import type { NormalizedEndpoint } from '../../lib/openapi';
  * status announcer is portaled into `statusContainerRef` — a node OUTSIDE the
  * collapsible panel (CONSTRAINT §5/§7) — so an in-flight announcement survives
  * a collapse. `onAfterCollapse` returns focus to the toggle when focus was
- * inside the panel as it hides (CONSTRAINT §7). Colors are brand-locked.
+ * inside the panel as it hides (CONSTRAINT §7). Colors consume `--mount-*`
+ * bundle tokens (brand literals when logged out, active theme when logged in).
  */
 
 interface EndpointCardProps {
@@ -78,7 +79,7 @@ export default function EndpointCard({
     <li>
       <article
         aria-labelledby={headingId}
-        className="border border-[#7d6ec0] rounded-xl"
+        className="border border-[var(--mount-border)] rounded-xl"
       >
         {/*
          * The form's sr-only status announcer portals here — OUTSIDE the
@@ -94,7 +95,10 @@ export default function EndpointCard({
           header={
             <span className="flex items-center gap-3">
               <MethodBadge method={endpoint.method} />
-              <h3 id={headingId} className="text-dazed text-base font-mono">
+              <h3
+                id={headingId}
+                className="text-[var(--mount-text)] text-base font-mono"
+              >
                 {/*
                  * sr-only span carries the full "GET /links" accessible name in
                  * one text node so the accessible-name algorithm can't collapse
@@ -110,12 +114,12 @@ export default function EndpointCard({
           }
         >
           {endpoint.summary && (
-            <p className="mb-2 text-dazed text-sm font-semibold">
+            <p className="mb-2 text-[var(--mount-text)] text-sm font-semibold">
               {endpoint.summary}
             </p>
           )}
           {endpoint.description && (
-            <p className="mb-4 text-dazed text-sm leading-relaxed">
+            <p className="mb-4 text-[var(--mount-alt-text)] text-sm leading-relaxed">
               {endpoint.description}
             </p>
           )}
@@ -146,7 +150,7 @@ export default function EndpointCard({
                   schema={response.schema}
                 />
               ) : (
-                <p className="text-dazed text-sm">
+                <p className="text-[var(--mount-text)] text-sm">
                   <span className="font-semibold">
                     {response.statusCode} response body:
                   </span>{' '}

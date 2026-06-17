@@ -1,12 +1,6 @@
 import RequestBodyEditor from './RequestBodyEditor';
 import RequestField from './RequestField';
 import ResponsePanel from './ResponsePanel';
-import {
-  BORDER,
-  ERROR_ACCENT,
-  ERROR_TEXT,
-  TEXT,
-} from '../../lib/apiDocs/apiDocsColors';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { paramKey, useRequestForm } from '../../lib/apiDocs/useRequestForm';
@@ -100,13 +94,11 @@ export default function RequestForm({
       {error !== null && (
         <p
           role="alert"
-          className="mb-3 flex items-center gap-2 text-sm"
-          style={{ color: ERROR_TEXT }}
+          className="mb-3 flex items-center gap-2 text-[var(--alert-text)] text-sm"
         >
           <i
-            className="fa-solid fa-circle-exclamation"
+            className="fa-solid fa-circle-exclamation text-[var(--alert-highlight)]"
             aria-hidden="true"
-            style={{ color: ERROR_ACCENT }}
           />
           Couldn&rsquo;t load your API token. Reload to try again.
         </p>
@@ -116,20 +108,18 @@ export default function RequestForm({
         className="border-0 p-0 m-0"
         aria-describedby={groupDescribedBy}
       >
-        <legend className="text-sm font-semibold" style={{ color: TEXT }}>
+        <legend className="text-[var(--mount-text)] text-sm font-semibold">
           Try it out
         </legend>
 
         {token === '' && !loading && error === null && (
           <p
             id={lockedId}
-            className="mt-1 mb-3 text-sm"
-            style={{ color: TEXT }}
+            className="mt-1 mb-3 text-[var(--mount-text)] text-sm"
           >
             <Link
               to="/login"
-              className="underline focus:outline-none focus:ring-2 rounded"
-              style={{ color: TEXT }}
+              className="text-[var(--mount-text)] underline focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] rounded"
             >
               Log in to send live requests
             </Link>
@@ -139,7 +129,7 @@ export default function RequestForm({
 
         {endpoint.parameters.length > 0 && (
           <fieldset className="border-0 p-0 m-0 mb-3">
-            <legend className="text-xs font-semibold" style={{ color: TEXT }}>
+            <legend className="text-[var(--mount-text)] text-xs font-semibold">
               Parameters
             </legend>
             {endpoint.parameters.map((parameter) => {
@@ -166,7 +156,7 @@ export default function RequestForm({
 
         {endpoint.requestBody && (
           <fieldset className="border-0 p-0 m-0 mb-3">
-            <legend className="text-xs font-semibold" style={{ color: TEXT }}>
+            <legend className="text-[var(--mount-text)] text-xs font-semibold">
               Request body
             </legend>
             <RequestBodyEditor
@@ -184,13 +174,11 @@ export default function RequestForm({
         <p
           id={summaryId}
           role="alert"
-          className="mt-1 flex items-center gap-2 text-xs"
-          style={{ color: ERROR_TEXT }}
+          className="mt-1 flex items-center gap-2 text-[var(--alert-text)] text-xs"
         >
           <i
-            className="fa-solid fa-circle-exclamation"
+            className="fa-solid fa-circle-exclamation text-[var(--alert-highlight)]"
             aria-hidden="true"
-            style={{ color: ERROR_ACCENT }}
           />
           {form.summaryError}
         </p>
@@ -202,8 +190,7 @@ export default function RequestForm({
         type="submit"
         aria-disabled={token === '' || undefined}
         disabled={form.phase === 'sending'}
-        className="mt-3 inline-flex items-center gap-2 px-4 py-2 border text-sm font-semibold rounded-full focus:outline-none focus:ring-2 aria-disabled:opacity-60 aria-disabled:cursor-not-allowed disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-        style={{ color: TEXT, borderColor: BORDER }}
+        className="mt-3 inline-flex items-center gap-2 px-4 py-2 border border-[var(--mount-border)] text-[var(--mount-text)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] aria-disabled:opacity-60 aria-disabled:cursor-not-allowed disabled:opacity-60 disabled:cursor-not-allowed rounded-full cursor-pointer"
       >
         {form.phase === 'sending' && (
           <i

@@ -18,6 +18,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NormalizedApi } from '../../lib/openapi';
+import type { User } from '../../auth/AuthContext/types';
 
 // ─── Module mocks (must precede import of ApiDocsView) ────────────────────────
 
@@ -39,9 +40,16 @@ vi.mock('./useApiDocsToken', () => ({
   useApiDocsToken: () => ({ token: '', loading: false, error: null }),
 }));
 
+// Auth drives the visual branch (Wave 6): logged out → brand chrome, logged
+// in → the active theme. Mock it so tests can pick either branch.
+vi.mock('../../auth/AuthContext', () => ({
+  useAuth: vi.fn(),
+}));
+
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import ApiDocsView from './ApiDocsView';
+import { useAuth } from '../../auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -53,6 +61,16 @@ function LocationStateProbe() {
       {JSON.stringify(location.state)}
     </div>
   );
+}
+
+/** Minimal logged-in user — only its presence (non-null) drives the branch. */
+const SOME_USER = { userId: 'user-1' } as User;
+
+/** Point `useAuth` at the logged-out (brand) or logged-in (themed) branch. */
+function mockAuth(user: User | null) {
+  vi.mocked(useAuth).mockReturnValue({
+    user,
+  } as ReturnType<typeof useAuth>);
 }
 
 function renderApiDocs() {
@@ -113,6 +131,9 @@ beforeEach(() => {
   // Each test starts from a known title so the SC 2.4.2 assertion is honest.
   document.title = 'unset';
   window.sessionStorage.clear();
+  // The header a11y contract is auth-agnostic; default to the brand (logged-out)
+  // branch. The dedicated "visual branch" describe overrides per case.
+  mockAuth(null);
   fetchOpenApiMock.mockReset();
   // Default to a never-settling fetch so the structural chrome tests assert
   // against the loading state and never trigger a post-test state update (act
@@ -246,5 +267,87 @@ describe('ApiDocsView a11y contract', () => {
       'aria-labelledby',
       'api-docs-reference-heading',
     );
+  });
+});
+
+/*
+ * Wave 6 — the dual visual branch. Verified via class-string + inline-style
+ * assertions on the page wrapper (no dev server, per
+ * [[feedback-token-plumbing-verify]]). The wrapper is the first <div> the
+ * component renders; we read it from the rendered container.
+ */
+describe('ApiDocsView visual branch (Wave 6)', () => {
+  /** The page wrapper is the first element rendered inside the router. */
+  function wrapper(container: HTMLElement): HTMLElement {
+    const node = container.querySelector('div.min-h-screen');
+    if (node === null) {
+      throw new Error('Could not find the page wrapper');
+    }
+    return node as HTMLElement;
+  }
+
+  describe('logged out → brand chrome', () => {
+    it('pins bg-hit-man and dark color-scheme on the wrapper', () => {
+      mockAuth(null);
+      const { container } = renderApiDocs();
+      const node = wrapper(container);
+      expect(node.className).toContain('bg-hit-man');
+      expect(node.className).toContain('[color-scheme:dark]');
+    });
+
+    it('pins the brand bundle-token literals inline on the wrapper', () => {
+      mockAuth(null);
+      const { container } = renderApiDocs();
+      const node = wrapper(container);
+      // Brand pins resolve the token-driven children to the marketing palette.
+      expect(node.style.getPropertyValue('--base-bg')).toBe('#0a0812');
+      expect(node.style.getPropertyValue('--focus-ring')).toBe('#eeeede');
+      expect(node.style.getPropertyValue('--mount-text')).toBe('#eeeede');
+      expect(node.style.getPropertyValue('--mount-border')).toBe('#7d6ec0');
+      expect(node.style.getPropertyValue('--alert-text')).toBe('#fca5a5');
+      expect(node.style.getPropertyValue('--success-text')).toBe('#86efac');
+    });
+
+    it('keeps the marketing gradient h1', () => {
+      mockAuth(null);
+      renderApiDocs();
+      const heading = screen.getByRole('heading', {
+        level: 1,
+        name: 'Linklater API',
+      });
+      expect(heading.className).toContain('from-dazed');
+      expect(heading.className).toContain('to-sunrise');
+    });
+  });
+
+  describe('logged in → active theme', () => {
+    it('drops bg-hit-man and the inline brand token pins', () => {
+      mockAuth(SOME_USER);
+      const { container } = renderApiDocs();
+      const node = wrapper(container);
+      expect(node.className).not.toContain('bg-hit-man');
+      // No inline brand pins — the <html> theme cascade supplies every slot.
+      expect(node.style.getPropertyValue('--base-bg')).toBe('');
+      expect(node.style.getPropertyValue('--focus-ring')).toBe('');
+      expect(node.style.getPropertyValue('--mount-text')).toBe('');
+    });
+
+    it('leaves color-scheme mode-driven (no pinned dark) on the wrapper', () => {
+      mockAuth(SOME_USER);
+      const { container } = renderApiDocs();
+      const node = wrapper(container);
+      expect(node.className).not.toContain('[color-scheme:dark]');
+    });
+
+    it('renders a solid base-text h1 (no marketing gradient)', () => {
+      mockAuth(SOME_USER);
+      renderApiDocs();
+      const heading = screen.getByRole('heading', {
+        level: 1,
+        name: 'Linklater API',
+      });
+      expect(heading.className).toContain('text-[var(--base-text)]');
+      expect(heading.className).not.toContain('from-dazed');
+    });
   });
 });

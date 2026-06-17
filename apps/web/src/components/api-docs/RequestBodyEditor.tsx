@@ -1,9 +1,3 @@
-import {
-  BORDER,
-  ERROR_TEXT,
-  FOCUS_RING,
-  TEXT,
-} from '../../lib/apiDocs/apiDocsColors';
 import { fieldDescriptionId, fieldErrorId } from '../../lib/apiDocs/fieldIds';
 
 /**
@@ -11,6 +5,12 @@ import { fieldDescriptionId, fieldErrorId } from '../../lib/apiDocs/fieldIds';
  * out" form. Same a11y contract as `RequestField` (real visible `<label>`,
  * deterministic ids, always-mounted error node, `aria-disabled` + `readOnly`
  * for the inert/logged-out state) — the body just edits free JSON text.
+ *
+ * `FormInput` is `<input>`-only, so the `<textarea>` can't adopt it directly;
+ * it MIRRORS FormInput's `surface="mount"` token set exactly (Wave 6) —
+ * `--mount-input-bg` fill, `--mount-border`, `--mount-text`, `--focus-ring` —
+ * so the body editor and the parameter fields paint identically and inherit
+ * the same input bundle contract mechanized in `bundles.contrast.test.ts`.
  *
  * The parse error is surfaced inline here AND folded into the form-level Alert
  * summary by `RequestForm`; the textarea's `aria-invalid` flips on a parse
@@ -49,12 +49,14 @@ export default function RequestBodyEditor({
     <div>
       <label
         htmlFor={fieldId}
-        className="block text-sm font-semibold"
-        style={{ color: TEXT }}
+        className="block text-[var(--mount-text)] text-sm font-semibold"
       >
         Request body (JSON)
       </label>
-      <p id={descriptionId} className="mt-1 text-xs" style={{ color: TEXT }}>
+      <p
+        id={descriptionId}
+        className="mt-1 text-[var(--mount-alt-text)] text-xs"
+      >
         Edit the prefilled example, then send the request.
       </p>
       <textarea
@@ -67,17 +69,10 @@ export default function RequestBodyEditor({
         aria-disabled={inert || undefined}
         readOnly={inert}
         aria-describedby={`${descriptionId} ${errorId}`}
-        className="block w-full mt-1 px-3 py-2 border text-xs font-mono rounded-lg focus:outline-none focus:ring-2 aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
-        style={
-          {
-            color: TEXT,
-            borderColor: BORDER,
-            '--tw-ring-color': FOCUS_RING,
-          } as React.CSSProperties
-        }
+        className="block w-full mt-1 px-3 py-2 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-transparent aria-disabled:opacity-60 aria-disabled:cursor-not-allowed rounded-lg"
       />
       {error ? (
-        <p id={errorId} className="mt-1 text-xs" style={{ color: ERROR_TEXT }}>
+        <p id={errorId} className="mt-1 text-[var(--alert-text)] text-xs">
           {error}
         </p>
       ) : (

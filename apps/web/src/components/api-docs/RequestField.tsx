@@ -1,17 +1,15 @@
-import {
-  BORDER,
-  ERROR_TEXT,
-  FOCUS_RING,
-  TEXT,
-} from '../../lib/apiDocs/apiDocsColors';
+import FormInput from '../common/FormInput';
 import { fieldDescriptionId, fieldErrorId } from '../../lib/apiDocs/fieldIds';
 
 /**
  * One labeled text input for a single path/query parameter inside the "try it
- * out" form. Replicates the token-based `FormInput` a11y CONTRACT — a real
- * visible `<label htmlFor>` (never a placeholder), native attribute
- * passthrough — but paints brand-locked literals (CONSTRAINT §9), because the
- * docs page carries brand chrome where `var(--mount-…)` resolves to nothing.
+ * out" form. Wraps the shared token-driven `FormInput` with `surface="mount"`
+ * (Wave 6) so the input fill (`--mount-input-bg`), border (`--mount-border`),
+ * text (`--mount-text`) and focus ring (`--focus-ring`) all come from the host
+ * surface's bundle — brand literals when logged out (pinned by `ApiDocsView`),
+ * the active theme when logged in. Adopting `FormInput` deletes the most
+ * duplicated input a11y surface and inherits the input bundle contract already
+ * mechanized in `bundles.contrast.test.ts`.
  *
  * Ids are deterministic (CONSTRAINT §1/E4): the caller passes a `fieldId` built
  * from the endpoint heading; the description (`-desc`) and error (`-error`)
@@ -71,8 +69,7 @@ export default function RequestField({
     <div className="mb-3 last:mb-0">
       <label
         htmlFor={fieldId}
-        className="block text-sm font-semibold"
-        style={{ color: TEXT }}
+        className="block text-[var(--mount-text)] text-sm font-semibold"
       >
         {label}{' '}
         <span className="font-normal">
@@ -80,11 +77,15 @@ export default function RequestField({
         </span>
       </label>
       {description && (
-        <p id={descriptionId} className="mt-1 text-xs" style={{ color: TEXT }}>
+        <p
+          id={descriptionId}
+          className="mt-1 text-[var(--mount-alt-text)] text-xs"
+        >
           {description}
         </p>
       )}
-      <input
+      <FormInput
+        surface="mount"
         id={fieldId}
         type="text"
         value={value}
@@ -95,17 +96,10 @@ export default function RequestField({
         aria-disabled={inert || undefined}
         readOnly={inert}
         aria-describedby={describedBy}
-        className="block w-full mt-1 px-3 py-2 border text-sm rounded-lg focus:outline-none focus:ring-2 aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
-        style={
-          {
-            color: TEXT,
-            borderColor: BORDER,
-            '--tw-ring-color': FOCUS_RING,
-          } as React.CSSProperties
-        }
+        className="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
       />
       {error ? (
-        <p id={errorId} className="mt-1 text-xs" style={{ color: ERROR_TEXT }}>
+        <p id={errorId} className="mt-1 text-[var(--alert-text)] text-xs">
           {error}
         </p>
       ) : (

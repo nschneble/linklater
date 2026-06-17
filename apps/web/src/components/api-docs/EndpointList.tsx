@@ -17,7 +17,8 @@ import type { NormalizedApi } from '../../lib/openapi';
  * on failure — so screen-reader users get a reliable completion/error cue
  * (WCAG 4.1.3). The visible UI (spinner, error text, list, empty state) is
  * aria-hidden from announcement to avoid double-blaring; the region is the
- * sole announcer. Colors are brand-locked.
+ * sole announcer. Colors consume the `--mount-*` bundle tokens (brand literals
+ * when logged out, the active theme when logged in).
  */
 
 interface EndpointListProps {
@@ -120,7 +121,7 @@ function EndpointListBody({
     return (
       <p
         aria-hidden="true"
-        className="flex items-center gap-3 px-4 py-6 text-dazed text-sm"
+        className="flex items-center gap-3 px-4 py-6 text-[var(--mount-text)] text-sm"
       >
         <i className="fa-solid fa-arrows-rotate fa-spin" aria-hidden="true" />
         Loading the API documentation…
@@ -130,7 +131,10 @@ function EndpointListBody({
 
   if (loadState.status === 'error') {
     return (
-      <p aria-hidden="true" className="px-4 py-6 text-dazed text-sm">
+      <p
+        aria-hidden="true"
+        className="px-4 py-6 text-[var(--mount-text)] text-sm"
+      >
         {loadState.message}
       </p>
     );
@@ -138,7 +142,10 @@ function EndpointListBody({
 
   if (loadState.api.endpoints.length === 0) {
     return (
-      <p aria-hidden="true" className="px-4 py-6 text-dazed text-sm">
+      <p
+        aria-hidden="true"
+        className="px-4 py-6 text-[var(--mount-text)] text-sm"
+      >
         No endpoints are documented yet.
       </p>
     );

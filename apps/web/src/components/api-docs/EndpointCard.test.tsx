@@ -1,9 +1,18 @@
-import EndpointCard from './EndpointCard';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { NormalizedEndpoint } from '../../lib/openapi';
+import type { User } from '../../auth/AuthContext/types';
+
+// EndpointCard renders MethodBadge, which reads `useAuth()` to pick its
+// brand/themed paint. Mock it to a logged-in user — these tests cover
+// structure + a11y, not the brand color branch (see MethodBadge.test).
+vi.mock('../../auth/AuthContext', () => ({
+  useAuth: () => ({ user: { userId: 'user-1' } as User }),
+}));
+
+import EndpointCard from './EndpointCard';
 
 function makeEndpoint(
   overrides: Partial<NormalizedEndpoint> = {},
