@@ -69,4 +69,51 @@ describe('EndpointCard', () => {
       within(table).getByRole('rowheader', { name: 'id' }),
     ).toBeInTheDocument();
   });
+
+  it('renders a parameters table with location and required text', async () => {
+    const user = userEvent.setup();
+    renderInList(
+      makeEndpoint({
+        method: 'delete',
+        path: '/links/{id}',
+        parameters: [
+          {
+            name: 'id',
+            location: 'path',
+            required: true,
+            description: 'The link id.',
+            schema: { type: 'string' },
+          },
+          {
+            name: 'search',
+            location: 'query',
+            required: false,
+            schema: { type: 'string' },
+          },
+        ],
+      }),
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'DELETE /links/{id}' }),
+    );
+    const table = screen.getByRole('table', {
+      name: 'Path & query parameters',
+    });
+    const idRow = within(table)
+      .getByRole('rowheader', { name: 'id' })
+      .closest('tr') as HTMLElement;
+    expect(within(idRow).getByText('path')).toBeInTheDocument();
+    expect(within(idRow).getByText('Required')).toBeInTheDocument();
+  });
+
+  it('renders no parameters table when there are zero parameters (T5)', async () => {
+    const user = userEvent.setup();
+    renderInList(makeEndpoint({ parameters: [] }));
+
+    await user.click(screen.getByRole('button', { name: 'GET /links' }));
+    expect(
+      screen.queryByRole('table', { name: 'Path & query parameters' }),
+    ).toBeNull();
+  });
 });

@@ -1,5 +1,6 @@
 import Disclosure from './Disclosure';
 import MethodBadge from './MethodBadge';
+import ParameterTable from './ParameterTable';
 import SchemaTable from './SchemaTable';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
@@ -70,6 +71,15 @@ export default function EndpointCard({ endpoint }: EndpointCardProps) {
             <p className="mb-4 text-dazed text-sm leading-relaxed">
               {endpoint.description}
             </p>
+          )}
+
+          {endpoint.parameters.length > 0 && (
+            <div className="mb-4">
+              <ParameterTable
+                caption="Path & query parameters"
+                parameters={endpoint.parameters}
+              />
+            </div>
           )}
 
           {endpoint.requestBody && (
