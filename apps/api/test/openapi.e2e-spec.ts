@@ -18,8 +18,8 @@ import { LinksService } from '../src/links/links.service.js';
  * consumes this exact endpoint, so this test guards against:
  *
  * - Spec scope leaks (only `/links/*` should be present).
- * - Missing or renamed security scheme (`pat` must exist; Scalar binds to
- *   it by name).
+ * - Missing or renamed security scheme (`pat` must exist; OpenAPI consumers,
+ *   including the custom API docs page, bind to it by name).
  * - Decorator drift on `LinksController` (missing operationIds, broken
  *   response shapes).
  *
@@ -58,7 +58,8 @@ describe('OpenAPI document (e2e)', () => {
           // Mirror the auth-header example baked into `apps/api/src/main.ts`
           // so the `info.description` assertion below has meaningful copy to
           // match against. The literal "Authorization: Bearer ltk_…" is what
-          // Scalar's "Try it" tab and downstream API clients read from.
+          // the API docs page's "try it" affordance and downstream API
+          // clients read from.
           'Authenticate every request with a personal access token in the `Authorization` header: `Authorization: Bearer ltk_…`.',
         )
         .setVersion('test')
@@ -96,8 +97,9 @@ describe('OpenAPI document (e2e)', () => {
   });
 
   // Pins the PAT-auth example baked into `main.ts`'s `setDescription` against
-  // future copy edits. Scalar's "Try it" tab uses the description as auth
-  // guidance, so the literal "Authorization: Bearer ltk_…" must survive.
+  // future copy edits. The API docs page's "try it" affordance uses the
+  // description as auth guidance, so the literal "Authorization: Bearer ltk_…"
+  // must survive.
   it('embeds the Bearer-ltk auth header example in info.description', async () => {
     const response = await request(app.getHttpServer()).get('/openapi.json');
 
@@ -106,7 +108,7 @@ describe('OpenAPI document (e2e)', () => {
     );
   });
 
-  it('declares the "pat" bearer security scheme that Scalar binds against', async () => {
+  it('declares the "pat" bearer security scheme that API consumers bind against', async () => {
     const response = await request(app.getHttpServer()).get('/openapi.json');
 
     const schemes = response.body.components?.securitySchemes ?? {};

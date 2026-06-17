@@ -24,9 +24,9 @@ export function resolveOpenApiUrl(apiBaseUrl: string | undefined): string {
 
 /**
  * Derives the API origin the "try it" affordance should target by stripping
- * the `/openapi.json` suffix — mirrors `useScalarConfiguration`. An absolute
- * spec URL resolves to the API origin; a relative one resolves to '' (same
- * origin), which is correct behind a reverse proxy.
+ * the `/openapi.json` suffix. An absolute spec URL resolves to the API
+ * origin; a relative one resolves to '' (same origin), which is correct
+ * behind a reverse proxy.
  */
 export function resolveServerOrigin(openapiUrl: string): string {
   return openapiUrl.replace(/\/openapi\.json$/, '');

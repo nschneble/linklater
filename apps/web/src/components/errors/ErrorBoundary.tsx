@@ -40,9 +40,9 @@ interface ErrorBoundaryState {
  *
  * Placed at the root of the app (`App.tsx`) to catch any unhandled error
  * from the entire component tree. Also used at the route layer in
- * `AppShell.tsx` to scope errors from heavy third-party embeds (e.g. the
- * Scalar API reference) so they cannot tip the whole app into the
- * full-screen fallback during route unmount.
+ * `AppShell.tsx` to scope errors from heavier route-level subtrees (e.g. the
+ * custom API docs page and its OpenAPI parse layer) so they cannot tip the
+ * whole app into the full-screen fallback during route unmount.
  */
 export default class ErrorBoundary extends Component<
   ErrorBoundaryProps,

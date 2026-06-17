@@ -1,8 +1,4 @@
-/*
- * Using Scalar with Tailwind CSS
- * https://scalar.com/products/api-references/integrations/react#using-with-tailwind-css
- */
-@layer scalar-base, scalar-theme, scalar-config, theme, base, components, utilities;
+@layer theme, base, components, utilities;
 @import 'tailwindcss';
 
 @import './theme/styles/bundles.css';
@@ -17,33 +13,6 @@
 @import './theme/styles/nouvelle-vague.css';
 @import './theme/styles/scanner-darkly.css';
 @import './theme/styles/school-of-rock.css';
-
-/*
- * Scalar's CSS variables
- * https://github.com/scalar/scalar/blob/main/packages/themes/src/base/variables.css
- */
-:root {
-  --scalar-font:
-    ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-    'Segoe UI Symbol', 'Noto Color Emoji';
-  --scalar-font-code:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-    'Courier New', monospace;
-
-  .dark-mode {
-    --scalar-color-1: white;
-    --scalar-color-2: var(--color-dazed);
-    --scalar-color-3: var(--color-confused);
-    --scalar-background-1: var(--color-midnight);
-    --scalar-background-2: var(--color-boyhood);
-
-    --scalar-scrollbar-color: var(--color-sunrise);
-    --scalar-scrollbar-color-active: var(--color-sunrise);
-    --scalar-button-1: transparent;
-    --scalar-button-1-hover: transparent;
-    --scalar-button-1-color: white;
-  }
-}
 
 body {
   -webkit-font-smoothing: antialiased;

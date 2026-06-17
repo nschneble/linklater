@@ -4,8 +4,10 @@ import { Navigate, Route } from 'react-router-dom';
 import NotFoundView from '../components/errors/NotFoundView';
 import StumblePage from '../components/stumble/StumblePage';
 
-// ApiDocsView is lazy-loaded because Scalar's bundle is heavy (~300KB
-// gzipped) and only visitors to /settings/api should pay that cost.
+// ApiDocsView is lazy-loaded because the custom docs UI plus the OpenAPI
+// parse layer form a self-contained chunk only /settings/api visitors need;
+// keeping it out of the main bundle (which no longer carries the retired
+// ~300KB Scalar embed) means everyone else never downloads it.
 const ApiDocsView = lazy(() => import('../components/api-docs'));
 
 function UnreadRedirect() {
