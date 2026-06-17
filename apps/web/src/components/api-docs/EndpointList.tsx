@@ -10,9 +10,13 @@ import type { NormalizedApi } from '../../lib/openapi';
  * (CONSTRAINT S2) — without it, Safari + VoiceOver no longer announce the
  * group as a list.
  *
- * The fetch lives here (the page is async). The pending state is a polite
- * sr-only status + a decorative spinner; a failure renders a role="alert"
- * message; an empty spec renders plain text. Colors are brand-locked.
+ * The fetch lives here (the page is async). A single persistent polite
+ * live region (sr-only `role="status"`) stays mounted across every state and
+ * only its TEXT changes — loading, then a result count on ready or the error
+ * on failure — so screen-reader users get a reliable completion/error cue
+ * (WCAG 4.1.3). The visible UI (spinner, error text, list, empty state) is
+ * aria-hidden from announcement to avoid double-blaring; the region is the
+ * sole announcer. Colors are brand-locked.
  */
 
 interface EndpointListProps {
@@ -52,10 +56,52 @@ export default function EndpointList({ apiBaseUrl }: EndpointListProps) {
     };
   }, [apiBaseUrl]);
 
+  return (
+    <>
+      <p role="status" aria-live="polite" className="sr-only">
+        {describeLoadState(loadState)}
+      </p>
+      <EndpointListBody loadState={loadState} />
+    </>
+  );
+}
+
+/**
+ * Builds the polite live-region announcement for the current load state. The
+ * count is pluralized so the ready cue reads naturally to assistive tech.
+ */
+function describeLoadState(loadState: LoadState): string {
+  if (loadState.status === 'loading') {
+    return 'Loading the API documentation…';
+  }
+
+  if (loadState.status === 'error') {
+    return loadState.message;
+  }
+
+  const endpointCount = loadState.api.endpoints.length;
+  if (endpointCount === 0) {
+    return 'No endpoints are documented yet.';
+  }
+
+  const noun = endpointCount === 1 ? 'endpoint' : 'endpoints';
+  return `${endpointCount} ${noun} loaded.`;
+}
+
+interface EndpointListBodyProps {
+  loadState: LoadState;
+}
+
+/**
+ * The visible UI. It carries no live-region role — the persistent sr-only
+ * announcer above is the sole source of AT announcements, so this content is
+ * purely visual (the error/loading text is conveyed sighted only).
+ */
+function EndpointListBody({ loadState }: EndpointListBodyProps) {
   if (loadState.status === 'loading') {
     return (
       <p
-        role="status"
+        aria-hidden="true"
         className="flex items-center gap-3 px-4 py-6 text-dazed text-sm"
       >
         <i className="fa-solid fa-arrows-rotate fa-spin" aria-hidden="true" />
@@ -66,7 +112,7 @@ export default function EndpointList({ apiBaseUrl }: EndpointListProps) {
 
   if (loadState.status === 'error') {
     return (
-      <p role="alert" className="px-4 py-6 text-dazed text-sm">
+      <p aria-hidden="true" className="px-4 py-6 text-dazed text-sm">
         {loadState.message}
       </p>
     );
@@ -74,7 +120,7 @@ export default function EndpointList({ apiBaseUrl }: EndpointListProps) {
 
   if (loadState.api.endpoints.length === 0) {
     return (
-      <p className="px-4 py-6 text-dazed text-sm">
+      <p aria-hidden="true" className="px-4 py-6 text-dazed text-sm">
         No endpoints are documented yet.
       </p>
     );

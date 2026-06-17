@@ -73,6 +73,60 @@ describe('resolveSchema', () => {
     expect(resolved).toBeUndefined();
   });
 
+  it('resolves a $ref inside additionalProperties (map-valued schema)', () => {
+    const resolved = resolveSchema(
+      {
+        type: 'object',
+        additionalProperties: { $ref: '#/components/schemas/Link' },
+      },
+      schemas,
+    );
+    const additional = resolved?.additionalProperties as OpenAPIV3.SchemaObject;
+    expect(additional).toMatchObject({ type: 'object' });
+    expect(additional.properties?.url).toEqual({ type: 'string' });
+  });
+
+  it('leaves a boolean additionalProperties untouched', () => {
+    const resolved = resolveSchema(
+      { type: 'object', additionalProperties: true },
+      schemas,
+    );
+    expect(resolved?.additionalProperties).toBe(true);
+  });
+
+  it('resolves every member $ref inside an allOf composition', () => {
+    const resolved = resolveSchema(
+      {
+        allOf: [
+          { $ref: '#/components/schemas/Link' },
+          { type: 'object', properties: { extra: { type: 'boolean' } } },
+        ],
+      },
+      schemas,
+    );
+    const members = resolved?.allOf as OpenAPIV3.SchemaObject[];
+    expect(members).toHaveLength(2);
+    expect(members[0].properties?.url).toEqual({ type: 'string' });
+    expect(members[1].properties?.extra).toEqual({ type: 'boolean' });
+  });
+
+  it('drops unresolvable members from a oneOf composition', () => {
+    const resolved = resolveSchema(
+      {
+        oneOf: [
+          { $ref: '#/components/schemas/Link' },
+          { $ref: '#/components/schemas/DoesNotExist' },
+        ],
+      },
+      schemas,
+    );
+    // The dangling member resolves to undefined and is filtered out rather
+    // than leaving a hole in the union.
+    const members = resolved?.oneOf as OpenAPIV3.SchemaObject[];
+    expect(members).toHaveLength(1);
+    expect(members[0].properties?.url).toEqual({ type: 'string' });
+  });
+
   it('guards against a self-referential (cyclic) schema', () => {
     const resolved = resolveSchema(
       { $ref: '#/components/schemas/Node' },

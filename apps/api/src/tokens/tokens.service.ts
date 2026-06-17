@@ -87,14 +87,17 @@ export class TokensService {
    * Permanently deletes a token, preventing any further API access with it.
    * The `userId` scope ensures users can only revoke their own tokens.
    *
-   * Bookmarklet tokens cannot be revoked through this method — users must
-   * use `BookmarkletTokensService.regenerate` instead so they always have a
-   * working bookmarklet to drag to their bookmarks bar.
+   * Only standard user tokens (`kind = USER`) can be revoked here. The
+   * retrievable secret-backed kinds are protected: a BOOKMARKLET is rotated
+   * through `BookmarkletTokensService.regenerate` so the user always has a
+   * working bookmarklet, and the API_DOCS token is auto-provisioned and never
+   * surfaced for deletion — revoking either via this endpoint would silently
+   * invalidate a raw token the user may have pasted elsewhere.
    *
    * @param userId - The UUID of the owning user (scope guard).
    * @param tokenId - The UUID of the token to delete.
    * @throws {NotFoundException} When no matching token exists for this user.
-   * @throws {BadRequestException} When the token is a bookmarklet token.
+   * @throws {BadRequestException} When the token is a non-USER (protected) kind.
    */
   async revoke(userId: string, tokenId: string) {
     const existing = await this.prisma.apiToken.findUnique({
@@ -105,10 +108,12 @@ export class TokensService {
       throw new NotFoundException('API token not found');
     }
 
-    if (existing.kind === TokenKind.BOOKMARKLET) {
-      throw new BadRequestException(
-        'Use the Regenerate button to revoke the bookmarklet token',
-      );
+    if (existing.kind !== TokenKind.USER) {
+      const message =
+        existing.kind === TokenKind.BOOKMARKLET
+          ? 'Use the Regenerate button to revoke the bookmarklet token'
+          : 'This token is managed automatically and cannot be revoked';
+      throw new BadRequestException(message);
     }
 
     try {

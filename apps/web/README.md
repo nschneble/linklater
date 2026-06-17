@@ -56,7 +56,7 @@ graph TD
             userMenuComps["MenuSection · MobileBottomSheet · …"]
         end
         subgraph CompApiDocs["api-docs/"]
-            apiDocsComps["ApiDocsView · TokenInput"]
+            apiDocsComps["ApiDocsView · EndpointList · EndpointCard · SchemaTable · …"]
         end
         subgraph CompVerify["verify/"]
             verifyComps["TokenVerificationPage · VerifyEmailPage · VerifyEmailChangePage"]

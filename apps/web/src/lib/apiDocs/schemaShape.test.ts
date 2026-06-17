@@ -19,6 +19,21 @@ describe('describeType', () => {
   it('falls back to unknown for a missing schema', () => {
     expect(describeType(undefined)).toBe('unknown');
   });
+
+  it('labels an enum schema as enum regardless of its base type', () => {
+    expect(describeType({ type: 'string', enum: ['a', 'b'] })).toBe('enum');
+  });
+
+  it('joins a union type array with a pipe', () => {
+    const schema = {
+      type: ['string', 'null'],
+    } as unknown as OpenAPIV3.SchemaObject;
+    expect(describeType(schema)).toBe('string | null');
+  });
+
+  it('falls back to object for a typeless schema', () => {
+    expect(describeType({})).toBe('object');
+  });
 });
 
 describe('toSchemaRows', () => {
@@ -92,6 +107,23 @@ describe('toSchemaRows', () => {
     };
 
     // At depth 1, an expandable object resolves to a note rather than a table.
+    const [row] = toSchemaRows(schema, 1);
+    expect(row.nested).toEqual({ kind: 'note' });
+  });
+
+  it('caps an array-of-object at one level — deeper becomes a note (T4)', () => {
+    const schema: OpenAPIV3.SchemaObject = {
+      type: 'object',
+      properties: {
+        tags: {
+          type: 'array',
+          items: { type: 'object', properties: { name: { type: 'string' } } },
+        },
+      },
+    };
+
+    // At depth 1, an expandable array-of-object also collapses to a note
+    // rather than recursing into a second nested table.
     const [row] = toSchemaRows(schema, 1);
     expect(row.nested).toEqual({ kind: 'note' });
   });

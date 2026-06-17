@@ -160,9 +160,20 @@ describe('TokensService', () => {
       );
     });
 
-    it('throws BadRequestException when token is a BOOKMARKLET', async () => {
+    it('throws BadRequestException with the regenerate message when token is a BOOKMARKLET', async () => {
       (prismaMock.apiToken.findUnique as jest.Mock).mockResolvedValue(
         makeApiToken({ kind: 'BOOKMARKLET' }),
+      );
+
+      await expect(service.revoke(USER_ID, TOKEN_ID)).rejects.toThrow(
+        'Use the Regenerate button to revoke the bookmarklet token',
+      );
+      expect(prismaMock.apiToken.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when token is an API_DOCS token', async () => {
+      (prismaMock.apiToken.findUnique as jest.Mock).mockResolvedValue(
+        makeApiToken({ kind: 'API_DOCS' }),
       );
 
       await expect(service.revoke(USER_ID, TOKEN_ID)).rejects.toThrow(

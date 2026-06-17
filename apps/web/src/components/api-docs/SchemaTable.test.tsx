@@ -77,4 +77,37 @@ describe('SchemaTable', () => {
       screen.getByRole('table', { name: 'metadata properties' }),
     ).toBeInTheDocument();
   });
+
+  it('renders a text note instead of a third table beyond one level (T4)', () => {
+    // Two levels of nesting: the top table expands `outer`, the child table
+    // hits depth 1 and must collapse `inner` to a note rather than recurse.
+    const deepSchema: OpenAPIV3.SchemaObject = {
+      type: 'object',
+      properties: {
+        outer: {
+          type: 'object',
+          properties: {
+            inner: {
+              type: 'object',
+              properties: { leaf: { type: 'string' } },
+            },
+          },
+        },
+      },
+    };
+
+    render(<SchemaTable caption="Request body" schema={deepSchema} />);
+
+    // The first nested level renders as a table...
+    expect(
+      screen.getByRole('table', { name: 'outer properties' }),
+    ).toBeInTheDocument();
+    // ...but the second level is a text note, not a third table.
+    expect(
+      screen.queryByRole('table', { name: 'inner properties' }),
+    ).toBeNull();
+    expect(
+      screen.getByText(/Nested object — see full schema\./),
+    ).toBeInTheDocument();
+  });
 });

@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 /**
@@ -44,13 +44,21 @@ export default function Disclosure({
   const panelId = useId();
   const onAfterCollapseRef = useRef(onAfterCollapse);
   onAfterCollapseRef.current = onAfterCollapse;
+  const wasExpandedRef = useRef(isExpanded);
+
+  // Fire onAfterCollapse exactly once per expanded -> collapsed transition.
+  // Running it from an effect (not inside the setState updater) keeps the
+  // updater pure, so React StrictMode's double-invoke can't double-fire the
+  // focus-return hook a later wave wires through here (CONSTRAINT K2).
+  useEffect(() => {
+    if (wasExpandedRef.current && !isExpanded) {
+      onAfterCollapseRef.current?.();
+    }
+    wasExpandedRef.current = isExpanded;
+  }, [isExpanded]);
 
   function handleToggle() {
-    setIsExpanded((wasExpanded) => {
-      const nextExpanded = !wasExpanded;
-      if (!nextExpanded) onAfterCollapseRef.current?.();
-      return nextExpanded;
-    });
+    setIsExpanded((wasExpanded) => !wasExpanded);
   }
 
   return (
