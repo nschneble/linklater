@@ -74,7 +74,7 @@
     - paragraph: Use personal access tokens (PATs) to connect Linklater with external tools and services.
     - heading "API Tokens" [level=3]
     - status: Your new token has been created. It'll only be shown once, so make sure you copy it down before navigating away from this page!
-    - code: ltk_SyPFR41j_OOLFleqHRMvkbbJ7wd_2cnH
+    - code: ltk_xGfBxLJG3idWr7nGu9t_BjAmwmpmSh00
     - button "Copy to clipboard"
     - status
     - list:
