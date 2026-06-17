@@ -99,6 +99,7 @@ model Link {
 enum TokenKind {
   USER
   BOOKMARKLET
+  API_DOCS
 }
 
 model ApiToken {
@@ -111,12 +112,14 @@ model ApiToken {
   lastUsedAt  DateTime?
   createdAt   DateTime  @default(now())
   kind        TokenKind @default(USER)
-  // Plaintext token value. Populated ONLY when kind = BOOKMARKLET, because the
-  // bookmarklet's `javascript:` URL must embed the raw token literally and the
-  // settings page needs to retrieve it on every load (including across devices).
+  // Plaintext token value. Populated for the retrievable kinds (BOOKMARKLET and
+  // API_DOCS) because their consumers must re-read the raw token on every load:
+  // the bookmarklet embeds it in a `javascript:` URL, and the API docs page
+  // pre-fills it into the live "try it out" panel — both across devices.
   // For kind = USER this column is NULL — those tokens follow the standard
-  // hash-only / shown-once model. DB compromise of bookmarklet rows allows
-  // saving links as the affected user; users can regenerate to invalidate.
+  // hash-only / shown-once model. DB compromise of these rows allows saving
+  // links as the affected user; the bookmarklet can be regenerated to
+  // invalidate, while the API_DOCS token is auto-provisioned and never shown.
   secretValue String?
 
   @@index([userId])
