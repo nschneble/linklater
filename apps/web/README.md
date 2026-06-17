@@ -25,6 +25,8 @@ graph TD
     subgraph Lib["lib/"]
         api["api/"]
         hooks["hooks/"]
+        openapi["openapi/"]
+        apiDocs["apiDocs/"]
         utils["navigation.ts · dates.ts · strings.ts · …"]
     end
 
@@ -107,7 +109,7 @@ graph TD
     class App,AppShell,main,css,Header rootStyle
     class AuthContext authStyle
     class ThemeContext,styles themeStyle
-    class api,hooks,utils libStyle
+    class api,hooks,openapi,apiDocs,utils libStyle
     class routeConfig routesStyle
     class authComps compAuthStyle
     class LinkCard,linksComps compLinksStyle
@@ -136,6 +138,7 @@ graph TD
 | Change the marketing page               | `src/components/LandingPage/`                          |
 | Edit theme styles                       | `src/theme/`, `src/theme/styles/`                      |
 | Edit the API reference UI               | `src/components/api-docs/`                             |
+| Change OpenAPI parsing or "try it out"  | `src/lib/openapi/`, `src/lib/apiDocs/`                 |
 | Edit the crash/error fallback page      | `src/components/FailWhalePage/`                        |
 | Edit the error boundary or 404 page     | `src/components/errors/`                               |
 | Edit the extension OAuth authorize page | `src/components/auth/`                                 |
