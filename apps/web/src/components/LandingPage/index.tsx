@@ -15,7 +15,7 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
  * landing-page theme rather than the authenticated app's CSS variables.
  */
 export default function LandingPage() {
-  useDocumentTitle('Linklater');
+  useDocumentTitle('Linklater – Save links now, read them later.');
 
   return (
     <div className="min-h-screen bg-hit-man">

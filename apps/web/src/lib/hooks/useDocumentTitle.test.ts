@@ -8,34 +8,36 @@ describe('useDocumentTitle', () => {
   });
 
   it('sets document.title to the provided title', () => {
-    renderHook(() => useDocumentTitle('My Page — Linklater'));
-    expect(document.title).toBe('My Page — Linklater');
+    renderHook(() =>
+      useDocumentTitle('Linklater – Save links now, read them later.'),
+    );
+    expect(document.title).toBe('Linklater – Save links now, read them later.');
   });
 
   it('updates document.title when the title argument changes', () => {
     const { rerender } = renderHook(
       ({ title }: { title: string }) => useDocumentTitle(title),
-      { initialProps: { title: 'First — Linklater' } },
+      {
+        initialProps: { title: 'Linklater – Save links now, read them later.' },
+      },
     );
-    expect(document.title).toBe('First — Linklater');
+    expect(document.title).toBe('Linklater – Save links now, read them later.');
 
-    rerender({ title: 'Second — Linklater' });
-    expect(document.title).toBe('Second — Linklater');
+    rerender({ title: 'Linklater – Settings' });
+    expect(document.title).toBe('Linklater – Settings');
   });
 
   it('does NOT restore the previous title on unmount', () => {
-    // Overlapping route transitions would let an unmounting page clobber
-    // the title that the incoming page just set. Each top-level route
-    // component is expected to call useDocumentTitle on mount, so the
-    // next mount always re-establishes the page title — no restore needed.
-    document.title = 'Original Title';
+    // Each top-level route component is expected to call useDocumentTitle
+    // on mount, so the next mount always re-establishes the page title
+    document.title = 'Linklater – Save links now, read them later.';
 
     const { unmount } = renderHook(() =>
-      useDocumentTitle('Temporary — Linklater'),
+      useDocumentTitle('Linklater – Settings'),
     );
-    expect(document.title).toBe('Temporary — Linklater');
+    expect(document.title).toBe('Linklater – Settings');
 
     unmount();
-    expect(document.title).toBe('Temporary — Linklater');
+    expect(document.title).toBe('Linklater – Settings');
   });
 });

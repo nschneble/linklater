@@ -24,7 +24,7 @@ import { useNavigate } from 'react-router-dom';
  * 6s toast window is too short for SRs to parse a free-form provider message.
  */
 export default function OAuthCallbackPage() {
-  useDocumentTitle('Sign in — Linklater');
+  useDocumentTitle('Linklater – Sign in');
   const { loginWithToken } = useAuth();
   const navigate = useNavigate();
   const hasHandled = useRef(false);

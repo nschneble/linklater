@@ -249,7 +249,7 @@ describe('ApiDocsView a11y contract', () => {
   it('sets document.title to "API documentation – Linklater" (SC 2.4.2)', () => {
     renderApiDocs();
 
-    expect(document.title).toBe('API documentation – Linklater');
+    expect(document.title).toBe('Linklater – API documentation');
   });
 
   it('keeps the aria-labelledby h2 target present (H1)', () => {

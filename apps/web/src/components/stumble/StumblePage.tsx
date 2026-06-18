@@ -26,7 +26,7 @@ type StumbleState = 'loading' | 'empty' | 'error';
 export default function StumblePage() {
   const [state, setState] = useState<StumbleState>('loading');
   useDocumentTitle(
-    state === 'error' ? 'Stumble error — Linklater' : 'Stumble — Linklater',
+    state === 'error' ? 'Linklater – Stumble error' : 'Linklater – Stumble',
   );
 
   const isMountedReference = useRef(true);

@@ -43,7 +43,7 @@ type MfaChallenge = 'totp' | 'recovery';
  * the OTP challenge; that branch mounts `MfaView` and is unchanged.
  */
 export default function VerifyLoginPage() {
-  useDocumentTitle('Verifying sign in — Linklater');
+  useDocumentTitle('Linklater – Verifying sign in');
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
   const { loginWithToken, refreshUser, user } = useAuth();

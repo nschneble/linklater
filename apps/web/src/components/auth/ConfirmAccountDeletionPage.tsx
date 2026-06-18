@@ -35,7 +35,7 @@ export default function ConfirmAccountDeletionPage() {
   const { logout } = useAuth();
   const hasConfirmed = useRef(false);
 
-  useDocumentTitle('Account deletion — Linklater');
+  useDocumentTitle('Linklater – Account deletion');
 
   useEffect(() => {
     if (hasConfirmed.current) return;

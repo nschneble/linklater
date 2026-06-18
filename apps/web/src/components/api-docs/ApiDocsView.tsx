@@ -27,7 +27,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
  * path serves both modes.
  */
 export default function ApiDocsView() {
-  useDocumentTitle('API documentation – Linklater');
+  useDocumentTitle('Linklater – API documentation');
   const { user } = useAuth();
   const isBrand = user === null;
 

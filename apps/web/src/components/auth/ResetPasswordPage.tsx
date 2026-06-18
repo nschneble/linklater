@@ -35,7 +35,7 @@ type MfaChallenge = 'totp' | 'recovery';
  * This route is always accessible without authentication.
  */
 export default function ResetPasswordPage() {
-  useDocumentTitle('Reset password — Linklater');
+  useDocumentTitle('Linklater – Reset password');
 
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();

@@ -51,7 +51,7 @@ export default function SettingsView({
   appleEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true',
   googleEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
 }: SettingsViewProps = {}) {
-  useDocumentTitle('Settings — Linklater');
+  useDocumentTitle('Linklater – Settings');
 
   const location = useLocation();
   const navigate = useNavigate();

@@ -84,7 +84,7 @@ describe('StumblePage sets document title', () => {
     renderStumblePage();
 
     await waitFor(() => {
-      expect(document.title).toBe('Stumble — Linklater');
+      expect(document.title).toBe('Linklater – Stumble');
     });
   });
 });
@@ -157,7 +157,7 @@ describe('StumblePage error path', () => {
     expect(
       screen.getByRole('button', { name: /try another link/i }),
     ).toBeInTheDocument();
-    expect(document.title).toBe('Stumble error — Linklater');
+    expect(document.title).toBe('Linklater – Stumble error');
   });
 
   it('retries the API call when the retry button is clicked', async () => {

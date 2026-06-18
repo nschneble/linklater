@@ -68,8 +68,8 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
 
   useDocumentTitle(
     view.filter === 'unread'
-      ? 'Your links — Linklater'
-      : 'Read links — Linklater',
+      ? 'Linklater – Your links'
+      : 'Linklater – Read links',
   );
 
   const dialogReference = useRef<HTMLDivElement>(null);
