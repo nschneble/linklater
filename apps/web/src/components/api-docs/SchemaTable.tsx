@@ -14,9 +14,12 @@ import type { OpenAPIV3 } from 'openapi-types';
  * deeper shows a text note. An empty schema renders a text fallback rather
  * than an empty table (CONSTRAINT T5).
  *
- * Text + gridlines consume the `--mount-text` / `--mount-border` bundle tokens
- * (CONSTRAINT T6) — brand literals when logged out, the active theme when
- * logged in.
+ * Reads with horizontal rules only (no per-cell box grid) plus a text
+ * hierarchy: column headers and each property NAME (the row header) use the
+ * primary `--mount-text`, while the secondary data cells (type, required,
+ * description) use the dimmer `--mount-text`'s sibling `--mount-alt-text`. All
+ * consume bundle tokens (CONSTRAINT T6) — brand literals when logged out, the
+ * active theme when logged in.
  */
 
 interface SchemaTableProps {
@@ -28,8 +31,14 @@ interface SchemaTableProps {
   depth?: number;
 }
 
-const CELL_CLASS =
-  'px-3 py-2 border border-[var(--mount-border)] text-[var(--mount-text)] text-sm align-top';
+/** Shared row-edge: a single bottom rule, generous padding, top-aligned. */
+const CELL_BASE =
+  'px-3 py-2.5 border-b border-[var(--mount-border)] text-sm align-top';
+/** Column header + property-name (row header): primary text, scannable anchor. */
+const HEADER_CELL = `${CELL_BASE} text-[var(--mount-text)] font-semibold`;
+const NAME_CELL = `${CELL_BASE} text-[var(--mount-text)] font-mono font-normal`;
+/** Secondary data cells: dimmer alt text so the name column reads as the anchor. */
+const DATA_CELL = `${CELL_BASE} text-[var(--mount-alt-text)]`;
 
 export default function SchemaTable({
   caption,
@@ -47,22 +56,22 @@ export default function SchemaTable({
   }
 
   return (
-    <table className="w-full border border-[var(--mount-border)] border-collapse text-left">
+    <table className="w-full border-collapse text-left">
       <caption className="pb-2 text-[var(--mount-text)] text-sm font-semibold text-left">
         {caption}
       </caption>
       <thead>
         <tr>
-          <th scope="col" className={`${CELL_CLASS} font-semibold`}>
+          <th scope="col" className={HEADER_CELL}>
             Property
           </th>
-          <th scope="col" className={`${CELL_CLASS} font-semibold`}>
+          <th scope="col" className={HEADER_CELL}>
             Type
           </th>
-          <th scope="col" className={`${CELL_CLASS} font-semibold`}>
+          <th scope="col" className={HEADER_CELL}>
             Required
           </th>
-          <th scope="col" className={`${CELL_CLASS} font-semibold`}>
+          <th scope="col" className={HEADER_CELL}>
             Description
           </th>
         </tr>
@@ -86,28 +95,36 @@ function SchemaRowCells({ row, depth }: SchemaRowCellsProps) {
   return (
     <>
       <tr>
-        <th scope="row" className={`${CELL_CLASS} font-mono font-normal`}>
+        <th scope="row" className={NAME_CELL}>
           {row.name}
         </th>
-        <td className={`${CELL_CLASS} font-mono`}>{row.typeLabel}</td>
-        <td className={CELL_CLASS}>{row.required ? 'Required' : 'Optional'}</td>
-        <td className={CELL_CLASS}>{row.description ?? ''}</td>
+        <td className={`${DATA_CELL} font-mono`}>{row.typeLabel}</td>
+        <td className={DATA_CELL}>{row.required ? 'Required' : 'Optional'}</td>
+        <td className={DATA_CELL}>{row.description ?? ''}</td>
       </tr>
       {row.nested && row.nested.kind === 'note' && (
         <tr>
-          <td colSpan={4} className={CELL_CLASS}>
+          <td colSpan={4} className={DATA_CELL}>
             Nested object — see full schema.
           </td>
         </tr>
       )}
       {row.nested && row.nested.kind !== 'note' && (
         <tr>
-          <td colSpan={4} className={CELL_CLASS}>
-            <SchemaTable
-              caption={row.nested.label}
-              schema={row.nested.schema}
-              depth={depth + 1}
-            />
+          {/*
+           * The nested sub-table sits in a full-width cell. With the per-cell
+           * grid gone, a left rule + inset visually contains it as a child of
+           * this row rather than letting it merge into the parent rows; the
+           * child table's own <caption> is the AT-side anchor.
+           */}
+          <td colSpan={4} className={`${DATA_CELL} pl-3`}>
+            <div className="pl-3 border-l-2 border-[var(--mount-border)]">
+              <SchemaTable
+                caption={row.nested.label}
+                schema={row.nested.schema}
+                depth={depth + 1}
+              />
+            </div>
           </td>
         </tr>
       )}

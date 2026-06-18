@@ -151,7 +151,7 @@ function Reference({
       >
         Skip to endpoint details
       </button>
-      <div className="grid grid-cols-1 md:grid-cols-[14rem_minmax(0,1fr)] gap-6 md:gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-[16rem_minmax(0,1fr)] gap-6 md:gap-10">
         <EndpointNav
           endpoints={api.endpoints}
           selectedSlug={selectedSlug}
@@ -167,6 +167,7 @@ function Reference({
             <EndpointDetail
               key={selectedSlug}
               endpoint={selectedEndpoint}
+              loggedIn={loggedIn}
               serverOrigin={api.serverOrigin}
               token={token}
               tokenLoading={tokenLoading}

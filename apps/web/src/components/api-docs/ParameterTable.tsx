@@ -13,8 +13,11 @@ import type { NormalizedParameter } from '../../lib/openapi';
  * <SchemaTable> (it adds an "In" column for path vs query and has no nested
  * rows), which is why this is a focused sibling rather than a parameterized
  * SchemaTable. The Type column reuses the shared `describeType` helper so type
- * labels read identically across both tables. Colors consume `--mount-*`
- * bundle tokens (brand literals when logged out, active theme when logged in).
+ * labels read identically across both tables. It mirrors SchemaTable's
+ * horizontal-rule styling + text hierarchy: column headers and each parameter
+ * NAME use the primary `--mount-text`; the secondary data cells use the dimmer
+ * `--mount-alt-text`. All consume `--mount-*` bundle tokens (brand literals
+ * when logged out, active theme when logged in).
  */
 
 interface ParameterTableProps {
@@ -24,33 +27,39 @@ interface ParameterTableProps {
   parameters: NormalizedParameter[];
 }
 
-const CELL_CLASS =
-  'px-3 py-2 border border-[var(--mount-border)] text-[var(--mount-text)] text-sm align-top';
+/** Shared row-edge: a single bottom rule, generous padding, top-aligned. */
+const CELL_BASE =
+  'px-3 py-2.5 border-b border-[var(--mount-border)] text-sm align-top';
+/** Column header + parameter-name (row header): primary text, scannable anchor. */
+const HEADER_CELL = `${CELL_BASE} text-[var(--mount-text)] font-semibold`;
+const NAME_CELL = `${CELL_BASE} text-[var(--mount-text)] font-mono font-normal`;
+/** Secondary data cells: dimmer alt text so the name column reads as the anchor. */
+const DATA_CELL = `${CELL_BASE} text-[var(--mount-alt-text)]`;
 
 export default function ParameterTable({
   caption,
   parameters,
 }: ParameterTableProps) {
   return (
-    <table className="w-full border border-[var(--mount-border)] border-collapse text-left">
+    <table className="w-full border-collapse text-left">
       <caption className="pb-2 text-[var(--mount-text)] text-sm font-semibold text-left">
         {caption}
       </caption>
       <thead>
         <tr>
-          <th scope="col" className={`${CELL_CLASS} font-semibold`}>
+          <th scope="col" className={HEADER_CELL}>
             Parameter
           </th>
-          <th scope="col" className={`${CELL_CLASS} font-semibold`}>
+          <th scope="col" className={HEADER_CELL}>
             In
           </th>
-          <th scope="col" className={`${CELL_CLASS} font-semibold`}>
+          <th scope="col" className={HEADER_CELL}>
             Type
           </th>
-          <th scope="col" className={`${CELL_CLASS} font-semibold`}>
+          <th scope="col" className={HEADER_CELL}>
             Required
           </th>
-          <th scope="col" className={`${CELL_CLASS} font-semibold`}>
+          <th scope="col" className={HEADER_CELL}>
             Description
           </th>
         </tr>
@@ -58,17 +67,17 @@ export default function ParameterTable({
       <tbody>
         {parameters.map((parameter) => (
           <tr key={`${parameter.location}-${parameter.name}`}>
-            <th scope="row" className={`${CELL_CLASS} font-mono font-normal`}>
+            <th scope="row" className={NAME_CELL}>
               {parameter.name}
             </th>
-            <td className={CELL_CLASS}>{parameter.location}</td>
-            <td className={`${CELL_CLASS} font-mono`}>
+            <td className={DATA_CELL}>{parameter.location}</td>
+            <td className={`${DATA_CELL} font-mono`}>
               {describeType(parameter.schema)}
             </td>
-            <td className={CELL_CLASS}>
+            <td className={DATA_CELL}>
               {parameter.required ? 'Required' : 'Optional'}
             </td>
-            <td className={CELL_CLASS}>{parameter.description ?? ''}</td>
+            <td className={DATA_CELL}>{parameter.description ?? ''}</td>
           </tr>
         ))}
       </tbody>

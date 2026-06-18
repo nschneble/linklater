@@ -75,9 +75,9 @@ function mockAuth(user: User | null) {
 
 function renderApiDocs() {
   return render(
-    <MemoryRouter initialEntries={['/settings/api']}>
+    <MemoryRouter initialEntries={['/docs']}>
       <Routes>
-        <Route path="/settings/api" element={<ApiDocsView />} />
+        <Route path="/docs" element={<ApiDocsView />} />
         <Route path="/" element={<div>home stub</div>} />
         <Route path="/settings" element={<LocationStateProbe />} />
       </Routes>
@@ -191,15 +191,27 @@ describe('ApiDocsView a11y contract', () => {
     expect(focusables[0]).toHaveAttribute('href', '#api-docs');
   });
 
-  it('exposes a labelled <section> region that the skip link targets', () => {
+  it('exposes the labelled <main> landmark that the skip link targets', () => {
     renderApiDocs();
 
-    const region = screen.getByRole('region', { name: 'API documentation' });
-    expect(region).toBeInTheDocument();
-    expect(region).toHaveAttribute('id', 'api-docs');
+    const main = screen.getByRole('main', { name: 'API documentation' });
+    expect(main).toBeInTheDocument();
+    expect(main).toHaveAttribute('id', 'api-docs');
   });
 
-  it('renders two nav links with clean accessible names (no arrow leakage)', () => {
+  it('shows only the back link when logged out (no token management)', () => {
+    mockAuth(null);
+    renderApiDocs();
+
+    const backLink = screen.getByRole('link', { name: 'Linklater' });
+    expect(backLink).toHaveAttribute('href', '/');
+    expect(
+      screen.queryByRole('link', { name: 'Manage tokens' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('adds the "Manage tokens" link with a clean name when logged in', () => {
+    mockAuth(SOME_USER);
     renderApiDocs();
 
     const backLink = screen.getByRole('link', { name: 'Linklater' });
@@ -211,6 +223,7 @@ describe('ApiDocsView a11y contract', () => {
 
   it('passes scrollTo:integrations through router state to /settings', async () => {
     const user = userEvent.setup();
+    mockAuth(SOME_USER);
     renderApiDocs();
 
     const tokensLink = screen.getByRole('link', { name: 'Manage tokens' });
@@ -248,24 +261,24 @@ describe('ApiDocsView a11y contract', () => {
     });
     expect(heading).toHaveAttribute('id', 'api-docs-reference-heading');
 
-    const region = screen.getByRole('region', { name: 'API documentation' });
-    expect(region).toHaveAttribute(
+    const main = screen.getByRole('main', { name: 'API documentation' });
+    expect(main).toHaveAttribute(
       'aria-labelledby',
       'api-docs-reference-heading',
     );
   });
 
-  it('renders the endpoint nav inside the labelled api-docs region', async () => {
+  it('renders the endpoint nav inside the labelled api-docs main', async () => {
     fetchOpenApiMock.mockResolvedValue(linksApi);
     renderApiDocs();
 
     const nav = await screen.findByRole('navigation', {
       name: 'API endpoints',
     });
-    const section = nav.closest('section');
-    expect(section).not.toBeNull();
-    expect(section).toHaveAttribute('id', 'api-docs');
-    expect(section).toHaveAttribute(
+    const main = nav.closest('main');
+    expect(main).not.toBeNull();
+    expect(main).toHaveAttribute('id', 'api-docs');
+    expect(main).toHaveAttribute(
       'aria-labelledby',
       'api-docs-reference-heading',
     );

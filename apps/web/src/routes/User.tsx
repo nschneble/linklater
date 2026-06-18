@@ -1,34 +1,10 @@
 import AppShell from '../AppShell';
-import { lazy, Suspense } from 'react';
 import { Navigate, Route } from 'react-router-dom';
 import NotFoundView from '../components/errors/NotFoundView';
 import StumblePage from '../components/stumble/StumblePage';
 
-// ApiDocsView is lazy-loaded because the custom docs UI plus the OpenAPI
-// parse layer form a self-contained chunk only /settings/api visitors need;
-// keeping it out of the main bundle (which no longer carries the retired
-// ~300KB Scalar embed) means everyone else never downloads it.
-const ApiDocsView = lazy(() => import('../components/api-docs'));
-
 function UnreadRedirect() {
   return <Navigate to="/unread" replace />;
-}
-
-function ApiDocsRoute() {
-  return (
-    <Suspense
-      fallback={
-        <div
-          aria-live="polite"
-          className="flex items-center justify-center min-h-screen bg-hit-man text-dazed text-sm select-none"
-        >
-          Loading API docs…
-        </div>
-      }
-    >
-      <ApiDocsView />
-    </Suspense>
-  );
 }
 
 export function userRoutes() {
@@ -47,13 +23,9 @@ export function userRoutes() {
       <Route key={key} path={`/${key}`} element={<AppShell />} />
     )),
 
-    // `/settings/api` is a brand-chrome page (not the user-theme app
-    // shell), so it's a standalone route alongside `/stumble`.
-    <Route
-      key="settings-api"
-      path="/settings/api"
-      element={<ApiDocsRoute />}
-    />,
+    // The API docs live at the PUBLIC `/docs` route (see `Common.tsx`), so a
+    // logged-out visitor reaches the same page; nothing API-docs-specific lives
+    // in the logged-in route table.
     <Route key="stumble" path="/stumble" element={<StumblePage />} />,
     <Route key="not-found" path="*" element={<NotFoundView />} />,
   ];

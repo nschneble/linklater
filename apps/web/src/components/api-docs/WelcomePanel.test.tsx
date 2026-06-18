@@ -36,10 +36,22 @@ describe('WelcomePanel', () => {
     ).toBeInTheDocument();
   });
 
-  it('prompts a logged-out user to log in for a key', () => {
+  it('offers a signed-in user the live "try it live" affordance', () => {
+    render(<WelcomePanel serverOrigin="" loggedIn />);
+    expect(screen.getByText('Try it live')).toBeInTheDocument();
+  });
+
+  it('gives a logged-out user static token guidance, not a wired-in key', () => {
     render(<WelcomePanel serverOrigin="" loggedIn={false} />);
     expect(
-      screen.getByText(/a key is provisioned for you automatically/i),
+      screen.getByText(/create a personal access token under settings/i),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/wired in/i)).not.toBeInTheDocument();
+  });
+
+  it('hides "try it live" from a logged-out user, showing a reference note', () => {
+    render(<WelcomePanel serverOrigin="" loggedIn={false} />);
+    expect(screen.queryByText('Try it live')).not.toBeInTheDocument();
+    expect(screen.getByText('Reference')).toBeInTheDocument();
   });
 });

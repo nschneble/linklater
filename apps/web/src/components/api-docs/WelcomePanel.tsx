@@ -30,6 +30,9 @@ export default function WelcomePanel({
   const baseUrl =
     serverOrigin === '' ? `${window.location.origin}` : serverOrigin;
 
+  // Logged OUT, the page is plain public documentation: no wired-in token, no
+  // "try it live". Logged IN, the welcome panel describes the key that's
+  // already wired into every form and the live "try it out" affordance.
   const points: OverviewPoint[] = [
     {
       icon: 'fa-link',
@@ -41,14 +44,25 @@ export default function WelcomePanel({
       term: 'Authentication',
       detail: loggedIn
         ? 'Your personal key is already wired into every form below — just hit Send. Real requests use Bearer auth: Authorization: Bearer ltk_…'
-        : 'Requests use Bearer auth: Authorization: Bearer ltk_… Log in and a key is provisioned for you automatically, no copy-paste required.',
+        : 'Create a personal access token under Settings → API Tokens, then send it on every request as a Bearer token: Authorization: Bearer ltk_…',
     },
-    {
-      icon: 'fa-hand-pointer',
-      term: 'Try it live',
-      detail:
-        'Pick an endpoint on the left to read its parameters and responses — then fire a real request right from the page and watch it come back.',
-    },
+    ...(loggedIn
+      ? [
+          {
+            icon: 'fa-hand-pointer',
+            term: 'Try it live',
+            detail:
+              'Pick an endpoint on the left to read its parameters and responses — then fire a real request right from the page and watch it come back.',
+          },
+        ]
+      : [
+          {
+            icon: 'fa-book-open',
+            term: 'Reference',
+            detail:
+              'Pick an endpoint on the left to read its full path, parameters, and responses, with a ready-to-copy cURL example for each.',
+          },
+        ]),
   ];
 
   return (

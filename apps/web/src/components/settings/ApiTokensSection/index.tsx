@@ -109,7 +109,7 @@ export default function ApiTokensSection() {
 
       <Link
         className="inline-block text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] text-xs underline underline-offset-3 transition-transform active:scale-[0.96]"
-        to="/settings/api"
+        to="/docs"
         target="_blank"
         rel="noreferrer"
         aria-label="View the API documentation in a new tab"

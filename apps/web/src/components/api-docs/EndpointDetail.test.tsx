@@ -26,12 +26,26 @@ function makeEndpoint(
   };
 }
 
-function renderDetail(endpoint = makeEndpoint(), onStatusMessage = vi.fn()) {
+interface RenderOptions {
+  loggedIn?: boolean;
+  serverOrigin?: string;
+  onStatusMessage?: ReturnType<typeof vi.fn>;
+}
+
+function renderDetail(
+  endpoint = makeEndpoint(),
+  {
+    loggedIn = true,
+    serverOrigin = '',
+    onStatusMessage = vi.fn(),
+  }: RenderOptions = {},
+) {
   return render(
     <MemoryRouter>
       <EndpointDetail
         endpoint={endpoint}
-        serverOrigin=""
+        loggedIn={loggedIn}
+        serverOrigin={serverOrigin}
         token=""
         tokenLoading={false}
         tokenError={null}
@@ -86,18 +100,41 @@ describe('EndpointDetail', () => {
     expect(screen.getByText(/No response body\./i)).toBeInTheDocument();
   });
 
-  it('embeds the try-it-out form', () => {
-    renderDetail();
+  it('shows the full request URL (origin + path), not a bare path', () => {
+    renderDetail(makeEndpoint(), { serverOrigin: 'https://api.test' });
+    expect(screen.getByText('https://api.test/links')).toBeInTheDocument();
+  });
+
+  it('renders a copy-ready cURL example in both auth states', () => {
+    renderDetail(makeEndpoint(), { loggedIn: false });
+    expect(screen.getByText('Example request')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /copy curl command/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('embeds the try-it-out form when logged in', () => {
+    renderDetail(makeEndpoint(), { loggedIn: true });
     expect(
       screen.getByRole('button', { name: /send request/i }),
     ).toBeInTheDocument();
   });
 
+  it('omits the try-it-out form when logged out', () => {
+    renderDetail(makeEndpoint(), { loggedIn: false });
+    expect(
+      screen.queryByRole('button', { name: /send request/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it('reports the form status upward instead of rendering an inline announcer', () => {
     const onStatusMessage = vi.fn();
-    renderDetail(makeEndpoint(), onStatusMessage);
-    // Hoisted: the detail does not render its own status region.
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    renderDetail(makeEndpoint(), { loggedIn: true, onStatusMessage });
+    // The form hoists its status upward; the only status node present is
+    // CurlExample's (empty) copy-confirmation region — never a form announcer.
+    screen
+      .queryAllByRole('status')
+      .forEach((node) => expect(node).toBeEmptyDOMElement());
     expect(onStatusMessage).toHaveBeenCalled();
   });
 });

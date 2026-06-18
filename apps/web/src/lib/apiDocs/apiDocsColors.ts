@@ -12,20 +12,43 @@
  * Every literal is verified against BOTH chrome backgrounds (`#0a0812` base,
  * `#14103a` gradient top).
  *
+ * Cards carry a subtle translucent fill (`MOUNT_BG`, white @ 5%) so they
+ * separate from the navy page rather than floating borderless. Worst case for
+ * light-text-on-card is the fill composited over the LIGHTER navy stop
+ * (#14103a → card ≈ #201c44); the figures below are measured there (and the
+ * border is also checked against the page navy on its OUTER side).
+ *
  * Verified contrast (culori `wcagContrast`, June 2026):
- *   TEXT      #eeeede  16.96 / 15.38  (SC 1.4.3 text, ≥ 4.5:1)
- *   BORDER    #7d6ec0   4.60 /  4.17  (SC 1.4.11 non-text, ≥ 3:1)
+ *   TEXT      #eeeede  13.67 (on #201c44 card) / 15.38 (page)  (SC 1.4.3, ≥ 4.5:1)
+ *   ALT_TEXT  #c4bce4   8.69 (on #201c44 card)               (SC 1.4.3, ≥ 4.5:1)
+ *   BORDER    #7d6ec0   3.71 (card inner) / 4.17–4.60 (page outer)  (SC 1.4.11, ≥ 3:1)
  *   FOCUS     #eeeede  16.96 / 15.38
  *   ERROR_TEXT    #fca5a5  10.47 /  9.50  (red-300; red-500 #ef4444 FAILS text)
  *   ERROR_ACCENT  #ef4444   5.28 /  4.79  (border/icon only, ≥ 3:1)
  *   SUCCESS_TEXT  #86efac  14.16 / 12.84  (green-300; green-500 fails text)
  *   SUCCESS_ACCENT #22c55e  8.72 /  7.91  (border/icon only, ≥ 3:1)
+ *   MethodBadge borders on #201c44 card (SC 1.4.11, ≥ 3:1): GET #34d399 8.33,
+ *   POST #38bdf8 7.48, PUT/PATCH #fbbf24 9.60, DELETE #f87171 5.79, default 3.71
  */
 
 import type { CSSProperties } from 'react';
 
 /** Primary body + label text, and the focus ring. */
 export const TEXT = '#eeeede';
+
+/**
+ * Secondary text (descriptions, table data cells). A dimmer lavender than the
+ * near-white primary so the two read as a hierarchy rather than one flat tone.
+ * Clears SC 1.4.3 (≥ 4.5:1) on the lifted card (~8.69:1).
+ */
+export const ALT_TEXT = '#c4bce4';
+
+/**
+ * Card surface fill — white at 5% over the navy chrome. Lifts cards off the
+ * page so they read as panels; keeps the border ≥ 3:1 on its inner side and
+ * text ≥ 4.5:1 (see the contrast table above).
+ */
+export const MOUNT_BG = 'rgba(255, 255, 255, 0.05)';
 
 /** Input + region border, and decorative chrome. Clears SC 1.4.11. */
 export const BORDER = '#7d6ec0';
@@ -72,10 +95,10 @@ export const BRAND_CHROME_STYLE = {
   '--base-border': BORDER,
   '--base-highlight': '#ff9170',
   '--focus-ring': FOCUS_RING,
-  '--mount-bg': 'transparent',
+  '--mount-bg': MOUNT_BG,
   '--mount-border': BORDER,
   '--mount-text': TEXT,
-  '--mount-alt-text': TEXT,
+  '--mount-alt-text': ALT_TEXT,
   '--mount-input-bg': 'transparent',
   '--alert-bg': 'transparent',
   '--alert-text': ERROR_TEXT,

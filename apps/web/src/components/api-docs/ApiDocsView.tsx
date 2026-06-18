@@ -60,17 +60,21 @@ export default function ApiDocsView() {
 
       <header className="max-w-6xl mx-auto px-6 sm:px-8 pt-12 sm:pt-16 pb-8 sm:pb-10 space-y-6 select-none">
         {/*
-         * Back/forward navigation pair. ONE <nav> landmark wraps both links
-         * so AT users land on a single "API docs" region with two items, not
-         * two unlabeled landmarks. Sits above the h1 in DOM order so a Tab
-         * from the skip link visits the back-affordance before page identity
-         * (SC 2.4.3). Plain text (not button-styled) keeps the h1 as focal
-         * point. The "Manage tokens" link returns to /settings via router
-         * state (NOT a #fragment), because SettingsView reads `scrollTo`
-         * from `location.state` to activate + scroll its sections; a plain
-         * hash would scroll the browser but never wake the activation
-         * machinery. The state convention matches WelcomeModal's "Go to
-         * bookmarks" link (see SettingsView lines 109-121).
+         * Page navigation. ONE <nav> landmark so AT users land on a single
+         * "API docs" region rather than scattered unlabeled landmarks. Sits
+         * above the h1 in DOM order so a Tab from the skip link visits the
+         * back-affordance before page identity (SC 2.4.3). Plain text (not
+         * button-styled) keeps the h1 as focal point.
+         *
+         * The "← Linklater" back link is ALWAYS present. The "Manage tokens →"
+         * link is logged-IN only (the docs are a public page; an anonymous
+         * visitor has no tokens to manage), so logged-out the nav holds a
+         * single link — `justify-between` leaves it at flex-start (upper-left).
+         * "Manage tokens" returns to /settings via router state (NOT a
+         * #fragment), because SettingsView reads `scrollTo` from
+         * `location.state` to activate + scroll its sections; a plain hash
+         * would scroll the browser but never wake the activation machinery.
+         * The state convention matches WelcomeModal's "Go to bookmarks" link.
          */}
         <nav
           aria-label="API docs"
@@ -89,13 +93,15 @@ export default function ApiDocsView() {
           >
             <span aria-hidden="true">&larr;&nbsp;</span>Linklater
           </Link>
-          <Link
-            to="/settings"
-            state={{ scrollTo: 'integrations' }}
-            className="text-[var(--base-text)] hover:text-[var(--base-highlight)] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--base-bg)] focus-visible:rounded"
-          >
-            Manage tokens<span aria-hidden="true">&nbsp;&rarr;</span>
-          </Link>
+          {!isBrand && (
+            <Link
+              to="/settings"
+              state={{ scrollTo: 'integrations' }}
+              className="text-[var(--base-text)] hover:text-[var(--base-highlight)] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--base-bg)] focus-visible:rounded"
+            >
+              Manage tokens<span aria-hidden="true">&nbsp;&rarr;</span>
+            </Link>
+          )}
         </nav>
         <div className="flex flex-col gap-3">
           {/*
@@ -119,7 +125,12 @@ export default function ApiDocsView() {
         </div>
       </header>
 
-      <section
+      {/*
+       * The primary content is the page's <main> landmark (the skip link
+       * targets it). As a standalone public route this page owns its own
+       * <main> rather than borrowing the app shell's.
+       */}
+      <main
         aria-labelledby="api-docs-reference-heading"
         id="api-docs"
         className="max-w-7xl mx-auto px-4 sm:px-6 pb-16 select-none"
@@ -136,7 +147,7 @@ export default function ApiDocsView() {
          * theme's own `--mount-border`).
          */}
         <ApiReference apiBaseUrl={API_BASE_URL} />
-      </section>
+      </main>
     </div>
   );
 }

@@ -9,9 +9,9 @@ import { type AppView } from './lib/navigation';
  * Maps the current URL pathname to the active `AppView`.
  *
  * `/settings` renders the settings view; sections within it are reached by
- * scrolling or the in-page sidebar nav, not by URL. `/settings/api` is a
- * standalone brand-chrome route handled outside `AppShell` entirely, so it
- * does not appear here.
+ * scrolling or the in-page sidebar nav, not by URL. The API docs are a
+ * standalone public route (`/docs`) handled outside `AppShell` entirely, so
+ * they do not appear here.
  */
 function viewFromPath(pathname: string): AppView {
   if (pathname === '/settings') return 'settings';
