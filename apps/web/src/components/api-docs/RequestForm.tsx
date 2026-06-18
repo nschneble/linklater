@@ -1,12 +1,10 @@
 import RequestBodyEditor from './RequestBodyEditor';
 import RequestField from './RequestField';
 import ResponsePanel from './ResponsePanel';
-import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { paramKey, useRequestForm } from '../../lib/apiDocs/useRequestForm';
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import type { NormalizedEndpoint } from '../../lib/openapi';
-import type { ReactNode } from 'react';
 
 /**
  * Interactive "try it out" form rendered below an endpoint's read-only tables
@@ -14,11 +12,15 @@ import type { ReactNode } from 'react';
  * the response; a logged-out user sees the same form in an explained, inert
  * state (CONSTRAINT §6).
  *
- * The persistent sr-only `role="status"` announcer lives HERE but is portaled
- * to `statusContainer` — a node `EndpointCard` mounts OUTSIDE the collapsible
- * panel (CONSTRAINT §5/§7) — so in-flight announcements survive a collapse.
- * When no container is supplied (unit tests) it renders inline. All state logic
- * lives in `useRequestForm`; this component owns only JSX + the submit focus move.
+ * Request status (Sending… / the result) reaches assistive tech through a
+ * `role="status"` live region. When `onStatusMessage` is supplied (the
+ * master-detail container), the form reports its status UP to a single
+ * page-level region that lives OUTSIDE the swapping detail panel — so an
+ * in-flight announcement is not cut off when the user selects another endpoint
+ * and this form unmounts. With no callback (unit tests), the form renders its
+ * own inline announcer instead. All state logic lives in `useRequestForm`;
+ * this component owns only JSX, the upward status report, and the submit focus
+ * move.
  */
 
 interface RequestFormProps {
@@ -34,11 +36,11 @@ interface RequestFormProps {
   /** Token-fetch error (logged-in path), or null. */
   error: string | null;
   /**
-   * Node OUTSIDE the collapsible panel that the sr-only `role="status"`
-   * announcer portals into so it survives a panel collapse (§5/§7). Omit to
-   * render the announcer inline (unit tests).
+   * Reports the request-status message UP to a persistent page-level live
+   * region that survives this form unmounting on an endpoint swap (§5/§7).
+   * Omit to render the announcer inline (unit tests).
    */
-  statusContainer?: HTMLElement | null;
+  onStatusMessage?: (message: string) => void;
 }
 
 export default function RequestForm({
@@ -48,7 +50,7 @@ export default function RequestForm({
   token,
   loading,
   error,
-  statusContainer,
+  onStatusMessage,
 }: RequestFormProps) {
   const inert = loading || token === '' || error !== null;
   const lockedId = useId();
@@ -61,6 +63,15 @@ export default function RequestForm({
     inert,
   });
 
+  // Push the status upward (when hoisted) so the page-level region — not this
+  // unmount-on-swap form — owns the announcement. Reading the latest callback
+  // from a ref keeps a fresh inline arrow prop from re-firing the effect.
+  const onStatusMessageRef = useRef(onStatusMessage);
+  onStatusMessageRef.current = onStatusMessage;
+  useEffect(() => {
+    onStatusMessageRef.current?.(form.statusMessage);
+  }, [form.statusMessage]);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const invalidFieldId = await form.submit();
@@ -71,12 +82,6 @@ export default function RequestForm({
 
   const groupDescribedBy =
     token === '' && !loading && error === null ? lockedId : undefined;
-
-  const announcer: ReactNode = (
-    <p aria-live="polite" role="status" className="sr-only">
-      {form.statusMessage}
-    </p>
-  );
 
   return (
     // `noValidate` hands validation to our JS (CONSTRAINT §3): native
@@ -89,7 +94,17 @@ export default function RequestForm({
       aria-busy={form.phase === 'sending'}
       className="mt-4"
     >
-      {statusContainer ? createPortal(announcer, statusContainer) : announcer}
+      {/*
+       * Inline announcer ONLY when the status isn't hoisted. When
+       * `onStatusMessage` is supplied the container owns a single persistent
+       * region (so it survives this form unmounting on a swap); a second region
+       * here would double-announce.
+       */}
+      {onStatusMessage === undefined && (
+        <p aria-live="polite" role="status" className="sr-only">
+          {form.statusMessage}
+        </p>
+      )}
 
       {error !== null && (
         <p

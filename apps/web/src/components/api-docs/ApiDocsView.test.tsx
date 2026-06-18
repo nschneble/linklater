@@ -255,12 +255,14 @@ describe('ApiDocsView a11y contract', () => {
     );
   });
 
-  it('renders the endpoint list inside the labelled api-docs region', async () => {
+  it('renders the endpoint nav inside the labelled api-docs region', async () => {
     fetchOpenApiMock.mockResolvedValue(linksApi);
     renderApiDocs();
 
-    const list = await screen.findByRole('list');
-    const section = list.closest('section');
+    const nav = await screen.findByRole('navigation', {
+      name: 'API endpoints',
+    });
+    const section = nav.closest('section');
     expect(section).not.toBeNull();
     expect(section).toHaveAttribute('id', 'api-docs');
     expect(section).toHaveAttribute(

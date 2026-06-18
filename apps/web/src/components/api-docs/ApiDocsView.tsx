@@ -1,4 +1,4 @@
-import EndpointList from './EndpointList';
+import ApiReference from './ApiReference';
 import { BRAND_CHROME_STYLE } from '../../lib/apiDocs/apiDocsColors';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
@@ -128,20 +128,14 @@ export default function ApiDocsView() {
           API documentation
         </h2>
         {/*
-         * Outer list border consumes `--mount-border` (§2: the list is the
-         * card surface). In the BRAND branch this pins to #7d6ec0, which clears
-         * SC 1.4.11 vs the bg-hit-man radial (4.17:1 vs the gradient top
-         * #14103a, 4.60:1 vs the base #0a0812); in the THEMED branch the
-         * theme's own `--mount-border` carries the contract, mechanized by the
-         * card-style-border-vs-page-base-bg test in bundles.contrast.test.ts.
-         *
-         * `animate-fade-in-up` carries `motion-reduce:animate-none` so the
-         * enter animation collapses to instant for users who prefer reduced
-         * motion (CONSTRAINT M1).
+         * The master-detail reference (endpoint nav + one swapping detail
+         * region) paints its own per-panel `--mount-*` card chrome; each
+         * panel's border carries SC 1.4.11 against the page `--base-bg`,
+         * mechanized by the card-style-border-vs-page-base-bg test in
+         * bundles.contrast.test.ts (brand pins `#7d6ec0`; themed uses the
+         * theme's own `--mount-border`).
          */}
-        <div className="overflow-hidden border border-[var(--mount-border)] rounded-2xl animate-fade-in-up motion-reduce:animate-none">
-          <EndpointList apiBaseUrl={API_BASE_URL} />
-        </div>
+        <ApiReference apiBaseUrl={API_BASE_URL} />
       </section>
     </div>
   );
