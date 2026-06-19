@@ -47,8 +47,8 @@
   --base-border: #8a7bd0;
   --base-input-bg: #1a1438;
   --base-text: #eeeede;
-  --base-subtle-text: #b8aed8;
   --base-alt-text: #bcb2dc; /* resting nav label on page navy: 8.89:1 vs #14103a top, 10.16:1 vs #0a0812 outer */
+  --base-subtle-text: #b8aed8;
   --base-highlight: #ff9170;
   --base-highlight-fg: #2a0d05;
   --base-highlight-hover: #ffb199;

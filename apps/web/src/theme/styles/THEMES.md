@@ -1,9 +1,10 @@
 # Linklater Themes
 
-There are ten themes, each with light and dark variants. Every consumer
-now paints from the bundle vocabulary (Section 2) or the universal
-`--focus-ring` slot (Section 3); the legacy flat-token surface has been
-retired in stages.
+There are ten selectable themes, each with light and dark variants, plus
+one off-book brand-chrome theme that no user can pick (Section 7). Every
+consumer now paints from the bundle vocabulary (Section 2) or the
+universal `--focus-ring` slot (Section 3); the legacy flat-token surface
+has been retired in stages.
 
 ## 1. Flat tokens (legacy, fully retired in chrome)
 
@@ -133,9 +134,10 @@ bundle it visually sits on:
   `LinksToolbar`, `StumblePage`, `StumbleEmptyView`, and the
   `PrimaryButton`s in `FailWhalePage`, `ErrorBoundary`, `NotFoundView`,
   `LinksControls`, `LinksMobileControls`, `LinkForm`). `ApiDocsView`
-  paints from the landing-page brand palette (`bg-hit-man` gradient,
-  `dazed` / `confused` / `midnight`) rather than bundle slots, and does
-  NOT use a bundle surface.
+  and `LandingPage` paint from the off-book `branding` theme (Section 7):
+  their wrappers set `data-theme='branding'` so every bundle slot
+  resolves to the marketing palette, and their inner components consume
+  bundle tokens like any other surface.
 - `surface="mount"` – inside a card (default for `IconButton`,
   `LinkButton`, and `PrimaryButton`; used by every settings-form
   `FormInput`, `AuthForm` inputs inside `AuthCard`, and most in-card
@@ -177,6 +179,26 @@ satisfy the bundle distinguishability contract without any
 `SHAPE_REDUNDANCY_WAIVERS` entries – every state-pair passes axis A
 (dE2000 ≥ 10 under all three dichromacies) or axis B (luminance gap
 ≥ 1.4×).
+
+## 7. The off-book `branding` theme
+
+`branding.css` defines an eleventh `data-theme` value, `branding`, that is
+deliberately NOT one of the ten selectable themes. It is absent from the
+`BaseTheme` union, `THEMES`, `VALID_BASE_THEME_IDS` (`constants.ts`), and
+the API `VALID_THEMES` list, so no user can ever activate it and it never
+appears in the theme editor. It paints only where a wrapper sets
+`data-theme='branding'` directly: the marketing `LandingPage`, the
+logged-out API-docs page (`ApiDocsView`), and the `Common` fallback
+wrappers. When a user is logged in, their active theme overrides it.
+
+Do NOT "fix" branding by registering it in the lists above — that would
+make it selectable and break the invisibility contract. It is dark-locked
+(a single `[data-theme='branding']` block, no `[data-mode]` qualifier),
+since the marketing chrome is navy-on-dark regardless of OS/app mode.
+Its palette is still a full bundle vocabulary and is WCAG-verified in
+`bundles.contrast.test.ts` as a mode-independent fixture. See the header
+comment in `branding.css` for the full rationale (border-hue choice,
+omitted `--page-gradient-*` slots, focus-ring pin).
 
 ## `swatchIcon` field
 

@@ -1,8 +1,13 @@
 /**
  * All valid theme identifiers accepted by the API. Each theme corresponds to
  * a Richard Linklater film. Adding a new theme requires updating this list,
- * the front-end `THEMES` array in `ThemeContext.tsx`, and adding the matching
- * CSS variable definitions in `apps/web/src/theme/styles/`.
+ * the front-end `THEMES` array and `BaseTheme` union in
+ * `apps/web/src/theme/constants.ts`, and adding the matching CSS variable
+ * definitions in `apps/web/src/theme/styles/`.
+ *
+ * The off-book `branding` theme (branding.css) is deliberately absent here by
+ * design — accepting it would let a client persist a user-invisible theme and
+ * break its invisibility contract. See THEMES.md Section 7.
  */
 export const VALID_THEMES = [
   'apollo-10-1-2',

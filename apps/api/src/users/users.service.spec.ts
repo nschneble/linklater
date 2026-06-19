@@ -213,6 +213,19 @@ describe('UsersService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
+    // Invisibility contract for the OFF-BOOK `branding` theme. `branding` is a
+    // real CSS cascade (web theme/styles/branding.css) the marketing/API-docs
+    // chrome activates via `data-theme='branding'` when logged out, but it must
+    // NEVER be a persistable user theme. Unlike a random string, it is a
+    // plausible leak — a future hand could copy it into VALID_THEMES alongside
+    // the film themes. Assert the allow-list rejects it so that mistake throws.
+    it('rejects the off-book branding theme (not user-selectable)', async () => {
+      await expect(
+        service.updateMe(USER_ID, { theme: 'branding' }),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaMock.user.update).not.toHaveBeenCalled();
+    });
+
     it('throws BadRequestException for an invalid mode', async () => {
       await expect(
         service.updateMe(USER_ID, { mode: 'sepia' }),

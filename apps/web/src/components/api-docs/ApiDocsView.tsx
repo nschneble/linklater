@@ -24,8 +24,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
  *     No inline token pins, no `bg-hit-man`; `color-scheme` follows the mode.
  *
  * The child components read bundle tokens via `var(--…)` in both branches –
- * the brand branch just pins those tokens to brand literals, so one styling
- * path serves both modes.
+ * the brand branch just swaps in the `branding` cascade for those tokens, so
+ * one styling path serves both modes.
  */
 export default function ApiDocsView() {
   useDocumentTitle('Linklater – API documentation');
