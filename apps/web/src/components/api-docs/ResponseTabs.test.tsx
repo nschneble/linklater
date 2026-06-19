@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import type { NormalizedEndpoint } from '../../lib/openapi';
 
 import ResponseTabs from './ResponseTabs';
 import { endpointHeadingId } from './endpointId';
+import type { NormalizedEndpoint } from '../../lib/openapi';
 
 function makeEndpoint(
   overrides: Partial<NormalizedEndpoint> = {},
@@ -97,11 +97,24 @@ describe('ResponseTabs', () => {
     expect(
       screen.getByRole('tab', { name: '401 Unauthorized' }),
     ).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: '401 Unauthorized' })).toHaveFocus();
     await user.keyboard('{ArrowRight}');
     expect(screen.getByRole('tab', { name: '200 OK' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
+  });
+
+  it('moves selection with ArrowLeft, wrapping backward to the last tab', async () => {
+    const user = userEvent.setup();
+    render(<ResponseTabs endpoint={makeEndpoint()} />);
+    await user.tab();
+    expect(screen.getByRole('tab', { name: '200 OK' })).toHaveFocus();
+    await user.keyboard('{ArrowLeft}');
+    expect(
+      screen.getByRole('tab', { name: '401 Unauthorized' }),
+    ).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: '401 Unauthorized' })).toHaveFocus();
   });
 
   it('jumps to the last tab with End and the first with Home', async () => {
@@ -112,11 +125,13 @@ describe('ResponseTabs', () => {
     expect(
       screen.getByRole('tab', { name: '401 Unauthorized' }),
     ).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: '401 Unauthorized' })).toHaveFocus();
     await user.keyboard('{Home}');
     expect(screen.getByRole('tab', { name: '200 OK' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
+    expect(screen.getByRole('tab', { name: '200 OK' })).toHaveFocus();
   });
 
   it('keeps a single Tab stop via roving tabindex', () => {
