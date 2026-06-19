@@ -91,18 +91,13 @@ describe('EndpointDetail', () => {
       }),
     );
     expect(
-      screen.getByRole('table', { name: /path & query parameters/i }),
+      screen.getByRole('table', { name: /parameters/i }),
     ).toBeInTheDocument();
   });
 
   it('states "No response body" for a response without a schema', () => {
     renderDetail(makeEndpoint({ responses: [{ statusCode: '204' }] }));
     expect(screen.getByText(/No response body\./i)).toBeInTheDocument();
-  });
-
-  it('shows the full request URL (origin + path), not a bare path', () => {
-    renderDetail(makeEndpoint(), { serverOrigin: 'https://api.test' });
-    expect(screen.getByText('https://api.test/links')).toBeInTheDocument();
   });
 
   it('renders a copy-ready cURL example in both auth states', () => {

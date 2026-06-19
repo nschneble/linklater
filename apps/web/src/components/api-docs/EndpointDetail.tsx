@@ -98,7 +98,7 @@ export default function EndpointDetail({
               {accessibleMethod} {endpoint.path}
             </span>
             <span aria-hidden="true" className="break-all">
-              {fullUrl}
+              {endpoint.path}
             </span>
           </h3>
         </div>
@@ -117,7 +117,7 @@ export default function EndpointDetail({
       {endpoint.parameters.length > 0 && (
         <div className="mb-4">
           <ParameterTable
-            caption="Path & query parameters"
+            caption="Parameters"
             parameters={endpoint.parameters}
           />
         </div>

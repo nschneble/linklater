@@ -115,7 +115,7 @@ export default function RequestForm({
             className="fa-solid fa-circle-exclamation text-[var(--alert-highlight)]"
             aria-hidden="true"
           />
-          Couldn&rsquo;t load your API token. Reload to try again.
+          Couldn't load your API token. Reload to try again.
         </p>
       )}
 

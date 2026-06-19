@@ -62,7 +62,7 @@ export default function EndpointNav({
                   {accessibleMethod} {endpoint.path}
                 </span>
                 <span aria-hidden="true" className="min-w-0 truncate font-mono">
-                  {endpoint.path}
+                  {endpoint.path.substring(1)}
                 </span>
               </button>
             </li>

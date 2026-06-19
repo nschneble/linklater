@@ -1,4 +1,5 @@
 import ApiReference from './ApiReference';
+import MethodBadge from './MethodBadge';
 import { BRAND_CHROME_STYLE } from '../../lib/apiDocs/apiDocsColors';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
@@ -104,12 +105,6 @@ export default function ApiDocsView() {
           )}
         </nav>
         <div className="flex flex-col gap-3">
-          {/*
-           * BRAND branch keeps the marketing gradient h1 (dazed→sunrise clip).
-           * THEMED branch renders a solid `--base-text` h1 – a per-theme
-           * gradient is not part of the bundle vocabulary, and the page
-           * identity reads cleaner as solid theme text.
-           */}
           <h1
             className={
               isBrand
@@ -119,33 +114,21 @@ export default function ApiDocsView() {
           >
             Linklater API
           </h1>
-          <p className="max-w-2xl text-[var(--base-text)] text-base sm:text-lg text-pretty leading-relaxed">
-            Learn how to save, read, and delete links from your collection.
+          <p className="flex items-center gap-2 max-w-2xl text-[var(--base-text)] text-base sm:text-lg text-pretty leading-relaxed">
+            <MethodBadge method="POST" /> links now,
+            <MethodBadge method="GET" /> them later.
           </p>
         </div>
       </header>
 
-      {/*
-       * The primary content is the page's <main> landmark (the skip link
-       * targets it). As a standalone public route this page owns its own
-       * <main> rather than borrowing the app shell's.
-       */}
       <main
-        aria-labelledby="api-docs-reference-heading"
+        className="max-w-5xl mx-auto px-4 sm:px-6 pb-16 select-none"
         id="api-docs"
-        className="max-w-7xl mx-auto px-4 sm:px-6 pb-16 select-none"
+        aria-labelledby="api-docs-heading"
       >
-        <h2 className="sr-only" id="api-docs-reference-heading">
+        <h2 className="sr-only" id="api-docs-heading">
           API documentation
         </h2>
-        {/*
-         * The master-detail reference (endpoint nav + one swapping detail
-         * region) paints its own per-panel `--mount-*` card chrome; each
-         * panel's border carries SC 1.4.11 against the page `--base-bg`,
-         * mechanized by the card-style-border-vs-page-base-bg test in
-         * bundles.contrast.test.ts (brand pins `#7d6ec0`; themed uses the
-         * theme's own `--mount-border`).
-         */}
         <ApiReference apiBaseUrl={API_BASE_URL} />
       </main>
     </div>

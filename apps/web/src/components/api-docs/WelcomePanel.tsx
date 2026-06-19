@@ -44,7 +44,7 @@ export default function WelcomePanel({
       term: 'Authentication',
       detail: loggedIn
         ? 'Your personal key is already wired into every form below – just hit Send. Real requests use Bearer auth: Authorization: Bearer ltk_…'
-        : 'Create a personal access token under Settings → API Tokens, then send it on every request as a Bearer token: Authorization: Bearer ltk_…',
+        : 'A personal access token is required for every request.',
     },
     ...(loggedIn
       ? [
@@ -59,8 +59,7 @@ export default function WelcomePanel({
           {
             icon: 'fa-book-open',
             term: 'Reference',
-            detail:
-              'Pick an endpoint on the left to read its full path, parameters, and responses, with a ready-to-copy cURL example for each.',
+            detail: 'Each item describes its parameters and responses.',
           },
         ]),
   ];
@@ -70,21 +69,20 @@ export default function WelcomePanel({
       aria-labelledby={WELCOME_HEADING_ID}
       className="p-5 sm:p-6 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-2xl animate-fade-in-up motion-reduce:animate-none"
     >
-      <header className="mb-5">
+      <header className="flex flex-col gap-1 mb-6">
+        <i
+          className="fa-solid fa-rocket text-sunrise text-2xl"
+          aria-hidden="true"
+        />
         <h3
           id={WELCOME_HEADING_ID}
           tabIndex={-1}
           className="flex items-center gap-2 text-[var(--mount-text)] text-lg font-semibold text-balance focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded"
         >
-          <i
-            className="fa-solid fa-rocket text-[var(--mount-alt-text)] text-sm"
-            aria-hidden="true"
-          />
-          Save, read, and delete links – programmatically
+          Save, read, and delete links programmatically
         </h3>
-        <p className="mt-1 text-[var(--mount-alt-text)] text-sm leading-relaxed text-pretty">
-          Everything you can do in Linklater, your code can do too. Here&rsquo;s
-          the short version before you dive in.
+        <p className="text-confused text-xs leading-relaxed text-pretty">
+          Here's the short version before you dive in.
         </p>
       </header>
 
@@ -95,11 +93,9 @@ export default function WelcomePanel({
               className={`fa-solid ${point.icon} shrink-0 mt-0.5 w-4 text-center text-[var(--mount-alt-text)] text-sm`}
               aria-hidden="true"
             />
-            <div>
-              <dt className="text-[var(--mount-text)] text-sm font-semibold">
-                {point.term}
-              </dt>
-              <dd className="mt-0.5 text-[var(--mount-alt-text)] text-sm leading-relaxed text-pretty break-words">
+            <div className="flex flex-col gap-1">
+              <dt className="text-dazed text-sm font-semibold">{point.term}</dt>
+              <dd className="text-confused text-xs leading-relaxed text-pretty break-words">
                 {point.detail}
               </dd>
             </div>

@@ -259,13 +259,10 @@ describe('ApiDocsView a11y contract', () => {
       level: 2,
       name: 'API documentation',
     });
-    expect(heading).toHaveAttribute('id', 'api-docs-reference-heading');
+    expect(heading).toHaveAttribute('id', 'api-docs-heading');
 
     const main = screen.getByRole('main', { name: 'API documentation' });
-    expect(main).toHaveAttribute(
-      'aria-labelledby',
-      'api-docs-reference-heading',
-    );
+    expect(main).toHaveAttribute('aria-labelledby', 'api-docs-heading');
   });
 
   it('renders the endpoint nav inside the labelled api-docs main', async () => {
@@ -278,10 +275,7 @@ describe('ApiDocsView a11y contract', () => {
     const main = nav.closest('main');
     expect(main).not.toBeNull();
     expect(main).toHaveAttribute('id', 'api-docs');
-    expect(main).toHaveAttribute(
-      'aria-labelledby',
-      'api-docs-reference-heading',
-    );
+    expect(main).toHaveAttribute('aria-labelledby', 'api-docs-heading');
   });
 });
 

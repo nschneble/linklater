@@ -44,7 +44,7 @@ describe('WelcomePanel', () => {
   it('gives a logged-out user static token guidance, not a wired-in key', () => {
     render(<WelcomePanel serverOrigin="" loggedIn={false} />);
     expect(
-      screen.getByText(/create a personal access token under settings/i),
+      screen.getByText(/a personal access token is required/i),
     ).toBeInTheDocument();
     expect(screen.queryByText(/wired in/i)).not.toBeInTheDocument();
   });
