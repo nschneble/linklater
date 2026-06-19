@@ -24,8 +24,14 @@ function ApiDocsRoute() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen bg-hit-man text-dazed text-sm select-none">
-          Loading API docs…
+        <div className="flex items-center justify-center min-h-screen bg-hit-man text-dazed select-none">
+          <p role="status" aria-live="polite" className="sr-only">
+            Loading API docs…
+          </p>
+          <i
+            className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+            aria-hidden="true"
+          />
         </div>
       }
     >
