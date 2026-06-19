@@ -9,8 +9,6 @@
  *    visible text. The icon stack is aria-hidden and never participates.
  * 2. The `data-copied` flag drives the icon cross-fade.
  * 3. Clicking invokes onCopy; surface forwards to the IconButton.
- * 4. Real-consumer name contracts: the labels shipped by CopyRevealPanel's
- *    consumers (ApiTokensSection) satisfy startsWith(visibleText).
  */
 
 import { describe, expect, it, vi } from 'vitest';
@@ -91,18 +89,5 @@ describe('CopyButton', () => {
     expect(screen.getByRole('button').getAttribute('data-surface')).toBe(
       'base',
     );
-  });
-
-  it('real consumer labels satisfy the startsWith name contract', () => {
-    // ApiTokensSection ships visible "Copy to clipboard" + override
-    // "Copy to clipboard". CurlExample (Wave 2) will ship visible "Copy" +
-    // override "Copy cURL command". Both must start with their visible text.
-    const consumerCases = [
-      { visible: 'Copy to clipboard', label: 'Copy to clipboard' },
-      { visible: 'Copy', label: 'Copy cURL command' },
-    ];
-    for (const consumerCase of consumerCases) {
-      expect(consumerCase.label.startsWith(consumerCase.visible)).toBe(true);
-    }
   });
 });

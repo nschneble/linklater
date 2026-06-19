@@ -1,5 +1,5 @@
-import CopyButton from '../common/CopyButton';
 import { buildCurlCommand } from '../../lib/apiDocs/buildCurlCommand';
+import CopyButton from '../common/CopyButton';
 import { useEffect, useRef, useState } from 'react';
 
 /**
@@ -10,7 +10,10 @@ import { useEffect, useRef, useState } from 'react';
  *
  * The page section sets `select-none`, so the `<pre>` opts back into selection
  * with `select-text` for manual copying; the Copy button is the primary path.
- * The button's accessible name stays constant ("Copy cURL command") – the icon
+ * The button's accessible name stays constant ("Copy cURL command") – the
+ * visible `children` is the shorter "Copy" and `label` overrides the spoken
+ * name with the longer form (which must start with the visible text per WCAG
+ * 2.5.3, mechanized in `CopyButton`). The icon
  * swap (copy → check) is the sighted confirmation and a scoped polite
  * `role="status"` announces success to assistive tech. The status text clears
  * after a beat so a repeat copy is a genuine '' → message transition and
