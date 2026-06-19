@@ -1,4 +1,4 @@
-import MethodBadge from './MethodBadge';
+import MethodIconBadge from './MethodIconBadge';
 import { endpointSlug } from './endpointId';
 import { FOCUS_RING } from '../../lib/styles';
 import type { NormalizedEndpoint } from '../../lib/openapi';
@@ -17,7 +17,7 @@ import type { NormalizedEndpoint } from '../../lib/openapi';
  * most-missed contrast rule.
  *
  * Each item's accessible name is the full "GET /links" (method first) via an
- * sr-only span – the `MethodBadge` is decorative and the visible path is
+ * sr-only span – the `MethodIconBadge` is decorative and the visible path is
  * `aria-hidden`, so AT hears method+path exactly once.
  */
 
@@ -57,7 +57,7 @@ export default function EndpointNav({
                 onClick={() => onSelect(slug)}
                 className={`group flex items-center gap-2.5 w-full min-h-10 px-3 py-2 hover:bg-[var(--mount-bg)] aria-[current]:bg-[var(--orbit-bg)] aria-[current]:ring-1 aria-[current]:ring-[var(--orbit-border)] text-[var(--base-alt-text)] hover:text-[var(--base-text)] aria-[current]:text-[var(--orbit-text)] text-sm font-medium aria-[current]:font-semibold ${FOCUS_RING} rounded-lg motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] cursor-pointer`}
               >
-                <MethodBadge method={endpoint.method} />
+                <MethodIconBadge method={endpoint.method} />
                 <span className="sr-only">
                   {accessibleMethod} {endpoint.path}
                 </span>

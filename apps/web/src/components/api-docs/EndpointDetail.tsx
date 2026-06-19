@@ -35,15 +35,6 @@ import type { NormalizedEndpoint } from '../../lib/openapi';
  * component unmounting when the user selects another endpoint.
  */
 
-/** A decorative Font Awesome icon per HTTP method, for personality in the header. */
-const METHOD_ICONS: Record<string, string> = {
-  GET: 'fa-magnifying-glass',
-  POST: 'fa-plus',
-  PUT: 'fa-pen',
-  PATCH: 'fa-pen',
-  DELETE: 'fa-trash-can',
-};
-
 interface EndpointDetailProps {
   endpoint: NormalizedEndpoint;
   /** Whether a user is signed in – gates the live "try it out" form. */
@@ -71,7 +62,6 @@ export default function EndpointDetail({
 }: EndpointDetailProps) {
   const headingId = endpointHeadingId(endpoint.method, endpoint.path);
   const accessibleMethod = endpoint.method.toUpperCase();
-  const methodIcon = METHOD_ICONS[accessibleMethod] ?? 'fa-code';
 
   // Full request URL for the header + cURL example. An empty serverOrigin
   // means same-origin (behind a proxy), so fall back to the current origin.
@@ -92,10 +82,6 @@ export default function EndpointDetail({
     >
       <header className="mb-5">
         <div className="flex items-center gap-3">
-          <i
-            className={`fa-solid ${methodIcon} text-[var(--mount-alt-text)] text-sm`}
-            aria-hidden="true"
-          />
           <MethodBadge method={endpoint.method} />
           <h3
             id={headingId}
