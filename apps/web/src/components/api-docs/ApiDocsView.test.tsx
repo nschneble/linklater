@@ -323,8 +323,8 @@ describe('ApiDocsView visual branch', () => {
         level: 1,
         name: 'Linklater API',
       });
-      expect(heading.className).toContain('from-dazed');
-      expect(heading.className).toContain('to-sunrise');
+      expect(heading.className).toContain('from-[var(--base-text)]');
+      expect(heading.className).toContain('to-[var(--base-highlight)]');
     });
   });
 
@@ -355,7 +355,7 @@ describe('ApiDocsView visual branch', () => {
         name: 'Linklater API',
       });
       expect(heading.className).toContain('text-[var(--base-text)]');
-      expect(heading.className).not.toContain('from-dazed');
+      expect(heading.className).not.toContain('from-[var(--base-text)]');
     });
   });
 });

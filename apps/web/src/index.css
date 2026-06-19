@@ -75,28 +75,10 @@ body {
   --animate-card-enter: card-enter 400ms ease-out both;
   --animate-card-exit: card-exit 280ms ease-in forwards;
   --animate-fade-out-down: fade-out-down 150ms ease-in forwards;
-
-  /*
-   * Marketing palette for the unauthenticated <LandingPage> only.
-   *
-   * Hardcoded here (not in theme/styles/) because Tailwind v4 generates
-   * utility classes (bg-midnight, text-sunrise, etc.) from --color-* tokens
-   * inside @theme at build time. Moving these into per-theme cascades would
-   * break utility generation. The landing page is theme-independent by
-   * design – it ships the brand palette regardless of the user's saved
-   * theme – so global declaration is correct.
-   *
-   * Consumers: apps/web/src/components/LandingPage/{Hero,Features,Footer}Section.tsx
-   */
-  --color-midnight: #1a1530; /* Very dark (mostly black) blue */
-  --color-boyhood: #2e2855; /* Very dark desaturated blue */
-  --color-sunrise: #c03812; /* Strong red */
-  --color-sunset: #7c2510; /* Dark red */
-  --color-dazed: #eeeede; /* Light grayish yellow */
-  --color-confused: #9b92c8; /* Slightly desaturated blue */
 }
 
-/* Landing page background – theme-independent brand surface on /. */
+/* Brand page surface – theme-independent navy radial on the marketing
+   landing page + logged-out API docs + Common fallback wrappers. */
 @utility bg-hit-man {
   background: radial-gradient(ellipse at 50% 0%, #14103a 0%, #0a0812 70%);
 }
