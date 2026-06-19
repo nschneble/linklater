@@ -20,7 +20,6 @@ export default function RecoveryCodesPanel({ codes }: RecoveryCodesPanelProps) {
       bodyText="Each code can be used once to log in without the authenticator app. They'll only be shown here, so make sure you copy them down before navigating away from this page!"
       secrets={codes}
       secretAriaLabel="Recovery code – navigate here to read it character by character"
-      copyButtonLabel="Copy all recovery codes to clipboard"
       copiedAnnouncement="Recovery codes copied to clipboard"
       focusOnMount
     />
