@@ -1,6 +1,6 @@
 /**
  * Anti-regression coverage for the a11y contract shipped on ApiDocsView's
- * brand-chrome header. Tests are structural — they pin landmarks, heading
+ * brand-chrome header. Tests are structural – they pin landmarks, heading
  * order, skip-link reachability, link accessible names, document title.
  *
  * Per `feedback-deferred-aria-live-test-shape.md`, structural arguments cover
@@ -40,7 +40,7 @@ vi.mock('./useApiDocsToken', () => ({
   useApiDocsToken: () => ({ token: '', loading: false, error: null }),
 }));
 
-// Auth drives the visual branch (Wave 6): logged out → brand chrome, logged
+// Auth drives the visual branch: logged out → brand chrome, logged
 // in → the active theme. Mock it so tests can pick either branch.
 vi.mock('../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
@@ -63,7 +63,7 @@ function LocationStateProbe() {
   );
 }
 
-/** Minimal logged-in user — only its presence (non-null) drives the branch. */
+/** Minimal logged-in user – only its presence (non-null) drives the branch. */
 const SOME_USER = { userId: 'user-1' } as User;
 
 /** Point `useAuth` at the logged-out (brand) or logged-in (themed) branch. */
@@ -239,7 +239,7 @@ describe('ApiDocsView a11y contract', () => {
     const { container } = renderApiDocs();
 
     // Any tabindex other than "0" or "-1" is a positive-tabindex anti-pattern
-    // (SC 2.4.3 — Focus Order).
+    // (SC 2.4.3 – Focus Order).
     const positiveTabindex = container.querySelector(
       '[tabindex]:not([tabindex="0"]):not([tabindex="-1"])',
     );
@@ -286,12 +286,12 @@ describe('ApiDocsView a11y contract', () => {
 });
 
 /*
- * Wave 6 — the dual visual branch. Verified via class-string + inline-style
+ * The dual visual branch, verified via class-string + inline-style
  * assertions on the page wrapper (no dev server, per
  * [[feedback-token-plumbing-verify]]). The wrapper is the first <div> the
  * component renders; we read it from the rendered container.
  */
-describe('ApiDocsView visual branch (Wave 6)', () => {
+describe('ApiDocsView visual branch', () => {
   /** The page wrapper is the first element rendered inside the router. */
   function wrapper(container: HTMLElement): HTMLElement {
     const node = container.querySelector('div.min-h-screen');
@@ -341,7 +341,7 @@ describe('ApiDocsView visual branch (Wave 6)', () => {
       const { container } = renderApiDocs();
       const node = wrapper(container);
       expect(node.className).not.toContain('bg-hit-man');
-      // No inline brand pins — the <html> theme cascade supplies every slot.
+      // No inline brand pins – the <html> theme cascade supplies every slot.
       expect(node.style.getPropertyValue('--base-bg')).toBe('');
       expect(node.style.getPropertyValue('--focus-ring')).toBe('');
       expect(node.style.getPropertyValue('--mount-text')).toBe('');

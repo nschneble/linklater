@@ -17,7 +17,7 @@ export type LoginResponse =
 /**
  * `POST /auth/verify-magic-link` shape. Adds `userId` on the non-MFA branch
  * so the SPA can detect a cross-account click (logged into B, link is for A)
- * and revoke B's sessions before swapping. MFA path stays unchanged — the
+ * and revoke B's sessions before swapping. MFA path stays unchanged – the
  * userId is bound to the mfaToken via the nonce and not exposed here.
  */
 export type MagicLinkVerifyResponse =
@@ -50,7 +50,7 @@ export interface MeResponse {
 }
 
 /**
- * Creates a new account. Does not store a token or sign the user in —
+ * Creates a new account. Does not store a token or sign the user in –
  * callers (e.g. `useAuthState.register`) are responsible for following up
  * with a `login()` call so the token-storage side-effect stays explicit and
  * testable.
@@ -89,7 +89,7 @@ export async function revokeAllSessions(): Promise<void> {
   try {
     await apiFetch('/auth/sessions', { method: 'DELETE' });
   } catch {
-    // Best-effort — clear local tokens regardless.
+    // Best-effort – clear local tokens regardless.
   }
 }
 
@@ -181,7 +181,7 @@ export async function resetPassword(
  * Idempotent: if a setup is already pending, the server returns the same
  * QR code so a scan in progress is not invalidated.
  *
- * @returns `{ qrCodeDataUrl, secret }` — the QR image data-URL and the
+ * @returns `{ qrCodeDataUrl, secret }` – the QR image data-URL and the
  *   base-32 secret for manual entry.
  * @throws {ApiError} 409 when TOTP is already fully enabled.
  */
@@ -200,7 +200,7 @@ export async function setupTotp(): Promise<{
  * `POST /auth/mfa/totp/verify`
  *
  * @param code - The current 6-digit code from the authenticator app.
- * @returns `{ recoveryCodes }` — 10 plaintext codes shown exactly once.
+ * @returns `{ recoveryCodes }` – 10 plaintext codes shown exactly once.
  * @throws {ApiError} 400 when there is no pending setup or the code is
  *   invalid.
  */
@@ -248,7 +248,7 @@ export async function verifyMagicLink(
   // first compares the returned `userId` against the currently signed-in
   // user, and may keep the existing session (same-account click) or revoke
   // B's sessions first (cross-account click). The server still consumes the
-  // magic-link token on every call — single-use semantics hold.
+  // magic-link token on every call – single-use semantics hold.
   return apiFetchRequired<MagicLinkVerifyResponse>(
     '/auth/verify-magic-link',
     { body: JSON.stringify({ token }), method: 'POST' },

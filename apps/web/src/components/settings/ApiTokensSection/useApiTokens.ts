@@ -20,9 +20,9 @@ import { useReanchorOnLoad } from '../useReanchorOnLoad';
  * and is never retrievable again.
  *
  * API calls:
- * - `GET /tokens` — load the list on mount
- * - `POST /tokens` — create a new token
- * - `DELETE /tokens/:id` — revoke a token
+ * - `GET /tokens` – load the list on mount
+ * - `POST /tokens` – create a new token
+ * - `DELETE /tokens/:id` – revoke a token
  */
 export function useApiTokens() {
   const [tokens, setTokens] = useState<ApiToken[]>([]);
@@ -91,7 +91,7 @@ export function useApiTokens() {
       await navigator.clipboard.writeText(newToken.rawToken);
       setCopied(true);
     } catch {
-      // clipboard access denied — user can select/copy manually
+      // clipboard access denied – user can select/copy manually
     }
   };
 

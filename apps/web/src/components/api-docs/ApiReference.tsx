@@ -24,7 +24,7 @@ import type { NormalizedApi } from '../../lib/openapi';
  * region carries the "try it out" form's announcements UP from the detail (via
  * `onStatusMessage`) so an in-flight request announcement is not cut off when
  * the user selects another endpoint and that form unmounts. The visible UI is
- * aria-hidden from announcement — the regions are the sole announcers.
+ * aria-hidden from announcement – the regions are the sole announcers.
  */
 
 interface ApiReferenceProps {
@@ -142,7 +142,7 @@ function Reference({
   return (
     <>
       {/* Bypass the endpoint nav: jump straight to the detail heading. A button
-          (not an anchor) because the URL hash already encodes the selection —
+          (not an anchor) because the URL hash already encodes the selection –
           a fragment href would overwrite it. */}
       <button
         type="button"

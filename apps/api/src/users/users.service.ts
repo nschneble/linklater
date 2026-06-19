@@ -31,7 +31,7 @@ export interface UpdateMeInput {
 }
 
 /**
- * Manages user accounts — creation, lookup, update, and deletion. All methods
+ * Manages user accounts – creation, lookup, update, and deletion. All methods
  * that return user data call `withoutPasswordHash` before returning so that
  * password hashes are never exposed to callers.
  *
@@ -151,7 +151,7 @@ export class UsersService {
 
   /**
    * Finds a user by email address. Returns the full Prisma User record
-   * *including* `passwordHash` — callers that expose user data must call
+   * *including* `passwordHash` – callers that expose user data must call
    * `withoutPasswordHash` themselves (or use `findById` instead).
    *
    * NOTE: This method intentionally returns `null` when no user is found
@@ -185,7 +185,7 @@ export class UsersService {
    * Finds a user by UUID and returns the full record including the password
    * hash. Used by auth flows that must validate credentials (e.g. password
    * change, reauthentication). Unlike `findById`, this intentionally exposes
-   * `passwordHash` — callers must not forward the result to the client.
+   * `passwordHash` – callers must not forward the result to the client.
    *
    * @param id - The UUID of the user.
    * @returns The full user record with `passwordHash` included.
@@ -324,7 +324,7 @@ export class UsersService {
   /**
    * Records that the user has dismissed the welcome modal. Uses `updateMany`
    * so a repeated dismissal (button + Escape + backdrop racing on close) is
-   * idempotent — only sets `welcomedAt` when it is still `null`.
+   * idempotent – only sets `welcomedAt` when it is still `null`.
    */
   async markWelcomed(id: string) {
     await this.prisma.user.updateMany({

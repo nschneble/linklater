@@ -2,7 +2,7 @@
  * Shared color parsing + WCAG luminance helpers for bundle-level tests.
  *
  * Extracted from `bundles.contrast.test.ts` when `bundles.distinguishability.test.ts`
- * landed — both tests parse the same cascade blocks and need the same hex /
+ * landed – both tests parse the same cascade blocks and need the same hex /
  * rgba / composite math, so the utilities moved here.
  *
  * Not a runtime dependency of the app. Tests-only.
@@ -65,8 +65,8 @@ const STYLES_DIR = dirname(fileURLToPath(import.meta.url));
  * Combined CSS source the contrast + distinguishability suites scan.
  * `bundles.css` holds the `:root` + `[data-mode='dark']` synthetic
  * fallbacks; each per-theme `.css` file holds that theme's
- * `[data-theme='X'][data-mode='Y']` blocks (wave 37 split). Concatenating
- * them preserves the test API — `extractBlock(BUNDLES_CSS, selector)`
+ * `[data-theme='X'][data-mode='Y']` blocks. Concatenating
+ * them preserves the test API – `extractBlock(BUNDLES_CSS, selector)`
  * resolves any per-theme selector regardless of which file it lives in.
  * No within-file source-order semantics rely on this concatenation: every
  * per-theme selector has specificity (0, 2, 0) vs the (0, 1, 0) of the
@@ -117,7 +117,7 @@ export function contrastRatio(foreground: Rgb, background: Rgb): number {
 }
 
 /*
- * Symmetric luminance ratio — used for distinguishability checks where the
+ * Symmetric luminance ratio – used for distinguishability checks where the
  * "+0.05" offset of contrastRatio is wrong (it models text/bg perception, not
  * surface-vs-surface separability). Two surfaces with identical luminance
  * have a luminance ratio of exactly 1.
@@ -285,7 +285,7 @@ function rgbToCuloriColor([red, green, blue]: Rgb) {
 
 /*
  * Delta-E 2000 between two sRGB colors after both are simulated through the
- * given CVD transform. Returns a perceptual distance in CIE Lab65 — higher =
+ * given CVD transform. Returns a perceptual distance in CIE Lab65 – higher =
  * more distinguishable to a viewer with that deficiency.
  */
 export function cvdDeltaE(first: Rgb, second: Rgb, cvd: CvdType): number {

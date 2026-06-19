@@ -1,5 +1,5 @@
 /**
- * Wave 6 co-located coverage (a11y-lead wave-5 Minor 2). RequestField adopts
+ * Co-located coverage for the bundle migration. RequestField adopts
  * the shared `FormInput` (surface="mount") this wave; these tests pin the a11y
  * contract that must hold through that swap:
  *

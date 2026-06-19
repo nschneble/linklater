@@ -167,7 +167,7 @@ export class UserTokensService {
    * Persists the hash of an account-deletion confirmation token alongside its
    * expiry. The raw token is sent via email; only its SHA-256 hash is stored.
    * Used by `AuthService.deleteAccount` for accounts that have no password
-   * and no MFA — those accounts cannot supply step-up credentials inline, so
+   * and no MFA – those accounts cannot supply step-up credentials inline, so
    * deletion is gated behind an email-link confirmation instead.
    */
   async updateAccountDeletionToken(
@@ -218,7 +218,7 @@ export class UserTokensService {
   /**
    * Clears any pending account-deletion token on the user. Used by the
    * "Never mind, keep my account" cancel flow and as a safety net for other
-   * paths that should invalidate outstanding deletion tokens. Idempotent —
+   * paths that should invalidate outstanding deletion tokens. Idempotent –
    * clearing already-null columns is a no-op.
    */
   async clearAccountDeletionToken(userId: string) {

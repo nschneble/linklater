@@ -8,7 +8,7 @@
  *   - API error → error state with retry button
  *
  * document.title is verified to confirm useDocumentTitle fires, including
- * the "Stumble error — Linklater" title for the error state.
+ * the "Stumble error – Linklater" title for the error state.
  * isSafeRedirectUrl rejection prevents open-redirect security regression.
  */
 
@@ -40,7 +40,7 @@ function renderStumblePage() {
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
-// jsdom's window.location is sealed — replace it with a configurable object so
+// jsdom's window.location is sealed – replace it with a configurable object so
 // we can spy on replace() without hitting "Cannot redefine property".
 const replaceMock = vi.fn();
 
@@ -58,7 +58,7 @@ beforeEach(() => {
 
 describe('StumblePage loading state', () => {
   it('shows a polite status region while waiting for the API call', () => {
-    // Never resolves — keeps the component in 'loading' state
+    // Never resolves – keeps the component in 'loading' state
     vi.mocked(apiModule.stumbleLink).mockReturnValue(new Promise(() => {}));
 
     renderStumblePage();
@@ -78,7 +78,7 @@ describe('StumblePage loading state', () => {
 });
 
 describe('StumblePage sets document title', () => {
-  it('sets document.title to "Stumble — Linklater"', async () => {
+  it('sets document.title to "Stumble – Linklater"', async () => {
     vi.mocked(apiModule.stumbleLink).mockReturnValue(new Promise(() => {}));
 
     renderStumblePage();

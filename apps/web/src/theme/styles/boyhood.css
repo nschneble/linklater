@@ -1,9 +1,9 @@
 /* ---------- boyhood ---------- *
- * Wave 10 migration to per-theme bundle palette. The legacy flat tokens
+ * Per-theme bundle palette. The legacy flat tokens
  * stay intact for un-migrated consumers.
  *
  * State-hue allocation: alert = rust, warn = amber/gold (PRD palette break
- * from boyhood's mustard-olive #637628 — amber sits in the same family
+ * from boyhood's mustard-olive #637628 – amber sits in the same family
  * before-midnight chose for its warn slot and carries the conventional
  * "yellow = warn" affordance more legibly under CVD), info = cool blue,
  * success = forest green.
@@ -29,14 +29,14 @@
  *     Resolved by darkening --success-border from #335215 to #1c3608,
  *     which lifts axis B border luminance ratio to 2.42x against
  *     --alert-border #8a2820. Side effect: success-border no longer
- *     unified with base/mount/orbit border (#335215) — acceptable, state
+ *     unified with base/mount/orbit border (#335215) – acceptable, state
  *     bundles should stand out. Border still clears SC 1.4.11 vs page bg
  *     (8.24:1) and vs --success-bg #d8e0b8 (9.66:1). --success-highlight
  *     and --success-highlight-hover updated to match the new border
  *     family.
  *   - DARK warn/success collapsed both axes with the briefed
  *     --success-border #99ba48 (axis B br 1.18; axis A prot 4.1 deut 7.8
- *     border) — textbook tritan amber-vs-lime collapse. M-D1 applied:
+ *     border) – textbook tritan amber-vs-lime collapse. M-D1 applied:
  *     --success-border / --success-highlight / --success-alt-text bumped
  *     to #d0e8a8 (light mint-cream), pushing axis B border to 1.48x. The
  *     a11y-lead estimate of 1.63x was 9% optimistic but the mitigation
@@ -44,22 +44,21 @@
  *     stays #d0e8a8 from the briefed palette; --success-alt-text
  *     collapses to the same value per a11y-lead's M-D1 spec.
  *
- * No SHAPE_REDUNDANCY_WAIVERS entries needed — both modes clear all six
+ * No SHAPE_REDUNDANCY_WAIVERS entries needed – both modes clear all six
  * state pairs on axis A or axis B post-mitigation.
  */
 [data-theme='boyhood'][data-mode='dark'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #aacb50;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #e0ebac;
   --page-gradient-to: #e8e7c3;
 
   /* Bundle palette. */
   --base-bg: #0d150d;
   --base-border: #87973c;
-  /* Wave 22b Recovery A: legacy --bg-input #335215 fails border/input
+  /* Recovery A: legacy --bg-input #335215 fails border/input
    * SC 1.4.11 (2.77:1 vs base-border #87973c). Border #87973c is bright
    * lime-olive (rel lum 0.276) leaving comfortable headroom for darken-
    * direction Recovery A. #243618 (deep olive-shadow) lands at border
@@ -116,7 +115,7 @@
   --info-highlight-hover: #7098c0;
 
   /* M-D1 applied: --success-border / --success-highlight bumped from
-   * a11y-lead's #99ba48 (lime) to #d0e8a8 (light mint-cream) — closes
+   * a11y-lead's #99ba48 (lime) to #d0e8a8 (light mint-cream) – closes
    * the tritan amber-vs-lime collapse vs --warn-border #ebb327 (axis B
    * border luminance ratio 1.18 → 1.48, clears 1.4 threshold). --alt-text
    * collapses to the same value per M-D1 spec. */
@@ -130,11 +129,10 @@
 }
 
 [data-theme='boyhood'][data-mode='light'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #5a2d29;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #1e2a0a;
   --page-gradient-to: #0d150d;
 
@@ -192,7 +190,7 @@
 
   /* --success-border darkened from a11y-lead's #335215 to #1c3608 to
    * widen axis B luminance ratio vs --alert-border #8a2820 from 1.03 to
-   * 2.42 — closes the deuteranopia border collapse (dE 3.2 under brief's
+   * 2.42 – closes the deuteranopia border collapse (dE 3.2 under brief's
    * hex) that would otherwise force a SHAPE_REDUNDANCY_WAIVERS entry. */
   --success-bg: #d8e0b8;
   --success-border: #1c3608;

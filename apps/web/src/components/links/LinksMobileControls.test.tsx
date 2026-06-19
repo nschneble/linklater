@@ -1,5 +1,5 @@
 /*
- * Tests for LinksMobileControls — mobile icon-only action buttons inside
+ * Tests for LinksMobileControls – mobile icon-only action buttons inside
  * LinksToolbar.
  *
  * Same `surface="base"` host-bundle contract as LinksControls (page-level
@@ -44,7 +44,7 @@ describe('LinksMobileControls', () => {
     expect(button.getAttribute('data-surface')).toBe('base');
   });
 
-  it('on unread tab — renders Stumble + Add link, omits trash entirely', () => {
+  it('on unread tab – renders Stumble + Add link, omits trash entirely', () => {
     render(<LinksMobileControls {...baseProps} />);
     expect(
       screen.getByRole('button', { name: /stumble!/i }),
@@ -57,7 +57,7 @@ describe('LinksMobileControls', () => {
     ).toBeNull();
   });
 
-  it('on read tab — renders trash only, omits Stumble + Add link entirely', () => {
+  it('on read tab – renders trash only, omits Stumble + Add link entirely', () => {
     render(<LinksMobileControls {...baseProps} filter="read" linksCount={3} />);
     expect(
       screen.getByRole('button', { name: /remove all read links/i }),

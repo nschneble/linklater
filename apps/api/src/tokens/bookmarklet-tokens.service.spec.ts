@@ -117,7 +117,7 @@ describe('BookmarkletTokensService', () => {
       expect(callArgs.data.kind).toBe('BOOKMARKLET');
       expect(callArgs.data.userId).toBe(USER_ID);
       // mintRawToken runs for real (it is a pure module function, not
-      // injected) — assert shape, not the literal RAW_TOKEN constant.
+      // injected) – assert shape, not the literal RAW_TOKEN constant.
       expect(callArgs.data.secretValue).toMatch(/^ltk_[A-Za-z0-9_-]+$/);
       expect(result.rawToken).toBe(callArgs.data.secretValue);
     });
@@ -182,7 +182,7 @@ describe('BookmarkletTokensService', () => {
       expect(result.id).toBe('bm-regen');
       expect(result.rawToken).toBe(RAW_TOKEN);
       // The user must never see a 500 just because of a row-level data
-      // glitch — recovery is transparent.
+      // glitch – recovery is transparent.
       expect(transactionMock).toHaveBeenCalled();
     });
   });
@@ -237,7 +237,7 @@ describe('BookmarkletTokensService', () => {
       expect(createCallArgs.data.name).toBe('Bookmarklet');
       expect(createCallArgs.data.kind).toBe('BOOKMARKLET');
       expect(createCallArgs.data.userId).toBe(USER_ID);
-      // mintRawToken runs for real — assert shape, not literal equality.
+      // mintRawToken runs for real – assert shape, not literal equality.
       expect(createCallArgs.data.secretValue).toMatch(/^ltk_[A-Za-z0-9_-]+$/);
       expect(result.rawToken).toBe(createCallArgs.data.secretValue);
     });

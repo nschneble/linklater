@@ -33,7 +33,7 @@ export function usePasteDetection({
 }: UsePasteDetectionOptions): void {
   // GOTCHA: onSave is stored in a ref so the effect closure always calls the
   // latest version without needing onSave in the dependency array. Including
-  // onSave would re-run the effect — and remove/re-add the listener — every
+  // onSave would re-run the effect – and remove/re-add the listener – every
   // time the links array changes, because onSave's identity is not stable.
   const onSaveReference = useRef(onSave);
   onSaveReference.current = onSave;

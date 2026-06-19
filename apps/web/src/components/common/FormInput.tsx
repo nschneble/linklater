@@ -8,10 +8,10 @@ import { forwardRef, type InputHTMLAttributes } from 'react';
  * Forwards its ref so parent components can imperatively focus the input
  * (e.g. `LinkForm` auto-focuses on mount, `AuthForm` re-focuses on mode change).
  *
- * Does not include a `<label>` — callers are responsible for associating one
+ * Does not include a `<label>` – callers are responsible for associating one
  * using `htmlFor` / `id` or by wrapping the input in a `<label>`.
  *
- * The `surface` prop names the bundle of the parent surface — i.e. which
+ * The `surface` prop names the bundle of the parent surface – i.e. which
  * bundle hosts this input. The component paints itself from that bundle's
  * input/border/text/alt-text slots. Forms rendered inside a `SettingsGroup`
  * or `AuthCard` (both mount-tier surfaces) pass `surface="mount"`. Inputs

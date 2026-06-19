@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 /**
  * Fixed-position notification that appears at the bottom of the screen and
  * auto-dismisses after 5 seconds (6 seconds for the warning and error
- * variants — their default copy is longer and the SR announcement needs
+ * variants – their default copy is longer and the SR announcement needs
  * the extra read window).
  *
  * - `'success'` and `'warning'` both use `role="status"` and
@@ -13,18 +13,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  *   warn-highlight paint + `fa-triangle-exclamation` glyph carry the
  *   "heads-up, side-effect happened" signal redundantly.
  * - `'error'` uses `role="alert"` and `aria-live="assertive"` for immediate
- *   announcement — reserved for genuine errors that require user attention.
+ *   announcement – reserved for genuine errors that require user attention.
  *
  * A brief exit animation (`animate-fade-out-down`) plays before `onDismiss` is
  * called, giving the CSS transition 150ms to complete. The parent is responsible
  * for removing the `<Toast>` from the tree once `onDismiss` fires.
  *
  * Toast is `position: fixed` at the viewport bottom and intentionally takes no
- * `surface` prop. The `variant` drives THREE coupled axes — icon glyph, ARIA
+ * `surface` prop. The `variant` drives THREE coupled axes – icon glyph, ARIA
  * live politeness, and bundle paint (`success-highlight` vs `warn-highlight`
  * vs `alert-highlight`). Coupling matters for a11y: the highlight color is
  * not decorative, it pairs with the icon glyph as the second channel of
- * meaning. A future contributor must not split these — e.g. allowing
+ * meaning. A future contributor must not split these – e.g. allowing
  * `variant="error"` with `aria-live="polite"`, or a neutral background
  * paint, would break the icon+color redundancy that lets CVD users
  * distinguish error from success from warning at a glance.
@@ -97,7 +97,7 @@ export default function Toast({
   // Mirror onDismiss into a ref so the auto-dismiss timer doesn't restart
   // every time a parent re-renders with a fresh inline arrow. Consumers
   // (AuthForm, LinksView, BookmarkletSection, SettingsView) pass
-  // `onDismiss={() => ...}` — without this ref the timer would extend
+  // `onDismiss={() => ...}` – without this ref the timer would extend
   // each time the parent's local state flips mid-window (e.g.
   // forgot-password sentinel-hold 5000ms after success → 5+5 = ~10s
   // visible toast).
@@ -121,11 +121,11 @@ export default function Toast({
   // bundle's own highlight-fg) rather than the universal `--focus-ring`.
   // Recovery Option A per a11y-lead brief: the dismiss button paints on the
   // toast's `--{state}-highlight` background; the per-theme `--focus-ring`
-  // hex (historically aliased to `--accent`, retired wave 44) failed 3:1
+  // hex (historically aliased to `--accent`, now retired) failed 3:1
   // against `--{state}-highlight` on most themes per looper culori
   // verification. The highlight-fg color already clears 4.5:1 against
   // highlight by the existing bundle contract, so the ring inherits a
-  // comfortable SC 1.4.11 margin by construction — an unconditional
+  // comfortable SC 1.4.11 margin by construction – an unconditional
   // uplift regardless of per-theme variance.
   return (
     <div

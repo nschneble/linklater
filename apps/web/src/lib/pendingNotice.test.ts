@@ -90,7 +90,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     expect(hasPendingNotice()).toBe(false);
   });
 
-  it('round-trips login-link-invalid as an error-variant entry (short copy — /login is the recovery destination)', () => {
+  it('round-trips login-link-invalid as an error-variant entry (short copy – /login is the recovery destination)', () => {
     setPendingNotice('login-link-invalid');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
@@ -100,7 +100,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     expect(hasPendingNotice()).toBe(false);
   });
 
-  it('round-trips oauth-failed as an error-variant entry (generic copy — provider message dropped)', () => {
+  it('round-trips oauth-failed as an error-variant entry (generic copy – provider message dropped)', () => {
     setPendingNotice('oauth-failed');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
@@ -110,7 +110,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     expect(hasPendingNotice()).toBe(false);
   });
 
-  // Magic-link cross-account / same-account / password-reset entries —
+  // Magic-link cross-account / same-account / password-reset entries –
   // queued after the verifyMagicLink and resetPassword flows finish.
 
   it('round-trips account-switched as a warning-variant entry (magic link consumed for a different account)', () => {
@@ -200,7 +200,7 @@ describe('hasPendingNotice', () => {
     expect(hasPendingNotice()).toBe(true);
   });
 
-  it('does not consume the notice — consumePendingNotice still returns the entry after peeking', () => {
+  it('does not consume the notice – consumePendingNotice still returns the entry after peeking', () => {
     setPendingNotice('account-deleted');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
@@ -230,13 +230,13 @@ describe('hasPendingNotice', () => {
   });
 });
 
-// Wave 6 — drift guard. Every key in the PendingNotice union MUST round-trip
+// Drift guard. Every key in the PendingNotice union MUST round-trip
 // through the catalog with a non-empty message and a valid variant. Without
 // this, a future contributor adding a new key but forgetting to register it
 // in the catalog would ship a silently-dropped notice (consumePendingNotice
 // returns null for unknown keys per the forward-compat guard above).
 describe('catalog drift guard', () => {
-  // Enumerated explicitly because TypeScript erases the union at runtime —
+  // Enumerated explicitly because TypeScript erases the union at runtime –
   // the only way to assert every member is covered is to write them out and
   // let the compiler trip if PendingNotice gains a new member without this
   // list being updated.

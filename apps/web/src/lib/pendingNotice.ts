@@ -7,7 +7,7 @@
  *
  * Consumers today: `AuthForm` (login/signup/auth arrivals) and `LinksView`
  * (links-page arrivals, e.g. after verify-email redirect to /unread).
- * The sessionStorage key is shared — whichever entry point mounts first
+ * The sessionStorage key is shared – whichever entry point mounts first
  * consumes the notice and clears the key, so the other won't double-fire.
  *
  * Uses `sessionStorage` (not `localStorage`) because the signal should not
@@ -18,7 +18,7 @@
  * Each entry carries a `variant` so the surfacing UI (toast + sr-only
  * mirror) can pick the right ARIA shape and bundle paint. Success AND
  * warning variants ride `role="status"` + `aria-live="polite"`; error
- * variants ride `role="alert"` + `aria-live="assertive"` — both channels
+ * variants ride `role="alert"` + `aria-live="assertive"` – both channels
  * MUST match per a11y-lead (divergence is worse than either channel
  * alone). Warning shares the polite channel with success because the
  * underlying user action was intentional; the warn paint + icon glyph
@@ -127,7 +127,7 @@ export function setPendingNotice(notice: PendingNotice): void {
   try {
     window.sessionStorage.setItem(PENDING_NOTICE_KEY, notice);
   } catch (error) {
-    // SecurityError in private browsing / blocked storage — best-effort write.
+    // SecurityError in private browsing / blocked storage – best-effort write.
     void error;
   }
 }
@@ -148,7 +148,7 @@ export function consumePendingNotice(): NoticeEntry | null {
     }
     return null;
   } catch (error) {
-    // SecurityError in private browsing / blocked storage — best-effort read.
+    // SecurityError in private browsing / blocked storage – best-effort read.
     void error;
     return null;
   }
@@ -157,7 +157,7 @@ export function consumePendingNotice(): NoticeEntry | null {
 /**
  * Peeks at the pending notice without consuming it. Returns `true` when any
  * value is queued (even an unknown one). Used by effects that need to branch
- * on the presence of a pending notice before the consumer effect clears it —
+ * on the presence of a pending notice before the consumer effect clears it –
  * e.g. AuthForm's mode-change effect skips auto-focusing the email input when
  * a notice is queued, so the focus shift doesn't switch a screen reader into
  * forms mode mid-announcement.

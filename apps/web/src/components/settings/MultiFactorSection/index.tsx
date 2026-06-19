@@ -15,14 +15,14 @@ import { useMultiFactor } from './useMultiFactor';
  * All state and API calls live in `useMultiFactor`. This component renders the
  * five mutually-exclusive UI states that hook drives:
  *
- * - **State A** — MFA disabled. Shows the "Add authenticator app" button.
- * - **State B** — TOTP setup in progress. Shows `TotpSetupView` with QR +
+ * - **State A** – MFA disabled. Shows the "Add authenticator app" button.
+ * - **State B** – TOTP setup in progress. Shows `TotpSetupView` with QR +
  *   verification form. Either an in-session start or a server-side
  *   `multiFactorPending` flag from a prior session can land us here.
- * - **State C / E** — MFA enabled. Shows Regenerate / Disable actions.
- * - **State D** — Pending recovery: server reports `multiFactorPending` but no
+ * - **State C / E** – MFA enabled. Shows Regenerate / Disable actions.
+ * - **State D** – Pending recovery: server reports `multiFactorPending` but no
  *   local `totpSetup`. Shows "Continue setup" / Cancel pair.
- * - **Reauth** — Disable or Regenerate requested, awaiting credentials.
+ * - **Reauth** – Disable or Regenerate requested, awaiting credentials.
  */
 export default function MultiFactorSection() {
   const { user } = useAuth();
@@ -58,10 +58,10 @@ export default function MultiFactorSection() {
         />
       )}
 
-      {/* Recovery codes reveal — shown after enrollment or regeneration. */}
+      {/* Recovery codes reveal – shown after enrollment or regeneration. */}
       {mfa.recoveryCodes && <RecoveryCodesPanel codes={mfa.recoveryCodes} />}
 
-      {/* State C / E — MFA enabled. While `recoveryCodes` is non-null the
+      {/* State C / E – MFA enabled. While `recoveryCodes` is non-null the
        * panel below takes over the action area to keep the user focused on
        * saving the codes and to prevent an accidental disable click mid-
        * confirmation. */}
@@ -107,7 +107,7 @@ export default function MultiFactorSection() {
         </div>
       )}
 
-      {/* State B — TOTP setup: verify QR */}
+      {/* State B – TOTP setup: verify QR */}
       {!mfa.reauthAction && !mfa.multiFactorMethod && mfa.totpSetup && (
         <TotpSetupView
           code={mfa.totpCode}
@@ -122,7 +122,7 @@ export default function MultiFactorSection() {
         />
       )}
 
-      {/* State B — TOTP pending from server (setup started in prior session) */}
+      {/* State B – TOTP pending from server (setup started in prior session) */}
       {!mfa.reauthAction &&
         !mfa.multiFactorMethod &&
         !mfa.totpSetup &&
@@ -154,7 +154,7 @@ export default function MultiFactorSection() {
           </div>
         )}
 
-      {/* State A — MFA not enabled */}
+      {/* State A – MFA not enabled */}
       {mfa.inStateA && (
         <div className="space-y-3">
           <p className="text-[var(--mount-alt-text)] text-xs">

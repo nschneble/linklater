@@ -8,7 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
 
 /**
  * API documentation. A single token-driven component tree that paints two
- * ways depending on auth (Wave 6):
+ * ways depending on auth:
  *
  *   - Logged OUT (`user === null`): the landing/marketing BRAND chrome. The
  *     wrapper pins `bg-hit-man`, forces dark `color-scheme`, and supplies the
@@ -22,7 +22,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
  *     (`main.tsx`), so every `var(--…)` bundle token cascades here for free.
  *     No inline token pins, no `bg-hit-man`; `color-scheme` follows the mode.
  *
- * The child components read bundle tokens via `var(--…)` in both branches —
+ * The child components read bundle tokens via `var(--…)` in both branches –
  * the brand branch just pins those tokens to brand literals, so one styling
  * path serves both modes.
  */
@@ -39,7 +39,7 @@ export default function ApiDocsView() {
     // `[data-cvd='on'] *:focus-visible` halo (index.css) paints brand colors:
     // some themes set `--focus-ring` to a hue that fails SC 1.4.11 vs the navy
     // gradient (e.g. before-sunrise dark), so it pins `--color-dazed`
-    // (#eeeede, ~16:1 vs #0a0812). THEMED branch: no pins — the `<html>`
+    // (#eeeede, ~16:1 vs #0a0812). THEMED branch: no pins – the `<html>`
     // cascade supplies every slot, the theme's own `--focus-ring` wins, and
     // `color-scheme` follows the active mode.
     <div
@@ -69,7 +69,7 @@ export default function ApiDocsView() {
          * The "← Linklater" back link is ALWAYS present. The "Manage tokens →"
          * link is logged-IN only (the docs are a public page; an anonymous
          * visitor has no tokens to manage), so logged-out the nav holds a
-         * single link — `justify-between` leaves it at flex-start (upper-left).
+         * single link – `justify-between` leaves it at flex-start (upper-left).
          * "Manage tokens" returns to /settings via router state (NOT a
          * #fragment), because SettingsView reads `scrollTo` from
          * `location.state` to activate + scroll its sections; a plain hash
@@ -106,7 +106,7 @@ export default function ApiDocsView() {
         <div className="flex flex-col gap-3">
           {/*
            * BRAND branch keeps the marketing gradient h1 (dazed→sunrise clip).
-           * THEMED branch renders a solid `--base-text` h1 — a per-theme
+           * THEMED branch renders a solid `--base-text` h1 – a per-theme
            * gradient is not part of the bundle vocabulary, and the page
            * identity reads cleaner as solid theme text.
            */}

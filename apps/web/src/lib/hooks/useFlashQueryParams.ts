@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 
 /**
  * One-shot deferred read of "flash" query params (e.g. `?linked=…`,
- * `?link_error=…`) — the post-redirect breadcrumbs that drive a Toast or
+ * `?link_error=…`) – the post-redirect breadcrumbs that drive a Toast or
  * inline Alert and then need to disappear from the URL.
  *
  * Returns `null` on first render; runs `read(params)` once inside a
@@ -54,7 +54,7 @@ export function useFlashQueryParams<T>(
     if (hasAnyKey) {
       setSearchParameters({}, { replace: true });
     }
-    // Mount-only by design — see WHY block above.
+    // Mount-only by design – see WHY block above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

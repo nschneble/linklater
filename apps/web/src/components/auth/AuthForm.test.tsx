@@ -6,7 +6,7 @@
  *     `PendingNoticeAnnouncer` renders the toast.
  *   - The sr-only mirror text updates from empty → notice text.
  *   - Mode-routing render branches still work (login, mfa, forgot-password)
- *     under the mocked hook — proves the refactor didn't drop a branch.
+ *     under the mocked hook – proves the refactor didn't drop a branch.
  *
  * `useAuthForm` is mocked at the module boundary so this test exercises
  * AuthForm's surface coordination without touching the API/auth context.
@@ -96,7 +96,7 @@ beforeEach(() => {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe('AuthForm — pending-notice surface', () => {
+describe('AuthForm – pending-notice surface', () => {
   it('renders the PendingNoticeAnnouncer toast when notice is non-null', () => {
     vi.mocked(useAuthForm).mockReturnValue(
       makeHookResult({
@@ -198,14 +198,14 @@ describe('AuthForm — pending-notice surface', () => {
     // The dismiss button on the toast clears the notice. We assert the
     // wiring indirectly: clicking the dismiss button invokes onDismiss,
     // which the announcer hands to the parent. After the exit animation
-    // (150ms) the parent's onDismiss fires — for the unit test, we just
+    // (150ms) the parent's onDismiss fires – for the unit test, we just
     // verify the button is reachable so the contract holds.
     const dismiss = screen.getByRole('button', { name: 'Dismiss' });
     expect(dismiss).toBeInTheDocument();
   });
 });
 
-describe('AuthForm — mode routing branches still render under the refactor', () => {
+describe('AuthForm – mode routing branches still render under the refactor', () => {
   it('renders LoginRegisterView when mode is login and no MFA challenge', () => {
     vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ mode: 'login' }));
 

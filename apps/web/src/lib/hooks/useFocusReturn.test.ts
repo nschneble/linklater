@@ -58,7 +58,7 @@ describe('useFocusReturn', () => {
     result.current.skipRestore();
     unmount();
     // Focus stays where the consumer left it instead of returning to the
-    // captured trigger — important for navigation cases where the trigger
+    // captured trigger – important for navigation cases where the trigger
     // is no longer the right destination.
     expect(document.activeElement).toBe(innerInput);
 
@@ -80,7 +80,7 @@ describe('useFocusReturn', () => {
     expect(document.activeElement).toBe(triggerB);
 
     rerender({ open: true });
-    // The region opens — pretend something inside takes focus.
+    // The region opens – pretend something inside takes focus.
     const innerInput = document.createElement('input');
     document.body.appendChild(innerInput);
     innerInput.focus();

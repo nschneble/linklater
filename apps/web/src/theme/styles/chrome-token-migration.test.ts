@@ -1,17 +1,17 @@
 /*
- * Anti-regression tripwire for the chrome bundle migration (Wave 19+).
+ * Anti-regression tripwire for the chrome bundle migration.
  *
  * Asserts that migrated files contain no references to the legacy
- * pre-bundle CSS custom properties. Started in wave 19 with page-chrome +
- * settings; extended each subsequent wave (common components, UserMenu,
+ * pre-bundle CSS custom properties. Started with page-chrome +
+ * settings, then extended (common components, UserMenu,
  * auth pages, feature views) as files were migrated.
  *
- * As of wave 44, nine of the legacy tokens (`--bg`, `--bg-surface`,
+ * Nine of the legacy tokens (`--bg`, `--bg-surface`,
  * `--text`, `--text-muted`, `--text-subtle`, `--border`, `--accent-fg`,
- * `--accent-hover`, `--accent`) are fully retired from the codebase —
+ * `--accent-hover`, `--accent`) are fully retired from the codebase –
  * not declared anywhere. The tripwire still lists them to prevent
- * re-introduction (sister to `--bg-input` wave 23 + `--bg-elevated`
- * wave 32 retirements).
+ * re-introduction (sister to the `--bg-input` and `--bg-elevated`
+ * retirements).
  *
  * Fires before the WCAG contrast suite runs, so a regression here is
  * caught as a flat string mismatch rather than a downstream contract
@@ -119,10 +119,10 @@ const MIGRATED_FILES = [
 ] as const;
 
 /*
- * Legacy tokens that should NOT appear in any wave-19 migrated chrome file.
+ * Legacy tokens that should NOT appear in any migrated chrome file.
  *
  * Not included:
- *   --focus-ring      — universal slot (wave 21). Migrated chrome files
+ *   --focus-ring      – universal slot. Migrated chrome files
  *                       use it; not a legacy alias.
  */
 const LEGACY_TOKENS = [

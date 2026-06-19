@@ -1,9 +1,9 @@
 /*
- * Tests for useThemeOverrides — the theme editor's live-edit state hook.
+ * Tests for useThemeOverrides – the theme editor's live-edit state hook.
  *
  * The hook owns the override map as React state and exposes an
  * `overrideStyle` object the consumer spreads onto a wrapper element.
- * Critically, it does NOT mutate document.documentElement.style — the
+ * Critically, it does NOT mutate document.documentElement.style – the
  * editor chrome reads from :root, so the user can never lock themselves
  * out by editing a bundle slot to an unreadable value.
  */
@@ -116,7 +116,7 @@ describe('useThemeOverrides', () => {
     });
     expect(result.current.colorValues['--mount-bg']).toBe('#abcdef');
     // Other variables retain whatever defaults the test environment reports
-    // (jsdom returns empty strings; the precise value doesn't matter — just
+    // (jsdom returns empty strings; the precise value doesn't matter – just
     // that the override slot is the one that flipped).
     expect(result.current.colorValues['--alert-bg']).not.toBe('#abcdef');
   });

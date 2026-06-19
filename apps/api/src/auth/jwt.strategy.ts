@@ -4,7 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 
 /**
  * The decoded contents of a Linklater JWT. The `subject` field stores the
- * user UUID — this intentionally mirrors the JWT standard "sub" claim name
+ * user UUID – this intentionally mirrors the JWT standard "sub" claim name
  * while keeping it explicit.
  *
  * NOTE: The JWT is signed with `JWT_SECRET` and expires after 90 days. The
@@ -22,7 +22,7 @@ interface JwtPayload {
  * Registered under the name `'jwt'` so that `JwtAuthGuard` can reference it.
  *
  * `JWT_SECRET` is read from the environment at startup and throws immediately
- * if missing — this prevents the server from silently accepting unsigned tokens.
+ * if missing – this prevents the server from silently accepting unsigned tokens.
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

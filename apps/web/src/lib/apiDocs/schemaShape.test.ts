@@ -98,7 +98,7 @@ describe('toSchemaRows', () => {
     });
   });
 
-  it('caps nesting at one level — deeper objects become a note (T4)', () => {
+  it('caps nesting at one level – deeper objects become a note (T4)', () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: 'object',
       properties: {
@@ -111,7 +111,7 @@ describe('toSchemaRows', () => {
     expect(row.nested).toEqual({ kind: 'note' });
   });
 
-  it('caps an array-of-object at one level — deeper becomes a note (T4)', () => {
+  it('caps an array-of-object at one level – deeper becomes a note (T4)', () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: 'object',
       properties: {

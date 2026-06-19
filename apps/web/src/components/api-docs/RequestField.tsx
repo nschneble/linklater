@@ -4,9 +4,9 @@ import { fieldDescriptionId, fieldErrorId } from '../../lib/apiDocs/fieldIds';
 /**
  * One labeled text input for a single path/query parameter inside the "try it
  * out" form. Wraps the shared token-driven `FormInput` with `surface="mount"`
- * (Wave 6) so the input fill (`--mount-input-bg`), border (`--mount-border`),
+ * so the input fill (`--mount-input-bg`), border (`--mount-border`),
  * text (`--mount-text`) and focus ring (`--focus-ring`) all come from the host
- * surface's bundle — brand literals when logged out (pinned by `ApiDocsView`),
+ * surface's bundle – brand literals when logged out (pinned by `ApiDocsView`),
  * the active theme when logged in. Adopting `FormInput` deletes the most
  * duplicated input a11y surface and inherits the input bundle contract already
  * mechanized in `bundles.contrast.test.ts`.
@@ -14,7 +14,7 @@ import { fieldDescriptionId, fieldErrorId } from '../../lib/apiDocs/fieldIds';
  * Ids are deterministic (CONSTRAINT §1/E4): the caller passes a `fieldId` built
  * from the endpoint heading; the description (`-desc`) and error (`-error`)
  * nodes hang off it. The error node is always mounted (empty when valid) so the
- * `aria-describedby` target never dangles — the same "empty-but-present" trick
+ * `aria-describedby` target never dangles – the same "empty-but-present" trick
  * the shared `Alert` uses.
  *
  * Logged-out / loading state is conveyed via `aria-disabled` + `readOnly`
@@ -26,7 +26,7 @@ import { fieldDescriptionId, fieldErrorId } from '../../lib/apiDocs/fieldIds';
 interface RequestFieldProps {
   /** Deterministic field id (see `buildFieldId`). */
   fieldId: string;
-  /** Visible label text — the parameter name. */
+  /** Visible label text – the parameter name. */
   label: string;
   /** Whether the parameter is required (drives the "(required)" text + native flag). */
   required: boolean;
@@ -38,7 +38,7 @@ interface RequestFieldProps {
   error: string;
   /** Whether the form is inert (logged-out or token loading). */
   inert: boolean;
-  /** Change handler — receives the raw string value. */
+  /** Change handler – receives the raw string value. */
   onValueChange: (value: string) => void;
 }
 
@@ -56,7 +56,7 @@ export default function RequestField({
   const errorId = fieldErrorId(fieldId);
 
   // Describe by the (always-present) description node when there is text, and
-  // always by the error node — empty error keeps the reference non-dangling.
+  // always by the error node – empty error keeps the reference non-dangling.
   const describedBy = [description ? descriptionId : null, errorId]
     .filter(Boolean)
     .join(' ');

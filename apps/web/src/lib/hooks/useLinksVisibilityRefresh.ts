@@ -28,16 +28,16 @@ interface UseLinksVisibilityRefreshOptions {
  * - 2s stale-time guard prevents rapid tab-switching from fanning out requests.
  * - A cancellation token discards results when (a) the hook is disabled
  *   mid-flight (filter switched, unmount) or (b) a newer refresh fires
- *   before the previous one resolves — without this, the earlier slower
+ *   before the previous one resolves – without this, the earlier slower
  *   response could overwrite the later state.
  * - Newly-arrived items are announced via the returned `newLinksAnnouncement`
- *   string — the caller binds it to a pre-mounted `role="status"` live region.
+ *   string – the caller binds it to a pre-mounted `role="status"` live region.
  * - The clear-then-set microtask pattern ensures repeat-count announcements
  *   re-fire even when the message text is identical.
  * - The 5s TTL clears the announcement so a follow-up refresh that yields the
  *   same count still triggers a fresh announcement (aria-live fires on change).
  *
- * @returns `newLinksAnnouncement` — empty string when nothing to announce.
+ * @returns `newLinksAnnouncement` – empty string when nothing to announce.
  */
 export function useLinksVisibilityRefresh({
   enabled,
@@ -107,7 +107,7 @@ export function useLinksVisibilityRefresh({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       // Invalidate so cleanup-after-unmount drops any in-flight result.
-      // Reading the latest .current here is intentional — we want to
+      // Reading the latest .current here is intentional – we want to
       // invalidate WHATEVER token is active at cleanup time, not capture
       // a stale value on attachment.
       // eslint-disable-next-line react-hooks/exhaustive-deps

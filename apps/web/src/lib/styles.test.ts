@@ -116,7 +116,7 @@ describe('FOCUS_RING_DANGER_FILLED', () => {
   });
 
   it('uses --alert-highlight-fg (NOT --alert-highlight) for the ring color', () => {
-    // Recovery A (wave-24 Toast precedent): danger-filled buttons paint
+    // Recovery A (Toast precedent): danger-filled buttons paint
     // --alert-highlight as their fill. A --alert-highlight ring would render
     // 1:1 invisible against that fill, breaking SC 2.4.7. --alert-highlight-fg
     // inherits 4.5:1 vs --alert-highlight from the bundle contract.

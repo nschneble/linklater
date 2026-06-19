@@ -23,8 +23,8 @@ import { LinksService } from '../src/links/links.service.js';
  * - Decorator drift on `LinksController` (missing operationIds, broken
  *   response shapes).
  *
- * Boots a minimal testing module — `LinksController` with a stubbed
- * `LinksService` and a permissive `AnyAuthGuard` — so the test never hits
+ * Boots a minimal testing module – `LinksController` with a stubbed
+ * `LinksService` and a permissive `AnyAuthGuard` – so the test never hits
  * a database or queue.
  */
 describe('OpenAPI document (e2e)', () => {
@@ -118,7 +118,7 @@ describe('OpenAPI document (e2e)', () => {
     });
   });
 
-  it('includes the /links endpoints — list, create, stumble, random, by id, delete-read', async () => {
+  it('includes the /links endpoints – list, create, stumble, random, by id, delete-read', async () => {
     const response = await request(app.getHttpServer()).get('/openapi.json');
 
     const paths = response.body.paths ?? {};

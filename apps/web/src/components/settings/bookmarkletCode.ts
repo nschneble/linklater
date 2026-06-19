@@ -6,7 +6,7 @@
  * Identifiers are minified to keep the bookmarklet URL short (bookmark UIs
  * truncate long URLs and some browsers cap them): `t` = token, `a` = API
  * base URL, `n(m, k)` = notification toast (`m` = message text, `k` = ok
- * flag — true for success, false for error), `e` = toast element, `r` =
+ * flag – true for success, false for error), `e` = toast element, `r` =
  * fetch response.
  *
  * The injected toast carries `role` + `aria-live` so assistive technology

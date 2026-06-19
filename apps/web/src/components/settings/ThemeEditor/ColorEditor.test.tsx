@@ -38,7 +38,7 @@ function getSearchbox() {
   return screen.getByRole('searchbox', { name: /search tokens/i });
 }
 
-describe('ColorEditor — token search', () => {
+describe('ColorEditor – token search', () => {
   it('shows every bundle section when no query is entered', () => {
     renderEditor();
     for (const group of VAR_GROUPS) {
@@ -94,11 +94,11 @@ describe('ColorEditor — token search', () => {
     fireEvent.click(alertButton);
     expect(alertButton).toHaveAttribute('aria-expanded', 'true');
 
-    // Search for mount — alert collapses out of the filtered list entirely.
+    // Search for mount – alert collapses out of the filtered list entirely.
     fireEvent.change(getSearchbox(), { target: { value: 'mount' } });
     expect(screen.queryByRole('button', { name: /^Alert/ })).toBeNull();
 
-    // Clear the query — alert returns AND is still open.
+    // Clear the query – alert returns AND is still open.
     fireEvent.change(getSearchbox(), { target: { value: '' } });
     expect(screen.getByRole('button', { name: /^Alert/ })).toHaveAttribute(
       'aria-expanded',
@@ -119,7 +119,7 @@ describe('ColorEditor — token search', () => {
     renderEditor();
     const status = document.getElementById('theme-editor-token-search-status');
     expect(status).not.toBeNull();
-    // Empty query — silent.
+    // Empty query – silent.
     expect(status?.textContent ?? '').toBe('');
 
     // No match.

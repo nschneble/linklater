@@ -11,7 +11,7 @@
  * Error path (missing token, expired token, server rejection):
  *   - setPendingNotice(invalidNotice) + navigate('/login')
  *
- * Per Wave 6: the page no longer renders an error card. All failure paths
+ * The page no longer renders an error card. All failure paths
  * redirect to /login, where the AuthForm surfaces the queued error-variant
  * notice as an assertive toast.
  */
@@ -151,7 +151,7 @@ describe('TokenVerificationPage verifying state', () => {
 
 // ─── Success path (signed-in) ────────────────────────────────────────────────
 
-describe('TokenVerificationPage success path — signed-in user', () => {
+describe('TokenVerificationPage success path – signed-in user', () => {
   beforeEach(() => {
     vi.mocked(useAuth).mockReturnValue(makeAuthContext(makeUser()));
   });
@@ -253,7 +253,7 @@ describe('TokenVerificationPage success path — signed-in user', () => {
 
 // ─── Success path (signed-out) ───────────────────────────────────────────────
 
-describe('TokenVerificationPage success path — signed-out user', () => {
+describe('TokenVerificationPage success path – signed-out user', () => {
   beforeEach(() => {
     vi.mocked(useAuth).mockReturnValue(makeAuthContext(null));
   });
@@ -299,9 +299,9 @@ describe('TokenVerificationPage success path — signed-out user', () => {
   });
 });
 
-// ─── Error paths — redirect to /login with toast ──────────────────────────────
+// ─── Error paths – redirect to /login with toast ──────────────────────────────
 
-describe('TokenVerificationPage error paths — redirect to /login with toast', () => {
+describe('TokenVerificationPage error paths – redirect to /login with toast', () => {
   it('queues the invalidNotice + navigates to /login when no token is present', async () => {
     const verifyFn = vi.fn();
 

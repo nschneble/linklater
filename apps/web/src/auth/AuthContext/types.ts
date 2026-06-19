@@ -59,7 +59,7 @@ export interface AuthContextValue {
   /**
    * Authenticates the user. On success, populates `user` and resolves to `void`.
    * When the account has MFA enabled, resolves to `{ mfaToken, mfaMethod }` instead
-   * and leaves `user` unpopulated — the caller must present the OTP challenge.
+   * and leaves `user` unpopulated – the caller must present the OTP challenge.
    */
   login: (
     email: string,
@@ -75,7 +75,7 @@ export interface AuthContextValue {
   resendVerificationEmail: () => Promise<void>;
   /**
    * Resends the email-change verification link to the address stored in
-   * `pendingEmail`. The server rotates the token but does not re-check MFA —
+   * `pendingEmail`. The server rotates the token but does not re-check MFA –
    * MFA was enforced when the pending change was created.
    */
   resendEmailChangeVerification: () => Promise<void>;
@@ -90,7 +90,7 @@ export interface AuthContextValue {
   /**
    * Records that the user has dismissed the welcome modal. Calls the welcome
    * endpoint and optimistically updates `user.welcomedAt` so the modal
-   * disappears immediately. Errors are swallowed and logged — the modal
+   * disappears immediately. Errors are swallowed and logged – the modal
    * dismissal is not blocking, and the next page load will retry naturally.
    */
   markWelcomed: () => Promise<void>;

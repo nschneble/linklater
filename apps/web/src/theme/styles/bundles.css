@@ -9,7 +9,7 @@
  *     --{bundle}-text            primary readable text
  *     --{bundle}-alt-text        secondary text (labels, captions)
  *     --{bundle}-subtle-text     lowest-emphasis text (kbd legends, hints,
- *                                chevrons) — BASE bundle only
+ *                                chevrons) – BASE bundle only
  *     --{bundle}-highlight       accent pop inside the bundle (filled buttons, links, badges)
  *     --{bundle}-highlight-fg    foreground for filled surfaces that use
  *                                --{bundle}-highlight as their bg
@@ -51,8 +51,8 @@
  * cascades carry the full contract):
  *
  *   --orbit-bg, --base-input-bg, --mount-input-bg, --focus-ring,
- *   --{base,mount,orbit}-highlight (wave 44 — inlining the prior
- *   `var(--accent)` resolution would fail SC 1.4.11 against --mount-bg
+ *   --{base,mount,orbit}-highlight (a shared `var(--accent)` resolution
+ *   would fail SC 1.4.11 against --mount-bg
  *   #201e43 at 2.87:1), and their dependent --{base,mount,orbit}-
  *   highlight-fg / -hover pairs.
  *
@@ -62,14 +62,14 @@
  */
 
 :root {
-  /* Theme-transition timing (wave 44.1 collapse of default.css). Drives
+  /* Theme-transition timing. Drives
    * the universal background/color/border-color transition in
    * index.css's @layer base. */
   --theme-transition-duration: 80ms;
   --theme-transition-easing: ease;
 
   /* --focus-ring and --base/mount/orbit-highlight omitted from the
-   * synthetic fallback — defined per-theme; see preamble. */
+   * synthetic fallback – defined per-theme; see preamble. */
 
   /* base = page chrome. Pre-theme-attribute fallback hex. */
   --base-bg: #0f0b1b;
@@ -84,26 +84,26 @@
   --mount-text: #eeeedf;
   --mount-alt-text: #e09d3a;
 
-  /* --base-input-bg / --mount-input-bg per-theme only (waves 22a+22b;
-   * legacy --bg-input retired wave 23). See preamble. */
+  /* --base-input-bg / --mount-input-bg per-theme only (legacy
+   * --bg-input retired). See preamble. */
 
   /* orbit = menus / dropdowns. --orbit-bg per-theme only (legacy
-   * --bg-elevated retired wave 32). See preamble. */
+   * --bg-elevated retired). See preamble. */
   --orbit-border: #47419d;
   --orbit-text: #eeeedf;
   --orbit-alt-text: #e09d3a;
 
-  /* alert / warn / info / success synthetic-fallback palettes — rose /
+  /* alert / warn / info / success synthetic-fallback palettes – rose /
    * amber / blue / emerald hues. Borders pinned to the -800 stop so
    * each clears 3:1 against the fallback --base-bg. Per-theme blocks
    * carry the contract for every shipped theme. See preamble.
    *
    * State bundles ship the full 7-slot contract here (bg / border /
-   * text / alt-text / highlight / highlight-fg / highlight-hover) —
+   * text / alt-text / highlight / highlight-fg / highlight-hover) –
    * filled-button consumers (PrimaryButton, IconButton danger-filled)
    * paint the highlight pair against any tier. `--{base,mount,orbit}-
    * highlight-fg` / `-hover` are intentionally omitted (their parent
-   * `-highlight` slots are omitted from the fallback — see preamble). */
+   * `-highlight` slots are omitted from the fallback – see preamble). */
   --alert-bg: #fff1f2;
   --alert-border: #9f1239;
   --alert-text: #be123c;
@@ -147,7 +147,7 @@
   --asset-filter: none;
   --safe-asset-filter: none;
 
-  /* Page-gradient stops — universal slots consumed by full-page auth /
+  /* Page-gradient stops – universal slots consumed by full-page auth /
    * verify wrappers (`bg-gradient-to-b from-[var(--page-gradient-from)]
    * to-[var(--page-gradient-to)]`). The gradient paints behind a centered
    * AuthCard whose edge is conveyed by `border-shadow` (a box-shadow
@@ -157,9 +157,9 @@
    * routes/Unauthenticated.
    *
    * Each shipped theme carries its own --page-gradient-{from,to} in the
-   * per-theme `.css` cascade (wave 40 inlined the values that used to
-   * alias `var(--text-muted)` / `var(--text)`, retiring those flat tokens;
-   * wave 49 retired the --page-gradient-via mid-stop that was byte-
+   * per-theme `.css` cascade (the values are inlined rather than
+   * aliasing `var(--text-muted)` / `var(--text)`, which are retired;
+   * the --page-gradient-via mid-stop is retired too, since it was byte-
    * identical to --page-gradient-from in every theme). The fallback values
    * below paint a familiar 2-tone gradient during the pre-theme-attribute
    * window.
@@ -168,7 +168,7 @@
    * doesn't depend on these stops vs --mount-border. The perceptual-
    * separation tripwire in bundles.contrast.test.ts enforces a 3.0
    * luminance ratio against --mount-bg as a design guard, not a
-   * regulatory pair. See wave 39. */
+   * regulatory pair. */
   --page-gradient-from: #e09d3a;
   --page-gradient-to: #eeeedf;
 }

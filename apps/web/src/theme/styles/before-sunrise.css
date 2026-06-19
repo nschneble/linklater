@@ -1,44 +1,44 @@
 /* ---------- before-sunrise ---------- *
- * Wave 15 migration to per-theme bundle palette. The legacy flat tokens
+ * Per-theme bundle palette. The legacy flat tokens
  * stay intact for un-migrated consumers.
  *
- * APOLLO-CLASS WARM-ONLY theme (sister to before-sunset wave 14). PRD-
+ * APOLLO-CLASS WARM-ONLY theme (sister to before-sunset). PRD-
  * allowed hues are rust + amber-gold; no greens, no blues. State bundles
  * need PRD breaks for info (purple) and success (emerald light / cream-
- * mint dark) to carry the conventional categorical signal under CVD —
- * hit-man wave 13 / Apollo wave 8 / scanner-darkly wave 12 / before-
- * sunset wave 14 precedent.
+ * mint dark) to carry the conventional categorical signal under CVD –
+ * hit-man / Apollo / scanner-darkly / before-
+ * sunset precedent.
  *
  * Card-style choice: calm path. Mount/orbit bgs are calm cream gradations
  * off the page bg in light mode and warm brown gradations off the dark
- * page bg in dark mode — keeps the surface stack quiet so state bundles
+ * page bg in dark mode – keeps the surface stack quiet so state bundles
  * do the categorical work.
  *
- * Critical divergence from before-sunset wave 14: DARK page-bg #3c1e0e
+ * Critical divergence from before-sunset: DARK page-bg #3c1e0e
  * (rel lum ~0.019) sits ABOVE the 0.005 alpha-lift threshold (vs before-
- * sunset's #050404 at ~0.0007). Standard alpha 0.55 holds — no alpha
+ * sunset's #050404 at ~0.0007). Standard alpha 0.55 holds – no alpha
  * lift to 0.65 needed. See feedback-warm-only-theme-template move #5.
  *
  * Brief / a11y-lead verification (a11y-lead disclosed no culori in their
- * reasoning loop — culori-verified independently per feedback-verify-
+ * reasoning loop – culori-verified independently per feedback-verify-
  * upstream-gate-claims):
  *   - Brief's LIGHT base-highlight #8a4520 razor (4.6:1 vs hl-fg) estimate
- *     wrong; verified 7.11:1 — comfortable headroom. M-L3 NOT applied.
+ *     wrong; verified 7.11:1 – comfortable headroom. M-L3 NOT applied.
  *   - Brief's DARK orbit-border #e09060 vs orbit-bg #5a3422 razor (3.2:1)
  *     estimate also conservative; verified 4.27:1. M-D2 NOT applied;
  *     unified base/mount/orbit border preserved for surface-stack
  *     coherence.
- *   - LIGHT alert/warn tritan border briefed at 9.8 razor — verified 9.8
+ *   - LIGHT alert/warn tritan border briefed at 9.8 razor – verified 9.8
  *     dE (under threshold) but axis B bg lum 1.43 clears 1.4 gate. M-L1
  *     NOT needed.
- *   - DARK alert/warn tritan border briefed at 7.7 — verified 7.7 dE
+ *   - DARK alert/warn tritan border briefed at 7.7 – verified 7.7 dE
  *     (under threshold) but axis B bg lum 1.56 clears. M-D1/M-D3 NOT
  *     needed.
  *   - DARK alert/info axis B fails (bg lum 1.27, border lum 1.14) but
  *     axis A clears under all three dichromacies (min tritan bg dE 11.8).
  *     Pair passes via axis A.
  *
- * Cleanest template application yet — three modules of the warm-only
+ * Cleanest template application yet – three modules of the warm-only
  * Apollo-class shape have now shipped (before-sunset, this wave), and
  * this is the first to need ZERO staged mitigations. Template is
  * production-ready per feedback-warm-only-theme-template.
@@ -46,7 +46,7 @@
  * Intentional palette breaks vs before-sunrise flat tokens / PRD:
  *   - LIGHT --info bundle = PURPLE (Apollo-class PRD break; orchestrator
  *     picked Option A / template purple over Option B / PRD slate-blue
- *     #677d8e — slate desaturates under deuter, can't anchor the cool
+ *     #677d8e – slate desaturates under deuter, can't anchor the cool
  *     end of the categorical palette).
  *   - LIGHT --success bundle = EMERALD (Apollo-class PRD break; warm-only
  *     PRD palette has no green).
@@ -58,20 +58,19 @@
  *     would fail against warn-bg #f8ecc8).
  *   - DARK --info bundle = LAVENDER (Apollo-class PRD break).
  *   - DARK --success bundle = CREAM-MINT (Apollo-class PRD break;
- *     before-sunset wave 14 precedent). High-lum mint cream outruns warn-
+ *     before-sunset precedent). High-lum mint cream outruns warn-
  *     gold under tritanopia.
  *   - DARK alpha = 0.55 standard (page-bg rel lum 0.019 > 0.005
- *     threshold; no alpha lift needed unlike before-sunset wave 14).
+ *     threshold; no alpha lift needed unlike before-sunset).
  *
- * No SHAPE_REDUNDANCY_WAIVERS entries needed — both modes clear all six
+ * No SHAPE_REDUNDANCY_WAIVERS entries needed – both modes clear all six
  * state pairs on axis A or axis B with zero mitigations applied.
  */
 [data-theme='before-sunrise'][data-mode='dark'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #e8854a;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #e6c89a;
   --page-gradient-to: #f3ecd3;
 
@@ -79,7 +78,7 @@
   --base-bg: #3c1e0e;
   --base-border: #e09060;
   /* Brief flagged legacy --bg-input #6a3c22 as failing border/input SC
-   * 1.4.11 (estimated 2.40:1). Culori verification produced 3.65:1 — PASS
+   * 1.4.11 (estimated 2.40:1). Culori verification produced 3.65:1 – PASS
    * with comfortable headroom. Legacy value held verbatim per
    * feedback-verify-upstream-gate-claims. */
   --base-input-bg: #6a3c22;
@@ -107,8 +106,8 @@
   --orbit-highlight-fg: #1a0e02;
   --orbit-highlight-hover: #c46d34;
 
-  /* dazed-wave-11 / scanner-darkly-wave-12 / hit-man-wave-13 / before-
-   * sunset-wave-14 precedent: punchy hl + dark hl-fg for fill-on-fill
+  /* dazed / scanner-darkly / hit-man / before-
+   * sunset precedent: punchy hl + dark hl-fg for fill-on-fill
    * alert buttons. Alpha 0.55 standard (page-bg rel lum 0.019 > 0.005
    * threshold). */
   --alert-bg: rgb(80 22 12 / 0.55);
@@ -127,7 +126,7 @@
   --warn-highlight-fg: #1c1408;
   --warn-highlight-hover: #f5c440;
 
-  /* info — LAVENDER (Apollo-class PRD break). */
+  /* info – LAVENDER (Apollo-class PRD break). */
   --info-bg: rgb(40 28 56 / 0.55);
   --info-border: #b08cd0;
   --info-text: #e0ccf0;
@@ -136,7 +135,7 @@
   --info-highlight-fg: #1a0e28;
   --info-highlight-hover: #c4a4dc;
 
-  /* success — CREAM-MINT (Apollo-class PRD break; before-sunset wave 14
+  /* success – CREAM-MINT (Apollo-class PRD break; before-sunset
    * precedent). High-luminance mint cream outruns warn-gold under
    * tritanopia. */
   --success-bg: rgb(20 50 30 / 0.55);
@@ -149,11 +148,10 @@
 }
 
 [data-theme='before-sunrise'][data-mode='light'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #623618;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #2b1f0a;
   --page-gradient-to: #341b0d;
 
@@ -204,7 +202,7 @@
   --warn-highlight-fg: #ffffff;
   --warn-highlight-hover: #523510;
 
-  /* info — PURPLE (Apollo-class PRD break; orchestrator picked Option A /
+  /* info – PURPLE (Apollo-class PRD break; orchestrator picked Option A /
    * template purple over Option B / PRD slate-blue). Carries the cool
    * anchor that survives CVD vs the warm-only PRD palette. */
   --info-bg: #e2d8ec;
@@ -215,7 +213,7 @@
   --info-highlight-fg: #ffffff;
   --info-highlight-hover: #2a1a30;
 
-  /* success — EMERALD (Apollo-class PRD break). The warm-only PRD palette
+  /* success – EMERALD (Apollo-class PRD break). The warm-only PRD palette
    * has no green; emerald carries the conventional "green = success"
    * affordance. */
   --success-bg: #d8e8d0;

@@ -12,7 +12,7 @@ describe('sha256Hex', () => {
     );
   });
 
-  it('is deterministic — the same input always hashes to the same digest', () => {
+  it('is deterministic – the same input always hashes to the same digest', () => {
     const input = 'session-token-abc';
     expect(sha256Hex(input)).toBe(sha256Hex(input));
   });

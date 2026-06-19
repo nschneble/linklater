@@ -1,5 +1,5 @@
 /*
- * Bundle contrast contract — automated WCAG verification.
+ * Bundle contrast contract – automated WCAG verification.
  *
  * Parses bundles.css and asserts every bundle pair clears the threshold
  * documented in the file's preamble:
@@ -14,17 +14,17 @@
  *
  * Why this file exists: waves 1-4 of the bundle migration verified ratios
  * by hand. Future waves cannot scale that. This suite encodes the contract
- * so any regression — a hex tweak that drops below the threshold, a
- * forgotten composite, a typo in an alpha value — surfaces in CI.
+ * so any regression – a hex tweak that drops below the threshold, a
+ * forgotten composite, a typo in an alpha value – surfaces in CI.
  *
- * Apollo migrated to the bundle cascade in wave 8 (CVD-mandated palette
+ * Apollo migrated to the bundle cascade for a CVD-mandated palette
  * verified per-pair against axis A + axis B distinguishability) and is
  * covered by its own FIXTURES entries below.
  *
- * Nouvelle Vague migrated in wave 16 (final). The palette is grayscale
+ * Nouvelle Vague migrated last. The palette is grayscale
  * by design, so categorical separation between state bundles is carried
  * by axis B (luminance ratio) plus three SHAPE_REDUNDANCY_WAIVERS entries
- * documented in the sister suite — see bundles.distinguishability.test.ts.
+ * documented in the sister suite – see bundles.distinguishability.test.ts.
  *
  * Soft assertions are used so a single run reports every failing pair,
  * not just the first.
@@ -83,7 +83,7 @@ interface CascadeFixture {
   /*
    * Whether to run the border-vs-page-bg adjacency check. False for the
    * `:root` + `[data-mode='dark']` defensive defaults (no runtime
-   * consumer paints them — all 10 themes have per-theme cascades).
+   * consumer paints them – all 10 themes have per-theme cascades).
    * True for every per-theme fixture, which self-contains a concrete
    * --base-bg.
    */
@@ -92,10 +92,10 @@ interface CascadeFixture {
 
 /*
  * Default cascade (`:root`, `[data-mode='dark']`) pins --base-bg to an
- * explicit hex in `bundles.css :root` (wave 36 retired the legacy
+ * explicit hex in `bundles.css :root` (the legacy
  * `--bg` flat-token alias). The default cascade's state-bundle borders
  * are pure defensive fallback now that all 10 shipped themes carry
- * their own per-theme bundle cascades — `checkAdjacency: false` skips
+ * their own per-theme bundle cascades – `checkAdjacency: false` skips
  * the border adjacency assertions for `:root` + `[data-mode='dark']`
  * since no runtime consumer paints the default cascade's state
  * borders. Per-theme cascades define --base-bg directly as hex; we
@@ -380,13 +380,13 @@ describe('bundle contrast contract', () => {
    * --focus-ring is a UNIVERSAL chrome token (not a per-bundle slot).
    * SC 1.4.11 requires the focus indicator clear 3:1 against every
    * surface a focused element can sit on: base-bg, mount-bg, orbit-bg,
-   * and each state bundle's composited bg. Mechanizes the wave 21
+   * and each state bundle's composited bg. Mechanizes the
    * contract that the brief verified by hand.
    *
    * Every per-theme cascade ships an explicit `--focus-ring: #...` hex
-   * (wave 43). The `:root` synthetic fallback in `bundles.css` omits
-   * the slot (wave 44 retirement of `--accent` collapsed the prior
-   * alias chain) — the resolver returns null for that fixture so the
+   *. The `:root` synthetic fallback in `bundles.css` omits
+   * the slot (retiring `--accent` collapsed the prior
+   * alias chain) – the resolver returns null for that fixture so the
    * per-theme cascades carry the contract.
    */
   describe('focus-ring on every surface', () => {
@@ -404,20 +404,20 @@ describe('bundle contrast contract', () => {
      * Resolve `--focus-ring` to a literal hex.
      *
      * Legitimate shapes today:
-     *  1. Undefined (no `--focus-ring` declared in this fixture's block) —
+     *  1. Undefined (no `--focus-ring` declared in this fixture's block) –
      *     return null so the caller can skip the fixture cleanly. The
      *     synthetic `:root` / `[data-mode='dark']` cascades omit the
-     *     slot post-wave-44 (the prior `var(--accent)` alias chain was
+     *     slot (the prior `var(--accent)` alias chain was
      *     retired). Only per-theme blocks declare it.
-     *  2. Literal hex (every per-theme block post-wave-43). This is the
+     *  2. Literal hex (every per-theme block ships one). This is the
      *     only resolved path today.
      *
-     * Wave 44 retired the `var(--accent)` alias chase that previously
-     * lived here — the resolver's state space collapsed to undefined →
+     * The `var(--accent)` alias chase that previously
+     * lived here – the resolver's state space collapsed to undefined →
      * null and hex → hex. Anything else (an unexpected alias, a
      * misspelled function) gets returned as `'__UNRESOLVED__'` so the
      * caller can fail loud rather than silently skip the fixture and
-     * lose coverage. See a11y-lead MINOR in wave 23.1 gang findings —
+     * lose coverage. Flagged as an a11y-lead gang finding:
      * silent-skip on aliases was the bug.
      */
     function resolveFocusRing(
@@ -443,7 +443,7 @@ describe('bundle contrast contract', () => {
 
       describe(`${fixture.label}`, () => {
         if (focusRing === '__UNRESOLVED__') {
-          // Fail loud per a11y-lead MINOR — silent skip would mask a
+          // Fail loud per a11y-lead MINOR – silent skip would mask a
           // future alias the resolver does not know how to chase.
           const raw = declarations.get('focus-ring') ?? '<undeclared>';
           it(`focus-ring resolves to a hex literal`, () => {
@@ -483,13 +483,13 @@ describe('bundle contrast contract', () => {
   /*
    * --base-subtle-text is a BASE-only slot (no equivalent on mount/orbit/
    * state bundles). It expresses the lowest-emphasis text tier used by
-   * page-chrome consumers — kbd legends, helper hints, chevrons, the
+   * page-chrome consumers – kbd legends, helper hints, chevrons, the
    * descriptive line under section nav pills. Contract: clears 4.5:1
    * against --base-bg per SC 1.4.3.
    *
    * Lives outside the CONTRACT iteration above because that loop applies
    * the same slot set to all 7 bundles; introducing a base-only slot
-   * cannot use that shape. See wave 19 brief Q1.
+   * cannot use that shape.
    */
   describe('base-subtle-text on base-bg', () => {
     for (const fixture of FIXTURES) {
@@ -571,10 +571,10 @@ describe('bundle contrast contract', () => {
 
   /*
    * --base-input-bg and --mount-input-bg are base/mount-only slots
-   * tuning the form-input fill per host surface. Wave 22a added the
+   * tuning the form-input fill per host surface. The
    * slots + mount-input-bg per-theme values (consumed by ColorEditor).
-   * Wave 22b added per-theme --base-input-bg values + migrated
-   * FormInput / LinksToolbar / 11 indirect consumers. Wave 23 retired
+   * Per-theme --base-input-bg values were added and migrated
+   * FormInput / LinksToolbar / 11 indirect consumers. Then retired
    * the legacy --bg-input flat token and dropped the default-cascade
    * aliases from bundles.css :root.
    *
@@ -586,7 +586,7 @@ describe('bundle contrast contract', () => {
    *     (input boundary visible against its own fill)
    *
    * The default :root / [data-mode='dark'] cascades no longer declare
-   * the input slots — every shipped theme defines them per-theme. Those
+   * the input slots – every shipped theme defines them per-theme. Those
    * fixtures skip the contract via the undefined-slot guard below.
    */
   describe('input bundle contract', () => {
@@ -642,7 +642,7 @@ describe('bundle contrast contract', () => {
   });
 
   /*
-   * Wave 22b documented two distinct intents for `--base-input-bg` vs
+   * Two distinct intents are documented for `--base-input-bg` vs
    * `--base-bg` on dark themes whose --base-border sits at the WCAG
    * razor-edge (~3:1 vs base-bg):
    *
@@ -650,7 +650,7 @@ describe('bundle contrast contract', () => {
    *     a subtle warm-brown sitting inside the base-bg's luminance band
    *     so the border carries the entire SC 1.4.11 load. The visual
    *     distinction reads as "bordered shape on a near-uniform dark
-   *     surface" — focus ring carries the focus affordance.
+   *     surface" – focus ring carries the focus affordance.
    *
    *   - boyhood dark: visible separation. The base-border #87973c is
    *     bright lime-olive (rel lum ~0.276) leaving comfortable headroom
@@ -659,12 +659,12 @@ describe('bundle contrast contract', () => {
    *
    * These two themes are the only ones whose bundles.css comments
    * explicitly call out the intent. Mechanizing only those two keeps the
-   * assertion set tight — every other theme's input-bg/base-bg
+   * assertion set tight – every other theme's input-bg/base-bg
    * relationship is incidental and should not be retro-fitted with a
-   * threshold. See chemist NICE-TO-HAVE in wave 23.1 gang findings.
+   * threshold. Flagged as a chemist nice-to-have in gang findings.
    */
-  describe('input-bg vs base-bg luminance intent (wave 22b)', () => {
-    it('school-of-rock dark — base-input-bg matches base-bg luminance band (ratio <= 1.5)', () => {
+  describe('input-bg vs base-bg luminance intent', () => {
+    it('school-of-rock dark – base-input-bg matches base-bg luminance band (ratio <= 1.5)', () => {
       const block = extractBlock(
         BUNDLES_CSS,
         "[data-theme='school-of-rock'][data-mode='dark']",
@@ -686,7 +686,7 @@ describe('bundle contrast contract', () => {
         .toBeLessThanOrEqual(1.5);
     });
 
-    it('boyhood dark — base-input-bg visibly separates from base-bg (ratio >= 1.4)', () => {
+    it('boyhood dark – base-input-bg visibly separates from base-bg (ratio >= 1.4)', () => {
       const block = extractBlock(
         BUNDLES_CSS,
         "[data-theme='boyhood'][data-mode='dark']",
@@ -744,8 +744,8 @@ describe('bundle contrast contract', () => {
    * on a mount surface paints `--orbit-bg` filled with `--orbit-border`
    * and sits on `--mount-bg`. SC 1.4.11 (3:1) applies on the border, not
    * on the bg-on-bg adjacency (`--orbit-bg` vs `--mount-bg` is
-   * intentionally low across every theme — 1.07-1.46:1 — with the border
-   * carrying the visual lift). Wave 24 mechanizes this pair so any
+   * intentionally low across every theme – 1.07-1.46:1 – with the border
+   * carrying the visual lift). This pair is mechanized so any
    * future palette tweak to either slot is caught.
    *
    * Brief originally listed `--orbit-bg` vs `--mount-bg >= 3:1`; that
@@ -786,10 +786,10 @@ describe('bundle contrast contract', () => {
    * lifted sub-surfaces inside an orbit-tier panel: WelcomeModal feature
    * tiles + KeyboardShortcutsModal kbd legends both sit on the orbit
    * panel with `border-[var(--orbit-border)]` carrying separation.
-   * Wave 30 surfaced this pair via the diamantaire's gang-pass review —
+   * This pair surfaced in the diamantaire's gang-pass review:
    * the previous "orbit-border on mount-bg" pair did not cover the
    * sub-surface case because the host bg is now orbit, not mount.
-   * Wave 30.1 mechanizes the pair so future palette tweaks are caught.
+   * This pair is mechanized so future palette tweaks are caught.
    * Tightest theme: before-sunset dark at ~3.017:1 (+0.017 over floor).
    */
   describe('orbit-border on orbit-bg (sub-surface on orbit panel)', () => {
@@ -821,29 +821,29 @@ describe('bundle contrast contract', () => {
   });
 
   /*
-   * Card-on-gradient lift — perceptual separation between each page-
+   * Card-on-gradient lift – perceptual separation between each page-
    * gradient stop and the card's --mount-bg surface. Consumers paint
    * `bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-
    * gradient-to)]` behind a centered AuthCard whose edge is conveyed by
    * `border-shadow` (a box-shadow utility), NOT by
    * `border-[var(--mount-border)]`.
    *
-   * NOT a WCAG SC 1.4.11 contract — the card edge does not depend on
+   * NOT a WCAG SC 1.4.11 contract – the card edge does not depend on
    * stop-vs-mount-border separation. This is a design tripwire: if a
    * future theme tweak collapses the gradient-bg-vs-mount-bg luminance
    * gap to imperceptible, the card stops feeling lifted off the page.
    * Threshold 3.0 luminance ratio (perceptual separation, mirrors the
    * axis B pattern in [[feedback-bundle-hue-separation]]).
    *
-   * Wave 40 retired the --text / --text-muted aliases the stops used to
+   * The --text / --text-muted aliases the stops used to
    * resolve through; each per-theme cascade now declares its own
-   * --page-gradient-{from,to} hex directly. Wave 49 retired the
+   * --page-gradient-{from,to} hex directly are retired; also retired the
    * --page-gradient-via mid-stop that was byte-identical to
-   * --page-gradient-from in every theme. Pre-flight (wave 39) cleared
+   * --page-gradient-from in every theme. Pre-flight cleared
    * the matrix at 14.603:1 floor (nouvelle-vague light from-stop), so
    * every theme passes with massive headroom.
    *
-   * Skips :root / [data-mode='dark'] fallback cascades — the :root
+   * Skips :root / [data-mode='dark'] fallback cascades – the :root
    * declares default stops but `checkAdjacency: false` already excludes
    * those fixtures. Per-theme cascades cover every runtime-painted
    * combination.
@@ -889,22 +889,22 @@ describe('bundle contrast contract', () => {
   });
 
   /*
-   * Alert idle paint on host surfaces — the IconButton `danger` variant
+   * Alert idle paint on host surfaces – the IconButton `danger` variant
    * paints `--alert-text` + `--alert-border` directly on its host bg (no
    * `--alert-bg` wrapper) at rest. The hover transient does fill
    * `--alert-bg`, but the idle pair is what the consumer reads most of
    * the time.
    *
-   * Scoped to alert only — the `danger` variant is the only intrinsic
+   * Scoped to alert only – the `danger` variant is the only intrinsic
    * state-bundle IconButton variant, and Alert.tsx/StatusBadge.tsx
    * always pair `--{state}-border` with `--{state}-bg` (the in-bundle
    * CONTRACT iteration above covers those). Warn/info/success on host
    * bg are not real consumer pairs today; if a future consumer adds
    * one, expand this block.
    *
-   * Mirrors the wave-20 `state-text on base-bg` block above
+   * Mirrors the `state-text on base-bg` block above
    * ([[feedback-state-text-on-base-bg-test-pair]]) extended to the
-   * mount and orbit tiers an IconButton can ride. Wave 24 mechanized
+   * mount and orbit tiers an IconButton can ride. Mechanized here
    * after a culori pre-flight cleared the matrix worst-case at 3.275:1
    * (alert-border on orbit-bg, before-midnight dark).
    */
@@ -957,27 +957,26 @@ describe('bundle contrast contract', () => {
   });
 
   /*
-   * Cross-bundle highlight adjacencies — `--{tier}-highlight` painted on a
+   * Cross-bundle highlight adjacencies – `--{tier}-highlight` painted on a
    * DIFFERENT tier's bg. Per-bundle CONTRACT above covers highlight on its
    * own bg; these four pairs cover the consumer geometries where a highlight
    * slot lives on a foreign host. SC 1.4.11 (3:1) per pair.
    *
-   *   1. mount-highlight on base-bg — LinkCardLayout loading-bar geometry
+   *   1. mount-highlight on base-bg – LinkCardLayout loading-bar geometry
    *      (`-translate-x-full` shifts the bar off the card's left edge so it
    *      paints on the page, not on the card's mount-bg). LinkCardLayout.tsx:157-158.
-   *   2. orbit-highlight on mount-bg — CvdModeToggle aria-checked capsule
+   *   2. orbit-highlight on mount-bg – CvdModeToggle aria-checked capsule
    *      bg painted inside a SettingsGroup mount-host. CvdModeToggle.tsx:78.
-   *   3. base-highlight on mount-bg — SettingsGroup data-active=true border
+   *   3. base-highlight on mount-bg – SettingsGroup data-active=true border
    *      painted on the section's own mount-bg fill (the matching outline
    *      sits on base-bg and is covered by the CONTRACT loop's
    *      `base-highlight on base-bg`). SettingsGroup.tsx:89.
-   *   4. base-highlight on orbit-bg — `[data-cvd='on'] [aria-checked='true']`
+   *   4. base-highlight on orbit-bg – `[data-cvd='on'] [aria-checked='true']`
    *      inset 3px box-shadow bar painted on orbit-host menu items (InlineThemeList
    *      inside MobileBottomSheet). index.css:159-164, InlineThemeList.tsx:28.
    *
-   * Pre-flight (wave 47) cleared the matrix worst-case at 3.282:1
-   * (mount-highlight on base-bg, before-midnight light). Diamantaire nit from
-   * waves 41-44 flagged pair 1 specifically — wave 43 verified ad-hoc but
+   * Pre-flight cleared the matrix worst-case at 3.282:1
+   * (mount-highlight on base-bg, before-midnight light). A diamantaire nit   * flagged pair 1 specifically; it was verified ad-hoc but
    * left the contract un-mechanized.
    */
   describe('cross-bundle highlight adjacencies', () => {

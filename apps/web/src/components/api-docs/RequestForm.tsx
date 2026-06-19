@@ -15,7 +15,7 @@ import type { NormalizedEndpoint } from '../../lib/openapi';
  * Request status (Sending… / the result) reaches assistive tech through a
  * `role="status"` live region. When `onStatusMessage` is supplied (the
  * master-detail container), the form reports its status UP to a single
- * page-level region that lives OUTSIDE the swapping detail panel — so an
+ * page-level region that lives OUTSIDE the swapping detail panel – so an
  * in-flight announcement is not cut off when the user selects another endpoint
  * and this form unmounts. With no callback (unit tests), the form renders its
  * own inline announcer instead. All state logic lives in `useRequestForm`;
@@ -25,7 +25,7 @@ import type { NormalizedEndpoint } from '../../lib/openapi';
 
 interface RequestFormProps {
   endpoint: NormalizedEndpoint;
-  /** Endpoint heading id — the deterministic root for every field id (E4). */
+  /** Endpoint heading id – the deterministic root for every field id (E4). */
   headingId: string;
   /** Origin to target; empty string means same-origin. */
   serverOrigin: string;
@@ -63,8 +63,8 @@ export default function RequestForm({
     inert,
   });
 
-  // Push the status upward (when hoisted) so the page-level region — not this
-  // unmount-on-swap form — owns the announcement. Reading the latest callback
+  // Push the status upward (when hoisted) so the page-level region – not this
+  // unmount-on-swap form – owns the announcement. Reading the latest callback
   // from a ref keeps a fresh inline arrow prop from re-firing the effect.
   const onStatusMessageRef = useRef(onStatusMessage);
   onStatusMessageRef.current = onStatusMessage;

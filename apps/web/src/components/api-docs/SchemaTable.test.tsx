@@ -107,7 +107,7 @@ describe('SchemaTable', () => {
       screen.queryByRole('table', { name: 'inner properties' }),
     ).toBeNull();
     expect(
-      screen.getByText(/Nested object — see full schema\./),
+      screen.getByText(/Nested object – see full schema\./),
     ).toBeInTheDocument();
   });
 });

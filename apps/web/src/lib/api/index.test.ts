@@ -159,7 +159,7 @@ describe('token helpers', () => {
 });
 
 // ---------------------------------------------------------------------------
-// apiFetch — core helper
+// apiFetch – core helper
 // ---------------------------------------------------------------------------
 
 describe('apiFetch', () => {
@@ -339,7 +339,7 @@ describe('apiFetch', () => {
     expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
   });
 
-  it('dedupes concurrent refreshes — two parallel 401s share one /auth/refresh call', async () => {
+  it('dedupes concurrent refreshes – two parallel 401s share one /auth/refresh call', async () => {
     setStoredToken('expired-jwt', 'valid-refresh');
 
     let resolveRefresh: (value: unknown) => void = () => {};
@@ -992,12 +992,12 @@ describe('registerMagicLink', () => {
 });
 
 describe('verifyMagicLink', () => {
-  // verifyMagicLink does NOT auto-store the returned token pair anymore — the
+  // verifyMagicLink does NOT auto-store the returned token pair anymore – the
   // VerifyLoginPage caller first compares the returned `userId` against the
   // currently signed-in user and decides whether to swap sessions, keep the
   // existing one (same-account click), or revoke B's sessions first
   // (cross-account click). The server still consumes the magic-link token
-  // on every call — single-use semantics hold at the API layer.
+  // on every call – single-use semantics hold at the API layer.
   it('POSTs to /auth/verify-magic-link with token and returns the response without storing', async () => {
     const fetchMock = mockFetch({
       accessToken: 'ml-jwt',
@@ -1250,7 +1250,7 @@ describe('getApiDocsToken', () => {
   });
 });
 
-describe('typed endpoints — ApiError guards on empty response body', () => {
+describe('typed endpoints – ApiError guards on empty response body', () => {
   it('login throws ApiError when the server returns an empty body', async () => {
     mockFetchEmptyBody();
     await expect(login('a@b.co', 'pw')).rejects.toBeInstanceOf(ApiError);

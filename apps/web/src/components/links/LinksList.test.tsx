@@ -1,5 +1,5 @@
 /*
- * Tests for LinksList — the paginated list region rendered inside LinksView.
+ * Tests for LinksList – the paginated list region rendered inside LinksView.
  *
  * Focus of this file: the skeleton-flash suppression contract introduced for
  * search/filter re-fetches. The initial-load case still renders a

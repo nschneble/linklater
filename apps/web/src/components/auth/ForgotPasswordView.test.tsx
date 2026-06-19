@@ -2,8 +2,8 @@
  * Tests for ForgotPasswordView.
  *
  * This is a pure presentational component; all behavior comes from
- * useAuthForm (tested separately). Wave 6 dropped the "Check your email"
- * interstitial branch — the form always renders, the success path fires a
+ * useAuthForm (tested separately). The "Check your email"
+ * interstitial branch – the form always renders, the success path fires a
  * toast via PendingNoticeAnnouncer and holds the submit button in a
  * "Reset link sent!" state for the toast's 5000ms window.
  *
@@ -107,7 +107,7 @@ describe('ForgotPasswordView back link', () => {
   });
 });
 
-describe('ForgotPasswordView submit button — default state', () => {
+describe('ForgotPasswordView submit button – default state', () => {
   it('shows "Send password reset link" as the default label', () => {
     renderView();
     expect(
@@ -129,7 +129,7 @@ describe('ForgotPasswordView submit button — default state', () => {
   });
 });
 
-describe('ForgotPasswordView submit button — loading state', () => {
+describe('ForgotPasswordView submit button – loading state', () => {
   it('keeps the envelope icon while loading (single envelope through the request)', () => {
     const { container } = renderView({ loading: true });
     expect(container.querySelector('.fa-envelope')).toBeInTheDocument();
@@ -144,7 +144,7 @@ describe('ForgotPasswordView submit button — loading state', () => {
   });
 });
 
-describe('ForgotPasswordView submit button — forgotPasswordSentJustNow state', () => {
+describe('ForgotPasswordView submit button – forgotPasswordSentJustNow state', () => {
   it('shows "Reset link sent!" as the label when forgotPasswordSentJustNow is true', () => {
     renderView({ forgotPasswordSentJustNow: true });
     expect(

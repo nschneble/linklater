@@ -3,13 +3,13 @@ import type { NormalizedParameter } from '../../lib/openapi';
 
 /**
  * Read-only renderer for an endpoint's path & query parameters. Sibling to
- * <SchemaTable>: it reuses the identical a11y contract — a real <table> (not a
+ * <SchemaTable>: it reuses the identical a11y contract – a real <table> (not a
  * <dl>; CONSTRAINT T1) with a <caption> naming the region (CONSTRAINT T2),
  * column headers as <th scope="col">, and each parameter name as
  * <th scope="row"> (CONSTRAINT T2). Required-ness is conveyed by TEXT
  * ("Required" / "Optional"), never color alone (CONSTRAINT T3).
  *
- * Parameters never nest, so this stays flat — the column set differs from
+ * Parameters never nest, so this stays flat – the column set differs from
  * <SchemaTable> (it adds an "In" column for path vs query and has no nested
  * rows), which is why this is a focused sibling rather than a parameterized
  * SchemaTable. The Type column reuses the shared `describeType` helper so type

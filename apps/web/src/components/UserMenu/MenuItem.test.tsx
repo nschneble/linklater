@@ -13,7 +13,7 @@ import MenuItem from './MenuItem';
  *   - SC 2.4.7 (focus visible) + SC 1.4.11 on the focus ring are carried by
  *     `--focus-ring` vs `--orbit-bg` >= 3:1, also enforced in
  *     `bundles.contrast.test.ts`. `FOCUS_RING` (lib/styles.ts) is the only
- *     focus-visible styling — no separate fill/inset-ring needed.
+ *     focus-visible styling – no separate fill/inset-ring needed.
  *
  * This test only guards that the bundle-driven hover affordance is wired up
  * on the component, not the contrast math itself.

@@ -7,9 +7,9 @@ import type { BaseTheme } from '../theme/ThemeContext';
 import type { User } from '../auth/AuthContext';
 
 interface HeaderProps {
-  /** The authenticated user — displayed in the `UserMenu` avatar and email label. */
+  /** The authenticated user – displayed in the `UserMenu` avatar and email label. */
   user: User;
-  /** The currently active view — passed to `UserMenu` to highlight the active item. */
+  /** The currently active view – passed to `UserMenu` to highlight the active item. */
   view: AppView;
   /** Whether the user menu dropdown is open. Owned by `AppShell`. */
   isUserMenuOpen: boolean;

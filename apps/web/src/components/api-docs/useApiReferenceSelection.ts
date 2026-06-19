@@ -25,7 +25,7 @@ interface UseApiReferenceSelectionResult {
  * and survives a refresh. An empty or unrecognized hash resolves to the
  * welcome panel.
  *
- * The hash is the single source of truth — `selectedEndpoint` is derived from
+ * The hash is the single source of truth – `selectedEndpoint` is derived from
  * `location.hash` against the loaded endpoints, so there is no second copy of
  * "what's selected" to drift. `selectEndpoint` just writes the hash.
  *
@@ -33,7 +33,7 @@ interface UseApiReferenceSelectionResult {
  * selects (`selectEndpoint`), focus moves to the newly shown panel's heading
  * after it renders, which both lands the user on the swapped content and lets
  * a screen reader announce the new endpoint. Focus is NOT stolen on initial
- * load, on async spec arrival, or on browser Back/Forward — only an explicit
+ * load, on async spec arrival, or on browser Back/Forward – only an explicit
  * `selectEndpoint` arms the focus move (`pendingFocusRef`), so a deep-linked
  * page load leaves focus at the document start where the skip links live.
  */

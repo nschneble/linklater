@@ -7,15 +7,15 @@ import { useAuth } from '../../auth/AuthContext';
  * would double-announce. Color is therefore decorative and the text carries
  * all meaning.
  *
- * Two paints depending on auth (Wave 6):
- *   - Logged IN (themed): a single NEUTRAL mount treatment — `--mount-text`
+ * Two paints depending on auth:
+ *   - Logged IN (themed): a single NEUTRAL mount treatment – `--mount-text`
  *     text on a `--mount-border` outline (a verified bundle pair). Method is
  *     decorative (B1), so a per-method × per-theme color matrix buys zero a11y
  *     value and is not maintained.
- *   - Logged OUT (brand): the brand-locked per-method palette below — light
+ *   - Logged OUT (brand): the brand-locked per-method palette below – light
  *     text on the navy chrome with a 1px border. Every text + border pair
  *     clears WCAG AA 4.5:1 (text) and 1.4.11 3:1 (border) against BOTH navy
- *     stops (#0a0812 base, #14103a gradient top); see the wave's contrast
+ *     stops (#0a0812 base, #14103a gradient top); see the bundle contrast
  *     verification.
  */
 
@@ -30,7 +30,7 @@ interface MethodPalette {
   border: string;
 }
 
-/** Fallback palette for an unrecognized method — neutral brand grey. */
+/** Fallback palette for an unrecognized method – neutral brand grey. */
 const DEFAULT_PALETTE: MethodPalette = {
   text: '#eeeede',
   border: '#7d6ec0',

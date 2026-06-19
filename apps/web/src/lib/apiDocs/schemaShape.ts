@@ -16,9 +16,9 @@ export type NestedShape =
   | { kind: 'object'; schema: OpenAPIV3.SchemaObject; label: string }
   /** An array whose item object should render as a child table. */
   | { kind: 'array'; schema: OpenAPIV3.SchemaObject; label: string }
-  /** Too deep to expand this wave — render a text note instead. */
+  /** Too deep to expand this wave – render a text note instead. */
   | { kind: 'note' }
-  /** A scalar (string/number/boolean/etc.) — no nesting. */
+  /** A scalar (string/number/boolean/etc.) – no nesting. */
   | null;
 
 /** One row of a `<SchemaTable>`: a single property of an object schema. */
@@ -61,7 +61,7 @@ function isExpandableObject(
  * Decides whether a property's schema should render as a nested child table.
  * Capped at one level deep this wave (CONSTRAINT T4): a nested object/array is
  * expanded once; anything deeper resolves to a `note` so the caller renders a
- * "nested object — see full schema" text note instead.
+ * "nested object – see full schema" text note instead.
  *
  * @param schema The property's resolved schema.
  * @param depth How many levels of nesting have already been rendered.
@@ -100,7 +100,7 @@ export function describeNested(
 /**
  * Flattens an object schema's `properties` into table rows, marking each row
  * required per the schema's `required` list. Returns an empty array for any
- * schema that is not an object with properties — the caller renders the
+ * schema that is not an object with properties – the caller renders the
  * "No properties." fallback (CONSTRAINT T5).
  *
  * @param schema The resolved object schema to flatten.

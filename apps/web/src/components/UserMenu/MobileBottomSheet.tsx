@@ -25,7 +25,7 @@ interface MobileBottomSheetProps {
  * A semi-transparent scrim covers the page behind the sheet. Tapping the
  * scrim or swiping the drag handle downward closes the sheet. A
  * `menu-open` class is toggled on `document.body` (mobile only) to prevent
- * background scroll — the desktop dropdown shares the same `isOpen` state,
+ * background scroll – the desktop dropdown shares the same `isOpen` state,
  * so the media-query guard in `index.css` keeps scroll unlocked on larger
  * screens.
  *
@@ -36,8 +36,8 @@ interface MobileBottomSheetProps {
  * Both panels are always mounted; `inert` is applied to the off-screen one
  * so keyboard/pointer events only reach the visible panel.
  *
- * `useMenuNavigation` calls and panel refs stay in this shell — not inside
- * children — so focus management is owned by one component.
+ * `useMenuNavigation` calls and panel refs stay in this shell – not inside
+ * children – so focus management is owned by one component.
  */
 export default function MobileBottomSheet({
   user,
@@ -133,7 +133,7 @@ export default function MobileBottomSheet({
 
   function handleDragHandleTouchStart(event: React.TouchEvent) {
     // Multi-finger or synthetic events can dispatch with an empty touches
-    // list — accessing `[0].clientY` would throw and crash the sheet.
+    // list – accessing `[0].clientY` would throw and crash the sheet.
     const firstTouch = event.touches[0];
     if (!firstTouch) return;
     touchStartY.current = firstTouch.clientY;

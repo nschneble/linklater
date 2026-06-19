@@ -82,8 +82,8 @@ body {
    * utility classes (bg-midnight, text-sunrise, etc.) from --color-* tokens
    * inside @theme at build time. Moving these into per-theme cascades would
    * break utility generation. The landing page is theme-independent by
-   * design — it ships the brand palette regardless of the user's saved
-   * theme — so global declaration is correct.
+   * design – it ships the brand palette regardless of the user's saved
+   * theme – so global declaration is correct.
    *
    * Consumers: apps/web/src/components/LandingPage/{Hero,Features,Footer}Section.tsx
    */
@@ -95,7 +95,7 @@ body {
   --color-confused: #9b92c8; /* Slightly desaturated blue */
 }
 
-/* Landing page background — theme-independent brand surface on /. */
+/* Landing page background – theme-independent brand surface on /. */
 @utility bg-hit-man {
   background: radial-gradient(ellipse at 50% 0%, #14103a 0%, #0a0812 70%);
 }
@@ -132,9 +132,9 @@ body {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
   /* Anchor the outer halo to --base-bg so the CVD focus ring reads through
-     the bundle vocabulary, consistent with the wave-31 chrome migration.
+     the bundle vocabulary, consistent with the chrome bundle migration.
      Most themes set --base-bg identical to the historical flat --bg
-     (retired wave 36); hit-man light intentionally diverges (--base-bg
+     (retired); hit-man light intentionally diverges (--base-bg
      #ecdcb0 vs the per-theme --base-input-bg #f0c870; see hit-man.css). */
   box-shadow: 0 0 0 5px var(--base-bg);
 }
@@ -161,7 +161,7 @@ body {
 [data-cvd='on'] [aria-checked='true'] {
   /* Universal indicator using --base-highlight. `box-shadow: inset` paints
    * inside the host element, so the bar visually sits over whatever paints
-   * behind it at the host's left edge — NOT --base-bg. Consumer geometries:
+   * behind it at the host's left edge – NOT --base-bg. Consumer geometries:
    *
    *   - InlineThemeList + ThemeSubmenu menuitemradio buttons (no own bg)
    *     inside an --orbit-bg menu surface → bar paints over --orbit-bg.

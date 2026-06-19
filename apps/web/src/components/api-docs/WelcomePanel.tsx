@@ -13,7 +13,7 @@ import { WELCOME_HEADING_ID } from './useApiReferenceSelection';
 interface WelcomePanelProps {
   /** Origin requests target; empty string means same-origin as the app. */
   serverOrigin: string;
-  /** Whether a user is signed in — tailors the API-key guidance. */
+  /** Whether a user is signed in – tailors the API-key guidance. */
   loggedIn: boolean;
 }
 
@@ -43,7 +43,7 @@ export default function WelcomePanel({
       icon: 'fa-key',
       term: 'Authentication',
       detail: loggedIn
-        ? 'Your personal key is already wired into every form below — just hit Send. Real requests use Bearer auth: Authorization: Bearer ltk_…'
+        ? 'Your personal key is already wired into every form below – just hit Send. Real requests use Bearer auth: Authorization: Bearer ltk_…'
         : 'Create a personal access token under Settings → API Tokens, then send it on every request as a Bearer token: Authorization: Bearer ltk_…',
     },
     ...(loggedIn
@@ -52,7 +52,7 @@ export default function WelcomePanel({
             icon: 'fa-hand-pointer',
             term: 'Try it live',
             detail:
-              'Pick an endpoint on the left to read its parameters and responses — then fire a real request right from the page and watch it come back.',
+              'Pick an endpoint on the left to read its parameters and responses – then fire a real request right from the page and watch it come back.',
           },
         ]
       : [
@@ -80,7 +80,7 @@ export default function WelcomePanel({
             className="fa-solid fa-rocket text-[var(--mount-alt-text)] text-sm"
             aria-hidden="true"
           />
-          Save, read, and delete links — programmatically
+          Save, read, and delete links – programmatically
         </h3>
         <p className="mt-1 text-[var(--mount-alt-text)] text-sm leading-relaxed text-pretty">
           Everything you can do in Linklater, your code can do too. Here&rsquo;s

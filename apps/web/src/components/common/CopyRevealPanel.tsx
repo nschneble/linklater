@@ -31,7 +31,7 @@ interface CopyRevealPanelProps {
   /**
    * Controlled copy state. When omitted, the component owns state + the
    * clipboard write internally and runs its own ~1s reset timer via
-   * `useTransientState`. When provided, the parent owns both — including
+   * `useTransientState`. When provided, the parent owns both – including
    * the obligation to flip `copied` back to `false` after the desired TTL
    * (e.g. `useApiTokens` runs its own `useTransientState(copied, false,
    * setCopied, 1000)` so revoking a token also clears the copied flag).
@@ -49,7 +49,7 @@ interface CopyRevealPanelProps {
  * mount), the secret(s) with a per-item aria-label, a copy button with a
  * `data-copied` icon cross-fade, and a sibling polite live region for the
  * copied announcement (a focused button's own label change is not reliably
- * re-announced — the sibling region is what makes the announcement land).
+ * re-announced – the sibling region is what makes the announcement land).
  *
  * Mount-host pinned: the dotted divider uses `--mount-border`, the secret
  * tile uses `--orbit-bg`/`--orbit-text`, and the copy button is
@@ -57,7 +57,7 @@ interface CopyRevealPanelProps {
  * surface (`SettingsGroup`, `AuthCard`). A future base-host consumer
  * would need to thread a `surface` prop through to the divider, the
  * secret tile (one tier up from the host: `--mount-bg` if host=base), and
- * the IconButton — do not silently let it inherit mount paint on a base
+ * the IconButton – do not silently let it inherit mount paint on a base
  * background.
  */
 export default function CopyRevealPanel({
@@ -101,7 +101,7 @@ export default function CopyRevealPanel({
       await navigator.clipboard.writeText(secrets.join('\n'));
       setUncontrolledCopied(true);
     } catch {
-      // clipboard access denied — user can select/copy manually
+      // clipboard access denied – user can select/copy manually
     }
   }, [secrets]);
 
@@ -192,7 +192,7 @@ function CopyButton({ label, copied, onCopy }: CopyButtonProps) {
       {/*
        * Both icons share a single grid cell so they stack without layout
        * shift and can scale/blur independently. `aria-hidden` on the wrapper
-       * keeps AT off the visual stack — the button's `aria-label` is the
+       * keeps AT off the visual stack – the button's `aria-label` is the
        * single source of truth for the name.
        */}
       <span aria-hidden="true" className="inline-grid place-items-center">

@@ -3,13 +3,13 @@ import { useEffect, useRef, useState } from 'react';
 
 /**
  * Static "Example request" block: a copy-ready `curl` command for the selected
- * endpoint. Rendered in BOTH auth states — it's reference material, not a live
+ * endpoint. Rendered in BOTH auth states – it's reference material, not a live
  * test, so a logged-out (public) visitor sees it too. The command always shows
  * the `ltk_…` token placeholder, never a real token (see `buildCurlCommand`).
  *
  * The page section sets `select-none`, so the `<pre>` opts back into selection
  * with `select-text` for manual copying; the Copy button is the primary path.
- * The button's accessible name stays constant ("Copy cURL command") — the icon
+ * The button's accessible name stays constant ("Copy cURL command") – the icon
  * swap (copy → check) is the sighted confirmation and a scoped polite
  * `role="status"` announces success to assistive tech. The status text clears
  * after a beat so a repeat copy is a genuine '' → message transition and

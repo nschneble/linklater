@@ -34,7 +34,7 @@ const variantClasses: Record<StatusBadgeProps['variant'], string> = {
 };
 
 /**
- * Compact pill-shaped status indicator used next to labels in settings —
+ * Compact pill-shaped status indicator used next to labels in settings –
  * Verified/Unverified email, Connected social provider, Enabled MFA, etc.
  *
  * Always renders a variant-specific icon for color-independent meaning in

@@ -7,7 +7,7 @@ interface ErrorBoundaryProps {
   /**
    * Custom fallback to render when a child throws. When omitted, the default
    * full-screen "Something went wrong" UI is shown. Pass `null` to render
-   * nothing — useful for scoped boundaries whose subtree is already on its
+   * nothing – useful for scoped boundaries whose subtree is already on its
    * way out (e.g. wrapping a third-party widget that throws during unmount
    * while the user navigates away).
    */
@@ -35,7 +35,7 @@ interface ErrorBoundaryState {
  * button that reloads the page. This covers the case where an unexpected
  * exception leaves the React tree in an unrecoverable state.
  *
- * NOTE: Error boundaries must be class components — hooks cannot catch render
+ * NOTE: Error boundaries must be class components – hooks cannot catch render
  * errors. This is the only class component in the codebase for this reason.
  *
  * Placed at the root of the app (`App.tsx`) to catch any unhandled error
@@ -69,7 +69,7 @@ export default class ErrorBoundary extends Component<
 
   render() {
     if (this.state.hasError) {
-      // Honor an explicit `null` fallback — only fall through to the default
+      // Honor an explicit `null` fallback – only fall through to the default
       // UI when the prop is genuinely omitted.
       if (this.props.fallback !== undefined) {
         return this.props.fallback;

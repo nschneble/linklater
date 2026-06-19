@@ -101,7 +101,7 @@ export class AuthService {
   /**
    * Issues a session for the given user. Fetches the user record internally
    * so all login paths (password, OAuth, magic-link) share a single MFA gate
-   * — callers cannot accidentally bypass MFA by passing a stale user object.
+   * – callers cannot accidentally bypass MFA by passing a stale user object.
    *
    * When the user has TOTP enabled, generates a fresh `mfaNonce` and writes
    * it to the user row before signing the MFA challenge JWT with the same
@@ -162,7 +162,7 @@ export class AuthService {
     const result = await this.login(user.id);
     // Surface the resolved userId on the non-MFA branch so the SPA can
     // detect a cross-account click (logged into B, link is for A) and
-    // revoke B's sessions before swapping. MFA path stays unchanged —
+    // revoke B's sessions before swapping. MFA path stays unchanged –
     // the userId is bound to the mfaToken via the nonce and surfaced
     // after verifyOtp resolves.
     if ('accessToken' in result) {
@@ -234,7 +234,7 @@ export class AuthService {
   }
 
   // Shared re-auth guard used by disableMfa and regenerateRecoveryCodes.
-  // Accepts password OR OTP/recovery code — verifies exactly one.
+  // Accepts password OR OTP/recovery code – verifies exactly one.
   private async reauthenticate(
     userId: string,
     currentPassword?: string,
@@ -289,11 +289,11 @@ export class AuthService {
    * Step-up authenticated account deletion. Routes to one of two paths based
    * on what credentials the user actually has on file:
    *
-   * - **Credentialed path** — when the account has a password or TOTP, the
+   * - **Credentialed path** – when the account has a password or TOTP, the
    *   caller must supply `currentPassword` OR `code` (TOTP or recovery
    *   code). Same `reauthenticate()` semantics as `disableMfa`. On success
    *   the account is deleted immediately.
-   * - **Email-confirm path** — when the account has neither a password nor
+   * - **Email-confirm path** – when the account has neither a password nor
    *   TOTP (magic-link-only accounts that never enrolled MFA), credentials
    *   cannot be checked against anything other than the email address. A
    *   confirmation token is persisted and emailed; deletion happens only
@@ -364,7 +364,7 @@ export class AuthService {
   /**
    * Clears any outstanding account-deletion confirmation token for the user.
    * Backs the "Never mind, keep my account" action on the email-sent panel.
-   * Idempotent — clearing already-clear columns is a no-op.
+   * Idempotent – clearing already-clear columns is a no-op.
    */
   async cancelPendingAccountDeletion(userId: string): Promise<void> {
     await this.userTokensService.clearAccountDeletionToken(userId);

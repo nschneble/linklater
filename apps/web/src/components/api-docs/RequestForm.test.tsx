@@ -55,7 +55,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('RequestForm — logged in', () => {
+describe('RequestForm – logged in', () => {
   it('submits a substituted URL, Bearer header and body, and announces the result', async () => {
     const fetchMock = vi
       .fn()
@@ -122,7 +122,7 @@ describe('RequestForm — logged in', () => {
   });
 });
 
-describe('RequestForm — validation', () => {
+describe('RequestForm – validation', () => {
   it('blocks submit, marks aria-invalid and focuses the first empty required field', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
@@ -210,7 +210,7 @@ describe('RequestForm — validation', () => {
   });
 });
 
-describe('RequestForm — in flight', () => {
+describe('RequestForm – in flight', () => {
   it('disables submit, sets aria-busy and announces sending, guarding double submit', async () => {
     let resolveFetch: (response: Response) => void = () => {};
     const fetchMock = vi.fn().mockReturnValue(
@@ -239,7 +239,7 @@ describe('RequestForm — in flight', () => {
   });
 });
 
-describe('RequestForm — network failure', () => {
+describe('RequestForm – network failure', () => {
   it('reports a transport failure in the status region without throwing', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error('network down'));
     vi.stubGlobal('fetch', fetchMock);
@@ -256,7 +256,7 @@ describe('RequestForm — network failure', () => {
   });
 });
 
-describe('RequestForm — logged out', () => {
+describe('RequestForm – logged out', () => {
   it('renders fields aria-disabled + readOnly (still focusable), with a login link, and never fetches', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
@@ -296,7 +296,7 @@ describe('RequestForm — logged out', () => {
   });
 });
 
-describe('RequestForm — token hook error', () => {
+describe('RequestForm – token hook error', () => {
   it('shows an alert and keeps the form inert when the token failed to load', () => {
     renderForm({ token: '', error: 'boom' });
     expect(
@@ -306,7 +306,7 @@ describe('RequestForm — token hook error', () => {
   });
 });
 
-describe('RequestForm — token security', () => {
+describe('RequestForm – token security', () => {
   it('never renders the token into the DOM, response, or announcement', async () => {
     const token = 'ltk_super_secret_value';
     const fetchMock = vi

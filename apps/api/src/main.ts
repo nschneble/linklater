@@ -16,8 +16,8 @@ import { fileURLToPath } from 'url';
  * server starts in plain HTTP mode (TLS is handled by the reverse proxy).
  *
  * In development, place your locally-trusted certs at `apps/api/certs/`:
- *   - `localhost-key.pem` — the private key
- *   - `localhost.pem`     — the certificate
+ *   - `localhost-key.pem` – the private key
+ *   - `localhost.pem`     – the certificate
  *
  * Use `mkcert localhost` to generate these quickly.
  *
@@ -34,7 +34,7 @@ function loadHttpsOptions() {
 
 /**
  * Validates that required environment variables are set. Exits the process
- * immediately with a clear diagnostic if any are missing — better to fail at
+ * immediately with a clear diagnostic if any are missing – better to fail at
  * startup than to discover a missing key during a live request.
  */
 function validateRequiredEnvVars() {
@@ -96,7 +96,7 @@ async function bootstrap() {
   // CORS is intentionally open (`*`) by default so the bookmarklet can POST
   // from any website. In production set `CORS_ORIGIN` to the union of the
   // front-end domain and any extension origins
-  // (`chrome-extension://<id>`, `moz-extension://<id>`, etc.) — bookmarklets
+  // (`chrome-extension://<id>`, `moz-extension://<id>`, etc.) – bookmarklets
   // are an Origin-less navigation in modern browsers and keep working under
   // a restricted CORS policy. `credentials: false` is required when
   // `origin: '*'` and is harmless under a restricted origin since the API
@@ -109,7 +109,7 @@ async function bootstrap() {
   });
 
   // Build the OpenAPI document for the Linklater API. Intentionally scoped to
-  // LinksModule — these are the only endpoints reachable with a personal
+  // LinksModule – these are the only endpoints reachable with a personal
   // access token (PAT), and the public docs page should describe exactly that
   // surface and nothing else. Session-only routes (/auth, /users, /tokens)
   // keep their decorators internally but are deliberately excluded from the
@@ -120,11 +120,11 @@ async function bootstrap() {
       .setTitle('Linklater API')
       .setDescription(
         [
-          'Save, browse, and stumble through your reading list from outside the Linklater web app — from a browser extension, a script, or your terminal.',
+          'Save, browse, and stumble through your reading list from outside the Linklater web app – from a browser extension, a script, or your terminal.',
           '',
           'Authenticate every request with a personal access token in the `Authorization` header: `Authorization: Bearer ltk_…`. Create a token under **Settings → API Tokens**; tokens are shown once at creation and can be revoked from the same page.',
           '',
-          'All responses are JSON. Successes use the conventional `2xx` status codes (`200` for reads and idempotent updates, `201` for create). Errors return a standard NestJS error body — `{ statusCode, message, error }` — with the matching HTTP status (`400` for invalid input, `401` for a missing or invalid token, `404` for links that do not exist or are not yours).',
+          'All responses are JSON. Successes use the conventional `2xx` status codes (`200` for reads and idempotent updates, `201` for create). Errors return a standard NestJS error body – `{ statusCode, message, error }` – with the matching HTTP status (`400` for invalid input, `401` for a missing or invalid token, `404` for links that do not exist or are not yours).',
         ].join('\n'),
       )
       .setVersion(process.env.npm_package_version ?? '0.0.0')

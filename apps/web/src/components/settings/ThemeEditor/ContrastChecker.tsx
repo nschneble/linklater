@@ -146,7 +146,7 @@ function hexToRelativeLuminance(hex: string): number | null {
 /**
  * Computes the WCAG 2.1 contrast ratio between two hex colors. Returns
  * `null` if either color is invalid or uses alpha (alpha tokens require
- * composite math the v1 editor does not perform — the compiled bundle
+ * composite math the v1 editor does not perform – the compiled bundle
  * tests in `bundles.contrast.test.ts` cover this rigorously).
  */
 function computeContrastRatio(hexA: string, hexB: string): number | null {
@@ -209,9 +209,9 @@ function BundleRow({ pair, ratio }: BundleRowProps) {
       {ratio === null ? (
         <span
           className="text-[var(--mount-alt-text)] text-[0.6rem]"
-          title="Alpha or invalid value — see compiled tests"
+          title="Alpha or invalid value – see compiled tests"
         >
-          —
+          –
         </span>
       ) : (
         <div className="flex shrink-0 items-center gap-1">
@@ -276,7 +276,7 @@ function useBundleResults(
  * A live-updating summary at the top announces regressions to screen-reader
  * users (`aria-live="polite"`).
  *
- * Alpha tokens (e.g. dark-mode state bundle bgs `rgb(R G B / α)`) show "—"
+ * Alpha tokens (e.g. dark-mode state bundle bgs `rgb(R G B / α)`) show "–"
  * because the v1 editor does not perform composite math. The compiled
  * bundle tests in `bundles.contrast.test.ts` cover those rigorously.
  */

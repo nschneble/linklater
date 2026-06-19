@@ -20,14 +20,14 @@ interface WikipediaSummary {
 
 /**
  * Source adapter for Wikipedia. Unlike the RSS adapters, this one hits the
- * Wikipedia REST API directly on every call — there is no DB cache because
+ * Wikipedia REST API directly on every call – there is no DB cache because
  * the API itself returns a random article and that randomness IS the
  * feature. Caching would defeat the purpose.
  *
  * `fetch(count)` issues `count` parallel requests. Duplicate URLs are
  * dropped silently. A few hundred ms of latency per request is acceptable
  * because this only runs when the user lands on an empty Stumble or
- * unread-list view — not on the hot path.
+ * unread-list view – not on the hot path.
  */
 @Injectable()
 export class WikipediaAdapter implements SourceAdapter {
@@ -47,7 +47,7 @@ export class WikipediaAdapter implements SourceAdapter {
       (suggestion): suggestion is Suggestion => suggestion !== null,
     );
 
-    // Dedupe by URL — the random endpoint occasionally returns the same
+    // Dedupe by URL – the random endpoint occasionally returns the same
     // article twice when called in quick succession.
     const seen = new Set<string>();
     return successful.filter((suggestion) => {

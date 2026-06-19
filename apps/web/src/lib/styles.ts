@@ -36,7 +36,7 @@ export const FOCUS_RING_DANGER =
 
 /**
  * Variant of `FOCUS_RING_DANGER` for destructive buttons whose fill IS
- * `--alert-highlight`. Recovery Option A from wave-24 Toast precedent: an
+ * `--alert-highlight`. Recovery Option A, Toast precedent: an
  * `--alert-highlight` ring against an `--alert-highlight` background
  * paints 1:1 invisible, breaking SC 1.4.11 + 2.4.7. The highlight-fg
  * slot inherits a 4.5:1 floor against highlight from the bundle contract

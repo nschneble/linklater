@@ -5,7 +5,7 @@ import { baseHtml } from './base.html.js';
  * Generates the plain-text body for a magic-link login email.
  *
  * Used as the fallback for email clients that do not render HTML.
- * The link expires after 15 minutes — this matches the JWT TTL
+ * The link expires after 15 minutes – this matches the JWT TTL
  * set by the auth module.
  * @param url - The fully-qualified magic-link URL, including the
  *   signed token as a query parameter.

@@ -1,8 +1,8 @@
 /**
  * Brand-locked color literals for the custom API-docs "try it out" explorer.
  *
- * As of Wave 6 the docs components are token-driven (`var(--…)` bundle slots)
- * in BOTH auth states. When logged OUT, `ApiDocsView` pins those bundle tokens
+ * The docs components are token-driven (`var(--…)` bundle slots) in BOTH auth
+ * states. When logged OUT, `ApiDocsView` pins those bundle tokens
  * to the brand literals defined here via `BRAND_CHROME_STYLE`, so the single
  * token-driven tree resolves to the marketing palette; the `MethodBadge` brand
  * branch is the only remaining consumer of the per-method literals. When logged
@@ -44,7 +44,7 @@ export const TEXT = '#eeeede';
 export const ALT_TEXT = '#c4bce4';
 
 /**
- * Card surface fill — white at 5% over the navy chrome. Lifts cards off the
+ * Card surface fill – white at 5% over the navy chrome. Lifts cards off the
  * page so they read as panels; keeps the border ≥ 3:1 on its inner side and
  * text ≥ 4.5:1 (see the contrast table above).
  */
@@ -53,23 +53,23 @@ export const MOUNT_BG = 'rgba(255, 255, 255, 0.05)';
 /** Input + region border, and decorative chrome. Clears SC 1.4.11. */
 export const BORDER = '#7d6ec0';
 
-/** Focus ring — pinned to brand white so it clears the chrome gradient. */
+/** Focus ring – pinned to brand white so it clears the chrome gradient. */
 export const FOCUS_RING = '#eeeede';
 
 /** Error MESSAGE text. Light red so it clears SC 1.4.3 (4.5:1) for text. */
 export const ERROR_TEXT = '#fca5a5';
 
-/** Error border + icon. Mid red — reserved for non-text (≥ 3:1) only. */
+/** Error border + icon. Mid red – reserved for non-text (≥ 3:1) only. */
 export const ERROR_ACCENT = '#ef4444';
 
 /** Success / 2xx status text. Light green, clears SC 1.4.3 for text. */
 export const SUCCESS_TEXT = '#86efac';
 
-/** Success border + icon. Mid green — reserved for non-text (≥ 3:1) only. */
+/** Success border + icon. Mid green – reserved for non-text (≥ 3:1) only. */
 export const SUCCESS_ACCENT = '#22c55e';
 
 /**
- * Page background for the brand chrome — the navy base of the `bg-hit-man`
+ * Page background for the brand chrome – the navy base of the `bg-hit-man`
  * radial. Pinned onto `--base-bg` so the global CVD focus-halo
  * (`[data-cvd='on'] *:focus-visible`, index.css) paints brand-coherent.
  */
@@ -83,7 +83,7 @@ const BRAND_BASE_BG = '#0a0812';
  * paints the marketing palette. Logged-IN, the wrapper omits this object
  * entirely and the active theme's `<html>` cascade supplies the slots.
  *
- * Surfaces covered (§2/§4/§5 of the Wave 6 theming brief):
+ * Surfaces covered:
  *   - base   page bg + header text/border/highlight + focus ring + CVD halo
  *   - mount  card surface: bg, border, text, alt-text, input-bg
  *   - alert  ResponsePanel error region + field/summary validation errors

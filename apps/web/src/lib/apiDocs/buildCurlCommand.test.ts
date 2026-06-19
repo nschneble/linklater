@@ -28,7 +28,7 @@ describe('buildCurlCommand', () => {
     expect(command).toContain('  -d \'{\n  "url": ""\n}\'');
   });
 
-  it('never renders a real token — only the ltk_ placeholder', () => {
+  it('never renders a real token – only the ltk_ placeholder', () => {
     const command = buildCurlCommand({
       method: 'get',
       url: 'https://api.test/links',

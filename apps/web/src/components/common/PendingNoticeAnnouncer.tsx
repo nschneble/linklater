@@ -4,14 +4,14 @@ interface PendingNoticeAnnouncerProps {
   /**
    * The message to surface, or `null` when no notice is queued. When `null`
    * the visible Toast is omitted, but the sr-only live region stays mounted
-   * with empty text — see the rationale below.
+   * with empty text – see the rationale below.
    */
   notice: string | null;
   /**
    * Controls icon, ARIA live shape, AND bundle paint on both the visible
    * Toast and the sr-only mirror. `'success'` and `'warning'` both ride
    * `role="status"` + `aria-live="polite"`; `'error'` rides `role="alert"`
-   * + `aria-live="assertive"`. The mirror MUST match the Toast — divergence
+   * + `aria-live="assertive"`. The mirror MUST match the Toast – divergence
    * (e.g. polite mirror under an assertive Toast) is worse than either
    * channel alone, because the two regions race on the SR's announcement
    * queue with mismatched priorities. Warning shares the polite channel
@@ -20,7 +20,7 @@ interface PendingNoticeAnnouncerProps {
    */
   variant: 'success' | 'warning' | 'error';
   /**
-   * Called when the toast is dismissed (user click or auto-dismiss timer —
+   * Called when the toast is dismissed (user click or auto-dismiss timer –
    * 5s for success, 6s for warning/error).
    */
   onDismiss: () => void;
@@ -29,7 +29,7 @@ interface PendingNoticeAnnouncerProps {
 /**
  * Surfaces a one-shot cross-route pending notice as a `<Toast>` plus a
  * pre-mounted sr-only live mirror. The pairing is load-bearing
- * accessibility logic — keeping them in a single primitive locks them
+ * accessibility logic – keeping them in a single primitive locks them
  * together so a future contributor cannot drift one without the other
  * (e.g. ship the toast without the mirror, or change one variant's
  * ARIA shape).

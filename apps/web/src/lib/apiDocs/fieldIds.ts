@@ -2,7 +2,7 @@
  * Deterministic id helpers for the "try it out" request form.
  *
  * Field ids are derived from the endpoint's `headingId` (built once in
- * `EndpointCard` from method+path) plus the parameter's location and name —
+ * `EndpointCard` from method+path) plus the parameter's location and name –
  * NEVER from `useId` (CONSTRAINT E4). This keeps ids collision-free and stable
  * across every rendered endpoint and across re-renders, so `aria-describedby`
  * and label `htmlFor` references can never dangle or collide.

@@ -44,7 +44,7 @@ export class OAuthAccountService {
         email,
       );
       // Auto-verification here is safe because we matched the user *by* this
-      // email — the provider's verified-email assertion applies to the same
+      // email – the provider's verified-email assertion applies to the same
       // address. The link-from-Settings path (`linkOAuthAccountToUser` below)
       // gates auto-verify on an equality check for the same reason.
       if (!existingUser.emailVerifiedAt) {
@@ -88,7 +88,7 @@ export class OAuthAccountService {
    * request originated from this server and was initiated by this user.
    *
    * @param userId - The UUID of the authenticated user initiating the link.
-   * @returns An object with `url` — the full Google authorization URL to
+   * @returns An object with `url` – the full Google authorization URL to
    *   navigate to, including the signed state parameter.
    */
   buildGoogleLinkUrl(userId: string): { url: string } {
@@ -138,7 +138,7 @@ export class OAuthAccountService {
     // Auto-verify only when the provider's email matches the account email.
     // Once federation is relaxed to allow mismatched provider emails, a
     // foreign provider email cannot be used as proof that the user controls
-    // their own account email. Do NOT delete this conditional — see the
+    // their own account email. Do NOT delete this conditional – see the
     // identity-federation design notes.
     if (!user.emailVerifiedAt && providerEmail === user.email) {
       await this.usersService.markEmailVerified(userId);

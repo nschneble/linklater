@@ -3,7 +3,7 @@ import type { LinksFilter } from '../../lib/hooks/useLinks';
 /**
  * Shared props for the desktop (`LinksControls`) and mobile
  * (`LinksMobileControls`) action-button surfaces in the links toolbar.
- * Extracted so both stay in sync — `LinksToolbar` passes the identical set
+ * Extracted so both stay in sync – `LinksToolbar` passes the identical set
  * of props to each variant.
  */
 export interface LinksControlsProps {

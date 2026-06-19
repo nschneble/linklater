@@ -1,20 +1,20 @@
 /**
  * Visible result of a "try it out" request: a status line (icon + text + color,
- * each redundant so it survives grayscale — CONSTRAINT §5/1.4.1) plus the
+ * each redundant so it survives grayscale – CONSTRAINT §5/1.4.1) plus the
  * formatted JSON body in a `<pre>`. Wrapped in a `<section aria-label="Response">`.
  *
  * This panel is purely visual: it carries NO live-region role. The single
  * announcer is the persistent sr-only `role="status"` node owned by
- * `RequestForm` (CONSTRAINT §5) — wrapping the `<pre>` in a second live region
+ * `RequestForm` (CONSTRAINT §5) – wrapping the `<pre>` in a second live region
  * would double-announce. Focus is never moved here (announce-only).
  *
- * Status color SOURCE is the state bundles (Wave 6, §4): a 2xx response wraps
+ * Status color SOURCE is the state bundles: a 2xx response wraps
  * the region in the `success` bundle surface (`--success-bg` / `--success-text`
  * with a `--success-highlight` icon accent); a non-2xx / transport failure
  * wraps it in the `alert` bundle surface. This reuses the proven "state-text on
  * own-bg" + "state-text on base-bg" contracts already mechanized in
  * `bundles.contrast.test.ts`, so no new contrast test is needed. The
- * icon + text + color redundancy is preserved (1.4.1) — only the color source
+ * icon + text + color redundancy is preserved (1.4.1) – only the color source
  * changed from brand literals to bundle tokens.
  */
 
@@ -57,7 +57,7 @@ export default function ResponsePanel({
       </p>
       {/*
        * The `<pre>` delimiter border consumes `--mount-border` (a soft
-       * decorative edge, not a sole boundary conveying meaning — the tinted
+       * decorative edge, not a sole boundary conveying meaning – the tinted
        * state-bundle fill already separates the region). Keeping `--mount-border`
        * preserves the brand output byte-for-byte (today's #7d6ec0).
        */}

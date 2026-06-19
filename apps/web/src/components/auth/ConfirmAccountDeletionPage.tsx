@@ -11,14 +11,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
  * requested deletion. The page mounts and POSTs the token to the API.
  *
  * On success: queues the `account-deleted` notice, logs out, and redirects
- * to `/login` — the AuthForm surfaces the confirmation via its existing
+ * to `/login` – the AuthForm surfaces the confirmation via its existing
  * toast + sr-only mirror channel. WCAG 3.2.5 is satisfied via implicit
  * request (the user clicked the emailed link expecting completion); no
  * extra confirmation click is required because the actual checked
  * confirmation already happened in Settings DangerZone before the email
  * was sent.
  *
- * Reachable while logged out — the recipient may have signed out, switched
+ * Reachable while logged out – the recipient may have signed out, switched
  * browsers, or never been signed in on this device. `logout()` is
  * idempotent (no harm if there was no session).
  *
@@ -52,7 +52,7 @@ export default function ConfirmAccountDeletionPage() {
       .then(() => {
         setPendingNotice('account-deleted');
         logout();
-        // `/login` is the actual destination — `/auth` was not a registered
+        // `/login` is the actual destination – `/auth` was not a registered
         // route, so it fell through to the catch-all redirect at
         // `routes/Unauthenticated.tsx` and added an extra history entry.
         navigate('/login', { replace: true });
@@ -66,7 +66,7 @@ export default function ConfirmAccountDeletionPage() {
 
   // The page is purely transient: spinner while the API call is in flight,
   // then an unconditional redirect to /login (success or failure). The
-  // verifying state mirrors StumblePage — a single centered spinning icon
+  // verifying state mirrors StumblePage – a single centered spinning icon
   // with an sr-only polite status, no card chrome. Card chrome would flash
   // visibly for sub-second windows before the redirect fires, which looks
   // like "page loaded and immediately bounced."

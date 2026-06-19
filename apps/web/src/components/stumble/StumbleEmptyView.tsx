@@ -12,7 +12,7 @@ import SuggestionCallout from '../links/SuggestionCallout';
  *
  * The fallback prop on `SuggestionCallout` preserves the "Suggestions
  * are napping too." copy when the suggestions endpoint produces nothing
- * — without it the page would silently lose all suggestion messaging.
+ * – without it the page would silently lose all suggestion messaging.
  */
 export default function StumbleEmptyView() {
   const navigate = useNavigate();

@@ -49,7 +49,7 @@ export class RssFeedService {
 
   /**
    * Refreshes every RSS source in the registry. Failures are isolated per
-   * source — a broken Aeon feed does not block Atlas Obscura from
+   * source – a broken Aeon feed does not block Atlas Obscura from
    * refreshing. Errors are logged at `warn` level.
    */
   async refreshAll(): Promise<void> {
@@ -175,7 +175,7 @@ export class RssFeedService {
 
   /**
    * Looks up a source by key. Returned for use by tests and the adapter
-   * factory — production code should prefer the registry-driven flows.
+   * factory – production code should prefer the registry-driven flows.
    */
   getSource(sourceKey: string): SourceDefinition | undefined {
     return SOURCES.find((source) => source.key === sourceKey);

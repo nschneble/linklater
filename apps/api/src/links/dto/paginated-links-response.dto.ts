@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { LinkResponseDto } from './link-response.dto.js';
 
-/** Response shape for GET /links — one page of results plus metadata. */
+/** Response shape for GET /links – one page of results plus metadata. */
 export class PaginatedLinksResponseDto {
   @ApiProperty({ type: [LinkResponseDto] })
   data: LinkResponseDto[];

@@ -321,7 +321,7 @@ describe('AuthService', () => {
       expect(result).toBeNull();
     });
 
-    it('returns null when user has no password (passwordless account — SSO or magic link)', async () => {
+    it('returns null when user has no password (passwordless account – SSO or magic link)', async () => {
       (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
         email: USER_EMAIL,
         id: USER_ID,
@@ -379,7 +379,7 @@ describe('AuthService', () => {
       expect(refreshTokenServiceMock.issueTokenPair).not.toHaveBeenCalled();
     });
 
-    it('forces MFA even when the caller supplies only a userId — closing the OAuth-strategy bypass', async () => {
+    it('forces MFA even when the caller supplies only a userId – closing the OAuth-strategy bypass', async () => {
       // Regression for the audit finding: previously the OAuth path called
       // login(request.user) where request.user lacked totpEnabledAt, so the
       // MFA branch never fired. login(userId) now fetches internally.
@@ -1356,7 +1356,7 @@ describe('AuthService', () => {
       ).toHaveBeenCalledWith(USER_ID);
     });
 
-    it('is idempotent — does not throw when no pending token exists', async () => {
+    it('is idempotent – does not throw when no pending token exists', async () => {
       (
         userTokensServiceMock.clearAccountDeletionToken as jest.Mock
       ).mockResolvedValue(undefined);

@@ -10,7 +10,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
  * filter/search changes & load-more increments can be handled atomically.
  */
 interface FetchParams {
-  /** The current tab — `'unread'` or `'read'`. */
+  /** The current tab – `'unread'` or `'read'`. */
   filter: LinksFilter;
   /** The current pagination page number, starting at 1. */
   page: number;
@@ -70,7 +70,7 @@ export interface UseLinksDataResult {
   /**
    * `true` after the very first fetch has settled (success or failure). Used
    * by the view layer to suppress the skeleton flash on subsequent
-   * filter/search re-fetches — once the user has seen real content, we keep
+   * filter/search re-fetches – once the user has seen real content, we keep
    * the stale list mounted until the new response arrives instead of clearing
    * back to a skeleton on every keystroke.
    */
@@ -97,7 +97,7 @@ export interface UseLinksDataResult {
   resetTotal: () => void;
   /**
    * Replaces the matching cached entry in local state. Not the same as the
-   * API-layer `refreshLink` — this mutates the in-memory list only and never
+   * API-layer `refreshLink` – this mutates the in-memory list only and never
    * round-trips to the server.
    */
   updateLink: (link: Link) => void;

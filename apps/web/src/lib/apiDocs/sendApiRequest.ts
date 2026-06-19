@@ -69,14 +69,14 @@ export interface ApiRequestResult {
   statusText: string;
   /** Whether `status` is 2xx. */
   ok: boolean;
-  /** Response body — pretty-printed JSON when parseable, else raw text. */
+  /** Response body – pretty-printed JSON when parseable, else raw text. */
   body: string;
 }
 
 /**
  * Fires the request and normalizes the response into renderable strings.
  * Rejects only on transport failure (network/CORS/offline); the caller catches
- * that and shows "could not reach …". Any HTTP status — including 4xx/5xx —
+ * that and shows "could not reach …". Any HTTP status – including 4xx/5xx –
  * resolves normally so the response panel can render it.
  */
 export async function sendApiRequest({

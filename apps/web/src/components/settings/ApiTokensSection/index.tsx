@@ -94,7 +94,7 @@ export default function ApiTokensSection() {
           headingText="Your new token has been created."
           bodyText="It'll only be shown once, so make sure you copy it down before navigating away from this page!"
           secrets={[apiTokens.newToken.rawToken]}
-          secretAriaLabel="Personal access token — navigate here to read it character by character"
+          secretAriaLabel="Personal access token – navigate here to read it character by character"
           copyButtonLabel="Copy to clipboard"
           copiedAnnouncement="Token copied to clipboard"
           copied={apiTokens.copied}

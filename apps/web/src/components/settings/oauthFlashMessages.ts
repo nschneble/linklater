@@ -3,7 +3,7 @@
  *
  * `LINKED_MESSAGES` powers the success Toast (`?linked=…`); the unknown-code
  * fallback at the consumer is intentionally provider-agnostic ("Account
- * connected.") rather than echoing the raw provider code — the value
+ * connected.") rather than echoing the raw provider code – the value
  * arrives from the redirect URL and could be anything.
  *
  * `LINK_ERROR_MESSAGES` powers the inline `<Alert>` inside `IdPsSection`

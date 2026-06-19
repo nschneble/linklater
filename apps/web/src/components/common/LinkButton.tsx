@@ -6,10 +6,10 @@ import { FOCUS_RING } from '../../lib/styles';
  * login", "Resend verification email"). Renders as `<button type="button">`
  * so it does not accidentally submit a form it is placed inside.
  *
- * The `surface` prop names the bundle of the parent surface — i.e. which
+ * The `surface` prop names the bundle of the parent surface – i.e. which
  * bundle hosts this link. Idle text reads `--{host}-alt-text`; hover
  * elevates to `--{host}-text`. DESIGN DECISION: hover deliberately does
- * not flip to `--{host}-highlight` — the permanent underline alone
+ * not flip to `--{host}-highlight` – the permanent underline alone
  * carries the link affordance, and the alt→text luminance lift confirms
  * the hover state. A highlight flip would compete with `PrimaryButton`
  * for visual weight on forms and break the "links are quiet" rule. Do

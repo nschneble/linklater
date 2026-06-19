@@ -18,7 +18,7 @@ function isReference(
 /**
  * Reads the schema name out of a local component reference
  * (`#/components/schemas/Foo` → `Foo`). Returns `undefined` for external or
- * non-schema references, which this layer does not resolve — the served
+ * non-schema references, which this layer does not resolve – the served
  * Linklater spec only ever refs its own `components.schemas`.
  */
 function schemaNameFromReference(reference: string): string | undefined {
@@ -36,7 +36,7 @@ function schemaNameFromReference(reference: string): string | undefined {
  *   so the caller can omit the schema rather than crash.
  * - A schema that refers back to a name already on the current resolution
  *   path (a cycle, e.g. a self-referential `next`) is left as a shallow
- *   placeholder — its own children are not recursed — so resolution always
+ *   placeholder – its own children are not recursed – so resolution always
  *   terminates.
  *
  * @param schema The schema or reference to resolve.
@@ -68,9 +68,9 @@ export function resolveSchema(
 }
 
 /**
- * Walks the resolvable child positions of an inline schema — `properties`,
+ * Walks the resolvable child positions of an inline schema – `properties`,
  * array `items`, `additionalProperties`, and the `allOf`/`oneOf`/`anyOf`
- * composition keywords — replacing each with its resolved form.
+ * composition keywords – replacing each with its resolved form.
  */
 function resolveSchemaChildren(
   schema: OpenAPIV3.SchemaObject,

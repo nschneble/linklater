@@ -10,7 +10,7 @@ export interface CreateLinkInput {
 
 /**
  * Write operations for links: creating, marking read/unread, and deleting.
- * Every method is scoped to a specific `userId` — the service never
+ * Every method is scoped to a specific `userId` – the service never
  * operates on links belonging to a different user.
  *
  * Read operations live in `LinksQueryService`. `LinksController` injects
@@ -100,7 +100,7 @@ export class LinksService {
   /**
    * Resets a link's timestamps to resurface it at the top of the unread list.
    * Used by both the found-existing path and the P2002 race-condition fallback
-   * in `create` — both paths represent the same intent: bring the link back.
+   * in `create` – both paths represent the same intent: bring the link back.
    *
    * @param id - The UUID of the link to resurface.
    * @returns The updated link with its `meta` relation included.
@@ -193,11 +193,11 @@ export class LinksService {
 
   /**
    * Permanently deletes all read links for a user. Used by the
-   * "Remove all read" button in the UI. Not scoped to a date threshold —
+   * "Remove all read" button in the UI. Not scoped to a date threshold –
    * all read links regardless of age are deleted.
    *
    * @param userId - The UUID of the authenticated user.
-   * @returns `{ count: number }` — the number of links deleted.
+   * @returns `{ count: number }` – the number of links deleted.
    */
   async removeAllRead(userId: string) {
     const result = await this.prisma.link.deleteMany({

@@ -18,7 +18,7 @@ import { useNavigate } from 'react-router-dom';
  * `oauth-failed` error-variant notice and redirects to `/login`. AuthForm
  * surfaces the toast (role="alert" + aria-live="assertive") + sr-only mirror.
  * Mirrors the redirect-on-error pattern shared with `TokenVerificationPage`,
- * `VerifyLoginPage`, and `ConfirmAccountDeletionPage` — the provider's specific
+ * `VerifyLoginPage`, and `ConfirmAccountDeletionPage` – the provider's specific
  * error message is intentionally dropped because the recovery path is identical
  * regardless of the underlying OAuth failure (retry sign-in on /login), and the
  * 6s toast window is too short for SRs to parse a free-form provider message.
@@ -40,7 +40,7 @@ export default function OAuthCallbackPage() {
 
     // Strip the credentials out of the URL bar before doing anything else.
     // The fragment never reaches the server, but it persists in the
-    // browser's address bar and history until the user navigates away —
+    // browser's address bar and history until the user navigates away –
     // shoulder-surfing a stale tab would expose a usable JWT. replaceState
     // keeps the entry in history (so Back still works) without the secret.
     if (typeof window !== 'undefined' && window.location.hash) {
@@ -51,7 +51,7 @@ export default function OAuthCallbackPage() {
           window.location.pathname + window.location.search,
         );
       } catch {
-        // history.replaceState is unavailable in sandboxed contexts —
+        // history.replaceState is unavailable in sandboxed contexts –
         // silently fall through to the auth flow.
       }
     }
@@ -73,7 +73,7 @@ export default function OAuthCallbackPage() {
 
   // The page is purely transient: spinner while loginWithToken is in flight,
   // then an unconditional redirect (success → /unread, failure → /login).
-  // The verifying state mirrors VerifyLoginPage / ConfirmAccountDeletionPage —
+  // The verifying state mirrors VerifyLoginPage / ConfirmAccountDeletionPage –
   // a single centered spinning icon with an sr-only polite status, no card
   // chrome. Card chrome would flash visibly for sub-second windows before the
   // redirect fires, which reads as "page loaded and immediately bounced."

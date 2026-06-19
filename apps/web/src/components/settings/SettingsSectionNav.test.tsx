@@ -1,10 +1,10 @@
 /*
- * Tests for SettingsSectionNav — the mobile-only horizontal chip nav for
+ * Tests for SettingsSectionNav – the mobile-only horizontal chip nav for
  * Settings sections.
  *
  * The active-state expression is the load-bearing piece: `aria-current="page"`
  * lights up the matching button via Tailwind `aria-[current]` variants
- * (bg/text/ring + icon swap). Wave 19 rewired the variant targets onto
+ * (bg/text/ring + icon swap). The variant targets are wired onto
  * bundle tokens, so the contract this file proves is:
  *
  *   - the right button gets aria-current="page" when active

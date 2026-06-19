@@ -8,7 +8,7 @@
  *     + logout() + navigate('/login')
  *   - API error → setPendingNotice('deletion-link-invalid') + navigate('/login')
  *
- * Per Wave 6: the page no longer renders an error card. All failure paths
+ * The page no longer renders an error card. All failure paths
  * redirect to /login, where the AuthForm surfaces the queued error-variant
  * notice as an assertive toast.
  */
@@ -101,7 +101,7 @@ describe('ConfirmAccountDeletionPage verifying state', () => {
     const status = screen.getByRole('status');
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent(/verifying your deletion link/i);
-    // The status node carries `sr-only` — verifying state is visually a bare
+    // The status node carries `sr-only` – verifying state is visually a bare
     // spinner. No card heading is rendered (errors redirect to /login).
     expect(status).toHaveClass('sr-only');
   });
@@ -189,7 +189,7 @@ describe('ConfirmAccountDeletionPage success path (auto-redirect)', () => {
   });
 });
 
-describe('ConfirmAccountDeletionPage error paths — redirect to /login with toast', () => {
+describe('ConfirmAccountDeletionPage error paths – redirect to /login with toast', () => {
   it('queues deletion-link-invalid + navigates to /login when no token is present', async () => {
     await act(async () => {
       renderPage('');

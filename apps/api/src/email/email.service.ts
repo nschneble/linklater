@@ -61,7 +61,7 @@ export class EmailService {
     // testing-ui mode drops emails on the floor so the harness never
     // depends on an SMTP relay being reachable and never logs a
     // ServiceUnavailableException for a downstream that does not exist.
-    // Subject only — never the recipient. If TESTING_UI is ever
+    // Subject only – never the recipient. If TESTING_UI is ever
     // accidentally set in a non-test env, this log path must not leak
     // user email addresses.
     if (isTestingUi()) {

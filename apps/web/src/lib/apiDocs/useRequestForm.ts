@@ -10,7 +10,7 @@ import type { NormalizedEndpoint } from '../openapi';
  * is unit-testable apart from the brand-locked JSX in `RequestForm`.
  *
  * Token security: the raw token is held only here and forwarded straight to
- * `sendApiRequest` as the Authorization header — it is never written into any
+ * `sendApiRequest` as the Authorization header – it is never written into any
  * state the UI renders (CONSTRAINT token-security).
  */
 

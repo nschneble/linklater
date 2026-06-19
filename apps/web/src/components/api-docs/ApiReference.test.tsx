@@ -104,7 +104,7 @@ describe('ApiReference', () => {
     expect(
       await screen.findByRole('heading', { level: 3, name: 'GET /links' }),
     ).toBeInTheDocument();
-    // Welcome heading is gone — the detail replaced it.
+    // Welcome heading is gone – the detail replaced it.
     expect(
       screen.queryByRole('heading', { name: /save, read, and delete links/i }),
     ).not.toBeInTheDocument();

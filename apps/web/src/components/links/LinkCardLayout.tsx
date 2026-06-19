@@ -22,14 +22,14 @@ interface LinkCardLayoutProps {
   isSelected?: boolean;
   /**
    * Called when the card anchor is activated (mouse click, Enter, Cmd-click).
-   * Native anchor activation handles opening the URL — this callback exists
+   * Native anchor activation handles opening the URL – this callback exists
    * so callers can run side effects like marking the link read.
    */
   onCardActivate: (event: React.MouseEvent) => void;
   /**
    * Called when the "Mark as unread" button is clicked. The button is a
    * sibling of the anchor overlay, so its click does not propagate to the
-   * card-open behavior — no `stopPropagation()` needed.
+   * card-open behavior – no `stopPropagation()` needed.
    */
   onUnreadClick: (event: React.MouseEvent) => void;
 }
@@ -115,7 +115,7 @@ export default function LinkCardLayout({
     [link.meta?.siteName, link.url],
   );
 
-  const cardAriaLabel = `${displayTitle} — ${displaySiteName}, opens in new tab`;
+  const cardAriaLabel = `${displayTitle} – ${displaySiteName}, opens in new tab`;
 
   return (
     <div

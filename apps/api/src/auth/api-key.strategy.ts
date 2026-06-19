@@ -4,7 +4,7 @@ import { TokensService } from '../tokens/tokens.service.js';
 
 /**
  * Validates personal access tokens (PATs) for non-browser API clients.
- * This is not a Passport strategy in the traditional sense — it is a
+ * This is not a Passport strategy in the traditional sense – it is a
  * plain injectable service invoked directly by `AnyAuthGuard` when the
  * bearer token starts with the `ltk_` prefix.
  *

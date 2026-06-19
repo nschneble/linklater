@@ -7,10 +7,10 @@ import { FOCUS_RING } from '../../lib/styles';
  * The active indicator (a sliding pill) is rendered separately by the parent
  * using an `aria-hidden` `<div>` so the text color transitions correctly over
  * the highlight. When active, the tab also renders a small `fa-circle-dot`
- * icon as a non-color active indicator — useful in the Apollo 10½ CVD theme.
+ * icon as a non-color active indicator – useful in the Apollo 10½ CVD theme.
  *
  * Text colors are driven by the parent `SlidingTabBar`'s `data-surface`
- * attribute via Tailwind `group-data-*` variants — no `surface` prop needed
+ * attribute via Tailwind `group-data-*` variants – no `surface` prop needed
  * here, the tab reads its host bundle from DOM ancestry. The mapping mirrors
  * the parent: `data-surface=base` paints mount-tier (idle label
  * `--mount-alt-text`, active inverts to `--mount-bg`); `data-surface=mount`

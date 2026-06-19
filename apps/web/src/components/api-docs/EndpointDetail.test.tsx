@@ -131,7 +131,7 @@ describe('EndpointDetail', () => {
     const onStatusMessage = vi.fn();
     renderDetail(makeEndpoint(), { loggedIn: true, onStatusMessage });
     // The form hoists its status upward; the only status node present is
-    // CurlExample's (empty) copy-confirmation region — never a form announcer.
+    // CurlExample's (empty) copy-confirmation region – never a form announcer.
     screen
       .queryAllByRole('status')
       .forEach((node) => expect(node).toBeEmptyDOMElement());

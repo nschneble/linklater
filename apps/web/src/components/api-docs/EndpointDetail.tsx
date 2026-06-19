@@ -11,10 +11,10 @@ import type { NormalizedEndpoint } from '../../lib/openapi';
  * The detail half of the master-detail reference: the full documentation for
  * the ONE selected endpoint, rendered as a labelled `<section>` region with
  * the mount-bundle card chrome and header shape of `SettingsGroup`. No
- * disclosure — the selected endpoint's content is always shown.
+ * disclosure – the selected endpoint's content is always shown.
  *
  * The `<h3>` is the sole accessible-name carrier of the method (CONSTRAINT B1):
- * its sr-only text reads "GET /links" — method first — so an AT user hears the
+ * its sr-only text reads "GET /links" – method first – so an AT user hears the
  * method without the decorative `MethodBadge` repeating it; the visible path is
  * `aria-hidden`. The heading carries `tabIndex={-1}` so the selection effect
  * (`useApiReferenceSelection`) can move focus here after a swap, landing the
@@ -27,7 +27,7 @@ import type { NormalizedEndpoint } from '../../lib/openapi';
  * the concise "GET /links" (method-first, CONSTRAINT B1) while the visible
  * full URL is `aria-hidden`. A copy-ready cURL example sits below the tables in
  * BOTH auth states (it's reference material). The interactive "try it out"
- * `RequestForm` renders ONLY when logged in — a public visitor gets static
+ * `RequestForm` renders ONLY when logged in – a public visitor gets static
  * docs, no live request affordance.
  *
  * Request status is reported UP via `onStatusMessage` to a single page-level
@@ -46,7 +46,7 @@ const METHOD_ICONS: Record<string, string> = {
 
 interface EndpointDetailProps {
   endpoint: NormalizedEndpoint;
-  /** Whether a user is signed in — gates the live "try it out" form. */
+  /** Whether a user is signed in – gates the live "try it out" form. */
   loggedIn: boolean;
   /** Origin the "try it out" form targets; empty string means same-origin. */
   serverOrigin: string;

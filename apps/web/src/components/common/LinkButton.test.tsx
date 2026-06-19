@@ -1,8 +1,8 @@
 /*
- * Tests for LinkButton — inline underline-style action button.
+ * Tests for LinkButton – inline underline-style action button.
  *
  * Pins the surface-prop paint matrix (base / mount / warn) and the focus-ring
- * presence (wave 24 added). Hover paint is asserted at the class-string level
+ * presence. Hover paint is asserted at the class-string level
  * because JSDOM does not exercise CSS `:hover`.
  */
 
@@ -12,7 +12,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import LinkButton from './LinkButton';
 
 describe('LinkButton', () => {
-  it('defaults to mount surface — paints mount-alt-text idle, mount-text hover', () => {
+  it('defaults to mount surface – paints mount-alt-text idle, mount-text hover', () => {
     render(<LinkButton onClick={() => {}}>link</LinkButton>);
     const button = screen.getByRole('button', { name: 'link' });
     expect(button.getAttribute('data-surface')).toBe('mount');
@@ -32,7 +32,7 @@ describe('LinkButton', () => {
     expect(button.className).toContain('hover:text-[var(--base-text)]');
   });
 
-  it('surface="warn" paints warn-text (no idle/hover differentiation — underline carries affordance)', () => {
+  it('surface="warn" paints warn-text (no idle/hover differentiation – underline carries affordance)', () => {
     render(
       <LinkButton surface="warn" onClick={() => {}}>
         link
@@ -44,7 +44,7 @@ describe('LinkButton', () => {
     expect(button.className).not.toContain('hover:text-[var(');
   });
 
-  it('always renders the underline — link affordance does not depend on color', () => {
+  it('always renders the underline – link affordance does not depend on color', () => {
     render(<LinkButton onClick={() => {}}>link</LinkButton>);
     const button = screen.getByRole('button', { name: 'link' });
     expect(button.className).toContain('underline');
@@ -59,13 +59,13 @@ describe('LinkButton', () => {
     );
   });
 
-  it('drops the accent flair on hover — no longer reads --accent', () => {
+  it('drops the accent flair on hover – no longer reads --accent', () => {
     render(<LinkButton onClick={() => {}}>link</LinkButton>);
     const button = screen.getByRole('button', { name: 'link' });
     expect(button.className).not.toContain('var(--accent)');
   });
 
-  it('defaults to type="button" — never accidentally submits a parent form', () => {
+  it('defaults to type="button" – never accidentally submits a parent form', () => {
     render(<LinkButton onClick={() => {}}>link</LinkButton>);
     expect(
       screen.getByRole('button', { name: 'link' }).getAttribute('type'),
@@ -79,7 +79,7 @@ describe('LinkButton', () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it('respects disabled — does not fire onClick + shows disabled style', () => {
+  it('respects disabled – does not fire onClick + shows disabled style', () => {
     const handleClick = vi.fn();
     render(
       <LinkButton disabled onClick={handleClick}>
@@ -93,7 +93,7 @@ describe('LinkButton', () => {
     expect(handleClick).not.toHaveBeenCalled();
   });
 
-  it('forwards ref to the underlying button — load-bearing for post-action focus (wave 27 ConfirmAccountDeletionPage)', () => {
+  it('forwards ref to the underlying button – load-bearing for post-action focus on ConfirmAccountDeletionPage', () => {
     const reference = createRef<HTMLButtonElement>();
     render(
       <LinkButton ref={reference} onClick={() => {}}>

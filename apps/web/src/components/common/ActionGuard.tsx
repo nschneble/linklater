@@ -43,7 +43,7 @@ interface ActionGuardProps {
    * cleared after 5s so a repeat action re-announces.
    */
   successAnnouncement?: string;
-  /** Outer wrapper class — e.g. `'space-y-2'` or `'space-y-3'`. */
+  /** Outer wrapper class – e.g. `'space-y-2'` or `'space-y-3'`. */
   className?: string;
   /** Where the Alert renders relative to children. Defaults to `'after'`. */
   alertSlot?: 'before' | 'after';
@@ -113,7 +113,7 @@ export default function ActionGuard({
     previouslyConfirming.current = confirming;
   }, [confirming, error, triggerId]);
 
-  // Pull focus into the error alert on failure — `role="alert"` alone is not
+  // Pull focus into the error alert on failure – `role="alert"` alone is not
   // reliable when a sibling button keeps focus.
   useEffect(() => {
     if (error) {
@@ -126,7 +126,7 @@ export default function ActionGuard({
   // some screen readers to miss the first announcement.
   useTransientState(announcement, '', setAnnouncement, 5000);
 
-  // Global Escape closes the confirm row — matches user expectation that
+  // Global Escape closes the confirm row – matches user expectation that
   // Escape always backs out, regardless of where focus currently is.
   useEffect(() => {
     if (!confirming) return;
@@ -180,7 +180,7 @@ export default function ActionGuard({
   //      below it visually.
   //   2. The trigger row stays the last in-flow child, so Tailwind v4's
   //      `space-y-*` (`:where(& > :not(:last-child)) { margin-block-end }`)
-  //      never forces a `margin-bottom` onto it — preserving `items-center`
+  //      never forces a `margin-bottom` onto it – preserving `items-center`
   //      alignment in parents.
   // Returning a single root (not a fragment with a sibling sr-only) also
   // prevents the live region from leaking into a caller's parent `space-y-*`

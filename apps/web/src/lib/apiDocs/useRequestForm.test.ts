@@ -1,5 +1,5 @@
 /**
- * Direct coverage for the headless `useRequestForm` state machine — branches
+ * Direct coverage for the headless `useRequestForm` state machine – branches
  * the `RequestForm` component tests don't reach because that suite only
  * exercises path params + a POST body:
  *
@@ -59,7 +59,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('useRequestForm — query parameter routing', () => {
+describe('useRequestForm – query parameter routing', () => {
   it('places a query-location parameter in the URL query string, not the path', async () => {
     const fetchMock = vi
       .fn()
@@ -119,12 +119,12 @@ describe('useRequestForm — query parameter routing', () => {
     expect(invalidFieldId).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [calledUrl] = fetchMock.mock.calls[0];
-    // Blank query value is dropped — no trailing `?`.
+    // Blank query value is dropped – no trailing `?`.
     expect(calledUrl).toBe('https://api.example.com/links');
   });
 });
 
-describe('useRequestForm — GET drops the body', () => {
+describe('useRequestForm – GET drops the body', () => {
   it('never sends a body or Content-Type for a GET even with valid JSON in the editor', async () => {
     const fetchMock = vi
       .fn()
@@ -157,7 +157,7 @@ describe('useRequestForm — GET drops the body', () => {
   });
 });
 
-describe('useRequestForm — inert guard', () => {
+describe('useRequestForm – inert guard', () => {
   it('does not fetch and returns null when inert', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);

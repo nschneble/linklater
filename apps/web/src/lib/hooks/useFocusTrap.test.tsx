@@ -131,7 +131,7 @@ describe('useFocusTrap', () => {
     }
     const { rerender } = render(<Wrapper open={true} />);
     rerender(<Wrapper open={false} />);
-    // No assertion needed — verifies cleanup doesn't throw on subsequent renders.
+    // No assertion needed – verifies cleanup doesn't throw on subsequent renders.
     expect(reference.current).toBeNull();
   });
 });

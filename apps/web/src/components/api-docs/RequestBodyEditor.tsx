@@ -4,11 +4,11 @@ import { fieldDescriptionId, fieldErrorId } from '../../lib/apiDocs/fieldIds';
  * Labeled JSON `<textarea>` for an endpoint's request body inside the "try it
  * out" form. Same a11y contract as `RequestField` (real visible `<label>`,
  * deterministic ids, always-mounted error node, `aria-disabled` + `readOnly`
- * for the inert/logged-out state) — the body just edits free JSON text.
+ * for the inert/logged-out state) – the body just edits free JSON text.
  *
  * `FormInput` is `<input>`-only, so the `<textarea>` can't adopt it directly;
- * it MIRRORS FormInput's `surface="mount"` token set exactly (Wave 6) —
- * `--mount-input-bg` fill, `--mount-border`, `--mount-text`, `--focus-ring` —
+ * it MIRRORS FormInput's `surface="mount"` token set exactly –
+ * `--mount-input-bg` fill, `--mount-border`, `--mount-text`, `--focus-ring` –
  * so the body editor and the parameter fields paint identically and inherit
  * the same input bundle contract mechanized in `bundles.contrast.test.ts`.
  *
@@ -27,7 +27,7 @@ interface RequestBodyEditorProps {
   error: string;
   /** Whether the form is inert (logged-out or token loading). */
   inert: boolean;
-  /** Change handler — receives the raw text. */
+  /** Change handler – receives the raw text. */
   onValueChange: (value: string) => void;
 }
 

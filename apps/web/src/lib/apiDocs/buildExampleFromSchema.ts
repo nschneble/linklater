@@ -11,7 +11,7 @@ import type { OpenAPIV3 } from 'openapi-types';
  *   2. the first `enum` member,
  *   3. a type-derived placeholder (`''`, `0`, `false`, `[item]`, `{}`).
  *
- * Capped implicitly by the spec's own nesting — objects recurse into their
+ * Capped implicitly by the spec's own nesting – objects recurse into their
  * properties and arrays into a single representative item.
  */
 export function buildExampleFromSchema(

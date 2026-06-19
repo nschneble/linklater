@@ -10,9 +10,9 @@ import type { PgBoss, Job } from 'pg-boss';
 
 /**
  * Thin wrapper around the pg-boss job queue. Provides three operations:
- * - `send` — enqueue a one-off job
- * - `work` — register a worker function for a queue
- * - `schedule` — register a recurring cron job
+ * - `send` – enqueue a one-off job
+ * - `work` – register a worker function for a queue
+ * - `schedule` – register a recurring cron job
  *
  * All three methods call `createQueue` before the actual operation so that
  * callers do not need to worry about queue initialization order. pg-boss
@@ -24,7 +24,7 @@ import type { PgBoss, Job } from 'pg-boss';
  * DELIVERY SEMANTICS: pg-boss is at-least-once by default. A worker that
  * crashes after side effects but before pg-boss marks the job complete will
  * see the job redelivered on restart. Every handler registered with `work`
- * must therefore be idempotent — running the same job twice must produce
+ * must therefore be idempotent – running the same job twice must produce
  * the same observable state. The two consumers in this repo
  * (MetadataService.fetchAndStore and ReadLinkCleanupService
  * .deleteExpiredReadLinks) achieve this via Prisma `upsert` and a

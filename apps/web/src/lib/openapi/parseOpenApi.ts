@@ -22,7 +22,7 @@ type SchemaMap = Record<string, OpenAPIV3.SchemaObject>;
  * throwing, so a bad fetch never takes down the page.
  *
  * Every `$ref` is resolved against `components.schemas` here, so the returned
- * model is self-contained — no consumer needs to know about references.
+ * model is self-contained – no consumer needs to know about references.
  *
  * @param document The raw OpenAPI document.
  * @param serverOrigin Origin for "try it" requests (derived from the spec

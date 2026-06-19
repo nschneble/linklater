@@ -1,12 +1,12 @@
 /**
- * Wave 6 co-located coverage (a11y-lead wave-5 Minor 2). This wave swaps
+ * Co-located coverage for the bundle migration. This swaps
  * ResponsePanel's color SOURCE from brand literals to the alert/success bundle
  * tokens; these tests pin the contracts that must survive that swap:
  *
  *   - the status icon stays `aria-hidden` (it is decorative; the status text
- *     and the persistent sr-only announcer carry the meaning — CONSTRAINT §5);
+ *     and the persistent sr-only announcer carry the meaning – CONSTRAINT §5);
  *   - success vs error stay distinguishable by ICON + TEXT, not color alone
- *     (SC 1.4.1) — so the panel reads correctly in grayscale / under CVD;
+ *     (SC 1.4.1) – so the panel reads correctly in grayscale / under CVD;
  *   - the region carries its `aria-label="Response"` and no second live region.
  */
 

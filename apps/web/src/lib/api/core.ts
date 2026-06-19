@@ -43,7 +43,7 @@ async function parseError(response: Response): Promise<ApiError> {
     const body = JSON.parse(text) as { message?: string };
     if (body.message) message = body.message;
   } catch {
-    // Body is not JSON — use the raw text as the error message.
+    // Body is not JSON – use the raw text as the error message.
   }
   return new ApiError(message, response.status);
 }
@@ -99,16 +99,16 @@ async function attemptTokenRefresh(): Promise<boolean> {
 
 /**
  * Controls the Authorization header on an `apiFetch` call:
- * - `true` (default) — attach the stored JWT; retry once after a 401 with a
+ * - `true` (default) – attach the stored JWT; retry once after a 401 with a
  *   token refresh
- * - `false` — send no Authorization header (public/unauthenticated endpoints)
- * - `string` — use the provided literal token as-is (e.g. a PAT or MFA token)
+ * - `false` – send no Authorization header (public/unauthenticated endpoints)
+ * - `string` – use the provided literal token as-is (e.g. a PAT or MFA token)
  */
 export type AuthContext = boolean | string;
 
 /**
  * Like `apiFetch<T>` but throws `ApiError` when the server returns an empty
- * body. Use this on endpoints that must return JSON — avoids repeating the
+ * body. Use this on endpoints that must return JSON – avoids repeating the
  * `if (data === undefined) throw new ApiError(...)` guard at every callsite.
  */
 export async function apiFetchRequired<T>(

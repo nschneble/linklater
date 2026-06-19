@@ -93,7 +93,7 @@ describe('IdPsSection error rendering', () => {
     );
   });
 
-  it('renders no success element — toast is now owned by SettingsView', () => {
+  it('renders no success element – toast is now owned by SettingsView', () => {
     const { container } = render(
       <IdPsSection
         appleEnabled={false}

@@ -154,6 +154,6 @@ graph TD
 
 Environment variables are documented in `.env.example`
 
-The API reference is available at `/settings/api` when the app is running
+The API reference is available at `/docs` when the app is running
 
 The CVD accessibility hook (`data-cvd="on"`) is implemented in `src/theme/ThemeContext/` and drives a set of global CSS rules defined in `src/index.css`

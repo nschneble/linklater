@@ -40,7 +40,7 @@ export default function SettingsLayout({
   // The skip link is a bypass, not a section selection: scroll + focus the
   // first section, but do NOT light its active accent (that is reserved for
   // deliberate nav clicks). `#${firstHash}` keeps a native fallback if JS
-  // fails — it points at the real DOM id of the first section.
+  // fails – it points at the real DOM id of the first section.
   function handleSkipClick(event: MouseEvent<HTMLAnchorElement>) {
     if (!firstHash || !isPlainAnchorClick(event)) return;
     event.preventDefault();
@@ -51,7 +51,7 @@ export default function SettingsLayout({
   // continue tabbing from the top of the page (not the bottom of the sidebar)
   // and screen-reader users hear "Settings, heading level 1" as confirmation.
   // Focusing the heading is outside any section, so it also clears the active
-  // accent — the desired "leave the section" outcome.
+  // accent – the desired "leave the section" outcome.
   function handleBackToTop() {
     window.scrollTo({
       top: 0,

@@ -11,7 +11,7 @@ const API_DOCS_TOKEN_NAME = 'API Docs';
  *
  * Mirrors `BookmarkletTokensService.getOrCreate`: the raw value is stored in
  * `secretValue` so the API docs page can pre-fill the live "try it out" panel
- * on every load — including from a new device. The token is auto-provisioned
+ * on every load – including from a new device. The token is auto-provisioned
  * on first request, never expires, and is never shown in the user's token
  * list (`TokensService.findAll` filters to `kind = USER`).
  *
@@ -78,7 +78,7 @@ export class ApiDocsTokensService {
 
   /**
    * Replaces a corrupted API-docs row (missing `secretValue`) with a freshly
-   * minted one in a single transaction. This is the self-heal path only — it
+   * minted one in a single transaction. This is the self-heal path only – it
    * is never exposed to the user, because the API-docs token has no
    * regenerate affordance by design.
    */
@@ -128,11 +128,11 @@ export class ApiDocsTokensService {
   }) {
     if (!stored.secretValue) {
       // Every API_DOCS row must have a secretValue populated at creation. A
-      // null here means a data-integrity violation — throw so it produces a
+      // null here means a data-integrity violation – throw so it produces a
       // visible 500 rather than silently returning an empty token that leaves
       // the docs "try it out" panel unauthenticated with no error shown.
       throw new Error(
-        `API docs token ${stored.id} is missing secretValue — data integrity violation`,
+        `API docs token ${stored.id} is missing secretValue – data integrity violation`,
       );
     }
     return {

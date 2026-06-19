@@ -17,13 +17,13 @@ export interface ApiDocsTokenState {
  * Fetches the authenticated user's hidden API-docs token so the "try it out"
  * explorer can sign live requests.
  *
- * The token is server-sourced and re-fetched fresh on every mount — it is a
+ * The token is server-sourced and re-fetched fresh on every mount – it is a
  * secret, so it is intentionally NOT cached in `sessionStorage`. It is only
  * requested when a user is logged in (`useAuth().user` is non-null); the
  * endpoint is JWT-guarded, so calling it logged-out would 401. The fetch waits
  * for auth `loading` to settle before deciding, and is cancelled on unmount.
  *
- * Intentionally silent — never emits a live-region announcement on hydration.
+ * Intentionally silent – never emits a live-region announcement on hydration.
  *
  * @returns The token state for the API explorer to consume.
  */

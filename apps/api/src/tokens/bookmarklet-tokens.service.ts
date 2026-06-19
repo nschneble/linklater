@@ -11,7 +11,7 @@ const BOOKMARKLET_TOKEN_NAME = 'Bookmarklet';
  *
  * Unlike regular PATs, the bookmarklet token's raw value is stored in
  * `secretValue` so the settings page can embed it in the `javascript:`
- * URL on every load — including from a new device.
+ * URL on every load – including from a new device.
  *
  * The raw-token minting primitive is imported directly from
  * `./mint-raw-token` rather than reached through `TokensService`. Keeping
@@ -125,11 +125,11 @@ export class BookmarkletTokensService {
   }) {
     if (!stored.secretValue) {
       // Every BOOKMARKLET row must have a secretValue populated at creation.
-      // A null here means a data-integrity violation — throw so it produces a
+      // A null here means a data-integrity violation – throw so it produces a
       // visible 500 rather than silently returning an empty token that leaves
       // the bookmarklet anchor stuck at href="#" with no error shown.
       throw new Error(
-        `Bookmarklet token ${stored.id} is missing secretValue — data integrity violation`,
+        `Bookmarklet token ${stored.id} is missing secretValue – data integrity violation`,
       );
     }
     return {

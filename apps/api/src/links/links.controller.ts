@@ -37,7 +37,7 @@ import { StumbleResponseDto } from './dto/stumble-response.dto.js';
 /**
  * CRUD endpoints for a user's saved links. Every route requires a valid JWT
  * or personal access token (PAT). All data is scoped to the authenticated
- * user — no route can read or modify another user's links.
+ * user – no route can read or modify another user's links.
  */
 @ApiTags('links')
 @ApiBearerAuth('pat')
@@ -76,7 +76,7 @@ export class LinksController {
   /**
    * Returns a paginated list of the authenticated user's links.
    * Defaults to page 1 with 10 results. When `search` is provided, full-text
-   * search is performed using PostgreSQL `tsvector` — results are ranked by
+   * search is performed using PostgreSQL `tsvector` – results are ranked by
    * relevance, not recency.
    */
   @ApiOperation({
@@ -122,7 +122,7 @@ export class LinksController {
   ) {
     const userId = request.user.userId;
 
-    // Query params arrive as strings — coerce to typed values before passing
+    // Query params arrive as strings – coerce to typed values before passing
     // to the service, which expects booleans and numbers.
     let readFlag: boolean | undefined;
     if (read === 'true') readFlag = true;
@@ -155,7 +155,7 @@ export class LinksController {
   @ApiResponse({
     status: 200,
     description:
-      'A randomly chosen link wrapped in `{ link }`. The link is returned as-is — its read state is not changed. `link` is `null` when no links match the filter.',
+      'A randomly chosen link wrapped in `{ link }`. The link is returned as-is – its read state is not changed. `link` is `null` when no links match the filter.',
     type: RandomLinkResponseDto,
   })
   @ApiUnauthorized()

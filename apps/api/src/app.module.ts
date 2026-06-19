@@ -20,11 +20,11 @@ import { UsersModule } from './users/users.module.js';
       { name: 'auth-resend-verification', ttl: 60000, limit: 3 },
       { name: 'auth-request-email-change', ttl: 60000, limit: 3 },
       { name: 'auth-verify-email-change', ttl: 60000, limit: 10 },
-      // MFA login step 2 — tighter window to slow brute-force on OTP codes
+      // MFA login step 2 – tighter window to slow brute-force on OTP codes
       { name: 'auth-verify-otp', ttl: 900000, limit: 5 },
       // MFA setup
       { name: 'auth-mfa-totp-setup', ttl: 60000, limit: 5 },
-      // MFA disable — most sensitive action; matches verify-otp window
+      // MFA disable – most sensitive action; matches verify-otp window
       { name: 'auth-disable-mfa', ttl: 900000, limit: 5 },
       // Re-auth gate for recovery code operations
       { name: 'auth-reauth', ttl: 900000, limit: 5 },

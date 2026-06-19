@@ -1,10 +1,10 @@
 /* ---------- scanner-darkly ---------- *
- * Wave 12 migration to per-theme bundle palette. The legacy flat tokens
+ * Per-theme bundle palette. The legacy flat tokens
  * stay intact for un-migrated consumers.
  *
  * Card-style choice: calm path (orchestrator approved). Mount/orbit bgs
  * sit on warm cream gradations off the page bg in light mode and on
- * deep-purple gradations of the purple-black page in dark mode — keeps
+ * deep-purple gradations of the purple-black page in dark mode – keeps
  * the surface stack quiet so state bundles do the categorical work.
  *
  * State-hue allocation:
@@ -12,9 +12,9 @@
  *     Purple (the theme's signature) lives in base/mount/orbit borders
  *     AND in the info bundle. The rust/gold/olive states have to do
  *     extra CVD work because they're all warm-warm on the deuter/protan
- *     axis — see the M-L2 mitigation block below.
+ *     axis – see the M-L2 mitigation block below.
  *   DARK: alert = peach-red, warn = amber/gold, info = CYAN (orchestrator-
- *     approved break from the theme's signature purple — base-border is
+ *     approved break from the theme's signature purple – base-border is
  *     already purple #847ecc and an info-purple bundle would collide on
  *     adjacency), success = lime/olive.
  *
@@ -34,10 +34,10 @@
  *   - DARK --orbit-border #b8b2e8 NOT the scanner PRD's #847ecc border
  *     (which would fail SC 1.4.11 vs orbit-bg #3b376a, the deeper purple).
  *   - DARK --alert-highlight #ee5050 + dark fg #1c0608 = dazed-and-
- *     confused wave-11 / school-of-rock precedent for fill-on-fill alert
+ *     confused / school-of-rock precedent for fill-on-fill alert
  *     buttons.
  *   - DARK --alert/warn/info/success-bg = rgb(... / 0.55) composited
- *     panels = dazed wave-11 precedent.
+ *     panels = dazed precedent.
  *
  * Brief flags that culori verification surfaced (a11y-lead disclosed no
  * culori in their reasoning loop):
@@ -51,12 +51,12 @@
  *          bg / 4.8 border). NOT pre-flagged. NOVEL MITIGATION applied:
  *          darken --alert-bg from briefed #f5dccc to #e8c8b0. Widens
  *          alert/warn bg luminance ratio from 1.05 to 1.43, clears axis B
- *          alone. Alert text/bg still clears 8.13:1 (briefed 10.19:1) —
+ *          alone. Alert text/bg still clears 8.13:1 (briefed 10.19:1) –
  *          headroom drops but stays comfortable.
  *       2. alert/success collapsed both axes (axis B bg 1.01 / border
  *          1.12; deuter bg dE 0.4 border 4.0). NOT pre-flagged. The M-L2
  *          Option A success-border darken AND the M-L2 Option C warn-bg
- *          lift both incidentally close this pair too — border lum ratio
+ *          lift both incidentally close this pair too – border lum ratio
  *          climbs to 1.93 (clears axis B).
  *       3. warn/success collapsed both axes per pre-staged M-L2. Applied
  *          Option A (darken --success-border to #2a3c10) AND Option C
@@ -69,17 +69,16 @@
  *   - DARK palette: every state-pair clears axis A or axis B unmitigated.
  *     M-D2 / M-D3 NOT needed. The brief's pre-flagged dark warn/success
  *     tritan collapse (est dE ~8) verifies at lum ratio 1.66 bg and 1.90
- *     border — clears axis B comfortably.
+ *     border – clears axis B comfortably.
  *
- * No SHAPE_REDUNDANCY_WAIVERS entries needed — both modes clear all six
+ * No SHAPE_REDUNDANCY_WAIVERS entries needed – both modes clear all six
  * state pairs on axis A or axis B post-mitigation.
  */
 [data-theme='scanner-darkly'][data-mode='dark'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #ed9156;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #ebcaae;
   --page-gradient-to: #eeeedf;
 
@@ -130,7 +129,7 @@
   --warn-highlight-fg: #1c1408;
   --warn-highlight-hover: #e5a040;
 
-  /* info — CYAN BREAK from the theme's purple signature (orchestrator-
+  /* info – CYAN BREAK from the theme's purple signature (orchestrator-
    * approved). A purple info bundle would collide with the purple base/
    * mount/orbit borders on adjacency; cyan keeps the cool-end categorical
    * separation from warn-gold and success-lime while staying tonally
@@ -143,7 +142,7 @@
   --info-highlight-fg: #04222c;
   --info-highlight-hover: #88d4ec;
 
-  /* success — lime/olive (anchored on the scanner PRD's subtle-text
+  /* success – lime/olive (anchored on the scanner PRD's subtle-text
    * #bcdc6f), lifted to high luminance for tritan separation from
    * warn-gold. */
   --success-bg: rgb(28 50 18 / 0.55);
@@ -156,11 +155,10 @@
 }
 
 [data-theme='scanner-darkly'][data-mode='light'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #8f2610;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #4c2413;
   --page-gradient-to: #0f0b1b;
 
@@ -195,7 +193,7 @@
   /* --alert-bg darkened from briefed #f5dccc to #e4c4a8 to widen the
    * alert/warn bg luminance ratio from 1.05 (axis B fail) to 1.43
    * (clears axis B). Alert-text contrast headroom drops from 10.19:1 to
-   * ~7.4:1 — still comfortable. */
+   * ~7.4:1 – still comfortable. */
   --alert-bg: #e4c4a8;
   --alert-border: #8f2610;
   --alert-text: #5a1808;
@@ -214,7 +212,7 @@
   --warn-highlight-fg: #ffffff;
   --warn-highlight-hover: #523608;
 
-  /* info — purple (NEW HUE FAMILY in light, complements purple base-border). */
+  /* info – purple (NEW HUE FAMILY in light, complements purple base-border). */
   --info-bg: #dcd8ec;
   --info-border: #2f2b52;
   --info-text: #1a1838;

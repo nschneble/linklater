@@ -34,7 +34,7 @@ import type { AuthRequest } from './auth-request.type.js';
  * Core authentication endpoints: register, login, profile, password
  * recovery, email verification, refresh, and session revocation.
  *
- * The original `AuthController` was split into focused sub-controllers —
+ * The original `AuthController` was split into focused sub-controllers –
  * see `OAuthController`, `MagicLinkController`, `MultiFactorController`,
  * and `ExtensionAuthController` for the related flows. All controllers
  * share the `auth` route prefix so external URLs are unchanged.
@@ -229,7 +229,7 @@ export class AuthController {
   /**
    * Re-sends the email-change verification link to the address stored in
    * `pendingEmail`. Used when the original link is lost or expired. MFA is not
-   * re-checked here — it was enforced when `pendingEmail` was set. Rate-limited
+   * re-checked here – it was enforced when `pendingEmail` was set. Rate-limited
    * to 3 requests per 60 seconds per IP.
    */
   @ApiOperation({ summary: 'Resend the email-change verification link' })

@@ -32,7 +32,7 @@ export interface UseLinksViewResult {
   /**
    * Most-recently-set error across the five sub-error fields below. Drives
    * the single visible `Alert` so that `role="alert"` mounts/unmounts at
-   * most once per transition — concurrent failures (e.g. background fetch +
+   * most once per transition – concurrent failures (e.g. background fetch +
    * user save) no longer cascade multiple assertive announcements.
    */
   error: string | null;
@@ -79,10 +79,10 @@ export interface UseLinksViewResult {
  * search input ref for `LinksToolbar`.
  *
  * What stays in the view:
- * - `dialogReference` — attached to a JSX element and consumed directly by
+ * - `dialogReference` – attached to a JSX element and consumed directly by
  *   `useFocusTrap`; threading it through the hook would add complexity with
  *   no benefit.
- * - `useFocusTrap` + `useFocusReturn` — one-liner DOM hooks that sit next to
+ * - `useFocusTrap` + `useFocusReturn` – one-liner DOM hooks that sit next to
  *   their respective refs in the JSX.
  */
 export function useLinksView({

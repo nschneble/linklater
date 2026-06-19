@@ -12,7 +12,7 @@ interface SettingsSectionNavProps {
  * place of the desktop sidebar below `md`. Clicking a chip scrolls to its
  * section and marks it active; the matching chip gets `aria-current="page"`
  * plus a filled treatment (driven by the shared `activeSection` state). The
- * active state is intent-driven, not scroll-driven — it does not follow the
+ * active state is intent-driven, not scroll-driven – it does not follow the
  * viewport and clears when the user interacts outside the active section.
  *
  * Landmark label is "Settings sections (compact)" so it differs from the

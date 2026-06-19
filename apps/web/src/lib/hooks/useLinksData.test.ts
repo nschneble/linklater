@@ -465,7 +465,7 @@ describe('useLinksData "less doesn\'t need more"', () => {
 
     await waitFor(() => expect(result.current.links).toHaveLength(2));
 
-    // limit override should be undefined — the second call should not pass
+    // limit override should be undefined – the second call should not pass
     // a limit at all.
     const secondCallArguments = vi.mocked(apiModule.getLinks).mock.calls[1][0];
     expect(secondCallArguments).toEqual(
@@ -488,7 +488,7 @@ describe('useLinksData "less doesn\'t need more"', () => {
 
     const { result } = renderHook(() => useLinksData('unread', ''));
 
-    // No explicit handleLoadMore call — the hook should auto-fire because
+    // No explicit handleLoadMore call – the hook should auto-fire because
     // the page-1 response leaves a single trailing item.
     await waitFor(() => expect(result.current.links).toHaveLength(3));
 
@@ -518,7 +518,7 @@ describe('useLinksData "less doesn\'t need more"', () => {
     const { result } = renderHook(() => useLinksData('unread', ''));
 
     await waitFor(() => expect(result.current.loadingLinks).toBe(false));
-    // Give the effect ample chance to fire again — it must not.
+    // Give the effect ample chance to fire again – it must not.
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(vi.mocked(apiModule.getLinks)).toHaveBeenCalledTimes(2);

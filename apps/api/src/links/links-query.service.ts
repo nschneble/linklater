@@ -23,7 +23,7 @@ export interface LinksQuery {
 /**
  * Read-only query operations for links: listing, filtering, full-text
  * search, and random selection. All methods are scoped to a specific
- * `userId` — the service never reads links belonging to a different user.
+ * `userId` – the service never reads links belonging to a different user.
  *
  * This service owns no mutable state and issues no queue jobs. It is
  * injected by `LinksService`, which delegates all read methods here while
@@ -90,7 +90,7 @@ export class LinksQueryService {
    * The `total` is derived from `COUNT(*) OVER()` on the raw query result
    * (a window function). When the paged result is empty AND `page > 1`,
    * a separate COUNT query runs so the caller can detect "past the last
-   * page" — otherwise paging past the end would collapse `total` to 0 and
+   * page" – otherwise paging past the end would collapse `total` to 0 and
    * make the UI claim "no results" even when matches exist.
    *
    * @param userId - The UUID of the authenticated user.

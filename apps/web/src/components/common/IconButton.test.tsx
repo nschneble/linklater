@@ -1,5 +1,5 @@
 /*
- * Tests for IconButton — the shared small-pill action button.
+ * Tests for IconButton – the shared small-pill action button.
  *
  * Three contracts pinned here:
  * 1. The `surface` prop drives the host-tier paint for `default`, `ghost`,
@@ -19,7 +19,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import IconButton from './IconButton';
 
 describe('IconButton', () => {
-  it('defaults to mount surface — default variant paints from the mount bundle', () => {
+  it('defaults to mount surface – default variant paints from the mount bundle', () => {
     render(<IconButton>label</IconButton>);
     const button = screen.getByRole('button', { name: 'label' });
     expect(button.getAttribute('data-surface')).toBe('mount');
@@ -37,7 +37,7 @@ describe('IconButton', () => {
     expect(button.className).toContain('hover:bg-[var(--mount-bg)]');
   });
 
-  it('surface="orbit" carries no hover-bg on default — no over-orbit slot exists', () => {
+  it('surface="orbit" carries no hover-bg on default – no over-orbit slot exists', () => {
     render(<IconButton surface="orbit">label</IconButton>);
     const button = screen.getByRole('button', { name: 'label' });
     expect(button.getAttribute('data-surface')).toBe('orbit');
@@ -64,7 +64,7 @@ describe('IconButton', () => {
     expect(button.className).toContain('ring-[var(--base-border)]');
   });
 
-  it('danger variant is intrinsic — alert tokens regardless of surface', () => {
+  it('danger variant is intrinsic – alert tokens regardless of surface', () => {
     const { rerender } = render(
       <IconButton variant="danger" surface="base">
         delete
@@ -85,7 +85,7 @@ describe('IconButton', () => {
     expect(button.className).toContain('ring-[var(--alert-border)]');
   });
 
-  it('danger-filled variant is intrinsic — alert-highlight regardless of surface', () => {
+  it('danger-filled variant is intrinsic – alert-highlight regardless of surface', () => {
     const { rerender } = render(
       <IconButton variant="danger-filled" surface="mount">
         confirm
@@ -135,7 +135,7 @@ describe('IconButton', () => {
 
   it('elevated variant uses the border-shadow focus indicator (not ring)', () => {
     // elevated carries its own card-shadow border affordance for focus
-    // instead of the FOCUS_RING utility — visual hierarchy choice.
+    // instead of the FOCUS_RING utility – visual hierarchy choice.
     render(<IconButton variant="elevated">go</IconButton>);
     const button = screen.getByRole('button', { name: 'go' });
     expect(button.className).toContain('border-shadow');
@@ -203,7 +203,7 @@ describe('IconButton', () => {
   it('hidden=true suppresses the disabled:opacity-60 rule so opacity-0 wins specificity', () => {
     render(<IconButton hidden>secret</IconButton>);
     const button = screen.getByRole('button', { hidden: true });
-    // DISABLED applies disabled:opacity-60 — must be ABSENT when hidden
+    // DISABLED applies disabled:opacity-60 – must be ABSENT when hidden
     expect(button.className).not.toContain('disabled:opacity-60');
   });
 
@@ -235,7 +235,7 @@ describe('IconButton', () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it('default type is button — guards against accidental form submission', () => {
+  it('default type is button – guards against accidental form submission', () => {
     render(<IconButton>safe</IconButton>);
     expect(
       screen.getByRole('button', { name: 'safe' }).getAttribute('type'),

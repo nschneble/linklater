@@ -37,7 +37,7 @@ export function generateLinkState(userId: string, secret: string): string {
  * state tokens that are too old.
  *
  * @param state - The state string received in the OAuth callback query.
- * @param secret - The HMAC key — must match the key used in `generateLinkState`.
+ * @param secret - The HMAC key – must match the key used in `generateLinkState`.
  * @param maxAgeMs - Maximum age of the token in milliseconds.
  * @returns The user UUID encoded in the state, or `null` on any failure.
  */

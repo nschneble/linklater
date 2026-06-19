@@ -47,7 +47,7 @@ function normalizeToSixDigitHex(value: string): string {
 
 /**
  * Filters `VAR_GROUPS` against a lowercased query, matching on bundle label,
- * slot label, or variable name. Substring match — users typically type a few
+ * slot label, or variable name. Substring match – users typically type a few
  * letters of the hyphenated name without the leading dashes, so a substring
  * check covers both `--mount-highlight-fg` and `mount-highlight-fg`. Whole
  * bundles are kept when the bundle label itself matches (e.g. query "mount"
@@ -236,11 +236,11 @@ export default function ColorEditor({
   function handleQueryChange(event: React.ChangeEvent<HTMLInputElement>) {
     const nextQuery = event.target.value;
     if (query === '' && nextQuery !== '') {
-      // Entering search mode — snapshot current open state.
+      // Entering search mode – snapshot current open state.
       preSearchOpenBundles.current = new Set(openBundles);
     }
     if (nextQuery === '' && preSearchOpenBundles.current !== null) {
-      // Exiting search mode — restore prior snapshot.
+      // Exiting search mode – restore prior snapshot.
       setOpenBundles(preSearchOpenBundles.current);
       preSearchOpenBundles.current = null;
     }

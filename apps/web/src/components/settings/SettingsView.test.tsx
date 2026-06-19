@@ -1,7 +1,7 @@
 /**
  * Tests for SettingsView, scoped to flash-message route-level state seeding.
  *
- * The Toast announcing `?linked=…` must surface AFTER a mount-effect — not on
+ * The Toast announcing `?linked=…` must surface AFTER a mount-effect – not on
  * synchronous first render. NVDA/JAWS only announce an `aria-live` region
  * when content transitions empty → populated; content present on first paint
  * is treated as page load and skipped (see `usePendingNotice.ts` comment).

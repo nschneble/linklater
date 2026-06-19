@@ -5,7 +5,7 @@
  *   - When `usePendingNotice` returns a non-null notice, the
  *     `PendingNoticeAnnouncer` renders the toast.
  *   - The sr-only mirror text updates from empty → notice text.
- *   - No focus shift fires on pending-notice arrival — the toast IS the
+ *   - No focus shift fires on pending-notice arrival – the toast IS the
  *     announcement, and moving focus into <main> mid-announce can
  *     interrupt the polite live region on NVDA/JAWS.
  *
@@ -117,7 +117,7 @@ beforeEach(() => {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe('LinksView — cross-route pending notice surface', () => {
+describe('LinksView – cross-route pending notice surface', () => {
   it('renders the PendingNoticeAnnouncer toast when usePendingNotice returns a notice', () => {
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: 'Your email has been verified.',
@@ -167,7 +167,7 @@ describe('LinksView — cross-route pending notice surface', () => {
     expect(liveRegions[0]?.textContent).toBe('');
 
     // Update the mock to return a notice and rerender. The mirror text
-    // should now contain the notice — the empty → populated transition
+    // should now contain the notice – the empty → populated transition
     // is what triggers SR announcement on NVDA/JAWS.
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: 'Your account has been deleted.',
@@ -189,9 +189,9 @@ describe('LinksView — cross-route pending notice surface', () => {
   });
 
   it('does not move focus to <main> on pending-notice arrival (B2)', () => {
-    // The Wave 4.5 fix removed the focus-shift effect entirely; the
+    // The fix removed the focus-shift effect entirely; the
     // <main> landmark gets a stable aria-label in AppShell instead, and
-    // the toast IS the announcement. This test pins that contract — if
+    // the toast IS the announcement. This test pins that contract – if
     // a future contributor reintroduces a focus shift here, it'll fail.
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: 'Your email has been verified.',

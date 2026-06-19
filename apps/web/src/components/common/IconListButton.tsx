@@ -4,7 +4,7 @@ import { DISABLED, FOCUS_RING } from '../../lib/styles';
 /**
  * Full-width row button for vertical lists (e.g. the Settings sidebar).
  *
- * Active state is driven by `aria-current` (set by the parent — typically to
+ * Active state is driven by `aria-current` (set by the parent – typically to
  * `"page"`) and styled via Tailwind `aria-[current]:` variants, so the ARIA
  * attribute and the visual state stay locked together and cannot drift.
  *

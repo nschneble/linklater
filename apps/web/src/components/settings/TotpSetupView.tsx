@@ -13,7 +13,7 @@ interface TotpSetupViewProps {
   secret: string;
   /** Current 6-digit verification code value (controlled). */
   code: string;
-  /** Ref to the verification code input — used by the parent to focus on mount. */
+  /** Ref to the verification code input – used by the parent to focus on mount. */
   codeInputReference: RefObject<HTMLInputElement | null>;
   /** Disables the form while a verify or cancel request is in flight. */
   loading: boolean;
@@ -73,7 +73,7 @@ export default function TotpSetupView({
        * it, so the manual secret below is the canonical pathway and the
        * surrounding copy already explains both options.
        *
-       * Do NOT add `themed-asset` to this img — the day-for-night filter
+       * Do NOT add `themed-asset` to this img – the day-for-night filter
        * (hue-rotate + invert) breaks QR scannability in camera apps, which
        * read finder-pattern polarity. Hard exclusion per
        * `[[feedback-asset-filter-exclusion]]`.

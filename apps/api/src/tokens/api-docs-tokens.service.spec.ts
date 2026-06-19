@@ -117,7 +117,7 @@ describe('ApiDocsTokensService', () => {
       expect(callArgs.data.kind).toBe('API_DOCS');
       expect(callArgs.data.userId).toBe(USER_ID);
       // mintRawToken runs for real (it is a pure module function, not
-      // injected) — assert shape, not the literal RAW_TOKEN constant.
+      // injected) – assert shape, not the literal RAW_TOKEN constant.
       expect(callArgs.data.secretValue).toMatch(/^ltk_[A-Za-z0-9_-]+$/);
       expect(result.rawToken).toBe(callArgs.data.secretValue);
     });
@@ -182,7 +182,7 @@ describe('ApiDocsTokensService', () => {
 
       expect(result.id).toBe('docs-healed');
       expect(result.rawToken).toBe(RAW_TOKEN);
-      // The docs page must never see a 500 from a row-level data glitch —
+      // The docs page must never see a 500 from a row-level data glitch –
       // recovery is transparent and silent.
       expect(transactionMock).toHaveBeenCalled();
     });

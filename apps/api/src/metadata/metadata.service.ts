@@ -6,7 +6,7 @@ import { MetadataFetcherService } from './metadata-fetcher.service.js';
 /**
  * Fetches and stores Open Graph / Twitter Card metadata for saved links.
  * Runs as a pg-boss queue worker so that metadata fetching is decoupled from
- * the HTTP request that creates the link — the link creation endpoint returns
+ * the HTTP request that creates the link – the link creation endpoint returns
  * immediately, and metadata appears asynchronously.
  *
  * Security: all outgoing fetch requests are guarded by `isPrivateHost` inside
@@ -51,7 +51,7 @@ export class MetadataService implements OnModuleInit {
    * IDEMPOTENT: safe under pg-boss at-least-once delivery. The `Meta` write
    * is a `upsert` keyed on `linkId`, so a redelivered job overwrites with
    * the same content rather than producing a duplicate row. The searchVector
-   * `$executeRaw UPDATE` is similarly idempotent — running it twice produces
+   * `$executeRaw UPDATE` is similarly idempotent – running it twice produces
    * the same tsvector. Redelivery re-fetches the URL (wasteful but not
    * corrupting); if hot path bandwidth becomes a concern, gate on
    * `meta.fetchedAt` at the start of the handler.

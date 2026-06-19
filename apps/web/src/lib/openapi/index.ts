@@ -1,6 +1,6 @@
 // fetches /openapi.json and normalizes it (resolving $ref pointers) into
 // the flat endpoint/parameter/response model the api-docs components
-// render — so the components never touch raw OpenAPI or $ref chasing.
+// render – so the components never touch raw OpenAPI or $ref chasing.
 
 export {
   fetchOpenApi,

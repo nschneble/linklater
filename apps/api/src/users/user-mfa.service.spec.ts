@@ -118,7 +118,7 @@ describe('UserMfaService', () => {
       (prismaMock.recoveryCode.findMany as jest.Mock).mockResolvedValue([
         { id: codeId, codeHash },
       ]);
-      // Atomic CAS lost the race — another request already marked it used.
+      // Atomic CAS lost the race – another request already marked it used.
       (prismaMock.recoveryCode.updateMany as jest.Mock).mockResolvedValue({
         count: 0,
       });

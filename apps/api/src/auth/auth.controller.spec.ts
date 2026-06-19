@@ -187,7 +187,7 @@ describe('AuthController', () => {
 
       const result = await controller.login(request);
 
-      // login(userId) — the controller no longer passes the full request.user
+      // login(userId) – the controller no longer passes the full request.user
       // object, eliminating the OAuth strategy-shape footgun.
       expect(authServiceMock.login).toHaveBeenCalledWith(USER_ID);
       expect(result).toEqual({ accessToken: ACCESS_TOKEN });

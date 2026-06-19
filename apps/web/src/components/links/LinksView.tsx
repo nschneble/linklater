@@ -53,8 +53,8 @@ interface LinksViewProps {
  *   outside the form closes it.
  * - Resets search and the `isClearingRead` flag whenever the filter changes.
  *
- * Cross-route pending notices (FLAG-1) — e.g. arriving on /unread after a
- * verify-email redirect — are consumed via `usePendingNotice` and surfaced
+ * Cross-route pending notices (FLAG-1) – e.g. arriving on /unread after a
+ * verify-email redirect – are consumed via `usePendingNotice` and surfaced
  * by `PendingNoticeAnnouncer` (toast + sr-only mirror). The announcer IS
  * the announcement; no focus shift to the <main> landmark is performed on
  * notice arrival, since (a) NVDA/JAWS can interrupt a polite live region
@@ -179,7 +179,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         Polite live region announcing links that arrive via a background
         visibility refresh (e.g. saved via the bookmarklet on another tab).
         The visual Toast above already carries its own role="status"
-        aria-live="polite", so it is not echoed here — that produced a
+        aria-live="polite", so it is not echoed here – that produced a
         double SR announcement.
       */}
       <span className="sr-only" role="status">

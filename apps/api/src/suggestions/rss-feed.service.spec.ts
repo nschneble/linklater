@@ -79,7 +79,7 @@ describe('RssFeedService', () => {
     it('inserts all-new items via a single createMany and skips updateMany', async () => {
       fetchMock.mockResolvedValueOnce(textResponse(RSS_XML));
       // No existing rows → every feed item is freshly created. updateMany
-      // must NOT fire for these — that would be a redundant write.
+      // must NOT fire for these – that would be a redundant write.
       (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValueOnce([]);
       (prismaMock.rssEntry.createMany as jest.Mock).mockResolvedValue({
         count: 2,
@@ -285,7 +285,7 @@ describe('RssFeedService', () => {
   });
 
   describe('refreshAll', () => {
-    it('does not throw when a source fails — failures are isolated', async () => {
+    it('does not throw when a source fails – failures are isolated', async () => {
       fetchMock.mockRejectedValue(new Error('network'));
 
       await expect(service.refreshAll()).resolves.not.toThrow();

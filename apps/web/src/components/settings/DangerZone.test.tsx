@@ -1,5 +1,5 @@
 /**
- * Tests for DangerZone — the account-deletion settings section.
+ * Tests for DangerZone – the account-deletion settings section.
  *
  * Two branches based on credential presence:
  *   - Credentialed: hasPassword=true → ReauthForm inline
@@ -201,7 +201,7 @@ describe('DangerZone credentialed branch (hasPassword: true)', () => {
     });
 
     expect(screen.getByRole('alert')).toHaveTextContent(/incorrect password/i);
-    // ReauthForm still visible — phase is 'reauth'
+    // ReauthForm still visible – phase is 'reauth'
     expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
   });
 
@@ -247,7 +247,7 @@ describe('DangerZone credentialed branch (MFA-only: hasPassword=false, multiFact
     );
   });
 
-  it('reveals only the code field — no password input', () => {
+  it('reveals only the code field – no password input', () => {
     renderDangerZone();
     fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
 

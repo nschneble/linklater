@@ -60,7 +60,7 @@ export default function SettingsView({
   // owns the deferred-read + URL-strip dance (see its WHY block for the
   // SR-announce, no-deps, and StrictMode rationale). The hook returns
   // `null` synchronously on first paint, then the parsed flash once,
-  // stable thereafter — preserving the empty → populated transition NVDA
+  // stable thereafter – preserving the empty → populated transition NVDA
   // and JAWS need to announce the Toast.
   const flash = useFlashQueryParams(readOAuthFlashMessages, [
     'linked',

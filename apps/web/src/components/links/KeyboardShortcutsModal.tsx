@@ -25,7 +25,7 @@ const HEADING_ID = 'keyboard-shortcuts-heading';
  * Modal dialog listing all keyboard shortcuts available in `LinksView`.
  *
  * ARIA wiring, focus management, body-scroll lock, and the close + backdrop
- * buttons are owned by `<Modal>` — see `Modal.tsx`. Lazy-loaded from
+ * buttons are owned by `<Modal>` – see `Modal.tsx`. Lazy-loaded from
  * `LinksView` to keep it out of the initial bundle.
  */
 export default function KeyboardShortcutsModal({

@@ -1,12 +1,12 @@
 /*
- * Tests for ExtensionAuthorizePage — extension OAuth confirmation page.
+ * Tests for ExtensionAuthorizePage – extension OAuth confirmation page.
  *
- * Host-bundle contract — the Authorize PrimaryButton paints with
+ * Host-bundle contract – the Authorize PrimaryButton paints with
  * `surface="mount"` (the default) via the data-surface attribute. The card
  * itself is `--mount-bg`, so the default surface IS the correct tier here;
  * this test pins the default in place so a future refactor cannot silently
- * override it to the wrong surface. Wave 46 lock-in matching the
- * LinksControls / LinksMobileControls (wave 42) pattern.
+ * override it to the wrong surface. Locked in to match the
+ * LinksControls / LinksMobileControls pattern.
  */
 
 import ExtensionAuthorizePage from './ExtensionAuthorizePage';
@@ -34,7 +34,7 @@ vi.mock('../../auth/AuthContext', () => ({
 }));
 
 describe('ExtensionAuthorizePage', () => {
-  it('Authorize PrimaryButton declares surface="mount" — card is --mount-bg (default)', () => {
+  it('Authorize PrimaryButton declares surface="mount" – card is --mount-bg (default)', () => {
     render(
       <MemoryRouter>
         <ExtensionAuthorizePage />

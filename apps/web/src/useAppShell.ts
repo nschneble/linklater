@@ -96,7 +96,7 @@ export function useAppShell() {
 
   // Move focus to the main landmark whenever the user navigates between
   // views. The isFirstRender guard prevents stealing focus on the
-  // initial page load — on mount the browser has not set focus anywhere
+  // initial page load – on mount the browser has not set focus anywhere
   // meaningful yet, so moving it to <main> would skip the skip link and
   // surprise keyboard users who land tabbed into the page header. Skip
   // the focus shift when a navigation into Settings carries a `scrollTo`

@@ -135,7 +135,7 @@ describe('LinksQueryService', () => {
 
       await service.findAll(USER_ID, { search: 'montréal' });
 
-      // $queryRaw is invoked as a tagged template — the first argument is the
+      // $queryRaw is invoked as a tagged template – the first argument is the
       // TemplateStringsArray containing the raw SQL fragments around the
       // interpolated values. We assert that those fragments include the
       // unaccent() wrapper around plainto_tsquery's input (Postel's Law).

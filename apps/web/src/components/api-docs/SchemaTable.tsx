@@ -3,8 +3,8 @@ import type { SchemaRow } from '../../lib/apiDocs/schemaShape';
 import type { OpenAPIV3 } from 'openapi-types';
 
 /**
- * Read-only schema renderer (CONSTRAINT R2). A real <table> — not a <dl> or
- * nested lists (CONSTRAINT T1) — with a caller-supplied <caption> naming the
+ * Read-only schema renderer (CONSTRAINT R2). A real <table> – not a <dl> or
+ * nested lists (CONSTRAINT T1) – with a caller-supplied <caption> naming the
  * region (e.g. "Request body", "200 response body"; CONSTRAINT T2), column
  * headers as <th scope="col">, and each property name as <th scope="row">.
  *
@@ -18,7 +18,7 @@ import type { OpenAPIV3 } from 'openapi-types';
  * hierarchy: column headers and each property NAME (the row header) use the
  * primary `--mount-text`, while the secondary data cells (type, required,
  * description) use the dimmer `--mount-text`'s sibling `--mount-alt-text`. All
- * consume bundle tokens (CONSTRAINT T6) — brand literals when logged out, the
+ * consume bundle tokens (CONSTRAINT T6) – brand literals when logged out, the
  * active theme when logged in.
  */
 
@@ -105,7 +105,7 @@ function SchemaRowCells({ row, depth }: SchemaRowCellsProps) {
       {row.nested && row.nested.kind === 'note' && (
         <tr>
           <td colSpan={4} className={DATA_CELL}>
-            Nested object — see full schema.
+            Nested object – see full schema.
           </td>
         </tr>
       )}

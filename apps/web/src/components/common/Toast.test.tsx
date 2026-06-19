@@ -1,5 +1,5 @@
 /*
- * Tests for Toast — the fixed-position notification.
+ * Tests for Toast – the fixed-position notification.
  *
  * Three contracts pinned here:
  * 1. Variant drives the bundle paint: success → success-highlight,
@@ -114,7 +114,7 @@ describe('Toast', () => {
     });
     expect(handleDismiss).not.toHaveBeenCalled();
     // Crossing the 5000ms boundary fires the auto-dismiss timer, which
-    // triggers a React state update (setExiting(true)) — wrap in act().
+    // triggers a React state update (setExiting(true)) – wrap in act().
     act(() => {
       vi.advanceTimersByTime(1);
     });
@@ -135,7 +135,7 @@ describe('Toast', () => {
     const handleDismiss = vi.fn();
 
     function Wrapper({ tick }: { tick: number }) {
-      // new inline arrow each render — mirrors the AuthForm consumer pattern
+      // new inline arrow each render – mirrors the AuthForm consumer pattern
       // where setForgotPasswordSentJustNow(false) fires 5000ms after success
       // and causes the parent to hand Toast a fresh onDismiss identity
       return (

@@ -4,7 +4,7 @@
  * On mount, reads ?token= from the URL and calls verifyMagicLink().
  * State machine:
  *   - verifying → no prior session → loginWithToken + navigate('/unread')
- *     (NO toast — login is login)
+ *     (NO toast – login is login)
  *   - verifying → SAME account as current session → keep existing tokens,
  *     setPendingNotice('already-logged-in') + navigate('/unread')
  *   - verifying → DIFFERENT account from current session → revokeAllSessions
@@ -14,7 +14,7 @@
  *   - verifying → failure → setPendingNotice('login-link-invalid') +
  *     navigate('/login') (AuthForm surfaces the toast)
  *
- * Per Wave 7: no error card is rendered anymore. All verify-link failures
+ * No error card is rendered. All verify-link failures
  * redirect to /login with an error-variant pending notice. The MFA branch
  * is unchanged and still mounts MfaView for OTP entry.
  */
@@ -110,7 +110,7 @@ describe('VerifyLoginPage verifying state', () => {
     const status = screen.getByRole('status');
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent(/verifying your login link/i);
-    // The status node carries `sr-only` — verifying state is visually a bare
+    // The status node carries `sr-only` – verifying state is visually a bare
     // spinner. No card heading is rendered (errors redirect to /login).
     expect(status).toHaveClass('sr-only');
   });
@@ -126,7 +126,7 @@ describe('VerifyLoginPage verifying state', () => {
   });
 });
 
-describe('VerifyLoginPage success path (no toast — login is login)', () => {
+describe('VerifyLoginPage success path (no toast – login is login)', () => {
   it('calls verifyMagicLink with the token from the URL', async () => {
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-abc',
@@ -329,7 +329,7 @@ describe('VerifyLoginPage account-switch branch (logged in as B, link is for A)'
   });
 });
 
-describe('VerifyLoginPage error paths — redirect to /login with toast', () => {
+describe('VerifyLoginPage error paths – redirect to /login with toast', () => {
   it('queues login-link-invalid + navigates to /login when no token is present', async () => {
     await act(async () => {
       renderPage('');
