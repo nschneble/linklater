@@ -78,13 +78,13 @@ export default function EndpointDetail({
   return (
     <section
       aria-labelledby={headingId}
-      className="p-6 bg-midnight border border-boyhood rounded-2xl animate-fade-in-up motion-reduce:animate-none"
+      className="p-6 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-2xl animate-fade-in-up motion-reduce:animate-none"
     >
       <header className="flex flex-col gap-2 mb-6">
         <div className="flex items-center gap-3">
           <MethodBadge method={endpoint.method} />
           <h3
-            className="text-dazed text-base font-mono"
+            className="text-[var(--mount-text)] text-base font-mono"
             id={headingId}
             tabIndex={-1}
           >
@@ -102,10 +102,12 @@ export default function EndpointDetail({
           </h3>
         </div>
         {endpoint.summary && (
-          <p className="text-confused text-xs">{endpoint.summary}</p>
+          <p className="text-[var(--mount-alt-text)] text-xs">
+            {endpoint.summary}
+          </p>
         )}
         {endpoint.description && (
-          <p className="text-confused text-xs leading-relaxed text-pretty">
+          <p className="text-[var(--mount-alt-text)] text-xs leading-relaxed text-pretty">
             {endpoint.description}
           </p>
         )}

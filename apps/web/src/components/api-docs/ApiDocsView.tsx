@@ -83,10 +83,10 @@ export default function ApiDocsView() {
         >
           <Link
             to="/"
-            className="group flex items-center gap-2 text-confused hover:text-dazed text-sm transition duration-200"
+            className="group flex items-center gap-2 text-[var(--base-subtle-text)] hover:text-[var(--base-text)] text-sm transition duration-200"
           >
             <i
-              className="fa-solid fa-arrow-left text-confused group-hover:text-dazed text-[0.7rem]"
+              className="fa-solid fa-arrow-left text-[var(--base-subtle-text)] group-hover:text-[var(--base-text)] text-[0.7rem]"
               aria-hidden="true"
             />
             Linklater

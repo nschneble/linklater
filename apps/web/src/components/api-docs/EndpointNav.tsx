@@ -55,7 +55,7 @@ export default function EndpointNav({
                 type="button"
                 aria-current={selectedSlug === slug ? 'page' : undefined}
                 onClick={() => onSelect(slug)}
-                className={`group flex items-center gap-2.5 w-full min-h-10 px-3 py-2 hover:bg-midnight aria-[current]:bg-midnight border border-transparent hover:border-boyhood aria-[current]:border-confused text-[var(--base-alt-text)] hover:text-[var(--base-text)] aria-[current]:text-dazed text-sm font-medium aria-[current]:font-semibold ${FOCUS_RING} rounded-lg motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] cursor-pointer`}
+                className={`group flex items-center gap-2.5 w-full min-h-10 px-3 py-2 hover:bg-[var(--orbit-bg)] aria-[current]:bg-[var(--orbit-bg)] border border-transparent hover:border-[var(--orbit-border)] aria-[current]:border-[var(--orbit-border)] text-[var(--base-alt-text)] hover:text-[var(--base-text)] aria-[current]:text-[var(--orbit-text)] text-sm font-medium aria-[current]:font-semibold ${FOCUS_RING} rounded-lg motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] cursor-pointer`}
               >
                 <MethodIconBadge method={endpoint.method} />
                 <span className="sr-only">

@@ -541,6 +541,43 @@ describe('bundle contrast contract', () => {
   });
 
   /*
+   * branding `--base-alt-text` is EndpointNav's resting endpoint label,
+   * painted directly on the `bg-hit-man` radial gradient – NOT a flat
+   * surface. The CONTRACT loop above checks `base-alt-text on base-bg`
+   * over a single `fixture.pageBg`, which for branding is the gradient's
+   * OUTER stop (#0a0812). The selection list also rides up over the
+   * BRIGHTER top stop (#14103a), the harder contrast case, so this block
+   * pins the resting label against BOTH gradient stops at SC 1.4.3 (4.5:1).
+   * Wave-3 slot add; mirrors the `state-text on base-bg` mechanization
+   * pattern. See [[feedback-off-book-theme-contrast-harness]].
+   */
+  describe('branding base-alt-text on both gradient stops', () => {
+    const BRANDING_TOP_STOP: Rgb = parseColor('#14103a');
+    const BRANDING_OUTER_STOP: Rgb = parseColor('#0a0812');
+    const block = extractBlock(BUNDLES_CSS, "[data-theme='branding']");
+    const declarations = parseDeclarations(block);
+    const altText = declarations.get('base-alt-text');
+
+    for (const [label, stop] of [
+      ['top stop #14103a', BRANDING_TOP_STOP],
+      ['outer stop #0a0812', BRANDING_OUTER_STOP],
+    ] as const) {
+      it(`base-alt-text on ${label} >= 4.5:1`, () => {
+        if (altText === undefined || altText.includes('var(')) {
+          throw new Error('branding cascade missing concrete --base-alt-text');
+        }
+        const ratio = contrastRatio(resolveFg(parseColor(altText)), stop);
+        expect
+          .soft(
+            ratio,
+            `base-alt-text on ${label} (branding): got ${describeRatio(ratio)}`,
+          )
+          .toBeGreaterThanOrEqual(AA_NORMAL);
+      });
+    }
+  });
+
+  /*
    * State-bundle text rendered DIRECTLY on the page background (no
    * `--{state}-bg` wrapper). Real consumer: AppShell warn banner text
    * fallback under specific media queries. The text/bg-in-bundle contract

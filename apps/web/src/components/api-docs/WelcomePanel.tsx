@@ -67,21 +67,21 @@ export default function WelcomePanel({
   return (
     <section
       aria-labelledby={WELCOME_HEADING_ID}
-      className="p-6 bg-midnight border border-boyhood rounded-2xl animate-fade-in-up motion-reduce:animate-none"
+      className="p-6 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-2xl animate-fade-in-up motion-reduce:animate-none"
     >
       <header className="flex flex-col gap-1 mb-6">
         <i
-          className="fa-solid fa-rocket text-sunrise text-2xl"
+          className="fa-solid fa-rocket text-[var(--mount-highlight)] text-2xl"
           aria-hidden="true"
         />
         <h3
           id={WELCOME_HEADING_ID}
           tabIndex={-1}
-          className="text-dazed text-sm font-semibold text-balance"
+          className="text-[var(--mount-text)] text-sm font-semibold text-balance"
         >
           Save, read, and delete links programmatically
         </h3>
-        <p className="text-confused text-xs leading-relaxed text-pretty">
+        <p className="text-[var(--mount-alt-text)] text-xs leading-relaxed text-pretty">
           Here's the short version before you dive in.
         </p>
       </header>
@@ -90,12 +90,14 @@ export default function WelcomePanel({
         {points.map((point) => (
           <div key={point.term} className="flex flex-row items-start gap-3">
             <i
-              className={`fa-solid ${point.icon} shrink-0 w-4 py-[3px] text-dazed text-center text-sm`}
+              className={`fa-solid ${point.icon} shrink-0 w-4 py-[3px] text-[var(--mount-text)] text-center text-sm`}
               aria-hidden="true"
             />
             <div className="flex flex-col gap-1">
-              <dt className="text-dazed text-sm font-semibold">{point.term}</dt>
-              <dd className="text-confused text-xs leading-relaxed text-pretty break-words">
+              <dt className="text-[var(--mount-text)] text-sm font-semibold">
+                {point.term}
+              </dt>
+              <dd className="text-[var(--mount-alt-text)] text-xs leading-relaxed text-pretty break-words">
                 {point.detail}
               </dd>
             </div>
