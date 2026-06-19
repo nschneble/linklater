@@ -1034,6 +1034,96 @@ describe('bundle contrast contract', () => {
   });
 
   /*
+   * ResponseTabs status-pill contract – the master-detail response widget
+   * inside EndpointDetail renders a tablist of status-code pills on the
+   * `--mount-bg` card surface. The selected pill fills `--orbit-bg` with an
+   * `--orbit-border` ring and `--orbit-text` digits; unselected pills paint
+   * `--base-alt-text` on the bare card.
+   *
+   * Three SC pairs, two of which are NOT otherwise mechanized for THIS
+   * geometry:
+   *   1. orbit-border on mount-bg >= 3:1 (SC 1.4.11) – the selected ring
+   *      against the CARD it sits on, NOT --base-bg. Orbit is tuned against
+   *      --base-bg, so accent ≈ card surface in dark themes is the genuine
+   *      risk. Already covered by the "orbit-border on mount-bg (elevated
+   *      lift)" block above (IconButton shares the geometry); re-asserted
+   *      here so the ResponseTabs contract reads as a single unit.
+   *   2. orbit-text on orbit-bg >= 4.5:1 (SC 1.4.3) – selected pill digits on
+   *      the fill. The per-bundle CONTRACT loop's `text on bg` covers orbit,
+   *      so this is belt-and-braces for the same slot pair.
+   *   3. base-alt-text on mount-bg >= 4.5:1 (SC 1.4.3) – unselected pill
+   *      digits on the card. FRESH pair: EndpointNav uses base-alt-text on
+   *      --base-bg (the gutter); here the pills render on --mount-bg.
+   *
+   * See [[feedback-state-text-on-base-bg-test-pair]] + the pre-build
+   * accessibility brief for the response-status master-detail widget.
+   */
+  describe('ResponseTabs status-pill contract', () => {
+    for (const fixture of FIXTURES) {
+      if (!fixture.checkAdjacency) {
+        continue;
+      }
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+      const orbitBorder = getSlot(declarations, 'orbit', 'border');
+      const orbitBg = getSlot(declarations, 'orbit', 'bg');
+      const orbitText = getSlot(declarations, 'orbit', 'text');
+      const mountBg = getSlot(declarations, 'mount', 'bg');
+      const baseAltText = getSlot(declarations, 'base', 'alt-text');
+      if (
+        orbitBorder === null ||
+        orbitBg === null ||
+        orbitText === null ||
+        mountBg === null ||
+        baseAltText === null
+      ) {
+        continue;
+      }
+
+      describe(`${fixture.label}`, () => {
+        it('orbit-border on mount-bg (selected ring on card) >= 3:1', () => {
+          const ratio = contrastRatio(
+            resolveFg(orbitBorder),
+            compositeOverBg(mountBg, fixture.pageBg),
+          );
+          expect
+            .soft(
+              ratio,
+              `orbit-border on mount-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+            )
+            .toBeGreaterThanOrEqual(AA_NON_TEXT);
+        });
+
+        it('orbit-text on orbit-bg (selected pill digits) >= 4.5:1', () => {
+          const ratio = contrastRatio(
+            resolveFg(orbitText),
+            compositeOverBg(orbitBg, fixture.pageBg),
+          );
+          expect
+            .soft(
+              ratio,
+              `orbit-text on orbit-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+            )
+            .toBeGreaterThanOrEqual(AA_NORMAL);
+        });
+
+        it('base-alt-text on mount-bg (unselected pill digits) >= 4.5:1', () => {
+          const ratio = contrastRatio(
+            resolveFg(baseAltText),
+            compositeOverBg(mountBg, fixture.pageBg),
+          );
+          expect
+            .soft(
+              ratio,
+              `base-alt-text on mount-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+            )
+            .toBeGreaterThanOrEqual(AA_NORMAL);
+        });
+      });
+    }
+  });
+
+  /*
    * Cross-bundle highlight adjacencies – `--{tier}-highlight` painted on a
    * DIFFERENT tier's bg. Per-bundle CONTRACT above covers highlight on its
    * own bg; these four pairs cover the consumer geometries where a highlight

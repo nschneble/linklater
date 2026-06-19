@@ -2,6 +2,7 @@ import CurlExample from './CurlExample';
 import MethodBadge from './MethodBadge';
 import ParameterTable from './ParameterTable';
 import RequestForm from './RequestForm';
+import ResponseTabs from './ResponseTabs';
 import SchemaTable from './SchemaTable';
 import { buildExampleFromSchema } from '../../lib/apiDocs/buildExampleFromSchema';
 import { endpointHeadingId } from './endpointId';
@@ -131,23 +132,7 @@ export default function EndpointDetail({
         </div>
       )}
 
-      {endpoint.responses.map((response) => (
-        <div key={response.statusCode} className="mb-4 last:mb-0">
-          {response.schema ? (
-            <SchemaTable
-              caption={`${response.statusCode} response body`}
-              schema={response.schema}
-            />
-          ) : (
-            <p className="text-[var(--mount-text)] text-sm">
-              <span className="font-semibold">
-                {response.statusCode} response body:
-              </span>{' '}
-              No response body.
-            </p>
-          )}
-        </div>
-      ))}
+      {endpoint.responses.length > 0 && <ResponseTabs endpoint={endpoint} />}
 
       <CurlExample method={endpoint.method} url={fullUrl} body={exampleBody} />
 

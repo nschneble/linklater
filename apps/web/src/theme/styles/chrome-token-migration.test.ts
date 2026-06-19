@@ -88,6 +88,7 @@ const MIGRATED_FILES = [
   'src/components/api-docs/RequestField.tsx',
   'src/components/api-docs/RequestForm.tsx',
   'src/components/api-docs/ResponsePanel.tsx',
+  'src/components/api-docs/ResponseTabs.tsx',
   'src/components/api-docs/SchemaTable.tsx',
   'src/components/api-docs/WelcomePanel.tsx',
   'src/components/auth/ConfirmAccountDeletionPage.tsx',

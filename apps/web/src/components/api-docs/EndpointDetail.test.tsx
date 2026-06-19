@@ -95,8 +95,12 @@ describe('EndpointDetail', () => {
     ).toBeInTheDocument();
   });
 
-  it('states "No response body" for a response without a schema', () => {
+  it('auto-selects a 204-only endpoint\'s single tab so its "No response body" fallback shows', () => {
     renderDetail(makeEndpoint({ responses: [{ statusCode: '204' }] }));
+    expect(screen.getByRole('tab', { name: 'Response 204' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
     expect(screen.getByText(/No response body\./i)).toBeInTheDocument();
   });
 
