@@ -136,8 +136,13 @@ export class TokensService {
    * `lastUsedAt` to the current time before returning the owning user.
    * Used by `ApiKeyStrategy` on every request that presents an `ltk_` token.
    *
+   * The token `kind` and `tokenHash` ride along so the auth layer can scope
+   * what the special retrievable kinds (BOOKMARKLET, API_DOCS) are allowed to
+   * do and rate-limit them per token – see `TokenScopeService`.
+   *
    * @param rawToken - The full raw token string (including `ltk_` prefix).
-   * @returns The owning `User` record, or `null` if no token matches.
+   * @returns The owning user plus the token's `kind` and `tokenHash`, or
+   *   `null` if no token matches.
    */
   async validateToken(rawToken: string) {
     const tokenHash = sha256Hex(rawToken);
@@ -159,6 +164,6 @@ export class TokensService {
         );
       });
 
-    return stored.user;
+    return { user: stored.user, kind: stored.kind, tokenHash };
   }
 }

@@ -19,6 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import { AllowsBookmarkletToken } from '../auth/token-scope.decorator.js';
 import { ApiUnauthorized } from '../auth/api-unauthorized.decorator.js';
 import { AnyAuthGuard, type AuthRequest } from '../auth/index.js';
 import { LinksQueryService } from './links-query.service.js';
@@ -67,6 +68,7 @@ export class LinksController {
       'The URL is missing the `http://` or `https://` protocol, points to a private network address, or fails URL parsing.',
   })
   @ApiUnauthorized()
+  @AllowsBookmarkletToken()
   @Post()
   async create(@Req() request: AuthRequest, @Body() body: CreateLinkDto) {
     const userId = request.user.userId;
