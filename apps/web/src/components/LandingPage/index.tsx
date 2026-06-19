@@ -11,14 +11,15 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
  * 2. `FeaturesSection` – grid of feature tiles (Save, Stumble!, Share)
  * 3. `FooterSection` – links to About, GitHub, and Contact
  *
- * Uses the `hit-man` Tailwind background token so it renders with the
- * landing-page theme rather than the authenticated app's CSS variables.
+ * Carries `data-theme='branding'` so the off-book `branding` cascade
+ * drives every bundle token, and keeps the `hit-man` Tailwind background
+ * gradient on top rather than inheriting the authenticated app's theme.
  */
 export default function LandingPage() {
   useDocumentTitle('Linklater – Save links now, read them later.');
 
   return (
-    <div className="min-h-screen bg-hit-man">
+    <div data-theme="branding" className="min-h-screen bg-hit-man">
       {/* Skip link is brand-locked to white-on-navy: bg-hit-man is a fixed
           radial gradient (~#14103a → #0a0812) that doesn't honor user themes,
           so the user-theme --focus-ring may not clear 3:1 against it for
