@@ -67,7 +67,7 @@ export default function WelcomePanel({
   return (
     <section
       aria-labelledby={WELCOME_HEADING_ID}
-      className="p-5 sm:p-6 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-2xl animate-fade-in-up motion-reduce:animate-none"
+      className="p-6 bg-midnight border border-boyhood rounded-2xl animate-fade-in-up motion-reduce:animate-none"
     >
       <header className="flex flex-col gap-1 mb-6">
         <i
@@ -77,7 +77,7 @@ export default function WelcomePanel({
         <h3
           id={WELCOME_HEADING_ID}
           tabIndex={-1}
-          className="flex items-center gap-2 text-[var(--mount-text)] text-lg font-semibold text-balance focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded"
+          className="text-dazed text-sm font-semibold text-balance"
         >
           Save, read, and delete links programmatically
         </h3>
@@ -88,9 +88,9 @@ export default function WelcomePanel({
 
       <dl className="space-y-4">
         {points.map((point) => (
-          <div key={point.term} className="flex gap-3">
+          <div key={point.term} className="flex flex-row items-start gap-3">
             <i
-              className={`fa-solid ${point.icon} shrink-0 mt-0.5 w-4 text-center text-[var(--mount-alt-text)] text-sm`}
+              className={`fa-solid ${point.icon} shrink-0 w-4 py-[3px] text-dazed text-center text-sm`}
               aria-hidden="true"
             />
             <div className="flex flex-col gap-1">

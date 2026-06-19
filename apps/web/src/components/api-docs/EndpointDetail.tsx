@@ -78,21 +78,20 @@ export default function EndpointDetail({
   return (
     <section
       aria-labelledby={headingId}
-      className="p-5 sm:p-6 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-2xl animate-fade-in-up motion-reduce:animate-none"
+      className="p-6 bg-midnight border border-boyhood rounded-2xl animate-fade-in-up motion-reduce:animate-none"
     >
-      <header className="mb-5">
+      <header className="flex flex-col gap-2 mb-6">
         <div className="flex items-center gap-3">
           <MethodBadge method={endpoint.method} />
           <h3
+            className="text-dazed text-base font-mono"
             id={headingId}
             tabIndex={-1}
-            className="text-[var(--mount-text)] text-base font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded"
           >
             {/*
-             * sr-only span carries the full "GET /links" accessible name in one
-             * text node so the accessible-name algorithm can't collapse the
-             * method/path boundary space (CONSTRAINT B1). The visible path is
-             * aria-hidden to avoid announcing the path twice.
+             * sr-only span carries the full "GET /links" accessible name.
+             * The visible path is aria-hidden to avoid announcing the path
+             * twice.
              */}
             <span className="sr-only">
               {accessibleMethod} {endpoint.path}
@@ -103,12 +102,10 @@ export default function EndpointDetail({
           </h3>
         </div>
         {endpoint.summary && (
-          <p className="mt-3 text-[var(--mount-text)] text-sm font-semibold">
-            {endpoint.summary}
-          </p>
+          <p className="text-confused text-xs">{endpoint.summary}</p>
         )}
         {endpoint.description && (
-          <p className="mt-1 text-[var(--mount-alt-text)] text-sm leading-relaxed text-pretty">
+          <p className="text-confused text-xs leading-relaxed text-pretty">
             {endpoint.description}
           </p>
         )}

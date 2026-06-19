@@ -81,18 +81,15 @@ export default function ApiDocsView() {
           aria-label="API docs"
           className="flex items-center justify-between gap-3 text-sm"
         >
-          {/*
-           * Arrow glyphs are wrapped in aria-hidden spans so they don't leak
-           * into the accessible name of each link (SC 1.1.1, SC 2.4.4). The
-           * non-breaking space inside each span keeps the visual gap between
-           * arrow and word even when the surrounding text node is collapsed
-           * away by the screen reader.
-           */}
           <Link
             to="/"
-            className="text-[var(--base-text)] hover:text-[var(--base-highlight)] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--base-bg)] focus-visible:rounded"
+            className="group flex items-center gap-2 text-confused hover:text-dazed text-sm transition duration-200"
           >
-            <span aria-hidden="true">&larr;&nbsp;</span>Linklater
+            <i
+              className="fa-solid fa-arrow-left text-confused group-hover:text-dazed text-[0.7rem]"
+              aria-hidden="true"
+            />
+            Linklater
           </Link>
           {!isBrand && (
             <Link
