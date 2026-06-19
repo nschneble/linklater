@@ -1,6 +1,5 @@
 import ApiReference from './ApiReference';
 import MethodBadge from './MethodBadge';
-import { BRAND_CHROME_STYLE } from '../../lib/apiDocs/apiDocsColors';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
@@ -12,11 +11,12 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
  * ways depending on auth:
  *
  *   - Logged OUT (`user === null`): the landing/marketing BRAND chrome. The
- *     wrapper pins `bg-hit-man`, forces dark `color-scheme`, and supplies the
- *     brand literals to every bundle slot the child components consume
- *     (`BRAND_CHROME_STYLE`) so the now-token-driven tree resolves to the
- *     brand palette. The CVD focus-halo override + `--focus-ring` pin live in
- *     this branch only.
+ *     wrapper pins `bg-hit-man`, forces dark `color-scheme`, and activates the
+ *     off-book `branding` theme via `data-theme='branding'` (branding.css) so
+ *     the now-token-driven tree resolves to the brand palette. The wrapper's
+ *     `data-theme` shadows `<html data-theme>` for its subtree, and the
+ *     branding cascade supplies every bundle slot plus `--focus-ring` and the
+ *     `--base-bg` the CVD focus-halo anchors to.
  *
  *   - Logged IN (`user !== null`): the user's ACTIVE theme. `ThemeProvider`
  *     already sets `data-theme`/`data-mode` on `<html>` above the router
@@ -33,19 +33,19 @@ export default function ApiDocsView() {
   const isBrand = user === null;
 
   return (
-    // BRAND branch only: pin `bg-hit-man` and the brand token literals so the
-    // token-driven children paint the marketing palette, and force dark
-    // `color-scheme`. The wrapper also redeclares `--base-bg` AND
-    // `--focus-ring` (inside `BRAND_CHROME_STYLE`) so the global
+    // BRAND branch only: pin `bg-hit-man`, force dark `color-scheme`, and
+    // activate the off-book `branding` theme so the token-driven children
+    // paint the marketing palette. The branding cascade (branding.css)
+    // redeclares `--base-bg` AND `--focus-ring` so the global
     // `[data-cvd='on'] *:focus-visible` halo (index.css) paints brand colors:
-    // some themes set `--focus-ring` to a hue that fails SC 1.4.11 vs the navy
-    // gradient (e.g. before-sunrise dark), so it pins `--color-dazed`
-    // (#eeeede, ~16:1 vs #0a0812). THEMED branch: no pins – the `<html>`
-    // cascade supplies every slot, the theme's own `--focus-ring` wins, and
-    // `color-scheme` follows the active mode.
+    // some on-book themes set `--focus-ring` to a hue that fails SC 1.4.11 vs
+    // the navy gradient (e.g. before-sunrise dark), so branding pins #eeeede
+    // (~16:1 vs #0a0812). THEMED branch: no `data-theme` override – the
+    // `<html>` cascade supplies every slot, the theme's own `--focus-ring`
+    // wins, and `color-scheme` follows the active mode.
     <div
       className={`min-h-screen ${isBrand ? 'bg-hit-man [color-scheme:dark]' : ''}`}
-      style={isBrand ? BRAND_CHROME_STYLE : undefined}
+      data-theme={isBrand ? 'branding' : undefined}
     >
       {/*
        * Skip link mirrors the LandingPage pattern: brand-locked white-on-navy

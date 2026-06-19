@@ -304,17 +304,16 @@ describe('ApiDocsView visual branch', () => {
       expect(node.className).toContain('[color-scheme:dark]');
     });
 
-    it('pins the brand bundle-token literals inline on the wrapper', () => {
+    it('activates the off-book branding theme cascade on the wrapper', () => {
       mockAuth(null);
       const { container } = renderApiDocs();
       const node = wrapper(container);
-      // Brand pins resolve the token-driven children to the marketing palette.
-      expect(node.style.getPropertyValue('--base-bg')).toBe('#0a0812');
-      expect(node.style.getPropertyValue('--focus-ring')).toBe('#eeeede');
-      expect(node.style.getPropertyValue('--mount-text')).toBe('#eeeede');
-      expect(node.style.getPropertyValue('--mount-border')).toBe('#7d6ec0');
-      expect(node.style.getPropertyValue('--alert-text')).toBe('#fca5a5');
-      expect(node.style.getPropertyValue('--success-text')).toBe('#86efac');
+      // The wrapper shadows <html data-theme> for its subtree so the
+      // token-driven children resolve to the brand palette via the
+      // branding.css cascade (no inline token pins).
+      expect(node.getAttribute('data-theme')).toBe('branding');
+      expect(node.style.getPropertyValue('--base-bg')).toBe('');
+      expect(node.style.getPropertyValue('--mount-border')).toBe('');
     });
 
     it('keeps the marketing gradient h1', () => {
@@ -330,15 +329,15 @@ describe('ApiDocsView visual branch', () => {
   });
 
   describe('logged in → active theme', () => {
-    it('drops bg-hit-man and the inline brand token pins', () => {
+    it('drops bg-hit-man and the branding theme override', () => {
       mockAuth(SOME_USER);
       const { container } = renderApiDocs();
       const node = wrapper(container);
       expect(node.className).not.toContain('bg-hit-man');
-      // No inline brand pins – the <html> theme cascade supplies every slot.
+      // No data-theme override – the <html> active-theme cascade supplies
+      // every slot.
+      expect(node.getAttribute('data-theme')).toBeNull();
       expect(node.style.getPropertyValue('--base-bg')).toBe('');
-      expect(node.style.getPropertyValue('--focus-ring')).toBe('');
-      expect(node.style.getPropertyValue('--mount-text')).toBe('');
     });
 
     it('leaves color-scheme mode-driven (no pinned dark) on the wrapper', () => {

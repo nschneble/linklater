@@ -203,6 +203,18 @@ const NOUVELLE_VAGUE_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='nouvelle-vague'][data-mode='dark']",
   'base-bg',
 );
+/*
+ * branding is the OFF-BOOK brand-chrome theme: DARK-LOCKED / mode-independent,
+ * so its selector has NO `[data-mode]` qualifier (see branding.css). The
+ * (theme × mode) iteration below integrates it as a single block. Its own
+ * --base-bg (#0a0812, the bg-hit-man radial's outer stop) is the page bg the
+ * alpha state-bundle bgs composite over.
+ */
+const BRANDING_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='branding']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -335,6 +347,16 @@ const FIXTURES: readonly CascadeFixture[] = [
     label: 'nouvelle-vague dark',
     selector: "[data-theme='nouvelle-vague'][data-mode='dark']",
     pageBg: NOUVELLE_VAGUE_DARK_PAGE_BG,
+    checkAdjacency: true,
+  },
+  {
+    // OFF-BOOK brand-chrome theme – mode-independent (no [data-mode]). It
+    // self-contains a concrete --base-bg, so the per-theme adjacency checks
+    // apply. It declares no --page-gradient-{from,to}, so the card-on-gradient
+    // lift block skips it via its undefined-slot guard.
+    label: 'branding',
+    selector: "[data-theme='branding']",
+    pageBg: BRANDING_PAGE_BG,
     checkAdjacency: true,
   },
 ];
@@ -859,6 +881,24 @@ describe('bundle contrast contract', () => {
       const declarations = parseDeclarations(block);
       const mountBg = declarations.get('mount-bg');
       if (mountBg === undefined || mountBg.includes('var(')) {
+        continue;
+      }
+
+      /*
+       * Skip fixtures that declare no concrete gradient stops. branding is
+       * the OFF-BOOK brand-chrome theme: its page bg is the `bg-hit-man`
+       * radial (hardcoded hexes in index.css, NOT --page-gradient-* tokens),
+       * and no branding-consuming view paints a card on a
+       * `from-[var(--page-gradient-from)]` gradient, so it declares neither
+       * stop. Without this guard the per-fixture describe below would
+       * register zero it() calls and vitest fails the empty suite
+       * ([[feedback-vitest-empty-describe]]).
+       */
+      const declaresAnyStop = STOPS.some((stop) => {
+        const value = declarations.get(stop);
+        return value !== undefined && !value.includes('var(');
+      });
+      if (!declaresAnyStop) {
         continue;
       }
 

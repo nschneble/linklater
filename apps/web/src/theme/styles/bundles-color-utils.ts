@@ -69,8 +69,14 @@ const STYLES_DIR = dirname(fileURLToPath(import.meta.url));
  * them preserves the test API – `extractBlock(BUNDLES_CSS, selector)`
  * resolves any per-theme selector regardless of which file it lives in.
  * No within-file source-order semantics rely on this concatenation: every
- * per-theme selector has specificity (0, 2, 0) vs the (0, 1, 0) of the
- * bundles.css fallbacks, so cascade order is governed by specificity.
+ * on-book per-theme selector has specificity (0, 2, 0) vs the (0, 1, 0) of
+ * the bundles.css fallbacks, so cascade order is governed by specificity.
+ *
+ * `branding.css` is the OFF-BOOK brand-chrome theme: a single
+ * mode-independent `[data-theme='branding']` block (specificity (0, 1, 0)).
+ * It only ever paints under the `data-theme='branding'` wrapper ApiDocsView
+ * sets directly, so its lower specificity vs other per-theme blocks is moot –
+ * the contrast suite extracts it by exact selector, not by cascade order.
  */
 const PER_THEME_FILES = [
   'apollo-10-1-2.css',
@@ -78,6 +84,7 @@ const PER_THEME_FILES = [
   'before-sunrise.css',
   'before-sunset.css',
   'boyhood.css',
+  'branding.css',
   'dazed-and-confused.css',
   'hit-man.css',
   'nouvelle-vague.css',
