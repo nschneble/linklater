@@ -1,8 +1,8 @@
 import SchemaTable from './SchemaTable';
 import { endpointHeadingId } from './endpointId';
 import { FOCUS_RING } from '../../lib/styles';
-import { useState } from 'react';
-import type { KeyboardEvent } from 'react';
+import { useRef, useState } from 'react';
+import { useTabNavigation } from '../../lib/hooks/useTabNavigation';
 import type { NormalizedEndpoint, NormalizedResponse } from '../../lib/openapi';
 
 /**
@@ -63,32 +63,19 @@ export default function ResponseTabs({ endpoint }: ResponseTabsProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const panelId = `${endpointHeadingId(endpoint.method, endpoint.path)}-resp-panel`;
 
-  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    let nextIndex: number | null = null;
-    if (event.key === 'ArrowRight') {
-      nextIndex = (selectedIndex + 1) % responses.length;
-    } else if (event.key === 'ArrowLeft') {
-      nextIndex = (selectedIndex - 1 + responses.length) % responses.length;
-    } else if (event.key === 'Home') {
-      nextIndex = 0;
-    } else if (event.key === 'End') {
-      nextIndex = responses.length - 1;
-    }
-
-    if (nextIndex === null) {
-      return;
-    }
-    event.preventDefault();
-    setSelectedIndex(nextIndex);
-    const nextResponse = responses[nextIndex];
-    document.getElementById(responseTabId(endpoint, nextResponse))?.focus();
-  }
+  // Arrow/Home/End keyboard navigation comes from the shared hook: it focuses
+  // the destination tab and fires its click, so selection follows focus
+  // through `onClick` below (automatic activation). The selected tab keeps
+  // focus; the re-render flips the roving tabindex onto it.
+  const tablistReference = useRef<HTMLDivElement>(null);
+  useTabNavigation(tablistReference);
 
   const selectedResponse = responses[selectedIndex];
 
   return (
     <div className="mb-4 last:mb-0">
       <div
+        ref={tablistReference}
         role="tablist"
         aria-label="Responses"
         aria-orientation="horizontal"
@@ -107,7 +94,6 @@ export default function ResponseTabs({ endpoint }: ResponseTabsProps) {
               aria-controls={panelId}
               tabIndex={isSelected ? 0 : -1}
               onClick={() => setSelectedIndex(index)}
-              onKeyDown={handleKeyDown}
               className={`min-h-10 px-3 py-1.5 bg-transparent aria-selected:bg-[var(--orbit-bg)] border border-transparent aria-selected:border-[var(--orbit-border)] text-[var(--base-alt-text)] aria-selected:text-[var(--orbit-text)] text-sm font-medium aria-selected:font-semibold ${FOCUS_RING} rounded-lg motion-safe:[transition:background-color_150ms,color_150ms] cursor-pointer`}
             >
               <span className="sr-only">{responseTabLabel(response)}</span>
