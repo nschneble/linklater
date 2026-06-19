@@ -1,3 +1,4 @@
+import CopyButton from '../common/CopyButton';
 import { buildCurlCommand } from '../../lib/apiDocs/buildCurlCommand';
 import { useEffect, useRef, useState } from 'react';
 
@@ -65,18 +66,13 @@ export default function CurlExample({ method, url, body }: CurlExampleProps) {
         <p className="text-[var(--mount-text)] text-sm font-semibold">
           Example request
         </p>
-        <button
-          type="button"
-          onClick={handleCopy}
-          aria-label="Copy cURL command"
-          className="group inline-flex items-center gap-1.5 px-2.5 py-1 text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] rounded-md cursor-pointer"
+        <CopyButton
+          copied={copied}
+          onCopy={handleCopy}
+          label="Copy cURL command"
         >
-          <i
-            className={`fa-solid ${copied ? 'fa-check' : 'fa-copy'} text-xs`}
-            aria-hidden="true"
-          />
           Copy
-        </button>
+        </CopyButton>
       </div>
       <pre className="max-h-80 overflow-auto px-3 py-2.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs leading-relaxed select-text rounded-lg">
         {command}
