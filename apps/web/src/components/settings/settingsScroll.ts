@@ -38,7 +38,7 @@ function scrollSettingsSection(
   const naturalTop = element.getBoundingClientRect().top + window.scrollY;
   const targetScrollY = naturalTop - scrollMarginTop;
   if (targetScrollY < scrollMarginTop) {
-    window.scrollTo({ top: 69, behavior });
+    window.scrollTo({ top: 0, behavior });
   } else {
     element.scrollIntoView({ behavior, block: 'start' });
   }
