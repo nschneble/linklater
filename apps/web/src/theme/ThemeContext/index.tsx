@@ -9,6 +9,7 @@ import {
 } from '../constants';
 import { getInitialBaseTheme, getInitialMode } from '../initial';
 import { useThemeState } from './useThemeState';
+import type { CustomTheme } from '../customTheme';
 import type { ThemeContextValue } from './types';
 
 export {
@@ -18,7 +19,7 @@ export {
   getInitialBaseTheme,
   getInitialMode,
 };
-export type { BaseTheme, Mode };
+export type { BaseTheme, CustomTheme, Mode };
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 

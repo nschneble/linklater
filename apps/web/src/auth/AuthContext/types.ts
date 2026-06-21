@@ -1,4 +1,5 @@
 import type { BaseTheme, Mode } from '../../theme/constants';
+import type { CustomTheme } from '../../theme/customTheme';
 
 /**
  * The minimal user object stored in auth state. Populated from `GET /auth/me`
@@ -13,6 +14,12 @@ export interface User {
   }>;
   /** When `true`, CVD mode is enabled on the server. */
   cvdMode: boolean;
+  /**
+   * The user's editable Custom theme (`{ dark, light }` token maps), or
+   * `null` when the user has never saved one. Normalized from the raw server
+   * JSON so only known bundle token keys survive.
+   */
+  customTheme: CustomTheme | null;
   /** The user's current email address. */
   email: string;
   /** ISO timestamp of when the email was verified, or `null` if unverified. */

@@ -14,6 +14,7 @@ export type BaseTheme =
   | 'before-sunrise'
   | 'before-sunset'
   | 'boyhood'
+  | 'custom'
   | 'dazed-and-confused'
   | 'hit-man'
   | 'nouvelle-vague'
@@ -99,6 +100,20 @@ export const THEMES: Array<{
     label: 'School of Rock',
     accent: '#b91c1c',
     swatchIcon: 'fa-guitar',
+  },
+  {
+    // The user-editable Custom theme. Its palette lives in the per-user
+    // `customTheme` column, not a film-specific CSS file, so the accent is a
+    // statically chosen neutral gray (NOT derived from the user's tokens,
+    // which may be empty). #808080 clears 3:1 against the menu background in
+    // both light and dark mode. `swatchIcon` is special-cased to the generic
+    // paintbrush — every other theme uses a film-specific icon. `isAccessible`
+    // is intentionally omitted: a user-authored palette can't be assumed
+    // CVD-safe.
+    id: 'custom',
+    label: 'Custom',
+    accent: '#808080',
+    swatchIcon: 'fa-paintbrush',
   },
 ];
 

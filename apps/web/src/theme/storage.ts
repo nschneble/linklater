@@ -12,6 +12,13 @@ export const CVD_MODE_KEY = 'linklater_cvd_mode';
 export const PRE_CVD_THEME_KEY = 'linklater_pre_cvd_theme';
 /** Timestamp written when CVD mode is toggled; used as race guard in App.tsx. */
 export const CVD_UPDATED_AT_KEY = 'linklater_cvd_updated_at';
+/**
+ * `localStorage` key for the user's editable Custom theme: a JSON-encoded
+ * `{ dark, light }` map of bundle token names to CSS color strings.
+ */
+export const CUSTOM_THEME_STORAGE_KEY = 'linklater_custom_theme';
+/** Timestamp written alongside the Custom theme when a user action changes it. */
+export const CUSTOM_THEME_UPDATED_AT_KEY = 'linklater_custom_theme_updated_at';
 
 /**
  * If the user changed a preference less than this many milliseconds ago,

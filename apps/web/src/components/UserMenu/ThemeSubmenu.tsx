@@ -82,7 +82,16 @@ export default function ThemeSubmenu({
   onFlyoutBlur,
   flyoutReference,
 }: ThemeSubmenuProps) {
-  const { isCvdMode } = useTheme();
+  const { customTheme, isCvdMode } = useTheme();
+
+  // The Custom theme is "set up" once the user has saved at least one token
+  // (in either mode). Until then the picker entry carries an sr-only
+  // ", not set up" qualifier so screen-reader users learn its state without a
+  // differing aria-label (WCAG 2.5.3).
+  const isCustomConfigured =
+    !!customTheme &&
+    (Object.keys(customTheme.dark).length > 0 ||
+      Object.keys(customTheme.light).length > 0);
 
   function handleOpenOrFocusFlyout() {
     if (showSubmenu) {
@@ -194,7 +203,12 @@ export default function ThemeSubmenu({
                   aria-hidden="true"
                 />
               </span>
-              <span className="flex-1">{theme.label}</span>
+              <span className="flex-1">
+                {theme.label}
+                {theme.id === 'custom' && !isCustomConfigured && (
+                  <span className="sr-only">, not set up</span>
+                )}
+              </span>
               {baseTheme === theme.id && (
                 <i
                   className="fa-solid fa-check text-[var(--orbit-highlight)] group-hover:text-[var(--orbit-highlight-fg)]"

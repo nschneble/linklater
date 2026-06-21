@@ -1,4 +1,5 @@
 import type { BaseTheme, Mode } from '../constants';
+import type { CustomTheme } from '../customTheme';
 
 /**
  * The shape of the value provided by `ThemeContext`. All theme-related
@@ -57,4 +58,23 @@ export interface ThemeContextValue {
   disableCvdMode: () => BaseTheme;
   /** Whether CVD mode is currently active. */
   isCvdMode: boolean;
+  /**
+   * The user's editable Custom theme (`{ dark, light }` token maps), or
+   * `null` when the user has never saved one. Its tokens are injected onto
+   * `document.documentElement` as inline CSS custom properties while the
+   * `'custom'` base theme is active.
+   */
+  customTheme: CustomTheme | null;
+  /**
+   * Sets the Custom theme from a user action (the Theme Editor's Save in
+   * wave 3). Persists to `localStorage` with a timestamp so a subsequent
+   * server sync cannot overwrite a very recent change.
+   */
+  setCustomTheme: (customTheme: CustomTheme) => void;
+  /**
+   * Applies the server-stored Custom theme. Skips the update if the user
+   * saved a Custom theme locally within the last 30 seconds, mirroring the
+   * race-condition guard used by `applyServerTheme`.
+   */
+  applyServerCustomTheme: (customTheme: CustomTheme | null) => void;
 }

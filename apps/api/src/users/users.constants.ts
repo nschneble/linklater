@@ -8,6 +8,10 @@
  * The off-book `branding` theme (branding.css) is deliberately absent here by
  * design — accepting it would let a client persist a user-invisible theme and
  * break its invisibility contract. See THEMES.md Section 7.
+ *
+ * Unlike `branding`, the `custom` theme IS user-selectable: it is the
+ * per-user editable theme whose palette lives in the `customTheme` JSON
+ * column rather than a CSS file.
  */
 export const VALID_THEMES = [
   'apollo-10-1-2',
@@ -15,6 +19,7 @@ export const VALID_THEMES = [
   'before-sunrise',
   'before-sunset',
   'boyhood',
+  'custom',
   'dazed-and-confused',
   'hit-man',
   'nouvelle-vague',

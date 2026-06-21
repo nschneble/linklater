@@ -13,8 +13,15 @@ import {
   type BaseTheme,
   type Mode,
 } from '../constants';
+import {
+  CUSTOM_TOKEN_KEYS,
+  readStoredCustomTheme,
+  tokensForMode,
+} from '../customTheme';
 import { getInitialBaseTheme, getInitialMode } from '../initial';
 import {
+  CUSTOM_THEME_STORAGE_KEY,
+  CUSTOM_THEME_UPDATED_AT_KEY,
   CVD_MODE_KEY,
   CVD_UPDATED_AT_KEY,
   MODE_STORAGE_KEY,
@@ -25,6 +32,7 @@ import {
   THEME_UPDATED_AT_KEY,
   readLocalStorage,
 } from '../storage';
+import type { CustomTheme } from '../customTheme';
 import type { ThemeContextValue } from './types';
 
 /**
@@ -37,6 +45,9 @@ export function useThemeState(): ThemeContextValue {
   const [mode, setModeState] = useState<Mode>(getInitialMode);
   const [isCvdMode, setIsCvdMode] = useState<boolean>(
     () => readLocalStorage(CVD_MODE_KEY) === 'on',
+  );
+  const [customTheme, setCustomThemeState] = useState<CustomTheme | null>(
+    readStoredCustomTheme,
   );
 
   // Ref to always have the current baseTheme available in callbacks
@@ -52,6 +63,36 @@ export function useThemeState(): ThemeContextValue {
     document.documentElement.dataset.theme = baseTheme;
     document.documentElement.dataset.mode = mode;
   }, [baseTheme, mode]);
+
+  // Injects the user's stored Custom theme tokens for the current mode as
+  // inline CSS custom properties on the document root while the `'custom'`
+  // theme is active. Unlike the film themes (whose palettes live in CSS files
+  // keyed off `[data-theme]`), the Custom palette is per-user data, so it has
+  // to be applied imperatively.
+  //
+  // When the Custom theme is active but no tokens are saved for the current
+  // mode, nothing is injected and the page falls back to the synthetic
+  // `:root` defaults already in bundles.css. When switching away from Custom
+  // (or to the other mode), the cleanup removes every previously injected
+  // property so custom values can't leak onto another theme.
+  useLayoutEffect(() => {
+    if (baseTheme !== 'custom') return;
+    const root = document.documentElement;
+    const tokens = tokensForMode(customTheme, mode);
+    for (const variable of CUSTOM_TOKEN_KEYS) {
+      const value = tokens[variable];
+      if (value) {
+        root.style.setProperty(variable, value);
+      } else {
+        root.style.removeProperty(variable);
+      }
+    }
+    return () => {
+      for (const variable of CUSTOM_TOKEN_KEYS) {
+        root.style.removeProperty(variable);
+      }
+    };
+  }, [baseTheme, mode, customTheme]);
 
   useLayoutEffect(() => {
     if (isCvdMode) {
@@ -138,6 +179,38 @@ export function useThemeState(): ThemeContextValue {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, []);
 
+  const setCustomTheme = useCallback((nextCustomTheme: CustomTheme) => {
+    setCustomThemeState(nextCustomTheme);
+    window.localStorage.setItem(
+      CUSTOM_THEME_STORAGE_KEY,
+      JSON.stringify(nextCustomTheme),
+    );
+    window.localStorage.setItem(
+      CUSTOM_THEME_UPDATED_AT_KEY,
+      Date.now().toString(),
+    );
+  }, []);
+
+  const applyServerCustomTheme = useCallback(
+    (serverCustomTheme: CustomTheme | null) => {
+      const updatedAt = parseInt(
+        readLocalStorage(CUSTOM_THEME_UPDATED_AT_KEY) ?? '0',
+        10,
+      );
+      if (Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS) return;
+      setCustomThemeState(serverCustomTheme);
+      if (serverCustomTheme) {
+        window.localStorage.setItem(
+          CUSTOM_THEME_STORAGE_KEY,
+          JSON.stringify(serverCustomTheme),
+        );
+      } else {
+        window.localStorage.removeItem(CUSTOM_THEME_STORAGE_KEY);
+      }
+    },
+    [],
+  );
+
   const applyServerMode = useCallback((serverMode: Mode) => {
     const updatedAt = parseInt(
       readLocalStorage(MODE_UPDATED_AT_KEY) ?? '0',
@@ -180,26 +253,32 @@ export function useThemeState(): ThemeContextValue {
 
   return useMemo(
     () => ({
+      applyServerCustomTheme,
       applyServerMode,
       applyServerTheme,
       baseTheme,
+      customTheme,
       disableCvdMode,
       enableCvdMode,
       isCvdMode,
       mode,
       setBaseTheme,
+      setCustomTheme,
       setMode,
       toggleMode,
     }),
     [
+      applyServerCustomTheme,
       applyServerMode,
       applyServerTheme,
       baseTheme,
+      customTheme,
       disableCvdMode,
       enableCvdMode,
       isCvdMode,
       mode,
       setBaseTheme,
+      setCustomTheme,
       setMode,
       toggleMode,
     ],

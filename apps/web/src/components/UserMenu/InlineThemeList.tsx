@@ -1,5 +1,6 @@
 import { FOCUS_RING } from '../../lib/styles';
 import { THEMES, type BaseTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../theme/ThemeContext';
 
 interface InlineThemeListProps {
   baseTheme: BaseTheme;
@@ -18,6 +19,17 @@ export default function InlineThemeList({
   baseTheme,
   onSelect,
 }: InlineThemeListProps) {
+  const { customTheme } = useTheme();
+
+  // The Custom theme is "set up" once the user has saved at least one token
+  // (in either mode). Until then the picker entry carries an sr-only
+  // ", not set up" qualifier so screen-reader users learn its state without a
+  // differing aria-label (WCAG 2.5.3).
+  const isCustomConfigured =
+    !!customTheme &&
+    (Object.keys(customTheme.dark).length > 0 ||
+      Object.keys(customTheme.light).length > 0);
+
   return (
     <>
       {THEMES.map((theme) => (
@@ -38,7 +50,12 @@ export default function InlineThemeList({
               aria-hidden="true"
             />
           </span>
-          <span className="flex-1">{theme.label}</span>
+          <span className="flex-1">
+            {theme.label}
+            {theme.id === 'custom' && !isCustomConfigured && (
+              <span className="sr-only">, not set up</span>
+            )}
+          </span>
           {baseTheme === theme.id && (
             <i
               className="fa-solid fa-check text-[var(--orbit-highlight)]"

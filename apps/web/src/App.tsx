@@ -18,6 +18,7 @@ export default function App() {
   const {
     applyServerTheme,
     applyServerMode,
+    applyServerCustomTheme,
     enableCvdMode,
     disableCvdMode,
     isCvdMode,
@@ -41,7 +42,14 @@ export default function App() {
       applyServerTheme(user.theme);
     }
     applyServerMode(user.mode);
-  }, [user, applyServerTheme, applyServerMode, isCvdMode]);
+    applyServerCustomTheme(user.customTheme);
+  }, [
+    user,
+    applyServerTheme,
+    applyServerMode,
+    applyServerCustomTheme,
+    isCvdMode,
+  ]);
 
   // Syncs CVD mode from the server with a 30s local-change guard. If the
   // user toggled CVD mode within the last 30s, skip the server sync to

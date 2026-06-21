@@ -18,8 +18,8 @@ describe('CVD_BASE_THEME', () => {
 });
 
 describe('THEMES', () => {
-  it('contains exactly 10 themes', () => {
-    expect(THEMES).toHaveLength(10);
+  it('contains exactly 11 themes', () => {
+    expect(THEMES).toHaveLength(11);
   });
 
   it('every theme has a non-empty id, label, accent, and swatchIcon', () => {
@@ -65,6 +65,7 @@ describe('THEMES', () => {
       'before-sunrise',
       'before-sunset',
       'boyhood',
+      'custom',
       'dazed-and-confused',
       'hit-man',
       'nouvelle-vague',
