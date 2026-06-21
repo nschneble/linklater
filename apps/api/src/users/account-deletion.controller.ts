@@ -40,7 +40,7 @@ export class AccountDeletionController {
 
   /**
    * Consumes a confirmation token (emailed by `AuthService.deleteAccount`
-   * on the email-confirm path) and permanently deletes the user. Public —
+   * on the email-confirm path) and permanently deletes the user. Public –
    * the email recipient may have signed out, switched browsers, or never
    * been signed in on this device.
    *
@@ -71,10 +71,10 @@ export class AccountDeletionController {
   /**
    * Clears any outstanding deletion confirmation token for the current
    * user. Backs the "Never mind, keep my account" affordance on the
-   * email-sent panel. Idempotent — returns 204 whether or not a token
+   * email-sent panel. Idempotent – returns 204 whether or not a token
    * was actually pending.
    *
-   * Rate-limited via `auth-account-deletion-cancel` (10 / 15 min) —
+   * Rate-limited via `auth-account-deletion-cancel` (10 / 15 min) –
    * slightly higher than the confirm bucket because legitimate UI
    * clicks shouldn't get throttled.
    */

@@ -3,7 +3,7 @@
   "steps": [
     {
       "kind": "click",
-      "hint": { "role": "button", "text": "Copy all recovery codes to clipboard" }
+      "hint": { "role": "button", "text": "Copy to clipboard" }
     },
     { "kind": "wait", "ms": 800 }
   ],

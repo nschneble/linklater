@@ -5,7 +5,7 @@
     { "kind": "wait", "ms": 600 }
   ],
   "expect": {
-    "anyOf": [{ "text": "Invalid authentication response" }]
+    "anyOf": [{ "text": "We couldn't sign you in" }]
   },
   "diff": { "maxDiffRatio": 0.02 }
 }

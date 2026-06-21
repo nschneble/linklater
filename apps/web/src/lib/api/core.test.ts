@@ -18,7 +18,7 @@ function makeStorageStub(overrides: Partial<Storage> = {}): Storage {
 
 /**
  * Verifies that `core.ts` survives module load when `localStorage` throws on
- * read — Safari private browsing and storage-blocked sites throw a
+ * read – Safari private browsing and storage-blocked sites throw a
  * `SecurityError` on every access. A naked `localStorage.getItem` call at
  * module top-level would have broken the entire app under those conditions.
  *

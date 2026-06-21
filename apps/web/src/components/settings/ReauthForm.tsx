@@ -19,7 +19,7 @@ interface ReauthFormProps {
   /**
    * Prompt shown above the inputs. Also wired to both `aria-describedby`
    * attributes so screen readers announce it when an input receives focus
-   * — critical for destructive flows where the field labels alone don't
+   * – critical for destructive flows where the field labels alone don't
    * convey the consequence ("Current password" doesn't say *what* it's
    * confirming).
    */
@@ -27,7 +27,7 @@ interface ReauthFormProps {
   /**
    * Visually-hidden `<h3>` rendered above the prompt so screen-reader users
    * navigating by heading (NVDA/JAWS `H`, VoiceOver rotor) find the form.
-   * Each caller passes per-flow text — e.g. "Confirm account deletion".
+   * Each caller passes per-flow text – e.g. "Confirm account deletion".
    * Level `h3` matches the surrounding hierarchy (`h1` Settings →
    * `h2` SettingsGroup → `h3` here).
    */
@@ -61,7 +61,7 @@ interface ReauthFormProps {
   /**
    * Whether the user has multi-factor authentication enrolled. Gates the
    * "Authenticator or recovery code" input. Without this gate, password-only
-   * users see a code field they cannot fill — see `DangerZone`'s credentialed
+   * users see a code field they cannot fill – see `DangerZone`'s credentialed
    * branch, which admits any user with `hasPassword || multiFactorMethod`.
    */
   hasMfa: boolean;
@@ -168,7 +168,7 @@ export default function ReauthForm({
                 // exceed an authenticator code length even on paste.
                 onCodeChange(raw.replace(/\D/g, '').slice(0, 6));
               } else {
-                // Recovery path: hyphen or letter detected — leave verbatim.
+                // Recovery path: hyphen or letter detected – leave verbatim.
                 onCodeChange(raw);
               }
             }}

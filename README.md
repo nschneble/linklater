@@ -263,7 +263,7 @@ bin/dev --remote
 
 ##### One-time setup for mobile devices
 
-The teck stack uses [mkcert](https://github.com/FiloSottile/mkcert) for HTTPS. Mobile devices need to trust the mkcert root certificate authority, or the connection will be refused.
+The tech stack uses [mkcert](https://github.com/FiloSottile/mkcert) for HTTPS. Mobile devices need to trust the mkcert root certificate authority, or the connection will be refused.
 
 1. Find the root CA on the computer where Linklater is running:
 

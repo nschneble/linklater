@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/index.js';
 import { QueueService, QUEUES } from '../queue/index.js';
 
-/** Seven days expressed in milliseconds — the retention period for read links. */
+/** Seven days expressed in milliseconds – the retention period for read links. */
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
@@ -36,7 +36,7 @@ export class ReadLinkCleanupService implements OnModuleInit {
 
   /**
    * Deletes all read links whose `readAt` timestamp is older than
-   * seven days. Scoped across all users — this is a global cleanup, not
+   * seven days. Scoped across all users – this is a global cleanup, not
    * per-user.
    *
    * IDEMPOTENT: safe under pg-boss at-least-once delivery. The

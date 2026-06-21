@@ -24,7 +24,7 @@ type MfaChallenge = 'totp' | 'recovery';
  *      discard the returned tokens, queue `already-logged-in` toast,
  *      navigate `/unread`. The server-side magic-link token is still
  *      single-use (it was just consumed by the verify call), but we
- *      don't disturb the current JWT — open tabs stay valid.
+ *      don't disturb the current JWT – open tabs stay valid.
  *   3. Signed in as a different user (cross-account click) → call
  *      `revokeAllSessions()` first (uses the OLD user's bearer to DELETE
  *      /auth/sessions), then `loginWithToken` with the new tokens,
@@ -36,14 +36,14 @@ type MfaChallenge = 'totp' | 'recovery';
  * Failures redirect to /login with an error-variant pending notice; the
  * AuthForm surfaces it as an assertive toast. /login is also where the
  * user immediately retries (request a new link), so the toast copy stays
- * short (WCAG 3.3.3 — recovery destination is the page the user lands
+ * short (WCAG 3.3.3 – recovery destination is the page the user lands
  * on).
  *
  * MFA-enabled accounts authenticated via magic link still need to clear
  * the OTP challenge; that branch mounts `MfaView` and is unchanged.
  */
 export default function VerifyLoginPage() {
-  useDocumentTitle('Verifying sign in — Linklater');
+  useDocumentTitle('Linklater – Verifying sign in');
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
   const { loginWithToken, refreshUser, user } = useAuth();
@@ -60,7 +60,7 @@ export default function VerifyLoginPage() {
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge>('totp');
   const [mfaCode, setMfaCode] = useState('');
   const [mfaLoading, setMfaLoading] = useState(false);
-  // `mfaError` is scoped to OTP-submission failures only — the verify-link
+  // `mfaError` is scoped to OTP-submission failures only – the verify-link
   // failure paths redirect to /login and surface as toasts, never landing
   // in MfaView. Keeping the state name disambiguated avoids future drift.
   const [mfaError, setMfaError] = useState<string | null>(null);
@@ -82,7 +82,7 @@ export default function VerifyLoginPage() {
     verifyMagicLink(token)
       .then(async (result) => {
         // MFA-enabled accounts that authenticate via a magic link still need
-        // to clear the OTP challenge before a session is issued — mirror the
+        // to clear the OTP challenge before a session is issued – mirror the
         // password login flow and surface the same MfaView.
         if ('mfaToken' in result) {
           setMfaToken(result.mfaToken);
@@ -99,7 +99,7 @@ export default function VerifyLoginPage() {
 
         if (isSameAccount) {
           // Server already consumed the magic-link token (single-use intact),
-          // but the existing session is still valid — discard the freshly
+          // but the existing session is still valid – discard the freshly
           // issued tokens rather than rotating the JWT in open tabs.
           setPendingNotice('already-logged-in');
           navigate('/unread', { replace: true });
@@ -119,7 +119,7 @@ export default function VerifyLoginPage() {
           return;
         }
 
-        // No prior session — standard fresh login, no toast (the destination
+        // No prior session – standard fresh login, no toast (the destination
         // is the confirmation that auth succeeded).
         await loginWithToken(result.accessToken, result.refreshToken);
         navigate('/unread', { replace: true });
@@ -183,7 +183,7 @@ export default function VerifyLoginPage() {
   }
 
   // The verifying state is a bare centered spinner with an sr-only polite
-  // status — the page is purely transient and any card chrome would flash
+  // status – the page is purely transient and any card chrome would flash
   // visibly for sub-second windows before the redirect fires, which reads
   // as "page loaded and immediately bounced." Failures surface as
   // error-variant toasts on /login rather than a full error card.

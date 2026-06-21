@@ -40,7 +40,7 @@ export class UserMfaService {
   /**
    * Clears a pending (not-yet-enabled) TOTP secret. Idempotent: no-op when the
    * user has no pending setup. The `totpEnabledAt: null` filter is intentional
-   * — it makes the guard atomic so an enabled account is silently skipped at
+   * – it makes the guard atomic so an enabled account is silently skipped at
    * the DB layer rather than racing a concurrent enable. Callers must still
    * surface a 409 to the user for the enabled case.
    */
@@ -67,7 +67,7 @@ export class UserMfaService {
   /**
    * Clears the MFA nonce after a successful verifyOtp, enforcing single-use
    * semantics on the MFA challenge token. Also doubles as an explicit
-   * revocation handle — any code path can call this to invalidate an
+   * revocation handle – any code path can call this to invalidate an
    * outstanding MFA token (e.g. after a password change).
    */
   async clearMfaNonce(id: string): Promise<void> {
@@ -143,7 +143,7 @@ export class UserMfaService {
    * Atomically marks a recovery code as used, but only if it is still unused.
    * Returns `true` when the code was just consumed, `false` when a parallel
    * request had already used it. Callers MUST treat `false` as an auth
-   * failure — without this guard, two concurrent verify-otp requests could
+   * failure – without this guard, two concurrent verify-otp requests could
    * both succeed on the same code.
    */
   async markRecoveryCodeUsed(id: string): Promise<boolean> {
@@ -184,7 +184,7 @@ export class UserMfaService {
       throw new UnauthorizedException('Invalid recovery code');
 
     // markRecoveryCodeUsed returns false when a parallel verify lost the
-    // race to consume the same code — treat that as an invalid code so
+    // race to consume the same code – treat that as an invalid code so
     // two concurrent requests cannot both succeed on one recovery code.
     const consumed = await this.markRecoveryCodeUsed(
       recoveryCodes[matchIndex].id,

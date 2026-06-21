@@ -7,6 +7,7 @@ import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 
 import { ApiKeyStrategy } from './api-key.strategy.js';
+import { TokenScopeService } from './token-scope.service.js';
 import { TOKEN_PREFIX } from '../tokens/tokens.service.js';
 
 /**
@@ -14,14 +15,18 @@ import { TOKEN_PREFIX } from '../tokens/tokens.service.js';
  * prefixed with `ltk_` (browser extensions and other API clients).
  *
  * PAT path: if the Bearer token starts with `ltk_`, it is validated by
- * `ApiKeyStrategy` and `request.user` is populated directly.
+ * `ApiKeyStrategy`, scoped + rate-limited by `TokenScopeService`, and then
+ * `request.user` is populated directly.
  *
  * JWT path: all other tokens fall through to the standard Passport JWT flow,
  * preserving the `mfaPending` guard inherited from `JwtAuthGuard`.
  */
 @Injectable()
 export class AnyAuthGuard extends AuthGuard('jwt') {
-  constructor(private readonly apiKeyStrategy: ApiKeyStrategy) {
+  constructor(
+    private readonly apiKeyStrategy: ApiKeyStrategy,
+    private readonly tokenScope: TokenScopeService,
+  ) {
     super();
   }
 
@@ -37,11 +42,22 @@ export class AnyAuthGuard extends AuthGuard('jwt') {
     }
 
     if (token.startsWith(TOKEN_PREFIX)) {
-      const user = await this.apiKeyStrategy.validate(token);
-      if (!user) {
+      const validated = await this.apiKeyStrategy.validate(token);
+      if (!validated) {
         throw new UnauthorizedException();
       }
-      (request as Request & { user: unknown }).user = user;
+
+      // Confine the special retrievable kinds (bookmarklet, API docs) to their
+      // single purpose before granting access – throws 403 or 429 as needed.
+      await this.tokenScope.enforce({
+        kind: validated.kind,
+        tokenHash: validated.tokenHash,
+        context,
+        request,
+      });
+
+      const { userId, email } = validated;
+      (request as Request & { user: unknown }).user = { userId, email };
       return true;
     }
 

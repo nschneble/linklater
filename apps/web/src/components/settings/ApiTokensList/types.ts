@@ -4,7 +4,7 @@ import type { ApiToken } from '../../../lib/api';
 export interface ApiTokenRowProps {
   // parent is responsible for the API call and refreshing the list
   onRevoke: (id: string) => Promise<void>;
-  // no raw token value is available here — only the summary metadata
+  // no raw token value is available here – only the summary metadata
   token: ApiToken;
 }
 

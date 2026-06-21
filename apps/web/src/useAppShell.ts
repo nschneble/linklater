@@ -8,12 +8,12 @@ import { type AppView } from './lib/navigation';
 /**
  * Maps the current URL pathname to the active `AppView`.
  *
- * `/settings/api` renders the dedicated API docs view (Scalar lazy bundle).
  * `/settings` renders the settings view; sections within it are reached by
- * scrolling or the in-page sidebar nav, not by URL.
+ * scrolling or the in-page sidebar nav, not by URL. The API docs are a
+ * standalone public route (`/docs`) handled outside `AppShell` entirely, so
+ * they do not appear here.
  */
 function viewFromPath(pathname: string): AppView {
-  if (pathname === '/settings/api') return 'api-docs';
   if (pathname === '/settings') return 'settings';
   if (pathname === '/editor') return 'theme-editor';
   return 'links';
@@ -87,7 +87,6 @@ export function useAppShell() {
 
   useEffect(() => {
     const titles: Record<AppView, string> = {
-      'api-docs': 'API documentation – Linklater',
       links: 'Your links – Linklater',
       settings: 'Settings – Linklater',
       'theme-editor': 'Theme editor – Linklater',
@@ -97,7 +96,7 @@ export function useAppShell() {
 
   // Move focus to the main landmark whenever the user navigates between
   // views. The isFirstRender guard prevents stealing focus on the
-  // initial page load — on mount the browser has not set focus anywhere
+  // initial page load – on mount the browser has not set focus anywhere
   // meaningful yet, so moving it to <main> would skip the skip link and
   // surprise keyboard users who land tabbed into the page header. Skip
   // the focus shift when a navigation into Settings carries a `scrollTo`

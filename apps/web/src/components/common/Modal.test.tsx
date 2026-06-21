@@ -1,5 +1,5 @@
 /*
- * Tests for Modal — shared dialog primitive used by WelcomeModal and
+ * Tests for Modal – shared dialog primitive used by WelcomeModal and
  * KeyboardShortcutsModal.
  *
  * Covers the ARIA + focus + scroll-lock contracts the primitive owns.
@@ -106,7 +106,7 @@ describe('Modal', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('traps Tab forward — focus on the last focusable wraps to the first', () => {
+  it('traps Tab forward – focus on the last focusable wraps to the first', () => {
     renderModal({ extraButton: true });
     const closeButton = screen.getByRole('button', {
       name: /close test dialog/i,
@@ -118,7 +118,7 @@ describe('Modal', () => {
     expect(document.activeElement).toBe(closeButton);
   });
 
-  it('traps Shift+Tab backward — focus on the first focusable wraps to the last', () => {
+  it('traps Shift+Tab backward – focus on the first focusable wraps to the last', () => {
     renderModal({ extraButton: true });
     const closeButton = screen.getByRole('button', {
       name: /close test dialog/i,

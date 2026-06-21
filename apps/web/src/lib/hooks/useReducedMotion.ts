@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
  * runtime updates the value without a refresh.
  *
  * Use to gate animation-heavy interactions like `scrollIntoView({ behavior:
- * 'smooth' })` — Tailwind's `motion-safe:`/`motion-reduce:` variants only
+ * 'smooth' })` – Tailwind's `motion-safe:`/`motion-reduce:` variants only
  * style CSS and cannot affect JS calls.
  */
 export function useReducedMotion(): boolean {

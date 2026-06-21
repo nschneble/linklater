@@ -11,7 +11,7 @@ interface FooterLinkProps {
 function FooterLink({ href, label, newTab = false }: FooterLinkProps) {
   return (
     <a
-      className="text-confused hover:text-dazed text-xs transition duration-200"
+      className="text-[var(--base-subtle-text)] hover:text-[var(--base-text)] text-xs transition duration-200"
       href={href}
       rel={newTab ? 'noreferrer' : undefined}
       target={newTab ? '_blank' : undefined}

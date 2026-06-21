@@ -1,17 +1,17 @@
 /*
- * Anti-regression tripwire for the chrome bundle migration (Wave 19+).
+ * Anti-regression tripwire for the chrome bundle migration.
  *
  * Asserts that migrated files contain no references to the legacy
- * pre-bundle CSS custom properties. Started in wave 19 with page-chrome +
- * settings; extended each subsequent wave (common components, UserMenu,
+ * pre-bundle CSS custom properties. Started with page-chrome +
+ * settings, then extended (common components, UserMenu,
  * auth pages, feature views) as files were migrated.
  *
- * As of wave 44, nine of the legacy tokens (`--bg`, `--bg-surface`,
+ * Nine of the legacy tokens (`--bg`, `--bg-surface`,
  * `--text`, `--text-muted`, `--text-subtle`, `--border`, `--accent-fg`,
- * `--accent-hover`, `--accent`) are fully retired from the codebase —
+ * `--accent-hover`, `--accent`) are fully retired from the codebase –
  * not declared anywhere. The tripwire still lists them to prevent
- * re-introduction (sister to `--bg-input` wave 23 + `--bg-elevated`
- * wave 32 retirements).
+ * re-introduction (sister to the `--bg-input` and `--bg-elevated`
+ * retirements).
  *
  * Fires before the WCAG contrast suite runs, so a regression here is
  * caught as a flat string mismatch rather than a downstream contract
@@ -32,13 +32,16 @@ const MIGRATED_FILES = [
   'src/components/FailWhalePage/index.tsx',
   'src/components/Header.tsx',
   'src/components/LandingPage/index.tsx',
+  'src/components/LandingPage/FeaturesSection.tsx',
+  'src/components/LandingPage/FooterSection.tsx',
+  'src/components/LandingPage/HeroSection.tsx',
   'src/components/auth/AuthCard.tsx',
-  'src/components/auth/AuthErrorPanel.tsx',
   'src/components/auth/AuthForm.tsx',
   'src/components/auth/ForgotPasswordView.tsx',
   'src/components/auth/LoginRegisterView.tsx',
   'src/components/auth/LogoutPage.tsx',
   'src/components/auth/MfaView.tsx',
+  'src/components/common/CopyButton.tsx',
   'src/components/common/CopyRevealPanel.tsx',
   'src/components/common/FormInput.tsx',
   'src/components/common/IconButton.tsx',
@@ -75,7 +78,19 @@ const MIGRATED_FILES = [
   'src/components/UserMenu/ThemeSubmenu.tsx',
   'src/components/UserMenu/index.tsx',
   'src/components/api-docs/ApiDocsView.tsx',
-  'src/components/api-docs/TokenInput.tsx',
+  'src/components/api-docs/ApiReference.tsx',
+  'src/components/api-docs/EndpointDetail.tsx',
+  'src/components/api-docs/EndpointNav.tsx',
+  'src/components/api-docs/EndpointNavCompact.tsx',
+  'src/components/api-docs/MethodBadge.tsx',
+  'src/components/api-docs/ParameterTable.tsx',
+  'src/components/api-docs/RequestBodyEditor.tsx',
+  'src/components/api-docs/RequestField.tsx',
+  'src/components/api-docs/RequestForm.tsx',
+  'src/components/api-docs/ResponsePanel.tsx',
+  'src/components/api-docs/ResponseTabs.tsx',
+  'src/components/api-docs/SchemaTable.tsx',
+  'src/components/api-docs/WelcomePanel.tsx',
   'src/components/auth/ConfirmAccountDeletionPage.tsx',
   'src/components/auth/ExtensionAuthorizePage.tsx',
   'src/components/auth/OAuthCallbackPage.tsx',
@@ -109,10 +124,10 @@ const MIGRATED_FILES = [
 ] as const;
 
 /*
- * Legacy tokens that should NOT appear in any wave-19 migrated chrome file.
+ * Legacy tokens that should NOT appear in any migrated chrome file.
  *
  * Not included:
- *   --focus-ring      — universal slot (wave 21). Migrated chrome files
+ *   --focus-ring      – universal slot. Migrated chrome files
  *                       use it; not a legacy alias.
  */
 const LEGACY_TOKENS = [

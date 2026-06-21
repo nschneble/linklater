@@ -42,7 +42,7 @@ export class OAuthController {
   @UseGuards(AuthGuard('google'))
   @Get('google')
   async googleAuth() {
-    // Passport redirects to Google — no body needed
+    // Passport redirects to Google – no body needed
   }
 
   @ApiOperation({ summary: 'Google OAuth callback' })
@@ -56,7 +56,7 @@ export class OAuthController {
   @UseGuards(AuthGuard('apple'))
   @Get('apple')
   async appleAuth() {
-    // Passport redirects to Apple — no body needed
+    // Passport redirects to Apple – no body needed
   }
 
   @ApiOperation({ summary: 'Apple Sign In callback' })
@@ -133,7 +133,7 @@ export class OAuthController {
         );
         return;
       }
-      // Anything else — DB outage, network blip linking the row, etc. —
+      // Anything else – DB outage, network blip linking the row, etc. –
       // must not escape as a NestJS HTML 500 inside the OAuth-callback
       // popup. Log it for triage, then redirect to a generic error state
       // the SPA already knows how to render.
@@ -151,7 +151,7 @@ export class OAuthController {
   @ApiResponse({ status: 200, description: 'Provider disconnected.' })
   @ApiResponse({
     status: 400,
-    description: 'No password set — cannot disconnect.',
+    description: 'No password set – cannot disconnect.',
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @UseGuards(JwtAuthGuard)

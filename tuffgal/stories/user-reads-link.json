@@ -1,7 +1,8 @@
 {
   "story": "As a logged-in user, I can click on an unread link to mark it as read.",
   "flow": "click on an unread link",
-  "needs": ["logged-in"],
+  "needs": ["logged-in", "db-link-mutator-1"],
+  "produces": ["db-link-mutator-2"],
   "fixtures": ["user-with-3-links"],
   "actions": [
     { "action": "intercept-1-read-link" },

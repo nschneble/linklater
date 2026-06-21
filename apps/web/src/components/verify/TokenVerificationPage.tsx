@@ -6,12 +6,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 /**
  * Props that configure the per-flow notice keys and verifying-state copy.
  * The logic is identical for email verification and email-change
- * verification — only the user-visible text and the notice keys differ.
+ * verification – only the user-visible text and the notice keys differ.
  */
 interface TokenVerificationPageProps {
   /**
    * Polite sr-only status text announced while the API call is in flight.
-   * The verifying state renders a centered spinning icon only — this text
+   * The verifying state renders a centered spinning icon only – this text
    * lives in an sr-only live region so screen-reader users still hear the
    * per-flow context.
    */
@@ -58,7 +58,7 @@ interface TokenVerificationPageProps {
  * `usePendingNotice` and surfaces it as a toast + sr-only mirror.
  *
  * The verifying state is a bare centered spinner with an sr-only polite
- * status — the page is purely transient and any card chrome would flash
+ * status – the page is purely transient and any card chrome would flash
  * visibly for sub-second windows before the redirect fires, which reads as
  * "page loaded and immediately bounced." Failures surface as error-variant
  * toasts on /login rather than a full error card.
@@ -83,7 +83,7 @@ export default function TokenVerificationPage({
   // verifyFn().then() callback reads the LATEST value rather than the
   // render-time closure. Today's verify endpoints don't issue session
   // cookies (apps/api/src/auth/auth.controller.ts), so the closure is
-  // safe by accident — this ref makes correctness independent of that
+  // safe by accident – this ref makes correctness independent of that
   // server behavior. If a future verify endpoint creates a session via
   // onSuccess (e.g. await refreshUser() flipping user from null → non-null),
   // the post-await read will see the new value and route correctly.

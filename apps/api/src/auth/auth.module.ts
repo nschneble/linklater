@@ -20,6 +20,7 @@ import { GoogleStrategy } from './google.strategy.js';
 import { JwtStrategy } from './jwt.strategy.js';
 import { LocalStrategy } from './local.strategy.js';
 import { MfaAuthGuard } from './mfa-auth.guard.js';
+import { TokenScopeService } from './token-scope.service.js';
 import { TotpService } from './totp.service.js';
 import { MultiFactorController } from './multi-factor.controller.js';
 import { EmailModule } from '../email/email.module.js';
@@ -75,6 +76,7 @@ const oauthProviders: Provider[] = [
     JwtStrategy,
     LocalStrategy,
     MfaAuthGuard,
+    TokenScopeService,
     TotpService,
     ...oauthProviders,
   ],
@@ -85,6 +87,6 @@ const oauthProviders: Provider[] = [
     OAuthController,
     MultiFactorController,
   ],
-  exports: [AnyAuthGuard, ApiKeyStrategy, AuthService],
+  exports: [AnyAuthGuard, ApiKeyStrategy, AuthService, TokenScopeService],
 })
 export class AuthModule {}

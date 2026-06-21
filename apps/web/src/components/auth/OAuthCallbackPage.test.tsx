@@ -1,4 +1,5 @@
 import OAuthCallbackPage from './OAuthCallbackPage';
+import { consumePendingNotice } from '../../lib/pendingNotice';
 import { MemoryRouter } from 'react-router-dom';
 import { render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -21,7 +22,7 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-describe('OAuthCallbackPage hash scrub', () => {
+describe('OAuthCallbackPage', () => {
   let replaceStateSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -29,6 +30,9 @@ describe('OAuthCallbackPage hash scrub', () => {
     navigate.mockReset();
     loginWithToken.mockResolvedValue(undefined);
     replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+    // Drain any stale pending notice from a previous test so the
+    // catalog-drift guard in setPendingNotice doesn't carry across.
+    consumePendingNotice();
   });
 
   afterEach(() => {
@@ -62,7 +66,22 @@ describe('OAuthCallbackPage hash scrub', () => {
     expect(hashAtLoginCall).toBe('');
   });
 
-  it('still scrubs the URL when no token is present, before surfacing the error state', async () => {
+  it('navigates to /unread on success without queuing a notice', async () => {
+    window.location.hash = '#token=test-jwt';
+
+    render(
+      <MemoryRouter>
+        <OAuthCallbackPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/unread', { replace: true });
+    });
+    expect(consumePendingNotice()).toBeNull();
+  });
+
+  it('queues oauth-failed and redirects to /login when the hash has no token', async () => {
     window.location.hash = '#error=cancelled';
 
     render(
@@ -76,5 +95,45 @@ describe('OAuthCallbackPage hash scrub', () => {
     });
     expect(loginWithToken).not.toHaveBeenCalled();
     expect(window.location.hash).toBe('');
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+    expect(consumePendingNotice()).toEqual({
+      message: "We couldn't sign you in. Please try again.",
+      variant: 'error',
+    });
+  });
+
+  it('queues oauth-failed and redirects to /login when loginWithToken rejects', async () => {
+    window.location.hash = '#token=test-jwt';
+    loginWithToken.mockRejectedValue(new Error('provider rejected token'));
+
+    render(
+      <MemoryRouter>
+        <OAuthCallbackPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+    });
+    expect(consumePendingNotice()).toEqual({
+      message: "We couldn't sign you in. Please try again.",
+      variant: 'error',
+    });
+  });
+
+  it('does not render a legacy error card (no alert role surfaced inline)', async () => {
+    window.location.hash = '#token=test-jwt';
+    loginWithToken.mockRejectedValue(new Error('boom'));
+
+    const { queryByRole } = render(
+      <MemoryRouter>
+        <OAuthCallbackPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
+    });
+    expect(queryByRole('alert')).toBeNull();
   });
 });

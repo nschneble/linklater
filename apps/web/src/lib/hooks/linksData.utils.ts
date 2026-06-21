@@ -2,7 +2,7 @@ import type { Link } from '../api';
 
 /**
  * Picks out links from `incoming` that don't already appear in `existing`,
- * keyed by id. Pure — safe to call inside a setter callback to avoid races.
+ * keyed by id. Pure – safe to call inside a setter callback to avoid races.
  */
 export function findNewLinks(incoming: Link[], existing: Link[]): Link[] {
   const existingIds = new Set(existing.map((link) => link.id));

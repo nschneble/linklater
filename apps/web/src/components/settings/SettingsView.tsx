@@ -1,69 +1,81 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
+import { useFlashQueryParams } from '../../lib/hooks/useFlashQueryParams';
+import { useToast } from '../../lib/hooks/useToast';
+import Toast from '../common/Toast';
+import StumbleSection from '../stumble/StumbleSection';
 import AccountSettingsForm from './AccountSettingsForm';
 import ApiTokensSection from './ApiTokensSection';
 import BookmarkletSection from './BookmarkletSection';
 import CvdModeToggle from './CvdModeToggle';
 import DangerZone from './DangerZone';
+import IdPsSection from './IdPsSection';
+import MultiFactorSection from './MultiFactorSection';
 import SettingsGroup from './SettingsGroup';
 import SettingsLayout from './SettingsLayout';
-import IdPsSection from './IdPsSection';
-import StumbleSection from '../stumble/StumbleSection';
-import MultiFactorSection from './MultiFactorSection';
+import { LINK_ERROR_MESSAGES, LINKED_MESSAGES } from './oauthFlashMessages';
 import { setActiveSettingsSection } from './settingsScroll';
 import { useSettingsActiveSection } from './useSettingsActiveSection';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { SettingsSection } from './settingsSections';
+
+interface FlashMessages {
+  toastMessage: string | null;
+  linkError: string | null;
+}
+
+function readOAuthFlashMessages(
+  parameters: URLSearchParams,
+): FlashMessages | null {
+  const provider = parameters.get('linked');
+  const errorCode = parameters.get('link_error');
+  if (!provider && !errorCode) {
+    return null;
+  }
+  return {
+    toastMessage: provider
+      ? (LINKED_MESSAGES[provider] ?? 'Account connected.')
+      : null,
+    linkError: errorCode
+      ? (LINK_ERROR_MESSAGES[errorCode] ?? 'Failed to connect account.')
+      : null,
+  };
+}
 
 interface SettingsViewProps {
   appleEnabled?: boolean;
   googleEnabled?: boolean;
 }
 
-const LINKED_MESSAGES: Record<string, string> = {
-  google: 'Google account connected successfully.',
-};
-
-const LINK_ERROR_MESSAGES: Record<string, string> = {
-  already_linked:
-    'That account is already linked to another user. Try a different one.',
-  unknown:
-    'Something went wrong connecting that account. Please try again in a moment.',
-};
-
 export default function SettingsView({
   appleEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true',
   googleEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
 }: SettingsViewProps = {}) {
-  useDocumentTitle('Settings — Linklater');
+  useDocumentTitle('Linklater – Settings');
 
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParameters, setSearchParameters] = useSearchParams();
 
-  // Capture flash messages from query params on mount and store them in state
-  // so they survive after the URL is cleaned up.
-  const [linkedMessage] = useState<string | null>(() => {
-    const provider = searchParameters.get('linked');
-    return provider
-      ? (LINKED_MESSAGES[provider] ?? `${provider} account connected.`)
-      : null;
-  });
-
-  const [linkError] = useState<string | null>(() => {
-    const errorCode = searchParameters.get('link_error');
-    return errorCode
-      ? (LINK_ERROR_MESSAGES[errorCode] ?? 'Failed to connect account.')
-      : null;
-  });
-
-  // Clean the flash params from the URL so they don't reappear on refresh.
+  // Flash messages from `?linked=…` / `?link_error=…`. `useFlashQueryParams`
+  // owns the deferred-read + URL-strip dance (see its WHY block for the
+  // SR-announce, no-deps, and StrictMode rationale). The hook returns
+  // `null` synchronously on first paint, then the parsed flash once,
+  // stable thereafter – preserving the empty → populated transition NVDA
+  // and JAWS need to announce the Toast.
+  const flash = useFlashQueryParams(readOAuthFlashMessages, [
+    'linked',
+    'link_error',
+  ]);
+  const toast = useToast();
+  const [linkError, setLinkError] = useState<string | null>(null);
   useEffect(() => {
-    if (searchParameters.get('linked') || searchParameters.get('link_error')) {
-      setSearchParameters({}, { replace: true });
-    }
+    if (!flash) return;
+    if (flash.toastMessage) toast.show(flash.toastMessage);
+    if (flash.linkError) setLinkError(flash.linkError);
+    // Run once when the flash settles. `toast` is a stable hook return
+    // by construction; `flash` flips null → value exactly once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [flash]);
 
   const showIdPs = googleEnabled || appleEnabled;
 
@@ -138,7 +150,6 @@ export default function SettingsView({
           <IdPsSection
             appleEnabled={appleEnabled}
             googleEnabled={googleEnabled}
-            linkedMessage={linkedMessage}
             linkError={linkError}
           />
         )}
@@ -202,6 +213,9 @@ export default function SettingsView({
           aria-hidden="true"
         />
       </div>
+      {toast.message && (
+        <Toast message={toast.message} onDismiss={toast.dismiss} />
+      )}
     </SettingsLayout>
   );
 }

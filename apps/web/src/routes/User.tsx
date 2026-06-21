@@ -18,12 +18,14 @@ export function userRoutes() {
     )),
 
     // `/settings` is a single route; sections are reached by scrolling or
-    // clicking the in-page sidebar nav, not by URL. `/settings/api` is a
-    // separate carve-out (the dedicated API docs view).
-    ...['editor', 'read', 'settings', 'settings/api', 'unread'].map((key) => (
+    // clicking the in-page sidebar nav, not by URL.
+    ...['editor', 'read', 'settings', 'unread'].map((key) => (
       <Route key={key} path={`/${key}`} element={<AppShell />} />
     )),
 
+    // The API docs live at the PUBLIC `/docs` route (see `Common.tsx`), so a
+    // logged-out visitor reaches the same page; nothing API-docs-specific lives
+    // in the logged-in route table.
     <Route key="stumble" path="/stumble" element={<StumblePage />} />,
     <Route key="not-found" path="*" element={<NotFoundView />} />,
   ];

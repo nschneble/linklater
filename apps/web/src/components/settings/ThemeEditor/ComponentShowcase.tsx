@@ -82,7 +82,7 @@ export default function ComponentShowcase() {
               Card primary
             </p>
             <p className="text-[var(--mount-alt-text)] text-sm">
-              Card alt — labels, captions, helper hints
+              Card alt – labels, captions, helper hints
             </p>
           </div>
           {/* Base-only subtle-text tier is rendered against the page surface,
@@ -92,10 +92,10 @@ export default function ComponentShowcase() {
               Page primary
             </p>
             <p className="text-[var(--base-alt-text)] text-sm">
-              Page alt — section nav, descriptions
+              Page alt – section nav, descriptions
             </p>
             <p className="text-[var(--base-subtle-text)] text-sm">
-              Page subtle — kbd legends, chevrons, hints
+              Page subtle – kbd legends, chevrons, hints
             </p>
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function ComponentShowcase() {
       </ShowcaseSection>
 
       <ShowcaseSection title="Tabs">
-        {/* read-only style preview, not a real tab widget — plain buttons
+        {/* read-only style preview, not a real tab widget – plain buttons
             (no role="tab"/"tablist") so we don't advertise a tablist that
             controls no panel. mirrors TabButton's active style + circle-dot
             indicator + no-width-shift grid via aria-pressed. */}

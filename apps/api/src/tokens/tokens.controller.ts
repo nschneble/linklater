@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard, type AuthRequest } from '../auth/index.js';
+import { ApiDocsTokensService } from './api-docs-tokens.service.js';
 import { BookmarkletTokensService } from './bookmarklet-tokens.service.js';
 import { CreateTokenDto } from './dto/create-token.dto.js';
 import { TokensService } from './tokens.service.js';
@@ -35,6 +36,7 @@ export class TokensController {
   constructor(
     private readonly tokensService: TokensService,
     private readonly bookmarkletTokensService: BookmarkletTokensService,
+    private readonly apiDocsTokensService: ApiDocsTokensService,
   ) {}
 
   @ApiOperation({ summary: 'Create a personal access token' })
@@ -89,6 +91,22 @@ export class TokensController {
   async regenerateBookmarklet(@Req() request: AuthRequest) {
     const userId = request.user.userId;
     return this.bookmarkletTokensService.regenerate(userId);
+  }
+
+  @ApiOperation({ summary: 'Get or create the API docs token' })
+  @ApiResponse({
+    status: 200,
+    description:
+      "Returns the user's hidden API-docs PAT, creating one if none exists. " +
+      'Like the bookmarklet token, the raw token is returned on every call so ' +
+      'the API docs page can pre-fill the live "try it out" panel across ' +
+      'devices. Auto-provisioned, never expires, and has no regenerate path.',
+  })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @Get('api-docs')
+  async getApiDocs(@Req() request: AuthRequest) {
+    const userId = request.user.userId;
+    return this.apiDocsTokensService.getOrCreate(userId);
   }
 
   @ApiOperation({ summary: 'Revoke a personal access token' })

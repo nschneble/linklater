@@ -139,20 +139,6 @@ describe('view derived from pathname', () => {
     expect(result.current.view).toBe('settings');
   });
 
-  it('resolves "/settings/api" to the api-docs view', () => {
-    vi.mocked(useLocation).mockReturnValue({
-      pathname: '/settings/api',
-      search: '',
-      hash: '',
-      state: null,
-      key: 'default',
-    });
-
-    const { result } = renderHook(() => useAppShell());
-
-    expect(result.current.view).toBe('api-docs');
-  });
-
   it('resolves "/editor" to the theme-editor view', () => {
     vi.mocked(useLocation).mockReturnValue({
       pathname: '/editor',

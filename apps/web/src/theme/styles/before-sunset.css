@@ -1,19 +1,19 @@
 /* ---------- before-sunset ---------- *
- * Wave 14 migration to per-theme bundle palette. The legacy flat tokens
+ * Per-theme bundle palette. The legacy flat tokens
  * stay intact for un-migrated consumers.
  *
  * APOLLO-CLASS WARM-ONLY theme: no greens, no blues in the base palette
  * (PRD-allowed hues are rust + amber-gold). State bundles need PRD breaks
  * for info (purple) and success (emerald light / cream-mint dark) to carry
- * the conventional categorical signal under CVD — hit-man wave 13 / Apollo
- * wave 8 / scanner-darkly wave 12 precedent.
+ * the conventional categorical signal under CVD – hit-man / Apollo
+ *  / scanner-darkly precedent.
  *
  * Card-style choice: calm path. Mount/orbit bgs are calm cream gradations
  * off the page bg in light mode and warm brown gradations off the
- * extremely-dark page bg in dark mode — keeps the surface stack quiet so
+ * extremely-dark page bg in dark mode – keeps the surface stack quiet so
  * state bundles do the categorical work.
  *
- * Critical divergence from hit-man wave 13: DARK page-bg #050404 (rel lum
+ * Critical divergence from hit-man: DARK page-bg #050404 (rel lum
  * ~0.0007) is 10x darker than hit-man's #1a150e (~0.0072). Standard alpha
  * 0.55 over this page-bg collapses composited state bgs to near-identical
  * near-black. Lifting alpha to 0.65 (instead of more aggressive RGB-triplet
@@ -25,12 +25,12 @@
  *   - LIGHT --base-border #5e4227 darker than flat --border #6b4a18,
  *     unifies base/mount/orbit border on a deeper brown for consistent
  *     SC 1.4.11 against the cream page bg.
- *   - LIGHT --info bundle = PURPLE (Apollo-class break; hit-man wave 13 /
- *     scanner-darkly wave 12 precedent). The PRD has no blue; purple
+ *   - LIGHT --info bundle = PURPLE (Apollo-class break; hit-man /
+ *     scanner-darkly precedent). The PRD has no blue; purple
  *     carries the cool anchor needed for unambiguous separation from
  *     alert / warn / success under all three dichromacies.
- *   - LIGHT --success bundle = EMERALD (Apollo-class break; Apollo wave 8
- *     / hit-man wave 13 precedent). The PRD has no green; emerald carries
+ *   - LIGHT --success bundle = EMERALD (Apollo-class break; Apollo
+ *     / hit-man precedent). The PRD has no green; emerald carries
  *     the conventional "green = success" affordance.
  *   - LIGHT --alert-bg #e4c4a8 pre-darkened (canonical 4x precedent
  *     scanner-darkly / hit-man / dazed-and-confused / boyhood) to close
@@ -43,9 +43,9 @@
  *     precedent). High-luminance mint cream outruns warn-gold under
  *     tritanopia.
  *   - DARK --alert-highlight #ee5050 paired with dark fg #1c0608 = dazed
- *     wave 11 / scanner-darkly wave 12 / hit-man wave 13 / school-of-rock
+ *      / scanner-darkly / hit-man / school-of-rock
  *     precedent for fill-on-fill alert buttons.
- *   - DARK alpha = 0.65 (NOT the 0.55 wave-11/12/13 precedent) — required
+ *   - DARK alpha = 0.65 (NOT the 0.55 precedent) – required
  *     by the 10x darker page bg vs hit-man. Fallback D-F5 path (alpha
  *     0.55 + RGB-lifted triplets) culori-verifies clean too, but 0.65
  *     carries more axis B headroom and more text-contrast headroom on
@@ -56,33 +56,32 @@
  *   - LIGHT --alert-highlight #b02818 vs alert-bg #e4c4a8 verified at
  *     4.03:1, not the brief's 3.4:1 razor estimate. L-F1 NOT needed.
  *   - LIGHT alert/warn tritan border briefed at dE 12 razor. Verified at
- *     border dE 9.8 tritan (slightly under threshold) — but axis B bg lum
+ *     border dE 9.8 tritan (slightly under threshold) – but axis B bg lum
  *     1.43 clears the test. L-F2 NOT needed.
  *   - DARK --orbit-border #b6745c vs orbit-bg #4a3818 verified at 3.02:1,
  *     above the brief's 3.1:1 razor estimate but still within 0.02 of
  *     the SC 1.4.11 threshold. Passes the contract test. D-F1 staged but
- *     not applied — the unified base/mount/orbit border maintains
+ *     not applied – the unified base/mount/orbit border maintains
  *     surface-stack coherence and the test passes.
  *   - DARK alert/warn tritan border briefed at dE 12 razor. Verified at
- *     border dE 7.7 tritan (under threshold) — but axis B bg lum 1.98
+ *     border dE 7.7 tritan (under threshold) – but axis B bg lum 1.98
  *     clears comfortably. D-F3 NOT needed.
  *   - DARK warn/success border CVD: verified protan dE 25.3 / deuter dE
- *     26.9 / tritan dE 48.8 — all well above 10 threshold (axis A clears
+ *     26.9 / tritan dE 48.8 – all well above 10 threshold (axis A clears
  *     comfortably). The briefed gold-vs-mint highest-risk pair has full
  *     headroom. D-F2 NOT needed.
  *   - DARK alert/info axis B briefed unstated. Verified bg lum 1.34 (axis
  *     B fails) but axis A clears under all three dichromacies (min tritan
  *     bg dE 19.5). Pair passes via axis A.
  *
- * No SHAPE_REDUNDANCY_WAIVERS entries needed — both modes clear all six
+ * No SHAPE_REDUNDANCY_WAIVERS entries needed – both modes clear all six
  * state pairs on axis A or axis B post-mitigation.
  */
 [data-theme='before-sunset'][data-mode='dark'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #d7974f;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #e6c99a;
   --page-gradient-to: #e8e5d7;
 
@@ -106,10 +105,10 @@
   --mount-highlight-fg: #1a0e02;
   --mount-highlight-hover: #b87a38;
 
-  /* --orbit-border lifted from #b6745c to #c18974 (Wave 6a). Original
+  /* --orbit-border lifted from #b6745c to #c18974. Original
    * #b6745c vs orbit-bg #4a3818 = 3.02:1 cleared SC 1.4.11 by 0.02 but
    * MenuItem's hover/focus-visible inset-ring (rendered over an
-   * orbit-text alpha overlay) measured 2.44:1 — same-hue alpha overlay
+   * orbit-text alpha overlay) measured 2.44:1 – same-hue alpha overlay
    * pulled both layers toward identical hue, reducing perceived contrast.
    * #c18974 lifts ring-vs-effective-bg to 3.07:1. Base/mount borders
    * kept at #b6745c (surface-stack still coherent at the card level;
@@ -123,9 +122,9 @@
   --orbit-highlight-fg: #1a0e02;
   --orbit-highlight-hover: #b87a38;
 
-  /* dazed-wave-11 / scanner-darkly-wave-12 / hit-man-wave-13 precedent:
+  /* dazed / scanner-darkly / hit-man precedent:
    * punchy hl + dark hl-fg for fill-on-fill alert buttons.
-   * --alert-bg alpha = 0.65 (NOT the wave-11/12/13 0.55) — required by
+   * --alert-bg alpha = 0.65 (NOT the 0.55) – required by
    * the 10x darker page bg #050404. */
   --alert-bg: rgb(96 26 14 / 0.65);
   --alert-border: #f08868;
@@ -143,7 +142,7 @@
   --warn-highlight-fg: #1c1408;
   --warn-highlight-hover: #f5c440;
 
-  /* info — LAVENDER (Apollo-class PRD break). */
+  /* info – LAVENDER (Apollo-class PRD break). */
   --info-bg: rgb(48 34 64 / 0.65);
   --info-border: #b08cd0;
   --info-text: #e0ccf0;
@@ -152,7 +151,7 @@
   --info-highlight-fg: #1a0e28;
   --info-highlight-hover: #c4a4dc;
 
-  /* success — CREAM-MINT (Apollo-class PRD break; boyhood / dazed /
+  /* success – CREAM-MINT (Apollo-class PRD break; boyhood / dazed /
    * hit-man precedent). High-luminance mint cream outruns warn-gold
    * under tritanopia. */
   --success-bg: rgb(24 56 34 / 0.65);
@@ -165,11 +164,10 @@
 }
 
 [data-theme='before-sunset'][data-mode='light'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #7a3f15;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #2f221a;
   --page-gradient-to: #050404;
 
@@ -220,8 +218,8 @@
   --warn-highlight-fg: #ffffff;
   --warn-highlight-hover: #523510;
 
-  /* info — PURPLE (Apollo-class PRD break; hit-man wave 13 / scanner-
-   * darkly wave 12 precedent). Carries the cool anchor that survives CVD
+  /* info – PURPLE (Apollo-class PRD break; hit-man / scanner-
+   * darkly precedent). Carries the cool anchor that survives CVD
    * vs the warm-only PRD palette. */
   --info-bg: #e2d8ec;
   --info-border: #3a2640;
@@ -231,8 +229,8 @@
   --info-highlight-fg: #ffffff;
   --info-highlight-hover: #2a1a30;
 
-  /* success — EMERALD (Apollo-class PRD break; Apollo wave 8 / hit-man
-   * wave 13 precedent). The warm-only PRD palette has no green; emerald
+  /* success – EMERALD (Apollo-class PRD break; Apollo / hit-man
+   *  precedent). The warm-only PRD palette has no green; emerald
    * carries the conventional "green = success" affordance. */
   --success-bg: #d8e8d0;
   --success-border: #1c4028;

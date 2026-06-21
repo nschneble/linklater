@@ -20,7 +20,7 @@ let scrollIntoViewMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // The active section is module-level state shared across tests — reset it so
+  // The active section is module-level state shared across tests – reset it so
   // a value set by one test can't leak into the next.
   setActiveSettingsSection('');
   scrollIntoViewMock = vi.fn();
@@ -57,7 +57,7 @@ describe('useReanchorOnLoad', () => {
     rerender(harnessTree(true));
 
     // A re-anchor is always a correction of an already-settled position, so it
-    // must scroll instantly — a smooth scroll would read as a visible lurch.
+    // must scroll instantly – a smooth scroll would read as a visible lurch.
     expect(scrollIntoViewMock).toHaveBeenCalledWith(
       expect.objectContaining({ behavior: 'auto', block: 'start' }),
     );

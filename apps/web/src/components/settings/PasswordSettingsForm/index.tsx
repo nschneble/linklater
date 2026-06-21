@@ -8,8 +8,8 @@ import { useAuth } from '../../../auth/AuthContext';
  *
  * - Has password → change-password flow: submits to `PATCH /users/me` with
  *   both `currentPassword` and `password`.
- * - No password → add-password flow (passwordless accounts — created via
- *   SSO or magic link — adding a backup credential): submits to
+ * - No password → add-password flow (passwordless accounts – created via
+ *   SSO or magic link – adding a backup credential): submits to
  *   `POST /auth/set-password`.
  *
  * Error state stays inside this component so the inserted `role="alert"`

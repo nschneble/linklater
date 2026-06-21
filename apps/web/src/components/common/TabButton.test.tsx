@@ -1,5 +1,5 @@
 /*
- * Tests for TabButton — a single tab inside a `role="tablist"`.
+ * Tests for TabButton – a single tab inside a `role="tablist"`.
  *
  * Surface paint is driven structurally: TabButton reads its host bundle
  * from an ancestor's `data-surface` attribute via Tailwind
@@ -12,7 +12,7 @@
  * - Under `data-surface=mount`, the variant overrides take effect:
  *   `--orbit-alt-text` idle and `--orbit-bg` active.
  * - `aria-selected` mirrors `isActive`. Roving `tabIndex` (0 when active,
- *   -1 when inactive) is preserved — `useTabNavigation` in the parent
+ *   -1 when inactive) is preserved – `useTabNavigation` in the parent
  *   relies on it for arrow-key navigation.
  * - The CVD active-indicator `fa-circle-dot` renders only when active.
  * - The off-screen extrabold sizing twin always renders so the label does
@@ -95,7 +95,7 @@ describe('TabButton', () => {
       </TabButton>,
     );
     // Visible label spans never include the dot when inactive (the
-    // off-screen sizing twin always carries the dot — see the next test).
+    // off-screen sizing twin always carries the dot – see the next test).
     const visibleSpan = container.querySelector(
       'span.col-start-1.row-start-1:not(.invisible)',
     );

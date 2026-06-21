@@ -12,7 +12,7 @@
  *   - API error → error in role="alert", form re-mounts
  *
  * The submit-in-flight surface is a bare centered spinner with an sr-only
- * polite status — matches VerifyLoginPage / TokenVerificationPage. The
+ * polite status – matches VerifyLoginPage / TokenVerificationPage. The
  * destination /unread surfaces the 'password-reset-success' toast via the
  * pending-notice mirror.
  */

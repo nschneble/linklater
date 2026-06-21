@@ -21,7 +21,7 @@ import { isPrivateHost } from '../common/private-host.js';
  *   meta tags via Cheerio, resolves relative URLs, and truncates field
  *   values to their column limits (`extractMeta`, `resolveUrl`).
  *
- * This service has no Prisma or queue dependency — it is a pure I/O +
+ * This service has no Prisma or queue dependency – it is a pure I/O +
  * data-transformation collaborator for `MetadataService`.
  */
 @Injectable()
@@ -41,9 +41,9 @@ export class MetadataFetcherService {
     try {
       hostname = new URL(url).hostname;
     } catch {
-      // Malformed URL reaching the fetcher is itself a signal — log so ops
+      // Malformed URL reaching the fetcher is itself a signal – log so ops
       // alerts catch the bypass attempt instead of silently dropping it.
-      this.logger.warn(`Blocked SSRF attempt — invalid URL: ${url}`);
+      this.logger.warn(`Blocked SSRF attempt – invalid URL: ${url}`);
       return this.emptyMetadata();
     }
 

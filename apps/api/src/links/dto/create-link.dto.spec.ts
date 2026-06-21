@@ -45,7 +45,7 @@ describe('CreateLinkDto', () => {
     expect(urlErrors.length).toBeGreaterThan(0);
   });
 
-  describe('SSRF protection — private hosts', () => {
+  describe('SSRF protection – private hosts', () => {
     it('rejects loopback 127.0.0.1', async () => {
       const errors = await validate(makeDto({ url: 'http://127.0.0.1' }));
       const urlErrors = errors.filter((error) => error.property === 'url');

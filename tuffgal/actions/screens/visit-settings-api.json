@@ -1,8 +1,8 @@
 {
   "action": "visit-settings-api",
-  "steps": [{ "kind": "navigate", "path": "/settings/api" }],
+  "steps": [{ "kind": "navigate", "path": "/docs" }],
   "expect": {
     "anyOf": [{ "role": "heading", "text": "API" }]
   },
-  "diff": { "maxDiffRatio": 0.02 }
+  "screenshot": false
 }

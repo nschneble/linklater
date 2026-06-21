@@ -16,8 +16,8 @@ interface SettingsGroupProps {
 }
 
 // The `danger` variant routes through the `alert` bundle (see
-// `theme/styles/bundles.css`). Every theme — including Nouvelle Vague's
-// grayscale-by-design palette — defines its own bundle cascade.
+// `theme/styles/bundles.css`). Every theme – including Nouvelle Vague's
+// grayscale-by-design palette – defines its own bundle cascade.
 const VARIANT_CLASSES = {
   default: 'bg-[var(--mount-bg)] border border-[var(--mount-border)]',
   danger: 'bg-[var(--alert-bg)] border border-[var(--alert-border)]',
@@ -50,14 +50,14 @@ const DESCRIPTION_CLASSES = {
  *
  * When `activeSection === id`, the card gains a 3px `outline` plus a matching
  * border color, both painted from `--base-highlight`. The outline renders
- * just outside the border edge against the page background `--base-bg` —
+ * just outside the border edge against the page background `--base-bg` –
  * the bundle-contrast contract pins `--base-highlight` at ≥3:1 against
  * `--base-bg`, the highest-confidence pairing for an active-state indicator
  * across every theme. (A mount-tier indicator on the card surface would
  * couple to the `--mount-highlight` / `--mount-bg` 3:1 pair instead; the
  * card edge sits on `--base-bg`, so the base-tier slot is the right anchor.)
  * At 3px the indicator clears the WCAG non-text "thick line" consideration,
- * and its presence/absence — not just its hue — signals the active state,
+ * and its presence/absence – not just its hue – signals the active state,
  * satisfying 1.4.1 (use of color). It is driven off the `data-active`
  * attribute via a Tailwind `data-[active=true]:` variant so visual and data
  * state stay locked together.

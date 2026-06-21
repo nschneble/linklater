@@ -47,7 +47,7 @@ export default function MfaView({
   const formReference = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    // Auto-submit only for TOTP (6-digit numeric) — recovery codes have no fixed length.
+    // Auto-submit only for TOTP (6-digit numeric) – recovery codes have no fixed length.
     if (!isRecovery && !loading && /^\d{6}$/.test(mfaCode)) {
       formReference.current?.requestSubmit();
     }

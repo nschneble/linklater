@@ -3,7 +3,7 @@
  *
  * Key behaviors:
  *   - "Current password" section is always in the DOM (not unmounted) but
- *     hidden when the new-password field is empty — <div hidden={!password}> pattern.
+ *     hidden when the new-password field is empty – <div hidden={!password}> pattern.
  *   - Clearing the new-password field hides it again but does not remove it.
  *   - Loading/error/success state transitions.
  */
@@ -80,7 +80,7 @@ describe('ChangePasswordForm hidden current-password pattern', () => {
       target: { value: 'new-secret-pass' },
     });
 
-    // Clear new password — current-password should still be in the DOM
+    // Clear new password – current-password should still be in the DOM
     fireEvent.change(screen.getByLabelText(/new password/i), {
       target: { value: '' },
     });

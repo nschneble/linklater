@@ -1,10 +1,10 @@
 /* ---------- dazed-and-confused ---------- *
- * Wave 11 migration to per-theme bundle palette. The legacy flat tokens
+ * Per-theme bundle palette. The legacy flat tokens
  * stay intact for un-migrated consumers.
  *
  * Card-style choice: calm path (orchestrator approved). Mount/orbit bgs
  * sit on cream/brown gradations off the page bg rather than re-tinting
- * with the theme's peach/steel accents — keeps the surface stack quiet
+ * with the theme's peach/steel accents – keeps the surface stack quiet
  * so state bundles can do the categorical work.
  *
  * State-hue allocation: alert = brick/peach, warn = amber/gold,
@@ -22,17 +22,17 @@
  *     (dark), NOT the dazed PRD's brown that would clash with warn-bundle
  *     gold.
  *   - LIGHT --warn-border #6f4810 NOT the PRD's amber #ecb518 (SC 1.4.11
- *     against page bg fails by wide margin) — already darkened in the
+ *     against page bg fails by wide margin) – already darkened in the
  *     brief; further darkened from brief's #8a6010 to close the tritan
  *     alert/warn border collapse (M-L3).
  *   - LIGHT --info-border #0d6080 NOT the PRD's cyan #26aad0 (SC 1.4.11).
  *   - LIGHT --success-border #1c4028 NOT the PRD's sage #a1bcac (SC
  *     1.4.11 by wide margin); tightened further from brief's #2a5a40 to
  *     close the info/success border collapse under tritanopia (M-L4).
- *   - DARK --success-border #d4e8dc NOT the PRD's sage #a1bcac — sage
+ *   - DARK --success-border #d4e8dc NOT the PRD's sage #a1bcac – sage
  *     vs warn-gold and sage vs light-cyan collapse on both axes; M-D1
  *     re-anchors success on a cream-mint at high luminance (lum vs warn
- *     1.51x, lum vs info 1.60x — clears axis B; CVD dE all >=10).
+ *     1.51x, lum vs info 1.60x – clears axis B; CVD dE all >=10).
  *   - DARK --alert-border #f08868 NOT the PRD's peach #e79d7f (avoids
  *     collision with --base-highlight).
  *
@@ -49,7 +49,7 @@
  *   - LIGHT alert/warn collapsed under tritanopia with brief's #8a6010
  *     warn-border (bg dE 4.4 / border dE 5.6; axis B border lum 1.01).
  *     M-L3 applied: #8a6010 -> #6f4810 widens border luminance gap vs
- *     alert-border #a15144 to 1.72x — clears axis B.
+ *     alert-border #a15144 to 1.72x – clears axis B.
  *   - DARK alert highlight contract: brief's #d4212b at 0.55 alpha gave
  *     highlight/composited-bg 2.96:1 (under SC 1.4.11). Both staged
  *     mitigations (M-D3 Option A #e83040 darker red, Option B 0.7 alpha)
@@ -58,32 +58,31 @@
  *     same hl-fg. NOVEL MITIGATION: punchy --alert-highlight #ee5050
  *     paired with a dark --alert-highlight-fg #1c0608 (school-of-rock
  *     precedent for fill-on-fill alert buttons). Clears hl/bg 4.31:1,
- *     hl-fg/hl 5.47:1, hl-fg/hl-hover 6.38:1 — full headroom.
+ *     hl-fg/hl 5.47:1, hl-fg/hl-hover 6.38:1 – full headroom.
  *   - DARK alert/warn collapsed both axes with brief's M-D4 first-pass
  *     (peach-vs-gold borders dE 8.2 tritan; bg lum 1.40 razor-edge).
  *     NOVEL MITIGATION: rather than darken either border (which would
  *     hurt their WCAG ratios), widen the bg luminance gap by lifting
  *     --warn-bg from rgb(70 50 8 / 0.55) to rgb(82 58 10 / 0.55). This
- *     pushes composited warn-bg lighter, giving bg lum ratio 1.68x —
+ *     pushes composited warn-bg lighter, giving bg lum ratio 1.68x –
  *     clears axis B without breaking adjacency contracts.
  *   - DARK warn/success collapsed both axes with the brief's sage
  *     #a1bcac success palette (axis B border 1.10x; deuter border dE
- *     7.8 protan 7.1) — textbook tritan gold-vs-sage collapse. M-D1
+ *     7.8 protan 7.1) – textbook tritan gold-vs-sage collapse. M-D1
  *     stage 1 applied: --success-border / --success-text / --success-
  *     alt-text / --success-highlight all bumped to cream-mint #d4e8dc.
  *     Cascades success-highlight-hover to #c0d8c8. Border lum vs warn
- *     1.51x, vs info 1.60x — both clear axis B; all CVD dE >=10.
+ *     1.51x, vs info 1.60x – both clear axis B; all CVD dE >=10.
  *     Stage 2 (#e8f0d8) not needed.
  *
- * No SHAPE_REDUNDANCY_WAIVERS entries needed — both modes clear all six
+ * No SHAPE_REDUNDANCY_WAIVERS entries needed – both modes clear all six
  * state pairs on axis A or axis B post-mitigation.
  */
 [data-theme='dazed-and-confused'][data-mode='dark'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #e9a4ae;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #ede392;
   --page-gradient-to: #f3f0ed;
 
@@ -91,7 +90,7 @@
   --base-bg: #2a201d;
   --base-border: #26aad0;
   /* Brief flagged legacy --bg-input #7a3028 as failing border/input SC
-   * 1.4.11 (estimated 2.07:1). Culori verification produced 3.39:1 — PASS
+   * 1.4.11 (estimated 2.07:1). Culori verification produced 3.39:1 – PASS
    * with comfortable headroom. Legacy value held verbatim per
    * feedback-verify-upstream-gate-claims (looper spot-checks brief
    * numerical claims). */
@@ -155,9 +154,9 @@
   --info-highlight-hover: #88d4ec;
 
   /* M-D1 applied: success re-anchored from brief's sage #a1bcac to
-   * cream-mint #d4e8dc (boyhood wave-10 precedent). Sage vs warn-gold
+   * cream-mint #d4e8dc (boyhood precedent). Sage vs warn-gold
    * and sage vs light-cyan collapsed on both axes; cream-mint lifts
-   * lum ratio vs warn to 1.51x, vs info to 1.60x — both clear axis B,
+   * lum ratio vs warn to 1.51x, vs info to 1.60x – both clear axis B,
    * all CVD dE >=10. M-D1 stage 2 (#e8f0d8) not needed. --success-alt-
    * text collapses to the same value per M-D1 spec. */
   --success-bg: rgb(28 50 38 / 0.55);
@@ -170,11 +169,10 @@
 }
 
 [data-theme='dazed-and-confused'][data-mode='light'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #7e1f1f;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #421410;
   --page-gradient-to: #2a201d;
 

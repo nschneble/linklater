@@ -18,17 +18,17 @@ type ReauthAction = 'disable' | 'regenerate';
  * Manages five mutually-exclusive UI states driven by
  * `(user.multiFactorMethod, user.multiFactorPending, totpSetup, reauthAction)`:
  *
- * - **State A** — MFA disabled. Shows the "Add authenticator app" button.
- * - **State B** — TOTP setup in progress. Shows `TotpSetupView` with QR +
+ * - **State A** – MFA disabled. Shows the "Add authenticator app" button.
+ * - **State B** – TOTP setup in progress. Shows `TotpSetupView` with QR +
  *   verification form.
- * - **State C / E** — MFA enabled. Shows Regenerate / Disable actions.
- * - **State D** — Pending recovery: server reports `multiFactorPending` but no
+ * - **State C / E** – MFA enabled. Shows Regenerate / Disable actions.
+ * - **State D** – Pending recovery: server reports `multiFactorPending` but no
  *   local `totpSetup`. Shows "Continue setup" / Cancel pair.
- * - **Reauth** — Disable or Regenerate requested, awaiting credentials.
+ * - **Reauth** – Disable or Regenerate requested, awaiting credentials.
  *
  * `shouldFocusAddAuthenticator` bridges the cancel-then-unmount transition:
  * after `handleCancelTotpSetup` succeeds the TOTP view unmounts and focus
- * would fall to `<body>` — the effect catches the next render that lands in
+ * would fall to `<body>` – the effect catches the next render that lands in
  * State A and restores focus to "Add authenticator app".
  */
 export function useMultiFactor() {

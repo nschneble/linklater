@@ -57,7 +57,7 @@ export class UserOAuthService {
   /**
    * Refreshes the stored `providerEmail` for an already-linked account.
    * Uses `updateMany` so a concurrent unlink is a clean no-op instead of a
-   * P2025. Identity is keyed by `(provider, providerId)` — this column is
+   * P2025. Identity is keyed by `(provider, providerId)` – this column is
    * purely informational, so silently skipping a vanished row is correct.
    */
   async updateOAuthProviderEmail(

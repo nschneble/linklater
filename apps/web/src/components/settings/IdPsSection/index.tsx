@@ -15,9 +15,10 @@ import type { IdPsSectionProps } from './types';
  * confirmation owned by `ActionGuard` inside the row.
  *
  * Section-level Alerts here are only for state that isn't tied to a single
- * row's guarded action: the `link_error` / `linked` query params from the
- * OAuth redirect return, and the connect-initiation error (which fires
- * before any row-scoped flow exists).
+ * row's guarded action: the `link_error` query param from the OAuth redirect
+ * return, and the connect-initiation error (which fires before any
+ * row-scoped flow exists). The success counterpart (`?linked=…`) is surfaced
+ * as a `<Toast>` owned by `SettingsView`, not an inline Alert here.
  *
  * Returns `null` when neither provider has a renderable row.
  */
@@ -25,7 +26,6 @@ export default function IdPsSection({
   appleEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true',
   googleEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
   linkError = null,
-  linkedMessage = null,
 }: IdPsSectionProps) {
   const { refreshUser, user } = useAuth();
 
@@ -76,7 +76,6 @@ export default function IdPsSection({
         Other ways to log in
       </h3>
 
-      {linkedMessage && <Alert variant="success">{linkedMessage}</Alert>}
       {displayedError && <Alert variant="error">{displayedError}</Alert>}
 
       <div className="mt-5 space-y-3">

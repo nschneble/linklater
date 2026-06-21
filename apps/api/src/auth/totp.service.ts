@@ -41,7 +41,7 @@ export class TotpService {
    * @param userId - UUID of the user enabling MFA.
    * @param userEmail - Shown as the account label inside the authenticator
    *   app (e.g. "user@example.com").
-   * @returns `{ qrCodeDataUrl, secret }` — the data-URL for the QR image and
+   * @returns `{ qrCodeDataUrl, secret }` – the data-URL for the QR image and
    *   the plaintext base-32 secret for manual entry.
    * @throws {ConflictException} When TOTP is already fully enabled for this
    *   account.
@@ -132,7 +132,7 @@ export class TotpService {
 
   /**
    * Abandons an in-flight TOTP enrollment by clearing the pending secret.
-   * Idempotent — calling this when no setup is pending is a no-op. The
+   * Idempotent – calling this when no setup is pending is a no-op. The
    * underlying `clearPendingTotpSecret` filters on `totpEnabledAt: null` at
    * the DB layer, so a fully-enabled account is silently skipped rather than
    * racing a concurrent `verifySetup` call.

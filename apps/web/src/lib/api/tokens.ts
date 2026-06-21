@@ -1,6 +1,6 @@
 import { apiFetch } from './core';
 
-/** A personal access token summary. `rawToken` is never included here — it
+/** A personal access token summary. `rawToken` is never included here – it
  * is only present in `CreatedApiToken` at creation time. */
 export interface ApiToken {
   id: string;
@@ -14,9 +14,9 @@ export interface ApiToken {
 }
 
 /** Extends `ApiToken` with the one-time plaintext token value. Only returned
- * by the create endpoint — never by the list endpoint. */
+ * by the create endpoint – never by the list endpoint. */
 export interface CreatedApiToken extends ApiToken {
-  /** Full raw token including the `ltk_` prefix. Copy it now — it will
+  /** Full raw token including the `ltk_` prefix. Copy it now – it will
    * not be shown again. */
   rawToken: string;
 }
@@ -25,7 +25,7 @@ export interface CreatedApiToken extends ApiToken {
  * Fetches all personal access token summaries for the authenticated user.
  * `GET /tokens`
  *
- * Bookmarklet tokens (`kind = BOOKMARKLET`) are excluded — they are
+ * Bookmarklet tokens (`kind = BOOKMARKLET`) are excluded – they are
  * managed through `getBookmarkletToken` / `regenerateBookmarkletToken`.
  *
  * @returns Array of token summaries without `rawToken`.
@@ -68,7 +68,7 @@ export function revokeApiToken(id: string): Promise<{ success: boolean }> {
  * Bookmarklet PAT (`kind = BOOKMARKLET` server-side). Unlike user-created
  * PATs, the raw token is returned on every call so the settings page can
  * embed it into the `javascript:` URL on any device or browser reload.
- * The token never expires — it can only be invalidated by calling
+ * The token never expires – it can only be invalidated by calling
  * `regenerateBookmarkletToken`.
  */
 export interface BookmarkletToken extends ApiToken {
@@ -90,7 +90,7 @@ export function getBookmarkletToken(): Promise<BookmarkletToken> {
 
 /**
  * Atomically replaces the user's bookmarklet token. The previous token is
- * deleted in the same transaction — any bookmarklet still using the old
+ * deleted in the same transaction – any bookmarklet still using the old
  * token will receive a 401 immediately after this call returns.
  * `POST /tokens/bookmarklet/regenerate`
  *
@@ -100,4 +100,29 @@ export function regenerateBookmarkletToken(): Promise<BookmarkletToken> {
   return apiFetch<BookmarkletToken>('/tokens/bookmarklet/regenerate', {
     method: 'POST',
   });
+}
+
+/**
+ * Hidden API-docs PAT (`kind = API_DOCS` server-side). Like the bookmarklet
+ * token, the raw value is returned on every call so the docs page can sign
+ * live "try it out" requests on any device or browser reload. Unlike
+ * user-created PATs, it is never surfaced in `listApiTokens` – it exists only
+ * to authenticate the in-page API explorer.
+ */
+export interface ApiDocsToken extends ApiToken {
+  /** Full raw token including the `ltk_` prefix. Unlike `CreatedApiToken`,
+   * this is available on every call to `getApiDocsToken`. */
+  rawToken: string;
+}
+
+/**
+ * Returns the authenticated user's hidden API-docs token, minting a new one
+ * if none exists yet (lazy provisioning). The endpoint is JWT-guarded, so
+ * only call this for a logged-in user.
+ * `GET /tokens/api-docs`
+ *
+ * @returns The API-docs token including its raw value.
+ */
+export function getApiDocsToken(): Promise<ApiDocsToken> {
+  return apiFetch<ApiDocsToken>('/tokens/api-docs');
 }

@@ -1,4 +1,19 @@
-- heading "Signing you in…" [level=1]
-- alert: Invalid authentication response. Please try again.
-- paragraph: Something went wrong during sign-in.
-- button "Back to login"
+- heading "Linklater" [level=1]
+- paragraph: Save links now, read them later.
+- tablist "Authentication mode":
+  - tab "Log in" [selected]
+  - tab "Sign up"
+- tabpanel "Log in":
+  - text: Email
+  - textbox "Email"
+  - text: Password
+  - textbox "Password":
+    - /placeholder: Leave blank to use a magic link
+  - button "Log in with magic link"
+- text: or continue with
+- button "Continue with Google"
+- button "I literally have no idea what my password is"
+- alert:
+  - text: We couldn't sign you in. Please try again.
+  - button "Dismiss"
+- alert: We couldn't sign you in. Please try again.

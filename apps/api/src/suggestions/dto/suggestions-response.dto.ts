@@ -29,7 +29,7 @@ export class SuggestionDto {
 }
 
 /**
- * The full `GET /suggestions` payload — one source picked, N suggestions
+ * The full `GET /suggestions` payload – one source picked, N suggestions
  * from it. The frontend uses `sourceName` to render copy like "How about
  * something from Aeon?".
  */

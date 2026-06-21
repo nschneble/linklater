@@ -7,9 +7,9 @@ import { useTabNavigation } from '../../lib/hooks/useTabNavigation';
  * `TabButton` already accepts so callers can express each tab declaratively.
  */
 export interface SlidingTab {
-  /** Stable DOM id — referenced by the matching `<*tabpanel*>` via `aria-labelledby`. */
+  /** Stable DOM id – referenced by the matching `<*tabpanel*>` via `aria-labelledby`. */
   id: string;
-  /** id of the panel this tab controls — surfaces on `aria-controls`. */
+  /** id of the panel this tab controls – surfaces on `aria-controls`. */
   ariaControls?: string;
   label: ReactNode;
   onClick: () => void;
@@ -43,7 +43,7 @@ interface SlidingTabBarProps {
 /**
  * Shared tablist with an animated "sliding pill" indicator. Used by the
  * Unread/Read switcher in `LinksToolbar` and the Log in/Sign up switcher in
- * `LoginRegisterView`. The pill is decorative (`aria-hidden`) — selection
+ * `LoginRegisterView`. The pill is decorative (`aria-hidden`) – selection
  * state lives on the individual `TabButton` (`aria-selected` + roving
  * `tabIndex`). Arrow-key navigation is provided by `useTabNavigation`.
  */

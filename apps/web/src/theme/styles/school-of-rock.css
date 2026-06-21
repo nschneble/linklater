@@ -10,26 +10,25 @@
  *              bundle bg and page bg
  */
 [data-theme='school-of-rock'][data-mode='dark'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #edc8b4;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #fffffe;
   --page-gradient-to: #ffffff;
 
   /* Bundle palette. */
   --base-bg: #0a0a07;
   --base-border: #6e5a3a;
-  /* Wave 22b Recovery A: legacy --bg-input #4c310b fails border/input
-   * SC 1.4.11 (1.82:1 vs base-border #6e5a3a). The math is razor-edge —
+  /* Recovery A: legacy --bg-input #4c310b fails border/input
+   * SC 1.4.11 (1.82:1 vs base-border #6e5a3a). The math is razor-edge –
    * base-border itself is at 3.008:1 vs base-bg, so the luminance band
    * available between base-bg lum 0.00297 and the 3:1 input-ceiling lum
    * 0.00311 is essentially zero. Recovery A by LIFT (lighter input-bg)
    * forces text/input below 4.5:1; only viable option is to match the
    * base-bg luminance band with a subtle warm-brown chromatic tint.
    * #0b0804 lands at border 3.03:1, text/input 19.99:1, alt-text/input
-   * 13.84:1 — passes the bundle-contrast test with the same razor-edge
+   * 13.84:1 – passes the bundle-contrast test with the same razor-edge
    * SC 1.4.11 headroom as the existing base-border/base-bg pair. Visual
    * distinction vs base-bg is sub-threshold (~1.17:1 luminance ratio,
    * well below the 3:1 separability threshold of SC 1.4.11);
@@ -97,11 +96,10 @@
 }
 
 [data-theme='school-of-rock'][data-mode='light'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #5c1615;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #040301;
   --page-gradient-to: #000000;
 
@@ -145,7 +143,7 @@
   --warn-border: #8a5c1f;
   --warn-text: #3e2810;
   --warn-alt-text: #5a3814;
-  /* CHANGED: was #a06820 — cannot host any safe fg at >=4.5:1 with margin.
+  /* CHANGED: was #a06820 – cannot host any safe fg at >=4.5:1 with margin.
    * Bumped to #8a5c1f (matches --warn-border light) so --warn-highlight-fg: #ffffff
    * clears at 5.78:1. */
   --warn-highlight: #8a5c1f;

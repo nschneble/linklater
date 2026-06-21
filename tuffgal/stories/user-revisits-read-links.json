@@ -1,7 +1,8 @@
 {
   "story": "As a logged-in user, I can revisit my read links, re-open one, and mark another back as unread.",
   "flow": "revisit my read links",
-  "needs": ["logged-in"],
+  "needs": ["logged-in", "db-link-mutator-5"],
+  "produces": ["db-link-mutator-6"],
   "fixtures": ["user-with-read-history"],
   "actions": [
     { "action": "view-read-links" },

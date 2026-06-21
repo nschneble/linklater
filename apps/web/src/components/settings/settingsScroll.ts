@@ -24,7 +24,7 @@ function scrollSettingsSection(
   if (!element) return false;
   // When `scrollIntoView` would land the page at a `scrollY` smaller than
   // the section's own `scroll-margin-top`, the resulting movement is by
-  // definition shorter than the gap the scroll-margin is meant to expose —
+  // definition shorter than the gap the scroll-margin is meant to expose –
   // i.e. there is no real content above worth scrolling past. The classic
   // case is the first section: Account naturally sits ~111px down with
   // `scroll-mt-24` (96px), so `scrollIntoView` would scroll the page 15px
@@ -38,7 +38,7 @@ function scrollSettingsSection(
   const naturalTop = element.getBoundingClientRect().top + window.scrollY;
   const targetScrollY = naturalTop - scrollMarginTop;
   if (targetScrollY < scrollMarginTop) {
-    window.scrollTo({ top: 69, behavior });
+    window.scrollTo({ top: 0, behavior });
   } else {
     element.scrollIntoView({ behavior, block: 'start' });
   }
@@ -117,8 +117,8 @@ let lastActivatedSection = '';
  * mobile chip, or a router-state `scrollTo` jump). Written by
  * `useSettingsActiveSection`'s `activateSection`.
  *
- * This is kept in module scope — separate from the React `activeSection`
- * state — because `useReanchorOnLoad` runs deep inside async leaf sections
+ * This is kept in module scope – separate from the React `activeSection`
+ * state – because `useReanchorOnLoad` runs deep inside async leaf sections
  * (the PAT list, the bookmarklet token) that have no access to the hook's
  * state. They read it via `getActiveSettingsSection` to re-anchor the jumped-to
  * section once their content settles and extends the page. It is intentionally

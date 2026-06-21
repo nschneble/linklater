@@ -13,12 +13,12 @@ import {
  * (`pointer-events-none`, `tabIndex={-1}`). This is used to animate controls
  * in/out without removing them from the DOM (which would cause layout shift).
  *
- * The `surface` prop names the bundle of the parent surface — i.e. which
+ * The `surface` prop names the bundle of the parent surface – i.e. which
  * bundle hosts this button. Host-driven variants (`default`, `ghost`,
  * `elevated`) paint themselves from the host bundle's slots so the button
  * stays coherent with its background. Intrinsic variants (`danger`,
  * `danger-filled`) ignore `surface` and paint from the alert bundle
- * regardless of host. Defaults to `'mount'` — most consumers live inside a
+ * regardless of host. Defaults to `'mount'` – most consumers live inside a
  * `SettingsGroup`, `AuthCard`, or modal panel.
  *
  * Same `surface` semantics as `FormInput`/`SlidingTabBar`/`TabButton`: the
@@ -75,8 +75,8 @@ const variantClassesByHost: Record<Surface, Record<Variant, string>> = {
     default: `${SMALL_PADDING} hover:bg-[var(--mount-bg)] disabled:bg-inherit ring-1 ring-[var(--base-border)] text-[var(--base-text)] ${FOCUS_RING} disabled:active:scale-100`,
     danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING_DANGER}`,
     // danger-filled paints --alert-highlight as its fill, so the focus
-    // ring switches to --alert-highlight-fg — a same-color ring would
-    // paint 1:1 invisible. Recovery A, wave-24 Toast precedent.
+    // ring switches to --alert-highlight-fg – a same-color ring would
+    // paint 1:1 invisible. Recovery A, Toast precedent.
     'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER_FILLED}`,
     ghost: `${SMALL_PADDING} ring-1 ring-[var(--base-border)] text-[var(--base-alt-text)] ${FOCUS_RING}`,
     elevated: `pl-3.5 pr-4 py-2 bg-[var(--mount-bg)] disabled:bg-[var(--mount-bg)] hover:bg-[var(--orbit-bg)] border-shadow hover:border-shadow text-[var(--mount-text)] font-semibold disabled:active:scale-100`,
@@ -91,10 +91,10 @@ const variantClassesByHost: Record<Surface, Record<Variant, string>> = {
   orbit: {
     // Default/ghost on orbit host: no hover-bg slot exists (no `over-orbit`
     // tier in the bundle system). No consumer exercises default/ghost hover
-    // on orbit today — ApiTokenRow uses only `danger` + `ghost`, and ghost
+    // on orbit today – ApiTokenRow uses only `danger` + `ghost`, and ghost
     // carries no hover-bg in any host. If a future consumer needs default
     // hover or elevated on orbit, STOP and add the slot per
-    // [[feedback-bundle-slot-add-reverify]] — do not silently fall back.
+    // [[feedback-bundle-slot-add-reverify]] – do not silently fall back.
     default: `${SMALL_PADDING} disabled:bg-inherit ring-1 ring-[var(--orbit-border)] text-[var(--orbit-text)] ${FOCUS_RING} disabled:active:scale-100`,
     danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING_DANGER}`,
     'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER_FILLED}`,

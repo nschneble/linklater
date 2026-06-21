@@ -1,16 +1,16 @@
 /* ---------- before-midnight ---------- *
- * Wave 9 migration to per-theme bundle palette. The legacy flat tokens
+ * Per-theme bundle palette. The legacy flat tokens
  * stay intact for un-migrated consumers.
  *
  * State-hue allocation: info = blue-leaning deep teal, success = green-
  * leaning bright mint. The two hues are intentionally split across the
- * teal continuum so they survive all three dichromacies — a medium-teal
+ * teal continuum so they survive all three dichromacies – a medium-teal
  * vs medium-teal pairing collapses under tritanopia, which is why the
  * dark-mode --success-border lands on the lighter mint #a8e8d0 instead
  * of the brief's first-pass #5cb098.
  *
- * Brief flags that culori verification surfaced (a11y-lead had no culori
- * in their reasoning loop):
+ * CVD constraints this palette satisfies (verified with culori
+ * under Brettel/CIEDE2000):
  *   - LIGHT --base-highlight bumped from #b75638 (2.62:1 vs page bg) to
  *     #a04a30 (3.28:1). #b75638 was the brief's first-pass value but
  *     failed SC 1.4.11 on --base-bg #ccc095. The shifted hex also
@@ -25,15 +25,14 @@
  *     (>=25), info (>=10) under Brettel/CIEDE2000 via culori.
  *   - LIGHT --alert-border #8a3d20 confirmed (4.17:1 vs page bg).
  *
- * No SHAPE_REDUNDANCY_WAIVERS entries needed — every state pair clears
+ * No SHAPE_REDUNDANCY_WAIVERS entries needed – every state pair clears
  * axis A or axis B in both modes.
  */
 [data-theme='before-midnight'][data-mode='dark'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #ebb327;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #cee1dc;
   --page-gradient-to: #e8dccd;
 
@@ -99,11 +98,10 @@
 }
 
 [data-theme='before-midnight'][data-mode='light'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #562315;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #323223;
   --page-gradient-to: #20303d;
 

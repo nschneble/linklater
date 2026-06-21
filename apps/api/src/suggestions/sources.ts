@@ -2,9 +2,9 @@
  * The fixed registry of suggestion sources. The Stumble empty state and the
  * unread-list callout both pick a source uniformly at random from this list.
  *
- * Wikipedia is treated as a `random` source — each fetch hits the random
+ * Wikipedia is treated as a `random` source – each fetch hits the random
  * article API and returns a fresh pick. The five RSS sources are `latest`
- * — entries are cached in the `RssEntry` table by a scheduled pg-boss job
+ * – entries are cached in the `RssEntry` table by a scheduled pg-boss job
  * and served from there.
  *
  * To add a source: append an entry below, then either (for RSS) the
@@ -68,7 +68,7 @@ export const SOURCES: readonly SourceDefinition[] = [
   },
 ] as const;
 
-/** Returns the RSS sources only — useful for the refresh job iteration. */
+/** Returns the RSS sources only – useful for the refresh job iteration. */
 export const RSS_SOURCES: readonly SourceDefinition[] = SOURCES.filter(
   (source) => source.type === 'latest',
 );

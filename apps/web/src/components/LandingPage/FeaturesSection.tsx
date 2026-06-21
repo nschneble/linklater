@@ -7,10 +7,15 @@ interface FeatureTileProps {
 
 function FeatureTile({ description, icon, title }: FeatureTileProps) {
   return (
-    <div className="flex flex-col gap-3 p-6 bg-midnight border border-boyhood rounded-2xl animate-fade-in-up">
-      <i className={`${icon} text-2xl text-sunrise`} aria-hidden="true" />
-      <h3 className="text-dazed text-sm font-semibold">{title}</h3>
-      <p className="text-confused text-xs text-balance leading-relaxed">
+    <div className="flex flex-col gap-3 p-6 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-2xl animate-fade-in-up">
+      <i
+        className={`${icon} text-2xl text-[var(--mount-highlight)]`}
+        aria-hidden="true"
+      />
+      <h3 className="text-[var(--mount-text)] text-sm font-semibold">
+        {title}
+      </h3>
+      <p className="text-[var(--mount-alt-text)] text-xs text-balance leading-relaxed">
         {description}
       </p>
     </div>

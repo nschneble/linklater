@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 interface SuggestionCalloutProps {
   /**
    * Rendered in place of the callout when no suggestion can be shown
-   * (empty result or fetch failure). Defaults to `null` — the unread-list
+   * (empty result or fetch failure). Defaults to `null` – the unread-list
    * use case already has "No unread links" above it, so silence is fine
    * there. The Stumble empty view passes a "Suggestions are napping too."
    * note so the page acknowledges the attempt instead of going blank.
@@ -21,7 +21,7 @@ interface SuggestionCalloutProps {
    * (default), the current tab navigates to the suggestion. Use `true`
    * from the unread-list empty state (so `/unread` stays in place); leave
    * `false` on the Stumble empty page (which is itself a discovery
-   * destination — same-tab nav is the expected behaviour there).
+   * destination – same-tab nav is the expected behaviour there).
    */
   inNewTab?: boolean;
 }
@@ -35,7 +35,7 @@ interface SuggestionCalloutProps {
  *
  * 1. Saves the URL to the user's collection via `POST /links`.
  * 2. Marks the newly saved link as read so it doesn't sit in the unread
- *    list — the user is opening it to read it now.
+ *    list – the user is opening it to read it now.
  * 3. Navigates the user to the article. In `inNewTab` mode the tab is
  *    opened synchronously inside the click handler so popup blockers do
  *    not fire; the create + read calls then run in the background. In
@@ -53,7 +53,7 @@ interface SuggestionCalloutProps {
  *   keep focus on the button (a hard `disabled` would steal focus and
  *   suppress the error announcement).
  * - Errors render via the shared `Alert` component which sets
- *   `role="alert"` — do not duplicate `aria-live` here.
+ *   `role="alert"` – do not duplicate `aria-live` here.
  */
 export default function SuggestionCallout({
   fallback = null,
@@ -110,7 +110,7 @@ export default function SuggestionCallout({
         }
         // Refetch failure: leave prior suggestion + sourceName mounted so
         // focus stays on the "Add and read" button. Silent fallback by
-        // design — the user already navigated to the article in a new tab.
+        // design – the user already navigated to the article in a new tab.
       });
   }, []);
 
@@ -158,8 +158,8 @@ export default function SuggestionCallout({
           // sees the original callout in its idle state, then refetch a
           // fresh suggestion so the just-added (now read) article isn't
           // recommended back to them next time they look. The populated
-          // card stays mounted during the refetch — see `fetchSuggestion`
-          // — so focus stays on the "Add and read" button (WCAG 2.4.3).
+          // card stays mounted during the refetch – see `fetchSuggestion`
+          // – so focus stays on the "Add and read" button (WCAG 2.4.3).
           setAdding(false);
           fetchSuggestion();
         }
@@ -172,7 +172,7 @@ export default function SuggestionCallout({
     })();
   }
 
-  // No suggestion returned (empty result) — show caller-provided fallback.
+  // No suggestion returned (empty result) – show caller-provided fallback.
   // Fetch errors are kept in the live region instead so screen readers hear them.
   if (!loading && !fetchFailed && (!suggestion || !sourceName)) {
     return <>{fallback}</>;

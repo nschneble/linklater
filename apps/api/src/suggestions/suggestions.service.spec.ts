@@ -113,7 +113,7 @@ describe('SuggestionsService', () => {
       (rssFeedServiceMock.getLatest as jest.Mock).mockResolvedValue([]);
 
       // Force the random pick to Wikipedia by making all other adapters
-      // empty — the service will exhaust them all and end on Wikipedia
+      // empty – the service will exhaust them all and end on Wikipedia
       // if Wikipedia is the last surviving candidate.
       const result = await service.getSuggestions(1, TEST_USER_ID);
 
@@ -162,7 +162,7 @@ describe('SuggestionsService', () => {
       const result = await service.getSuggestions(1, TEST_USER_ID);
 
       // Either Wikipedia gets picked then fails (we recover) or another
-      // source is picked first and returns the safe entry — both are
+      // source is picked first and returns the safe entry – both are
       // acceptable outcomes, the contract is "result is not null".
       expect(result).not.toBeNull();
     });
@@ -259,7 +259,7 @@ describe('SuggestionsService', () => {
 
       expect(result).not.toBeNull();
       expect(result!.suggestions[0].url).toBe('https://example.com/fresh');
-      // Both adapters may run depending on random pick order — the
+      // Both adapters may run depending on random pick order – the
       // contract is just that we recovered to a non-saved suggestion.
       expect(wikipediaCalled + rssCalled).toBeGreaterThan(0);
     });
@@ -271,7 +271,7 @@ describe('SuggestionsService', () => {
       (rssFeedServiceMock.getLatest as jest.Mock).mockResolvedValue([
         aSuggestion('https://example.com/saved'),
       ]);
-      // Every URL passed in comes back as "saved" — total duplicate
+      // Every URL passed in comes back as "saved" – total duplicate
       // collision.
       (prismaMock.link.findMany as jest.Mock).mockImplementation(
         async ({ where }: { where: { url: { in: string[] } } }) =>

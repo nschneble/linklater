@@ -59,7 +59,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('initial state — no stored token', () => {
+describe('initial state – no stored token', () => {
   it('sets loading to false and user to null when no token is stored', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
 
@@ -73,7 +73,7 @@ describe('initial state — no stored token', () => {
   });
 });
 
-describe('initial state — stored token present', () => {
+describe('initial state – stored token present', () => {
   it('populates user from the stored token on mount', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
     vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());

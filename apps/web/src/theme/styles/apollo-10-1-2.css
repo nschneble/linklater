@@ -2,27 +2,26 @@
  * CVD-mandated theme (PRD footnote ^1 flagship). Palette is hand-tuned
  * against the bundle distinguishability contract (axis A: dE2000 >= 10
  * under all three dichromacies; axis B: luminance gap >= 1.4x). Every
- * state-pair must pass without a SHAPE_REDUNDANCY_WAIVERS entry — Apollo
+ * state-pair must pass without a SHAPE_REDUNDANCY_WAIVERS entry – Apollo
  * users specifically depend on color-based state separation.
  *
  * Dark-mode success bundle is COOL EMERALD, an intentional break from
  * Apollo's warm-earth dark palette: the original brown success bundle
- * (wave 8 first pass) collapsed against alert (red) under deuteranopia
+ * collapsed against alert (red) under deuteranopia
  * and against warn (gold) under protanopia. See the dark-mode bundle
  * comment for the full mitigation chain. The --success-border #3a8060
  * is the tightest WCAG margin in dark mode (3.38:1 on bundle bg, 3.87:1
- * on page bg) — both clear SC 1.4.11 but with little headroom.
+ * on page bg) – both clear SC 1.4.11 but with little headroom.
  *
  * Light-mode --success-border tightened from #4f361a -> #3a2008 to widen
  * axis-B luminance gap vs --info-border #223366 (monochromatism safety).
  */
 [data-theme='apollo-10-1-2'][data-mode='dark'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #70b0e0;
 
-  /* Page-gradient stops — see bundles.css preamble. Carry the wave-39
-   * two-tone tinting forward post-wave-40 (--text / --text-muted retired). */
+  /* Page-gradient stops – see bundles.css preamble. Carry the
+   * two-tone tinting forward (--text / --text-muted retired). */
   --page-gradient-from: #e1dbd5;
   --page-gradient-to: #f4f1ec;
 
@@ -59,9 +58,8 @@
   --alert-text: #f4d4d8;
   --alert-alt-text: #f0c4cc;
   /* --alert-highlight bumped from #c84858 (4.21:1 on highlight-fg, below
-   * SC 1.4.3 4.5:1) to #cf5060 — clears 4.63:1 on highlight-fg and
-   * widens highlight-on-bg from 3.68:1 to 4.05:1. Mitigation hex from
-   * wave 8 brief. */
+   * SC 1.4.3 4.5:1) to #cf5060 – clears 4.63:1 on highlight-fg and
+   * widens highlight-on-bg from 3.68:1 to 4.05:1.   * Mitigation hex. */
   --alert-highlight: #cf5060;
   --alert-highlight-fg: #1a0608;
   --alert-highlight-hover: #d05868;
@@ -83,9 +81,9 @@
   --info-highlight-hover: #5e98d4;
 
   /* Apollo dark success: COOL EMERALD (intentional break from Apollo's
-   * warm-earth dark palette). The wave-8 brown success bundle collapsed
+   * warm-earth dark palette). The brown success bundle collapsed
    * against alert (red) under deuteranopia and against warn (gold) under
-   * protanopia — both red-green CVD textbook cases. Re-hued to emerald
+   * protanopia – both red-green CVD textbook cases. Re-hued to emerald
    * for unambiguous separation from alert / warn / info under all three
    * dichromacies. Border #3a8060 is the mitigation hex: a11y-lead's
    * first-pass #70c098 still collapsed against alert under deuteranopia
@@ -94,7 +92,7 @@
    * (alert dE 18.2 deuter; info dE 18.8 tritan) at the cost of a tighter
    * but still SC-1.4.11-compliant border contrast (3.38:1 on bg,
    * 3.87:1 on page-bg). Verified via culori Brettel+CIEDE2000 pre-flight,
-   * NOT oklch estimation — see project memory on CVD pre-flight method. */
+   * NOT oklch estimation – see project memory on CVD pre-flight method. */
   --success-bg: rgb(10 50 30 / 0.6);
   --success-border: #3a8060;
   --success-text: #c8e8d0;
@@ -105,11 +103,10 @@
 }
 
 [data-theme='apollo-10-1-2'][data-mode='light'] {
-  /* Universal focus-visible ring (wave 43 broke prior `--accent` alias;
-   * wave 44 retired `--accent`). */
+  /* Universal focus-visible ring, themed per palette. */
   --focus-ring: #28537e;
 
-  /* Page-gradient stops — see bundles.css preamble. */
+  /* Page-gradient stops – see bundles.css preamble. */
   --page-gradient-from: #4f361a;
   --page-gradient-to: #0d1426;
 
@@ -167,7 +164,7 @@
 
   --success-bg: #ecdcc8;
   /* --success-border tightened from #4f361a to #3a2008 to widen axis-B
-   * luminance gap against --info-border #223366 — monochromatism safety
+   * luminance gap against --info-border #223366 – monochromatism safety
    * per PRD ^1. */
   --success-border: #3a2008;
   --success-text: #2a1a08;

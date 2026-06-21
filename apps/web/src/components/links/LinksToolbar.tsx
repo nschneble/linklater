@@ -19,7 +19,7 @@ interface LinksToolbarProps {
   search: string;
   /** Ref forwarded to the search input so `LinksView` can imperatively focus it on shortcut press. */
   searchInputReference: React.RefObject<HTMLInputElement | null>;
-  /** Whether the inline link form is open — drives button label and `aria-expanded`. */
+  /** Whether the inline link form is open – drives button label and `aria-expanded`. */
   showLinkForm: boolean;
   /** Called when the user clicks "Remove all read". */
   onClearRead: () => void;

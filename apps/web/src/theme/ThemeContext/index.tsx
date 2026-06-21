@@ -66,12 +66,12 @@ export function useTheme() {
  *
  * Safe to call outside of a `ThemeProvider`: falls back to
  * `{ baseTheme: 'scanner-darkly', mode: 'light' }`, which resolves to the
- * `default` style branch in callers — the same styling production users see
+ * `default` style branch in callers – the same styling production users see
  * for themes that have no per-theme override. This keeps test environments
  * working without forcing every caller to wrap in a provider.
  *
  * Use `useTheme` instead whenever you need theme actions, CVD state, or
- * server-sync behavior — those must be inside a `ThemeProvider`.
+ * server-sync behavior – those must be inside a `ThemeProvider`.
  */
 export function useThemeStyling(): { baseTheme: BaseTheme; mode: Mode } {
   const context = useContext(ThemeContext);

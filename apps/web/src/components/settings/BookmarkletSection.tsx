@@ -1,5 +1,6 @@
 import { getBookmarkletToken, regenerateBookmarkletToken } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
+import { useToast } from '../../lib/hooks/useToast';
 import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
 import Toast from '../common/Toast';
@@ -20,7 +21,7 @@ export default function BookmarkletSection() {
   const bookmarkletReference = useRef<HTMLAnchorElement>(null);
   const [rawToken, setRawToken] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toast = useToast();
 
   useEffect(() => {
     let cancelled = false;
@@ -76,7 +77,7 @@ export default function BookmarkletSection() {
             regenerate={regenerateBookmarkletToken}
             onRegenerated={(token) => {
               setRawToken(token);
-              setToastMessage('Bookmarklet regenerated');
+              toast.show('Bookmarklet regenerated');
             }}
           />
         )}
@@ -100,7 +101,7 @@ export default function BookmarkletSection() {
         aria-busy={loading}
         aria-disabled={Boolean(loadError) || undefined}
         aria-describedby={loadError ? 'bookmarklet-load-error' : undefined}
-        aria-label="Save to Linklater — drag to your bookmarks bar, or click on any page to save that link"
+        aria-label="Save to Linklater – drag to your bookmarks bar, or click on any page to save that link"
         className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--orbit-bg)] hover:bg-[var(--mount-bg)] border-shadow hover:border-shadow text-[var(--orbit-text)] text-xs no-underline! font-semibold ring-1 ring-[var(--orbit-border)] ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing active:scale-[0.96] transition duration-200 aria-busy:opacity-50 aria-busy:cursor-wait aria-busy:pointer-events-none aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:pointer-events-none`}
         draggable={!loadError}
         onClick={(event) => event.preventDefault()}
@@ -117,8 +118,8 @@ export default function BookmarkletSection() {
         Your auth token is embedded in this bookmarklet. It never expires, but
         it can be regenerated if someone else gains access to it.
       </p>
-      {toastMessage && (
-        <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
+      {toast.message && (
+        <Toast message={toast.message} onDismiss={toast.dismiss} />
       )}
     </div>
   );

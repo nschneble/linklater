@@ -3,7 +3,7 @@
  *
  * The primitive pairs a conditional `<Toast>` with a pre-mounted sr-only
  * mirror. The mirror's role/aria-live MUST match the toast's variant per
- * a11y-lead — a polite mirror under an assertive toast lets the two regions
+ * a11y-lead – a polite mirror under an assertive toast lets the two regions
  * race on the SR's announcement queue with mismatched priorities.
  *
  * Coverage:
@@ -18,7 +18,7 @@ import PendingNoticeAnnouncer from './PendingNoticeAnnouncer';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-describe('PendingNoticeAnnouncer mirror — success variant', () => {
+describe('PendingNoticeAnnouncer mirror – success variant', () => {
   it('renders the sr-only mirror with role="status" and aria-live="polite" when variant is success', () => {
     render(
       <PendingNoticeAnnouncer
@@ -52,7 +52,7 @@ describe('PendingNoticeAnnouncer mirror — success variant', () => {
   });
 });
 
-describe('PendingNoticeAnnouncer mirror — error variant', () => {
+describe('PendingNoticeAnnouncer mirror – error variant', () => {
   it('renders the sr-only mirror with role="alert" and aria-live="assertive" when variant is error', () => {
     render(
       <PendingNoticeAnnouncer

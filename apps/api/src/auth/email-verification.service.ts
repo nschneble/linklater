@@ -142,7 +142,7 @@ export class EmailVerificationService {
     if (user.totpEnabledAt) {
       if (!code) {
         throw new ForbiddenException(
-          'MFA is enabled — provide a verification code to change your email',
+          'MFA is enabled – provide a verification code to change your email',
         );
       }
 
@@ -204,7 +204,7 @@ export class EmailVerificationService {
         error.code === 'P2002'
       ) {
         throw new ConflictException(
-          'That email address is no longer available — request the change again with a different address',
+          'That email address is no longer available – request the change again with a different address',
         );
       }
       throw error;

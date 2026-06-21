@@ -19,7 +19,7 @@ export type Bundle = (typeof BUNDLES)[number];
 
 /**
  * Card-style bundles (everything except base) whose border touches the page
- * surface — they must clear 3:1 against `--base-bg` per WCAG SC 1.4.11.
+ * surface – they must clear 3:1 against `--base-bg` per WCAG SC 1.4.11.
  */
 export const CARD_BUNDLES: ReadonlyArray<Bundle> = [
   'mount',
@@ -44,7 +44,7 @@ export type Slot = (typeof SLOTS)[number];
 /**
  * Slots that only exist on the base bundle. `subtle-text` is the
  * lowest-emphasis text tier used by page chrome (kbd legends, helper hints,
- * chevrons) — see bundles.css preamble. Mount/orbit/state bundles do not
+ * chevrons) – see bundles.css preamble. Mount/orbit/state bundles do not
  * carry this slot by design.
  */
 const BASE_ONLY_SLOTS = ['subtle-text'] as const;
@@ -52,7 +52,7 @@ export type BaseOnlySlot = (typeof BASE_ONLY_SLOTS)[number];
 
 /**
  * Slots that only exist on base + mount bundles. `input-bg` is the form
- * input fill — tuned per-surface so inputs read as inset against either
+ * input fill – tuned per-surface so inputs read as inset against either
  * page chrome (base) or card surface (mount). Orbit/state bundles don't
  * host form inputs.
  */
@@ -95,7 +95,7 @@ const SLOT_LABELS: Record<Slot | BaseOnlySlot | BaseAndMountOnlySlot, string> =
 /**
  * 52 bundle tokens the editor can override (7 bundles × 7 slots = 49,
  * plus 1 base-only `subtle-text` slot + 2 base/mount `input-bg` slots).
- * Per-bundle, `bundles.css` may declare fewer — base/mount/orbit omit
+ * Per-bundle, `bundles.css` may declare fewer – base/mount/orbit omit
  * `highlight-fg` / `highlight-hover`. The editor still exposes overrides
  * for those so users can add them.
  */
@@ -157,7 +157,7 @@ export const VAR_GROUPS: BundleGroup[] = BUNDLES.map((bundle) => ({
 /**
  * Returns true when the value cannot be edited via a native `<input
  * type="color">` (which only supports 6-digit hex without alpha). Alpha
- * tokens — typically dark-mode state bundle bgs like `rgb(76 5 25 / 0.4)` —
+ * tokens – typically dark-mode state bundle bgs like `rgb(76 5 25 / 0.4)` –
  * keep the text input enabled but disable the color picker.
  */
 export function isAlphaValue(value: string): boolean {
@@ -198,7 +198,7 @@ export interface UseThemeOverridesResult {
 /**
  * Manages live CSS variable overrides for the theme editor.
  *
- * Overrides live in React state only — the hook never mutates
+ * Overrides live in React state only – the hook never mutates
  * `document.documentElement.style`. Consumers spread `overrideStyle` onto
  * the wrapper element that owns the live preview (typically the showcase
  * column). The editor chrome itself continues to paint from the active

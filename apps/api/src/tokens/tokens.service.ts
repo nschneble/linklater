@@ -33,7 +33,7 @@ export class TokensService {
   /**
    * Generates a new PAT, stores only its hash, and returns the raw token
    * to the caller. The raw token is never stored and cannot be retrieved
-   * later — the user must copy it immediately.
+   * later – the user must copy it immediately.
    *
    * @param userId - The UUID of the owning user.
    * @param name - A user-provided label (e.g. "Chrome Extension").
@@ -60,7 +60,7 @@ export class TokensService {
    * Returns all PAT summaries for the given user, ordered newest-first.
    * The `tokenHash` field is never included in the response.
    *
-   * Bookmarklet tokens (`kind = BOOKMARKLET`) are excluded — they are
+   * Bookmarklet tokens (`kind = BOOKMARKLET`) are excluded – they are
    * managed through the dedicated bookmarklet endpoints, not the regular
    * token list, because their lifecycle is "always one, never shown in the
    * list".
@@ -87,14 +87,17 @@ export class TokensService {
    * Permanently deletes a token, preventing any further API access with it.
    * The `userId` scope ensures users can only revoke their own tokens.
    *
-   * Bookmarklet tokens cannot be revoked through this method — users must
-   * use `BookmarkletTokensService.regenerate` instead so they always have a
-   * working bookmarklet to drag to their bookmarks bar.
+   * Only standard user tokens (`kind = USER`) can be revoked here. The
+   * retrievable secret-backed kinds are protected: a BOOKMARKLET is rotated
+   * through `BookmarkletTokensService.regenerate` so the user always has a
+   * working bookmarklet, and the API_DOCS token is auto-provisioned and never
+   * surfaced for deletion – revoking either via this endpoint would silently
+   * invalidate a raw token the user may have pasted elsewhere.
    *
    * @param userId - The UUID of the owning user (scope guard).
    * @param tokenId - The UUID of the token to delete.
    * @throws {NotFoundException} When no matching token exists for this user.
-   * @throws {BadRequestException} When the token is a bookmarklet token.
+   * @throws {BadRequestException} When the token is a non-USER (protected) kind.
    */
   async revoke(userId: string, tokenId: string) {
     const existing = await this.prisma.apiToken.findUnique({
@@ -105,10 +108,12 @@ export class TokensService {
       throw new NotFoundException('API token not found');
     }
 
-    if (existing.kind === TokenKind.BOOKMARKLET) {
-      throw new BadRequestException(
-        'Use the Regenerate button to revoke the bookmarklet token',
-      );
+    if (existing.kind !== TokenKind.USER) {
+      const message =
+        existing.kind === TokenKind.BOOKMARKLET
+          ? 'Use the Regenerate button to revoke the bookmarklet token'
+          : 'This token is managed automatically and cannot be revoked';
+      throw new BadRequestException(message);
     }
 
     try {
@@ -131,8 +136,13 @@ export class TokensService {
    * `lastUsedAt` to the current time before returning the owning user.
    * Used by `ApiKeyStrategy` on every request that presents an `ltk_` token.
    *
+   * The token `kind` and `tokenHash` ride along so the auth layer can scope
+   * what the special retrievable kinds (BOOKMARKLET, API_DOCS) are allowed to
+   * do and rate-limit them per token – see `TokenScopeService`.
+   *
    * @param rawToken - The full raw token string (including `ltk_` prefix).
-   * @returns The owning `User` record, or `null` if no token matches.
+   * @returns The owning user plus the token's `kind` and `tokenHash`, or
+   *   `null` if no token matches.
    */
   async validateToken(rawToken: string) {
     const tokenHash = sha256Hex(rawToken);
@@ -154,6 +164,6 @@ export class TokensService {
         );
       });
 
-    return stored.user;
+    return { user: stored.user, kind: stored.kind, tokenHash };
   }
 }

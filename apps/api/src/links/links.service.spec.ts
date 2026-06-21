@@ -175,7 +175,7 @@ describe('LinksService', () => {
 
   it('re-throws the original P2002 when findFirst returns null after the race (row vanished between constraint error and recovery query)', async () => {
     // The race winner created the row but immediately deleted it. The recovery
-    // findFirst finds nothing, so the service has no row to resurface — it
+    // findFirst finds nothing, so the service has no row to resurface – it
     // must propagate the original P2002 rather than swallow it silently.
     const p2002 = new (
       Prisma as {

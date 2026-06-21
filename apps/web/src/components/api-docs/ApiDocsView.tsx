@@ -1,137 +1,133 @@
-import { useTheme } from '../../theme/ThemeContext';
-import LinkButton from '../common/LinkButton';
-import TokenInput from './TokenInput';
-import { useApiDocsToken } from './useApiDocsToken';
-import { ApiReferenceReact } from '@scalar/api-reference-react';
-import '@scalar/api-reference-react/style.css';
-import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-
-const OPENAPI_PATH = '/openapi.json';
+import ApiReference from './ApiReference';
+import MethodBadge from './MethodBadge';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthContext';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
 
 /**
- * Reduces Scalar's animations to a near-instant transition under
- * `prefers-reduced-motion: reduce`. Concatenated into the `customCss` config
- * so the rule lives inside Scalar's style scope and overrides its defaults.
- */
-const REDUCED_MOTION_CSS = `
-@media (prefers-reduced-motion: reduce) {
-  .scalar-app *,
-  .scalar-app *::before,
-  .scalar-app *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-`;
-
-/**
- * The /settings/api page. Renders a labeled token-paste field on top of a
- * Scalar API Reference component pointed at the backend's /openapi.json.
+ * API documentation. A single token-driven component tree that paints two
+ * ways depending on auth:
  *
- * Token storage is sessionStorage-scoped, masked by default, never logged
- * or URL-encoded. Dark mode follows the global Linklater theme (no FOUC).
+ *   - Logged OUT (`user === null`): the landing/marketing BRAND chrome. The
+ *     wrapper pins `bg-hit-man`, forces dark `color-scheme`, and activates the
+ *     off-book `branding` theme via `data-theme='branding'` (branding.css) so
+ *     the now-token-driven tree resolves to the brand palette. The wrapper's
+ *     `data-theme` shadows `<html data-theme>` for its subtree, and the
+ *     branding cascade supplies every bundle slot plus `--focus-ring` and the
+ *     `--base-bg` the CVD focus-halo anchors to.
+ *
+ *   - Logged IN (`user !== null`): the user's ACTIVE theme. `ThemeProvider`
+ *     already sets `data-theme`/`data-mode` on `<html>` above the router
+ *     (`main.tsx`), so every `var(--…)` bundle token cascades here for free.
+ *     No inline token pins, no `bg-hit-man`; `color-scheme` follows the mode.
+ *
+ * The child components read bundle tokens via `var(--…)` in both branches –
+ * the brand branch just swaps in the `branding` cascade for those tokens, so
+ * one styling path serves both modes.
  */
 export default function ApiDocsView() {
-  const { mode } = useTheme();
-  const [token, setToken] = useApiDocsToken();
-  const navigate = useNavigate();
-
-  const openapiUrl = useMemo(() => {
-    if (!API_BASE_URL) return OPENAPI_PATH;
-    return `${API_BASE_URL}${OPENAPI_PATH}`;
-  }, []);
-
-  // Memoize the configuration so Scalar does not re-mount on unrelated renders
-  // (e.g. a parent component re-rendering without changing mode or token).
-  // A new object is returned — and Scalar sees a changed prop — whenever
-  // mode, openapiUrl, or token changes (including each keystroke in TokenInput).
-  const scalarConfiguration = useMemo(
-    () => ({
-      url: openapiUrl,
-      layout: 'modern' as const,
-      hideDarkModeToggle: true,
-      darkMode: mode === 'dark',
-      hideModels: false,
-      customCss: REDUCED_MOTION_CSS,
-      authentication: {
-        preferredSecurityScheme: 'pat',
-        securitySchemes: {
-          pat: {
-            type: 'http' as const,
-            scheme: 'bearer' as const,
-            token,
-          },
-        },
-      },
-    }),
-    [mode, openapiUrl, token],
-  );
+  useDocumentTitle('Linklater – API documentation');
+  const { user } = useAuth();
+  const isBrand = user === null;
 
   return (
-    <div className="space-y-8">
+    // BRAND branch only: pin `bg-hit-man`, force dark `color-scheme`, and
+    // activate the off-book `branding` theme so the token-driven children
+    // paint the marketing palette. The branding cascade (branding.css)
+    // redeclares `--base-bg` AND `--focus-ring` so the global
+    // `[data-cvd='on'] *:focus-visible` halo (index.css) paints brand colors:
+    // some on-book themes set `--focus-ring` to a hue that fails SC 1.4.11 vs
+    // the navy gradient (e.g. before-sunrise dark), so branding pins #eeeede
+    // (~16:1 vs #0a0812). THEMED branch: no `data-theme` override – the
+    // `<html>` cascade supplies every slot, the theme's own `--focus-ring`
+    // wins, and `color-scheme` follows the active mode.
+    <div
+      className={`min-h-screen ${isBrand ? 'bg-hit-man [color-scheme:dark]' : ''}`}
+      data-theme={isBrand ? 'branding' : undefined}
+    >
       {/*
-       * Scalar renders the spec's `info.title` ("Linklater API") as its own
-       * H1 inside its embed. To avoid two H1s on the same page, our visible
-       * page label is a styled paragraph and the page-level H1 is sr-only.
-       * Screen readers still hear "API documentation" first, then Scalar's
-       * "Linklater API" as a second heading at H2 level inside the embed.
+       * Skip link mirrors the LandingPage pattern: brand-locked white-on-navy
+       * (clears ~16:1 vs the gradient) rather than user-theme `--focus-ring`,
+       * which is not safe on the fixed brand gradient.
        */}
-      <div className="flex flex-col gap-2">
-        <LinkButton
-          className="self-start"
-          surface="base"
-          onClick={() => navigate('/settings')}
-        >
-          Back to Settings
-        </LinkButton>
-        <h1 className="sr-only">API documentation</h1>
-        <p
-          aria-hidden="true"
-          className="text-[var(--base-text)] text-2xl font-semibold text-balance"
-        >
-          API documentation
-        </p>
-        <p className="text-[var(--base-alt-text)] text-sm text-pretty">
-          Personal access tokens unlock the link-management endpoints below.
-          Paste a token to try requests live against your own account.
-        </p>
-      </div>
-
-      <section aria-labelledby="api-docs-auth-heading" className="space-y-3">
-        <h2
-          className="text-[var(--base-text)] text-base font-semibold"
-          id="api-docs-auth-heading"
-        >
-          Authenticate
-        </h2>
-        <TokenInput value={token} onChange={setToken} />
-      </section>
-
       <a
-        className="sr-only focus:not-sr-only focus:inline-flex focus:px-3 focus:py-1.5 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-xs focus:rounded-full focus:ring-2 focus:ring-[var(--focus-ring)]"
-        href="#after-api-reference"
+        href="#api-docs"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-white focus:text-[#14103a] focus:text-sm focus:font-semibold focus:outline-none focus:ring-2 focus:ring-white focus:rounded-lg"
       >
-        Skip past the API reference
+        Skip to API documentation
       </a>
 
-      <section
-        aria-labelledby="api-docs-reference-heading"
-        className="-mx-4 sm:-mx-0 [color-scheme:light] [[data-mode='dark']_&]:[color-scheme:dark]"
-      >
-        <h2 className="sr-only" id="api-docs-reference-heading">
-          API reference
-        </h2>
-        <ApiReferenceReact configuration={scalarConfiguration} />
-      </section>
+      <header className="max-w-6xl mx-auto px-6 sm:px-8 pt-12 sm:pt-16 pb-8 sm:pb-10 space-y-6 select-none">
+        {/*
+         * Page navigation. ONE <nav> landmark so AT users land on a single
+         * "API docs" region rather than scattered unlabeled landmarks. Sits
+         * above the h1 in DOM order so a Tab from the skip link visits the
+         * back-affordance before page identity (SC 2.4.3). Plain text (not
+         * button-styled) keeps the h1 as focal point.
+         *
+         * The "← Linklater" back link is ALWAYS present. The "Manage tokens →"
+         * link is logged-IN only (the docs are a public page; an anonymous
+         * visitor has no tokens to manage), so logged-out the nav holds a
+         * single link – `justify-between` leaves it at flex-start (upper-left).
+         * "Manage tokens" returns to /settings via router state (NOT a
+         * #fragment), because SettingsView reads `scrollTo` from
+         * `location.state` to activate + scroll its sections; a plain hash
+         * would scroll the browser but never wake the activation machinery.
+         * The state convention matches WelcomeModal's "Go to bookmarks" link.
+         */}
+        <nav
+          aria-label="API docs"
+          className="flex items-center justify-between gap-3 text-sm"
+        >
+          <Link
+            to="/"
+            className="group flex items-center gap-2 text-[var(--base-subtle-text)] hover:text-[var(--base-text)] text-sm transition duration-200"
+          >
+            <i
+              className="fa-solid fa-arrow-left text-[var(--base-subtle-text)] group-hover:text-[var(--base-text)] text-[0.7rem]"
+              aria-hidden="true"
+            />
+            Linklater
+          </Link>
+          {!isBrand && (
+            <Link
+              to="/settings"
+              state={{ scrollTo: 'integrations' }}
+              className="text-[var(--base-text)] hover:text-[var(--base-highlight)] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--base-bg)] focus-visible:rounded"
+            >
+              Manage tokens<span aria-hidden="true">&nbsp;&rarr;</span>
+            </Link>
+          )}
+        </nav>
+        <div className="flex flex-col gap-3">
+          <h1
+            className={
+              isBrand
+                ? 'bg-gradient-to-br from-[var(--base-text)] to-[var(--base-highlight)] bg-clip-text text-transparent text-4xl sm:text-5xl font-bold tracking-tight text-balance'
+                : 'text-[var(--base-text)] text-4xl sm:text-5xl font-bold tracking-tight text-balance'
+            }
+          >
+            Linklater API
+          </h1>
+          <p className="flex items-center gap-2 max-w-2xl text-[var(--base-text)] text-base sm:text-lg text-pretty leading-relaxed">
+            <MethodBadge method="POST" /> links now,
+            <MethodBadge method="GET" /> them later.
+          </p>
+        </div>
+      </header>
 
-      <div
-        aria-label="End of API reference"
-        id="after-api-reference"
-        tabIndex={-1}
-      />
+      <main
+        className="max-w-5xl mx-auto px-4 sm:px-6 pb-16 select-none"
+        id="api-docs"
+        aria-labelledby="api-docs-heading"
+      >
+        <h2 className="sr-only" id="api-docs-heading">
+          API documentation
+        </h2>
+        <ApiReference apiBaseUrl={API_BASE_URL} />
+      </main>
     </div>
   );
 }

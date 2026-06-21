@@ -17,12 +17,12 @@ import { useThemeOverrides } from './useThemeOverrides';
  * subtle-text slot + 2 base/mount input-bg slots) that make up the
  * active theme. Overrides live in React state inside `useThemeOverrides`
  * and are applied as inline custom-property styles on a wrapper that
- * scopes the showcase column only — the editor chrome inherits from the
+ * scopes the showcase column only – the editor chrome inherits from the
  * active theme at `:root`, so the user can never edit themselves into an
  * unrecoverable state. Overrides reset when the user navigates away.
  *
  * The editor also supports switching between themes (using the base theme
- * from `ThemeContext`) and toggling light/dark mode — both of which clear
+ * from `ThemeContext`) and toggling light/dark mode – both of which clear
  * any active overrides so the new theme's values are the new baseline.
  *
  * Layout: a left panel with `ColorEditor` and `ContrastChecker`, and a

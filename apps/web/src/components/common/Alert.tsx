@@ -27,7 +27,7 @@ interface AlertProps {
   ref?: Ref<HTMLParagraphElement>;
   /**
    * When set, makes the alert programmatically focusable so callers can
-   * `.focus()` it on appearance — needed when a sibling button keeps focus
+   * `.focus()` it on appearance – needed when a sibling button keeps focus
    * and a focused element's own re-render is not reliably re-announced.
    */
   tabIndex?: number;
@@ -41,8 +41,8 @@ const defaultIcons: Record<AlertProps['variant'], string> = {
 
 // All themes route through the alert/success color bundles (see
 // `theme/styles/bundles.css`). Per-theme overrides previously lived here as
-// inline Tailwind branches; now every theme — including Nouvelle Vague's
-// grayscale-by-design palette — defines its own bundle cascade.
+// inline Tailwind branches; now every theme – including Nouvelle Vague's
+// grayscale-by-design palette – defines its own bundle cascade.
 const variantClasses: Record<AlertProps['variant'], string> = {
   error:
     'bg-[var(--alert-bg)] border-[var(--alert-border)] text-[var(--alert-text)]',

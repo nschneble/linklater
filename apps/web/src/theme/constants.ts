@@ -3,6 +3,10 @@
  * Adding a new theme requires updating this union, the `THEMES` array,
  * `VALID_THEMES` in `apps/api/src/users/users.constants.ts`, and the
  * matching CSS variable file in `apps/web/src/theme/styles/`.
+ *
+ * The off-book `branding` theme (branding.css) is deliberately absent here
+ * by design — registering it would make it user-selectable and break its
+ * invisibility contract. See THEMES.md Section 7.
  */
 export type BaseTheme =
   | 'apollo-10-1-2'

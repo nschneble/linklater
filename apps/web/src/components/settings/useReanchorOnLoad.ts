@@ -11,7 +11,7 @@ import { useEffect, useRef } from 'react';
  *
  * Why: jumping to a section near the page bottom (e.g. a `scrollTo`
  * navigation to `integrations`) lands at an offset based on the page geometry
- * at first paint — before child sections like the PAT list and the
+ * at first paint – before child sections like the PAT list and the
  * bookmarklet token have resolved. As those settle in, content above the
  * target section grows and the target section slides off the upper edge.
  * The old implementation used a `ResizeObserver` on `document.body`; this

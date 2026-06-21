@@ -1,5 +1,5 @@
 /*
- * Tests for Toast — the fixed-position notification.
+ * Tests for Toast – the fixed-position notification.
  *
  * Three contracts pinned here:
  * 1. Variant drives the bundle paint: success → success-highlight,
@@ -76,6 +76,20 @@ describe('Toast', () => {
     );
   });
 
+  // Windows High Contrast / forced-colors mode overrides the arbitrary bg
+  // paint to system Canvas and strips the box-shadow that border-shadow
+  // produces. Without a forced-colors-visible border the toast would lose
+  // every visible boundary against the page (WCAG 1.4.11 Non-text Contrast).
+  // CanvasText is the system foreground token; ButtonText is reserved for
+  // the interactive dismiss button's outline.
+  it('paints a CanvasText border + text fallback in forced-colors mode', () => {
+    render(<Toast message="x" onDismiss={() => {}} />);
+    const toast = screen.getByRole('status');
+    expect(toast.className).toContain('forced-colors:border');
+    expect(toast.className).toContain('forced-colors:border-[CanvasText]');
+    expect(toast.className).toContain('forced-colors:text-[CanvasText]');
+  });
+
   it('clicking dismiss triggers the exit animation and fires onDismiss after 150ms', () => {
     const handleDismiss = vi.fn();
     render(<Toast message="x" onDismiss={handleDismiss} />);
@@ -100,7 +114,7 @@ describe('Toast', () => {
     });
     expect(handleDismiss).not.toHaveBeenCalled();
     // Crossing the 5000ms boundary fires the auto-dismiss timer, which
-    // triggers a React state update (setExiting(true)) — wrap in act().
+    // triggers a React state update (setExiting(true)) – wrap in act().
     act(() => {
       vi.advanceTimersByTime(1);
     });
@@ -121,7 +135,7 @@ describe('Toast', () => {
     const handleDismiss = vi.fn();
 
     function Wrapper({ tick }: { tick: number }) {
-      // new inline arrow each render — mirrors the AuthForm consumer pattern
+      // new inline arrow each render – mirrors the AuthForm consumer pattern
       // where setForgotPasswordSentJustNow(false) fires 5000ms after success
       // and causes the parent to hand Toast a fresh onDismiss identity
       return (

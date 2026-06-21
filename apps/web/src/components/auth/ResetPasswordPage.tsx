@@ -18,7 +18,7 @@ type MfaChallenge = 'totp' | 'recovery';
  * to choose a new password. Validates that both password fields match
  * client-side before calling `POST /auth/reset-password`.
  *
- * On success the server issues a session — the user lands signed in on
+ * On success the server issues a session – the user lands signed in on
  * `/unread` without having to retype credentials. TOTP-enrolled accounts hit
  * the MFA challenge first (same surface as login/magic-link MFA). The
  * destination page surfaces a `password-reset-success` toast via the
@@ -35,7 +35,7 @@ type MfaChallenge = 'totp' | 'recovery';
  * This route is always accessible without authentication.
  */
 export default function ResetPasswordPage() {
-  useDocumentTitle('Reset password — Linklater');
+  useDocumentTitle('Linklater – Reset password');
 
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();

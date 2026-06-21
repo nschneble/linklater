@@ -20,7 +20,7 @@ vi.mock('../../../lib/api', () => ({
   revokeApiToken: vi.fn(),
 }));
 
-// useReanchorOnLoad is a side-effectful scroll helper — stub it out
+// useReanchorOnLoad is a side-effectful scroll helper – stub it out
 vi.mock('../useReanchorOnLoad', () => ({
   useReanchorOnLoad: vi.fn(),
 }));

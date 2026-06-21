@@ -22,7 +22,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
    * `AuthService.validateUser`. Passport calls this before the route
    * handler and attaches the return value to `request.user`.
    *
-   * Returns only `{ userId, email }` — the MFA gate is enforced inside
+   * Returns only `{ userId, email }` – the MFA gate is enforced inside
    * `AuthService.login`, which fetches the user by ID. Returning extra
    * fields here historically tempted callers to short-circuit that gate.
    *

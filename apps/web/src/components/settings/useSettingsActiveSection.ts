@@ -12,7 +12,7 @@ interface UseSettingsActiveSectionOptions {
 /**
  * Backstop that clears the active section after a period of inactivity. Covers
  * screen-reader virtual-cursor users, whose reading cursor moves through the
- * page without firing `pointerdown` or `focusin` — without this they could
+ * page without firing `pointerdown` or `focusin` – without this they could
  * strand the accent indicator on a section they have long since read past.
  */
 const CLEAR_SAFETY_MS = 5000;
@@ -22,7 +22,7 @@ const CLEAR_SAFETY_MS = 5000;
  * deliberate, not positional: it is set only when the user explicitly
  * navigates to a section (sidebar/chip click, or a router-state `scrollTo`
  * jump) and is cleared the moment they interact outside it. It is NOT tied to
- * scroll position — scrolling away leaves the indicator in place until an
+ * scroll position – scrolling away leaves the indicator in place until an
  * outside interaction (or the safety timeout) clears it.
  *
  * `activeSection` drives both the section card's accent indicator

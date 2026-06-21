@@ -26,7 +26,7 @@ interface ModalProps {
    */
   labelledBy: string;
   /**
-   * ID of an element that describes the dialog. Optional — omit when
+   * ID of an element that describes the dialog. Optional – omit when
    * the dialog has no descriptive paragraph (e.g. reference lists).
    * Wired to `aria-describedby` on the dialog panel when present.
    */
@@ -38,12 +38,12 @@ interface ModalProps {
   onClose: () => void;
   /**
    * Accessible label for the close (X) button in the top-right corner.
-   * Required — must be specific (e.g. "Close welcome") so AT users
+   * Required – must be specific (e.g. "Close welcome") so AT users
    * know which dialog they're dismissing.
    */
   closeLabel: string;
   /**
-   * Accessible label for the backdrop dismiss button. Required —
+   * Accessible label for the backdrop dismiss button. Required –
    * distinct from `closeLabel` is recommended to avoid duplicate
    * accessible names within the same view.
    */

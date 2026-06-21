@@ -6,6 +6,7 @@ import type { Request, Response } from 'express';
 
 import { AnyAuthGuard } from '../src/auth/any-auth.guard.js';
 import { LinksController } from '../src/links/links.controller.js';
+import { LinksQueryService } from '../src/links/links-query.service.js';
 import { LinksService } from '../src/links/links.service.js';
 
 /**
@@ -17,13 +18,13 @@ import { LinksService } from '../src/links/links.service.js';
  * consumes this exact endpoint, so this test guards against:
  *
  * - Spec scope leaks (only `/links/*` should be present).
- * - Missing or renamed security scheme (`pat` must exist; Scalar binds to
- *   it by name).
+ * - Missing or renamed security scheme (`pat` must exist; OpenAPI consumers,
+ *   including the custom API docs page, bind to it by name).
  * - Decorator drift on `LinksController` (missing operationIds, broken
  *   response shapes).
  *
- * Boots a minimal testing module — `LinksController` with a stubbed
- * `LinksService` and a permissive `AnyAuthGuard` — so the test never hits
+ * Boots a minimal testing module – `LinksController` with a stubbed
+ * `LinksService` and a permissive `AnyAuthGuard` – so the test never hits
  * a database or queue.
  */
 describe('OpenAPI document (e2e)', () => {
@@ -36,6 +37,10 @@ describe('OpenAPI document (e2e)', () => {
         {
           provide: LinksService,
           useValue: {} as unknown as LinksService,
+        },
+        {
+          provide: LinksQueryService,
+          useValue: {} as unknown as LinksQueryService,
         },
       ],
     })
@@ -50,7 +55,12 @@ describe('OpenAPI document (e2e)', () => {
       new DocumentBuilder()
         .setTitle('Linklater API')
         .setDescription(
-          'Personal access token endpoints for managing your saved links.',
+          // Mirror the auth-header example baked into `apps/api/src/main.ts`
+          // so the `info.description` assertion below has meaningful copy to
+          // match against. The literal "Authorization: Bearer ltk_…" is what
+          // the API docs page's "try it" affordance and downstream API
+          // clients read from.
+          'Authenticate every request with a personal access token in the `Authorization` header: `Authorization: Bearer ltk_…`.',
         )
         .setVersion('test')
         .addBearerAuth(
@@ -86,7 +96,19 @@ describe('OpenAPI document (e2e)', () => {
     expect(response.body.info.version).toBe('test');
   });
 
-  it('declares the "pat" bearer security scheme that Scalar binds against', async () => {
+  // Pins the PAT-auth example baked into `main.ts`'s `setDescription` against
+  // future copy edits. The API docs page's "try it" affordance uses the
+  // description as auth guidance, so the literal "Authorization: Bearer ltk_…"
+  // must survive.
+  it('embeds the Bearer-ltk auth header example in info.description', async () => {
+    const response = await request(app.getHttpServer()).get('/openapi.json');
+
+    expect(response.body.info.description).toContain(
+      'Authorization: Bearer ltk_',
+    );
+  });
+
+  it('declares the "pat" bearer security scheme that API consumers bind against', async () => {
     const response = await request(app.getHttpServer()).get('/openapi.json');
 
     const schemes = response.body.components?.securitySchemes ?? {};
@@ -96,7 +118,7 @@ describe('OpenAPI document (e2e)', () => {
     });
   });
 
-  it('includes the /links endpoints — list, create, stumble, random, by id, delete-read', async () => {
+  it('includes the /links endpoints – list, create, stumble, random, by id, delete-read', async () => {
     const response = await request(app.getHttpServer()).get('/openapi.json');
 
     const paths = response.body.paths ?? {};

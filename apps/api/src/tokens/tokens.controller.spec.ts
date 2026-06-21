@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 
 import { Test, type TestingModule } from '@nestjs/testing';
+import { ApiDocsTokensService } from './api-docs-tokens.service';
 import { BookmarkletTokensService } from './bookmarklet-tokens.service';
 import { TokensController } from './tokens.controller';
 import { TokensService } from './tokens.service';
@@ -36,6 +37,10 @@ describe('TokensController', () => {
     regenerate: jest.fn(),
   } as unknown as BookmarkletTokensService;
 
+  const apiDocsTokensServiceMock = {
+    getOrCreate: jest.fn(),
+  } as unknown as ApiDocsTokensService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TokensController],
@@ -44,6 +49,10 @@ describe('TokensController', () => {
         {
           provide: BookmarkletTokensService,
           useValue: bookmarkletTokensServiceMock,
+        },
+        {
+          provide: ApiDocsTokensService,
+          useValue: apiDocsTokensServiceMock,
         },
       ],
     }).compile();
@@ -125,6 +134,22 @@ describe('TokensController', () => {
         USER_ID,
       );
       expect(result).toBe(bookmarklet);
+    });
+  });
+
+  describe('getApiDocs', () => {
+    it('delegates to ApiDocsTokensService.getOrCreate with userId', async () => {
+      const apiDocs = { ...makeApiToken(), rawToken: RAW_TOKEN };
+      (apiDocsTokensServiceMock.getOrCreate as jest.Mock).mockResolvedValue(
+        apiDocs,
+      );
+
+      const result = await controller.getApiDocs(makeRequest());
+
+      expect(apiDocsTokensServiceMock.getOrCreate).toHaveBeenCalledWith(
+        USER_ID,
+      );
+      expect(result).toBe(apiDocs);
     });
   });
 });

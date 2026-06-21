@@ -1,10 +1,10 @@
 /*
- * Tests for CopyRevealPanel — shared one-shot secret reveal.
+ * Tests for CopyRevealPanel – shared one-shot secret reveal.
  *
  * Three contracts pinned here:
  * 1. Single-secret vs multi-secret rendering branches: `<code>` for one
  *    secret, `<ul>/<li>` grid for multiple. Each branch paints from the
- *    mount/orbit bundle tokens (wave 24 migration: lifted to `--orbit-bg`
+ *    mount/orbit bundle tokens (lifted to `--orbit-bg`
  *    for the secret-containing surface, `--mount-border` for the panel
  *    edges, `--mount-text`/`--mount-alt-text` for the heading copy).
  * 2. Controlled vs uncontrolled copy state: when the parent passes
@@ -21,7 +21,7 @@ import CopyRevealPanel from './CopyRevealPanel';
 const baseProps = {
   headingText: 'Your token has been created.',
   bodyText: "It'll only be shown once.",
-  secretAriaLabel: 'Token — navigate to read character by character',
+  secretAriaLabel: 'Token – navigate to read character by character',
   copyButtonLabel: 'Copy to clipboard',
   copiedAnnouncement: 'Token copied',
 };
@@ -94,7 +94,7 @@ describe('CopyRevealPanel', () => {
     expect(announcer.textContent).toBe(baseProps.copiedAnnouncement);
   });
 
-  it('controlled mode — parent-supplied copied=false suppresses the announcement', () => {
+  it('controlled mode – parent-supplied copied=false suppresses the announcement', () => {
     const { container } = render(
       <CopyRevealPanel {...baseProps} secrets={['x']} copied={false} />,
     );
@@ -103,7 +103,7 @@ describe('CopyRevealPanel', () => {
     expect(announcer.textContent).toBe('');
   });
 
-  it('controlled mode — clicking copy invokes onCopy', () => {
+  it('controlled mode – clicking copy invokes onCopy', () => {
     const handleCopy = vi.fn();
     render(
       <CopyRevealPanel

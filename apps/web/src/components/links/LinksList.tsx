@@ -16,7 +16,7 @@ export const LINKS_LIST_ID = 'links-list';
  * `LinksView` via `useLinks`.
  */
 interface LinksListProps {
-  /** The current tab — determines the empty-state message and icon. */
+  /** The current tab – determines the empty-state message and icon. */
   filter: LinksFilter;
   /**
    * `true` once the hook has settled at least one fetch. Gates the initial
@@ -37,9 +37,9 @@ interface LinksListProps {
   page: number;
   /** Pagination metadata used to decide whether to show "Load more". */
   pagination: Pick<PaginatedLinks, 'total' | 'limit'> | null;
-  /** Current search query — used to pick the right empty-state icon. */
+  /** Current search query – used to pick the right empty-state icon. */
   search: string;
-  /** Debounced search query — used alongside `search` to avoid icon flicker during transition. */
+  /** Debounced search query – used alongside `search` to avoid icon flicker during transition. */
   debouncedSearch: string;
   /** Index of the keyboard-selected link, or `null` if one isn't selected. */
   selectedLinkIndex: number | null;
@@ -86,7 +86,7 @@ export default function LinksList({
   const isInitialLoad = loadingLinks && page === 1 && !hasSettledOnce;
 
   // Show the discovery callout only when the unread list is genuinely
-  // empty — never when an active search just happens to return no
+  // empty – never when an active search just happens to return no
   // matches, and never on the read tab.
   const isUnreadEmpty =
     filter === 'unread' && search === '' && debouncedSearch === '';
@@ -145,7 +145,7 @@ export default function LinksList({
 
         {pagination &&
           // "Less doesn't need more": never offer a Load more button for a
-          // single trailing item — `useLinksData` auto-loads that case so the
+          // single trailing item – `useLinksData` auto-loads that case so the
           // remaining link arrives without a click.
           pagination.total - links.length > 1 &&
           !loadingLinks && (

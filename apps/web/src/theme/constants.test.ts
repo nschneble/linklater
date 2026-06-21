@@ -98,3 +98,30 @@ describe('VALID_BASE_THEME_IDS', () => {
     expect(VALID_BASE_THEME_IDS.has(CVD_BASE_THEME)).toBe(true);
   });
 });
+
+/*
+ * The OFF-BOOK `branding` theme invisibility contract. `branding` ships ONLY
+ * as a CSS cascade (theme/styles/branding.css) plus the `data-theme='branding'`
+ * attribute ApiDocsView/LandingPage set directly on their wrappers when logged
+ * out. It is DELIBERATELY absent from every user-facing theme registry so it
+ * never appears in the theme editor and no user can persist it as their theme.
+ *
+ * branding.css's header asserts this absence in prose, but nothing enforced it:
+ * adding `'branding'` to THEMES or the API VALID_THEMES allow-list would leak
+ * the marketing chrome into the picker (and let a crafted PATCH /me persist it)
+ * while every existing test stayed green. This guard mechanizes the contract.
+ *
+ * The API-side allow-list (apps/api/src/users/users.constants.ts VALID_THEMES)
+ * is covered by its own back-end spec to keep this front-end suite from
+ * reaching across the workspace boundary.
+ */
+describe('branding off-book theme invisibility contract', () => {
+  it('is absent from the THEMES picker array', () => {
+    const ids = THEMES.map((theme) => theme.id);
+    expect(ids).not.toContain('branding');
+  });
+
+  it('is absent from the VALID_BASE_THEME_IDS allow-list', () => {
+    expect(VALID_BASE_THEME_IDS.has('branding')).toBe(false);
+  });
+});

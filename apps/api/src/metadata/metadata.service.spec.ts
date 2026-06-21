@@ -476,7 +476,7 @@ describe('MetadataService', () => {
         .mockRejectedValueOnce(new Error('DB down'))
         .mockResolvedValue({});
 
-      // Should not propagate — swallowed by the inner .catch()
+      // Should not propagate – swallowed by the inner .catch()
       await expect(
         service.fetchAndStore(LINK_ID, LINK_URL),
       ).resolves.not.toThrow();
@@ -545,7 +545,7 @@ describe('MetadataService', () => {
       const call = (prismaMock.meta.upsert as jest.Mock).mock.calls[0][0] as {
         create: { faviconUrl: string | null };
       };
-      // resolveUrl returns '' on parse failure — upsert should still be called
+      // resolveUrl returns '' on parse failure – upsert should still be called
       expect(prismaMock.meta.upsert).toHaveBeenCalled();
       expect(typeof call.create.faviconUrl).toBe('string');
     });
@@ -563,7 +563,7 @@ describe('MetadataService', () => {
 
       await service.fetchAndStore(LINK_ID, LINK_URL);
 
-      // Body should not be parsed — title field stays null because empty metadata.
+      // Body should not be parsed – title field stays null because empty metadata.
       expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           create: expect.objectContaining({ title: null, source: null }),

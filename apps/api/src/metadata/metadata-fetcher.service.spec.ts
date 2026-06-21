@@ -28,7 +28,7 @@ const mockFetchSuccess = () => {
 };
 
 const mockFetchReject = () => {
-  // Never resolves — the SSRF guard should prevent fetch from being called
+  // Never resolves – the SSRF guard should prevent fetch from being called
   // at all. Using a never-settling mock avoids unhandled-rejection noise
   // while still allowing the test to assert fetch was not invoked.
   global.fetch = jest
@@ -48,7 +48,7 @@ describe('MetadataFetcherService', () => {
     jest.clearAllMocks();
   });
 
-  describe('SSRF protection — blocked hosts (isPrivateHost)', () => {
+  describe('SSRF protection – blocked hosts (isPrivateHost)', () => {
     const blockedUrls = [
       // Localhost
       ['localhost', 'http://localhost/path'],
@@ -57,16 +57,16 @@ describe('MetadataFetcherService', () => {
       ['127.0.0.1', 'http://127.0.0.1/'],
       ['127.0.0.2 (loopback range)', 'http://127.0.0.2/'],
       ['127.255.255.255 (loopback range end)', 'http://127.255.255.255/'],
-      // RFC 1918 — 10.0.0.0/8
+      // RFC 1918 – 10.0.0.0/8
       ['10.0.0.1', 'http://10.0.0.1/'],
       ['10.255.255.255', 'http://10.255.255.255/'],
-      // RFC 1918 — 172.16.0.0/12
+      // RFC 1918 – 172.16.0.0/12
       ['172.16.0.1', 'http://172.16.0.1/'],
       ['172.31.255.255', 'http://172.31.255.255/'],
-      // RFC 1918 — 192.168.0.0/16
+      // RFC 1918 – 192.168.0.0/16
       ['192.168.0.1', 'http://192.168.0.1/'],
       ['192.168.255.255', 'http://192.168.255.255/'],
-      // Link-local — 169.254.0.0/16
+      // Link-local – 169.254.0.0/16
       ['169.254.0.1 (link-local)', 'http://169.254.0.1/'],
       ['169.254.169.254 (AWS metadata)', 'http://169.254.169.254/'],
       // IPv6 loopback
@@ -76,7 +76,7 @@ describe('MetadataFetcherService', () => {
       ['fd00::1 (unique-local)', 'http://[fd00::1]/'],
       // IPv6 link-local (fe80::/10)
       ['fe80::1 (link-local)', 'http://[fe80::1]/'],
-      // IPv4-mapped IPv6 — must re-check the embedded IPv4 address
+      // IPv4-mapped IPv6 – must re-check the embedded IPv4 address
       ['::ffff:127.0.0.1 (mapped loopback)', 'http://[::ffff:127.0.0.1]/'],
       ['::ffff:192.168.1.1 (mapped private)', 'http://[::ffff:192.168.1.1]/'],
       ['::ffff:10.0.0.1 (mapped private)', 'http://[::ffff:10.0.0.1]/'],
@@ -109,7 +109,7 @@ describe('MetadataFetcherService', () => {
     });
   });
 
-  describe('SSRF protection — allowed hosts', () => {
+  describe('SSRF protection – allowed hosts', () => {
     const allowedUrls = [
       ['public IPv4', 'https://93.184.216.34/'],
       ['172.15.x.x (just outside private range)', 'https://172.15.0.1/'],
@@ -127,7 +127,7 @@ describe('MetadataFetcherService', () => {
     );
   });
 
-  describe('fetchMetadata — behavior on blocked host', () => {
+  describe('fetchMetadata – behavior on blocked host', () => {
     it('returns empty metadata without throwing', async () => {
       mockFetchReject();
       const result = await service.fetchMetadata('http://192.168.1.1/page');
@@ -142,7 +142,7 @@ describe('MetadataFetcherService', () => {
     });
   });
 
-  describe('fetchMetadata — favicon fallback', () => {
+  describe('fetchMetadata – favicon fallback', () => {
     it('adds /favicon.ico fallback when no favicon found in HTML', async () => {
       const html =
         '<html><head><title>No icon</title></head><body></body></html>';

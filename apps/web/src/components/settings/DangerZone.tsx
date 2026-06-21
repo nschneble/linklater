@@ -31,9 +31,9 @@ type Phase = 'idle' | 'reauth' | 'reauth-pending';
  *   refreshes the user (flag clears), and the panel unmounts back to the
  *   idle trigger. Driving the panel off the server flag (not local state)
  *   keeps the in-flight state across navigation away from Settings and back.
- *   No logout in this branch — the email click finishes the deletion.
+ *   No logout in this branch – the email click finishes the deletion.
  *
- * While `useAuth()` is still loading, branch-specific UI is suppressed —
+ * While `useAuth()` is still loading, branch-specific UI is suppressed –
  * the section renders only a disabled idle trigger to avoid flickering the
  * magic-link-default branch for a user who is actually credentialed.
  */
@@ -80,7 +80,7 @@ export default function DangerZone() {
     setPhase('reauth');
   }, []);
 
-  // Escape backs out of the credentialed reauth form — matches user
+  // Escape backs out of the credentialed reauth form – matches user
   // expectation that Escape always cancels, regardless of focus location.
   useEffect(() => {
     if (phase !== 'reauth' && phase !== 'reauth-pending') return;
@@ -138,7 +138,7 @@ export default function DangerZone() {
         // either way; the worst case is the email link still works.
       }
       // Arm the focus-return effect before refreshUser commits the idle
-      // branch — raf-after-await races React commit; the effect locks
+      // branch – raf-after-await races React commit; the effect locks
       // focus to the actual mount of the trigger button.
       shouldFocusTriggerOnIdle.current = true;
       try {
@@ -267,7 +267,7 @@ export default function DangerZone() {
               {/* Ghost on alert-bg host (SettingsGroup variant="danger"
                   paints --alert-bg). IconButton default surface="mount"
                   paints --mount-border / --mount-alt-text against --alert-bg.
-                  Intentional — adding 'alert' to IconButton's surface union
+                  Intentional – adding 'alert' to IconButton's surface union
                   would require a new bundle slot per
                   [[feedback-bundle-slot-add-reverify]] and is deferred to
                   a future wave. Pre-existing in legacy code (was

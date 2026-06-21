@@ -23,13 +23,22 @@ describe('ApiKeyStrategy', () => {
   });
 
   describe('validate', () => {
-    it('returns AuthUser when token matches', async () => {
+    it('returns the validated token payload (userId, email, kind, tokenHash) when token matches', async () => {
       const user = { id: USER_ID, email: USER_EMAIL };
-      (tokensServiceMock.validateToken as jest.Mock).mockResolvedValue(user);
+      (tokensServiceMock.validateToken as jest.Mock).mockResolvedValue({
+        user,
+        kind: 'USER',
+        tokenHash: 'abc123hash',
+      });
 
       const result = await strategy.validate('ltk_somerawtoken');
 
-      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
+      expect(result).toEqual({
+        userId: USER_ID,
+        email: USER_EMAIL,
+        kind: 'USER',
+        tokenHash: 'abc123hash',
+      });
     });
 
     it('returns null when token does not match', async () => {

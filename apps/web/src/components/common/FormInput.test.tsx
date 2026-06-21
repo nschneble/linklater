@@ -1,5 +1,5 @@
 /*
- * Tests for FormInput — the themed text input shared across forms.
+ * Tests for FormInput – the themed text input shared across forms.
  *
  * The load-bearing piece is the `surface` prop. It names the host bundle
  * (base = page chrome, mount = card / settings panel / auth card) and the
@@ -19,7 +19,7 @@ import { fireEvent, render } from '@testing-library/react';
 import FormInput from './FormInput';
 
 describe('FormInput', () => {
-  it('defaults to base surface — paints from base-input-bg / base-border / base-text / base-alt-text', () => {
+  it('defaults to base surface – paints from base-input-bg / base-border / base-text / base-alt-text', () => {
     const { getByRole } = render(<FormInput type="text" aria-label="x" />);
     const className = getByRole('textbox').className;
     expect(className).toContain('bg-[var(--base-input-bg)]');
@@ -50,14 +50,14 @@ describe('FormInput', () => {
     expect(className).toContain('placeholder:text-[var(--mount-alt-text)]');
   });
 
-  it('drops the opposite surface classes — base surface omits mount-* paint', () => {
+  it('drops the opposite surface classes – base surface omits mount-* paint', () => {
     const { getByRole } = render(<FormInput type="text" aria-label="x" />);
     const className = getByRole('textbox').className;
     expect(className).not.toContain('var(--mount-input-bg)');
     expect(className).not.toContain('var(--mount-border)');
   });
 
-  it('drops the opposite surface classes — mount surface omits base-* paint', () => {
+  it('drops the opposite surface classes – mount surface omits base-* paint', () => {
     const { getByRole } = render(
       <FormInput type="text" surface="mount" aria-label="x" />,
     );

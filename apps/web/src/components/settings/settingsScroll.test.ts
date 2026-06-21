@@ -76,7 +76,7 @@ describe('scrollToSettingsSection', () => {
     expect(scrollToSettingsSection('account')).toBe(true);
 
     expect(scrollToMock).toHaveBeenCalledWith(
-      expect.objectContaining({ top: 69 }),
+      expect.objectContaining({ top: 0 }),
     );
     expect(scrollIntoViewMock).not.toHaveBeenCalled();
   });
@@ -87,7 +87,7 @@ describe('scrollToSettingsSection', () => {
     scrollToSettingsSection('account');
 
     expect(scrollToMock).toHaveBeenCalledWith(
-      expect.objectContaining({ top: 69 }),
+      expect.objectContaining({ top: 0 }),
     );
     expect(scrollIntoViewMock).not.toHaveBeenCalled();
   });
@@ -100,7 +100,7 @@ describe('scrollToSettingsSection', () => {
     scrollToSettingsSection('account');
 
     expect(scrollToMock).toHaveBeenCalledWith(
-      expect.objectContaining({ top: 69 }),
+      expect.objectContaining({ top: 0 }),
     );
     expect(scrollIntoViewMock).not.toHaveBeenCalled();
   });
@@ -161,7 +161,7 @@ describe('reanchorSettingsSection', () => {
     reanchorSettingsSection('account');
 
     expect(scrollToMock).toHaveBeenCalledWith(
-      expect.objectContaining({ top: 69, behavior: 'auto' }),
+      expect.objectContaining({ top: 0, behavior: 'auto' }),
     );
   });
 });

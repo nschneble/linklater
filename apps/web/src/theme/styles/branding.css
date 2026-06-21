@@ -1,0 +1,110 @@
+/* ---------- branding ---------- *
+ * OFF-BOOK brand-chrome theme.
+ *
+ * NOT a user-selectable theme: branding is deliberately absent from the
+ * BaseTheme union, THEMES, VALID_BASE_THEME_IDS (constants.ts), and the API
+ * VALID_THEMES list, so it never appears in the theme editor and no user can
+ * activate it. It ships ONLY as this CSS cascade plus the
+ * `data-theme='branding'` attribute that ApiDocsView sets directly on its
+ * wrapper when logged out (the marketing chrome).
+ *
+ * DARK-LOCKED / mode-independent. Unlike every on-book theme – which carries
+ * a `[data-theme='x'][data-mode='dark']` and a `[data-theme='x'][data-mode='light']`
+ * block – branding collapses to a SINGLE `[data-theme='branding']` block with
+ * no `[data-mode]` qualifier. The marketing chrome is navy-on-dark regardless
+ * of the visitor's OS/app mode, so a light variant would never paint.
+ *
+ * Page background is the `bg-hit-man` radial gradient (index.css):
+ *   radial-gradient(ellipse at 50% 0%, #14103a 0%, #0a0812 70%)
+ * The wrapper keeps `bg-hit-man [color-scheme:dark]`; this cascade drives
+ * every bundle slot composited on top. `--base-bg #0a0812` matches the
+ * gradient's outer stop so the global `[data-cvd='on'] *:focus-visible` halo
+ * (anchored to --base-bg) reads coherently against the chrome.
+ *
+ * Palette is WCAG-verified (accessibility-lead gate) and re-verified via
+ * culori in bundles.contrast.test.ts (the canonical check). The `branding`
+ * fixture there is mode-independent: its selector has no `[data-mode]`
+ * qualifier, integrated as a single block in the (theme × mode) iteration.
+ *
+ * Border note: base/mount/orbit adopt #8a7bd0, NOT the legacy #7d6ec0 – the
+ * legacy value fails SC 1.4.11 (3:1) against the #14103a top stop (2.81:1);
+ * #8a7bd0 clears it (3.35 vs top, 5.49 vs the #0a0812 outer).
+ *
+ * No --page-gradient-{from,to} slots: the `bg-hit-man` radial reads hardcoded
+ * hexes (index.css), and no branding-consuming view paints a card on a
+ * `from-[var(--page-gradient-from)]` gradient (those tokens are consumed only
+ * by auth/unauthenticated routes under the user's own active theme). Adding
+ * them here would be dead tokens AND would trip the card-on-gradient lift
+ * design-tripwire for a card relationship branding does not have.
+ */
+[data-theme='branding'] {
+  /* Universal focus-visible ring, pinned to brand near-white so it clears
+   * the navy chrome gradient (16.96 vs #0a0812). */
+  --focus-ring: #eeeede;
+
+  /* base = page chrome (page bg #0a0812 outer / #14103a top). */
+  --base-bg: #0a0812;
+  --base-border: #8a7bd0;
+  --base-input-bg: #1a1438;
+  --base-text: #eeeede;
+  --base-alt-text: #bcb2dc; /* resting nav label on page navy: 8.89:1 vs #14103a top, 10.16:1 vs #0a0812 outer */
+  --base-subtle-text: #b8aed8;
+  --base-highlight: #ff9170;
+  --base-highlight-fg: #2a0d05;
+  --base-highlight-hover: #ffb199;
+
+  /* mount = cards (bg = white @ 5% over the navy chrome). */
+  --mount-bg: rgba(255, 255, 255, 0.05);
+  --mount-border: #8a7bd0;
+  --mount-input-bg: #1a1438;
+  --mount-text: #eeeede;
+  --mount-alt-text: #c4bce4;
+  --mount-highlight: #ff9170;
+  --mount-highlight-fg: #2a0d05;
+  --mount-highlight-hover: #ffb199;
+
+  /* orbit = menus / dropdowns. */
+  --orbit-bg: #2a2550;
+  --orbit-border: #8a7bd0;
+  --orbit-text: #eeeede;
+  --orbit-alt-text: #c4bce4;
+  --orbit-highlight: #ff9170;
+  --orbit-highlight-fg: #2a0d05;
+  --orbit-highlight-hover: #ffb199;
+
+  /* alert = rose (bg = rgb(76 5 25 / 0.55) over #0a0812). */
+  --alert-bg: rgb(76 5 25 / 0.55);
+  --alert-border: #f87171;
+  --alert-text: #fca5a5;
+  --alert-alt-text: #fecaca;
+  --alert-highlight: #f43f5e;
+  --alert-highlight-fg: #2a0810;
+  --alert-highlight-hover: #fb7185;
+
+  /* warn = amber (bg = rgb(69 26 3 / 0.55) over #0a0812). */
+  --warn-bg: rgb(69 26 3 / 0.55);
+  --warn-border: #f59e0b;
+  --warn-text: #fcd34d;
+  --warn-alt-text: #fde68a;
+  --warn-highlight: #f59e0b;
+  --warn-highlight-fg: #3a1a05;
+  --warn-highlight-hover: #fbbf24;
+
+  /* info = blue (bg = rgb(23 37 84 / 0.55) over #0a0812). */
+  --info-bg: rgb(23 37 84 / 0.55);
+  --info-border: #60a5fa;
+  --info-text: #93c5fd;
+  --info-alt-text: #bfdbfe;
+  --info-highlight: #60a5fa;
+  --info-highlight-fg: #0a1f3a;
+  --info-highlight-hover: #93c5fd;
+
+  /* success = emerald (bg = rgb(6 50 32 / 0.55) over #0a0812). */
+  --success-bg: rgb(6 50 32 / 0.55);
+  --success-border: #22c55e;
+  --success-text: #86efac;
+  --success-alt-text: #bbf7d0;
+  --success-highlight: #22c55e;
+  --success-highlight-fg: #001a10;
+  --success-highlight-hover: #34d399;
+}

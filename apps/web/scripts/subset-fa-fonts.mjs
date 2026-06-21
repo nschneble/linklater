@@ -5,7 +5,7 @@
 //
 // The manifest itself is rewritten from the source scan by sync-fa-manifest.mjs,
 // which is chained ahead of this script via `npm run subset-fa`. To add a new
-// icon, just use its class in source — the next subset-fa picks it up.
+// icon, just use its class in source – the next subset-fa picks it up.
 //
 // CSS rule shape lives in fa-scan.mjs (parseCodepoints). Two escape kinds:
 // `\HEX` (1-6 hex digits) maps to that unicode codepoint; `\X` for any other

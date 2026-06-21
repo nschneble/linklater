@@ -31,7 +31,7 @@ export function useAuthForm() {
   const emailReference = useRef<HTMLInputElement>(null);
   const errorReference = useRef<HTMLParagraphElement>(null);
   // WARN-4: timeout ids for post-magic-link / post-forgot-password
-  // success-state holds. The submit button and toast must stay in sync —
+  // success-state holds. The submit button and toast must stay in sync –
   // both render the "sent!" success state for the toast's 5000ms auto-
   // dismiss window. The refs let the mode-change effect cancel pending
   // releases if the user navigates away first.
@@ -66,13 +66,13 @@ export function useAuthForm() {
   // The cross-route notice (e.g. account-deleted) is read once on mount.
   // Deferred to a useEffect (not synchronous render) because NVDA and
   // sometimes JAWS only announce an aria-live region when its content
-  // changes after mount — content present on first paint is treated as
+  // changes after mount – content present on first paint is treated as
   // part of page load and skipped. Deferring guarantees the region
   // transitions empty → populated, which all major SRs announce reliably.
   //
   // useAuthForm reads this directly via `consumePendingNotice` (not via
   // the `usePendingNotice` hook) so the peek-before-consume ordering with
-  // the mode-change effect below stays intact — effects fire in
+  // the mode-change effect below stays intact – effects fire in
   // declaration order, and the peek (`hasPendingNotice()` inside the
   // mode-change effect) must run BEFORE this consume effect clears the
   // sessionStorage key. See [[feedback-peek-before-consume-effect-order]].
@@ -99,7 +99,7 @@ export function useAuthForm() {
   // sees the queued notice before consumePendingNotice clears it. After
   // this effect returns, the consume effect fires and the next mode
   // change will (correctly) get hasPendingNotice() === false. Effects
-  // fire in declaration order — see
+  // fire in declaration order – see
   // [[feedback-peek-before-consume-effect-order]].
   useEffect(() => {
     if (magicLinkSentJustNowReference.current !== null) {
@@ -116,7 +116,7 @@ export function useAuthForm() {
     setMagicLinkSentJustNow(false);
     setForgotPasswordSentJustNow(false);
 
-    // Skip auto-focus when a pending notice is queued — focusing a text
+    // Skip auto-focus when a pending notice is queued – focusing a text
     // input switches NVDA/JAWS into forms mode and can swallow the polite
     // announcement mid-read (WCAG 4.1.3 status messages). The user can
     // Tab in deliberately after hearing the toast.
@@ -158,7 +158,7 @@ export function useAuthForm() {
     // visible when the user attempts a new auth action, dismiss it so the
     // upcoming form-level error Alert is the sole assertive announcement.
     // Without this coalesce, the user would receive two simultaneous
-    // assertive announcements (toast + Alert) on the same channel — see
+    // assertive announcements (toast + Alert) on the same channel – see
     // WCAG 4.1.3 status messages and ARIA 1.2 §5.2.8.4 (live region
     // politeness must be honored predictably; stacking two assertive
     // regions in the same tick is implementation-defined on most SRs).
@@ -184,7 +184,7 @@ export function useAuthForm() {
         });
         // WARN-4: on success, release loading immediately so the button no
         // longer reads "Working…" while the toast is already announcing the
-        // outcome — that desync is what made the prior flow look
+        // outcome – that desync is what made the prior flow look
         // contradictory. The button then enters the success-state hold
         // (`magicLinkSentJustNow`) for 5000ms, matching the toast's own
         // auto-dismiss window. The hold also prevents a second click during
@@ -214,7 +214,7 @@ export function useAuthForm() {
         // and hold the submit button in a "Reset link sent!" success state
         // for the toast's 5000ms auto-dismiss window so the two surfaces
         // never read as contradictory. The hold also prevents a second
-        // click during that window — re-submitting before the email arrives
+        // click during that window – re-submitting before the email arrives
         // would just queue a duplicate reset request.
         setNotice({
           message: 'Reset link sent!',

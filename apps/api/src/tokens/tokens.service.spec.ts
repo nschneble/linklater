@@ -160,9 +160,20 @@ describe('TokensService', () => {
       );
     });
 
-    it('throws BadRequestException when token is a BOOKMARKLET', async () => {
+    it('throws BadRequestException with the regenerate message when token is a BOOKMARKLET', async () => {
       (prismaMock.apiToken.findUnique as jest.Mock).mockResolvedValue(
         makeApiToken({ kind: 'BOOKMARKLET' }),
+      );
+
+      await expect(service.revoke(USER_ID, TOKEN_ID)).rejects.toThrow(
+        'Use the Regenerate button to revoke the bookmarklet token',
+      );
+      expect(prismaMock.apiToken.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when token is an API_DOCS token', async () => {
+      (prismaMock.apiToken.findUnique as jest.Mock).mockResolvedValue(
+        makeApiToken({ kind: 'API_DOCS' }),
       );
 
       await expect(service.revoke(USER_ID, TOKEN_ID)).rejects.toThrow(
@@ -197,15 +208,19 @@ describe('TokensService', () => {
   });
 
   describe('validateToken', () => {
-    it('returns user when token matches', async () => {
+    it('returns the user plus kind and tokenHash when token matches', async () => {
       const user = { id: USER_ID, email: 'user@example.com' };
-      const stored = makeApiToken({ user });
+      const stored = makeApiToken({ user, kind: 'USER' });
       (prismaMock.apiToken.findUnique as jest.Mock).mockResolvedValue(stored);
       (prismaMock.apiToken.update as jest.Mock).mockResolvedValue(stored);
 
       const result = await service.validateToken('ltk_sometoken');
 
-      expect(result).toBe(user);
+      expect(result).toEqual({
+        user,
+        kind: 'USER',
+        tokenHash: expect.any(String) as string,
+      });
     });
 
     it('returns null when token does not match', async () => {

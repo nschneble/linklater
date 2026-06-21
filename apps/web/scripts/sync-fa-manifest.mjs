@@ -3,7 +3,7 @@
 //   1. Every fa-* token that resolves to a real FA icon gets listed.
 //   2. Every existing manifest entry not seen in source gets dropped.
 //   3. Unknown fa-* tokens (no matching icon in either catalog) abort the
-//      sync. These are almost always typos or grep artifacts — silently
+//      sync. These are almost always typos or grep artifacts – silently
 //      dropping them would mask real bugs.
 //
 // Family routing for icons that appear in only one catalog is unambiguous.
@@ -113,7 +113,7 @@ function formatSyncErrorMessage(kind, details) {
         `  ${token}  (${files.length} file${files.length === 1 ? '' : 's'})`,
     );
     return (
-      'Unknown fa-* token(s) in source — no matching icon in either catalog. ' +
+      'Unknown fa-* token(s) in source – no matching icon in either catalog. ' +
       'Likely typo, grep artifact, or truncated string. Fix the source, then ' +
       'rerun sync.\n' +
       lines.join('\n')

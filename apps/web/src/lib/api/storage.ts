@@ -28,7 +28,7 @@ function safeWrite(key: string, value: string): void {
   try {
     window.localStorage.setItem(key, value);
   } catch {
-    // Storage quota exceeded or blocked — keep the in-memory copy so the
+    // Storage quota exceeded or blocked – keep the in-memory copy so the
     // current session keeps working, but skip persistence.
   }
 }
@@ -39,7 +39,7 @@ function safeRemove(key: string): void {
   try {
     window.localStorage.removeItem(key);
   } catch {
-    // Nothing to do — keep the in-memory copy in sync via the caller.
+    // Nothing to do – keep the in-memory copy in sync via the caller.
   }
 }
 
@@ -77,10 +77,10 @@ export function clearStoredToken(): void {
 /**
  * Resets the module-level token singletons to `null` without touching
  * `localStorage`. Use in test `beforeEach` to prevent stale state from
- * one test leaking into the next — each test that calls `setStoredToken`
+ * one test leaking into the next – each test that calls `setStoredToken`
  * gets a clean slate.
  *
- * Not exported from the public API barrel (`lib/api/index.ts`) — this is
+ * Not exported from the public API barrel (`lib/api/index.ts`) – this is
  * a test-only helper.
  */
 export function resetStorageForTesting(): void {

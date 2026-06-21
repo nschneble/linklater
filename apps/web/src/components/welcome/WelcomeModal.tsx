@@ -18,7 +18,7 @@ const DESCRIPTION_ID = 'welcome-description';
  * miss. Mounted from `AppShell` whenever `user.welcomedAt` is `null`.
  *
  * ARIA wiring, focus management, body-scroll lock, and the close + backdrop
- * buttons are owned by `<Modal>` — see `Modal.tsx`. The bookmarklet and
+ * buttons are owned by `<Modal>` – see `Modal.tsx`. The bookmarklet and
  * Stumble actions navigate away on click, so we suppress focus restoration
  * (via `controlRef.current?.skipRestore()`) before closing; the trigger
  * that opened the modal may no longer be in the tab order after the route

@@ -4,6 +4,7 @@ import { LinksController } from './links.controller';
 import { LinksQueryService } from './links-query.service';
 import { LinksService } from './links.service';
 import { Test, type TestingModule } from '@nestjs/testing';
+import { TokenScopeService } from '../auth/token-scope.service';
 
 const LINK_ID = 'link-1';
 const LINK_URL = 'https://example.com/page';
@@ -45,6 +46,10 @@ describe('LinksController', () => {
       providers: [
         { provide: LinksService, useValue: linksServiceMock },
         { provide: LinksQueryService, useValue: linksQueryMock },
+        // AnyAuthGuard (applied at the controller level) pulls in
+        // TokenScopeService, which depends on the throttler storage; a stub
+        // keeps this controller unit test from booting that whole graph.
+        { provide: TokenScopeService, useValue: { enforce: jest.fn() } },
       ],
     }).compile();
 

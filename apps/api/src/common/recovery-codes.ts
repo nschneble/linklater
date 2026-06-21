@@ -10,7 +10,7 @@ const BCRYPT_COST = 10;
  * Recognizes any user-typed recovery code that maps to a canonical
  * `XXXXX-XXXXX-XXXXX` form once trivial input variations (whitespace,
  * hyphens) are stripped. Used to keep input forgiving without storing
- * multiple hash variants per code (Postel's Law — see CLAUDE.md).
+ * multiple hash variants per code (Postel's Law – see CLAUDE.md).
  */
 const RECOVERY_CODE_PAYLOAD = /^[^01IOl]{15}$/;
 
@@ -30,7 +30,7 @@ export function normalizeRecoveryCode(input: string): string | null {
 
 /** Characters that are unambiguous to read and type (no 0, O, I, l, 1). */
 const CHARSET = 'abcdefghjkmnpqrstuvwxyz23456789ABCDEFGHJKMNPQRSTUVWXYZ';
-/** Largest multiple of CHARSET.length that fits in a uint16 — eliminates modulo bias. */
+/** Largest multiple of CHARSET.length that fits in a uint16 – eliminates modulo bias. */
 const CHARSET_LIMIT = Math.floor(65536 / CHARSET.length) * CHARSET.length;
 
 function randomChar(): string {

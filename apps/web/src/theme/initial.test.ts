@@ -63,7 +63,7 @@ describe('getInitialBaseTheme', () => {
 
 describe('getInitialMode', () => {
   beforeEach(() => {
-    // jsdom does not implement matchMedia — provide a default stub so tests
+    // jsdom does not implement matchMedia – provide a default stub so tests
     // that don't care about it still work without errors.
     stubMatchMedia(false);
   });

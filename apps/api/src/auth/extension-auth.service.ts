@@ -33,7 +33,7 @@ export class ExtensionAuthService implements OnModuleInit {
     const raw = process.env.EXTENSION_REDIRECT_URIS;
     if (!raw) {
       this.logger.warn(
-        'EXTENSION_REDIRECT_URIS is not set — the browser extension authorization flow will reject all redirect URIs. Set this to a comma-separated list of allowed extension callback URIs.',
+        'EXTENSION_REDIRECT_URIS is not set – the browser extension authorization flow will reject all redirect URIs. Set this to a comma-separated list of allowed extension callback URIs.',
       );
       return;
     }

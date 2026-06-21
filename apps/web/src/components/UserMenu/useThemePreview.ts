@@ -3,7 +3,7 @@ import type { MutableRefObject, RefObject } from 'react';
 import { CVD_BASE_THEME, type BaseTheme } from '../../theme/ThemeContext';
 
 interface UseThemePreviewResult {
-  /** ref attached to the flyout `div` — pass to `ThemeSubmenu`
+  /** ref attached to the flyout `div` – pass to `ThemeSubmenu`
    * and `useMenuNavigation` so both can read its DOM node. */
   flyoutReference: RefObject<HTMLDivElement | null>;
   /**
@@ -14,11 +14,11 @@ interface UseThemePreviewResult {
    * `resetPreview` when the submenu closes.
    */
   applyPreview: (themeId: BaseTheme) => void;
-  /** `null` clears without animating back — use `resetPreview`
+  /** `null` clears without animating back – use `resetPreview`
    * when the submenu closes instead. */
   handlePreviewChange: (theme: BaseTheme | null) => void;
   /** call when the pointer enters (or focus moves into) the Theme
-   * row — opens the submenu and recalculates which side it
+   * row – opens the submenu and recalculates which side it
    * should open on. */
   handleThemeRowEnter: () => void;
   previewTheme: string | null;
@@ -28,7 +28,7 @@ interface UseThemePreviewResult {
    * action; the hook's internal effect will auto-focus the
    * first flyout item and then reset this flag. */
   submenuOpenedByKeyboard: MutableRefObject<boolean>;
-  /** ref attached to the Theme row `div` — used to measure the
+  /** ref attached to the Theme row `div` – used to measure the
    * row's position so the submenu can decide whether to open
    * left or right of the trigger. */
   themeRowReference: RefObject<HTMLDivElement | null>;
@@ -38,7 +38,7 @@ interface UseThemePreviewResult {
    * 600ms ease-out CSS transition before restoring the original
    * theme data-attribute. */
   resetPreview: (currentBaseTheme: string) => void;
-  /** cancels any in-flight preview reset rAF/timeout — call in a
+  /** cancels any in-flight preview reset rAF/timeout – call in a
    * `useLayoutEffect([baseTheme])` to prevent a stale reset from
    * overwriting the freshly committed theme. */
   clearResetHandles: () => void;

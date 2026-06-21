@@ -1,12 +1,12 @@
 /*
- * Tests for SlidingTabBar — the shared animated-pill tablist.
+ * Tests for SlidingTabBar – the shared animated-pill tablist.
  *
  * Two contracts pinned here:
  * 1. The `surface` prop drives container bg + pill bg via the
  *    `data-surface` attribute on the tablist. `surface="base"` (default)
  *    paints from the mount bundle one lift up; `surface="mount"` paints
  *    from the orbit bundle. Forwarded to child `TabButton`s via DOM
- *    ancestry (group-data-* variants) — no prop passing needed.
+ *    ancestry (group-data-* variants) – no prop passing needed.
  * 2. Pill geometry (translateX = activeIndex * 100%, width =
  *    calc(100/N% - 4px)) drives the sliding-pill animation. A regression
  *    here would silently break the active-tab indicator.
@@ -32,7 +32,7 @@ function makeTabs(overrides: Partial<SlidingTab>[] = []): SlidingTab[] {
 }
 
 describe('SlidingTabBar', () => {
-  it('defaults to base surface — container paints mount-bg, pill paints mount-text', () => {
+  it('defaults to base surface – container paints mount-bg, pill paints mount-text', () => {
     render(
       <SlidingTabBar ariaLabel="example" activeIndex={0} tabs={makeTabs()} />,
     );
@@ -52,7 +52,7 @@ describe('SlidingTabBar', () => {
     );
   });
 
-  it('surface="mount" lifts the chip — data-surface attribute carries the host bundle', () => {
+  it('surface="mount" lifts the chip – data-surface attribute carries the host bundle', () => {
     render(
       <SlidingTabBar
         ariaLabel="example"

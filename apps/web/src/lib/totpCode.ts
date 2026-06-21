@@ -9,7 +9,7 @@ export function normalizeTotpInput(raw: string): string {
 }
 
 /**
- * Formats a digits-only TOTP code for display as `"XXX XXX"` — the same
+ * Formats a digits-only TOTP code for display as `"XXX XXX"` – the same
  * grouping authenticator apps use. Returns whatever is passed in once the
  * length is 3 or fewer so the space only appears after the user types the
  * fourth digit.

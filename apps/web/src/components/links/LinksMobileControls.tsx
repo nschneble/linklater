@@ -9,7 +9,7 @@ import type { LinksControlsProps } from './links-controls-props';
  * On the unread tab: shuffle + add/hide-form.
  * On the read tab: trash (hidden when the list is empty).
  *
- * This component is hidden on desktop (`flex sm:hidden` wrapper) — desktop has
+ * This component is hidden on desktop (`flex sm:hidden` wrapper) – desktop has
  * the full-text equivalents in `LinksControls`.
  */
 export default function LinksMobileControls({

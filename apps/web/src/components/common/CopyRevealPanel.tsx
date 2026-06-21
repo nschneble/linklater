@@ -1,5 +1,5 @@
 import { useTransientState } from '../../lib/hooks/useTransientState';
-import IconButton from './IconButton';
+import CopyButton from './CopyButton';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
@@ -18,8 +18,13 @@ interface CopyRevealPanelProps {
    * blurting the value on mount; lets browse-mode users opt in.
    */
   secretAriaLabel: string;
-  /** aria-label for the copy button. */
-  copyButtonLabel: string;
+  /**
+   * Optional accessible-name OVERRIDE for the copy button (`aria-label`).
+   * Omit to let the button derive its name from its visible "Copy to
+   * clipboard" text (WCAG 2.5.3). When provided, MUST start with the visible
+   * text – see `CopyButton`.
+   */
+  copyButtonLabel?: string;
   /** Message announced by the sibling polite live region after copy. */
   copiedAnnouncement: string;
   /**
@@ -31,7 +36,7 @@ interface CopyRevealPanelProps {
   /**
    * Controlled copy state. When omitted, the component owns state + the
    * clipboard write internally and runs its own ~1s reset timer via
-   * `useTransientState`. When provided, the parent owns both — including
+   * `useTransientState`. When provided, the parent owns both – including
    * the obligation to flip `copied` back to `false` after the desired TTL
    * (e.g. `useApiTokens` runs its own `useTransientState(copied, false,
    * setCopied, 1000)` so revoking a token also clears the copied flag).
@@ -49,7 +54,7 @@ interface CopyRevealPanelProps {
  * mount), the secret(s) with a per-item aria-label, a copy button with a
  * `data-copied` icon cross-fade, and a sibling polite live region for the
  * copied announcement (a focused button's own label change is not reliably
- * re-announced — the sibling region is what makes the announcement land).
+ * re-announced – the sibling region is what makes the announcement land).
  *
  * Mount-host pinned: the dotted divider uses `--mount-border`, the secret
  * tile uses `--orbit-bg`/`--orbit-text`, and the copy button is
@@ -57,7 +62,7 @@ interface CopyRevealPanelProps {
  * surface (`SettingsGroup`, `AuthCard`). A future base-host consumer
  * would need to thread a `surface` prop through to the divider, the
  * secret tile (one tier up from the host: `--mount-bg` if host=base), and
- * the IconButton — do not silently let it inherit mount paint on a base
+ * the IconButton – do not silently let it inherit mount paint on a base
  * background.
  */
 export default function CopyRevealPanel({
@@ -101,7 +106,7 @@ export default function CopyRevealPanel({
       await navigator.clipboard.writeText(secrets.join('\n'));
       setUncontrolledCopied(true);
     } catch {
-      // clipboard access denied — user can select/copy manually
+      // clipboard access denied – user can select/copy manually
     }
   }, [secrets]);
 
@@ -171,39 +176,5 @@ export default function CopyRevealPanel({
         {copied ? copiedAnnouncement : ''}
       </span>
     </div>
-  );
-}
-
-interface CopyButtonProps {
-  label: string;
-  copied: boolean;
-  onCopy?: () => void | Promise<void>;
-}
-
-function CopyButton({ label, copied, onCopy }: CopyButtonProps) {
-  return (
-    <IconButton
-      className="group"
-      surface="mount"
-      data-copied={copied ? 'true' : undefined}
-      aria-label={label}
-      onClick={() => void onCopy?.()}
-    >
-      {/*
-       * Both icons share a single grid cell so they stack without layout
-       * shift and can scale/blur independently. `aria-hidden` on the wrapper
-       * keeps AT off the visual stack — the button's `aria-label` is the
-       * single source of truth for the name.
-       */}
-      <span aria-hidden="true" className="inline-grid place-items-center">
-        <span className="col-start-1 row-start-1 opacity-0 blur-xs scale-[0.25] group-data-[copied]:opacity-100 group-data-[copied]:blur-none group-data-[copied]:scale-100 transition-[opacity,filter,scale] duration-300 ease-in-out motion-reduce:transition-none">
-          <i className="fa-solid fa-check text-[0.7rem]" />
-        </span>
-        <span className="col-start-1 row-start-1 opacity-100 blur-none scale-100 group-data-[copied]:opacity-0 group-data-[copied]:blur-xs group-data-[copied]:scale-[0.25] transition-[opacity,filter,scale] duration-300 ease-in-out motion-reduce:transition-none">
-          <i className="fa-solid fa-copy text-[0.7rem]" />
-        </span>
-      </span>
-      Copy to clipboard
-    </IconButton>
   );
 }

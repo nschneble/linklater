@@ -6,7 +6,7 @@
  *   - Stable aria-describedby="auth-form-error" on both form fields (new
  *     always-mounted Alert pattern means the reference is never dangling)
  *   - Error text appears in the role="alert" element when provided
- *   - The form always renders — no interstitial branch
+ *   - The form always renders – no interstitial branch
  *   - Mode-change tabs wire up correctly (login / sign up labels visible)
  *   - Forgot-password link present in login mode
  */

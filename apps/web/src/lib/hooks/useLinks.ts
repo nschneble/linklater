@@ -11,7 +11,7 @@ export type { LinksFilter, UseLinksResult };
  *
  * Splitting the implementation across three hooks keeps each concern small
  * and independently testable. This facade is what `LinksView` actually
- * calls — it does not need to know about the internals.
+ * calls – it does not need to know about the internals.
  *
  * @param filter - Whether to show unread or read links.
  * @param search - The current full-text search term (debounced by the caller).

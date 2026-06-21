@@ -12,7 +12,7 @@ import { useAuthForm } from './useAuthForm';
  * After a successful credential check, if the server returns a `mfaToken`
  * the form transitions to an `MfaView` where the user enters their TOTP or
  * recovery code. The `mfaToken` is a short-lived server-issued token that
- * identifies the pending MFA session — it is not a full JWT.
+ * identifies the pending MFA session – it is not a full JWT.
  */
 export default function AuthForm() {
   const {

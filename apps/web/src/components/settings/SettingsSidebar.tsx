@@ -11,7 +11,7 @@ interface SettingsSidebarProps {
 /**
  * Desktop sticky table of contents for the Settings page. Renders one
  * `IconListButton` per group, plus a "Back to top" action at the bottom.
- * Buttons (not anchors) — the trade-off is that middle-click-new-tab does
+ * Buttons (not anchors) – the trade-off is that middle-click-new-tab does
  * not work, which is acceptable because Settings is a single-route,
  * single-user authenticated surface with no section URLs.
  *

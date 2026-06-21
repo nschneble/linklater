@@ -12,7 +12,7 @@ import type { SourceAdapter, Suggestion } from './suggestions.types.js';
 /**
  * Frozen suggestion pool returned in TESTING_UI mode. Exported so tuffgal
  * fixtures can avoid writing colliding `Link.url` rows for the test user
- * — a fixture sharing one of these URLs would be filtered out and would
+ * – a fixture sharing one of these URLs would be filtered out and would
  * shrink the deterministic suggestion set unexpectedly.
  */
 export const TESTING_UI_SUGGESTION_POOL: readonly Suggestion[] = [
@@ -70,7 +70,7 @@ export class SuggestionsService implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     // In testing-ui mode we never want network calls to flaky external
     // sources or the recurring refresh job competing for the test database
-    // — both would inject non-determinism into visual baselines.
+    // – both would inject non-determinism into visual baselines.
     if (isTestingUi()) {
       this.logger.log(
         'TESTING_UI=1: skipping RSS scheduling and bootstrap refresh.',
@@ -109,7 +109,7 @@ export class SuggestionsService implements OnModuleInit {
    * URLs so a stumble never surfaces something the user has bookmarked.
    * @returns `{ sourceName, suggestions }`. `suggestions` may have fewer
    * than `count` entries if the chosen source had less to offer after
-   * the duplicate filter. `null` if no source had anything fresh —
+   * the duplicate filter. `null` if no source had anything fresh –
    * caller treats this as a soft failure and renders a napping fallback.
    */
   async getSuggestions(
