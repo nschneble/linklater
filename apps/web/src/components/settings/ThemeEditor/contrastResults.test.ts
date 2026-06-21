@@ -8,8 +8,24 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { computeContrastRatio, pairsForBundle } from './contrastResults';
+import {
+  computeContrastRatio,
+  pairsForBundle,
+  tokenContrastFailures,
+} from './contrastResults';
+import type { ContrastPair, ContrastResults } from './contrastResults';
 import { BUNDLES } from './useThemeOverrides';
+
+function makePair(overrides: Partial<ContrastPair>): ContrastPair {
+  return {
+    label: 'pair',
+    foreground: '--token',
+    background: '--bg',
+    criterion: '1.4.3',
+    threshold: 4.5,
+    ...overrides,
+  };
+}
 
 describe('computeContrastRatio', () => {
   it('returns 21 for black on white', () => {
@@ -76,6 +92,42 @@ const STATIC_CONTRACT: ReadonlyArray<{
   { fg: 'highlight-fg', bg: 'highlight', threshold: 4.5 },
   { fg: 'highlight-fg', bg: 'highlight-hover', threshold: 4.5 },
 ];
+
+describe('tokenContrastFailures worst-failure selection', () => {
+  it('keeps the failure with the larger deficit when one token fails two pairs of different thresholds', () => {
+    // Same foreground token in two failing pairs with DIFFERENT thresholds.
+    // Pair A: ratio 2.6 vs threshold 3 → deficit 0.4 (the milder failure).
+    // Pair B: ratio 4.0 vs threshold 4.5 → deficit 0.5 (the worse failure).
+    // The worse failure (B) must win regardless of pair order.
+    const milder = makePair({
+      label: 'token / border',
+      criterion: '1.4.11',
+      threshold: 3,
+    });
+    const worse = makePair({
+      label: 'token / text',
+      criterion: '1.4.3',
+      threshold: 4.5,
+    });
+    const results: ContrastResults = {
+      groups: [
+        {
+          bundle: 'mount',
+          label: 'mount',
+          pairs: [
+            { pair: milder, ratio: 2.6 },
+            { pair: worse, ratio: 4.0 },
+          ],
+        },
+      ],
+    } as unknown as ContrastResults;
+
+    const failure = tokenContrastFailures(results).get('--token');
+    expect(failure?.pairLabel).toBe('token / text');
+    expect(failure?.ratio).toBe(4.0);
+    expect(failure?.threshold).toBe(4.5);
+  });
+});
 
 describe('runtime pair set ⊇ static bundles.contrast.test.ts contract', () => {
   for (const bundle of BUNDLES) {

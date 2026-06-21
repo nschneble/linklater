@@ -251,7 +251,7 @@ export function tokenContrastFailures(
       if (ratio === null || ratio >= pair.threshold) continue;
       const deficit = pair.threshold - ratio;
       const existing = failures.get(pair.foreground);
-      if (existing && pair.threshold - existing.ratio >= deficit) continue;
+      if (existing && existing.threshold - existing.ratio >= deficit) continue;
       failures.set(pair.foreground, {
         ratio,
         threshold: pair.threshold,
