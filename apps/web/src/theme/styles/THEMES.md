@@ -1,7 +1,8 @@
 # Linklater Themes
 
-There are ten selectable themes, each with light and dark variants, plus
-one off-book brand-chrome theme that no user can pick (Section 7). Every
+There are eleven selectable themes: ten film themes (each with light and
+dark variants) plus the user-editable `custom` theme (Section 7), as well
+as one off-book brand-chrome theme that no user can pick (Section 7). Every
 consumer now paints from the bundle vocabulary (Section 2) or the
 universal `--focus-ring` slot (Section 3); the legacy flat-token surface
 has been retired in stages.
@@ -39,7 +40,7 @@ Twelve flat tokens have been retired:
 The `chrome-token-migration.test.ts` tripwire keeps every retired token
 in its `LEGACY_TOKENS` list to prevent re-introduction.
 
-## 2. Color bundles (all 10 themes migrated)
+## 2. Color bundles (all 10 film themes migrated)
 
 A **bundle** is a complete palette for one kind of UI surface. The seven
 bundles map onto the UI's narrative surfaces:
@@ -180,7 +181,22 @@ satisfy the bundle distinguishability contract without any
 (dE2000 ≥ 10 under all three dichromacies) or axis B (luminance gap
 ≥ 1.4×).
 
-## 7. The off-book `branding` theme
+## 7. The `custom` theme and the off-book `branding` theme
+
+### The user-editable `custom` theme
+
+`custom` is the eleventh selectable theme, but unlike the ten film themes it
+has no `.css` file. Its `{dark, light}` palette of `--{bundle}-{slot}` tokens
+(plus the universal `--focus-ring`) lives in the per-user `customTheme` JSON
+column, is edited in the Theme Editor, and is injected onto
+`document.documentElement` at runtime while `custom` is the active theme. It is
+deliberately NOT part of the `bundles.contrast.test.ts` fixtures because the
+palette is user-authored — contrast can't be validated against a fixed file.
+Instead it is validated live in the editor's contrast checker (Section 2's
+WCAG contracts, computed per edit), and per-token failures surface inline on
+each color input.
+
+### The off-book `branding` theme
 
 `branding.css` defines an eleventh `data-theme` value, `branding`, that is
 deliberately NOT one of the ten selectable themes. It is absent from the

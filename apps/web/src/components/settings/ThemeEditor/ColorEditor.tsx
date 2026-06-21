@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { TokenContrastFailure } from './contrastResults';
 import {
   VAR_GROUPS,
   isAlphaValue,
@@ -10,6 +11,12 @@ import {
 interface ColorEditorProps {
   /** The current (possibly overridden) values for all editable CSS variables. */
   colorValues: Record<ThemeVariable, string>;
+  /**
+   * Per-token worst failing contrast pair, keyed by the token's variable name.
+   * A present entry means this token's hex input fails a WCAG pair and should
+   * surface inline failure feedback (BL1).
+   */
+  contrastFailures: Map<string, TokenContrastFailure>;
   /** Called when the user changes a color via the picker or text input. */
   onOverride: (variable: ThemeVariable, value: string) => void;
   /** Called when the user clicks a per-bundle Reset button. */
@@ -25,12 +32,21 @@ interface ColorRowProps {
   variable: ThemeVariable;
   /** The current resolved value of this variable. */
   currentValue: string;
+  /** This token's worst failing contrast pair, or `undefined` when it passes. */
+  failure: TokenContrastFailure | undefined;
   /** Called when the user commits a new color value. */
   onOverride: (variable: ThemeVariable, value: string) => void;
 }
 
 const SEARCH_INPUT_ID = 'theme-editor-token-search';
 const SEARCH_STATUS_ID = 'theme-editor-token-search-status';
+
+/**
+ * How long the describedby failure text waits after the latest keystroke
+ * before updating. Stops a half-typed value (e.g. `#3`) from thrashing the
+ * note text while the user is mid-edit (BL1).
+ */
+const FAILURE_NOTE_DEBOUNCE_MS = 400;
 
 /**
  * Expands a 3-digit hex shorthand (e.g. `#abc`) to 6-digit form (`#aabbcc`).
@@ -92,6 +108,7 @@ function ColorRow({
   bundleLabel,
   variable,
   currentValue,
+  failure,
   onOverride,
 }: ColorRowProps) {
   const [inputValue, setInputValue] = useState(currentValue);
@@ -99,6 +116,18 @@ function ColorRow({
   useEffect(() => {
     setInputValue(currentValue);
   }, [currentValue]);
+
+  // Debounce the visible/announced failure note so a mid-edit value (e.g.
+  // `#3`) doesn't thrash it. `aria-invalid` is NOT debounced – it tracks the
+  // live state so the input styling reflects the current value immediately.
+  const [debouncedFailure, setDebouncedFailure] = useState(failure);
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setDebouncedFailure(failure),
+      FAILURE_NOTE_DEBOUNCE_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [failure]);
 
   function handleColorPickerChange(event: React.ChangeEvent<HTMLInputElement>) {
     const value = event.target.value;
@@ -131,9 +160,13 @@ function ColorRow({
   const swatchBackground = isAlpha ? currentValue : pickerValue;
   const pickerAriaLabel = `Color picker for ${bundleLabel} ${label.toLowerCase()}`;
   const textAriaLabel = `Value for ${bundleLabel} ${label.toLowerCase()}`;
+  const failureNoteId = `theme-editor-failure-${variable.replace(/^--/, '')}`;
+  const failureNote = debouncedFailure
+    ? `Fails contrast with ${debouncedFailure.pairLabel} — ${debouncedFailure.ratio.toFixed(1)}:1, needs ${debouncedFailure.threshold}:1`
+    : '';
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
       <label
         className="relative shrink-0 focus-within:ring-2 focus-within:ring-[var(--focus-ring)] focus-within:ring-offset-1 focus-within:ring-offset-[var(--mount-bg)] rounded-md cursor-pointer aria-disabled:cursor-not-allowed"
         aria-disabled={isAlpha}
@@ -167,10 +200,25 @@ function ColorRow({
         onChange={handleTextChange}
         onBlur={handleTextBlur}
         aria-label={textAriaLabel}
-        className="w-28 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-[0.65rem] font-mono focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] focus:border-transparent rounded-md"
+        aria-invalid={failure ? 'true' : undefined}
+        aria-describedby={debouncedFailure ? failureNoteId : undefined}
+        className="w-28 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] aria-invalid:border-[var(--alert-border)] text-[var(--mount-text)] text-[0.65rem] font-mono focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] focus:border-transparent rounded-md"
         placeholder="#000000"
         spellCheck={false}
       />
+
+      {debouncedFailure && (
+        <p
+          id={failureNoteId}
+          className="flex basis-full items-center gap-1 text-[var(--alert-highlight)] text-[0.6rem]"
+        >
+          <i
+            className="fa-solid fa-triangle-exclamation text-[0.55rem]"
+            aria-hidden="true"
+          />
+          {failureNote}
+        </p>
+      )}
     </div>
   );
 }
@@ -185,6 +233,7 @@ function ColorRow({
  */
 export default function ColorEditor({
   colorValues,
+  contrastFailures,
   onOverride,
   onResetBundle,
 }: ColorEditorProps) {
@@ -395,6 +444,7 @@ export default function ColorEditor({
                       bundleLabel={group.label}
                       variable={variable}
                       currentValue={colorValues[variable]}
+                      failure={contrastFailures.get(variable)}
                       onOverride={onOverride}
                     />
                   ))}

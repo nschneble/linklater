@@ -258,6 +258,7 @@ import { useEffect, useState } from 'react';
 - `chrome-token-migration.test.ts` is an anti-regression tripwire — don't reintroduce legacy flat tokens (`--bg-input`, `--text-muted`, `--bg-surface`, etc) on migrated files. Add new migrated files to `MIGRATED_FILES`.
 - `.themed-asset` utility opts an `<img>` into `--asset-filter` (day-for-night in dark mode). NEVER apply to QR codes, captchas, secrets, brand logos, or color-fidelity-critical user content.
 - WCAG contract enforced in `bundles.contrast.test.ts`. CVD distinguishability in `bundles.distinguishability.test.ts` (culori, delta-E 2000 ≥ 10).
+- `custom` is a user-editable theme whose `{dark,light}` palette of `--{bundle}-{slot}` tokens (plus `--focus-ring`) lives in the per-user `customTheme` column and is injected at runtime — distinct from the 10 film themes (`.css` files) and the off-book `branding` theme. Canonical token key list: `theme/customThemeTokens.ts` (`EDITABLE_VARS`/`CUSTOM_TOKEN_KEYS`); not in `bundles.contrast.test.ts` (validated live in the editor).
 
 ## Gotchas
 

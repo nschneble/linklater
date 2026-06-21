@@ -1,6 +1,6 @@
 import { FOCUS_RING } from '../../lib/styles';
-import { THEMES, type BaseTheme } from '../../theme/ThemeContext';
-import { useTheme } from '../../theme/ThemeContext';
+import { isCustomThemeConfigured } from '../../theme/customTheme';
+import { THEMES, useTheme, type BaseTheme } from '../../theme/ThemeContext';
 
 interface InlineThemeListProps {
   baseTheme: BaseTheme;
@@ -20,15 +20,7 @@ export default function InlineThemeList({
   onSelect,
 }: InlineThemeListProps) {
   const { customTheme } = useTheme();
-
-  // The Custom theme is "set up" once the user has saved at least one token
-  // (in either mode). Until then the picker entry carries an sr-only
-  // ", not set up" qualifier so screen-reader users learn its state without a
-  // differing aria-label (WCAG 2.5.3).
-  const isCustomConfigured =
-    !!customTheme &&
-    (Object.keys(customTheme.dark).length > 0 ||
-      Object.keys(customTheme.light).length > 0);
+  const isCustomConfigured = isCustomThemeConfigured(customTheme);
 
   return (
     <>

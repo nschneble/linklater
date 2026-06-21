@@ -8,8 +8,9 @@
  */
 
 import ColorEditor from './ColorEditor';
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { TokenContrastFailure } from './contrastResults';
 import {
   EDITABLE_VARS,
   VAR_GROUPS,
@@ -24,10 +25,13 @@ function buildColorValues(): Record<ThemeVariable, string> {
   ) as Record<ThemeVariable, string>;
 }
 
-function renderEditor() {
+function renderEditor(
+  contrastFailures: Map<string, TokenContrastFailure> = new Map(),
+) {
   return render(
     <ColorEditor
       colorValues={buildColorValues()}
+      contrastFailures={contrastFailures}
       onOverride={vi.fn()}
       onResetBundle={vi.fn()}
     />,
@@ -161,5 +165,53 @@ describe('ColorEditor – token search', () => {
     expect(
       within(landmark).getByLabelText(/search tokens/i),
     ).toBeInTheDocument();
+  });
+});
+
+describe('ColorEditor – per-token contrast failure (BL1)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  });
+
+  const failure: TokenContrastFailure = {
+    ratio: 2.9,
+    threshold: 4.5,
+    pairLabel: 'text / bg',
+  };
+
+  it('marks a failing token input aria-invalid and describes it after the debounce', () => {
+    // Base bundle is open by default; --base-text is a base slot row.
+    renderEditor(new Map([['--base-text', failure]]));
+
+    const input = screen.getByRole('textbox', { name: /Base text/i });
+    // aria-invalid is immediate (drives styling); the note text is debounced.
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+
+    const describedById = input.getAttribute('aria-describedby');
+    expect(describedById).toBeTruthy();
+    const note = document.getElementById(describedById as string);
+    expect(note?.textContent).toContain('Fails contrast with text / bg');
+    expect(note?.textContent).toContain('2.9:1, needs 4.5:1');
+    // Per-row notes must NOT be live regions (no alert barrage across ~50 rows).
+    expect(note?.getAttribute('role')).toBeNull();
+  });
+
+  it('leaves a passing token input valid with no note', () => {
+    renderEditor();
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    const input = screen.getByRole('textbox', { name: /Base text/i });
+    expect(input).not.toHaveAttribute('aria-invalid');
+    expect(input).not.toHaveAttribute('aria-describedby');
   });
 });

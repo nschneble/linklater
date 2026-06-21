@@ -9,6 +9,10 @@
 
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import {
+  CUSTOM_THEME_STORAGE_KEY,
+  CUSTOM_THEME_UPDATED_AT_KEY,
+} from '../storage';
 import { useThemeState } from './useThemeState';
 
 const storage: Record<string, string> = {};
@@ -41,6 +45,7 @@ beforeEach(() => {
   delete document.documentElement.dataset.cvd;
   document.documentElement.dataset.theme = 'scanner-darkly';
   document.documentElement.dataset.mode = 'dark';
+  document.documentElement.removeAttribute('style');
 });
 
 afterEach(() => {
@@ -326,5 +331,145 @@ describe('disableCvdMode', () => {
     });
 
     expect(returned).toBe('school-of-rock');
+  });
+});
+
+const root = () => document.documentElement;
+
+function seedStoredCustomTheme(theme: {
+  dark?: Record<string, string>;
+  light?: Record<string, string>;
+}) {
+  window.localStorage.setItem(
+    CUSTOM_THEME_STORAGE_KEY,
+    JSON.stringify({ dark: theme.dark ?? {}, light: theme.light ?? {} }),
+  );
+}
+
+describe('custom theme runtime injection', () => {
+  it('injects tokens onto documentElement only when baseTheme is custom', () => {
+    seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
+
+    // Not custom yet (defaults to scanner-darkly): nothing injected.
+    const { result } = renderHook(() => useThemeState());
+    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+
+    act(() => {
+      result.current.setBaseTheme('custom');
+    });
+    expect(root().style.getPropertyValue('--mount-border')).toBe('#abcabc');
+  });
+
+  it('removes every injected property when switching away from custom', () => {
+    window.localStorage.setItem('linklater_theme', 'custom');
+    seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
+
+    const { result } = renderHook(() => useThemeState());
+    expect(root().style.getPropertyValue('--mount-border')).toBe('#abcabc');
+
+    act(() => {
+      result.current.setBaseTheme('boyhood');
+    });
+    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+  });
+
+  it('re-injects the other mode and drops a token present in one mode only', () => {
+    window.localStorage.setItem('linklater_theme', 'custom');
+    window.localStorage.setItem('linklater_mode', 'dark');
+    seedStoredCustomTheme({
+      dark: { '--mount-border': '#dark11' },
+      light: { '--base-bg': '#light22' },
+    });
+
+    const { result } = renderHook(() => useThemeState());
+    expect(root().style.getPropertyValue('--mount-border')).toBe('#dark11');
+    expect(root().style.getPropertyValue('--base-bg')).toBe('');
+
+    act(() => {
+      result.current.setMode('light');
+    });
+    expect(root().style.getPropertyValue('--base-bg')).toBe('#light22');
+    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+  });
+
+  it('injects nothing without crashing when no tokens are saved', () => {
+    window.localStorage.setItem('linklater_theme', 'custom');
+
+    expect(() => renderHook(() => useThemeState())).not.toThrow();
+    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+  });
+});
+
+describe('setCustomTheme', () => {
+  it('writes both storage keys and updates state', () => {
+    const { result } = renderHook(() => useThemeState());
+    const nextTheme = { dark: { '--mount-border': '#445566' }, light: {} };
+
+    act(() => {
+      result.current.setCustomTheme(nextTheme);
+    });
+
+    expect(result.current.customTheme).toEqual(nextTheme);
+    expect(
+      JSON.parse(window.localStorage.getItem(CUSTOM_THEME_STORAGE_KEY) ?? '{}'),
+    ).toEqual(nextTheme);
+    expect(
+      window.localStorage.getItem(CUSTOM_THEME_UPDATED_AT_KEY),
+    ).not.toBeNull();
+  });
+});
+
+describe('applyServerCustomTheme', () => {
+  it('suppresses when a local change was made recently', () => {
+    window.localStorage.setItem('linklater_theme', 'custom');
+    seedStoredCustomTheme({ dark: { '--mount-border': '#local00' } });
+    const { result } = renderHook(() => useThemeState());
+    window.localStorage.setItem(
+      CUSTOM_THEME_UPDATED_AT_KEY,
+      Date.now().toString(),
+    );
+
+    act(() => {
+      result.current.applyServerCustomTheme({
+        dark: { '--mount-border': '#server0' },
+        light: {},
+      });
+    });
+
+    expect(result.current.customTheme?.dark['--mount-border']).toBe('#local00');
+  });
+
+  it('applies and writes the server value when the guard has passed', () => {
+    const { result } = renderHook(() => useThemeState());
+    window.localStorage.setItem(
+      CUSTOM_THEME_UPDATED_AT_KEY,
+      (Date.now() - 60_000).toString(),
+    );
+    const serverTheme = { dark: { '--mount-border': '#server0' }, light: {} };
+
+    act(() => {
+      result.current.applyServerCustomTheme(serverTheme);
+    });
+
+    expect(result.current.customTheme).toEqual(serverTheme);
+    expect(
+      JSON.parse(window.localStorage.getItem(CUSTOM_THEME_STORAGE_KEY) ?? '{}'),
+    ).toEqual(serverTheme);
+  });
+
+  it('removes the localStorage key when the server value is null', () => {
+    seedStoredCustomTheme({ dark: { '--mount-border': '#local00' } });
+    const { result } = renderHook(() => useThemeState());
+    window.localStorage.setItem(
+      CUSTOM_THEME_UPDATED_AT_KEY,
+      (Date.now() - 60_000).toString(),
+    );
+
+    act(() => {
+      result.current.applyServerCustomTheme(null);
+    });
+
+    expect(result.current.customTheme).toBeNull();
+    expect(window.localStorage.getItem(CUSTOM_THEME_STORAGE_KEY)).toBeNull();
   });
 });

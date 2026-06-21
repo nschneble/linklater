@@ -1,5 +1,5 @@
-import { EDITABLE_VARS } from '../components/settings/ThemeEditor/useThemeOverrides';
 import { CUSTOM_THEME_STORAGE_KEY, readLocalStorage } from './storage';
+import { EDITABLE_VARS } from './customThemeTokens';
 import type { Mode } from './constants';
 
 /**
@@ -15,8 +15,9 @@ export interface CustomTheme {
 }
 
 /**
- * The canonical set of bundle CSS variable names a Custom theme may define,
- * re-exported from the Theme Editor so the list stays single-sourced. Used to
+ * The canonical set of bundle CSS variable names a Custom theme may define.
+ * Single-sourced in `customThemeTokens.ts` (core theme data) and re-exported
+ * here for the runtime injection + trust-boundary normalize paths. Used to
  * filter server/localStorage token maps down to known keys before injecting
  * them onto `document.documentElement`, so a stale or hostile key can't leak
  * an arbitrary property onto the page.
@@ -40,6 +41,11 @@ export function normalizeCustomTheme(value: unknown): CustomTheme | null {
   };
 }
 
+/**
+ * Trust-boundary filter over UNTRUSTED entries: keeps only known token keys
+ * with string values. Distinct from `collectTokens`, which walks the trusted
+ * canonical key list via a getter.
+ */
 function pickKnownTokens(value: unknown): Record<string, string> {
   if (value === null || typeof value !== 'object') return {};
   const result: Record<string, string> = {};
@@ -49,6 +55,42 @@ function pickKnownTokens(value: unknown): Record<string, string> {
     }
   }
   return result;
+}
+
+/**
+ * Walks the given canonical `keys`, reading each value via `read`, and keeps
+ * only the non-empty string results. Shared by the editor's copy/load/save
+ * paths, which each iterate the canonical key set against a different getter
+ * (live `colorValues`, a computed-style probe). Trusted-input path; do NOT use
+ * for untrusted blobs (see `pickKnownTokens`).
+ */
+export function collectTokens(
+  keys: ReadonlyArray<string>,
+  read: (key: string) => string | undefined,
+): Record<string, string> {
+  const tokens: Record<string, string> = {};
+  for (const key of keys) {
+    const value = read(key);
+    if (typeof value === 'string' && value !== '') {
+      tokens[key] = value;
+    }
+  }
+  return tokens;
+}
+
+/**
+ * Whether the Custom theme is "set up" – the user has saved at least one token
+ * in either mode. Until then the picker entry carries an sr-only ", not set
+ * up" qualifier (WCAG 2.5.3).
+ */
+export function isCustomThemeConfigured(
+  customTheme: CustomTheme | null,
+): boolean {
+  return (
+    !!customTheme &&
+    (Object.keys(customTheme.dark).length > 0 ||
+      Object.keys(customTheme.light).length > 0)
+  );
 }
 
 /**

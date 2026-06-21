@@ -1,63 +1,35 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  BASE_AND_MOUNT_ONLY_SLOTS,
+  BASE_ONLY_SLOTS,
+  BUNDLES,
+  CARD_BUNDLES,
+  EDITABLE_VARS,
+  FOCUS_RING_VAR,
+  SLOTS,
+  type BaseAndMountOnlySlot,
+  type BaseOnlySlot,
+  type Bundle,
+  type Slot,
+  type ThemeVariable,
+} from '../../../theme/customThemeTokens';
+import { collectTokens } from '../../../theme/customTheme';
 import { useTheme } from '../../../theme/ThemeContext';
 import type { CSSProperties } from 'react';
 
-/**
- * The 7 bundles in importance order: page chrome first, then card variants
- * by frequency, then status bundles by severity.
- */
-export const BUNDLES = [
-  'base',
-  'mount',
-  'orbit',
-  'alert',
-  'warn',
-  'info',
-  'success',
-] as const;
-export type Bundle = (typeof BUNDLES)[number];
-
-/**
- * Card-style bundles (everything except base) whose border touches the page
- * surface – they must clear 3:1 against `--base-bg` per WCAG SC 1.4.11.
- */
-export const CARD_BUNDLES: ReadonlyArray<Bundle> = [
-  'mount',
-  'orbit',
-  'alert',
-  'warn',
-  'info',
-  'success',
-];
-
-const SLOTS = [
-  'bg',
-  'border',
-  'text',
-  'alt-text',
-  'highlight',
-  'highlight-fg',
-  'highlight-hover',
-] as const;
-export type Slot = (typeof SLOTS)[number];
-
-/**
- * Slots that only exist on the base bundle. `subtle-text` is the
- * lowest-emphasis text tier used by page chrome (kbd legends, helper hints,
- * chevrons) – see bundles.css preamble. Mount/orbit/state bundles do not
- * carry this slot by design.
- */
-const BASE_ONLY_SLOTS = ['subtle-text'] as const;
-export type BaseOnlySlot = (typeof BASE_ONLY_SLOTS)[number];
-
-/**
- * Slots that only exist on base + mount bundles. `input-bg` is the form
- * input fill – tuned per-surface so inputs read as inset against either
- * page chrome (base) or card surface (mount). Orbit/state bundles don't
- * host form inputs.
- */
-const BASE_AND_MOUNT_ONLY_SLOTS = ['input-bg'] as const;
-export type BaseAndMountOnlySlot = (typeof BASE_AND_MOUNT_ONLY_SLOTS)[number];
+// Re-export the canonical token vocabulary (now single-sourced in `theme/`)
+// so existing editor-side consumers keep importing it from here unchanged.
+export {
+  BUNDLES,
+  CARD_BUNDLES,
+  EDITABLE_VARS,
+  FOCUS_RING_VAR,
+  type BaseAndMountOnlySlot,
+  type BaseOnlySlot,
+  type Bundle,
+  type Slot,
+  type ThemeVariable,
+};
 
 const BUNDLE_LABELS: Record<Bundle, string> = {
   base: 'Base',
@@ -92,25 +64,7 @@ const SLOT_LABELS: Record<Slot | BaseOnlySlot | BaseAndMountOnlySlot, string> =
     'highlight-hover': 'Highlight hover',
   };
 
-/**
- * 52 bundle tokens the editor can override (7 bundles × 7 slots = 49,
- * plus 1 base-only `subtle-text` slot + 2 base/mount `input-bg` slots).
- * Per-bundle, `bundles.css` may declare fewer – base/mount/orbit omit
- * `highlight-fg` / `highlight-hover`. The editor still exposes overrides
- * for those so users can add them.
- */
-export const EDITABLE_VARS = [
-  ...BUNDLES.flatMap((bundle) =>
-    SLOTS.map((slot) => `--${bundle}-${slot}` as const),
-  ),
-  ...BASE_ONLY_SLOTS.map((slot) => `--base-${slot}` as const),
-  ...BASE_AND_MOUNT_ONLY_SLOTS.flatMap(
-    (slot) => [`--base-${slot}`, `--mount-${slot}`] as const,
-  ),
-];
-
-/** The union of all CSS variable names that the editor can modify. */
-export type ThemeVariable = (typeof EDITABLE_VARS)[number];
+const FOCUS_RING_LABEL = 'Focus ring';
 
 /**
  * Groupings used by `ColorEditor` to render the variable list with labeled
@@ -122,7 +76,6 @@ export interface BundleGroup {
   description: string;
   items: Array<{
     variable: ThemeVariable;
-    slot: Slot | BaseOnlySlot | BaseAndMountOnlySlot;
     label: string;
   }>;
 }
@@ -134,22 +87,25 @@ export const VAR_GROUPS: BundleGroup[] = BUNDLES.map((bundle) => ({
   items: [
     ...SLOTS.map((slot) => ({
       variable: `--${bundle}-${slot}` as ThemeVariable,
-      slot,
       label: SLOT_LABELS[slot],
     })),
     ...(bundle === 'base'
       ? BASE_ONLY_SLOTS.map((slot) => ({
           variable: `--base-${slot}` as ThemeVariable,
-          slot,
           label: SLOT_LABELS[slot],
         }))
       : []),
     ...(bundle === 'base' || bundle === 'mount'
       ? BASE_AND_MOUNT_ONLY_SLOTS.map((slot) => ({
           variable: `--${bundle}-${slot}` as ThemeVariable,
-          slot,
           label: SLOT_LABELS[slot],
         }))
+      : []),
+    // The universal focus ring rides on the base group: it is page-chrome
+    // adjacent and has no bundle of its own. Editing it here makes its
+    // contrast verifiable in the live checker (W1).
+    ...(bundle === 'base'
+      ? [{ variable: FOCUS_RING_VAR as ThemeVariable, label: FOCUS_RING_LABEL }]
       : []),
   ],
 }));
@@ -236,15 +192,21 @@ export function useThemeOverrides(): UseThemeOverridesResult {
   }, []);
 
   const loadOverrides = useCallback((tokens: Record<string, string>) => {
-    const next: Partial<Record<ThemeVariable, string>> = {};
+    // Seed BOTH overrides and colorValues for the full canonical set. A copied
+    // theme may resolve fewer than every key; for those gaps fall back to the
+    // current computed value so colorValues / inputs / the contrast checker /
+    // the saved snapshot can never show a stale pre-copy value (W3).
+    const computed = readAllComputedVars();
+    const next = collectTokens(
+      EDITABLE_VARS,
+      (variable) => tokens[variable],
+    ) as Partial<Record<ThemeVariable, string>>;
+    const seededColorValues = { ...computed };
     for (const variable of EDITABLE_VARS) {
-      const value = tokens[variable];
-      if (typeof value === 'string' && value !== '') {
-        next[variable] = value;
-      }
+      seededColorValues[variable] = next[variable] ?? computed[variable];
     }
     setOverrides(next);
-    setColorValues((previous) => ({ ...previous, ...next }));
+    setColorValues(seededColorValues);
   }, []);
 
   const resetOverrides = useCallback(() => {
@@ -263,6 +225,10 @@ export function useThemeOverrides(): UseThemeOverridesResult {
     const variablesForBundle = slotsForBundle.map(
       (slot) => `--${bundle}-${slot}` as ThemeVariable,
     );
+    // The focus ring rides on the base group, so resetting base resets it too.
+    if (bundle === 'base') {
+      variablesForBundle.push(FOCUS_RING_VAR);
+    }
 
     setOverrides((previous) => {
       const next = { ...previous };

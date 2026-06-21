@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ESCAPE_HATCH_DARK } from './escapeHatchStyles';
 
 const SAVE_DESCRIPTION_ID = 'theme-editor-save-description';
 const SAVE_NON_CUSTOM_HINT =
@@ -74,12 +75,8 @@ export default function ThemeSaveBar({
         aria-disabled={isInactive}
         aria-busy={isSaving}
         aria-describedby={isCustom ? undefined : SAVE_DESCRIPTION_ID}
-        style={{
-          backgroundColor: '#0a0a0a',
-          color: '#fafafa',
-          borderColor: '#404040',
-        }}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg active:scale-[0.96] aria-disabled:opacity-50 aria-disabled:active:scale-100 aria-disabled:cursor-not-allowed cursor-pointer transition-transform"
+        style={ESCAPE_HATCH_DARK}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg active:scale-[0.96] aria-disabled:opacity-50 aria-disabled:active:scale-100 aria-disabled:cursor-not-allowed transition-transform cursor-pointer"
       >
         {isSaving && (
           <i

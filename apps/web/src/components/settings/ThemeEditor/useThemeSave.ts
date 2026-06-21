@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { updateMe } from '../../../lib/api';
-import { CUSTOM_TOKEN_KEYS } from '../../../theme/customTheme';
+import { collectTokens, CUSTOM_TOKEN_KEYS } from '../../../theme/customTheme';
 import { useTheme } from '../../../theme/ThemeContext';
 import type { CustomTheme } from '../../../theme/customTheme';
 import type { Mode } from '../../../theme/constants';
@@ -17,13 +17,10 @@ function buildNextCustomTheme(
   mode: Mode,
   colorValues: Record<ThemeVariable, string>,
 ): CustomTheme {
-  const modeTokens: Record<string, string> = {};
-  for (const variable of CUSTOM_TOKEN_KEYS) {
-    const value = colorValues[variable as ThemeVariable];
-    if (typeof value === 'string' && value !== '') {
-      modeTokens[variable] = value;
-    }
-  }
+  const modeTokens = collectTokens(
+    CUSTOM_TOKEN_KEYS,
+    (variable) => colorValues[variable as ThemeVariable],
+  );
   return {
     dark: mode === 'dark' ? modeTokens : (existing?.dark ?? {}),
     light: mode === 'light' ? modeTokens : (existing?.light ?? {}),

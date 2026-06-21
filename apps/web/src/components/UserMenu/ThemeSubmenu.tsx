@@ -1,6 +1,6 @@
-import { CVD_BASE_THEME, THEMES } from '../../theme/ThemeContext';
+import { CVD_BASE_THEME, THEMES, useTheme } from '../../theme/ThemeContext';
 import { FOCUS_RING, menuRevealStyle } from '../../lib/styles';
-import { useTheme } from '../../theme/ThemeContext';
+import { isCustomThemeConfigured } from '../../theme/customTheme';
 import type { BaseTheme } from '../../theme/ThemeContext';
 import type { RefObject } from 'react';
 
@@ -83,15 +83,7 @@ export default function ThemeSubmenu({
   flyoutReference,
 }: ThemeSubmenuProps) {
   const { customTheme, isCvdMode } = useTheme();
-
-  // The Custom theme is "set up" once the user has saved at least one token
-  // (in either mode). Until then the picker entry carries an sr-only
-  // ", not set up" qualifier so screen-reader users learn its state without a
-  // differing aria-label (WCAG 2.5.3).
-  const isCustomConfigured =
-    !!customTheme &&
-    (Object.keys(customTheme.dark).length > 0 ||
-      Object.keys(customTheme.light).length > 0);
+  const isCustomConfigured = isCustomThemeConfigured(customTheme);
 
   function handleOpenOrFocusFlyout() {
     if (showSubmenu) {

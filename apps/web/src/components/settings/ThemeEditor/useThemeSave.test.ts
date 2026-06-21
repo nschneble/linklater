@@ -115,4 +115,38 @@ describe('useThemeSave', () => {
     expect(outcome).toBe(true);
     expect(result.current.error).toBeNull();
   });
+
+  it('suppresses a re-entrant save while one is already in flight', async () => {
+    // Hold the first updateMe open so isSaving stays true across the gap.
+    let releaseUpdate: () => void = () => undefined;
+    vi.mocked(updateMe).mockReturnValue(
+      new Promise<void>((resolve) => {
+        releaseUpdate = resolve;
+      }),
+    );
+
+    const { result } = renderHook(() => useThemeSave());
+
+    // First save: starts and parks on the pending updateMe (sets isSaving).
+    let firstSave: Promise<boolean> | undefined;
+    act(() => {
+      firstSave = result.current.save(buildColorValues('#555555'));
+    });
+    expect(result.current.isSaving).toBe(true);
+
+    // Second save while in flight: the re-render gave us a save closure that
+    // sees isSaving=true, so it short-circuits and never hits updateMe again.
+    let secondOutcome: boolean | undefined;
+    await act(async () => {
+      secondOutcome = await result.current.save(buildColorValues('#666666'));
+    });
+    expect(secondOutcome).toBe(false);
+    expect(updateMe).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      releaseUpdate();
+      await firstSave;
+    });
+    expect(updateMe).toHaveBeenCalledTimes(1);
+  });
 });

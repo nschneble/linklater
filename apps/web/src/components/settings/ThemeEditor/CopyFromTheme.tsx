@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { CUSTOM_TOKEN_KEYS } from '../../../theme/customTheme';
+import { collectTokens, CUSTOM_TOKEN_KEYS } from '../../../theme/customTheme';
+import { ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
 import { THEMES } from '../../../theme/constants';
 import type { BaseTheme, Mode } from '../../../theme/constants';
 
@@ -37,14 +38,9 @@ function readThemeTokens(theme: BaseTheme, mode: Mode): Record<string, string> {
   document.body.appendChild(probe);
   try {
     const computed = getComputedStyle(probe);
-    const tokens: Record<string, string> = {};
-    for (const variable of CUSTOM_TOKEN_KEYS) {
-      const value = computed.getPropertyValue(variable).trim();
-      if (value !== '') {
-        tokens[variable] = value;
-      }
-    }
-    return tokens;
+    return collectTokens(CUSTOM_TOKEN_KEYS, (variable) =>
+      computed.getPropertyValue(variable).trim(),
+    );
   } finally {
     document.body.removeChild(probe);
   }
@@ -114,11 +110,7 @@ export default function CopyFromTheme({
           id={COPY_SELECT_ID}
           value={selected}
           onChange={(event) => setSelected(event.target.value)}
-          style={{
-            backgroundColor: '#fafafa',
-            color: '#0a0a0a',
-            borderColor: '#404040',
-          }}
+          style={ESCAPE_HATCH_LIGHT}
           className="px-2.5 py-1.5 border text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg cursor-pointer"
         >
           <option value="">Select a theme to copy…</option>
@@ -135,12 +127,8 @@ export default function CopyFromTheme({
         onClick={handleCopy}
         aria-disabled={isInactive}
         aria-describedby={COPY_DESCRIPTION_ID}
-        style={{
-          backgroundColor: '#fafafa',
-          color: '#0a0a0a',
-          borderColor: '#404040',
-        }}
-        className="px-2.5 py-1.5 border text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg active:scale-[0.96] aria-disabled:opacity-50 aria-disabled:active:scale-100 aria-disabled:cursor-not-allowed cursor-pointer transition-transform"
+        style={ESCAPE_HATCH_LIGHT}
+        className="px-2.5 py-1.5 border text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg active:scale-[0.96] aria-disabled:opacity-50 aria-disabled:active:scale-100 aria-disabled:cursor-not-allowed transition-transform cursor-pointer"
       >
         Copy
       </button>

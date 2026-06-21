@@ -121,6 +121,28 @@ describe('useThemeOverrides', () => {
     expect(result.current.colorValues['--alert-bg']).not.toBe('#abcdef');
   });
 
+  it('seeds the full canonical set on loadOverrides so un-copied keys are not stale (W3)', () => {
+    const { result } = renderHook(() => useThemeOverrides());
+
+    // Pre-copy edit on a key the incoming copy will NOT include.
+    act(() => {
+      result.current.setOverride('--mount-bg', '#abcdef');
+    });
+    expect(result.current.colorValues['--mount-bg']).toBe('#abcdef');
+
+    // Copy a palette that resolves ONLY --alert-text.
+    act(() => {
+      result.current.loadOverrides({ '--alert-text': '#fee2e2' });
+    });
+
+    // The copied key lands in both views.
+    expect(result.current.colorValues['--alert-text']).toBe('#fee2e2');
+    expect(result.current.overrideStyle).toEqual({ '--alert-text': '#fee2e2' });
+    // The previously-edited, un-copied key is re-seeded from computed (empty in
+    // jsdom) – it must NOT retain its stale pre-copy override value.
+    expect(result.current.colorValues['--mount-bg']).not.toBe('#abcdef');
+  });
+
   it('never mutates document.documentElement.style', () => {
     const { result } = renderHook(() => useThemeOverrides());
     act(() => {

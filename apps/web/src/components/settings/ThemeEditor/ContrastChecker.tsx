@@ -106,7 +106,12 @@ export default function ContrastChecker({ results }: ContrastCheckerProps) {
     () => new Set<GroupResult['group']>([...BUNDLES, 'focus']),
   );
 
-  const { totalFailures, totalPairs } = results;
+  const { totalFailures, totalUnverified, totalPairs } = results;
+  // Unverified pairs (alpha composites / unset focus ring) count as "needs
+  // attention": the editor cannot prove they pass, so the aggregate must not
+  // claim "all passing" while any remain, and the default "Failures only"
+  // view keeps them visible (W1b – SC 1.4.11, SC 2.4.13).
+  const needsAttention = totalFailures + totalUnverified;
 
   function toggleGroup(group: GroupResult['group']) {
     setOpenGroups((previous) => {
@@ -129,9 +134,11 @@ export default function ContrastChecker({ results }: ContrastCheckerProps) {
         className="flex items-center justify-between gap-2"
       >
         <p className="text-[var(--mount-alt-text)] text-[0.65rem]">
-          {totalFailures === 0
+          {needsAttention === 0
             ? `All ${totalPairs} pairs passing`
-            : `${totalFailures} of ${totalPairs} pairs failing`}
+            : totalUnverified === 0
+              ? `${totalFailures} of ${totalPairs} pairs failing`
+              : `${totalFailures} of ${totalPairs} pairs failing, ${totalUnverified} unverified`}
         </p>
         <button
           type="button"
@@ -146,7 +153,7 @@ export default function ContrastChecker({ results }: ContrastCheckerProps) {
       {results.groups.map((result) => {
         const visiblePairs = failuresOnly
           ? result.pairs.filter(
-              ({ pair, ratio }) => ratio !== null && ratio < pair.threshold,
+              ({ pair, ratio }) => ratio === null || ratio < pair.threshold,
             )
           : result.pairs;
         if (visiblePairs.length === 0) return null;
@@ -196,10 +203,10 @@ export default function ContrastChecker({ results }: ContrastCheckerProps) {
         );
       })}
 
-      {failuresOnly && totalFailures === 0 && (
+      {failuresOnly && needsAttention === 0 && (
         <p className="text-[var(--mount-alt-text)] text-[0.65rem] italic">
-          No failing pairs. Toggle &ldquo;Show all&rdquo; to see all{' '}
-          {totalPairs} pairs.
+          No failing or unverified pairs. Toggle &ldquo;Show all&rdquo; to see
+          all {totalPairs} pairs.
         </p>
       )}
     </div>

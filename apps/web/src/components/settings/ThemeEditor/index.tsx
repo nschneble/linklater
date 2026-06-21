@@ -11,7 +11,8 @@ import ContrastChecker from './ContrastChecker';
 import CopyFromTheme, { type CopiedTokens } from './CopyFromTheme';
 import ThemeSaveBar from './ThemeSaveBar';
 import Toast from '../../common/Toast';
-import { useContrastResults } from './contrastResults';
+import { ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
+import { tokenContrastFailures, useContrastResults } from './contrastResults';
 import { useThemeOverrides } from './useThemeOverrides';
 import { useThemeSave } from './useThemeSave';
 import { useToast } from '../../../lib/hooks/useToast';
@@ -57,19 +58,17 @@ export default function ThemeEditor() {
 
   const isCustom = baseTheme === 'custom';
 
-  // The focus ring is a universal chrome token, not an editable bundle slot,
-  // so it is read live from the document root rather than from `colorValues`.
-  // For the custom theme it currently resolves to empty (no per-theme
-  // `--focus-ring` cascade), so its pairs report "unverified" until a custom
-  // focus-ring source lands.
-  const focusRingValue =
-    typeof document === 'undefined'
-      ? ''
-      : getComputedStyle(document.documentElement)
-          .getPropertyValue('--focus-ring')
-          .trim();
+  // The focus ring is now an editable, injected token for the custom theme
+  // (W1), so it flows through `colorValues` like any bundle slot rather than
+  // being read separately from the document root.
+  const contrastResults = useContrastResults(colorValues);
 
-  const contrastResults = useContrastResults(colorValues, focusRingValue);
+  // Per-token failing-pair lookup so each hex input can surface its own
+  // contrast failure inline (BL1). Memoized on the results object identity.
+  const contrastFailures = useMemo(
+    () => tokenContrastFailures(contrastResults),
+    [contrastResults],
+  );
 
   function handleThemeChange(event: React.ChangeEvent<HTMLSelectElement>) {
     setBaseTheme(event.target.value as BaseTheme);
@@ -99,14 +98,6 @@ export default function ThemeEditor() {
   // contract (a11y brief B1).
   const toastView = useMemo(() => resolveToast(toast.message), [toast.message]);
 
-  // Fixed neutral palette for the editor's own critical controls. Bundle
-  // edits cannot affect these, so the user always has a visible escape.
-  const escapeHatchStyle = {
-    backgroundColor: '#fafafa',
-    color: '#0a0a0a',
-    borderColor: '#404040',
-  } as const;
-
   return (
     <div className="max-w-5xl mx-auto">
       <div className="flex flex-wrap items-start gap-3 mb-4">
@@ -124,7 +115,7 @@ export default function ThemeEditor() {
           <select
             value={baseTheme}
             onChange={handleThemeChange}
-            style={escapeHatchStyle}
+            style={ESCAPE_HATCH_LIGHT}
             className="px-2.5 py-1.5 border text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg cursor-pointer"
             aria-label="Select theme"
           >
@@ -136,7 +127,7 @@ export default function ThemeEditor() {
           </select>
 
           <div
-            style={escapeHatchStyle}
+            style={ESCAPE_HATCH_LIGHT}
             className="relative inline-flex p-0.5 border rounded-full"
             role="group"
             aria-label="Color mode"
@@ -162,7 +153,7 @@ export default function ThemeEditor() {
           <button
             type="button"
             onClick={resetOverrides}
-            style={escapeHatchStyle}
+            style={ESCAPE_HATCH_LIGHT}
             className="px-2.5 py-1.5 border text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg active:scale-[0.96] cursor-pointer"
           >
             Reset all
@@ -188,6 +179,7 @@ export default function ThemeEditor() {
             </h2>
             <ColorEditor
               colorValues={colorValues}
+              contrastFailures={contrastFailures}
               onOverride={setOverride}
               onResetBundle={resetBundle}
             />
@@ -234,9 +226,10 @@ interface ToastView {
 /**
  * Resolves the editor's toast message key into a `<Toast>` variant and visible
  * copy. The success/error variant is chosen HERE at the render site (the
- * `useToast` hook holds only a message string), per a11y brief B1.
+ * `useToast` hook holds only a message string), per a11y brief B1. Exported for
+ * direct unit coverage of the `copied:<n>:<label>` string protocol (W6).
  */
-function resolveToast(message: string | null): ToastView | null {
+export function resolveToast(message: string | null): ToastView | null {
   if (message === null) return null;
   if (message === 'saved') {
     return { message: 'Custom theme saved.', variant: 'success' };

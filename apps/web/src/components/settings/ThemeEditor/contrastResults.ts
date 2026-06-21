@@ -41,7 +41,10 @@ export const SC_LABELS: Record<ContrastPair['criterion'], string> = {
  * same surfaces the static `bundles.contrast.test.ts` suite enforces. The
  * editor checks the three highest-frequency chrome surfaces (page, card,
  * menu); the static suite covers the remaining state-bundle bgs, which use
- * alpha composites the runtime hex math cannot resolve.
+ * alpha composites the runtime hex math cannot resolve. For the Custom theme
+ * `--focus-ring` is now an editable, injected token (W1), so these pairs
+ * resolve from live `colorValues` like any other slot instead of reading
+ * "unverified".
  */
 const FOCUS_RING_SURFACES: ReadonlyArray<{
   label: string;
@@ -201,49 +204,94 @@ export interface GroupResult {
   group: Bundle | 'focus';
   label: string;
   pairs: Array<{ pair: ContrastPair; ratio: number | null }>;
+  /** Pairs whose ratio resolved AND fell below threshold. */
   failureCount: number;
+  /** Pairs whose ratio could not be computed (alpha / unset token). */
+  unverifiedCount: number;
+  /** Pairs whose ratio resolved (verified, pass or fail). */
   totalCount: number;
 }
 
 export interface ContrastResults {
   groups: GroupResult[];
   totalFailures: number;
+  /** Total pairs that could not be verified across all groups. */
+  totalUnverified: number;
   totalPairs: number;
 }
 
 /**
- * Resolves the value for a contrast pair endpoint. Bundle slots come from the
- * editor's live `colorValues`; `--focus-ring` is not an editable token (it is
- * not in `EDITABLE_VARS`), so it is read from the live computed style of the
- * document root instead. Returns an empty string for any unresolved token so
- * `computeContrastRatio` reports it as unverified ("–") rather than throwing.
+ * A single token's worst FAILING contrast pair, used by `ColorEditor` to
+ * surface per-row failure feedback on the hex input (BL1). Only failing pairs
+ * (resolved ratio below threshold) produce an entry; passing and unverified
+ * pairs do not, so a row only ever reports a concrete, color-independent
+ * "fails contrast" note (SC 3.3.1, SC 1.4.1).
+ */
+export interface TokenContrastFailure {
+  /** Measured ratio of the failing pair. */
+  ratio: number;
+  /** Threshold the pair must clear. */
+  threshold: number;
+  /** Human-readable label for the pair (e.g. "text / bg"). */
+  pairLabel: string;
+}
+
+/**
+ * Builds a map from each token (a pair's FOREGROUND variable) to its worst
+ * failing pair – the one furthest below threshold. Tokens that appear as a
+ * foreground in several pairs (e.g. the focus ring across three bgs) report
+ * their single most severe failure so the row note stays focused.
+ */
+export function tokenContrastFailures(
+  results: ContrastResults,
+): Map<string, TokenContrastFailure> {
+  const failures = new Map<string, TokenContrastFailure>();
+  for (const group of results.groups) {
+    for (const { pair, ratio } of group.pairs) {
+      if (ratio === null || ratio >= pair.threshold) continue;
+      const deficit = pair.threshold - ratio;
+      const existing = failures.get(pair.foreground);
+      if (existing && pair.threshold - existing.ratio >= deficit) continue;
+      failures.set(pair.foreground, {
+        ratio,
+        threshold: pair.threshold,
+        pairLabel: pair.label,
+      });
+    }
+  }
+  return failures;
+}
+
+/**
+ * Resolves the value for a contrast pair endpoint from the editor's live
+ * `colorValues`. `--focus-ring` is now an editable, injected token (W1), so it
+ * is looked up here like any bundle slot. Returns an empty string for any
+ * unresolved token so `computeContrastRatio` reports it as unverified ("–")
+ * rather than throwing.
  */
 function resolveValue(
   variable: string,
   colorValues: Record<ThemeVariable, string>,
-  focusRingValue: string,
 ): string {
-  if (variable === '--focus-ring') return focusRingValue;
   return colorValues[variable as ThemeVariable] ?? '';
 }
 
 /**
  * Computes WCAG contrast results for every bundle's contract pairs plus the
- * focus-ring pairs. Memoized on its inputs so live edits trigger a single
- * recompute. `focusRingValue` is read by the caller from the live computed
- * style (the focus ring is not user-editable in this wave).
+ * focus-ring pairs. Memoized on `colorValues` so live edits trigger a single
+ * recompute. The focus ring is read from `colorValues` like any other token
+ * now that it is editable for the Custom theme (W1).
  */
 export function useContrastResults(
   colorValues: Record<ThemeVariable, string>,
-  focusRingValue: string,
 ): ContrastResults {
   return useMemo(() => {
     const bundleGroups: GroupResult[] = BUNDLES.map((bundle) => {
       const pairs = pairsForBundle(bundle).map((pair) => ({
         pair,
         ratio: computeContrastRatio(
-          resolveValue(pair.foreground, colorValues, focusRingValue),
-          resolveValue(pair.background, colorValues, focusRingValue),
+          resolveValue(pair.foreground, colorValues),
+          resolveValue(pair.background, colorValues),
         ),
       }));
       return buildGroup(bundle, labelFor(bundle), pairs);
@@ -252,8 +300,8 @@ export function useContrastResults(
     const focusPairs = focusRingPairs().map((pair) => ({
       pair,
       ratio: computeContrastRatio(
-        resolveValue(pair.foreground, colorValues, focusRingValue),
-        resolveValue(pair.background, colorValues, focusRingValue),
+        resolveValue(pair.foreground, colorValues),
+        resolveValue(pair.background, colorValues),
       ),
     }));
     const focusGroup = buildGroup('focus', 'Focus ring', focusPairs);
@@ -262,9 +310,13 @@ export function useContrastResults(
     return {
       groups,
       totalFailures: groups.reduce((sum, item) => sum + item.failureCount, 0),
-      totalPairs: groups.reduce((sum, item) => sum + item.totalCount, 0),
+      totalUnverified: groups.reduce(
+        (sum, item) => sum + item.unverifiedCount,
+        0,
+      ),
+      totalPairs: groups.reduce((sum, item) => sum + item.pairs.length, 0),
     };
-  }, [colorValues, focusRingValue]);
+  }, [colorValues]);
 }
 
 function labelFor(bundle: Bundle): string {
@@ -283,6 +335,7 @@ function buildGroup(
     failureCount: pairs.filter(
       ({ pair, ratio }) => ratio !== null && ratio < pair.threshold,
     ).length,
+    unverifiedCount: pairs.filter(({ ratio }) => ratio === null).length,
     totalCount: pairs.filter(({ ratio }) => ratio !== null).length,
   };
 }
