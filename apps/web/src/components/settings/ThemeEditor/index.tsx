@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react';
 import {
   THEMES,
   useTheme,
@@ -7,7 +8,13 @@ import {
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import ContrastChecker from './ContrastChecker';
+import CopyFromTheme, { type CopiedTokens } from './CopyFromTheme';
+import ThemeSaveBar from './ThemeSaveBar';
+import Toast from '../../common/Toast';
+import { useContrastResults } from './contrastResults';
 import { useThemeOverrides } from './useThemeOverrides';
+import { useThemeSave } from './useThemeSave';
+import { useToast } from '../../../lib/hooks/useToast';
 
 /**
  * Full-page theme editor accessible from the user menu under "Theme
@@ -19,23 +26,21 @@ import { useThemeOverrides } from './useThemeOverrides';
  * and are applied as inline custom-property styles on a wrapper that
  * scopes the showcase column only – the editor chrome inherits from the
  * active theme at `:root`, so the user can never edit themselves into an
- * unrecoverable state. Overrides reset when the user navigates away.
+ * unrecoverable state.
  *
- * The editor also supports switching between themes (using the base theme
- * from `ThemeContext`) and toggling light/dark mode – both of which clear
- * any active overrides so the new theme's values are the new baseline.
+ * Persistence is custom-only. When the editor's selected theme is `custom`,
+ * a Save button persists the current mode's tokens (localStorage +
+ * `PATCH /users/me`) and a "Copy from theme" control seeds the editor from
+ * any built-in theme's palette. For the 10 built-in themes both controls
+ * stay present but `aria-disabled` (a11y brief B6); the editor remains
+ * preview-only. Built-in theme edits still reset on navigation.
  *
  * Layout: a left panel with `ColorEditor` and `ContrastChecker`, and a
- * right panel with `ComponentShowcase` for a live preview of the bundle
- * tokens and key UI components.
+ * right panel with `ComponentShowcase` for a live preview.
  *
  * Reset, theme select, and mode toggle use fixed neutral colors instead
  * of bundle tokens so they remain readable as escape hatches when the
  * user edits the bundles to invalid values mid-session.
- *
- * NOTE: Changes made in the editor are not persisted. They only affect the
- * current browser session. Theme selection (via the UserMenu) is the
- * persistent preference.
  */
 export default function ThemeEditor() {
   const { baseTheme, mode, setBaseTheme, setMode } = useTheme();
@@ -43,9 +48,28 @@ export default function ThemeEditor() {
     colorValues,
     overrideStyle,
     setOverride,
+    loadOverrides,
     resetOverrides,
     resetBundle,
   } = useThemeOverrides();
+  const { isSaving, save } = useThemeSave();
+  const toast = useToast();
+
+  const isCustom = baseTheme === 'custom';
+
+  // The focus ring is a universal chrome token, not an editable bundle slot,
+  // so it is read live from the document root rather than from `colorValues`.
+  // For the custom theme it currently resolves to empty (no per-theme
+  // `--focus-ring` cascade), so its pairs report "unverified" until a custom
+  // focus-ring source lands.
+  const focusRingValue =
+    typeof document === 'undefined'
+      ? ''
+      : getComputedStyle(document.documentElement)
+          .getPropertyValue('--focus-ring')
+          .trim();
+
+  const contrastResults = useContrastResults(colorValues, focusRingValue);
 
   function handleThemeChange(event: React.ChangeEvent<HTMLSelectElement>) {
     setBaseTheme(event.target.value as BaseTheme);
@@ -54,6 +78,26 @@ export default function ThemeEditor() {
   function handleModeToggle(nextMode: Mode) {
     setMode(nextMode);
   }
+
+  const handleSave = useCallback(async () => {
+    const succeeded = await save(colorValues);
+    toast.show(succeeded ? 'saved' : 'save-failed');
+  }, [colorValues, save, toast]);
+
+  const handleCopy = useCallback(
+    (tokens: CopiedTokens, themeLabel: string) => {
+      const modeTokens = tokens[mode];
+      loadOverrides(modeTokens);
+      const count = Object.keys(modeTokens).length;
+      toast.show(`copied:${count}:${themeLabel}`);
+    },
+    [loadOverrides, mode, toast],
+  );
+
+  // The toast holds only a message key; the variant (success vs error) and the
+  // visible copy are resolved here at the render site, per the useToast
+  // contract (a11y brief B1).
+  const toastView = useMemo(() => resolveToast(toast.message), [toast.message]);
 
   // Fixed neutral palette for the editor's own critical controls. Bundle
   // edits cannot affect these, so the user always has a visible escape.
@@ -72,7 +116,7 @@ export default function ThemeEditor() {
           </h1>
           <p className="mt-0.5 text-[var(--base-alt-text)] text-xs">
             Edit the 52 bundle tokens of the active theme and see changes live.
-            Resets when you navigate away.
+            Save and copy are available for the custom theme.
           </p>
         </div>
 
@@ -126,6 +170,16 @@ export default function ThemeEditor() {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+        <CopyFromTheme isCustom={isCustom} onCopy={handleCopy} />
+        <ThemeSaveBar
+          isCustom={isCustom}
+          isSaving={isSaving}
+          failingCount={contrastResults.totalFailures}
+          onSave={handleSave}
+        />
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="shrink-0 w-full lg:w-80 space-y-4">
           <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
@@ -143,7 +197,7 @@ export default function ThemeEditor() {
             <h2 className="mb-3 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
               Contrast (WCAG 2.1)
             </h2>
-            <ContrastChecker colorValues={colorValues} />
+            <ContrastChecker results={contrastResults} />
           </div>
         </div>
 
@@ -160,6 +214,45 @@ export default function ThemeEditor() {
           </div>
         </div>
       </div>
+
+      {toastView && (
+        <Toast
+          message={toastView.message}
+          variant={toastView.variant}
+          onDismiss={toast.dismiss}
+        />
+      )}
     </div>
   );
+}
+
+interface ToastView {
+  message: string;
+  variant: 'success' | 'error';
+}
+
+/**
+ * Resolves the editor's toast message key into a `<Toast>` variant and visible
+ * copy. The success/error variant is chosen HERE at the render site (the
+ * `useToast` hook holds only a message string), per a11y brief B1.
+ */
+function resolveToast(message: string | null): ToastView | null {
+  if (message === null) return null;
+  if (message === 'saved') {
+    return { message: 'Custom theme saved.', variant: 'success' };
+  }
+  if (message === 'save-failed') {
+    return { message: 'Could not save custom theme.', variant: 'error' };
+  }
+  if (message.startsWith('copied:')) {
+    const withoutPrefix = message.slice('copied:'.length);
+    const separatorIndex = withoutPrefix.indexOf(':');
+    const count = withoutPrefix.slice(0, separatorIndex);
+    const themeLabel = withoutPrefix.slice(separatorIndex + 1);
+    return {
+      message: `Copied ${count} tokens from ${themeLabel}`,
+      variant: 'success',
+    };
+  }
+  return { message, variant: 'success' };
 }

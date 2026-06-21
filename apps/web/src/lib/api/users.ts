@@ -1,8 +1,10 @@
 import { apiFetch } from './core';
+import type { CustomTheme } from '../../theme/customTheme';
 
 export function updateMe(input: {
-  cvdMode?: boolean;
   currentPassword?: string;
+  customTheme?: CustomTheme;
+  cvdMode?: boolean;
   mode?: string;
   password?: string;
   theme?: string;

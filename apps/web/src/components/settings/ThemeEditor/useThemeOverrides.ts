@@ -191,6 +191,13 @@ export interface UseThemeOverridesResult {
    */
   overrideStyle: CSSProperties;
   setOverride: (variable: ThemeVariable, value: string) => void;
+  /**
+   * Bulk-replaces the override map with a fresh set of token values – used by
+   * "Copy from theme" to seed every editable variable from another theme's
+   * resolved palette in a single update. Only keys in `EDITABLE_VARS` are
+   * applied; unknown keys are ignored. Replaces any in-progress edits.
+   */
+  loadOverrides: (tokens: Record<string, string>) => void;
   resetOverrides: () => void;
   resetBundle: (bundle: Bundle) => void;
 }
@@ -226,6 +233,18 @@ export function useThemeOverrides(): UseThemeOverridesResult {
   const setOverride = useCallback((variable: ThemeVariable, value: string) => {
     setOverrides((previous) => ({ ...previous, [variable]: value }));
     setColorValues((previous) => ({ ...previous, [variable]: value }));
+  }, []);
+
+  const loadOverrides = useCallback((tokens: Record<string, string>) => {
+    const next: Partial<Record<ThemeVariable, string>> = {};
+    for (const variable of EDITABLE_VARS) {
+      const value = tokens[variable];
+      if (typeof value === 'string' && value !== '') {
+        next[variable] = value;
+      }
+    }
+    setOverrides(next);
+    setColorValues((previous) => ({ ...previous, ...next }));
   }, []);
 
   const resetOverrides = useCallback(() => {
@@ -272,6 +291,7 @@ export function useThemeOverrides(): UseThemeOverridesResult {
     colorValues,
     overrideStyle,
     setOverride,
+    loadOverrides,
     resetOverrides,
     resetBundle,
   };
