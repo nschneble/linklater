@@ -14,6 +14,12 @@ model User {
   theme   String  @default("scanner-darkly")
   cvdMode Boolean @default(false)
 
+  // Per-user editable "Custom" theme. Holds a { dark, light } map of bundle
+  // token names (e.g. "--mount-border") to CSS color strings. Null until the
+  // user saves a Custom theme via the Theme Editor. Validation of the exact
+  // token set happens client-side; the column stays a free-form JSON blob.
+  customTheme Json?
+
   passwordHash      String?
   pendingEmail      String?
   pendingEmailToken String? @unique

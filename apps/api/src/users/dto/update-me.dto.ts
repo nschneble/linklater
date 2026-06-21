@@ -1,12 +1,101 @@
 import {
   IsBoolean,
   IsIn,
+  IsObject,
   IsOptional,
   IsString,
   MinLength,
+  ValidatorConstraint,
+  registerDecorator,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { VALID_MODES, VALID_THEMES } from '../users.constants.js';
+import type {
+  ValidationArguments,
+  ValidationOptions,
+  ValidatorConstraintInterface,
+} from 'class-validator';
+
+/** True when `value` is a plain object (not null, not an array). */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** True when `value` is a plain object whose every value is a string. */
+function isStringRecord(value: unknown): boolean {
+  if (!isPlainObject(value)) {
+    return false;
+  }
+  return Object.values(value).every((entry) => typeof entry === 'string');
+}
+
+/**
+ * Validates the shape of a user's Custom theme: an object with optional `dark`
+ * and `light` keys, each a map of bundle token names (e.g. `--mount-border`) to
+ * CSS color strings. Both modes are optional so a partial save is accepted.
+ *
+ * The exact 52-token set is intentionally NOT enforced here — the front-end
+ * Theme Editor is the source of truth for membership. The API stays liberal in
+ * what it accepts (Postel's Law) and only guards the broad shape so a malformed
+ * blob can never reach the JSON column.
+ */
+@ValidatorConstraint({ name: 'isCustomThemeShape', async: false })
+class IsCustomThemeShapeConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (!isPlainObject(value)) {
+      return false;
+    }
+    return (['dark', 'light'] as const).every((mode) => {
+      const palette = value[mode];
+      return palette === undefined || isStringRecord(palette);
+    });
+  }
+
+  defaultMessage(validationArguments: ValidationArguments): string {
+    return `${validationArguments.property} must be an object with optional 'dark' and 'light' maps of token names to color strings`;
+  }
+}
+
+/** Property decorator applying the {@link IsCustomThemeShapeConstraint}. */
+function IsCustomThemeShape(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      target: object.constructor,
+      propertyName,
+      options: validationOptions,
+      constraints: [],
+      validator: IsCustomThemeShapeConstraint,
+    });
+  };
+}
+
+/**
+ * A user's editable "Custom" theme: a per-mode map of bundle token names to CSS
+ * color strings. Both modes are optional so a partial save (e.g. only the dark
+ * palette) is accepted. Used for the OpenAPI schema and request typing; the
+ * shape is validated by `@IsCustomThemeShape` on `UpdateMeDto.customTheme`.
+ */
+export class CustomThemeDto {
+  @ApiPropertyOptional({
+    description:
+      'Dark-mode palette: a map of bundle token names (e.g. `--mount-border`) to CSS color strings.',
+    type: 'object',
+    additionalProperties: { type: 'string' },
+  })
+  @IsOptional()
+  @IsObject()
+  dark?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    description:
+      'Light-mode palette: a map of bundle token names (e.g. `--mount-border`) to CSS color strings.',
+    type: 'object',
+    additionalProperties: { type: 'string' },
+  })
+  @IsOptional()
+  @IsObject()
+  light?: Record<string, string>;
+}
 
 /** Request body for PATCH /users/me. All fields are optional. */
 export class UpdateMeDto {
@@ -57,4 +146,13 @@ export class UpdateMeDto {
   @IsOptional()
   @IsBoolean()
   cvdMode?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      "The user's editable Custom theme: a per-mode (`dark`/`light`) map of bundle token names to CSS color strings. Both modes are optional.",
+    type: CustomThemeDto,
+  })
+  @IsOptional()
+  @IsCustomThemeShape()
+  customTheme?: CustomThemeDto;
 }

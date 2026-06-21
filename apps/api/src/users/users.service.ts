@@ -20,6 +20,11 @@ export { VALID_MODES, VALID_THEMES };
 export interface UpdateMeInput {
   /** Toggles the color-vision-deficient mode flag. */
   cvdMode?: boolean;
+  /**
+   * The user's editable Custom theme: a per-mode map of bundle token names to
+   * CSS color strings. Persisted verbatim to the `customTheme` JSON column.
+   */
+  customTheme?: CustomTheme;
   /** New password (plaintext) to hash and store. Requires `currentPassword`. */
   password?: string;
   /** Existing password used to authorize a password change. */
@@ -28,6 +33,17 @@ export interface UpdateMeInput {
   theme?: string;
   /** Color mode identifier from the `VALID_MODES` allow-list. */
   mode?: string;
+}
+
+/**
+ * A user's editable Custom theme as stored in the `customTheme` JSON column: a
+ * per-mode map of bundle token names (e.g. `--mount-border`) to CSS color
+ * strings. Both modes are optional. The exact token set is enforced
+ * client-side, so this stays a free-form record.
+ */
+export interface CustomTheme {
+  dark?: Record<string, string>;
+  light?: Record<string, string>;
 }
 
 /**
@@ -80,7 +96,8 @@ export class UsersService {
 
   /**
    * Updates the current user's account settings. Any combination of
-   * `password`, `theme`, and `mode` may be changed in a single call.
+   * `password`, `theme`, `mode`, `cvdMode`, and `customTheme` may be changed in
+   * a single call.
    *
    * Changing the password requires `currentPassword` for verification.
    * Theme and mode values are validated against their respective allow-lists.
@@ -95,6 +112,7 @@ export class UsersService {
   async updateMe(id: string, data: UpdateMeInput) {
     const updateData: {
       cvdMode?: boolean;
+      customTheme?: Prisma.InputJsonValue;
       passwordHash?: string;
       theme?: string;
       mode?: string;
@@ -139,6 +157,13 @@ export class UsersService {
 
     if (data.cvdMode !== undefined) {
       updateData.cvdMode = data.cvdMode;
+    }
+
+    if (data.customTheme !== undefined) {
+      // The DTO guarantees a `{ dark?, light? }` map of string→string, which is
+      // JSON-safe, but its named-key interface lacks the index signature
+      // Prisma's `InputJsonValue` requires — assert across that structural gap.
+      updateData.customTheme = data.customTheme as Prisma.InputJsonValue;
     }
 
     const user = await this.prisma.user.update({
