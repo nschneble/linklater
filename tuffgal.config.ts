@@ -22,9 +22,18 @@ export default defineConfig({
   // authenticated request will 401. `resetTestDatabase` wipes
   // `tuffgal/.auth` on every reset which covers the common path; do not
   // reuse a longer-lived CI cache of this directory beyond JWT exp.
-  storageStatePins: ['linklater_token', 'linklater_refresh_token', 'linklater_mode', 'linklater_theme'],
+  storageStatePins: [
+    'linklater_token',
+    'linklater_refresh_token',
+    'linklater_mode',
+    'linklater_theme',
+  ],
 
-  breakpoints: { 'mobile', 'desktop' },
+  // Omitting `breakpoints` runs the single default desktop mode (1280x800).
+  // Mobile is deferred until Tuffgal alpha.10 reseeds the DB per breakpoint:
+  // alpha.9 isolates only the browser context per breakpoint, so a story that
+  // mutates real DB state passes at the first mode and fails at the second
+  // (register dup-email, read-link already read, empty-read-history empty).
   defaultTimeoutMs: 10_000,
   navigationTimeoutMs: 60_000,
   frozenTime: '2026-01-15T12:00:00.000Z',
