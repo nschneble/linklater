@@ -34,11 +34,22 @@
     "pg": "^8.11.0",
     "prettier": "^3.7.4",
     "squawk-cli": "^2.52.1",
-    "tuffgal": "^0.1.0-alpha.8",
+    "tuffgal": "^0.1.0-alpha.9",
     "typescript-eslint": "^8.49.0"
   },
   "overrides": {
+    "esbuild": "0.27.2",
+    "multer": "^2.2.0",
     "picomatch": "^4.0.4",
     "webpack": "^5.105.0"
+  },
+  "allowScripts": {
+    "esbuild@0.27.2": true,
+    "fsevents@2.3.3": true,
+    "fsevents@2.3.2": true,
+    "prisma@7.7.0": true,
+    "unrs-resolver@1.12.2": true,
+    "@prisma/engines@7.7.0": true,
+    "@scarf/scarf@1.4.0": true
   }
 }
