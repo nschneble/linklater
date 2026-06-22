@@ -29,11 +29,11 @@ export default defineConfig({
     'linklater_theme',
   ],
 
-  // Omitting `breakpoints` runs the single default desktop mode (1280x800).
-  // Mobile is deferred until Tuffgal alpha.10 reseeds the DB per breakpoint:
-  // alpha.9 isolates only the browser context per breakpoint, so a story that
-  // mutates real DB state passes at the first mode and fails at the second
-  // (register dup-email, read-link already read, empty-read-history empty).
+  // alpha.10 reseeds the DB per breakpoint, so state-mutating stories
+  // (read-link, empty-read-history) are safe to run at both modes. Stories
+  // that assert genuinely desktop-only UI — the welcome modal, the desktop
+  // user menu — pin themselves to `desktop` via their own `breakpoints`.
+  breakpoints: ['mobile', 'desktop'],
   defaultTimeoutMs: 10_000,
   navigationTimeoutMs: 60_000,
   frozenTime: '2026-01-15T12:00:00.000Z',
