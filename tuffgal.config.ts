@@ -24,7 +24,7 @@ export default defineConfig({
   // reuse a longer-lived CI cache of this directory beyond JWT exp.
   storageStatePins: ['linklater_token', 'linklater_refresh_token', 'linklater_mode', 'linklater_theme'],
 
-  viewport: { width: 1280, height: 800 },
+  breakpoints: { 'mobile', 'desktop' },
   defaultTimeoutMs: 10_000,
   navigationTimeoutMs: 60_000,
   frozenTime: '2026-01-15T12:00:00.000Z',
