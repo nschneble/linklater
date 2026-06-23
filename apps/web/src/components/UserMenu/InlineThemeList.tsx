@@ -1,6 +1,13 @@
 import { FOCUS_RING } from '../../lib/styles';
-import { isCustomThemeConfigured } from '../../theme/customTheme';
-import { THEMES, useTheme, type BaseTheme } from '../../theme/ThemeContext';
+import {
+  customThemeSrSuffix,
+  isCustomThemeConfigured,
+} from '../../theme/customTheme';
+import {
+  pickerThemes,
+  useTheme,
+  type BaseTheme,
+} from '../../theme/ThemeContext';
 
 interface InlineThemeListProps {
   baseTheme: BaseTheme;
@@ -12,19 +19,21 @@ interface InlineThemeListProps {
  * preview on hover because mobile devices have no reliable hover state and the
  * mobile menu closes immediately on selection anyway.
  *
- * The "Theme" label and ARIA grouping (`role="group"` + `aria-labelledby`) are
- * provided by the enclosing `MenuSection` in `MobileMenuPanel`.
+ * The `role="menu"` host and its `aria-label="Theme"` are provided by the
+ * enclosing `BottomSheetThemeSubmenu`; the buttons here are its
+ * `menuitemradio` children.
  */
 export default function InlineThemeList({
   baseTheme,
   onSelect,
 }: InlineThemeListProps) {
-  const { customTheme } = useTheme();
+  const { customTheme, customThemeEnabled } = useTheme();
   const isCustomConfigured = isCustomThemeConfigured(customTheme);
+  const visibleThemes = pickerThemes(baseTheme, customThemeEnabled);
 
   return (
     <>
-      {THEMES.map((theme) => (
+      {visibleThemes.map((theme) => (
         <button
           key={theme.id}
           type="button"
@@ -44,8 +53,10 @@ export default function InlineThemeList({
           </span>
           <span className="flex-1">
             {theme.label}
-            {theme.id === 'custom' && !isCustomConfigured && (
-              <span className="sr-only">, not set up</span>
+            {theme.id === 'custom' && (
+              <span className="sr-only">
+                {customThemeSrSuffix(isCustomConfigured)}
+              </span>
             )}
           </span>
           {baseTheme === theme.id && (

@@ -1,11 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  applyCustomThemeTokens,
+  clearCustomThemeTokens,
   collectTokens,
+  customThemeSrSuffix,
   isCustomThemeConfigured,
   normalizeCustomTheme,
   readStoredCustomTheme,
   tokensForMode,
 } from './customTheme';
+import { BRANDING_DEFAULTS, BRANDING_DEFAULTS_LIGHT } from './brandingDefaults';
 import { CUSTOM_THEME_STORAGE_KEY } from './storage';
 
 // A token in the canonical set and one that is not, so the trust-boundary
@@ -118,6 +122,20 @@ describe('isCustomThemeConfigured', () => {
   });
 });
 
+describe('customThemeSrSuffix', () => {
+  it('names the theme but omits the setup hint once configured', () => {
+    expect(customThemeSrSuffix(true)).toBe(', custom theme');
+  });
+
+  it('appends the setup hint while unconfigured', () => {
+    expect(customThemeSrSuffix(false)).toBe(', custom theme, not set up');
+  });
+
+  it('keeps "Yours" the leading token of the announced name (WCAG 2.5.3)', () => {
+    expect(`Yours${customThemeSrSuffix(true)}`).toBe('Yours, custom theme');
+  });
+});
+
 describe('collectTokens', () => {
   it('keeps only non-empty string values read via the getter', () => {
     const source: Record<string, string> = {
@@ -133,5 +151,49 @@ describe('collectTokens', () => {
 
   it('returns an empty object when the getter yields nothing', () => {
     expect(collectTokens([KNOWN_KEY], () => undefined)).toEqual({});
+  });
+});
+
+describe('applyCustomThemeTokens / clearCustomThemeTokens', () => {
+  function makeRoot(): HTMLElement {
+    return document.createElement('div');
+  }
+
+  it('writes saved tokens for the active mode as inline properties', () => {
+    const root = makeRoot();
+    applyCustomThemeTokens(
+      root,
+      { dark: { '--mount-border': '#abcdef' }, light: {} },
+      'dark',
+    );
+    expect(root.style.getPropertyValue('--mount-border')).toBe('#abcdef');
+  });
+
+  it('falls back to the branding default when a slot is unsaved', () => {
+    const root = makeRoot();
+    applyCustomThemeTokens(root, { dark: {}, light: {} }, 'dark');
+    expect(root.style.getPropertyValue('--base-bg')).toBe(
+      BRANDING_DEFAULTS['--base-bg'],
+    );
+  });
+
+  it('uses the light branding defaults in light mode', () => {
+    const root = makeRoot();
+    applyCustomThemeTokens(root, null, 'light');
+    expect(root.style.getPropertyValue('--base-bg')).toBe(
+      BRANDING_DEFAULTS_LIGHT['--base-bg'],
+    );
+  });
+
+  it('clears every Custom token so a stylesheet theme cascades again', () => {
+    const root = makeRoot();
+    applyCustomThemeTokens(
+      root,
+      { dark: { '--mount-border': '#abcdef' }, light: {} },
+      'dark',
+    );
+    clearCustomThemeTokens(root);
+    expect(root.style.getPropertyValue('--mount-border')).toBe('');
+    expect(root.style.getPropertyValue('--base-bg')).toBe('');
   });
 });

@@ -1,50 +1,65 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  BRANDING_DEFAULTS,
+  BRANDING_DEFAULTS_LIGHT,
+} from '../../../theme/brandingDefaults';
 import {
   THEMES,
   useTheme,
   type BaseTheme,
   type Mode,
 } from '../../../theme/ThemeContext';
+import {
+  customThemeSrSuffix,
+  isCustomThemeConfigured,
+} from '../../../theme/customTheme';
+import AutoSaveStatus from './AutoSaveStatus';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import ContrastChecker from './ContrastChecker';
 import CopyFromTheme, { type CopiedTokens } from './CopyFromTheme';
-import ThemeSaveBar from './ThemeSaveBar';
+import CustomThemePickerToggle from './CustomThemePickerToggle';
+import ThemeSelectMenu from './ThemeSelectMenu';
 import Toast from '../../common/Toast';
-import { ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
+import { EDITOR_FOCUS_RING, ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
 import { tokenContrastFailures, useContrastResults } from './contrastResults';
-import { useThemeOverrides } from './useThemeOverrides';
+import { updateMe } from '../../../lib/api';
+import { useThemeAutoSave } from './useThemeAutoSave';
+import { useThemeOverrides, type ThemeVariable } from './useThemeOverrides';
 import { useThemeSave } from './useThemeSave';
 import { useToast } from '../../../lib/hooks/useToast';
 
+const MODE_OPTIONS: Mode[] = ['dark', 'light'];
+
 /**
- * Full-page theme editor accessible from the user menu under "Theme
- * editor".
+ * Full-page custom-theme editor reached from the user menu ("Create a custom
+ * theme" / "Edit your custom theme").
  *
- * Live-edits the 52 bundle tokens (7 bundles × 7 slots + 1 base-only
- * subtle-text slot + 2 base/mount input-bg slots) that make up the
- * active theme. Overrides live in React state inside `useThemeOverrides`
- * and are applied as inline custom-property styles on a wrapper that
- * scopes the showcase column only – the editor chrome inherits from the
- * active theme at `:root`, so the user can never edit themselves into an
- * unrecoverable state.
+ * Live-edits the bundle tokens that make up the active theme. Overrides live in
+ * React state inside `useThemeOverrides` and are applied as inline
+ * custom-property styles on a wrapper scoping the showcase column, so the live
+ * preview is instant before a save lands.
  *
- * Persistence is custom-only. When the editor's selected theme is `custom`,
- * a Save button persists the current mode's tokens (localStorage +
- * `PATCH /users/me`) and a "Copy from theme" control seeds the editor from
- * any built-in theme's palette. For the 10 built-in themes both controls
- * stay present but `aria-disabled` (a11y brief B6); the editor remains
- * preview-only. Built-in theme edits still reset on navigation.
+ * Persistence is custom-only and AUTOMATIC: every edit to the custom theme is
+ * debounced and saved (localStorage + `PATCH /users/me`) with no Save button.
+ * Built-in themes stay preview-only and reset on navigation.
  *
- * Layout: a left panel with `ColorEditor` and `ContrastChecker`, and a
- * right panel with `ComponentShowcase` for a live preview.
- *
- * Reset, theme select, and mode toggle use fixed neutral colors instead
- * of bundle tokens so they remain readable as escape hatches when the
- * user edits the bundles to invalid values mid-session.
+ * The chrome controls (theme picker, copy, mode toggle, show-custom switch)
+ * paint from the active theme's bundle tokens. Because auto-save pushes custom
+ * edits to `:root`, those controls can degrade if the user picks unreadable
+ * colors — so "Reset all" stays a FIXED-color escape hatch: it reverts the
+ * custom theme to the readable branding defaults, restoring a way out.
  */
 export default function ThemeEditor() {
-  const { baseTheme, mode, setBaseTheme, setMode } = useTheme();
+  const {
+    baseTheme,
+    customTheme,
+    customThemeEnabled,
+    mode,
+    setBaseTheme,
+    setCustomThemeEnabled,
+    setMode,
+  } = useTheme();
   const {
     colorValues,
     overrideStyle,
@@ -55,47 +70,89 @@ export default function ThemeEditor() {
   } = useThemeOverrides();
   const { isSaving, save } = useThemeSave();
   const toast = useToast();
+  const [savedCount, setSavedCount] = useState(0);
 
   const isCustom = baseTheme === 'custom';
+  const isCustomConfigured = isCustomThemeConfigured(customTheme);
 
-  // The focus ring is now an editable, injected token for the custom theme
-  // (W1), so it flows through `colorValues` like any bundle slot rather than
-  // being read separately from the document root.
   const contrastResults = useContrastResults(colorValues);
 
-  // Per-token failing-pair lookup so each hex input can surface its own
-  // contrast failure inline (BL1). Memoized on the results object identity.
   const contrastFailures = useMemo(
     () => tokenContrastFailures(contrastResults),
     [contrastResults],
   );
 
-  function handleThemeChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    setBaseTheme(event.target.value as BaseTheme);
+  // Auto-save fires the polite "saved" affordance on success and an assertive
+  // error Toast on failure; both are routed through a single outcome handler.
+  const handleAutoSaveOutcome = useCallback(
+    (outcome: 'saved' | 'failed') => {
+      if (outcome === 'saved') {
+        setSavedCount((previous) => previous + 1);
+      } else {
+        toast.show('save-failed');
+      }
+    },
+    [toast],
+  );
+
+  const { scheduleSave, saveNow } = useThemeAutoSave({
+    isCustom,
+    colorValues,
+    save,
+    onOutcome: handleAutoSaveOutcome,
+  });
+
+  function handleOverride(variable: ThemeVariable, value: string) {
+    setOverride(variable, value);
+    scheduleSave();
   }
 
-  function handleModeToggle(nextMode: Mode) {
-    setMode(nextMode);
+  function handleResetBundle(bundle: Parameters<typeof resetBundle>[0]) {
+    resetBundle(bundle);
+    scheduleSave();
   }
-
-  const handleSave = useCallback(async () => {
-    const succeeded = await save(colorValues);
-    toast.show(succeeded ? 'saved' : 'save-failed');
-  }, [colorValues, save, toast]);
 
   const handleCopy = useCallback(
     (tokens: CopiedTokens, themeLabel: string) => {
       const modeTokens = tokens[mode];
       loadOverrides(modeTokens);
+      scheduleSave();
       const count = Object.keys(modeTokens).length;
       toast.show(`copied:${count}:${themeLabel}`);
     },
-    [loadOverrides, mode, toast],
+    [loadOverrides, mode, scheduleSave, toast],
   );
 
-  // The toast holds only a message key; the variant (success vs error) and the
-  // visible copy are resolved here at the render site, per the useToast
-  // contract (a11y brief B1).
+  // The single guaranteed escape hatch. For the custom theme it reverts the
+  // current mode to the branding defaults and persists immediately, so an
+  // unreadable palette repaints to a readable one without waiting on the
+  // debounce. For built-in themes it just drops the preview-only edits.
+  const handleResetAll = useCallback(() => {
+    if (isCustom) {
+      const defaults =
+        mode === 'dark' ? BRANDING_DEFAULTS : BRANDING_DEFAULTS_LIGHT;
+      loadOverrides(defaults);
+      saveNow(defaults as Record<ThemeVariable, string>);
+    } else {
+      resetOverrides();
+    }
+  }, [isCustom, mode, loadOverrides, saveNow, resetOverrides]);
+
+  // Optimistically flips the picker opt-in, then persists it. On failure the
+  // switch reverts and an assertive Toast announces the error (a11y brief c2).
+  const handleTogglePickerVisibility = useCallback(
+    async (next: boolean) => {
+      setCustomThemeEnabled(next);
+      try {
+        await updateMe({ customThemeEnabled: next });
+      } catch {
+        setCustomThemeEnabled(!next);
+        toast.show('picker-visibility-failed');
+      }
+    },
+    [setCustomThemeEnabled, toast],
+  );
+
   const toastView = useMemo(() => resolveToast(toast.message), [toast.message]);
 
   return (
@@ -103,47 +160,44 @@ export default function ThemeEditor() {
       <div className="flex flex-wrap items-start gap-3 mb-4">
         <div className="flex-1 min-w-0">
           <h1 className="text-[var(--base-text)] text-lg font-semibold">
-            Theme editor
+            Custom theme editor
           </h1>
           <p className="mt-0.5 text-[var(--base-alt-text)] text-xs">
-            Edit the 52 bundle tokens of the active theme and see changes live.
-            Save and copy are available for the custom theme.
+            Pick your colors and components. Changes save as you go. Preview a
+            film theme to copy its palette as a starting point.
           </p>
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <select
+          <ThemeSelectMenu
+            options={THEMES.map((theme) => ({
+              id: theme.id,
+              label: theme.label,
+              swatchIcon: theme.swatchIcon,
+              accent: theme.accent,
+              isAccessible: theme.isAccessible,
+              suffixSrText:
+                theme.id === 'custom'
+                  ? customThemeSrSuffix(isCustomConfigured)
+                  : undefined,
+            }))}
             value={baseTheme}
-            onChange={handleThemeChange}
-            style={ESCAPE_HATCH_LIGHT}
-            className="px-2.5 py-1.5 border text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg cursor-pointer"
-            aria-label="Select theme"
-          >
-            {THEMES.map((theme) => (
-              <option key={theme.id} value={theme.id}>
-                {theme.label}
-              </option>
-            ))}
-          </select>
+            onSelect={(id) => setBaseTheme(id as BaseTheme)}
+            ariaLabel="Theme"
+          />
 
           <div
-            style={ESCAPE_HATCH_LIGHT}
-            className="relative inline-flex p-0.5 border rounded-full"
+            className="relative inline-flex p-0.5 bg-[var(--base-bg)] border border-[var(--base-border)] rounded-full"
             role="group"
             aria-label="Color mode"
           >
-            {(['dark', 'light'] as Mode[]).map((modeOption) => (
+            {MODE_OPTIONS.map((modeOption) => (
               <button
                 key={modeOption}
                 type="button"
-                onClick={() => handleModeToggle(modeOption)}
-                style={
-                  mode === modeOption
-                    ? { backgroundColor: '#0a0a0a', color: '#fafafa' }
-                    : { color: '#0a0a0a' }
-                }
-                className="relative z-10 px-2.5 py-1 text-xs capitalize aria-pressed:font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-full transition-colors duration-150 cursor-pointer"
+                onClick={() => setMode(modeOption)}
                 aria-pressed={mode === modeOption}
+                className={`relative z-10 min-h-[24px] px-2.5 py-1.5 text-[var(--base-subtle-text)] text-xs capitalize aria-pressed:bg-[var(--base-highlight)] aria-pressed:text-[var(--base-highlight-fg)] aria-pressed:font-semibold ${EDITOR_FOCUS_RING} rounded-full transition-colors`}
               >
                 {modeOption}
               </button>
@@ -152,9 +206,9 @@ export default function ThemeEditor() {
 
           <button
             type="button"
-            onClick={resetOverrides}
+            onClick={handleResetAll}
             style={ESCAPE_HATCH_LIGHT}
-            className="px-2.5 py-1.5 border text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg active:scale-[0.96] cursor-pointer"
+            className={`min-h-[24px] px-2.5 py-1.5 border text-xs ${EDITOR_FOCUS_RING} rounded-lg active:scale-[0.96] cursor-pointer`}
           >
             Reset all
           </button>
@@ -163,11 +217,18 @@ export default function ThemeEditor() {
 
       <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
         <CopyFromTheme isCustom={isCustom} onCopy={handleCopy} />
-        <ThemeSaveBar
+        <AutoSaveStatus
           isCustom={isCustom}
           isSaving={isSaving}
+          savedCount={savedCount}
           failingCount={contrastResults.totalFailures}
-          onSave={handleSave}
+        />
+      </div>
+
+      <div className="mb-4">
+        <CustomThemePickerToggle
+          enabled={customThemeEnabled}
+          onChange={handleTogglePickerVisibility}
         />
       </div>
 
@@ -180,8 +241,8 @@ export default function ThemeEditor() {
             <ColorEditor
               colorValues={colorValues}
               contrastFailures={contrastFailures}
-              onOverride={setOverride}
-              onResetBundle={resetBundle}
+              onOverride={handleOverride}
+              onResetBundle={handleResetBundle}
             />
           </div>
 
@@ -198,9 +259,8 @@ export default function ThemeEditor() {
             Components
           </h2>
           {/* Override scope: bundle edits apply to the showcase subtree only,
-              so a hostile bundle value can't lock the user out of the editor
-              chrome (panel headings, color rows, contrast pairs). The chrome
-              inherits from :root via the active theme, unaffected. */}
+              so the instant preview is visible before the debounced save lands
+              and (for built-in themes) without ever touching :root. */}
           <div style={overrideStyle}>
             <ComponentShowcase />
           </div>
@@ -228,14 +288,20 @@ interface ToastView {
  * copy. The success/error variant is chosen HERE at the render site (the
  * `useToast` hook holds only a message string), per a11y brief B1. Exported for
  * direct unit coverage of the `copied:<n>:<label>` string protocol (W6).
+ *
+ * Auto-save SUCCESS no longer routes here — it is announced by the polite
+ * `AutoSaveStatus` region — but the `save-failed` assertive path still does.
  */
 export function resolveToast(message: string | null): ToastView | null {
   if (message === null) return null;
-  if (message === 'saved') {
-    return { message: 'Custom theme saved.', variant: 'success' };
-  }
   if (message === 'save-failed') {
     return { message: 'Could not save custom theme.', variant: 'error' };
+  }
+  if (message === 'picker-visibility-failed') {
+    return {
+      message: 'Could not update theme picker setting.',
+      variant: 'error',
+    };
   }
   if (message.startsWith('copied:')) {
     const withoutPrefix = message.slice('copied:'.length);

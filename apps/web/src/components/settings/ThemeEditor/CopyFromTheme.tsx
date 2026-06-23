@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { collectTokens, CUSTOM_TOKEN_KEYS } from '../../../theme/customTheme';
-import { ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
+import { EDITOR_FOCUS_RING } from './escapeHatchStyles';
 import { THEMES } from '../../../theme/constants';
+import ThemeSelectMenu from './ThemeSelectMenu';
 import type { BaseTheme, Mode } from '../../../theme/constants';
 
 const COPY_DESCRIPTION_ID = 'theme-editor-copy-description';
-const COPY_SELECT_ID = 'theme-editor-copy-select';
+const COPY_LABEL_ID = 'theme-editor-copy-label';
 
 /**
  * Themes that can be copied FROM. The custom theme is excluded – copying the
@@ -58,15 +59,18 @@ interface CopyFromThemeProps {
 }
 
 const COPY_NON_CUSTOM_HINT =
-  'Copying is available for the custom theme only. Switch the theme selector to Custom to copy a palette.';
+  'Copying is available for the custom theme only. Switch the theme selector to Yours to copy a palette.';
 
 /**
- * Two-step "Copy palette from theme" control: a native `<select>` paired with
- * an explicit Copy `<button>`. Overwriting the editor's tokens is destructive,
- * so it must NOT fire on select `onChange` (a11y brief B2 – SC 3.2.2 On
- * Input). The select carries a visible `<label>` (not aria-label only,
- * justified because the action is destructive) and the Copy button a static
- * `aria-describedby` warning that the copy replaces current edits (SC 3.3.2).
+ * Two-step "Copy palette from theme" control: a themed picker paired with an
+ * explicit Copy `<button>`. Overwriting the editor's tokens is destructive, so
+ * it must NOT fire on selection (a11y brief B2 / SC 3.2.2 On Input) — the
+ * picker only stages a pending choice; the Copy button commits.
+ *
+ * The picker carries a VISIBLE label (associated via `aria-labelledby`, since a
+ * `role="combobox"` button is not `<label htmlFor>`-labelable), justified
+ * because the action is destructive (SC 3.3.2). The Copy button keeps a static
+ * `aria-describedby` warning that the copy replaces current edits.
  *
  * Like Save, the control stays PRESENT and `aria-disabled` for non-custom
  * themes rather than unmounting (B6).
@@ -100,26 +104,26 @@ export default function CopyFromTheme({
       className="flex items-end gap-2"
     >
       <div className="flex flex-col gap-1">
-        <label
-          htmlFor={COPY_SELECT_ID}
+        <span
+          id={COPY_LABEL_ID}
           className="text-[var(--base-alt-text)] text-[0.65rem] font-medium"
         >
           Copy palette from theme
-        </label>
-        <select
-          id={COPY_SELECT_ID}
+        </span>
+        <ThemeSelectMenu
+          options={COPYABLE_THEMES.map((theme) => ({
+            id: theme.id,
+            label: theme.label,
+            swatchIcon: theme.swatchIcon,
+            accent: theme.accent,
+            isAccessible: theme.isAccessible,
+          }))}
           value={selected}
-          onChange={(event) => setSelected(event.target.value)}
-          style={ESCAPE_HATCH_LIGHT}
-          className="px-2.5 py-1.5 border text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg cursor-pointer"
-        >
-          <option value="">Select a theme to copy…</option>
-          {COPYABLE_THEMES.map((theme) => (
-            <option key={theme.id} value={theme.id}>
-              {theme.label}
-            </option>
-          ))}
-        </select>
+          placeholder="Select a theme to copy…"
+          onSelect={setSelected}
+          ariaLabelledBy={COPY_LABEL_ID}
+          className="min-w-56"
+        />
       </div>
 
       <button
@@ -127,8 +131,7 @@ export default function CopyFromTheme({
         onClick={handleCopy}
         aria-disabled={isInactive}
         aria-describedby={COPY_DESCRIPTION_ID}
-        style={ESCAPE_HATCH_LIGHT}
-        className="px-2.5 py-1.5 border text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg active:scale-[0.96] aria-disabled:opacity-50 aria-disabled:active:scale-100 aria-disabled:cursor-not-allowed transition-transform cursor-pointer"
+        className={`px-2.5 py-1.5 bg-[var(--base-highlight)] text-[var(--base-highlight-fg)] text-xs font-semibold ${EDITOR_FOCUS_RING} rounded-lg active:scale-[0.96] aria-disabled:opacity-50 aria-disabled:active:scale-100 aria-disabled:cursor-not-allowed transition-transform cursor-pointer`}
       >
         Copy
       </button>

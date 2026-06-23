@@ -89,7 +89,7 @@ export function useAppShell() {
     const titles: Record<AppView, string> = {
       links: 'Your links – Linklater',
       settings: 'Settings – Linklater',
-      'theme-editor': 'Theme editor – Linklater',
+      'theme-editor': 'Custom theme editor – Linklater',
     };
     document.title = titles[view];
   }, [view]);

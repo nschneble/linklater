@@ -1,3 +1,4 @@
+import { BRANDING_DEFAULTS, BRANDING_DEFAULTS_LIGHT } from './brandingDefaults';
 import { CUSTOM_THEME_STORAGE_KEY, readLocalStorage } from './storage';
 import { EDITABLE_VARS } from './customThemeTokens';
 import type { Mode } from './constants';
@@ -94,6 +95,17 @@ export function isCustomThemeConfigured(
 }
 
 /**
+ * The screen-reader-only qualifier appended to the custom theme's picker label
+ * ("Yours"). A bare possessive pronoun has no referent when announced amid a
+ * radio list of film titles, so assistive tech hears "Yours, custom theme" —
+ * plus the "not set up" tail until the user has authored a palette (WCAG
+ * 2.4.6). Shared by all three pickers so the announced name can't drift.
+ */
+export function customThemeSrSuffix(isConfigured: boolean): string {
+  return isConfigured ? ', custom theme' : ', custom theme, not set up';
+}
+
+/**
  * Reads and parses the Custom theme from `localStorage`. Returns `null` when
  * nothing is stored or the stored value can't be parsed.
  */
@@ -117,4 +129,47 @@ export function tokensForMode(
 ): Record<string, string> {
   if (!customTheme) return {};
   return customTheme[mode] ?? {};
+}
+
+/**
+ * Imperatively writes the Custom theme's tokens for `mode` as inline custom
+ * properties on `root` (normally `document.documentElement`). Unsaved slots
+ * fall back to the off-book `branding` palette so a fresh Custom theme
+ * "defaults to branding" in both modes. Only the allowlisted
+ * `CUSTOM_TOKEN_KEYS` are ever written, keeping the branding fallback inside
+ * the same trust boundary as user data.
+ *
+ * Shared by the active-theme injection in `useThemeState` AND the theme-picker
+ * live preview (`useThemePreview`): the picker only swaps the `data-theme`
+ * attribute, which CSS-file themes key off, but the Custom palette is inline
+ * `style` (higher specificity than any stylesheet), so the preview must
+ * apply/clear these tokens itself or a stale Custom palette would bleed over
+ * every previewed theme.
+ */
+export function applyCustomThemeTokens(
+  root: HTMLElement,
+  customTheme: CustomTheme | null,
+  mode: Mode,
+): void {
+  const tokens = tokensForMode(customTheme, mode);
+  const defaults =
+    mode === 'dark' ? BRANDING_DEFAULTS : BRANDING_DEFAULTS_LIGHT;
+  for (const variable of CUSTOM_TOKEN_KEYS) {
+    const value = tokens[variable] ?? defaults[variable];
+    if (value) {
+      root.style.setProperty(variable, value);
+    } else {
+      root.style.removeProperty(variable);
+    }
+  }
+}
+
+/**
+ * Removes every Custom theme inline property from `root`, so a CSS-file theme's
+ * stylesheet values cascade again. The inverse of `applyCustomThemeTokens`.
+ */
+export function clearCustomThemeTokens(root: HTMLElement): void {
+  for (const variable of CUSTOM_TOKEN_KEYS) {
+    root.style.removeProperty(variable);
+  }
 }
