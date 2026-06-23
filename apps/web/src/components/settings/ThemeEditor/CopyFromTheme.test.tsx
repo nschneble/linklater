@@ -1,14 +1,15 @@
 /*
  * Tests for CopyFromTheme – the two-step "Copy palette from theme" control.
  *
- * Covers a11y brief B2/B6: select + explicit Copy button (overwrite never
- * wired to select onChange), role="group" labelling, a visible <label>, the
- * destructive-action describedby, custom-only aria-disabled, and that Copy
+ * Covers a11y brief B2/B6: the themed picker stages a pending choice while an
+ * explicit Copy button commits (overwrite never wired to selection), the
+ * role="group" labelling, the picker's visible label (via aria-labelledby),
+ * the destructive-action describedby, custom-only aria-disabled, and that Copy
  * reads tokens from a probe element's computed style for BOTH modes.
  */
 
 import CopyFromTheme from './CopyFromTheme';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CUSTOM_TOKEN_KEYS } from '../../../theme/customTheme';
 
@@ -18,12 +19,21 @@ function renderControl(isCustom = true) {
   return { onCopy };
 }
 
-function getSelect() {
+function getTrigger() {
   return screen.getByRole('combobox', { name: /copy palette from theme/i });
 }
 
 function getCopyButton() {
   return screen.getByRole('button', { name: /^copy$/i });
+}
+
+/** Opens the picker and clicks the option with the given accessible name. */
+function selectTheme(name: RegExp) {
+  fireEvent.click(getTrigger());
+  const listbox = screen.getByRole('listbox', {
+    name: /copy palette from theme/i,
+  });
+  fireEvent.click(within(listbox).getByRole('option', { name }));
 }
 
 // jsdom does not apply the [data-theme] stylesheet cascade, so stub
@@ -49,22 +59,22 @@ afterEach(() => {
 });
 
 describe('CopyFromTheme', () => {
-  it('groups the select and button under a labelled group', () => {
+  it('groups the picker and button under a labelled group', () => {
     renderControl();
     expect(
       screen.getByRole('group', { name: /copy palette from theme/i }),
     ).toBeInTheDocument();
   });
 
-  it('does NOT copy on select change (two-step, SC 3.2.2)', () => {
+  it('does NOT copy on selection (two-step, SC 3.2.2)', () => {
     const { onCopy } = renderControl();
-    fireEvent.change(getSelect(), { target: { value: 'apollo-10-1-2' } });
+    selectTheme(/apollo 10½/i);
     expect(onCopy).not.toHaveBeenCalled();
   });
 
   it('copies BOTH modes resolved from the probe on Copy click', () => {
     const { onCopy } = renderControl();
-    fireEvent.change(getSelect(), { target: { value: 'apollo-10-1-2' } });
+    selectTheme(/apollo 10½/i);
     fireEvent.click(getCopyButton());
 
     expect(onCopy).toHaveBeenCalledTimes(1);
@@ -85,6 +95,7 @@ describe('CopyFromTheme', () => {
 
   it('excludes the custom theme from the copyable options', () => {
     renderControl();
+    fireEvent.click(getTrigger());
     expect(screen.queryByRole('option', { name: /^custom$/i })).toBeNull();
   });
 
@@ -93,7 +104,7 @@ describe('CopyFromTheme', () => {
     const button = getCopyButton();
     expect(button).toBeInTheDocument();
     expect(button).toHaveAttribute('aria-disabled', 'true');
-    fireEvent.change(getSelect(), { target: { value: 'apollo-10-1-2' } });
+    selectTheme(/apollo 10½/i);
     fireEvent.click(button);
     expect(onCopy).not.toHaveBeenCalled();
   });

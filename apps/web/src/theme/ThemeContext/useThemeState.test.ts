@@ -10,9 +10,17 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  BRANDING_DEFAULTS,
+  BRANDING_DEFAULTS_LIGHT,
+} from '../brandingDefaults';
+import {
+  CUSTOM_THEME_ENABLED_KEY,
+  CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
   CUSTOM_THEME_STORAGE_KEY,
   CUSTOM_THEME_UPDATED_AT_KEY,
+  THEME_STORAGE_KEY,
 } from '../storage';
+import { CUSTOM_TOKEN_KEYS } from '../customTheme';
 import { useThemeState } from './useThemeState';
 
 const storage: Record<string, string> = {};
@@ -373,7 +381,7 @@ describe('custom theme runtime injection', () => {
     expect(root().style.getPropertyValue('--mount-border')).toBe('');
   });
 
-  it('re-injects the other mode and drops a token present in one mode only', () => {
+  it('re-injects the other mode and falls back to branding for an unsaved dark token', () => {
     window.localStorage.setItem('linklater_theme', 'custom');
     window.localStorage.setItem('linklater_mode', 'dark');
     seedStoredCustomTheme({
@@ -382,21 +390,139 @@ describe('custom theme runtime injection', () => {
     });
 
     const { result } = renderHook(() => useThemeState());
+    // Saved dark token wins; an unsaved dark token falls back to branding.
     expect(root().style.getPropertyValue('--mount-border')).toBe('#dark11');
-    expect(root().style.getPropertyValue('--base-bg')).toBe('');
+    expect(root().style.getPropertyValue('--base-bg')).toBe(
+      BRANDING_DEFAULTS['--base-bg'],
+    );
 
     act(() => {
       result.current.setMode('light');
     });
+    // Light defaults to branding-light: saved light token wins, an unsaved one
+    // falls back to the light palette.
     expect(root().style.getPropertyValue('--base-bg')).toBe('#light22');
-    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+    expect(root().style.getPropertyValue('--mount-border')).toBe(
+      BRANDING_DEFAULTS_LIGHT['--mount-border'],
+    );
   });
 
-  it('injects nothing without crashing when no tokens are saved', () => {
+  it('defaults the dark palette to branding when no tokens are saved', () => {
     window.localStorage.setItem('linklater_theme', 'custom');
+    window.localStorage.setItem('linklater_mode', 'dark');
 
     expect(() => renderHook(() => useThemeState())).not.toThrow();
-    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+    expect(root().style.getPropertyValue('--mount-border')).toBe(
+      BRANDING_DEFAULTS['--mount-border'],
+    );
+    expect(root().style.getPropertyValue('--base-bg')).toBe(
+      BRANDING_DEFAULTS['--base-bg'],
+    );
+  });
+
+  it('defaults the light palette to branding-light when no tokens are saved', () => {
+    window.localStorage.setItem('linklater_theme', 'custom');
+    window.localStorage.setItem('linklater_mode', 'light');
+
+    expect(() => renderHook(() => useThemeState())).not.toThrow();
+    expect(root().style.getPropertyValue('--mount-border')).toBe(
+      BRANDING_DEFAULTS_LIGHT['--mount-border'],
+    );
+    expect(root().style.getPropertyValue('--base-bg')).toBe(
+      BRANDING_DEFAULTS_LIGHT['--base-bg'],
+    );
+  });
+});
+
+describe('unauthenticated custom-theme gate', () => {
+  it('falls back to scanner-darkly and injects no tokens when unauthenticated', () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, 'custom');
+    seedStoredCustomTheme({
+      dark: { '--mount-border': '#ff0000', '--base-bg': '#010203' },
+    });
+
+    const { result } = renderHook(() => useThemeState(false));
+
+    expect(result.current.baseTheme).toBe('scanner-darkly');
+    expect(root().dataset.theme).toBe('scanner-darkly');
+    for (const variable of CUSTOM_TOKEN_KEYS) {
+      expect(root().style.getPropertyValue(variable)).toBe('');
+    }
+  });
+
+  it('injects the custom palette when authenticated', () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, 'custom');
+    seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
+
+    const { result } = renderHook(() => useThemeState(true));
+
+    expect(result.current.baseTheme).toBe('custom');
+    expect(root().dataset.theme).toBe('custom');
+    expect(root().style.getPropertyValue('--mount-border')).toBe('#abcabc');
+  });
+
+  it('does not gate the built-in film themes when unauthenticated', () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, 'boyhood');
+
+    const { result } = renderHook(() => useThemeState(false));
+
+    expect(result.current.baseTheme).toBe('boyhood');
+    expect(root().dataset.theme).toBe('boyhood');
+  });
+});
+
+describe('setCustomThemeEnabled', () => {
+  it('writes the flag + timestamp and updates state', () => {
+    const { result } = renderHook(() => useThemeState());
+    expect(result.current.customThemeEnabled).toBe(false);
+
+    act(() => {
+      result.current.setCustomThemeEnabled(true);
+    });
+
+    expect(result.current.customThemeEnabled).toBe(true);
+    expect(window.localStorage.getItem(CUSTOM_THEME_ENABLED_KEY)).toBe('on');
+    expect(
+      window.localStorage.getItem(CUSTOM_THEME_ENABLED_UPDATED_AT_KEY),
+    ).not.toBeNull();
+  });
+
+  it('initialises from the stored flag', () => {
+    window.localStorage.setItem(CUSTOM_THEME_ENABLED_KEY, 'on');
+    const { result } = renderHook(() => useThemeState());
+    expect(result.current.customThemeEnabled).toBe(true);
+  });
+});
+
+describe('applyServerCustomThemeEnabled', () => {
+  it('suppresses when toggled locally within the guard window', () => {
+    window.localStorage.setItem(CUSTOM_THEME_ENABLED_KEY, 'on');
+    const { result } = renderHook(() => useThemeState());
+    window.localStorage.setItem(
+      CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
+      Date.now().toString(),
+    );
+
+    act(() => {
+      result.current.applyServerCustomThemeEnabled(false);
+    });
+
+    expect(result.current.customThemeEnabled).toBe(true);
+  });
+
+  it('applies the server value once the guard has passed', () => {
+    const { result } = renderHook(() => useThemeState());
+    window.localStorage.setItem(
+      CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
+      (Date.now() - 60_000).toString(),
+    );
+
+    act(() => {
+      result.current.applyServerCustomThemeEnabled(true);
+    });
+
+    expect(result.current.customThemeEnabled).toBe(true);
+    expect(window.localStorage.getItem(CUSTOM_THEME_ENABLED_KEY)).toBe('on');
   });
 });
 

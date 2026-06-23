@@ -57,8 +57,9 @@ export class UsersController {
 
   /**
    * Updates the current user's account settings. Accepts any combination of
-   * `password`, `theme`, `mode`, `cvdMode`, and `customTheme` – all fields are
-   * optional. Changing the password requires `currentPassword` as well.
+   * `password`, `theme`, `mode`, `cvdMode`, `customTheme`, and
+   * `customThemeEnabled` – all fields are optional. Changing the password
+   * requires `currentPassword` as well.
    */
   @ApiOperation({
     summary: 'Update account settings (password, theme, mode, custom theme)',

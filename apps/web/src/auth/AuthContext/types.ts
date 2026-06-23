@@ -20,6 +20,12 @@ export interface User {
    * JSON so only known bundle token keys survive.
    */
   customTheme: CustomTheme | null;
+  /**
+   * Whether the user has opted the Custom theme into the theme picker. The
+   * Custom theme is always editable in the Theme Editor regardless; this only
+   * controls whether the picker menus list it.
+   */
+  customThemeEnabled: boolean;
   /** The user's current email address. */
   email: string;
   /** ISO timestamp of when the email was verified, or `null` if unverified. */

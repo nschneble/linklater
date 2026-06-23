@@ -51,7 +51,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
   forwardedReference,
 ) {
   const avatarUrl = useMemo(() => gravatarUrl(user.email, 64), [user.email]);
-  const { baseTheme, mode } = useTheme();
+  const { baseTheme, customTheme, mode } = useTheme();
 
   const {
     applyPreview,
@@ -65,7 +65,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
     themeRowReference,
     themeSubmenuOnLeft,
     resetPreview,
-  } = useThemePreview();
+  } = useThemePreview(customTheme, mode);
 
   // When the base theme actually commits (ThemeContext useLayoutEffect has
   // already written the new data-theme), cancel any in-flight reset rAF so a

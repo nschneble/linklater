@@ -25,6 +25,8 @@ export interface UpdateMeInput {
    * CSS color strings. Persisted verbatim to the `customTheme` JSON column.
    */
   customTheme?: CustomTheme;
+  /** Whether the Custom theme is shown in the theme picker. */
+  customThemeEnabled?: boolean;
   /** New password (plaintext) to hash and store. Requires `currentPassword`. */
   password?: string;
   /** Existing password used to authorize a password change. */
@@ -113,6 +115,7 @@ export class UsersService {
     const updateData: {
       cvdMode?: boolean;
       customTheme?: Prisma.InputJsonValue;
+      customThemeEnabled?: boolean;
       passwordHash?: string;
       theme?: string;
       mode?: string;
@@ -164,6 +167,10 @@ export class UsersService {
       // JSON-safe, but its named-key interface lacks the index signature
       // Prisma's `InputJsonValue` requires — assert across that structural gap.
       updateData.customTheme = data.customTheme as Prisma.InputJsonValue;
+    }
+
+    if (data.customThemeEnabled !== undefined) {
+      updateData.customThemeEnabled = data.customThemeEnabled;
     }
 
     const user = await this.prisma.user.update({

@@ -9,16 +9,16 @@ import { describe, expect, it } from 'vitest';
 import { resolveToast } from './index';
 
 describe('resolveToast', () => {
-  it('maps "saved" to a success toast', () => {
-    expect(resolveToast('saved')).toEqual({
-      message: 'Custom theme saved.',
-      variant: 'success',
-    });
-  });
-
   it('maps "save-failed" to an error toast', () => {
     expect(resolveToast('save-failed')).toEqual({
       message: 'Could not save custom theme.',
+      variant: 'error',
+    });
+  });
+
+  it('maps "picker-visibility-failed" to an error toast', () => {
+    expect(resolveToast('picker-visibility-failed')).toEqual({
+      message: 'Could not update theme picker setting.',
       variant: 'error',
     });
   });

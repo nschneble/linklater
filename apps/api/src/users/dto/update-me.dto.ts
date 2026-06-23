@@ -155,4 +155,13 @@ export class UpdateMeDto {
   @IsOptional()
   @IsCustomThemeShape()
   customTheme?: CustomThemeDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Whether the Custom theme is shown in the theme picker. The Custom theme is always editable in the Theme Editor; this only controls its visibility in the picker menus.',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  customThemeEnabled?: boolean;
 }

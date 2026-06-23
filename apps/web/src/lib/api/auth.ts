@@ -38,6 +38,8 @@ export interface MeResponse {
    * the wire; narrowed client-side via `normalizeCustomTheme`.
    */
   customTheme: unknown;
+  /** Whether the Custom theme is shown in the theme picker. */
+  customThemeEnabled: boolean;
   connectedProviders: Array<{
     provider: string;
     providerEmail: string;

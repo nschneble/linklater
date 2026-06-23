@@ -4,10 +4,12 @@ import {
   CVD_BASE_THEME,
   THEMES,
   VALID_BASE_THEME_IDS,
+  pickerThemes,
   type BaseTheme,
   type Mode,
 } from '../constants';
 import { getInitialBaseTheme, getInitialMode } from '../initial';
+import { useOptionalAuth } from '../../auth/AuthContext';
 import { useThemeState } from './useThemeState';
 import type { CustomTheme } from '../customTheme';
 import type { ThemeContextValue } from './types';
@@ -16,6 +18,7 @@ export {
   CVD_BASE_THEME,
   THEMES,
   VALID_BASE_THEME_IDS,
+  pickerThemes,
   getInitialBaseTheme,
   getInitialMode,
 };
@@ -40,7 +43,12 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
  * @param children - The subtree that should have access to theme state.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const value = useThemeState();
+  // Read auth non-throwingly: `ThemeProvider` is mounted bare (no
+  // `AuthProvider`) in some component tests, where the absence of a session
+  // correctly reads as unauthenticated. The `custom` theme is gated to a
+  // validated fallback until a session exists.
+  const auth = useOptionalAuth();
+  const value = useThemeState(auth?.user != null);
 
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

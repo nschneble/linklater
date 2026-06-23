@@ -49,6 +49,7 @@ const PENDING_EMAIL = 'pending.email@addy.com';
 const makeUser = (overrides = {}) => ({
   cvdMode: false,
   customTheme: null,
+  customThemeEnabled: false,
   createdAt: new Date(),
   email: USER_EMAIL,
   emailVerifiedAt: null,
@@ -263,6 +264,28 @@ describe('UsersService', () => {
           data: expect.objectContaining({ cvdMode: true }),
         }),
       );
+    });
+
+    it('updates customThemeEnabled when provided', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.updateMe(USER_ID, { customThemeEnabled: true });
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ customThemeEnabled: true }),
+        }),
+      );
+    });
+
+    it('does not write customThemeEnabled when it is omitted', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.updateMe(USER_ID, { theme: THEME_NAME });
+
+      const updateArgument = (prismaMock.user.update as jest.Mock).mock
+        .calls[0][0] as { data: Record<string, unknown> };
+      expect(updateArgument.data).not.toHaveProperty('customThemeEnabled');
     });
 
     it('persists customTheme verbatim when provided', async () => {

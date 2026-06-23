@@ -14,12 +14,14 @@ import {
   type Mode,
 } from '../constants';
 import {
-  CUSTOM_TOKEN_KEYS,
+  applyCustomThemeTokens,
+  clearCustomThemeTokens,
   readStoredCustomTheme,
-  tokensForMode,
 } from '../customTheme';
 import { getInitialBaseTheme, getInitialMode } from '../initial';
 import {
+  CUSTOM_THEME_ENABLED_KEY,
+  CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
   CUSTOM_THEME_STORAGE_KEY,
   CUSTOM_THEME_UPDATED_AT_KEY,
   CVD_MODE_KEY,
@@ -36,10 +38,28 @@ import type { CustomTheme } from '../customTheme';
 import type { ThemeContextValue } from './types';
 
 /**
+ * The theme shown to unauthenticated visitors whose stored selection is the
+ * per-user `custom` theme. Its palette is contract-validated in
+ * `bundles.contrast.test.ts` (both modes), unlike the user-authored custom
+ * palette, so it is safe to paint behind the login/signup screens.
+ */
+const UNAUTHENTICATED_FALLBACK_THEME: BaseTheme = 'scanner-darkly';
+
+/**
  * Encapsulates all theme state, layout effects, and action handlers.
  * Consumed by `ThemeProvider`, which passes the returned value into context.
+ *
+ * @param isAuthenticated - Whether a user session exists. The `custom` theme
+ *   renders a per-user palette injected from `localStorage`; for an
+ *   unauthenticated visitor (logged out, or a fresh/DB-reset browser holding
+ *   stale storage) that palette is not theirs to show and carries no contrast
+ *   contract, so it is replaced by `UNAUTHENTICATED_FALLBACK_THEME` on the
+ *   auth screens. `localStorage` is left untouched, so the custom selection
+ *   restores automatically once the server sync confirms it after login.
+ *   Defaults to `true` so direct hook tests and bare `ThemeProvider` mounts
+ *   keep their pre-gate behavior.
  */
-export function useThemeState(): ThemeContextValue {
+export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const [baseTheme, setBaseThemeState] =
     useState<BaseTheme>(getInitialBaseTheme);
   const [mode, setModeState] = useState<Mode>(getInitialMode);
@@ -49,6 +69,21 @@ export function useThemeState(): ThemeContextValue {
   const [customTheme, setCustomThemeState] = useState<CustomTheme | null>(
     readStoredCustomTheme,
   );
+  const [customThemeEnabled, setCustomThemeEnabledState] = useState<boolean>(
+    () => readLocalStorage(CUSTOM_THEME_ENABLED_KEY) === 'on',
+  );
+
+  // The theme actually painted. Diverges from the stored `baseTheme` only when
+  // an unauthenticated visitor's stored selection is `custom`, which is gated
+  // to a validated fallback (see the `isAuthenticated` param docs). Everything
+  // that renders the page — the `data-theme` attribute, the custom-token
+  // injection, the value handed to consumers — keys off this, while the
+  // setters and CVD logic keep operating on the raw `baseTheme` so the user's
+  // real selection survives untouched until login restores it.
+  const effectiveBaseTheme: BaseTheme =
+    !isAuthenticated && baseTheme === 'custom'
+      ? UNAUTHENTICATED_FALLBACK_THEME
+      : baseTheme;
 
   // Ref to always have the current baseTheme available in callbacks
   // without them needing to be recreated on every theme change.
@@ -60,9 +95,9 @@ export function useThemeState(): ThemeContextValue {
   // useLayoutEffect ensures data-theme/data-mode are set before any child
   // useEffect reads getComputedStyle (e.g. useThemeOverrides).
   useLayoutEffect(() => {
-    document.documentElement.dataset.theme = baseTheme;
+    document.documentElement.dataset.theme = effectiveBaseTheme;
     document.documentElement.dataset.mode = mode;
-  }, [baseTheme, mode]);
+  }, [effectiveBaseTheme, mode]);
 
   // Injects the user's stored Custom theme tokens for the current mode as
   // inline CSS custom properties on the document root while the `'custom'`
@@ -70,29 +105,21 @@ export function useThemeState(): ThemeContextValue {
   // keyed off `[data-theme]`), the Custom palette is per-user data, so it has
   // to be applied imperatively.
   //
-  // When the Custom theme is active but no tokens are saved for the current
-  // mode, nothing is injected and the page falls back to the synthetic
-  // `:root` defaults already in bundles.css. When switching away from Custom
-  // (or to the other mode), the cleanup removes every previously injected
-  // property so custom values can't leak onto another theme.
+  // When the Custom theme is active but no tokens are saved for a slot, that
+  // slot falls back to the off-book `branding` palette for the current mode
+  // (BRANDING_DEFAULTS dark / BRANDING_DEFAULTS_LIGHT light) so a fresh Custom
+  // theme "defaults to branding" in both modes. Only the allowlisted
+  // CUSTOM_TOKEN_KEYS are ever written, so the branding fallback stays inside
+  // the same trust boundary as user data — never a trusted bypass. When
+  // switching away from Custom (or to the other mode), the cleanup removes
+  // every previously injected property so the values can't leak onto another
+  // theme.
   useLayoutEffect(() => {
-    if (baseTheme !== 'custom') return;
+    if (effectiveBaseTheme !== 'custom') return;
     const root = document.documentElement;
-    const tokens = tokensForMode(customTheme, mode);
-    for (const variable of CUSTOM_TOKEN_KEYS) {
-      const value = tokens[variable];
-      if (value) {
-        root.style.setProperty(variable, value);
-      } else {
-        root.style.removeProperty(variable);
-      }
-    }
-    return () => {
-      for (const variable of CUSTOM_TOKEN_KEYS) {
-        root.style.removeProperty(variable);
-      }
-    };
-  }, [baseTheme, mode, customTheme]);
+    applyCustomThemeTokens(root, customTheme, mode);
+    return () => clearCustomThemeTokens(root);
+  }, [effectiveBaseTheme, mode, customTheme]);
 
   useLayoutEffect(() => {
     if (isCvdMode) {
@@ -211,6 +238,31 @@ export function useThemeState(): ThemeContextValue {
     [],
   );
 
+  const setCustomThemeEnabled = useCallback((enabled: boolean) => {
+    setCustomThemeEnabledState(enabled);
+    window.localStorage.setItem(
+      CUSTOM_THEME_ENABLED_KEY,
+      enabled ? 'on' : 'off',
+    );
+    window.localStorage.setItem(
+      CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
+      Date.now().toString(),
+    );
+  }, []);
+
+  const applyServerCustomThemeEnabled = useCallback((enabled: boolean) => {
+    const updatedAt = parseInt(
+      readLocalStorage(CUSTOM_THEME_ENABLED_UPDATED_AT_KEY) ?? '0',
+      10,
+    );
+    if (Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS) return;
+    setCustomThemeEnabledState(enabled);
+    window.localStorage.setItem(
+      CUSTOM_THEME_ENABLED_KEY,
+      enabled ? 'on' : 'off',
+    );
+  }, []);
+
   const applyServerMode = useCallback((serverMode: Mode) => {
     const updatedAt = parseInt(
       readLocalStorage(MODE_UPDATED_AT_KEY) ?? '0',
@@ -254,31 +306,37 @@ export function useThemeState(): ThemeContextValue {
   return useMemo(
     () => ({
       applyServerCustomTheme,
+      applyServerCustomThemeEnabled,
       applyServerMode,
       applyServerTheme,
-      baseTheme,
+      baseTheme: effectiveBaseTheme,
       customTheme,
+      customThemeEnabled,
       disableCvdMode,
       enableCvdMode,
       isCvdMode,
       mode,
       setBaseTheme,
       setCustomTheme,
+      setCustomThemeEnabled,
       setMode,
       toggleMode,
     }),
     [
       applyServerCustomTheme,
+      applyServerCustomThemeEnabled,
       applyServerMode,
       applyServerTheme,
-      baseTheme,
+      effectiveBaseTheme,
       customTheme,
+      customThemeEnabled,
       disableCvdMode,
       enableCvdMode,
       isCvdMode,
       mode,
       setBaseTheme,
       setCustomTheme,
+      setCustomThemeEnabled,
       setMode,
       toggleMode,
     ],

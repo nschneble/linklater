@@ -19,6 +19,15 @@ export const CVD_UPDATED_AT_KEY = 'linklater_cvd_updated_at';
 export const CUSTOM_THEME_STORAGE_KEY = 'linklater_custom_theme';
 /** Timestamp written alongside the Custom theme when a user action changes it. */
 export const CUSTOM_THEME_UPDATED_AT_KEY = 'linklater_custom_theme_updated_at';
+/**
+ * Whether the user has opted the Custom theme into the theme picker (`'on'`).
+ * The Custom theme is always editable in the Theme Editor; this flag only
+ * controls whether it appears in the picker menus.
+ */
+export const CUSTOM_THEME_ENABLED_KEY = 'linklater_custom_theme_enabled';
+/** Timestamp written when the Custom-theme picker opt-in is toggled. */
+export const CUSTOM_THEME_ENABLED_UPDATED_AT_KEY =
+  'linklater_custom_theme_enabled_updated_at';
 
 /**
  * If the user changed a preference less than this many milliseconds ago,

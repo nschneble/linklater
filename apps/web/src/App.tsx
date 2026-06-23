@@ -19,6 +19,7 @@ export default function App() {
     applyServerTheme,
     applyServerMode,
     applyServerCustomTheme,
+    applyServerCustomThemeEnabled,
     enableCvdMode,
     disableCvdMode,
     isCvdMode,
@@ -43,11 +44,13 @@ export default function App() {
     }
     applyServerMode(user.mode);
     applyServerCustomTheme(user.customTheme);
+    applyServerCustomThemeEnabled(user.customThemeEnabled);
   }, [
     user,
     applyServerTheme,
     applyServerMode,
     applyServerCustomTheme,
+    applyServerCustomThemeEnabled,
     isCvdMode,
   ]);
 

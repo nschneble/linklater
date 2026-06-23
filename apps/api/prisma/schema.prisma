@@ -20,6 +20,11 @@ model User {
   // token set happens client-side; the column stays a free-form JSON blob.
   customTheme Json?
 
+  // Whether the user has opted the Custom theme into the theme picker. The
+  // Custom theme is always reachable from the Theme Editor, but stays hidden
+  // from the picker menus until the user checks this in the editor.
+  customThemeEnabled Boolean @default(false)
+
   passwordHash      String?
   pendingEmail      String?
   pendingEmailToken String? @unique

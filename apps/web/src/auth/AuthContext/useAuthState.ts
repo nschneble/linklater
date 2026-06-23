@@ -61,6 +61,7 @@ function mapMeToUser(me: MeResponse): User {
   return {
     cvdMode: me.cvdMode,
     customTheme: normalizeCustomTheme(me.customTheme),
+    customThemeEnabled: me.customThemeEnabled,
     connectedProviders: me.connectedProviders,
     email: me.email,
     emailVerifiedAt: me.emailVerifiedAt,

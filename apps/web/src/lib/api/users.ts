@@ -4,6 +4,7 @@ import type { CustomTheme } from '../../theme/customTheme';
 export function updateMe(input: {
   currentPassword?: string;
   customTheme?: CustomTheme;
+  customThemeEnabled?: boolean;
   cvdMode?: boolean;
   mode?: string;
   password?: string;

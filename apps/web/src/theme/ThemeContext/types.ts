@@ -77,4 +77,21 @@ export interface ThemeContextValue {
    * race-condition guard used by `applyServerTheme`.
    */
   applyServerCustomTheme: (customTheme: CustomTheme | null) => void;
+  /**
+   * Whether the user has opted the Custom theme into the theme picker. The
+   * Custom theme is always reachable from the Theme Editor; this flag only
+   * controls whether the picker menus list it.
+   */
+  customThemeEnabled: boolean;
+  /**
+   * Sets the Custom-theme picker opt-in from a user action (the Theme
+   * Editor's toggle). Persists to `localStorage` with a timestamp so a
+   * subsequent server sync cannot overwrite a very recent change.
+   */
+  setCustomThemeEnabled: (enabled: boolean) => void;
+  /**
+   * Applies the server-stored Custom-theme picker opt-in. Skips the update
+   * if the user toggled it locally within the last 30 seconds.
+   */
+  applyServerCustomThemeEnabled: (enabled: boolean) => void;
 }
