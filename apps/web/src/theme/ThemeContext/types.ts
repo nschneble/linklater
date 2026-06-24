@@ -20,6 +20,15 @@ export interface ThemeContextValue {
    */
   setBaseTheme: (theme: BaseTheme) => void;
   /**
+   * Transiently previews a base theme WITHOUT persisting it: no
+   * `localStorage` write and no change to the committed `baseTheme`. Only the
+   * painted `data-theme` and custom-token injection follow the preview, so
+   * consumers (e.g. the editor's auto-save) keep reading the real selection.
+   * The Theme Editor's copy-palette picker uses this to paint the page in a
+   * film theme while an option is active, passing `null` to revert.
+   */
+  setPreviewTheme: (theme: BaseTheme | null) => void;
+  /**
    * Sets the color mode from a user action. Persists to `localStorage`
    * with a timestamp so a subsequent server sync cannot overwrite a very
    * recent change.

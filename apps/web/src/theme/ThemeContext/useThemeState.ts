@@ -72,6 +72,11 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const [customThemeEnabled, setCustomThemeEnabledState] = useState<boolean>(
     () => readLocalStorage(CUSTOM_THEME_ENABLED_KEY) === 'on',
   );
+  // Transient, non-persisting preview overlay. When set, the page PAINTS in
+  // this theme (data-theme + custom-token injection) while the committed
+  // `baseTheme` is left untouched, so nothing downstream of the real selection
+  // changes. Used by the editor's copy-palette picker to peek at a film theme.
+  const [previewTheme, setPreviewTheme] = useState<BaseTheme | null>(null);
 
   // The theme actually painted. Diverges from the stored `baseTheme` only when
   // an unauthenticated visitor's stored selection is `custom`, which is gated
@@ -85,6 +90,17 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       ? UNAUTHENTICATED_FALLBACK_THEME
       : baseTheme;
 
+  // The theme actually PAINTED on the document. A transient preview wins over
+  // the committed selection but is never persisted, so the data-theme + custom
+  // tokens follow it while consumers keep reading the real `effectiveBaseTheme`.
+  // A preview never bypasses the unauthenticated custom-theme gate: an unauth
+  // visitor can't be painted in the per-user custom palette via a preview
+  // either (the editor is the only caller and is authenticated-only, so this is
+  // a belt-and-suspenders guard).
+  const previewIsGated = !isAuthenticated && previewTheme === 'custom';
+  const paintedTheme: BaseTheme =
+    previewTheme && !previewIsGated ? previewTheme : effectiveBaseTheme;
+
   // Ref to always have the current baseTheme available in callbacks
   // without them needing to be recreated on every theme change.
   const baseThemeRef = useRef<BaseTheme>(baseTheme);
@@ -95,9 +111,9 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   // useLayoutEffect ensures data-theme/data-mode are set before any child
   // useEffect reads getComputedStyle (e.g. useThemeOverrides).
   useLayoutEffect(() => {
-    document.documentElement.dataset.theme = effectiveBaseTheme;
+    document.documentElement.dataset.theme = paintedTheme;
     document.documentElement.dataset.mode = mode;
-  }, [effectiveBaseTheme, mode]);
+  }, [paintedTheme, mode]);
 
   // Injects the user's stored Custom theme tokens for the current mode as
   // inline CSS custom properties on the document root while the `'custom'`
@@ -115,11 +131,11 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   // every previously injected property so the values can't leak onto another
   // theme.
   useLayoutEffect(() => {
-    if (effectiveBaseTheme !== 'custom') return;
+    if (paintedTheme !== 'custom') return;
     const root = document.documentElement;
     applyCustomThemeTokens(root, customTheme, mode);
     return () => clearCustomThemeTokens(root);
-  }, [effectiveBaseTheme, mode, customTheme]);
+  }, [paintedTheme, mode, customTheme]);
 
   useLayoutEffect(() => {
     if (isCvdMode) {
@@ -320,6 +336,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       setCustomTheme,
       setCustomThemeEnabled,
       setMode,
+      setPreviewTheme,
       toggleMode,
     }),
     [
@@ -338,6 +355,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       setCustomTheme,
       setCustomThemeEnabled,
       setMode,
+      setPreviewTheme,
       toggleMode,
     ],
   );

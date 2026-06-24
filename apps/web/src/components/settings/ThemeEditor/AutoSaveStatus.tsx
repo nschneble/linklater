@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
 
 interface AutoSaveStatusProps {
-  /** Whether the editor's selected theme is the editable custom theme. */
-  isCustom: boolean;
+  /** Whether the custom theme is enabled (editable + saving). */
+  enabled: boolean;
   /** Whether a save round-trip is currently in flight. */
   isSaving: boolean;
   /**
@@ -11,6 +11,13 @@ interface AutoSaveStatusProps {
    * `0` means nothing has been saved yet this session.
    */
   savedCount: number;
+  /**
+   * The message announced on each settled save. Generic edits pass "Custom
+   * theme saved."; a copy or undo passes a one-off reason ("School of Rock
+   * palette applied and saved." / "Reverted to previous colors.") so the
+   * single utterance per save tick says WHAT happened, never double-speaking.
+   */
+  savedMessage: string;
   /** Live count of failing WCAG contrast pairs (visible warning only). */
   failingCount: number;
 }
@@ -32,26 +39,34 @@ interface AutoSaveStatusProps {
  * are a live preview and only the custom theme saves.
  */
 export default function AutoSaveStatus({
-  isCustom,
+  enabled,
   isSaving,
   savedCount,
+  savedMessage,
   failingCount,
 }: AutoSaveStatusProps) {
   const [announcement, setAnnouncement] = useState('');
 
   // Re-announce on every settled save: clear first so an identical message
   // string still triggers the live region (it only fires on content change).
+  // The message is read at fire time via a ref so the consume-once reason set
+  // just before the save isn't lost to a stale closure.
+  const savedMessageReference = useRef(savedMessage);
+  savedMessageReference.current = savedMessage;
   useEffect(() => {
     if (savedCount === 0) return;
     setAnnouncement('');
-    const timer = setTimeout(() => setAnnouncement('Custom theme saved.'), 50);
+    const timer = setTimeout(
+      () => setAnnouncement(savedMessageReference.current),
+      50,
+    );
     return () => clearTimeout(timer);
   }, [savedCount]);
 
-  if (!isCustom) {
+  if (!enabled) {
     return (
       <p className="text-[var(--base-subtle-text)] text-[0.65rem]">
-        Live preview. Switch the theme to Yours to save your changes.
+        Turn on the custom theme to edit and save your colors.
       </p>
     );
   }

@@ -151,9 +151,13 @@ export interface UseThemeOverridesResult {
    * Bulk-replaces the override map with a fresh set of token values – used by
    * "Copy from theme" to seed every editable variable from another theme's
    * resolved palette in a single update. Only keys in `EDITABLE_VARS` are
-   * applied; unknown keys are ignored. Replaces any in-progress edits.
+   * applied; unknown keys are ignored. Replaces any in-progress edits. Returns
+   * the fully-resolved values it applied so a caller can persist exactly that
+   * snapshot immediately (state updates are async).
    */
-  loadOverrides: (tokens: Record<string, string>) => void;
+  loadOverrides: (
+    tokens: Record<string, string>,
+  ) => Record<ThemeVariable, string>;
   resetOverrides: () => void;
   resetBundle: (bundle: Bundle) => void;
 }
@@ -207,6 +211,7 @@ export function useThemeOverrides(): UseThemeOverridesResult {
     }
     setOverrides(next);
     setColorValues(seededColorValues);
+    return seededColorValues;
   }, []);
 
   const resetOverrides = useCallback(() => {

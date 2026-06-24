@@ -1,119 +1,138 @@
 /*
- * Tests for CopyFromTheme – the two-step "Copy palette from theme" control.
+ * Tests for CopyFromTheme – the "Copy palette from theme" menu control.
  *
- * Covers a11y brief B2/B6: the themed picker stages a pending choice while an
- * explicit Copy button commits (overwrite never wired to selection), the
- * role="group" labelling, the picker's visible label (via aria-labelledby),
- * the destructive-action describedby, custom-only aria-disabled, and that Copy
- * reads tokens from a probe element's computed style for BOTH modes.
+ * Covers the redesigned flow: picking a theme is a one-step ACTION (apply +
+ * autosave, no Copy button), the menu is aria-disabled until the custom theme
+ * is enabled, the role="group" labelling + describedby hint, the active-row
+ * preview hook, and the Undo button (naming + focus-return to the trigger).
  */
 
 import CopyFromTheme from './CopyFromTheme';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CUSTOM_TOKEN_KEYS } from '../../../theme/customTheme';
+import { describe, expect, it, vi } from 'vitest';
 
-function renderControl(isCustom = true) {
-  const onCopy = vi.fn();
-  render(<CopyFromTheme isCustom={isCustom} onCopy={onCopy} />);
-  return { onCopy };
+function renderControl(
+  props: Partial<Parameters<typeof CopyFromTheme>[0]> = {},
+) {
+  const onApply = vi.fn();
+  const onPreviewTheme = vi.fn();
+  const onUndo = vi.fn();
+  render(
+    <CopyFromTheme
+      editingEnabled
+      onApply={onApply}
+      onPreviewTheme={onPreviewTheme}
+      undoThemeLabel={null}
+      onUndo={onUndo}
+      {...props}
+    />,
+  );
+  return { onApply, onPreviewTheme, onUndo };
 }
 
 function getTrigger() {
-  return screen.getByRole('combobox', { name: /copy palette from theme/i });
+  return screen.getByRole('button', { name: /copy palette from theme/i });
 }
-
-function getCopyButton() {
-  return screen.getByRole('button', { name: /^copy$/i });
-}
-
-/** Opens the picker and clicks the option with the given accessible name. */
-function selectTheme(name: RegExp) {
-  fireEvent.click(getTrigger());
-  const listbox = screen.getByRole('listbox', {
-    name: /copy palette from theme/i,
-  });
-  fireEvent.click(within(listbox).getByRole('option', { name }));
-}
-
-// jsdom does not apply the [data-theme] stylesheet cascade, so stub
-// getComputedStyle to return a fixed token value for every custom key. This
-// lets us assert the probe was queried per mode without a real stylesheet.
-const realGetComputedStyle = window.getComputedStyle;
-
-beforeEach(() => {
-  vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
-    const dataset = (element as HTMLElement).dataset;
-    return {
-      getPropertyValue: (property: string) =>
-        CUSTOM_TOKEN_KEYS.includes(property)
-          ? `value-${dataset.theme}-${dataset.mode}`
-          : '',
-    } as unknown as CSSStyleDeclaration;
-  });
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  window.getComputedStyle = realGetComputedStyle;
-});
 
 describe('CopyFromTheme', () => {
-  it('groups the picker and button under a labelled group', () => {
+  it('groups the menu under a labelled group', () => {
     renderControl();
     expect(
       screen.getByRole('group', { name: /copy palette from theme/i }),
     ).toBeInTheDocument();
   });
 
-  it('does NOT copy on selection (two-step, SC 3.2.2)', () => {
-    const { onCopy } = renderControl();
-    selectTheme(/apollo 10½/i);
-    expect(onCopy).not.toHaveBeenCalled();
+  it('applies the picked theme in one step (no Copy button)', () => {
+    const { onApply } = renderControl();
+    expect(screen.queryByRole('button', { name: /^copy$/i })).toBeNull();
+    fireEvent.click(getTrigger());
+    const menu = screen.getByRole('menu', { name: /copy palette from theme/i });
+    fireEvent.click(
+      within(menu).getByRole('menuitem', { name: /apollo 10½/i }),
+    );
+    expect(onApply).toHaveBeenCalledWith('apollo-10-1-2', 'Apollo 10½');
   });
 
-  it('copies BOTH modes resolved from the probe on Copy click', () => {
-    const { onCopy } = renderControl();
-    selectTheme(/apollo 10½/i);
-    fireEvent.click(getCopyButton());
-
-    expect(onCopy).toHaveBeenCalledTimes(1);
-    const [tokens, label] = onCopy.mock.calls[0];
-    expect(label).toBe('Apollo 10½');
-    expect(tokens.dark['--mount-bg']).toBe('value-apollo-10-1-2-dark');
-    expect(tokens.light['--mount-bg']).toBe('value-apollo-10-1-2-light');
-    expect(Object.keys(tokens.dark).length).toBe(CUSTOM_TOKEN_KEYS.length);
-  });
-
-  it('stays disabled until a theme is selected', () => {
-    const { onCopy } = renderControl();
-    const button = getCopyButton();
-    expect(button).toHaveAttribute('aria-disabled', 'true');
-    fireEvent.click(button);
-    expect(onCopy).not.toHaveBeenCalled();
-  });
-
-  it('excludes the custom theme from the copyable options', () => {
+  it('excludes the custom theme from the menu', () => {
     renderControl();
     fireEvent.click(getTrigger());
-    expect(screen.queryByRole('option', { name: /^custom$/i })).toBeNull();
+    expect(
+      screen.queryByRole('menuitem', { name: /^your theme$/i }),
+    ).toBeNull();
   });
 
-  it('is present but aria-disabled for non-custom themes (B6)', () => {
-    const { onCopy } = renderControl(false);
-    const button = getCopyButton();
-    expect(button).toBeInTheDocument();
-    expect(button).toHaveAttribute('aria-disabled', 'true');
-    selectTheme(/apollo 10½/i);
-    fireEvent.click(button);
-    expect(onCopy).not.toHaveBeenCalled();
+  it('is aria-disabled and does not open while the custom theme is off', () => {
+    const { onApply } = renderControl({ editingEnabled: false });
+    const trigger = getTrigger();
+    expect(trigger).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(onApply).not.toHaveBeenCalled();
   });
 
-  it('warns that copying replaces edits via aria-describedby', () => {
+  it('previews the active row theme and reverts on close', () => {
+    const { onPreviewTheme } = renderControl();
+    fireEvent.click(getTrigger());
+    expect(onPreviewTheme).toHaveBeenLastCalledWith('apollo-10-1-2');
+    const menu = screen.getByRole('menu', { name: /copy palette from theme/i });
+    fireEvent.keyDown(menu, { key: 'Escape' });
+    expect(onPreviewTheme).toHaveBeenLastCalledWith(null);
+  });
+
+  it('describes the apply-and-undo behavior when enabled', () => {
     renderControl();
-    const button = getCopyButton();
-    const describedById = button.getAttribute('aria-describedby');
+    const describedById = getTrigger().getAttribute('aria-describedby');
     const description = document.getElementById(describedById as string);
-    expect(description?.textContent).toMatch(/replaces all current edits/i);
+    expect(description?.textContent).toMatch(/undo to revert/i);
+  });
+
+  it('shows a labelled Undo button only when there is something to undo', () => {
+    const { rerender } = renderUndoable(null);
+    expect(screen.queryByRole('button', { name: /undo/i })).toBeNull();
+    rerender('Apollo 10½');
+    expect(
+      screen.getByRole('button', { name: 'Undo copy from Apollo 10½' }),
+    ).toBeInTheDocument();
+  });
+
+  it('reverts and returns focus to the trigger on Undo', () => {
+    const onUndo = vi.fn();
+    render(
+      <CopyFromTheme
+        editingEnabled
+        onApply={vi.fn()}
+        onPreviewTheme={vi.fn()}
+        undoThemeLabel="Apollo 10½"
+        onUndo={onUndo}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /undo copy from/i }));
+    expect(onUndo).toHaveBeenCalledTimes(1);
+    expect(getTrigger()).toHaveFocus();
   });
 });
+
+/** Renders the control with a controllable `undoThemeLabel`. */
+function renderUndoable(initial: string | null) {
+  const view = render(
+    <CopyFromTheme
+      editingEnabled
+      onApply={vi.fn()}
+      onPreviewTheme={vi.fn()}
+      undoThemeLabel={initial}
+      onUndo={vi.fn()}
+    />,
+  );
+  return {
+    rerender: (label: string | null) =>
+      view.rerender(
+        <CopyFromTheme
+          editingEnabled
+          onApply={vi.fn()}
+          onPreviewTheme={vi.fn()}
+          undoThemeLabel={label}
+          onUndo={vi.fn()}
+        />,
+      ),
+  };
+}

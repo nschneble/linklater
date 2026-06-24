@@ -109,11 +109,11 @@ export const THEMES: Array<{
     // both light and dark mode. `swatchIcon` is special-cased to the generic
     // paintbrush — every other theme uses a film-specific icon. `isAccessible`
     // is intentionally omitted: a user-authored palette can't be assumed
-    // CVD-safe. The label is "Yours" (it's the viewer's own theme); the
-    // referent-free pronoun gets an sr-only "custom theme" qualifier at each
-    // picker via `customThemeSrSuffix`.
+    // CVD-safe. The label is "Your Theme" (the viewer's own); each picker still
+    // appends an sr-only "custom theme" qualifier via `customThemeSrSuffix` so
+    // it reads unambiguously out of context.
     id: 'custom',
-    label: 'Yours',
+    label: 'Your Theme',
     accent: '#808080',
     swatchIcon: 'fa-paintbrush',
   },

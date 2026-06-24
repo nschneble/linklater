@@ -1,8 +1,8 @@
 /*
- * Tests for the editor's `resolveToast` message-key resolver (W6). The toast
- * holds only a string key; this resolver picks the <Toast> variant and visible
- * copy, including the `copied:<count>:<label>` string protocol (which stays
- * encoded this wave but is now covered – the generic-ization is deferred).
+ * Tests for the editor's `resolveToast` message-key resolver. The toast holds
+ * only a string key; this resolver picks the <Toast> variant and visible copy.
+ * Only the assertive FAILURE keys route here now — copy/undo success is
+ * announced by the polite AutoSaveStatus region, not a toast.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -16,24 +16,10 @@ describe('resolveToast', () => {
     });
   });
 
-  it('maps "picker-visibility-failed" to an error toast', () => {
-    expect(resolveToast('picker-visibility-failed')).toEqual({
-      message: 'Could not update theme picker setting.',
+  it('maps "custom-theme-toggle-failed" to an error toast', () => {
+    expect(resolveToast('custom-theme-toggle-failed')).toEqual({
+      message: 'Could not update the custom theme setting.',
       variant: 'error',
-    });
-  });
-
-  it('decodes copied:<count>:<label> into a success toast', () => {
-    expect(resolveToast('copied:12:Apollo 10½')).toEqual({
-      message: 'Copied 12 tokens from Apollo 10½',
-      variant: 'success',
-    });
-  });
-
-  it('preserves a colon inside the copied label', () => {
-    expect(resolveToast('copied:3:Before: Midnight')).toEqual({
-      message: 'Copied 3 tokens from Before: Midnight',
-      variant: 'success',
     });
   });
 

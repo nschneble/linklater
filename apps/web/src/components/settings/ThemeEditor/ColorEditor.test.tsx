@@ -27,6 +27,7 @@ function buildColorValues(): Record<ThemeVariable, string> {
 
 function renderEditor(
   contrastFailures: Map<string, TokenContrastFailure> = new Map(),
+  editingDisabled = false,
 ) {
   return render(
     <ColorEditor
@@ -34,6 +35,7 @@ function renderEditor(
       contrastFailures={contrastFailures}
       onOverride={vi.fn()}
       onResetBundle={vi.fn()}
+      editingDisabled={editingDisabled}
     />,
   );
 }
@@ -165,6 +167,43 @@ describe('ColorEditor – token search', () => {
     expect(
       within(landmark).getByLabelText(/search tokens/i),
     ).toBeInTheDocument();
+  });
+});
+
+describe('ColorEditor – editing locked (custom theme off)', () => {
+  it('shows the lock hint and keeps search + disclosures operable', () => {
+    renderEditor(new Map(), true);
+    expect(screen.getByText(/turn on the switch to edit/i)).toBeInTheDocument();
+    // Browse stays available: search is operable, base disclosure can toggle.
+    expect(getSearchbox()).not.toBeDisabled();
+    const baseButton = screen.getByRole('button', { name: /^Base/ });
+    expect(baseButton).not.toBeDisabled();
+  });
+
+  it('locks the hex input read-only (not disabled) so values stay copyable', () => {
+    renderEditor(new Map(), true);
+    const input = screen.getByRole('textbox', { name: /Base text/i });
+    expect(input).toHaveAttribute('readonly');
+    expect(input).not.toBeDisabled();
+  });
+
+  it('disables the color pickers and per-bundle resets', () => {
+    renderEditor(new Map(), true);
+    expect(
+      screen.getByRole('button', { name: /reset base bundle/i }),
+    ).toBeDisabled();
+    expect(screen.getByLabelText(/color picker for base text/i)).toBeDisabled();
+  });
+
+  it('suppresses aria-invalid on a failing token while locked', () => {
+    renderEditor(
+      new Map([
+        ['--base-text', { ratio: 2.9, threshold: 4.5, pairLabel: 'text / bg' }],
+      ]),
+      true,
+    );
+    const input = screen.getByRole('textbox', { name: /Base text/i });
+    expect(input).not.toHaveAttribute('aria-invalid');
   });
 });
 

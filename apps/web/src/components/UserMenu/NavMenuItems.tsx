@@ -64,9 +64,7 @@ export default function NavMenuItems({
 
       <MenuItem
         icon="fa-paintbrush"
-        label={
-          hasCustomTheme ? 'Edit your custom theme' : 'Create a custom theme'
-        }
+        label={`${hasCustomTheme ? 'Edit your' : 'Create a'} custom theme`}
         onClick={() => {
           onViewChange('theme-editor');
           onClose();

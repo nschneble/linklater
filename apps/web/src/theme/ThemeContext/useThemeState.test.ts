@@ -599,3 +599,55 @@ describe('applyServerCustomTheme', () => {
     expect(window.localStorage.getItem(CUSTOM_THEME_STORAGE_KEY)).toBeNull();
   });
 });
+
+describe('setPreviewTheme', () => {
+  it('paints the preview theme on data-theme without changing baseTheme or storage', () => {
+    const { result } = renderHook(() => useThemeState());
+    expect(result.current.baseTheme).toBe('scanner-darkly');
+
+    act(() => {
+      result.current.setPreviewTheme('boyhood');
+    });
+
+    expect(root().dataset.theme).toBe('boyhood');
+    // The committed selection and storage are untouched — preview never persists.
+    expect(result.current.baseTheme).toBe('scanner-darkly');
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
+  });
+
+  it('reverts to the committed theme when the preview is cleared', () => {
+    const { result } = renderHook(() => useThemeState());
+    act(() => result.current.setPreviewTheme('boyhood'));
+    expect(root().dataset.theme).toBe('boyhood');
+
+    act(() => result.current.setPreviewTheme(null));
+    expect(root().dataset.theme).toBe('scanner-darkly');
+  });
+
+  it('injects custom tokens when previewing custom and clears them when previewing away', () => {
+    seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
+    // baseTheme stays a film theme; only the preview points at custom.
+    const { result } = renderHook(() => useThemeState());
+    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+
+    act(() => result.current.setPreviewTheme('custom'));
+    expect(root().style.getPropertyValue('--mount-border')).toBe('#abcabc');
+
+    act(() => result.current.setPreviewTheme('boyhood'));
+    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+    expect(result.current.baseTheme).toBe('scanner-darkly');
+  });
+
+  it('does not let a preview of custom bypass the unauthenticated gate', () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, 'custom');
+    seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
+    // Unauthenticated: the committed custom selection is already gated to the
+    // fallback; a preview of custom must not re-open that door.
+    const { result } = renderHook(() => useThemeState(false));
+
+    act(() => result.current.setPreviewTheme('custom'));
+
+    expect(root().dataset.theme).not.toBe('custom');
+    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+  });
+});

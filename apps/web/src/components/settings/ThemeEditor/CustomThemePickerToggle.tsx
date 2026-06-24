@@ -2,37 +2,38 @@ const TOGGLE_ID = 'theme-editor-show-custom';
 const TOGGLE_DESCRIPTION_ID = 'theme-editor-show-custom-description';
 
 interface CustomThemePickerToggleProps {
-  /** Whether the Custom theme is currently shown in the picker menus. */
+  /** Whether the custom theme is enabled: editable + saving here, and shown in the picker menus. */
   enabled: boolean;
   /** Called with the next value when the user flips the switch. */
   onChange: (enabled: boolean) => void;
 }
 
 /**
- * Switch that opts the Custom theme into the theme picker. Until it is on, the
- * Custom theme stays hidden from the user-menu pickers (it remains editable
- * here in the editor's own theme select regardless). The state self-announces
- * via the `switch` role, so no live-region confirmation is needed on flip; a
- * failed save is announced separately by the editor's Toast.
+ * Master switch for the custom theme. While OFF the editor mirrors the user's
+ * real theme with the color pickers locked; flipping it ON seeds the palette,
+ * switches the page to custom, and unlocks editing — and also shows the custom
+ * theme in the user-menu pickers. The state self-announces via the `switch`
+ * role, so no live-region confirmation is needed on flip; a failed save is
+ * announced separately by the editor's Toast.
  *
  * Built as a real `<input type="checkbox" role="switch">` so the native
  * element owns checked/keyboard/focus and AT announces "switch, on/off". The
  * painted track + thumb are an aria-hidden sibling driven entirely off the
  * peer's `:checked`/`:focus-visible` state — no JS class ternaries.
  *
- * Rendered as a full-width card matching the editor's panels (mount surface),
- * the track/thumb/label all paint from the active theme's `--mount-*` tokens.
- * The thumb color inverts with state (`--mount-text` off → `--mount-highlight-fg`
- * on) so it stays readable against both the inset track and the filled track.
- * The focus ring stays a FIXED blue like the editor's other chrome, so a
- * hostile custom palette can never hide keyboard focus.
+ * Rendered inside the editor's two-up settings card (mount surface) beside the
+ * copy-palette control, the track/thumb/label all paint from the active theme's
+ * `--mount-*` tokens. The thumb color inverts with state (`--mount-text` off →
+ * `--mount-highlight-fg` on) so it stays readable against both the inset track
+ * and the filled track. The focus ring stays a FIXED blue like the editor's
+ * other chrome, so a hostile custom palette can never hide keyboard focus.
  */
 export default function CustomThemePickerToggle({
   enabled,
   onChange,
 }: CustomThemePickerToggleProps) {
   return (
-    <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
+    <div>
       <label
         htmlFor={TOGGLE_ID}
         className="inline-flex items-center gap-3 min-h-[24px] cursor-pointer"
@@ -57,15 +58,15 @@ export default function CustomThemePickerToggle({
           />
         </span>
         <span className="text-[var(--mount-text)] text-sm font-medium select-none">
-          Show the custom theme in the theme picker
+          Use your own custom theme
         </span>
       </label>
       <p
         id={TOGGLE_DESCRIPTION_ID}
         className="mt-1.5 max-w-prose text-[var(--mount-alt-text)] text-xs"
       >
-        Off by default. When on, the custom theme appears in the theme picker
-        alongside the built-in themes.
+        Off by default. Turn it on to edit your colors here and show your custom
+        theme in the theme picker alongside the built-in themes.
       </p>
     </div>
   );

@@ -1,12 +1,13 @@
 import type { CSSProperties } from 'react';
 
 /**
- * Fixed neutral palette for the Theme Editor's ONE guaranteed escape hatch:
- * "Reset all". Every other chrome control now paints from the active theme's
- * bundle tokens, so a hostile or unreadable custom palette can degrade them.
- * Reset all deliberately does NOT read bundle tokens — its opaque light fill
- * stays readable on any theme, and clicking it reverts the custom theme to the
- * branding defaults, so there is always a visible way back to a readable state.
+ * Fixed neutral palette for the Theme Editor's guaranteed escape hatches. Every
+ * other chrome control paints from the active theme's bundle tokens, so a
+ * hostile or unreadable custom palette can degrade them. Controls spread this
+ * instead so they stay readable on any palette: the copy-menu TRIGGER (now the
+ * only way back to a readable theme, since "Reset all" was removed) and the
+ * contrast-failure warning chip in `AutoSaveStatus` (it must stay legible
+ * precisely when the colors it warns about are broken).
  *
  * Opaque on purpose: a translucent fill would composite over the (possibly
  * unreadable) page background and lose its guaranteed contrast. The border
@@ -16,6 +17,29 @@ export const ESCAPE_HATCH_LIGHT: CSSProperties = {
   backgroundColor: '#fafafa',
   color: '#0a0a0a',
   borderColor: '#404040',
+};
+
+/**
+ * Fixed fill + label pair for the active pill of the editor's dark/light mode
+ * toggle, keyed by the current mode. The toggle borrows the read/unread
+ * sliding-pill LOOK but NOT its bundle tokens: those come from the untrusted
+ * custom palette with no contrast guarantee (`bundles.contrast.test.ts` only
+ * covers the film themes), so a hostile palette could collapse the active
+ * label against its pill. The mode toggle is the very control needed to reach
+ * the dark/light palettes being repaired, so it must stay legible regardless.
+ *
+ * Each pair is the inverse of the page background it sits over, so the pill
+ * reads against the track (SC 1.4.11) and the label reads against the pill
+ * (~19:1, SC 1.4.3): a near-white pill in dark mode, a near-black pill in
+ * light mode. Not guarded by `bundles.contrast.test.ts` — these are chrome
+ * literals, verified by hand.
+ */
+export const ESCAPE_HATCH_PILL: Record<
+  'dark' | 'light',
+  { fill: string; label: string }
+> = {
+  dark: { fill: '#fafafa', label: '#0a0a0a' },
+  light: { fill: '#0a0a0a', label: '#fafafa' },
 };
 
 /**

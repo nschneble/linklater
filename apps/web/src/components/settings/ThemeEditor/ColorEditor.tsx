@@ -21,6 +21,14 @@ interface ColorEditorProps {
   onOverride: (variable: ThemeVariable, value: string) => void;
   /** Called when the user clicks a per-bundle Reset button. */
   onResetBundle: (bundle: Bundle) => void;
+  /**
+   * When true, editing is locked (the custom theme is not enabled): the hex
+   * inputs go `readonly` and the color pickers + per-bundle resets `disabled`,
+   * but search + bundle disclosures stay operable so the user can still BROWSE
+   * and copy the currently-shown theme's read-only values. Conveyed by native
+   * per-control state plus a visible hint, never `aria-disabled` on the region.
+   */
+  editingDisabled?: boolean;
 }
 
 interface ColorRowProps {
@@ -36,10 +44,13 @@ interface ColorRowProps {
   failure: TokenContrastFailure | undefined;
   /** Called when the user commits a new color value. */
   onOverride: (variable: ThemeVariable, value: string) => void;
+  /** When true, the picker is `disabled` and the hex input is `readonly`. */
+  editingDisabled: boolean;
 }
 
 const SEARCH_INPUT_ID = 'theme-editor-token-search';
 const SEARCH_STATUS_ID = 'theme-editor-token-search-status';
+const EDIT_LOCK_HINT_ID = 'theme-editor-edit-lock-hint';
 
 /**
  * How long the describedby failure text waits after the latest keystroke
@@ -110,6 +121,7 @@ function ColorRow({
   currentValue,
   failure,
   onOverride,
+  editingDisabled,
 }: ColorRowProps) {
   const [inputValue, setInputValue] = useState(currentValue);
 
@@ -154,6 +166,11 @@ function ColorRow({
   }
 
   const isAlpha = isAlphaValue(currentValue);
+  // The native color picker cannot represent alpha and is meaningless while
+  // editing is locked, so it is disabled in either case. The hex input stays a
+  // readable, copyable, focusable `readonly` field while locked (not disabled),
+  // so the OFF state lets the user read + copy the current theme's values.
+  const pickerDisabled = isAlpha || editingDisabled;
   const pickerValue = /^#[0-9a-fA-F]{6}$/.test(inputValue)
     ? inputValue
     : '#000000';
@@ -169,12 +186,12 @@ function ColorRow({
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
       <label
         className="relative shrink-0 focus-within:ring-2 focus-within:ring-[var(--focus-ring)] focus-within:ring-offset-1 focus-within:ring-offset-[var(--mount-bg)] rounded-md cursor-pointer aria-disabled:cursor-not-allowed"
-        aria-disabled={isAlpha}
+        aria-disabled={pickerDisabled}
       >
         <span
           className="block w-7 h-7 border border-[var(--mount-border)] rounded-md shadow-sm aria-disabled:opacity-60"
           style={{ backgroundColor: swatchBackground }}
-          aria-disabled={isAlpha}
+          aria-disabled={pickerDisabled}
         />
         <input
           type="color"
@@ -182,8 +199,8 @@ function ColorRow({
           onChange={handleColorPickerChange}
           className="absolute inset-0 opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed"
           aria-label={pickerAriaLabel}
-          disabled={isAlpha}
-          aria-disabled={isAlpha}
+          disabled={pickerDisabled}
+          aria-disabled={pickerDisabled}
         />
       </label>
 
@@ -199,10 +216,14 @@ function ColorRow({
         value={inputValue}
         onChange={handleTextChange}
         onBlur={handleTextBlur}
+        readOnly={editingDisabled}
         aria-label={textAriaLabel}
-        aria-invalid={failure ? 'true' : undefined}
+        // While locked the field is read-only, so suppress the "fix me"
+        // aria-invalid signal on a value the user can't change — but keep the
+        // describedby note, which is still-true descriptive info (not a CTA).
+        aria-invalid={!editingDisabled && failure ? 'true' : undefined}
         aria-describedby={debouncedFailure ? failureNoteId : undefined}
-        className="w-28 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] aria-invalid:border-[var(--alert-border)] text-[var(--mount-text)] text-[0.65rem] font-mono focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] focus:border-transparent rounded-md"
+        className="w-28 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] aria-invalid:border-[var(--alert-border)] text-[var(--mount-text)] text-[0.65rem] font-mono read-only:opacity-70 focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] focus:border-transparent rounded-md"
         placeholder="#000000"
         spellCheck={false}
       />
@@ -236,6 +257,7 @@ export default function ColorEditor({
   contrastFailures,
   onOverride,
   onResetBundle,
+  editingDisabled = false,
 }: ColorEditorProps) {
   const [openBundles, setOpenBundles] = useState<Set<Bundle>>(
     () => new Set(['base']),
@@ -325,6 +347,19 @@ export default function ColorEditor({
 
   return (
     <div className="space-y-3">
+      {editingDisabled && (
+        // Full-opacity hint (kept legible — not dimmed) explaining why the
+        // pickers are locked. Stays the first thing in the card body so it is
+        // encountered first in reading order (SC 3.3.2 / 1.3.1).
+        <p
+          id={EDIT_LOCK_HINT_ID}
+          className="flex items-center gap-1.5 text-[var(--mount-alt-text)] text-xs"
+        >
+          <i className="fa-solid fa-lock text-[0.6rem]" aria-hidden="true" />
+          Turn on the switch to edit your colors.
+        </p>
+      )}
+
       <div role="search" className="relative">
         <label htmlFor={SEARCH_INPUT_ID} className="sr-only">
           Search tokens
@@ -339,7 +374,11 @@ export default function ColorEditor({
           placeholder="Search tokens…"
           autoComplete="off"
           spellCheck={false}
-          aria-describedby={SEARCH_STATUS_ID}
+          aria-describedby={
+            editingDisabled
+              ? `${EDIT_LOCK_HINT_ID} ${SEARCH_STATUS_ID}`
+              : SEARCH_STATUS_ID
+          }
           className="w-full pl-7 pr-7 py-1.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] rounded-md"
         />
         <i
@@ -425,8 +464,9 @@ export default function ColorEditor({
                 <button
                   type="button"
                   onClick={() => onResetBundle(group.bundle)}
+                  disabled={editingDisabled}
                   aria-label={`Reset ${group.label} bundle`}
-                  className="px-1.5 py-1 text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] text-[0.65rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded cursor-pointer"
+                  className="px-1.5 py-1 text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] text-[0.65rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <i
                     className="fa-solid fa-arrow-rotate-left"
@@ -446,6 +486,7 @@ export default function ColorEditor({
                       currentValue={colorValues[variable]}
                       failure={contrastFailures.get(variable)}
                       onOverride={onOverride}
+                      editingDisabled={editingDisabled}
                     />
                   ))}
                 </div>

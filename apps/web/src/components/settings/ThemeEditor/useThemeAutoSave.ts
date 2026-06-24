@@ -24,8 +24,9 @@ export interface UseThemeAutoSaveResult {
    */
   scheduleSave: () => void;
   /**
-   * Persist immediately, bypassing the debounce. Used by the "Reset all"
-   * escape hatch so a readable palette is restored without waiting.
+   * Persist immediately, bypassing the debounce. Used by the high-intent
+   * one-shot actions (copy-from-theme apply, Undo) so a deliberate palette
+   * change is saved at once rather than risking loss in the debounce window.
    */
   saveNow: (colorValues: Record<ThemeVariable, string>) => void;
 }
@@ -36,9 +37,8 @@ export interface UseThemeAutoSaveResult {
  * the settled burst is announced (intermediate "saving" states stay silent so
  * assistive tech is not barraged on every keystroke — a11y brief B1/B2).
  *
- * A monotonic token implements latest-wins: if edits keep arriving while a
- * save is in flight, the stale resolution is dropped and only the final save's
- * outcome is announced.
+ * Saves are serialized (see `flush`): overlapping saves can't race, so the user
+ * hears one settled outcome for the final state and never a spurious failure.
  */
 export function useThemeAutoSave({
   isCustom,
@@ -59,14 +59,31 @@ export function useThemeAutoSave({
   onOutcomeReference.current = onOutcome;
 
   const timerReference = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const tokenReference = useRef(0);
+  const inFlightReference = useRef(false);
+  const pendingValuesReference = useRef<Record<ThemeVariable, string> | null>(
+    null,
+  );
 
+  // Serialize saves: never let two PATCHes overlap. A save fired while one is
+  // in flight just stashes its values; the running save drains them when it
+  // settles. Without this, an overlapping save trips the save hook's re-entry
+  // guard, which resolves a no-op `false` and would surface a FALSE "save
+  // failed" while dropping the real save's success. Only the final drained
+  // outcome is announced, so the user still hears one settled result.
   const flush = useCallback(async (values: Record<ThemeVariable, string>) => {
-    const token = ++tokenReference.current;
-    const succeeded = await saveReference.current(values);
-    // A newer save was scheduled while this one was in flight; let it own the
-    // announcement so the user hears a single, final outcome.
-    if (token !== tokenReference.current) return;
+    if (inFlightReference.current) {
+      pendingValuesReference.current = values;
+      return;
+    }
+    inFlightReference.current = true;
+    let succeeded = false;
+    let next: Record<ThemeVariable, string> | null = values;
+    while (next) {
+      succeeded = await saveReference.current(next);
+      next = pendingValuesReference.current;
+      pendingValuesReference.current = null;
+    }
+    inFlightReference.current = false;
     onOutcomeReference.current(succeeded ? 'saved' : 'failed');
   }, []);
 
