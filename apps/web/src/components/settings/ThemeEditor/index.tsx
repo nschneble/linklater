@@ -1,10 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  THEMES,
-  useTheme,
-  type BaseTheme,
-  type Mode,
-} from '../../../theme/ThemeContext';
+import { useCallback, useEffect, useMemo } from 'react';
+import { THEMES, useTheme } from '../../../theme/ThemeContext';
 import {
   customThemeSrSuffix,
   isCustomThemeConfigured,
@@ -16,17 +11,15 @@ import ComponentShowcase from './ComponentShowcase';
 import ContrastChecker from './ContrastChecker';
 import CopyFromTheme from './CopyFromTheme';
 import CustomThemePickerToggle from './CustomThemePickerToggle';
+import ModeToggle from './ModeToggle';
 import Toast from '../../common/Toast';
-import { EDITOR_FOCUS_RING, ESCAPE_HATCH_PILL } from './escapeHatchStyles';
 import { readThemeTokens } from './themeProbe';
 import { tokenContrastFailures, useContrastResults } from './contrastResults';
 import { updateMe } from '../../../lib/api';
-import { useThemeAutoSave } from './useThemeAutoSave';
-import { useThemeOverrides, type ThemeVariable } from './useThemeOverrides';
+import { useThemeCopy } from './useThemeCopy';
+import { useThemeOverrides } from './useThemeOverrides';
 import { useThemeSave } from './useThemeSave';
 import { useToast } from '../../../lib/hooks/useToast';
-
-const MODE_OPTIONS: Mode[] = ['dark', 'light'];
 
 /** The custom-theme descriptor, used for the editor's static identity label. */
 const CUSTOM_THEME = THEMES.find((theme) => theme.id === 'custom')!;
@@ -92,19 +85,6 @@ export default function ThemeEditor() {
 
   const { isSaving, save } = useThemeSave();
   const toast = useToast();
-  const [savedCount, setSavedCount] = useState(0);
-  const [savedMessage, setSavedMessage] = useState('Custom theme saved.');
-  const [undoThemeLabel, setUndoThemeLabel] = useState<string | null>(null);
-
-  // Always-current values (snapshot source for Undo) + a consume-once reason
-  // that the next settled save announces, so a copy/undo says WHAT happened
-  // through the single polite region without double-speaking.
-  const colorValuesReference = useRef(colorValues);
-  colorValuesReference.current = colorValues;
-  const undoSnapshotReference = useRef<Record<ThemeVariable, string> | null>(
-    null,
-  );
-  const pendingSaveReasonReference = useRef<string | null>(null);
 
   const contrastResults = useContrastResults(colorValues);
 
@@ -113,41 +93,25 @@ export default function ThemeEditor() {
     [contrastResults],
   );
 
-  // Auto-save fires the polite "saved" affordance on success and an assertive
-  // error Toast on failure. A success consumes the pending reason (or the
-  // generic message) so each settled save announces exactly one thing.
-  const handleAutoSaveOutcome = useCallback(
-    (outcome: 'saved' | 'failed') => {
-      if (outcome === 'saved') {
-        const reason =
-          pendingSaveReasonReference.current ?? 'Custom theme saved.';
-        pendingSaveReasonReference.current = null;
-        setSavedMessage(reason);
-        setSavedCount((previous) => previous + 1);
-      } else {
-        toast.show('save-failed');
-      }
-    },
-    [toast],
-  );
+  const onSaveFailed = useCallback(() => toast.show('save-failed'), [toast]);
 
-  const { scheduleSave, saveNow } = useThemeAutoSave({
-    isCustom: editingEnabled,
+  const {
+    scheduleSave,
+    savedCount,
+    savedMessage,
+    undoThemeLabel,
+    clearUndo,
+    handleApply,
+    handleUndo,
+  } = useThemeCopy({
+    editingEnabled,
+    baseTheme,
+    mode,
     colorValues,
     save,
-    onOutcome: handleAutoSaveOutcome,
+    loadOverrides,
+    onSaveFailed,
   });
-
-  // A manual edit, or a theme/mode change, makes the "undo the last copy"
-  // snapshot stale — drop it so Undo never reverts to a mismatched palette.
-  const clearUndo = useCallback(() => {
-    undoSnapshotReference.current = null;
-    setUndoThemeLabel(null);
-  }, []);
-
-  useEffect(() => {
-    clearUndo();
-  }, [mode, baseTheme, clearUndo]);
 
   function handleOverride(
     variable: Parameters<typeof setOverride>[0],
@@ -163,31 +127,6 @@ export default function ThemeEditor() {
     clearUndo();
     scheduleSave();
   }
-
-  // Apply a film theme's CURRENT-mode palette immediately, snapshot the prior
-  // values for Undo, and persist at once. Applying a whole palette is a
-  // deliberate, high-intent action, so it uses `saveNow` (not the debounce) —
-  // navigating away in the debounce window must not silently drop it.
-  const handleApply = useCallback(
-    (themeId: BaseTheme, themeLabel: string) => {
-      undoSnapshotReference.current = { ...colorValuesReference.current };
-      const applied = loadOverrides(readThemeTokens(themeId, mode));
-      pendingSaveReasonReference.current = `${themeLabel} palette applied and saved.`;
-      setUndoThemeLabel(themeLabel);
-      saveNow(applied);
-    },
-    [loadOverrides, mode, saveNow],
-  );
-
-  const handleUndo = useCallback(() => {
-    const snapshot = undoSnapshotReference.current;
-    if (!snapshot) return;
-    loadOverrides(snapshot);
-    pendingSaveReasonReference.current = 'Reverted to previous colors.';
-    undoSnapshotReference.current = null;
-    setUndoThemeLabel(null);
-    saveNow(snapshot);
-  }, [loadOverrides, saveNow]);
 
   // Master enable. Turning ON seeds the custom palette from the currently-shown
   // real theme (both modes) the FIRST time, persists it, and switches to
@@ -285,60 +224,7 @@ export default function ThemeEditor() {
             </span>
           </span>
 
-          {/* Dark/light toggle. Borrows the read/unread sliding-pill look
-              (ComponentShowcase) but pins the active pill fill + label to fixed
-              escape-hatch colors and keeps the fixed focus ring, so an
-              unreadable custom palette can never hide this control's state —
-              it's the very control needed to reach each mode's palette. */}
-          <div
-            role="group"
-            aria-label="Color mode"
-            className="relative grid grid-cols-2 p-1 bg-[var(--base-bg)] border border-[var(--base-border)] rounded-full"
-          >
-            <div
-              aria-hidden="true"
-              className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full motion-safe:[transition:transform_200ms_cubic-bezier(0.34,1.56,0.64,1)]"
-              style={{
-                backgroundColor: ESCAPE_HATCH_PILL[mode].fill,
-                transform:
-                  mode === 'light' ? 'translateX(100%)' : 'translateX(0)',
-              }}
-            />
-            {MODE_OPTIONS.map((modeOption) => (
-              <button
-                key={modeOption}
-                type="button"
-                onClick={() => setMode(modeOption)}
-                aria-pressed={mode === modeOption}
-                style={
-                  mode === modeOption
-                    ? { color: ESCAPE_HATCH_PILL[modeOption].label }
-                    : undefined
-                }
-                className={`group relative z-10 min-h-[24px] px-3 py-1.5 text-[var(--base-subtle-text)] text-xs capitalize aria-pressed:font-semibold ${EDITOR_FOCUS_RING} rounded-full transition-colors`}
-              >
-                <span className="grid justify-center">
-                  <span
-                    aria-hidden="true"
-                    className="col-start-1 row-start-1 flex invisible items-center justify-center gap-1 font-semibold"
-                  >
-                    <i
-                      className="fa-solid fa-circle-dot text-[0.4rem]"
-                      aria-hidden="true"
-                    />
-                    {modeOption}
-                  </span>
-                  <span className="col-start-1 row-start-1 flex items-center justify-center gap-1">
-                    <i
-                      className="hidden group-aria-pressed:inline fa-solid fa-circle-dot text-[0.4rem]"
-                      aria-hidden="true"
-                    />
-                    {modeOption}
-                  </span>
-                </span>
-              </button>
-            ))}
-          </div>
+          <ModeToggle mode={mode} onModeChange={setMode} />
         </div>
       </div>
 

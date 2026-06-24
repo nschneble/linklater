@@ -120,6 +120,7 @@ const MIGRATED_FILES = [
   'src/components/settings/ThemeEditor/ContrastChecker.tsx',
   'src/components/settings/ThemeEditor/CopyFromTheme.tsx',
   'src/components/settings/ThemeEditor/CustomThemePickerToggle.tsx',
+  'src/components/settings/ThemeEditor/ModeToggle.tsx',
   'src/components/settings/ThemeEditor/ShowcaseSection.tsx',
   'src/components/settings/ThemeEditor/ThemeCopyMenu.tsx',
   'src/components/settings/ThemeEditor/index.tsx',
