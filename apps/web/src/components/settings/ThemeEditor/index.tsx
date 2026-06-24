@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { THEMES, useTheme } from '../../../theme/ThemeContext';
+import { useTheme } from '../../../theme/ThemeContext';
 import {
-  customThemeSrSuffix,
   isCustomThemeConfigured,
   type CustomTheme,
 } from '../../../theme/customTheme';
@@ -20,9 +19,6 @@ import { useThemeCopy } from './useThemeCopy';
 import { useThemeOverrides } from './useThemeOverrides';
 import { useThemeSave } from './useThemeSave';
 import { useToast } from '../../../lib/hooks/useToast';
-
-/** The custom-theme descriptor, used for the editor's static identity label. */
-const CUSTOM_THEME = THEMES.find((theme) => theme.id === 'custom')!;
 
 /**
  * Full-page custom-theme editor reached from the user menu ("Create a custom
@@ -180,16 +176,10 @@ export default function ThemeEditor() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex flex-wrap items-start gap-3 mb-4">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-[var(--base-text)] text-lg font-semibold">
-            Custom theme editor
-          </h1>
-          <p className="mt-0.5 text-[var(--base-alt-text)] text-xs">
-            Pick your colors and components. Changes save as you go. Preview a
-            film theme to copy its palette as a starting point.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h1 className="text-[var(--base-text)] text-lg font-semibold">
+          Custom theme editor
+        </h1>
 
         <div className="flex shrink-0 items-center gap-2">
           <AutoSaveStatus
@@ -199,38 +189,25 @@ export default function ThemeEditor() {
             savedMessage={savedMessage}
             failingCount={contrastResults.totalFailures}
           />
-
-          {/* Static identity label: the editor is always on the custom theme,
-              so the old theme switcher is just a name + swatch now. Plain inert
-              text — no role/tabindex/combobox ARIA, so AT announces no phantom
-              control. */}
-          <span className="inline-flex items-center gap-2 px-2.5 py-1.5 bg-[var(--base-bg)] border border-[var(--base-border)] text-[var(--base-text)] text-xs rounded-lg">
-            <span
-              aria-hidden="true"
-              className="relative shrink-0 inline-flex items-center justify-center w-3.5 h-3.5 rounded-full"
-              style={{ backgroundColor: CUSTOM_THEME.accent }}
-            >
-              <i
-                className={`fa-solid ${CUSTOM_THEME.swatchIcon} text-[0.5rem]`}
-                style={{ color: '#ffffff' }}
-                aria-hidden="true"
-              />
-            </span>
-            <span>
-              {CUSTOM_THEME.label}
-              <span className="sr-only">
-                {customThemeSrSuffix(isCustomConfigured)}
-              </span>
-            </span>
-          </span>
-
           <ModeToggle mode={mode} onModeChange={setMode} />
         </div>
       </div>
 
-      {/* Two-up settings card: copy-palette menu on the left, the master
-          enable switch on the right. */}
+      {/* Full-width intro so it uses the space the old chrome row left empty. */}
+      <p className="mt-1 mb-4 text-[var(--base-alt-text)] text-xs">
+        Pick your colors and components. Changes save as you go. Preview a film
+        theme to copy its palette as a starting point.
+      </p>
+
+      {/* Two-up settings card: the master-enable switch + its description on the
+          left half, the copy-palette menu on the right. */}
       <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-4 p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
+        <div className="sm:w-1/2">
+          <CustomThemePickerToggle
+            enabled={customThemeEnabled}
+            onChange={handleToggleCustomTheme}
+          />
+        </div>
         <div className="flex-1 min-w-0">
           <CopyFromTheme
             editingEnabled={editingEnabled}
@@ -240,21 +217,14 @@ export default function ThemeEditor() {
             onUndo={handleUndo}
           />
         </div>
-        <CustomThemePickerToggle
-          enabled={customThemeEnabled}
-          onChange={handleToggleCustomTheme}
-        />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="shrink-0 w-full lg:w-80 space-y-4">
-          {/* Colors card. While editing is locked the heading + lock hint stay
-              full-opacity; only the (disabled) controls below dim, so the
-              "grayed" cue never drops live text below its contrast floor. */}
+          {/* Colors card. ColorEditor owns its header (heading + the corner
+              lock indicator). While editing is locked only the disabled
+              controls dim — live text stays above its contrast floor. */}
           <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
-            <h2 className="mb-4 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
-              Colors
-            </h2>
             <ColorEditor
               colorValues={colorValues}
               contrastFailures={contrastFailures}

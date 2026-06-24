@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TokenContrastFailure } from './contrastResults';
+import { ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
 import {
   VAR_GROUPS,
   isAlphaValue,
@@ -50,7 +51,7 @@ interface ColorRowProps {
 
 const SEARCH_INPUT_ID = 'theme-editor-token-search';
 const SEARCH_STATUS_ID = 'theme-editor-token-search-status';
-const EDIT_LOCK_HINT_ID = 'theme-editor-edit-lock-hint';
+const EDIT_LOCK_TOOLTIP_ID = 'theme-editor-edit-lock-tooltip';
 
 /**
  * How long the describedby failure text waits after the latest keystroke
@@ -266,6 +267,18 @@ export default function ColorEditor({
   const preSearchOpenBundles = useRef<Set<Bundle> | null>(null);
   const searchInputReference = useRef<HTMLInputElement>(null);
 
+  // The corner lock tooltip reveals on hover/focus via CSS; Escape dismisses it
+  // (SC 1.4.13 Dismissable) while keeping the trigger focused. Re-hovering or
+  // re-focusing the trigger clears the dismissal.
+  const [lockTooltipDismissed, setLockTooltipDismissed] = useState(false);
+
+  function handleLockKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      setLockTooltipDismissed(true);
+    }
+  }
+
   const normalizedQuery = query.trim().toLowerCase();
   const filteredGroups = useMemo(
     () => filterGroups(normalizedQuery, VAR_GROUPS),
@@ -347,18 +360,48 @@ export default function ColorEditor({
 
   return (
     <div className="space-y-3">
-      {editingDisabled && (
-        // Full-opacity hint (kept legible — not dimmed) explaining why the
-        // pickers are locked. Stays the first thing in the card body so it is
-        // encountered first in reading order (SC 3.3.2 / 1.3.1).
-        <p
-          id={EDIT_LOCK_HINT_ID}
-          className="flex items-center gap-1.5 text-[var(--mount-alt-text)] text-xs"
+      {/* Card header: heading + a corner lock indicator. The trigger is a real
+          focusable button so :focus-visible reveals the tooltip for keyboard
+          users too (not mouse-only); its accessible NAME carries the lock state
+          (the padlock glyph is decorative + shape-distinct). The tooltip stays
+          in the DOM (visually hidden) so the search input's aria-describedby
+          IDREF never dangles, and it paints from a FIXED escape hatch so a
+          hostile custom palette can't hide the recovery message. */}
+      <div className="group relative flex items-center justify-between">
+        <h2 className="text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
+          Colors
+        </h2>
+        <button
+          type="button"
+          aria-label={editingDisabled ? 'Editing locked' : 'Editing unlocked'}
+          aria-describedby={EDIT_LOCK_TOOLTIP_ID}
+          data-locked={editingDisabled ? 'true' : undefined}
+          onKeyDown={handleLockKeyDown}
+          onMouseEnter={() => setLockTooltipDismissed(false)}
+          onFocus={() => setLockTooltipDismissed(false)}
+          className="group/lock inline-flex shrink-0 items-center justify-center w-5 h-5 text-[var(--mount-alt-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded"
         >
-          <i className="fa-solid fa-lock text-[0.6rem]" aria-hidden="true" />
-          Turn on the switch to edit your colors.
-        </p>
-      )}
+          <i
+            className="fa-solid fa-lock-open group-data-[locked=true]/lock:hidden text-[0.7rem]"
+            aria-hidden="true"
+          />
+          <i
+            className="hidden fa-solid fa-lock group-data-[locked=true]/lock:inline text-[0.7rem]"
+            aria-hidden="true"
+          />
+        </button>
+        <span
+          id={EDIT_LOCK_TOOLTIP_ID}
+          role="tooltip"
+          data-dismissed={lockTooltipDismissed ? 'true' : undefined}
+          style={{ ...ESCAPE_HATCH_LIGHT, color: '#92400e' }}
+          className="pointer-events-none absolute right-0 top-full z-10 mt-1 max-w-[14rem] px-2 py-1 border text-[0.65rem] rounded-md shadow-md opacity-0 invisible transition-opacity duration-150 group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto data-[dismissed=true]:!opacity-0 data-[dismissed=true]:!invisible"
+        >
+          {editingDisabled
+            ? 'Turn on the switch to edit your colors.'
+            : 'Editing on. Your color changes save to your custom theme.'}
+        </span>
+      </div>
 
       <div role="search" className="relative">
         <label htmlFor={SEARCH_INPUT_ID} className="sr-only">
@@ -376,7 +419,7 @@ export default function ColorEditor({
           spellCheck={false}
           aria-describedby={
             editingDisabled
-              ? `${EDIT_LOCK_HINT_ID} ${SEARCH_STATUS_ID}`
+              ? `${EDIT_LOCK_TOOLTIP_ID} ${SEARCH_STATUS_ID}`
               : SEARCH_STATUS_ID
           }
           className="w-full pl-7 pr-7 py-1.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] rounded-md"

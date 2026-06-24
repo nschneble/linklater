@@ -171,13 +171,38 @@ describe('ColorEditor – token search', () => {
 });
 
 describe('ColorEditor – editing locked (custom theme off)', () => {
-  it('shows the lock hint and keeps search + disclosures operable', () => {
+  it('keeps search + disclosures operable while locked', () => {
     renderEditor(new Map(), true);
-    expect(screen.getByText(/turn on the switch to edit/i)).toBeInTheDocument();
     // Browse stays available: search is operable, base disclosure can toggle.
     expect(getSearchbox()).not.toBeDisabled();
     const baseButton = screen.getByRole('button', { name: /^Base/ });
     expect(baseButton).not.toBeDisabled();
+  });
+
+  it('surfaces the lock state + reason through the corner indicator', () => {
+    renderEditor(new Map(), true);
+    const lock = screen.getByRole('button', { name: /editing locked/i });
+    // The tooltip message is the search input's describedby target.
+    const tooltip = screen.getByRole('tooltip');
+    expect(tooltip).toHaveTextContent(
+      /turn on the switch to edit your colors/i,
+    );
+    expect(lock).toHaveAttribute('aria-describedby', tooltip.id);
+    expect(getSearchbox().getAttribute('aria-describedby')).toContain(
+      tooltip.id,
+    );
+  });
+
+  it('dismisses the lock tooltip on Escape, keeping the trigger focused', () => {
+    renderEditor(new Map(), true);
+    const lock = screen.getByRole('button', { name: /editing locked/i });
+    lock.focus();
+    fireEvent.keyDown(lock, { key: 'Escape' });
+    expect(screen.getByRole('tooltip')).toHaveAttribute(
+      'data-dismissed',
+      'true',
+    );
+    expect(lock).toHaveFocus();
   });
 
   it('locks the hex input read-only (not disabled) so values stay copyable', () => {
@@ -204,6 +229,18 @@ describe('ColorEditor – editing locked (custom theme off)', () => {
     );
     const input = screen.getByRole('textbox', { name: /Base text/i });
     expect(input).not.toHaveAttribute('aria-invalid');
+  });
+
+  it('flips the corner indicator to unlocked when editing is enabled', () => {
+    renderEditor(new Map(), false);
+    expect(
+      screen.getByRole('button', { name: /editing unlocked/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('tooltip')).toHaveTextContent(/editing on/i);
+    // When unlocked the search no longer points at the lock message.
+    expect(getSearchbox().getAttribute('aria-describedby')).not.toContain(
+      'edit-lock-tooltip',
+    );
   });
 });
 

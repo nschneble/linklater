@@ -123,8 +123,8 @@ describe('AutoSaveStatus', () => {
     expect(status().textContent).toBe('Custom theme saved.');
   });
 
-  it('shows the disabled hint and no live region when not enabled', () => {
-    render(
+  it('renders nothing while disabled (no saving, no live region)', () => {
+    const { container } = render(
       <AutoSaveStatus
         enabled={false}
         isSaving={false}
@@ -133,9 +133,7 @@ describe('AutoSaveStatus', () => {
         failingCount={0}
       />,
     );
-    expect(
-      screen.getByText(/turn on the custom theme to edit and save/i),
-    ).toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
     expect(document.querySelector('[role="status"]')).toBeNull();
   });
 

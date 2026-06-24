@@ -63,13 +63,9 @@ export default function AutoSaveStatus({
     return () => clearTimeout(timer);
   }, [savedCount]);
 
-  if (!enabled) {
-    return (
-      <p className="text-[var(--base-subtle-text)] text-[0.65rem]">
-        Turn on the custom theme to edit and save your colors.
-      </p>
-    );
-  }
+  // Nothing to show while disabled: there is no saving, and the locked state is
+  // conveyed by the switch + the Colors card's lock indicator.
+  if (!enabled) return null;
 
   return (
     <div className="flex flex-col items-end gap-1">
