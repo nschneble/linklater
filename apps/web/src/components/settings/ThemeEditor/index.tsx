@@ -176,12 +176,20 @@ export default function ThemeEditor() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <h1 className="text-[var(--base-text)] text-lg font-semibold">
-          Custom theme editor
-        </h1>
+      {/* Header: title + intro fill the LEFT half; the mode toggle (and the
+          save affordance) sit top-right, aligned against the title. */}
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <div className="min-w-0 sm:max-w-[50%]">
+          <h1 className="text-[var(--base-text)] text-lg font-semibold">
+            Custom theme editor
+          </h1>
+          <p className="mt-1 text-[var(--base-alt-text)] text-xs">
+            Pick your colors and components. Changes save as you go. Preview a
+            film theme to copy its palette as a starting point.
+          </p>
+        </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-start gap-2">
           <AutoSaveStatus
             enabled={editingEnabled}
             isSaving={isSaving}
@@ -193,30 +201,22 @@ export default function ThemeEditor() {
         </div>
       </div>
 
-      {/* Full-width intro so it uses the space the old chrome row left empty. */}
-      <p className="mt-1 mb-4 text-[var(--base-alt-text)] text-xs">
-        Pick your colors and components. Changes save as you go. Preview a film
-        theme to copy its palette as a starting point.
-      </p>
-
-      {/* Two-up settings card: the master-enable switch + its description on the
-          left half, the copy-palette menu on the right. */}
-      <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-4 p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
-        <div className="sm:w-1/2">
+      {/* Settings card. Split mirrors the content columns below (switch at
+          lg:w-80, gap-6, copy area flex-1) so the two rows line up. */}
+      <div className="flex flex-col lg:flex-row gap-6 mb-4 p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
+        <div className="w-full lg:w-80 shrink-0">
           <CustomThemePickerToggle
             enabled={customThemeEnabled}
             onChange={handleToggleCustomTheme}
           />
         </div>
-        <div className="flex-1 min-w-0">
-          <CopyFromTheme
-            editingEnabled={editingEnabled}
-            onApply={handleApply}
-            onPreviewTheme={setPreviewTheme}
-            undoThemeLabel={undoThemeLabel}
-            onUndo={handleUndo}
-          />
-        </div>
+        <CopyFromTheme
+          editingEnabled={editingEnabled}
+          onApply={handleApply}
+          onPreviewTheme={setPreviewTheme}
+          undoThemeLabel={undoThemeLabel}
+          onUndo={handleUndo}
+        />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">

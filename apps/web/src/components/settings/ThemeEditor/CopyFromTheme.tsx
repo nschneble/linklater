@@ -79,38 +79,45 @@ export default function CopyFromTheme({
     <div
       role="group"
       aria-label="Copy palette from theme"
-      className="flex flex-wrap items-end gap-2"
+      className="flex flex-1 flex-col gap-1.5"
     >
-      <ThemeCopyMenu
-        ref={triggerReference}
-        options={COPYABLE_THEMES.map((theme) => ({
-          id: theme.id,
-          label: theme.label,
-          swatchIcon: theme.swatchIcon,
-          accent: theme.accent,
-          isAccessible: theme.isAccessible,
-        }))}
-        label="Copy palette from theme"
-        disabled={!editingEnabled}
-        onActivate={handleActivate}
-        onActivePreview={(id) => onPreviewTheme((id as BaseTheme) ?? null)}
-        ariaDescribedBy={COPY_DESCRIPTION_ID}
-        className="min-w-56"
-      />
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <ThemeCopyMenu
+          ref={triggerReference}
+          options={COPYABLE_THEMES.map((theme) => ({
+            id: theme.id,
+            label: theme.label,
+            swatchIcon: theme.swatchIcon,
+            accent: theme.accent,
+            isAccessible: theme.isAccessible,
+          }))}
+          label="Copy palette from theme"
+          disabled={!editingEnabled}
+          onActivate={handleActivate}
+          onActivePreview={(id) => onPreviewTheme((id as BaseTheme) ?? null)}
+          ariaDescribedBy={COPY_DESCRIPTION_ID}
+          className="min-w-56"
+        />
 
-      {undoThemeLabel !== null && (
-        <button
-          type="button"
-          onClick={handleUndo}
-          aria-label={`Undo copy from ${undoThemeLabel}`}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--mount-highlight)] text-[var(--mount-highlight-fg)] text-xs font-semibold ${EDITOR_FOCUS_RING} rounded-lg active:scale-[0.96] transition-transform cursor-pointer`}
-        >
-          <i className="fa-solid fa-arrow-rotate-left" aria-hidden="true" />
-          Undo
-        </button>
-      )}
+        {undoThemeLabel !== null && (
+          <button
+            type="button"
+            onClick={handleUndo}
+            aria-label={`Undo copy from ${undoThemeLabel}`}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--mount-highlight)] text-[var(--mount-highlight-fg)] text-xs font-semibold ${EDITOR_FOCUS_RING} rounded-lg active:scale-[0.96] transition-transform cursor-pointer`}
+          >
+            <i className="fa-solid fa-arrow-rotate-left" aria-hidden="true" />
+            Undo
+          </button>
+        )}
+      </div>
 
-      <p id={COPY_DESCRIPTION_ID} className="sr-only">
+      {/* Visible helper, promoted from sr-only: the trigger's describedby points
+          here, so the instruction is one node seen by everyone (SC 3.3.2 / 1.3.1). */}
+      <p
+        id={COPY_DESCRIPTION_ID}
+        className="text-[var(--mount-alt-text)] text-right text-xs"
+      >
         {editingEnabled
           ? 'Selecting a theme replaces your colors with its palette and saves. Undo to revert.'
           : 'Turn on the custom theme to copy a palette.'}
