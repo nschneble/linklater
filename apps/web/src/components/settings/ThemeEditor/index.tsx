@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo, useState, type CSSProperties } from 'react';
 import { useTheme } from '../../../theme/ThemeContext';
 import {
   isCustomThemeConfigured,
   type CustomTheme,
 } from '../../../theme/customTheme';
+import type { BaseTheme } from '../../../theme/constants';
 import AutoSaveStatus from './AutoSaveStatus';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
@@ -24,29 +25,29 @@ import { useToast } from '../../../lib/hooks/useToast';
  * Full-page custom-theme editor reached from the user menu ("Create a custom
  * theme" / "Edit your custom theme").
  *
- * Live-edits the bundle tokens that make up the active theme. Overrides live in
- * React state inside `useThemeOverrides` and are applied as inline
- * custom-property styles on a wrapper scoping the showcase column, so the live
- * preview is instant before a save lands.
+ * The editor NEVER changes the global site theme. The custom palette is
+ * previewed by scoping it (as inline custom properties via `contentThemeStyle`)
+ * to the content columns below the header — so leaving the editor can't strand
+ * the whole app on custom.
  *
  * The master-enable switch ("Use your own custom theme") gates everything:
- * while OFF the editor mirrors the user's currently-selected real theme
- * (live-following theme/mode changes) with the color pickers LOCKED and the
- * Colors card grayed, so the page matches the rest of the app. Flipping it ON
- * seeds the custom palette from whatever theme is showing, switches to custom,
- * and unlocks editing. Persistence is then AUTOMATIC: every edit is debounced
- * and saved (localStorage + `PATCH /users/me`) with no Save button.
+ * while OFF the editor mirrors the current global theme (color pickers LOCKED,
+ * read-only) so it looks like any other page. Flipping it ON for the FIRST time
+ * snapshots the current theme's colors as the initial custom palette and
+ * persists it; the content then renders that custom palette, editable, with
+ * AUTOMATIC debounced saves (localStorage + `PATCH /users/me`). Toggling OFF
+ * again reverts the content to the global theme without overwriting the saved
+ * custom palette.
  *
  * There is no on-page theme switcher. Hovering or arrow-navigating a row in the
- * copy menu previews that film theme full-page (transient, non-persisting);
- * activating a row applies its current-mode palette immediately + autosaves,
+ * copy menu previews that film theme within the content scope (transient,
+ * non-persisting); activating a row applies its current-mode palette + saves,
  * with an Undo to revert.
  *
  * The mode toggle's active pill and the copy menu's trigger paint from
- * FIXED-color escape hatches (not bundle tokens): a hostile custom palette can
- * degrade everything else, but the mode toggle (needed to reach each mode's
- * palette) and the copy menu (now the only way back to a readable palette,
- * since "Reset all" is gone) must stay legible regardless.
+ * FIXED-color escape hatches (not bundle tokens), and the settings card with
+ * the OFF switch sits OUTSIDE the custom scope — so a hostile custom palette can
+ * degrade the preview but never the controls needed to escape it.
  */
 export default function ThemeEditor() {
   const {
@@ -54,15 +55,13 @@ export default function ThemeEditor() {
     customTheme,
     customThemeEnabled,
     mode,
-    setBaseTheme,
     setCustomTheme,
     setCustomThemeEnabled,
     setMode,
-    setPreviewTheme,
   } = useTheme();
   const {
     colorValues,
-    overrideStyle,
+    contentThemeStyle,
     setOverride,
     loadOverrides,
     resetBundle,
@@ -71,13 +70,18 @@ export default function ThemeEditor() {
   const editingEnabled = customThemeEnabled;
   const isCustomConfigured = isCustomThemeConfigured(customTheme);
 
-  // While the custom theme is enabled the editor edits it, so keep the page on
-  // custom. While disabled, DON'T force it — the editor mirrors the user's real
-  // theme (and live-follows theme/mode changes via `useThemeOverrides`).
-  useEffect(() => {
-    if (editingEnabled && baseTheme !== 'custom') setBaseTheme('custom');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingEnabled]);
+  // Hovering/arrow-navigating a copy-menu row previews that film theme — scoped
+  // to the editor's content (the same wrapper that scopes the custom palette),
+  // so the preview shows where the showcase is and never touches the global
+  // theme or the app nav. Reverts to `null` when the menu closes.
+  const [previewThemeId, setPreviewThemeId] = useState<BaseTheme | null>(null);
+  const previewStyle = useMemo<CSSProperties | null>(
+    () =>
+      previewThemeId
+        ? (readThemeTokens(previewThemeId, mode) as CSSProperties)
+        : null,
+    [previewThemeId, mode],
+  );
 
   const { isSaving, save } = useThemeSave();
   const toast = useToast();
@@ -124,16 +128,15 @@ export default function ThemeEditor() {
     scheduleSave();
   }
 
-  // Master enable. Turning ON seeds the custom palette from the currently-shown
-  // real theme (both modes) the FIRST time, persists it, and switches to
-  // custom; turning OFF just hides it. Optimistic — on PATCH failure it reverts
-  // EVERY local mutation (enabled flag, the base-theme switch, and the seeded
-  // palette, which `setCustomTheme`/`setBaseTheme` already wrote to
-  // localStorage), so a failed enable can't leave an orphaned `custom`
-  // selection behind.
+  // Master enable. Turning ON for the FIRST time snapshots the current theme's
+  // colors (both modes) as the initial custom palette and persists it; turning
+  // OFF just hides it (the saved palette is untouched). The editor NEVER
+  // changes the global site theme — the custom palette is previewed via a
+  // scoped wrapper (see `contentThemeStyle`), so leaving the editor can't
+  // strand the whole app on custom. Optimistic — on PATCH failure it reverts
+  // the enabled flag + the seeded palette.
   const handleToggleCustomTheme = useCallback(
     async (next: boolean) => {
-      const previousBaseTheme = baseTheme;
       const previousCustomTheme = customTheme;
       setCustomThemeEnabled(next);
       const seeded: CustomTheme | null =
@@ -144,7 +147,6 @@ export default function ThemeEditor() {
             }
           : null;
       if (seeded) setCustomTheme(seeded);
-      if (next) setBaseTheme('custom');
       try {
         await updateMe({
           customThemeEnabled: next,
@@ -152,7 +154,6 @@ export default function ThemeEditor() {
         });
       } catch {
         setCustomThemeEnabled(!next);
-        if (next) setBaseTheme(previousBaseTheme);
         // Restore the prior palette; an empty map reads as "not configured"
         // so a never-seeded user lands back where they started.
         if (seeded) {
@@ -165,7 +166,6 @@ export default function ThemeEditor() {
       baseTheme,
       customTheme,
       isCustomConfigured,
-      setBaseTheme,
       setCustomTheme,
       setCustomThemeEnabled,
       toast,
@@ -213,13 +213,24 @@ export default function ThemeEditor() {
         <CopyFromTheme
           editingEnabled={editingEnabled}
           onApply={handleApply}
-          onPreviewTheme={setPreviewTheme}
+          onPreviewTheme={setPreviewThemeId}
           undoThemeLabel={undoThemeLabel}
           onUndo={handleUndo}
         />
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      {/* Custom-theme PREVIEW scope. While enabled, `contentThemeStyle` carries
+          the full custom palette as inline custom properties, so this subtree
+          (the editor's main content) renders the custom theme WITHOUT touching
+          the global `:root` theme; while disabled it is empty and the subtree
+          inherits the current global theme. A copy-menu hover preview overrides
+          it with the hovered film theme's tokens. The header + settings card
+          sit OUTSIDE this scope, so the switch used to escape an unreadable
+          palette stays painted in the always-readable global theme. */}
+      <div
+        className="flex flex-col lg:flex-row gap-6"
+        style={previewStyle ?? contentThemeStyle}
+      >
         <div className="shrink-0 w-full lg:w-80 space-y-4">
           {/* Colors card. ColorEditor owns its header (heading + the corner
               lock indicator). While editing is locked only the disabled
@@ -246,12 +257,7 @@ export default function ThemeEditor() {
           <h2 className="mb-6 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
             Components
           </h2>
-          {/* Override scope: bundle edits apply to the showcase subtree only,
-              so the instant preview is visible before the debounced save lands
-              and (for built-in themes) without ever touching :root. */}
-          <div style={overrideStyle}>
-            <ComponentShowcase />
-          </div>
+          <ComponentShowcase />
         </div>
       </div>
 

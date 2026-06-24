@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BASE_AND_MOUNT_ONLY_SLOTS,
   BASE_ONLY_SLOTS,
@@ -13,7 +13,7 @@ import {
   type Slot,
   type ThemeVariable,
 } from '../../../theme/customThemeTokens';
-import { collectTokens } from '../../../theme/customTheme';
+import { resolveCustomThemeTokens } from '../../../theme/customTheme';
 import { useTheme } from '../../../theme/ThemeContext';
 import type { CSSProperties } from 'react';
 
@@ -140,12 +140,15 @@ export interface UseThemeOverridesResult {
   /** Current (possibly overridden) values for all editable variables. */
   colorValues: Record<ThemeVariable, string>;
   /**
-   * Inline style object containing only the variables the user has actively
-   * overridden. Spread onto a wrapper element that scopes the live preview;
-   * the editor chrome continues to inherit from the active theme at `:root`
-   * so a hostile bundle edit can't lock the user out of the editor itself.
+   * Inline custom-property style spread onto the editor's preview subtree.
+   * While the custom theme is ENABLED this is the FULL resolved custom palette
+   * (so the subtree previews custom independently of the global `:root` theme,
+   * which the editor never touches); while DISABLED it is empty, so the subtree
+   * inherits the current global theme. The settings card + header sit OUTSIDE
+   * this scope, so the controls used to escape an unreadable palette stay
+   * painted in the always-readable global theme.
    */
-  overrideStyle: CSSProperties;
+  contentThemeStyle: CSSProperties;
   setOverride: (variable: ThemeVariable, value: string) => void;
   /**
    * Bulk-replaces the override map with a fresh set of token values – used by
@@ -163,104 +166,113 @@ export interface UseThemeOverridesResult {
 }
 
 /**
- * Manages live CSS variable overrides for the theme editor.
+ * Manages the Theme Editor's live token values + the inline style that scopes
+ * the custom palette to its preview subtree.
  *
- * Overrides live in React state only – the hook never mutates
- * `document.documentElement.style`. Consumers spread `overrideStyle` onto
- * the wrapper element that owns the live preview (typically the showcase
- * column). The editor chrome itself continues to paint from the active
- * theme at `:root`, so the user can never edit themselves into an
- * unrecoverable state by setting bundle slots to unreadable values.
+ * The editor NEVER mutates `document.documentElement` / the global theme. While
+ * the custom theme is enabled, the baseline is the resolved custom palette
+ * (saved tokens + branding fallback), `colorValues` track the user's live
+ * edits, and `contentThemeStyle` carries the FULL palette as inline custom
+ * properties for the preview subtree. While disabled, the baseline is the
+ * current global theme read from `:root` (a read-only mirror) and
+ * `contentThemeStyle` is empty so the subtree inherits the global theme.
  *
- * Overrides are cleared automatically when the base theme or mode changes
- * (so the new theme's values are used as the new baseline).
+ * The baseline re-resolves when the enabled flag, mode, or global theme
+ * changes. `customTheme` is read via a ref (NOT an effect dep) so an auto-save
+ * writing it back can't clobber an in-progress edit; the first-enable seed is
+ * already covered by the enabled-flag flip.
  *
  * @returns See `UseThemeOverridesResult`.
  */
 export function useThemeOverrides(): UseThemeOverridesResult {
-  const { baseTheme, mode } = useTheme();
+  const { baseTheme, mode, customTheme, customThemeEnabled } = useTheme();
+
+  const customThemeRef = useRef(customTheme);
+  customThemeRef.current = customTheme;
+
+  const readBaseline = useCallback((): Record<ThemeVariable, string> => {
+    if (customThemeEnabled) {
+      return resolveCustomThemeTokens(customThemeRef.current, mode) as Record<
+        ThemeVariable,
+        string
+      >;
+    }
+    return readAllComputedVars();
+  }, [customThemeEnabled, mode]);
+
   const [colorValues, setColorValues] =
-    useState<Record<ThemeVariable, string>>(readAllComputedVars);
-  const [overrides, setOverrides] = useState<
-    Partial<Record<ThemeVariable, string>>
-  >({});
+    useState<Record<ThemeVariable, string>>(readBaseline);
+
+  const colorValuesRef = useRef(colorValues);
+  colorValuesRef.current = colorValues;
 
   useEffect(() => {
-    setOverrides({});
-    setColorValues(readAllComputedVars());
-  }, [baseTheme, mode]);
+    setColorValues(readBaseline());
+  }, [readBaseline, baseTheme]);
 
   const setOverride = useCallback((variable: ThemeVariable, value: string) => {
-    setOverrides((previous) => ({ ...previous, [variable]: value }));
     setColorValues((previous) => ({ ...previous, [variable]: value }));
   }, []);
 
   const loadOverrides = useCallback((tokens: Record<string, string>) => {
-    // Seed BOTH overrides and colorValues for the full canonical set. A copied
-    // theme may resolve fewer than every key; for those gaps fall back to the
-    // current computed value so colorValues / inputs / the contrast checker /
-    // the saved snapshot can never show a stale pre-copy value (W3).
-    const computed = readAllComputedVars();
-    const next = collectTokens(
-      EDITABLE_VARS,
-      (variable) => tokens[variable],
-    ) as Partial<Record<ThemeVariable, string>>;
-    const seededColorValues = { ...computed };
+    // Seed every editable var; for any the copied palette omits, fall back to
+    // the CURRENT shown value so the inputs / contrast checker / saved snapshot
+    // never reveal a stale pre-copy value.
+    const fallback = colorValuesRef.current;
+    const seeded = { ...fallback };
     for (const variable of EDITABLE_VARS) {
-      seededColorValues[variable] = next[variable] ?? computed[variable];
+      const value = tokens[variable];
+      if (typeof value === 'string' && value !== '') {
+        seeded[variable] = value;
+      }
     }
-    setOverrides(next);
-    setColorValues(seededColorValues);
-    return seededColorValues;
+    setColorValues(seeded);
+    return seeded;
   }, []);
 
   const resetOverrides = useCallback(() => {
-    setOverrides({});
-    setColorValues(readAllComputedVars());
-  }, []);
+    setColorValues(readBaseline());
+  }, [readBaseline]);
 
-  const resetBundle = useCallback((bundle: Bundle) => {
-    const slotsForBundle: Array<string> = [...SLOTS];
-    if (bundle === 'base') {
-      slotsForBundle.push(...BASE_ONLY_SLOTS);
-    }
-    if (bundle === 'base' || bundle === 'mount') {
-      slotsForBundle.push(...BASE_AND_MOUNT_ONLY_SLOTS);
-    }
-    const variablesForBundle = slotsForBundle.map(
-      (slot) => `--${bundle}-${slot}` as ThemeVariable,
-    );
-    // The focus ring rides on the base group, so resetting base resets it too.
-    if (bundle === 'base') {
-      variablesForBundle.push(FOCUS_RING_VAR);
-    }
-
-    setOverrides((previous) => {
-      const next = { ...previous };
-      for (const variable of variablesForBundle) {
-        delete next[variable];
+  const resetBundle = useCallback(
+    (bundle: Bundle) => {
+      const slotsForBundle: Array<string> = [...SLOTS];
+      if (bundle === 'base') {
+        slotsForBundle.push(...BASE_ONLY_SLOTS);
       }
-      return next;
-    });
-
-    // Re-read computed vars so colorValues for this bundle reflect the theme
-    // defaults again. Only replace this bundle's values; preserve any
-    // in-progress edits to other bundles.
-    const fresh = readAllComputedVars();
-    setColorValues((previous) => {
-      const next = { ...previous };
-      for (const variable of variablesForBundle) {
-        next[variable] = fresh[variable];
+      if (bundle === 'base' || bundle === 'mount') {
+        slotsForBundle.push(...BASE_AND_MOUNT_ONLY_SLOTS);
       }
-      return next;
-    });
-  }, []);
+      const variablesForBundle = slotsForBundle.map(
+        (slot) => `--${bundle}-${slot}` as ThemeVariable,
+      );
+      // The focus ring rides on the base group, so resetting base resets it too.
+      if (bundle === 'base') {
+        variablesForBundle.push(FOCUS_RING_VAR);
+      }
 
-  const overrideStyle = useMemo(() => overrides as CSSProperties, [overrides]);
+      // Reset this bundle's values back to the baseline; preserve in-progress
+      // edits to other bundles.
+      const fresh = readBaseline();
+      setColorValues((previous) => {
+        const next = { ...previous };
+        for (const variable of variablesForBundle) {
+          next[variable] = fresh[variable];
+        }
+        return next;
+      });
+    },
+    [readBaseline],
+  );
+
+  const contentThemeStyle = useMemo<CSSProperties>(
+    () => (customThemeEnabled ? (colorValues as CSSProperties) : {}),
+    [customThemeEnabled, colorValues],
+  );
 
   return {
     colorValues,
-    overrideStyle,
+    contentThemeStyle,
     setOverride,
     loadOverrides,
     resetOverrides,

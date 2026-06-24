@@ -151,17 +151,40 @@ export function applyCustomThemeTokens(
   customTheme: CustomTheme | null,
   mode: Mode,
 ): void {
-  const tokens = tokensForMode(customTheme, mode);
-  const defaults =
-    mode === 'dark' ? BRANDING_DEFAULTS : BRANDING_DEFAULTS_LIGHT;
+  const resolved = resolveCustomThemeTokens(customTheme, mode);
   for (const variable of CUSTOM_TOKEN_KEYS) {
-    const value = tokens[variable] ?? defaults[variable];
+    const value = resolved[variable];
     if (value) {
       root.style.setProperty(variable, value);
     } else {
       root.style.removeProperty(variable);
     }
   }
+}
+
+/**
+ * Pure variant of `applyCustomThemeTokens`: resolves the Custom theme's full
+ * palette for `mode` (saved token ?? branding default) into a `{ '--var':
+ * value }` map instead of writing to an element. Used by the Theme Editor to
+ * style its preview subtree with inline custom properties — so the custom
+ * palette can be previewed WITHOUT changing the global `:root` theme. Stays
+ * inside the trust boundary: only allowlisted `CUSTOM_TOKEN_KEYS` are emitted.
+ */
+export function resolveCustomThemeTokens(
+  customTheme: CustomTheme | null,
+  mode: Mode,
+): Record<string, string> {
+  const tokens = tokensForMode(customTheme, mode);
+  const defaults =
+    mode === 'dark' ? BRANDING_DEFAULTS : BRANDING_DEFAULTS_LIGHT;
+  const resolved: Record<string, string> = {};
+  for (const variable of CUSTOM_TOKEN_KEYS) {
+    const value = tokens[variable] ?? defaults[variable];
+    if (value) {
+      resolved[variable] = value;
+    }
+  }
+  return resolved;
 }
 
 /**

@@ -69,7 +69,8 @@ describe('ThemeEditor master-enable toggle', () => {
       dark: { '--mount-bg': 'boyhood-dark' },
       light: { '--mount-bg': 'boyhood-light' },
     });
-    expect(mockTheme.setBaseTheme).toHaveBeenCalledWith('custom');
+    // The editor NEVER changes the global theme — only the scoped preview.
+    expect(mockTheme.setBaseTheme).not.toHaveBeenCalled();
 
     await waitFor(() =>
       expect(updateMe).toHaveBeenCalledWith({
@@ -88,17 +89,14 @@ describe('ThemeEditor master-enable toggle', () => {
     fireEvent.click(getSwitch());
 
     expect(mockTheme.setCustomTheme).not.toHaveBeenCalled();
-    expect(mockTheme.setBaseTheme).toHaveBeenCalledWith('custom');
+    expect(mockTheme.setBaseTheme).not.toHaveBeenCalled();
     await waitFor(() =>
       expect(updateMe).toHaveBeenCalledWith({ customThemeEnabled: true }),
     );
   });
 
-  it('disabling does not seed or touch the base theme', async () => {
-    // Already enabled + on custom, so the mount effect is a no-op and any
-    // setBaseTheme call would come from the toggle itself.
+  it('disabling does not seed or change any theme', async () => {
     mockTheme.customThemeEnabled = true;
-    mockTheme.baseTheme = 'custom';
     mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
     render(<ThemeEditor />);
     fireEvent.click(getSwitch());
@@ -111,7 +109,7 @@ describe('ThemeEditor master-enable toggle', () => {
     );
   });
 
-  it('reverts every mutation when the enable PATCH fails', async () => {
+  it('reverts the toggle + seeded palette when the enable PATCH fails', async () => {
     (updateMe as ReturnType<typeof vi.fn>).mockRejectedValue(
       new Error('network'),
     );
@@ -121,9 +119,8 @@ describe('ThemeEditor master-enable toggle', () => {
     await waitFor(() =>
       expect(mockTheme.setCustomThemeEnabled).toHaveBeenCalledWith(false),
     );
-    // Base theme switched to custom then reverted to the prior real theme.
-    expect(mockTheme.setBaseTheme).toHaveBeenCalledWith('custom');
-    expect(mockTheme.setBaseTheme).toHaveBeenLastCalledWith('boyhood');
+    // Global theme was never touched, so there's nothing to revert there.
+    expect(mockTheme.setBaseTheme).not.toHaveBeenCalled();
     // Seeded palette rolled back to an empty (unconfigured) map.
     expect(mockTheme.setCustomTheme).toHaveBeenLastCalledWith({
       dark: {},

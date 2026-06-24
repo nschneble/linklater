@@ -7,6 +7,7 @@ import {
   isCustomThemeConfigured,
   normalizeCustomTheme,
   readStoredCustomTheme,
+  resolveCustomThemeTokens,
   tokensForMode,
 } from './customTheme';
 import { BRANDING_DEFAULTS, BRANDING_DEFAULTS_LIGHT } from './brandingDefaults';
@@ -151,6 +152,25 @@ describe('collectTokens', () => {
 
   it('returns an empty object when the getter yields nothing', () => {
     expect(collectTokens([KNOWN_KEY], () => undefined)).toEqual({});
+  });
+});
+
+describe('resolveCustomThemeTokens', () => {
+  it('resolves saved tokens over the branding fallback for the active mode', () => {
+    const resolved = resolveCustomThemeTokens(
+      { dark: { '--mount-border': '#abcdef' }, light: {} },
+      'dark',
+    );
+    expect(resolved['--mount-border']).toBe('#abcdef');
+    // Unsaved slot falls back to branding (dark).
+    expect(resolved['--base-bg']).toBe(BRANDING_DEFAULTS['--base-bg']);
+  });
+
+  it('returns the full light branding palette for an empty custom theme', () => {
+    const resolved = resolveCustomThemeTokens(null, 'light');
+    expect(resolved['--base-bg']).toBe(BRANDING_DEFAULTS_LIGHT['--base-bg']);
+    // A full palette (every editable var), not just a sparse override map.
+    expect(Object.keys(resolved).length).toBeGreaterThan(10);
   });
 });
 
