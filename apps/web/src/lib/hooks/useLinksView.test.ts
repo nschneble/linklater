@@ -1,5 +1,59 @@
-import { describe, expect, it } from 'vitest';
-import { filterFromPath } from './useLinksView';
+import { act, renderHook } from '@testing-library/react';
+import { createElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
+import type { ReactNode } from 'react';
+
+import { filterFromPath, useLinksView } from './useLinksView';
+import type { UseLinksResult } from './types';
+
+/**
+ * `useLinksView` composes `useLinks`, which fans out to the real fetch +
+ * mutation layer. Stub it to a quiet, fully-typed shape so the facade can be
+ * exercised in isolation. Only `handleDeleteAllRead` carries behavior: it
+ * returns a promise we never resolve, so `isClearingRead` stays `true` while
+ * we drive the filter change under test.
+ */
+let resolveDeleteAllRead: (() => void) | undefined;
+
+const linksStub: UseLinksResult = {
+  fetchError: null,
+  readError: null,
+  deleteError: null,
+  handleCreated: vi.fn(),
+  handleDeleteAllRead: vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        resolveDeleteAllRead = resolve;
+      }),
+  ),
+  handleDismissToast: vi.fn(),
+  handleLoadMore: vi.fn(),
+  handleRandom: vi.fn(),
+  handleToggleRead: vi.fn(),
+  handleToggleForm: vi.fn(),
+  hasSettledOnce: true,
+  links: [],
+  loadingLinks: false,
+  newLinksAnnouncement: '',
+  page: 1,
+  pagination: null,
+  randomError: null,
+  randomLoading: false,
+  saveError: null,
+  showLinkForm: false,
+  toastMessage: null,
+};
+
+vi.mock('./useLinks', () => ({
+  useLinks: () => linksStub,
+}));
+
+function wrapperAt(path: string) {
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return createElement(MemoryRouter, { initialEntries: [path] }, children);
+  };
+}
 
 describe('filterFromPath', () => {
   it('returns "read" for the /read pathname', () => {
@@ -18,5 +72,34 @@ describe('filterFromPath', () => {
     expect(filterFromPath('/settings')).toBe('unread');
     expect(filterFromPath('/read/extra')).toBe('unread');
     expect(filterFromPath('')).toBe('unread');
+  });
+});
+
+describe('useLinksView', () => {
+  it('resets isClearingRead to false when the filter changes', async () => {
+    const { result } = renderHook(() => useLinksView(), {
+      wrapper: wrapperAt('/read'),
+    });
+
+    // Start a clear-read: the stubbed delete stays pending, so the flag is
+    // latched on until something resets it.
+    act(() => {
+      void result.current.handleClearRead();
+    });
+    expect(result.current.isClearingRead).toBe(true);
+
+    // Navigate /read -> /unread mid-flight. The filter changes, which must
+    // reset the flag even though the delete promise has not settled.
+    act(() => {
+      result.current.onNavigateUnread();
+    });
+    expect(result.current.filter).toBe('unread');
+    expect(result.current.isClearingRead).toBe(false);
+
+    // Settle the pending delete so the `finally` state update flushes inside
+    // act() and no unhandled promise leaks past the test.
+    await act(async () => {
+      resolveDeleteAllRead?.();
+    });
   });
 });

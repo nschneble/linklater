@@ -1,22 +1,15 @@
-import { useEffect, useRef, useState, useTransition } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { filterFromPath } from './useLinksView.utils';
+import { useAggregatedError } from './useAggregatedError';
+import { useEffect, useRef, useState } from 'react';
 import { useKeyboardShortcuts } from './useKeyboardShortcuts';
+import { useLinkSelection } from './useLinkSelection';
 import { useLinks } from './useLinks';
-import type { LinksFilter } from './types';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useSearchDebounce } from './useSearchDebounce';
+import type { UseLinksViewResult } from './useLinksView.types';
 
-/**
- * How long to wait after the user stops typing before firing the search
- * request.
- */
-const SEARCH_DEBOUNCE_MS = 300;
-
-/**
- * Maps the current URL pathname to the links filter.
- * `/read` → `'read'`, everything else → `'unread'`.
- */
-export function filterFromPath(pathname: string): LinksFilter {
-  return pathname === '/read' ? 'read' : 'unread';
-}
+export { filterFromPath } from './useLinksView.utils';
+export type { UseLinksViewResult } from './useLinksView.types';
 
 interface UseLinksViewOptions {
   /**
@@ -26,57 +19,14 @@ interface UseLinksViewOptions {
   onCloseUserMenu?: () => void;
 }
 
-/** Everything the `LinksView` component needs from this hook. */
-export interface UseLinksViewResult {
-  debouncedSearch: string;
-  /**
-   * Most-recently-set error across the five sub-error fields below. Drives
-   * the single visible `Alert` so that `role="alert"` mounts/unmounts at
-   * most once per transition – concurrent failures (e.g. background fetch +
-   * user save) no longer cascade multiple assertive announcements.
-   */
-  error: string | null;
-  filter: LinksFilter;
-  isClearingRead: boolean;
-  search: string;
-  searchInputReference: React.RefObject<HTMLInputElement | null>;
-  selectedLinkIndex: number | null;
-  showShortcuts: boolean;
-  onCloseShortcuts: () => void;
-  onNavigateRead: () => void;
-  onNavigateUnread: () => void;
-  onSearch: (value: string) => void;
-  onToggleShortcuts: () => void;
-  // Forwarded from useLinks
-  deleteError: string | null;
-  fetchError: string | null;
-  handleClearRead: () => Promise<void>;
-  handleCreated: ReturnType<typeof useLinks>['handleCreated'];
-  handleDismissToast: () => void;
-  handleLoadMore: () => void;
-  handleRandom: () => Promise<void>;
-  handleToggleForm: () => void;
-  handleToggleRead: ReturnType<typeof useLinks>['handleToggleRead'];
-  /** See `UseLinksDataResult.hasSettledOnce`. */
-  hasSettledOnce: boolean;
-  links: ReturnType<typeof useLinks>['links'];
-  loadingLinks: boolean;
-  newLinksAnnouncement: string;
-  page: number;
-  pagination: ReturnType<typeof useLinks>['pagination'];
-  randomError: string | null;
-  randomLoading: boolean;
-  readError: string | null;
-  saveError: string | null;
-  showLinkForm: boolean;
-  toastMessage: string | null;
-}
-
 /**
- * Controller hook for `LinksView`. Owns all stateful logic: URL-derived
- * filter, search debounce, keyboard selection, shortcuts modal, and the
- * clear-read animation flag. Wires up keyboard shortcuts and exposes the
- * search input ref for `LinksToolbar`.
+ * Controller hook for `LinksView`. Composes the focused sub-hooks that own
+ * each slice of state — URL-derived filter, search debounce
+ * (`useSearchDebounce`), keyboard selection (`useLinkSelection`), and the
+ * aggregated error (`useAggregatedError`) — wires up keyboard shortcuts, and
+ * re-exposes a single, stable API. The shortcuts modal flag and the
+ * clear-read animation flag stay here because they are small and coupled to
+ * this hook's wiring.
  *
  * What stays in the view:
  * - `dialogReference` – attached to a JSX element and consumed directly by
@@ -92,60 +42,38 @@ export function useLinksView({
   const navigate = useNavigate();
   const filter = filterFromPath(location.pathname);
 
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedLinkIndex, setSelectedLinkIndex] = useState<number | null>(
-    null,
-  );
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isClearingRead, setIsClearingRead] = useState(false);
-
-  const [, startTransition] = useTransition();
   const searchInputReference = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (showShortcuts) onCloseUserMenu?.();
   }, [showShortcuts, onCloseUserMenu]);
 
+  // Clears the in-flight clear-read flag whenever the filter changes (e.g.
+  // switching between the unread and read tabs). Search and selection resets
+  // on filter change are owned by `useSearchDebounce` and `useLinkSelection`;
+  // this flag lives here, so its reset does too. Without it, navigating away
+  // mid clear-read leaves cards stuck with `pointer-events-none` and the
+  // clear control disabled (transient WCAG 2.1.1 operability regression).
   useEffect(() => {
-    if (search === '') {
-      startTransition(() => setDebouncedSearch(''));
-      return;
-    }
-    const timer = setTimeout(
-      () => startTransition(() => setDebouncedSearch(search)),
-      SEARCH_DEBOUNCE_MS,
-    );
-    return () => clearTimeout(timer);
-  }, [search]);
+    setIsClearingRead(false);
+  }, [filter]);
 
+  const { search, debouncedSearch, setSearch } = useSearchDebounce(filter);
   const linksResult = useLinks(filter, debouncedSearch);
 
-  function handleNavigateNextLink() {
-    if (linksResult.links.length === 0) return;
-    setSelectedLinkIndex((previous) => {
-      if (previous === null) return 0;
-      return Math.min(previous + 1, linksResult.links.length - 1);
-    });
-  }
-
-  function handleNavigatePrevLink() {
-    if (linksResult.links.length === 0) return;
-    setSelectedLinkIndex((previous) => {
-      if (previous === null) return linksResult.links.length - 1;
-      return Math.max(previous - 1, 0);
-    });
-  }
-
-  function handleOpenSelectedLink() {
-    if (selectedLinkIndex === null) return;
-    const link = linksResult.links[selectedLinkIndex];
-    if (!link) return;
-    window.open(link.url, '_blank', 'noreferrer');
-    if (!link.readAt) {
-      linksResult.handleToggleRead(link);
-    }
-  }
+  const {
+    selectedLinkIndex,
+    handleNavigateNextLink,
+    handleNavigatePrevLink,
+    handleOpenSelectedLink,
+  } = useLinkSelection({
+    debouncedSearch,
+    filter,
+    links: linksResult.links,
+    onToggleRead: linksResult.handleToggleRead,
+  });
 
   useKeyboardShortcuts({
     enabled: true,
@@ -164,76 +92,13 @@ export function useLinksView({
     onOpenSelectedLink: handleOpenSelectedLink,
   });
 
-  // Resets search, selection, and the isClearingRead flag whenever the filter
-  // changes (e.g. switching between unread and read tabs).
-  useEffect(() => {
-    setIsClearingRead(false);
-    setSearch('');
-    setDebouncedSearch('');
-    setSelectedLinkIndex(null);
-  }, [filter]);
-
-  // Clamps selection when the list shrinks (e.g. after a link is marked as read).
-  useEffect(() => {
-    if (
-      selectedLinkIndex !== null &&
-      selectedLinkIndex >= linksResult.links.length
-    ) {
-      setSelectedLinkIndex(
-        linksResult.links.length > 0 ? linksResult.links.length - 1 : null,
-      );
-    }
-  }, [linksResult.links.length, selectedLinkIndex]);
-
-  // Resets selection when search changes, so the highlighted card matches the
-  // new result set.
-  useEffect(() => {
-    setSelectedLinkIndex(null);
-  }, [debouncedSearch]);
-
-  // Aggregates the five sub-error fields into a single last-write-wins
-  // `error` so the view can render one `Alert` (one `role="alert"`)
-  // instead of mounting up to five assertive regions concurrently. Detects
-  // both `null → string` and `string → string'` transitions so the same
-  // field re-failing with a new message also re-announces.
-  const previousErrors = useRef({
-    delete: null as string | null,
-    fetch: null as string | null,
-    random: null as string | null,
-    read: null as string | null,
-    save: null as string | null,
+  const error = useAggregatedError({
+    deleteError: linksResult.deleteError,
+    fetchError: linksResult.fetchError,
+    randomError: linksResult.randomError,
+    readError: linksResult.readError,
+    saveError: linksResult.saveError,
   });
-  const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    const current = {
-      delete: linksResult.deleteError,
-      fetch: linksResult.fetchError,
-      random: linksResult.randomError,
-      read: linksResult.readError,
-      save: linksResult.saveError,
-    };
-    let nextError: string | null = null;
-    for (const kind of Object.keys(current) as Array<keyof typeof current>) {
-      const currentValue = current[kind];
-      const previousValue = previousErrors.current[kind];
-      if (currentValue !== null && currentValue !== previousValue) {
-        nextError = currentValue;
-      }
-    }
-    const allCleared = Object.values(current).every((value) => value === null);
-    previousErrors.current = current;
-    if (allCleared) {
-      setError(null);
-    } else if (nextError !== null) {
-      setError(nextError);
-    }
-  }, [
-    linksResult.deleteError,
-    linksResult.fetchError,
-    linksResult.randomError,
-    linksResult.readError,
-    linksResult.saveError,
-  ]);
 
   /**
    * Triggers the card exit animation before calling `handleDeleteAllRead`.
