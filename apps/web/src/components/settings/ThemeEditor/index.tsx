@@ -15,6 +15,7 @@ import Toast from '../../common/Toast';
 import { readThemeTokens } from './themeProbe';
 import { tokenContrastFailures, useContrastResults } from './contrastResults';
 import { updateMe } from '../../../lib/api';
+import { usePanelPresence } from './usePanelPresence';
 import { useThemeCopy } from './useThemeCopy';
 import { useThemeOverrides } from './useThemeOverrides';
 import { useThemeSave } from './useThemeSave';
@@ -77,6 +78,11 @@ export default function ThemeEditor() {
 
   const editingEnabled = customThemeEnabled;
   const isCustomConfigured = isCustomThemeConfigured(customTheme);
+
+  // The editing cards exist only while enabled; presence keeps them mounted
+  // through a fade-out so they don't snap away when the switch flips off.
+  const { rendered: contentRendered, exiting: contentExiting } =
+    usePanelPresence(editingEnabled);
 
   // Hovering/arrow-navigating a copy-menu row previews that film theme — scoped
   // to the editor's content (the same wrapper that scopes the custom palette),
@@ -182,6 +188,17 @@ export default function ThemeEditor() {
 
   const toastView = useMemo(() => resolveToast(toast.message), [toast.message]);
 
+  // Each content card carries the shared mount surface + the link-card enter
+  // fade (gentle fade-down on the way out). The stagger comes from the per-card
+  // animation delay; reduced-motion is handled globally (the CSS clamp) and by
+  // `usePanelPresence` (synchronous unmount).
+  const cardClassName = `p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl ${
+    contentExiting ? 'animate-fade-out-down' : 'animate-card-enter'
+  }`;
+  function cardDelayStyle(index: number): CSSProperties {
+    return { animationDelay: `${index * 60}ms` };
+  }
+
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header: title + intro fill the LEFT half; the save status sits
@@ -225,49 +242,54 @@ export default function ThemeEditor() {
         />
       </div>
 
-      {/* Custom-theme PREVIEW scope. While enabled, `contentThemeStyle` carries
-          the full custom palette as inline custom properties, so this subtree
-          (the editor's main content) renders the custom theme WITHOUT touching
-          the global `:root` theme; while disabled it is empty and the subtree
-          inherits the current global theme. A copy-menu hover preview overrides
-          it with the hovered film theme's tokens. The header + settings card
-          sit OUTSIDE this scope, so the switch used to escape an unreadable
-          palette stays painted in the always-readable global theme. */}
-      <div
-        className="flex flex-col lg:flex-row gap-6"
-        style={previewStyle ?? contentThemeStyle}
-      >
-        <div className="shrink-0 w-full lg:w-80 space-y-4">
-          {/* Colors card. ColorEditor owns its header (heading + the corner
-              lock indicator). While editing is locked only the disabled
-              controls dim — live text stays above its contrast floor. */}
-          <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
-            <ColorEditor
-              colorValues={colorValues}
-              contrastFailures={contrastFailures}
-              onOverride={handleOverride}
-              onResetBundle={handleResetBundle}
-              editingDisabled={!editingEnabled}
-              editorMode={editorMode}
-              onEditorModeChange={setEditorMode}
-            />
+      {/* Editing content. It exists ONLY while the custom theme is enabled —
+          locked, purposeless cards aren't shown disabled, they're unmounted.
+          `usePanelPresence` keeps them through one fade-out so they don't snap
+          away; each card plays the link-card enter fade on the way in and a
+          gentle fade-down on the way out (staggered, reduced-motion-aware).
+
+          Custom-theme PREVIEW scope: `contentThemeStyle` carries the full
+          custom palette as inline custom properties, so this subtree renders
+          the custom theme WITHOUT touching the global `:root`. A copy-menu hover
+          preview overrides it with the hovered film theme's tokens. The header +
+          settings card sit OUTSIDE this scope, so the switch used to escape an
+          unreadable palette stays painted in the always-readable global theme. */}
+      {contentRendered && (
+        <div
+          className="flex flex-col lg:flex-row gap-6"
+          style={previewStyle ?? contentThemeStyle}
+        >
+          <div className="shrink-0 w-full lg:w-80 space-y-4">
+            <div className={cardClassName} style={cardDelayStyle(0)}>
+              <ColorEditor
+                colorValues={colorValues}
+                contrastFailures={contrastFailures}
+                onOverride={handleOverride}
+                onResetBundle={handleResetBundle}
+                editorMode={editorMode}
+                onEditorModeChange={setEditorMode}
+              />
+            </div>
+
+            <div className={cardClassName} style={cardDelayStyle(1)}>
+              <h2 className="mb-3 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
+                Contrast (WCAG 2.1)
+              </h2>
+              <ContrastChecker results={contrastResults} />
+            </div>
           </div>
 
-          <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
-            <h2 className="mb-3 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
-              Contrast (WCAG 2.1)
+          <div
+            className={`flex-1 min-w-0 ${cardClassName}`}
+            style={cardDelayStyle(2)}
+          >
+            <h2 className="mb-6 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
+              Components
             </h2>
-            <ContrastChecker results={contrastResults} />
+            <ComponentShowcase />
           </div>
         </div>
-
-        <div className="flex-1 min-w-0 p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
-          <h2 className="mb-6 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
-            Components
-          </h2>
-          <ComponentShowcase />
-        </div>
-      </div>
+      )}
 
       {toastView && (
         <Toast

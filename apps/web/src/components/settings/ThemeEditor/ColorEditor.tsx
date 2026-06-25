@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import ModeToggle from './ModeToggle';
 import type { Mode } from '../../../theme/constants';
 import type { TokenContrastFailure } from './contrastResults';
-import { ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
 import {
   VAR_GROUPS,
   isAlphaValue,
@@ -30,14 +29,6 @@ interface ColorEditorProps {
   /** Called when the user clicks a per-bundle Reset button. */
   onResetBundle: (bundle: Bundle) => void;
   /**
-   * When true, editing is locked (the custom theme is not enabled): the hex
-   * inputs go `readonly` and the color pickers + per-bundle resets `disabled`,
-   * but search + bundle disclosures stay operable so the user can still BROWSE
-   * and copy the currently-shown theme's read-only values. Conveyed by native
-   * per-control state plus a visible hint, never `aria-disabled` on the region.
-   */
-  editingDisabled?: boolean;
-  /**
    * The editor's LOCAL color mode (which mode's palette is shown + edited). The
    * Light/Dark tabs at the top of the card drive this; it is decoupled from the
    * global site mode.
@@ -60,13 +51,10 @@ interface ColorRowProps {
   failure: TokenContrastFailure | undefined;
   /** Called when the user commits a new color value. */
   onOverride: (variable: ThemeVariable, value: string) => void;
-  /** When true, the picker is `disabled` and the hex input is `readonly`. */
-  editingDisabled: boolean;
 }
 
 const SEARCH_INPUT_ID = 'theme-editor-token-search';
 const SEARCH_STATUS_ID = 'theme-editor-token-search-status';
-const EDIT_LOCK_TOOLTIP_ID = 'theme-editor-edit-lock-tooltip';
 
 /**
  * How long the describedby failure text waits after the latest keystroke
@@ -137,7 +125,6 @@ function ColorRow({
   currentValue,
   failure,
   onOverride,
-  editingDisabled,
 }: ColorRowProps) {
   const [inputValue, setInputValue] = useState(currentValue);
 
@@ -182,11 +169,9 @@ function ColorRow({
   }
 
   const isAlpha = isAlphaValue(currentValue);
-  // The native color picker cannot represent alpha and is meaningless while
-  // editing is locked, so it is disabled in either case. The hex input stays a
-  // readable, copyable, focusable `readonly` field while locked (not disabled),
-  // so the OFF state lets the user read + copy the current theme's values.
-  const pickerDisabled = isAlpha || editingDisabled;
+  // The native color picker cannot represent alpha (it only does 6-digit hex),
+  // so alpha rows disable it and keep editing through the text input.
+  const pickerDisabled = isAlpha;
   const pickerValue = /^#[0-9a-fA-F]{6}$/.test(inputValue)
     ? inputValue
     : '#000000';
@@ -229,14 +214,10 @@ function ColorRow({
         value={inputValue}
         onChange={handleTextChange}
         onBlur={handleTextBlur}
-        readOnly={editingDisabled}
         aria-label={textAriaLabel}
-        // While locked the field is read-only, so suppress the "fix me"
-        // aria-invalid signal on a value the user can't change — but keep the
-        // describedby note, which is still-true descriptive info (not a CTA).
-        aria-invalid={!editingDisabled && failure ? 'true' : undefined}
+        aria-invalid={failure ? 'true' : undefined}
         aria-describedby={debouncedFailure ? failureNoteId : undefined}
-        className="w-28 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] aria-invalid:border-[var(--alert-border)] text-[var(--mount-text)] text-[0.65rem] font-mono read-only:opacity-70 focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] focus:border-transparent rounded-md"
+        className="w-28 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] aria-invalid:border-[var(--alert-border)] text-[var(--mount-text)] text-[0.65rem] font-mono focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] focus:border-transparent rounded-md"
         placeholder="#000000"
         spellCheck={false}
       />
@@ -270,7 +251,6 @@ export default function ColorEditor({
   contrastFailures,
   onOverride,
   onResetBundle,
-  editingDisabled = false,
   editorMode,
   onEditorModeChange,
 }: ColorEditorProps) {
@@ -280,18 +260,6 @@ export default function ColorEditor({
   const [query, setQuery] = useState('');
   const preSearchOpenBundles = useRef<Set<Bundle> | null>(null);
   const searchInputReference = useRef<HTMLInputElement>(null);
-
-  // The corner lock tooltip reveals on hover/focus via CSS; Escape dismisses it
-  // (SC 1.4.13 Dismissable) while keeping the trigger focused. Re-hovering or
-  // re-focusing the trigger clears the dismissal.
-  const [lockTooltipDismissed, setLockTooltipDismissed] = useState(false);
-
-  function handleLockKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
-    if (event.key === 'Escape') {
-      event.stopPropagation();
-      setLockTooltipDismissed(true);
-    }
-  }
 
   const normalizedQuery = query.trim().toLowerCase();
   const filteredGroups = useMemo(
@@ -387,47 +355,9 @@ export default function ColorEditor({
         labels={EDITOR_MODE_LABELS}
       />
 
-      {/* Card header: heading + a corner lock indicator. The trigger is a real
-          focusable button so :focus-visible reveals the tooltip for keyboard
-          users too (not mouse-only); its accessible NAME carries the lock state
-          (the padlock glyph is decorative + shape-distinct). The tooltip stays
-          in the DOM (visually hidden) so the search input's aria-describedby
-          IDREF never dangles, and it paints from a FIXED escape hatch so a
-          hostile custom palette can't hide the recovery message. */}
-      <div className="group relative flex items-center justify-between">
-        <h2 className="text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
-          Colors
-        </h2>
-        <button
-          type="button"
-          aria-label={editingDisabled ? 'Editing locked' : 'Editing unlocked'}
-          aria-describedby={EDIT_LOCK_TOOLTIP_ID}
-          onKeyDown={handleLockKeyDown}
-          onMouseEnter={() => setLockTooltipDismissed(false)}
-          onFocus={() => setLockTooltipDismissed(false)}
-          className="inline-flex shrink-0 items-center justify-center w-5 h-5 text-[var(--mount-alt-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded"
-        >
-          {/* Single glyph swapped by state — the lock STATE rides on the
-              button's aria-label + the tooltip, so the icon stays decorative.
-              (Two display-toggled <i>s both showed at once: FA's own display
-              rule defeats Tailwind's `hidden`.) */}
-          <i
-            className={`fa-solid ${editingDisabled ? 'fa-lock' : 'fa-lock-open'} text-[0.7rem]`}
-            aria-hidden="true"
-          />
-        </button>
-        <span
-          id={EDIT_LOCK_TOOLTIP_ID}
-          role="tooltip"
-          data-dismissed={lockTooltipDismissed ? 'true' : undefined}
-          style={{ ...ESCAPE_HATCH_LIGHT, color: '#92400e' }}
-          className="pointer-events-none absolute right-0 top-full z-10 mt-1 max-w-[14rem] px-2 py-1 border text-[0.65rem] rounded-md shadow-md opacity-0 invisible transition-opacity duration-150 group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto data-[dismissed=true]:!opacity-0 data-[dismissed=true]:!invisible"
-        >
-          {editingDisabled
-            ? 'Turn on the switch to edit your colors.'
-            : 'Editing on. Your color changes save to your custom theme.'}
-        </span>
-      </div>
+      <h2 className="text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
+        Colors
+      </h2>
 
       <div role="search" className="relative">
         <label htmlFor={SEARCH_INPUT_ID} className="sr-only">
@@ -443,11 +373,7 @@ export default function ColorEditor({
           placeholder="Search tokens…"
           autoComplete="off"
           spellCheck={false}
-          aria-describedby={
-            editingDisabled
-              ? `${EDIT_LOCK_TOOLTIP_ID} ${SEARCH_STATUS_ID}`
-              : SEARCH_STATUS_ID
-          }
+          aria-describedby={SEARCH_STATUS_ID}
           className="w-full pl-7 pr-7 py-1.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] rounded-md"
         />
         <i
@@ -533,9 +459,8 @@ export default function ColorEditor({
                 <button
                   type="button"
                   onClick={() => onResetBundle(group.bundle)}
-                  disabled={editingDisabled}
                   aria-label={`Reset ${group.label} bundle`}
-                  className="px-1.5 py-1 text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] text-[0.65rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-1.5 py-1 text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] text-[0.65rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded cursor-pointer"
                 >
                   <i
                     className="fa-solid fa-arrow-rotate-left"
@@ -555,7 +480,6 @@ export default function ColorEditor({
                       currentValue={colorValues[variable]}
                       failure={contrastFailures.get(variable)}
                       onOverride={onOverride}
-                      editingDisabled={editingDisabled}
                     />
                   ))}
                 </div>

@@ -27,7 +27,6 @@ function buildColorValues(): Record<ThemeVariable, string> {
 
 function renderEditor(
   contrastFailures: Map<string, TokenContrastFailure> = new Map(),
-  editingDisabled = false,
 ) {
   return render(
     <ColorEditor
@@ -35,7 +34,6 @@ function renderEditor(
       contrastFailures={contrastFailures}
       onOverride={vi.fn()}
       onResetBundle={vi.fn()}
-      editingDisabled={editingDisabled}
       editorMode="dark"
       onEditorModeChange={vi.fn()}
     />,
@@ -181,7 +179,6 @@ describe('ColorEditor – Light/Dark palette tabs', () => {
         contrastFailures={new Map()}
         onOverride={vi.fn()}
         onResetBundle={vi.fn()}
-        editingDisabled={false}
         editorMode="dark"
         onEditorModeChange={onEditorModeChange}
       />,
@@ -197,77 +194,31 @@ describe('ColorEditor – Light/Dark palette tabs', () => {
   });
 });
 
-describe('ColorEditor – editing locked (custom theme off)', () => {
-  it('keeps search + disclosures operable while locked', () => {
-    renderEditor(new Map(), true);
-    // Browse stays available: search is operable, base disclosure can toggle.
-    expect(getSearchbox()).not.toBeDisabled();
-    const baseButton = screen.getByRole('button', { name: /^Base/ });
-    expect(baseButton).not.toBeDisabled();
-  });
-
-  it('surfaces the lock state + reason through the corner indicator', () => {
-    renderEditor(new Map(), true);
-    const lock = screen.getByRole('button', { name: /editing locked/i });
-    // The tooltip message is the search input's describedby target.
-    const tooltip = screen.getByRole('tooltip');
-    expect(tooltip).toHaveTextContent(
-      /turn on the switch to edit your colors/i,
-    );
-    expect(lock).toHaveAttribute('aria-describedby', tooltip.id);
-    expect(getSearchbox().getAttribute('aria-describedby')).toContain(
-      tooltip.id,
-    );
-  });
-
-  it('dismisses the lock tooltip on Escape, keeping the trigger focused', () => {
-    renderEditor(new Map(), true);
-    const lock = screen.getByRole('button', { name: /editing locked/i });
-    lock.focus();
-    fireEvent.keyDown(lock, { key: 'Escape' });
-    expect(screen.getByRole('tooltip')).toHaveAttribute(
-      'data-dismissed',
-      'true',
-    );
-    expect(lock).toHaveFocus();
-  });
-
-  it('locks the hex input read-only (not disabled) so values stay copyable', () => {
-    renderEditor(new Map(), true);
+describe('ColorEditor – always editable (cards only render when enabled)', () => {
+  it('keeps the hex input editable (not readonly) with no lock affordance', () => {
+    renderEditor();
     const input = screen.getByRole('textbox', { name: /Base text/i });
-    expect(input).toHaveAttribute('readonly');
+    expect(input).not.toHaveAttribute('readonly');
     expect(input).not.toBeDisabled();
+    // The old corner lock indicator + tooltip are gone entirely.
+    expect(
+      screen.queryByRole('button', { name: /editing (un)?locked/i }),
+    ).toBeNull();
+    expect(screen.queryByRole('tooltip')).toBeNull();
   });
 
-  it('disables the color pickers and per-bundle resets', () => {
-    renderEditor(new Map(), true);
+  it('points the search input only at its status region (no dangling IDREF)', () => {
+    renderEditor();
+    expect(getSearchbox().getAttribute('aria-describedby')).toBe(
+      'theme-editor-token-search-status',
+    );
+  });
+
+  it('leaves the per-bundle reset enabled', () => {
+    renderEditor();
     expect(
       screen.getByRole('button', { name: /reset base bundle/i }),
-    ).toBeDisabled();
-    expect(screen.getByLabelText(/color picker for base text/i)).toBeDisabled();
-  });
-
-  it('suppresses aria-invalid on a failing token while locked', () => {
-    renderEditor(
-      new Map([
-        ['--base-text', { ratio: 2.9, threshold: 4.5, pairLabel: 'text / bg' }],
-      ]),
-      true,
-    );
-    const input = screen.getByRole('textbox', { name: /Base text/i });
-    expect(input).not.toHaveAttribute('aria-invalid');
-  });
-
-  it('flips the corner indicator to unlocked when editing is enabled', () => {
-    renderEditor(new Map(), false);
-    expect(
-      screen.getByRole('button', { name: /editing unlocked/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('tooltip')).toHaveTextContent(/editing on/i);
-    // When unlocked the search no longer points at the lock message.
-    expect(getSearchbox().getAttribute('aria-describedby')).not.toContain(
-      'edit-lock-tooltip',
-    );
+    ).not.toBeDisabled();
   });
 });
 
