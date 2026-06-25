@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import ModeToggle from './ModeToggle';
+import type { Mode } from '../../../theme/constants';
 import type { TokenContrastFailure } from './contrastResults';
 import { ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
 import {
@@ -8,6 +10,11 @@ import {
   type BundleGroup,
   type ThemeVariable,
 } from './useThemeOverrides';
+
+const EDITOR_MODE_LABELS: Record<Mode, string> = {
+  light: 'Light colors',
+  dark: 'Dark colors',
+};
 
 interface ColorEditorProps {
   /** The current (possibly overridden) values for all editable CSS variables. */
@@ -30,6 +37,14 @@ interface ColorEditorProps {
    * per-control state plus a visible hint, never `aria-disabled` on the region.
    */
   editingDisabled?: boolean;
+  /**
+   * The editor's LOCAL color mode (which mode's palette is shown + edited). The
+   * Light/Dark tabs at the top of the card drive this; it is decoupled from the
+   * global site mode.
+   */
+  editorMode: Mode;
+  /** Switches which mode's palette the editor shows + edits. */
+  onEditorModeChange: (mode: Mode) => void;
 }
 
 interface ColorRowProps {
@@ -207,9 +222,6 @@ function ColorRow({
 
       <div className="flex-1 min-w-0">
         <p className="text-[var(--mount-text)] text-xs font-medium">{label}</p>
-        <p className="text-[var(--mount-alt-text)] text-[0.65rem] font-mono truncate">
-          {variable}
-        </p>
       </div>
 
       <input
@@ -259,6 +271,8 @@ export default function ColorEditor({
   onOverride,
   onResetBundle,
   editingDisabled = false,
+  editorMode,
+  onEditorModeChange,
 }: ColorEditorProps) {
   const [openBundles, setOpenBundles] = useState<Set<Bundle>>(
     () => new Set(['base']),
@@ -360,6 +374,19 @@ export default function ColorEditor({
 
   return (
     <div className="space-y-3">
+      {/* Light/Dark palette selector — the FIRST control in the card so DOM
+          order matches the read flow ("choose a mode, then edit"). It re-points
+          this card + the Contrast and Components cards to that mode's palette
+          WITHOUT touching the global site mode (a binary toggle, not a tablist:
+          there is no single panel to own). The group label names the
+          consequence so the pressed state self-documents — no live region. */}
+      <ModeToggle
+        mode={editorMode}
+        onModeChange={onEditorModeChange}
+        groupLabel="Palette to edit"
+        labels={EDITOR_MODE_LABELS}
+      />
+
       {/* Card header: heading + a corner lock indicator. The trigger is a real
           focusable button so :focus-visible reveals the tooltip for keyboard
           users too (not mouse-only); its accessible NAME carries the lock state
@@ -375,18 +402,17 @@ export default function ColorEditor({
           type="button"
           aria-label={editingDisabled ? 'Editing locked' : 'Editing unlocked'}
           aria-describedby={EDIT_LOCK_TOOLTIP_ID}
-          data-locked={editingDisabled ? 'true' : undefined}
           onKeyDown={handleLockKeyDown}
           onMouseEnter={() => setLockTooltipDismissed(false)}
           onFocus={() => setLockTooltipDismissed(false)}
-          className="group/lock inline-flex shrink-0 items-center justify-center w-5 h-5 text-[var(--mount-alt-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded"
+          className="inline-flex shrink-0 items-center justify-center w-5 h-5 text-[var(--mount-alt-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded"
         >
+          {/* Single glyph swapped by state — the lock STATE rides on the
+              button's aria-label + the tooltip, so the icon stays decorative.
+              (Two display-toggled <i>s both showed at once: FA's own display
+              rule defeats Tailwind's `hidden`.) */}
           <i
-            className="fa-solid fa-lock-open group-data-[locked=true]/lock:hidden text-[0.7rem]"
-            aria-hidden="true"
-          />
-          <i
-            className="hidden fa-solid fa-lock group-data-[locked=true]/lock:inline text-[0.7rem]"
+            className={`fa-solid ${editingDisabled ? 'fa-lock' : 'fa-lock-open'} text-[0.7rem]`}
             aria-hidden="true"
           />
         </button>

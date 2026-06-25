@@ -119,8 +119,8 @@ export default function CopyFromTheme({
         className="text-[var(--mount-alt-text)] text-right text-xs"
       >
         {editingEnabled
-          ? 'Selecting a theme replaces your colors with its palette and saves. Undo to revert.'
-          : 'Turn on the custom theme to copy a palette.'}
+          ? 'Picking a theme paints over your colors with its palette and saves. Undo to revert.'
+          : 'Flip on the custom theme to copy a palette.'}
       </p>
     </div>
   );

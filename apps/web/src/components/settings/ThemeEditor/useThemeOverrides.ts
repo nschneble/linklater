@@ -14,8 +14,10 @@ import {
   type ThemeVariable,
 } from '../../../theme/customThemeTokens';
 import { resolveCustomThemeTokens } from '../../../theme/customTheme';
+import { readThemeTokens } from './themeProbe';
 import { useTheme } from '../../../theme/ThemeContext';
 import type { CSSProperties } from 'react';
+import type { Mode } from '../../../theme/constants';
 
 // Re-export the canonical token vocabulary (now single-sourced in `theme/`)
 // so existing editor-side consumers keep importing it from here unchanged.
@@ -121,21 +123,6 @@ export function isAlphaValue(value: string): boolean {
   return /^rgba?\(/i.test(trimmed) || /^#[0-9a-fA-F]{8}$/.test(trimmed);
 }
 
-/**
- * Reads the current computed values of all `EDITABLE_VARS` from
- * `document.documentElement`. Called on mount and whenever the base theme
- * or mode changes to reset the editor state.
- */
-function readAllComputedVars(): Record<ThemeVariable, string> {
-  const computedStyle = getComputedStyle(document.documentElement);
-  return Object.fromEntries(
-    EDITABLE_VARS.map((variable) => [
-      variable,
-      computedStyle.getPropertyValue(variable).trim(),
-    ]),
-  ) as Record<ThemeVariable, string>;
-}
-
 export interface UseThemeOverridesResult {
   /** Current (possibly overridden) values for all editable variables. */
   colorValues: Record<ThemeVariable, string>;
@@ -167,38 +154,49 @@ export interface UseThemeOverridesResult {
 
 /**
  * Manages the Theme Editor's live token values + the inline style that scopes
- * the custom palette to its preview subtree.
+ * the editor's palette to its preview subtree.
  *
- * The editor NEVER mutates `document.documentElement` / the global theme. While
- * the custom theme is enabled, the baseline is the resolved custom palette
- * (saved tokens + branding fallback), `colorValues` track the user's live
- * edits, and `contentThemeStyle` carries the FULL palette as inline custom
- * properties for the preview subtree. While disabled, the baseline is the
- * current global theme read from `:root` (a read-only mirror) and
- * `contentThemeStyle` is empty so the subtree inherits the global theme.
+ * The editor NEVER mutates `document.documentElement` / the global theme — and
+ * its `editorMode` is LOCAL, decoupled from the site mode: switching it repaints
+ * only this subtree, never the live app. While the custom theme is enabled, the
+ * baseline is the resolved custom palette (saved tokens + branding fallback) for
+ * `editorMode` and `colorValues` track the user's live edits. While disabled,
+ * the baseline is the current theme's `editorMode` palette read off a probe (a
+ * read-only mirror) so the Light/Dark tabs still swap the preview. Either way
+ * `contentThemeStyle` carries the FULL palette as inline custom properties for
+ * the preview subtree; the settings card + header sit OUTSIDE that scope.
  *
- * The baseline re-resolves when the enabled flag, mode, or global theme
+ * The baseline re-resolves when the enabled flag, `editorMode`, or global theme
  * changes. `customTheme` is read via a ref (NOT an effect dep) so an auto-save
  * writing it back can't clobber an in-progress edit; the first-enable seed is
  * already covered by the enabled-flag flip.
  *
+ * @param editorMode Which mode's palette to show + edit (local to the editor).
  * @returns See `UseThemeOverridesResult`.
  */
-export function useThemeOverrides(): UseThemeOverridesResult {
-  const { baseTheme, mode, customTheme, customThemeEnabled } = useTheme();
+export function useThemeOverrides(editorMode: Mode): UseThemeOverridesResult {
+  const { baseTheme, customTheme, customThemeEnabled } = useTheme();
 
   const customThemeRef = useRef(customTheme);
   customThemeRef.current = customTheme;
 
   const readBaseline = useCallback((): Record<ThemeVariable, string> => {
     if (customThemeEnabled) {
-      return resolveCustomThemeTokens(customThemeRef.current, mode) as Record<
-        ThemeVariable,
-        string
-      >;
+      return resolveCustomThemeTokens(
+        customThemeRef.current,
+        editorMode,
+      ) as Record<ThemeVariable, string>;
     }
-    return readAllComputedVars();
-  }, [customThemeEnabled, mode]);
+    // Disabled: mirror the current theme's `editorMode` palette read-only via a
+    // probe (never the live `:root`, which is fixed to the site mode), so the
+    // Light/Dark tabs swap the preview without flipping the site. The probe
+    // drops unset/empty tokens, so backfill every editable var with '' — a row
+    // (and the contrast checker) must never read `undefined`.
+    const probed = readThemeTokens(baseTheme, editorMode);
+    return Object.fromEntries(
+      EDITABLE_VARS.map((variable) => [variable, probed[variable] ?? '']),
+    ) as Record<ThemeVariable, string>;
+  }, [customThemeEnabled, editorMode, baseTheme]);
 
   const [colorValues, setColorValues] =
     useState<Record<ThemeVariable, string>>(readBaseline);
@@ -208,7 +206,7 @@ export function useThemeOverrides(): UseThemeOverridesResult {
 
   useEffect(() => {
     setColorValues(readBaseline());
-  }, [readBaseline, baseTheme]);
+  }, [readBaseline]);
 
   const setOverride = useCallback((variable: ThemeVariable, value: string) => {
     setColorValues((previous) => ({ ...previous, [variable]: value }));
@@ -265,9 +263,13 @@ export function useThemeOverrides(): UseThemeOverridesResult {
     [readBaseline],
   );
 
+  // The scoped subtree always paints `colorValues`: when enabled that's the
+  // editable custom palette, when disabled it's the current theme's `editorMode`
+  // mirror — so the Light/Dark tabs repaint the preview in both states without
+  // ever touching the global `:root` (which stays on the site mode).
   const contentThemeStyle = useMemo<CSSProperties>(
-    () => (customThemeEnabled ? (colorValues as CSSProperties) : {}),
-    [customThemeEnabled, colorValues],
+    () => colorValues as CSSProperties,
+    [colorValues],
   );
 
   return {

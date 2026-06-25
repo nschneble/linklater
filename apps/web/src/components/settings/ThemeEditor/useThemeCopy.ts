@@ -9,8 +9,11 @@ interface UseThemeCopyOptions {
   editingEnabled: boolean;
   /** The committed base theme; a change drops a stale Undo snapshot. */
   baseTheme: BaseTheme;
-  /** The active mode; copy applies this mode and a change drops the snapshot. */
-  mode: Mode;
+  /**
+   * The editor's LOCAL mode (the Light/Dark tabs, not the site mode). Copy
+   * applies this mode's palette and a change drops the Undo snapshot.
+   */
+  editorMode: Mode;
   /** Live editor values, snapshotted for Undo. */
   colorValues: Record<ThemeVariable, string>;
   /** Persists the given values; resolves true on success. */
@@ -54,7 +57,7 @@ export interface UseThemeCopyResult {
 export function useThemeCopy({
   editingEnabled,
   baseTheme,
-  mode,
+  editorMode,
   colorValues,
   save,
   loadOverrides,
@@ -107,17 +110,17 @@ export function useThemeCopy({
 
   useEffect(() => {
     clearUndo();
-  }, [mode, baseTheme, clearUndo]);
+  }, [editorMode, baseTheme, clearUndo]);
 
   const handleApply = useCallback(
     (themeId: BaseTheme, themeLabel: string) => {
       undoSnapshotReference.current = { ...colorValuesReference.current };
-      const applied = loadOverrides(readThemeTokens(themeId, mode));
+      const applied = loadOverrides(readThemeTokens(themeId, editorMode));
       pendingSaveReasonReference.current = `${themeLabel} palette applied and saved.`;
       setUndoThemeLabel(themeLabel);
       saveNow(applied);
     },
-    [loadOverrides, mode, saveNow],
+    [loadOverrides, editorMode, saveNow],
   );
 
   const handleUndo = useCallback(() => {

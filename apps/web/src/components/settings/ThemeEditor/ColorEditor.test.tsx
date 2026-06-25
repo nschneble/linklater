@@ -36,6 +36,8 @@ function renderEditor(
       onOverride={vi.fn()}
       onResetBundle={vi.fn()}
       editingDisabled={editingDisabled}
+      editorMode="dark"
+      onEditorModeChange={vi.fn()}
     />,
   );
 }
@@ -167,6 +169,31 @@ describe('ColorEditor – token search', () => {
     expect(
       within(landmark).getByLabelText(/search tokens/i),
     ).toBeInTheDocument();
+  });
+});
+
+describe('ColorEditor – Light/Dark palette tabs', () => {
+  it('renders the mode selector as the card lead control and commits a change', () => {
+    const onEditorModeChange = vi.fn();
+    render(
+      <ColorEditor
+        colorValues={buildColorValues()}
+        contrastFailures={new Map()}
+        onOverride={vi.fn()}
+        onResetBundle={vi.fn()}
+        editingDisabled={false}
+        editorMode="dark"
+        onEditorModeChange={onEditorModeChange}
+      />,
+    );
+    const group = screen.getByRole('group', { name: /palette to edit/i });
+    expect(
+      within(group).getByRole('button', { name: /dark colors/i }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(
+      within(group).getByRole('button', { name: /light colors/i }),
+    );
+    expect(onEditorModeChange).toHaveBeenCalledWith('light');
   });
 });
 

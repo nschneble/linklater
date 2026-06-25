@@ -46,7 +46,10 @@ function PassBadge({ pair, ratio }: PassBadgeProps) {
         className={`fa-solid ${passes ? 'fa-check' : 'fa-xmark'} text-[0.5rem]`}
         aria-hidden="true"
       />
-      {pair.criterion}
+      {/* A pass needs no SC number — the check + ratio already say "fine". A
+          fail keeps the criterion visible so a sighted user can spot which pair
+          to fix. The full label/ratio stays in the aria-label either way. */}
+      {!passes && pair.criterion}
     </span>
   );
 }
@@ -146,7 +149,7 @@ export default function ContrastChecker({ results }: ContrastCheckerProps) {
           aria-pressed={failuresOnly}
           className="text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] aria-pressed:text-[var(--mount-text)] aria-pressed:font-semibold text-[0.6rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded cursor-pointer"
         >
-          {failuresOnly ? 'Show all' : 'Failures only'}
+          {failuresOnly ? 'Show all' : 'Show failures'}
         </button>
       </div>
 

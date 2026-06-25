@@ -30,7 +30,7 @@ function setup(overrides: Partial<Parameters<typeof useThemeCopy>[0]> = {}) {
   const initialProps = {
     editingEnabled: true,
     baseTheme: 'boyhood' as const,
-    mode: 'dark' as const,
+    editorMode: 'dark' as const,
     colorValues: COLOR_VALUES,
     save,
     loadOverrides,
@@ -97,7 +97,7 @@ describe('useThemeCopy', () => {
       rerender({
         editingEnabled: true,
         baseTheme: 'boyhood',
-        mode: 'light',
+        editorMode: 'light',
         colorValues: COLOR_VALUES,
         save: vi.fn().mockResolvedValue(true),
         loadOverrides: vi.fn((tokens) => tokens),

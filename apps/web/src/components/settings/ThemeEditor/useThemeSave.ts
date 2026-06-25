@@ -46,9 +46,13 @@ export interface UseThemeSaveResult {
  * project's form-state sequence: clear error → set loading → attempt →
  * handle result. The handler suppresses re-entry while a request is in flight
  * so a rapid double-activation cannot fire two PATCHes.
+ *
+ * @param editorMode The mode slot the edits belong to. This is the editor's
+ *   LOCAL mode (the Light/Dark tabs), NOT the global site mode — so editing the
+ *   dark tab while the site is light still writes the dark slot.
  */
-export function useThemeSave(): UseThemeSaveResult {
-  const { customTheme, mode, setCustomTheme } = useTheme();
+export function useThemeSave(editorMode: Mode): UseThemeSaveResult {
+  const { customTheme, setCustomTheme } = useTheme();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +63,7 @@ export function useThemeSave(): UseThemeSaveResult {
       setIsSaving(true);
       const nextCustomTheme = buildNextCustomTheme(
         customTheme,
-        mode,
+        editorMode,
         colorValues,
       );
       try {
@@ -75,7 +79,7 @@ export function useThemeSave(): UseThemeSaveResult {
         setIsSaving(false);
       }
     },
-    [customTheme, isSaving, mode, setCustomTheme],
+    [customTheme, editorMode, isSaving, setCustomTheme],
   );
 
   return { isSaving, error, save };

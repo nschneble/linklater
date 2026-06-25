@@ -47,7 +47,7 @@ beforeEach(() => {
 
 describe('useThemeSave', () => {
   it('persists the current mode tokens to localStorage and the backend', async () => {
-    const { result } = renderHook(() => useThemeSave());
+    const { result } = renderHook(() => useThemeSave('dark'));
 
     await act(async () => {
       await result.current.save(buildColorValues('#123456'));
@@ -68,7 +68,7 @@ describe('useThemeSave', () => {
       light: { '--mount-bg': '#abcdef' },
     };
     themeState.mode = 'dark';
-    const { result } = renderHook(() => useThemeSave());
+    const { result } = renderHook(() => useThemeSave('dark'));
 
     await act(async () => {
       await result.current.save(buildColorValues('#000000'));
@@ -80,7 +80,7 @@ describe('useThemeSave', () => {
   });
 
   it('sends the same payload to setCustomTheme and updateMe', async () => {
-    const { result } = renderHook(() => useThemeSave());
+    const { result } = renderHook(() => useThemeSave('dark'));
 
     await act(async () => {
       await result.current.save(buildColorValues('#222222'));
@@ -92,7 +92,7 @@ describe('useThemeSave', () => {
 
   it('surfaces an error message when the backend rejects', async () => {
     vi.mocked(updateMe).mockRejectedValue(new Error('Network down'));
-    const { result } = renderHook(() => useThemeSave());
+    const { result } = renderHook(() => useThemeSave('dark'));
 
     let outcome: boolean | undefined;
     await act(async () => {
@@ -105,7 +105,7 @@ describe('useThemeSave', () => {
   });
 
   it('returns true and clears error on success', async () => {
-    const { result } = renderHook(() => useThemeSave());
+    const { result } = renderHook(() => useThemeSave('dark'));
 
     let outcome: boolean | undefined;
     await act(async () => {
@@ -125,7 +125,7 @@ describe('useThemeSave', () => {
       }),
     );
 
-    const { result } = renderHook(() => useThemeSave());
+    const { result } = renderHook(() => useThemeSave('dark'));
 
     // First save: starts and parks on the pending updateMe (sets isSaving).
     let firstSave: Promise<boolean> | undefined;

@@ -4,14 +4,13 @@ import {
   isCustomThemeConfigured,
   type CustomTheme,
 } from '../../../theme/customTheme';
-import type { BaseTheme } from '../../../theme/constants';
+import type { BaseTheme, Mode } from '../../../theme/constants';
 import AutoSaveStatus from './AutoSaveStatus';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import ContrastChecker from './ContrastChecker';
 import CopyFromTheme from './CopyFromTheme';
 import CustomThemePickerToggle from './CustomThemePickerToggle';
-import ModeToggle from './ModeToggle';
 import Toast from '../../common/Toast';
 import { readThemeTokens } from './themeProbe';
 import { tokenContrastFailures, useContrastResults } from './contrastResults';
@@ -39,12 +38,15 @@ import { useToast } from '../../../lib/hooks/useToast';
  * again reverts the content to the global theme without overwriting the saved
  * custom palette.
  *
- * There is no on-page theme switcher. Hovering or arrow-navigating a row in the
- * copy menu previews that film theme within the content scope (transient,
- * non-persisting); activating a row applies its current-mode palette + saves,
- * with an Undo to revert.
+ * The editor's color mode is LOCAL (`editorMode`): the Light/Dark tabs in the
+ * Colors card swap which mode's palette the content shows + edits, decoupled
+ * from the global site mode — so previewing the dark palette never flips the
+ * whole app. There is no on-page theme switcher. Hovering or arrow-navigating a
+ * row in the copy menu previews that film theme within the content scope
+ * (transient, non-persisting); activating a row applies its `editorMode` palette
+ * + saves, with an Undo to revert.
  *
- * The mode toggle's active pill and the copy menu's trigger paint from
+ * The Light/Dark toggle's active pill and the copy menu's trigger paint from
  * FIXED-color escape hatches (not bundle tokens), and the settings card with
  * the OFF switch sits OUTSIDE the custom scope — so a hostile custom palette can
  * degrade the preview but never the controls needed to escape it.
@@ -57,15 +59,21 @@ export default function ThemeEditor() {
     mode,
     setCustomTheme,
     setCustomThemeEnabled,
-    setMode,
   } = useTheme();
+
+  // The editor's color mode is LOCAL — the Light/Dark tabs in the Colors card
+  // swap which mode's palette the content shows + edits, WITHOUT flipping the
+  // global site mode (navigating away leaves the app on whatever mode it was).
+  // Seeded once from the site mode so the editor opens on the expected palette.
+  const [editorMode, setEditorMode] = useState<Mode>(mode);
+
   const {
     colorValues,
     contentThemeStyle,
     setOverride,
     loadOverrides,
     resetBundle,
-  } = useThemeOverrides();
+  } = useThemeOverrides(editorMode);
 
   const editingEnabled = customThemeEnabled;
   const isCustomConfigured = isCustomThemeConfigured(customTheme);
@@ -78,12 +86,12 @@ export default function ThemeEditor() {
   const previewStyle = useMemo<CSSProperties | null>(
     () =>
       previewThemeId
-        ? (readThemeTokens(previewThemeId, mode) as CSSProperties)
+        ? (readThemeTokens(previewThemeId, editorMode) as CSSProperties)
         : null,
-    [previewThemeId, mode],
+    [previewThemeId, editorMode],
   );
 
-  const { isSaving, save } = useThemeSave();
+  const { isSaving, save } = useThemeSave(editorMode);
   const toast = useToast();
 
   const contrastResults = useContrastResults(colorValues);
@@ -106,7 +114,7 @@ export default function ThemeEditor() {
   } = useThemeCopy({
     editingEnabled,
     baseTheme,
-    mode,
+    editorMode,
     colorValues,
     save,
     loadOverrides,
@@ -176,29 +184,27 @@ export default function ThemeEditor() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Header: title + intro fill the LEFT half; the mode toggle (and the
-          save affordance) sit top-right, aligned against the title. */}
+      {/* Header: title + intro fill the LEFT half; the save status sits
+          top-right, aligned against the title. (The Light/Dark control lives in
+          the Colors card now, since it swaps the editor's palette, not chrome.) */}
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div className="min-w-0 sm:max-w-[50%]">
           <h1 className="text-[var(--base-text)] text-lg font-semibold">
             Custom theme editor
           </h1>
           <p className="mt-1 text-[var(--base-alt-text)] text-xs">
-            Pick your colors and components. Changes save as you go. Preview a
-            film theme to copy its palette as a starting point.
+            Make the app yours. Recolor every surface, watch it change live, and
+            lift a film theme's palette whenever you want a head start.
           </p>
         </div>
 
-        <div className="flex shrink-0 items-start gap-2">
-          <AutoSaveStatus
-            enabled={editingEnabled}
-            isSaving={isSaving}
-            savedCount={savedCount}
-            savedMessage={savedMessage}
-            failingCount={contrastResults.totalFailures}
-          />
-          <ModeToggle mode={mode} onModeChange={setMode} />
-        </div>
+        <AutoSaveStatus
+          enabled={editingEnabled}
+          isSaving={isSaving}
+          savedCount={savedCount}
+          savedMessage={savedMessage}
+          failingCount={contrastResults.totalFailures}
+        />
       </div>
 
       {/* Settings card. Split mirrors the content columns below (switch at
@@ -242,6 +248,8 @@ export default function ThemeEditor() {
               onOverride={handleOverride}
               onResetBundle={handleResetBundle}
               editingDisabled={!editingEnabled}
+              editorMode={editorMode}
+              onEditorModeChange={setEditorMode}
             />
           </div>
 

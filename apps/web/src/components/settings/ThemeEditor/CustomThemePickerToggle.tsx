@@ -65,8 +65,8 @@ export default function CustomThemePickerToggle({
         id={TOGGLE_DESCRIPTION_ID}
         className="mt-1.5 max-w-prose text-[var(--mount-alt-text)] text-xs"
       >
-        Off by default. Turn it on to edit your colors here and show your custom
-        theme in the theme picker alongside the built-in themes.
+        Off by default. Flip it on to edit your colors here and show your custom
+        theme in the picker alongside the built-in ones.
       </p>
     </div>
   );
