@@ -6,9 +6,10 @@ import { useLinkSelection } from './useLinkSelection';
 import { useLinks } from './useLinks';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSearchDebounce } from './useSearchDebounce';
-import type { LinksFilter } from './types';
+import type { UseLinksViewResult } from './useLinksView.types';
 
 export { filterFromPath } from './useLinksView.utils';
+export type { UseLinksViewResult } from './useLinksView.types';
 
 interface UseLinksViewOptions {
   /**
@@ -16,52 +17,6 @@ interface UseLinksViewOptions {
    * any other menus (e.g. the user menu).
    */
   onCloseUserMenu?: () => void;
-}
-
-/** Everything the `LinksView` component needs from this hook. */
-export interface UseLinksViewResult {
-  debouncedSearch: string;
-  /**
-   * Most-recently-set error across the five sub-error fields below. Drives
-   * the single visible `Alert` so that `role="alert"` mounts/unmounts at
-   * most once per transition – concurrent failures (e.g. background fetch +
-   * user save) no longer cascade multiple assertive announcements.
-   */
-  error: string | null;
-  filter: LinksFilter;
-  isClearingRead: boolean;
-  search: string;
-  searchInputReference: React.RefObject<HTMLInputElement | null>;
-  selectedLinkIndex: number | null;
-  showShortcuts: boolean;
-  onCloseShortcuts: () => void;
-  onNavigateRead: () => void;
-  onNavigateUnread: () => void;
-  onSearch: (value: string) => void;
-  onToggleShortcuts: () => void;
-  // Forwarded from useLinks
-  deleteError: string | null;
-  fetchError: string | null;
-  handleClearRead: () => Promise<void>;
-  handleCreated: ReturnType<typeof useLinks>['handleCreated'];
-  handleDismissToast: () => void;
-  handleLoadMore: () => void;
-  handleRandom: () => Promise<void>;
-  handleToggleForm: () => void;
-  handleToggleRead: ReturnType<typeof useLinks>['handleToggleRead'];
-  /** See `UseLinksDataResult.hasSettledOnce`. */
-  hasSettledOnce: boolean;
-  links: ReturnType<typeof useLinks>['links'];
-  loadingLinks: boolean;
-  newLinksAnnouncement: string;
-  page: number;
-  pagination: ReturnType<typeof useLinks>['pagination'];
-  randomError: string | null;
-  randomLoading: boolean;
-  readError: string | null;
-  saveError: string | null;
-  showLinkForm: boolean;
-  toastMessage: string | null;
 }
 
 /**
@@ -94,6 +49,16 @@ export function useLinksView({
   useEffect(() => {
     if (showShortcuts) onCloseUserMenu?.();
   }, [showShortcuts, onCloseUserMenu]);
+
+  // Clears the in-flight clear-read flag whenever the filter changes (e.g.
+  // switching between the unread and read tabs). Search and selection resets
+  // on filter change are owned by `useSearchDebounce` and `useLinkSelection`;
+  // this flag lives here, so its reset does too. Without it, navigating away
+  // mid clear-read leaves cards stuck with `pointer-events-none` and the
+  // clear control disabled (transient WCAG 2.1.1 operability regression).
+  useEffect(() => {
+    setIsClearingRead(false);
+  }, [filter]);
 
   const { search, debouncedSearch, setSearch } = useSearchDebounce(filter);
   const linksResult = useLinks(filter, debouncedSearch);
