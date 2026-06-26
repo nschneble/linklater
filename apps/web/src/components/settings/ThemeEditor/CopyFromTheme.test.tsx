@@ -57,7 +57,7 @@ describe('CopyFromTheme', () => {
     renderControl();
     fireEvent.click(getTrigger());
     expect(
-      screen.queryByRole('menuitem', { name: /^your theme$/i }),
+      screen.queryByRole('menuitem', { name: /^your custom theme$/i }),
     ).toBeNull();
   });
 

@@ -195,7 +195,7 @@ export default function ThemeEditor() {
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div className="min-w-0 sm:max-w-[50%]">
           <h1 className="text-[var(--base-text)] text-lg font-semibold">
-            Custom theme editor
+            Theme editor
           </h1>
           <p className="mt-1 text-[var(--base-alt-text)] text-xs">
             Make the app yours. Recolor every surface, watch it change live, and
