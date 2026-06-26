@@ -33,7 +33,6 @@ function renderEditor(
       colorValues={buildColorValues()}
       contrastFailures={contrastFailures}
       onOverride={vi.fn()}
-      onResetBundle={vi.fn()}
       editorMode="dark"
       onEditorModeChange={vi.fn()}
     />,
@@ -178,7 +177,6 @@ describe('ColorEditor – Light/Dark palette tabs', () => {
         colorValues={buildColorValues()}
         contrastFailures={new Map()}
         onOverride={vi.fn()}
-        onResetBundle={vi.fn()}
         editorMode="dark"
         onEditorModeChange={onEditorModeChange}
       />,
@@ -212,13 +210,6 @@ describe('ColorEditor – always editable (cards only render when enabled)', () 
     expect(getSearchbox().getAttribute('aria-describedby')).toBe(
       'theme-editor-token-search-status',
     );
-  });
-
-  it('leaves the per-bundle reset enabled', () => {
-    renderEditor();
-    expect(
-      screen.getByRole('button', { name: /reset base bundle/i }),
-    ).not.toBeDisabled();
   });
 });
 

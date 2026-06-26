@@ -67,13 +67,8 @@ export default function ThemeEditor() {
   // Seeded once from the site mode so the editor opens on the expected palette.
   const [editorMode, setEditorMode] = useState<Mode>(mode);
 
-  const {
-    colorValues,
-    contentThemeStyle,
-    setOverride,
-    loadOverrides,
-    resetBundle,
-  } = useThemeOverrides(editorMode);
+  const { colorValues, contentThemeStyle, setOverride, loadOverrides } =
+    useThemeOverrides(editorMode);
 
   const editingEnabled = customThemeEnabled;
   const isCustomConfigured = isCustomThemeConfigured(customTheme);
@@ -131,12 +126,6 @@ export default function ThemeEditor() {
     value: string,
   ) {
     setOverride(variable, value);
-    clearUndo();
-    scheduleSave();
-  }
-
-  function handleResetBundle(bundle: Parameters<typeof resetBundle>[0]) {
-    resetBundle(bundle);
     clearUndo();
     scheduleSave();
   }
@@ -262,7 +251,6 @@ export default function ThemeEditor() {
                 colorValues={colorValues}
                 contrastFailures={contrastFailures}
                 onOverride={handleOverride}
-                onResetBundle={handleResetBundle}
                 editorMode={editorMode}
                 onEditorModeChange={setEditorMode}
               />

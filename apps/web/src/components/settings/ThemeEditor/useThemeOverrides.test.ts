@@ -100,34 +100,6 @@ describe('useThemeOverrides – enabled (editing the custom theme)', () => {
     expect(result.current.colorValues['--mount-bg']).toBeTruthy();
   });
 
-  it('resetBundle reverts only that bundle, preserving other edits', () => {
-    const { result } = renderHook(() => useThemeOverrides('light'));
-    act(() => {
-      result.current.setOverride('--mount-bg', '#ffffff');
-      result.current.setOverride('--alert-text', '#fee2e2');
-    });
-    act(() => result.current.resetBundle('mount'));
-    expect(result.current.colorValues['--mount-bg']).not.toBe('#ffffff');
-    expect(result.current.colorValues['--alert-text']).toBe('#fee2e2');
-  });
-
-  it('resetBundle base also resets base-only + base/mount-only slots + focus ring', () => {
-    const { result } = renderHook(() => useThemeOverrides('light'));
-    act(() => {
-      result.current.setOverride('--base-bg', '#000000');
-      result.current.setOverride('--base-subtle-text', '#888888');
-      result.current.setOverride('--base-input-bg', '#111111');
-      result.current.setOverride('--focus-ring', '#123456');
-    });
-    act(() => result.current.resetBundle('base'));
-    expect(result.current.colorValues['--base-bg']).not.toBe('#000000');
-    expect(result.current.colorValues['--base-subtle-text']).not.toBe(
-      '#888888',
-    );
-    expect(result.current.colorValues['--base-input-bg']).not.toBe('#111111');
-    expect(result.current.colorValues['--focus-ring']).not.toBe('#123456');
-  });
-
   it('loadOverrides seeds the copied keys; un-copied keys keep their value', () => {
     const { result } = renderHook(() => useThemeOverrides('light'));
     act(() => result.current.setOverride('--mount-bg', '#abcdef'));

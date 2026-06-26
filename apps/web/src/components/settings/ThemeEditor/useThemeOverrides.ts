@@ -149,7 +149,6 @@ export interface UseThemeOverridesResult {
     tokens: Record<string, string>,
   ) => Record<ThemeVariable, string>;
   resetOverrides: () => void;
-  resetBundle: (bundle: Bundle) => void;
 }
 
 /**
@@ -232,37 +231,6 @@ export function useThemeOverrides(editorMode: Mode): UseThemeOverridesResult {
     setColorValues(readBaseline());
   }, [readBaseline]);
 
-  const resetBundle = useCallback(
-    (bundle: Bundle) => {
-      const slotsForBundle: Array<string> = [...SLOTS];
-      if (bundle === 'base') {
-        slotsForBundle.push(...BASE_ONLY_SLOTS);
-      }
-      if (bundle === 'base' || bundle === 'mount') {
-        slotsForBundle.push(...BASE_AND_MOUNT_ONLY_SLOTS);
-      }
-      const variablesForBundle = slotsForBundle.map(
-        (slot) => `--${bundle}-${slot}` as ThemeVariable,
-      );
-      // The focus ring rides on the base group, so resetting base resets it too.
-      if (bundle === 'base') {
-        variablesForBundle.push(FOCUS_RING_VAR);
-      }
-
-      // Reset this bundle's values back to the baseline; preserve in-progress
-      // edits to other bundles.
-      const fresh = readBaseline();
-      setColorValues((previous) => {
-        const next = { ...previous };
-        for (const variable of variablesForBundle) {
-          next[variable] = fresh[variable];
-        }
-        return next;
-      });
-    },
-    [readBaseline],
-  );
-
   // The scoped subtree always paints `colorValues`: when enabled that's the
   // editable custom palette, when disabled it's the current theme's `editorMode`
   // mirror — so the Light/Dark tabs repaint the preview in both states without
@@ -278,6 +246,5 @@ export function useThemeOverrides(editorMode: Mode): UseThemeOverridesResult {
     setOverride,
     loadOverrides,
     resetOverrides,
-    resetBundle,
   };
 }

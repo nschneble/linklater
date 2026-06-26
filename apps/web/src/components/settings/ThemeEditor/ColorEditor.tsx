@@ -26,8 +26,6 @@ interface ColorEditorProps {
   contrastFailures: Map<string, TokenContrastFailure>;
   /** Called when the user changes a color via the picker or text input. */
   onOverride: (variable: ThemeVariable, value: string) => void;
-  /** Called when the user clicks a per-bundle Reset button. */
-  onResetBundle: (bundle: Bundle) => void;
   /**
    * The editor's LOCAL color mode (which mode's palette is shown + edited). The
    * Light/Dark tabs at the top of the card drive this; it is decoupled from the
@@ -241,8 +239,8 @@ function ColorRow({
 /**
  * Renders the full list of editable color variables, grouped by bundle, with
  * a search box that filters across bundle labels, slot labels, and variable
- * names. Each bundle is a collapsible disclosure with its own Reset button;
- * the `base` bundle defaults to open. While a search query is active, every
+ * names. Each bundle is a collapsible disclosure; the `base` bundle defaults
+ * to open. While a search query is active, every
  * bundle with at least one match auto-expands; the prior open/closed state is
  * restored when the query clears.
  */
@@ -250,7 +248,6 @@ export default function ColorEditor({
   colorValues,
   contrastFailures,
   onOverride,
-  onResetBundle,
   editorMode,
   onEditorModeChange,
 }: ColorEditorProps) {
@@ -434,40 +431,27 @@ export default function ColorEditor({
               aria-labelledby={headingId}
               className="border-b border-[var(--mount-border)] last:border-0 pb-3 last:pb-0"
             >
-              <div className="flex items-center gap-1">
-                <h3
-                  id={headingId}
-                  className="flex-1 m-0 text-[var(--mount-text)] text-xs font-semibold"
-                >
-                  <button
-                    type="button"
-                    aria-expanded={isOpen}
-                    aria-controls={contentId}
-                    onClick={() => toggleBundle(group.bundle)}
-                    className="group w-full flex items-center gap-2 py-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded cursor-pointer"
-                  >
-                    <i
-                      className="fa-solid fa-chevron-right text-[0.55rem] text-[var(--mount-alt-text)] group-aria-expanded:rotate-90 transition-transform duration-150"
-                      aria-hidden="true"
-                    />
-                    <span>{group.label}</span>
-                    <span className="flex-1 text-[var(--mount-alt-text)] text-[0.65rem] font-normal truncate">
-                      {group.description}
-                    </span>
-                  </button>
-                </h3>
+              <h3
+                id={headingId}
+                className="m-0 text-[var(--mount-text)] text-xs font-semibold"
+              >
                 <button
                   type="button"
-                  onClick={() => onResetBundle(group.bundle)}
-                  aria-label={`Reset ${group.label} bundle`}
-                  className="px-1.5 py-1 text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] text-[0.65rem] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded cursor-pointer"
+                  aria-expanded={isOpen}
+                  aria-controls={contentId}
+                  onClick={() => toggleBundle(group.bundle)}
+                  className="group w-full flex items-center gap-2 py-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded cursor-pointer"
                 >
                   <i
-                    className="fa-solid fa-arrow-rotate-left"
+                    className="fa-solid fa-chevron-right text-[0.55rem] text-[var(--mount-alt-text)] group-aria-expanded:rotate-90 transition-transform duration-150"
                     aria-hidden="true"
                   />
+                  <span>{group.label}</span>
+                  <span className="flex-1 text-[var(--mount-alt-text)] text-[0.65rem] font-normal truncate">
+                    {group.description}
+                  </span>
                 </button>
-              </div>
+              </h3>
 
               {isOpen && (
                 <div id={contentId} className="mt-2 space-y-2 pl-4">
