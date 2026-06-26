@@ -9,8 +9,7 @@ import AutoSaveStatus from './AutoSaveStatus';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import ContrastChecker from './ContrastChecker';
-import CopyFromTheme from './CopyFromTheme';
-import CustomThemePickerToggle from './CustomThemePickerToggle';
+import CustomThemePanel from './CustomThemePanel';
 import Toast from '../../common/Toast';
 import { readThemeTokens } from './themeProbe';
 import { tokenContrastFailures, useContrastResults } from './contrastResults';
@@ -224,17 +223,15 @@ export default function ThemeEditor() {
         />
       </div>
 
-      {/* Settings card. Split mirrors the content columns below (switch at
-          lg:w-80, gap-6, copy area flex-1) so the two rows line up. */}
-      <div className="flex flex-col lg:flex-row gap-6 mb-4 p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
-        <div className="w-full lg:w-80 shrink-0">
-          <CustomThemePickerToggle
-            enabled={customThemeEnabled}
-            onChange={handleToggleCustomTheme}
-          />
-        </div>
-        <CopyFromTheme
+      {/* Master-control card: the enable switch + copy-palette shortcut that
+          gate everything below. It sits OUTSIDE the custom-theme preview scope
+          (see below) so the controls needed to escape an unreadable palette
+          always paint in the always-legible global theme. */}
+      <div className="mb-4">
+        <CustomThemePanel
+          enabled={customThemeEnabled}
           editingEnabled={editingEnabled}
+          onToggle={handleToggleCustomTheme}
           onApply={handleApply}
           onPreviewTheme={setPreviewThemeId}
           undoThemeLabel={undoThemeLabel}

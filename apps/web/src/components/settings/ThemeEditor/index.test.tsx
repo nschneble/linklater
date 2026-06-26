@@ -57,6 +57,35 @@ function getSwitch() {
   return screen.getByRole('switch', { name: /use your own custom theme/i });
 }
 
+describe('ThemeEditor custom-theme panel', () => {
+  it('renders one master-control card with a heading and no dead CVD switch', () => {
+    render(<ThemeEditor />);
+
+    // The card reuses SettingsGroup chrome — its heading is present...
+    expect(
+      screen.getByRole('heading', { name: /your custom theme/i }),
+    ).toBeInTheDocument();
+    // ...the dead copy-pasted CVD switch is gone entirely...
+    expect(document.getElementById('cvd-toggle')).toBeNull();
+    expect(
+      screen.queryByRole('switch', { name: /color vision deficiency/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders the master switch and copy control exactly once each', () => {
+    render(<ThemeEditor />);
+
+    // `getByRole`/`getByLabelText` throw on more than one match, so these
+    // standing in for "exactly one" also guard against the old double-render.
+    expect(
+      screen.getByRole('switch', { name: /use your own custom theme/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('group', { name: /copy palette from theme/i }),
+    ).toBeInTheDocument();
+  });
+});
+
 describe('ThemeEditor master-enable toggle', () => {
   it('seeds the custom palette from the current theme (both modes) on enable', async () => {
     render(<ThemeEditor />);
