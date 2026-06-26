@@ -18,6 +18,7 @@
     "test:cov": "npm run test:cov --workspace @linklater/api && npm run test:cov --workspace @linklater/web",
     "test:ui": "tuffgal run",
     "test:ui:approve": "tuffgal approve",
+    "test:ui:approve:new": "tuffgal approve --new-only",
     "test:ui:setup": "node --experimental-strip-types tuffgal/setup.ts",
     "version:bump": "node scripts/bump-version.mjs"
   },

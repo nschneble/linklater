@@ -1,0 +1,15 @@
+- heading "Linklater" [level=1]
+- paragraph: Save links now, read them later.
+- tablist "Authentication mode":
+  - tab "Log in"
+  - tab "Sign up" [selected]
+- tabpanel "Sign up":
+  - text: Email
+  - textbox "Email"
+  - text: Password
+  - textbox "Password":
+    - /placeholder: Leave blank to use a magic link
+  - button "Sign up with magic link"
+- text: or continue with
+- button "Continue with Google"
+- status

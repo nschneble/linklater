@@ -1,0 +1,52 @@
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - button "Go to your links": Linklater Save links now, read them later.
+  - button "User menu (testing-ui@linklater.test)"
+  - dialog "User menu":
+    - menu "User menu":
+      - group "Logged in as":
+        - paragraph: Logged in as
+        - paragraph: testing-ui@linklater.test
+      - menuitem "Your links"
+      - menuitem "Settings"
+      - menuitem "Switch to light mode"
+      - menuitem "Create a custom theme"
+      - menuitem "Theme A Scanner Darkly"
+      - menuitem "Log out"
+    - menu "Theme":
+      - menuitem "Back to main menu"
+      - paragraph: Themes
+      - menuitemradio "Apollo 10½ Accessible theme"
+      - menuitemradio "A Scanner Darkly" [checked]
+      - menuitemradio "Before Sunrise"
+      - menuitemradio "Before Sunset"
+      - menuitemradio "Before Midnight"
+      - menuitemradio "Boyhood"
+      - menuitemradio "Dazed and Confused"
+      - menuitemradio "Hit Man"
+      - menuitemradio "Nouvelle Vague"
+      - menuitemradio "School of Rock"
+- main "Links":
+  - heading "Theme editor" [level=1]
+  - paragraph: Make the app yours. Recolor every surface, watch it change live, and lift a film theme's palette whenever you want a head start.
+  - region "Roll your own":
+    - heading "Roll your own" [level=2]
+    - paragraph: Start from a blank palette, or copy a film theme's colors and tweak from there.
+    - switch "Use your own custom theme"
+    - text: Use your own custom theme
+    - paragraph: Off by default. Flip it on to edit your colors here and show your custom theme in the picker alongside the built-in ones.
+    - group "Copy palette from theme":
+      - button "Copy palette from theme" [disabled]
+      - menu "Copy palette from theme":
+        - menuitem "Apollo 10½ Accessible theme"
+        - menuitem "A Scanner Darkly"
+        - menuitem "Before Sunrise"
+        - menuitem "Before Sunset"
+        - menuitem "Before Midnight"
+        - menuitem "Boyhood"
+        - menuitem "Dazed and Confused"
+        - menuitem "Hit Man"
+        - menuitem "Nouvelle Vague"
+        - menuitem "School of Rock"
+      - paragraph: Flip on the custom theme to copy a palette.
