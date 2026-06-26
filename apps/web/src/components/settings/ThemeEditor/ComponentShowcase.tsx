@@ -102,7 +102,7 @@ export default function ComponentShowcase() {
       </ShowcaseSection>
 
       <ShowcaseSection title="Buttons">
-        <div className="flex flex-wrap justify-between gap-2">
+        <div className="grid grid-cols-2 justify-between gap-2">
           <PrimaryButton type="button">
             <i className="fa-solid fa-plus text-xs" aria-hidden="true" />
             Add link
