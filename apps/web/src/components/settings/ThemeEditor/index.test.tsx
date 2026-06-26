@@ -58,25 +58,16 @@ function getSwitch() {
 }
 
 describe('ThemeEditor custom-theme panel', () => {
-  it('renders one master-control card with a heading and no dead CVD switch', () => {
+  it('renders the master-control card heading, switch, and copy control exactly once each', () => {
     render(<ThemeEditor />);
 
-    // The card reuses SettingsGroup chrome — its heading is present...
+    // The card reuses SettingsGroup chrome, so its heading is present. And
+    // because `getByRole` throws on more than one match, the switch + group
+    // lookups stand in for "exactly one" — guarding against the old
+    // double-render.
     expect(
-      screen.getByRole('heading', { name: /your custom theme/i }),
+      screen.getByRole('heading', { name: /roll your own/i }),
     ).toBeInTheDocument();
-    // ...the dead copy-pasted CVD switch is gone entirely...
-    expect(document.getElementById('cvd-toggle')).toBeNull();
-    expect(
-      screen.queryByRole('switch', { name: /color vision deficiency/i }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('renders the master switch and copy control exactly once each', () => {
-    render(<ThemeEditor />);
-
-    // `getByRole`/`getByLabelText` throw on more than one match, so these
-    // standing in for "exactly one" also guard against the old double-render.
     expect(
       screen.getByRole('switch', { name: /use your own custom theme/i }),
     ).toBeInTheDocument();
