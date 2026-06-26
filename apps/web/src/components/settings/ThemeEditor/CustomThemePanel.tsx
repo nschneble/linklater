@@ -44,9 +44,9 @@ export default function CustomThemePanel({
   return (
     <SettingsGroup
       id="custom-theme"
-      title="Your custom theme"
+      title="Roll your own"
       icon="fa-paintbrush"
-      description="Switch it on to paint your own palette, or copy a film theme's colors and make them yours."
+      description="Start from a blank palette, or copy a film theme's colors and tweak from there."
     >
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="w-full lg:w-80 shrink-0">
