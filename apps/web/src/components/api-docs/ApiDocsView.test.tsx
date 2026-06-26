@@ -246,7 +246,7 @@ describe('ApiDocsView a11y contract', () => {
     expect(positiveTabindex).toBeNull();
   });
 
-  it('sets document.title to "API documentation – Linklater" (SC 2.4.2)', () => {
+  it('sets document.title to "Linklater – API documentation" (SC 2.4.2)', () => {
     renderApiDocs();
 
     expect(document.title).toBe('Linklater – API documentation');
