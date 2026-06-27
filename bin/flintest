@@ -81,7 +81,7 @@ TICK=✓  CROSS=✗  CIRC=○
 
 # ── Layout constants ────────────────────────────────────────────────────────────
 if [[ "$RUN_TUFFGAL" == true ]]; then
-  STEPS=(Install Browsers Setup Visual)
+  STEPS=(Install Playwright Database Test)
 elif [[ "$RUN_UPDATE" == true ]]; then
   STEPS=(Update Install Generate Subset\ FA Format Lint Lint\ Migrations Test Build)
 else
@@ -207,7 +207,7 @@ run_step() {
 
 # ── Visual regression summary ───────────────────────────────────────────────────
 # Mirrors the "Parse harness outcome" step in tuffgal-action: pulls the totals
-# out of results.json so the final status line can show pass/changed/failed
+# out of results.json so the final status line can show passed/new/changed/failed
 # even when the harness exited 0. Empty string when no results.json was
 # written (e.g. tuffgal crashed before producing one).
 tuffgal_summary() {
@@ -220,10 +220,11 @@ tuffgal_summary() {
     const raw = require("fs").readFileSync(path, "utf8");
     const totals = JSON.parse(raw).totals ?? {};
     const passed = totals.passed ?? 0;
+    const newish = totals.new ?? 0;
     const changed = totals.changed ?? 0;
     const failed = totals.failed ?? 0;
     const stories = totals.stories ?? 0;
-    process.stdout.write(`${passed}/${stories} passed, ${changed} changed, ${failed} failed`);
+    process.stdout.write(`${passed}/${stories} passed, ${newish} new, ${changed} changed, ${failed} failed`);
   ' "$results" 2>/dev/null
 }
 
@@ -235,10 +236,6 @@ FAILED_STEP=""
 FAILED_OUTPUT=""
 
 if [[ "$RUN_TUFFGAL" == true ]]; then
-  # Visual regression chain. `--manage-servers` hands API+web lifecycle to
-  # tuffgal itself (per tuffgal.config.ts `devServers` block), so flintest does
-  # not need to spawn or tear down dev:test. `--with-deps` from the GH Action
-  # is Linux-only (apt); omitted here so this runs cleanly on macOS too.
   if ! run_step 0 npm install; then
     FAILED_STEP="Install"
     FAILED_OUTPUT="$STEP_OUTPUT"
@@ -246,21 +243,21 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
 
   if [[ -z "$FAILED_STEP" ]]; then
     if ! run_step 1 npx playwright install chromium; then
-      FAILED_STEP="Browsers"
+      FAILED_STEP="Playwright"
       FAILED_OUTPUT="$STEP_OUTPUT"
     fi
   fi
 
   if [[ -z "$FAILED_STEP" ]]; then
     if ! run_step 2 npm run tuffgal:setup; then
-      FAILED_STEP="Setup"
+      FAILED_STEP="Database"
       FAILED_OUTPUT="$STEP_OUTPUT"
     fi
   fi
 
   if [[ -z "$FAILED_STEP" ]]; then
     if ! run_step 3 npx tuffgal run --manage-servers; then
-      FAILED_STEP="Visual"
+      FAILED_STEP="Test"
       FAILED_OUTPUT="$STEP_OUTPUT"
     fi
   fi
@@ -269,9 +266,9 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
 
   if [[ -z "$FAILED_STEP" ]]; then
     if [[ -n "$TUFFGAL_SUMMARY" ]]; then
-      set_status "${GRN}${BLD}Visual regression passed.${RST} ${DIM}${TUFFGAL_SUMMARY}${RST}"
+      set_status "${GRN}${BLD}Visual regression passed${RST}\n  ${DIM}${TUFFGAL_SUMMARY}${RST}"
     else
-      set_status "${GRN}${BLD}Visual regression passed.${RST}"
+      set_status "${GRN}${BLD}Visual regression passed${RST}"
     fi
     [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
     exit 0
