@@ -194,15 +194,22 @@ Visual + accessibility regression coverage is provided by [Tuffgal](https://www.
 # cd /path/to/your/repo
 
 # one-time setup to create the test database + seed the test user
-npm run test:ui:setup
+npm run tuffgal:setup
 
 # run the dev server in test mode + run every story against the baselines
 npm run dev:test
-npm run test:ui
+npm run tuffgal
 
 # accept intentional UI changes as the new baseline
-npm run test:ui:approve
+npm run tuffgal:approve
+
+# forward Tuffgal flags after `--`
+npm run tuffgal:approve -- --desktop --new-only  # only new baselines + for one breakpoint
+npm run tuffgal:approve -- user-logs-in          # single story
 ```
+
+> **Note:** The `--` is required. Without it `npm` keeps the flags for
+> itself instead of forwarding them to `tuffgal approve`.
 
 ##### Authoring stories
 

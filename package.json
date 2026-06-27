@@ -16,10 +16,9 @@
     "lint:migrations": "squawk 'apps/api/prisma/migrations/**/*.sql'",
     "test": "node scripts/run-tests.mjs",
     "test:cov": "npm run test:cov --workspace @linklater/api && npm run test:cov --workspace @linklater/web",
-    "test:ui": "tuffgal run",
-    "test:ui:approve": "tuffgal approve",
-    "test:ui:approve:new": "tuffgal approve --new-only",
-    "test:ui:setup": "node --experimental-strip-types tuffgal/setup.ts",
+    "tuffgal": "tuffgal run",
+    "tuffgal:approve": "tuffgal approve",
+    "tuffgal:setup": "node --experimental-strip-types tuffgal/setup.ts",
     "version:bump": "node scripts/bump-version.mjs"
   },
   "workspaces": [

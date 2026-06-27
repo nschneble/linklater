@@ -5,11 +5,7 @@ import { promisify } from 'node:util';
 import * as bcrypt from 'bcryptjs';
 import pg from 'pg';
 import { TEST_USER } from './database.ts';
-import {
-  TEST_DB_NAME,
-  readDatabaseUrl,
-  withDatabase,
-} from './database-url.ts';
+import { TEST_DB_NAME, readDatabaseUrl, withDatabase } from './database-url.ts';
 
 const TUFFGAL_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(TUFFGAL_DIR, '..');
@@ -44,7 +40,7 @@ async function main(): Promise<void> {
     `Test database ready: ${TEST_DB_NAME}\n` +
       `Connection: ${redactPassword(testUrl)}\n` +
       `Seeded user: ${TEST_USER.email}\n` +
-      `Next: run \`npm run dev:test\` in another shell, then \`npm run test:ui\`.\n`,
+      `Next: run \`npm run dev:test\` in another shell, then \`npm run tuffgal\`.\n`,
   );
 }
 
@@ -101,10 +97,10 @@ async function seedTestUser(testUrl: string): Promise<void> {
     // previous dev experiment could have left one behind, and the
     // following INSERT would otherwise fail the email uniqueness
     // constraint with no recovery path.
-    await client.query(
-      `DELETE FROM "User" WHERE "email" = $1 AND "id" <> $2`,
-      [TEST_USER.email, TEST_USER.id],
-    );
+    await client.query(`DELETE FROM "User" WHERE "email" = $1 AND "id" <> $2`, [
+      TEST_USER.email,
+      TEST_USER.id,
+    ]);
     await client.query(
       `
       INSERT INTO "User"

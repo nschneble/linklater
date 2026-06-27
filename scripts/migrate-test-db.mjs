@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 /**
  * Applies every committed Prisma migration to the testing-ui database
  * before `dev:test` launches the API. Tuffgal's per-run reset only
- * truncates rows, so a migration added since the last `test:ui:setup`
+ * truncates rows, so a migration added since the last `tuffgal:setup`
  * would otherwise leave the test DB on a stale schema and the first
  * authenticated query would fail with a missing-column error.
  *

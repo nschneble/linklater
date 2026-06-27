@@ -28,7 +28,7 @@ Options:
              mirrors .github/workflows/visual-regression.yml:
                npm install
                npx playwright install chromium
-               npm run test:ui:setup
+               npm run tuffgal:setup
                npx tuffgal run --manage-servers
   -h, --help Show this help.
 USAGE
@@ -252,7 +252,7 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
   fi
 
   if [[ -z "$FAILED_STEP" ]]; then
-    if ! run_step 2 npm run test:ui:setup; then
+    if ! run_step 2 npm run tuffgal:setup; then
       FAILED_STEP="Setup"
       FAILED_OUTPUT="$STEP_OUTPUT"
     fi
