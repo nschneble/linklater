@@ -3,178 +3,26 @@
 - banner:
   - button "Go to your links": Linklater Save links now, read them later.
   - button "User menu (testing-ui@linklater.test)"
-- main:
+- main "Links":
   - heading "Theme editor" [level=1]
-  - paragraph: Edit the 52 bundle tokens of the active theme and see changes live. Resets when you navigate away.
-  - combobox "Select theme":
-    - option "Apollo 10½"
-    - option "A Scanner Darkly" [selected]
-    - option "Before Sunrise"
-    - option "Before Sunset"
-    - option "Before Midnight"
-    - option "Boyhood"
-    - option "Dazed and Confused"
-    - option "Hit Man"
-    - option "Nouvelle Vague (Noir)"
-    - option "School of Rock"
-  - group "Color mode":
-    - button "dark" [pressed]
-    - button "light"
-  - button "Reset all"
-  - heading "Colors" [level=2]
-  - search:
-    - text: Search tokens
-    - searchbox "Search tokens"
-    - status
-  - paragraph: 7 bundles · 52 tokens
-  - button "Expand all"
-  - region "Base Page chrome":
-    - heading "Base Page chrome" [level=3]:
-      - button "Base Page chrome" [expanded]
-    - button "Reset Base bundle"
-    - textbox "Color picker for Base background": "#0f0b1b"
-    - paragraph: Background
-    - paragraph: "--base-bg"
-    - textbox "Value for Base background":
-      - /placeholder: "#000000"
-      - text: "#0f0b1b"
-    - textbox "Color picker for Base border": "#847ecc"
-    - paragraph: Border
-    - paragraph: "--base-border"
-    - textbox "Value for Base border":
-      - /placeholder: "#000000"
-      - text: "#847ecc"
-    - textbox "Color picker for Base text": "#eeeedf"
-    - paragraph: Text
-    - paragraph: "--base-text"
-    - textbox "Value for Base text":
-      - /placeholder: "#000000"
-      - text: "#eeeedf"
-    - textbox "Color picker for Base alt text": "#ebcaae"
-    - paragraph: Alt text
-    - paragraph: "--base-alt-text"
-    - textbox "Value for Base alt text":
-      - /placeholder: "#000000"
-      - text: "#ebcaae"
-    - textbox "Color picker for Base highlight": "#ed9156"
-    - paragraph: Highlight
-    - paragraph: "--base-highlight"
-    - textbox "Value for Base highlight":
-      - /placeholder: "#000000"
-      - text: "#ed9156"
-    - textbox "Color picker for Base highlight foreground": "#1a0e08"
-    - paragraph: Highlight foreground
-    - paragraph: "--base-highlight-fg"
-    - textbox "Value for Base highlight foreground":
-      - /placeholder: "#000000"
-      - text: "#1a0e08"
-    - textbox "Color picker for Base highlight hover": "#f5a878"
-    - paragraph: Highlight hover
-    - paragraph: "--base-highlight-hover"
-    - textbox "Value for Base highlight hover":
-      - /placeholder: "#000000"
-      - text: "#f5a878"
-    - textbox "Color picker for Base subtle text": "#bcdc6f"
-    - paragraph: Subtle text
-    - paragraph: "--base-subtle-text"
-    - textbox "Value for Base subtle text":
-      - /placeholder: "#000000"
-      - text: "#bcdc6f"
-    - textbox "Color picker for Base input background": "#201e43"
-    - paragraph: Input background
-    - paragraph: "--base-input-bg"
-    - textbox "Value for Base input background":
-      - /placeholder: "#000000"
-      - text: "#201e43"
-  - region "Mount Cards, panels":
-    - heading "Mount Cards, panels" [level=3]:
-      - button "Mount Cards, panels"
-    - button "Reset Mount bundle"
-  - region "Orbit Menus, dropdowns":
-    - heading "Orbit Menus, dropdowns" [level=3]:
-      - button "Orbit Menus, dropdowns"
-    - button "Reset Orbit bundle"
-  - region "Alert Errors, danger zones":
-    - heading "Alert Errors, danger zones" [level=3]:
-      - button "Alert Errors, danger zones"
-    - button "Reset Alert bundle"
-  - region "Warn Yellow banners":
-    - heading "Warn Yellow banners" [level=3]:
-      - button "Warn Yellow banners"
-    - button "Reset Warn bundle"
-  - region "Info Tips, hints":
-    - heading "Info Tips, hints" [level=3]:
-      - button "Info Tips, hints"
-    - button "Reset Info bundle"
-  - region "Success Verified, notifications":
-    - heading "Success Verified, notifications" [level=3]:
-      - button "Success Verified, notifications"
-    - button "Reset Success bundle"
-  - heading "Contrast (WCAG 2.1)" [level=2]
-  - status:
-    - paragraph: All 33 pairs passing
-    - button "Show all" [pressed]
-  - paragraph: No failing pairs. Toggle “Show all” to see all 33 pairs.
-  - heading "Components" [level=2]
-  - heading "Bundles" [level=3]
-  - article "base bundle preview":
-    - heading "base" [level=4]
-    - paragraph: Page chrome
-    - paragraph: Alt text sample
-    - text: Highlight
-  - article "mount bundle preview":
-    - heading "mount" [level=4]
-    - paragraph: Card surface
-    - paragraph: Alt text sample
-    - text: Highlight
-  - article "orbit bundle preview":
-    - heading "orbit" [level=4]
-    - paragraph: Menu surface
-    - paragraph: Alt text sample
-    - text: Highlight
-  - article "alert bundle preview":
-    - heading "alert" [level=4]
-    - paragraph: Error / danger
-    - paragraph: Alt text sample
-    - text: Highlight
-  - article "warn bundle preview":
-    - heading "warn" [level=4]
-    - paragraph: Warning banner
-    - paragraph: Alt text sample
-    - text: Highlight
-  - article "info bundle preview":
-    - heading "info" [level=4]
-    - paragraph: Tip or hint
-    - paragraph: Alt text sample
-    - text: Highlight
-  - article "success bundle preview":
-    - heading "success" [level=4]
-    - paragraph: Verified, confirmed
-    - paragraph: Alt text sample
-    - text: Highlight
-  - heading "Typography" [level=3]
-  - paragraph: Card primary
-  - paragraph: Card alt — labels, captions, helper hints
-  - paragraph: Page primary
-  - paragraph: Page alt — section nav, descriptions
-  - paragraph: Page subtle — kbd legends, chevrons, hints
-  - heading "Buttons" [level=3]
-  - button "Add link"
-  - button "Stumble!"
-  - button "Default"
-  - button "Ghost"
-  - button "Danger"
-  - button "Danger filled"
-  - heading "Form input" [level=3]
-  - textbox "Demo URL input":
-    - /placeholder: Paste a URL to save…
-  - heading "Tabs" [level=3]
-  - button "Unread" [pressed]
-  - button "Read"
-  - heading "Alerts" [level=3]
-  - alert: Something went wrong. Please try again.
-  - status: Changes saved successfully.
-  - heading "Card" [level=3]
-  - paragraph: Example saved link
-  - paragraph: example.com
-  - paragraph: A brief description of the saved link. This shows how muted text looks within a card surface in the current theme.
+  - paragraph: Make the app yours. Recolor every surface, watch it change live, and lift a film theme's palette whenever you want a head start.
+  - region "Roll your own":
+    - heading "Roll your own" [level=2]
+    - paragraph: Start from a blank palette, or copy a film theme's colors and tweak from there.
+    - switch "Use your own custom theme"
+    - text: Use your own custom theme
+    - paragraph: Off by default. Flip it on to edit your colors here and show your custom theme in the picker alongside the built-in ones.
+    - group "Copy palette from theme":
+      - button "Copy palette from theme" [disabled]
+      - menu "Copy palette from theme":
+        - menuitem "Apollo 10½ Accessible theme"
+        - menuitem "A Scanner Darkly"
+        - menuitem "Before Sunrise"
+        - menuitem "Before Sunset"
+        - menuitem "Before Midnight"
+        - menuitem "Boyhood"
+        - menuitem "Dazed and Confused"
+        - menuitem "Hit Man"
+        - menuitem "Nouvelle Vague"
+        - menuitem "School of Rock"
+      - paragraph: Flip on the custom theme to copy a palette.

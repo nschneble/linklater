@@ -80,7 +80,7 @@
     - button "Generate new token"
     - paragraph: You haven't created any tokens
     - link "View the API documentation in a new tab":
-      - /url: /settings/api
+      - /url: /docs
       - text: View the API documentation
   - region "Danger zone":
     - heading "Danger zone" [level=2]
