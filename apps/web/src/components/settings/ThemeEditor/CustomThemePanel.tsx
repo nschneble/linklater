@@ -1,15 +1,15 @@
 import CopyFromTheme from './CopyFromTheme';
-import CustomThemePickerToggle from './CustomThemePickerToggle';
+import CustomThemeOffRamp from './CustomThemePickerToggle';
 import SettingsGroup from '../SettingsGroup';
 import type { BaseTheme } from '../../../theme/constants';
 
 interface CustomThemePanelProps {
-  /** Whether the custom theme is enabled (master switch on). */
-  enabled: boolean;
-  /** Whether editing is unlocked — the copy menu is disabled until this is true. */
-  editingEnabled: boolean;
-  /** Called with the next value when the master switch flips. */
-  onToggle: (enabled: boolean) => void;
+  /** Whether the custom theme is currently active (editing + saving). */
+  active: boolean;
+  /** Label of the theme the off-ramp returns to. */
+  baseThemeLabel: string;
+  /** Reverts to the named theme, keeping the saved palette. */
+  onRevert: () => void;
   /** Applies a film theme's current-mode palette to the custom theme. */
   onApply: (themeId: BaseTheme, themeLabel: string) => void;
   /** Transiently previews a film theme under the active copy-menu row. */
@@ -26,16 +26,16 @@ interface CustomThemePanelProps {
  * `fa-solid` icon + `<h2>` heading + description) so it reads like any other
  * settings section — but it does NOT register with the SettingsView scroll-spy.
  *
- * Holds the two controls that gate everything below: the master enable switch
- * and the copy-palette shortcut. Each owns its own label, description, and fixed
- * escape-hatch focus ring (so a hostile custom palette can't hide them) — this
- * card only arranges them in the two-up layout the editing rows below echo
- * (switch fixed-width on the left, copy control flex-1).
+ * Holds the off-ramp (the "Back to {theme}" button, shown only while custom is
+ * active) and the copy-palette shortcut. The off-ramp comes FIRST in DOM order
+ * and paints from a fixed escape-hatch palette so it stays the legible way back
+ * from a hostile custom palette; this card only arranges the two in the two-up
+ * layout the editing rows below echo (off-ramp on the left, copy control flex-1).
  */
 export default function CustomThemePanel({
-  enabled,
-  editingEnabled,
-  onToggle,
+  active,
+  baseThemeLabel,
+  onRevert,
   onApply,
   onPreviewTheme,
   undoThemeLabel,
@@ -50,10 +50,14 @@ export default function CustomThemePanel({
     >
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="w-full lg:w-80 shrink-0">
-          <CustomThemePickerToggle enabled={enabled} onChange={onToggle} />
+          <CustomThemeOffRamp
+            active={active}
+            baseThemeLabel={baseThemeLabel}
+            onRevert={onRevert}
+          />
         </div>
         <CopyFromTheme
-          editingEnabled={editingEnabled}
+          editingEnabled={active}
           onApply={onApply}
           onPreviewTheme={onPreviewTheme}
           undoThemeLabel={undoThemeLabel}

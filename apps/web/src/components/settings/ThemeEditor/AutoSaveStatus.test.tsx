@@ -123,18 +123,45 @@ describe('AutoSaveStatus', () => {
     expect(status().textContent).toBe('Your theme saved.');
   });
 
-  it('renders nothing while disabled (no saving, no live region)', () => {
-    const { container } = render(
+  it('keeps the live region mounted while disabled but hides the affordance', () => {
+    render(
       <AutoSaveStatus
         enabled={false}
         isSaving={false}
-        savedCount={3}
-        savedMessage="Your theme saved."
+        savedCount={0}
+        savedMessage="Custom theme saved."
+        failingCount={2}
+      />,
+    );
+    // The polite region survives the custom theme being turned off so a revert
+    // announcement can still fire through it.
+    expect(document.querySelector('[role="status"]')).not.toBeNull();
+    // ...but the visible "saved" affordance + the contrast chip are gated off.
+    expect(screen.queryByText(/all changes saved/i)).toBeNull();
+    expect(screen.queryByText(/contrast pairs failing/i)).toBeNull();
+  });
+
+  it('announces a message through the region even while disabled (revert path)', () => {
+    const { rerender } = render(
+      <AutoSaveStatus
+        enabled={false}
+        isSaving={false}
+        savedCount={0}
+        savedMessage="Custom theme saved."
         failingCount={0}
       />,
     );
-    expect(container).toBeEmptyDOMElement();
-    expect(document.querySelector('[role="status"]')).toBeNull();
+    rerender(
+      <AutoSaveStatus
+        enabled={false}
+        isSaving={false}
+        savedCount={1}
+        savedMessage="Your theme is off."
+        failingCount={0}
+      />,
+    );
+    flushAnnounce();
+    expect(status().textContent).toBe('Your theme is off.');
   });
 
   it('shows the failing-contrast chip with pluralized copy, not a live region', () => {

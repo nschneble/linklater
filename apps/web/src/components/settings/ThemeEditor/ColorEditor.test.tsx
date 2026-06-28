@@ -27,11 +27,14 @@ function buildColorValues(): Record<ThemeVariable, string> {
 
 function renderEditor(
   contrastFailures: Map<string, TokenContrastFailure> = new Map(),
+  customActive = true,
 ) {
   return render(
     <ColorEditor
       colorValues={buildColorValues()}
       contrastFailures={contrastFailures}
+      baseThemeLabel="Boyhood"
+      customActive={customActive}
       onOverride={vi.fn()}
       editorMode="dark"
       onEditorModeChange={vi.fn()}
@@ -176,6 +179,8 @@ describe('ColorEditor – Light/Dark palette tabs', () => {
       <ColorEditor
         colorValues={buildColorValues()}
         contrastFailures={new Map()}
+        baseThemeLabel="Boyhood"
+        customActive={true}
         onOverride={vi.fn()}
         editorMode="dark"
         onEditorModeChange={onEditorModeChange}
@@ -189,6 +194,21 @@ describe('ColorEditor – Light/Dark palette tabs', () => {
       within(group).getByRole('button', { name: /light colors/i }),
     );
     expect(onEditorModeChange).toHaveBeenCalledWith('light');
+  });
+});
+
+describe('ColorEditor – pre-custom seed disclosure (SC 3.3.2)', () => {
+  it('discloses that swatches start from the theme until custom is active', () => {
+    renderEditor(new Map(), false);
+    const note = screen.getByRole('note');
+    expect(note.textContent).toBe(
+      'These start from Boyhood. Editing any color saves it as your own theme.',
+    );
+  });
+
+  it('drops the seed note once the custom theme is active', () => {
+    renderEditor(new Map(), true);
+    expect(screen.queryByText(/these start from boyhood/i)).toBeNull();
   });
 });
 

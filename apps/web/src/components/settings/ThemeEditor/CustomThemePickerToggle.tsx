@@ -1,72 +1,59 @@
-const TOGGLE_ID = 'theme-editor-show-custom';
-const TOGGLE_DESCRIPTION_ID = 'theme-editor-show-custom-description';
+import { EDITOR_FOCUS_RING, ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
 
-interface CustomThemePickerToggleProps {
-  /** Whether the custom theme is enabled: editable + saving here, and shown in the picker menus. */
-  enabled: boolean;
-  /** Called with the next value when the user flips the switch. */
-  onChange: (enabled: boolean) => void;
+const DESCRIPTION_ID = 'theme-editor-custom-description';
+
+interface CustomThemeOffRampProps {
+  /**
+   * Whether the custom theme is currently active (editing + saving here, and
+   * shown in the picker menus). Drives whether the "Back to …" off-ramp shows.
+   */
+  active: boolean;
+  /** Label of the theme to return to (e.g. "School of Rock"). */
+  baseThemeLabel: string;
+  /** Reverts to the named theme, keeping the saved custom palette intact. */
+  onRevert: () => void;
 }
 
 /**
- * Master switch for the custom theme. While OFF the editor mirrors the user's
- * real theme with the color pickers locked; flipping it ON seeds the palette,
- * switches the page to custom, and unlocks editing — and also shows the custom
- * theme in the user-menu pickers. The state self-announces via the `switch`
- * role, so no live-region confirmation is needed on flip; a failed save is
- * announced separately by the editor's Toast.
+ * The custom theme's off-ramp. There is no master switch: touching any color
+ * IS the act of going custom (the first edit seeds + saves the palette). So the
+ * only standing control here is the way BACK — a plain "Back to {theme}" button
+ * that reverts the preview to the named theme without discarding the saved
+ * palette. It renders only while the custom theme is active, paired with the
+ * editor's polite "Your theme is on/off" announcement so the live state is never
+ * signalled by this button's mere presence alone (a11y brief §1/§3).
  *
- * Built as a real `<input type="checkbox" role="switch">` so the native
- * element owns checked/keyboard/focus and AT announces "switch, on/off". The
- * painted track + thumb are an aria-hidden sibling driven entirely off the
- * peer's `:checked`/`:focus-visible` state — no JS class ternaries.
- *
- * Rendered inside the editor's two-up settings card (mount surface) beside the
- * copy-palette control, the track/thumb/label all paint from the active theme's
- * `--mount-*` tokens. The thumb color inverts with state (`--mount-text` off →
- * `--mount-highlight-fg` on) so it stays readable against both the inset track
- * and the filled track. The focus ring stays a FIXED blue like the editor's
- * other chrome, so a hostile custom palette can never hide keyboard focus.
+ * The button paints from the FIXED escape-hatch palette (#fafafa bg / #0a0a0a
+ * text / #404040 border) and a fixed-blue focus ring, NEVER bundle tokens: when
+ * the custom theme is the LIVE site theme its palette is injected onto `:root`,
+ * so a hostile palette could otherwise make the one control needed to escape it
+ * unreadable (SC 1.4.3 / 1.4.11). Same posture as the contrast chip + mode pill.
  */
-export default function CustomThemePickerToggle({
-  enabled,
-  onChange,
-}: CustomThemePickerToggleProps) {
+export default function CustomThemeOffRamp({
+  active,
+  baseThemeLabel,
+  onRevert,
+}: CustomThemeOffRampProps) {
   return (
     <div>
-      <label
-        htmlFor={TOGGLE_ID}
-        className="inline-flex items-center gap-3 min-h-[24px] cursor-pointer"
-      >
-        <span className="relative inline-flex shrink-0 items-center">
-          <input
-            id={TOGGLE_ID}
-            type="checkbox"
-            role="switch"
-            checked={enabled}
-            onChange={(event) => onChange(event.target.checked)}
-            aria-describedby={TOGGLE_DESCRIPTION_ID}
-            className="peer sr-only"
-          />
-          <span
-            aria-hidden="true"
-            className="block w-9 h-5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] peer-checked:bg-[var(--mount-highlight)] peer-checked:border-[var(--mount-highlight)] peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 forced-colors:peer-focus-visible:outline-2 forced-colors:peer-focus-visible:outline-[ButtonText] rounded-full transition-colors"
-          />
-          <span
-            aria-hidden="true"
-            className="absolute top-0.5 left-0.5 w-4 h-4 bg-[var(--mount-text)] peer-checked:bg-[var(--mount-highlight-fg)] peer-checked:translate-x-4 rounded-full motion-safe:transition-transform"
-          />
-        </span>
-        <span className="text-[var(--mount-text)] text-sm font-medium select-none">
-          Use your theme
-        </span>
-      </label>
+      {active && (
+        <button
+          type="button"
+          onClick={onRevert}
+          style={ESCAPE_HATCH_LIGHT}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 border text-xs font-semibold ${EDITOR_FOCUS_RING} rounded-lg cursor-pointer`}
+        >
+          <i className="fa-solid fa-arrow-left" aria-hidden="true" />
+          Back to {baseThemeLabel}
+        </button>
+      )}
       <p
-        id={TOGGLE_DESCRIPTION_ID}
-        className="mt-1.5 max-w-prose text-[var(--mount-alt-text)] text-xs"
+        id={DESCRIPTION_ID}
+        className={`${active ? 'mt-1.5' : ''} max-w-prose text-[var(--mount-alt-text)] text-xs`}
       >
-        Off by default. Flip it on to edit your colors here and show your theme
-        in the picker alongside the built-in ones.
+        {active
+          ? `Editing any color saves it as your theme. “Back to ${baseThemeLabel}” returns to that theme — your colors are kept.`
+          : `Editing any color here saves it as your own theme, shown in the picker alongside the built-in ones.`}
       </p>
     </div>
   );

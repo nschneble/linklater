@@ -29,6 +29,14 @@ interface UseThemeCopyOptions {
 export interface UseThemeCopyResult {
   /** Schedule a debounced save after a per-keystroke edit. */
   scheduleSave: () => void;
+  /**
+   * Push a one-off message through the polite announcement channel (bumps the
+   * count + sets the message). Used by the editor for engage/revert utterances
+   * ("Your theme is on and saved." / "Your theme is off.") that ride the same
+   * `role="status"` region the settled-save announcements use, so there is only
+   * ever one live region (a11y brief §3).
+   */
+  announce: (message: string) => void;
   /** Increments once per settled save; drives the polite announcement. */
   savedCount: number;
   /** The message the next settled save announces (consume-once reason). */
@@ -64,7 +72,7 @@ export function useThemeCopy({
   onSaveFailed,
 }: UseThemeCopyOptions): UseThemeCopyResult {
   const [savedCount, setSavedCount] = useState(0);
-  const [savedMessage, setSavedMessage] = useState('Your theme saved.');
+  const [savedMessage, setSavedMessage] = useState('Custom theme saved.');
   const [undoThemeLabel, setUndoThemeLabel] = useState<string | null>(null);
 
   // Always-current values (snapshot source for Undo) + a consume-once reason
@@ -84,13 +92,23 @@ export function useThemeCopy({
   // assertive Toast.
   const handleAutoSaveOutcome = useCallback((outcome: 'saved' | 'failed') => {
     if (outcome === 'saved') {
-      const reason = pendingSaveReasonReference.current ?? 'Your theme saved.';
+      const reason =
+        pendingSaveReasonReference.current ?? 'Custom theme saved.';
       pendingSaveReasonReference.current = null;
       setSavedMessage(reason);
       setSavedCount((previous) => previous + 1);
     } else {
       onSaveFailedReference.current();
     }
+  }, []);
+
+  // Push a one-off message through the same polite channel the settled-save
+  // announcements use (engage/revert utterances). Clearing-then-setting is the
+  // live region's job (in `AutoSaveStatus`); here we just bump the count so the
+  // region re-fires with the new message.
+  const announce = useCallback((message: string) => {
+    setSavedMessage(message);
+    setSavedCount((previous) => previous + 1);
   }, []);
 
   const { scheduleSave, saveNow } = useThemeAutoSave({
@@ -134,6 +152,7 @@ export function useThemeCopy({
 
   return {
     scheduleSave,
+    announce,
     savedCount,
     savedMessage,
     undoThemeLabel,

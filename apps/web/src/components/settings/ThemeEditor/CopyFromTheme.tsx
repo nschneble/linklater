@@ -14,9 +14,9 @@ const COPYABLE_THEMES = THEMES.filter((theme) => theme.id !== 'custom');
 
 interface CopyFromThemeProps {
   /**
-   * Whether the custom theme is enabled (editable). While disabled the menu is
-   * `aria-disabled` but stays focusable + discoverable so the user learns to
-   * turn the switch on.
+   * Whether the custom theme is active (editable). Before the user has gone
+   * custom the menu is `aria-disabled` but stays focusable + discoverable so
+   * they learn that editing a color first unlocks copying a palette.
    */
   editingEnabled: boolean;
   /**
@@ -45,9 +45,9 @@ interface CopyFromThemeProps {
  * no two-step Copy button and no retained selection — see `ThemeCopyMenu` for
  * why this is a menu, not a combobox.
  *
- * The menu is disabled until the custom theme is enabled. Its trigger paints
- * from fixed escape-hatch colors so it stays the legible way back from an
- * unreadable custom palette (the old "Reset all" hatch is gone).
+ * The menu is disabled until the custom theme is active (the first color edit).
+ * Its trigger paints from fixed escape-hatch colors so it stays the legible way
+ * back from an unreadable custom palette (the old "Reset all" hatch is gone).
  */
 export default function CopyFromTheme({
   editingEnabled,
@@ -120,7 +120,7 @@ export default function CopyFromTheme({
       >
         {editingEnabled
           ? 'Picking a theme paints over your colors with its palette and saves. Undo to revert.'
-          : 'Flip on the custom theme to copy a palette.'}
+          : 'Edit a color to start your theme, then you can copy a palette.'}
       </p>
     </div>
   );

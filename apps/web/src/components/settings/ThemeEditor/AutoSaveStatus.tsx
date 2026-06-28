@@ -63,49 +63,59 @@ export default function AutoSaveStatus({
     return () => clearTimeout(timer);
   }, [savedCount]);
 
-  // Nothing to show while disabled: there is no saving, and the locked state is
-  // conveyed by the switch + the Colors card's lock indicator.
-  if (!enabled) return null;
-
+  // The polite live region is mounted UNCONDITIONALLY (not gated on `enabled`).
+  // It has to survive the custom theme being turned OFF so the editor can
+  // announce the revert ("Your theme is off.") through it — if it unmounted with
+  // the rest of the affordance, that utterance would be lost (a11y brief §3).
+  // The VISIBLE "Saving…/Saved" affordance + the contrast chip stay gated on
+  // `enabled`: there is nothing to save while custom is off, and the locked
+  // state is conveyed elsewhere.
   return (
     <div className="flex flex-col items-end gap-1">
-      {failingCount > 0 && (
-        // Fixed-color chip, like the Reset escape hatch: this warning reports
-        // that the custom palette has unreadable pairs, so it must stay legible
-        // even when those very colors are broken — it can't paint from the
-        // theme tokens it is warning about. The triangle glyph is the
-        // second channel (WCAG 1.4.1); #92400e on #fafafa measures ~6:1.
-        <p
-          style={{ ...ESCAPE_HATCH_LIGHT, color: '#92400e' }}
-          className="flex items-center gap-1 px-2 py-0.5 border text-[0.65rem] font-medium rounded-md"
-        >
-          <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
-          {failingCount} contrast {failingCount === 1 ? 'pair' : 'pairs'}{' '}
-          failing
-        </p>
-      )}
+      {enabled && (
+        <>
+          {failingCount > 0 && (
+            // Fixed-color chip, like the Reset escape hatch: this warning reports
+            // that the custom palette has unreadable pairs, so it must stay
+            // legible even when those very colors are broken — it can't paint
+            // from the theme tokens it is warning about. The triangle glyph is
+            // the second channel (WCAG 1.4.1); #92400e on #fafafa measures ~6:1.
+            <p
+              style={{ ...ESCAPE_HATCH_LIGHT, color: '#92400e' }}
+              className="flex items-center gap-1 px-2 py-0.5 border text-[0.65rem] font-medium rounded-md"
+            >
+              <i
+                className="fa-solid fa-triangle-exclamation"
+                aria-hidden="true"
+              />
+              {failingCount} contrast {failingCount === 1 ? 'pair' : 'pairs'}{' '}
+              failing
+            </p>
+          )}
 
-      <p
-        className="flex items-center gap-1.5 text-[var(--base-subtle-text)] text-[0.65rem]"
-        aria-hidden="true"
-      >
-        {isSaving && (
-          <>
-            <i
-              className="fa-solid fa-circle-notch motion-safe:animate-spin"
-              aria-hidden="true"
-            />
-            Saving…
-          </>
-        )}
-        {!isSaving && savedCount > 0 && (
-          <>
-            <i className="fa-solid fa-check" aria-hidden="true" />
-            All changes saved
-          </>
-        )}
-        {!isSaving && savedCount === 0 && 'Changes save automatically'}
-      </p>
+          <p
+            className="flex items-center gap-1.5 text-[var(--base-subtle-text)] text-[0.65rem]"
+            aria-hidden="true"
+          >
+            {isSaving && (
+              <>
+                <i
+                  className="fa-solid fa-circle-notch motion-safe:animate-spin"
+                  aria-hidden="true"
+                />
+                Saving…
+              </>
+            )}
+            {!isSaving && savedCount > 0 && (
+              <>
+                <i className="fa-solid fa-check" aria-hidden="true" />
+                All changes saved
+              </>
+            )}
+            {!isSaving && savedCount === 0 && 'Changes save automatically'}
+          </p>
+        </>
+      )}
 
       <p role="status" aria-live="polite" className="sr-only">
         {announcement}

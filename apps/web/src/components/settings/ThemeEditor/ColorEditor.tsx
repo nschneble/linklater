@@ -24,6 +24,18 @@ interface ColorEditorProps {
    * surface inline failure feedback (BL1).
    */
   contrastFailures: Map<string, TokenContrastFailure>;
+  /**
+   * Label of the theme the swatches are seeded from while the custom theme is
+   * not yet active. Drives the region-level "These start from {theme}…"
+   * disclosure (a11y brief §5).
+   */
+  baseThemeLabel: string;
+  /**
+   * Whether the custom theme is already active. While `false` the swatches are
+   * a live mirror of `baseThemeLabel`, so the editor discloses that editing one
+   * commits it as the user's own theme (SC 3.3.2).
+   */
+  customActive: boolean;
   /** Called when the user changes a color via the picker or text input. */
   onOverride: (variable: ThemeVariable, value: string) => void;
   /**
@@ -247,6 +259,8 @@ function ColorRow({
 export default function ColorEditor({
   colorValues,
   contrastFailures,
+  baseThemeLabel,
+  customActive,
   onOverride,
   editorMode,
   onEditorModeChange,
@@ -355,6 +369,19 @@ export default function ColorEditor({
       <h2 className="text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
         Colors
       </h2>
+
+      {/* Pre-custom disclosure (SC 3.3.2): until the user has gone custom these
+          swatches are a live mirror of the active theme, so editing one is what
+          commits the palette as their own. Named at the REGION level — the
+          theme name stays out of every per-swatch label (a11y brief §5). Drops
+          away once custom is active, when "start from {theme}" is no longer
+          true. */}
+      {!customActive && (
+        <p role="note" className="text-[var(--mount-alt-text)] text-[0.7rem]">
+          These start from {baseThemeLabel}. Editing any color saves it as your
+          own theme.
+        </p>
+      )}
 
       <div role="search" className="relative">
         <label htmlFor={SEARCH_INPUT_ID} className="sr-only">
