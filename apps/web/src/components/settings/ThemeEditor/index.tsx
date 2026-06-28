@@ -263,13 +263,17 @@ export default function ThemeEditor() {
             </div>
           </div>
 
+          {/* The right column is layout-only: no card chrome and no visible
+              heading. The mock already looks like the app, so a card-in-a-card
+              "Components" frame would be redundant. The enter/exit stagger is
+              kept (it animates in as the third card); ComponentShowcase owns its
+              own sr-only "Live preview" heading for assistive tech. */}
           <div
-            className={`flex-1 min-w-0 ${cardClassName}`}
+            className={`flex-1 min-w-0 ${
+              contentExiting ? 'animate-fade-out-down' : 'animate-card-enter'
+            }`}
             style={cardDelayStyle(2)}
           >
-            <h2 className="mb-6 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
-              Components
-            </h2>
             <ComponentShowcase />
           </div>
         </div>

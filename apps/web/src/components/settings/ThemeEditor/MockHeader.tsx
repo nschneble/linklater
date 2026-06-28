@@ -1,7 +1,9 @@
 /**
  * The static top nav bar in the app mock. Rendering surface is orbit (matches
- * the real header). Decorative only: the logo, wordmark, and avatar are plain
- * <span>/<div> shapes — no <button>, no <a href>, no focusable descendants.
+ * the real header). Decorative only: the logo, wordmark, tagline, and avatar
+ * are plain <span>/<div> shapes — no <button>, no <a href>, no focusable
+ * descendants. Paints every orbit slot, so the rest of the mock is free to
+ * style its orbit surfaces however reads best.
  */
 export default function MockHeader() {
   return (
@@ -13,11 +15,13 @@ export default function MockHeader() {
             aria-hidden="true"
           />
         </span>
-        <span className="text-[var(--orbit-text)] text-sm font-bold">
-          Linklater
-        </span>
-        <span className="ml-1 text-[var(--orbit-alt-text)] text-[0.65rem]">
-          Your links
+        <span className="leading-tight">
+          <span className="block text-[var(--orbit-text)] text-sm font-bold">
+            Linklater
+          </span>
+          <span className="block text-[var(--orbit-alt-text)] text-[0.6rem]">
+            Save links now, read them later.
+          </span>
         </span>
       </div>
       <span className="flex items-center justify-center w-6 h-6 bg-[var(--orbit-highlight-hover)] rounded-full">

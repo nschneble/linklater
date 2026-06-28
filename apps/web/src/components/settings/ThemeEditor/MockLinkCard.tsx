@@ -1,9 +1,11 @@
 /**
  * The static saved-link card in the app mock (mount surface). Decorative only:
- * favicon and thumbnail are CSS-painted <div>/<span> shapes (no <img>), the
- * "Add a note" field is a styled <div> (never an <input>), and there are no
- * focusable descendants. Paints every mount slot — including the left accent
- * border (mount-highlight) and a fake field (mount-input-bg).
+ * the favicon is a CSS-painted <span> dot and the preview is a placeholder
+ * panel (no <img>), and there are no focusable descendants. Paints every mount
+ * slot the real card uses — the left accent border (mount-highlight), the
+ * favicon dot (mount-highlight-hover), and the placeholder preview, which
+ * mirrors the real app's placehold.co fill+label (mount-highlight background
+ * with mount-highlight-fg text).
  */
 export default function MockLinkCard() {
   return (
@@ -18,27 +20,18 @@ export default function MockLinkCard() {
             smashingmagazine.com
           </p>
         </div>
-        <span className="px-1.5 py-0.5 bg-[var(--mount-highlight)] text-[var(--mount-highlight-fg)] text-[0.55rem] font-semibold rounded">
-          Design
-        </span>
       </div>
 
-      <div className="w-full h-14 mt-2.5 bg-gradient-to-br from-[var(--mount-highlight)] to-[var(--mount-highlight-hover)] rounded-lg" />
+      <div className="flex items-center justify-center w-full h-14 mt-2.5 bg-[var(--mount-highlight)] rounded-lg">
+        <span className="text-[var(--mount-highlight-fg)] text-[0.6rem] font-medium">
+          smashingmagazine.com
+        </span>
+      </div>
 
       <p className="mt-2 text-[var(--mount-alt-text)] text-[0.65rem] line-clamp-2">
         A practical look at building resilient, low-bandwidth interfaces that
         stay fast and legible on modest hardware and flaky connections.
       </p>
-
-      <div className="flex items-center gap-2 mt-2.5 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] rounded-md">
-        <i
-          className="fa-solid fa-pen text-[var(--mount-alt-text)] text-[0.55rem]"
-          aria-hidden="true"
-        />
-        <span className="text-[var(--mount-alt-text)] text-[0.65rem]">
-          Add a note…
-        </span>
-      </div>
     </div>
   );
 }

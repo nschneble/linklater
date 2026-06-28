@@ -1,22 +1,17 @@
 /**
- * The static page toolbar in the app mock (base surface): page title, link
- * count, a fake search field, the Add link / Stumble actions, and the
- * Unread / Read tab pills. Decorative only — the "search field" is a styled
- * <div> (never an <input>), the actions and pills are <span>s with no handlers
- * and no focusable descendants. Renders BOTH a static selected pill (Unread)
- * and an unselected pill (Read) so both tab styles can be checked at once.
+ * The static page toolbar in the app mock (base surface): page title, a fake
+ * search field, the Add link / Stumble actions, and the Unread / Read tab
+ * pills. Decorative only — the "search field" is a styled <div> (never an
+ * <input>), the actions and pills are <span>s with no handlers and no focusable
+ * descendants. Renders BOTH a static selected pill (Unread) and an unselected
+ * pill (Read) so both tab styles can be checked at once.
  */
 export default function MockToolbar() {
   return (
     <div className="space-y-2.5 px-4 pt-3">
-      <div className="flex items-baseline gap-2">
-        <span className="text-[var(--base-text)] text-base font-bold">
-          Your links
-        </span>
-        <span className="text-[var(--base-subtle-text)] text-[0.65rem]">
-          12 saved
-        </span>
-      </div>
+      <span className="block text-[var(--base-text)] text-base font-bold">
+        Your links
+      </span>
 
       <div className="flex items-center gap-2">
         <div className="flex flex-1 items-center gap-2 px-2.5 py-1.5 bg-[var(--base-input-bg)] border border-[var(--base-border)] rounded-md">

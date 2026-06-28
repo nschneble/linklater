@@ -1,12 +1,17 @@
 /*
  * Tests for ComponentShowcase – the live, decorative app mock in the theme
  * editor. The mock is a PICTURE of the app, not the app: it must be a single
- * aria-hidden subtree with zero focusable descendants, paired with one sr-only
- * summary rendered OUTSIDE that subtree. These tests lock that contract plus
- * full coverage of all 52 bundle-slot pairs so the live contrast preview stays
- * complete: a dropped slot would silently blind the user to that contrast pair.
- * (The focus-ring token is the one editable token the mock can't preview — it
- * has no focusable elements by design — and is verified in the Contrast panel.)
+ * aria-hidden subtree with zero focusable descendants, fronted by an sr-only
+ * <h2> "Live preview" plus an sr-only orientation summary, BOTH rendered
+ * OUTSIDE that subtree. These tests lock that contract plus coverage of all 51
+ * bundle-slot pairs so the live contrast preview stays complete: a dropped slot
+ * would silently blind the user to that contrast pair.
+ *
+ * Two editable tokens are excepted from the in-mock coverage because the real
+ * app gives them no home the mock can faithfully reproduce: `--focus-ring`
+ * (the mock has zero focusable elements by design) and `--mount-input-bg` (the
+ * real links view has no mount-surface input field). Both are still verified in
+ * the Contrast panel, which checks every editable token regardless.
  */
 
 import ComponentShowcase from './ComponentShowcase';
@@ -24,14 +29,20 @@ const EXPECTED_TOKENS = [
     SLOTS.map((slot) => `var(--${bundle}-${slot})`),
   ),
   ...BASE_ONLY_SLOTS.map((slot) => `var(--base-${slot})`),
-  ...BASE_AND_MOUNT_ONLY_SLOTS.flatMap((slot) => [
-    `var(--base-${slot})`,
-    `var(--mount-${slot})`,
-  ]),
+  // `input-bg` exists on base + mount, but only `--base-input-bg` is painted
+  // (the toolbar search field). `--mount-input-bg` is intentionally EXCEPTED:
+  // the real links view has no mount-surface input, so the only place it could
+  // live in the mock was a fabricated "Add a note" field. It is verified in the
+  // Contrast panel instead.
+  ...BASE_AND_MOUNT_ONLY_SLOTS.map((slot) => `var(--base-${slot})`),
 ];
 
 function getMock() {
   return screen.getByTestId('app-mock');
+}
+
+function getLivePreviewHeading() {
+  return screen.getByRole('heading', { level: 2, name: 'Live preview' });
 }
 
 describe('ComponentShowcase app mock', () => {
@@ -45,11 +56,26 @@ describe('ComponentShowcase app mock', () => {
     expect(getMock()).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('renders one sr-only summary OUTSIDE the hidden subtree', () => {
+  it('fronts the mock with an sr-only "Live preview" h2 as the first child, OUTSIDE the hidden subtree', () => {
+    const { container } = render(<ComponentShowcase />);
+    const heading = getLivePreviewHeading();
+    expect(heading).toHaveClass('sr-only');
+    // The heading must be AT-perceivable: outside the aria-hidden mock subtree.
+    expect(getMock().contains(heading)).toBe(false);
+    // It is the FIRST child of the returned fragment.
+    expect(container.firstElementChild).toBe(heading);
+    // It is the ONLY heading the component renders.
+    expect(container.querySelectorAll('h1, h2, h3, h4, h5, h6')).toHaveLength(
+      1,
+    );
+  });
+
+  it('renders the sr-only orientation summary right after the heading, OUTSIDE the hidden subtree', () => {
     render(<ComponentShowcase />);
-    const summary = screen.getByText(/live visual preview of the app/i);
+    const summary = screen.getByText(/a visual preview of the app/i);
     expect(summary).toHaveClass('sr-only');
     expect(getMock().contains(summary)).toBe(false);
+    expect(getLivePreviewHeading().nextElementSibling).toBe(summary);
   });
 
   it('has zero focusable descendants (Tab skips the entire mock)', () => {
@@ -99,7 +125,7 @@ describe('ComponentShowcase app mock', () => {
     expect(screen.getByText('Read')).toBeInTheDocument();
   });
 
-  it('paints every bundle slot so the contrast preview covers all 52 pairs (focus ring excepted — the mock has no focusable elements)', () => {
+  it('paints every bundle slot so the contrast preview covers all 51 pairs (focus ring + mount input-bg excepted)', () => {
     render(<ComponentShowcase />);
     const html = getMock().outerHTML;
     for (const token of EXPECTED_TOKENS) {
