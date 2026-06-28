@@ -57,9 +57,13 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** Edits the Base background swatch (Base is open by default) to a fixed hex. */
+/**
+ * Edits the page background to a fixed hex via the "Page" knob (which sets
+ * `--base-bg`). The knobs sit above the collapsed "show all colors" drawer, so
+ * this is the reachable path to the same `--base-bg` edit that goes custom.
+ */
 function editBaseBackground(value = '#123456') {
-  const picker = screen.getByLabelText(/color picker for base background/i);
+  const picker = screen.getByLabelText('Page color');
   fireEvent.change(picker, { target: { value } });
 }
 

@@ -20,7 +20,11 @@ import ContrastChecker from './ContrastChecker';
 import CustomThemePanel from './CustomThemePanel';
 import Toast from '../../common/Toast';
 import { readThemeTokens } from './themeProbe';
-import { tokenContrastFailures, useContrastResults } from './contrastResults';
+import {
+  pairsTouchingToken,
+  tokenContrastFailures,
+  useContrastResults,
+} from './contrastResults';
 import { updateMe } from '../../../lib/api';
 import { useThemeCopy } from './useThemeCopy';
 import { useThemeOverrides } from './useThemeOverrides';
@@ -118,6 +122,14 @@ export default function ThemeEditor() {
     [contrastResults],
   );
 
+  // The knobs read the both-endpoints view so a too-light Page/Cards/Alerts
+  // BACKGROUND flags on its knob; the drawer's rows keep the foreground-keyed
+  // view above.
+  const knobFailures = useMemo(
+    () => pairsTouchingToken(contrastResults),
+    [contrastResults],
+  );
+
   const onSaveFailed = useCallback(() => toast.show('save-failed'), [toast]);
 
   const {
@@ -149,7 +161,7 @@ export default function ThemeEditor() {
   // Optimistic — on PATCH failure it rolls the enabled flag + palette back.
   const engageCustomTheme = useCallback(
     async (
-      variable: Parameters<typeof setOverride>[0],
+      variables: Array<Parameters<typeof setOverride>[0]>,
       value: string,
       postEditValues: Record<Parameters<typeof setOverride>[0], string>,
     ) => {
@@ -157,10 +169,17 @@ export default function ThemeEditor() {
       setCustomThemeEnabled(true);
 
       const otherMode: Mode = editorMode === 'dark' ? 'light' : 'dark';
-      // The edited mode's slot — either merged into the saved palette (re-engage
-      // after a revert) or the full post-edit snapshot (fresh).
+      // The edited mode's slots — either merged into the saved palette
+      // (re-engage after a revert, all edited variables snapped to `value`) or
+      // the full post-edit snapshot (fresh). A knob edits several variables at
+      // once, so merge them all rather than a single slot.
       const editedModeTokens = isCustomConfigured
-        ? { ...(customTheme?.[editorMode] ?? {}), [variable]: value }
+        ? {
+            ...(customTheme?.[editorMode] ?? {}),
+            ...Object.fromEntries(
+              variables.map((variable) => [variable, value]),
+            ),
+          }
         : collectTokens(
             CUSTOM_TOKEN_KEYS,
             (key) => postEditValues[key as Parameters<typeof setOverride>[0]],
@@ -201,21 +220,44 @@ export default function ThemeEditor() {
     ],
   );
 
-  function handleOverride(
-    variable: Parameters<typeof setOverride>[0],
+  // Apply an edit to one or more variables in a single pass: the first edit
+  // goes custom (engaging once, even across a knob's multi-token write), later
+  // edits debounce-save. A knob passes all its constituent tokens together so
+  // the engage snapshot and the saved palette never miss any of them.
+  function editTokens(
+    variables: Array<Parameters<typeof setOverride>[0]>,
     value: string,
   ) {
-    const postEditValues = { ...colorValues, [variable]: value };
-    setOverride(variable, value);
+    const postEditValues = { ...colorValues };
+    for (const variable of variables) {
+      postEditValues[variable] = value;
+      setOverride(variable, value);
+    }
     clearUndo();
     if (!customThemeEnabled) {
       // First edit — go custom. The guard absorbs a color picker's drag burst.
       if (engagingReference.current) return;
       engagingReference.current = true;
-      void engageCustomTheme(variable, value, postEditValues);
+      void engageCustomTheme(variables, value, postEditValues);
     } else {
       scheduleSave();
     }
+  }
+
+  function handleOverride(
+    variable: Parameters<typeof setOverride>[0],
+    value: string,
+  ) {
+    editTokens([variable], value);
+  }
+
+  // A knob flattens every constituent token to the new value in one write
+  // (destructively overwriting any per-surface value set in the drawer).
+  function handleKnobOverride(
+    variables: Array<Parameters<typeof setOverride>[0]>,
+    value: string,
+  ) {
+    editTokens(variables, value);
   }
 
   // Revert off-ramp. Moves focus to the page heading BEFORE the button unmounts
@@ -314,9 +356,11 @@ export default function ThemeEditor() {
             <ColorEditor
               colorValues={colorValues}
               contrastFailures={contrastFailures}
+              knobFailures={knobFailures}
               baseThemeLabel={baseThemeLabel}
               customActive={customThemeEnabled}
               onOverride={handleOverride}
+              onKnobOverride={handleKnobOverride}
               editorMode={editorMode}
               onEditorModeChange={setEditorMode}
             />

@@ -129,7 +129,7 @@ describe('AutoSaveStatus', () => {
         enabled={false}
         isSaving={false}
         savedCount={0}
-        savedMessage="Custom theme saved."
+        savedMessage="Your theme saved."
         failingCount={2}
       />,
     );
@@ -147,7 +147,7 @@ describe('AutoSaveStatus', () => {
         enabled={false}
         isSaving={false}
         savedCount={0}
-        savedMessage="Custom theme saved."
+        savedMessage="Your theme saved."
         failingCount={0}
       />,
     );

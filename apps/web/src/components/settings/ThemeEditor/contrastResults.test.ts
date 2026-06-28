@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import {
   computeContrastRatio,
   pairsForBundle,
+  pairsTouchingToken,
   tokenContrastFailures,
 } from './contrastResults';
 import type { ContrastPair, ContrastResults } from './contrastResults';
@@ -126,6 +127,57 @@ describe('tokenContrastFailures worst-failure selection', () => {
     expect(failure?.pairLabel).toBe('token / text');
     expect(failure?.ratio).toBe(4.0);
     expect(failure?.threshold).toBe(4.5);
+  });
+});
+
+describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
+  it('reports a failure under the background token, not just the foreground', () => {
+    // A too-light `--mount-bg` makes "text / bg" fail; the knob whose
+    // representative token is `--mount-bg` must see it even though it is the
+    // background, never the foreground.
+    const pair = makePair({
+      label: 'text / bg',
+      foreground: '--mount-text',
+      background: '--mount-bg',
+      criterion: '1.4.3',
+      threshold: 4.5,
+    });
+    const results: ContrastResults = {
+      groups: [
+        {
+          bundle: 'mount',
+          label: 'mount',
+          pairs: [{ pair, ratio: 2.8 }],
+        },
+      ],
+    } as unknown as ContrastResults;
+
+    const touching = pairsTouchingToken(results);
+    // Both endpoints carry the failure…
+    expect(touching.get('--mount-text')?.ratio).toBe(2.8);
+    expect(touching.get('--mount-bg')?.ratio).toBe(2.8);
+    // …whereas the foreground-keyed view omits the background token.
+    expect(tokenContrastFailures(results).get('--mount-bg')).toBeUndefined();
+  });
+
+  it('makes no entry for passing or unverified pairs', () => {
+    const passing = makePair({ foreground: '--a', background: '--b' });
+    const unverified = makePair({ foreground: '--c', background: '--d' });
+    const results: ContrastResults = {
+      groups: [
+        {
+          bundle: 'mount',
+          label: 'mount',
+          pairs: [
+            { pair: passing, ratio: 7 },
+            { pair: unverified, ratio: null },
+          ],
+        },
+      ],
+    } as unknown as ContrastResults;
+
+    const touching = pairsTouchingToken(results);
+    expect(touching.size).toBe(0);
   });
 });
 

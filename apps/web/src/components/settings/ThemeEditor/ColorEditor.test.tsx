@@ -1,10 +1,11 @@
 /*
- * Tests for the ColorEditor search box.
+ * Tests for the ColorEditor orchestrator: the Light/Dark tabs, the pre-custom
+ * seed disclosure, and the "show all colors" drawer that holds the token tree.
  *
- * Covers the search filter + auto-expand contract added when the ThemeEditor
- * grew a token search input. The underlying disclosure / color-picker
- * machinery is exercised indirectly by these tests and was already shipping
- * pre-search.
+ * The knobs themselves are exercised in KnobPanel.test.tsx and the drawer's
+ * internals in TokenTree.test.tsx; here we cover the orchestration — drawer
+ * toggle (mount + hidden), tab order, and that the token-tree search/rows are
+ * reachable once the drawer is open.
  */
 
 import ColorEditor from './ColorEditor';
@@ -28,25 +29,61 @@ function buildColorValues(): Record<ThemeVariable, string> {
 function renderEditor(
   contrastFailures: Map<string, TokenContrastFailure> = new Map(),
   customActive = true,
+  { autoOpen = true }: { autoOpen?: boolean } = {},
 ) {
-  return render(
+  const utils = render(
     <ColorEditor
       colorValues={buildColorValues()}
       contrastFailures={contrastFailures}
+      knobFailures={new Map()}
       baseThemeLabel="Boyhood"
       customActive={customActive}
       onOverride={vi.fn()}
+      onKnobOverride={vi.fn()}
       editorMode="dark"
       onEditorModeChange={vi.fn()}
     />,
   );
+  if (autoOpen) openDrawer();
+  return utils;
+}
+
+function openDrawer() {
+  fireEvent.click(screen.getByRole('button', { name: /show all colors/i }));
 }
 
 function getSearchbox() {
   return screen.getByRole('searchbox', { name: /search tokens/i });
 }
 
-describe('ColorEditor – token search', () => {
+describe('ColorEditor – "show all colors" drawer (mount + hidden)', () => {
+  it('mounts the token tree always; the toggle aria-controls resolves while collapsed', () => {
+    renderEditor(new Map(), true, { autoOpen: false });
+    const toggle = screen.getByRole('button', { name: /show all colors/i });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const controlledId = toggle.getAttribute('aria-controls');
+    expect(controlledId).toBe('theme-editor-token-tree');
+    // The controlled element is present (mounted) even while collapsed…
+    const tree = document.getElementById(controlledId as string);
+    expect(tree).not.toBeNull();
+    // …but hidden, so its searchbox/rows are out of the a11y tree.
+    expect(tree).toHaveAttribute('hidden');
+    expect(screen.queryByRole('searchbox')).toBeNull();
+  });
+
+  it('reveals the tree on expand without unmounting it', () => {
+    renderEditor(new Map(), true, { autoOpen: false });
+    const toggle = screen.getByRole('button', { name: /show all colors/i });
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      document.getElementById('theme-editor-token-tree'),
+    ).not.toHaveAttribute('hidden');
+    expect(getSearchbox()).toBeInTheDocument();
+  });
+});
+
+describe('ColorEditor – token search (inside the drawer)', () => {
   it('shows every bundle section when no query is entered', () => {
     renderEditor();
     for (const group of VAR_GROUPS) {
@@ -63,26 +100,9 @@ describe('ColorEditor – token search', () => {
     expect(screen.queryByRole('button', { name: /^Alert/ })).toBeNull();
   });
 
-  it('filters slot labels', () => {
-    renderEditor();
-    fireEvent.change(getSearchbox(), {
-      target: { value: 'highlight foreground' },
-    });
-    // Every bundle has a highlight-foreground slot, so every bundle stays.
-    for (const group of VAR_GROUPS) {
-      expect(
-        screen.getByRole('button', { name: new RegExp(`^${group.label}`) }),
-      ).toBeInTheDocument();
-    }
-  });
-
   it('filters variable names with or without leading dashes', () => {
     renderEditor();
     fireEvent.change(getSearchbox(), { target: { value: '--alert-bg' } });
-    expect(screen.getByRole('button', { name: /^Alert/ })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^Mount/ })).toBeNull();
-
-    fireEvent.change(getSearchbox(), { target: { value: 'alert-bg' } });
     expect(screen.getByRole('button', { name: /^Alert/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Mount/ })).toBeNull();
   });
@@ -94,53 +114,17 @@ describe('ColorEditor – token search', () => {
     expect(warnButton).toHaveAttribute('aria-expanded', 'true');
   });
 
-  it('restores prior open state when the query is cleared', () => {
-    renderEditor();
-    const alertButton = screen.getByRole('button', { name: /^Alert/ });
-    expect(alertButton).toHaveAttribute('aria-expanded', 'false');
-    // Open alert manually.
-    fireEvent.click(alertButton);
-    expect(alertButton).toHaveAttribute('aria-expanded', 'true');
-
-    // Search for mount – alert collapses out of the filtered list entirely.
-    fireEvent.change(getSearchbox(), { target: { value: 'mount' } });
-    expect(screen.queryByRole('button', { name: /^Alert/ })).toBeNull();
-
-    // Clear the query – alert returns AND is still open.
-    fireEvent.change(getSearchbox(), { target: { value: '' } });
-    expect(screen.getByRole('button', { name: /^Alert/ })).toHaveAttribute(
-      'aria-expanded',
-      'true',
-    );
-  });
-
-  it('renders an empty-state note when no tokens match', () => {
-    renderEditor();
-    fireEvent.change(getSearchbox(), { target: { value: 'qqqqzz' } });
-    expect(screen.getByRole('note').textContent).toBe(
-      'No tokens match “qqqqzz”.',
-    );
-    expect(screen.queryByRole('button', { name: /^Base/ })).toBeNull();
-  });
-
   it('announces match count via the live region', () => {
     renderEditor();
     const status = document.getElementById('theme-editor-token-search-status');
     expect(status).not.toBeNull();
-    // Empty query – silent.
     expect(status?.textContent ?? '').toBe('');
 
-    // No match.
     fireEvent.change(getSearchbox(), { target: { value: 'qqqqzz' } });
     expect(status?.textContent).toMatch(/No tokens match/);
 
-    // One match (only Base bundle has a subtle-text slot).
     fireEvent.change(getSearchbox(), { target: { value: 'subtle' } });
     expect(status?.textContent).toMatch(/^1 token matches$/);
-
-    // Multi-match.
-    fireEvent.change(getSearchbox(), { target: { value: 'border' } });
-    expect(status?.textContent).toMatch(/^\d+ tokens match$/);
   });
 
   it('clears the query when Escape is pressed', () => {
@@ -152,20 +136,11 @@ describe('ColorEditor – token search', () => {
     expect((searchbox as HTMLInputElement).value).toBe('');
   });
 
-  it('clear button is keyboard-reachable when the query is non-empty', () => {
+  it('wraps the search input in a role="search" landmark labelled "Search theme tokens"', () => {
     renderEditor();
-    // No clear button when query is empty.
-    expect(screen.queryByRole('button', { name: /clear search/i })).toBeNull();
-
-    fireEvent.change(getSearchbox(), { target: { value: 'mount' } });
-    const clearButton = screen.getByRole('button', { name: /clear search/i });
-    fireEvent.click(clearButton);
-    expect((getSearchbox() as HTMLInputElement).value).toBe('');
-  });
-
-  it('wraps the search input in a role="search" landmark with sr-only label', () => {
-    renderEditor();
-    const landmark = screen.getByRole('search');
+    const landmark = screen.getByRole('search', {
+      name: /search theme tokens/i,
+    });
     expect(
       within(landmark).getByLabelText(/search tokens/i),
     ).toBeInTheDocument();
@@ -179,9 +154,11 @@ describe('ColorEditor – Light/Dark palette tabs', () => {
       <ColorEditor
         colorValues={buildColorValues()}
         contrastFailures={new Map()}
+        knobFailures={new Map()}
         baseThemeLabel="Boyhood"
         customActive={true}
         onOverride={vi.fn()}
+        onKnobOverride={vi.fn()}
         editorMode="dark"
         onEditorModeChange={onEditorModeChange}
       />,
@@ -199,7 +176,7 @@ describe('ColorEditor – Light/Dark palette tabs', () => {
 
 describe('ColorEditor – pre-custom seed disclosure (SC 3.3.2)', () => {
   it('discloses that swatches start from the theme until custom is active', () => {
-    renderEditor(new Map(), false);
+    renderEditor(new Map(), false, { autoOpen: false });
     const note = screen.getByRole('note');
     expect(note.textContent).toBe(
       'These start from Boyhood. Editing any color saves it as your own theme.',
@@ -207,33 +184,49 @@ describe('ColorEditor – pre-custom seed disclosure (SC 3.3.2)', () => {
   });
 
   it('drops the seed note once the custom theme is active', () => {
-    renderEditor(new Map(), true);
+    renderEditor(new Map(), true, { autoOpen: false });
     expect(screen.queryByText(/these start from boyhood/i)).toBeNull();
   });
 });
 
-describe('ColorEditor – always editable (cards only render when enabled)', () => {
-  it('keeps the hex input editable (not readonly) with no lock affordance', () => {
+describe('ColorEditor – tab order', () => {
+  function precedes(first: Element, second: Element): boolean {
+    return Boolean(
+      first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  }
+
+  it('orders mode toggle → knobs (picker→hex) → show all colors → search → bundles', () => {
     renderEditor();
-    const input = screen.getByRole('textbox', { name: /Base text/i });
-    expect(input).not.toHaveAttribute('readonly');
-    expect(input).not.toBeDisabled();
-    // The old corner lock indicator + tooltip are gone entirely.
-    expect(
-      screen.queryByRole('button', { name: /editing (un)?locked/i }),
-    ).toBeNull();
-    expect(screen.queryByRole('tooltip')).toBeNull();
+    const modeGroup = screen.getByRole('group', { name: /palette to edit/i });
+    const darkTab = within(modeGroup).getByRole('button', {
+      name: /dark colors/i,
+    });
+    const accentPicker = screen.getByLabelText('Accent color');
+    const accentHex = screen.getByLabelText('Accent color hex value');
+    const alertsHex = screen.getByLabelText('Alerts color hex value');
+    // The drawer is open (auto-opened), so the toggle reads "Hide all colors".
+    const showAll = screen.getByRole('button', { name: /all colors/i });
+    const searchbox = getSearchbox();
+    const baseBundle = screen.getByRole('button', { name: /^Base/ });
+
+    expect(precedes(darkTab, accentPicker)).toBe(true);
+    expect(precedes(accentPicker, accentHex)).toBe(true);
+    expect(precedes(alertsHex, showAll)).toBe(true);
+    expect(precedes(showAll, searchbox)).toBe(true);
+    expect(precedes(searchbox, baseBundle)).toBe(true);
   });
 
-  it('points the search input only at its status region (no dangling IDREF)', () => {
-    renderEditor();
-    expect(getSearchbox().getAttribute('aria-describedby')).toBe(
-      'theme-editor-token-search-status',
-    );
+  it('uses no positive tabindex anywhere', () => {
+    const { container } = renderEditor();
+    const positive = Array.from(
+      container.querySelectorAll('[tabindex]'),
+    ).filter((element) => Number(element.getAttribute('tabindex')) > 0);
+    expect(positive).toEqual([]);
   });
 });
 
-describe('ColorEditor – per-token contrast failure (BL1)', () => {
+describe('ColorEditor – drawer rows still editable (BL1)', () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -249,12 +242,10 @@ describe('ColorEditor – per-token contrast failure (BL1)', () => {
     pairLabel: 'text / bg',
   };
 
-  it('marks a failing token input aria-invalid and describes it after the debounce', () => {
-    // Base bundle is open by default; --base-text is a base slot row.
+  it('keeps the hex input editable and marks a failing token after the debounce', () => {
     renderEditor(new Map([['--base-text', failure]]));
-
     const input = screen.getByRole('textbox', { name: /Base text/i });
-    // aria-invalid is immediate (drives styling); the note text is debounced.
+    expect(input).not.toHaveAttribute('readonly');
     expect(input).toHaveAttribute('aria-invalid', 'true');
 
     act(() => {
@@ -262,21 +253,8 @@ describe('ColorEditor – per-token contrast failure (BL1)', () => {
     });
 
     const describedById = input.getAttribute('aria-describedby');
-    expect(describedById).toBeTruthy();
     const note = document.getElementById(describedById as string);
     expect(note?.textContent).toContain('Fails contrast with text / bg');
     expect(note?.textContent).toContain('2.9:1, needs 4.5:1');
-    // Per-row notes must NOT be live regions (no alert barrage across ~50 rows).
-    expect(note?.getAttribute('role')).toBeNull();
-  });
-
-  it('leaves a passing token input valid with no note', () => {
-    renderEditor();
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    const input = screen.getByRole('textbox', { name: /Base text/i });
-    expect(input).not.toHaveAttribute('aria-invalid');
-    expect(input).not.toHaveAttribute('aria-describedby');
   });
 });

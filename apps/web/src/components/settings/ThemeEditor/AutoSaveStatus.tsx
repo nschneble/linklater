@@ -12,7 +12,7 @@ interface AutoSaveStatusProps {
    */
   savedCount: number;
   /**
-   * The message announced on each settled save. Generic edits pass "Custom
+   * The message announced on each settled save. Generic edits pass "Your
    * theme saved."; a copy or undo passes a one-off reason ("School of Rock
    * palette applied and saved." / "Reverted to previous colors.") so the
    * single utterance per save tick says WHAT happened, never double-speaking.

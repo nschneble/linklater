@@ -72,7 +72,7 @@ export function useThemeCopy({
   onSaveFailed,
 }: UseThemeCopyOptions): UseThemeCopyResult {
   const [savedCount, setSavedCount] = useState(0);
-  const [savedMessage, setSavedMessage] = useState('Custom theme saved.');
+  const [savedMessage, setSavedMessage] = useState('Your theme saved.');
   const [undoThemeLabel, setUndoThemeLabel] = useState<string | null>(null);
 
   // Always-current values (snapshot source for Undo) + a consume-once reason
@@ -92,8 +92,7 @@ export function useThemeCopy({
   // assertive Toast.
   const handleAutoSaveOutcome = useCallback((outcome: 'saved' | 'failed') => {
     if (outcome === 'saved') {
-      const reason =
-        pendingSaveReasonReference.current ?? 'Custom theme saved.';
+      const reason = pendingSaveReasonReference.current ?? 'Your theme saved.';
       pendingSaveReasonReference.current = null;
       setSavedMessage(reason);
       setSavedCount((previous) => previous + 1);

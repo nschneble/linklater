@@ -263,6 +263,40 @@ export function tokenContrastFailures(
 }
 
 /**
+ * Like `tokenContrastFailures`, but keys each failing pair under BOTH its
+ * foreground AND its background token, so a token that fails only as a
+ * BACKGROUND (e.g. a too-light `--mount-bg` under card text) still reports a
+ * failure. Used by the knobs (whose representative token is often a background)
+ * so a contrast problem surfaces ON THE KNOB rather than being buried in the
+ * drawer. Reuses the ratios already computed by `useContrastResults` — it makes
+ * NO new `computeContrastRatio` calls — so coverage stays identical to the
+ * foreground-keyed view, just regrouped by both endpoints.
+ */
+export function pairsTouchingToken(
+  results: ContrastResults,
+): Map<string, TokenContrastFailure> {
+  const failures = new Map<string, TokenContrastFailure>();
+  const consider = (token: string, ratio: number, pair: ContrastPair) => {
+    const deficit = pair.threshold - ratio;
+    const existing = failures.get(token);
+    if (existing && existing.threshold - existing.ratio >= deficit) return;
+    failures.set(token, {
+      ratio,
+      threshold: pair.threshold,
+      pairLabel: pair.label,
+    });
+  };
+  for (const group of results.groups) {
+    for (const { pair, ratio } of group.pairs) {
+      if (ratio === null || ratio >= pair.threshold) continue;
+      consider(pair.foreground, ratio, pair);
+      consider(pair.background, ratio, pair);
+    }
+  }
+  return failures;
+}
+
+/**
  * Resolves the value for a contrast pair endpoint from the editor's live
  * `colorValues`. `--focus-ring` is now an editable, injected token (W1), so it
  * is looked up here like any bundle slot. Returns an empty string for any
