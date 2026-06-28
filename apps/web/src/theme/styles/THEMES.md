@@ -22,9 +22,9 @@ Twelve flat tokens have been retired:
   pairs. Page-gradient consumers read `--page-gradient-from` and
   `--page-gradient-to` directly per theme.
 - `--accent-fg`, `--accent-hover` – primary-button foreground
-  + hover now resolve per host tier via `--{base,mount,orbit}-highlight-fg`
-  and `--{base,mount,orbit}-highlight-hover`. `PrimaryButton` gained a
-  `surface` prop to pick the right pair. See Section 5.
+  - hover now resolve per host tier via `--{base,mount,orbit}-highlight-fg`
+    and `--{base,mount,orbit}-highlight-hover`. `PrimaryButton` gained a
+    `surface` prop to pick the right pair. See Section 5.
 - `--accent` – the last chrome consumers migrated to
   `--mount-highlight`, `--base-highlight`, and `--orbit-highlight`
   depending on host; the per-theme `--accent`
@@ -35,7 +35,7 @@ Twelve flat tokens have been retired:
 - `--page-gradient-via` – the mid-stop was byte-identical to
   `--page-gradient-from` in every shipped theme, so the auth / verify
   page-gradient wrappers collapsed to a 2-stop `bg-gradient-to-b
-  from-{from} to-{to}` and the slot was retired across all 10 themes.
+from-{from} to-{to}` and the slot was retired across all 10 themes.
 
 The `chrome-token-migration.test.ts` tripwire keeps every retired token
 in its `LEGACY_TOKENS` list to prevent re-introduction.
@@ -198,7 +198,7 @@ each color input.
 
 ### The off-book `branding` theme
 
-`branding.css` defines an eleventh `data-theme` value, `branding`, that is
+`branding.css` defines a twelfth `data-theme` value, `branding`, that is
 deliberately NOT one of the ten selectable themes. It is absent from the
 `BaseTheme` union, `THEMES`, `VALID_BASE_THEME_IDS` (`constants.ts`), and
 the API `VALID_THEMES` list, so no user can ever activate it and it never
