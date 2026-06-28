@@ -11,7 +11,7 @@
       - menuitem "Your links"
       - menuitem "Settings"
       - menuitem "Switch to light mode"
-      - menuitem "Create a custom theme"
+      - menuitem "Create your theme"
       - menuitem "Theme A Scanner Darkly"
       - menuitem "Log out"
     - menu "Theme":
@@ -28,17 +28,16 @@
       - menuitemradio "Nouvelle Vague"
       - menuitemradio "School of Rock"
 - main "Links":
-  - heading "Theme editor" [level=1]
-  - paragraph: Make the app yours. Recolor every surface, watch it change live, and lift a film theme's palette whenever you want a head start.
-  - region "Roll your own":
-    - heading "Roll your own" [level=2]
-    - paragraph: Start from a blank palette, or copy a film theme's colors and tweak from there.
-    - switch "Use your own custom theme"
-    - text: Use your own custom theme
-    - paragraph: Off by default. Flip it on to edit your colors here and show your custom theme in the picker alongside the built-in ones.
-    - group "Copy palette from theme":
-      - button "Copy palette from theme" [disabled]
-      - menu "Copy palette from theme":
+  - heading "Your theme" [level=1]
+  - paragraph: Build your own theme and preview it live. Saves as you go.
+  - status
+  - region "Theme starting point":
+    - heading "Theme starting point" [level=2]
+    - paragraph: Start from a blank palette, or copy a theme you already like.
+    - paragraph: Editing any color here saves it as your own theme, shown in the picker alongside the built-in ones.
+    - group "Copy a palette":
+      - button "Start from a theme" [disabled]
+      - menu "Start from a theme":
         - menuitem "Apollo 10½ Accessible theme"
         - menuitem "A Scanner Darkly"
         - menuitem "Before Sunrise"
@@ -49,4 +48,45 @@
         - menuitem "Hit Man"
         - menuitem "Nouvelle Vague"
         - menuitem "School of Rock"
-      - paragraph: Flip on the custom theme to copy a palette.
+      - paragraph: Edit a color to start your theme, then you can start from a built-in one.
+  - group "Palette to edit":
+    - button "Light colors"
+    - button "Dark colors" [pressed]
+  - heading "Colors" [level=2]
+  - note: These start from A Scanner Darkly. Editing any color saves it as your own theme.
+  - group "Main colors":
+    - group "Page":
+      - textbox "Page color": "#0f0b1b"
+      - text: Page
+      - textbox "Page color hex value":
+        - /placeholder: "#000000"
+        - text: "#0f0b1b"
+    - group "Cards":
+      - textbox "Cards color": "#201e43"
+      - text: Cards
+      - textbox "Cards color hex value":
+        - /placeholder: "#000000"
+        - text: "#201e43"
+    - group "Accent":
+      - textbox "Accent color": "#ed9156"
+      - text: Accent
+      - textbox "Accent color hex value":
+        - /placeholder: "#000000"
+        - text: "#ed9156"
+    - text: Sets the accent on the page, cards, and menus.
+    - group "Text":
+      - textbox "Text color": "#eeeedf"
+      - text: Text
+      - textbox "Text color hex value":
+        - /placeholder: "#000000"
+        - text: "#eeeedf"
+    - text: Sets the text color on the page, cards, and menus.
+    - group "Alerts":
+      - textbox "Alerts color" [disabled]: "#000000"
+      - text: Alerts
+      - textbox "Alerts color hex value":
+        - /placeholder: "#000000"
+        - text: rgb(76 14 8 / 0.55)
+  - button "Show all colors"
+  - heading "Live preview" [level=2]
+  - paragraph: A visual preview of the app painted with your current colors. Contrast issues are flagged on the affected color controls.
