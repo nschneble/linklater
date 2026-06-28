@@ -44,9 +44,9 @@ export default function CustomThemePanel({
   return (
     <SettingsGroup
       id="custom-theme"
-      title="Roll your own"
+      title="Your theme"
       icon="fa-paintbrush"
-      description="Start from a blank palette or copy an existing theme"
+      description="Start from a blank palette, or copy a theme you already like."
     >
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="w-full lg:w-80 shrink-0">

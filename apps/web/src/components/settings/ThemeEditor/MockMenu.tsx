@@ -1,7 +1,7 @@
 /**
  * The static "open" user menu in the app mock (orbit surface). Mirrors the real
  * UserMenu: a "Logged in as" header plus the real rows in order (Your links,
- * Settings, Switch to dark mode, Edit your custom theme, Log out). Decorative
+ * Settings, Switch to dark mode, Edit your theme, Log out). Decorative
  * only: plain <div>/<ul>/<li> for layout, NO role="menu"/"menuitem", no
  * aria-haspopup/aria-expanded, no focusable rows. One active row previews
  * orbit-highlight / highlight-fg; one row previews highlight-hover.
@@ -38,7 +38,7 @@ export default function MockMenu() {
             className="fa-solid fa-paintbrush text-[0.65rem]"
             aria-hidden="true"
           />
-          Edit your custom theme
+          Edit your theme
         </li>
         <li className="flex items-center gap-2 px-2 py-1.5 text-[var(--orbit-text)] text-[0.7rem] rounded-md">
           <i

@@ -21,15 +21,15 @@ import { useThemeSave } from './useThemeSave';
 import { useToast } from '../../../lib/hooks/useToast';
 
 /**
- * Full-page custom-theme editor reached from the user menu ("Create a custom
- * theme" / "Edit your custom theme").
+ * Full-page custom-theme editor reached from the user menu ("Create your
+ * theme" / "Edit your theme").
  *
  * The editor NEVER changes the global site theme. The custom palette is
  * previewed by scoping it (as inline custom properties via `contentThemeStyle`)
  * to the content columns below the header — so leaving the editor can't strand
  * the whole app on custom.
  *
- * The master-enable switch ("Use your own custom theme") gates everything:
+ * The master-enable switch ("Use your theme") gates everything:
  * while OFF the editor mirrors the current global theme (color pickers LOCKED,
  * read-only) so it looks like any other page. Flipping it ON for the FIRST time
  * snapshots the current theme's colors as the initial custom palette and
@@ -195,10 +195,10 @@ export default function ThemeEditor() {
       <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div className="min-w-0 sm:max-w-[50%]">
           <h1 className="text-[var(--base-text)] text-lg font-semibold">
-            Theme editor
+            Your theme
           </h1>
           <p className="mt-1 text-[var(--base-alt-text)] text-xs">
-            Create, edit, and preview custom themes.
+            Build your own theme and preview it live. Saves as you go.
           </p>
         </div>
 

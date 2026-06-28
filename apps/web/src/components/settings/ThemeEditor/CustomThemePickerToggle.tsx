@@ -58,15 +58,15 @@ export default function CustomThemePickerToggle({
           />
         </span>
         <span className="text-[var(--mount-text)] text-sm font-medium select-none">
-          Use your own custom theme
+          Use your theme
         </span>
       </label>
       <p
         id={TOGGLE_DESCRIPTION_ID}
         className="mt-1.5 max-w-prose text-[var(--mount-alt-text)] text-xs"
       >
-        Off by default. Flip it on to edit your colors here and show your custom
-        theme in the picker alongside the built-in ones.
+        Off by default. Flip it on to edit your colors here and show your theme
+        in the picker alongside the built-in ones.
       </p>
     </div>
   );

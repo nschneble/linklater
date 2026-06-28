@@ -54,7 +54,7 @@ afterEach(() => {
 });
 
 function getSwitch() {
-  return screen.getByRole('switch', { name: /use your own custom theme/i });
+  return screen.getByRole('switch', { name: /use your theme/i });
 }
 
 describe('ThemeEditor custom-theme panel', () => {
@@ -65,11 +65,13 @@ describe('ThemeEditor custom-theme panel', () => {
     // because `getByRole` throws on more than one match, the switch + group
     // lookups stand in for "exactly one" — guarding against the old
     // double-render.
+    // Both the page h1 and this card's h2 read "Your theme" now, so scope the
+    // card-heading lookup to level 2 to avoid matching the page title.
     expect(
-      screen.getByRole('heading', { name: /roll your own/i }),
+      screen.getByRole('heading', { level: 2, name: /your theme/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('switch', { name: /use your own custom theme/i }),
+      screen.getByRole('switch', { name: /use your theme/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('group', { name: /copy palette from theme/i }),

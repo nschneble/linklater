@@ -36,7 +36,7 @@ describe('AutoSaveStatus', () => {
         enabled
         isSaving={false}
         savedCount={0}
-        savedMessage="Custom theme saved."
+        savedMessage="Your theme saved."
         failingCount={0}
       />,
     );
@@ -49,7 +49,7 @@ describe('AutoSaveStatus', () => {
         enabled
         isSaving={false}
         savedCount={0}
-        savedMessage="Custom theme saved."
+        savedMessage="Your theme saved."
         failingCount={0}
       />,
     );
@@ -77,7 +77,7 @@ describe('AutoSaveStatus', () => {
         enabled
         isSaving={false}
         savedCount={0}
-        savedMessage="Custom theme saved."
+        savedMessage="Your theme saved."
         failingCount={0}
       />,
     );
@@ -100,12 +100,12 @@ describe('AutoSaveStatus', () => {
         enabled
         isSaving={false}
         savedCount={1}
-        savedMessage="Custom theme saved."
+        savedMessage="Your theme saved."
         failingCount={0}
       />,
     );
     flushAnnounce();
-    expect(status().textContent).toBe('Custom theme saved.');
+    expect(status().textContent).toBe('Your theme saved.');
 
     // Same message, next save: the clear-first step lets the live region re-fire.
     rerender(
@@ -113,14 +113,14 @@ describe('AutoSaveStatus', () => {
         enabled
         isSaving={false}
         savedCount={2}
-        savedMessage="Custom theme saved."
+        savedMessage="Your theme saved."
         failingCount={0}
       />,
     );
     // Immediately after the bump it clears, then repopulates on the timer.
     expect(status().textContent).toBe('');
     flushAnnounce();
-    expect(status().textContent).toBe('Custom theme saved.');
+    expect(status().textContent).toBe('Your theme saved.');
   });
 
   it('renders nothing while disabled (no saving, no live region)', () => {
@@ -129,7 +129,7 @@ describe('AutoSaveStatus', () => {
         enabled={false}
         isSaving={false}
         savedCount={3}
-        savedMessage="Custom theme saved."
+        savedMessage="Your theme saved."
         failingCount={0}
       />,
     );
@@ -143,7 +143,7 @@ describe('AutoSaveStatus', () => {
         enabled
         isSaving={false}
         savedCount={0}
-        savedMessage="Custom theme saved."
+        savedMessage="Your theme saved."
         failingCount={1}
       />,
     );
@@ -153,7 +153,7 @@ describe('AutoSaveStatus', () => {
         enabled
         isSaving={false}
         savedCount={0}
-        savedMessage="Custom theme saved."
+        savedMessage="Your theme saved."
         failingCount={2}
       />,
     );
