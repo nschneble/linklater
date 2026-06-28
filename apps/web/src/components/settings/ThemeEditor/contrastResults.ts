@@ -10,9 +10,9 @@ import {
 /**
  * Shared WCAG contrast computation for the theme editor's live contract
  * checking. Extracted so both `ContrastChecker` (the visible per-bundle
- * breakdown) and `ThemeSaveBar` (the failing-count warning at the Save
- * action) read a SINGLE source of truth – the a11y brief B5 mandates the
- * Save warning reuse ContrastChecker's computed failing count rather than
+ * breakdown) and `AutoSaveStatus` (the failing-count warning in the auto-save
+ * status) read a SINGLE source of truth – the a11y brief B5 mandates the
+ * warning reuse ContrastChecker's computed failing count rather than
  * recomputing it, so the two can never disagree.
  */
 

@@ -187,7 +187,7 @@ export default function TokenTree({
           className="w-full pl-7 pr-7 py-1.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] rounded-md"
         />
         <i
-          className="absolute left-2 top-1/2 -translate-y-1/2 fa-solid fa-magnifying-glass text-[0.6rem] text-[var(--mount-alt-text)]"
+          className="absolute left-2 top-1/2 -translate-y-1/2 fa-solid fa-magnifying-glass text-[var(--mount-alt-text)] text-[0.6rem]"
           aria-hidden="true"
         />
         {query !== '' && (
@@ -229,7 +229,7 @@ export default function TokenTree({
       {filteredGroups.length === 0 ? (
         <p
           role="note"
-          className="text-[var(--mount-alt-text)] text-xs italic py-4 text-center"
+          className="py-4 text-[var(--mount-alt-text)] text-xs italic text-center"
         >
           No tokens match &ldquo;{query}&rdquo;.
         </p>
@@ -242,7 +242,7 @@ export default function TokenTree({
             <section
               key={group.bundle}
               aria-labelledby={headingId}
-              className="border-b border-[var(--mount-border)] last:border-0 pb-3 last:pb-0"
+              className="pb-3 last:pb-0 border-b border-[var(--mount-border)] last:border-0"
             >
               <h3
                 id={headingId}
@@ -256,7 +256,7 @@ export default function TokenTree({
                   className="group w-full flex items-center gap-2 py-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded cursor-pointer"
                 >
                   <i
-                    className="fa-solid fa-chevron-right text-[0.55rem] text-[var(--mount-alt-text)] group-aria-expanded:rotate-90 transition-transform duration-150"
+                    className="fa-solid fa-chevron-right text-[var(--mount-alt-text)] text-[0.55rem] group-aria-expanded:rotate-90 transition-transform duration-150"
                     aria-hidden="true"
                   />
                   <span>{group.label}</span>

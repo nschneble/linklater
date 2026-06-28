@@ -1,4 +1,8 @@
-import { isValidColorValue, normalizeToSixDigitHex } from './hexColor';
+import {
+  isSixDigitHex,
+  isValidColorValue,
+  normalizeToSixDigitHex,
+} from './hexColor';
 import { isAlphaValue, type ThemeVariable } from './useThemeOverrides';
 import { useEffect, useState } from 'react';
 import type { TokenContrastFailure } from './contrastResults';
@@ -91,9 +95,7 @@ export default function ColorRow({
   // The native color picker cannot represent alpha (it only does 6-digit hex),
   // so alpha rows disable it and keep editing through the text input.
   const pickerDisabled = isAlpha;
-  const pickerValue = /^#[0-9a-fA-F]{6}$/.test(inputValue)
-    ? inputValue
-    : '#000000';
+  const pickerValue = isSixDigitHex(inputValue) ? inputValue : '#000000';
   const swatchBackground = isAlpha ? currentValue : pickerValue;
   const pickerAriaLabel = `Color picker for ${bundleLabel} ${label.toLowerCase()}`;
   const textAriaLabel = `Value for ${bundleLabel} ${label.toLowerCase()}`;
@@ -117,7 +119,7 @@ export default function ColorRow({
           type="color"
           value={pickerValue}
           onChange={handleColorPickerChange}
-          className="absolute inset-0 opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
           aria-label={pickerAriaLabel}
           disabled={pickerDisabled}
           aria-disabled={pickerDisabled}

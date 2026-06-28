@@ -10,7 +10,13 @@
  */
 
 import ThemeEditor from './index';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { updateMe } from '../../../lib/api';
 import { readThemeTokens } from './themeProbe';
@@ -64,6 +70,17 @@ afterEach(() => {
  */
 function editBaseBackground(value = '#123456') {
   const picker = screen.getByLabelText('Page color');
+  fireEvent.change(picker, { target: { value } });
+}
+
+/**
+ * Fires a native-picker change on one of the multi-token knobs (Accent → the
+ * three `*-highlight` tokens; Text → the three `*-text` tokens). The single
+ * gesture must flatten EVERY constituent token, so these exercise the path a
+ * single-token-only regression would silently break.
+ */
+function editKnobColor(word: 'Accent' | 'Text', value: string) {
+  const picker = screen.getByLabelText(`${word} color`);
   fireEvent.change(picker, { target: { value } });
 }
 
@@ -200,5 +217,145 @@ describe('ThemeEditor revert off-ramp', () => {
     expect(
       await screen.findByText(/could not update the custom theme setting/i),
     ).toBeInTheDocument();
+  });
+});
+
+/*
+ * Multi-token engage coverage. A knob (Accent, Text) edits THREE tokens in one
+ * gesture; the engage seed + the persisted palette must carry all three, not
+ * just the representative `--base-*` slot. The code is already correct — these
+ * lock it so a regression that wrote only the first token would turn red.
+ */
+describe('ThemeEditor go-custom-on-first-edit (multi-token knobs)', () => {
+  it('seeds ALL THREE accent tokens into the edited (dark) map, not just --base-highlight', async () => {
+    render(<ThemeEditor />);
+    editKnobColor('Accent', '#123456');
+
+    const seed = (
+      mockTheme.setCustomTheme as ReturnType<typeof vi.fn>
+    ).mock.calls.at(-1)?.[0];
+    expect(seed.dark).toEqual(
+      expect.objectContaining({
+        '--base-highlight': '#123456',
+        '--mount-highlight': '#123456',
+        '--orbit-highlight': '#123456',
+      }),
+    );
+
+    await waitFor(() =>
+      expect(updateMe).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customThemeEnabled: true,
+          customTheme: expect.objectContaining({
+            dark: expect.objectContaining({
+              '--base-highlight': '#123456',
+              '--mount-highlight': '#123456',
+              '--orbit-highlight': '#123456',
+            }),
+          }),
+        }),
+      ),
+    );
+  });
+
+  it('seeds ALL THREE text tokens into the edited (dark) map, not just --base-text', async () => {
+    render(<ThemeEditor />);
+    editKnobColor('Text', '#654321');
+
+    const seed = (
+      mockTheme.setCustomTheme as ReturnType<typeof vi.fn>
+    ).mock.calls.at(-1)?.[0];
+    expect(seed.dark).toEqual(
+      expect.objectContaining({
+        '--base-text': '#654321',
+        '--mount-text': '#654321',
+        '--orbit-text': '#654321',
+      }),
+    );
+    await waitFor(() => expect(updateMe).toHaveBeenCalled());
+  });
+});
+
+describe('ThemeEditor re-engage merge (multi-token knobs)', () => {
+  it('merges ALL THREE accent tokens into the existing saved palette', async () => {
+    // Post-revert state: a saved palette exists but custom is off.
+    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
+    render(<ThemeEditor />);
+    editKnobColor('Accent', '#123456');
+
+    const expectedSeed = {
+      dark: {
+        '--mount-bg': '#abc',
+        '--base-highlight': '#123456',
+        '--mount-highlight': '#123456',
+        '--orbit-highlight': '#123456',
+      },
+      light: {},
+    };
+    expect(mockTheme.setCustomTheme).toHaveBeenCalledWith(expectedSeed);
+    await waitFor(() =>
+      expect(updateMe).toHaveBeenCalledWith({
+        customThemeEnabled: true,
+        customTheme: expectedSeed,
+      }),
+    );
+  });
+});
+
+describe('ThemeEditor engage double-fire guard', () => {
+  it('fires the engage PATCH once across a picker drag burst', () => {
+    // Hold the engage PATCH pending so `engagingReference` stays locked while
+    // a second change arrives (simulating a native picker's drag burst).
+    (updateMe as ReturnType<typeof vi.fn>).mockReturnValue(
+      new Promise(() => {}),
+    );
+    render(<ThemeEditor />);
+
+    const picker = screen.getByLabelText('Accent color');
+    fireEvent.change(picker, { target: { value: '#111111' } });
+    fireEvent.change(picker, { target: { value: '#222222' } });
+
+    // The lock collapses the two into a single engage.
+    expect(updateMe).toHaveBeenCalledTimes(1);
+    expect(mockTheme.setCustomThemeEnabled).toHaveBeenCalledTimes(1);
+    expect(mockTheme.setCustomThemeEnabled).toHaveBeenCalledWith(true);
+  });
+});
+
+describe('ThemeEditor knob edit while already custom', () => {
+  it('takes the scheduled-save path, never re-engaging, and persists the flatten', async () => {
+    vi.useFakeTimers();
+    try {
+      mockTheme.customThemeEnabled = true;
+      mockTheme.customTheme = { dark: { '--base-bg': '#abc' }, light: {} };
+      render(<ThemeEditor />);
+
+      editKnobColor('Accent', '#123456');
+
+      // No engage: the enable flag is never re-flipped, and no synchronous
+      // engage PATCH fires (the auto-save is debounced, not yet sent).
+      expect(mockTheme.setCustomThemeEnabled).not.toHaveBeenCalled();
+      expect(updateMe).not.toHaveBeenCalled();
+
+      // The debounced auto-save flushes the REAL flatten: every accent token
+      // (via the actual `setOverride` loop) lands in the persisted palette.
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      expect(updateMe).toHaveBeenCalledWith({
+        customTheme: expect.objectContaining({
+          dark: expect.objectContaining({
+            '--base-highlight': '#123456',
+            '--mount-highlight': '#123456',
+            '--orbit-highlight': '#123456',
+          }),
+        }),
+      });
+      // Still no engage PATCH ({ customThemeEnabled: true, ... }) anywhere.
+      expect(mockTheme.setCustomThemeEnabled).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -196,6 +196,14 @@ export default function ThemeEditor() {
 
       setCustomTheme(seeded);
       try {
+        // This engage PATCH is fired DIRECTLY, outside `useThemeAutoSave`'s
+        // in-flight serialization (`flush`), because it must atomically carry
+        // BOTH the enable flag and the freshly-probed seed AND own its own
+        // optimistic enable/palette rollback — none of which the serialized
+        // current-mode `save` path models. It is not racy in practice: engage
+        // is triggered by the FIRST edit, while any scheduled save can only be
+        // armed by a LATER edit (custom is now on) and won't flush until 700ms
+        // after that, by which point this engage PATCH has long since landed.
         await updateMe({ customThemeEnabled: true, customTheme: seeded });
         announce('Your theme is on and saved.');
       } catch {

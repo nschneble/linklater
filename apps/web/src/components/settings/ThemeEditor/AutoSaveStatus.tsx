@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
 
 interface AutoSaveStatusProps {
-  /** Whether the custom theme is enabled (editable + saving). */
+  /** Whether the custom theme is enabled (active + saving). */
   enabled: boolean;
   /** Whether a save round-trip is currently in flight. */
   isSaving: boolean;
@@ -35,8 +35,9 @@ interface AutoSaveStatusProps {
  * (a11y brief B2/B5). Save FAILURES are announced separately by the editor's
  * assertive Toast — they never share this polite channel.
  *
- * For the built-in themes (preview-only, never persisted) it states that edits
- * are a live preview and only the custom theme saves.
+ * While the custom theme is off, the whole visible affordance drops away and
+ * only the unconditional sr-only live region remains mounted (so a revert can
+ * still be announced through it).
  */
 export default function AutoSaveStatus({
   enabled,
@@ -68,8 +69,7 @@ export default function AutoSaveStatus({
   // announce the revert ("Your theme is off.") through it — if it unmounted with
   // the rest of the affordance, that utterance would be lost (a11y brief §3).
   // The VISIBLE "Saving…/Saved" affordance + the contrast chip stay gated on
-  // `enabled`: there is nothing to save while custom is off, and the locked
-  // state is conveyed elsewhere.
+  // `enabled`: there is nothing to save while custom is off.
   return (
     <div className="flex flex-col items-end gap-1">
       {enabled && (

@@ -201,7 +201,7 @@ export default function KnobRow({
             type="color"
             value={pickerValue}
             onChange={handlePickerChange}
-            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
             aria-label={`${word} color`}
             disabled={pickerDisabled}
             aria-disabled={pickerDisabled}
