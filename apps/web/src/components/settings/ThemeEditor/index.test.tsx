@@ -96,7 +96,7 @@ describe('ThemeEditor custom-theme panel', () => {
     // The master switch is gone — going custom is an edit, not a toggle.
     expect(screen.queryByRole('switch')).toBeNull();
     expect(
-      screen.getByRole('group', { name: /start from a theme/i }),
+      screen.getByRole('group', { name: /copy a palette/i }),
     ).toBeInTheDocument();
     // The off-ramp only shows once custom is active.
     expect(

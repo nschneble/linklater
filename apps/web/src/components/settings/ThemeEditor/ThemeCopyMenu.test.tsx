@@ -22,7 +22,7 @@ function renderMenu(props: Partial<Parameters<typeof ThemeCopyMenu>[0]> = {}) {
   render(
     <ThemeCopyMenu
       options={OPTIONS}
-      label="Copy palette from theme"
+      label="Start from a theme"
       onActivate={onActivate}
       {...props}
     />,
@@ -31,11 +31,11 @@ function renderMenu(props: Partial<Parameters<typeof ThemeCopyMenu>[0]> = {}) {
 }
 
 function getTrigger() {
-  return screen.getByRole('button', { name: 'Copy palette from theme' });
+  return screen.getByRole('button', { name: 'Start from a theme' });
 }
 
 function getMenu() {
-  return screen.getByRole('menu', { name: 'Copy palette from theme' });
+  return screen.getByRole('menu', { name: 'Start from a theme' });
 }
 
 function openMenu() {
@@ -141,7 +141,7 @@ describe('ThemeCopyMenu', () => {
       <ThemeCopyMenu
         ref={ref}
         options={OPTIONS}
-        label="Copy palette from theme"
+        label="Start from a theme"
         onActivate={vi.fn()}
       />,
     );

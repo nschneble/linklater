@@ -279,40 +279,13 @@ export interface TokenContrastFailure {
 }
 
 /**
- * Builds a map from each token (a pair's FOREGROUND variable) to its worst
- * failing pair – the one furthest below threshold. Tokens that appear as a
- * foreground in several pairs (e.g. the focus ring across three bgs) report
- * their single most severe failure so the row note stays focused.
- */
-export function tokenContrastFailures(
-  results: ContrastResults,
-): Map<string, TokenContrastFailure> {
-  const failures = new Map<string, TokenContrastFailure>();
-  for (const group of results.groups) {
-    for (const { pair, ratio } of group.pairs) {
-      if (ratio === null || ratio >= pair.threshold) continue;
-      const deficit = pair.threshold - ratio;
-      const existing = failures.get(pair.foreground);
-      if (existing && existing.threshold - existing.ratio >= deficit) continue;
-      failures.set(pair.foreground, {
-        ratio,
-        threshold: pair.threshold,
-        pairLabel: pair.label,
-      });
-    }
-  }
-  return failures;
-}
-
-/**
- * Like `tokenContrastFailures`, but keys each failing pair under BOTH its
- * foreground AND its background token, so a token that fails only as a
- * BACKGROUND (e.g. a too-light `--mount-bg` under card text) still reports a
- * failure. Used by the knobs (whose representative token is often a background)
- * so a contrast problem surfaces ON THE KNOB rather than being buried in the
- * drawer. Reuses the ratios already computed by `useContrastResults` — it makes
- * NO new `computeContrastRatio` calls — so coverage stays identical to the
- * foreground-keyed view, just regrouped by both endpoints.
+ * Keys each failing pair under BOTH its foreground AND its background token, so
+ * a token that fails only as a BACKGROUND (e.g. a too-light `--mount-bg` under
+ * card text) still reports a failure. Used by the knobs (whose representative
+ * token is often a background) so a contrast problem surfaces ON THE KNOB
+ * rather than being buried in the drawer. Reuses the ratios already computed by
+ * `useContrastResults` — it makes NO new `computeContrastRatio` calls — so a
+ * failing pair is reachable from either of its two endpoint controls.
  */
 export function pairsTouchingToken(
   results: ContrastResults,

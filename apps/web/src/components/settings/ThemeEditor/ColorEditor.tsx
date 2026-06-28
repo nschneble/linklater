@@ -95,7 +95,7 @@ export default function ColorEditor({
     <div className="space-y-3">
       {/* Light/Dark palette selector — the FIRST control in the card so DOM
           order matches the read flow ("choose a mode, then edit"). It re-points
-          this card + the Contrast and Components cards to that mode's palette
+          this card and the Components preview to that mode's palette
           WITHOUT touching the global site mode (a binary toggle, not a tablist:
           there is no single panel to own). The group label names the
           consequence so the pressed state self-documents — no live region. */}
@@ -125,7 +125,7 @@ export default function ColorEditor({
 
       <KnobPanel
         colorValues={colorValues}
-        knobFailures={failures}
+        contrastFailures={failures}
         onKnobOverride={onKnobOverride}
       />
 

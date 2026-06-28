@@ -49,7 +49,7 @@ export default function CustomThemeOffRamp({
       )}
       <p
         id={DESCRIPTION_ID}
-        className={`${active ? 'mt-1.5' : ''} max-w-prose text-[var(--mount-alt-text)] text-xs`}
+        className={`max-w-prose ${active ? 'mt-1.5' : ''} text-[var(--mount-alt-text)] text-xs`}
       >
         {active
           ? `Editing any color saves it as your theme. “Back to ${baseThemeLabel}” returns to that theme — your colors are kept.`

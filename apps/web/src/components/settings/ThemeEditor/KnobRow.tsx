@@ -44,7 +44,7 @@ interface KnobRowProps {
    * Worst failing pair keyed by EITHER endpoint token (`pairsTouchingToken`),
    * so a too-light knob background flags on the knob, not buried in the drawer.
    */
-  knobFailures: Map<string, TokenContrastFailure>;
+  contrastFailures: Map<string, TokenContrastFailure>;
   /** Flattens every constituent token to `value` in one write. */
   onKnobOverride: (variables: ThemeVariable[], value: string) => void;
 }
@@ -73,7 +73,7 @@ export default function KnobRow({
   tokens,
   helpText,
   colorValues,
-  knobFailures,
+  contrastFailures,
   onKnobOverride,
 }: KnobRowProps) {
   const representative = colorValues[tokens[0]] ?? '';
@@ -98,13 +98,13 @@ export default function KnobRow({
       | { token: ThemeVariable; failure: TokenContrastFailure; deficit: number }
       | undefined;
     for (const token of tokens) {
-      const failure = knobFailures.get(token);
+      const failure = contrastFailures.get(token);
       if (!failure) continue;
       const deficit = failure.threshold - failure.ratio;
       if (!best || deficit > best.deficit) best = { token, failure, deficit };
     }
     return best;
-  }, [tokens, knobFailures]);
+  }, [tokens, contrastFailures]);
 
   // Debounce the contrast note like the drawer rows so a mid-drag value does
   // not thrash it; `aria-invalid` tracks the live state undebounced.
@@ -186,7 +186,7 @@ export default function KnobRow({
       <div
         role="group"
         aria-labelledby={wordId}
-        className="flex flex-1 min-w-0 items-center gap-2"
+        className="flex flex-1 items-center gap-2 min-w-0"
       >
         <label
           className="relative shrink-0 focus-within:ring-2 focus-within:ring-[var(--focus-ring)] focus-within:ring-offset-1 focus-within:ring-offset-[var(--mount-bg)] rounded-md cursor-pointer aria-disabled:cursor-not-allowed"
@@ -247,7 +247,7 @@ export default function KnobRow({
         </span>
       )}
 
-      {formatError ? (
+      {formatError && (
         <p
           id={formatErrorId}
           className="flex basis-full items-center gap-1 text-[var(--alert-highlight)] text-[0.6rem]"
@@ -258,19 +258,18 @@ export default function KnobRow({
           />
           Not a valid hex color — use #RRGGBB
         </p>
-      ) : (
-        debouncedFailure && (
-          <p
-            id={failureId}
-            className="flex basis-full items-center gap-1 text-[var(--alert-highlight)] text-[0.6rem]"
-          >
-            <i
-              className="fa-solid fa-triangle-exclamation text-[0.55rem]"
-              aria-hidden="true"
-            />
-            {failureNote}
-          </p>
-        )
+      )}
+      {!formatError && debouncedFailure && (
+        <p
+          id={failureId}
+          className="flex basis-full items-center gap-1 text-[var(--alert-highlight)] text-[0.6rem]"
+        >
+          <i
+            className="fa-solid fa-triangle-exclamation text-[0.55rem]"
+            aria-hidden="true"
+          />
+          {failureNote}
+        </p>
       )}
     </div>
   );

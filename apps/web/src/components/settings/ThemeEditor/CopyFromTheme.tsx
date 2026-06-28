@@ -78,7 +78,7 @@ export default function CopyFromTheme({
   return (
     <div
       role="group"
-      aria-label="Start from a theme"
+      aria-label="Copy a palette"
       className="flex flex-1 flex-col gap-1.5"
     >
       <div className="flex flex-wrap items-center justify-end gap-2">

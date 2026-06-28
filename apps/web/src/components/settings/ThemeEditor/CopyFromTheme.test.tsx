@@ -37,8 +37,10 @@ function getTrigger() {
 describe('CopyFromTheme', () => {
   it('groups the menu under a labelled group', () => {
     renderControl();
+    // The group is named distinctly from its menu trigger ("Start from a
+    // theme") so a screen reader doesn't hear the same phrase twice.
     expect(
-      screen.getByRole('group', { name: /start from a theme/i }),
+      screen.getByRole('group', { name: /copy a palette/i }),
     ).toBeInTheDocument();
   });
 

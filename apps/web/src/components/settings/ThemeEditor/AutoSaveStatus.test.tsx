@@ -210,8 +210,13 @@ describe('AutoSaveStatus – contrast chip three states (GAP1)', () => {
 
   it('failing only → triangle, amber, "N contrast pairs failing"', () => {
     renderChip(2, 0);
-    expect(screen.getByText('2 contrast pairs failing')).toBeInTheDocument();
+    const chip = screen.getByText('2 contrast pairs failing');
+    expect(chip).toBeInTheDocument();
     expect(chipIcon()).toHaveClass('fa-triangle-exclamation');
+    // The chip is a FIXED escape-hatch color (it warns about the very palette it
+    // can't paint from), so a regression flipping the proven-failure amber must
+    // be caught here, not just the icon/text.
+    expect(chip).toHaveStyle({ color: '#92400e' });
   });
 
   it('failing + unverified → triangle, "N failing · K unverified"', () => {
@@ -222,10 +227,14 @@ describe('AutoSaveStatus – contrast chip three states (GAP1)', () => {
 
   it('unverified only → info glyph (NOT triangle), "K pairs unverified"', () => {
     renderChip(0, 4);
-    expect(screen.getByText('4 pairs unverified')).toBeInTheDocument();
+    const chip = screen.getByText('4 pairs unverified');
+    expect(chip).toBeInTheDocument();
     // Nothing is proven broken, so it must NOT read as a warning.
     expect(chipIcon()).toHaveClass('fa-circle-info');
     expect(chipIcon()).not.toHaveClass('fa-triangle-exclamation');
+    // Neutral fixed color, distinct from the amber failure chip — a regression
+    // that re-tints this as a warning amber must fail here.
+    expect(chip).toHaveStyle({ color: '#0a0a0a' });
   });
 
   it('singularizes the unverified-only copy', () => {

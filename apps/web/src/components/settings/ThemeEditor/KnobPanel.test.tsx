@@ -27,13 +27,13 @@ function buildColorValues(
 
 function renderKnobs(
   colorValues = buildColorValues(),
-  knobFailures: Map<string, TokenContrastFailure> = new Map(),
+  contrastFailures: Map<string, TokenContrastFailure> = new Map(),
 ) {
   const onKnobOverride = vi.fn();
   render(
     <KnobPanel
       colorValues={colorValues}
-      knobFailures={knobFailures}
+      contrastFailures={contrastFailures}
       onKnobOverride={onKnobOverride}
     />,
   );

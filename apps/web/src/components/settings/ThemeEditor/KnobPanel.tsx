@@ -42,7 +42,7 @@ interface KnobPanelProps {
    * Worst failing pair keyed by EITHER endpoint (`pairsTouchingToken`), so a
    * too-light Page/Cards/Alerts background flags on its knob.
    */
-  knobFailures: Map<string, TokenContrastFailure>;
+  contrastFailures: Map<string, TokenContrastFailure>;
   /** Flattens every constituent token of a knob to the new value. */
   onKnobOverride: (variables: ThemeVariable[], value: string) => void;
 }
@@ -55,7 +55,7 @@ interface KnobPanelProps {
  */
 export default function KnobPanel({
   colorValues,
-  knobFailures,
+  contrastFailures,
   onKnobOverride,
 }: KnobPanelProps) {
   return (
@@ -68,7 +68,7 @@ export default function KnobPanel({
           tokens={knob.tokens}
           helpText={knob.helpText}
           colorValues={colorValues}
-          knobFailures={knobFailures}
+          contrastFailures={contrastFailures}
           onKnobOverride={onKnobOverride}
         />
       ))}

@@ -379,7 +379,7 @@ const ThemeCopyMenu = forwardRef<HTMLButtonElement, ThemeCopyMenuProps>(
                   if (!option.disabled) setActiveId(option.id);
                 }}
                 onClick={() => activate(option.id)}
-                className="group flex items-center gap-2 w-full px-3 py-2 text-[var(--orbit-text)] text-left text-xs data-[active=true]:bg-[var(--orbit-highlight)] data-[active=true]:text-[var(--orbit-highlight-fg)] data-[active=true]:ring-2 data-[active=true]:ring-inset data-[active=true]:ring-blue-500 forced-colors:data-[active=true]:outline forced-colors:data-[active=true]:outline-2 aria-disabled:opacity-50 aria-disabled:cursor-not-allowed cursor-pointer"
+                className="group flex items-center gap-2 w-full px-3 py-2 text-[var(--orbit-text)] text-left text-xs data-[active=true]:bg-[var(--orbit-highlight)] data-[active=true]:text-[var(--orbit-highlight-fg)] data-[active=true]:ring-2 data-[active=true]:ring-inset data-[active=true]:ring-blue-500 forced-colors:data-[active=true]:outline forced-colors:data-[active=true]:outline-2 cursor-pointer aria-disabled:opacity-50 aria-disabled:cursor-not-allowed"
               >
                 <ThemeRowContent
                   label={option.label}

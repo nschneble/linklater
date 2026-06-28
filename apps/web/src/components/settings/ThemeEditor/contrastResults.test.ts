@@ -15,10 +15,9 @@ import {
   KNOB_TOKENS,
   pairsForBundle,
   pairsTouchingToken,
-  tokenContrastFailures,
 } from './contrastResults';
 import type { ContrastPair, ContrastResults } from './contrastResults';
-import { BUNDLES, EDITABLE_VARS } from './useThemeOverrides';
+import { BUNDLES, EDITABLE_VARS, VAR_GROUPS } from './useThemeOverrides';
 
 /** Every contract pair the live checker evaluates: per-bundle plus focus ring. */
 function allContractPairs(): ContrastPair[] {
@@ -125,42 +124,6 @@ const STATIC_CONTRACT: ReadonlyArray<{
   { fg: 'highlight-fg', bg: 'highlight-hover', threshold: 4.5 },
 ];
 
-describe('tokenContrastFailures worst-failure selection', () => {
-  it('keeps the failure with the larger deficit when one token fails two pairs of different thresholds', () => {
-    // Same foreground token in two failing pairs with DIFFERENT thresholds.
-    // Pair A: ratio 2.6 vs threshold 3 → deficit 0.4 (the milder failure).
-    // Pair B: ratio 4.0 vs threshold 4.5 → deficit 0.5 (the worse failure).
-    // The worse failure (B) must win regardless of pair order.
-    const milder = makePair({
-      label: 'token / border',
-      criterion: '1.4.11',
-      threshold: 3,
-    });
-    const worse = makePair({
-      label: 'token / text',
-      criterion: '1.4.3',
-      threshold: 4.5,
-    });
-    const results: ContrastResults = {
-      groups: [
-        {
-          bundle: 'mount',
-          label: 'mount',
-          pairs: [
-            { pair: milder, ratio: 2.6 },
-            { pair: worse, ratio: 4.0 },
-          ],
-        },
-      ],
-    } as unknown as ContrastResults;
-
-    const failure = tokenContrastFailures(results).get('--token');
-    expect(failure?.pairLabel).toBe('token / text');
-    expect(failure?.ratio).toBe(4.0);
-    expect(failure?.threshold).toBe(4.5);
-  });
-});
-
 describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
   it('reports a failure under the background token, not just the foreground', () => {
     // A too-light `--mount-bg` makes "text / bg" fail; the knob whose
@@ -184,11 +147,10 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
     } as unknown as ContrastResults;
 
     const touching = pairsTouchingToken(results);
-    // Both endpoints carry the failure…
+    // Both endpoints carry the failure — including the background token, which
+    // a foreground-only view would have omitted.
     expect(touching.get('--mount-text')?.ratio).toBe(2.8);
     expect(touching.get('--mount-bg')?.ratio).toBe(2.8);
-    // …whereas the foreground-keyed view omits the background token.
-    expect(tokenContrastFailures(results).get('--mount-bg')).toBeUndefined();
   });
 
   it('makes no entry for passing or unverified pairs', () => {
@@ -223,6 +185,24 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
  *       token renders a drawer row, and the rows read the both-endpoints map)
  *   (c) the TOGGLE BADGE — pairs with neither endpoint a knob ("drawer-only")
  */
+describe('C1 premise: every drawer row is an editable token (VAR_GROUPS ⇄ EDITABLE_VARS)', () => {
+  it('renders exactly one drawer row per editable token, no more no less', () => {
+    // The C1 test asserts every contract-pair endpoint is in EDITABLE_VARS
+    // ("has a drawer row"), but the drawer actually renders rows from
+    // VAR_GROUPS[].items. They are equal only by parallel construction —
+    // EDITABLE_VARS flatMaps the slot arrays in customThemeTokens.ts while
+    // VAR_GROUPS branches per-bundle in useThemeOverrides.ts, two independent
+    // build-ups. This locks them in lockstep (like the KNOB_TOKENS guard) so a
+    // future VAR_GROUPS filter can't silently drop a drawer row while C1 stays
+    // green. The set equality is bidirectional: a dropped row OR an extra
+    // editable token both fail.
+    const drawerRows = new Set(
+      VAR_GROUPS.flatMap((group) => group.items.map((item) => item.variable)),
+    );
+    expect(drawerRows).toEqual(new Set(EDITABLE_VARS));
+  });
+});
+
 describe('C1: every failing pair self-reports inline (card retired)', () => {
   const editable = new Set<string>(EDITABLE_VARS);
 
