@@ -1,5 +1,5 @@
 import CopyFromTheme from './CopyFromTheme';
-import CustomThemeOffRamp from './CustomThemePickerToggle';
+import CustomThemeOffRamp from './CustomThemeOffRamp';
 import SettingsGroup from '../SettingsGroup';
 import type { BaseTheme } from '../../../theme/constants';
 
@@ -44,7 +44,7 @@ export default function CustomThemePanel({
   return (
     <SettingsGroup
       id="custom-theme"
-      title="Your theme"
+      title="Theme starting point"
       icon="fa-paintbrush"
       description="Start from a blank palette, or copy a theme you already like."
     >

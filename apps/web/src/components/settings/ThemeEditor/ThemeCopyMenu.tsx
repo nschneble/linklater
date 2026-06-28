@@ -9,6 +9,7 @@ import {
 import { EDITOR_FOCUS_RING, ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
 import { menuRevealStyle } from '../../../lib/styles';
 import { useReducedMotion } from '../../../lib/hooks/useReducedMotion';
+import ThemeRowContent from '../../common/ThemeRowContent';
 
 /** A single selectable row in the copy menu. */
 export interface ThemeMenuOption {
@@ -380,17 +381,15 @@ const ThemeCopyMenu = forwardRef<HTMLButtonElement, ThemeCopyMenuProps>(
                 onClick={() => activate(option.id)}
                 className="group flex items-center gap-2 w-full px-3 py-2 text-[var(--orbit-text)] text-left text-xs data-[active=true]:bg-[var(--orbit-highlight)] data-[active=true]:text-[var(--orbit-highlight-fg)] data-[active=true]:ring-2 data-[active=true]:ring-inset data-[active=true]:ring-blue-500 forced-colors:data-[active=true]:outline forced-colors:data-[active=true]:outline-2 aria-disabled:opacity-50 aria-disabled:cursor-not-allowed cursor-pointer"
               >
-                <Swatch icon={option.swatchIcon} accent={option.accent} />
-                <span className="flex-1 truncate">{option.label}</span>
-                {option.isAccessible && (
-                  <>
-                    <i
-                      className="fa-solid fa-universal-access shrink-0"
-                      aria-hidden="true"
-                    />
-                    <span className="sr-only">Accessible theme</span>
-                  </>
-                )}
+                <ThemeRowContent
+                  label={option.label}
+                  truncateLabel
+                  swatchIcon={option.swatchIcon}
+                  accent={option.accent}
+                  swatchSize="w-3.5 h-3.5"
+                  glyphSize="text-[0.5rem]"
+                  isAccessible={option.isAccessible}
+                />
               </button>
             );
           })}
@@ -401,31 +400,3 @@ const ThemeCopyMenu = forwardRef<HTMLButtonElement, ThemeCopyMenuProps>(
 );
 
 export default ThemeCopyMenu;
-
-interface SwatchProps {
-  icon?: string;
-  accent?: string;
-}
-
-/**
- * Color dot with an overlaid film glyph, mirroring the user-menu picker. When
- * an `accent` is given the dot uses it with a white glyph (theme identity);
- * otherwise it falls back to the orbit alt-text fill with an orbit-bg glyph so
- * it tracks the popup surface.
- */
-function Swatch({ icon, accent }: SwatchProps) {
-  return (
-    <span
-      className="relative shrink-0 inline-flex items-center justify-center w-3.5 h-3.5 bg-[var(--orbit-alt-text)] rounded-full"
-      style={accent ? { backgroundColor: accent } : undefined}
-    >
-      {icon && (
-        <i
-          className={`fa-solid ${icon} text-[var(--orbit-bg)] text-[0.5rem]`}
-          style={accent ? { color: '#ffffff' } : undefined}
-          aria-hidden="true"
-        />
-      )}
-    </span>
-  );
-}

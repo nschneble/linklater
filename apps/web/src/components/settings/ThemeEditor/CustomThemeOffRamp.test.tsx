@@ -5,7 +5,7 @@
  * hatch colors (never bundle tokens) so it stays legible on a hostile palette.
  */
 
-import CustomThemeOffRamp from './CustomThemePickerToggle';
+import CustomThemeOffRamp from './CustomThemeOffRamp';
 import { ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';

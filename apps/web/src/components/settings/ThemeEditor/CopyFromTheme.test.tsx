@@ -1,5 +1,5 @@
 /*
- * Tests for CopyFromTheme – the "Copy palette from theme" menu control.
+ * Tests for CopyFromTheme – the "Start from a theme" menu control.
  *
  * Covers the redesigned flow: picking a theme is a one-step ACTION (apply +
  * autosave, no Copy button), the menu is aria-disabled until the custom theme
@@ -31,14 +31,14 @@ function renderControl(
 }
 
 function getTrigger() {
-  return screen.getByRole('button', { name: /copy palette from theme/i });
+  return screen.getByRole('button', { name: /start from a theme/i });
 }
 
 describe('CopyFromTheme', () => {
   it('groups the menu under a labelled group', () => {
     renderControl();
     expect(
-      screen.getByRole('group', { name: /copy palette from theme/i }),
+      screen.getByRole('group', { name: /start from a theme/i }),
     ).toBeInTheDocument();
   });
 
@@ -46,7 +46,7 @@ describe('CopyFromTheme', () => {
     const { onApply } = renderControl();
     expect(screen.queryByRole('button', { name: /^copy$/i })).toBeNull();
     fireEvent.click(getTrigger());
-    const menu = screen.getByRole('menu', { name: /copy palette from theme/i });
+    const menu = screen.getByRole('menu', { name: /start from a theme/i });
     fireEvent.click(
       within(menu).getByRole('menuitem', { name: /apollo 10½/i }),
     );
@@ -74,7 +74,7 @@ describe('CopyFromTheme', () => {
     const { onPreviewTheme } = renderControl();
     fireEvent.click(getTrigger());
     expect(onPreviewTheme).toHaveBeenLastCalledWith('apollo-10-1-2');
-    const menu = screen.getByRole('menu', { name: /copy palette from theme/i });
+    const menu = screen.getByRole('menu', { name: /start from a theme/i });
     fireEvent.keyDown(menu, { key: 'Escape' });
     expect(onPreviewTheme).toHaveBeenLastCalledWith(null);
   });

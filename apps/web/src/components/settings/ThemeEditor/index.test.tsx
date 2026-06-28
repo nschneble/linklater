@@ -88,15 +88,15 @@ describe('ThemeEditor custom-theme panel', () => {
   it('renders the master-control card heading + copy control, no master switch', () => {
     render(<ThemeEditor />);
 
-    // The card reuses SettingsGroup chrome; both the page h1 and the card h2
-    // read "Your theme", so scope the card heading to level 2.
+    // The card reuses SettingsGroup chrome; its h2 is distinct from the page
+    // h1 "Your theme" so the heading is descriptive, not a duplicate (SC 2.4.6).
     expect(
-      screen.getByRole('heading', { level: 2, name: /your theme/i }),
+      screen.getByRole('heading', { level: 2, name: /theme starting point/i }),
     ).toBeInTheDocument();
     // The master switch is gone — going custom is an edit, not a toggle.
     expect(screen.queryByRole('switch')).toBeNull();
     expect(
-      screen.getByRole('group', { name: /copy palette from theme/i }),
+      screen.getByRole('group', { name: /start from a theme/i }),
     ).toBeInTheDocument();
     // The off-ramp only shows once custom is active.
     expect(

@@ -38,7 +38,7 @@ interface CopyFromThemeProps {
 }
 
 /**
- * "Copy palette from theme" control: a themed MENU whose rows are ACTIONS.
+ * "Start from a theme" control: a themed MENU whose rows are ACTIONS.
  * Picking a theme applies its current-mode palette to the custom theme
  * immediately and autosaves; an Undo button then appears to revert (recoverable
  * per SC 3.3.6, announced via the editor's polite auto-save region). There is
@@ -78,7 +78,7 @@ export default function CopyFromTheme({
   return (
     <div
       role="group"
-      aria-label="Copy palette from theme"
+      aria-label="Start from a theme"
       className="flex flex-1 flex-col gap-1.5"
     >
       <div className="flex flex-wrap items-center justify-end gap-2">
@@ -91,7 +91,7 @@ export default function CopyFromTheme({
             accent: theme.accent,
             isAccessible: theme.isAccessible,
           }))}
-          label="Copy palette from theme"
+          label="Start from a theme"
           disabled={!editingEnabled}
           onActivate={handleActivate}
           onActivePreview={(id) => onPreviewTheme((id as BaseTheme) ?? null)}
@@ -120,7 +120,7 @@ export default function CopyFromTheme({
       >
         {editingEnabled
           ? 'Picking a theme paints over your colors with its palette and saves. Undo to revert.'
-          : 'Edit a color to start your theme, then you can copy a palette.'}
+          : 'Edit a color to start your theme, then you can start from a built-in one.'}
       </p>
     </div>
   );
