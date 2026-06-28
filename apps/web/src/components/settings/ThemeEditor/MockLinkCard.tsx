@@ -23,7 +23,7 @@ export default function MockLinkCard() {
         </span>
       </div>
 
-      <div className="mt-2.5 w-full h-14 bg-gradient-to-br from-[var(--mount-highlight)] to-[var(--mount-highlight-hover)] rounded-lg" />
+      <div className="w-full h-14 mt-2.5 bg-gradient-to-br from-[var(--mount-highlight)] to-[var(--mount-highlight-hover)] rounded-lg" />
 
       <p className="mt-2 text-[var(--mount-alt-text)] text-[0.65rem] line-clamp-2">
         A practical look at building resilient, low-bandwidth interfaces that

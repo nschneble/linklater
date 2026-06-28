@@ -52,7 +52,7 @@ export default function MockNotice({
         </p>
       </div>
       <span
-        className="mt-1 w-1.5 h-1.5 rounded-full"
+        className="w-1.5 h-1.5 mt-1 rounded-full"
         style={{ backgroundColor: `var(--${bundle}-highlight-hover)` }}
       />
     </div>

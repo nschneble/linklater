@@ -3,8 +3,10 @@
  * editor. The mock is a PICTURE of the app, not the app: it must be a single
  * aria-hidden subtree with zero focusable descendants, paired with one sr-only
  * summary rendered OUTSIDE that subtree. These tests lock that contract plus
- * full bundle-token coverage so the live contrast preview stays complete: a
- * dropped slot would silently blind the user to that contrast pair.
+ * full coverage of all 52 bundle-slot pairs so the live contrast preview stays
+ * complete: a dropped slot would silently blind the user to that contrast pair.
+ * (The focus-ring token is the one editable token the mock can't preview — it
+ * has no focusable elements by design — and is verified in the Contrast panel.)
  */
 
 import ComponentShowcase from './ComponentShowcase';
@@ -97,7 +99,7 @@ describe('ComponentShowcase app mock', () => {
     expect(screen.getByText('Read')).toBeInTheDocument();
   });
 
-  it('paints every bundle slot so the live contrast preview is complete', () => {
+  it('paints every bundle slot so the contrast preview covers all 52 pairs (focus ring excepted — the mock has no focusable elements)', () => {
     render(<ComponentShowcase />);
     const html = getMock().outerHTML;
     for (const token of EXPECTED_TOKENS) {
