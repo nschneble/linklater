@@ -18,9 +18,10 @@ interface TokenTreeProps {
   /** Current (possibly overridden) values for all editable CSS variables. */
   colorValues: Record<ThemeVariable, string>;
   /**
-   * Per-token worst failing contrast pair keyed by the pair's FOREGROUND
-   * variable (the demoted tree keeps the foreground-keyed view; the knobs read
-   * the both-endpoints `pairsTouchingToken` view instead).
+   * Worst failing contrast pair keyed by EITHER endpoint (the both-endpoints
+   * `pairsTouchingToken` view, the same map the knobs read). Keying by both
+   * endpoints means editing a row whose token is a pair's BACKGROUND
+   * self-reports on that row, not only on the far foreground row (C3).
    */
   contrastFailures: Map<string, TokenContrastFailure>;
   /** Called when the user changes a color via the picker or text input. */

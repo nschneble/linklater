@@ -16,13 +16,12 @@ import { THEMES, type BaseTheme, type Mode } from '../../../theme/constants';
 import AutoSaveStatus from './AutoSaveStatus';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
-import ContrastChecker from './ContrastChecker';
 import CustomThemePanel from './CustomThemePanel';
 import Toast from '../../common/Toast';
 import { readThemeTokens } from './themeProbe';
 import {
+  drawerOnlyFailureCount,
   pairsTouchingToken,
-  tokenContrastFailures,
   useContrastResults,
 } from './contrastResults';
 import { updateMe } from '../../../lib/api';
@@ -117,16 +116,19 @@ export default function ThemeEditor() {
 
   const contrastResults = useContrastResults(colorValues);
 
-  const contrastFailures = useMemo(
-    () => tokenContrastFailures(contrastResults),
+  // BOTH the knobs and the drawer rows read the both-endpoints view, so a
+  // too-light Page/Cards/Alerts BACKGROUND flags on whichever control set it —
+  // a knob OR its drawer row — not only on the far foreground row (C3). The
+  // standalone contrast card is retired; this map is the inline guardrail.
+  const failures = useMemo(
+    () => pairsTouchingToken(contrastResults),
     [contrastResults],
   );
 
-  // The knobs read the both-endpoints view so a too-light Page/Cards/Alerts
-  // BACKGROUND flags on its knob; the drawer's rows keep the foreground-keyed
-  // view above.
-  const knobFailures = useMemo(
-    () => pairsTouchingToken(contrastResults),
+  // Failures with no knob endpoint are reachable only inside the collapsed
+  // drawer; the "Show all colors" toggle advertises a count of them (GAP2).
+  const drawerOnlyCount = useMemo(
+    () => drawerOnlyFailureCount(contrastResults),
     [contrastResults],
   );
 
@@ -324,6 +326,7 @@ export default function ThemeEditor() {
           savedCount={savedCount}
           savedMessage={savedMessage}
           failingCount={contrastResults.totalFailures}
+          unverifiedCount={contrastResults.totalUnverified}
         />
       </div>
 
@@ -363,8 +366,8 @@ export default function ThemeEditor() {
           <div className={cardClassName} style={cardDelayStyle(0)}>
             <ColorEditor
               colorValues={colorValues}
-              contrastFailures={contrastFailures}
-              knobFailures={knobFailures}
+              failures={failures}
+              drawerOnlyFailureCount={drawerOnlyCount}
               baseThemeLabel={baseThemeLabel}
               customActive={customThemeEnabled}
               onOverride={handleOverride}
@@ -373,23 +376,17 @@ export default function ThemeEditor() {
               onEditorModeChange={setEditorMode}
             />
           </div>
-
-          <div className={cardClassName} style={cardDelayStyle(1)}>
-            <h2 className="mb-3 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
-              Contrast (WCAG 2.1)
-            </h2>
-            <ContrastChecker results={contrastResults} />
-          </div>
         </div>
 
         {/* The right column is layout-only: no card chrome and no visible
             heading. The mock already looks like the app, so a card-in-a-card
-            "Components" frame would be redundant. It animates in as the third
-            card; ComponentShowcase owns its own sr-only "Live preview" heading
-            for assistive tech. */}
+            "Components" frame would be redundant. It animates in as the second
+            card (the retired contrast card freed index 1), so the enter-stagger
+            has no gap; ComponentShowcase owns its own sr-only "Live preview"
+            heading for assistive tech. */}
         <div
           className="flex-1 min-w-0 animate-card-enter"
-          style={cardDelayStyle(2)}
+          style={cardDelayStyle(1)}
         >
           <ComponentShowcase />
         </div>

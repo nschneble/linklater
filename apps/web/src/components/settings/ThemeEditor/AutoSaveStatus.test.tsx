@@ -189,3 +189,52 @@ describe('AutoSaveStatus', () => {
     expect(status().textContent).toBe('');
   });
 });
+
+describe('AutoSaveStatus – contrast chip three states (GAP1)', () => {
+  function renderChip(failingCount: number, unverifiedCount: number) {
+    return render(
+      <AutoSaveStatus
+        enabled
+        isSaving={false}
+        savedCount={0}
+        savedMessage="Your theme saved."
+        failingCount={failingCount}
+        unverifiedCount={unverifiedCount}
+      />,
+    );
+  }
+
+  function chipIcon() {
+    return document.querySelector('p > i.fa-solid');
+  }
+
+  it('failing only → triangle, amber, "N contrast pairs failing"', () => {
+    renderChip(2, 0);
+    expect(screen.getByText('2 contrast pairs failing')).toBeInTheDocument();
+    expect(chipIcon()).toHaveClass('fa-triangle-exclamation');
+  });
+
+  it('failing + unverified → triangle, "N failing · K unverified"', () => {
+    renderChip(2, 3);
+    expect(screen.getByText('2 failing · 3 unverified')).toBeInTheDocument();
+    expect(chipIcon()).toHaveClass('fa-triangle-exclamation');
+  });
+
+  it('unverified only → info glyph (NOT triangle), "K pairs unverified"', () => {
+    renderChip(0, 4);
+    expect(screen.getByText('4 pairs unverified')).toBeInTheDocument();
+    // Nothing is proven broken, so it must NOT read as a warning.
+    expect(chipIcon()).toHaveClass('fa-circle-info');
+    expect(chipIcon()).not.toHaveClass('fa-triangle-exclamation');
+  });
+
+  it('singularizes the unverified-only copy', () => {
+    renderChip(0, 1);
+    expect(screen.getByText('1 pair unverified')).toBeInTheDocument();
+  });
+
+  it('renders no chip when nothing is failing or unverified', () => {
+    renderChip(0, 0);
+    expect(screen.queryByText(/failing|unverified/i)).toBeNull();
+  });
+});

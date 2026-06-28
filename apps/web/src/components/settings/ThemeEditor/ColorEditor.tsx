@@ -1,6 +1,7 @@
 import KnobPanel from './KnobPanel';
 import ModeToggle from './ModeToggle';
 import TokenTree, { TOKEN_TREE_ID } from './TokenTree';
+import { ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
 import { useState } from 'react';
 import type { Mode } from '../../../theme/constants';
 import type { ThemeVariable } from './useThemeOverrides';
@@ -15,15 +16,18 @@ interface ColorEditorProps {
   /** The current (possibly overridden) values for all editable CSS variables. */
   colorValues: Record<ThemeVariable, string>;
   /**
-   * Per-token worst failing pair keyed by the pair's FOREGROUND variable, read
-   * by the demoted token tree's rows (BL1).
-   */
-  contrastFailures: Map<string, TokenContrastFailure>;
-  /**
    * Worst failing pair keyed by EITHER endpoint (`pairsTouchingToken`), read by
-   * the knobs so a too-light background flags on the knob itself.
+   * BOTH the knobs AND the demoted token-tree rows — so a failure self-reports
+   * on whichever control (knob or drawer row) was edited, including when the
+   * edited token is the pair's BACKGROUND (C3).
    */
-  knobFailures: Map<string, TokenContrastFailure>;
+  failures: Map<string, TokenContrastFailure>;
+  /**
+   * Count of failing pairs with no knob endpoint ("drawer-only"). Drives the
+   * count badge + accessible name on the "Show all colors" toggle so failures
+   * buried in the collapsed drawer are still discoverable (GAP2).
+   */
+  drawerOnlyFailureCount: number;
   /**
    * Label of the theme the swatches are seeded from while the custom theme is
    * not yet active. Drives the region-level "These start from {theme}…"
@@ -63,8 +67,8 @@ interface ColorEditorProps {
  */
 export default function ColorEditor({
   colorValues,
-  contrastFailures,
-  knobFailures,
+  failures,
+  drawerOnlyFailureCount,
   baseThemeLabel,
   customActive,
   onOverride,
@@ -73,6 +77,19 @@ export default function ColorEditor({
   onEditorModeChange,
 }: ColorEditorProps) {
   const [showAll, setShowAll] = useState(false);
+
+  // The drawer is collapsed by default, so failures whose neither endpoint is
+  // a knob would be invisible until opened. The toggle advertises them: the
+  // visible label drives the accessible name when there are none; when there
+  // are, an aria-label that STARTS WITH the visible label (SC 2.5.3) folds the
+  // count in, and a fixed-color badge reinforces it sightedly. The drawer is
+  // NOT auto-expanded (that would fight the persisted open-set + surprise the
+  // user, SC 3.2.x).
+  const toggleLabel = showAll ? 'Hide all colors' : 'Show all colors';
+  const toggleAccessibleName =
+    drawerOnlyFailureCount > 0
+      ? `${toggleLabel} — ${drawerOnlyFailureCount} with contrast ${drawerOnlyFailureCount === 1 ? 'issue' : 'issues'}`
+      : undefined;
 
   return (
     <div className="space-y-3">
@@ -108,7 +125,7 @@ export default function ColorEditor({
 
       <KnobPanel
         colorValues={colorValues}
-        knobFailures={knobFailures}
+        knobFailures={failures}
         onKnobOverride={onKnobOverride}
       />
 
@@ -120,6 +137,7 @@ export default function ColorEditor({
         type="button"
         aria-expanded={showAll}
         aria-controls={TOKEN_TREE_ID}
+        aria-label={toggleAccessibleName}
         onClick={() => setShowAll((previous) => !previous)}
         className="group flex items-center gap-2 text-[var(--mount-alt-text)] hover:text-[var(--mount-text)] text-[0.7rem] font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded cursor-pointer"
       >
@@ -127,12 +145,29 @@ export default function ColorEditor({
           className="fa-solid fa-chevron-right text-[0.55rem] group-aria-expanded:rotate-90 transition-transform duration-150"
           aria-hidden="true"
         />
-        {showAll ? 'Hide all colors' : 'Show all colors'}
+        {toggleLabel}
+        {drawerOnlyFailureCount > 0 && (
+          // Fixed-color escape-hatch badge: it lives inside the preview scope,
+          // so a hostile palette could vanish a token-painted badge precisely
+          // when it matters most. Meaning is in the aria-label above; the badge
+          // (icon + count) is decorative reinforcement (aria-hidden).
+          <span
+            aria-hidden="true"
+            style={{ ...ESCAPE_HATCH_LIGHT, color: '#92400e' }}
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 border text-[0.6rem] font-semibold rounded"
+          >
+            <i
+              className="fa-solid fa-triangle-exclamation text-[0.55rem]"
+              aria-hidden="true"
+            />
+            {drawerOnlyFailureCount}
+          </span>
+        )}
       </button>
 
       <TokenTree
         colorValues={colorValues}
-        contrastFailures={contrastFailures}
+        contrastFailures={failures}
         onOverride={onOverride}
         visible={showAll}
       />

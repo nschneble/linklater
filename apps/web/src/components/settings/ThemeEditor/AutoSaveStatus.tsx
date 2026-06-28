@@ -20,6 +20,53 @@ interface AutoSaveStatusProps {
   savedMessage: string;
   /** Live count of failing WCAG contrast pairs (visible warning only). */
   failingCount: number;
+  /**
+   * Live count of pairs whose ratio can't be resolved (alpha composites / unset
+   * tokens). Aggregate-only — never surfaced as a per-row note. Defaults to 0.
+   */
+  unverifiedCount?: number;
+}
+
+interface ChipContent {
+  /** Font Awesome glyph carrying the state distinction (SC 1.4.1, not color). */
+  icon: string;
+  /** Fixed escape-hatch text color (amber for a proven failure, else neutral). */
+  color: string;
+  /** Visible chip copy. */
+  text: string;
+}
+
+/**
+ * Resolves the aggregate contrast chip's three states. The ICON (not color)
+ * carries the failing-vs-unverified distinction so it survives CVD + forced
+ * colors (SC 1.4.1):
+ *
+ *   failing>0, unverified=0 → triangle, amber  "N contrast pair(s) failing"
+ *   failing>0, unverified>0 → triangle, amber  "N failing · K unverified"
+ *   failing=0, unverified>0 → info,     neutral "K pair(s) unverified"
+ *
+ * Unverified-only is deliberately NOT a warning (nothing is proven broken; in
+ * dark mode the alpha state-bundle bgs make it near-permanent), so it reads as
+ * neutral info rather than crying wolf. Returns `null` when nothing needs
+ * attention.
+ */
+function contrastChip(
+  failingCount: number,
+  unverifiedCount: number,
+): ChipContent | null {
+  if (failingCount === 0 && unverifiedCount === 0) return null;
+  if (failingCount > 0) {
+    const text =
+      unverifiedCount === 0
+        ? `${failingCount} contrast ${failingCount === 1 ? 'pair' : 'pairs'} failing`
+        : `${failingCount} failing · ${unverifiedCount} unverified`;
+    return { icon: 'fa-triangle-exclamation', color: '#92400e', text };
+  }
+  return {
+    icon: 'fa-circle-info',
+    color: '#0a0a0a',
+    text: `${unverifiedCount} ${unverifiedCount === 1 ? 'pair' : 'pairs'} unverified`,
+  };
 }
 
 /**
@@ -45,8 +92,10 @@ export default function AutoSaveStatus({
   savedCount,
   savedMessage,
   failingCount,
+  unverifiedCount = 0,
 }: AutoSaveStatusProps) {
   const [announcement, setAnnouncement] = useState('');
+  const chip = contrastChip(failingCount, unverifiedCount);
 
   // Re-announce on every settled save: clear first so an identical message
   // string still triggers the live region (it only fires on content change).
@@ -74,22 +123,19 @@ export default function AutoSaveStatus({
     <div className="flex flex-col items-end gap-1">
       {enabled && (
         <>
-          {failingCount > 0 && (
-            // Fixed-color chip, like the Reset escape hatch: this warning reports
-            // that the custom palette has unreadable pairs, so it must stay
-            // legible even when those very colors are broken — it can't paint
-            // from the theme tokens it is warning about. The triangle glyph is
-            // the second channel (WCAG 1.4.1); #92400e on #fafafa measures ~6:1.
+          {chip && (
+            // Fixed-color chip, like the Reset escape hatch: this read-out
+            // reports that the custom palette has unreadable/unprovable pairs,
+            // so it must stay legible even when those very colors are broken —
+            // it can't paint from the theme tokens it is warning about. The
+            // glyph (triangle vs info) is the second channel (WCAG 1.4.1);
+            // #92400e on #fafafa measures ~6:1, neutral #0a0a0a ~18:1.
             <p
-              style={{ ...ESCAPE_HATCH_LIGHT, color: '#92400e' }}
+              style={{ ...ESCAPE_HATCH_LIGHT, color: chip.color }}
               className="flex items-center gap-1 px-2 py-0.5 border text-[0.65rem] font-medium rounded-md"
             >
-              <i
-                className="fa-solid fa-triangle-exclamation"
-                aria-hidden="true"
-              />
-              {failingCount} contrast {failingCount === 1 ? 'pair' : 'pairs'}{' '}
-              failing
+              <i className={`fa-solid ${chip.icon}`} aria-hidden="true" />
+              {chip.text}
             </p>
           )}
 

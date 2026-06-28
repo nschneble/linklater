@@ -17,7 +17,7 @@ interface KnobDefinition {
  * The five human knobs, mapped to the tokens each sets. Multi-token knobs set
  * every constituent together (a flatten) and disclose the spanned surfaces.
  */
-const KNOBS: ReadonlyArray<KnobDefinition> = [
+export const KNOBS: ReadonlyArray<KnobDefinition> = [
   { id: 'page', word: 'Page', tokens: ['--base-bg'], helpText: '' },
   { id: 'cards', word: 'Cards', tokens: ['--mount-bg'], helpText: '' },
   {

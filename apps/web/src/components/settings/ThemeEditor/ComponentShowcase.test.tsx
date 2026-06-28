@@ -10,8 +10,8 @@
  * Two editable tokens are excepted from the in-mock coverage because the real
  * app gives them no home the mock can faithfully reproduce: `--focus-ring`
  * (the mock has zero focusable elements by design) and `--mount-input-bg` (the
- * real links view has no mount-surface input field). Both are still verified in
- * the Contrast panel, which checks every editable token regardless.
+ * real links view has no mount-surface input field). Both are still checked by
+ * the live contrast math, which evaluates every editable token regardless.
  */
 
 import ComponentShowcase from './ComponentShowcase';
@@ -32,8 +32,8 @@ const EXPECTED_TOKENS = [
   // `input-bg` exists on base + mount, but only `--base-input-bg` is painted
   // (the toolbar search field). `--mount-input-bg` is intentionally EXCEPTED:
   // the real links view has no mount-surface input, so the only place it could
-  // live in the mock was a fabricated "Add a note" field. It is verified in the
-  // Contrast panel instead.
+  // live in the mock was a fabricated "Add a note" field. The live contrast
+  // math checks it instead.
   ...BASE_AND_MOUNT_ONLY_SLOTS.map((slot) => `var(--base-${slot})`),
 ];
 

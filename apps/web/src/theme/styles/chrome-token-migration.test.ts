@@ -119,7 +119,6 @@ const MIGRATED_FILES = [
   'src/components/settings/ThemeEditor/ColorEditor.tsx',
   'src/components/settings/ThemeEditor/ColorRow.tsx',
   'src/components/settings/ThemeEditor/ComponentShowcase.tsx',
-  'src/components/settings/ThemeEditor/ContrastChecker.tsx',
   'src/components/settings/ThemeEditor/CopyFromTheme.tsx',
   'src/components/settings/ThemeEditor/CustomThemeOffRamp.tsx',
   'src/components/settings/ThemeEditor/KnobPanel.tsx',

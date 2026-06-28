@@ -14,9 +14,9 @@ import MockToolbar from './MockToolbar';
  * The right column of the editor has no visible heading — the mock already
  * looks like the app, so a card-in-a-card "Components" frame would be redundant.
  * For assistive tech the region is fronted by an `sr-only` <h2> "Live preview"
- * (sibling to the left column's "Colors" / "Contrast" h2s under the page <h1>)
- * plus an `sr-only` orientation summary, BOTH rendered OUTSIDE the hidden
- * subtree so they stay perceivable while the decorative mock stays hidden.
+ * (sibling to the left column's "Colors" h2 under the page <h1>) plus an
+ * `sr-only` orientation summary, BOTH rendered OUTSIDE the hidden subtree so
+ * they stay perceivable while the decorative mock stays hidden.
  *
  * One composed frame exercises every theme bundle and slot in realistic
  * context — base (page frame + toolbar), mount (link card), orbit (header +
@@ -29,7 +29,7 @@ export default function ComponentShowcase() {
       <h2 className="sr-only">Live preview</h2>
       <p className="sr-only">
         A visual preview of the app painted with your current colors. Contrast
-        results are reported in the Contrast panel.
+        issues are flagged on the affected color controls.
       </p>
       <div
         aria-hidden="true"

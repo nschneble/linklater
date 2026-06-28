@@ -9,11 +9,17 @@ import {
 
 /**
  * Shared WCAG contrast computation for the theme editor's live contract
- * checking. Extracted so both `ContrastChecker` (the visible per-bundle
- * breakdown) and `AutoSaveStatus` (the failing-count warning in the auto-save
- * status) read a SINGLE source of truth – the a11y brief B5 mandates the
- * warning reuse ContrastChecker's computed failing count rather than
- * recomputing it, so the two can never disagree.
+ * checking. The standalone contrast card was retired: every failing pair now
+ * self-reports inline ON the control being edited (a knob note, a drawer-row
+ * note) plus two aggregate read-outs — the `AutoSaveStatus` chip
+ * (failing/unverified counts) and the "Show all colors" drawer-only badge.
+ * They all read this SINGLE source of truth so they can never disagree.
+ *
+ * The governing invariant: an edit to token X can only change the contrast of
+ * pairs that TOUCH X, so surfacing each failing pair on BOTH its endpoints
+ * (`pairsTouchingToken`) guarantees the warning lands on whichever control the
+ * user just edited. `contrastResults.test.ts` mechanizes the completeness of
+ * that coverage (the C1 invariant).
  */
 
 /** A foreground/background color pair to test for WCAG contrast compliance. */
@@ -29,11 +35,6 @@ export interface ContrastPair {
   /** Minimum contrast ratio to pass the criterion. */
   threshold: number;
 }
-
-export const SC_LABELS: Record<ContrastPair['criterion'], string> = {
-  '1.4.3': 'SC 1.4.3 Contrast (Minimum)',
-  '1.4.11': 'SC 1.4.11 Non-text Contrast',
-};
 
 /**
  * The bundle background slots a focused element can sit on. The focus ring
@@ -199,7 +200,7 @@ export function computeContrastRatio(
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-export interface GroupResult {
+interface GroupResult {
   /** A bundle id, or the synthetic `'focus'` group id. */
   group: Bundle | 'focus';
   label: string;
@@ -217,7 +218,48 @@ export interface ContrastResults {
   totalFailures: number;
   /** Total pairs that could not be verified across all groups. */
   totalUnverified: number;
-  totalPairs: number;
+}
+
+/**
+ * The nine tokens fronted by the five human knobs (Page, Cards, Accent, Text,
+ * Alerts — see `KnobPanel`). A failing pair with NEITHER endpoint in this set
+ * is "drawer-only": reachable only by opening the "Show all colors" drawer, so
+ * the drawer toggle advertises a count of them (GAP2). Cross-checked against
+ * `KnobPanel`'s `KNOBS` in `KnobPanel.test.tsx` so the two can't drift.
+ */
+export const KNOB_TOKENS: ReadonlySet<string> = new Set([
+  '--base-bg',
+  '--mount-bg',
+  '--base-highlight',
+  '--mount-highlight',
+  '--orbit-highlight',
+  '--base-text',
+  '--mount-text',
+  '--orbit-text',
+  '--alert-bg',
+]);
+
+/**
+ * Counts the distinct FAILING pairs whose neither endpoint is a knob token —
+ * the failures a user can only find by opening the drawer. Drives the count
+ * badge on the "Show all colors" toggle. Reuses the ratios already in
+ * `results` (no new contrast math).
+ */
+export function drawerOnlyFailureCount(results: ContrastResults): number {
+  let count = 0;
+  for (const group of results.groups) {
+    for (const { pair, ratio } of group.pairs) {
+      if (ratio === null || ratio >= pair.threshold) continue;
+      if (
+        KNOB_TOKENS.has(pair.foreground) ||
+        KNOB_TOKENS.has(pair.background)
+      ) {
+        continue;
+      }
+      count += 1;
+    }
+  }
+  return count;
 }
 
 /**
@@ -348,7 +390,6 @@ export function useContrastResults(
         (sum, item) => sum + item.unverifiedCount,
         0,
       ),
-      totalPairs: groups.reduce((sum, item) => sum + item.pairs.length, 0),
     };
   }, [colorValues]);
 }

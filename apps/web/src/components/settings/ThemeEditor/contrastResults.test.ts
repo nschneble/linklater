@@ -10,12 +10,43 @@
 import { describe, expect, it } from 'vitest';
 import {
   computeContrastRatio,
+  drawerOnlyFailureCount,
+  focusRingPairs,
+  KNOB_TOKENS,
   pairsForBundle,
   pairsTouchingToken,
   tokenContrastFailures,
 } from './contrastResults';
 import type { ContrastPair, ContrastResults } from './contrastResults';
-import { BUNDLES } from './useThemeOverrides';
+import { BUNDLES, EDITABLE_VARS } from './useThemeOverrides';
+
+/** Every contract pair the live checker evaluates: per-bundle plus focus ring. */
+function allContractPairs(): ContrastPair[] {
+  return [
+    ...BUNDLES.flatMap((bundle) => pairsForBundle(bundle)),
+    ...focusRingPairs(),
+  ];
+}
+
+/** A ContrastResults where EVERY contract pair is failing (ratio below its
+ *  threshold), so the completeness assertions see the worst case. */
+function allFailing(): ContrastResults {
+  const pairs = allContractPairs().map((pair) => ({ pair, ratio: 1 }));
+  return {
+    groups: [
+      {
+        group: 'base',
+        label: 'base',
+        pairs,
+        failureCount: pairs.length,
+        unverifiedCount: 0,
+        totalCount: pairs.length,
+      },
+    ],
+    totalFailures: pairs.length,
+    totalUnverified: 0,
+  } as unknown as ContrastResults;
+}
 
 function makePair(overrides: Partial<ContrastPair>): ContrastPair {
   return {
@@ -178,6 +209,114 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
 
     const touching = pairsTouchingToken(results);
     expect(touching.size).toBe(0);
+  });
+});
+
+/*
+ * C1 COMPLETENESS INVARIANT — the standalone contrast card is gone, so every
+ * failing pair must remain reachable inline. An edit to token X can only change
+ * pairs that TOUCH X, so surfacing each pair on BOTH endpoints guarantees the
+ * note lands on whichever control the user just edited. This mechanizes that no
+ * failing pair can fall through the three surfacing channels:
+ *   (a) a KNOB note     — either endpoint is one of the nine knob tokens
+ *   (b) a DRAWER-ROW note — either endpoint is an editable token (every editable
+ *       token renders a drawer row, and the rows read the both-endpoints map)
+ *   (c) the TOGGLE BADGE — pairs with neither endpoint a knob ("drawer-only")
+ */
+describe('C1: every failing pair self-reports inline (card retired)', () => {
+  const editable = new Set<string>(EDITABLE_VARS);
+
+  it('surfaces every contract pair via a knob note or a drawer-row note', () => {
+    // A pair with no inline home would land here as a `false` keyed by its
+    // endpoints, localizing the regression.
+    const unhomed = allContractPairs().filter((pair) => {
+      const endpoints = [pair.foreground, pair.background];
+      const knobNote = endpoints.some((token) => KNOB_TOKENS.has(token));
+      const drawerRowNote = endpoints.some((token) => editable.has(token));
+      return !(knobNote || drawerRowNote);
+    });
+    expect(
+      unhomed.map((pair) => `${pair.foreground} / ${pair.background}`),
+    ).toEqual([]);
+  });
+
+  it('keeps BOTH endpoints of every contract pair editable, so editing either self-reports (C3)', () => {
+    // Any endpoint that is not an editable drawer row surfaces here by name.
+    const nonEditableEndpoints = allContractPairs().flatMap((pair) =>
+      [pair.foreground, pair.background].filter(
+        (token) => !editable.has(token),
+      ),
+    );
+    expect(nonEditableEndpoints).toEqual([]);
+  });
+
+  it('routes pairs with no knob endpoint to the drawer (badge advertises them)', () => {
+    const touching = pairsTouchingToken(allFailing());
+    for (const pair of allContractPairs()) {
+      const endpoints = [pair.foreground, pair.background];
+      if (endpoints.some((token) => KNOB_TOKENS.has(token))) continue;
+      // Drawer-only: each endpoint must still carry the failure in the
+      // both-endpoints map (so its drawer row shows the note) and be editable.
+      for (const token of endpoints) {
+        expect(touching.has(token)).toBe(true);
+        expect(editable.has(token)).toBe(true);
+      }
+    }
+  });
+});
+
+describe('drawerOnlyFailureCount', () => {
+  it('counts only failing pairs whose neither endpoint is a knob token', () => {
+    const knobPair = makePair({
+      label: 'text / bg',
+      foreground: '--mount-text', // a knob token
+      background: '--mount-bg',
+      threshold: 4.5,
+    });
+    const drawerPair = makePair({
+      label: 'hl-fg / hl',
+      foreground: '--alert-highlight-fg', // neither is a knob token
+      background: '--alert-highlight',
+      threshold: 4.5,
+    });
+    const passingDrawerPair = makePair({
+      label: 'border / bg',
+      foreground: '--warn-border',
+      background: '--warn-bg',
+      criterion: '1.4.11',
+      threshold: 3,
+    });
+    const results = {
+      groups: [
+        {
+          group: 'mount',
+          label: 'mount',
+          pairs: [
+            { pair: knobPair, ratio: 2 }, // failing but knob-touching → excluded
+            { pair: drawerPair, ratio: 2 }, // failing, drawer-only → counted
+            { pair: passingDrawerPair, ratio: 9 }, // passing → excluded
+          ],
+        },
+      ],
+    } as unknown as ContrastResults;
+    expect(drawerOnlyFailureCount(results)).toBe(1);
+  });
+
+  it('ignores unverified (null-ratio) pairs', () => {
+    const drawerPair = makePair({
+      foreground: '--info-text',
+      background: '--info-bg',
+    });
+    const results = {
+      groups: [
+        {
+          group: 'info',
+          label: 'info',
+          pairs: [{ pair: drawerPair, ratio: null }],
+        },
+      ],
+    } as unknown as ContrastResults;
+    expect(drawerOnlyFailureCount(results)).toBe(0);
   });
 });
 

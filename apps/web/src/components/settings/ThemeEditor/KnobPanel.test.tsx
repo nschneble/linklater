@@ -6,10 +6,10 @@
  * contrast flagging that lets a too-light background flag ON the knob.
  */
 
-import KnobPanel from './KnobPanel';
+import KnobPanel, { KNOBS } from './KnobPanel';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { TokenContrastFailure } from './contrastResults';
+import { KNOB_TOKENS, type TokenContrastFailure } from './contrastResults';
 import { EDITABLE_VARS, type ThemeVariable } from './useThemeOverrides';
 
 const PLACEHOLDER_VALUE = '#abcdef';
@@ -45,6 +45,16 @@ const ACCENT_TOKENS = [
   '--mount-highlight',
   '--orbit-highlight',
 ];
+
+describe('KnobPanel – KNOB_TOKENS drift guard', () => {
+  it('matches the token set the contrast math treats as knob-fronted', () => {
+    // contrastResults.KNOB_TOKENS (drives the drawer-only badge count) must
+    // stay in lockstep with the tokens the knobs actually front, or a failure
+    // could be miscategorised as drawer-only (or hidden from the badge).
+    const fronted = new Set(KNOBS.flatMap((knob) => knob.tokens));
+    expect(fronted).toEqual(new Set(KNOB_TOKENS));
+  });
+});
 
 describe('KnobPanel – structure + names', () => {
   it('wraps the knobs in a named group (not a heading)', () => {

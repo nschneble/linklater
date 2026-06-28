@@ -27,15 +27,18 @@ function buildColorValues(): Record<ThemeVariable, string> {
 }
 
 function renderEditor(
-  contrastFailures: Map<string, TokenContrastFailure> = new Map(),
+  failures: Map<string, TokenContrastFailure> = new Map(),
   customActive = true,
-  { autoOpen = true }: { autoOpen?: boolean } = {},
+  {
+    autoOpen = true,
+    drawerOnlyFailureCount = 0,
+  }: { autoOpen?: boolean; drawerOnlyFailureCount?: number } = {},
 ) {
   const utils = render(
     <ColorEditor
       colorValues={buildColorValues()}
-      contrastFailures={contrastFailures}
-      knobFailures={new Map()}
+      failures={failures}
+      drawerOnlyFailureCount={drawerOnlyFailureCount}
       baseThemeLabel="Boyhood"
       customActive={customActive}
       onOverride={vi.fn()}
@@ -153,8 +156,8 @@ describe('ColorEditor – Light/Dark palette tabs', () => {
     render(
       <ColorEditor
         colorValues={buildColorValues()}
-        contrastFailures={new Map()}
-        knobFailures={new Map()}
+        failures={new Map()}
+        drawerOnlyFailureCount={0}
         baseThemeLabel="Boyhood"
         customActive={true}
         onOverride={vi.fn()}
@@ -171,6 +174,49 @@ describe('ColorEditor – Light/Dark palette tabs', () => {
       within(group).getByRole('button', { name: /light colors/i }),
     );
     expect(onEditorModeChange).toHaveBeenCalledWith('light');
+  });
+});
+
+describe('ColorEditor – "Show all colors" drawer-only badge (GAP2)', () => {
+  it('adds no count to the toggle name or a badge when there are no drawer-only failures', () => {
+    renderEditor(new Map(), true, {
+      autoOpen: false,
+      drawerOnlyFailureCount: 0,
+    });
+    const toggle = screen.getByRole('button', { name: /show all colors/i });
+    // Accessible name is exactly the visible label — no aria-label override.
+    expect(toggle).not.toHaveAttribute('aria-label');
+    expect(toggle.querySelector('.fa-triangle-exclamation')).toBeNull();
+  });
+
+  it('folds the count into the accessible name (SC 2.5.3) and shows a fixed-color badge', () => {
+    renderEditor(new Map(), true, {
+      autoOpen: false,
+      drawerOnlyFailureCount: 2,
+    });
+    // The accessible name STARTS WITH the visible label, then names the count.
+    const toggle = screen.getByRole('button', {
+      name: 'Show all colors — 2 with contrast issues',
+    });
+    expect(toggle).toBeInTheDocument();
+    // The badge icon is decorative (meaning is in the name).
+    const badgeIcon = toggle.querySelector('.fa-triangle-exclamation');
+    expect(badgeIcon).not.toBeNull();
+    expect(badgeIcon).toHaveAttribute('aria-hidden', 'true');
+    // Badge count is rendered visibly.
+    expect(toggle.textContent).toContain('2');
+  });
+
+  it('singularizes the accessible name for a single drawer-only failure', () => {
+    renderEditor(new Map(), true, {
+      autoOpen: false,
+      drawerOnlyFailureCount: 1,
+    });
+    expect(
+      screen.getByRole('button', {
+        name: 'Show all colors — 1 with contrast issue',
+      }),
+    ).toBeInTheDocument();
   });
 });
 
