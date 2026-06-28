@@ -46,7 +46,7 @@ export default function CustomThemePanel({
       id="custom-theme"
       title="Roll your own"
       icon="fa-paintbrush"
-      description="Start from a blank palette, or copy a film theme's colors and tweak from there."
+      description="Start from a blank palette or copy an existing theme"
     >
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="w-full lg:w-80 shrink-0">
