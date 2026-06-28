@@ -1,165 +1,314 @@
+import { useCallback, useMemo, useState, type CSSProperties } from 'react';
+import { useTheme } from '../../../theme/ThemeContext';
 import {
-  THEMES,
-  useTheme,
-  type BaseTheme,
-  type Mode,
-} from '../../../theme/ThemeContext';
+  isCustomThemeConfigured,
+  type CustomTheme,
+} from '../../../theme/customTheme';
+import type { BaseTheme, Mode } from '../../../theme/constants';
+import AutoSaveStatus from './AutoSaveStatus';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import ContrastChecker from './ContrastChecker';
+import CustomThemePanel from './CustomThemePanel';
+import Toast from '../../common/Toast';
+import { readThemeTokens } from './themeProbe';
+import { tokenContrastFailures, useContrastResults } from './contrastResults';
+import { updateMe } from '../../../lib/api';
+import { usePanelPresence } from './usePanelPresence';
+import { useThemeCopy } from './useThemeCopy';
 import { useThemeOverrides } from './useThemeOverrides';
+import { useThemeSave } from './useThemeSave';
+import { useToast } from '../../../lib/hooks/useToast';
 
 /**
- * Full-page theme editor accessible from the user menu under "Theme
- * editor".
+ * Full-page custom-theme editor reached from the user menu ("Create a custom
+ * theme" / "Edit your custom theme").
  *
- * Live-edits the 52 bundle tokens (7 bundles × 7 slots + 1 base-only
- * subtle-text slot + 2 base/mount input-bg slots) that make up the
- * active theme. Overrides live in React state inside `useThemeOverrides`
- * and are applied as inline custom-property styles on a wrapper that
- * scopes the showcase column only – the editor chrome inherits from the
- * active theme at `:root`, so the user can never edit themselves into an
- * unrecoverable state. Overrides reset when the user navigates away.
+ * The editor NEVER changes the global site theme. The custom palette is
+ * previewed by scoping it (as inline custom properties via `contentThemeStyle`)
+ * to the content columns below the header — so leaving the editor can't strand
+ * the whole app on custom.
  *
- * The editor also supports switching between themes (using the base theme
- * from `ThemeContext`) and toggling light/dark mode – both of which clear
- * any active overrides so the new theme's values are the new baseline.
+ * The master-enable switch ("Use your own custom theme") gates everything:
+ * while OFF the editor mirrors the current global theme (color pickers LOCKED,
+ * read-only) so it looks like any other page. Flipping it ON for the FIRST time
+ * snapshots the current theme's colors as the initial custom palette and
+ * persists it; the content then renders that custom palette, editable, with
+ * AUTOMATIC debounced saves (localStorage + `PATCH /users/me`). Toggling OFF
+ * again reverts the content to the global theme without overwriting the saved
+ * custom palette.
  *
- * Layout: a left panel with `ColorEditor` and `ContrastChecker`, and a
- * right panel with `ComponentShowcase` for a live preview of the bundle
- * tokens and key UI components.
+ * The editor's color mode is LOCAL (`editorMode`): the Light/Dark tabs in the
+ * Colors card swap which mode's palette the content shows + edits, decoupled
+ * from the global site mode — so previewing the dark palette never flips the
+ * whole app. There is no on-page theme switcher. Hovering or arrow-navigating a
+ * row in the copy menu previews that film theme within the content scope
+ * (transient, non-persisting); activating a row applies its `editorMode` palette
+ * + saves, with an Undo to revert.
  *
- * Reset, theme select, and mode toggle use fixed neutral colors instead
- * of bundle tokens so they remain readable as escape hatches when the
- * user edits the bundles to invalid values mid-session.
- *
- * NOTE: Changes made in the editor are not persisted. They only affect the
- * current browser session. Theme selection (via the UserMenu) is the
- * persistent preference.
+ * The Light/Dark toggle's active pill and the copy menu's trigger paint from
+ * FIXED-color escape hatches (not bundle tokens), and the settings card with
+ * the OFF switch sits OUTSIDE the custom scope — so a hostile custom palette can
+ * degrade the preview but never the controls needed to escape it.
  */
 export default function ThemeEditor() {
-  const { baseTheme, mode, setBaseTheme, setMode } = useTheme();
   const {
+    baseTheme,
+    customTheme,
+    customThemeEnabled,
+    mode,
+    setCustomTheme,
+    setCustomThemeEnabled,
+  } = useTheme();
+
+  // The editor's color mode is LOCAL — the Light/Dark tabs in the Colors card
+  // swap which mode's palette the content shows + edits, WITHOUT flipping the
+  // global site mode (navigating away leaves the app on whatever mode it was).
+  // Seeded once from the site mode so the editor opens on the expected palette.
+  const [editorMode, setEditorMode] = useState<Mode>(mode);
+
+  const { colorValues, contentThemeStyle, setOverride, loadOverrides } =
+    useThemeOverrides(editorMode);
+
+  const editingEnabled = customThemeEnabled;
+  const isCustomConfigured = isCustomThemeConfigured(customTheme);
+
+  // The editing cards exist only while enabled; presence keeps them mounted
+  // through a fade-out so they don't snap away when the switch flips off.
+  const { rendered: contentRendered, exiting: contentExiting } =
+    usePanelPresence(editingEnabled);
+
+  // Hovering/arrow-navigating a copy-menu row previews that film theme — scoped
+  // to the editor's content (the same wrapper that scopes the custom palette),
+  // so the preview shows where the showcase is and never touches the global
+  // theme or the app nav. Reverts to `null` when the menu closes.
+  const [previewThemeId, setPreviewThemeId] = useState<BaseTheme | null>(null);
+  const previewStyle = useMemo<CSSProperties | null>(
+    () =>
+      previewThemeId
+        ? (readThemeTokens(previewThemeId, editorMode) as CSSProperties)
+        : null,
+    [previewThemeId, editorMode],
+  );
+
+  const { isSaving, save } = useThemeSave(editorMode);
+  const toast = useToast();
+
+  const contrastResults = useContrastResults(colorValues);
+
+  const contrastFailures = useMemo(
+    () => tokenContrastFailures(contrastResults),
+    [contrastResults],
+  );
+
+  const onSaveFailed = useCallback(() => toast.show('save-failed'), [toast]);
+
+  const {
+    scheduleSave,
+    savedCount,
+    savedMessage,
+    undoThemeLabel,
+    clearUndo,
+    handleApply,
+    handleUndo,
+  } = useThemeCopy({
+    editingEnabled,
+    baseTheme,
+    editorMode,
     colorValues,
-    overrideStyle,
-    setOverride,
-    resetOverrides,
-    resetBundle,
-  } = useThemeOverrides();
+    save,
+    loadOverrides,
+    onSaveFailed,
+  });
 
-  function handleThemeChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    setBaseTheme(event.target.value as BaseTheme);
+  function handleOverride(
+    variable: Parameters<typeof setOverride>[0],
+    value: string,
+  ) {
+    setOverride(variable, value);
+    clearUndo();
+    scheduleSave();
   }
 
-  function handleModeToggle(nextMode: Mode) {
-    setMode(nextMode);
-  }
+  // Master enable. Turning ON for the FIRST time snapshots the current theme's
+  // colors (both modes) as the initial custom palette and persists it; turning
+  // OFF just hides it (the saved palette is untouched). The editor NEVER
+  // changes the global site theme — the custom palette is previewed via a
+  // scoped wrapper (see `contentThemeStyle`), so leaving the editor can't
+  // strand the whole app on custom. Optimistic — on PATCH failure it reverts
+  // the enabled flag + the seeded palette.
+  const handleToggleCustomTheme = useCallback(
+    async (next: boolean) => {
+      const previousCustomTheme = customTheme;
+      setCustomThemeEnabled(next);
+      const seeded: CustomTheme | null =
+        next && !isCustomConfigured
+          ? {
+              dark: readThemeTokens(baseTheme, 'dark'),
+              light: readThemeTokens(baseTheme, 'light'),
+            }
+          : null;
+      if (seeded) setCustomTheme(seeded);
+      try {
+        await updateMe({
+          customThemeEnabled: next,
+          ...(seeded ? { customTheme: seeded } : {}),
+        });
+      } catch {
+        setCustomThemeEnabled(!next);
+        // Restore the prior palette; an empty map reads as "not configured"
+        // so a never-seeded user lands back where they started.
+        if (seeded) {
+          setCustomTheme(previousCustomTheme ?? { dark: {}, light: {} });
+        }
+        toast.show('custom-theme-toggle-failed');
+      }
+    },
+    [
+      baseTheme,
+      customTheme,
+      isCustomConfigured,
+      setCustomTheme,
+      setCustomThemeEnabled,
+      toast,
+    ],
+  );
 
-  // Fixed neutral palette for the editor's own critical controls. Bundle
-  // edits cannot affect these, so the user always has a visible escape.
-  const escapeHatchStyle = {
-    backgroundColor: '#fafafa',
-    color: '#0a0a0a',
-    borderColor: '#404040',
-  } as const;
+  const toastView = useMemo(() => resolveToast(toast.message), [toast.message]);
+
+  // Each content card carries the shared mount surface + the link-card enter
+  // fade (gentle fade-down on the way out). The stagger comes from the per-card
+  // animation delay; reduced-motion is handled globally (the CSS clamp) and by
+  // `usePanelPresence` (synchronous unmount).
+  const cardClassName = `p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl ${
+    contentExiting ? 'animate-fade-out-down' : 'animate-card-enter'
+  }`;
+  function cardDelayStyle(index: number): CSSProperties {
+    return { animationDelay: `${index * 60}ms` };
+  }
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex flex-wrap items-start gap-3 mb-4">
-        <div className="flex-1 min-w-0">
+      {/* Header: title + intro fill the LEFT half; the save status sits
+          top-right, aligned against the title. (The Light/Dark control lives in
+          the Colors card now, since it swaps the editor's palette, not chrome.) */}
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
+        <div className="min-w-0 sm:max-w-[50%]">
           <h1 className="text-[var(--base-text)] text-lg font-semibold">
             Theme editor
           </h1>
-          <p className="mt-0.5 text-[var(--base-alt-text)] text-xs">
-            Edit the 52 bundle tokens of the active theme and see changes live.
-            Resets when you navigate away.
+          <p className="mt-1 text-[var(--base-alt-text)] text-xs">
+            Create, edit, and preview custom themes.
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <select
-            value={baseTheme}
-            onChange={handleThemeChange}
-            style={escapeHatchStyle}
-            className="px-2.5 py-1.5 border text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg cursor-pointer"
-            aria-label="Select theme"
-          >
-            {THEMES.map((theme) => (
-              <option key={theme.id} value={theme.id}>
-                {theme.label}
-              </option>
-            ))}
-          </select>
-
-          <div
-            style={escapeHatchStyle}
-            className="relative inline-flex p-0.5 border rounded-full"
-            role="group"
-            aria-label="Color mode"
-          >
-            {(['dark', 'light'] as Mode[]).map((modeOption) => (
-              <button
-                key={modeOption}
-                type="button"
-                onClick={() => handleModeToggle(modeOption)}
-                style={
-                  mode === modeOption
-                    ? { backgroundColor: '#0a0a0a', color: '#fafafa' }
-                    : { color: '#0a0a0a' }
-                }
-                className="relative z-10 px-2.5 py-1 text-xs capitalize aria-pressed:font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-full transition-colors duration-150 cursor-pointer"
-                aria-pressed={mode === modeOption}
-              >
-                {modeOption}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={resetOverrides}
-            style={escapeHatchStyle}
-            className="px-2.5 py-1.5 border text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg active:scale-[0.96] cursor-pointer"
-          >
-            Reset all
-          </button>
-        </div>
+        <AutoSaveStatus
+          enabled={editingEnabled}
+          isSaving={isSaving}
+          savedCount={savedCount}
+          savedMessage={savedMessage}
+          failingCount={contrastResults.totalFailures}
+        />
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="shrink-0 w-full lg:w-80 space-y-4">
-          <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
-            <h2 className="mb-4 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
-              Colors
-            </h2>
-            <ColorEditor
-              colorValues={colorValues}
-              onOverride={setOverride}
-              onResetBundle={resetBundle}
-            />
+      {/* Master-control card: the enable switch + copy-palette shortcut that
+          gate everything below. It sits OUTSIDE the custom-theme preview scope
+          (see below) so the controls needed to escape an unreadable palette
+          always paint in the always-legible global theme. */}
+      <div className="mb-4">
+        <CustomThemePanel
+          enabled={customThemeEnabled}
+          editingEnabled={editingEnabled}
+          onToggle={handleToggleCustomTheme}
+          onApply={handleApply}
+          onPreviewTheme={setPreviewThemeId}
+          undoThemeLabel={undoThemeLabel}
+          onUndo={handleUndo}
+        />
+      </div>
+
+      {/* Editing content. It exists ONLY while the custom theme is enabled —
+          locked, purposeless cards aren't shown disabled, they're unmounted.
+          `usePanelPresence` keeps them through one fade-out so they don't snap
+          away; each card plays the link-card enter fade on the way in and a
+          gentle fade-down on the way out (staggered, reduced-motion-aware).
+
+          Custom-theme PREVIEW scope: `contentThemeStyle` carries the full
+          custom palette as inline custom properties, so this subtree renders
+          the custom theme WITHOUT touching the global `:root`. A copy-menu hover
+          preview overrides it with the hovered film theme's tokens. The header +
+          settings card sit OUTSIDE this scope, so the switch used to escape an
+          unreadable palette stays painted in the always-readable global theme. */}
+      {contentRendered && (
+        <div
+          className="flex flex-col lg:flex-row gap-6"
+          style={previewStyle ?? contentThemeStyle}
+        >
+          <div className="shrink-0 w-full lg:w-80 space-y-4">
+            <div className={cardClassName} style={cardDelayStyle(0)}>
+              <ColorEditor
+                colorValues={colorValues}
+                contrastFailures={contrastFailures}
+                onOverride={handleOverride}
+                editorMode={editorMode}
+                onEditorModeChange={setEditorMode}
+              />
+            </div>
+
+            <div className={cardClassName} style={cardDelayStyle(1)}>
+              <h2 className="mb-3 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
+                Contrast (WCAG 2.1)
+              </h2>
+              <ContrastChecker results={contrastResults} />
+            </div>
           </div>
 
-          <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
-            <h2 className="mb-3 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
-              Contrast (WCAG 2.1)
+          <div
+            className={`flex-1 min-w-0 ${cardClassName}`}
+            style={cardDelayStyle(2)}
+          >
+            <h2 className="mb-6 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
+              Components
             </h2>
-            <ContrastChecker colorValues={colorValues} />
-          </div>
-        </div>
-
-        <div className="flex-1 min-w-0 p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
-          <h2 className="mb-6 text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
-            Components
-          </h2>
-          {/* Override scope: bundle edits apply to the showcase subtree only,
-              so a hostile bundle value can't lock the user out of the editor
-              chrome (panel headings, color rows, contrast pairs). The chrome
-              inherits from :root via the active theme, unaffected. */}
-          <div style={overrideStyle}>
             <ComponentShowcase />
           </div>
         </div>
-      </div>
+      )}
+
+      {toastView && (
+        <Toast
+          message={toastView.message}
+          variant={toastView.variant}
+          onDismiss={toast.dismiss}
+        />
+      )}
     </div>
   );
+}
+
+interface ToastView {
+  message: string;
+  variant: 'success' | 'error';
+}
+
+/**
+ * Resolves the editor's toast message key into a `<Toast>` variant and visible
+ * copy. The success/error variant is chosen HERE at the render site (the
+ * `useToast` hook holds only a message string), per a11y brief B1.
+ *
+ * Auto-save SUCCESS (incl. copy/undo) is announced by the polite
+ * `AutoSaveStatus` region — only the assertive FAILURE paths route here.
+ */
+export function resolveToast(message: string | null): ToastView | null {
+  if (message === null) return null;
+  if (message === 'save-failed') {
+    return { message: 'Could not save custom theme.', variant: 'error' };
+  }
+  if (message === 'custom-theme-toggle-failed') {
+    return {
+      message: 'Could not update the custom theme setting.',
+      variant: 'error',
+    };
+  }
+  return { message, variant: 'success' };
 }

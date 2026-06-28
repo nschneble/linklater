@@ -70,6 +70,24 @@ describe('UsersController', () => {
     expect(result).toBe(updated);
   });
 
+  it('updateMe forwards a customTheme body to UsersService.updateMe verbatim', async () => {
+    const customTheme = {
+      dark: { '--mount-border': '#102030' },
+      light: { '--mount-border': '#fefefe' },
+    };
+    const updated = { customTheme, email: USER_EMAIL, id: USER_ID };
+    (usersServiceMock.updateMe as jest.Mock).mockResolvedValue(updated);
+
+    const result = await controller.updateMe(makeRequest(), {
+      customTheme,
+    } as never);
+
+    expect(usersServiceMock.updateMe).toHaveBeenCalledWith(USER_ID, {
+      customTheme,
+    });
+    expect(result).toBe(updated);
+  });
+
   describe('deleteMe', () => {
     it('delegates to AuthService.deleteAccount with the credentials from the body', async () => {
       (authServiceMock.deleteAccount as jest.Mock).mockResolvedValue({

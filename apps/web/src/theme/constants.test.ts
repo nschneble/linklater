@@ -3,6 +3,7 @@ import {
   CVD_BASE_THEME,
   THEMES,
   VALID_BASE_THEME_IDS,
+  pickerThemes,
   type BaseTheme,
 } from './constants';
 
@@ -18,8 +19,8 @@ describe('CVD_BASE_THEME', () => {
 });
 
 describe('THEMES', () => {
-  it('contains exactly 10 themes', () => {
-    expect(THEMES).toHaveLength(10);
+  it('contains exactly 11 themes', () => {
+    expect(THEMES).toHaveLength(11);
   });
 
   it('every theme has a non-empty id, label, accent, and swatchIcon', () => {
@@ -65,6 +66,7 @@ describe('THEMES', () => {
       'before-sunrise',
       'before-sunset',
       'boyhood',
+      'custom',
       'dazed-and-confused',
       'hit-man',
       'nouvelle-vague',
@@ -74,6 +76,45 @@ describe('THEMES', () => {
     const actualIds = THEMES.map((theme) => theme.id);
     for (const expectedId of expectedIds) {
       expect(actualIds).toContain(expectedId);
+    }
+  });
+});
+
+describe('pickerThemes', () => {
+  it('hides the custom theme when the opt-in is off and it is not active', () => {
+    const ids = pickerThemes('scanner-darkly', false).map((theme) => theme.id);
+    expect(ids).not.toContain('custom');
+  });
+
+  it('shows the custom theme when the opt-in is on', () => {
+    const ids = pickerThemes('scanner-darkly', true).map((theme) => theme.id);
+    expect(ids).toContain('custom');
+  });
+
+  it('shows the custom theme when it is active even with the opt-in off', () => {
+    const ids = pickerThemes('custom', false).map((theme) => theme.id);
+    expect(ids).toContain('custom');
+  });
+
+  it('always lists every built-in theme regardless of the opt-in', () => {
+    const builtInIds = THEMES.filter((theme) => theme.id !== 'custom').map(
+      (theme) => theme.id,
+    );
+    const visibleIds = pickerThemes('scanner-darkly', false).map(
+      (theme) => theme.id,
+    );
+    for (const id of builtInIds) {
+      expect(visibleIds).toContain(id);
+    }
+  });
+
+  it('always lists the active theme (exactly-one-checked invariant)', () => {
+    // The picker drives aria-checked off `active === theme.id`. If the active
+    // theme were ever filtered out, the radio group would report zero checked
+    // items. The active theme must always survive the filter.
+    for (const theme of THEMES) {
+      const visibleIds = pickerThemes(theme.id, false).map((entry) => entry.id);
+      expect(visibleIds).toContain(theme.id);
     }
   });
 });

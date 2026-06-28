@@ -14,6 +14,7 @@ export type BaseTheme =
   | 'before-sunrise'
   | 'before-sunset'
   | 'boyhood'
+  | 'custom'
   | 'dazed-and-confused'
   | 'hit-man'
   | 'nouvelle-vague'
@@ -90,7 +91,7 @@ export const THEMES: Array<{
   },
   {
     id: 'nouvelle-vague',
-    label: 'Nouvelle Vague (Noir)',
+    label: 'Nouvelle Vague',
     accent: '#555555',
     swatchIcon: 'fa-film',
   },
@@ -100,8 +101,43 @@ export const THEMES: Array<{
     accent: '#b91c1c',
     swatchIcon: 'fa-guitar',
   },
+  {
+    // The user-editable custom theme. Its palette lives in the per-user
+    // `customTheme` column, not a film-specific CSS file, so the accent is a
+    // statically chosen neutral gray (NOT derived from the user's tokens,
+    // which may be empty). #808080 clears 3:1 against the menu background in
+    // both light and dark mode. `swatchIcon` is special-cased to the generic
+    // paintbrush — every other theme uses a film-specific icon. `isAccessible`
+    // is intentionally omitted: a user-authored palette can't be assumed
+    // CVD-safe. The label is "Your Custom Theme" (the viewer's own); each
+    // picker still appends an sr-only "custom theme" qualifier via
+    // `customThemeSrSuffix` so it reads unambiguously out of context.
+    id: 'custom',
+    label: 'Your Custom Theme',
+    accent: '#808080',
+    swatchIcon: 'fa-paintbrush',
+  },
 ];
 
 export const VALID_BASE_THEME_IDS = new Set<string>(
   THEMES.map((theme) => theme.id),
 );
+
+/**
+ * The themes the picker menus list. The Custom theme is hidden until the user
+ * opts in via the Theme Editor — except when it is the active theme, so the
+ * picker always lists the current selection. That exception keeps the radio
+ * group's exactly-one-checked invariant intact (a filtered-out active theme
+ * would leave the group with zero checked items) and lets a user who is on the
+ * Custom theme see and switch away from it. Every non-custom theme always
+ * shows.
+ */
+export function pickerThemes(
+  activeTheme: BaseTheme,
+  customThemeEnabled: boolean,
+): typeof THEMES {
+  return THEMES.filter(
+    (theme) =>
+      theme.id !== 'custom' || customThemeEnabled || activeTheme === 'custom',
+  );
+}

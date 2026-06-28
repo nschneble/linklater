@@ -54,4 +54,4 @@ jobs:
           mkcert -key-file apps/api/certs/localhost-key.pem -cert-file apps/api/certs/localhost.pem localhost
       - uses: nschneble/tuffgal-action@v0
         with:
-          setup-script: test:ui:setup
+          setup-script: tuffgal:setup

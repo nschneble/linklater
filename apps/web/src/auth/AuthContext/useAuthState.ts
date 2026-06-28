@@ -13,6 +13,7 @@ import {
 import type { MeResponse } from '../../lib/api';
 import { VALID_BASE_THEME_IDS } from '../../theme/constants';
 import type { BaseTheme, Mode } from '../../theme/constants';
+import { normalizeCustomTheme } from '../../theme/customTheme';
 import type { AuthContextValue, User } from './types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -59,6 +60,8 @@ export function narrowMode(mode: string): Mode {
 function mapMeToUser(me: MeResponse): User {
   return {
     cvdMode: me.cvdMode,
+    customTheme: normalizeCustomTheme(me.customTheme),
+    customThemeEnabled: me.customThemeEnabled,
     connectedProviders: me.connectedProviders,
     email: me.email,
     emailVerifiedAt: me.emailVerifiedAt,

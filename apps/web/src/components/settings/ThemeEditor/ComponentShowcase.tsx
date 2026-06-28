@@ -59,13 +59,13 @@ export default function ComponentShowcase() {
               >
                 Alt text sample
               </p>
-              <div className="inline-flex items-center mt-1.5 px-1.5 py-0.5 text-[0.6rem] font-semibold rounded">
+              <div className="mt-1.5">
                 <span
                   style={{
                     backgroundColor: `var(--${bundle}-highlight)`,
                     color: `var(--${bundle}-highlight-fg)`,
                   }}
-                  className="px-1.5 py-0.5 rounded"
+                  className="inline-block px-1.5 py-0.5 text-[0.6rem] font-semibold rounded"
                 >
                   Highlight
                 </span>
@@ -102,7 +102,7 @@ export default function ComponentShowcase() {
       </ShowcaseSection>
 
       <ShowcaseSection title="Buttons">
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 justify-between gap-2">
           <PrimaryButton type="button">
             <i className="fa-solid fa-plus text-xs" aria-hidden="true" />
             Add link
@@ -206,8 +206,8 @@ export default function ComponentShowcase() {
         </div>
       </ShowcaseSection>
 
-      <ShowcaseSection title="Card">
-        <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] border-l-2 border-l-[var(--mount-highlight)] rounded-xl">
+      <ShowcaseSection title="Cards">
+        <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
           <div className="flex items-start gap-3">
             <div className="flex shrink-0 items-center justify-center w-8 h-8 bg-[var(--orbit-bg)] rounded-md">
               <i
@@ -226,7 +226,7 @@ export default function ComponentShowcase() {
           </div>
           <p className="mt-2 text-[var(--mount-alt-text)] text-xs line-clamp-2">
             A brief description of the saved link. This shows how muted text
-            looks within a card surface in the current theme.
+            looks within a card surface.
           </p>
         </div>
       </ShowcaseSection>

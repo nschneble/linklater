@@ -1,6 +1,14 @@
-import { CVD_BASE_THEME, THEMES } from '../../theme/ThemeContext';
+import {
+  CVD_BASE_THEME,
+  THEMES,
+  pickerThemes,
+  useTheme,
+} from '../../theme/ThemeContext';
 import { FOCUS_RING, menuRevealStyle } from '../../lib/styles';
-import { useTheme } from '../../theme/ThemeContext';
+import {
+  customThemeSrSuffix,
+  isCustomThemeConfigured,
+} from '../../theme/customTheme';
 import type { BaseTheme } from '../../theme/ThemeContext';
 import type { RefObject } from 'react';
 
@@ -82,7 +90,9 @@ export default function ThemeSubmenu({
   onFlyoutBlur,
   flyoutReference,
 }: ThemeSubmenuProps) {
-  const { isCvdMode } = useTheme();
+  const { customTheme, customThemeEnabled, isCvdMode } = useTheme();
+  const isCustomConfigured = isCustomThemeConfigured(customTheme);
+  const visibleThemes = pickerThemes(baseTheme, customThemeEnabled);
 
   function handleOpenOrFocusFlyout() {
     if (showSubmenu) {
@@ -160,7 +170,7 @@ export default function ThemeSubmenu({
           onFlyoutBlur?.(event.relatedTarget as Element | null);
         }}
       >
-        {THEMES.map((theme) => {
+        {visibleThemes.map((theme) => {
           const isDisabled = isCvdMode && theme.id !== CVD_BASE_THEME;
           return (
             <button
@@ -194,7 +204,14 @@ export default function ThemeSubmenu({
                   aria-hidden="true"
                 />
               </span>
-              <span className="flex-1">{theme.label}</span>
+              <span className="flex-1">
+                {theme.label}
+                {theme.id === 'custom' && (
+                  <span className="sr-only">
+                    {customThemeSrSuffix(isCustomConfigured)}
+                  </span>
+                )}
+              </span>
               {baseTheme === theme.id && (
                 <i
                   className="fa-solid fa-check text-[var(--orbit-highlight)] group-hover:text-[var(--orbit-highlight-fg)]"

@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MutableRefObject, RefObject } from 'react';
-import { CVD_BASE_THEME, type BaseTheme } from '../../theme/ThemeContext';
+import {
+  applyCustomThemeTokens,
+  clearCustomThemeTokens,
+} from '../../theme/customTheme';
+import {
+  CVD_BASE_THEME,
+  type BaseTheme,
+  type CustomTheme,
+  type Mode,
+} from '../../theme/ThemeContext';
 
 interface UseThemePreviewResult {
   /** ref attached to the flyout `div` – pass to `ThemeSubmenu`
@@ -53,7 +62,10 @@ interface UseThemePreviewResult {
  * `useMenuNavigation`. `submenuOpenedByKeyboard` lets the caller auto-focus
  * the first flyout item when the submenu opens via keyboard.
  */
-export function useThemePreview(): UseThemePreviewResult {
+export function useThemePreview(
+  customTheme: CustomTheme | null,
+  mode: Mode,
+): UseThemePreviewResult {
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
   const [showThemeSubmenu, setShowThemeSubmenu] = useState(false);
   const [themeSubmenuOnLeft, setThemeSubmenuOnLeft] = useState(true);
@@ -68,6 +80,28 @@ export function useThemePreview(): UseThemePreviewResult {
   const previewCvdValue = useRef<string | undefined>(undefined);
   const submenuOpenedByKeyboard = useRef(false);
   const themeRowReference = useRef<HTMLDivElement | null>(null);
+
+  // Latest Custom palette + mode, read inside the preview callbacks without
+  // recreating them on every edit. The Custom theme injects inline `style`
+  // tokens (higher specificity than any stylesheet), so previewing into or out
+  // of `custom` must apply/clear those tokens alongside the `data-theme` swap.
+  const customThemeReference = useRef(customTheme);
+  customThemeReference.current = customTheme;
+  const modeReference = useRef(mode);
+  modeReference.current = mode;
+
+  const syncCustomTokens = useCallback((themeId: string) => {
+    const root = document.documentElement;
+    if (themeId === 'custom') {
+      applyCustomThemeTokens(
+        root,
+        customThemeReference.current,
+        modeReference.current,
+      );
+    } else {
+      clearCustomThemeTokens(root);
+    }
+  }, []);
 
   // auto-focuses first flyout item when submenu opens via keyboard
   useEffect(() => {
@@ -103,6 +137,9 @@ export function useThemePreview(): UseThemePreviewResult {
       root.style.setProperty('--theme-transition-duration', '600ms');
       root.style.setProperty('--theme-transition-easing', 'ease-out');
       root.dataset.theme = currentBaseTheme;
+      // Re-apply (or clear) the Custom inline tokens for the committed theme so
+      // a preview into another theme doesn't leave the Custom palette behind.
+      syncCustomTokens(currentBaseTheme);
       // Restore data-cvd if it was cleared during preview
       if (savedsavedCvd !== undefined) {
         root.dataset.cvd = savedsavedCvd;
@@ -123,6 +160,9 @@ export function useThemePreview(): UseThemePreviewResult {
       root.style.setProperty('--theme-transition-duration', '150ms');
       root.style.setProperty('--theme-transition-easing', 'ease-out');
       root.dataset.theme = themeId;
+      // Apply the Custom palette when previewing `custom`, clear it for every
+      // other theme so its inline tokens stop overriding the previewed theme.
+      syncCustomTokens(themeId);
 
       // If CVD mode is on and the previewed theme isn't the CVD base
       // theme, temporarily clear data-cvd so the preview looks correct.
@@ -138,7 +178,7 @@ export function useThemePreview(): UseThemePreviewResult {
         delete root.dataset.cvd;
       }
     },
-    [clearResetHandles],
+    [clearResetHandles, syncCustomTokens],
   );
 
   const handlePreviewChange = (theme: BaseTheme | null) => {

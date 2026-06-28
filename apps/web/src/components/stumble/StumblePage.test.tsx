@@ -8,7 +8,7 @@
  *   - API error → error state with retry button
  *
  * document.title is verified to confirm useDocumentTitle fires, including
- * the "Stumble error – Linklater" title for the error state.
+ * the "Linklater – Stumble error" title for the error state.
  * isSafeRedirectUrl rejection prevents open-redirect security regression.
  */
 
@@ -78,7 +78,7 @@ describe('StumblePage loading state', () => {
 });
 
 describe('StumblePage sets document title', () => {
-  it('sets document.title to "Stumble – Linklater"', async () => {
+  it('sets document.title to "Linklater – Stumble"', async () => {
     vi.mocked(apiModule.stumbleLink).mockReturnValue(new Promise(() => {}));
 
     renderStumblePage();

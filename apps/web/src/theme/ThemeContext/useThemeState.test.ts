@@ -9,6 +9,18 @@
 
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import {
+  BRANDING_DEFAULTS,
+  BRANDING_DEFAULTS_LIGHT,
+} from '../brandingDefaults';
+import {
+  CUSTOM_THEME_ENABLED_KEY,
+  CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
+  CUSTOM_THEME_STORAGE_KEY,
+  CUSTOM_THEME_UPDATED_AT_KEY,
+  THEME_STORAGE_KEY,
+} from '../storage';
+import { CUSTOM_TOKEN_KEYS } from '../customTheme';
 import { useThemeState } from './useThemeState';
 
 const storage: Record<string, string> = {};
@@ -41,6 +53,7 @@ beforeEach(() => {
   delete document.documentElement.dataset.cvd;
   document.documentElement.dataset.theme = 'scanner-darkly';
   document.documentElement.dataset.mode = 'dark';
+  document.documentElement.removeAttribute('style');
 });
 
 afterEach(() => {
@@ -326,5 +339,315 @@ describe('disableCvdMode', () => {
     });
 
     expect(returned).toBe('school-of-rock');
+  });
+});
+
+const root = () => document.documentElement;
+
+function seedStoredCustomTheme(theme: {
+  dark?: Record<string, string>;
+  light?: Record<string, string>;
+}) {
+  window.localStorage.setItem(
+    CUSTOM_THEME_STORAGE_KEY,
+    JSON.stringify({ dark: theme.dark ?? {}, light: theme.light ?? {} }),
+  );
+}
+
+describe('custom theme runtime injection', () => {
+  it('injects tokens onto documentElement only when baseTheme is custom', () => {
+    seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
+
+    // Not custom yet (defaults to scanner-darkly): nothing injected.
+    const { result } = renderHook(() => useThemeState());
+    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+
+    act(() => {
+      result.current.setBaseTheme('custom');
+    });
+    expect(root().style.getPropertyValue('--mount-border')).toBe('#abcabc');
+  });
+
+  it('removes every injected property when switching away from custom', () => {
+    window.localStorage.setItem('linklater_theme', 'custom');
+    seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
+
+    const { result } = renderHook(() => useThemeState());
+    expect(root().style.getPropertyValue('--mount-border')).toBe('#abcabc');
+
+    act(() => {
+      result.current.setBaseTheme('boyhood');
+    });
+    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+  });
+
+  it('re-injects the other mode and falls back to branding for an unsaved dark token', () => {
+    window.localStorage.setItem('linklater_theme', 'custom');
+    window.localStorage.setItem('linklater_mode', 'dark');
+    seedStoredCustomTheme({
+      dark: { '--mount-border': '#dark11' },
+      light: { '--base-bg': '#light22' },
+    });
+
+    const { result } = renderHook(() => useThemeState());
+    // Saved dark token wins; an unsaved dark token falls back to branding.
+    expect(root().style.getPropertyValue('--mount-border')).toBe('#dark11');
+    expect(root().style.getPropertyValue('--base-bg')).toBe(
+      BRANDING_DEFAULTS['--base-bg'],
+    );
+
+    act(() => {
+      result.current.setMode('light');
+    });
+    // Light defaults to branding-light: saved light token wins, an unsaved one
+    // falls back to the light palette.
+    expect(root().style.getPropertyValue('--base-bg')).toBe('#light22');
+    expect(root().style.getPropertyValue('--mount-border')).toBe(
+      BRANDING_DEFAULTS_LIGHT['--mount-border'],
+    );
+  });
+
+  it('defaults the dark palette to branding when no tokens are saved', () => {
+    window.localStorage.setItem('linklater_theme', 'custom');
+    window.localStorage.setItem('linklater_mode', 'dark');
+
+    expect(() => renderHook(() => useThemeState())).not.toThrow();
+    expect(root().style.getPropertyValue('--mount-border')).toBe(
+      BRANDING_DEFAULTS['--mount-border'],
+    );
+    expect(root().style.getPropertyValue('--base-bg')).toBe(
+      BRANDING_DEFAULTS['--base-bg'],
+    );
+  });
+
+  it('defaults the light palette to branding-light when no tokens are saved', () => {
+    window.localStorage.setItem('linklater_theme', 'custom');
+    window.localStorage.setItem('linklater_mode', 'light');
+
+    expect(() => renderHook(() => useThemeState())).not.toThrow();
+    expect(root().style.getPropertyValue('--mount-border')).toBe(
+      BRANDING_DEFAULTS_LIGHT['--mount-border'],
+    );
+    expect(root().style.getPropertyValue('--base-bg')).toBe(
+      BRANDING_DEFAULTS_LIGHT['--base-bg'],
+    );
+  });
+});
+
+describe('unauthenticated custom-theme gate', () => {
+  it('falls back to scanner-darkly and injects no tokens when unauthenticated', () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, 'custom');
+    seedStoredCustomTheme({
+      dark: { '--mount-border': '#ff0000', '--base-bg': '#010203' },
+    });
+
+    const { result } = renderHook(() => useThemeState(false));
+
+    expect(result.current.baseTheme).toBe('scanner-darkly');
+    expect(root().dataset.theme).toBe('scanner-darkly');
+    for (const variable of CUSTOM_TOKEN_KEYS) {
+      expect(root().style.getPropertyValue(variable)).toBe('');
+    }
+  });
+
+  it('injects the custom palette when authenticated', () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, 'custom');
+    seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
+
+    const { result } = renderHook(() => useThemeState(true));
+
+    expect(result.current.baseTheme).toBe('custom');
+    expect(root().dataset.theme).toBe('custom');
+    expect(root().style.getPropertyValue('--mount-border')).toBe('#abcabc');
+  });
+
+  it('does not gate the built-in film themes when unauthenticated', () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, 'boyhood');
+
+    const { result } = renderHook(() => useThemeState(false));
+
+    expect(result.current.baseTheme).toBe('boyhood');
+    expect(root().dataset.theme).toBe('boyhood');
+  });
+});
+
+describe('setCustomThemeEnabled', () => {
+  it('writes the flag + timestamp and updates state', () => {
+    const { result } = renderHook(() => useThemeState());
+    expect(result.current.customThemeEnabled).toBe(false);
+
+    act(() => {
+      result.current.setCustomThemeEnabled(true);
+    });
+
+    expect(result.current.customThemeEnabled).toBe(true);
+    expect(window.localStorage.getItem(CUSTOM_THEME_ENABLED_KEY)).toBe('on');
+    expect(
+      window.localStorage.getItem(CUSTOM_THEME_ENABLED_UPDATED_AT_KEY),
+    ).not.toBeNull();
+  });
+
+  it('initialises from the stored flag', () => {
+    window.localStorage.setItem(CUSTOM_THEME_ENABLED_KEY, 'on');
+    const { result } = renderHook(() => useThemeState());
+    expect(result.current.customThemeEnabled).toBe(true);
+  });
+});
+
+describe('applyServerCustomThemeEnabled', () => {
+  it('suppresses when toggled locally within the guard window', () => {
+    window.localStorage.setItem(CUSTOM_THEME_ENABLED_KEY, 'on');
+    const { result } = renderHook(() => useThemeState());
+    window.localStorage.setItem(
+      CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
+      Date.now().toString(),
+    );
+
+    act(() => {
+      result.current.applyServerCustomThemeEnabled(false);
+    });
+
+    expect(result.current.customThemeEnabled).toBe(true);
+  });
+
+  it('applies the server value once the guard has passed', () => {
+    const { result } = renderHook(() => useThemeState());
+    window.localStorage.setItem(
+      CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
+      (Date.now() - 60_000).toString(),
+    );
+
+    act(() => {
+      result.current.applyServerCustomThemeEnabled(true);
+    });
+
+    expect(result.current.customThemeEnabled).toBe(true);
+    expect(window.localStorage.getItem(CUSTOM_THEME_ENABLED_KEY)).toBe('on');
+  });
+});
+
+describe('setCustomTheme', () => {
+  it('writes both storage keys and updates state', () => {
+    const { result } = renderHook(() => useThemeState());
+    const nextTheme = { dark: { '--mount-border': '#445566' }, light: {} };
+
+    act(() => {
+      result.current.setCustomTheme(nextTheme);
+    });
+
+    expect(result.current.customTheme).toEqual(nextTheme);
+    expect(
+      JSON.parse(window.localStorage.getItem(CUSTOM_THEME_STORAGE_KEY) ?? '{}'),
+    ).toEqual(nextTheme);
+    expect(
+      window.localStorage.getItem(CUSTOM_THEME_UPDATED_AT_KEY),
+    ).not.toBeNull();
+  });
+});
+
+describe('applyServerCustomTheme', () => {
+  it('suppresses when a local change was made recently', () => {
+    window.localStorage.setItem('linklater_theme', 'custom');
+    seedStoredCustomTheme({ dark: { '--mount-border': '#local00' } });
+    const { result } = renderHook(() => useThemeState());
+    window.localStorage.setItem(
+      CUSTOM_THEME_UPDATED_AT_KEY,
+      Date.now().toString(),
+    );
+
+    act(() => {
+      result.current.applyServerCustomTheme({
+        dark: { '--mount-border': '#server0' },
+        light: {},
+      });
+    });
+
+    expect(result.current.customTheme?.dark['--mount-border']).toBe('#local00');
+  });
+
+  it('applies and writes the server value when the guard has passed', () => {
+    const { result } = renderHook(() => useThemeState());
+    window.localStorage.setItem(
+      CUSTOM_THEME_UPDATED_AT_KEY,
+      (Date.now() - 60_000).toString(),
+    );
+    const serverTheme = { dark: { '--mount-border': '#server0' }, light: {} };
+
+    act(() => {
+      result.current.applyServerCustomTheme(serverTheme);
+    });
+
+    expect(result.current.customTheme).toEqual(serverTheme);
+    expect(
+      JSON.parse(window.localStorage.getItem(CUSTOM_THEME_STORAGE_KEY) ?? '{}'),
+    ).toEqual(serverTheme);
+  });
+
+  it('removes the localStorage key when the server value is null', () => {
+    seedStoredCustomTheme({ dark: { '--mount-border': '#local00' } });
+    const { result } = renderHook(() => useThemeState());
+    window.localStorage.setItem(
+      CUSTOM_THEME_UPDATED_AT_KEY,
+      (Date.now() - 60_000).toString(),
+    );
+
+    act(() => {
+      result.current.applyServerCustomTheme(null);
+    });
+
+    expect(result.current.customTheme).toBeNull();
+    expect(window.localStorage.getItem(CUSTOM_THEME_STORAGE_KEY)).toBeNull();
+  });
+});
+
+describe('setPreviewTheme', () => {
+  it('paints the preview theme on data-theme without changing baseTheme or storage', () => {
+    const { result } = renderHook(() => useThemeState());
+    expect(result.current.baseTheme).toBe('scanner-darkly');
+
+    act(() => {
+      result.current.setPreviewTheme('boyhood');
+    });
+
+    expect(root().dataset.theme).toBe('boyhood');
+    // The committed selection and storage are untouched — preview never persists.
+    expect(result.current.baseTheme).toBe('scanner-darkly');
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
+  });
+
+  it('reverts to the committed theme when the preview is cleared', () => {
+    const { result } = renderHook(() => useThemeState());
+    act(() => result.current.setPreviewTheme('boyhood'));
+    expect(root().dataset.theme).toBe('boyhood');
+
+    act(() => result.current.setPreviewTheme(null));
+    expect(root().dataset.theme).toBe('scanner-darkly');
+  });
+
+  it('injects custom tokens when previewing custom and clears them when previewing away', () => {
+    seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
+    // baseTheme stays a film theme; only the preview points at custom.
+    const { result } = renderHook(() => useThemeState());
+    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+
+    act(() => result.current.setPreviewTheme('custom'));
+    expect(root().style.getPropertyValue('--mount-border')).toBe('#abcabc');
+
+    act(() => result.current.setPreviewTheme('boyhood'));
+    expect(root().style.getPropertyValue('--mount-border')).toBe('');
+    expect(result.current.baseTheme).toBe('scanner-darkly');
+  });
+
+  it('does not let a preview of custom bypass the unauthenticated gate', () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, 'custom');
+    seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
+    // Unauthenticated: the committed custom selection is already gated to the
+    // fallback; a preview of custom must not re-open that door.
+    const { result } = renderHook(() => useThemeState(false));
+
+    act(() => result.current.setPreviewTheme('custom'));
+
+    expect(root().dataset.theme).not.toBe('custom');
+    expect(root().style.getPropertyValue('--mount-border')).toBe('');
   });
 });

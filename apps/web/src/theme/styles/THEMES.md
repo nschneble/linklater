@@ -1,7 +1,8 @@
 # Linklater Themes
 
-There are ten selectable themes, each with light and dark variants, plus
-one off-book brand-chrome theme that no user can pick (Section 7). Every
+There are eleven selectable themes: ten film themes (each with light and
+dark variants) plus the user-editable `custom` theme (Section 7), as well
+as one off-book brand-chrome theme that no user can pick (Section 7). Every
 consumer now paints from the bundle vocabulary (Section 2) or the
 universal `--focus-ring` slot (Section 3); the legacy flat-token surface
 has been retired in stages.
@@ -21,9 +22,9 @@ Twelve flat tokens have been retired:
   pairs. Page-gradient consumers read `--page-gradient-from` and
   `--page-gradient-to` directly per theme.
 - `--accent-fg`, `--accent-hover` – primary-button foreground
-  + hover now resolve per host tier via `--{base,mount,orbit}-highlight-fg`
-  and `--{base,mount,orbit}-highlight-hover`. `PrimaryButton` gained a
-  `surface` prop to pick the right pair. See Section 5.
+  - hover now resolve per host tier via `--{base,mount,orbit}-highlight-fg`
+    and `--{base,mount,orbit}-highlight-hover`. `PrimaryButton` gained a
+    `surface` prop to pick the right pair. See Section 5.
 - `--accent` – the last chrome consumers migrated to
   `--mount-highlight`, `--base-highlight`, and `--orbit-highlight`
   depending on host; the per-theme `--accent`
@@ -34,12 +35,12 @@ Twelve flat tokens have been retired:
 - `--page-gradient-via` – the mid-stop was byte-identical to
   `--page-gradient-from` in every shipped theme, so the auth / verify
   page-gradient wrappers collapsed to a 2-stop `bg-gradient-to-b
-  from-{from} to-{to}` and the slot was retired across all 10 themes.
+from-{from} to-{to}` and the slot was retired across all 10 themes.
 
 The `chrome-token-migration.test.ts` tripwire keeps every retired token
 in its `LEGACY_TOKENS` list to prevent re-introduction.
 
-## 2. Color bundles (all 10 themes migrated)
+## 2. Color bundles (all 10 film themes migrated)
 
 A **bundle** is a complete palette for one kind of UI surface. The seven
 bundles map onto the UI's narrative surfaces:
@@ -180,9 +181,24 @@ satisfy the bundle distinguishability contract without any
 (dE2000 ≥ 10 under all three dichromacies) or axis B (luminance gap
 ≥ 1.4×).
 
-## 7. The off-book `branding` theme
+## 7. The `custom` theme and the off-book `branding` theme
 
-`branding.css` defines an eleventh `data-theme` value, `branding`, that is
+### The user-editable `custom` theme
+
+`custom` is the eleventh selectable theme, but unlike the ten film themes it
+has no `.css` file. Its `{dark, light}` palette of `--{bundle}-{slot}` tokens
+(plus the universal `--focus-ring`) lives in the per-user `customTheme` JSON
+column, is edited in the Theme Editor, and is injected onto
+`document.documentElement` at runtime while `custom` is the active theme. It is
+deliberately NOT part of the `bundles.contrast.test.ts` fixtures because the
+palette is user-authored — contrast can't be validated against a fixed file.
+Instead it is validated live in the editor's contrast checker (Section 2's
+WCAG contracts, computed per edit), and per-token failures surface inline on
+each color input.
+
+### The off-book `branding` theme
+
+`branding.css` defines a twelfth `data-theme` value, `branding`, that is
 deliberately NOT one of the ten selectable themes. It is absent from the
 `BaseTheme` union, `THEMES`, `VALID_BASE_THEME_IDS` (`constants.ts`), and
 the API `VALID_THEMES` list, so no user can ever activate it and it never

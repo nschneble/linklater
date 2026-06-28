@@ -32,10 +32,12 @@ const makeUser = (
   overrides: Partial<{
     pendingEmail: string | null;
     welcomedAt: string | null;
+    customTheme: unknown;
   }> = {},
 ) => ({
   cvdMode: false,
   connectedProviders: [],
+  customTheme: null as unknown,
   email: 'user@example.com',
   emailVerifiedAt: '2024-01-01T00:00:00Z',
   hasPassword: true,
@@ -354,5 +356,61 @@ describe('markWelcomed', () => {
       expect.any(Error),
     );
     expect(result.current.user?.welcomedAt).not.toBeNull();
+  });
+});
+
+describe('mapMeToUser customTheme normalization', () => {
+  it('normalizes a valid server blob onto user.customTheme', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockResolvedValue(
+      makeUser({
+        customTheme: {
+          dark: { '--mount-border': '#abcdef', '--bogus-key': '#000000' },
+          light: {},
+        },
+      }),
+    );
+
+    const { result } = renderHook(() => useAuthState());
+
+    await waitFor(() =>
+      expect(result.current.user?.email).toBe('user@example.com'),
+    );
+
+    // Known keys survive; unknown keys are stripped by the trust boundary.
+    expect(result.current.user?.customTheme).toEqual({
+      dark: { '--mount-border': '#abcdef' },
+      light: {},
+    });
+  });
+
+  it('yields null for a malformed (non-object) customTheme, never raw passthrough', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockResolvedValue(
+      makeUser({ customTheme: 'not-an-object' }),
+    );
+
+    const { result } = renderHook(() => useAuthState());
+
+    await waitFor(() =>
+      expect(result.current.user?.email).toBe('user@example.com'),
+    );
+
+    expect(result.current.user?.customTheme).toBeNull();
+  });
+
+  it('coerces an array customTheme to safe empty mode maps', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser({ customTheme: [] }));
+
+    const { result } = renderHook(() => useAuthState());
+
+    await waitFor(() =>
+      expect(result.current.user?.email).toBe('user@example.com'),
+    );
+
+    // An array is an object, so normalize returns empty mode maps – never the
+    // raw array.
+    expect(result.current.user?.customTheme).toEqual({ dark: {}, light: {} });
   });
 });

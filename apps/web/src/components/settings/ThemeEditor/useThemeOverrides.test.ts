@@ -1,29 +1,39 @@
 /*
  * Tests for useThemeOverrides – the theme editor's live-edit state hook.
  *
- * The hook owns the override map as React state and exposes an
- * `overrideStyle` object the consumer spreads onto a wrapper element.
- * Critically, it does NOT mutate document.documentElement.style – the
- * editor chrome reads from :root, so the user can never lock themselves
- * out by editing a bundle slot to an unreadable value.
+ * It NEVER mutates document.documentElement / the global theme, and its mode is
+ * a LOCAL `editorMode` argument (the Light/Dark tabs), decoupled from the site
+ * mode. While ENABLED the baseline is the resolved custom palette for that mode;
+ * while DISABLED it mirrors the current theme's `editorMode` palette via a probe
+ * (empty in jsdom, where the probe can't resolve the cascade). Either way
+ * `contentThemeStyle` is just `colorValues`, so the tabs repaint the scoped
+ * subtree without touching the global theme.
  */
 
 import { act, renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useThemeOverrides } from './useThemeOverrides';
+import type { CustomTheme } from '../../../theme/customTheme';
+
+const mockTheme = {
+  baseTheme: 'apollo-10-1-2',
+  mode: 'light' as 'light' | 'dark',
+  customTheme: null as CustomTheme | null,
+  customThemeEnabled: false,
+  setBaseTheme: vi.fn(),
+  setMode: vi.fn(),
+};
 
 vi.mock('../../../theme/ThemeContext', () => ({
-  useTheme: () => ({
-    baseTheme: 'apollo-10-1-2',
-    mode: 'light',
-    setBaseTheme: vi.fn(),
-    setMode: vi.fn(),
-  }),
+  useTheme: () => mockTheme,
 }));
 
-afterEach(() => {
-  // Belt-and-braces: confirm no inline custom properties leaked onto :root
-  // across tests. Cleared by the test isolation regardless.
+beforeEach(() => {
+  Object.assign(mockTheme, {
+    mode: 'light',
+    customTheme: null,
+    customThemeEnabled: false,
+  });
   for (const property of Array.from(document.documentElement.style)) {
     if (property.startsWith('--')) {
       document.documentElement.style.removeProperty(property);
@@ -31,101 +41,77 @@ afterEach(() => {
   }
 });
 
-describe('useThemeOverrides', () => {
-  it('returns an empty overrideStyle when no overrides are set', () => {
-    const { result } = renderHook(() => useThemeOverrides());
-    expect(result.current.overrideStyle).toEqual({});
+describe('useThemeOverrides – disabled (custom theme off)', () => {
+  it('contentThemeStyle mirrors colorValues so the tabs repaint the preview', () => {
+    const { result } = renderHook(() => useThemeOverrides('light'));
+    // In jsdom the probe resolves nothing, so the read-only mirror is empty —
+    // the contract under test is that the style tracks colorValues, not {}.
+    expect(result.current.contentThemeStyle).toEqual(
+      result.current.colorValues,
+    );
   });
 
-  it('returns only the overridden variables in overrideStyle', () => {
-    const { result } = renderHook(() => useThemeOverrides());
-    act(() => {
-      result.current.setOverride('--mount-bg', '#ffffff');
+  it('never mutates document.documentElement.style while disabled', () => {
+    renderHook(() => useThemeOverrides('dark'));
+    expect(document.documentElement.style.getPropertyValue('--mount-bg')).toBe(
+      '',
+    );
+  });
+});
+
+describe('useThemeOverrides – enabled (editing the custom theme)', () => {
+  beforeEach(() => {
+    Object.assign(mockTheme, {
+      customThemeEnabled: true,
+      customTheme: { dark: {}, light: {} },
     });
-    expect(result.current.overrideStyle).toEqual({ '--mount-bg': '#ffffff' });
+  });
+
+  it('contentThemeStyle carries the full resolved palette (branding fallback)', () => {
+    const { result } = renderHook(() => useThemeOverrides('light'));
+    // An empty custom theme resolves to the branding defaults for every var.
+    expect(result.current.contentThemeStyle['--mount-bg']).toBeTruthy();
+    expect(result.current.contentThemeStyle['--base-text']).toBeTruthy();
+    expect(
+      Object.keys(result.current.contentThemeStyle).length,
+    ).toBeGreaterThan(10);
+  });
+
+  it('setOverride updates colorValues and contentThemeStyle', () => {
+    const { result } = renderHook(() => useThemeOverrides('light'));
+    act(() => result.current.setOverride('--mount-bg', '#ffffff'));
+    expect(result.current.colorValues['--mount-bg']).toBe('#ffffff');
+    expect(result.current.contentThemeStyle['--mount-bg']).toBe('#ffffff');
   });
 
   it('accumulates multiple overrides without dropping prior keys', () => {
-    const { result } = renderHook(() => useThemeOverrides());
-    act(() => {
-      result.current.setOverride('--mount-bg', '#ffffff');
-    });
-    act(() => {
-      result.current.setOverride('--alert-text', '#fee2e2');
-    });
-    expect(result.current.overrideStyle).toEqual({
-      '--mount-bg': '#ffffff',
-      '--alert-text': '#fee2e2',
-    });
+    const { result } = renderHook(() => useThemeOverrides('light'));
+    act(() => result.current.setOverride('--mount-bg', '#ffffff'));
+    act(() => result.current.setOverride('--alert-text', '#fee2e2'));
+    expect(result.current.colorValues['--mount-bg']).toBe('#ffffff');
+    expect(result.current.colorValues['--alert-text']).toBe('#fee2e2');
   });
 
-  it('clears every override on resetOverrides', () => {
-    const { result } = renderHook(() => useThemeOverrides());
-    act(() => {
-      result.current.setOverride('--mount-bg', '#ffffff');
-      result.current.setOverride('--alert-text', '#fee2e2');
-    });
-    act(() => {
-      result.current.resetOverrides();
-    });
-    expect(result.current.overrideStyle).toEqual({});
+  it('resetOverrides reverts every edit to the baseline', () => {
+    const { result } = renderHook(() => useThemeOverrides('light'));
+    act(() => result.current.setOverride('--mount-bg', '#ffffff'));
+    act(() => result.current.resetOverrides());
+    expect(result.current.colorValues['--mount-bg']).not.toBe('#ffffff');
+    expect(result.current.colorValues['--mount-bg']).toBeTruthy();
   });
 
-  it('clears only the targeted bundle on resetBundle', () => {
-    const { result } = renderHook(() => useThemeOverrides());
-    act(() => {
-      result.current.setOverride('--mount-bg', '#ffffff');
-      result.current.setOverride('--alert-text', '#fee2e2');
-    });
-    act(() => {
-      result.current.resetBundle('mount');
-    });
-    expect(result.current.overrideStyle).toEqual({
-      '--alert-text': '#fee2e2',
-    });
-  });
-
-  it('clears base-only and base/mount-only slots when resetting base', () => {
-    const { result } = renderHook(() => useThemeOverrides());
-    act(() => {
-      result.current.setOverride('--base-bg', '#000000');
-      result.current.setOverride('--base-subtle-text', '#888888');
-      result.current.setOverride('--base-input-bg', '#111111');
-    });
-    act(() => {
-      result.current.resetBundle('base');
-    });
-    expect(result.current.overrideStyle).toEqual({});
-  });
-
-  it('clears mount-only input-bg when resetting mount', () => {
-    const { result } = renderHook(() => useThemeOverrides());
-    act(() => {
-      result.current.setOverride('--mount-input-bg', '#222222');
-    });
-    act(() => {
-      result.current.resetBundle('mount');
-    });
-    expect(result.current.overrideStyle).toEqual({});
-  });
-
-  it('exposes overridden colorValues alongside non-overridden defaults', () => {
-    const { result } = renderHook(() => useThemeOverrides());
-    act(() => {
-      result.current.setOverride('--mount-bg', '#abcdef');
-    });
+  it('loadOverrides seeds the copied keys; un-copied keys keep their value', () => {
+    const { result } = renderHook(() => useThemeOverrides('light'));
+    act(() => result.current.setOverride('--mount-bg', '#abcdef'));
+    // A real copy resolves the full key set; a partial map keeps the rest.
+    act(() => result.current.loadOverrides({ '--alert-text': '#fee2e2' }));
+    expect(result.current.colorValues['--alert-text']).toBe('#fee2e2');
     expect(result.current.colorValues['--mount-bg']).toBe('#abcdef');
-    // Other variables retain whatever defaults the test environment reports
-    // (jsdom returns empty strings; the precise value doesn't matter – just
-    // that the override slot is the one that flipped).
-    expect(result.current.colorValues['--alert-bg']).not.toBe('#abcdef');
   });
 
   it('never mutates document.documentElement.style', () => {
-    const { result } = renderHook(() => useThemeOverrides());
-    act(() => {
-      result.current.setOverride('--mount-bg', '#ffffff');
-    });
+    const { result } = renderHook(() => useThemeOverrides('light'));
+    act(() => result.current.setOverride('--mount-bg', '#ffffff'));
     expect(document.documentElement.style.getPropertyValue('--mount-bg')).toBe(
       '',
     );

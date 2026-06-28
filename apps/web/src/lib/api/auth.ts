@@ -31,6 +31,15 @@ export type MagicLinkVerifyResponse =
  */
 export interface MeResponse {
   cvdMode: boolean;
+  /**
+   * The user's editable Custom theme as stored in the `customTheme` JSON
+   * column — a `{ dark, light }` map of bundle token names to CSS color
+   * strings — or `null` when the user has never saved one. Free-form JSON on
+   * the wire; narrowed client-side via `normalizeCustomTheme`.
+   */
+  customTheme: unknown;
+  /** Whether the Custom theme is shown in the theme picker. */
+  customThemeEnabled: boolean;
   connectedProviders: Array<{
     provider: string;
     providerEmail: string;

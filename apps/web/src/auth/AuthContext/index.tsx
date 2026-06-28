@@ -37,3 +37,15 @@ export function useAuth() {
 
   return context;
 }
+
+/**
+ * Non-throwing variant for consumers that only need to read session state and
+ * must tolerate rendering outside an `AuthProvider` (e.g. `ThemeProvider`,
+ * which is also mounted bare in some component tests).
+ *
+ * Returns `undefined` when no `AuthProvider` is present, which callers should
+ * treat as "no authenticated user".
+ */
+export function useOptionalAuth(): AuthContextValue | undefined {
+  return useContext(AuthContext);
+}

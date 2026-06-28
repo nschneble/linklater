@@ -65,4 +65,59 @@ describe('UpdateMeDto', () => {
     const cvdErrors = errors.filter((error) => error.property === 'cvdMode');
     expect(cvdErrors.length).toBeGreaterThan(0);
   });
+
+  it('accepts a customTheme with both dark and light maps', async () => {
+    const errors = await validate(
+      makeDto({
+        customTheme: {
+          dark: { '--mount-border': '#102030' },
+          light: { '--mount-border': '#fefefe' },
+        },
+      }),
+    );
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts a customTheme with only a single mode (partial save)', async () => {
+    const errors = await validate(
+      makeDto({ customTheme: { dark: { '--base-bg': '#000000' } } }),
+    );
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts an empty customTheme object', async () => {
+    const errors = await validate(makeDto({ customTheme: {} }));
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a customTheme whose mode map holds a non-string value', async () => {
+    const errors = await validate(
+      makeDto({
+        customTheme: {
+          dark: { '--mount-border': 42 as unknown as string },
+        },
+      }),
+    );
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('rejects a customTheme mode that is not an object', async () => {
+    const errors = await validate(
+      makeDto({
+        customTheme: {
+          dark: 'not-an-object' as unknown as Record<string, string>,
+        },
+      }),
+    );
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('rejects a customTheme that is an array, not an object', async () => {
+    const errors = await validate(
+      makeDto({
+        customTheme: [] as unknown as { dark?: Record<string, string> },
+      }),
+    );
+    expect(errors.length).toBeGreaterThan(0);
+  });
 });

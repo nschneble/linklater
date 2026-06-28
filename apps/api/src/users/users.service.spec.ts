@@ -48,6 +48,8 @@ const PENDING_EMAIL = 'pending.email@addy.com';
 
 const makeUser = (overrides = {}) => ({
   cvdMode: false,
+  customTheme: null,
+  customThemeEnabled: false,
   createdAt: new Date(),
   email: USER_EMAIL,
   emailVerifiedAt: null,
@@ -263,6 +265,67 @@ describe('UsersService', () => {
         }),
       );
     });
+
+    it('updates customThemeEnabled when provided', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.updateMe(USER_ID, { customThemeEnabled: true });
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ customThemeEnabled: true }),
+        }),
+      );
+    });
+
+    it('does not write customThemeEnabled when it is omitted', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.updateMe(USER_ID, { theme: THEME_NAME });
+
+      const updateArgument = (prismaMock.user.update as jest.Mock).mock
+        .calls[0][0] as { data: Record<string, unknown> };
+      expect(updateArgument.data).not.toHaveProperty('customThemeEnabled');
+    });
+
+    it('persists customTheme verbatim when provided', async () => {
+      const customTheme = {
+        dark: { '--mount-border': '#102030' },
+        light: { '--mount-border': '#fefefe' },
+      };
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(
+        makeUser({ customTheme }),
+      );
+
+      await service.updateMe(USER_ID, { customTheme });
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ customTheme }),
+        }),
+      );
+    });
+
+    it('does not write customTheme when it is omitted', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.updateMe(USER_ID, { theme: THEME_NAME });
+
+      const updateArgument = (prismaMock.user.update as jest.Mock).mock
+        .calls[0][0] as { data: Record<string, unknown> };
+      expect(updateArgument.data).not.toHaveProperty('customTheme');
+    });
+
+    it('returns the persisted customTheme on the updated user', async () => {
+      const customTheme = { dark: { '--base-bg': '#000000' } };
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(
+        makeUser({ customTheme }),
+      );
+
+      const result = await service.updateMe(USER_ID, { customTheme });
+
+      expect(result).toMatchObject({ customTheme });
+    });
   });
 
   describe('findByEmail', () => {
@@ -312,6 +375,25 @@ describe('UsersService', () => {
       const result = await service.findById(USER_ID);
 
       expect(result).toHaveProperty('hasPassword', false);
+    });
+
+    it('returns the stored customTheme so the front-end can hydrate it', async () => {
+      const customTheme = { dark: { '--mount-border': '#102030' } };
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(
+        makeUser({ customTheme }),
+      );
+
+      const result = await service.findById(USER_ID);
+
+      expect(result).toMatchObject({ customTheme });
+    });
+
+    it('returns customTheme: null for a user who has never saved one', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(makeUser());
+
+      const result = await service.findById(USER_ID);
+
+      expect(result.customTheme).toBeNull();
     });
 
     it('throws NotFoundException when user does not exist', async () => {

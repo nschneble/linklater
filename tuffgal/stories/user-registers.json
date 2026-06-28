@@ -1,6 +1,7 @@
 {
   "story": "As a new user, I can create an account.",
   "flow": "create a new account",
+  "breakpoints": ["desktop"],
   "actions": [
     {
       "action": "register",

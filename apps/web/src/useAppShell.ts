@@ -87,9 +87,9 @@ export function useAppShell() {
 
   useEffect(() => {
     const titles: Record<AppView, string> = {
-      links: 'Your links – Linklater',
-      settings: 'Settings – Linklater',
-      'theme-editor': 'Theme editor – Linklater',
+      links: 'Linklater – Your links',
+      settings: 'Linklater – Settings',
+      'theme-editor': 'Linklater – Theme editor',
     };
     document.title = titles[view];
   }, [view]);
