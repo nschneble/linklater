@@ -48,6 +48,20 @@ body {
   }
 }
 
+/* A single, self-terminating die "roll" for the theme editor's Randomize
+   button — one rotation, then it settles. Re-triggered by remounting the icon
+   (a key bump) on each click, never by a JS animation loop, so it inherits the
+   global prefers-reduced-motion clamp below (iteration-count + duration both
+   neutralized) for free. */
+@keyframes dice-roll {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -73,6 +87,7 @@ body {
 @theme {
   --animate-fade-in-up: fade-in-up 180ms ease-out both;
   --animate-card-enter: card-enter 400ms ease-out both;
+  --animate-dice-roll: dice-roll 600ms ease-out;
   --animate-card-exit: card-exit 280ms ease-in forwards;
   --animate-fade-out-down: fade-out-down 150ms ease-in forwards;
 }

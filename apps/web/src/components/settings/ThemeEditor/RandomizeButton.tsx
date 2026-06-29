@@ -1,4 +1,5 @@
 import { EDITOR_FOCUS_RING, ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
+import { useState } from 'react';
 
 interface RandomizeButtonProps {
   /** Generates + applies a fresh WCAG-AA palette for the current mode. */
@@ -18,16 +19,38 @@ interface RandomizeButtonProps {
  * palette is always readable, but a PRIOR hostile hand-edit could still be live
  * when the user reaches for this). It is a real `<button>` with VISIBLE text as
  * its accessible name; the die icon is decorative (`aria-hidden`).
+ *
+ * Delight (PRD point 12 — the editor's "Stumble for colors"): the die ROLLS on
+ * each activation, echoing Stumble's fa-spin energy. The roll is a one-shot CSS
+ * animation (`animate-dice-roll`) replayed by remounting the icon via a
+ * `spinNonce` key — never a JS animation loop — so it inherits the global
+ * prefers-reduced-motion clamp. It is purely decorative feedback layered on top
+ * of the existing live-region announce + visible palette repaint, so non-visual
+ * and reduced-motion users lose nothing. Activation fires for mouse click AND
+ * keyboard Enter/Space (native `<button>` onClick), so the roll is identical for
+ * every input method. The die stays `aria-hidden` (it carries no semantics).
  */
 export default function RandomizeButton({ onRandomize }: RandomizeButtonProps) {
+  const [spinNonce, setSpinNonce] = useState(0);
+
+  function handleClick() {
+    setSpinNonce((current) => current + 1);
+    onRandomize();
+  }
+
   return (
     <button
       type="button"
-      onClick={onRandomize}
+      onClick={handleClick}
       style={ESCAPE_HATCH_LIGHT}
       className={`flex items-center gap-1.5 px-2.5 py-1.5 border text-xs font-semibold ${EDITOR_FOCUS_RING} rounded-lg active:scale-[0.96] transition-transform cursor-pointer`}
     >
-      <i className="fa-solid fa-dice" aria-hidden="true" />
+      <i
+        key={spinNonce}
+        data-testid="randomize-die"
+        className={`fa-solid fa-dice ${spinNonce > 0 ? 'animate-dice-roll' : ''}`}
+        aria-hidden="true"
+      />
       Randomize
     </button>
   );

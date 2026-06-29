@@ -14,6 +14,7 @@ import { BUNDLES, type Bundle } from './useThemeOverrides';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { CSSProperties } from 'react';
+import type { Mode } from '../../../theme/constants';
 
 function renderShowcase(
   bundle: Bundle = 'base',
@@ -23,6 +24,8 @@ function renderShowcase(
   return render(
     <ComponentShowcase
       activeBundle={bundle}
+      editorMode="dark"
+      randomizeNonce={0}
       previewStyle={previewStyle}
       contentThemeStyle={contentThemeStyle}
     />,
@@ -78,6 +81,8 @@ describe('ComponentShowcase – the explanation is real app UI', () => {
     rerender(
       <ComponentShowcase
         activeBundle="orbit"
+        editorMode="dark"
+        randomizeNonce={0}
         previewStyle={null}
         contentThemeStyle={{}}
       />,
@@ -205,5 +210,130 @@ describe('ComponentShowcase – decorative mock contract (per bundle)', () => {
       });
       unmount();
     }
+  });
+});
+
+describe('ComponentShowcase – enter animation (PRD point 10)', () => {
+  // The mock's pieces carry the app's `animate-card-enter` class with a capped
+  // inline stagger delay, exactly like the links list. Reduced-motion safety is
+  // INHERITED from the global prefers-reduced-motion clamp in index.css (it
+  // neutralizes animation-duration + iteration-count on *), so we assert the
+  // CSS-driven mechanism is present and trust the global clamp — no bespoke,
+  // unguarded motion is introduced here.
+  it('animates each mock piece in with animate-card-enter + a capped stagger delay', () => {
+    for (const bundle of BUNDLES) {
+      const { unmount } = renderShowcase(bundle);
+      const animated = screen
+        .getByTestId('app-mock')
+        .querySelectorAll('.animate-card-enter');
+      expect(animated.length).toBeGreaterThan(0);
+      animated.forEach((piece) => {
+        const delay = (piece as HTMLElement).style.animationDelay;
+        // Either an inline capped delay (MockStagger) or the Tailwind
+        // [animation-delay:60ms] utility on the orbit menu — both stay <= 240ms.
+        if (delay) {
+          const milliseconds = Number.parseInt(delay, 10);
+          expect(milliseconds).toBeGreaterThanOrEqual(0);
+          expect(milliseconds).toBeLessThanOrEqual(240);
+        }
+      });
+      unmount();
+    }
+  });
+});
+
+describe('ComponentShowcase – re-stagger key (PRD points 10 + 12)', () => {
+  function renderWithKey(
+    bundle: Bundle,
+    editorMode: Mode,
+    randomizeNonce: number,
+  ) {
+    return render(
+      <ComponentShowcase
+        activeBundle={bundle}
+        editorMode={editorMode}
+        randomizeNonce={randomizeNonce}
+        previewStyle={null}
+        contentThemeStyle={{}}
+      />,
+    );
+  }
+
+  it('remounts the mock (replaying the animation) when the bundle changes', () => {
+    const { rerender } = renderWithKey('base', 'dark', 0);
+    const before = screen.getByTestId('app-mock');
+    rerender(
+      <ComponentShowcase
+        activeBundle="mount"
+        editorMode="dark"
+        randomizeNonce={0}
+        previewStyle={null}
+        contentThemeStyle={{}}
+      />,
+    );
+    // A changed key forces React to mount a brand-new node, replaying the
+    // enter animation rather than diffing the old one in place.
+    expect(screen.getByTestId('app-mock')).not.toBe(before);
+  });
+
+  it('remounts the mock when the editor mode flips', () => {
+    const { rerender } = renderWithKey('mount', 'dark', 0);
+    const before = screen.getByTestId('app-mock');
+    rerender(
+      <ComponentShowcase
+        activeBundle="mount"
+        editorMode="light"
+        randomizeNonce={0}
+        previewStyle={null}
+        contentThemeStyle={{}}
+      />,
+    );
+    expect(screen.getByTestId('app-mock')).not.toBe(before);
+  });
+
+  it('remounts the mock when the randomize nonce bumps (re-stagger on Randomize)', () => {
+    const { rerender } = renderWithKey('mount', 'dark', 0);
+    const before = screen.getByTestId('app-mock');
+    rerender(
+      <ComponentShowcase
+        activeBundle="mount"
+        editorMode="dark"
+        randomizeNonce={1}
+        previewStyle={null}
+        contentThemeStyle={{}}
+      />,
+    );
+    expect(screen.getByTestId('app-mock')).not.toBe(before);
+  });
+
+  it('does NOT remount the section or its sr-only heading on a re-stagger', () => {
+    const { rerender } = renderWithKey('mount', 'dark', 0);
+    const sectionBefore = screen.getByRole('region', { name: 'Live preview' });
+    rerender(
+      <ComponentShowcase
+        activeBundle="mount"
+        editorMode="dark"
+        randomizeNonce={1}
+        previewStyle={null}
+        contentThemeStyle={{}}
+      />,
+    );
+    // Only the inner mock is keyed; the named region + heading stay mounted, so
+    // nothing re-announces and focus cannot move.
+    expect(screen.getByRole('region', { name: 'Live preview' })).toBe(
+      sectionBefore,
+    );
+  });
+});
+
+describe('ComponentShowcase – whimsical aside (PRD points 12 + 13)', () => {
+  it('renders an app-voiced aside that is real, app-themed UI outside the mock', () => {
+    renderShowcase('base');
+    const aside = screen.getByText(/roll the dice until it feels like you/i);
+    expect(aside).not.toHaveClass('sr-only');
+    // App-themed (always-readable token), never a custom-palette token.
+    expect(aside.className).toContain('text-[var(--base-alt-text)]');
+    // Lives OUTSIDE the aria-hidden, possibly-hostile mock subtree.
+    expect(getMock().contains(aside)).toBe(false);
   });
 });

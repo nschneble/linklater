@@ -83,6 +83,11 @@ export default function ThemeEditor() {
   // the editable slots AND swaps the previewed component (PRD point 4).
   const [activeBundle, setActiveBundle] = useState<Bundle>(BUNDLES[0]);
 
+  // Bumped on every Randomize so the live preview re-staggers in with the fresh
+  // palette (PRD point 12). It only feeds ComponentShowcase's mock remount key —
+  // it never touches the palette itself.
+  const [randomizeNonce, setRandomizeNonce] = useState(0);
+
   const { colorValues, contentThemeStyle, setOverride, loadOverrides } =
     useThemeOverrides(editorMode);
 
@@ -355,6 +360,7 @@ export default function ThemeEditor() {
   // guaranteed within one mode's generated palette).
   const handleRandomize = useCallback(() => {
     const palette = generateRandomPalette(editorMode);
+    setRandomizeNonce((current) => current + 1);
     if (customThemeEnabled) {
       setEngageUndo(null);
       handleApplyRandom(palette);
@@ -538,6 +544,8 @@ export default function ThemeEditor() {
         >
           <ComponentShowcase
             activeBundle={activeBundle}
+            editorMode={editorMode}
+            randomizeNonce={randomizeNonce}
             previewStyle={previewStyle}
             contentThemeStyle={contentThemeStyle}
           />

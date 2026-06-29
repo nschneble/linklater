@@ -112,12 +112,16 @@ describe('ThemeEditor live preview reflects the selected bundle (PRD point 4)', 
     expect(within(mock).getByText('Add link')).toBeInTheDocument();
     expect(screen.getByText(/used for the page itself/i)).toBeInTheDocument();
 
-    // Picking the mount bundle swaps the preview to the link card.
+    // Picking the mount bundle swaps the preview to the link card. The inner
+    // mock REMOUNTS on a bundle change (its enter animation replays — PRD point
+    // 10), so re-query the live node rather than the now-detached original.
     fireEvent.click(screen.getByRole('tab', { name: 'Mount' }));
     expect(
       screen.getByText(/used for your saved-link cards/i),
     ).toBeInTheDocument();
-    expect(within(mock).queryByText('Add link')).toBeNull();
+    expect(
+      within(screen.getByTestId('app-mock')).queryByText('Add link'),
+    ).toBeNull();
   });
 
   it('keeps a single sr-only "Live preview" h2 and an h1 → "Colors" → "Live preview" outline', () => {

@@ -3,9 +3,10 @@ import MockLinkCard from './MockLinkCard';
 import MockMenu from './MockMenu';
 import MockNotice from './MockNotice';
 import MockToolbar from './MockToolbar';
-import { useId } from 'react';
+import { Children, useId } from 'react';
 import type { Bundle } from './useThemeOverrides';
-import type { CSSProperties } from 'react';
+import type { Mode } from '../../../theme/constants';
+import type { CSSProperties, ReactNode } from 'react';
 
 interface ComponentShowcaseProps {
   /**
@@ -14,6 +15,18 @@ interface ComponentShowcaseProps {
    * bundle paints — never an everything-at-once montage (PRD point 4).
    */
   activeBundle: Bundle;
+  /**
+   * The editor's local color mode. Part of the re-stagger key only — a mode flip
+   * repaints the preview, so the mock replays its enter animation (PRD point 10).
+   */
+  editorMode: Mode;
+  /**
+   * A monotonically increasing counter the parent bumps on each Randomize. It
+   * joins `activeBundle` + `editorMode` in the mock's remount key so a fresh
+   * random palette re-staggers the showcase in — the editor's "Stumble for
+   * colors" landing with a flourish (PRD point 12).
+   */
+  randomizeNonce: number;
   /**
    * The custom-palette inline style scoped to the decorative mock ONLY: while a
    * copy-menu row is hovered this is the hovered film theme; otherwise it is the
@@ -24,6 +37,29 @@ interface ComponentShowcaseProps {
   previewStyle: CSSProperties | null;
   /** The resolved custom palette, applied to the mock when no preview is active. */
   contentThemeStyle: CSSProperties;
+}
+
+/**
+ * The per-child enter stagger, identical in spirit to the links list: each
+ * direct piece of the active bundle's mock animates in with `animate-card-enter`
+ * and an inline `animationDelay` of `min(index * 60, 240)ms`. It is CSS-driven,
+ * so the global prefers-reduced-motion clamp collapses it to the correct end
+ * state (the `both` fill mode lands opacity 1 / translateY 0) for free. The
+ * stagger replays whenever the parent remounts the mock via its key.
+ */
+function MockStagger({ children }: { children: ReactNode }) {
+  return (
+    <>
+      {Children.map(children, (child, childIndex) => (
+        <div
+          className="animate-card-enter"
+          style={{ animationDelay: `${Math.min(childIndex * 60, 240)}ms` }}
+        >
+          {child}
+        </div>
+      ))}
+    </>
+  );
 }
 
 /**
@@ -56,25 +92,32 @@ function BundleMock({ bundle }: { bundle: Bundle }) {
   if (bundle === 'base') {
     return (
       <div className="pb-4 bg-[var(--base-bg)]">
-        <MockToolbar />
+        <MockStagger>
+          <MockToolbar />
+        </MockStagger>
       </div>
     );
   }
   if (bundle === 'mount') {
     return (
       <div className="p-4 bg-[var(--base-bg)]">
-        <MockLinkCard />
+        <MockStagger>
+          <MockLinkCard />
+        </MockStagger>
       </div>
     );
   }
   if (bundle === 'orbit') {
     return (
       <div className="relative bg-[var(--base-bg)]">
-        <MockHeader />
+        <MockStagger>
+          <MockHeader />
+        </MockStagger>
         {/* The open account menu drops from the top-right avatar, overlaying the
             content the way the real dropdown does — inset so it is never
-            clipped. */}
-        <div className="absolute right-3 top-12 z-10">
+            clipped. The menu is the second staggered piece, so it slides in just
+            after the header. */}
+        <div className="absolute right-3 top-12 z-10 animate-card-enter [animation-delay:60ms]">
           <MockMenu />
         </div>
         <div className="h-32" />
@@ -83,12 +126,14 @@ function BundleMock({ bundle }: { bundle: Bundle }) {
   }
   return (
     <div className="p-4 bg-[var(--base-bg)]">
-      <MockNotice
-        bundle={bundle}
-        icon={STATUS_ICONS[bundle]}
-        title={STATUS_COPY[bundle].title}
-        detail={STATUS_COPY[bundle].detail}
-      />
+      <MockStagger>
+        <MockNotice
+          bundle={bundle}
+          icon={STATUS_ICONS[bundle]}
+          title={STATUS_COPY[bundle].title}
+          detail={STATUS_COPY[bundle].detail}
+        />
+      </MockStagger>
     </div>
   );
 }
@@ -140,10 +185,20 @@ const STATUS_COPY: Record<StatusBundle, { title: string; detail: string }> = {
  */
 export default function ComponentShowcase({
   activeBundle,
+  editorMode,
+  randomizeNonce,
   previewStyle,
   contentThemeStyle,
 }: ComponentShowcaseProps) {
   const headingId = useId();
+
+  // The mock's REMOUNT key (§2). Bumping it on a bundle swap, a mode flip, or a
+  // Randomize tears down + rebuilds the inner mock, replaying `animate-card-enter`
+  // on every piece — the showcase comes alive on each selection (PRD points 10 +
+  // 12). It is keyed on the INNER aria-hidden mock ALONE: the section, its
+  // sr-only heading, and the explanation stay mounted, so nothing re-announces
+  // and no focus can move (the mock has zero focusable descendants).
+  const mockKey = `${activeBundle}-${editorMode}-${randomizeNonce}`;
 
   return (
     <section aria-labelledby={headingId} className="space-y-3">
@@ -154,6 +209,7 @@ export default function ComponentShowcase({
         {BUNDLE_EXPLANATIONS[activeBundle]}
       </p>
       <div
+        key={mockKey}
         aria-hidden="true"
         data-testid="app-mock"
         className="relative overflow-hidden bg-[var(--base-bg)] border border-[var(--base-border)] rounded-xl"
@@ -161,6 +217,14 @@ export default function ComponentShowcase({
       >
         <BundleMock bundle={activeBundle} />
       </div>
+      {/* A small, app-voiced aside — the theatrical-but-tasteful DNA the settings
+          page already speaks in. Real app UI in the always-readable app theme
+          (mirrors the explanation slot), so it stays AA-legible and OUTSIDE the
+          aria-hidden mock. */}
+      <p className="text-[var(--base-alt-text)] text-xs italic">
+        Roll the dice until it feels like you. We promise not to judge your neon
+        phase.
+      </p>
     </section>
   );
 }
