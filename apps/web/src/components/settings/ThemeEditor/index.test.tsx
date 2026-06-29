@@ -103,6 +103,77 @@ describe('ThemeEditor copy control + heading outline', () => {
   });
 });
 
+/*
+ * The Light/Dark palette toggle moved OUT of the Colors card and INTO the header
+ * toolbar (Wave 1). It leads the toolbar (left), ahead of Randomize + the copy
+ * control, mirroring the "Your links" toolbar. It keeps its role=group +
+ * aria-pressed binary-toggle shape and stays a sibling ABOVE the preview scope,
+ * so its fixed-escape-hatch colors survive a hostile custom palette.
+ */
+describe('ThemeEditor mode toggle in the header toolbar', () => {
+  it('renders the Light/Dark palette toggle, seeded to the site mode (dark)', () => {
+    render(<ThemeEditor />);
+    const group = screen.getByRole('group', { name: /palette to edit/i });
+    expect(
+      within(group).getByRole('button', { name: /dark colors/i }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      within(group).getByRole('button', { name: /light colors/i }),
+    ).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('flips the pressed palette when the other mode is chosen', () => {
+    render(<ThemeEditor />);
+    const group = screen.getByRole('group', { name: /palette to edit/i });
+    fireEvent.click(
+      within(group).getByRole('button', { name: /light colors/i }),
+    );
+    expect(
+      within(group).getByRole('button', { name: /light colors/i }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      within(group).getByRole('button', { name: /dark colors/i }),
+    ).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('is no longer rendered inside the Colors region', () => {
+    render(<ThemeEditor />);
+    const colors = screen.getByRole('region', { name: 'Colors' });
+    expect(
+      within(colors).queryByRole('group', { name: /palette to edit/i }),
+    ).toBeNull();
+  });
+
+  it('leads the toolbar: mode toggle precedes Randomize, then the copy control', () => {
+    render(<ThemeEditor />);
+    const modeGroup = screen.getByRole('group', { name: /palette to edit/i });
+    const randomize = screen.getByRole('button', { name: 'Randomize' });
+    const copyGroup = screen.getByRole('group', { name: /copy a palette/i });
+
+    expect(
+      modeGroup.compareDocumentPosition(randomize) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      randomize.compareDocumentPosition(copyGroup) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('keeps the mode toggle OUTSIDE any preview-scoped ancestor', () => {
+    render(<ThemeEditor />);
+    let node: HTMLElement | null = screen.getByRole('group', {
+      name: /palette to edit/i,
+    });
+    // No ancestor carries an inline custom-property style, so a hostile prior
+    // palette can never strand this recovery control (a11y brief §3/§5).
+    while (node) {
+      expect(node.getAttribute('style') ?? '').not.toContain('--');
+      node = node.parentElement;
+    }
+  });
+});
+
 describe('ThemeEditor live preview reflects the selected bundle (PRD point 4)', () => {
   it('opens on base (toolbar) and swaps the mock + explanation when a bundle is picked', () => {
     render(<ThemeEditor />);

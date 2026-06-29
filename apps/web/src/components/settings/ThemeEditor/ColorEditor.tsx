@@ -1,15 +1,8 @@
 import BundleTabs from './BundleTabs';
-import ModeToggle from './ModeToggle';
 import { useId } from 'react';
 import type { Bundle } from './useThemeOverrides';
-import type { Mode } from '../../../theme/constants';
 import type { TokenContrastFailure } from './contrastResults';
 import type { ThemeVariable } from './useThemeOverrides';
-
-const EDITOR_MODE_LABELS: Record<Mode, string> = {
-  light: 'Light colors',
-  dark: 'Dark colors',
-};
 
 interface ColorEditorProps {
   /** The current (possibly overridden) values for all editable CSS variables. */
@@ -35,14 +28,6 @@ interface ColorEditorProps {
   /** Called when the user changes a single slot's color. */
   onOverride: (variable: ThemeVariable, value: string) => void;
   /**
-   * The editor's LOCAL color mode (which mode's palette is shown + edited). The
-   * Light/Dark toggle at the top of the region drives this; it is decoupled
-   * from the global site mode.
-   */
-  editorMode: Mode;
-  /** Switches which mode's palette the editor shows + edits. */
-  onEditorModeChange: (mode: Mode) => void;
-  /**
    * The bundle whose slots are shown + edited. Lifted to the editor root so the
    * live preview can mirror the SAME selection the tablist drives (PRD point 4).
    */
@@ -52,10 +37,12 @@ interface ColorEditorProps {
 }
 
 /**
- * The Colors editing region: a Light/Dark mode toggle + a bundle tablist that
- * together drive a single panel of the chosen bundle's raw slots, in the chosen
- * mode. The full ~49-token list and the five human knobs are both retired —
- * users pick a bundle, then edit only its 7-10 slots (PRD point 3).
+ * The Colors editing region: a bundle tablist driving a single panel of the
+ * chosen bundle's raw slots, in the editor's current mode. The full ~49-token
+ * list and the five human knobs are both retired — users pick a bundle, then
+ * edit only its 7-10 slots (PRD point 3). The Light/Dark palette toggle that
+ * chooses the mode now lives in the header toolbar (a sibling above this
+ * region), not here.
  *
  * This is a NAMED region (`<section aria-labelledby>` on the "Colors" h2) so AT
  * still announces it after the old `SettingsGroup` card was dropped (a11y brief
@@ -68,8 +55,6 @@ export default function ColorEditor({
   baseThemeLabel,
   customActive,
   onOverride,
-  editorMode,
-  onEditorModeChange,
   activeBundle,
   onActiveBundleChange,
 }: ColorEditorProps) {
@@ -77,19 +62,6 @@ export default function ColorEditor({
 
   return (
     <section aria-labelledby={colorsHeadingId} className="space-y-3">
-      {/* Light/Dark palette selector — the FIRST control so DOM order matches
-          the read flow ("choose a mode, then a bundle, then edit"). It repoints
-          this region + the Components preview to that mode's palette WITHOUT
-          touching the global site mode (a binary toggle, not a tablist: there is
-          no single panel to own). The group label names the consequence so the
-          pressed state self-documents — no live region. */}
-      <ModeToggle
-        mode={editorMode}
-        onModeChange={onEditorModeChange}
-        groupLabel="Palette to edit"
-        labels={EDITOR_MODE_LABELS}
-      />
-
       <h2
         id={colorsHeadingId}
         className="text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold"

@@ -16,6 +16,7 @@ import { THEMES, type BaseTheme, type Mode } from '../../../theme/constants';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import CopyFromTheme from './CopyFromTheme';
+import ModeToggle from './ModeToggle';
 import RandomizeButton from './RandomizeButton';
 import Toast from '../../common/Toast';
 import { generateRandomPalette } from './randomPalette';
@@ -28,6 +29,11 @@ import { useThemeCopy } from './useThemeCopy';
 import { useThemeOverrides } from './useThemeOverrides';
 import { useThemeSave } from './useThemeSave';
 import { useToast } from '../../../lib/hooks/useToast';
+
+const EDITOR_MODE_LABELS: Record<Mode, string> = {
+  light: 'Light colors',
+  dark: 'Dark colors',
+};
 
 /**
  * Full-page custom-theme editor reached from the user menu ("Create your
@@ -49,8 +55,8 @@ import { useToast } from '../../../lib/hooks/useToast';
  * Engage + copy/undo are announced through the editor's single polite live
  * region ("Your theme is on and saved." / "{label} palette applied and saved.").
  *
- * The editor's color mode is LOCAL (`editorMode`): the Light/Dark tabs in the
- * Colors card swap which mode's palette the content shows + edits, decoupled
+ * The editor's color mode is LOCAL (`editorMode`): the Light/Dark toggle in the
+ * header toolbar swaps which mode's palette the content shows + edits, decoupled
  * from the global site mode — so previewing the dark palette never flips the
  * whole app. There is no on-page theme switcher. Hovering or arrow-navigating a
  * row in the copy menu previews that film theme on the decorative mock alone
@@ -423,8 +429,7 @@ export default function ThemeEditor() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Header: title + intro. (The Light/Dark control lives in the Colors
-          region now, since it swaps the editor's palette, not chrome.) */}
+      {/* Header: title + intro. */}
       <div className="mb-6">
         <h1 className="text-[var(--base-text)] text-lg font-semibold">
           Theme editor
@@ -442,26 +447,39 @@ export default function ThemeEditor() {
         {announcement}
       </p>
 
-      {/* Global Colors-region actions. The SettingsGroup card wrapper is dropped
-          (PRD point 8); the controls live in this bare selector strip. The strip
-          is a SIBLING ABOVE the preview-scoped content div, so the Randomize +
-          copy-menu triggers — the surviving keyboard-reachable recovery paths
-          back to a readable palette — have NO ancestor carrying the injected
-          custom palette (`style={previewStyle ?? contentThemeStyle}`) and always
-          paint in the fixed escape-hatch colors (a11y brief §4 / §5). Visual
-          adjacency to the bundle/mode selectors does NOT require DOM nesting.
-          Randomize fills the CURRENT mode's slots with a generated WCAG-AA
-          palette (and goes custom if off); it sits OUTSIDE the preview scope so
-          it stays legible even on a hostile prior palette (PRD point 11). */}
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <RandomizeButton onRandomize={handleRandomize} />
-        <CopyFromTheme
-          editingEnabled={customThemeEnabled}
-          onApply={handleCopyTheme}
-          onPreviewTheme={setPreviewThemeId}
-          undoThemeLabel={engageUndo?.label ?? undoThemeLabel}
-          onUndo={engageUndo ? handleEngageUndo : handleUndo}
+      {/* Header toolbar, modeled on the "Your links" toolbar (LinksToolbar):
+          the Light/Dark palette toggle leads on the left (like the links tabs)
+          and the Randomize + copy-palette actions follow on the right. The
+          SettingsGroup card wrapper is dropped (PRD point 8); these controls
+          live in this bare strip.
+
+          The strip is a SIBLING ABOVE the preview-scoped content div, so the
+          mode toggle, Randomize, and copy-menu triggers — the surviving
+          keyboard-reachable recovery paths back to a readable palette — have NO
+          ancestor carrying the injected custom palette (`style={previewStyle ??
+          contentThemeStyle}`). The mode toggle's active pill paints from a fixed
+          escape hatch, and Randomize/copy paint in the always-readable app
+          theme, so all three stay legible even on a hostile prior palette (a11y
+          brief §3/§4/§5). Visual adjacency to the bundle selectors does NOT
+          require DOM nesting. Randomize fills the CURRENT mode's slots with a
+          generated WCAG-AA palette (and goes custom if off) (PRD point 11). */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+        <ModeToggle
+          mode={editorMode}
+          onModeChange={setEditorMode}
+          groupLabel="Palette to edit"
+          labels={EDITOR_MODE_LABELS}
         />
+        <div className="flex items-center gap-3 sm:ml-auto">
+          <RandomizeButton onRandomize={handleRandomize} />
+          <CopyFromTheme
+            editingEnabled={customThemeEnabled}
+            onApply={handleCopyTheme}
+            onPreviewTheme={setPreviewThemeId}
+            undoThemeLabel={engageUndo?.label ?? undoThemeLabel}
+            onUndo={engageUndo ? handleEngageUndo : handleUndo}
+          />
+        </div>
       </div>
 
       {/* Editing content. The swatches ALWAYS render now (seeded as a live
@@ -486,8 +504,6 @@ export default function ThemeEditor() {
               baseThemeLabel={baseThemeLabel}
               customActive={customThemeEnabled}
               onOverride={handleOverride}
-              editorMode={editorMode}
-              onEditorModeChange={setEditorMode}
               activeBundle={activeBundle}
               onActiveBundleChange={setActiveBundle}
             />

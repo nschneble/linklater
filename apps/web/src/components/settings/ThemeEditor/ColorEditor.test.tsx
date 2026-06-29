@@ -1,12 +1,13 @@
 /*
- * Tests for the ColorEditor orchestrator: the Light/Dark mode toggle, the named
- * "Colors" region, the pre-custom seed disclosure, and that the bundle tablist
- * is wired in. The tablist's own keyboard/roving behavior lives in
- * BundleTabs.test.tsx.
+ * Tests for the ColorEditor orchestrator: the named "Colors" region, the
+ * pre-custom seed disclosure, and that the bundle tablist is wired in. The
+ * tablist's own keyboard/roving behavior lives in BundleTabs.test.tsx; the
+ * Light/Dark palette toggle moved to the header toolbar and is covered in
+ * index.test.tsx.
  */
 
 import ColorEditor from './ColorEditor';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { TokenContrastFailure } from './contrastResults';
 import { EDITABLE_VARS, type ThemeVariable } from './useThemeOverrides';
@@ -30,8 +31,6 @@ function renderEditor(
       baseThemeLabel="Boyhood"
       customActive={customActive}
       onOverride={vi.fn()}
-      editorMode="dark"
-      onEditorModeChange={vi.fn()}
       activeBundle="base"
       onActiveBundleChange={vi.fn()}
     />,
@@ -51,30 +50,12 @@ describe('ColorEditor – named Colors region (a11y brief §3)', () => {
   });
 });
 
-describe('ColorEditor – Light/Dark palette toggle', () => {
-  it('renders the mode toggle as the lead control and commits a change', () => {
-    const onEditorModeChange = vi.fn();
-    render(
-      <ColorEditor
-        colorValues={buildColorValues()}
-        failures={new Map()}
-        baseThemeLabel="Boyhood"
-        customActive={true}
-        onOverride={vi.fn()}
-        editorMode="dark"
-        onEditorModeChange={onEditorModeChange}
-        activeBundle="base"
-        onActiveBundleChange={vi.fn()}
-      />,
-    );
-    const group = screen.getByRole('group', { name: /palette to edit/i });
+describe('ColorEditor – mode toggle relocated to the toolbar', () => {
+  it('no longer renders the Light/Dark palette toggle inside the region', () => {
+    renderEditor();
     expect(
-      within(group).getByRole('button', { name: /dark colors/i }),
-    ).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(
-      within(group).getByRole('button', { name: /light colors/i }),
-    );
-    expect(onEditorModeChange).toHaveBeenCalledWith('light');
+      screen.queryByRole('group', { name: /palette to edit/i }),
+    ).toBeNull();
   });
 });
 
@@ -100,17 +81,12 @@ describe('ColorEditor – tab order', () => {
     );
   }
 
-  it('orders mode toggle → bundle tablist → slot rows', () => {
+  it('orders bundle tablist → slot rows', () => {
     renderEditor();
-    const modeGroup = screen.getByRole('group', { name: /palette to edit/i });
-    const darkButton = within(modeGroup).getByRole('button', {
-      name: /dark colors/i,
-    });
     const baseTab = screen.getByRole('tab', { name: 'Base' });
     // The default active bundle (base) shows its Background slot row first.
     const firstSlot = screen.getByLabelText('Color picker for Background');
 
-    expect(precedes(darkButton, baseTab)).toBe(true);
     expect(precedes(baseTab, firstSlot)).toBe(true);
   });
 
