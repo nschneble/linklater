@@ -28,14 +28,10 @@ interface ComponentShowcaseProps {
    */
   randomizeNonce: number;
   /**
-   * The custom-palette inline style scoped to the decorative mock ONLY: while a
-   * copy-menu row is hovered this is the hovered film theme; otherwise it is the
-   * editor's live custom palette. The precedence logic is unchanged from W2 —
-   * only its mount point moved DOWN here, onto the aria-hidden mock container, so
-   * the left Colors card now renders in the APP THEME (PRD point 9 inversion).
+   * The resolved custom palette, scoped to the decorative mock ALONE (mounted on
+   * the aria-hidden mock container), so the left Colors card renders in the APP
+   * THEME (PRD point 9 inversion).
    */
-  previewStyle: CSSProperties | null;
-  /** The resolved custom palette, applied to the mock when no preview is active. */
   contentThemeStyle: CSSProperties;
 }
 
@@ -174,9 +170,9 @@ const STATUS_COPY: Record<StatusBundle, { title: string; detail: string }> = {
  * The mock is a PICTURE of the app, not the app: 100% static (no state, no
  * handlers) with zero focusable descendants, wrapped in a single `aria-hidden`
  * container and skipped by the Tab order and the screen-reader cursor. ONLY that
- * container carries the custom palette (`previewStyle ?? contentThemeStyle`) — so
- * the user previews their colors (including bad contrast, which is the point)
- * while the explanation and heading render in the always-readable app theme.
+ * container carries the custom palette (`contentThemeStyle`) — so the user
+ * previews their colors (including bad contrast, which is the point) while the
+ * explanation and heading render in the always-readable app theme.
  *
  * Swapping the bundle/mode swaps the mock SILENTLY: the activated tab already
  * self-voices, so there is no live region and no focus move here (the showcase
@@ -186,7 +182,6 @@ export default function ComponentShowcase({
   activeBundle,
   editorMode,
   randomizeNonce,
-  previewStyle,
   contentThemeStyle,
 }: ComponentShowcaseProps) {
   const headingId = useId();
@@ -212,7 +207,7 @@ export default function ComponentShowcase({
         aria-hidden="true"
         data-testid="app-mock"
         className="relative overflow-hidden bg-[var(--base-bg)] border border-[var(--base-border)] rounded-xl"
-        style={previewStyle ?? contentThemeStyle}
+        style={contentThemeStyle}
       >
         <BundleMock bundle={activeBundle} />
       </div>

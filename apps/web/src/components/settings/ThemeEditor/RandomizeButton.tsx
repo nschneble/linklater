@@ -1,9 +1,16 @@
 import { EDITOR_FOCUS_RING, ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
 import { useState } from 'react';
+import type { Ref } from 'react';
 
 interface RandomizeButtonProps {
   /** Generates + applies a fresh WCAG-AA palette for the current mode. */
   onRandomize: () => void;
+  /**
+   * Forwarded to the underlying `<button>` so the editor can move focus here
+   * after a copy-initiated engage (no Undo to land on) or a copy-over Undo —
+   * Randomize is the always-present recovery target (a11y brief R-B4/R-B5).
+   */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 /**
@@ -30,7 +37,10 @@ interface RandomizeButtonProps {
  * keyboard Enter/Space (native `<button>` onClick), so the roll is identical for
  * every input method. The die stays `aria-hidden` (it carries no semantics).
  */
-export default function RandomizeButton({ onRandomize }: RandomizeButtonProps) {
+export default function RandomizeButton({
+  onRandomize,
+  ref,
+}: RandomizeButtonProps) {
   const [spinNonce, setSpinNonce] = useState(0);
 
   function handleClick() {
@@ -40,6 +50,7 @@ export default function RandomizeButton({ onRandomize }: RandomizeButtonProps) {
 
   return (
     <button
+      ref={ref}
       type="button"
       onClick={handleClick}
       style={ESCAPE_HATCH_LIGHT}

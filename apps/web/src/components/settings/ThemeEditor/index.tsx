@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -15,10 +16,11 @@ import {
 import { THEMES, type BaseTheme, type Mode } from '../../../theme/constants';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
-import CopyFromTheme from './CopyFromTheme';
+import IconButton from '../../common/IconButton';
 import ModeToggle from './ModeToggle';
 import RandomizeButton from './RandomizeButton';
 import Toast from '../../common/Toast';
+import { EDITOR_FOCUS_RING } from './escapeHatchStyles';
 import { generateRandomPalette } from './randomPalette';
 import { readThemeTokens } from './themeProbe';
 import { BUNDLES, type Bundle } from './useThemeOverrides';
@@ -50,23 +52,31 @@ const EDITOR_MODE_LABELS: Record<Mode, string> = {
  * user's current theme; the FIRST edit snapshots that (post-edit) palette as the
  * initial custom palette, enables custom, and persists it (localStorage + `PATCH
  * /users/me`), after which edits AUTOMATIC-debounced-save. There is no path back
- * to the prior theme by design — copying any film theme in the picker overwrites
- * the custom palette, which is the surviving recovery from an unreadable one.
+ * to the prior theme by design — copying the active film theme overwrites the
+ * custom palette, which is the surviving recovery from an unreadable one.
  * Engage + copy/undo are announced through the editor's single polite live
  * region ("Your theme is on and saved." / "{label} palette applied and saved.").
  *
  * The editor's color mode is LOCAL (`editorMode`): the Light/Dark toggle in the
  * header toolbar swaps which mode's palette the content shows + edits, decoupled
  * from the global site mode — so previewing the dark palette never flips the
- * whole app. There is no on-page theme switcher. Hovering or arrow-navigating a
- * row in the copy menu previews that film theme on the decorative mock alone
- * (transient, non-persisting); activating a row applies its `editorMode` palette
- * + saves, with an Undo to revert.
+ * whole app. There is no on-page theme switcher.
  *
- * The Light/Dark toggle's active pill and the copy menu's trigger both paint
- * from FIXED-color escape hatches (not bundle tokens), and the copy strip sits
- * OUTSIDE the custom scope — so a hostile custom palette can degrade the preview
- * but never the controls needed to escape it.
+ * The toolbar mirrors the "Your links" toolbar: the Light/Dark toggle leads on
+ * the left, Randomize + a single "Copy {baseThemeLabel} colors" action follow on
+ * the right. The copy action seeds the custom palette from the currently-active
+ * film theme; it HIDES once custom is on (there is no longer a base film theme to
+ * copy from) and is replaced by an Undo when the copy overwrote a returning
+ * user's saved palette. The title row carries a NON-interactive status icon
+ * (check / triangle) summarizing whether the live palette clears the contrast
+ * contract — a roll-up of the per-slot row failures, never an auto-announced one.
+ *
+ * The Light/Dark toggle's active pill and Randomize both paint from FIXED-color
+ * escape hatches (not bundle tokens), and the toolbar sits OUTSIDE the custom
+ * scope — so a hostile custom palette can degrade the preview but never the
+ * Randomize recovery needed to escape it. The copy button uses NORMAL bundle
+ * tokens: it only ever renders on a contrast-guaranteed film theme (it is hidden
+ * while custom is on).
  */
 export default function ThemeEditor() {
   const {
@@ -116,19 +126,25 @@ export default function ThemeEditor() {
     label: string;
   } | null>(null);
 
-  // Hovering/arrow-navigating a copy-menu row previews that film theme — scoped
-  // to the decorative mock alone (`previewStyle` overrides the custom palette
-  // on the same mock node), so the preview shows where the showcase is and
-  // never touches the global theme or the app nav. Reverts to `null` when the
-  // menu closes.
-  const [previewThemeId, setPreviewThemeId] = useState<BaseTheme | null>(null);
-  const previewStyle = useMemo<CSSProperties | null>(
-    () =>
-      previewThemeId
-        ? (readThemeTokens(previewThemeId, editorMode) as CSSProperties)
-        : null,
-    [previewThemeId, editorMode],
-  );
+  // Focus targets for the toolbar's recovery affordances. The copy button hides
+  // when custom turns on and reappears when an Undo turns it back off; the Undo
+  // button mounts only when there is a copy to revert; Randomize is always
+  // present. Focus is moved AFTER the relevant async engage transition settles
+  // (SC 2.4.3) — see the two effects below.
+  const copyButtonReference = useRef<HTMLButtonElement>(null);
+  const randomizeButtonReference = useRef<HTMLButtonElement>(null);
+  const undoButtonReference = useRef<HTMLButtonElement>(null);
+
+  // Bumped from `engageFromTheme`'s success callback (the COPY-initiated engage
+  // path ONLY — never the color-edit engage, which keeps focus on the picker,
+  // a11y brief R-B3). Drives the post-engage focus move once the PATCH settles
+  // and React has committed the copy-button hide + any Undo mount (R-B2/R-B4).
+  const [copyEngageFocusNonce, setCopyEngageFocusNonce] = useState(0);
+
+  // Set when an engage-Undo (custom → OFF) is in flight, so the focus effect
+  // keyed on the disengage settling knows to land focus on the reappeared copy
+  // button (R-B5) rather than reacting to an unrelated enabled-flag change.
+  const undoReturnsToCopyReference = useRef(false);
 
   const { save } = useThemeSave(editorMode);
   const toast = useToast();
@@ -270,6 +286,11 @@ export default function ThemeEditor() {
           });
         }
         announce(`Your theme is on. ${themeLabel} palette applied and saved.`);
+        // Move focus once the engage has settled: the copy button has gone
+        // (custom is now on) so focus would otherwise fall to <body>. Batched
+        // with setEngageUndo, so the effect sees the Undo button if one mounted
+        // (R-B2/R-B4).
+        setCopyEngageFocusNonce((nonce) => nonce + 1);
       });
     },
     [
@@ -352,13 +373,14 @@ export default function ThemeEditor() {
 
   // Undo for a copy that overwrote an existing saved palette: restore the prior
   // palette and turn custom back OFF (the state the user copied from). On PATCH
-  // failure, roll back to the just-copied on-state. Focus return to the menu
-  // trigger is handled by `CopyFromTheme` (this label going null unmounts the
-  // button, so focus must move first — SC 2.4.3).
+  // failure, roll back to the just-copied on-state. Turning custom off reappears
+  // the copy button; the effect below returns focus to it once the disengage
+  // settles (this Undo button unmounts as its label goes null — SC 2.4.3).
   const handleEngageUndo = useCallback(async () => {
     if (!engageUndo) return;
     const restored = engageUndo.customTheme;
     setEngageUndo(null);
+    undoReturnsToCopyReference.current = true;
     // The revert announces OPTIMISTICALLY (before the await), unlike the three
     // engage paths that announce from `commitEngagement`'s success callback —
     // `commitEngagement` rolls back to the just-copied on-state if the disengage
@@ -381,6 +403,49 @@ export default function ThemeEditor() {
     },
     [customThemeEnabled, engageFromTheme, handleApply],
   );
+
+  // The single toolbar copy action: seed the custom palette from the CURRENTLY
+  // ACTIVE film theme. The button only renders while custom is off, so this
+  // always takes the go-custom `engageFromTheme` branch.
+  const handleCopyFromBaseTheme = useCallback(() => {
+    handleCopyTheme(baseTheme, baseThemeLabel);
+  }, [baseTheme, baseThemeLabel, handleCopyTheme]);
+
+  // Undo dispatcher. The engage-Undo (custom → OFF) is async + returns focus to
+  // the reappearing copy button via the effect below; the copy-over Undo (custom
+  // stays ON) is synchronous and returns focus to the always-present Randomize
+  // (R-B5).
+  const handleUndoClick = useCallback(() => {
+    if (engageUndo) {
+      void handleEngageUndo();
+    } else {
+      handleUndo();
+      randomizeButtonReference.current?.focus();
+    }
+  }, [engageUndo, handleEngageUndo, handleUndo]);
+
+  // After a COPY-initiated engage settles, land focus on the Undo button if one
+  // appeared (returning user whose palette was overwritten), else on Randomize —
+  // never the mode toggle (R-B4). Keyed on the success-callback nonce so it runs
+  // after React commits the copy-button hide + Undo mount.
+  useEffect(() => {
+    if (copyEngageFocusNonce === 0) return;
+    if (undoButtonReference.current) {
+      undoButtonReference.current.focus();
+    } else {
+      randomizeButtonReference.current?.focus();
+    }
+  }, [copyEngageFocusNonce]);
+
+  // After an engage-Undo turns custom back OFF, the copy button reappears
+  // (becomes focusable) — return focus to it (R-B5). Guarded by the flag so an
+  // unrelated enabled-flag change never steals focus.
+  useEffect(() => {
+    if (!undoReturnsToCopyReference.current) return;
+    if (customThemeEnabled) return;
+    undoReturnsToCopyReference.current = false;
+    copyButtonReference.current?.focus();
+  }, [customThemeEnabled]);
 
   // Apply an edit to a slot: the first edit goes custom (engaging once), later
   // edits debounce-save.
@@ -416,6 +481,16 @@ export default function ThemeEditor() {
   // message re-announces (a11y brief §1).
   const announcement = useAnnouncer(savedCount, savedMessage);
 
+  // Contrast roll-up for the title-row status icon — a SUPPLEMENTARY summary of
+  // the per-slot row failures (which stay the authoritative SC 3.3.1 report).
+  // Binary on whether any contract pair fails (a11y brief R-A2/R-A4).
+  const hasContrastIssue = failures.size > 0;
+
+  // The Undo label spans both Undo flavors: the engage-Undo snapshot (copy while
+  // custom was off, overwriting a saved palette) and the copy-over Undo (copy /
+  // Randomize while custom was already on). Either present means an Undo renders.
+  const copyUndoLabel = engageUndo?.label ?? undoThemeLabel;
+
   // Each content card carries the shared mount surface + the link-card enter
   // fade. The stagger comes from the per-card animation delay; reduced-motion is
   // handled globally (the CSS clamp). The cards always render now (turning custom
@@ -429,11 +504,38 @@ export default function ThemeEditor() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Header: title + intro. */}
+      {/* Header: title + intro. The title row mirrors the "Your links" page
+          (LinksView) — a single h1 on the left, a right-aligned glyph in the
+          slot LinksView uses for its keyboard-shortcuts button. Here that glyph
+          is a NON-interactive contrast-status icon (a11y brief R-A7). */}
       <div className="mb-6">
-        <h1 className="text-[var(--base-text)] text-lg font-semibold">
-          Theme editor
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-[var(--base-text)] text-lg font-semibold">
+            Theme editor
+          </h1>
+          {/* Contrast roll-up: a check when the live palette clears the contract,
+              a triangle when a pair fails. role="img" + a silently-updating
+              aria-label, NOT a button and NOT in the tab order (R-A1). NO
+              aria-live: save state is already spoken by the polite region and a
+              picker drag must not spam announcements (R-A3). Distinct glyphs
+              carry the meaning without color (R-A5). It paints --success-text /
+              --warn-text on the page --base-bg, both ≥4.5:1 across every theme
+              (R-A6) — no fixed escape hatch, it degrades with the palette like
+              the inline failure text (accepted, it is supplementary). */}
+          <i
+            role="img"
+            aria-label={
+              hasContrastIssue
+                ? 'Theme has a contrast issue to fix'
+                : 'Theme colors meet contrast'
+            }
+            className={
+              hasContrastIssue
+                ? 'fa-solid fa-triangle-exclamation text-[var(--warn-text)] text-sm'
+                : 'fa-solid fa-circle-check text-[var(--success-text)] text-sm'
+            }
+          />
+        </div>
         <p className="mt-1 text-[var(--base-alt-text)] text-xs">
           All changes are saved automatically.
         </p>
@@ -449,20 +551,20 @@ export default function ThemeEditor() {
 
       {/* Header toolbar, modeled on the "Your links" toolbar (LinksToolbar):
           the Light/Dark palette toggle leads on the left (like the links tabs)
-          and the Randomize + copy-palette actions follow on the right. The
-          SettingsGroup card wrapper is dropped (PRD point 8); these controls
-          live in this bare strip.
+          and the Randomize + copy actions follow on the right. The SettingsGroup
+          card wrapper is dropped (PRD point 8); these controls live in this bare
+          strip.
 
           The strip is a SIBLING ABOVE the preview-scoped content div, so the
-          mode toggle, Randomize, and copy-menu triggers — the surviving
-          keyboard-reachable recovery paths back to a readable palette — have NO
-          ancestor carrying the injected custom palette (`style={previewStyle ??
-          contentThemeStyle}`). The mode toggle's active pill paints from a fixed
-          escape hatch, and Randomize/copy paint in the always-readable app
-          theme, so all three stay legible even on a hostile prior palette (a11y
-          brief §3/§4/§5). Visual adjacency to the bundle selectors does NOT
-          require DOM nesting. Randomize fills the CURRENT mode's slots with a
-          generated WCAG-AA palette (and goes custom if off) (PRD point 11). */}
+          mode toggle, Randomize, copy, and Undo — the surviving keyboard-
+          reachable controls — have NO ancestor carrying the injected custom
+          palette (`style={contentThemeStyle}`). The mode toggle's active pill
+          and Randomize paint from fixed escape hatches, so they stay the legible
+          recovery even on a hostile prior palette (a11y brief §3/§5). The copy
+          button only renders while custom is off, so it always paints on a
+          contrast-guaranteed film theme (R-C1). Randomize fills the CURRENT
+          mode's slots with a generated WCAG-AA palette (and goes custom if off)
+          (PRD point 11). */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
         <ModeToggle
           mode={editorMode}
@@ -471,14 +573,38 @@ export default function ThemeEditor() {
           labels={EDITOR_MODE_LABELS}
         />
         <div className="flex items-center gap-3 sm:ml-auto">
-          <RandomizeButton onRandomize={handleRandomize} />
-          <CopyFromTheme
-            editingEnabled={customThemeEnabled}
-            onApply={handleCopyTheme}
-            onPreviewTheme={setPreviewThemeId}
-            undoThemeLabel={engageUndo?.label ?? undoThemeLabel}
-            onUndo={engageUndo ? handleEngageUndo : handleUndo}
+          <RandomizeButton
+            ref={randomizeButtonReference}
+            onRandomize={handleRandomize}
           />
+          {/* Copy the active film theme into the custom palette. Hidden (not
+              disabled) once custom is on — there is no base theme left to copy
+              (R-B1/R-C1). Reuses the shared elevated IconButton (peer to
+              Randomize) with NORMAL bundle tokens + --focus-ring; the source
+              theme is named in the accessible name, the clone glyph is
+              decorative (R-E1/R-E2). */}
+          <IconButton
+            ref={copyButtonReference}
+            variant="elevated"
+            surface="base"
+            hidden={customThemeEnabled}
+            onClick={handleCopyFromBaseTheme}
+          >
+            <i className="fa-solid fa-clone" aria-hidden="true" />
+            Copy {baseThemeLabel} colors
+          </IconButton>
+          {copyUndoLabel !== null && (
+            <button
+              ref={undoButtonReference}
+              type="button"
+              onClick={handleUndoClick}
+              aria-label={`Undo copy from ${copyUndoLabel}`}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--mount-highlight)] text-[var(--mount-highlight-fg)] text-xs font-semibold ${EDITOR_FOCUS_RING} rounded-lg active:scale-[0.96] transition-transform cursor-pointer`}
+            >
+              <i className="fa-solid fa-arrow-rotate-left" aria-hidden="true" />
+              Undo
+            </button>
+          )}
         </div>
       </div>
 
@@ -492,9 +618,8 @@ export default function ThemeEditor() {
           APP THEME (a contrast win — its chrome + focus ring now resolve from the
           always-readable global theme, never a hostile custom palette), while
           ONLY the decorative mock inside ComponentShowcase carries
-          `previewStyle ?? contentThemeStyle`. The header + copy strip stay outside
-          any scope, so the copy-menu trigger used to escape an unreadable palette
-          is always painted in the app theme. */}
+          `contentThemeStyle`. The header + toolbar stay outside any scope, so the
+          Randomize recovery is always painted in the app theme. */}
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="shrink-0 w-full lg:w-80 space-y-4">
           <div className={cardClassName} style={cardDelayStyle(0)}>
@@ -525,7 +650,6 @@ export default function ThemeEditor() {
             activeBundle={activeBundle}
             editorMode={editorMode}
             randomizeNonce={randomizeNonce}
-            previewStyle={previewStyle}
             contentThemeStyle={contentThemeStyle}
           />
         </div>

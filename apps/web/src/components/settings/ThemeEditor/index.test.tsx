@@ -76,7 +76,7 @@ function editBaseBackground(value = '#123456') {
 }
 
 describe('ThemeEditor copy control + heading outline', () => {
-  it('renders the rehomed copy control + h2 "Colors", no master switch', () => {
+  it('renders the single copy button + h2 "Colors", no master switch', () => {
     render(<ThemeEditor />);
 
     // The SettingsGroup card wrapper is dropped (PRD point 8); the picker is now
@@ -93,9 +93,15 @@ describe('ThemeEditor copy control + heading outline', () => {
     ).toBeInTheDocument();
     // The master switch is gone — going custom is an edit, not a toggle.
     expect(screen.queryByRole('switch')).toBeNull();
+    // The 10-theme copy MENU is replaced by ONE button that names its source
+    // theme (R-E2). The old menu trigger is gone.
     expect(
-      screen.getByRole('group', { name: /copy a palette/i }),
+      screen.getByRole('button', { name: /copy boyhood colors/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /start from a theme/i }),
+    ).toBeNull();
+    expect(screen.queryByRole('menu')).toBeNull();
     // The off-ramp is gone — there is no path back to the prior theme by design.
     expect(
       screen.queryByRole('button', { name: /back to boyhood/i }),
@@ -144,18 +150,20 @@ describe('ThemeEditor mode toggle in the header toolbar', () => {
     ).toBeNull();
   });
 
-  it('leads the toolbar: mode toggle precedes Randomize, then the copy control', () => {
+  it('leads the toolbar: mode toggle precedes Randomize, then the copy button', () => {
     render(<ThemeEditor />);
     const modeGroup = screen.getByRole('group', { name: /palette to edit/i });
     const randomize = screen.getByRole('button', { name: 'Randomize' });
-    const copyGroup = screen.getByRole('group', { name: /copy a palette/i });
+    const copyButton = screen.getByRole('button', {
+      name: /copy boyhood colors/i,
+    });
 
     expect(
       modeGroup.compareDocumentPosition(randomize) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
-      randomize.compareDocumentPosition(copyGroup) &
+      randomize.compareDocumentPosition(copyButton) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
@@ -220,19 +228,21 @@ describe('ThemeEditor live preview reflects the selected bundle (PRD point 4)', 
     expect(mock.contains(colors)).toBe(false);
   });
 
-  it('keeps the copy-palette strip OUTSIDE any preview-scoped ancestor', () => {
+  it('keeps the copy button OUTSIDE any preview-scoped ancestor', () => {
     render(<ThemeEditor />);
-    const copyStrip = screen.getByRole('group', { name: /copy a palette/i });
+    const copyButton = screen.getByRole('button', {
+      name: /copy boyhood colors/i,
+    });
     const mock = screen.getByTestId('app-mock');
-    // No ancestor of the copy strip carries an inline custom-property style.
-    let node: HTMLElement | null = copyStrip;
+    // No ancestor of the copy button carries an inline custom-property style.
+    let node: HTMLElement | null = copyButton;
     while (node) {
       const style = node.getAttribute('style') ?? '';
       expect(style).not.toContain('--');
       node = node.parentElement;
     }
     // And it is not nested inside the styled mock.
-    expect(mock.contains(copyStrip)).toBe(false);
+    expect(mock.contains(copyButton)).toBe(false);
   });
 });
 
@@ -369,13 +379,12 @@ describe('ThemeEditor engage double-fire guard', () => {
 });
 
 /**
- * Picks a theme from the "Start from a theme" copy menu. With the trigger
- * always operable now, this is the copy-to-go-custom path.
+ * Clicks the single toolbar copy action, which copies the CURRENTLY ACTIVE film
+ * theme (boyhood in the mock) into the custom palette. The button only renders
+ * while custom is off, so this is the copy-to-go-custom path.
  */
-function copyTheme(name: RegExp) {
-  fireEvent.click(screen.getByRole('button', { name: /start from a theme/i }));
-  const menu = screen.getByRole('menu', { name: /start from a theme/i });
-  fireEvent.click(within(menu).getByRole('menuitem', { name }));
+function copyActiveTheme() {
+  fireEvent.click(screen.getByRole('button', { name: /copy boyhood colors/i }));
 }
 
 /*
@@ -387,29 +396,30 @@ function copyTheme(name: RegExp) {
  * before the copy clobbers it (a11y FLAG 1).
  */
 describe('ThemeEditor go-custom-by-copying-a-theme', () => {
-  const apolloSeed = {
-    dark: { '--mount-bg': 'apollo-10-1-2-dark' },
-    light: { '--mount-bg': 'apollo-10-1-2-light' },
+  // The single copy button copies the CURRENTLY ACTIVE film theme (boyhood).
+  const boyhoodSeed = {
+    dark: { '--mount-bg': 'boyhood-dark' },
+    light: { '--mount-bg': 'boyhood-light' },
   };
 
-  it('seeds both modes from the picked theme, enables, persists, announces', async () => {
+  it('seeds both modes from the active theme, enables, persists, announces', async () => {
     render(<ThemeEditor />);
-    copyTheme(/apollo 10½/i);
+    copyActiveTheme();
 
     expect(mockTheme.setCustomThemeEnabled).toHaveBeenCalledWith(true);
-    expect(mockTheme.setCustomTheme).toHaveBeenCalledWith(apolloSeed);
+    expect(mockTheme.setCustomTheme).toHaveBeenCalledWith(boyhoodSeed);
     expect(mockTheme.setBaseTheme).not.toHaveBeenCalled();
 
     await waitFor(() =>
       expect(updateMe).toHaveBeenCalledWith({
         customThemeEnabled: true,
-        customTheme: apolloSeed,
+        customTheme: boyhoodSeed,
       }),
     );
     await waitFor(() =>
       expect(
         screen.getByText(
-          'Your theme is on. Apollo 10½ palette applied and saved.',
+          'Your theme is on. Boyhood palette applied and saved.',
         ),
       ).toBeInTheDocument(),
     );
@@ -417,7 +427,7 @@ describe('ThemeEditor go-custom-by-copying-a-theme', () => {
 
   it('offers no Undo when no saved palette was overwritten', async () => {
     render(<ThemeEditor />);
-    copyTheme(/apollo 10½/i);
+    copyActiveTheme();
 
     await waitFor(() => expect(updateMe).toHaveBeenCalled());
     expect(
@@ -427,7 +437,7 @@ describe('ThemeEditor go-custom-by-copying-a-theme', () => {
 
   it('fires the engage PATCH exactly once (one announce, no double-bump)', async () => {
     render(<ThemeEditor />);
-    copyTheme(/apollo 10½/i);
+    copyActiveTheme();
 
     await waitFor(() => expect(updateMe).toHaveBeenCalled());
     expect(updateMe).toHaveBeenCalledTimes(1);
@@ -438,7 +448,7 @@ describe('ThemeEditor go-custom-by-copying-a-theme', () => {
       new Error('network'),
     );
     render(<ThemeEditor />);
-    copyTheme(/apollo 10½/i);
+    copyActiveTheme();
 
     await waitFor(() =>
       expect(mockTheme.setCustomThemeEnabled).toHaveBeenLastCalledWith(false),
@@ -456,11 +466,11 @@ describe('ThemeEditor go-custom-by-copying-a-theme', () => {
     // Off, but a palette already exists (the user reverted earlier).
     mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
     render(<ThemeEditor />);
-    copyTheme(/apollo 10½/i);
+    copyActiveTheme();
 
     // The copy overwrote the saved palette, so an Undo appears to get it back.
     const undo = await screen.findByRole('button', {
-      name: /undo copy from apollo 10½/i,
+      name: /undo copy from boyhood/i,
     });
 
     fireEvent.click(undo);
@@ -635,5 +645,127 @@ describe('ThemeEditor slot edit while already custom', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+/*
+ * The title row carries a NON-interactive contrast roll-up icon (#3), right of
+ * the h1 like the keyboard-shortcuts glyph on "Your links". It is keyed on the
+ * live `failures` map: a check when clean, a triangle when a contract pair
+ * fails. It is supplementary to the per-slot row failures (R-A2), carries NO
+ * auto-announce channel (R-A3), and conveys state by distinct glyph, not color
+ * alone (R-A5).
+ */
+describe('ThemeEditor contrast status icon (title row)', () => {
+  it('shows a non-interactive check glyph when the palette is contrast-clean', () => {
+    render(<ThemeEditor />);
+    const icon = screen.getByRole('img', {
+      name: 'Theme colors meet contrast',
+    });
+    // A bare <i role="img">: not a button, not in the tab order (R-A1).
+    expect(icon.tagName).toBe('I');
+    expect(icon).toHaveClass('fa-circle-check');
+    expect(icon).not.toHaveAttribute('tabindex');
+    // No auto-announce channel — the polite save region owns speech (R-A3).
+    expect(icon).not.toHaveAttribute('aria-live');
+  });
+
+  it('flips to a warning triangle when a contract pair fails', () => {
+    render(<ThemeEditor />);
+    // Collapse Background onto Text (1:1 ratio) so a base text/bg pair fails.
+    fireEvent.change(screen.getByLabelText('Color picker for Background'), {
+      target: { value: '#808080' },
+    });
+    fireEvent.change(screen.getByLabelText('Color picker for Text'), {
+      target: { value: '#808080' },
+    });
+    const icon = screen.getByRole('img', {
+      name: 'Theme has a contrast issue to fix',
+    });
+    expect(icon).toHaveClass('fa-triangle-exclamation');
+    expect(icon).not.toHaveAttribute('aria-live');
+  });
+});
+
+/*
+ * The single copy button (#5) HIDES once custom is on — there is no longer a
+ * base film theme to copy from (R-B1). It hides (not disables-in-place) via the
+ * shared IconButton's `hidden` prop, which seals it from the tab + AT trees.
+ */
+describe('ThemeEditor copy button visibility', () => {
+  it('hides the copy button once custom is on', () => {
+    mockTheme.customThemeEnabled = true;
+    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
+    render(<ThemeEditor />);
+    // A hidden IconButton is aria-hidden, so it has no computed accessible name
+    // — match it by text content among the hidden buttons instead.
+    const copy = screen
+      .getAllByRole('button', { hidden: true })
+      .find((button) => /copy boyhood colors/i.test(button.textContent ?? ''));
+    expect(copy).toBeDefined();
+    expect(copy).toHaveAttribute('aria-hidden', 'true');
+    expect(copy).toBeDisabled();
+  });
+});
+
+/*
+ * Focus moves AFTER each async engage transition settles (SC 2.4.3) — the copy
+ * button or Undo can unmount/mount across the await, so a synchronous focus
+ * would land on <body> (a11y brief R-B2/R-B4/R-B5).
+ */
+describe('ThemeEditor toolbar focus management', () => {
+  it('lands focus on Randomize after a copy-initiated engage with no Undo', async () => {
+    render(<ThemeEditor />);
+    copyActiveTheme();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Randomize' })).toHaveFocus(),
+    );
+  });
+
+  it('lands focus on the Undo button after a copy that overwrote a saved palette', async () => {
+    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
+    render(<ThemeEditor />);
+    copyActiveTheme();
+    const undo = await screen.findByRole('button', {
+      name: /undo copy from boyhood/i,
+    });
+    await waitFor(() => expect(undo).toHaveFocus());
+  });
+
+  it('returns focus to Randomize when Undo reverts a copy-over (custom stays on)', () => {
+    mockTheme.customThemeEnabled = true;
+    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
+    render(<ThemeEditor />);
+
+    clickRandomize();
+    const undo = screen.getByRole('button', {
+      name: /undo copy from random palette/i,
+    });
+    fireEvent.click(undo);
+
+    expect(screen.getByRole('button', { name: 'Randomize' })).toHaveFocus();
+  });
+
+  it('returns focus to the reappearing copy button when an engage-Undo turns custom off', async () => {
+    // A STATEFUL enabled flag so the copy button actually hides on engage and
+    // reappears on undo (the return-focus effect is keyed on that transition).
+    // The component's own state bumps drive the rerenders that re-read it.
+    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
+    mockTheme.setCustomThemeEnabled = vi.fn((value: boolean) => {
+      mockTheme.customThemeEnabled = value;
+    });
+    render(<ThemeEditor />);
+
+    copyActiveTheme();
+    const undo = await screen.findByRole('button', {
+      name: /undo copy from boyhood/i,
+    });
+    fireEvent.click(undo);
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: /copy boyhood colors/i }),
+      ).toHaveFocus(),
+    );
   });
 });

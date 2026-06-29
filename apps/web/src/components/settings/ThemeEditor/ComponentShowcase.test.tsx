@@ -18,7 +18,6 @@ import type { Mode } from '../../../theme/constants';
 
 function renderShowcase(
   bundle: Bundle = 'base',
-  previewStyle: CSSProperties | null = null,
   contentThemeStyle: CSSProperties = {},
 ) {
   return render(
@@ -26,7 +25,6 @@ function renderShowcase(
       activeBundle={bundle}
       editorMode="dark"
       randomizeNonce={0}
-      previewStyle={previewStyle}
       contentThemeStyle={contentThemeStyle}
     />,
   );
@@ -83,7 +81,6 @@ describe('ComponentShowcase – the explanation is real app UI', () => {
         activeBundle="orbit"
         editorMode="dark"
         randomizeNonce={0}
-        previewStyle={null}
         contentThemeStyle={{}}
       />,
     );
@@ -130,23 +127,14 @@ describe('ComponentShowcase – per-bundle mock (PRD point 4)', () => {
 
 describe('ComponentShowcase – preview-scope inversion (PRD point 9)', () => {
   it('applies contentThemeStyle to the aria-hidden mock container ONLY', () => {
-    renderShowcase('mount', null, {
+    renderShowcase('mount', {
       '--mount-bg': '#102030',
     } as CSSProperties);
     expect(getMock()).toHaveStyle({ '--mount-bg': '#102030' });
   });
 
-  it('prefers previewStyle (copy-menu hover) over contentThemeStyle', () => {
-    renderShowcase(
-      'mount',
-      { '--mount-bg': '#aabbcc' } as CSSProperties,
-      { '--mount-bg': '#102030' } as CSSProperties,
-    );
-    expect(getMock()).toHaveStyle({ '--mount-bg': '#aabbcc' });
-  });
-
   it('does NOT scope the explanation or heading (they render in app theme)', () => {
-    const { container } = renderShowcase('mount', null, {
+    const { container } = renderShowcase('mount', {
       '--mount-bg': '#102030',
     } as CSSProperties);
     const region = container.querySelector('section') as HTMLElement;
@@ -253,7 +241,6 @@ describe('ComponentShowcase – re-stagger key (PRD points 10 + 12)', () => {
         activeBundle={bundle}
         editorMode={editorMode}
         randomizeNonce={randomizeNonce}
-        previewStyle={null}
         contentThemeStyle={{}}
       />,
     );
@@ -267,7 +254,6 @@ describe('ComponentShowcase – re-stagger key (PRD points 10 + 12)', () => {
         activeBundle="mount"
         editorMode="dark"
         randomizeNonce={0}
-        previewStyle={null}
         contentThemeStyle={{}}
       />,
     );
@@ -284,7 +270,6 @@ describe('ComponentShowcase – re-stagger key (PRD points 10 + 12)', () => {
         activeBundle="mount"
         editorMode="light"
         randomizeNonce={0}
-        previewStyle={null}
         contentThemeStyle={{}}
       />,
     );
@@ -299,7 +284,6 @@ describe('ComponentShowcase – re-stagger key (PRD points 10 + 12)', () => {
         activeBundle="mount"
         editorMode="dark"
         randomizeNonce={1}
-        previewStyle={null}
         contentThemeStyle={{}}
       />,
     );
@@ -314,7 +298,6 @@ describe('ComponentShowcase – re-stagger key (PRD points 10 + 12)', () => {
         activeBundle="mount"
         editorMode="dark"
         randomizeNonce={1}
-        previewStyle={null}
         contentThemeStyle={{}}
       />,
     );
