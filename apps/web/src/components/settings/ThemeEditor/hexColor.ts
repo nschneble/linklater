@@ -8,19 +8,36 @@ const HEX3 = /^#[0-9a-fA-F]{3}$/;
 const HEX6 = /^#[0-9a-fA-F]{6}$/;
 const HEX8 = /^#[0-9a-fA-F]{8}$/;
 const RGBA = /^rgba?\(/i;
+// A bare 3- or 6-digit hex body (no `#` prefix), e.g. `abc` or `aabbcc`.
+const BARE_HEX_BODY = /^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$/;
 
 /**
- * Expands a 3-digit hex shorthand (e.g. `#abc`) to 6-digit form (`#aabbcc`).
- * Returns the trimmed input unchanged if it is already 6-digit or not a valid
- * 3-digit hex.
+ * Normalizes a hex value toward canonical 6-digit `#RRGGBB` form (Postel's Law):
+ *
+ *  1. Prepends `#` when the input is a bare 3- or 6-digit hex body (`aabbcc` →
+ *     `#aabbcc`, `abc` → `#abc`). Only bare hex bodies are rescued — `rgb()`,
+ *     8-digit alpha hex, and true garbage are left untouched so validation can
+ *     reject (or accept) them on their own terms.
+ *  2. Expands 3-digit shorthand to 6-digit (`#abc` → `#aabbcc`).
+ *  3. Lower-cases hex output so it matches the canonical `#000000` form the
+ *     placeholder models (`ABC` → `#aabbcc`). Hex is case-insensitive, so this
+ *     is cosmetic; non-hex values keep their original casing.
+ *
+ * Returns the trimmed input unchanged if it is already 6-digit or is not a
+ * normalizable hex form.
  */
 export function normalizeToSixDigitHex(value: string): string {
   const trimmed = value.trim();
-  if (HEX3.test(trimmed)) {
-    const digits = trimmed.slice(1);
+  // Prepend `#` to a bare hex body before the 3→6 expansion below picks it up.
+  const prefixed = BARE_HEX_BODY.test(trimmed) ? `#${trimmed}` : trimmed;
+  if (HEX3.test(prefixed)) {
+    const digits = prefixed.slice(1).toLowerCase();
     return `#${digits[0]}${digits[0]}${digits[1]}${digits[1]}${digits[2]}${digits[2]}`;
   }
-  return trimmed;
+  if (HEX6.test(prefixed)) {
+    return prefixed.toLowerCase();
+  }
+  return prefixed;
 }
 
 /** True when the value is a 6-digit `#RRGGBB` hex (the native picker's domain). */

@@ -107,6 +107,16 @@ export default function ColorRow({
 
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      {/*
+        The slot label reads first but sits LAST in source order so the picker
+        and hex input stay DOM-adjacent siblings: focus moves picker → input
+        with nothing in between (Wave 4 A — the two editors of one value read as
+        a single paired control). `order-first` restores the visual lead.
+      */}
+      <div className="order-first flex-1 min-w-0">
+        <p className="text-[var(--mount-text)] text-xs font-medium">{label}</p>
+      </div>
+
       <label
         className="relative shrink-0 focus-within:ring-2 focus-within:ring-[var(--focus-ring)] focus-within:ring-offset-1 focus-within:ring-offset-[var(--mount-bg)] rounded-md cursor-pointer aria-disabled:cursor-not-allowed"
         aria-disabled={pickerDisabled}
@@ -126,10 +136,6 @@ export default function ColorRow({
           aria-disabled={pickerDisabled}
         />
       </label>
-
-      <div className="flex-1 min-w-0">
-        <p className="text-[var(--mount-text)] text-xs font-medium">{label}</p>
-      </div>
 
       <input
         type="text"

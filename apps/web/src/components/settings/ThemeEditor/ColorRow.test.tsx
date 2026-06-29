@@ -89,6 +89,28 @@ describe('ColorRow – silent invalid-hex revert', () => {
     expect(input.value).toBe('#aabbcc');
     expect(onOverride).toHaveBeenCalledWith('--mount-bg', '#aabbcc');
   });
+
+  it('accepts a #-less hex on blur, prepending the # (Postel’s Law)', () => {
+    const { onOverride, input } = renderRow('#123456');
+
+    fireEvent.change(input, { target: { value: 'aabbcc' } });
+    fireEvent.blur(input);
+
+    // Normalized to a prefixed hex, committed, and KEPT in the input (not
+    // reverted) — the missing `#` is added silently.
+    expect(input.value).toBe('#aabbcc');
+    expect(onOverride).toHaveBeenCalledWith('--mount-bg', '#aabbcc');
+  });
+
+  it('reverts true garbage on blur and commits nothing', () => {
+    const { onOverride, input } = renderRow('#123456');
+
+    fireEvent.change(input, { target: { value: 'zzz' } });
+    fireEvent.blur(input);
+
+    expect(input.value).toBe('#123456');
+    expect(onOverride).not.toHaveBeenCalled();
+  });
 });
 
 /*
