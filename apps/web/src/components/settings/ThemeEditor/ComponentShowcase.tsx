@@ -33,7 +33,7 @@ interface ComponentShowcaseProps {
  * app's own voice — concise, truthful, no marketing. The orchestrator runs a
  * copy-polish pass in a later wave; these are accurate placeholders.
  */
-const BUNDLE_EXPLANATIONS: Record<Bundle, string> = {
+export const BUNDLE_EXPLANATIONS: Record<Bundle, string> = {
   base: 'Used for the page itself: your links toolbar, search field, and tabs.',
   mount: 'Used for your saved-link cards.',
   orbit: 'Used for the top bar and your account menu.',

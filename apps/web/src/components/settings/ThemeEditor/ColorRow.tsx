@@ -156,7 +156,7 @@ export default function ColorRow({
       {debouncedFailure && (
         <p
           id={failureNoteId}
-          className="flex basis-full items-center gap-1 text-[var(--alert-highlight)] text-[0.6rem]"
+          className="flex basis-full items-center gap-1 text-[var(--mount-alt-text)] text-[0.6rem]"
         >
           <i
             className="fa-solid fa-triangle-exclamation text-[0.55rem]"

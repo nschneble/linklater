@@ -42,9 +42,7 @@ import type { Mode } from '../../../theme/constants';
 const toOklch = converter('oklch');
 
 /** A seedable RNG so a failing test iteration is reproducible. */
-export interface Rng {
-  (): number;
-}
+export type Rng = () => number;
 
 /**
  * Mulberry32 — a tiny, fast, well-distributed seedable PRNG. Used so a failing
@@ -64,7 +62,7 @@ function mulberry32(seed: number): Rng {
 }
 
 /** The lightness band each mode's BACKGROUND slots sit in. */
-const BG_BAND: Record<Mode, { min: number; max: number }> = {
+export const BG_BAND: Record<Mode, { min: number; max: number }> = {
   light: { min: 0.92, max: 0.98 },
   dark: { min: 0.1, max: 0.18 },
 };
@@ -99,7 +97,11 @@ function clamp01(value: number): number {
  * out-of-gamut oklch to the sRGB boundary on conversion, which is exactly what
  * we want — a slightly desaturated in-gamut color over an unrenderable one.
  */
-function oklchHex(lightness: number, chroma: number, hue: number): string {
+export function oklchHex(
+  lightness: number,
+  chroma: number,
+  hue: number,
+): string {
   const color: Oklch = {
     mode: 'oklch',
     l: clamp01(lightness),
@@ -135,7 +137,7 @@ function lightnessOf(hex: string): number {
  * Chroma + hue are caller-chosen and held fixed while only lightness moves, so
  * the foreground keeps its intended color family while gaining contrast.
  */
-function deriveForeground(
+export function deriveForeground(
   backgroundHex: string,
   threshold: number,
   mode: Mode,
@@ -216,7 +218,7 @@ function neutralBackgroundHex(rng: Rng, mode: Mode, baseHue: number): string {
 }
 
 /** The accumulating palette, written slot-by-slot as each is derived. */
-type Palette = Partial<Record<ThemeVariable, string>>;
+export type Palette = Partial<Record<ThemeVariable, string>>;
 
 function setSlot(
   palette: Palette,
@@ -312,7 +314,7 @@ function deriveBundle(
   }
 }
 
-interface HighlightTriple {
+export interface HighlightTriple {
   highlight: string;
   highlightHover: string;
   highlightFg: string;
@@ -345,7 +347,7 @@ interface HighlightTriple {
  * bg, which a dark highlight clears against a light bg and a mid-dark highlight
  * clears against a near-black bg).
  */
-function deriveHighlightTriple(
+export function deriveHighlightTriple(
   bundleBgHex: string,
   hue: number,
   rng: Rng,
@@ -378,10 +380,15 @@ function deriveHighlightTriple(
   };
 
   let highlight = findHighlight(0.18);
-  // Safety: if the window search didn't land (rare hue/bg combos), force the
-  // highlight to a guaranteed-passing dark tone — white reads on it and a dark
-  // tone clears 3.0 against any in-band bg except a same-dark dark-mode bg, in
-  // which case the verify pass + outer fallback repair it.
+  // Defensive only — UNREACHABLE for any in-band bundle bg. `findHighlight`
+  // always lands within `BG_BAND` (proven exhaustively in
+  // randomPalette.internals.test.ts: 0 misses across every in-band bg hue/
+  // chroma × every highlight hue/chroma, both modes). It can only miss for a
+  // mid-lightness bg this generator never produces — and in THAT case the 0.4-L
+  // tone here does NOT itself clear 3:1 vs such a bg; it is a placeholder the
+  // outer `failingForegrounds` → `forceExtreme` repair pass corrects. So this is
+  // a last-ditch guard against a future band change, not a passing-guaranteed
+  // safety net.
   if (
     (computeContrastRatio(foreground, highlight) ?? 0) < 4.5 ||
     (computeContrastRatio(highlight, bundleBgHex) ?? 0) < 3
@@ -398,13 +405,20 @@ function deriveHighlightTriple(
   );
   const hoverFgRatio = computeContrastRatio(foreground, hoverCandidate);
   const hoverBgRatio = computeContrastRatio(hoverCandidate, bundleBgHex);
-  const highlightHover =
+  let highlightHover: string;
+  if (
     hoverFgRatio !== null &&
     hoverBgRatio !== null &&
     hoverFgRatio >= 4.5 &&
     hoverBgRatio >= 3
-      ? hoverCandidate
-      : highlight;
+  ) {
+    // The hover step kept both constraints — use it.
+    highlightHover = hoverCandidate;
+  } else {
+    // The step would break a constraint — a no-op hover still satisfies the
+    // contract.
+    highlightHover = highlight;
+  }
 
   return { highlight, highlightHover, highlightFg: foreground };
 }
@@ -433,7 +447,9 @@ function deriveFocusRing(
 
   for (let step = 0; step < MAX_NUDGE_STEPS; step += 1) {
     const candidate = oklchHex(lightness, 0.12, hue);
-    const ratios = backgrounds.map((bg) => computeContrastRatio(candidate, bg));
+    const ratios = backgrounds.map((background) =>
+      computeContrastRatio(candidate, background),
+    );
     if (ratios.every((ratio) => ratio !== null && ratio >= 3)) {
       return candidate;
     }
@@ -505,7 +521,7 @@ function buildAttempt(mode: Mode, rng: Rng): Palette {
 }
 
 /** The full 52-pair contract, rebuilt from the bundle/focus pair builders. */
-interface PairCheck {
+export interface PairCheck {
   foreground: ThemeVariable;
   background: ThemeVariable;
   threshold: number;
@@ -519,12 +535,14 @@ interface PairCheck {
 function failingForegrounds(palette: Palette, pairs: PairCheck[]): PairCheck[] {
   const failures: PairCheck[] = [];
   for (const pair of pairs) {
-    const fg = palette[pair.foreground];
-    const bg = palette[pair.background];
-    const ratio =
-      fg !== undefined && bg !== undefined
-        ? computeContrastRatio(fg, bg)
-        : null;
+    const foreground = palette[pair.foreground];
+    const background = palette[pair.background];
+    let ratio: number | null;
+    if (foreground !== undefined && background !== undefined) {
+      ratio = computeContrastRatio(foreground, background);
+    } else {
+      ratio = null;
+    }
     if (ratio === null || ratio < pair.threshold) {
       failures.push(pair);
     }
@@ -537,6 +555,10 @@ function failingForegrounds(palette: Palette, pairs: PairCheck[]): PairCheck[] {
  * generator's repair pass keys off the same data. Built from the same shapes
  * `pairsForBundle` / `focusRingPairs` produce (text/bg, border/bg, border/
  * base-bg, hl-fg/hl, etc.) — the test imports the REAL builders to prove parity.
+ *
+ * KEEP IN SYNC with `contrastResults.ts`'s `pairsForBundle` / `focusRingPairs`:
+ * the test proves OUTPUT parity (same pairs emitted) but NOT definition parity,
+ * so if you change a pair's shape there, mirror it here.
  */
 function contractPairs(): PairCheck[] {
   const pairs: PairCheck[] = [];
@@ -606,12 +628,16 @@ const CONTRACT_PAIRS = contractPairs();
  * answers to multiple bgs the SAME extreme clears all of them (all bgs sit in
  * one band), so a single extreme per foreground suffices.
  */
-function forceExtreme(palette: Palette, pair: PairCheck): void {
-  const bg = palette[pair.background];
-  if (bg === undefined) return;
-  const blackRatio = computeContrastRatio('#000000', bg) ?? 0;
-  const whiteRatio = computeContrastRatio('#ffffff', bg) ?? 0;
-  palette[pair.foreground] = blackRatio >= whiteRatio ? '#000000' : '#ffffff';
+export function forceExtreme(palette: Palette, pair: PairCheck): void {
+  const background = palette[pair.background];
+  if (background === undefined) return;
+  const blackRatio = computeContrastRatio('#000000', background) ?? 0;
+  const whiteRatio = computeContrastRatio('#ffffff', background) ?? 0;
+  if (blackRatio >= whiteRatio) {
+    palette[pair.foreground] = '#000000';
+  } else {
+    palette[pair.foreground] = '#ffffff';
+  }
 }
 
 /**
@@ -659,10 +685,17 @@ export function generateRandomPalette(
   const complete = {} as Record<ThemeVariable, string>;
   for (const variable of EDITABLE_VARS) {
     const value = palette[variable];
-    complete[variable] =
-      typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value)
-        ? value
-        : oklchHex(randomBandLightness(rng, mode), 0.01, rng() * 360);
+    if (typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value)) {
+      complete[variable] = value;
+    } else {
+      // A slot the derivation didn't write (shouldn't happen): fall back to a
+      // band neutral so the map is never missing a key.
+      complete[variable] = oklchHex(
+        randomBandLightness(rng, mode),
+        0.01,
+        rng() * 360,
+      );
+    }
   }
   return complete;
 }

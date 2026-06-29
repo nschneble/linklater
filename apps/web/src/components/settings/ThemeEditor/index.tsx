@@ -18,9 +18,9 @@ import ComponentShowcase from './ComponentShowcase';
 import CopyFromTheme from './CopyFromTheme';
 import RandomizeButton from './RandomizeButton';
 import Toast from '../../common/Toast';
-import { BUNDLES, type Bundle } from './useThemeOverrides';
-import { readThemeTokens } from './themeProbe';
 import { generateRandomPalette } from './randomPalette';
+import { readThemeTokens } from './themeProbe';
+import { BUNDLES, type Bundle } from './useThemeOverrides';
 import { pairsTouchingToken, useContrastResults } from './contrastResults';
 import { updateMe } from '../../../lib/api';
 import { useAnnouncer } from './useAnnouncer';
@@ -53,7 +53,7 @@ import { useToast } from '../../../lib/hooks/useToast';
  * Colors card swap which mode's palette the content shows + edits, decoupled
  * from the global site mode — so previewing the dark palette never flips the
  * whole app. There is no on-page theme switcher. Hovering or arrow-navigating a
- * row in the copy menu previews that film theme within the content scope
+ * row in the copy menu previews that film theme on the decorative mock alone
  * (transient, non-persisting); activating a row applies its `editorMode` palette
  * + saves, with an Undo to revert.
  *
@@ -106,9 +106,10 @@ export default function ThemeEditor() {
   } | null>(null);
 
   // Hovering/arrow-navigating a copy-menu row previews that film theme — scoped
-  // to the editor's content (the same wrapper that scopes the custom palette),
-  // so the preview shows where the showcase is and never touches the global
-  // theme or the app nav. Reverts to `null` when the menu closes.
+  // to the decorative mock alone (`previewStyle` overrides the custom palette
+  // on the same mock node), so the preview shows where the showcase is and
+  // never touches the global theme or the app nav. Reverts to `null` when the
+  // menu closes.
   const [previewThemeId, setPreviewThemeId] = useState<BaseTheme | null>(null);
   const previewStyle = useMemo<CSSProperties | null>(
     () =>

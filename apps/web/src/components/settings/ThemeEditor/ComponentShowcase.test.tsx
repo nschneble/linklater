@@ -9,7 +9,7 @@
  * the explanation + heading render in the always-readable app theme.
  */
 
-import ComponentShowcase from './ComponentShowcase';
+import ComponentShowcase, { BUNDLE_EXPLANATIONS } from './ComponentShowcase';
 import { BUNDLES, type Bundle } from './useThemeOverrides';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
@@ -85,6 +85,17 @@ describe('ComponentShowcase – the explanation is real app UI', () => {
     expect(
       screen.getByText(/used for the top bar and your account menu/i),
     ).toBeInTheDocument();
+  });
+
+  it('renders the matching explanation for EVERY bundle (incl. alert/warn/info)', () => {
+    for (const bundle of BUNDLES) {
+      const { unmount } = renderShowcase(bundle);
+      const explanation = screen.getByText(BUNDLE_EXPLANATIONS[bundle]);
+      // Real app UI: visible + outside the aria-hidden mock subtree.
+      expect(explanation).not.toHaveClass('sr-only');
+      expect(getMock().contains(explanation)).toBe(false);
+      unmount();
+    }
   });
 });
 
