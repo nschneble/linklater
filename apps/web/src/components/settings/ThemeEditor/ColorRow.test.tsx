@@ -17,7 +17,6 @@ function renderRow(currentValue = '#123456') {
   render(
     <ColorRow
       label="Background"
-      bundleLabel="Mount"
       variable="--mount-bg"
       currentValue={currentValue}
       failure={undefined}
@@ -25,10 +24,23 @@ function renderRow(currentValue = '#123456') {
     />,
   );
   const input = screen.getByLabelText(
-    'Value for Mount background',
+    'Value for Background',
   ) as HTMLInputElement;
   return { onOverride, input };
 }
+
+describe('ColorRow – slot-only accessible names (SC 2.4.6 de-dupe)', () => {
+  it('names the picker + hex by slot alone, no bundle prefix', () => {
+    renderRow();
+    // The enclosing tabpanel establishes the bundle, so the row names are
+    // slot-only ("...for Background"), never "...for Mount background".
+    expect(
+      screen.getByLabelText('Color picker for Background'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Value for Background')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/mount background/i)).toBeNull();
+  });
+});
 
 describe('ColorRow – silent invalid-hex revert', () => {
   it('resets the typed value to currentValue on blur and commits nothing', () => {

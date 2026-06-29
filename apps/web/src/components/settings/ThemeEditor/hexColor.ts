@@ -1,9 +1,7 @@
 /*
- * Shared hex/color-value helpers for the Theme Editor's editable rows.
- *
- * Both the demoted token-tree rows (`ColorRow`) and the human knobs
- * (`KnobRow`) parse, normalize, and validate the same color strings, so the
- * vocabulary lives in one place rather than being duplicated per row type.
+ * Shared hex/color-value helpers for the Theme Editor's editable slot rows
+ * (`ColorRow`), which parse, normalize, and validate color strings. Kept in one
+ * place so the vocabulary is not duplicated across the picker + hex inputs.
  */
 
 const HEX3 = /^#[0-9a-fA-F]{3}$/;

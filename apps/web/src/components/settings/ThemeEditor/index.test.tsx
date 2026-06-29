@@ -65,34 +65,31 @@ afterEach(() => {
 });
 
 /**
- * Edits the page background to a fixed hex via the "Page" knob (which sets
- * `--base-bg`). The knobs sit above the collapsed "show all colors" drawer, so
- * this is the reachable path to the same `--base-bg` edit that goes custom.
+ * Edits the page background to a fixed hex via the base bundle panel's
+ * "Background" slot row (which sets `--base-bg`). `base` is the default active
+ * bundle, so its Background picker is the reachable path to the `--base-bg`
+ * edit that goes custom.
  */
 function editBaseBackground(value = '#123456') {
-  const picker = screen.getByLabelText('Page color');
+  const picker = screen.getByLabelText('Color picker for Background');
   fireEvent.change(picker, { target: { value } });
 }
 
-/**
- * Fires a native-picker change on one of the multi-token knobs (Accent → the
- * three `*-highlight` tokens; Text → the three `*-text` tokens). The single
- * gesture must flatten EVERY constituent token, so these exercise the path a
- * single-token-only regression would silently break.
- */
-function editKnobColor(word: 'Accent' | 'Text', value: string) {
-  const picker = screen.getByLabelText(`${word} color`);
-  fireEvent.change(picker, { target: { value } });
-}
-
-describe('ThemeEditor custom-theme panel', () => {
-  it('renders the master-control card heading + copy control, no master switch', () => {
+describe('ThemeEditor copy control + heading outline', () => {
+  it('renders the rehomed copy control + h2 "Colors", no master switch', () => {
     render(<ThemeEditor />);
 
-    // The card reuses SettingsGroup chrome; its h2 is distinct from the page
-    // h1 "Theme editor" so the heading is descriptive, not a duplicate (SC 2.4.6).
+    // The SettingsGroup card wrapper is dropped (PRD point 8); the picker is now
+    // a bare strip. The single h2 in the editing surface is "Colors", distinct
+    // from the page h1 "Theme editor" (SC 2.4.6) — no "Craft your theme" card h2.
     expect(
-      screen.getByRole('heading', { level: 2, name: /craft your theme/i }),
+      screen.getByRole('heading', { level: 1, name: /theme editor/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /craft your theme/i }),
+    ).toBeNull();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Colors' }),
     ).toBeInTheDocument();
     // The master switch is gone — going custom is an edit, not a toggle.
     expect(screen.queryByRole('switch')).toBeNull();
@@ -197,76 +194,15 @@ describe('ThemeEditor go-custom-on-first-edit', () => {
   });
 });
 
-/*
- * Multi-token engage coverage. A knob (Accent, Text) edits THREE tokens in one
- * gesture; the engage seed + the persisted palette must carry all three, not
- * just the representative `--base-*` slot. The code is already correct — these
- * lock it so a regression that wrote only the first token would turn red.
- */
-describe('ThemeEditor go-custom-on-first-edit (multi-token knobs)', () => {
-  it('seeds ALL THREE accent tokens into the edited (dark) map, not just --base-highlight', async () => {
-    render(<ThemeEditor />);
-    editKnobColor('Accent', '#123456');
-
-    const seed = (
-      mockTheme.setCustomTheme as ReturnType<typeof vi.fn>
-    ).mock.calls.at(-1)?.[0];
-    expect(seed.dark).toEqual(
-      expect.objectContaining({
-        '--base-highlight': '#123456',
-        '--mount-highlight': '#123456',
-        '--orbit-highlight': '#123456',
-      }),
-    );
-
-    await waitFor(() =>
-      expect(updateMe).toHaveBeenCalledWith(
-        expect.objectContaining({
-          customThemeEnabled: true,
-          customTheme: expect.objectContaining({
-            dark: expect.objectContaining({
-              '--base-highlight': '#123456',
-              '--mount-highlight': '#123456',
-              '--orbit-highlight': '#123456',
-            }),
-          }),
-        }),
-      ),
-    );
-  });
-
-  it('seeds ALL THREE text tokens into the edited (dark) map, not just --base-text', async () => {
-    render(<ThemeEditor />);
-    editKnobColor('Text', '#654321');
-
-    const seed = (
-      mockTheme.setCustomTheme as ReturnType<typeof vi.fn>
-    ).mock.calls.at(-1)?.[0];
-    expect(seed.dark).toEqual(
-      expect.objectContaining({
-        '--base-text': '#654321',
-        '--mount-text': '#654321',
-        '--orbit-text': '#654321',
-      }),
-    );
-    await waitFor(() => expect(updateMe).toHaveBeenCalled());
-  });
-});
-
-describe('ThemeEditor re-engage merge (multi-token knobs)', () => {
-  it('merges ALL THREE accent tokens into the existing saved palette', async () => {
+describe('ThemeEditor re-engage merge (single slot)', () => {
+  it('merges the edited slot into the existing saved palette, not re-seeding', async () => {
     // Post-revert state: a saved palette exists but custom is off.
     mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
     render(<ThemeEditor />);
-    editKnobColor('Accent', '#123456');
+    editBaseBackground('#123456');
 
     const expectedSeed = {
-      dark: {
-        '--mount-bg': '#abc',
-        '--base-highlight': '#123456',
-        '--mount-highlight': '#123456',
-        '--orbit-highlight': '#123456',
-      },
+      dark: { '--mount-bg': '#abc', '--base-bg': '#123456' },
       light: {},
     };
     expect(mockTheme.setCustomTheme).toHaveBeenCalledWith(expectedSeed);
@@ -288,7 +224,7 @@ describe('ThemeEditor engage double-fire guard', () => {
     );
     render(<ThemeEditor />);
 
-    const picker = screen.getByLabelText('Accent color');
+    const picker = screen.getByLabelText('Color picker for Background');
     fireEvent.change(picker, { target: { value: '#111111' } });
     fireEvent.change(picker, { target: { value: '#222222' } });
 
@@ -411,34 +347,29 @@ describe('ThemeEditor go-custom-by-copying-a-theme', () => {
   });
 });
 
-describe('ThemeEditor knob edit while already custom', () => {
-  it('takes the scheduled-save path, never re-engaging, and persists the flatten', async () => {
+describe('ThemeEditor slot edit while already custom', () => {
+  it('takes the scheduled-save path, never re-engaging, and persists the edit', async () => {
     vi.useFakeTimers();
     try {
       mockTheme.customThemeEnabled = true;
-      mockTheme.customTheme = { dark: { '--base-bg': '#abc' }, light: {} };
+      mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
       render(<ThemeEditor />);
 
-      editKnobColor('Accent', '#123456');
+      editBaseBackground('#123456');
 
       // No engage: the enable flag is never re-flipped, and no synchronous
       // engage PATCH fires (the auto-save is debounced, not yet sent).
       expect(mockTheme.setCustomThemeEnabled).not.toHaveBeenCalled();
       expect(updateMe).not.toHaveBeenCalled();
 
-      // The debounced auto-save flushes the REAL flatten: every accent token
-      // (via the actual `setOverride` loop) lands in the persisted palette.
+      // The debounced auto-save flushes the real edit (via `setOverride`).
       await act(async () => {
         await vi.runAllTimersAsync();
       });
 
       expect(updateMe).toHaveBeenCalledWith({
         customTheme: expect.objectContaining({
-          dark: expect.objectContaining({
-            '--base-highlight': '#123456',
-            '--mount-highlight': '#123456',
-            '--orbit-highlight': '#123456',
-          }),
+          dark: expect.objectContaining({ '--base-bg': '#123456' }),
         }),
       });
       // Still no engage PATCH ({ customThemeEnabled: true, ... }) anywhere.

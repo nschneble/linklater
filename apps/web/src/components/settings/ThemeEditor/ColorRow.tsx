@@ -17,8 +17,6 @@ export const FAILURE_NOTE_DEBOUNCE_MS = 400;
 interface ColorRowProps {
   /** Human-readable label for this color row (e.g. "Background", "Border"). */
   label: string;
-  /** Human-readable bundle name for aria-label disambiguation. */
-  bundleLabel: string;
   /** The CSS variable name this row controls (e.g. `'--alert-border'`). */
   variable: ThemeVariable;
   /** The current resolved value of this variable. */
@@ -30,8 +28,12 @@ interface ColorRowProps {
 }
 
 /**
- * A single color variable row in the demoted token tree, with a native color
- * picker, a hex text input, and the slot label.
+ * A single color variable row — a native color picker, a hex text input, and
+ * the slot label — rendered under the selected bundle's tabpanel.
+ *
+ * The accessible names are slot-only ("Color picker for Background") rather than
+ * bundle-qualified: the enclosing tabpanel already establishes which bundle the
+ * row belongs to, so a bundle prefix would be redundant (SC 2.4.6).
  *
  * The color picker fires `onOverride` on every change (live preview). The text
  * input only fires on blur, after normalizing and validating the hex value.
@@ -47,7 +49,6 @@ interface ColorRowProps {
  */
 export default function ColorRow({
   label,
-  bundleLabel,
   variable,
   currentValue,
   failure,
@@ -97,8 +98,8 @@ export default function ColorRow({
   const pickerDisabled = isAlpha;
   const pickerValue = isSixDigitHex(inputValue) ? inputValue : '#000000';
   const swatchBackground = isAlpha ? currentValue : pickerValue;
-  const pickerAriaLabel = `Color picker for ${bundleLabel} ${label.toLowerCase()}`;
-  const textAriaLabel = `Value for ${bundleLabel} ${label.toLowerCase()}`;
+  const pickerAriaLabel = `Color picker for ${label}`;
+  const textAriaLabel = `Value for ${label}`;
   const failureNoteId = `theme-editor-failure-${variable.replace(/^--/, '')}`;
   const failureNote = debouncedFailure
     ? `Fails contrast with ${debouncedFailure.pairLabel} — ${debouncedFailure.ratio.toFixed(1)}:1, needs ${debouncedFailure.threshold}:1`

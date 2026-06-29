@@ -10,14 +10,13 @@ import {
 /**
  * Shared WCAG contrast computation for the theme editor's live contract
  * checking. The standalone contrast card AND the aggregate pass/fail chip were
- * retired: every failing pair now self-reports inline ON the control being
- * edited (a knob note, a drawer-row note), plus the "Show all colors"
- * drawer-only badge counts the failures reachable only inside the collapsed
- * drawer. They all read this SINGLE source of truth so they can never disagree.
+ * retired: every failing pair now self-reports inline ON the slot row being
+ * edited. The rows all read this SINGLE source of truth so they can never
+ * disagree.
  *
  * The governing invariant: an edit to token X can only change the contrast of
  * pairs that TOUCH X, so surfacing each failing pair on BOTH its endpoints
- * (`pairsTouchingToken`) guarantees the warning lands on whichever control the
+ * (`pairsTouchingToken`) guarantees the warning lands on whichever slot row the
  * user just edited. `contrastResults.test.ts` mechanizes the completeness of
  * that coverage (the C1 invariant).
  */
@@ -221,50 +220,8 @@ export interface ContrastResults {
 }
 
 /**
- * The nine tokens fronted by the five human knobs (Page, Cards, Accent, Text,
- * Alerts — see `KnobPanel`). A failing pair with NEITHER endpoint in this set
- * is "drawer-only": reachable only by opening the "Show all colors" drawer, so
- * the drawer toggle advertises a count of them (GAP2). Cross-checked against
- * `KnobPanel`'s `KNOBS` in `KnobPanel.test.tsx` so the two can't drift.
- */
-export const KNOB_TOKENS: ReadonlySet<string> = new Set([
-  '--base-bg',
-  '--mount-bg',
-  '--base-highlight',
-  '--mount-highlight',
-  '--orbit-highlight',
-  '--base-text',
-  '--mount-text',
-  '--orbit-text',
-  '--alert-bg',
-]);
-
-/**
- * Counts the distinct FAILING pairs whose neither endpoint is a knob token —
- * the failures a user can only find by opening the drawer. Drives the count
- * badge on the "Show all colors" toggle. Reuses the ratios already in
- * `results` (no new contrast math).
- */
-export function drawerOnlyFailureCount(results: ContrastResults): number {
-  let count = 0;
-  for (const group of results.groups) {
-    for (const { pair, ratio } of group.pairs) {
-      if (ratio === null || ratio >= pair.threshold) continue;
-      if (
-        KNOB_TOKENS.has(pair.foreground) ||
-        KNOB_TOKENS.has(pair.background)
-      ) {
-        continue;
-      }
-      count += 1;
-    }
-  }
-  return count;
-}
-
-/**
- * A single token's worst FAILING contrast pair, used by `ColorEditor` to
- * surface per-row failure feedback on the hex input (BL1). Only failing pairs
+ * A single token's worst FAILING contrast pair, used by the per-bundle slot
+ * rows to surface failure feedback on the hex input (BL1). Only failing pairs
  * (resolved ratio below threshold) produce an entry; passing and unverified
  * pairs do not, so a row only ever reports a concrete, color-independent
  * "fails contrast" note (SC 3.3.1, SC 1.4.1).
@@ -281,11 +238,10 @@ export interface TokenContrastFailure {
 /**
  * Keys each failing pair under BOTH its foreground AND its background token, so
  * a token that fails only as a BACKGROUND (e.g. a too-light `--mount-bg` under
- * card text) still reports a failure. Used by the knobs (whose representative
- * token is often a background) so a contrast problem surfaces ON THE KNOB
- * rather than being buried in the drawer. Reuses the ratios already computed by
- * `useContrastResults` — it makes NO new `computeContrastRatio` calls — so a
- * failing pair is reachable from either of its two endpoint controls.
+ * card text) still reports a failure on its OWN slot row, not only on the far
+ * foreground row (C3). Reuses the ratios already computed by `useContrastResults`
+ * — it makes NO new `computeContrastRatio` calls — so a failing pair is
+ * reachable from either of its two endpoint rows.
  */
 export function pairsTouchingToken(
   results: ContrastResults,

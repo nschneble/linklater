@@ -15,14 +15,10 @@ import {
 import { THEMES, type BaseTheme, type Mode } from '../../../theme/constants';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
-import CustomThemePanel from './CustomThemePanel';
+import CopyFromTheme from './CopyFromTheme';
 import Toast from '../../common/Toast';
 import { readThemeTokens } from './themeProbe';
-import {
-  drawerOnlyFailureCount,
-  pairsTouchingToken,
-  useContrastResults,
-} from './contrastResults';
+import { pairsTouchingToken, useContrastResults } from './contrastResults';
 import { updateMe } from '../../../lib/api';
 import { useAnnouncer } from './useAnnouncer';
 import { useThemeCopy } from './useThemeCopy';
@@ -58,9 +54,9 @@ import { useToast } from '../../../lib/hooks/useToast';
  * + saves, with an Undo to revert.
  *
  * The Light/Dark toggle's active pill and the copy menu's trigger both paint
- * from FIXED-color escape hatches (not bundle tokens), and the settings card
- * sits OUTSIDE the custom scope — so a hostile custom palette can degrade the
- * preview but never the controls needed to escape it.
+ * from FIXED-color escape hatches (not bundle tokens), and the copy strip sits
+ * OUTSIDE the custom scope — so a hostile custom palette can degrade the preview
+ * but never the controls needed to escape it.
  */
 export default function ThemeEditor() {
   const {
@@ -118,19 +114,11 @@ export default function ThemeEditor() {
 
   const contrastResults = useContrastResults(colorValues);
 
-  // BOTH the knobs and the drawer rows read the both-endpoints view, so a
-  // too-light Page/Cards/Alerts BACKGROUND flags on whichever control set it —
-  // a knob OR its drawer row — not only on the far foreground row (C3). The
-  // standalone contrast card is retired; this map is the inline guardrail.
+  // Each slot row reads the both-endpoints view, so a too-light BACKGROUND
+  // flags on whichever slot set it — not only on the far foreground slot (C3).
+  // The standalone contrast card is retired; this map is the inline guardrail.
   const failures = useMemo(
     () => pairsTouchingToken(contrastResults),
-    [contrastResults],
-  );
-
-  // Failures with no knob endpoint are reachable only inside the collapsed
-  // drawer; the "Show all colors" toggle advertises a count of them (GAP2).
-  const drawerOnlyCount = useMemo(
-    () => drawerOnlyFailureCount(contrastResults),
     [contrastResults],
   );
 
@@ -334,10 +322,9 @@ export default function ThemeEditor() {
     [customThemeEnabled, engageFromTheme, handleApply],
   );
 
-  // Apply an edit to one or more variables in a single pass: the first edit
-  // goes custom (engaging once, even across a knob's multi-token write), later
-  // edits debounce-save. A knob passes all its constituent tokens together so
-  // the engage snapshot and the saved palette never miss any of them.
+  // Apply an edit to a slot: the first edit goes custom (engaging once), later
+  // edits debounce-save. Modelled as a variable LIST so the engage snapshot can
+  // carry several tokens at once (the engage path still accepts an array).
   function editTokens(
     variables: Array<Parameters<typeof setOverride>[0]>,
     value: string,
@@ -366,15 +353,6 @@ export default function ThemeEditor() {
     editTokens([variable], value);
   }
 
-  // A knob flattens every constituent token to the new value in one write
-  // (destructively overwriting any per-surface value set in the drawer).
-  function handleKnobOverride(
-    variables: Array<Parameters<typeof setOverride>[0]>,
-    value: string,
-  ) {
-    editTokens(variables, value);
-  }
-
   const toastView = useMemo(() => resolveToast(toast.message), [toast.message]);
 
   // The single polite live region's rendered text, re-triggered (clear-then-set)
@@ -396,7 +374,7 @@ export default function ThemeEditor() {
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header: title + intro. (The Light/Dark control lives in the Colors
-          card now, since it swaps the editor's palette, not chrome.) */}
+          region now, since it swaps the editor's palette, not chrome.) */}
       <div className="mb-6">
         <h1 className="text-[var(--base-text)] text-lg font-semibold">
           Theme editor
@@ -414,14 +392,17 @@ export default function ThemeEditor() {
         {announcement}
       </p>
 
-      {/* Master-control card: the copy-palette shortcut. It sits OUTSIDE the
-          custom-theme preview scope (see below) so the copy-menu trigger — the
-          surviving keyboard-reachable recovery path back to a readable palette —
-          always paints in the always-legible escape-hatch colors, never the
-          injected custom palette. */}
-      <div className="mb-4">
-        <CustomThemePanel
-          active={customThemeEnabled}
+      {/* Copy-palette shortcut. The SettingsGroup card wrapper is dropped (PRD
+          point 8); the picker now lives in this bare selector strip. The strip
+          is a SIBLING ABOVE the preview-scoped content div, so the copy-menu
+          trigger — the surviving keyboard-reachable recovery path back to a
+          readable palette — has NO ancestor carrying the injected custom palette
+          (`style={previewStyle ?? contentThemeStyle}`) and always paints in the
+          fixed escape-hatch colors (a11y brief §4). Visual adjacency to the
+          bundle/mode selectors does NOT require DOM nesting. */}
+      <div className="flex justify-end mb-4">
+        <CopyFromTheme
+          editingEnabled={customThemeEnabled}
           onApply={handleCopyTheme}
           onPreviewTheme={setPreviewThemeId}
           undoThemeLabel={engageUndo?.label ?? undoThemeLabel}
@@ -438,7 +419,7 @@ export default function ThemeEditor() {
           custom palette as inline custom properties, so this subtree renders
           the custom theme WITHOUT touching the global `:root`. A copy-menu hover
           preview overrides it with the hovered film theme's tokens. The header +
-          settings card sit OUTSIDE this scope, so the off-ramp used to escape an
+          copy strip sit OUTSIDE this scope, so the off-ramp used to escape an
           unreadable palette stays painted in its fixed escape-hatch colors. */}
       <div
         className="flex flex-col lg:flex-row gap-6"
@@ -449,11 +430,9 @@ export default function ThemeEditor() {
             <ColorEditor
               colorValues={colorValues}
               failures={failures}
-              drawerOnlyFailureCount={drawerOnlyCount}
               baseThemeLabel={baseThemeLabel}
               customActive={customThemeEnabled}
               onOverride={handleOverride}
-              onKnobOverride={handleKnobOverride}
               editorMode={editorMode}
               onEditorModeChange={setEditorMode}
             />
