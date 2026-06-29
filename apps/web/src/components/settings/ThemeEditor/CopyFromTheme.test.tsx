@@ -2,9 +2,10 @@
  * Tests for CopyFromTheme – the "Start from a theme" menu control.
  *
  * Covers the redesigned flow: picking a theme is a one-step ACTION (apply +
- * autosave, no Copy button), the menu is aria-disabled until the custom theme
- * is enabled, the role="group" labelling + describedby hint, the active-row
- * preview hook, and the Undo button (naming + focus-return to the trigger).
+ * autosave, no Copy button), the menu is ALWAYS operable (picking while off is
+ * itself a way to go custom), the role="group" labelling + describedby hint,
+ * the active-row preview hook, and the Undo button (naming + focus-return to
+ * the trigger).
  */
 
 import CopyFromTheme from './CopyFromTheme';
@@ -63,13 +64,23 @@ describe('CopyFromTheme', () => {
     ).toBeNull();
   });
 
-  it('is aria-disabled and does not open while the custom theme is off', () => {
+  it('stays operable while the custom theme is off (copying starts it)', () => {
     const { onApply } = renderControl({ editingEnabled: false });
     const trigger = getTrigger();
-    expect(trigger).toHaveAttribute('aria-disabled', 'true');
+    expect(trigger).not.toHaveAttribute('aria-disabled');
     fireEvent.click(trigger);
-    expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    expect(onApply).not.toHaveBeenCalled();
+    const menu = screen.getByRole('menu', { name: /start from a theme/i });
+    fireEvent.click(
+      within(menu).getByRole('menuitem', { name: /apollo 10½/i }),
+    );
+    expect(onApply).toHaveBeenCalledWith('apollo-10-1-2', 'Apollo 10½');
+  });
+
+  it('hints that picking a theme starts the custom theme while off', () => {
+    renderControl({ editingEnabled: false });
+    const describedById = getTrigger().getAttribute('aria-describedby');
+    const description = document.getElementById(describedById as string);
+    expect(description?.textContent).toMatch(/turns on your theme/i);
   });
 
   it('previews the active row theme and reverts on close', () => {

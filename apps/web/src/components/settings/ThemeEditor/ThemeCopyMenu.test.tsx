@@ -3,7 +3,7 @@
  * (apply a palette), not selectable values. Covers the menu-button contract:
  * roles, open/close, activate-on-click, activate-on-Enter, Escape cancels,
  * arrow nav skipping disabled rows, typeahead, the active-option preview hook,
- * the aria-disabled (but focusable) trigger, and ref forwarding.
+ * and ref forwarding.
  */
 
 import ThemeCopyMenu, { type ThemeMenuOption } from './ThemeCopyMenu';
@@ -122,17 +122,6 @@ describe('ThemeCopyMenu', () => {
     expect(onActivePreview).toHaveBeenLastCalledWith('apollo');
     fireEvent.keyDown(getMenu(), { key: 'Escape' });
     expect(onActivePreview).toHaveBeenLastCalledWith(null);
-  });
-
-  it('is focusable but inert when disabled (does not open or activate)', () => {
-    const { onActivate } = renderMenu({ disabled: true });
-    const trigger = getTrigger();
-    expect(trigger).toHaveAttribute('aria-disabled', 'true');
-    // Still in the tab order (no native `disabled`), so it stays discoverable.
-    expect(trigger).not.toHaveAttribute('disabled');
-    fireEvent.click(trigger);
-    expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    expect(onActivate).not.toHaveBeenCalled();
   });
 
   it('forwards a ref to the trigger button', () => {

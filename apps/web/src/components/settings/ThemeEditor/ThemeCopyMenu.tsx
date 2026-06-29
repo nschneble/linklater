@@ -41,13 +41,7 @@ interface ThemeCopyMenuProps {
    * path (SC 2.1.1).
    */
   onActivePreview?: (id: string | null) => void;
-  /**
-   * When true, the trigger is `aria-disabled` (kept focusable + announced so it
-   * stays discoverable as "turn the toggle on to use this"); activation and
-   * opening are blocked.
-   */
-  disabled?: boolean;
-  /** Id of a static hint describing the trigger (e.g. the disabled reason). */
+  /** Id of a static hint describing the trigger. */
   ariaDescribedBy?: string;
   /** Extra classes for the trigger button. */
   className?: string;
@@ -84,7 +78,6 @@ const ThemeCopyMenu = forwardRef<HTMLButtonElement, ThemeCopyMenuProps>(
       label,
       onActivate,
       onActivePreview,
-      disabled = false,
       ariaDescribedBy,
       className = '',
     },
@@ -138,11 +131,10 @@ const ThemeCopyMenu = forwardRef<HTMLButtonElement, ThemeCopyMenuProps>(
     }, [close]);
 
     const open = useCallback(() => {
-      if (disabled) return;
       setIsOpen(true);
       setActiveId(initialActiveId());
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [disabled, options]);
+    }, [options]);
 
     const activate = useCallback(
       (id: string | null) => {
@@ -210,7 +202,7 @@ const ThemeCopyMenu = forwardRef<HTMLButtonElement, ThemeCopyMenuProps>(
     function handleTriggerKeyDown(
       event: React.KeyboardEvent<HTMLButtonElement>,
     ) {
-      if (disabled || isOpen) return;
+      if (isOpen) return;
       if (
         event.key === 'ArrowDown' ||
         event.key === 'ArrowUp' ||
@@ -331,16 +323,14 @@ const ThemeCopyMenu = forwardRef<HTMLButtonElement, ThemeCopyMenuProps>(
           aria-haspopup="menu"
           aria-expanded={isOpen}
           aria-controls={menuId}
-          aria-disabled={disabled || undefined}
           aria-describedby={ariaDescribedBy}
           onClick={() => {
-            if (disabled) return;
             if (isOpen) close();
             else open();
           }}
           onKeyDown={handleTriggerKeyDown}
           style={ESCAPE_HATCH_LIGHT}
-          className={`group flex items-center justify-between gap-2 px-2.5 py-1.5 border text-xs ${EDITOR_FOCUS_RING} rounded-lg cursor-pointer aria-disabled:opacity-50 aria-disabled:cursor-not-allowed ${className}`}
+          className={`group flex items-center justify-between gap-2 px-2.5 py-1.5 border text-xs ${EDITOR_FOCUS_RING} rounded-lg cursor-pointer ${className}`}
         >
           <span className="truncate">{label}</span>
           <i

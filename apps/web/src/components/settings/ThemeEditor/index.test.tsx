@@ -16,6 +16,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { updateMe } from '../../../lib/api';
@@ -89,9 +90,9 @@ describe('ThemeEditor custom-theme panel', () => {
     render(<ThemeEditor />);
 
     // The card reuses SettingsGroup chrome; its h2 is distinct from the page
-    // h1 "Your theme" so the heading is descriptive, not a duplicate (SC 2.4.6).
+    // h1 "Theme editor" so the heading is descriptive, not a duplicate (SC 2.4.6).
     expect(
-      screen.getByRole('heading', { level: 2, name: /theme starting point/i }),
+      screen.getByRole('heading', { level: 2, name: /craft your theme/i }),
     ).toBeInTheDocument();
     // The master switch is gone — going custom is an edit, not a toggle.
     expect(screen.queryByRole('switch')).toBeNull();
@@ -188,7 +189,7 @@ describe('ThemeEditor revert off-ramp', () => {
 
     // Focus moved to the page heading BEFORE the button unmounts (SC 2.4.3).
     expect(
-      screen.getByRole('heading', { level: 1, name: /your theme/i }),
+      screen.getByRole('heading', { level: 1, name: /theme editor/i }),
     ).toHaveFocus();
 
     expect(mockTheme.setCustomThemeEnabled).toHaveBeenCalledWith(false);
@@ -319,6 +320,118 @@ describe('ThemeEditor engage double-fire guard', () => {
     expect(updateMe).toHaveBeenCalledTimes(1);
     expect(mockTheme.setCustomThemeEnabled).toHaveBeenCalledTimes(1);
     expect(mockTheme.setCustomThemeEnabled).toHaveBeenCalledWith(true);
+  });
+});
+
+/**
+ * Picks a theme from the "Start from a theme" copy menu. With the trigger
+ * always operable now, this is the copy-to-go-custom path.
+ */
+function copyTheme(name: RegExp) {
+  fireEvent.click(screen.getByRole('button', { name: /start from a theme/i }));
+  const menu = screen.getByRole('menu', { name: /start from a theme/i });
+  fireEvent.click(within(menu).getByRole('menuitem', { name }));
+}
+
+/*
+ * Copying a theme is a SECOND way to go custom, equal to editing a color: while
+ * custom is off, picking a theme seeds the palette from that theme for BOTH
+ * modes, enables, persists in one PATCH, and announces. No Undo is offered when
+ * nothing was overwritten (a never-configured user) — the off-ramp covers
+ * turning back off — but a returning user's saved palette IS snapshotted for
+ * Undo before the copy clobbers it (a11y FLAG 1).
+ */
+describe('ThemeEditor go-custom-by-copying-a-theme', () => {
+  const apolloSeed = {
+    dark: { '--mount-bg': 'apollo-10-1-2-dark' },
+    light: { '--mount-bg': 'apollo-10-1-2-light' },
+  };
+
+  it('seeds both modes from the picked theme, enables, persists, announces', async () => {
+    render(<ThemeEditor />);
+    copyTheme(/apollo 10½/i);
+
+    expect(mockTheme.setCustomThemeEnabled).toHaveBeenCalledWith(true);
+    expect(mockTheme.setCustomTheme).toHaveBeenCalledWith(apolloSeed);
+    expect(mockTheme.setBaseTheme).not.toHaveBeenCalled();
+
+    await waitFor(() =>
+      expect(updateMe).toHaveBeenCalledWith({
+        customThemeEnabled: true,
+        customTheme: apolloSeed,
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          'Your theme is on. Apollo 10½ palette applied and saved.',
+        ),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it('offers no Undo when no saved palette was overwritten', async () => {
+    render(<ThemeEditor />);
+    copyTheme(/apollo 10½/i);
+
+    await waitFor(() => expect(updateMe).toHaveBeenCalled());
+    expect(
+      screen.queryByRole('button', { name: /undo copy from/i }),
+    ).toBeNull();
+  });
+
+  it('fires the engage PATCH exactly once (one announce, no double-bump)', async () => {
+    render(<ThemeEditor />);
+    copyTheme(/apollo 10½/i);
+
+    await waitFor(() => expect(updateMe).toHaveBeenCalled());
+    expect(updateMe).toHaveBeenCalledTimes(1);
+  });
+
+  it('rolls back the enable + seed when the engage PATCH fails', async () => {
+    (updateMe as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error('network'),
+    );
+    render(<ThemeEditor />);
+    copyTheme(/apollo 10½/i);
+
+    await waitFor(() =>
+      expect(mockTheme.setCustomThemeEnabled).toHaveBeenLastCalledWith(false),
+    );
+    expect(mockTheme.setCustomTheme).toHaveBeenLastCalledWith({
+      dark: {},
+      light: {},
+    });
+    expect(
+      await screen.findByText(/could not update the custom theme setting/i),
+    ).toBeInTheDocument();
+  });
+
+  it('snapshots a returning user’s palette for Undo, then restores it + turns off', async () => {
+    // Off, but a palette already exists (the user reverted earlier).
+    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
+    render(<ThemeEditor />);
+    copyTheme(/apollo 10½/i);
+
+    // The copy overwrote the saved palette, so an Undo appears to get it back.
+    const undo = await screen.findByRole('button', {
+      name: /undo copy from apollo 10½/i,
+    });
+
+    fireEvent.click(undo);
+
+    // Undo restores the prior palette and turns custom back OFF (its prior state).
+    expect(mockTheme.setCustomThemeEnabled).toHaveBeenLastCalledWith(false);
+    expect(mockTheme.setCustomTheme).toHaveBeenLastCalledWith({
+      dark: { '--mount-bg': '#abc' },
+      light: {},
+    });
+    await waitFor(() =>
+      expect(updateMe).toHaveBeenLastCalledWith({
+        customThemeEnabled: false,
+        customTheme: { dark: { '--mount-bg': '#abc' }, light: {} },
+      }),
+    );
   });
 });
 

@@ -98,6 +98,15 @@ export default function ThemeEditor() {
   // between events — this stops two of them firing two engage PATCHes.
   const engagingReference = useRef(false);
 
+  // Copying a theme while custom is OFF can clobber an EXISTING saved palette (a
+  // returning user who reverted earlier). We snapshot that palette so an Undo
+  // can restore it + turn custom back off (a never-configured user has nothing
+  // to lose — the off-ramp covers turning off, so no Undo is offered then).
+  const [engageUndo, setEngageUndo] = useState<{
+    customTheme: CustomTheme;
+    label: string;
+  } | null>(null);
+
   // Hovering/arrow-navigating a copy-menu row previews that film theme — scoped
   // to the editor's content (the same wrapper that scopes the custom palette),
   // so the preview shows where the showcase is and never touches the global
@@ -230,6 +239,108 @@ export default function ThemeEditor() {
     ],
   );
 
+  // Copying a theme while custom is OFF is ALSO a way to go custom — equal to
+  // editing a color. It seeds the palette from the picked theme for BOTH modes
+  // (a copy means "start from this whole theme", not just the shown mode),
+  // enables, persists, and announces — all in ONE direct PATCH + ONE announce
+  // (mirroring `engageCustomTheme`; routing through the debounced copy save
+  // would double-bump the live region and swallow this utterance). When a saved
+  // palette already existed it is snapshotted for Undo, since the copy
+  // overwrites it (a11y FLAG 1 — the off-ramp keeps the COPIED colors, so it is
+  // not a path back to the originals).
+  const engageFromTheme = useCallback(
+    async (themeId: BaseTheme, themeLabel: string) => {
+      if (engagingReference.current) return;
+      engagingReference.current = true;
+
+      const previousCustomTheme = customTheme;
+      const hadSavedPalette = isCustomConfigured;
+      const otherMode: Mode = editorMode === 'dark' ? 'light' : 'dark';
+      const editedModeTokens = readThemeTokens(themeId, editorMode);
+      const otherModeTokens = readThemeTokens(themeId, otherMode);
+      const seeded: CustomTheme = {
+        dark: editorMode === 'dark' ? editedModeTokens : otherModeTokens,
+        light: editorMode === 'light' ? editedModeTokens : otherModeTokens,
+      };
+
+      setCustomThemeEnabled(true);
+      setCustomTheme(seeded);
+      loadOverrides(editedModeTokens);
+      clearUndo();
+      try {
+        await updateMe({ customThemeEnabled: true, customTheme: seeded });
+        if (hadSavedPalette && previousCustomTheme) {
+          setEngageUndo({
+            customTheme: previousCustomTheme,
+            label: themeLabel,
+          });
+        }
+        announce(`Your theme is on. ${themeLabel} palette applied and saved.`);
+      } catch {
+        setCustomThemeEnabled(false);
+        setCustomTheme(previousCustomTheme ?? { dark: {}, light: {} });
+        toast.show('custom-theme-toggle-failed');
+      } finally {
+        engagingReference.current = false;
+      }
+    },
+    [
+      announce,
+      clearUndo,
+      customTheme,
+      editorMode,
+      isCustomConfigured,
+      loadOverrides,
+      setCustomTheme,
+      setCustomThemeEnabled,
+      toast,
+    ],
+  );
+
+  // Undo for a copy that overwrote an existing saved palette: restore the prior
+  // palette and turn custom back OFF (the state the user copied from). On PATCH
+  // failure, roll back to the just-copied on-state. Focus return to the menu
+  // trigger is handled by `CopyFromTheme` (this label going null unmounts the
+  // button, so focus must move first — SC 2.4.3).
+  const handleEngageUndo = useCallback(async () => {
+    if (!engageUndo) return;
+    const restored = engageUndo.customTheme;
+    const copied = customTheme;
+    setEngageUndo(null);
+    setCustomThemeEnabled(false);
+    setCustomTheme(restored);
+    announce('Reverted to previous colors.');
+    try {
+      await updateMe({ customThemeEnabled: false, customTheme: restored });
+    } catch {
+      setCustomThemeEnabled(true);
+      setCustomTheme(copied ?? restored);
+      toast.show('custom-theme-toggle-failed');
+    }
+  }, [
+    announce,
+    customTheme,
+    engageUndo,
+    setCustomTheme,
+    setCustomThemeEnabled,
+    toast,
+  ]);
+
+  // Picking a theme in the copy menu: while custom is already on it is a
+  // copy-over with its own Undo (`handleApply`); while off it is a way to GO
+  // custom (`engageFromTheme`). A later copy-over supersedes any engage Undo.
+  const handleCopyTheme = useCallback(
+    (themeId: BaseTheme, themeLabel: string) => {
+      if (customThemeEnabled) {
+        setEngageUndo(null);
+        handleApply(themeId, themeLabel);
+      } else {
+        void engageFromTheme(themeId, themeLabel);
+      }
+    },
+    [customThemeEnabled, engageFromTheme, handleApply],
+  );
+
   // Apply an edit to one or more variables in a single pass: the first edit
   // goes custom (engaging once, even across a knob's multi-token write), later
   // edits debounce-save. A knob passes all its constituent tokens together so
@@ -244,6 +355,7 @@ export default function ThemeEditor() {
       setOverride(variable, value);
     }
     clearUndo();
+    setEngageUndo(null);
     if (!customThemeEnabled) {
       // First edit — go custom. The guard absorbs a color picker's drag burst.
       if (engagingReference.current) return;
@@ -279,6 +391,7 @@ export default function ThemeEditor() {
   const handleRevert = useCallback(async () => {
     headingReference.current?.focus();
     setCustomThemeEnabled(false);
+    setEngageUndo(null);
     announce('Your theme is off.');
     try {
       await updateMe({ customThemeEnabled: false });
@@ -313,10 +426,10 @@ export default function ThemeEditor() {
             tabIndex={-1}
             className="text-[var(--base-text)] text-lg font-semibold focus:outline-none"
           >
-            Your theme
+            Theme editor
           </h1>
           <p className="mt-1 text-[var(--base-alt-text)] text-xs">
-            Build your own theme and preview it live. Saves as you go.
+            All changes are saved automatically.
           </p>
         </div>
 
@@ -340,10 +453,10 @@ export default function ThemeEditor() {
           active={customThemeEnabled}
           baseThemeLabel={baseThemeLabel}
           onRevert={handleRevert}
-          onApply={handleApply}
+          onApply={handleCopyTheme}
           onPreviewTheme={setPreviewThemeId}
-          undoThemeLabel={undoThemeLabel}
-          onUndo={handleUndo}
+          undoThemeLabel={engageUndo?.label ?? undoThemeLabel}
+          onUndo={engageUndo ? handleEngageUndo : handleUndo}
         />
       </div>
 

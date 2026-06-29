@@ -14,9 +14,9 @@ const COPYABLE_THEMES = THEMES.filter((theme) => theme.id !== 'custom');
 
 interface CopyFromThemeProps {
   /**
-   * Whether the custom theme is active (editable). Before the user has gone
-   * custom the menu is `aria-disabled` but stays focusable + discoverable so
-   * they learn that editing a color first unlocks copying a palette.
+   * Whether the custom theme is already active. Only switches the helper text:
+   * the menu is ALWAYS operable — picking a theme while off is itself a way to
+   * go custom (it seeds + saves the palette), equal to editing a color.
    */
   editingEnabled: boolean;
   /**
@@ -45,8 +45,10 @@ interface CopyFromThemeProps {
  * no two-step Copy button and no retained selection — see `ThemeCopyMenu` for
  * why this is a menu, not a combobox.
  *
- * The menu is disabled until the custom theme is active (the first color edit).
- * Its trigger paints from fixed escape-hatch colors so it stays the legible way
+ * The menu is ALWAYS operable: picking a theme while the custom theme is off is
+ * itself a way to go custom (the parent seeds + saves the picked palette), so
+ * copying a theme can START a custom theme, not just edit an active one. Its
+ * trigger paints from fixed escape-hatch colors so it stays the legible way
  * back from an unreadable custom palette (the old "Reset all" hatch is gone).
  */
 export default function CopyFromTheme({
@@ -92,7 +94,6 @@ export default function CopyFromTheme({
             isAccessible: theme.isAccessible,
           }))}
           label="Start from a theme"
-          disabled={!editingEnabled}
           onActivate={handleActivate}
           onActivePreview={(id) => onPreviewTheme((id as BaseTheme) ?? null)}
           ariaDescribedBy={COPY_DESCRIPTION_ID}
@@ -120,7 +121,7 @@ export default function CopyFromTheme({
       >
         {editingEnabled
           ? 'Picking a theme paints over your colors with its palette and saves. Undo to revert.'
-          : 'Edit a color to start your theme, then you can start from a built-in one.'}
+          : 'Pick a theme to start yours — it turns on your theme and saves.'}
       </p>
     </div>
   );
