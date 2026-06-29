@@ -17,6 +17,7 @@ import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import CopyFromTheme from './CopyFromTheme';
 import Toast from '../../common/Toast';
+import { BUNDLES, type Bundle } from './useThemeOverrides';
 import { readThemeTokens } from './themeProbe';
 import { pairsTouchingToken, useContrastResults } from './contrastResults';
 import { updateMe } from '../../../lib/api';
@@ -32,8 +33,9 @@ import { useToast } from '../../../lib/hooks/useToast';
  *
  * The editor NEVER changes the global site theme. The custom palette is
  * previewed by scoping it (as inline custom properties via `contentThemeStyle`)
- * to the content columns below the header — so leaving the editor can't strand
- * the whole app on custom.
+ * to the decorative app mock in the live-preview column ALONE — so the Colors
+ * card the user edits with stays painted in the always-readable app theme, and
+ * leaving the editor can't strand the whole app on custom.
  *
  * There is NO master switch and no off-ramp: touching any color IS the act of
  * going custom. The swatches always render, seeded as a live mirror of the
@@ -73,6 +75,11 @@ export default function ThemeEditor() {
   // global site mode (navigating away leaves the app on whatever mode it was).
   // Seeded once from the site mode so the editor opens on the expected palette.
   const [editorMode, setEditorMode] = useState<Mode>(mode);
+
+  // The active bundle is OWNED here (not inside the tablist) so BOTH the tablist
+  // and the live preview read the same selection: picking a bundle both swaps
+  // the editable slots AND swaps the previewed component (PRD point 4).
+  const [activeBundle, setActiveBundle] = useState<Bundle>(BUNDLES[0]);
 
   const { colorValues, contentThemeStyle, setOverride, loadOverrides } =
     useThemeOverrides(editorMode);
@@ -408,17 +415,15 @@ export default function ThemeEditor() {
           turning custom off only swaps the previewed palette — it never unmounts
           these controls, so keyboard focus is never stranded.
 
-          Custom-theme PREVIEW scope: `contentThemeStyle` carries the full
-          custom palette as inline custom properties, so this subtree renders
-          the custom theme WITHOUT touching the global `:root`. A copy-menu hover
-          preview overrides it with the hovered film theme's tokens. The header +
-          copy strip sit OUTSIDE this scope, so the copy-menu trigger used to
-          escape an unreadable palette stays painted in its fixed escape-hatch
-          colors. */}
-      <div
-        className="flex flex-col lg:flex-row gap-6"
-        style={previewStyle ?? contentThemeStyle}
-      >
+          PREVIEW-SCOPE INVERSION (PRD point 9): the custom palette is NO LONGER
+          scoped to this whole two-column row. The LEFT Colors card renders in the
+          APP THEME (a contrast win — its chrome + focus ring now resolve from the
+          always-readable global theme, never a hostile custom palette), while
+          ONLY the decorative mock inside ComponentShowcase carries
+          `previewStyle ?? contentThemeStyle`. The header + copy strip stay outside
+          any scope, so the copy-menu trigger used to escape an unreadable palette
+          is always painted in the app theme. */}
+      <div className="flex flex-col lg:flex-row gap-6">
         <div className="shrink-0 w-full lg:w-80 space-y-4">
           <div className={cardClassName} style={cardDelayStyle(0)}>
             <ColorEditor
@@ -429,6 +434,8 @@ export default function ThemeEditor() {
               onOverride={handleOverride}
               editorMode={editorMode}
               onEditorModeChange={setEditorMode}
+              activeBundle={activeBundle}
+              onActiveBundleChange={setActiveBundle}
             />
           </div>
         </div>
@@ -438,12 +445,17 @@ export default function ThemeEditor() {
             "Components" frame would be redundant. It animates in as the second
             card (the retired contrast card freed index 1), so the enter-stagger
             has no gap; ComponentShowcase owns its own sr-only "Live preview"
-            heading for assistive tech. */}
+            heading + the visible per-bundle explanation, and carries the custom
+            palette on its decorative mock alone. */}
         <div
           className="flex-1 min-w-0 animate-card-enter"
           style={cardDelayStyle(1)}
         >
-          <ComponentShowcase />
+          <ComponentShowcase
+            activeBundle={activeBundle}
+            previewStyle={previewStyle}
+            contentThemeStyle={contentThemeStyle}
+          />
         </div>
       </div>
 

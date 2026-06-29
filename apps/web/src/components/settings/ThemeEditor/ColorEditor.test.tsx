@@ -32,6 +32,8 @@ function renderEditor(
       onOverride={vi.fn()}
       editorMode="dark"
       onEditorModeChange={vi.fn()}
+      activeBundle="base"
+      onActiveBundleChange={vi.fn()}
     />,
   );
 }
@@ -61,6 +63,8 @@ describe('ColorEditor – Light/Dark palette toggle', () => {
         onOverride={vi.fn()}
         editorMode="dark"
         onEditorModeChange={onEditorModeChange}
+        activeBundle="base"
+        onActiveBundleChange={vi.fn()}
       />,
     );
     const group = screen.getByRole('group', { name: /palette to edit/i });

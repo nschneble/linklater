@@ -124,7 +124,6 @@ const MIGRATED_FILES = [
   'src/components/settings/ThemeEditor/MockLinkCard.tsx',
   'src/components/settings/ThemeEditor/MockMenu.tsx',
   'src/components/settings/ThemeEditor/MockNotice.tsx',
-  'src/components/settings/ThemeEditor/MockNotifications.tsx',
   'src/components/settings/ThemeEditor/MockToolbar.tsx',
   'src/components/settings/ThemeEditor/ModeToggle.tsx',
   'src/components/settings/ThemeEditor/ThemeCopyMenu.tsx',

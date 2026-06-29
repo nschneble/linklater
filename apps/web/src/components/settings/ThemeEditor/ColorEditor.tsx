@@ -1,7 +1,7 @@
 import BundleTabs from './BundleTabs';
 import ModeToggle from './ModeToggle';
-import { BUNDLES, type Bundle } from './useThemeOverrides';
-import { useId, useState } from 'react';
+import { useId } from 'react';
+import type { Bundle } from './useThemeOverrides';
 import type { Mode } from '../../../theme/constants';
 import type { TokenContrastFailure } from './contrastResults';
 import type { ThemeVariable } from './useThemeOverrides';
@@ -42,6 +42,13 @@ interface ColorEditorProps {
   editorMode: Mode;
   /** Switches which mode's palette the editor shows + edits. */
   onEditorModeChange: (mode: Mode) => void;
+  /**
+   * The bundle whose slots are shown + edited. Lifted to the editor root so the
+   * live preview can mirror the SAME selection the tablist drives (PRD point 4).
+   */
+  activeBundle: Bundle;
+  /** Selects which bundle's slots are shown + edited (also repaints the preview). */
+  onActiveBundleChange: (bundle: Bundle) => void;
 }
 
 /**
@@ -63,9 +70,10 @@ export default function ColorEditor({
   onOverride,
   editorMode,
   onEditorModeChange,
+  activeBundle,
+  onActiveBundleChange,
 }: ColorEditorProps) {
   const colorsHeadingId = useId();
-  const [activeBundle, setActiveBundle] = useState<Bundle>(BUNDLES[0]);
 
   return (
     <section aria-labelledby={colorsHeadingId} className="space-y-3">
@@ -105,7 +113,7 @@ export default function ColorEditor({
         colorValues={colorValues}
         contrastFailures={failures}
         activeBundle={activeBundle}
-        onBundleChange={setActiveBundle}
+        onBundleChange={onActiveBundleChange}
         onOverride={onOverride}
       />
     </section>

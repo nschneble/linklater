@@ -103,6 +103,64 @@ describe('ThemeEditor copy control + heading outline', () => {
   });
 });
 
+describe('ThemeEditor live preview reflects the selected bundle (PRD point 4)', () => {
+  it('opens on base (toolbar) and swaps the mock + explanation when a bundle is picked', () => {
+    render(<ThemeEditor />);
+
+    // Default active bundle is base — the toolbar mock + its explanation show.
+    const mock = screen.getByTestId('app-mock');
+    expect(within(mock).getByText('Add link')).toBeInTheDocument();
+    expect(screen.getByText(/used for the page itself/i)).toBeInTheDocument();
+
+    // Picking the mount bundle swaps the preview to the link card.
+    fireEvent.click(screen.getByRole('tab', { name: 'Mount' }));
+    expect(
+      screen.getByText(/used for your saved-link cards/i),
+    ).toBeInTheDocument();
+    expect(within(mock).queryByText('Add link')).toBeNull();
+  });
+
+  it('keeps a single sr-only "Live preview" h2 and an h1 → "Colors" → "Live preview" outline', () => {
+    render(<ThemeEditor />);
+    const headings = screen
+      .getAllByRole('heading')
+      .map((heading) => `${heading.tagName}:${heading.textContent}`);
+    expect(headings).toEqual([
+      'H1:Theme editor',
+      'H2:Colors',
+      'H2:Live preview',
+    ]);
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Live preview' }),
+    ).toHaveClass('sr-only');
+  });
+
+  it('paints the custom palette on the aria-hidden mock ONLY, not the Colors card', () => {
+    render(<ThemeEditor />);
+    const mock = screen.getByTestId('app-mock');
+    // The decorative mock carries the inline custom-property scope.
+    expect(mock.getAttribute('style')).toBeTruthy();
+    // The left Colors region (and its tablist) is NOT inside the styled mock.
+    const colors = screen.getByRole('region', { name: 'Colors' });
+    expect(mock.contains(colors)).toBe(false);
+  });
+
+  it('keeps the copy-palette strip OUTSIDE any preview-scoped ancestor', () => {
+    render(<ThemeEditor />);
+    const copyStrip = screen.getByRole('group', { name: /copy a palette/i });
+    const mock = screen.getByTestId('app-mock');
+    // No ancestor of the copy strip carries an inline custom-property style.
+    let node: HTMLElement | null = copyStrip;
+    while (node) {
+      const style = node.getAttribute('style') ?? '';
+      expect(style).not.toContain('--');
+      node = node.parentElement;
+    }
+    // And it is not nested inside the styled mock.
+    expect(mock.contains(copyStrip)).toBe(false);
+  });
+});
+
 describe('ThemeEditor polite live region', () => {
   it('mounts an unconditional sr-only role=status region (survives custom off)', () => {
     render(<ThemeEditor />);
