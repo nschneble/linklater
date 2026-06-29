@@ -329,7 +329,7 @@ describe('ComponentShowcase – re-stagger key (PRD points 10 + 12)', () => {
 describe('ComponentShowcase – whimsical aside (PRD points 12 + 13)', () => {
   it('renders an app-voiced aside that is real, app-themed UI outside the mock', () => {
     renderShowcase('base');
-    const aside = screen.getByText(/roll the dice until it feels like you/i);
+    const aside = screen.getByText(/roll until it feels like you/i);
     expect(aside).not.toHaveClass('sr-only');
     // App-themed (always-readable token), never a custom-palette token.
     expect(aside.className).toContain('text-[var(--base-alt-text)]');

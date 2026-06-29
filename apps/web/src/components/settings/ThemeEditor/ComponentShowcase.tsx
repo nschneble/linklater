@@ -70,13 +70,13 @@ function MockStagger({ children }: { children: ReactNode }) {
  * copy-polish pass in a later wave; these are accurate placeholders.
  */
 export const BUNDLE_EXPLANATIONS: Record<Bundle, string> = {
-  base: 'Used for the page itself: your links toolbar, search field, and tabs.',
-  mount: 'Used for your saved-link cards.',
+  base: 'Used for the page itself: the toolbar, search field, and tabs.',
+  mount: 'Used for your saved-link cards and settings panels.',
   orbit: 'Used for the top bar and your account menu.',
-  alert: 'Used for error notices, e.g. “We couldn’t open that link.”',
-  warn: 'Used for warning banners, e.g. read links being removed.',
-  info: 'Used for tips and hints.',
-  success: 'Used for success toasts, e.g. “Link saved!”',
+  alert: 'Used when something breaks, like a link that won’t open.',
+  warn: 'Used for the heads-up banners, like read links on their way out.',
+  info: 'Used for tips and the occasional helpful nudge.',
+  success: 'Used for success toasts, like “Link saved!” and verified badges.',
 };
 
 /**
@@ -222,8 +222,7 @@ export default function ComponentShowcase({
           (mirrors the explanation slot), so it stays AA-legible and OUTSIDE the
           aria-hidden mock. */}
       <p className="text-[var(--base-alt-text)] text-xs italic">
-        Roll the dice until it feels like you. We promise not to judge your neon
-        phase.
+        Roll until it feels like you. The neon phase stays between us.
       </p>
     </section>
   );
