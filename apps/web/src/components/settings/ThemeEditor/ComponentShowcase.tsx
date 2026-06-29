@@ -50,10 +50,10 @@ interface ComponentShowcaseProps {
 function MockStagger({ children }: { children: ReactNode }) {
   return (
     <>
-      {Children.map(children, (child, childIndex) => (
+      {Children.map(children, (child, index) => (
         <div
           className="animate-card-enter"
-          style={{ animationDelay: `${Math.min(childIndex * 60, 240)}ms` }}
+          style={{ animationDelay: `${Math.min(index * 60, 240)}ms` }}
         >
           {child}
         </div>
@@ -66,8 +66,7 @@ function MockStagger({ children }: { children: ReactNode }) {
  * A short, honest sentence per bundle, describing where in the real app that
  * bundle's colors are used. This copy is REAL app UI (it lives OUTSIDE the
  * aria-hidden mock subtree, in the accessibility tree) so it must read as the
- * app's own voice — concise, truthful, no marketing. The orchestrator runs a
- * copy-polish pass in a later wave; these are accurate placeholders.
+ * app's own voice — concise, truthful, no marketing.
  */
 export const BUNDLE_EXPLANATIONS: Record<Bundle, string> = {
   base: 'Used for the page itself: the toolbar, search field, and tabs.',
