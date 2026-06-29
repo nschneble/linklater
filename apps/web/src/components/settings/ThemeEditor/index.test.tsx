@@ -3,10 +3,10 @@
  *
  * Focus: there is no master switch — the FIRST color edit seeds the palette
  * from the post-edit values, enables custom, and persists; an already-saved
- * palette merges the edit instead of re-seeding; the "Back to {theme}" off-ramp
- * reverts (moving focus first) and announces; and a failed engage rolls back
- * EVERY local mutation. The context, api, and theme probe are mocked; the rest
- * of the editor renders real.
+ * palette merges the edit instead of re-seeding; a failed engage rolls back
+ * EVERY local mutation; and every settled save / engage / copy announces
+ * through the editor's single polite live region. The context, api, and theme
+ * probe are mocked; the rest of the editor renders real.
  */
 
 import ThemeEditor from './index';
@@ -99,10 +99,29 @@ describe('ThemeEditor custom-theme panel', () => {
     expect(
       screen.getByRole('group', { name: /copy a palette/i }),
     ).toBeInTheDocument();
-    // The off-ramp only shows once custom is active.
+    // The off-ramp is gone — there is no path back to the prior theme by design.
     expect(
       screen.queryByRole('button', { name: /back to boyhood/i }),
     ).toBeNull();
+  });
+});
+
+describe('ThemeEditor polite live region', () => {
+  it('mounts an unconditional sr-only role=status region (survives custom off)', () => {
+    render(<ThemeEditor />);
+    // Custom is off in the default mock — the region must still be mounted so a
+    // later revert/announce has somewhere to speak (a11y brief §1).
+    expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  it('announces the engage utterance through the role=status region', async () => {
+    render(<ThemeEditor />);
+    editBaseBackground('#123456');
+
+    const status = await screen.findByRole('status');
+    await waitFor(() =>
+      expect(status).toHaveTextContent('Your theme is on and saved.'),
+    );
   });
 });
 
@@ -172,49 +191,6 @@ describe('ThemeEditor go-custom-on-first-edit', () => {
       dark: {},
       light: {},
     });
-    expect(
-      await screen.findByText(/could not update the custom theme setting/i),
-    ).toBeInTheDocument();
-  });
-});
-
-describe('ThemeEditor revert off-ramp', () => {
-  it('shows "Back to {theme}", reverts on click, moves focus, and announces', async () => {
-    mockTheme.customThemeEnabled = true;
-    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
-    render(<ThemeEditor />);
-
-    const offRamp = screen.getByRole('button', { name: /back to boyhood/i });
-    fireEvent.click(offRamp);
-
-    // Focus moved to the page heading BEFORE the button unmounts (SC 2.4.3).
-    expect(
-      screen.getByRole('heading', { level: 1, name: /theme editor/i }),
-    ).toHaveFocus();
-
-    expect(mockTheme.setCustomThemeEnabled).toHaveBeenCalledWith(false);
-    expect(mockTheme.setCustomTheme).not.toHaveBeenCalled();
-    await waitFor(() =>
-      expect(updateMe).toHaveBeenCalledWith({ customThemeEnabled: false }),
-    );
-    await waitFor(() =>
-      expect(screen.getByText('Your theme is off.')).toBeInTheDocument(),
-    );
-  });
-
-  it('re-enables custom + warns when the revert PATCH fails', async () => {
-    (updateMe as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error('network'),
-    );
-    mockTheme.customThemeEnabled = true;
-    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
-    render(<ThemeEditor />);
-
-    fireEvent.click(screen.getByRole('button', { name: /back to boyhood/i }));
-
-    await waitFor(() =>
-      expect(mockTheme.setCustomThemeEnabled).toHaveBeenLastCalledWith(true),
-    );
     expect(
       await screen.findByText(/could not update the custom theme setting/i),
     ).toBeInTheDocument();

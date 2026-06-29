@@ -31,10 +31,10 @@ export interface UseThemeCopyResult {
   scheduleSave: () => void;
   /**
    * Push a one-off message through the polite announcement channel (bumps the
-   * count + sets the message). Used by the editor for engage/revert utterances
-   * ("Your theme is on and saved." / "Your theme is off.") that ride the same
-   * `role="status"` region the settled-save announcements use, so there is only
-   * ever one live region (a11y brief §3).
+   * count + sets the message). Used by the editor for engage/copy utterances
+   * ("Your theme is on and saved." / "Reverted to previous colors.") that ride
+   * the same `role="status"` region the settled-save announcements use, so there
+   * is only ever one live region (a11y brief §3).
    */
   announce: (message: string) => void;
   /** Increments once per settled save; drives the polite announcement. */
@@ -102,8 +102,8 @@ export function useThemeCopy({
   }, []);
 
   // Push a one-off message through the same polite channel the settled-save
-  // announcements use (engage/revert utterances). Clearing-then-setting is the
-  // live region's job (in `AutoSaveStatus`); here we just bump the count so the
+  // announcements use (engage/copy utterances). Clearing-then-setting is the
+  // live region's job (in `useAnnouncer`); here we just bump the count so the
   // region re-fires with the new message.
   const announce = useCallback((message: string) => {
     setSavedMessage(message);

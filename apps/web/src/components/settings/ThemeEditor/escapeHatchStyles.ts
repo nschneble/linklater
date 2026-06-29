@@ -4,10 +4,9 @@ import type { CSSProperties } from 'react';
  * Fixed neutral palette for the Theme Editor's guaranteed escape hatches. Every
  * other chrome control paints from the active theme's bundle tokens, so a
  * hostile or unreadable custom palette can degrade them. Controls spread this
- * instead so they stay readable on any palette: the copy-menu TRIGGER (now the
- * only way back to a readable theme, since "Reset all" was removed) and the
- * contrast-failure warning chip in `AutoSaveStatus` (it must stay legible
- * precisely when the colors it warns about are broken).
+ * instead so they stay readable on any palette: the copy-menu TRIGGER — the
+ * only way back to a readable theme, since both "Reset all" and the off-ramp
+ * were removed — must stay legible precisely when the custom colors are broken.
  *
  * Opaque on purpose: a translucent fill would composite over the (possibly
  * unreadable) page background and lose its guaranteed contrast. The border

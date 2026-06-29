@@ -13,7 +13,6 @@ import {
   type CustomTheme,
 } from '../../../theme/customTheme';
 import { THEMES, type BaseTheme, type Mode } from '../../../theme/constants';
-import AutoSaveStatus from './AutoSaveStatus';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import CustomThemePanel from './CustomThemePanel';
@@ -25,6 +24,7 @@ import {
   useContrastResults,
 } from './contrastResults';
 import { updateMe } from '../../../lib/api';
+import { useAnnouncer } from './useAnnouncer';
 import { useThemeCopy } from './useThemeCopy';
 import { useThemeOverrides } from './useThemeOverrides';
 import { useThemeSave } from './useThemeSave';
@@ -39,15 +39,15 @@ import { useToast } from '../../../lib/hooks/useToast';
  * to the content columns below the header — so leaving the editor can't strand
  * the whole app on custom.
  *
- * There is NO master switch: touching any color IS the act of going custom. The
- * swatches always render, seeded as a live mirror of the user's current theme;
- * the FIRST edit snapshots that (post-edit) palette as the initial custom
- * palette, enables custom, and persists it (localStorage + `PATCH /users/me`),
- * after which edits AUTOMATIC-debounced-save. An explicit fixed-color "Back to
- * {theme}" off-ramp reverts the preview to the named theme WITHOUT overwriting
- * the saved custom palette. Engage/revert are announced through the editor's
- * single polite live region ("Your theme is on and saved." / "Your theme is
- * off.").
+ * There is NO master switch and no off-ramp: touching any color IS the act of
+ * going custom. The swatches always render, seeded as a live mirror of the
+ * user's current theme; the FIRST edit snapshots that (post-edit) palette as the
+ * initial custom palette, enables custom, and persists it (localStorage + `PATCH
+ * /users/me`), after which edits AUTOMATIC-debounced-save. There is no path back
+ * to the prior theme by design — copying any film theme in the picker overwrites
+ * the custom palette, which is the surviving recovery from an unreadable one.
+ * Engage + copy/undo are announced through the editor's single polite live
+ * region ("Your theme is on and saved." / "{label} palette applied and saved.").
  *
  * The editor's color mode is LOCAL (`editorMode`): the Light/Dark tabs in the
  * Colors card swap which mode's palette the content shows + edits, decoupled
@@ -57,11 +57,10 @@ import { useToast } from '../../../lib/hooks/useToast';
  * (transient, non-persisting); activating a row applies its `editorMode` palette
  * + saves, with an Undo to revert.
  *
- * The Light/Dark toggle's active pill, the copy menu's trigger, and the "Back
- * to {theme}" off-ramp all paint from FIXED-color escape hatches (not bundle
- * tokens), and the settings card sits OUTSIDE the custom scope — so a hostile
- * custom palette can degrade the preview but never the controls needed to
- * escape it.
+ * The Light/Dark toggle's active pill and the copy menu's trigger both paint
+ * from FIXED-color escape hatches (not bundle tokens), and the settings card
+ * sits OUTSIDE the custom scope — so a hostile custom palette can degrade the
+ * preview but never the controls needed to escape it.
  */
 export default function ThemeEditor() {
   const {
@@ -87,12 +86,6 @@ export default function ThemeEditor() {
   const baseThemeLabel =
     THEMES.find((theme) => theme.id === baseTheme)?.label ?? baseTheme;
 
-  // Focus target for the revert off-ramp: the off-ramp button unmounts the
-  // instant custom turns off, so focus must move somewhere stable first or it
-  // falls to <body> (SC 2.4.3). The page <h1> is always mounted and names the
-  // editor, so it reads sensibly when focus lands on it.
-  const headingReference = useRef<HTMLHeadingElement>(null);
-
   // Guards the engage-on-first-edit path: a native color picker fires a burst
   // of `onChange`s during a single drag, and the enabled flag only commits
   // between events — this stops two of them firing two engage PATCHes.
@@ -101,7 +94,7 @@ export default function ThemeEditor() {
   // Copying a theme while custom is OFF can clobber an EXISTING saved palette (a
   // returning user who reverted earlier). We snapshot that palette so an Undo
   // can restore it + turn custom back off (a never-configured user has nothing
-  // to lose — the off-ramp covers turning off, so no Undo is offered then).
+  // to lose, so no Undo is offered then).
   const [engageUndo, setEngageUndo] = useState<{
     customTheme: CustomTheme;
     label: string;
@@ -120,7 +113,7 @@ export default function ThemeEditor() {
     [previewThemeId, editorMode],
   );
 
-  const { isSaving, save } = useThemeSave(editorMode);
+  const { save } = useThemeSave(editorMode);
   const toast = useToast();
 
   const contrastResults = useContrastResults(colorValues);
@@ -382,26 +375,12 @@ export default function ThemeEditor() {
     editTokens(variables, value);
   }
 
-  // Revert off-ramp. Moves focus to the page heading BEFORE the button unmounts
-  // (the button only renders while custom is active, so focusing afterwards
-  // would chase a gone node and drop to <body> — SC 2.4.3), turns custom off,
-  // and announces. The saved palette is untouched, so re-engaging restores it.
-  // Optimistic — a failed PATCH re-enables custom and routes the error to the
-  // assertive Toast.
-  const handleRevert = useCallback(async () => {
-    headingReference.current?.focus();
-    setCustomThemeEnabled(false);
-    setEngageUndo(null);
-    announce('Your theme is off.');
-    try {
-      await updateMe({ customThemeEnabled: false });
-    } catch {
-      setCustomThemeEnabled(true);
-      toast.show('custom-theme-toggle-failed');
-    }
-  }, [announce, setCustomThemeEnabled, toast]);
-
   const toastView = useMemo(() => resolveToast(toast.message), [toast.message]);
+
+  // The single polite live region's rendered text, re-triggered (clear-then-set)
+  // on each settled save / engage / undo so even an identical consecutive
+  // message re-announces (a11y brief §1).
+  const announcement = useAnnouncer(savedCount, savedMessage);
 
   // Each content card carries the shared mount surface + the link-card enter
   // fade. The stagger comes from the per-card animation delay; reduced-motion is
@@ -416,43 +395,33 @@ export default function ThemeEditor() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Header: title + intro fill the LEFT half; the save status sits
-          top-right, aligned against the title. (The Light/Dark control lives in
-          the Colors card now, since it swaps the editor's palette, not chrome.) */}
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
-        <div className="min-w-0 sm:max-w-[50%]">
-          <h1
-            ref={headingReference}
-            tabIndex={-1}
-            className="text-[var(--base-text)] text-lg font-semibold focus:outline-none"
-          >
-            Theme editor
-          </h1>
-          <p className="mt-1 text-[var(--base-alt-text)] text-xs">
-            All changes are saved automatically.
-          </p>
-        </div>
-
-        <AutoSaveStatus
-          enabled={editingEnabled}
-          isSaving={isSaving}
-          savedCount={savedCount}
-          savedMessage={savedMessage}
-          failingCount={contrastResults.totalFailures}
-          unverifiedCount={contrastResults.totalUnverified}
-        />
+      {/* Header: title + intro. (The Light/Dark control lives in the Colors
+          card now, since it swaps the editor's palette, not chrome.) */}
+      <div className="mb-6">
+        <h1 className="text-[var(--base-text)] text-lg font-semibold">
+          Theme editor
+        </h1>
+        <p className="mt-1 text-[var(--base-alt-text)] text-xs">
+          All changes are saved automatically.
+        </p>
       </div>
 
-      {/* Master-control card: the "Back to {theme}" off-ramp (shown only while
-          custom is active) + the copy-palette shortcut. It sits OUTSIDE the
-          custom-theme preview scope (see below) so the controls needed to escape
-          an unreadable palette always paint in the always-legible escape-hatch
-          colors, never the injected custom palette. */}
+      {/* The editor's single polite live region. Mounted UNCONDITIONALLY (not
+          gated on custom being on) so a revert still speaks through it, and
+          visually hidden — each settled save / engage / undo announces here
+          exactly once via the clear-then-set re-trigger (a11y brief §1). */}
+      <p role="status" aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
+
+      {/* Master-control card: the copy-palette shortcut. It sits OUTSIDE the
+          custom-theme preview scope (see below) so the copy-menu trigger — the
+          surviving keyboard-reachable recovery path back to a readable palette —
+          always paints in the always-legible escape-hatch colors, never the
+          injected custom palette. */}
       <div className="mb-4">
         <CustomThemePanel
           active={customThemeEnabled}
-          baseThemeLabel={baseThemeLabel}
-          onRevert={handleRevert}
           onApply={handleCopyTheme}
           onPreviewTheme={setPreviewThemeId}
           undoThemeLabel={engageUndo?.label ?? undoThemeLabel}
@@ -526,8 +495,8 @@ interface ToastView {
  * copy. The success/error variant is chosen HERE at the render site (the
  * `useToast` hook holds only a message string), per a11y brief B1.
  *
- * Auto-save SUCCESS (incl. copy/undo) is announced by the polite
- * `AutoSaveStatus` region — only the assertive FAILURE paths route here.
+ * Auto-save SUCCESS (incl. copy/undo) is announced by the editor's polite live
+ * region — only the assertive FAILURE paths route here.
  */
 export function resolveToast(message: string | null): ToastView | null {
   if (message === null) return null;

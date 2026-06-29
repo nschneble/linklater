@@ -9,11 +9,11 @@ import {
 
 /**
  * Shared WCAG contrast computation for the theme editor's live contract
- * checking. The standalone contrast card was retired: every failing pair now
- * self-reports inline ON the control being edited (a knob note, a drawer-row
- * note) plus two aggregate read-outs — the `AutoSaveStatus` chip
- * (failing/unverified counts) and the "Show all colors" drawer-only badge.
- * They all read this SINGLE source of truth so they can never disagree.
+ * checking. The standalone contrast card AND the aggregate pass/fail chip were
+ * retired: every failing pair now self-reports inline ON the control being
+ * edited (a knob note, a drawer-row note), plus the "Show all colors"
+ * drawer-only badge counts the failures reachable only inside the collapsed
+ * drawer. They all read this SINGLE source of truth so they can never disagree.
  *
  * The governing invariant: an edit to token X can only change the contrast of
  * pairs that TOUCH X, so surfacing each failing pair on BOTH its endpoints
