@@ -43,16 +43,6 @@ const BUNDLE_LABELS: Record<Bundle, string> = {
   success: 'Success',
 };
 
-const BUNDLE_DESCRIPTIONS: Record<Bundle, string> = {
-  base: 'Page chrome',
-  mount: 'Cards, panels',
-  orbit: 'Menus, dropdowns',
-  alert: 'Errors, danger zones',
-  warn: 'Yellow banners',
-  info: 'Tips, hints',
-  success: 'Verified, notifications',
-};
-
 const SLOT_LABELS: Record<Slot | BaseOnlySlot | BaseAndMountOnlySlot, string> =
   {
     bg: 'Background',
@@ -62,7 +52,7 @@ const SLOT_LABELS: Record<Slot | BaseOnlySlot | BaseAndMountOnlySlot, string> =
     'subtle-text': 'Subtle text',
     'input-bg': 'Input background',
     highlight: 'Highlight',
-    'highlight-fg': 'Highlight foreground',
+    'highlight-fg': 'Highlight text',
     'highlight-hover': 'Highlight hover',
   };
 
@@ -75,7 +65,6 @@ const FOCUS_RING_LABEL = 'Focus ring';
 export interface BundleGroup {
   bundle: Bundle;
   label: string;
-  description: string;
   items: Array<{
     variable: ThemeVariable;
     label: string;
@@ -85,7 +74,6 @@ export interface BundleGroup {
 export const VAR_GROUPS: BundleGroup[] = BUNDLES.map((bundle) => ({
   bundle,
   label: BUNDLE_LABELS[bundle],
-  description: BUNDLE_DESCRIPTIONS[bundle],
   items: [
     ...SLOTS.map((slot) => ({
       variable: `--${bundle}-${slot}` as ThemeVariable,

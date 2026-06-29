@@ -37,15 +37,26 @@ function renderEditor(
   );
 }
 
-describe('ColorEditor – named Colors region (a11y brief §3)', () => {
-  it('wraps the editing surface in a region named by the "Colors" h2', () => {
+describe('ColorEditor – named Color Bundles region (a11y brief §3)', () => {
+  it('wraps the editing surface in a region named by the "Color Bundles" h2', () => {
     renderEditor();
-    const heading = screen.getByRole('heading', { level: 2, name: 'Colors' });
-    const region = screen.getByRole('region', { name: 'Colors' });
+    const heading = screen.getByRole('heading', {
+      level: 2,
+      name: 'Color Bundles',
+    });
+    const region = screen.getByRole('region', { name: 'Color Bundles' });
     expect(region).toContainElement(heading);
-    // The bundle tablist lives inside the named region.
+    // The bundle tablist lives inside the named region and is labelled by the
+    // same "Color Bundles" h2.
     expect(
-      within(region).getByRole('tablist', { name: /bundle to edit/i }),
+      within(region).getByRole('tablist', { name: /color bundles/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the "Colors" h3 between the tablist and the slot panel', () => {
+    renderEditor();
+    expect(
+      screen.getByRole('heading', { level: 3, name: 'Colors' }),
     ).toBeInTheDocument();
   });
 });

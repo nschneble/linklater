@@ -80,8 +80,9 @@ describe('ThemeEditor copy control + heading outline', () => {
     render(<ThemeEditor />);
 
     // The SettingsGroup card wrapper is dropped (PRD point 8); the picker is now
-    // a bare strip. The single h2 in the editing surface is "Colors", distinct
-    // from the page h1 "Theme editor" (SC 2.4.6) — no "Craft your theme" card h2.
+    // a bare strip. The editing surface's region title is the "Color Bundles" h2,
+    // distinct from the page h1 "Theme editor" (SC 2.4.6) — no "Craft your theme"
+    // card h2.
     expect(
       screen.getByRole('heading', { level: 1, name: /theme editor/i }),
     ).toBeInTheDocument();
@@ -89,7 +90,7 @@ describe('ThemeEditor copy control + heading outline', () => {
       screen.queryByRole('heading', { name: /craft your theme/i }),
     ).toBeNull();
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Colors' }),
+      screen.getByRole('heading', { level: 2, name: 'Color Bundles' }),
     ).toBeInTheDocument();
     // The master switch is gone — going custom is an edit, not a toggle.
     expect(screen.queryByRole('switch')).toBeNull();
@@ -144,7 +145,7 @@ describe('ThemeEditor mode toggle in the header toolbar', () => {
 
   it('is no longer rendered inside the Colors region', () => {
     render(<ThemeEditor />);
-    const colors = screen.getByRole('region', { name: 'Colors' });
+    const colors = screen.getByRole('region', { name: 'Color Bundles' });
     expect(
       within(colors).queryByRole('group', { name: /palette to edit/i }),
     ).toBeNull();
@@ -203,14 +204,15 @@ describe('ThemeEditor live preview reflects the selected bundle (PRD point 4)', 
     ).toBeNull();
   });
 
-  it('keeps a single sr-only "Live preview" h2 and an h1 → "Colors" → "Live preview" outline', () => {
+  it('keeps a single sr-only "Live preview" h2 and an h1 → "Color Bundles" → "Colors" → "Live preview" outline', () => {
     render(<ThemeEditor />);
     const headings = screen
       .getAllByRole('heading')
       .map((heading) => `${heading.tagName}:${heading.textContent}`);
     expect(headings).toEqual([
       'H1:Theme editor',
-      'H2:Colors',
+      'H2:Color Bundles',
+      'H3:Colors',
       'H2:Live preview',
     ]);
     expect(
@@ -223,8 +225,9 @@ describe('ThemeEditor live preview reflects the selected bundle (PRD point 4)', 
     const mock = screen.getByTestId('app-mock');
     // The decorative mock carries the inline custom-property scope.
     expect(mock.getAttribute('style')).toBeTruthy();
-    // The left Colors region (and its tablist) is NOT inside the styled mock.
-    const colors = screen.getByRole('region', { name: 'Colors' });
+    // The left Color Bundles region (and its tablist) is NOT inside the styled
+    // mock.
+    const colors = screen.getByRole('region', { name: 'Color Bundles' });
     expect(mock.contains(colors)).toBe(false);
   });
 

@@ -621,7 +621,7 @@ export default function ThemeEditor() {
           `contentThemeStyle`. The header + toolbar stay outside any scope, so the
           Randomize recovery is always painted in the app theme. */}
       <div className="flex flex-col lg:flex-row gap-6">
-        <div className="shrink-0 w-full lg:w-80 space-y-4">
+        <div className="shrink-0 w-full lg:w-72 space-y-4">
           <div className={cardClassName} style={cardDelayStyle(0)}>
             <ColorEditor
               colorValues={colorValues}

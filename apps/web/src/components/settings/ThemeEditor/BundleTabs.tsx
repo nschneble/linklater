@@ -24,6 +24,12 @@ interface BundleTabsProps {
   onBundleChange: (bundle: Bundle) => void;
   /** Called when the user changes a slot via the picker or text input. */
   onOverride: (variable: ThemeVariable, value: string) => void;
+  /**
+   * Id of the region's "Color Bundles" h2 (owned by `ColorEditor`). The tablist
+   * is `aria-labelledby` this heading rather than carrying its own label, so the
+   * card title names the bundle selector too (SC 2.4.6).
+   */
+  tablistLabelledBy: string;
 }
 
 function tabId(bundle: Bundle): string {
@@ -46,10 +52,11 @@ const PANEL_ID = 'bundle-panel';
  * `id` that every tab's `aria-controls` points at, while its `aria-labelledby`
  * tracks the ACTIVE bundle so AT always lands on the right panel. The panel is
  * NOT a tab stop — it always contains focusable slot rows, so making it
- * focusable would add a redundant inert stop (APG). The active tab is
- * distinguished by MORE than color (SC 1.4.1): a
- * `fa-circle-dot` second channel + `font-semibold` + a fixed underline, all
- * driven off the `aria-selected` attribute (no JS ternary class toggles).
+ * focusable would add a redundant inert stop (APG). The active tab reads as a
+ * FILLED pill (inverted `--mount-text` bg / `--mount-bg` label) and is
+ * distinguished by MORE than color (SC 1.4.1): a `fa-circle-dot` second channel
+ * + `font-semibold`, all driven off the `aria-selected` attribute (no JS ternary
+ * class toggles).
  *
  * Arrow keys move selection with NO wrap (matching the copy menu); Home/End
  * jump to the first/last bundle. Focus STAYS on the activated tab — Tab descends
@@ -61,6 +68,7 @@ export default function BundleTabs({
   activeBundle,
   onBundleChange,
   onOverride,
+  tablistLabelledBy,
 }: BundleTabsProps) {
   const tabReferences = useRef<Partial<Record<Bundle, HTMLButtonElement>>>({});
 
@@ -100,7 +108,7 @@ export default function BundleTabs({
     <div className="space-y-3">
       <div
         role="tablist"
-        aria-label="Bundle to edit"
+        aria-labelledby={tablistLabelledBy}
         aria-orientation="horizontal"
         className="flex flex-wrap gap-1.5"
       >
@@ -122,7 +130,7 @@ export default function BundleTabs({
             tabIndex={group.bundle === activeBundle ? 0 : -1}
             onClick={() => onBundleChange(group.bundle)}
             onKeyDown={handleTabKeyDown}
-            className="group flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--mount-bg)] border border-[var(--mount-border)] aria-selected:border-[var(--mount-text)] text-[var(--mount-alt-text)] aria-selected:text-[var(--mount-text)] text-xs aria-selected:font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-full transition-colors cursor-pointer"
+            className="group flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--mount-bg)] aria-selected:bg-[var(--mount-text)] border border-[var(--mount-border)] aria-selected:border-[var(--mount-text)] text-[var(--mount-alt-text)] aria-selected:text-[var(--mount-bg)] text-xs aria-selected:font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-full transition-colors cursor-pointer"
           >
             <i
               className="hidden group-aria-selected:inline fa-solid fa-circle-dot text-[0.4rem]"
@@ -133,15 +141,16 @@ export default function BundleTabs({
         ))}
       </div>
 
+      <h3 className="text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
+        Colors
+      </h3>
+
       <div
         role="tabpanel"
         id={PANEL_ID}
         aria-labelledby={tabId(activeBundle)}
         className="space-y-2"
       >
-        <p className="text-[var(--mount-alt-text)] text-[0.65rem]">
-          {activeGroup.description}
-        </p>
         {activeGroup.items.map(({ variable, label }) => (
           <ColorRow
             key={variable}

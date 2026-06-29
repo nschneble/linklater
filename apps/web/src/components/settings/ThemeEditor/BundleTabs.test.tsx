@@ -30,14 +30,20 @@ function buildColorValues(): Record<ThemeVariable, string> {
 
 function Harness({ initial = 'base' as Bundle } = {}) {
   const [activeBundle, setActiveBundle] = useState<Bundle>(initial);
+  // Mirror the real parent (ColorEditor): the tablist is named by the region's
+  // "Color Bundles" h2, passed in via tablistLabelledBy.
   return (
-    <BundleTabs
-      colorValues={buildColorValues()}
-      contrastFailures={new Map()}
-      activeBundle={activeBundle}
-      onBundleChange={setActiveBundle}
-      onOverride={vi.fn()}
-    />
+    <>
+      <h2 id="color-bundles-heading">Color Bundles</h2>
+      <BundleTabs
+        colorValues={buildColorValues()}
+        contrastFailures={new Map()}
+        activeBundle={activeBundle}
+        onBundleChange={setActiveBundle}
+        onOverride={vi.fn()}
+        tablistLabelledBy="color-bundles-heading"
+      />
+    </>
   );
 }
 
@@ -52,7 +58,7 @@ function tab(bundle: Bundle) {
 describe('BundleTabs – tablist structure', () => {
   it('exposes a horizontal tablist with one tab per bundle', () => {
     render(<Harness />);
-    const tablist = screen.getByRole('tablist', { name: /bundle to edit/i });
+    const tablist = screen.getByRole('tablist', { name: /color bundles/i });
     expect(tablist).toHaveAttribute('aria-orientation', 'horizontal');
     const tabs = within(tablist).getAllByRole('tab');
     expect(tabs).toHaveLength(BUNDLES.length);

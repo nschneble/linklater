@@ -44,10 +44,13 @@ interface ColorEditorProps {
  * chooses the mode now lives in the header toolbar (a sibling above this
  * region), not here.
  *
- * This is a NAMED region (`<section aria-labelledby>` on the "Colors" h2) so AT
- * still announces it after the old `SettingsGroup` card was dropped (a11y brief
- * §3). The h2 is the only heading inside; the bundle tabs are NOT headings (the
- * tab role self-voices), so the outline stays h1 → h2 with no skipped level.
+ * This is a NAMED region (`<section aria-labelledby>` on the "Color Bundles" h2)
+ * so AT still announces it after the old `SettingsGroup` card was dropped (a11y
+ * brief §3). The region holds two headings — the "Color Bundles" h2 (also the
+ * tablist's `aria-labelledby` target) and a "Colors" h3 rendered inside
+ * `BundleTabs` between the tablist and the slot panel — so the outline runs
+ * h1 → h2 → h3 with no skipped level. The bundle tabs themselves are NOT headings
+ * (the tab role self-voices).
  */
 export default function ColorEditor({
   colorValues,
@@ -58,15 +61,15 @@ export default function ColorEditor({
   activeBundle,
   onActiveBundleChange,
 }: ColorEditorProps) {
-  const colorsHeadingId = useId();
+  const colorBundlesHeadingId = useId();
 
   return (
-    <section aria-labelledby={colorsHeadingId} className="space-y-3">
+    <section aria-labelledby={colorBundlesHeadingId} className="space-y-3">
       <h2
-        id={colorsHeadingId}
+        id={colorBundlesHeadingId}
         className="text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold"
       >
-        Colors
+        Color Bundles
       </h2>
 
       {/* Pre-custom disclosure (SC 3.3.2): until the user has gone custom these
@@ -87,6 +90,7 @@ export default function ColorEditor({
         activeBundle={activeBundle}
         onBundleChange={onActiveBundleChange}
         onOverride={onOverride}
+        tablistLabelledBy={colorBundlesHeadingId}
       />
     </section>
   );
