@@ -413,6 +413,123 @@ describe('ThemeEditor go-custom-by-copying-a-theme', () => {
   });
 });
 
+/** Clicks the global "Randomize" action in the Colors region strip. */
+function clickRandomize() {
+  fireEvent.click(screen.getByRole('button', { name: 'Randomize' }));
+}
+
+/*
+ * Randomize (PRD point 11): a global Colors-region action that fills the
+ * current mode's slots with a generated WCAG-AA palette. Like editing a color
+ * or copying a theme, it is ALSO a way to go custom — while off it seeds + saves
+ * in ONE PATCH and announces once; while on it copies over with an Undo. The
+ * generator runs for real here (NOT mocked) so the wiring is exercised
+ * end-to-end; `randomPalette.test.ts` is the airtight contract gate.
+ */
+describe('ThemeEditor randomize button', () => {
+  it('renders a real, keyboard-reachable button named "Randomize"', () => {
+    render(<ThemeEditor />);
+    const button = screen.getByRole('button', { name: 'Randomize' });
+    expect(button).toBeInTheDocument();
+    // A real <button> is focusable + Enter/Space-activated for free (no custom
+    // role/handler), so keyboard reachability is structural.
+    expect(button.tagName).toBe('BUTTON');
+    expect(button).toHaveAttribute('type', 'button');
+  });
+
+  it('keeps the Randomize trigger OUTSIDE any preview-scoped ancestor', () => {
+    render(<ThemeEditor />);
+    let node: HTMLElement | null = screen.getByRole('button', {
+      name: 'Randomize',
+    });
+    // No ancestor carries an inline custom-property style, so a hostile prior
+    // palette can never strand this recovery control (a11y brief §5).
+    while (node) {
+      expect(node.getAttribute('style') ?? '').not.toContain('--');
+      node = node.parentElement;
+    }
+  });
+
+  it('goes custom when off: enables, persists in ONE PATCH, announces', async () => {
+    render(<ThemeEditor />);
+    clickRandomize();
+
+    expect(mockTheme.setCustomThemeEnabled).toHaveBeenCalledWith(true);
+    expect(mockTheme.setBaseTheme).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(updateMe).toHaveBeenCalledTimes(1));
+    const patch = (updateMe as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(patch.customThemeEnabled).toBe(true);
+    // The edited mode (dark) carries the generated palette; the other mode
+    // (light) is preserved off the probe, untouched by the generator.
+    expect(patch.customTheme.dark['--base-bg']).toMatch(/^#[0-9a-fA-F]{6}$/);
+    expect(patch.customTheme.light).toEqual({ '--mount-bg': 'boyhood-light' });
+
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Your theme is on. Random palette applied and saved.',
+      ),
+    );
+  });
+
+  it('offers an Undo when randomize overwrote a returning user’s palette', async () => {
+    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
+    render(<ThemeEditor />);
+    clickRandomize();
+
+    const undo = await screen.findByRole('button', {
+      name: /undo copy from random palette/i,
+    });
+    expect(undo).toBeInTheDocument();
+  });
+
+  it('copies over with an Undo when custom is already on', async () => {
+    vi.useFakeTimers();
+    try {
+      mockTheme.customThemeEnabled = true;
+      mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
+      render(<ThemeEditor />);
+
+      clickRandomize();
+      // Apply-on path never re-flips the enable flag (no engage PATCH).
+      expect(mockTheme.setCustomThemeEnabled).not.toHaveBeenCalled();
+
+      // The Undo for the just-applied random palette is offered immediately.
+      expect(
+        screen.getByRole('button', { name: /undo copy from random palette/i }),
+      ).toBeInTheDocument();
+
+      // The high-intent apply persists via saveNow (not the debounce).
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+      expect(updateMe).toHaveBeenCalledWith({
+        customTheme: expect.objectContaining({
+          dark: expect.objectContaining({
+            '--base-bg': expect.stringMatching(/^#[0-9a-fA-F]{6}$/),
+          }),
+        }),
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('announces the apply through the polite region when custom is on', async () => {
+    mockTheme.customThemeEnabled = true;
+    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
+    render(<ThemeEditor />);
+
+    clickRandomize();
+
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Random palette applied and saved.',
+      ),
+    );
+  });
+});
+
 describe('ThemeEditor slot edit while already custom', () => {
   it('takes the scheduled-save path, never re-engaging, and persists the edit', async () => {
     vi.useFakeTimers();

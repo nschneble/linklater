@@ -16,9 +16,11 @@ import { THEMES, type BaseTheme, type Mode } from '../../../theme/constants';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import CopyFromTheme from './CopyFromTheme';
+import RandomizeButton from './RandomizeButton';
 import Toast from '../../common/Toast';
 import { BUNDLES, type Bundle } from './useThemeOverrides';
 import { readThemeTokens } from './themeProbe';
+import { generateRandomPalette } from './randomPalette';
 import { pairsTouchingToken, useContrastResults } from './contrastResults';
 import { updateMe } from '../../../lib/api';
 import { useAnnouncer } from './useAnnouncer';
@@ -139,6 +141,7 @@ export default function ThemeEditor() {
     undoThemeLabel,
     clearUndo,
     handleApply,
+    handleApplyRandom,
     handleUndo,
   } = useThemeCopy({
     editingEnabled,
@@ -282,6 +285,83 @@ export default function ThemeEditor() {
     ],
   );
 
+  // Randomize while custom is OFF is ALSO a way to go custom (PRD point 11) —
+  // equal to editing a color or copying a theme. It generates a WCAG-AA palette
+  // for `editorMode` ONLY (HARD scope: cross-bundle pairs are only guaranteed
+  // within one generated mode) and, like `engageCustomTheme`, PRESERVES the
+  // other mode: a returning user's saved other-mode palette is kept (re-engage),
+  // else the other mode is probed fresh off the current theme. It enables +
+  // seeds BOTH modes, loads the editor overrides, persists in ONE direct PATCH,
+  // and announces ONCE through the polite region. When a saved palette already
+  // existed it is snapshotted for Undo (the random palette overwrote it).
+  const engageFromRandom = useCallback(
+    async (palette: Record<Parameters<typeof setOverride>[0], string>) => {
+      if (engagingReference.current) return;
+      engagingReference.current = true;
+
+      const previousCustomTheme = customTheme;
+      const hadSavedPalette = isCustomConfigured;
+      const otherMode: Mode = editorMode === 'dark' ? 'light' : 'dark';
+      // Keep the other mode's saved tokens (re-engage) or probe them fresh —
+      // the random palette only ever touches `editorMode` (§3).
+      const otherModeTokens = isCustomConfigured
+        ? { ...(customTheme?.[otherMode] ?? {}) }
+        : readThemeTokens(baseTheme, otherMode);
+      const seeded: CustomTheme = {
+        dark: editorMode === 'dark' ? palette : otherModeTokens,
+        light: editorMode === 'light' ? palette : otherModeTokens,
+      };
+
+      setCustomThemeEnabled(true);
+      setCustomTheme(seeded);
+      loadOverrides(palette);
+      clearUndo();
+      try {
+        await updateMe({ customThemeEnabled: true, customTheme: seeded });
+        if (hadSavedPalette && previousCustomTheme) {
+          setEngageUndo({
+            customTheme: previousCustomTheme,
+            label: 'random palette',
+          });
+        }
+        announce('Your theme is on. Random palette applied and saved.');
+      } catch {
+        setCustomThemeEnabled(false);
+        setCustomTheme(previousCustomTheme ?? { dark: {}, light: {} });
+        toast.show('custom-theme-toggle-failed');
+      } finally {
+        engagingReference.current = false;
+      }
+    },
+    [
+      announce,
+      baseTheme,
+      clearUndo,
+      customTheme,
+      editorMode,
+      isCustomConfigured,
+      loadOverrides,
+      setCustomTheme,
+      setCustomThemeEnabled,
+      toast,
+    ],
+  );
+
+  // Randomize dispatcher: while custom is already on it is a copy-over with its
+  // own Undo (`handleApplyRandom`); while off it goes custom (`engageFromRandom`).
+  // Either way the palette is generated ONCE for the current editor mode and the
+  // OTHER mode is left untouched (HARD scope: cross-bundle pairs are only
+  // guaranteed within one mode's generated palette).
+  const handleRandomize = useCallback(() => {
+    const palette = generateRandomPalette(editorMode);
+    if (customThemeEnabled) {
+      setEngageUndo(null);
+      handleApplyRandom(palette);
+    } else {
+      void engageFromRandom(palette);
+    }
+  }, [customThemeEnabled, editorMode, engageFromRandom, handleApplyRandom]);
+
   // Undo for a copy that overwrote an existing saved palette: restore the prior
   // palette and turn custom back OFF (the state the user copied from). On PATCH
   // failure, roll back to the just-copied on-state. Focus return to the menu
@@ -392,15 +472,19 @@ export default function ThemeEditor() {
         {announcement}
       </p>
 
-      {/* Copy-palette shortcut. The SettingsGroup card wrapper is dropped (PRD
-          point 8); the picker now lives in this bare selector strip. The strip
-          is a SIBLING ABOVE the preview-scoped content div, so the copy-menu
-          trigger — the surviving keyboard-reachable recovery path back to a
-          readable palette — has NO ancestor carrying the injected custom palette
-          (`style={previewStyle ?? contentThemeStyle}`) and always paints in the
-          fixed escape-hatch colors (a11y brief §4). Visual adjacency to the
-          bundle/mode selectors does NOT require DOM nesting. */}
-      <div className="flex justify-end mb-4">
+      {/* Global Colors-region actions. The SettingsGroup card wrapper is dropped
+          (PRD point 8); the controls live in this bare selector strip. The strip
+          is a SIBLING ABOVE the preview-scoped content div, so the Randomize +
+          copy-menu triggers — the surviving keyboard-reachable recovery paths
+          back to a readable palette — have NO ancestor carrying the injected
+          custom palette (`style={previewStyle ?? contentThemeStyle}`) and always
+          paint in the fixed escape-hatch colors (a11y brief §4 / §5). Visual
+          adjacency to the bundle/mode selectors does NOT require DOM nesting.
+          Randomize fills the CURRENT mode's slots with a generated WCAG-AA
+          palette (and goes custom if off); it sits OUTSIDE the preview scope so
+          it stays legible even on a hostile prior palette (PRD point 11). */}
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <RandomizeButton onRandomize={handleRandomize} />
         <CopyFromTheme
           editingEnabled={customThemeEnabled}
           onApply={handleCopyTheme}

@@ -126,6 +126,7 @@ const MIGRATED_FILES = [
   'src/components/settings/ThemeEditor/MockNotice.tsx',
   'src/components/settings/ThemeEditor/MockToolbar.tsx',
   'src/components/settings/ThemeEditor/ModeToggle.tsx',
+  'src/components/settings/ThemeEditor/RandomizeButton.tsx',
   'src/components/settings/ThemeEditor/ThemeCopyMenu.tsx',
   'src/components/settings/ThemeEditor/index.tsx',
   'src/components/settings/TotpSetupView.tsx',

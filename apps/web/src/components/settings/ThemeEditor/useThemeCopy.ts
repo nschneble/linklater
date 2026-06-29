@@ -47,6 +47,14 @@ export interface UseThemeCopyResult {
   clearUndo: () => void;
   /** Apply a film theme's current-mode palette immediately and announce it. */
   handleApply: (themeId: BaseTheme, themeLabel: string) => void;
+  /**
+   * Apply an already-resolved random palette immediately and announce it
+   * (Randomize while custom is already on). Mirrors `handleApply` — snapshots
+   * the prior values for Undo, loads the palette, and persists via `saveNow` —
+   * but takes the resolved token map directly since a random palette has no
+   * `themeId` to probe. PRD point 11.
+   */
+  handleApplyRandom: (palette: Record<ThemeVariable, string>) => void;
   /** Revert the last apply and announce the revert. */
   handleUndo: () => void;
 }
@@ -139,6 +147,17 @@ export function useThemeCopy({
     [loadOverrides, editorMode, saveNow],
   );
 
+  const handleApplyRandom = useCallback(
+    (palette: Record<ThemeVariable, string>) => {
+      undoSnapshotReference.current = { ...colorValuesReference.current };
+      const applied = loadOverrides(palette);
+      pendingSaveReasonReference.current = 'Random palette applied and saved.';
+      setUndoThemeLabel('random palette');
+      saveNow(applied);
+    },
+    [loadOverrides, saveNow],
+  );
+
   const handleUndo = useCallback(() => {
     const snapshot = undoSnapshotReference.current;
     if (!snapshot) return;
@@ -157,6 +176,7 @@ export function useThemeCopy({
     undoThemeLabel,
     clearUndo,
     handleApply,
+    handleApplyRandom,
     handleUndo,
   };
 }
