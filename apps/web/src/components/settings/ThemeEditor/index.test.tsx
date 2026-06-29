@@ -249,9 +249,9 @@ function copyTheme(name: RegExp) {
  * Copying a theme is a SECOND way to go custom, equal to editing a color: while
  * custom is off, picking a theme seeds the palette from that theme for BOTH
  * modes, enables, persists in one PATCH, and announces. No Undo is offered when
- * nothing was overwritten (a never-configured user) — the off-ramp covers
- * turning back off — but a returning user's saved palette IS snapshotted for
- * Undo before the copy clobbers it (a11y FLAG 1).
+ * nothing was overwritten (a never-configured user has no prior palette to
+ * restore) — but a returning user's saved palette IS snapshotted for Undo
+ * before the copy clobbers it (a11y FLAG 1).
  */
 describe('ThemeEditor go-custom-by-copying-a-theme', () => {
   const apolloSeed = {
@@ -343,6 +343,14 @@ describe('ThemeEditor go-custom-by-copying-a-theme', () => {
         customThemeEnabled: false,
         customTheme: { dark: { '--mount-bg': '#abc' }, light: {} },
       }),
+    );
+
+    // The undo announcement reaches the editor's own polite live region —
+    // end-to-end through index's role=status, not just the PATCH (W-2).
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Reverted to previous colors.',
+      ),
     );
   });
 });

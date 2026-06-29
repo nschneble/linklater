@@ -153,7 +153,7 @@ export default function ThemeEditor() {
   // Optimistic — on PATCH failure it rolls the enabled flag + palette back.
   const engageCustomTheme = useCallback(
     async (
-      variables: Array<Parameters<typeof setOverride>[0]>,
+      variable: Parameters<typeof setOverride>[0],
       value: string,
       postEditValues: Record<Parameters<typeof setOverride>[0], string>,
     ) => {
@@ -161,16 +161,13 @@ export default function ThemeEditor() {
       setCustomThemeEnabled(true);
 
       const otherMode: Mode = editorMode === 'dark' ? 'light' : 'dark';
-      // The edited mode's slots — either merged into the saved palette
-      // (re-engage after a revert, all edited variables snapped to `value`) or
-      // the full post-edit snapshot (fresh). A knob edits several variables at
-      // once, so merge them all rather than a single slot.
+      // The edited mode's slots — either the edited slot merged into the saved
+      // palette (re-engage after a revert) or the full post-edit snapshot
+      // (fresh).
       const editedModeTokens = isCustomConfigured
         ? {
             ...(customTheme?.[editorMode] ?? {}),
-            ...Object.fromEntries(
-              variables.map((variable) => [variable, value]),
-            ),
+            [variable]: value,
           }
         : collectTokens(
             CUSTOM_TOKEN_KEYS,
@@ -227,8 +224,8 @@ export default function ThemeEditor() {
   // (mirroring `engageCustomTheme`; routing through the debounced copy save
   // would double-bump the live region and swallow this utterance). When a saved
   // palette already existed it is snapshotted for Undo, since the copy
-  // overwrites it (a11y FLAG 1 — the off-ramp keeps the COPIED colors, so it is
-  // not a path back to the originals).
+  // overwrites it (a11y FLAG 1 — copying keeps the COPIED colors, so it is not
+  // a path back to the originals).
   const engageFromTheme = useCallback(
     async (themeId: BaseTheme, themeLabel: string) => {
       if (engagingReference.current) return;
@@ -323,24 +320,20 @@ export default function ThemeEditor() {
   );
 
   // Apply an edit to a slot: the first edit goes custom (engaging once), later
-  // edits debounce-save. Modelled as a variable LIST so the engage snapshot can
-  // carry several tokens at once (the engage path still accepts an array).
+  // edits debounce-save.
   function editTokens(
-    variables: Array<Parameters<typeof setOverride>[0]>,
+    variable: Parameters<typeof setOverride>[0],
     value: string,
   ) {
-    const postEditValues = { ...colorValues };
-    for (const variable of variables) {
-      postEditValues[variable] = value;
-      setOverride(variable, value);
-    }
+    const postEditValues = { ...colorValues, [variable]: value };
+    setOverride(variable, value);
     clearUndo();
     setEngageUndo(null);
     if (!customThemeEnabled) {
       // First edit — go custom. The guard absorbs a color picker's drag burst.
       if (engagingReference.current) return;
       engagingReference.current = true;
-      void engageCustomTheme(variables, value, postEditValues);
+      void engageCustomTheme(variable, value, postEditValues);
     } else {
       scheduleSave();
     }
@@ -350,7 +343,7 @@ export default function ThemeEditor() {
     variable: Parameters<typeof setOverride>[0],
     value: string,
   ) {
-    editTokens([variable], value);
+    editTokens(variable, value);
   }
 
   const toastView = useMemo(() => resolveToast(toast.message), [toast.message]);
@@ -419,8 +412,9 @@ export default function ThemeEditor() {
           custom palette as inline custom properties, so this subtree renders
           the custom theme WITHOUT touching the global `:root`. A copy-menu hover
           preview overrides it with the hovered film theme's tokens. The header +
-          copy strip sit OUTSIDE this scope, so the off-ramp used to escape an
-          unreadable palette stays painted in its fixed escape-hatch colors. */}
+          copy strip sit OUTSIDE this scope, so the copy-menu trigger used to
+          escape an unreadable palette stays painted in its fixed escape-hatch
+          colors. */}
       <div
         className="flex flex-col lg:flex-row gap-6"
         style={previewStyle ?? contentThemeStyle}

@@ -124,9 +124,9 @@ const STATIC_CONTRACT: ReadonlyArray<{
 
 describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
   it('reports a failure under the background token, not just the foreground', () => {
-    // A too-light `--mount-bg` makes "text / bg" fail; the knob whose
-    // representative token is `--mount-bg` must see it even though it is the
-    // background, never the foreground.
+    // A too-light `--mount-bg` makes "text / bg" fail; the slot row whose
+    // token is `--mount-bg` must see it even though it is the background,
+    // never the foreground.
     const pair = makePair({
       label: 'text / bg',
       foreground: '--mount-text',
@@ -149,6 +149,45 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
     // a foreground-only view would have omitted.
     expect(touching.get('--mount-text')?.ratio).toBe(2.8);
     expect(touching.get('--mount-bg')?.ratio).toBe(2.8);
+  });
+
+  it('keeps the WORST-deficit failure when two pairs share an endpoint', () => {
+    // `--mount-bg` is the shared endpoint of two failing pairs. The note must
+    // report the pair the token misses by the MOST (largest threshold − ratio),
+    // so the row surfaces its hardest constraint — regardless of pair order.
+    const mildPair = makePair({
+      label: 'border / bg',
+      foreground: '--mount-border',
+      background: '--mount-bg',
+      criterion: '1.4.11',
+      threshold: 3,
+    });
+    const severePair = makePair({
+      label: 'text / bg',
+      foreground: '--mount-text',
+      background: '--mount-bg',
+      criterion: '1.4.3',
+      threshold: 4.5,
+    });
+    const results: ContrastResults = {
+      groups: [
+        {
+          bundle: 'mount',
+          label: 'mount',
+          // mild deficit 3 − 2.6 = 0.4; severe deficit 4.5 − 1.5 = 3.0.
+          pairs: [
+            { pair: mildPair, ratio: 2.6 },
+            { pair: severePair, ratio: 1.5 },
+          ],
+        },
+      ],
+    } as unknown as ContrastResults;
+
+    const touching = pairsTouchingToken(results);
+    // The shared `--mount-bg` row shows the severe pair (the bigger deficit),
+    // even though the mild pair came first.
+    expect(touching.get('--mount-bg')?.pairLabel).toBe('text / bg');
+    expect(touching.get('--mount-bg')?.ratio).toBe(1.5);
   });
 
   it('makes no entry for passing or unverified pairs', () => {

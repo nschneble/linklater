@@ -117,7 +117,7 @@ export default function CopyFromTheme({
           here, so the instruction is one node seen by everyone (SC 3.3.2 / 1.3.1). */}
       <p
         id={COPY_DESCRIPTION_ID}
-        className="text-[var(--mount-alt-text)] text-right text-xs"
+        className="text-right text-[var(--mount-alt-text)] text-xs"
       >
         {editingEnabled
           ? 'Picking a theme paints over your colors with its palette and saves. Undo to revert.'

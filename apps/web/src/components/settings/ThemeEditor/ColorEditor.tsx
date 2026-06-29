@@ -3,8 +3,8 @@ import ModeToggle from './ModeToggle';
 import { BUNDLES, type Bundle } from './useThemeOverrides';
 import { useId, useState } from 'react';
 import type { Mode } from '../../../theme/constants';
-import type { ThemeVariable } from './useThemeOverrides';
 import type { TokenContrastFailure } from './contrastResults';
+import type { ThemeVariable } from './useThemeOverrides';
 
 const EDITOR_MODE_LABELS: Record<Mode, string> = {
   light: 'Light colors',

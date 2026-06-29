@@ -85,6 +85,24 @@ describe('BundleTabs – tablist structure', () => {
     expect(panel).toHaveAttribute('role', 'tabpanel');
     expect(panel).toHaveAttribute('aria-labelledby', tab('base').id);
   });
+
+  it('points EVERY tab aria-controls at the one fixed panel (AUD-W2)', () => {
+    render(<Harness />);
+    // The single physical panel never changes identity, so a non-active tab's
+    // aria-controls must resolve to that same live panel — not a per-bundle id
+    // that points at nothing while another bundle is shown.
+    const panel = screen.getByRole('tabpanel');
+    for (const bundle of BUNDLES) {
+      expect(tab(bundle)).toHaveAttribute('aria-controls', panel.id);
+    }
+  });
+
+  it('does not make the panel a focusable tab stop (AUD-W1)', () => {
+    render(<Harness />);
+    // The panel always contains focusable slot rows, so it must NOT itself be a
+    // tab stop (no tabIndex) — an inert stop would be a redundant APG violation.
+    expect(screen.getByRole('tabpanel')).not.toHaveAttribute('tabindex');
+  });
 });
 
 describe('BundleTabs – automatic activation + roving tabindex', () => {

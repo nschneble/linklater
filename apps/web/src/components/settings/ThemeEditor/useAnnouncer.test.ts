@@ -61,18 +61,29 @@ describe('useAnnouncer', () => {
     expect(result.current).toBe('Your theme saved.');
   });
 
-  it('reads the latest message at fire time (consume-once reason wins)', () => {
+  it('reads the latest message at fire time via the ref, NOT a stale closure', () => {
     const { result, rerender } = renderHook(
       ({ count, message }) => useAnnouncer(count, message),
       { initialProps: { count: 0, message: 'Your theme saved.' } },
     );
 
-    // The count bumps and the reason changes in the same render.
+    // Bump the count with message A — this fires the effect (clear + schedule
+    // the 50ms timer) while message A is current.
+    rerender({ count: 1, message: 'Your theme saved.' });
+
+    // Now change the message to B while the count STAYS FIXED, so the effect
+    // does NOT re-run (its only dep is savedCount). The pending timer is still
+    // the one scheduled under message A — only the ref has moved on. This is
+    // what isolates a ref READ from a closure CAPTURE: a closure-captured
+    // message would still announce A here.
     rerender({ count: 1, message: 'Reverted to previous colors.' });
+
     act(() => {
       vi.advanceTimersByTime(50);
     });
 
+    // The ref read wins: the timer announces the LATEST message (B), proving the
+    // effect didn't capture message A at scheduling time.
     expect(result.current).toBe('Reverted to previous colors.');
   });
 });

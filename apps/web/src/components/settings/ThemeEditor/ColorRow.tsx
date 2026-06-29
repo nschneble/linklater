@@ -37,8 +37,8 @@ interface ColorRowProps {
  *
  * The color picker fires `onOverride` on every change (live preview). The text
  * input only fires on blur, after normalizing and validating the hex value.
- * Invalid hex strings are silently reset to `currentValue` on blur (this is the
- * deep-drawer tree; the human knobs use a louder no-revert format error).
+ * Invalid hex strings are silently reset to `currentValue` on blur — no kept
+ * text, no error flag, nothing committed.
  *
  * Alpha rows (whose value is `rgb(...)` or `#RRGGBBAA`) disable the native
  * picker (it cannot represent alpha) and keep the text input editable.

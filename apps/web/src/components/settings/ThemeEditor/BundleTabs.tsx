@@ -1,5 +1,5 @@
-import ColorRow from './ColorRow';
 import { useRef } from 'react';
+import ColorRow from './ColorRow';
 import {
   VAR_GROUPS,
   type Bundle,
@@ -30,9 +30,10 @@ function tabId(bundle: Bundle): string {
   return `bundle-tab-${bundle}`;
 }
 
-function panelId(bundle: Bundle): string {
-  return `bundle-panel-${bundle}`;
-}
+// One physical panel whose contents swap, so it carries ONE fixed id. Every
+// tab's `aria-controls` points here (the panel never changes identity); only
+// the panel's `aria-labelledby` tracks the active tab (AUD-W2).
+const PANEL_ID = 'bundle-panel';
 
 /**
  * Bundle selector + slot panel for the Theme Editor's Colors region. The
@@ -41,9 +42,12 @@ function panelId(bundle: Bundle): string {
  * raw slots (7-10, sourced from `VAR_GROUPS`) in the active mode — no "show all
  * colors" drawer, no human knobs.
  *
- * One physical tabpanel whose contents swap (not 7 mounted); its `id` +
- * `aria-labelledby` track the ACTIVE bundle so AT always lands on the right
- * panel. The active tab is distinguished by MORE than color (SC 1.4.1): a
+ * One physical tabpanel whose contents swap (not 7 mounted); it carries a FIXED
+ * `id` that every tab's `aria-controls` points at, while its `aria-labelledby`
+ * tracks the ACTIVE bundle so AT always lands on the right panel. The panel is
+ * NOT a tab stop — it always contains focusable slot rows, so making it
+ * focusable would add a redundant inert stop (APG). The active tab is
+ * distinguished by MORE than color (SC 1.4.1): a
  * `fa-circle-dot` second channel + `font-semibold` + a fixed underline, all
  * driven off the `aria-selected` attribute (no JS ternary class toggles).
  *
@@ -114,7 +118,7 @@ export default function BundleTabs({
             role="tab"
             id={tabId(group.bundle)}
             aria-selected={group.bundle === activeBundle}
-            aria-controls={panelId(activeBundle)}
+            aria-controls={PANEL_ID}
             tabIndex={group.bundle === activeBundle ? 0 : -1}
             onClick={() => onBundleChange(group.bundle)}
             onKeyDown={handleTabKeyDown}
@@ -131,10 +135,9 @@ export default function BundleTabs({
 
       <div
         role="tabpanel"
-        id={panelId(activeBundle)}
+        id={PANEL_ID}
         aria-labelledby={tabId(activeBundle)}
-        tabIndex={0}
-        className="space-y-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-md"
+        className="space-y-2"
       >
         <p className="text-[var(--mount-alt-text)] text-[0.65rem]">
           {activeGroup.description}
