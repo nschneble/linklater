@@ -22,8 +22,8 @@ import { generateRandomPalette } from './randomPalette';
 import { readThemeTokens } from './themeProbe';
 import { BUNDLES, type Bundle } from './useThemeOverrides';
 import { pairsTouchingToken, useContrastResults } from './contrastResults';
-import { updateMe } from '../../../lib/api';
 import { useAnnouncer } from './useAnnouncer';
+import { useCustomThemeEngagement } from './useCustomThemeEngagement';
 import { useThemeCopy } from './useThemeCopy';
 import { useThemeOverrides } from './useThemeOverrides';
 import { useThemeSave } from './useThemeSave';
@@ -127,6 +127,19 @@ export default function ThemeEditor() {
   const { save } = useThemeSave(editorMode);
   const toast = useToast();
 
+  const onEngageError = useCallback(
+    () => toast.show('custom-theme-toggle-failed'),
+    [toast],
+  );
+  const { commitEngagement } = useCustomThemeEngagement({
+    customTheme,
+    customThemeEnabled,
+    setCustomTheme,
+    setCustomThemeEnabled,
+    engagingReference,
+    onError: onEngageError,
+  });
+
   const contrastResults = useContrastResults(colorValues);
 
   // Each slot row reads the both-endpoints view, so a too-light BACKGROUND
@@ -166,16 +179,20 @@ export default function ThemeEditor() {
   // open color picker back mid-drag); the other mode is probed off the current
   // theme. When a saved palette already exists (the user reverted earlier), the
   // edit merges into it so re-engaging restores their colors (a11y brief §4).
-  // Optimistic — on PATCH failure it rolls the enabled flag + palette back.
+  //
+  // `commitEngagement` fires this PATCH DIRECTLY, outside `useThemeAutoSave`'s
+  // in-flight serialization, because it must atomically carry BOTH the enable
+  // flag and the freshly-probed seed AND own the optimistic rollback — none of
+  // which the serialized current-mode `save` path models. Not racy in practice:
+  // engage is the FIRST edit, while any scheduled save can only be armed by a
+  // LATER edit (custom is now on) and won't flush until 700ms after, by which
+  // point this PATCH has long since landed.
   const engageCustomTheme = useCallback(
     async (
       variable: Parameters<typeof setOverride>[0],
       value: string,
       postEditValues: Record<Parameters<typeof setOverride>[0], string>,
     ) => {
-      const previousCustomTheme = customTheme;
-      setCustomThemeEnabled(true);
-
       const otherMode: Mode = editorMode === 'dark' ? 'light' : 'dark';
       // The edited mode's slots — either the edited slot merged into the saved
       // palette (re-engage after a revert) or the full post-edit snapshot
@@ -199,37 +216,17 @@ export default function ThemeEditor() {
         light: editorMode === 'light' ? editedModeTokens : otherModeTokens,
       };
 
-      setCustomTheme(seeded);
-      try {
-        // This engage PATCH is fired DIRECTLY, outside `useThemeAutoSave`'s
-        // in-flight serialization (`flush`), because it must atomically carry
-        // BOTH the enable flag and the freshly-probed seed AND own its own
-        // optimistic enable/palette rollback — none of which the serialized
-        // current-mode `save` path models. It is not racy in practice: engage
-        // is triggered by the FIRST edit, while any scheduled save can only be
-        // armed by a LATER edit (custom is now on) and won't flush until 700ms
-        // after that, by which point this engage PATCH has long since landed.
-        await updateMe({ customThemeEnabled: true, customTheme: seeded });
-        announce('Your theme is on and saved.');
-      } catch {
-        setCustomThemeEnabled(false);
-        // Restore the prior palette; an empty map reads as "not configured"
-        // so a never-seeded user lands back where they started.
-        setCustomTheme(previousCustomTheme ?? { dark: {}, light: {} });
-        toast.show('custom-theme-toggle-failed');
-      } finally {
-        engagingReference.current = false;
-      }
+      await commitEngagement({ enabled: true, customTheme: seeded }, () =>
+        announce('Your theme is on and saved.'),
+      );
     },
     [
       announce,
       baseTheme,
+      commitEngagement,
       customTheme,
       editorMode,
       isCustomConfigured,
-      setCustomTheme,
-      setCustomThemeEnabled,
-      toast,
     ],
   );
 
@@ -257,12 +254,9 @@ export default function ThemeEditor() {
         light: editorMode === 'light' ? editedModeTokens : otherModeTokens,
       };
 
-      setCustomThemeEnabled(true);
-      setCustomTheme(seeded);
       loadOverrides(editedModeTokens);
       clearUndo();
-      try {
-        await updateMe({ customThemeEnabled: true, customTheme: seeded });
+      await commitEngagement({ enabled: true, customTheme: seeded }, () => {
         if (hadSavedPalette && previousCustomTheme) {
           setEngageUndo({
             customTheme: previousCustomTheme,
@@ -270,24 +264,16 @@ export default function ThemeEditor() {
           });
         }
         announce(`Your theme is on. ${themeLabel} palette applied and saved.`);
-      } catch {
-        setCustomThemeEnabled(false);
-        setCustomTheme(previousCustomTheme ?? { dark: {}, light: {} });
-        toast.show('custom-theme-toggle-failed');
-      } finally {
-        engagingReference.current = false;
-      }
+      });
     },
     [
       announce,
       clearUndo,
+      commitEngagement,
       customTheme,
       editorMode,
       isCustomConfigured,
       loadOverrides,
-      setCustomTheme,
-      setCustomThemeEnabled,
-      toast,
     ],
   );
 
@@ -318,12 +304,9 @@ export default function ThemeEditor() {
         light: editorMode === 'light' ? palette : otherModeTokens,
       };
 
-      setCustomThemeEnabled(true);
-      setCustomTheme(seeded);
       loadOverrides(palette);
       clearUndo();
-      try {
-        await updateMe({ customThemeEnabled: true, customTheme: seeded });
+      await commitEngagement({ enabled: true, customTheme: seeded }, () => {
         if (hadSavedPalette && previousCustomTheme) {
           setEngageUndo({
             customTheme: previousCustomTheme,
@@ -331,25 +314,17 @@ export default function ThemeEditor() {
           });
         }
         announce('Your theme is on. Random palette applied and saved.');
-      } catch {
-        setCustomThemeEnabled(false);
-        setCustomTheme(previousCustomTheme ?? { dark: {}, light: {} });
-        toast.show('custom-theme-toggle-failed');
-      } finally {
-        engagingReference.current = false;
-      }
+      });
     },
     [
       announce,
       baseTheme,
       clearUndo,
+      commitEngagement,
       customTheme,
       editorMode,
       isCustomConfigured,
       loadOverrides,
-      setCustomTheme,
-      setCustomThemeEnabled,
-      toast,
     ],
   );
 
@@ -377,26 +352,14 @@ export default function ThemeEditor() {
   const handleEngageUndo = useCallback(async () => {
     if (!engageUndo) return;
     const restored = engageUndo.customTheme;
-    const copied = customTheme;
     setEngageUndo(null);
-    setCustomThemeEnabled(false);
-    setCustomTheme(restored);
+    // The revert announces OPTIMISTICALLY (before the await), unlike the three
+    // engage paths that announce from `commitEngagement`'s success callback —
+    // `commitEngagement` rolls back to the just-copied on-state if the disengage
+    // PATCH fails.
     announce('Reverted to previous colors.');
-    try {
-      await updateMe({ customThemeEnabled: false, customTheme: restored });
-    } catch {
-      setCustomThemeEnabled(true);
-      setCustomTheme(copied ?? restored);
-      toast.show('custom-theme-toggle-failed');
-    }
-  }, [
-    announce,
-    customTheme,
-    engageUndo,
-    setCustomTheme,
-    setCustomThemeEnabled,
-    toast,
-  ]);
+    await commitEngagement({ enabled: false, customTheme: restored });
+  }, [announce, commitEngagement, engageUndo]);
 
   // Picking a theme in the copy menu: while custom is already on it is a
   // copy-over with its own Undo (`handleApply`); while off it is a way to GO

@@ -1,4 +1,8 @@
-import { computeContrastRatio } from './contrastResults';
+import {
+  computeContrastRatio,
+  focusRingPairs,
+  pairsForBundle,
+} from './contrastResults';
 import { converter, formatHex, type Oklch } from 'culori';
 import {
   BUNDLES,
@@ -551,73 +555,23 @@ function failingForegrounds(palette: Palette, pairs: PairCheck[]): PairCheck[] {
 }
 
 /**
- * The full contract pair list, expressed in the `ThemeVariable` space so the
- * generator's repair pass keys off the same data. Built from the same shapes
- * `pairsForBundle` / `focusRingPairs` produce (text/bg, border/bg, border/
- * base-bg, hl-fg/hl, etc.) — the test imports the REAL builders to prove parity.
- *
- * KEEP IN SYNC with `contrastResults.ts`'s `pairsForBundle` / `focusRingPairs`:
- * the test proves OUTPUT parity (same pairs emitted) but NOT definition parity,
- * so if you change a pair's shape there, mirror it here.
+ * The full contract pair list, in the generator's `PairCheck` space, DERIVED
+ * from the editor's own `pairsForBundle` / `focusRingPairs` builders — the same
+ * builders `useContrastResults` (the live checker) and `randomPalette.test.ts`
+ * (the gate) read. Sharing one definition means the generator's repair pass can
+ * never check a different pair set than the editor enforces; there is nothing to
+ * keep in sync. `PairCheck` consumes only foreground/background/threshold, so
+ * dropping the builders' `label`/`criterion` is a lossless projection.
  */
 function contractPairs(): PairCheck[] {
-  const pairs: PairCheck[] = [];
-  for (const bundle of BUNDLES) {
-    pairs.push(
-      {
-        foreground: `--${bundle}-text` as ThemeVariable,
-        background: `--${bundle}-bg` as ThemeVariable,
-        threshold: 4.5,
-      },
-      {
-        foreground: `--${bundle}-alt-text` as ThemeVariable,
-        background: `--${bundle}-bg` as ThemeVariable,
-        threshold: 4.5,
-      },
-      {
-        foreground: `--${bundle}-border` as ThemeVariable,
-        background: `--${bundle}-bg` as ThemeVariable,
-        threshold: 3,
-      },
-      {
-        foreground: `--${bundle}-highlight` as ThemeVariable,
-        background: `--${bundle}-bg` as ThemeVariable,
-        threshold: 3,
-      },
-      {
-        foreground: `--${bundle}-highlight-fg` as ThemeVariable,
-        background: `--${bundle}-highlight` as ThemeVariable,
-        threshold: 4.5,
-      },
-      {
-        foreground: `--${bundle}-highlight-fg` as ThemeVariable,
-        background: `--${bundle}-highlight-hover` as ThemeVariable,
-        threshold: 4.5,
-      },
-    );
-    if (CARD_BUNDLES.includes(bundle)) {
-      pairs.push({
-        foreground: `--${bundle}-border` as ThemeVariable,
-        background: '--base-bg' as ThemeVariable,
-        threshold: 3,
-      });
-    }
-    if (bundle === 'base') {
-      pairs.push({
-        foreground: '--base-subtle-text' as ThemeVariable,
-        background: '--base-bg' as ThemeVariable,
-        threshold: 4.5,
-      });
-    }
-  }
-  for (const background of ['--base-bg', '--mount-bg', '--orbit-bg'] as const) {
-    pairs.push({
-      foreground: FOCUS_RING_VAR,
-      background: background as ThemeVariable,
-      threshold: 3,
-    });
-  }
-  return pairs;
+  return [
+    ...BUNDLES.flatMap((bundle) => pairsForBundle(bundle)),
+    ...focusRingPairs(),
+  ].map((pair) => ({
+    foreground: pair.foreground as ThemeVariable,
+    background: pair.background as ThemeVariable,
+    threshold: pair.threshold,
+  }));
 }
 
 const CONTRACT_PAIRS = contractPairs();
