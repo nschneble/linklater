@@ -473,8 +473,8 @@ export default function ThemeEditor() {
   const hasContrastIssue = failures.size > 0;
 
   // The Undo label spans both Undo flavors: the engage-Undo snapshot (copy while
-  // custom was off, overwriting a saved palette) and the copy-over Undo (copy /
-  // Randomize while custom was already on). Either present means an Undo renders.
+  // custom was off, overwriting a saved palette) and the copy-over Undo (Randomize
+  // while custom was already on). Either present means an Undo renders.
   const copyUndoLabel = engageUndo?.label ?? undoThemeLabel;
 
   // Each content card carries the shared mount surface + the link-card enter
