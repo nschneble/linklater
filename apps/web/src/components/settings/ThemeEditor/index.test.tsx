@@ -10,6 +10,7 @@
  */
 
 import ThemeEditor from './index';
+import { MOCK_GLYPHS } from './mockGlyphs';
 import {
   act,
   fireEvent,
@@ -187,9 +188,10 @@ describe('ThemeEditor live preview reflects the selected bundle (PRD point 4)', 
   it('opens on base (toolbar) and swaps the mock + explanation when a bundle is picked', () => {
     render(<ThemeEditor />);
 
-    // Default active bundle is base — the toolbar mock + its explanation show.
+    // Default active bundle is base — the toolbar mock (its asemic "Add link"
+    // stand-in) + its app-themed explanation show.
     const mock = screen.getByTestId('app-mock');
-    expect(within(mock).getByText('Add link')).toBeInTheDocument();
+    expect(within(mock).getByText(MOCK_GLYPHS.addLink)).toBeInTheDocument();
     expect(screen.getByText(/used for the page itself/i)).toBeInTheDocument();
 
     // Picking the mount bundle swaps the preview to the link card. The inner
@@ -200,7 +202,7 @@ describe('ThemeEditor live preview reflects the selected bundle (PRD point 4)', 
       screen.getByText(/used for your saved-link cards/i),
     ).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('app-mock')).queryByText('Add link'),
+      within(screen.getByTestId('app-mock')).queryByText(MOCK_GLYPHS.addLink),
     ).toBeNull();
   });
 

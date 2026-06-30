@@ -3,6 +3,7 @@ import MockLinkCard from './MockLinkCard';
 import MockMenu from './MockMenu';
 import MockNotice from './MockNotice';
 import MockToolbar from './MockToolbar';
+import { MOCK_STATUS_GLYPHS } from './mockGlyphs';
 import { Children, useId } from 'react';
 import type { Bundle } from './useThemeOverrides';
 import type { Mode } from '../../../theme/constants';
@@ -142,24 +143,10 @@ const STATUS_ICONS: Record<StatusBundle, string> = {
   success: 'fa-solid fa-circle-check',
 };
 
-const STATUS_COPY: Record<StatusBundle, { title: string; detail: string }> = {
-  warn: {
-    title: 'Read links are removed after seven days',
-    detail: 'Move anything you want to keep back to Unread.',
-  },
-  info: {
-    title: 'Tip: drag a link to reorder it',
-    detail: 'Your order syncs across every device.',
-  },
-  alert: {
-    title: 'We couldn’t open that link',
-    detail: 'The site may be down. Try again in a moment.',
-  },
-  success: {
-    title: 'Link saved!',
-    detail: 'Added to Unread and synced everywhere.',
-  },
-};
+// Asemic Old Turkic stand-ins for each status notice's title + detail. They feed
+// MockNotice's props; MockNotice renders them verbatim (no string edit there).
+const STATUS_COPY: Record<StatusBundle, { title: string; detail: string }> =
+  MOCK_STATUS_GLYPHS;
 
 /**
  * The right-hand live preview: a named region fronted by an `sr-only` "Live
@@ -177,6 +164,11 @@ const STATUS_COPY: Record<StatusBundle, { title: string; detail: string }> = {
  * Swapping the bundle/mode swaps the mock SILENTLY: the activated tab already
  * self-voices, so there is no live region and no focus move here (the showcase
  * has no focusable elements to steal focus to).
+ *
+ * The mock's visible copy is asemic Old Turkic, rendered in a self-hosted
+ * webfont scoped to the `.app-mock-asemic` container alone (see index.css +
+ * mockGlyphs), and the container carries `cursor-not-allowed` — together they
+ * read the preview as decoration that is not meant to be interacted with.
  */
 export default function ComponentShowcase({
   activeBundle,
@@ -206,7 +198,7 @@ export default function ComponentShowcase({
         key={mockKey}
         aria-hidden="true"
         data-testid="app-mock"
-        className="relative overflow-hidden bg-[var(--base-bg)] border border-[var(--base-border)] rounded-xl"
+        className="app-mock-asemic relative overflow-hidden bg-[var(--base-bg)] border border-[var(--base-border)] rounded-xl cursor-not-allowed"
         style={contentThemeStyle}
       >
         <BundleMock bundle={activeBundle} />

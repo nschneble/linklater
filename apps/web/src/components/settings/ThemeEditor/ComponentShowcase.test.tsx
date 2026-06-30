@@ -10,6 +10,7 @@
  */
 
 import ComponentShowcase, { BUNDLE_EXPLANATIONS } from './ComponentShowcase';
+import { MOCK_GLYPHS, MOCK_STATUS_GLYPHS } from './mockGlyphs';
 import { BUNDLES, type Bundle } from './useThemeOverrides';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
@@ -109,19 +110,21 @@ describe('ComponentShowcase – per-bundle mock (PRD point 4)', () => {
 
   it('previews the header + account menu for the orbit bundle', () => {
     renderShowcase('orbit');
-    expect(screen.getByText('Linklater')).toBeInTheDocument();
-    expect(screen.getByText('Logged in as')).toBeInTheDocument();
+    expect(screen.getByText(MOCK_GLYPHS.wordmark)).toBeInTheDocument();
+    expect(screen.getByText(MOCK_GLYPHS.loggedInAs)).toBeInTheDocument();
   });
 
   it('previews the toolbar for the base bundle', () => {
     renderShowcase('base');
-    expect(screen.getByText('Add link')).toBeInTheDocument();
-    expect(screen.getByText('Unread')).toBeInTheDocument();
+    expect(screen.getByText(MOCK_GLYPHS.addLink)).toBeInTheDocument();
+    expect(screen.getByText(MOCK_GLYPHS.unread)).toBeInTheDocument();
   });
 
   it('previews the matching notice for each status bundle', () => {
     renderShowcase('success');
-    expect(screen.getByText('Link saved!')).toBeInTheDocument();
+    expect(
+      screen.getByText(MOCK_STATUS_GLYPHS.success.title),
+    ).toBeInTheDocument();
   });
 });
 
@@ -318,5 +321,69 @@ describe('ComponentShowcase – whimsical aside (PRD points 12 + 13)', () => {
     expect(aside.className).toContain('text-[var(--base-alt-text)]');
     // Lives OUTSIDE the aria-hidden, possibly-hostile mock subtree.
     expect(getMock().contains(aside)).toBe(false);
+  });
+});
+
+describe('ComponentShowcase – asemic Old Turkic copy (decorative)', () => {
+  const allGlyphStrings = [
+    ...Object.values(MOCK_GLYPHS),
+    ...Object.values(MOCK_STATUS_GLYPHS).flatMap((copy) => [
+      copy.title,
+      copy.detail,
+    ]),
+  ];
+
+  it('builds every stand-in from assigned Old Turkic code points (U+10C00–U+10C48) and spaces', () => {
+    for (const glyphString of allGlyphStrings) {
+      expect(glyphString.length).toBeGreaterThan(0);
+      for (const character of glyphString) {
+        if (character === ' ') {
+          continue;
+        }
+        const codePoint = character.codePointAt(0) as number;
+        expect(codePoint).toBeGreaterThanOrEqual(0x10c00);
+        expect(codePoint).toBeLessThanOrEqual(0x10c48);
+      }
+    }
+  });
+
+  it('leaves NO Latin copy inside the aria-hidden mock for any bundle (a11y Seal 6)', () => {
+    for (const bundle of BUNDLES) {
+      const { unmount } = renderShowcase(bundle);
+      // Nothing crosses the boundary: the mock holds only asemic glyphs (plus
+      // word-boundary spaces and icon-only <i> elements), never Latin copy.
+      expect(getMock().textContent ?? '').not.toMatch(/[A-Za-z]/);
+      unmount();
+    }
+  });
+});
+
+describe('ComponentShowcase – asemic font scope + no-interaction cursor (#9/#10)', () => {
+  it('marks the mock container with the scoped asemic font and cursor-not-allowed', () => {
+    renderShowcase('base');
+    expect(getMock()).toHaveClass('app-mock-asemic');
+    expect(getMock()).toHaveClass('cursor-not-allowed');
+  });
+
+  it('keeps the mock free of disabled-state ARIA (cursor read only, not a control)', () => {
+    renderShowcase('base');
+    expect(getMock()).not.toHaveAttribute('aria-disabled');
+    expect(getMock()).not.toHaveAttribute('disabled');
+    expect(getMock()).not.toHaveAttribute('role');
+  });
+
+  it('does NOT leak the asemic font onto the heading, explanation, or aside', () => {
+    const { container } = renderShowcase('mount');
+    const section = container.querySelector('section') as HTMLElement;
+    expect(section).not.toHaveClass('app-mock-asemic');
+    expect(getLivePreviewHeading()).not.toHaveClass('app-mock-asemic');
+    expect(screen.getByText(/used for your saved-link cards/i)).not.toHaveClass(
+      'app-mock-asemic',
+    );
+    expect(screen.getByText(/roll until it feels like you/i)).not.toHaveClass(
+      'app-mock-asemic',
+    );
+    // The marker exists exactly once, on the mock container itself.
+    expect(container.querySelectorAll('.app-mock-asemic')).toHaveLength(1);
   });
 });
