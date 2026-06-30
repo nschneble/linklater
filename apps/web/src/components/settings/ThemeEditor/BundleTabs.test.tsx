@@ -196,3 +196,26 @@ describe('BundleTabs – per-bundle slot list (sourced from VAR_GROUPS)', () => 
     expect(screen.getAllByRole('tabpanel')).toHaveLength(1);
   });
 });
+
+/*
+ * The selected tab reads as a FILLED pill: the inverse of the unselected pair
+ * (--mount-text bg / --mount-bg label), so it inherits the enforced
+ * fg/bg contrast for free, plus a non-color 2nd channel (the fa-circle-dot
+ * glyph) so selection survives CVD (SC 1.4.1). These are static aria-variant
+ * classes, so class-string + glyph-presence are the right guard.
+ */
+describe('BundleTabs – filled-pill selected-state contract (SC 1.4.1)', () => {
+  it('emits the inverse fill/label tokens + the fa-circle-dot 2nd channel on the selected tab', () => {
+    render(<Harness />);
+    const selected = tab('base');
+    expect(selected).toHaveAttribute('aria-selected', 'true');
+    expect(selected.className).toContain(
+      'aria-selected:bg-[var(--mount-text)]',
+    );
+    expect(selected.className).toContain(
+      'aria-selected:text-[var(--mount-bg)]',
+    );
+    // The non-color second channel lives inside the selected tab.
+    expect(selected.querySelector('.fa-circle-dot')).not.toBeNull();
+  });
+});

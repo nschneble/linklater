@@ -20,7 +20,7 @@ interface RandomizeButtonProps {
  * a theme, it seeds + saves the custom palette when custom is off.
  *
  * It paints from the FIXED escape-hatch colors (not bundle tokens) and uses the
- * fixed-blue `EDITOR_FOCUS_RING`, exactly like the copy-menu trigger and Undo:
+ * fixed-blue `EDITOR_FOCUS_RING`, like the Undo button and the mode toggle:
  * it is an always-operable recovery-class control, so it must stay legible AND
  * keyboard-focusable even on top of a hostile generated palette (a generated
  * palette is always readable, but a PRIOR hostile hand-edit could still be live

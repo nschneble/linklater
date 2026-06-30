@@ -693,23 +693,22 @@ describe('ThemeEditor contrast status icon (title row)', () => {
 });
 
 /*
- * The single copy button (#5) HIDES once custom is on — there is no longer a
- * base film theme to copy from (R-B1). It hides (not disables-in-place) via the
- * shared IconButton's `hidden` prop, which seals it from the tab + AT trees.
+ * The single copy button (#5) is removed from the DOM once custom is on — there
+ * is no longer a base film theme to copy from (R-B1). It is CONDITIONALLY
+ * RENDERED (not opacity-hidden in place), so it leaves no phantom gap in the
+ * right-aligned toolbar flex row for the common custom-on user.
  */
 describe('ThemeEditor copy button visibility', () => {
-  it('hides the copy button once custom is on', () => {
+  it('removes the copy button from the DOM once custom is on', () => {
     mockTheme.customThemeEnabled = true;
     mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
     render(<ThemeEditor />);
-    // A hidden IconButton is aria-hidden, so it has no computed accessible name
-    // — match it by text content among the hidden buttons instead.
-    const copy = screen
-      .getAllByRole('button', { hidden: true })
-      .find((button) => /copy boyhood colors/i.test(button.textContent ?? ''));
-    expect(copy).toBeDefined();
-    expect(copy).toHaveAttribute('aria-hidden', 'true');
-    expect(copy).toBeDisabled();
+    // Conditional render means it is gone entirely — not present-but-hidden — so
+    // neither the role query nor a hidden-inclusive text query finds it.
+    expect(
+      screen.queryByRole('button', { name: /copy boyhood colors/i }),
+    ).toBeNull();
+    expect(screen.queryByText(/copy boyhood colors/i)).toBeNull();
   });
 });
 
@@ -772,5 +771,27 @@ describe('ThemeEditor toolbar focus management', () => {
         screen.getByRole('button', { name: /copy boyhood colors/i }),
       ).toHaveFocus(),
     );
+  });
+
+  // Only the COPY-initiated engage moves focus (it bumps copyEngageFocusNonce);
+  // the color-edit engage must NOT, or a returning user editing a swatch would
+  // have focus yanked off the picker mid-task (R-B3). This locks the negative:
+  // wiring the color-edit path into the focus nonce later would fail here.
+  it('does NOT steal focus off the color picker when the first edit goes custom', async () => {
+    render(<ThemeEditor />);
+    const picker = screen.getByLabelText('Color picker for Background');
+    picker.focus();
+    expect(picker).toHaveFocus();
+
+    fireEvent.change(picker, { target: { value: '#123456' } });
+
+    // The engage settles + announces, proving the async path ran to completion.
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Your theme is on and saved.',
+      ),
+    );
+    // Focus never left the edited input.
+    expect(picker).toHaveFocus();
   });
 });

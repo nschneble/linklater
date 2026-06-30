@@ -1,12 +1,13 @@
 import type { CSSProperties } from 'react';
 
 /**
- * Fixed neutral palette for the Theme Editor's guaranteed escape hatches. Every
- * other chrome control paints from the active theme's bundle tokens, so a
- * hostile or unreadable custom palette can degrade them. Controls spread this
- * instead so they stay readable on any palette: the copy-menu TRIGGER — the
- * only way back to a readable theme, since both "Reset all" and the off-ramp
- * were removed — must stay legible precisely when the custom colors are broken.
+ * Fixed neutral palette for the Theme Editor's Randomize button — its guaranteed
+ * escape hatch. Every other chrome control paints from the active theme's bundle
+ * tokens, so a hostile or unreadable custom palette can degrade them. Randomize
+ * spreads this instead so it stays readable on any palette: it is the recovery
+ * control that stays operable when a hostile custom palette is live, since the
+ * copy button HIDES once custom is on. Randomize must stay legible precisely
+ * when the custom colors are broken.
  *
  * Opaque on purpose: a translucent fill would composite over the (possibly
  * unreadable) page background and lose its guaranteed contrast. The border
@@ -42,9 +43,10 @@ export const ESCAPE_HATCH_PILL: Record<
 };
 
 /**
- * Fixed focus ring for the editor's chrome controls. Like the Reset escape
- * hatch, the ring stays a fixed blue rather than the editable `--focus-ring`
- * token: a hostile custom palette could set `--focus-ring` to collapse against
+ * Fixed focus ring for the editor's chrome controls (Randomize, Undo, the mode
+ * toggle). Like those recovery controls' fixed fills, the ring stays a fixed
+ * blue rather than the editable `--focus-ring` token: a hostile custom palette
+ * could set `--focus-ring` to collapse against
  * its own `--base-bg` and make keyboard focus invisible. Fixed `#3b82f6`
  * (`blue-500`) clears 3:1 against both the light and dark page backgrounds. The
  * `forced-colors` outline keeps SC 2.4.7 intact under Windows High Contrast.

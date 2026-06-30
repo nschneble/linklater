@@ -1,22 +1,23 @@
 /*
- * Tests for useThemeCopy – the copy/apply/undo state machine extracted from the
- * editor. Covers: apply snapshots the prior values, loads the theme's tokens,
- * persists immediately, and announces "applied"; undo restores the snapshot and
- * announces "reverted"; a mode/theme change drops a stale snapshot; and undo is
- * a no-op with nothing to revert.
+ * Tests for useThemeCopy – the apply-random / undo / save-routing state machine
+ * extracted from the editor. Covers: applying a random palette loads it,
+ * persists immediately, and snapshots the prior values; undo restores the
+ * snapshot and announces "reverted"; a mode/theme change drops a stale snapshot;
+ * undo is a no-op with nothing to revert; and a failed save routes to
+ * onSaveFailed, not the polite region.
  */
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { readThemeTokens } from './themeProbe';
 import { useThemeCopy } from './useThemeCopy';
 import type { ThemeVariable } from './useThemeOverrides';
 
-vi.mock('./themeProbe', () => ({
-  readThemeTokens: vi.fn(() => ({ '--mount-bg': 'probe-value' })),
-}));
-
 const COLOR_VALUES = { '--base-bg': '#000' } as unknown as Record<
+  ThemeVariable,
+  string
+>;
+
+const RANDOM_PALETTE = { '--base-bg': '#123abc' } as unknown as Record<
   ThemeVariable,
   string
 >;
@@ -46,21 +47,20 @@ beforeEach(() => {
 });
 
 describe('useThemeCopy', () => {
-  it('applies a theme: loads its tokens, persists at once, announces "applied"', async () => {
+  it('applies a random palette: loads it, persists at once, announces', async () => {
     const { result, save, loadOverrides } = setup();
 
     await act(async () => {
-      result.current.handleApply('school-of-rock', 'School of Rock');
+      result.current.handleApplyRandom(RANDOM_PALETTE);
     });
 
-    expect(readThemeTokens).toHaveBeenCalledWith('school-of-rock', 'dark');
-    expect(loadOverrides).toHaveBeenCalledWith({ '--mount-bg': 'probe-value' });
-    expect(result.current.undoThemeLabel).toBe('School of Rock');
-    expect(save).toHaveBeenCalledWith({ '--mount-bg': 'probe-value' });
+    expect(loadOverrides).toHaveBeenCalledWith(RANDOM_PALETTE);
+    expect(result.current.undoThemeLabel).toBe('random palette');
+    expect(save).toHaveBeenCalledWith(RANDOM_PALETTE);
 
     await waitFor(() => expect(result.current.savedCount).toBe(1));
     expect(result.current.savedMessage).toBe(
-      'School of Rock palette applied and saved.',
+      'Random palette applied and saved.',
     );
   });
 
@@ -68,7 +68,7 @@ describe('useThemeCopy', () => {
     const { result, loadOverrides, save } = setup();
 
     await act(async () => {
-      result.current.handleApply('school-of-rock', 'School of Rock');
+      result.current.handleApplyRandom(RANDOM_PALETTE);
     });
     await waitFor(() => expect(result.current.savedCount).toBe(1));
     loadOverrides.mockClear();
@@ -89,9 +89,9 @@ describe('useThemeCopy', () => {
   it('drops the Undo snapshot when the mode changes', async () => {
     const { result, rerender } = setup();
     await act(async () => {
-      result.current.handleApply('school-of-rock', 'School of Rock');
+      result.current.handleApplyRandom(RANDOM_PALETTE);
     });
-    expect(result.current.undoThemeLabel).toBe('School of Rock');
+    expect(result.current.undoThemeLabel).toBe('random palette');
 
     act(() => {
       rerender({
@@ -120,7 +120,7 @@ describe('useThemeCopy', () => {
     const { result, onSaveFailed } = setup({ save: failing });
 
     await act(async () => {
-      result.current.handleApply('school-of-rock', 'School of Rock');
+      result.current.handleApplyRandom(RANDOM_PALETTE);
     });
 
     await waitFor(() => expect(onSaveFailed).toHaveBeenCalledTimes(1));

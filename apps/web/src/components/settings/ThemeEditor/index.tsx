@@ -88,9 +88,10 @@ export default function ThemeEditor() {
     setCustomThemeEnabled,
   } = useTheme();
 
-  // The editor's color mode is LOCAL — the Light/Dark tabs in the Colors card
-  // swap which mode's palette the content shows + edits, WITHOUT flipping the
-  // global site mode (navigating away leaves the app on whatever mode it was).
+  // The editor's color mode is LOCAL — the Light/Dark toggle in the header
+  // toolbar swaps which mode's palette the content shows + edits, WITHOUT
+  // flipping the global site mode (navigating away leaves the app on whatever
+  // mode it was).
   // Seeded once from the site mode so the editor opens on the expected palette.
   const [editorMode, setEditorMode] = useState<Mode>(mode);
 
@@ -181,7 +182,6 @@ export default function ThemeEditor() {
     savedMessage,
     undoThemeLabel,
     clearUndo,
-    handleApply,
     handleApplyRandom,
     handleUndo,
   } = useThemeCopy({
@@ -389,27 +389,13 @@ export default function ThemeEditor() {
     await commitEngagement({ enabled: false, customTheme: restored });
   }, [announce, commitEngagement, engageUndo]);
 
-  // Picking a theme in the copy menu: while custom is already on it is a
-  // copy-over with its own Undo (`handleApply`); while off it is a way to GO
-  // custom (`engageFromTheme`). A later copy-over supersedes any engage Undo.
-  const handleCopyTheme = useCallback(
-    (themeId: BaseTheme, themeLabel: string) => {
-      if (customThemeEnabled) {
-        setEngageUndo(null);
-        handleApply(themeId, themeLabel);
-      } else {
-        void engageFromTheme(themeId, themeLabel);
-      }
-    },
-    [customThemeEnabled, engageFromTheme, handleApply],
-  );
-
   // The single toolbar copy action: seed the custom palette from the CURRENTLY
-  // ACTIVE film theme. The button only renders while custom is off, so this
-  // always takes the go-custom `engageFromTheme` branch.
+  // ACTIVE film theme. The button only renders while custom is off, so this is
+  // always the go-custom `engageFromTheme` path (there is no copy-over branch:
+  // copying while custom is already on is unreachable now the button hides).
   const handleCopyFromBaseTheme = useCallback(() => {
-    handleCopyTheme(baseTheme, baseThemeLabel);
-  }, [baseTheme, baseThemeLabel, handleCopyTheme]);
+    void engageFromTheme(baseTheme, baseThemeLabel);
+  }, [baseTheme, baseThemeLabel, engageFromTheme]);
 
   // Undo dispatcher. The engage-Undo (custom → OFF) is async + returns focus to
   // the reappearing copy button via the effect below; the copy-over Undo (custom
@@ -529,11 +515,7 @@ export default function ThemeEditor() {
                 ? 'Theme has a contrast issue to fix'
                 : 'Theme colors meet contrast'
             }
-            className={
-              hasContrastIssue
-                ? 'fa-solid fa-triangle-exclamation text-[var(--warn-text)] text-sm'
-                : 'fa-solid fa-circle-check text-[var(--success-text)] text-sm'
-            }
+            className={`fa-solid text-sm ${hasContrastIssue ? 'fa-triangle-exclamation text-[var(--warn-text)]' : 'fa-circle-check text-[var(--success-text)]'}`}
           />
         </div>
         <p className="mt-1 text-[var(--base-alt-text)] text-xs">
@@ -577,22 +559,27 @@ export default function ThemeEditor() {
             ref={randomizeButtonReference}
             onRandomize={handleRandomize}
           />
-          {/* Copy the active film theme into the custom palette. Hidden (not
-              disabled) once custom is on — there is no base theme left to copy
-              (R-B1/R-C1). Reuses the shared elevated IconButton (peer to
-              Randomize) with NORMAL bundle tokens + --focus-ring; the source
-              theme is named in the accessible name, the clone glyph is
-              decorative (R-E1/R-E2). */}
-          <IconButton
-            ref={copyButtonReference}
-            variant="elevated"
-            surface="base"
-            hidden={customThemeEnabled}
-            onClick={handleCopyFromBaseTheme}
-          >
-            <i className="fa-solid fa-clone" aria-hidden="true" />
-            Copy {baseThemeLabel} colors
-          </IconButton>
+          {/* Copy the active film theme into the custom palette. CONDITIONALLY
+              RENDERED (not opacity-hidden) — once custom is on there is no base
+              theme left to copy, and an opacity-hidden button would leave a
+              phantom gap in this right-aligned flex row for the common custom-on
+              user (R-B1/R-C1). On engage-undo it remounts in the same commit
+              customThemeEnabled flips false, so copyButtonReference re-attaches
+              before the focus effect runs (R-B5). Reuses the shared elevated
+              IconButton (peer to Randomize) with NORMAL bundle tokens +
+              --focus-ring; the source theme is named in the accessible name, the
+              clone glyph is decorative (R-E1/R-E2). */}
+          {!customThemeEnabled && (
+            <IconButton
+              ref={copyButtonReference}
+              variant="elevated"
+              surface="base"
+              onClick={handleCopyFromBaseTheme}
+            >
+              <i className="fa-solid fa-clone" aria-hidden="true" />
+              Copy {baseThemeLabel} colors
+            </IconButton>
+          )}
           {copyUndoLabel !== null && (
             <button
               ref={undoButtonReference}

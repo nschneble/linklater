@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { readThemeTokens } from './themeProbe';
 import { useThemeAutoSave } from './useThemeAutoSave';
 import type { BaseTheme, Mode } from '../../../theme/constants';
 import type { ThemeVariable } from './useThemeOverrides';
@@ -45,14 +44,11 @@ export interface UseThemeCopyResult {
   undoThemeLabel: string | null;
   /** Drop the pending Undo snapshot (called on manual edits). */
   clearUndo: () => void;
-  /** Apply a film theme's current-mode palette immediately and announce it. */
-  handleApply: (themeId: BaseTheme, themeLabel: string) => void;
   /**
    * Apply an already-resolved random palette immediately and announce it
-   * (Randomize while custom is already on). Mirrors `handleApply` — snapshots
-   * the prior values for Undo, loads the palette, and persists via `saveNow` —
-   * but takes the resolved token map directly since a random palette has no
-   * `themeId` to probe. PRD point 11.
+   * (Randomize while custom is already on). Snapshots the prior values for Undo,
+   * loads the palette, and persists via `saveNow`, taking the resolved token map
+   * directly since a random palette has no `themeId` to probe. PRD point 11.
    */
   handleApplyRandom: (palette: Record<ThemeVariable, string>) => void;
   /** Revert the last apply and announce the revert. */
@@ -136,17 +132,6 @@ export function useThemeCopy({
     clearUndo();
   }, [editorMode, baseTheme, clearUndo]);
 
-  const handleApply = useCallback(
-    (themeId: BaseTheme, themeLabel: string) => {
-      undoSnapshotReference.current = { ...colorValuesReference.current };
-      const applied = loadOverrides(readThemeTokens(themeId, editorMode));
-      pendingSaveReasonReference.current = `${themeLabel} palette applied and saved.`;
-      setUndoThemeLabel(themeLabel);
-      saveNow(applied);
-    },
-    [loadOverrides, editorMode, saveNow],
-  );
-
   const handleApplyRandom = useCallback(
     (palette: Record<ThemeVariable, string>) => {
       undoSnapshotReference.current = { ...colorValuesReference.current };
@@ -175,7 +160,6 @@ export function useThemeCopy({
     savedMessage,
     undoThemeLabel,
     clearUndo,
-    handleApply,
     handleApplyRandom,
     handleUndo,
   };

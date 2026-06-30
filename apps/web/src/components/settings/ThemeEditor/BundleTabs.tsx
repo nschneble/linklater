@@ -58,8 +58,9 @@ const PANEL_ID = 'bundle-panel';
  * + `font-semibold`, all driven off the `aria-selected` attribute (no JS ternary
  * class toggles).
  *
- * Arrow keys move selection with NO wrap (matching the copy menu); Home/End
- * jump to the first/last bundle. Focus STAYS on the activated tab — Tab descends
+ * Arrow keys move selection with NO wrap (matching the APG tablist no-wrap
+ * pattern); Home/End jump to the first/last bundle. Focus STAYS on the
+ * activated tab — Tab descends
  * into the slot rows from there.
  */
 export default function BundleTabs({
