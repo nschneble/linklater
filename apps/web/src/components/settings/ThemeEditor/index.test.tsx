@@ -98,7 +98,7 @@ describe('ThemeEditor copy control + heading outline', () => {
     // The 10-theme copy MENU is replaced by ONE button that names its source
     // theme (R-E2). The old menu trigger is gone.
     expect(
-      screen.getByRole('button', { name: /copy boyhood colors/i }),
+      screen.getByRole('button', { name: /copy boyhood/i }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /start from a theme/i }),
@@ -114,50 +114,51 @@ describe('ThemeEditor copy control + heading outline', () => {
 /*
  * The Light/Dark palette toggle moved OUT of the Colors card and INTO the header
  * toolbar (Wave 1). It leads the toolbar (left), ahead of Randomize + the copy
- * control, mirroring the "Your links" toolbar. It keeps its role=group +
- * aria-pressed binary-toggle shape and stays a sibling ABOVE the preview scope,
- * so its fixed-escape-hatch colors survive a hostile custom palette.
+ * control, mirroring the "Your links" toolbar. It IS the shared SlidingTabBar
+ * (same component as the Unread/Read switcher) — a role=tablist of aria-selected
+ * tabs controlling the editing panel — and stays a sibling ABOVE the preview
+ * scope so going custom never drags the toolbar's paint with it.
  */
 describe('ThemeEditor mode toggle in the header toolbar', () => {
   it('renders the Light/Dark palette toggle, seeded to the site mode (dark)', () => {
     render(<ThemeEditor />);
-    const group = screen.getByRole('group', { name: /palette to edit/i });
+    const group = screen.getByRole('tablist', { name: /palette to edit/i });
     expect(
-      within(group).getByRole('button', { name: /dark colors/i }),
-    ).toHaveAttribute('aria-pressed', 'true');
+      within(group).getByRole('tab', { name: /dark colors/i }),
+    ).toHaveAttribute('aria-selected', 'true');
     expect(
-      within(group).getByRole('button', { name: /light colors/i }),
-    ).toHaveAttribute('aria-pressed', 'false');
+      within(group).getByRole('tab', { name: /light colors/i }),
+    ).toHaveAttribute('aria-selected', 'false');
   });
 
-  it('flips the pressed palette when the other mode is chosen', () => {
+  it('flips the selected palette when the other mode is chosen', () => {
     render(<ThemeEditor />);
-    const group = screen.getByRole('group', { name: /palette to edit/i });
-    fireEvent.click(
-      within(group).getByRole('button', { name: /light colors/i }),
-    );
+    const group = screen.getByRole('tablist', { name: /palette to edit/i });
+    fireEvent.click(within(group).getByRole('tab', { name: /light colors/i }));
     expect(
-      within(group).getByRole('button', { name: /light colors/i }),
-    ).toHaveAttribute('aria-pressed', 'true');
+      within(group).getByRole('tab', { name: /light colors/i }),
+    ).toHaveAttribute('aria-selected', 'true');
     expect(
-      within(group).getByRole('button', { name: /dark colors/i }),
-    ).toHaveAttribute('aria-pressed', 'false');
+      within(group).getByRole('tab', { name: /dark colors/i }),
+    ).toHaveAttribute('aria-selected', 'false');
   });
 
   it('is no longer rendered inside the Colors region', () => {
     render(<ThemeEditor />);
     const colors = screen.getByRole('region', { name: 'Color Bundles' });
     expect(
-      within(colors).queryByRole('group', { name: /palette to edit/i }),
+      within(colors).queryByRole('tablist', { name: /palette to edit/i }),
     ).toBeNull();
   });
 
   it('leads the toolbar: mode toggle precedes Randomize, then the copy button', () => {
     render(<ThemeEditor />);
-    const modeGroup = screen.getByRole('group', { name: /palette to edit/i });
+    const modeGroup = screen.getByRole('tablist', {
+      name: /palette to edit/i,
+    });
     const randomize = screen.getByRole('button', { name: 'Randomize' });
     const copyButton = screen.getByRole('button', {
-      name: /copy boyhood colors/i,
+      name: /copy boyhood/i,
     });
 
     expect(
@@ -172,7 +173,7 @@ describe('ThemeEditor mode toggle in the header toolbar', () => {
 
   it('keeps the mode toggle OUTSIDE any preview-scoped ancestor', () => {
     render(<ThemeEditor />);
-    let node: HTMLElement | null = screen.getByRole('group', {
+    let node: HTMLElement | null = screen.getByRole('tablist', {
       name: /palette to edit/i,
     });
     // No ancestor carries an inline custom-property style, so a hostile prior
@@ -236,7 +237,7 @@ describe('ThemeEditor live preview reflects the selected bundle (PRD point 4)', 
   it('keeps the copy button OUTSIDE any preview-scoped ancestor', () => {
     render(<ThemeEditor />);
     const copyButton = screen.getByRole('button', {
-      name: /copy boyhood colors/i,
+      name: /copy boyhood/i,
     });
     const mock = screen.getByTestId('app-mock');
     // No ancestor of the copy button carries an inline custom-property style.
@@ -389,7 +390,7 @@ describe('ThemeEditor engage double-fire guard', () => {
  * while custom is off, so this is the copy-to-go-custom path.
  */
 function copyActiveTheme() {
-  fireEvent.click(screen.getByRole('button', { name: /copy boyhood colors/i }));
+  fireEvent.click(screen.getByRole('button', { name: /copy boyhood/i }));
 }
 
 /*
@@ -675,14 +676,18 @@ describe('ThemeEditor contrast status icon (title row)', () => {
     expect(icon).not.toHaveAttribute('aria-live');
   });
 
-  it('flips to a warning triangle when a contract pair fails', () => {
+  it('flips to a warning triangle when a contract pair fails', async () => {
     render(<ThemeEditor />);
     // Collapse Background onto Text (1:1 ratio) so a base text/bg pair fails.
-    fireEvent.change(screen.getByLabelText('Color picker for Background'), {
-      target: { value: '#808080' },
-    });
-    fireEvent.change(screen.getByLabelText('Color picker for Text'), {
-      target: { value: '#808080' },
+    // The first color edit triggers an async engage; wrap both edits so its
+    // trailing state update settles inside act.
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('Color picker for Background'), {
+        target: { value: '#808080' },
+      });
+      fireEvent.change(screen.getByLabelText('Color picker for Text'), {
+        target: { value: '#808080' },
+      });
     });
     const icon = screen.getByRole('img', {
       name: 'Theme has a contrast issue to fix',
@@ -693,22 +698,20 @@ describe('ThemeEditor contrast status icon (title row)', () => {
 });
 
 /*
- * The single copy button (#5) is removed from the DOM once custom is on — there
- * is no longer a base film theme to copy from (R-B1). It is CONDITIONALLY
- * RENDERED (not opacity-hidden in place), so it leaves no phantom gap in the
- * right-aligned toolbar flex row for the common custom-on user.
+ * The single copy button stays in the DOM even once custom is on — it remains
+ * the way to overwrite a customized palette with the underlying film theme's
+ * colors, which makes it a recovery control (it paints from a fixed escape
+ * hatch so it survives a hostile live palette). It names the base film theme in
+ * its accessible name regardless of whether custom is engaged.
  */
 describe('ThemeEditor copy button visibility', () => {
-  it('removes the copy button from the DOM once custom is on', () => {
+  it('keeps the copy button in the DOM once custom is on', () => {
     mockTheme.customThemeEnabled = true;
     mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
     render(<ThemeEditor />);
-    // Conditional render means it is gone entirely — not present-but-hidden — so
-    // neither the role query nor a hidden-inclusive text query finds it.
     expect(
-      screen.queryByRole('button', { name: /copy boyhood colors/i }),
-    ).toBeNull();
-    expect(screen.queryByText(/copy boyhood colors/i)).toBeNull();
+      screen.getByRole('button', { name: /copy boyhood/i }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -736,16 +739,22 @@ describe('ThemeEditor toolbar focus management', () => {
     await waitFor(() => expect(undo).toHaveFocus());
   });
 
-  it('returns focus to Randomize when Undo reverts a copy-over (custom stays on)', () => {
+  it('returns focus to Randomize when Undo reverts a copy-over (custom stays on)', async () => {
     mockTheme.customThemeEnabled = true;
     mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
     render(<ThemeEditor />);
 
-    clickRandomize();
+    // Randomize runs an async engage; wrap it so its trailing state update
+    // settles inside act before we drive Undo.
+    await act(async () => {
+      clickRandomize();
+    });
     const undo = screen.getByRole('button', {
       name: /undo copy from random palette/i,
     });
-    fireEvent.click(undo);
+    await act(async () => {
+      fireEvent.click(undo);
+    });
 
     expect(screen.getByRole('button', { name: 'Randomize' })).toHaveFocus();
   });
@@ -768,7 +777,7 @@ describe('ThemeEditor toolbar focus management', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole('button', { name: /copy boyhood colors/i }),
+        screen.getByRole('button', { name: /copy boyhood/i }),
       ).toHaveFocus(),
     );
   });

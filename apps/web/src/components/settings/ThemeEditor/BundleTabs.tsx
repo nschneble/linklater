@@ -55,8 +55,10 @@ const PANEL_ID = 'bundle-panel';
  * focusable would add a redundant inert stop (APG). The active tab reads as a
  * FILLED pill (inverted `--mount-text` bg / `--mount-bg` label) and is
  * distinguished by MORE than color (SC 1.4.1): a `fa-circle-dot` second channel
- * + `font-semibold`, all driven off the `aria-selected` attribute (no JS ternary
- * class toggles).
+ * + `font-semibold`. The bg inversion + weight ride the `aria-selected` variant;
+ * the dot is conditionally rendered instead (Font Awesome's `.fa-solid` display
+ * reset beats Tailwind `.hidden` at equal specificity but later in the cascade,
+ * so a CSS-hidden dot leaked onto every tab).
  *
  * Arrow keys move selection with NO wrap (matching the APG tablist no-wrap
  * pattern); Home/End jump to the first/last bundle. Focus STAYS on the
@@ -111,7 +113,7 @@ export default function BundleTabs({
         role="tablist"
         aria-labelledby={tablistLabelledBy}
         aria-orientation="horizontal"
-        className="flex flex-wrap gap-1.5"
+        className="grid grid-cols-3 gap-1.5"
       >
         {VAR_GROUPS.map((group) => (
           <button
@@ -131,12 +133,14 @@ export default function BundleTabs({
             tabIndex={group.bundle === activeBundle ? 0 : -1}
             onClick={() => onBundleChange(group.bundle)}
             onKeyDown={handleTabKeyDown}
-            className="group flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--mount-bg)] aria-selected:bg-[var(--mount-text)] border border-[var(--mount-border)] aria-selected:border-[var(--mount-text)] text-[var(--mount-alt-text)] aria-selected:text-[var(--mount-bg)] text-xs aria-selected:font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-full transition-colors cursor-pointer"
+            className="group flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[var(--mount-bg)] aria-selected:bg-[var(--mount-text)] border border-[var(--mount-border)] aria-selected:border-[var(--mount-text)] text-[var(--mount-alt-text)] aria-selected:text-[var(--mount-bg)] text-xs aria-selected:font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-full transition-colors cursor-pointer"
           >
-            <i
-              className="hidden group-aria-selected:inline fa-solid fa-circle-dot text-[0.4rem]"
-              aria-hidden="true"
-            />
+            {group.bundle === activeBundle && (
+              <i
+                className="fa-solid fa-circle-dot text-[0.4rem]"
+                aria-hidden="true"
+              />
+            )}
             {group.label}
           </button>
         ))}

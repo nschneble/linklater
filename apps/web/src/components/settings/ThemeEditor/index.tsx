@@ -17,10 +17,10 @@ import { THEMES, type BaseTheme, type Mode } from '../../../theme/constants';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import IconButton from '../../common/IconButton';
-import ModeToggle from './ModeToggle';
+import ModeToggle, { modeTabId } from './ModeToggle';
 import RandomizeButton from './RandomizeButton';
 import Toast from '../../common/Toast';
-import { EDITOR_FOCUS_RING } from './escapeHatchStyles';
+import { FOCUS_RING } from '../../../lib/styles';
 import { generateRandomPalette } from './randomPalette';
 import { readThemeTokens } from './themeProbe';
 import { BUNDLES, type Bundle } from './useThemeOverrides';
@@ -36,6 +36,11 @@ const EDITOR_MODE_LABELS: Record<Mode, string> = {
   light: 'Light colors',
   dark: 'Dark colors',
 };
+
+// The editing content row is the single `role="tabpanel"` the Light/Dark tabs
+// control; its `aria-labelledby` tracks the active mode tab (same physical panel
+// whose contents swap, mirroring the Unread/Read switcher + BundleTabs).
+const EDITOR_PANEL_ID = 'theme-editor-panel';
 
 /**
  * Full-page custom-theme editor reached from the user menu ("Create your
@@ -63,20 +68,21 @@ const EDITOR_MODE_LABELS: Record<Mode, string> = {
  * whole app. There is no on-page theme switcher.
  *
  * The toolbar mirrors the "Your links" toolbar: the Light/Dark toggle leads on
- * the left, Randomize + a single "Copy {baseThemeLabel} colors" action follow on
- * the right. The copy action seeds the custom palette from the currently-active
- * film theme; it HIDES once custom is on (there is no longer a base film theme to
- * copy from) and is replaced by an Undo when the copy overwrote a returning
- * user's saved palette. The title row carries a NON-interactive status icon
- * (check / triangle) summarizing whether the live palette clears the contrast
- * contract — a roll-up of the per-slot row failures, never an auto-announced one.
+ * the left, Randomize + a single "Copy {baseThemeLabel}" action follow on the
+ * right. The copy action seeds the custom palette from the currently-active film
+ * theme; it stays visible even once custom is on (so it can overwrite a
+ * customized palette) and is joined by an Undo when the copy overwrote a
+ * returning user's saved palette. The title row carries a NON-interactive status
+ * icon (check / triangle) summarizing whether the live palette clears the
+ * contrast contract — a roll-up of the per-slot row failures, never an
+ * auto-announced one.
  *
- * The Light/Dark toggle's active pill and Randomize both paint from FIXED-color
- * escape hatches (not bundle tokens), and the toolbar sits OUTSIDE the custom
- * scope — so a hostile custom palette can degrade the preview but never the
- * Randomize recovery needed to escape it. The copy button uses NORMAL bundle
- * tokens: it only ever renders on a contrast-guaranteed film theme (it is hidden
- * while custom is on).
+ * The Light/Dark toggle (the shared SlidingTabBar), Randomize, and Copy (shared
+ * elevated IconButtons) all read as ordinary app chrome painted from bundle
+ * tokens — the same controls the "Your links" toolbar uses — so they look and
+ * behave identically to the rest of the app and degrade with the active theme
+ * like all other chrome. (Recovery from a saved-but-unreadable custom theme is a
+ * tracked follow-up: there is currently no guaranteed-legible global escape.)
  */
 export default function ThemeEditor() {
   const {
@@ -515,7 +521,12 @@ export default function ThemeEditor() {
                 ? 'Theme has a contrast issue to fix'
                 : 'Theme colors meet contrast'
             }
-            className={`fa-solid text-sm ${hasContrastIssue ? 'fa-triangle-exclamation text-[var(--warn-text)]' : 'fa-circle-check text-[var(--success-text)]'}`}
+            title={
+              hasContrastIssue
+                ? 'Theme has a contrast issue to fix'
+                : 'Theme colors meet contrast'
+            }
+            className={`fa-solid text-sm ${hasContrastIssue ? 'fa-triangle-exclamation text-[var(--warn-text)]' : 'fa-circle-check text-[var(--base-subtle-text)]'}`}
           />
         </div>
         <p className="mt-1 text-[var(--base-alt-text)] text-xs">
@@ -538,55 +549,51 @@ export default function ThemeEditor() {
           strip.
 
           The strip is a SIBLING ABOVE the preview-scoped content div, so the
-          mode toggle, Randomize, copy, and Undo — the surviving keyboard-
-          reachable controls — have NO ancestor carrying the injected custom
-          palette (`style={contentThemeStyle}`). The mode toggle's active pill
-          and Randomize paint from fixed escape hatches, so they stay the legible
-          recovery even on a hostile prior palette (a11y brief §3/§5). The copy
-          button only renders while custom is off, so it always paints on a
-          contrast-guaranteed film theme (R-C1). Randomize fills the CURRENT
-          mode's slots with a generated WCAG-AA palette (and goes custom if off)
-          (PRD point 11). */}
+          mode toggle, Randomize, copy, and Undo have NO ancestor carrying the
+          injected custom palette (`style={contentThemeStyle}`) — the preview can
+          go custom without dragging the toolbar with it. The mode toggle (shared
+          SlidingTabBar) + Randomize/copy (shared elevated IconButtons) paint
+          from bundle tokens like the rest of the chrome. Randomize fills the
+          CURRENT mode's slots with a generated WCAG-AA palette (and goes custom
+          if off) (PRD point 11). */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
         <ModeToggle
           mode={editorMode}
           onModeChange={setEditorMode}
-          groupLabel="Palette to edit"
+          ariaLabel="Palette to edit"
           labels={EDITOR_MODE_LABELS}
+          panelId={EDITOR_PANEL_ID}
         />
         <div className="flex items-center gap-3 sm:ml-auto">
           <RandomizeButton
             ref={randomizeButtonReference}
             onRandomize={handleRandomize}
           />
-          {/* Copy the active film theme into the custom palette. CONDITIONALLY
-              RENDERED (not opacity-hidden) — once custom is on there is no base
-              theme left to copy, and an opacity-hidden button would leave a
-              phantom gap in this right-aligned flex row for the common custom-on
-              user (R-B1/R-C1). On engage-undo it remounts in the same commit
-              customThemeEnabled flips false, so copyButtonReference re-attaches
-              before the focus effect runs (R-B5). Reuses the shared elevated
-              IconButton (peer to Randomize) with NORMAL bundle tokens +
-              --focus-ring; the source theme is named in the accessible name, the
-              clone glyph is decorative (R-E1/R-E2). */}
-          {!customThemeEnabled && (
-            <IconButton
-              ref={copyButtonReference}
-              variant="elevated"
-              surface="base"
-              onClick={handleCopyFromBaseTheme}
-            >
-              <i className="fa-solid fa-clone" aria-hidden="true" />
-              Copy {baseThemeLabel} colors
-            </IconButton>
-          )}
+          {/* Copy the active film theme into the custom palette. ALWAYS rendered,
+              even once custom is on — it stays useful as the way to overwrite a
+              customized palette with a known-good film theme. It is the shared
+              elevated IconButton (peer to Randomize, same control the "Your
+              links" toolbar uses for Stumble), so it reads as ordinary chrome
+              and paints from bundle tokens. Always mounted means
+              copyButtonReference stays attached, so the engage-undo focus return
+              (R-B5) fires with no remount race. The source theme is named in the
+              accessible name; the clone glyph is decorative (R-E1/R-E2). */}
+          <IconButton
+            ref={copyButtonReference}
+            variant="elevated"
+            surface="base"
+            onClick={handleCopyFromBaseTheme}
+          >
+            <i className="fa-solid fa-clone" aria-hidden="true" />
+            Copy {baseThemeLabel}
+          </IconButton>
           {copyUndoLabel !== null && (
             <button
               ref={undoButtonReference}
               type="button"
               onClick={handleUndoClick}
               aria-label={`Undo copy from ${copyUndoLabel}`}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--mount-highlight)] text-[var(--mount-highlight-fg)] text-xs font-semibold ${EDITOR_FOCUS_RING} rounded-lg active:scale-[0.96] transition-transform cursor-pointer`}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--mount-highlight)] text-[var(--mount-highlight-fg)] text-xs font-semibold ${FOCUS_RING} rounded-lg active:scale-[0.96] transition-transform cursor-pointer`}
             >
               <i className="fa-solid fa-arrow-rotate-left" aria-hidden="true" />
               Undo
@@ -607,7 +614,12 @@ export default function ThemeEditor() {
           ONLY the decorative mock inside ComponentShowcase carries
           `contentThemeStyle`. The header + toolbar stay outside any scope, so the
           Randomize recovery is always painted in the app theme. */}
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div
+        id={EDITOR_PANEL_ID}
+        role="tabpanel"
+        aria-labelledby={modeTabId(editorMode)}
+        className="flex flex-col lg:flex-row gap-6"
+      >
         <div className="shrink-0 w-full lg:w-72 space-y-4">
           <div className={cardClassName} style={cardDelayStyle(0)}>
             <ColorEditor
