@@ -32,7 +32,7 @@ export default function HeroSection() {
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--base-highlight)] hover:bg-[var(--base-highlight-hover)] text-[var(--base-highlight-fg)] text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded-full transition duration-200 active:scale-[0.96] cursor-pointer"
         >
           <i className="fa-solid fa-arrow-right text-xs" aria-hidden="true" />
-          Get started free
+          Get started
         </Link>
         <Link
           to="/login"
