@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthGuard } from '@nestjs/passport';
 import type { Response } from 'express';
@@ -183,6 +183,9 @@ describe('OAuthController', () => {
     });
 
     it('redirects to /settings?link_error=unknown when an unexpected error occurs', async () => {
+      const loggerError = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation(() => undefined);
       (
         oauthAccountServiceMock.linkOAuthAccountToUser as jest.Mock
       ).mockRejectedValue(new Error('Database connection lost'));
@@ -193,6 +196,8 @@ describe('OAuthController', () => {
       expect(response.redirect).toHaveBeenCalledWith(
         'https://app.example.com/settings?link_error=unknown',
       );
+      expect(loggerError).toHaveBeenCalled();
+      loggerError.mockRestore();
     });
   });
 
