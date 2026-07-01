@@ -312,18 +312,6 @@ describe('ComponentShowcase – re-stagger key (PRD points 10 + 12)', () => {
   });
 });
 
-describe('ComponentShowcase – whimsical aside (PRD points 12 + 13)', () => {
-  it('renders an app-voiced aside that is real, app-themed UI outside the mock', () => {
-    renderShowcase('base');
-    const aside = screen.getByText(/roll until it feels like you/i);
-    expect(aside).not.toHaveClass('sr-only');
-    // App-themed (always-readable token), never a custom-palette token.
-    expect(aside.className).toContain('text-[var(--base-alt-text)]');
-    // Lives OUTSIDE the aria-hidden, possibly-hostile mock subtree.
-    expect(getMock().contains(aside)).toBe(false);
-  });
-});
-
 describe('ComponentShowcase – asemic Old Turkic copy (decorative)', () => {
   const allGlyphStrings = [
     ...Object.values(MOCK_GLYPHS),
@@ -372,15 +360,12 @@ describe('ComponentShowcase – asemic font scope + no-interaction cursor (#9/#1
     expect(getMock()).not.toHaveAttribute('role');
   });
 
-  it('does NOT leak the asemic font onto the heading, explanation, or aside', () => {
+  it('does NOT leak the asemic font onto the heading or explanation', () => {
     const { container } = renderShowcase('mount');
     const section = container.querySelector('section') as HTMLElement;
     expect(section).not.toHaveClass('app-mock-asemic');
     expect(getLivePreviewHeading()).not.toHaveClass('app-mock-asemic');
     expect(screen.getByText(/used for your saved-link cards/i)).not.toHaveClass(
-      'app-mock-asemic',
-    );
-    expect(screen.getByText(/roll until it feels like you/i)).not.toHaveClass(
       'app-mock-asemic',
     );
     // The marker exists exactly once, on the mock container itself.

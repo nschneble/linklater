@@ -191,9 +191,6 @@ export default function ComponentShowcase({
       <h2 id={headingId} className="sr-only">
         Live preview
       </h2>
-      <p className="text-[var(--base-alt-text)] text-xs">
-        {BUNDLE_EXPLANATIONS[activeBundle]}
-      </p>
       <div
         key={mockKey}
         aria-hidden="true"
@@ -203,12 +200,8 @@ export default function ComponentShowcase({
       >
         <BundleMock bundle={activeBundle} />
       </div>
-      {/* A small, app-voiced aside — the theatrical-but-tasteful DNA the settings
-          page already speaks in. Real app UI in the always-readable app theme
-          (mirrors the explanation slot), so it stays AA-legible and OUTSIDE the
-          aria-hidden mock. */}
-      <p className="text-[var(--base-alt-text)] text-xs italic">
-        Roll until it feels like you. The neon phase stays between us.
+      <p className="text-[var(--base-alt-text)] text-xs">
+        {BUNDLE_EXPLANATIONS[activeBundle]}
       </p>
     </section>
   );
