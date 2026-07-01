@@ -1,6 +1,6 @@
 import RequestForm from './RequestForm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { NormalizedEndpoint } from '../../lib/openapi';
@@ -232,7 +232,9 @@ describe('RequestForm – in flight', () => {
     await user.click(submit);
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    resolveFetch(new Response('{}', { status: 200, statusText: 'OK' }));
+    await act(async () => {
+      resolveFetch(new Response('{}', { status: 200, statusText: 'OK' }));
+    });
     await vi.waitFor(() => {
       expect(submit).not.toBeDisabled();
     });
