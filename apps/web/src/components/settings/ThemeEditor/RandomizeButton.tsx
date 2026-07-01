@@ -1,4 +1,4 @@
-import { EDITOR_FOCUS_RING, ESCAPE_HATCH_LIGHT } from './escapeHatchStyles';
+import IconButton from '../../common/IconButton';
 import { useState } from 'react';
 import type { Ref } from 'react';
 
@@ -19,13 +19,11 @@ interface RandomizeButtonProps {
  * 11). Randomizing is ALSO a way to go custom: like editing a color or copying
  * a theme, it seeds + saves the custom palette when custom is off.
  *
- * It paints from the FIXED escape-hatch colors (not bundle tokens) and uses the
- * fixed-blue `EDITOR_FOCUS_RING`, like the Undo button and the mode toggle:
- * it is an always-operable recovery-class control, so it must stay legible AND
- * keyboard-focusable even on top of a hostile generated palette (a generated
- * palette is always readable, but a PRIOR hostile hand-edit could still be live
- * when the user reaches for this). It is a real `<button>` with VISIBLE text as
- * its accessible name; the die icon is decorative (`aria-hidden`).
+ * It is the shared elevated `IconButton` (the same control the "Your links"
+ * toolbar uses for Stumble — `variant="elevated" surface="base"`), so it reads
+ * as ordinary app chrome and degrades with the active theme exactly like the
+ * rest of the chrome. It is a real `<button>` with VISIBLE text as its
+ * accessible name; the die icon is decorative (`aria-hidden`).
  *
  * Delight (PRD point 12 — the editor's "Stumble for colors"): the die ROLLS on
  * each activation, echoing Stumble's fa-spin energy. The roll is a one-shot CSS
@@ -49,12 +47,11 @@ export default function RandomizeButton({
   }
 
   return (
-    <button
+    <IconButton
       ref={ref}
-      type="button"
+      variant="elevated"
+      surface="base"
       onClick={handleClick}
-      style={ESCAPE_HATCH_LIGHT}
-      className={`flex items-center gap-1.5 px-2.5 py-1.5 border text-xs font-semibold ${EDITOR_FOCUS_RING} rounded-lg active:scale-[0.96] transition-transform cursor-pointer`}
     >
       <i
         key={spinNonce}
@@ -63,6 +60,6 @@ export default function RandomizeButton({
         aria-hidden="true"
       />
       Randomize
-    </button>
+    </IconButton>
   );
 }
