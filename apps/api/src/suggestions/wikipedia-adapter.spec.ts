@@ -1,5 +1,7 @@
 import { jest } from '@jest/globals';
 
+import { Logger } from '@nestjs/common';
+
 import { WikipediaAdapter } from './wikipedia-adapter.js';
 
 interface WikipediaSummary {
@@ -43,9 +45,12 @@ describe('WikipediaAdapter', () => {
     adapter = new WikipediaAdapter();
     fetchMock = jest.fn();
     (global as { fetch: unknown }).fetch = fetchMock;
+    // Failure-path tests exercise the warn branch on purpose; keep it quiet.
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     jest.clearAllMocks();
   });
 
