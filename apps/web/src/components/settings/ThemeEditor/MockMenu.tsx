@@ -49,7 +49,7 @@ function MockMenuRow({
  */
 export default function MockMenu() {
   return (
-    <div className="w-56 bg-[var(--orbit-bg)] border border-[var(--orbit-border)] rounded-lg shadow-lg">
+    <div className="w-56 bg-[var(--orbit-bg)] border-shadow rounded-lg shadow-lg">
       <div className="px-3 pt-2.5 pb-2 border-b border-[var(--orbit-border)]">
         <p className="text-[var(--orbit-alt-text)] text-[0.55rem] uppercase tracking-wide">
           {MOCK_GLYPHS.loggedInAs}
@@ -63,10 +63,7 @@ export default function MockMenu() {
         <MockMenuRow icon="fa-solid fa-bookmark">
           {MOCK_GLYPHS.yourLinks}
         </MockMenuRow>
-        <MockMenuRow
-          icon="fa-solid fa-gear"
-          iconClassName="text-[var(--orbit-highlight)] text-[0.65rem]"
-        >
+        <MockMenuRow icon="fa-solid fa-gear">
           {MOCK_GLYPHS.settings}
         </MockMenuRow>
         <MockMenuRow
@@ -84,7 +81,7 @@ export default function MockMenu() {
       <div className="py-1 border-b border-[var(--orbit-border)]">
         <div className="flex items-center gap-2 px-2.5 py-1.5 text-[var(--orbit-text)] text-[0.7rem]">
           <i
-            className="fa-solid fa-palette text-[var(--orbit-alt-text)] text-[0.65rem]"
+            className="fa-solid fa-palette text-[var(--orbit-alt-text)]"
             aria-hidden="true"
           />
           <span className="flex-1 leading-tight">
