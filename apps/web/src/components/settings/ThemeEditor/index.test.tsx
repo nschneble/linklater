@@ -123,24 +123,28 @@ describe('ThemeEditor mode toggle in the header toolbar', () => {
   it('renders the Light/Dark palette toggle, seeded to the site mode (dark)', () => {
     render(<ThemeEditor />);
     const group = screen.getByRole('tablist', { name: /palette to edit/i });
-    expect(
-      within(group).getByRole('tab', { name: /dark colors/i }),
-    ).toHaveAttribute('aria-selected', 'true');
-    expect(
-      within(group).getByRole('tab', { name: /light colors/i }),
-    ).toHaveAttribute('aria-selected', 'false');
+    expect(within(group).getByRole('tab', { name: /dark/i })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(within(group).getByRole('tab', { name: /light/i })).toHaveAttribute(
+      'aria-selected',
+      'false',
+    );
   });
 
   it('flips the selected palette when the other mode is chosen', () => {
     render(<ThemeEditor />);
     const group = screen.getByRole('tablist', { name: /palette to edit/i });
-    fireEvent.click(within(group).getByRole('tab', { name: /light colors/i }));
-    expect(
-      within(group).getByRole('tab', { name: /light colors/i }),
-    ).toHaveAttribute('aria-selected', 'true');
-    expect(
-      within(group).getByRole('tab', { name: /dark colors/i }),
-    ).toHaveAttribute('aria-selected', 'false');
+    fireEvent.click(within(group).getByRole('tab', { name: /light/i }));
+    expect(within(group).getByRole('tab', { name: /light/i })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(within(group).getByRole('tab', { name: /dark/i })).toHaveAttribute(
+      'aria-selected',
+      'false',
+    );
   });
 
   it('is no longer rendered inside the Colors region', () => {

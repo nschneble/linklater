@@ -33,8 +33,8 @@ import { useThemeSave } from './useThemeSave';
 import { useToast } from '../../../lib/hooks/useToast';
 
 const EDITOR_MODE_LABELS: Record<Mode, string> = {
-  light: 'Light colors',
-  dark: 'Dark colors',
+  light: 'Light',
+  dark: 'Dark',
 };
 
 // The editing content row is the single `role="tabpanel"` the Light/Dark tabs

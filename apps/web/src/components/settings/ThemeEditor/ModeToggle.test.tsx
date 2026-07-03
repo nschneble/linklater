@@ -11,7 +11,7 @@ import ModeToggle from './ModeToggle';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-const LABELS = { light: 'Light colors', dark: 'Dark colors' } as const;
+const LABELS = { light: 'Light', dark: 'Dark' } as const;
 
 function renderToggle(props: Partial<Parameters<typeof ModeToggle>[0]> = {}) {
   return render(
@@ -34,28 +34,27 @@ describe('ModeToggle', () => {
   it('renders dark + light as tabs reflecting the mode', () => {
     renderToggle({ mode: 'dark' });
     const tablist = getTablist();
+    expect(within(tablist).getByRole('tab', { name: /dark/i })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
     expect(
-      within(tablist).getByRole('tab', { name: /dark colors/i }),
-    ).toHaveAttribute('aria-selected', 'true');
-    expect(
-      within(tablist).getByRole('tab', { name: /light colors/i }),
+      within(tablist).getByRole('tab', { name: /light/i }),
     ).toHaveAttribute('aria-selected', 'false');
   });
 
   it('uses the visible label as the accessible name (SC 2.5.3, no aria-label)', () => {
     renderToggle({ mode: 'dark' });
-    expect(
-      screen.getByRole('tab', { name: 'Light colors' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Light' })).toBeInTheDocument();
   });
 
   it('points each tab at the editing panel it controls', () => {
     renderToggle({ mode: 'dark', panelId: 'theme-editor-panel' });
-    expect(screen.getByRole('tab', { name: /dark colors/i })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: /dark/i })).toHaveAttribute(
       'aria-controls',
       'theme-editor-panel',
     );
-    expect(screen.getByRole('tab', { name: /light colors/i })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: /light/i })).toHaveAttribute(
       'aria-controls',
       'theme-editor-panel',
     );
@@ -63,11 +62,11 @@ describe('ModeToggle', () => {
 
   it('makes only the selected tab a tab stop (roving tabindex)', () => {
     renderToggle({ mode: 'dark' });
-    expect(screen.getByRole('tab', { name: /dark colors/i })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: /dark/i })).toHaveAttribute(
       'tabindex',
       '0',
     );
-    expect(screen.getByRole('tab', { name: /light colors/i })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: /light/i })).toHaveAttribute(
       'tabindex',
       '-1',
     );
@@ -76,7 +75,7 @@ describe('ModeToggle', () => {
   it('commits the chosen mode on click', () => {
     const onModeChange = vi.fn();
     renderToggle({ mode: 'dark', onModeChange });
-    fireEvent.click(screen.getByRole('tab', { name: /light colors/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /light/i }));
     expect(onModeChange).toHaveBeenCalledWith('light');
   });
 
@@ -104,7 +103,7 @@ describe('ModeToggle', () => {
   it('jumps to the ends with Home/End', () => {
     const onModeChange = vi.fn();
     renderToggle({ mode: 'dark', onModeChange });
-    const darkTab = screen.getByRole('tab', { name: /dark colors/i });
+    const darkTab = screen.getByRole('tab', { name: /dark/i });
     darkTab.focus();
     fireEvent.keyDown(darkTab, { key: 'Home' });
     expect(onModeChange).toHaveBeenLastCalledWith('light');
