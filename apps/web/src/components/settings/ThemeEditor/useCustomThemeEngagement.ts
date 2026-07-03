@@ -21,8 +21,9 @@ interface UseCustomThemeEngagementOptions {
 export interface UseCustomThemeEngagementResult {
   /**
    * The shared optimistic engage→PATCH→rollback envelope behind every way the
-   * editor flips the custom theme on or off (first edit, copy-a-theme,
-   * Randomize, Undo).
+   * editor flips the custom theme ON (first edit, Randomize-while-off). Copying
+   * a theme is NOT here — it only runs while custom is already on, as a plain
+   * copy-over save, so it never touches the enable flag.
    *
    * It snapshots the current enabled flag + palette, optimistically commits the
    * target, fires ONE direct `PATCH /users/me` (outside the debounced auto-save,
@@ -30,10 +31,8 @@ export interface UseCustomThemeEngagementResult {
    * the caller's `onSuccess`. On failure it restores the snapshot and toasts via
    * `onError`; either way it re-arms `engagingReference`.
    *
-   * The polite live-region announcement is the CALLER's job, not `onSuccess`'s,
-   * for the disengage (Undo) path — it must speak optimistically, before the
-   * await — whereas the three engage paths announce from `onSuccess`, after the
-   * PATCH lands. The envelope is agnostic to which.
+   * Both engage paths announce from `onSuccess`, after the PATCH lands (the
+   * envelope stays agnostic to when the announcement fires).
    */
   commitEngagement: (
     target: { enabled: boolean; customTheme: CustomTheme },
@@ -42,11 +41,11 @@ export interface UseCustomThemeEngagementResult {
 }
 
 /**
- * Extracts the one optimistic-commit envelope the Theme Editor's four
- * engage/disengage handlers (`engageCustomTheme`, `engageFromTheme`,
- * `engageFromRandom`, `handleEngageUndo`) all shared verbatim. Each caller keeps
- * its own seed derivation + success side effects; this owns only the rollback
- * contract, so the four can never drift on how a failed PATCH recovers.
+ * Extracts the one optimistic-commit envelope the Theme Editor's two engage
+ * handlers (`engageCustomTheme`, `engageFromRandom`) both share verbatim. Each
+ * caller keeps its own seed derivation + success side effects; this owns only
+ * the rollback contract, so the two can never drift on how a failed PATCH
+ * recovers.
  */
 export function useCustomThemeEngagement({
   customTheme,

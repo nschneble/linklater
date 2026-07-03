@@ -1,19 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useThemeAutoSave } from './useThemeAutoSave';
-import type { BaseTheme, Mode } from '../../../theme/constants';
 import type { ThemeVariable } from './useThemeOverrides';
 
 interface UseThemeCopyOptions {
   /** Whether the custom theme is enabled (gates auto-save). */
   editingEnabled: boolean;
-  /** The committed base theme; a change drops a stale Undo snapshot. */
-  baseTheme: BaseTheme;
-  /**
-   * The editor's LOCAL mode (the Light/Dark tabs, not the site mode). Copy
-   * applies this mode's palette and a change drops the Undo snapshot.
-   */
-  editorMode: Mode;
-  /** Live editor values, snapshotted for Undo. */
+  /** Live editor values, persisted by the debounced auto-save. */
   colorValues: Record<ThemeVariable, string>;
   /** Persists the given values; resolves true on success. */
   save: (colorValues: Record<ThemeVariable, string>) => Promise<boolean>;
@@ -31,45 +23,44 @@ export interface UseThemeCopyResult {
   /**
    * Push a one-off message through the polite announcement channel (bumps the
    * count + sets the message). Used by the editor for engage/copy utterances
-   * ("Your theme is on and saved." / "Reverted to previous colors.") that ride
-   * the same `role="status"` region the settled-save announcements use, so there
-   * is only ever one live region (a11y brief §3).
+   * ("Your theme is on and saved." / "{label} palette applied and saved.") that
+   * ride the same `role="status"` region the settled-save announcements use, so
+   * there is only ever one live region (a11y brief §3).
    */
   announce: (message: string) => void;
   /** Increments once per settled save; drives the polite announcement. */
   savedCount: number;
   /** The message the next settled save announces (consume-once reason). */
   savedMessage: string;
-  /** Label of the last-applied theme, or `null` when there's nothing to undo. */
-  undoThemeLabel: string | null;
-  /** Drop the pending Undo snapshot (called on manual edits). */
-  clearUndo: () => void;
+  /**
+   * Apply an already-resolved palette immediately as a copy-over and announce
+   * it via the consume-once reason. Loads the palette and persists via
+   * `saveNow`. Shared by both copy-over-while-on actions — Randomize
+   * (`handleApplyRandom`) and copying the base film theme — so they can never
+   * drift on how a copy-over saves.
+   */
+  applyPalette: (palette: Record<string, string>, reason: string) => void;
   /**
    * Apply an already-resolved random palette immediately and announce it
-   * (Randomize while custom is already on). Snapshots the prior values for Undo,
-   * loads the palette, and persists via `saveNow`, taking the resolved token map
-   * directly since a random palette has no `themeId` to probe. PRD point 11.
+   * (Randomize while custom is already on). Thin wrapper over `applyPalette`
+   * with the random reason. PRD point 11.
    */
   handleApplyRandom: (palette: Record<ThemeVariable, string>) => void;
-  /** Revert the last apply and announce the revert. */
-  handleUndo: () => void;
 }
 
 /**
- * Owns the Theme Editor's copy-from-theme / Undo state machine: snapshotting
- * the prior palette, applying a film theme's current-mode tokens, reverting,
- * and routing each settled save's announcement through a consume-once "reason"
- * so a copy/undo says WHAT happened without double-speaking. Wraps
- * `useThemeAutoSave` so the component only deals in the handlers it renders.
+ * Owns the Theme Editor's copy-from-theme apply path: applying a film theme's
+ * (or a random) current-mode tokens and routing each settled save's
+ * announcement through a consume-once "reason" so a copy says WHAT happened
+ * without double-speaking. Wraps `useThemeAutoSave` so the component only deals
+ * in the handlers it renders.
  *
- * Apply/Undo are high-intent one-shot actions, so they persist via `saveNow`
- * (not the debounce) — navigating away in the debounce window must not silently
- * drop them. Per-keystroke edits keep using the debounced `scheduleSave`.
+ * Apply is a high-intent one-shot action, so it persists via `saveNow` (not the
+ * debounce) — navigating away in the debounce window must not silently drop it.
+ * Per-keystroke edits keep using the debounced `scheduleSave`.
  */
 export function useThemeCopy({
   editingEnabled,
-  baseTheme,
-  editorMode,
   colorValues,
   save,
   loadOverrides,
@@ -77,15 +68,8 @@ export function useThemeCopy({
 }: UseThemeCopyOptions): UseThemeCopyResult {
   const [savedCount, setSavedCount] = useState(0);
   const [savedMessage, setSavedMessage] = useState('Your theme saved.');
-  const [undoThemeLabel, setUndoThemeLabel] = useState<string | null>(null);
 
-  // Always-current values (snapshot source for Undo) + a consume-once reason
-  // the next settled save announces.
-  const colorValuesReference = useRef(colorValues);
-  colorValuesReference.current = colorValues;
-  const undoSnapshotReference = useRef<Record<ThemeVariable, string> | null>(
-    null,
-  );
+  // A consume-once reason the next settled save announces.
   const pendingSaveReasonReference = useRef<string | null>(null);
 
   const onSaveFailedReference = useRef(onSaveFailed);
@@ -121,46 +105,28 @@ export function useThemeCopy({
     onOutcome: handleAutoSaveOutcome,
   });
 
-  // A manual edit, or a theme/mode change, makes the "undo the last copy"
-  // snapshot stale — drop it so Undo never reverts to a mismatched palette.
-  const clearUndo = useCallback(() => {
-    undoSnapshotReference.current = null;
-    setUndoThemeLabel(null);
-  }, []);
-
-  useEffect(() => {
-    clearUndo();
-  }, [editorMode, baseTheme, clearUndo]);
-
-  const handleApplyRandom = useCallback(
-    (palette: Record<ThemeVariable, string>) => {
-      undoSnapshotReference.current = { ...colorValuesReference.current };
+  const applyPalette = useCallback(
+    (palette: Record<string, string>, reason: string) => {
       const applied = loadOverrides(palette);
-      pendingSaveReasonReference.current = 'Random palette applied and saved.';
-      setUndoThemeLabel('random palette');
+      pendingSaveReasonReference.current = reason;
       saveNow(applied);
     },
     [loadOverrides, saveNow],
   );
 
-  const handleUndo = useCallback(() => {
-    const snapshot = undoSnapshotReference.current;
-    if (!snapshot) return;
-    loadOverrides(snapshot);
-    pendingSaveReasonReference.current = 'Reverted to previous colors.';
-    undoSnapshotReference.current = null;
-    setUndoThemeLabel(null);
-    saveNow(snapshot);
-  }, [loadOverrides, saveNow]);
+  const handleApplyRandom = useCallback(
+    (palette: Record<ThemeVariable, string>) => {
+      applyPalette(palette, 'Random palette applied and saved.');
+    },
+    [applyPalette],
+  );
 
   return {
     scheduleSave,
     announce,
     savedCount,
     savedMessage,
-    undoThemeLabel,
-    clearUndo,
+    applyPalette,
     handleApplyRandom,
-    handleUndo,
   };
 }

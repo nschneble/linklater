@@ -1,6 +1,5 @@
 import {
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -13,14 +12,13 @@ import {
   isCustomThemeConfigured,
   type CustomTheme,
 } from '../../../theme/customTheme';
-import { THEMES, type BaseTheme, type Mode } from '../../../theme/constants';
+import { THEMES, type Mode } from '../../../theme/constants';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
 import IconButton from '../../common/IconButton';
 import ModeToggle, { modeTabId } from './ModeToggle';
 import RandomizeButton from './RandomizeButton';
 import Toast from '../../common/Toast';
-import { FOCUS_RING } from '../../../lib/styles';
 import { generateRandomPalette } from './randomPalette';
 import { readThemeTokens } from './themeProbe';
 import { BUNDLES, type Bundle } from './useThemeOverrides';
@@ -42,6 +40,11 @@ const EDITOR_MODE_LABELS: Record<Mode, string> = {
 // whose contents swap, mirroring the Unread/Read switcher + BundleTabs).
 const EDITOR_PANEL_ID = 'theme-editor-panel';
 
+// The visually-hidden reason the copy button points at (via aria-describedby)
+// while it is aria-disabled, so an AT user hears WHY copying is unavailable
+// rather than a silent dimmed control.
+const COPY_REDUNDANT_HINT_ID = 'theme-editor-copy-redundant-hint';
+
 /**
  * Full-page custom-theme editor reached from the user menu ("Create your
  * theme" / "Edit your theme").
@@ -59,7 +62,7 @@ const EDITOR_PANEL_ID = 'theme-editor-panel';
  * /users/me`), after which edits AUTOMATIC-debounced-save. There is no path back
  * to the prior theme by design — copying the active film theme overwrites the
  * custom palette, which is the surviving recovery from an unreadable one.
- * Engage + copy/undo are announced through the editor's single polite live
+ * Engage + copy are announced through the editor's single polite live
  * region ("Your theme is on and saved." / "{label} palette applied and saved.").
  *
  * The editor's color mode is LOCAL (`editorMode`): the Light/Dark toggle in the
@@ -71,8 +74,7 @@ const EDITOR_PANEL_ID = 'theme-editor-panel';
  * the left, Randomize + a single "Copy {baseThemeLabel}" action follow on the
  * right. The copy action seeds the custom palette from the currently-active film
  * theme; it stays visible even once custom is on (so it can overwrite a
- * customized palette) and is joined by an Undo when the copy overwrote a
- * returning user's saved palette. The title row carries a NON-interactive status
+ * customized palette). The title row carries a NON-interactive status
  * icon (check / triangle) summarizing whether the live palette clears the
  * contrast contract — a roll-up of the per-slot row failures, never an
  * auto-announced one.
@@ -119,39 +121,19 @@ export default function ThemeEditor() {
   const baseThemeLabel =
     THEMES.find((theme) => theme.id === baseTheme)?.label ?? baseTheme;
 
+  // The copy action is a no-op — and so aria-disabled — when there's nothing to
+  // copy: either custom is OFF (the editor already previews the base film theme)
+  // or the custom theme is ITSELF the active theme (copying "Your Theme" onto
+  // itself changes nothing). The visually-hidden reason names WHY per case.
+  const copyDisabled = !customThemeEnabled || baseTheme === 'custom';
+  const copyDisabledReason = !customThemeEnabled
+    ? `Already using ${baseThemeLabel}'s colors. Edit a color or Randomize to start a custom theme.`
+    : `${baseThemeLabel} is already active, so there's nothing to copy. Edit a color or Randomize to change it.`;
+
   // Guards the engage-on-first-edit path: a native color picker fires a burst
   // of `onChange`s during a single drag, and the enabled flag only commits
   // between events — this stops two of them firing two engage PATCHes.
   const engagingReference = useRef(false);
-
-  // Copying a theme while custom is OFF can clobber an EXISTING saved palette (a
-  // returning user who reverted earlier). We snapshot that palette so an Undo
-  // can restore it + turn custom back off (a never-configured user has nothing
-  // to lose, so no Undo is offered then).
-  const [engageUndo, setEngageUndo] = useState<{
-    customTheme: CustomTheme;
-    label: string;
-  } | null>(null);
-
-  // Focus targets for the toolbar's recovery affordances. The copy button hides
-  // when custom turns on and reappears when an Undo turns it back off; the Undo
-  // button mounts only when there is a copy to revert; Randomize is always
-  // present. Focus is moved AFTER the relevant async engage transition settles
-  // (SC 2.4.3) — see the two effects below.
-  const copyButtonReference = useRef<HTMLButtonElement>(null);
-  const randomizeButtonReference = useRef<HTMLButtonElement>(null);
-  const undoButtonReference = useRef<HTMLButtonElement>(null);
-
-  // Bumped from `engageFromTheme`'s success callback (the COPY-initiated engage
-  // path ONLY — never the color-edit engage, which keeps focus on the picker,
-  // a11y brief R-B3). Drives the post-engage focus move once the PATCH settles
-  // and React has committed the copy-button hide + any Undo mount (R-B2/R-B4).
-  const [copyEngageFocusNonce, setCopyEngageFocusNonce] = useState(0);
-
-  // Set when an engage-Undo (custom → OFF) is in flight, so the focus effect
-  // keyed on the disengage settling knows to land focus on the reappeared copy
-  // button (R-B5) rather than reacting to an unrelated enabled-flag change.
-  const undoReturnsToCopyReference = useRef(false);
 
   const { save } = useThemeSave(editorMode);
   const toast = useToast();
@@ -186,14 +168,10 @@ export default function ThemeEditor() {
     announce,
     savedCount,
     savedMessage,
-    undoThemeLabel,
-    clearUndo,
+    applyPalette,
     handleApplyRandom,
-    handleUndo,
   } = useThemeCopy({
     editingEnabled,
-    baseTheme,
-    editorMode,
     colorValues,
     save,
     loadOverrides,
@@ -258,58 +236,6 @@ export default function ThemeEditor() {
     ],
   );
 
-  // Copying a theme while custom is OFF is ALSO a way to go custom — equal to
-  // editing a color. It seeds the palette from the picked theme for BOTH modes
-  // (a copy means "start from this whole theme", not just the shown mode),
-  // enables, persists, and announces — all in ONE direct PATCH + ONE announce
-  // (mirroring `engageCustomTheme`; routing through the debounced copy save
-  // would double-bump the live region and swallow this utterance). When a saved
-  // palette already existed it is snapshotted for Undo, since the copy
-  // overwrites it (a11y FLAG 1 — copying keeps the COPIED colors, so it is not
-  // a path back to the originals).
-  const engageFromTheme = useCallback(
-    async (themeId: BaseTheme, themeLabel: string) => {
-      if (engagingReference.current) return;
-      engagingReference.current = true;
-
-      const previousCustomTheme = customTheme;
-      const hadSavedPalette = isCustomConfigured;
-      const otherMode: Mode = editorMode === 'dark' ? 'light' : 'dark';
-      const editedModeTokens = readThemeTokens(themeId, editorMode);
-      const otherModeTokens = readThemeTokens(themeId, otherMode);
-      const seeded: CustomTheme = {
-        dark: editorMode === 'dark' ? editedModeTokens : otherModeTokens,
-        light: editorMode === 'light' ? editedModeTokens : otherModeTokens,
-      };
-
-      loadOverrides(editedModeTokens);
-      clearUndo();
-      await commitEngagement({ enabled: true, customTheme: seeded }, () => {
-        if (hadSavedPalette && previousCustomTheme) {
-          setEngageUndo({
-            customTheme: previousCustomTheme,
-            label: themeLabel,
-          });
-        }
-        announce(`Your theme is on. ${themeLabel} palette applied and saved.`);
-        // Move focus once the engage has settled: the copy button has gone
-        // (custom is now on) so focus would otherwise fall to <body>. Batched
-        // with setEngageUndo, so the effect sees the Undo button if one mounted
-        // (R-B2/R-B4).
-        setCopyEngageFocusNonce((nonce) => nonce + 1);
-      });
-    },
-    [
-      announce,
-      clearUndo,
-      commitEngagement,
-      customTheme,
-      editorMode,
-      isCustomConfigured,
-      loadOverrides,
-    ],
-  );
-
   // Randomize while custom is OFF is ALSO a way to go custom (PRD point 11) —
   // equal to editing a color or copying a theme. It generates a WCAG-AA palette
   // for `editorMode` ONLY (HARD scope: cross-bundle pairs are only guaranteed
@@ -317,15 +243,12 @@ export default function ThemeEditor() {
   // other mode: a returning user's saved other-mode palette is kept (re-engage),
   // else the other mode is probed fresh off the current theme. It enables +
   // seeds BOTH modes, loads the editor overrides, persists in ONE direct PATCH,
-  // and announces ONCE through the polite region. When a saved palette already
-  // existed it is snapshotted for Undo (the random palette overwrote it).
+  // and announces ONCE through the polite region.
   const engageFromRandom = useCallback(
     async (palette: Record<Parameters<typeof setOverride>[0], string>) => {
       if (engagingReference.current) return;
       engagingReference.current = true;
 
-      const previousCustomTheme = customTheme;
-      const hadSavedPalette = isCustomConfigured;
       const otherMode: Mode = editorMode === 'dark' ? 'light' : 'dark';
       // Keep the other mode's saved tokens (re-engage) or probe them fresh —
       // the random palette only ever touches `editorMode` (§3).
@@ -338,21 +261,13 @@ export default function ThemeEditor() {
       };
 
       loadOverrides(palette);
-      clearUndo();
       await commitEngagement({ enabled: true, customTheme: seeded }, () => {
-        if (hadSavedPalette && previousCustomTheme) {
-          setEngageUndo({
-            customTheme: previousCustomTheme,
-            label: 'random palette',
-          });
-        }
         announce('Your theme is on. Random palette applied and saved.');
       });
     },
     [
       announce,
       baseTheme,
-      clearUndo,
       commitEngagement,
       customTheme,
       editorMode,
@@ -361,8 +276,8 @@ export default function ThemeEditor() {
     ],
   );
 
-  // Randomize dispatcher: while custom is already on it is a copy-over with its
-  // own Undo (`handleApplyRandom`); while off it goes custom (`engageFromRandom`).
+  // Randomize dispatcher: while custom is already on it is a copy-over
+  // (`handleApplyRandom`); while off it goes custom (`engageFromRandom`).
   // Either way the palette is generated ONCE for the current editor mode and the
   // OTHER mode is left untouched (HARD scope: cross-bundle pairs are only
   // guaranteed within one mode's generated palette).
@@ -370,74 +285,26 @@ export default function ThemeEditor() {
     const palette = generateRandomPalette(editorMode);
     setRandomizeNonce((current) => current + 1);
     if (customThemeEnabled) {
-      setEngageUndo(null);
       handleApplyRandom(palette);
     } else {
       void engageFromRandom(palette);
     }
   }, [customThemeEnabled, editorMode, engageFromRandom, handleApplyRandom]);
 
-  // Undo for a copy that overwrote an existing saved palette: restore the prior
-  // palette and turn custom back OFF (the state the user copied from). On PATCH
-  // failure, roll back to the just-copied on-state. Turning custom off reappears
-  // the copy button; the effect below returns focus to it once the disengage
-  // settles (this Undo button unmounts as its label goes null — SC 2.4.3).
-  const handleEngageUndo = useCallback(async () => {
-    if (!engageUndo) return;
-    const restored = engageUndo.customTheme;
-    setEngageUndo(null);
-    undoReturnsToCopyReference.current = true;
-    // The revert announces OPTIMISTICALLY (before the await), unlike the three
-    // engage paths that announce from `commitEngagement`'s success callback —
-    // `commitEngagement` rolls back to the just-copied on-state if the disengage
-    // PATCH fails.
-    announce('Reverted to previous colors.');
-    await commitEngagement({ enabled: false, customTheme: restored });
-  }, [announce, commitEngagement, engageUndo]);
-
-  // The single toolbar copy action: seed the custom palette from the CURRENTLY
-  // ACTIVE film theme. The button only renders while custom is off, so this is
-  // always the go-custom `engageFromTheme` path (there is no copy-over branch:
-  // copying while custom is already on is unreachable now the button hides).
+  // The single toolbar copy action: overwrite the live palette with the
+  // CURRENTLY ACTIVE film theme's current-mode colors. It is a no-op — and
+  // aria-disabled — while custom is OFF (the editor already previews that exact
+  // theme) or when the custom theme is ITSELF active (copying it onto itself
+  // changes nothing); the button names why in each case. Otherwise it is a
+  // copy-over sharing the same path as Randomize-while-on (`applyPalette`):
+  // custom stays on, no engage/re-enable.
   const handleCopyFromBaseTheme = useCallback(() => {
-    void engageFromTheme(baseTheme, baseThemeLabel);
-  }, [baseTheme, baseThemeLabel, engageFromTheme]);
-
-  // Undo dispatcher. The engage-Undo (custom → OFF) is async + returns focus to
-  // the reappearing copy button via the effect below; the copy-over Undo (custom
-  // stays ON) is synchronous and returns focus to the always-present Randomize
-  // (R-B5).
-  const handleUndoClick = useCallback(() => {
-    if (engageUndo) {
-      void handleEngageUndo();
-    } else {
-      handleUndo();
-      randomizeButtonReference.current?.focus();
-    }
-  }, [engageUndo, handleEngageUndo, handleUndo]);
-
-  // After a COPY-initiated engage settles, land focus on the Undo button if one
-  // appeared (returning user whose palette was overwritten), else on Randomize —
-  // never the mode toggle (R-B4). Keyed on the success-callback nonce so it runs
-  // after React commits the copy-button hide + Undo mount.
-  useEffect(() => {
-    if (copyEngageFocusNonce === 0) return;
-    if (undoButtonReference.current) {
-      undoButtonReference.current.focus();
-    } else {
-      randomizeButtonReference.current?.focus();
-    }
-  }, [copyEngageFocusNonce]);
-
-  // After an engage-Undo turns custom back OFF, the copy button reappears
-  // (becomes focusable) — return focus to it (R-B5). Guarded by the flag so an
-  // unrelated enabled-flag change never steals focus.
-  useEffect(() => {
-    if (!undoReturnsToCopyReference.current) return;
-    if (customThemeEnabled) return;
-    undoReturnsToCopyReference.current = false;
-    copyButtonReference.current?.focus();
-  }, [customThemeEnabled]);
+    if (!customThemeEnabled || baseTheme === 'custom') return;
+    applyPalette(
+      readThemeTokens(baseTheme, editorMode),
+      `${baseThemeLabel} palette applied and saved.`,
+    );
+  }, [applyPalette, baseTheme, baseThemeLabel, customThemeEnabled, editorMode]);
 
   // Apply an edit to a slot: the first edit goes custom (engaging once), later
   // edits debounce-save.
@@ -447,8 +314,6 @@ export default function ThemeEditor() {
   ) {
     const postEditValues = { ...colorValues, [variable]: value };
     setOverride(variable, value);
-    clearUndo();
-    setEngageUndo(null);
     if (!customThemeEnabled) {
       // First edit — go custom. The guard absorbs a color picker's drag burst.
       if (engagingReference.current) return;
@@ -469,19 +334,14 @@ export default function ThemeEditor() {
   const toastView = useMemo(() => resolveToast(toast.message), [toast.message]);
 
   // The single polite live region's rendered text, re-triggered (clear-then-set)
-  // on each settled save / engage / undo so even an identical consecutive
-  // message re-announces (a11y brief §1).
+  // on each settled save / engage so even an identical consecutive message
+  // re-announces (a11y brief §1).
   const announcement = useAnnouncer(savedCount, savedMessage);
 
   // Contrast roll-up for the title-row status icon — a SUPPLEMENTARY summary of
   // the per-slot row failures (which stay the authoritative SC 3.3.1 report).
   // Binary on whether any contract pair fails (a11y brief R-A2/R-A4).
   const hasContrastIssue = failures.size > 0;
-
-  // The Undo label spans both Undo flavors: the engage-Undo snapshot (copy while
-  // custom was off, overwriting a saved palette) and the copy-over Undo (Randomize
-  // while custom was already on). Either present means an Undo renders.
-  const copyUndoLabel = engageUndo?.label ?? undoThemeLabel;
 
   // Each content card carries the shared mount surface + the link-card enter
   // fade. The stagger comes from the per-card animation delay; reduced-motion is
@@ -535,9 +395,9 @@ export default function ThemeEditor() {
       </div>
 
       {/* The editor's single polite live region. Mounted UNCONDITIONALLY (not
-          gated on custom being on) so a revert still speaks through it, and
-          visually hidden — each settled save / engage / undo announces here
-          exactly once via the clear-then-set re-trigger (a11y brief §1). */}
+          gated on custom being on) and visually hidden — each settled save /
+          engage announces here exactly once via the clear-then-set re-trigger
+          (a11y brief §1). */}
       <p role="status" aria-live="polite" className="sr-only">
         {announcement}
       </p>
@@ -549,7 +409,7 @@ export default function ThemeEditor() {
           strip.
 
           The strip is a SIBLING ABOVE the preview-scoped content div, so the
-          mode toggle, Randomize, copy, and Undo have NO ancestor carrying the
+          mode toggle, Randomize, and copy have NO ancestor carrying the
           injected custom palette (`style={contentThemeStyle}`) — the preview can
           go custom without dragging the toolbar with it. The mode toggle (shared
           SlidingTabBar) + Randomize/copy (shared elevated IconButtons) paint
@@ -565,40 +425,37 @@ export default function ThemeEditor() {
           panelId={EDITOR_PANEL_ID}
         />
         <div className="flex items-center gap-3 sm:ml-auto">
-          <RandomizeButton
-            ref={randomizeButtonReference}
-            onRandomize={handleRandomize}
-          />
-          {/* Copy the active film theme into the custom palette. ALWAYS rendered,
-              even once custom is on — it stays useful as the way to overwrite a
-              customized palette with a known-good film theme. It is the shared
-              elevated IconButton (peer to Randomize, same control the "Your
-              links" toolbar uses for Stumble), so it reads as ordinary chrome
-              and paints from bundle tokens. Always mounted means
-              copyButtonReference stays attached, so the engage-undo focus return
-              (R-B5) fires with no remount race. The source theme is named in the
-              accessible name; the clone glyph is decorative (R-E1/R-E2). */}
+          <RandomizeButton onRandomize={handleRandomize} />
+          {/* Overwrite the live custom palette with the active film theme's
+              colors. It is the shared elevated IconButton (peer to Randomize,
+              same control the "Your links" toolbar uses for Stumble), so it reads
+              as ordinary chrome and paints from bundle tokens.
+
+              When the copy would change nothing — custom is OFF (the editor
+              already previews this exact theme) or the custom theme is ITSELF
+              active — the button is INERT via `aria-disabled` (NOT the native
+              `disabled` attribute, which would drop it from the tab order and
+              announce no reason). aria-disabled keeps it focusable, so
+              `aria-describedby` can tell an AT user WHY it's unavailable, and the
+              click is a no-op guard in the handler. Styling is driven off the
+              attribute (`aria-disabled:` variants), never a JS ternary. The
+              source theme is named in the label; the clone glyph is decorative
+              (R-E1/R-E2). */}
           <IconButton
-            ref={copyButtonReference}
             variant="elevated"
             surface="base"
             onClick={handleCopyFromBaseTheme}
-            disabled={!customThemeEnabled}
+            aria-disabled={copyDisabled || undefined}
+            aria-describedby={copyDisabled ? COPY_REDUNDANT_HINT_ID : undefined}
+            className="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:active:scale-100"
           >
             <i className="fa-solid fa-clone" aria-hidden="true" />
             Copy {baseThemeLabel}
           </IconButton>
-          {copyUndoLabel !== null && (
-            <button
-              ref={undoButtonReference}
-              type="button"
-              onClick={handleUndoClick}
-              aria-label={`Undo copy from ${copyUndoLabel}`}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--mount-highlight)] text-[var(--mount-highlight-fg)] text-xs font-semibold ${FOCUS_RING} rounded-lg active:scale-[0.96] transition-transform cursor-pointer`}
-            >
-              <i className="fa-solid fa-arrow-rotate-left" aria-hidden="true" />
-              Undo
-            </button>
+          {copyDisabled && (
+            <span id={COPY_REDUNDANT_HINT_ID} className="sr-only">
+              {copyDisabledReason}
+            </span>
           )}
         </div>
       </div>

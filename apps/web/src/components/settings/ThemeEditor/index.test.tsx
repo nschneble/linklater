@@ -260,7 +260,7 @@ describe('ThemeEditor polite live region', () => {
   it('mounts an unconditional sr-only role=status region (survives custom off)', () => {
     render(<ThemeEditor />);
     // Custom is off in the default mock — the region must still be mounted so a
-    // later revert/announce has somewhere to speak (a11y brief §1).
+    // later engage/copy announcement has somewhere to speak (a11y brief §1).
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
@@ -389,122 +389,164 @@ describe('ThemeEditor engage double-fire guard', () => {
 });
 
 /**
- * Clicks the single toolbar copy action, which copies the CURRENTLY ACTIVE film
- * theme (boyhood in the mock) into the custom palette. The button only renders
- * while custom is off, so this is the copy-to-go-custom path.
+ * Clicks the single toolbar copy action, which overwrites the live custom
+ * palette with the CURRENTLY ACTIVE film theme's colors (boyhood in the mock).
+ * The button is only interactive while custom is ON; while off it is
+ * aria-disabled (the editor already previews that theme, so a copy is
+ * redundant), so this exercises the copy-over-while-on path.
  */
 function copyActiveTheme() {
   fireEvent.click(screen.getByRole('button', { name: /copy boyhood/i }));
 }
 
 /*
- * Copying a theme is a SECOND way to go custom, equal to editing a color: while
- * custom is off, picking a theme seeds the palette from that theme for BOTH
- * modes, enables, persists in one PATCH, and announces. No Undo is offered when
- * nothing was overwritten (a never-configured user has no prior palette to
- * restore) — but a returning user's saved palette IS snapshotted for Undo
- * before the copy clobbers it (a11y FLAG 1).
+ * While custom is OFF the copy button is redundant: `readBaseline` probes the
+ * base film theme when custom is off, so the editor already previews exactly
+ * those colors and copying them changes nothing. The button is INERT via
+ * `aria-disabled` — kept focusable (NOT the native `disabled` attribute, which
+ * would drop it from the tab order and announce no reason) so `aria-describedby`
+ * can name WHY it is unavailable — and its click is a guarded no-op.
  */
-describe('ThemeEditor go-custom-by-copying-a-theme', () => {
-  // The single copy button copies the CURRENTLY ACTIVE film theme (boyhood).
-  const boyhoodSeed = {
-    dark: { '--mount-bg': 'boyhood-dark' },
-    light: { '--mount-bg': 'boyhood-light' },
-  };
-
-  it('seeds both modes from the active theme, enables, persists, announces', async () => {
+describe('ThemeEditor copy button is inert while custom is off', () => {
+  it('is aria-disabled (not natively disabled) and does nothing when never configured', () => {
     render(<ThemeEditor />);
+    const copy = screen.getByRole('button', { name: /copy boyhood/i });
+    expect(copy).toHaveAttribute('aria-disabled', 'true');
+    // aria-disabled, NOT the native attribute — it stays in the tab order.
+    expect(copy).not.toBeDisabled();
+
     copyActiveTheme();
 
-    expect(mockTheme.setCustomThemeEnabled).toHaveBeenCalledWith(true);
-    expect(mockTheme.setCustomTheme).toHaveBeenCalledWith(boyhoodSeed);
-    expect(mockTheme.setBaseTheme).not.toHaveBeenCalled();
-
-    await waitFor(() =>
-      expect(updateMe).toHaveBeenCalledWith({
-        customThemeEnabled: true,
-        customTheme: boyhoodSeed,
-      }),
-    );
-    await waitFor(() =>
-      expect(
-        screen.getByText(
-          'Your theme is on. Boyhood palette applied and saved.',
-        ),
-      ).toBeInTheDocument(),
-    );
+    expect(mockTheme.setCustomThemeEnabled).not.toHaveBeenCalled();
+    expect(mockTheme.setCustomTheme).not.toHaveBeenCalled();
+    expect(updateMe).not.toHaveBeenCalled();
   });
 
-  it('offers no Undo when no saved palette was overwritten', async () => {
-    render(<ThemeEditor />);
-    copyActiveTheme();
-
-    await waitFor(() => expect(updateMe).toHaveBeenCalled());
-    expect(
-      screen.queryByRole('button', { name: /undo copy from/i }),
-    ).toBeNull();
-  });
-
-  it('fires the engage PATCH exactly once (one announce, no double-bump)', async () => {
-    render(<ThemeEditor />);
-    copyActiveTheme();
-
-    await waitFor(() => expect(updateMe).toHaveBeenCalled());
-    expect(updateMe).toHaveBeenCalledTimes(1);
-  });
-
-  it('rolls back the enable + seed when the engage PATCH fails', async () => {
-    (updateMe as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error('network'),
-    );
-    render(<ThemeEditor />);
-    copyActiveTheme();
-
-    await waitFor(() =>
-      expect(mockTheme.setCustomThemeEnabled).toHaveBeenLastCalledWith(false),
-    );
-    expect(mockTheme.setCustomTheme).toHaveBeenLastCalledWith({
-      dark: {},
-      light: {},
-    });
-    expect(
-      await screen.findByText(/could not update the custom theme setting/i),
-    ).toBeInTheDocument();
-  });
-
-  it('snapshots a returning user’s palette for Undo, then restores it + turns off', async () => {
-    // Off, but a palette already exists (the user reverted earlier).
+  it('stays inert for a returning user whose custom is off but configured', () => {
+    // A saved palette exists, but custom is off (the user reverted earlier). The
+    // editor still previews the base theme, so copy is redundant here too.
     mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
     render(<ThemeEditor />);
+    const copy = screen.getByRole('button', { name: /copy boyhood/i });
+    expect(copy).toHaveAttribute('aria-disabled', 'true');
+
     copyActiveTheme();
 
-    // The copy overwrote the saved palette, so an Undo appears to get it back.
-    const undo = await screen.findByRole('button', {
-      name: /undo copy from boyhood/i,
-    });
+    expect(mockTheme.setCustomThemeEnabled).not.toHaveBeenCalled();
+    expect(updateMe).not.toHaveBeenCalled();
+  });
 
-    fireEvent.click(undo);
-
-    // Undo restores the prior palette and turns custom back OFF (its prior state).
-    expect(mockTheme.setCustomThemeEnabled).toHaveBeenLastCalledWith(false);
-    expect(mockTheme.setCustomTheme).toHaveBeenLastCalledWith({
-      dark: { '--mount-bg': '#abc' },
-      light: {},
-    });
-    await waitFor(() =>
-      expect(updateMe).toHaveBeenLastCalledWith({
-        customThemeEnabled: false,
-        customTheme: { dark: { '--mount-bg': '#abc' }, light: {} },
-      }),
+  it('names why it is unavailable via aria-describedby', () => {
+    render(<ThemeEditor />);
+    const copy = screen.getByRole('button', { name: /copy boyhood/i });
+    const describedBy = copy.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(describedBy as string)).toHaveTextContent(
+      "Already using Boyhood's colors. Edit a color or Randomize to start a custom theme.",
     );
+  });
+});
 
-    // The undo announcement reaches the editor's own polite live region —
-    // end-to-end through index's role=status, not just the PATCH (W-2).
+/*
+ * When the ACTIVE theme is itself the custom theme ("Your Theme"), copying it
+ * onto the custom palette is a no-op — so the copy button is aria-disabled even
+ * though custom is ON. Its click is a guarded no-op, and its aria-describedby
+ * names the "already active" reason (driven off baseThemeLabel, not a hardcoded
+ * "Your Theme").
+ */
+describe('ThemeEditor copy button is inert when the custom theme is active', () => {
+  beforeEach(() => {
+    mockTheme.baseTheme = 'custom';
+    mockTheme.customThemeEnabled = true;
+    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
+  });
+
+  it('is aria-disabled and does nothing when copying Your Theme onto itself', () => {
+    render(<ThemeEditor />);
+    const copy = screen.getByRole('button', { name: /copy your theme/i });
+    expect(copy).toHaveAttribute('aria-disabled', 'true');
+    // aria-disabled, NOT the native attribute — it stays in the tab order.
+    expect(copy).not.toBeDisabled();
+
+    fireEvent.click(copy);
+
+    // The guard mirrors the disabled condition, so no save is attempted.
+    expect(updateMe).not.toHaveBeenCalled();
+  });
+
+  it('names the "already active" reason via aria-describedby', () => {
+    render(<ThemeEditor />);
+    const copy = screen.getByRole('button', { name: /copy your theme/i });
+    const describedBy = copy.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(describedBy as string)).toHaveTextContent(
+      "Your Theme is already active, so there's nothing to copy. Edit a color or Randomize to change it.",
+    );
+  });
+});
+
+/*
+ * While custom is already ON, copy is a copy-over: it overwrites the live palette
+ * with the active film theme's current-mode colors, keeps custom ON (no engage /
+ * no re-enable), announces, and persists via the high-intent saveNow — the SAME
+ * path as Randomize-while-on. There is no Undo affordance (removed by design).
+ */
+describe('ThemeEditor copy-over while custom is on', () => {
+  beforeEach(() => {
+    mockTheme.customThemeEnabled = true;
+    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
+  });
+
+  it('is interactive (not aria-disabled) once custom is on', () => {
+    render(<ThemeEditor />);
+    expect(
+      screen.getByRole('button', { name: /copy boyhood/i }),
+    ).not.toHaveAttribute('aria-disabled');
+  });
+
+  it('overwrites with the base theme colors and never re-engages', async () => {
+    vi.useFakeTimers();
+    try {
+      render(<ThemeEditor />);
+      copyActiveTheme();
+
+      // No engage: the enable flag is never re-flipped (custom already on).
+      expect(mockTheme.setCustomThemeEnabled).not.toHaveBeenCalled();
+
+      // The high-intent apply persists via saveNow (not the debounce), carrying
+      // the base theme's probed current-mode token.
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+      expect(updateMe).toHaveBeenCalledWith({
+        customTheme: expect.objectContaining({
+          dark: expect.objectContaining({ '--mount-bg': 'boyhood-dark' }),
+        }),
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('announces the copy-over through the polite region', async () => {
+    render(<ThemeEditor />);
+    copyActiveTheme();
     await waitFor(() =>
       expect(screen.getByRole('status')).toHaveTextContent(
-        'Reverted to previous colors.',
+        'Boyhood palette applied and saved.',
       ),
     );
+  });
+
+  it('offers no Undo affordance after a copy-over', async () => {
+    render(<ThemeEditor />);
+    copyActiveTheme();
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Boyhood palette applied and saved.',
+      ),
+    );
+    expect(screen.queryByRole('button', { name: /undo/i })).toBeNull();
   });
 });
 
@@ -517,7 +559,7 @@ function clickRandomize() {
  * Randomize (PRD point 11): a global Colors-region action that fills the
  * current mode's slots with a generated WCAG-AA palette. Like editing a color
  * or copying a theme, it is ALSO a way to go custom — while off it seeds + saves
- * in ONE PATCH and announces once; while on it copies over with an Undo. The
+ * in ONE PATCH and announces once; while on it copies over. The
  * generator runs for real here (NOT mocked) so the wiring is exercised
  * end-to-end; `randomPalette.test.ts` is the airtight contract gate.
  */
@@ -567,18 +609,20 @@ describe('ThemeEditor randomize button', () => {
     );
   });
 
-  it('offers an Undo when randomize overwrote a returning user’s palette', async () => {
+  it('goes custom without any Undo affordance for a returning user', async () => {
     mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
     render(<ThemeEditor />);
     clickRandomize();
 
-    const undo = await screen.findByRole('button', {
-      name: /undo copy from random palette/i,
-    });
-    expect(undo).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Your theme is on. Random palette applied and saved.',
+      ),
+    );
+    expect(screen.queryByRole('button', { name: /undo/i })).toBeNull();
   });
 
-  it('copies over with an Undo when custom is already on', async () => {
+  it('copies over without any Undo affordance when custom is already on', async () => {
     vi.useFakeTimers();
     try {
       mockTheme.customThemeEnabled = true;
@@ -589,10 +633,8 @@ describe('ThemeEditor randomize button', () => {
       // Apply-on path never re-flips the enable flag (no engage PATCH).
       expect(mockTheme.setCustomThemeEnabled).not.toHaveBeenCalled();
 
-      // The Undo for the just-applied random palette is offered immediately.
-      expect(
-        screen.getByRole('button', { name: /undo copy from random palette/i }),
-      ).toBeInTheDocument();
+      // No Undo affordance is offered.
+      expect(screen.queryByRole('button', { name: /undo/i })).toBeNull();
 
       // The high-intent apply persists via saveNow (not the debounce).
       await act(async () => {
@@ -704,9 +746,10 @@ describe('ThemeEditor contrast status icon (title row)', () => {
 /*
  * The single copy button stays in the DOM even once custom is on — it remains
  * the way to overwrite a customized palette with the underlying film theme's
- * colors, which makes it a recovery control (it paints from a fixed escape
- * hatch so it survives a hostile live palette). It names the base film theme in
- * its accessible name regardless of whether custom is engaged.
+ * colors, which makes it a recovery control: it sits OUTSIDE the preview-scoped
+ * `contentThemeStyle` subtree, so it survives a hostile live palette. It names
+ * the base film theme in its accessible name regardless of whether custom is
+ * engaged.
  */
 describe('ThemeEditor copy button visibility', () => {
   it('keeps the copy button in the DOM once custom is on', () => {
@@ -720,76 +763,31 @@ describe('ThemeEditor copy button visibility', () => {
 });
 
 /*
- * Focus moves AFTER each async engage transition settles (SC 2.4.3) — the copy
- * button or Undo can unmount/mount across the await, so a synchronous focus
- * would land on <body> (a11y brief R-B2/R-B4/R-B5).
+ * With the Undo affordance removed, neither Copy nor Randomize moves focus:
+ * both triggering controls stay mounted and enabled, so there is nothing to
+ * land focus on after the action. The first color edit is the sole engage that
+ * must NOT move focus — it stays on the picker mid-drag (R-B3).
  */
 describe('ThemeEditor toolbar focus management', () => {
-  it('lands focus on Randomize after a copy-initiated engage with no Undo', async () => {
-    render(<ThemeEditor />);
-    copyActiveTheme();
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Randomize' })).toHaveFocus(),
-    );
-  });
-
-  it('lands focus on the Undo button after a copy that overwrote a saved palette', async () => {
-    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
-    render(<ThemeEditor />);
-    copyActiveTheme();
-    const undo = await screen.findByRole('button', {
-      name: /undo copy from boyhood/i,
-    });
-    await waitFor(() => expect(undo).toHaveFocus());
-  });
-
-  it('returns focus to Randomize when Undo reverts a copy-over (custom stays on)', async () => {
+  it('does NOT move focus off Randomize after a copy-over (custom stays on)', async () => {
     mockTheme.customThemeEnabled = true;
     mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
     render(<ThemeEditor />);
 
-    // Randomize runs an async engage; wrap it so its trailing state update
-    // settles inside act before we drive Undo.
+    const randomize = screen.getByRole('button', { name: 'Randomize' });
+    randomize.focus();
+    // Randomize runs its copy-over path; wrap it so any trailing state update
+    // settles inside act.
     await act(async () => {
       clickRandomize();
     });
-    const undo = screen.getByRole('button', {
-      name: /undo copy from random palette/i,
-    });
-    await act(async () => {
-      fireEvent.click(undo);
-    });
 
-    expect(screen.getByRole('button', { name: 'Randomize' })).toHaveFocus();
+    // No programmatic focus move — focus stays where the user left it.
+    expect(randomize).toHaveFocus();
   });
 
-  it('returns focus to the reappearing copy button when an engage-Undo turns custom off', async () => {
-    // A STATEFUL enabled flag so the copy button actually hides on engage and
-    // reappears on undo (the return-focus effect is keyed on that transition).
-    // The component's own state bumps drive the rerenders that re-read it.
-    mockTheme.customTheme = { dark: { '--mount-bg': '#abc' }, light: {} };
-    mockTheme.setCustomThemeEnabled = vi.fn((value: boolean) => {
-      mockTheme.customThemeEnabled = value;
-    });
-    render(<ThemeEditor />);
-
-    copyActiveTheme();
-    const undo = await screen.findByRole('button', {
-      name: /undo copy from boyhood/i,
-    });
-    fireEvent.click(undo);
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole('button', { name: /copy boyhood/i }),
-      ).toHaveFocus(),
-    );
-  });
-
-  // Only the COPY-initiated engage moves focus (it bumps copyEngageFocusNonce);
-  // the color-edit engage must NOT, or a returning user editing a swatch would
-  // have focus yanked off the picker mid-task (R-B3). This locks the negative:
-  // wiring the color-edit path into the focus nonce later would fail here.
+  // The color-edit engage must NOT move focus, or a returning user editing a
+  // swatch would have focus yanked off the picker mid-task (R-B3).
   it('does NOT steal focus off the color picker when the first edit goes custom', async () => {
     render(<ThemeEditor />);
     const picker = screen.getByLabelText('Color picker for Background');
