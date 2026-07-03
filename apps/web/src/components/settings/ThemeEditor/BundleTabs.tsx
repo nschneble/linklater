@@ -108,7 +108,7 @@ export default function BundleTabs({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       <div
         role="tablist"
         aria-labelledby={tablistLabelledBy}
@@ -146,26 +146,28 @@ export default function BundleTabs({
         ))}
       </div>
 
-      <h3 className="text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
-        Colors
-      </h3>
+      <div className="space-y-3">
+        <h3 className="text-[var(--mount-alt-text)] text-[0.65rem] uppercase tracking-wide font-semibold">
+          Colors
+        </h3>
 
-      <div
-        role="tabpanel"
-        id={PANEL_ID}
-        aria-labelledby={tabId(activeBundle)}
-        className="space-y-2"
-      >
-        {activeGroup.items.map(({ variable, label }) => (
-          <ColorRow
-            key={variable}
-            label={label}
-            variable={variable}
-            currentValue={colorValues[variable]}
-            failure={contrastFailures.get(variable)}
-            onOverride={onOverride}
-          />
-        ))}
+        <div
+          role="tabpanel"
+          id={PANEL_ID}
+          aria-labelledby={tabId(activeBundle)}
+          className="min-h-[352px] space-y-2"
+        >
+          {activeGroup.items.map(({ variable, label }) => (
+            <ColorRow
+              key={variable}
+              label={label}
+              variable={variable}
+              currentValue={colorValues[variable]}
+              failure={contrastFailures.get(variable)}
+              onOverride={onOverride}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
