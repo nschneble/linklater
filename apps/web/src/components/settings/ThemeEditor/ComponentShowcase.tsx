@@ -136,7 +136,7 @@ function BundleMock({ bundle }: { bundle: Bundle }) {
     );
   }
   return (
-    <div className="flex-1 p-4 bg-[var(--base-bg)]">
+    <div className="flex-1 pt-0 bg-[var(--base-bg)]">
       <MockStagger>
         <MockNotice
           bundle={bundle}
@@ -209,7 +209,7 @@ export default function ComponentShowcase({
       </h2>
 
       <div
-        className="flex flex-col w-full min-h-60 bg-[var(--base-bg)] border shadow-xl rounded-2xl overflow-hidden"
+        className="flex flex-col w-full min-h-90 bg-[var(--base-bg)] border shadow-xl rounded-2xl overflow-hidden"
         style={{ borderColor: PREVIEW_CHROME.frameBorder }}
       >
         <div
