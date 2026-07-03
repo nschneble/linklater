@@ -670,7 +670,7 @@ describe('ThemeEditor contrast status icon (title row)', () => {
   it('shows a non-interactive check glyph when the palette is contrast-clean', () => {
     render(<ThemeEditor />);
     const icon = screen.getByRole('img', {
-      name: 'Theme colors meet contrast',
+      name: 'Theme colors meet minimum contrast',
     });
     // A bare <i role="img">: not a button, not in the tab order (R-A1).
     expect(icon.tagName).toBe('I');
@@ -694,7 +694,7 @@ describe('ThemeEditor contrast status icon (title row)', () => {
       });
     });
     const icon = screen.getByRole('img', {
-      name: 'Theme has a contrast issue to fix',
+      name: 'Theme colors have a contrast issue to fix',
     });
     expect(icon).toHaveClass('fa-triangle-exclamation');
     expect(icon).not.toHaveAttribute('aria-live');
