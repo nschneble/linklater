@@ -76,6 +76,21 @@ export const BUNDLE_EXPLANATIONS: Record<Bundle, string> = {
 };
 
 /**
+ * The preview's macOS-style window chrome: the frame border, title bar, address
+ * pill, and the three traffic lights. Deliberately theme-independent — it frames
+ * the themed content like a real app window, so it stays constant across every
+ * bundle and mode and is never painted from the custom palette.
+ */
+const PREVIEW_CHROME = {
+  frameBorder: '#424041',
+  titleBar: '#2d2a2b',
+  pillBorder: '#423e41',
+  trafficRed: '#fe5c5f',
+  trafficYellow: '#f9c800',
+  trafficGreen: '#27c73f',
+} as const;
+
+/**
  * The decorative mock for the active bundle — the real component that bundle
  * paints, drawn at app scale: base shows the page frame + toolbar; mount shows
  * a link card; orbit shows the header with its account menu; and each status
@@ -87,7 +102,7 @@ export const BUNDLE_EXPLANATIONS: Record<Bundle, string> = {
 function BundleMock({ bundle }: { bundle: Bundle }) {
   if (bundle === 'base') {
     return (
-      <div className="pb-4 bg-[var(--base-bg)]">
+      <div className="flex-1 pb-4 bg-[var(--base-bg)]">
         <MockStagger>
           <MockToolbar />
         </MockStagger>
@@ -96,7 +111,7 @@ function BundleMock({ bundle }: { bundle: Bundle }) {
   }
   if (bundle === 'mount') {
     return (
-      <div className="p-4 bg-[var(--base-bg)]">
+      <div className="flex-1 p-4 bg-[var(--base-bg)]">
         <MockStagger>
           <MockLinkCard />
         </MockStagger>
@@ -105,7 +120,7 @@ function BundleMock({ bundle }: { bundle: Bundle }) {
   }
   if (bundle === 'orbit') {
     return (
-      <div className="relative bg-[var(--base-bg)]">
+      <div className="relative flex-1 bg-[var(--base-bg)]">
         <MockStagger>
           <MockHeader />
         </MockStagger>
@@ -121,7 +136,7 @@ function BundleMock({ bundle }: { bundle: Bundle }) {
     );
   }
   return (
-    <div className="p-4 bg-[var(--base-bg)]">
+    <div className="flex-1 p-4 bg-[var(--base-bg)]">
       <MockStagger>
         <MockNotice
           bundle={bundle}
@@ -191,15 +206,55 @@ export default function ComponentShowcase({
       <h2 id={headingId} className="sr-only">
         Live preview
       </h2>
+
       <div
-        key={mockKey}
-        aria-hidden="true"
-        data-testid="app-mock"
-        className="app-mock-asemic relative overflow-hidden bg-[var(--base-bg)] border border-[var(--base-border)] rounded-xl cursor-not-allowed"
-        style={contentThemeStyle}
+        className="flex flex-col w-full min-h-60 bg-[var(--base-bg)] border shadow-xl rounded-2xl overflow-hidden"
+        style={{ borderColor: PREVIEW_CHROME.frameBorder }}
       >
-        <BundleMock bundle={activeBundle} />
+        <div
+          className="flex flex-row items-center justify-between w-full h-8 px-3"
+          style={{ backgroundColor: PREVIEW_CHROME.titleBar }}
+        >
+          <div className="flex flex-row items-center gap-0.75 text-xs shadow-xl">
+            <i
+              className="fa-solid fa-circle"
+              style={{ color: PREVIEW_CHROME.trafficRed }}
+            ></i>
+            <i
+              className="fa-solid fa-circle"
+              style={{ color: PREVIEW_CHROME.trafficYellow }}
+            ></i>
+            <i
+              className="fa-solid fa-circle"
+              style={{ color: PREVIEW_CHROME.trafficGreen }}
+            ></i>
+          </div>
+
+          <div
+            className="flex flex-row items-center h-6 px-12 border shadow-xl rounded-4xl"
+            style={{ borderColor: PREVIEW_CHROME.pillBorder }}
+          >
+            <span className="text-white text-xs">Preview</span>
+          </div>
+
+          <div className="flex flex-row items-center gap-0.75 text-xs">
+            <i className="fa-solid fa-circle text-transparent"></i>
+            <i className="fa-solid fa-circle text-transparent"></i>
+            <i className="fa-solid fa-circle text-transparent"></i>
+          </div>
+        </div>
+
+        <div
+          className="flex flex-1 flex-col app-mock-asemic relative w-full overflow-hidden"
+          style={contentThemeStyle}
+          data-testid="app-mock"
+          key={mockKey}
+          aria-hidden="true"
+        >
+          <BundleMock bundle={activeBundle} />
+        </div>
       </div>
+
       <p className="text-[var(--base-alt-text)] text-xs">
         {BUNDLE_EXPLANATIONS[activeBundle]}
       </p>
