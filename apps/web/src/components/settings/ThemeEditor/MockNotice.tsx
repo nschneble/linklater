@@ -25,9 +25,9 @@ export default function MockNotice({
   toast,
 }: MockNoticeProps) {
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
       <div
-        className="flex items-center justify-center gap-2 px-3 py-2 border rounded-lg"
+        className="flex items-center justify-center gap-2 px-3 py-2 border-b"
         style={{
           backgroundColor: `var(--${bundle}-bg)`,
           borderColor: `var(--${bundle}-border)`,
@@ -39,7 +39,7 @@ export default function MockNotice({
       </div>
 
       <div
-        className="flex items-center gap-2 w-fit px-4 py-2.5 rounded-full"
+        className="flex items-center gap-2 w-fit mx-auto px-4 py-2.5 rounded-full"
         style={{
           backgroundColor: `var(--${bundle}-highlight)`,
           color: `var(--${bundle}-highlight-fg)`,
