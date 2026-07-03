@@ -583,6 +583,7 @@ export default function ThemeEditor() {
             variant="elevated"
             surface="base"
             onClick={handleCopyFromBaseTheme}
+            disabled={!customThemeEnabled}
           >
             <i className="fa-solid fa-clone" aria-hidden="true" />
             Copy {baseThemeLabel}
