@@ -12,7 +12,7 @@ export default function MockHeader() {
   return (
     <div className="flex items-center justify-between px-4 py-2.5 bg-[var(--orbit-bg)] border-b border-[var(--orbit-border)]">
       <div className="flex items-center gap-2">
-        <span className="flex items-center justify-center w-6 h-6 bg-[var(--orbit-highlight)] rounded-md">
+        <span className="flex items-center justify-center w-6 h-6 bg-[var(--orbit-highlight)] rounded-full">
           <i
             className="fa-solid fa-link text-[var(--orbit-highlight-fg)] text-[0.6rem]"
             aria-hidden="true"
@@ -27,10 +27,16 @@ export default function MockHeader() {
           </span>
         </span>
       </div>
-      <span className="flex items-center justify-center w-6 h-6 bg-[var(--orbit-highlight-hover)] rounded-full">
-        <span className="text-[var(--orbit-highlight-fg)] text-[0.6rem] font-bold">
-          {MOCK_GLYPHS.avatarInitial}
+      <span className="flex items-center gap-1.5">
+        <span className="flex items-center justify-center w-6 h-6 bg-[var(--orbit-highlight-hover)] rounded-full">
+          <span className="text-[var(--orbit-highlight-fg)] text-[0.6rem] font-bold">
+            {MOCK_GLYPHS.avatarInitial}
+          </span>
         </span>
+        <i
+          className="fa-solid fa-chevron-down text-[var(--orbit-alt-text)] text-[0.6rem]"
+          aria-hidden="true"
+        />
       </span>
     </div>
   );

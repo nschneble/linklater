@@ -141,8 +141,8 @@ function BundleMock({ bundle }: { bundle: Bundle }) {
         <MockNotice
           bundle={bundle}
           icon={STATUS_ICONS[bundle]}
-          title={STATUS_COPY[bundle].title}
-          detail={STATUS_COPY[bundle].detail}
+          banner={STATUS_COPY[bundle].banner}
+          toast={STATUS_COPY[bundle].toast}
         />
       </MockStagger>
     </div>
@@ -158,9 +158,10 @@ const STATUS_ICONS: Record<StatusBundle, string> = {
   success: 'fa-solid fa-circle-check',
 };
 
-// Asemic Old Turkic stand-ins for each status notice's title + detail. They feed
-// MockNotice's props; MockNotice renders them verbatim (no string edit there).
-const STATUS_COPY: Record<StatusBundle, { title: string; detail: string }> =
+// Asemic Old Turkic stand-ins for each status notice's banner + toast lines.
+// They feed MockNotice's props; MockNotice renders them verbatim (no string
+// edit there).
+const STATUS_COPY: Record<StatusBundle, { banner: string; toast: string }> =
   MOCK_STATUS_GLYPHS;
 
 /**
@@ -245,7 +246,7 @@ export default function ComponentShowcase({
         </div>
 
         <div
-          className="flex flex-1 flex-col app-mock-asemic relative w-full overflow-hidden"
+          className="flex flex-1 flex-col app-mock-asemic relative w-full overflow-hidden cursor-not-allowed"
           style={contentThemeStyle}
           data-testid="app-mock"
           key={mockKey}

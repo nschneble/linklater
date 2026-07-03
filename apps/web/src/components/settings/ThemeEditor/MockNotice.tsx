@@ -3,58 +3,52 @@ type StatusBundle = 'alert' | 'warn' | 'info' | 'success';
 interface MockNoticeProps {
   bundle: StatusBundle;
   icon: string;
-  title: string;
-  detail: string;
+  banner: string;
+  toast: string;
 }
 
 /**
- * One static status notification in the app mock (alert / warn / info /
- * success). Decorative only: no role="alert"/"status", no aria-live — the
- * whole mock re-renders on every color edit, so a live region would
- * re-announce on every keystroke. Paints every slot of its status bundle so
- * the editor can verify that bundle's contrast in realistic context.
+ * The static status previews in the app mock (alert / warn / info / success),
+ * mirroring the TWO real status forms each status bundle paints: an inline
+ * `Alert` banner (bundle bg + border, inline bundle-text icon and copy) stacked
+ * above a `Toast` pill (bundle-highlight fill, bundle-highlight-fg icon + copy +
+ * a decorative close glyph). Decorative only: no role="alert"/"status", no
+ * aria-live — the whole mock re-renders on every color edit, so a live region
+ * would re-announce on every keystroke. Between them the two forms paint the
+ * bundle's bg, border, text, highlight, and highlight-fg slots in realistic
+ * context so the editor can preview that bundle's contrast.
  */
 export default function MockNotice({
   bundle,
   icon,
-  title,
-  detail,
+  banner,
+  toast,
 }: MockNoticeProps) {
   return (
-    <div
-      className="flex items-start gap-2.5 px-3 py-2.5 border rounded-lg"
-      style={{
-        backgroundColor: `var(--${bundle}-bg)`,
-        borderColor: `var(--${bundle}-border)`,
-      }}
-    >
-      <span
-        className="flex shrink-0 items-center justify-center w-6 h-6 rounded-md"
+    <div className="space-y-2.5">
+      <div
+        className="flex items-center justify-center gap-2 px-3 py-2 border rounded-lg"
+        style={{
+          backgroundColor: `var(--${bundle}-bg)`,
+          borderColor: `var(--${bundle}-border)`,
+          color: `var(--${bundle}-text)`,
+        }}
+      >
+        <i className={`${icon} text-[0.7rem]`} aria-hidden="true" />
+        <span className="text-[0.7rem]">{banner}</span>
+      </div>
+
+      <div
+        className="flex items-center gap-2 w-fit px-4 py-2.5 rounded-full"
         style={{
           backgroundColor: `var(--${bundle}-highlight)`,
           color: `var(--${bundle}-highlight-fg)`,
         }}
       >
         <i className={`${icon} text-[0.7rem]`} aria-hidden="true" />
-      </span>
-      <div className="flex-1 min-w-0">
-        <p
-          className="text-[0.72rem] font-semibold"
-          style={{ color: `var(--${bundle}-text)` }}
-        >
-          {title}
-        </p>
-        <p
-          className="text-[0.65rem]"
-          style={{ color: `var(--${bundle}-alt-text)` }}
-        >
-          {detail}
-        </p>
+        <span className="text-[0.7rem] font-medium">{toast}</span>
+        <i className="fa-solid fa-xmark text-[0.7rem]" aria-hidden="true" />
       </div>
-      <span
-        className="w-1.5 h-1.5 mt-1 rounded-full"
-        style={{ backgroundColor: `var(--${bundle}-highlight-hover)` }}
-      />
     </div>
   );
 }

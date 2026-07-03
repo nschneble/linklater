@@ -123,7 +123,10 @@ describe('ComponentShowcase – per-bundle mock (PRD point 4)', () => {
   it('previews the matching notice for each status bundle', () => {
     renderShowcase('success');
     expect(
-      screen.getByText(MOCK_STATUS_GLYPHS.success.title),
+      screen.getByText(MOCK_STATUS_GLYPHS.success.banner),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(MOCK_STATUS_GLYPHS.success.toast),
     ).toBeInTheDocument();
   });
 });
@@ -316,8 +319,8 @@ describe('ComponentShowcase – asemic Old Turkic copy (decorative)', () => {
   const allGlyphStrings = [
     ...Object.values(MOCK_GLYPHS),
     ...Object.values(MOCK_STATUS_GLYPHS).flatMap((copy) => [
-      copy.title,
-      copy.detail,
+      copy.banner,
+      copy.toast,
     ]),
   ];
 

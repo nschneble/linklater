@@ -56,7 +56,6 @@ export const MOCK_GLYPHS = {
   // MockToolbar (base)
   yourLinks: asemicLine([4, 5], 4),
   searchPlaceholder: asemicLine([6, 5], 5),
-  shortcutSlash: asemicWord(1, 6),
   addLink: asemicLine([3, 4], 7),
   stumble: asemicWord(7, 8),
   unread: asemicWord(6, 9),
@@ -74,29 +73,35 @@ export const MOCK_GLYPHS = {
   toggleMode: asemicLine([6, 2, 4, 4], 17),
   editTheme: asemicLine([4, 4, 5], 18),
   logOut: asemicLine([3, 3], 19),
+  // The Theme submenu trigger row: a short "Theme" label above the
+  // current-theme name, mirroring the real ThemeSubmenu's two-line trigger.
+  themeLabel: asemicWord(5, 30),
+  themeName: asemicWord(8, 31),
 } as const;
 
 /**
  * The status-notice copy for the mock's alert/warn/info/success previews,
  * asemic like the rest of the mock. Keyed by status bundle, each with a longer
- * `title` line and a shorter `detail` line so the notice keeps its shape. Feeds
- * MockNotice's `title`/`detail` props (MockNotice itself renders props verbatim).
+ * `banner` line (the centered inline-alert copy) and a shorter `toast` line
+ * (the pill copy) so each notice keeps the shape of the two real status forms
+ * MockNotice renders — an inline `Alert` banner above a `Toast` pill. Feeds
+ * MockNotice's `banner`/`toast` props (MockNotice renders them verbatim).
  */
 export const MOCK_STATUS_GLYPHS = {
   warn: {
-    title: asemicLine([4, 5, 3, 7, 5, 5, 4], 20),
-    detail: asemicLine([4, 8, 3, 4, 2, 4, 4, 2, 6], 21),
+    banner: asemicLine([4, 5, 3, 7, 5, 5, 4], 20),
+    toast: asemicLine([4, 8, 3, 4, 2, 4, 4, 2, 6], 21),
   },
   info: {
-    title: asemicLine([3, 4, 1, 4, 2, 7, 2], 22),
-    detail: asemicLine([4, 5, 6, 5, 6], 23),
+    banner: asemicLine([3, 4, 1, 4, 2, 7, 2], 22),
+    toast: asemicLine([4, 5, 6, 5, 6], 23),
   },
   alert: {
-    title: asemicLine([2, 8, 4, 4, 4], 24),
-    detail: asemicLine([3, 4, 3, 2, 4, 5, 2, 1, 6], 25),
+    banner: asemicLine([2, 8, 4, 4, 4], 24),
+    toast: asemicLine([3, 4, 3, 2, 4, 5, 2, 1, 6], 25),
   },
   success: {
-    title: asemicLine([4, 6], 26),
-    detail: asemicLine([5, 2, 6, 3, 6, 9], 27),
+    banner: asemicLine([4, 6], 26),
+    toast: asemicLine([5, 2, 6, 3, 6, 9], 27),
   },
 } as const;
