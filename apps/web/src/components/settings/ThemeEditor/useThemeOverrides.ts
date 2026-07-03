@@ -50,13 +50,13 @@ const SLOT_LABELS: Record<Slot | BaseOnlySlot | BaseAndMountOnlySlot, string> =
     text: 'Text',
     'alt-text': 'Alt text',
     'subtle-text': 'Subtle text',
-    'input-bg': 'Input background',
+    'input-bg': 'Input',
     highlight: 'Highlight',
-    'highlight-fg': 'Highlight text',
     'highlight-hover': 'Highlight hover',
+    'highlight-fg': 'Highlight text',
   };
 
-const FOCUS_RING_LABEL = 'Focus ring';
+const FOCUS_RING_LABEL = 'Focus';
 
 /**
  * Groupings used by `ColorEditor` to render the variable list with labeled
@@ -79,15 +79,15 @@ export const VAR_GROUPS: BundleGroup[] = BUNDLES.map((bundle) => ({
       variable: `--${bundle}-${slot}` as ThemeVariable,
       label: SLOT_LABELS[slot],
     })),
-    ...(bundle === 'base'
-      ? BASE_ONLY_SLOTS.map((slot) => ({
-          variable: `--base-${slot}` as ThemeVariable,
-          label: SLOT_LABELS[slot],
-        }))
-      : []),
     ...(bundle === 'base' || bundle === 'mount'
       ? BASE_AND_MOUNT_ONLY_SLOTS.map((slot) => ({
           variable: `--${bundle}-${slot}` as ThemeVariable,
+          label: SLOT_LABELS[slot],
+        }))
+      : []),
+    ...(bundle === 'base'
+      ? BASE_ONLY_SLOTS.map((slot) => ({
+          variable: `--base-${slot}` as ThemeVariable,
           label: SLOT_LABELS[slot],
         }))
       : []),
