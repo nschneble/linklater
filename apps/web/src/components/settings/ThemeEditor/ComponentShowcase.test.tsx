@@ -112,6 +112,7 @@ describe('ComponentShowcase – per-bundle mock (PRD point 4)', () => {
     renderShowcase('orbit');
     expect(screen.getByText(MOCK_GLYPHS.wordmark)).toBeInTheDocument();
     expect(screen.getByText(MOCK_GLYPHS.loggedInAs)).toBeInTheDocument();
+    expect(screen.getByText(MOCK_GLYPHS.themeName)).toBeInTheDocument();
   });
 
   it('previews the toolbar for the base bundle', () => {

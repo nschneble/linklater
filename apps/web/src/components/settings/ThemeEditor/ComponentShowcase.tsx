@@ -246,7 +246,7 @@ export default function ComponentShowcase({
         </div>
 
         <div
-          className="flex flex-1 flex-col app-mock-asemic relative w-full overflow-hidden cursor-not-allowed"
+          className="relative flex flex-1 flex-col w-full overflow-hidden app-mock-asemic cursor-not-allowed"
           style={contentThemeStyle}
           data-testid="app-mock"
           key={mockKey}

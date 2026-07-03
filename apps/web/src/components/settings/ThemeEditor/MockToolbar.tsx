@@ -22,7 +22,7 @@ export default function MockToolbar() {
       </span>
 
       <div className="flex items-center justify-between gap-2">
-        <div className="flex w-fit gap-1 p-1 bg-[var(--base-input-bg)] border border-[var(--base-border)] rounded-full">
+        <div className="flex gap-1 w-fit p-1 bg-[var(--base-input-bg)] border border-[var(--base-border)] rounded-full">
           <span className="flex items-center gap-1 px-3 py-1 bg-[var(--base-highlight)] text-[var(--base-highlight-fg)] text-[0.65rem] font-semibold rounded-full">
             <i
               className="fa-solid fa-circle-dot text-[0.4rem]"
