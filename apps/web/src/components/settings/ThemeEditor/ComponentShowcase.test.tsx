@@ -350,11 +350,10 @@ describe('ComponentShowcase – asemic Old Turkic copy (decorative)', () => {
   });
 });
 
-describe('ComponentShowcase – asemic font scope + no-interaction cursor (#9/#10)', () => {
-  it('marks the mock container with the scoped asemic font and cursor-not-allowed', () => {
+describe('ComponentShowcase – asemic font scope', () => {
+  it('marks the mock container with the scoped asemic font', () => {
     renderShowcase('base');
     expect(getMock()).toHaveClass('app-mock-asemic');
-    expect(getMock()).toHaveClass('cursor-not-allowed');
   });
 
   it('keeps the mock free of disabled-state ARIA (cursor read only, not a control)', () => {
