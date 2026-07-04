@@ -1,13 +1,16 @@
 interface FeatureTileProps {
   description: string;
-  // e.g. 'fa-solid fa-bookmark'
   icon: string;
   title: string;
+  offset: number;
 }
 
-function FeatureTile({ description, icon, title }: FeatureTileProps) {
+function FeatureTile({ description, icon, title, offset }: FeatureTileProps) {
   return (
-    <div className="flex flex-col gap-3 p-6 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-2xl animate-fade-in-up">
+    <div
+      className="flex flex-col gap-3 -mx-6 pl-12 first:pl-6 p-6 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-2xl animate-fade-in-up"
+      style={{ marginTop: offset + 'px', marginBottom: -offset + 'px' }}
+    >
       <i
         className={`${icon} text-2xl text-[var(--mount-highlight)]`}
         aria-hidden="true"
@@ -28,18 +31,21 @@ const FEATURES: FeatureTileProps[] = [
       'Save links from literally anywhere. A New York Times recipe on your laptop. A Reddit thread on your phone. A Facebook post your mom emailed you, again.',
     icon: 'fa-solid fa-bookmark',
     title: 'Save',
+    offset: 0,
   },
   {
     description:
       'Decision fatigue is real. We can serve up a random unread link from your collection, and all you gotta do is read it. Bringing back the best of the 2000s!',
     icon: 'fa-brands fa-stumbleupon',
     title: 'Stumble!',
+    offset: -30,
   },
   {
     description:
       'Half the fun of learning something new is sharing it with those around you. Be the annoying person at the metaphorical water cooler with a fun fact.',
     icon: 'fa-solid fa-share',
     title: 'Share',
+    offset: -60,
   },
 ];
 
