@@ -128,13 +128,8 @@ export default function ColorRow({
   const pickerAriaLabel = `Color picker for ${label}`;
   const textAriaLabel = `Value for ${label}`;
   const failureNoteId = `theme-editor-failure-${variable.replace(/^--/, '')}`;
-  // Names only the failing pair's OTHER endpoint (this row IS the near one, so
-  // its slot is implied by the row label + the input's accessible name). The
-  // ratio uses a word relation ("below the … minimum") rather than "<" because
-  // screen readers drop punctuation by default, which would collapse "1.8:1 <
-  // 4.5:1" to two bare numbers with no relation.
   const failureNote = debouncedFailure
-    ? `${debouncedFailure.partnerLabel} contrast is too low (${debouncedFailure.ratio.toFixed(1)}:1, below the ${debouncedFailure.threshold}:1 minimum).`
+    ? `${debouncedFailure.partnerLabel} contrast is too low (${debouncedFailure.ratio.toFixed(1)}:1)`
     : '';
 
   return (

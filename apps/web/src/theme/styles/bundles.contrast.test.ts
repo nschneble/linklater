@@ -848,6 +848,41 @@ describe('bundle contrast contract', () => {
   });
 
   /*
+   * `--warn-text` over `--mount-bg` backs the Theme Editor's per-bundle
+   * contrast-error triangle (`BundleTabs`): the glyph paints `--warn-text` on
+   * the mount-tier tab pill. It IS the at-a-glance triage signal, so it's a
+   * required graphical object (SC 1.4.11) and must clear 3:1 on every theme.
+   * Tightest film theme: before-midnight light ~7.70:1.
+   */
+  describe('warn-text on mount-bg (BundleTabs error glyph)', () => {
+    for (const fixture of FIXTURES) {
+      if (!fixture.checkAdjacency) {
+        continue;
+      }
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+      const warnText = getSlot(declarations, 'warn', 'text');
+      const mountBg = getSlot(declarations, 'mount', 'bg');
+      if (warnText === null || mountBg === null) {
+        continue;
+      }
+
+      it(`${fixture.label} >= 3:1`, () => {
+        const ratio = contrastRatio(
+          resolveFg(warnText),
+          compositeOverBg(mountBg, fixture.pageBg),
+        );
+        expect
+          .soft(
+            ratio,
+            `warn-text on mount-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+          )
+          .toBeGreaterThanOrEqual(AA_NON_TEXT);
+      });
+    }
+  });
+
+  /*
    * `--orbit-border` over `--orbit-bg` is the structural pair for inner
    * lifted sub-surfaces inside an orbit-tier panel: WelcomeModal feature
    * tiles + KeyboardShortcutsModal kbd legends both sit on the orbit

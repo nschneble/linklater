@@ -157,10 +157,8 @@ describe('ColorRow – inline contrast-failure note', () => {
     });
 
     // The rendered string matches ColorRow's format exactly: the partner slot
-    // label, ratio to one decimal, and the word-form threshold relation.
-    const note = screen.getByText(
-      'Text contrast is too low (2.8:1, below the 4.5:1 minimum).',
-    );
+    // label plus the measured ratio to one decimal.
+    const note = screen.getByText('Text contrast is too low (2.8:1)');
     expect(note).toBeInTheDocument();
     // describedby now resolves to the rendered note's id.
     const describedBy = input.getAttribute('aria-describedby');

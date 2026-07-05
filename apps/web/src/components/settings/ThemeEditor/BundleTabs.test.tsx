@@ -19,6 +19,13 @@ import {
   type Bundle,
   type ThemeVariable,
 } from './useThemeOverrides';
+import type { TokenContrastFailure } from './contrastResults';
+
+const A_FAILURE: TokenContrastFailure = {
+  ratio: 2,
+  threshold: 4.5,
+  partnerLabel: 'Text',
+};
 
 const PLACEHOLDER_VALUE = '#abcdef';
 
@@ -28,7 +35,10 @@ function buildColorValues(): Record<ThemeVariable, string> {
   ) as Record<ThemeVariable, string>;
 }
 
-function Harness({ initial = 'base' as Bundle } = {}) {
+function Harness({
+  initial = 'base' as Bundle,
+  failures = new Map<string, TokenContrastFailure>(),
+} = {}) {
   const [activeBundle, setActiveBundle] = useState<Bundle>(initial);
   // Mirror the real parent (ColorEditor): the tablist is named by the region's
   // "Color Bundles" h2, passed in via tablistLabelledBy.
@@ -37,7 +47,7 @@ function Harness({ initial = 'base' as Bundle } = {}) {
       <h2 id="color-bundles-heading">Color Bundles</h2>
       <BundleTabs
         colorValues={buildColorValues()}
-        contrastFailures={new Map()}
+        contrastFailures={failures}
         activeBundle={activeBundle}
         onBundleChange={setActiveBundle}
         onOverride={vi.fn()}
@@ -54,6 +64,44 @@ function bundleLabel(bundle: Bundle): string {
 function tab(bundle: Bundle) {
   return screen.getByRole('tab', { name: bundleLabel(bundle) });
 }
+
+describe('BundleTabs – per-bundle contrast-error indicator', () => {
+  it('flags the tab whose bundle owns a failing token, and no others', () => {
+    render(<Harness failures={new Map([['--mount-bg', A_FAILURE]])} />);
+
+    // sr-only suffix reaches AT; the visible "Mount" stays the name base (2.5.3).
+    const mountTab = screen.getByRole('tab', {
+      name: 'Mount, has contrast errors',
+    });
+    expect(mountTab.querySelector('.fa-triangle-exclamation')).not.toBeNull();
+
+    // A bundle with no failing token carries neither the glyph nor the note.
+    const baseTab = screen.getByRole('tab', { name: 'Base' });
+    expect(baseTab.querySelector('.fa-triangle-exclamation')).toBeNull();
+  });
+
+  it('routes a focus-ring failure to the Base tab (it rides the base group)', () => {
+    render(<Harness failures={new Map([['--focus-ring', A_FAILURE]])} />);
+    const baseTab = screen.getByRole('tab', {
+      name: 'Base, has contrast errors',
+    });
+    expect(baseTab.querySelector('.fa-triangle-exclamation')).not.toBeNull();
+  });
+
+  it('shows BOTH the selection dot and the error triangle on an active failing tab', () => {
+    render(
+      <Harness
+        initial="mount"
+        failures={new Map([['--mount-bg', A_FAILURE]])}
+      />,
+    );
+    const mountTab = screen.getByRole('tab', {
+      name: 'Mount, has contrast errors',
+    });
+    expect(mountTab.querySelector('.fa-circle-dot')).not.toBeNull();
+    expect(mountTab.querySelector('.fa-triangle-exclamation')).not.toBeNull();
+  });
+});
 
 describe('BundleTabs – hover affordance (parity with the page tab pills)', () => {
   it('brightens the border and adds a shadow on hover', () => {
