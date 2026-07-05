@@ -85,10 +85,11 @@ describe('BundleTabs – per-bundle contrast-error indicator', () => {
     const baseTab = screen.getByRole('tab', {
       name: 'Base, has contrast errors',
     });
-    expect(baseTab.querySelector('.fa-triangle-exclamation')).not.toBeNull();
+    expect(baseTab.querySelector('.fa-circle-dot')).not.toBeNull();
+    expect(baseTab.querySelector('.fa-triangle-exclamation')).toBeNull();
   });
 
-  it('shows BOTH the selection dot and the error triangle on an active failing tab', () => {
+  it('shows only the selection dot on an active failing tab', () => {
     render(
       <Harness
         initial="mount"
@@ -99,7 +100,7 @@ describe('BundleTabs – per-bundle contrast-error indicator', () => {
       name: 'Mount, has contrast errors',
     });
     expect(mountTab.querySelector('.fa-circle-dot')).not.toBeNull();
-    expect(mountTab.querySelector('.fa-triangle-exclamation')).not.toBeNull();
+    expect(mountTab.querySelector('.fa-triangle-exclamation')).toBeNull();
   });
 });
 
