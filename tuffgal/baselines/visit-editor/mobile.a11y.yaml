@@ -29,15 +29,16 @@
       - menuitemradio "School of Rock"
 - main "Links":
   - heading "Theme editor" [level=1]
-  - img "Theme colors meet contrast"
+  - img "Theme colors meet minimum contrast"
   - paragraph: All changes are saved automatically.
   - status
   - tablist "Palette to edit":
-    - tab "Light colors"
-    - tab "Dark colors" [selected]
+    - tab "Light"
+    - tab "Dark" [selected]
   - button "Randomize"
-  - button "Copy A Scanner Darkly"
-  - tabpanel "Dark colors":
+  - button "Copy A Scanner Darkly" [disabled]
+  - text: Already using A Scanner Darkly's colors. Edit a color or Randomize to start a custom theme.
+  - tabpanel "Dark":
     - region "Color Bundles":
       - heading "Color Bundles" [level=2]
       - note: These start from A Scanner Darkly. Editing any color saves it as your own theme.
@@ -76,31 +77,32 @@
         - textbox "Value for Highlight":
           - /placeholder: "#000000"
           - text: "#ed9156"
-        - paragraph: Highlight text
-        - textbox "Color picker for Highlight text": "#1a0e08"
-        - textbox "Value for Highlight text":
-          - /placeholder: "#000000"
-          - text: "#1a0e08"
         - paragraph: Highlight hover
         - textbox "Color picker for Highlight hover": "#f5a878"
         - textbox "Value for Highlight hover":
           - /placeholder: "#000000"
           - text: "#f5a878"
+        - paragraph: Highlight text
+        - textbox "Color picker for Highlight text": "#1a0e08"
+        - textbox "Value for Highlight text":
+          - /placeholder: "#000000"
+          - text: "#1a0e08"
+        - paragraph: Input
+        - textbox "Color picker for Input": "#201e43"
+        - textbox "Value for Input":
+          - /placeholder: "#000000"
+          - text: "#201e43"
         - paragraph: Subtle text
         - textbox "Color picker for Subtle text": "#bcdc6f"
         - textbox "Value for Subtle text":
           - /placeholder: "#000000"
           - text: "#bcdc6f"
-        - paragraph: Input background
-        - textbox "Color picker for Input background": "#201e43"
-        - textbox "Value for Input background":
-          - /placeholder: "#000000"
-          - text: "#201e43"
-        - paragraph: Focus ring
-        - textbox "Color picker for Focus ring": "#ed9156"
-        - textbox "Value for Focus ring":
+        - paragraph: Focus
+        - textbox "Color picker for Focus": "#ed9156"
+        - textbox "Value for Focus":
           - /placeholder: "#000000"
           - text: "#ed9156"
     - region "Live preview":
       - heading "Live preview" [level=2]
-      - paragraph: "Used for the page itself: the toolbar, search field, and tabs."
+      - text: Preview
+      - paragraph: Page defaults. Covers elements like the page title, search input, and navigation buttons.
