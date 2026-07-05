@@ -231,8 +231,62 @@ export interface TokenContrastFailure {
   ratio: number;
   /** Threshold the pair must clear. */
   threshold: number;
-  /** Human-readable label for the pair (e.g. "text / bg"). */
-  pairLabel: string;
+  /**
+   * The OTHER endpoint of the failing pair, named by its editor row label
+   * (e.g. "Alt text"). The row this failure renders on IS one endpoint, so the
+   * note only needs to name its partner — the current slot is implied by the
+   * row's own label + the input's accessible name. Bundle-qualified ("Mount
+   * border") when the partner lives in a different bundle than this row, so the
+   * named endpoint is never ambiguous across bundles.
+   */
+  partnerLabel: string;
+}
+
+/**
+ * Per-endpoint descriptor for every editable token, built once from the same
+ * `VAR_GROUPS` the rows render from, so a failure note names its partner with
+ * the EXACT label the user sees on that partner's row. The universal focus ring
+ * (`--focus-ring`) rides the base group but belongs to no bundle, so its
+ * `bundle` is null (detected by its token not matching `--{group.bundle}-…`) —
+ * it is never bundle-qualified since its name is already unique.
+ */
+const ENDPOINT_INFO: ReadonlyMap<
+  string,
+  { bundle: Bundle | null; bundleLabel: string; slotLabel: string }
+> = (() => {
+  const info = new Map<
+    string,
+    { bundle: Bundle | null; bundleLabel: string; slotLabel: string }
+  >();
+  for (const group of VAR_GROUPS) {
+    for (const item of group.items) {
+      const belongsToBundle = item.variable.startsWith(`--${group.bundle}-`);
+      info.set(item.variable, {
+        bundle: belongsToBundle ? group.bundle : null,
+        bundleLabel: group.label,
+        slotLabel: item.label,
+      });
+    }
+  }
+  return info;
+})();
+
+/**
+ * The failing pair's OTHER endpoint, relative to `rowToken`, as a display
+ * label. Bundle-qualified only when the partner's bundle differs from the row's
+ * (or the row has no bundle, e.g. the focus ring) so "Background" can't be
+ * mistaken for the wrong bundle's background.
+ */
+function partnerLabelFor(rowToken: string, pair: ContrastPair): string {
+  const partnerToken =
+    rowToken === pair.foreground ? pair.background : pair.foreground;
+  const partner = ENDPOINT_INFO.get(partnerToken);
+  if (partner === undefined) return partnerToken;
+  const row = ENDPOINT_INFO.get(rowToken);
+  if (partner.bundle !== null && partner.bundle !== row?.bundle) {
+    return `${partner.bundleLabel} ${partner.slotLabel.toLowerCase()}`;
+  }
+  return partner.slotLabel;
 }
 
 /**
@@ -254,7 +308,7 @@ export function pairsTouchingToken(
     failures.set(token, {
       ratio,
       threshold: pair.threshold,
-      pairLabel: pair.label,
+      partnerLabel: partnerLabelFor(token, pair),
     });
   };
   for (const group of results.groups) {

@@ -15,7 +15,7 @@ interface MockHeaderProps {
 export default function MockHeader({ muted }: MockHeaderProps) {
   return (
     <div
-      className="flex items-center justify-between px-4 py-2.5 bg-[var(--orbit-bg)] border-b border-[var(--orbit-border)] data-muted:grayscale data-muted:opacity-30 transition duration-200"
+      className="flex items-center justify-between px-4 py-2.5 bg-[var(--orbit-bg)] border-b border-[var(--orbit-border)] data-muted:grayscale data-muted:opacity-30 group-hover:grayscale-0! group-hover:opacity-100! transition duration-200"
       data-muted={muted || undefined}
     >
       <div className="flex items-center gap-2">

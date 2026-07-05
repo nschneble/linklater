@@ -55,6 +55,18 @@ function tab(bundle: Bundle) {
   return screen.getByRole('tab', { name: bundleLabel(bundle) });
 }
 
+describe('BundleTabs – hover affordance (parity with the page tab pills)', () => {
+  it('brightens the border and adds a shadow on hover', () => {
+    render(<Harness />);
+    // Mirrors the real SlidingTabBar/LinksToolbar `border-shadow` hover; the
+    // border only increases contrast (--mount-border → --mount-text), so it
+    // never weakens the pill's 1.4.11 boundary.
+    const pill = tab('mount');
+    expect(pill).toHaveClass('hover:border-[var(--mount-text)]');
+    expect(pill).toHaveClass('hover:border-shadow');
+  });
+});
+
 describe('BundleTabs – tablist structure', () => {
   it('exposes a horizontal tablist with one tab per bundle', () => {
     render(<Harness />);

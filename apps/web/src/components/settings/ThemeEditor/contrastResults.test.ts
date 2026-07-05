@@ -186,8 +186,38 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
     const touching = pairsTouchingToken(results);
     // The shared `--mount-bg` row shows the severe pair (the bigger deficit),
     // even though the mild pair came first.
-    expect(touching.get('--mount-bg')?.pairLabel).toBe('text / bg');
+    // The partner endpoint of the `--mount-bg` row in the severe text/bg pair
+    // is `--mount-text` — same bundle, so the label is the bare slot name.
+    expect(touching.get('--mount-bg')?.partnerLabel).toBe('Text');
     expect(touching.get('--mount-bg')?.ratio).toBe(1.5);
+  });
+
+  it('bundle-qualifies a partner that lives in a different bundle', () => {
+    // The card border-vs-page-bg adjacency: the two endpoints are in different
+    // bundles, so a bare "Background"/"Border" would be ambiguous. Each row must
+    // name its partner WITH the partner's bundle (SC 3.3.1 disambiguation).
+    const crossBundle = makePair({
+      label: 'border / base-bg',
+      foreground: '--mount-border',
+      background: '--base-bg',
+      criterion: '1.4.11',
+      threshold: 3,
+    });
+    const results: ContrastResults = {
+      groups: [
+        {
+          bundle: 'mount',
+          label: 'mount',
+          pairs: [{ pair: crossBundle, ratio: 2.1 }],
+        },
+      ],
+    } as unknown as ContrastResults;
+
+    const touching = pairsTouchingToken(results);
+    expect(touching.get('--mount-border')?.partnerLabel).toBe(
+      'Base background',
+    );
+    expect(touching.get('--base-bg')?.partnerLabel).toBe('Mount border');
   });
 
   it('makes no entry for passing or unverified pairs', () => {

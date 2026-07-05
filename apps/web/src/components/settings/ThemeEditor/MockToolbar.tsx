@@ -8,7 +8,11 @@ import { MOCK_GLYPHS } from './mockGlyphs';
  * styled <div> (never an <input>, and with no leading icon or shortcut glyph),
  * the actions and pills are <span>s with no handlers and no focusable
  * descendants. Renders BOTH a static selected pill (Unread) and an unselected
- * pill (Read) so both tab styles can be checked at once. The Add link span
+ * pill (Read) so both tab styles can be checked at once. The pills mirror the
+ * real `SlidingTabBar` (surface=base lifts to mount): a `--mount-bg` container,
+ * the selected pill a `--mount-text` fill with a `--mount-bg` label, the idle
+ * pill `--mount-alt-text` — so the mock reads like the real Unread/Read switcher
+ * and the editor's own bundle tabs, not a one-off. The Add link span
  * mirrors the real base-surface `PrimaryButton` (base-highlight fill) and the
  * Stumble span mirrors the real base-surface elevated `IconButton` (mount-bg
  * lift). The visible copy is asemic Old Turkic (see mockGlyphs) so the
@@ -21,7 +25,7 @@ interface MockToolbarProps {
 export default function MockToolbar({ muted }: MockToolbarProps) {
   return (
     <div
-      className="space-y-2.5 px-4 pt-3 data-muted:grayscale data-muted:opacity-30 transition duration-200"
+      className="space-y-2.5 px-4 pt-3 data-muted:grayscale data-muted:opacity-30 group-hover:grayscale-0! group-hover:opacity-100! transition duration-200"
       data-muted={muted || undefined}
     >
       <span className="block text-[var(--base-text)] text-base font-bold">
@@ -29,15 +33,15 @@ export default function MockToolbar({ muted }: MockToolbarProps) {
       </span>
 
       <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-1 w-fit p-1 bg-[var(--base-input-bg)] border border-[var(--base-border)] rounded-full">
-          <span className="flex items-center gap-1 px-3 py-1 bg-[var(--base-highlight)] text-[var(--base-highlight-fg)] text-[0.65rem] font-semibold rounded-full">
+        <div className="flex gap-1 w-fit p-1 bg-[var(--mount-bg)] rounded-full">
+          <span className="flex items-center gap-1 px-3 py-1 bg-[var(--mount-text)] text-[var(--mount-bg)] text-[0.65rem] font-extrabold rounded-full">
             <i
               className="fa-solid fa-circle-dot text-[0.4rem]"
               aria-hidden="true"
             />
             {MOCK_GLYPHS.unread}
           </span>
-          <span className="px-3 py-1 text-[var(--base-alt-text)] text-[0.65rem] font-semibold rounded-full">
+          <span className="px-3 py-1 text-[var(--mount-alt-text)] text-[0.65rem] font-semibold rounded-full">
             {MOCK_GLYPHS.read}
           </span>
         </div>

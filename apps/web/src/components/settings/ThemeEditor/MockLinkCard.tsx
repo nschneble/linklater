@@ -21,7 +21,7 @@ interface MockLinkCardProps {
 export default function MockLinkCard({ muted }: MockLinkCardProps) {
   return (
     <div
-      className="relative overflow-visible m-4 pl-6 pr-3 py-3 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] border-shadow rounded-r-xl data-muted:grayscale data-muted:opacity-30 transition duration-200"
+      className="relative overflow-visible m-4 pl-6 pr-3 py-3 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] border-shadow rounded-r-xl data-muted:grayscale data-muted:opacity-30 group-hover:grayscale-0! group-hover:opacity-100! transition duration-200"
       data-muted={muted || undefined}
     >
       <span className="absolute left-0 top-3 -translate-x-1/2 w-5 h-5 bg-[var(--mount-highlight-hover)] rounded-full" />

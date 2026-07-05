@@ -193,7 +193,7 @@ export default function ComponentShowcase({
         </div>
 
         <div
-          className="relative flex flex-1 flex-col w-full overflow-hidden app-mock-asemic"
+          className="group relative flex flex-1 flex-col w-full overflow-hidden app-mock-asemic"
           style={contentThemeStyle}
           data-testid="app-mock"
           key={mockKey}

@@ -171,6 +171,46 @@ describe('ComponentShowcase – whole-frame preview with grayscale muting', () =
   });
 });
 
+/*
+ * Hovering the preview reveals the whole theme in color. This is CSS-only
+ * (`group` on the aria-hidden mock + `group-hover:` overrides on each muted
+ * wrapper), which jsdom can't exercise via a real `:hover`, so these pin the
+ * wiring by class presence instead. The `!` important is load-bearing: the
+ * `data-muted:` mute compiles LATER than `group-hover:` at equal specificity,
+ * so without it the mute would win over the hover reveal.
+ */
+describe('ComponentShowcase – preview hover reveals full color', () => {
+  it('marks the aria-hidden mock container as the hover group', () => {
+    renderShowcase('base');
+    expect(getMock()).toHaveClass('group');
+  });
+
+  it('gives each muted wrapper an important group-hover un-mute override', () => {
+    renderShowcase('base');
+    const mutedWrapper = screen
+      .getByText(MOCK_GLYPHS.wordmark)
+      .closest('[data-muted]');
+    expect(mutedWrapper).toHaveClass('group-hover:grayscale-0!');
+    expect(mutedWrapper).toHaveClass('group-hover:opacity-100!');
+  });
+});
+
+describe('ComponentShowcase – toolbar tab pills mirror the real switcher', () => {
+  it('paints the Unread/Read pills in mount-tier tokens, not a one-off', () => {
+    // The real page Unread/Read switcher (SlidingTabBar surface=base) lifts to
+    // mount: --mount-text pill / --mount-bg label / --mount-alt-text idle. The
+    // mock must match it (and the editor's own bundle tabs), not paint a
+    // bespoke base-highlight fill.
+    renderShowcase('base');
+    const selected = screen.getByText(MOCK_GLYPHS.unread);
+    expect(selected).toHaveClass('bg-[var(--mount-text)]');
+    expect(selected).toHaveClass('text-[var(--mount-bg)]');
+    expect(screen.getByText(MOCK_GLYPHS.read)).toHaveClass(
+      'text-[var(--mount-alt-text)]',
+    );
+  });
+});
+
 describe('ComponentShowcase – preview-scope inversion (PRD point 9)', () => {
   it('applies contentThemeStyle to the aria-hidden mock container ONLY', () => {
     renderShowcase('mount', {

@@ -39,7 +39,7 @@ function makeFailure(
   return {
     ratio: 2.8,
     threshold: 4.5,
-    pairLabel: 'text / bg',
+    partnerLabel: 'Text',
     ...overrides,
   };
 }
@@ -150,16 +150,16 @@ describe('ColorRow – inline contrast-failure note', () => {
     expect(input).toHaveAttribute('aria-invalid', 'true');
     // The visible note + its describedby link wait for the debounce.
     expect(input).not.toHaveAttribute('aria-describedby');
-    expect(screen.queryByText(/fails contrast/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/contrast is too low/i)).not.toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(FAILURE_NOTE_DEBOUNCE_MS);
     });
 
-    // The rendered string matches ColorRow's format exactly (ratio to one
-    // decimal, threshold as authored).
+    // The rendered string matches ColorRow's format exactly: the partner slot
+    // label, ratio to one decimal, and the word-form threshold relation.
     const note = screen.getByText(
-      'Fails contrast with text / bg — 2.8:1, needs 4.5:1',
+      'Text contrast is too low (2.8:1, below the 4.5:1 minimum).',
     );
     expect(note).toBeInTheDocument();
     // describedby now resolves to the rendered note's id.

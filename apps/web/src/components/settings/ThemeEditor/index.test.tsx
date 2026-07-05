@@ -741,7 +741,7 @@ describe('ThemeEditor contrast status icon (title row)', () => {
       });
     });
     const icon = screen.getByRole('img', {
-      name: 'Theme colors have a contrast issue to fix',
+      name: "Theme colors don't meet minimum contrast",
     });
     expect(icon).toHaveClass('fa-triangle-exclamation');
     expect(icon).not.toHaveAttribute('aria-live');

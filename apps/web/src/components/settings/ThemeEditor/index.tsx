@@ -378,12 +378,12 @@ export default function ThemeEditor() {
             role="img"
             aria-label={
               hasContrastIssue
-                ? 'Theme colors have a contrast issue to fix'
+                ? "Theme colors don't meet minimum contrast"
                 : 'Theme colors meet minimum contrast'
             }
             title={
               hasContrastIssue
-                ? 'Theme colors have a contrast issue to fix'
+                ? "Theme colors don't meet minimum contrast"
                 : 'Theme colors meet minimum contrast'
             }
             className={`fa-solid text-sm ${hasContrastIssue ? 'fa-triangle-exclamation text-[var(--warn-text)]' : 'fa-circle-check text-[var(--base-subtle-text)]'}`}
