@@ -300,7 +300,7 @@ describe('ComponentShowcase – re-stagger key (PRD points 10 + 12)', () => {
     );
   }
 
-  it('remounts the mock (replaying the animation) when the bundle changes', () => {
+  it('reuses the mock node when the bundle changes (so the grayscale crossfade can play)', () => {
     const { rerender } = renderWithKey('base', 'dark', 0);
     const before = screen.getByTestId('app-mock');
     rerender(
@@ -311,9 +311,10 @@ describe('ComponentShowcase – re-stagger key (PRD points 10 + 12)', () => {
         contentThemeStyle={{}}
       />,
     );
-    // A changed key forces React to mount a brand-new node, replaying the
-    // enter animation rather than diffing the old one in place.
-    expect(screen.getByTestId('app-mock')).not.toBe(before);
+    // A bundle swap is absent from the key, so React reconciles the SAME node in
+    // place — the `data-muted` grayscale/opacity flip transitions on stable DOM
+    // instead of hard-cutting on a remount.
+    expect(screen.getByTestId('app-mock')).toBe(before);
   });
 
   it('remounts the mock when the editor mode flips', () => {

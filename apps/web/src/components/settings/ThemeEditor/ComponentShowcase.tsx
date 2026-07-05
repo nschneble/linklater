@@ -23,9 +23,9 @@ interface ComponentShowcaseProps {
   editorMode: Mode;
   /**
    * A monotonically increasing counter the parent bumps on each Randomize. It
-   * joins `activeBundle` + `editorMode` in the mock's remount key so a fresh
-   * random palette re-staggers the showcase in — the editor's "Stumble for
-   * colors" landing with a flourish (PRD point 12).
+   * joins `editorMode` in the mock's remount key so a fresh random palette
+   * re-staggers the showcase in — the editor's "Stumble for colors" landing with
+   * a flourish (PRD point 12).
    */
   randomizeNonce: number;
   /**
@@ -140,13 +140,14 @@ export default function ComponentShowcase({
 }: ComponentShowcaseProps) {
   const headingId = useId();
 
-  // The mock's REMOUNT key (§2). Bumping it on a bundle swap, a mode flip, or a
-  // Randomize tears down + rebuilds the inner mock, replaying `animate-card-enter`
-  // on every piece — the showcase comes alive on each selection (PRD points 10 +
-  // 12). It is keyed on the INNER aria-hidden mock ALONE: the section, its
-  // sr-only heading, and the explanation stay mounted, so nothing re-announces
-  // and no focus can move (the mock has zero focusable descendants).
-  const mockKey = `${activeBundle}-${editorMode}-${randomizeNonce}`;
+  // The mock's REMOUNT key (§2). A mode flip or a Randomize bumps it to tear
+  // down + rebuild the inner mock, replaying `animate-card-enter` on every piece
+  // (PRD points 10 + 12). A bundle swap is DELIBERATELY absent: it reconciles the
+  // nodes in place so `data-muted` flips on stable DOM and the sub-mocks crossfade
+  // grayscale→color instead of hard-cutting. It is keyed on the INNER aria-hidden
+  // mock ALONE: the section, its sr-only heading, and the explanation stay
+  // mounted, so nothing re-announces and no focus can move.
+  const mockKey = `${editorMode}-${randomizeNonce}`;
 
   return (
     <section aria-labelledby={headingId} className="space-y-3">

@@ -14,7 +14,7 @@ const MUTED_BUNDLES = new Set<Bundle>(['base', 'mount', 'orbit']);
 export default function MockBanner({ bundle, icon, text }: MockBannerProps) {
   return (
     <div
-      className="flex items-center justify-center gap-2 px-3 py-2 border-b data-muted:grayscale data-muted:opacity-10"
+      className="flex items-center justify-center gap-2 px-3 py-2 border-b data-muted:grayscale data-muted:opacity-30 transition duration-200"
       data-muted={MUTED_BUNDLES.has(bundle) || undefined}
       style={{
         backgroundColor: `var(--${bundle}-bg)`,

@@ -14,7 +14,7 @@ const MUTED_BUNDLES = new Set<Bundle>(['base', 'mount', 'orbit']);
 export default function MockToast({ bundle, icon, text }: MockToastProps) {
   return (
     <div
-      className="flex items-center gap-2 w-fit mx-auto px-4 py-2.5 rounded-full data-muted:grayscale data-muted:opacity-10"
+      className="flex items-center gap-2 w-fit mx-auto px-4 py-2.5 rounded-full data-muted:grayscale data-muted:opacity-30 transition duration-200"
       data-muted={MUTED_BUNDLES.has(bundle) || undefined}
       style={{
         backgroundColor: `var(--${bundle}-highlight)`,

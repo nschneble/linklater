@@ -21,7 +21,7 @@ interface MockToolbarProps {
 export default function MockToolbar({ muted }: MockToolbarProps) {
   return (
     <div
-      className="space-y-2.5 px-4 pt-3 data-muted:grayscale data-muted:opacity-10"
+      className="space-y-2.5 px-4 pt-3 data-muted:grayscale data-muted:opacity-30 transition duration-200"
       data-muted={muted || undefined}
     >
       <span className="block text-[var(--base-text)] text-base font-bold">
