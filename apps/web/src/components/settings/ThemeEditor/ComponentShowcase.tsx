@@ -1,235 +1,211 @@
-import ShowcaseSection from './ShowcaseSection';
-import { BUNDLES } from './useThemeOverrides';
-import { useState } from 'react';
-import Alert from '../../common/Alert';
-import FormInput from '../../common/FormInput';
-import IconButton from '../../common/IconButton';
-import PrimaryButton from '../../common/PrimaryButton';
+import MockBanner from './MockBanner';
+import MockHeader from './MockHeader';
+import MockLinkCard from './MockLinkCard';
+import MockToast from './MockToast';
+import MockToolbar from './MockToolbar';
+import { MOCK_STATUS_GLYPHS } from './mockGlyphs';
+import { useId } from 'react';
+import type { Bundle } from './useThemeOverrides';
+import type { Mode } from '../../../theme/constants';
+import type { CSSProperties } from 'react';
 
-const BUNDLE_DEMO_TEXT: Record<(typeof BUNDLES)[number], string> = {
-  base: 'Page chrome',
-  mount: 'Card surface',
-  orbit: 'Menu surface',
-  alert: 'Error / danger',
-  warn: 'Warning banner',
-  info: 'Tip or hint',
-  success: 'Verified, confirmed',
+interface ComponentShowcaseProps {
+  /**
+   * The bundle the editor is currently editing. The showcase mirrors the SAME
+   * `activeBundle` the tablist drives, so it always previews the component that
+   * bundle paints — never an everything-at-once montage (PRD point 4).
+   */
+  activeBundle: Bundle;
+  /**
+   * The editor's local color mode. Part of the re-stagger key only — a mode flip
+   * repaints the preview, so the mock replays its enter animation (PRD point 10).
+   */
+  editorMode: Mode;
+  /**
+   * A monotonically increasing counter the parent bumps on each Randomize. It
+   * joins `editorMode` in the mock's remount key so a fresh random palette
+   * re-staggers the showcase in — the editor's "Stumble for colors" landing with
+   * a flourish (PRD point 12).
+   */
+  randomizeNonce: number;
+  /**
+   * The resolved custom palette, scoped to the decorative mock ALONE (mounted on
+   * the aria-hidden mock container), so the left Colors card renders in the APP
+   * THEME (PRD point 9 inversion).
+   */
+  contentThemeStyle: CSSProperties;
+}
+
+/**
+ * A short, honest sentence per bundle, describing where in the real app that
+ * bundle's colors are used. This copy is REAL app UI (it lives OUTSIDE the
+ * aria-hidden mock subtree, in the accessibility tree) so it must read as the
+ * app's own voice — concise, truthful, no marketing.
+ */
+export const BUNDLE_EXPLANATIONS: Record<Bundle, string> = {
+  base: 'Page defaults. Covers elements like the page title, search input, and navigation buttons.',
+  mount: 'Used for raised components like cards, panels, and sections.',
+  orbit: 'Used for the page header, user menu, and submenus.',
+  alert:
+    'Used for danger and failure toast notifications and banners. These typically indicate something has gone dreadfully wrong.',
+  warn: 'Used for warning toast notifications, banners, and badges. These typically indicate an action is required.',
+  info: 'Used for informational toast notifications, banners, and badges.',
+  success: 'Used for successful toast notifications and banners.',
 };
 
 /**
- * A read-only preview panel showing all major UI components styled with the
- * current theme. Used in the theme editor so changes to bundle tokens are
- * immediately visible in realistic context.
- *
- * The tab switcher in this showcase is interactive (controlled by local
- * state) so users can verify that active/inactive tab styles look correct.
+ * The preview's macOS-style window chrome: the frame border, title bar, address
+ * pill, and the three traffic lights. Deliberately theme-independent — it frames
+ * the themed content like a real app window, so it stays constant across every
+ * bundle and mode and is never painted from the custom palette.
  */
-export default function ComponentShowcase() {
-  const [activeTab, setActiveTab] = useState<'unread' | 'read'>('unread');
+const PREVIEW_CHROME = {
+  frameBorder: '#424041',
+  titleBar: '#2d2a2b',
+  pillBorder: '#423e41',
+  trafficRed: '#fe5c5f',
+  trafficYellow: '#f9c800',
+  trafficGreen: '#27c73f',
+} as const;
+
+/**
+ * The decorative mock for the active bundle — the real component that bundle
+ * paints, drawn at app scale: base shows the page frame + toolbar; mount shows
+ * a link card; orbit shows the header with its account menu; and each status
+ * bundle shows its matching notice. Each mirrors its real counterpart's
+ * structure (real border widths, real accent placement) but is 100% static —
+ * zero focusable descendants, no handlers, no interactive roles (the parent
+ * wraps it in a single aria-hidden container).
+ */
+function BundleMock({ bundle }: { bundle: Bundle }) {
+  const icon = STATUS_ICONS[bundle];
+  const banner = STATUS_COPY[bundle].banner;
+  const toast = STATUS_COPY[bundle].toast;
 
   return (
-    <div className="space-y-6">
-      <ShowcaseSection title="Bundles">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {BUNDLES.map((bundle) => (
-            <article
-              key={bundle}
-              aria-label={`${bundle} bundle preview`}
-              className="px-3 py-2.5 border rounded-lg"
-              style={{
-                backgroundColor: `var(--${bundle}-bg)`,
-                borderColor: `var(--${bundle}-border)`,
-              }}
-            >
-              <h4
-                className="text-[0.65rem] uppercase tracking-wide font-semibold"
-                style={{ color: `var(--${bundle}-text)` }}
-              >
-                {bundle}
-              </h4>
-              <p
-                className="text-[0.7rem]"
-                style={{ color: `var(--${bundle}-text)` }}
-              >
-                {BUNDLE_DEMO_TEXT[bundle]}
-              </p>
-              <p
-                className="text-[0.6rem]"
-                style={{ color: `var(--${bundle}-alt-text)` }}
-              >
-                Alt text sample
-              </p>
-              <div className="mt-1.5">
-                <span
-                  style={{
-                    backgroundColor: `var(--${bundle}-highlight)`,
-                    color: `var(--${bundle}-highlight-fg)`,
-                  }}
-                  className="inline-block px-1.5 py-0.5 text-[0.6rem] font-semibold rounded"
-                >
-                  Highlight
-                </span>
-              </div>
-            </article>
-          ))}
-        </div>
-      </ShowcaseSection>
-
-      <ShowcaseSection title="Typography">
-        <div className="space-y-2">
-          <div className="space-y-1.5 px-3 py-3 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-lg">
-            <p className="text-[var(--mount-text)] text-sm font-semibold">
-              Card primary
-            </p>
-            <p className="text-[var(--mount-alt-text)] text-sm">
-              Card alt – labels, captions, helper hints
-            </p>
-          </div>
-          {/* Base-only subtle-text tier is rendered against the page surface,
-              not the card, because its 4.5:1 contract targets --base-bg. */}
-          <div className="space-y-1.5 px-3 py-3 bg-[var(--base-bg)] border border-[var(--base-border)] rounded-lg">
-            <p className="text-[var(--base-text)] text-sm font-semibold">
-              Page primary
-            </p>
-            <p className="text-[var(--base-alt-text)] text-sm">
-              Page alt – section nav, descriptions
-            </p>
-            <p className="text-[var(--base-subtle-text)] text-sm">
-              Page subtle – kbd legends, chevrons, hints
-            </p>
-          </div>
-        </div>
-      </ShowcaseSection>
-
-      <ShowcaseSection title="Buttons">
-        <div className="grid grid-cols-2 justify-between gap-2">
-          <PrimaryButton type="button">
-            <i className="fa-solid fa-plus text-xs" aria-hidden="true" />
-            Add link
-          </PrimaryButton>
-          <IconButton variant="elevated">
-            <i
-              className="fa-brands fa-stumbleupon text-[0.7rem]"
-              aria-hidden="true"
-            />
-            Stumble!
-          </IconButton>
-          <IconButton>
-            <i
-              className="fa-solid fa-bookmark text-[0.7rem]"
-              aria-hidden="true"
-            />
-            Default
-          </IconButton>
-          <IconButton variant="ghost">
-            <i
-              className="fa-solid fa-ellipsis text-[0.7rem]"
-              aria-hidden="true"
-            />
-            Ghost
-          </IconButton>
-          <IconButton variant="danger">
-            <i
-              className="fa-solid fa-triangle-exclamation text-[0.7rem]"
-              aria-hidden="true"
-            />
-            Danger
-          </IconButton>
-          <IconButton variant="danger-filled">
-            <i className="fa-solid fa-trash text-[0.7rem]" aria-hidden="true" />
-            Danger filled
-          </IconButton>
-        </div>
-      </ShowcaseSection>
-
-      <ShowcaseSection title="Form input">
-        <FormInput
-          surface="mount"
-          type="text"
-          placeholder="Paste a URL to save…"
-          aria-label="Demo URL input"
-          readOnly
-        />
-      </ShowcaseSection>
-
-      <ShowcaseSection title="Tabs">
-        {/* read-only style preview, not a real tab widget – plain buttons
-            (no role="tab"/"tablist") so we don't advertise a tablist that
-            controls no panel. mirrors TabButton's active style + circle-dot
-            indicator + no-width-shift grid via aria-pressed. */}
-        <div className="relative grid grid-cols-2 p-1 bg-[var(--mount-bg)] border-shadow hover:border-shadow text-xs rounded-full">
-          <div
-            aria-hidden="true"
-            className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-[var(--mount-text)] rounded-full"
-            style={{
-              transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transform:
-                activeTab === 'read' ? 'translateX(100%)' : 'translateX(0)',
-            }}
-          />
-          {(['unread', 'read'] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              aria-pressed={activeTab === tab}
-              onClick={() => setActiveTab(tab)}
-              className="group relative z-10 px-3 py-1.5 text-[var(--mount-alt-text)] font-semibold aria-pressed:text-[var(--mount-bg)] aria-pressed:font-extrabold rounded-full transition-colors duration-200 cursor-pointer"
-            >
-              <span className="grid justify-center">
-                <span
-                  className="col-start-1 row-start-1 invisible flex items-center justify-center gap-1 font-extrabold"
-                  aria-hidden="true"
-                >
-                  <i
-                    className="fa-solid fa-circle-dot text-[0.4rem]"
-                    aria-hidden="true"
-                  />
-                  {tab === 'unread' ? 'Unread' : 'Read'}
-                </span>
-                <span className="col-start-1 row-start-1 flex items-center justify-center gap-1">
-                  <i
-                    className="hidden group-aria-pressed:inline fa-solid fa-circle-dot text-[0.4rem]"
-                    aria-hidden="true"
-                  />
-                  {tab === 'unread' ? 'Unread' : 'Read'}
-                </span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </ShowcaseSection>
-
-      <ShowcaseSection title="Alerts">
-        <div className="space-y-2">
-          <Alert variant="error">Something went wrong. Please try again.</Alert>
-          <Alert variant="success">Changes saved successfully.</Alert>
-        </div>
-      </ShowcaseSection>
-
-      <ShowcaseSection title="Cards">
-        <div className="p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl">
-          <div className="flex items-start gap-3">
-            <div className="flex shrink-0 items-center justify-center w-8 h-8 bg-[var(--orbit-bg)] rounded-md">
-              <i
-                className="fa-solid fa-link text-[var(--orbit-alt-text)] text-[0.7rem]"
-                aria-hidden="true"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[var(--mount-text)] text-sm font-medium truncate">
-                Example saved link
-              </p>
-              <p className="text-[var(--mount-alt-text)] text-xs truncate">
-                example.com
-              </p>
-            </div>
-          </div>
-          <p className="mt-2 text-[var(--mount-alt-text)] text-xs line-clamp-2">
-            A brief description of the saved link. This shows how muted text
-            looks within a card surface.
-          </p>
-        </div>
-      </ShowcaseSection>
+    <div className="relative flex-1 pb-3 bg-[var(--base-bg)]">
+      <MockBanner bundle={bundle} icon={icon} text={banner} />
+      <MockHeader muted={bundle !== 'orbit'} />
+      <MockToolbar muted={bundle !== 'base'} />
+      <MockLinkCard muted={bundle !== 'mount'} />
+      <div className="h-[34px]" />
+      <MockToast bundle={bundle} icon={icon} text={toast} />
     </div>
+  );
+}
+
+const STATUS_ICONS: Record<Bundle, string> = {
+  base: 'fa-solid fa-cat',
+  mount: 'fa-solid fa-cat',
+  orbit: 'fa-solid fa-cat',
+  warn: 'fa-solid fa-triangle-exclamation',
+  info: 'fa-solid fa-circle-info',
+  alert: 'fa-solid fa-circle-xmark',
+  success: 'fa-solid fa-circle-check',
+};
+
+// Asemic Old Turkic stand-ins for each status notice's banner + toast lines.
+// They feed MockNotice's props; MockNotice renders them verbatim (no string
+// edit there).
+const STATUS_COPY: Record<Bundle, { banner: string; toast: string }> =
+  MOCK_STATUS_GLYPHS;
+
+/**
+ * The right-hand live preview: a named region fronted by an `sr-only` "Live
+ * preview" h2 (parity with the left "Colors" region), then a VISIBLE, app-themed
+ * sentence describing where the active bundle's colors are used, then the
+ * decorative mock of the component that bundle paints.
+ *
+ * The mock is a PICTURE of the app, not the app: 100% static (no state, no
+ * handlers) with zero focusable descendants, wrapped in a single `aria-hidden`
+ * container and skipped by the Tab order and the screen-reader cursor. ONLY that
+ * container carries the custom palette (`contentThemeStyle`) — so the user
+ * previews their colors (including bad contrast, which is the point) while the
+ * explanation and heading render in the always-readable app theme.
+ *
+ * Swapping the bundle/mode swaps the mock SILENTLY: the activated tab already
+ * self-voices, so there is no live region and no focus move here (the showcase
+ * has no focusable elements to steal focus to).
+ *
+ * The mock's visible copy is asemic Old Turkic, rendered in a self-hosted
+ * webfont scoped to the `.app-mock-asemic` container alone (see index.css +
+ * mockGlyphs), and the container carries `cursor-not-allowed` — together they
+ * read the preview as decoration that is not meant to be interacted with.
+ */
+export default function ComponentShowcase({
+  activeBundle,
+  editorMode,
+  randomizeNonce,
+  contentThemeStyle,
+}: ComponentShowcaseProps) {
+  const headingId = useId();
+
+  // The mock's REMOUNT key (§2). A mode flip or a Randomize bumps it to tear
+  // down + rebuild the inner mock, replaying `animate-card-enter` on every piece
+  // (PRD points 10 + 12). A bundle swap is DELIBERATELY absent: it reconciles the
+  // nodes in place so `data-muted` flips on stable DOM and the sub-mocks crossfade
+  // grayscale→color instead of hard-cutting. It is keyed on the INNER aria-hidden
+  // mock ALONE: the section, its sr-only heading, and the explanation stay
+  // mounted, so nothing re-announces and no focus can move.
+  const mockKey = `${editorMode}-${randomizeNonce}`;
+
+  return (
+    <section aria-labelledby={headingId} className="space-y-3">
+      <h2 id={headingId} className="sr-only">
+        Live preview
+      </h2>
+
+      <div
+        className="flex flex-col w-full min-h-90 bg-[var(--base-bg)] border shadow-xl rounded-2xl overflow-hidden"
+        style={{ borderColor: PREVIEW_CHROME.frameBorder }}
+      >
+        <div
+          className="flex flex-row items-center justify-between w-full h-8 px-3"
+          style={{ backgroundColor: PREVIEW_CHROME.titleBar }}
+        >
+          <div className="flex flex-row items-center gap-0.75 text-xs shadow-xl">
+            <i
+              className="fa-solid fa-circle"
+              style={{ color: PREVIEW_CHROME.trafficRed }}
+            ></i>
+            <i
+              className="fa-solid fa-circle"
+              style={{ color: PREVIEW_CHROME.trafficYellow }}
+            ></i>
+            <i
+              className="fa-solid fa-circle"
+              style={{ color: PREVIEW_CHROME.trafficGreen }}
+            ></i>
+          </div>
+
+          <div
+            className="flex flex-row items-center h-6 px-12 border shadow-xl rounded-4xl"
+            style={{ borderColor: PREVIEW_CHROME.pillBorder }}
+          >
+            <span className="text-white text-xs">Preview</span>
+          </div>
+
+          <div className="flex flex-row items-center gap-0.75 text-xs">
+            <i className="fa-solid fa-circle text-transparent"></i>
+            <i className="fa-solid fa-circle text-transparent"></i>
+            <i className="fa-solid fa-circle text-transparent"></i>
+          </div>
+        </div>
+
+        <div
+          className="group relative flex flex-1 flex-col w-full overflow-hidden app-mock-asemic"
+          style={contentThemeStyle}
+          data-testid="app-mock"
+          key={mockKey}
+          aria-hidden="true"
+        >
+          <BundleMock bundle={activeBundle} />
+        </div>
+      </div>
+
+      <p className="text-[var(--base-alt-text)] text-xs">
+        {BUNDLE_EXPLANATIONS[activeBundle]}
+      </p>
+    </section>
   );
 }

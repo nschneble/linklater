@@ -113,7 +113,7 @@
   --orbit-highlight-fg: #1a0e08;
   --orbit-highlight-hover: #f5a878;
 
-  --alert-bg: rgb(76 14 8 / 0.55);
+  --alert-bg: #4c0e088c;
   --alert-border: #f08868;
   --alert-text: #f5c8b8;
   --alert-alt-text: #e8b0a0;
@@ -121,7 +121,7 @@
   --alert-highlight-fg: #1c0608;
   --alert-highlight-hover: #f06868;
 
-  --warn-bg: rgb(82 58 10 / 0.55);
+  --warn-bg: #523a0a8c;
   --warn-border: #d58c32;
   --warn-text: #f5dc80;
   --warn-alt-text: #f0d090;
@@ -134,7 +134,7 @@
    * mount/orbit borders on adjacency; cyan keeps the cool-end categorical
    * separation from warn-gold and success-lime while staying tonally
    * compatible with the deep-purple page chrome. */
-  --info-bg: rgb(8 32 56 / 0.55);
+  --info-bg: #0820388c;
   --info-border: #69c4e3;
   --info-text: #c8e8f3;
   --info-alt-text: #a8d8e8;
@@ -145,7 +145,7 @@
   /* success – lime/olive (anchored on the scanner PRD's subtle-text
    * #bcdc6f), lifted to high luminance for tritan separation from
    * warn-gold. */
-  --success-bg: rgb(28 50 18 / 0.55);
+  --success-bg: #1c32128c;
   --success-border: #bcdc6f;
   --success-text: #d4e8a0;
   --success-alt-text: #c0d488;

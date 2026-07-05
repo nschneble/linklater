@@ -9,11 +9,16 @@ import {
 
 /**
  * Shared WCAG contrast computation for the theme editor's live contract
- * checking. Extracted so both `ContrastChecker` (the visible per-bundle
- * breakdown) and `ThemeSaveBar` (the failing-count warning at the Save
- * action) read a SINGLE source of truth – the a11y brief B5 mandates the
- * Save warning reuse ContrastChecker's computed failing count rather than
- * recomputing it, so the two can never disagree.
+ * checking. The standalone contrast card AND the aggregate pass/fail chip were
+ * retired: every failing pair now self-reports inline ON the slot row being
+ * edited. The rows all read this SINGLE source of truth so they can never
+ * disagree.
+ *
+ * The governing invariant: an edit to token X can only change the contrast of
+ * pairs that TOUCH X, so surfacing each failing pair on BOTH its endpoints
+ * (`pairsTouchingToken`) guarantees the warning lands on whichever slot row the
+ * user just edited. `contrastResults.test.ts` mechanizes the completeness of
+ * that coverage (the C1 invariant).
  */
 
 /** A foreground/background color pair to test for WCAG contrast compliance. */
@@ -29,11 +34,6 @@ export interface ContrastPair {
   /** Minimum contrast ratio to pass the criterion. */
   threshold: number;
 }
-
-export const SC_LABELS: Record<ContrastPair['criterion'], string> = {
-  '1.4.3': 'SC 1.4.3 Contrast (Minimum)',
-  '1.4.11': 'SC 1.4.11 Non-text Contrast',
-};
 
 /**
  * The bundle background slots a focused element can sit on. The focus ring
@@ -199,7 +199,7 @@ export function computeContrastRatio(
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-export interface GroupResult {
+interface GroupResult {
   /** A bundle id, or the synthetic `'focus'` group id. */
   group: Bundle | 'focus';
   label: string;
@@ -217,12 +217,11 @@ export interface ContrastResults {
   totalFailures: number;
   /** Total pairs that could not be verified across all groups. */
   totalUnverified: number;
-  totalPairs: number;
 }
 
 /**
- * A single token's worst FAILING contrast pair, used by `ColorEditor` to
- * surface per-row failure feedback on the hex input (BL1). Only failing pairs
+ * A single token's worst FAILING contrast pair, used by the per-bundle slot
+ * rows to surface failure feedback on the hex input (BL1). Only failing pairs
  * (resolved ratio below threshold) produce an entry; passing and unverified
  * pairs do not, so a row only ever reports a concrete, color-independent
  * "fails contrast" note (SC 3.3.1, SC 1.4.1).
@@ -232,31 +231,91 @@ export interface TokenContrastFailure {
   ratio: number;
   /** Threshold the pair must clear. */
   threshold: number;
-  /** Human-readable label for the pair (e.g. "text / bg"). */
-  pairLabel: string;
+  /**
+   * The OTHER endpoint of the failing pair, named by its editor row label
+   * (e.g. "Alt text"). The row this failure renders on IS one endpoint, so the
+   * note only needs to name its partner — the current slot is implied by the
+   * row's own label + the input's accessible name. Bundle-qualified ("Mount
+   * border") when the partner lives in a different bundle than this row, so the
+   * named endpoint is never ambiguous across bundles.
+   */
+  partnerLabel: string;
 }
 
 /**
- * Builds a map from each token (a pair's FOREGROUND variable) to its worst
- * failing pair – the one furthest below threshold. Tokens that appear as a
- * foreground in several pairs (e.g. the focus ring across three bgs) report
- * their single most severe failure so the row note stays focused.
+ * Per-endpoint descriptor for every editable token, built once from the same
+ * `VAR_GROUPS` the rows render from, so a failure note names its partner with
+ * the EXACT label the user sees on that partner's row. The universal focus ring
+ * (`--focus-ring`) rides the base group but belongs to no bundle, so its
+ * `bundle` is null (detected by its token not matching `--{group.bundle}-…`) —
+ * it is never bundle-qualified since its name is already unique.
  */
-export function tokenContrastFailures(
+const ENDPOINT_INFO: ReadonlyMap<
+  string,
+  { bundle: Bundle | null; bundleLabel: string; slotLabel: string }
+> = (() => {
+  const info = new Map<
+    string,
+    { bundle: Bundle | null; bundleLabel: string; slotLabel: string }
+  >();
+  for (const group of VAR_GROUPS) {
+    for (const item of group.items) {
+      const belongsToBundle = item.variable.startsWith(`--${group.bundle}-`);
+      info.set(item.variable, {
+        bundle: belongsToBundle ? group.bundle : null,
+        bundleLabel: group.label,
+        slotLabel: item.label,
+      });
+    }
+  }
+  return info;
+})();
+
+/**
+ * The failing pair's OTHER endpoint, relative to `rowToken`, as a display
+ * label. Bundle-qualified only when the partner's bundle differs from the row's
+ * (or the row has no bundle, e.g. the focus ring) so "Background" can't be
+ * mistaken for the wrong bundle's background.
+ */
+function partnerLabelFor(rowToken: string, pair: ContrastPair): string {
+  const partnerToken =
+    rowToken === pair.foreground ? pair.background : pair.foreground;
+  const partner = ENDPOINT_INFO.get(partnerToken);
+  if (partner === undefined) return partnerToken;
+  const row = ENDPOINT_INFO.get(rowToken);
+  if (partner.bundle !== null && partner.bundle !== row?.bundle) {
+    return `${partner.bundleLabel} ${partner.slotLabel.toLowerCase()}`;
+  }
+  return partner.slotLabel;
+}
+
+/**
+ * Keys each failing pair under BOTH its foreground AND its background token, so
+ * a token that fails only as a BACKGROUND (e.g. a too-light `--mount-bg` under
+ * card text) still reports a failure on its OWN slot row, not only on the far
+ * foreground row (C3). Reuses the ratios already computed by `useContrastResults`
+ * — it makes NO new `computeContrastRatio` calls — so a failing pair is
+ * reachable from either of its two endpoint rows.
+ */
+export function pairsTouchingToken(
   results: ContrastResults,
 ): Map<string, TokenContrastFailure> {
   const failures = new Map<string, TokenContrastFailure>();
+  const consider = (token: string, ratio: number, pair: ContrastPair) => {
+    const deficit = pair.threshold - ratio;
+    const existing = failures.get(token);
+    if (existing && existing.threshold - existing.ratio >= deficit) return;
+    failures.set(token, {
+      ratio,
+      threshold: pair.threshold,
+      partnerLabel: partnerLabelFor(token, pair),
+    });
+  };
   for (const group of results.groups) {
     for (const { pair, ratio } of group.pairs) {
       if (ratio === null || ratio >= pair.threshold) continue;
-      const deficit = pair.threshold - ratio;
-      const existing = failures.get(pair.foreground);
-      if (existing && existing.threshold - existing.ratio >= deficit) continue;
-      failures.set(pair.foreground, {
-        ratio,
-        threshold: pair.threshold,
-        pairLabel: pair.label,
-      });
+      consider(pair.foreground, ratio, pair);
+      consider(pair.background, ratio, pair);
     }
   }
   return failures;
@@ -314,7 +373,6 @@ export function useContrastResults(
         (sum, item) => sum + item.unverifiedCount,
         0,
       ),
-      totalPairs: groups.reduce((sum, item) => sum + item.pairs.length, 0),
     };
   }, [colorValues]);
 }

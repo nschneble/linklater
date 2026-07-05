@@ -589,6 +589,13 @@ describe('bundle contrast contract', () => {
    * bgs sit at the lightness extreme adjacent to `--base-bg`, but a hex
    * tweak to either token could silently regress without mechanization.
    * See [[feedback-state-text-on-base-bg-test-pair]].
+   *
+   * SECOND consumer (theme editor, Wave 2): the title-row contrast-status
+   * icon paints `--success-text` (clean) / `--warn-text` (failing) directly
+   * on the page `--base-bg`. As a non-text status glyph it needs only SC
+   * 1.4.11 (3:1), which the 4.5:1 assertions below already SUBSUME for every
+   * theme — so warn-text never falls back to alert-text. No separate weaker
+   * 3:1 pair is added; this stronger pair IS the icon's contract gate.
    */
   describe('state-text on base-bg', () => {
     for (const fixture of FIXTURES) {
@@ -834,6 +841,41 @@ describe('bundle contrast contract', () => {
           .soft(
             ratio,
             `orbit-border on mount-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+          )
+          .toBeGreaterThanOrEqual(AA_NON_TEXT);
+      });
+    }
+  });
+
+  /*
+   * `--warn-text` over `--mount-bg` backs the Theme Editor's per-bundle
+   * contrast-error triangle (`BundleTabs`): the glyph paints `--warn-text` on
+   * the mount-tier tab pill. It IS the at-a-glance triage signal, so it's a
+   * required graphical object (SC 1.4.11) and must clear 3:1 on every theme.
+   * Tightest film theme: before-midnight light ~7.70:1.
+   */
+  describe('warn-text on mount-bg (BundleTabs error glyph)', () => {
+    for (const fixture of FIXTURES) {
+      if (!fixture.checkAdjacency) {
+        continue;
+      }
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+      const warnText = getSlot(declarations, 'warn', 'text');
+      const mountBg = getSlot(declarations, 'mount', 'bg');
+      if (warnText === null || mountBg === null) {
+        continue;
+      }
+
+      it(`${fixture.label} >= 3:1`, () => {
+        const ratio = contrastRatio(
+          resolveFg(warnText),
+          compositeOverBg(mountBg, fixture.pageBg),
+        );
+        expect
+          .soft(
+            ratio,
+            `warn-text on mount-bg (${fixture.label}): got ${describeRatio(ratio)}`,
           )
           .toBeGreaterThanOrEqual(AA_NON_TEXT);
       });

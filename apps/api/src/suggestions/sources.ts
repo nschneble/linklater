@@ -56,7 +56,7 @@ export const SOURCES: readonly SourceDefinition[] = [
     key: 'low-tech-magazine',
     name: 'Low-Tech Magazine',
     type: 'latest',
-    feedUrl: 'https://solar.lowtechmagazine.com/feeds',
+    feedUrl: 'https://solar.lowtechmagazine.com/posts/index.xml',
     siteName: 'Low-Tech Magazine',
   },
   {

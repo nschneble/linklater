@@ -124,7 +124,7 @@
    * with a dark --alert-highlight-fg #1c0608. School-of-rock precedent
    * for high-saturation dark-mode alert fills. Clears hl/bg 4.31:1,
    * hl-fg/hl 5.47:1, hl-fg/hl-hover 6.38:1. */
-  --alert-bg: rgb(76 22 18 / 0.55);
+  --alert-bg: #4c16128c;
   --alert-border: #f08868;
   --alert-text: #f5c8b8;
   --alert-alt-text: #e8b0a0;
@@ -137,7 +137,7 @@
    * (razor-edge axis B fail) to 1.68 (clears axis B). Composite stays
    * a brown-amber that reads as "yellow-bundle" without darkening into
    * alert territory. */
-  --warn-bg: rgb(82 58 10 / 0.55);
+  --warn-bg: #523a0a8c;
   --warn-border: #ecb518;
   --warn-text: #f5dc80;
   --warn-alt-text: #f0d090;
@@ -145,7 +145,7 @@
   --warn-highlight-fg: #1c1408;
   --warn-highlight-hover: #f5c440;
 
-  --info-bg: rgb(8 40 56 / 0.55);
+  --info-bg: #0828388c;
   --info-border: #69c4e3;
   --info-text: #c8e8f3;
   --info-alt-text: #a8d8e8;
@@ -159,7 +159,7 @@
    * lum ratio vs warn to 1.51x, vs info to 1.60x – both clear axis B,
    * all CVD dE >=10. M-D1 stage 2 (#e8f0d8) not needed. --success-alt-
    * text collapses to the same value per M-D1 spec. */
-  --success-bg: rgb(28 50 38 / 0.55);
+  --success-bg: #1c32268c;
   --success-border: #d4e8dc;
   --success-text: #d4e8dc;
   --success-alt-text: #d4e8dc;

@@ -15,6 +15,36 @@
 @import './theme/styles/scanner-darkly.css';
 @import './theme/styles/school-of-rock.css';
 
+/*
+ * Self-hosted "Noto Sans Old Turkic" (SIL OFL 1.1 — see public/fonts/OFL.txt).
+ * The only @font-face in the app; everything else is a system/Tailwind default
+ * or Font Awesome (loaded via index.html). Used solely by the theme editor's
+ * decorative, aria-hidden app mock to render asemic Old Turkic glyphs. The
+ * unicode-range is the assigned block, so spaces fall through to the Latin
+ * fallback below and the font is never fetched for real UI text.
+ */
+@font-face {
+  font-family: 'Noto Sans Old Turkic';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/noto-sans-old-turkic.woff2') format('woff2');
+  unicode-range: U+10C00-10C48;
+}
+
+/*
+ * Scopes the asemic webfont to the theme editor's mock subtree ALONE — the one
+ * aria-hidden container that also carries the runtime custom palette. It must
+ * never cascade onto :root/body, the live-preview section, the explanation
+ * copy, or any real control. The Latin fallback keeps an accidental leftover
+ * Latin string legible (cosmetic only; the subtree is aria-hidden), and Font
+ * Awesome's own font-family wins on the mock's <i class="fa-*"> icons, so the
+ * icons still render from Font Awesome.
+ */
+.app-mock-asemic {
+  font-family: 'Noto Sans Old Turkic', ui-sans-serif, system-ui, sans-serif;
+}
+
 body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -48,6 +78,20 @@ body {
   }
 }
 
+/* A single, self-terminating die "roll" for the theme editor's Randomize
+   button — one rotation, then it settles. Re-triggered by remounting the icon
+   (a key bump) on each click, never by a JS animation loop, so it inherits the
+   global prefers-reduced-motion clamp below (iteration-count + duration both
+   neutralized) for free. */
+@keyframes dice-roll {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -73,6 +117,7 @@ body {
 @theme {
   --animate-fade-in-up: fade-in-up 180ms ease-out both;
   --animate-card-enter: card-enter 400ms ease-out both;
+  --animate-dice-roll: dice-roll 600ms ease-out;
   --animate-card-exit: card-exit 280ms ease-in forwards;
   --animate-fade-out-down: fade-out-down 150ms ease-in forwards;
 }

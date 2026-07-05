@@ -47,8 +47,8 @@ export const SLOTS = [
   'text',
   'alt-text',
   'highlight',
-  'highlight-fg',
   'highlight-hover',
+  'highlight-fg',
 ] as const;
 export type Slot = (typeof SLOTS)[number];
 

@@ -19,12 +19,6 @@ const defaultIcons: Record<StatusBadgeProps['variant'], string> = {
   info: 'fa-solid fa-circle-info',
 };
 
-const variantShape: Record<StatusBadgeProps['variant'], string> = {
-  success: 'rounded-full',
-  warning: 'rounded',
-  info: 'rounded-sm',
-};
-
 const variantClasses: Record<StatusBadgeProps['variant'], string> = {
   success:
     'bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-text)]',
@@ -52,7 +46,7 @@ export default function StatusBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 border text-xs ${variantClasses[variant]} ${variantShape[variant]}`}
+      className={`inline-flex items-center gap-1 pl-2.5 pr-3 py-0.5 border text-[0.7rem] rounded-xl ${variantClasses[variant]}`}
     >
       <i className={`${resolvedIcon} text-[0.6rem]`} aria-hidden="true" />
       {children}

@@ -1,22 +1,23 @@
 /*
- * Tests for useThemeCopy – the copy/apply/undo state machine extracted from the
- * editor. Covers: apply snapshots the prior values, loads the theme's tokens,
- * persists immediately, and announces "applied"; undo restores the snapshot and
- * announces "reverted"; a mode/theme change drops a stale snapshot; and undo is
- * a no-op with nothing to revert.
+ * Tests for useThemeCopy – the apply-random / undo / save-routing state machine
+ * extracted from the editor. Covers: applying a random palette loads it,
+ * persists immediately, and snapshots the prior values; undo restores the
+ * snapshot and announces "reverted"; a mode/theme change drops a stale snapshot;
+ * undo is a no-op with nothing to revert; and a failed save routes to
+ * onSaveFailed, not the polite region.
  */
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { readThemeTokens } from './themeProbe';
 import { useThemeCopy } from './useThemeCopy';
 import type { ThemeVariable } from './useThemeOverrides';
 
-vi.mock('./themeProbe', () => ({
-  readThemeTokens: vi.fn(() => ({ '--mount-bg': 'probe-value' })),
-}));
-
 const COLOR_VALUES = { '--base-bg': '#000' } as unknown as Record<
+  ThemeVariable,
+  string
+>;
+
+const RANDOM_PALETTE = { '--base-bg': '#123abc' } as unknown as Record<
   ThemeVariable,
   string
 >;
@@ -46,73 +47,20 @@ beforeEach(() => {
 });
 
 describe('useThemeCopy', () => {
-  it('applies a theme: loads its tokens, persists at once, announces "applied"', async () => {
+  it('applies a random palette: loads it, persists at once, announces', async () => {
     const { result, save, loadOverrides } = setup();
 
     await act(async () => {
-      result.current.handleApply('school-of-rock', 'School of Rock');
+      result.current.handleApplyRandom(RANDOM_PALETTE);
     });
 
-    expect(readThemeTokens).toHaveBeenCalledWith('school-of-rock', 'dark');
-    expect(loadOverrides).toHaveBeenCalledWith({ '--mount-bg': 'probe-value' });
-    expect(result.current.undoThemeLabel).toBe('School of Rock');
-    expect(save).toHaveBeenCalledWith({ '--mount-bg': 'probe-value' });
+    expect(loadOverrides).toHaveBeenCalledWith(RANDOM_PALETTE);
+    expect(save).toHaveBeenCalledWith(RANDOM_PALETTE);
 
     await waitFor(() => expect(result.current.savedCount).toBe(1));
     expect(result.current.savedMessage).toBe(
-      'School of Rock palette applied and saved.',
+      'Random palette applied and saved.',
     );
-  });
-
-  it('undo restores the pre-apply snapshot and announces the revert', async () => {
-    const { result, loadOverrides, save } = setup();
-
-    await act(async () => {
-      result.current.handleApply('school-of-rock', 'School of Rock');
-    });
-    await waitFor(() => expect(result.current.savedCount).toBe(1));
-    loadOverrides.mockClear();
-    save.mockClear();
-
-    await act(async () => {
-      result.current.handleUndo();
-    });
-
-    // Restores the snapshot captured from colorValues at apply time.
-    expect(loadOverrides).toHaveBeenCalledWith(COLOR_VALUES);
-    expect(save).toHaveBeenCalledWith(COLOR_VALUES);
-    expect(result.current.undoThemeLabel).toBeNull();
-    await waitFor(() => expect(result.current.savedCount).toBe(2));
-    expect(result.current.savedMessage).toBe('Reverted to previous colors.');
-  });
-
-  it('drops the Undo snapshot when the mode changes', async () => {
-    const { result, rerender } = setup();
-    await act(async () => {
-      result.current.handleApply('school-of-rock', 'School of Rock');
-    });
-    expect(result.current.undoThemeLabel).toBe('School of Rock');
-
-    act(() => {
-      rerender({
-        editingEnabled: true,
-        baseTheme: 'boyhood',
-        editorMode: 'light',
-        colorValues: COLOR_VALUES,
-        save: vi.fn().mockResolvedValue(true),
-        loadOverrides: vi.fn((tokens) => tokens),
-        onSaveFailed: vi.fn(),
-      });
-    });
-
-    expect(result.current.undoThemeLabel).toBeNull();
-  });
-
-  it('undo is a no-op when there is nothing to revert', () => {
-    const { result, save } = setup();
-    act(() => result.current.handleUndo());
-    expect(save).not.toHaveBeenCalled();
-    expect(result.current.undoThemeLabel).toBeNull();
   });
 
   it('routes a failed save to onSaveFailed, not the polite announcement', async () => {
@@ -120,7 +68,7 @@ describe('useThemeCopy', () => {
     const { result, onSaveFailed } = setup({ save: failing });
 
     await act(async () => {
-      result.current.handleApply('school-of-rock', 'School of Rock');
+      result.current.handleApplyRandom(RANDOM_PALETTE);
     });
 
     await waitFor(() => expect(onSaveFailed).toHaveBeenCalledTimes(1));

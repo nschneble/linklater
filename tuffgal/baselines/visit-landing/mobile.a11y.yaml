@@ -5,7 +5,7 @@
     - heading "Linklater" [level=1]
     - paragraph: Save links now, read them later.
     - paragraph: Most curious adults come across dozens of interesting articles on any given day. Do they have time to read them all? Nope. Do they often forget about them? Totally.
-    - link "Get started free":
+    - link "Get started":
       - /url: /signup
     - link "Log in":
       - /url: /login

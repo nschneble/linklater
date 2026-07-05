@@ -1,7 +1,7 @@
 {
   "action": "delete-account",
   "steps": [
-    { "kind": "navigate", "path": "/settings#danger", "waitUntil": "domcontentloaded" },
+    { "kind": "navigate", "path": "/settings", "waitUntil": "domcontentloaded" },
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Delete my account" }

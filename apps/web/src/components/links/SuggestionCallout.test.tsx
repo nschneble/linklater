@@ -150,6 +150,8 @@ describe('SuggestionCallout inNewTab refetch after Add-and-Read', () => {
   });
 
   it('leaves the prior suggestion mounted when the refetch fails', async () => {
+    // The refetch rejects on purpose; keep its warn branch out of the log.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.mocked(apiModule.getSuggestions)
       .mockResolvedValueOnce({
         sourceName: 'Wikipedia',
@@ -190,6 +192,8 @@ describe('SuggestionCallout inNewTab refetch after Add-and-Read', () => {
         name: /add and read \(opens in new tab\)/i,
       }),
     ).toBeInTheDocument();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it('does NOT refetch in same-tab mode (inNewTab=false)', async () => {

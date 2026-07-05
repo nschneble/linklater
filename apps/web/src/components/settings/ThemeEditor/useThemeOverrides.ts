@@ -43,16 +43,6 @@ const BUNDLE_LABELS: Record<Bundle, string> = {
   success: 'Success',
 };
 
-const BUNDLE_DESCRIPTIONS: Record<Bundle, string> = {
-  base: 'Page chrome',
-  mount: 'Cards, panels',
-  orbit: 'Menus, dropdowns',
-  alert: 'Errors, danger zones',
-  warn: 'Yellow banners',
-  info: 'Tips, hints',
-  success: 'Verified, notifications',
-};
-
 const SLOT_LABELS: Record<Slot | BaseOnlySlot | BaseAndMountOnlySlot, string> =
   {
     bg: 'Background',
@@ -60,13 +50,13 @@ const SLOT_LABELS: Record<Slot | BaseOnlySlot | BaseAndMountOnlySlot, string> =
     text: 'Text',
     'alt-text': 'Alt text',
     'subtle-text': 'Subtle text',
-    'input-bg': 'Input background',
+    'input-bg': 'Input',
     highlight: 'Highlight',
-    'highlight-fg': 'Highlight foreground',
     'highlight-hover': 'Highlight hover',
+    'highlight-fg': 'Highlight text',
   };
 
-const FOCUS_RING_LABEL = 'Focus ring';
+const FOCUS_RING_LABEL = 'Focus';
 
 /**
  * Groupings used by `ColorEditor` to render the variable list with labeled
@@ -75,7 +65,6 @@ const FOCUS_RING_LABEL = 'Focus ring';
 export interface BundleGroup {
   bundle: Bundle;
   label: string;
-  description: string;
   items: Array<{
     variable: ThemeVariable;
     label: string;
@@ -85,21 +74,20 @@ export interface BundleGroup {
 export const VAR_GROUPS: BundleGroup[] = BUNDLES.map((bundle) => ({
   bundle,
   label: BUNDLE_LABELS[bundle],
-  description: BUNDLE_DESCRIPTIONS[bundle],
   items: [
     ...SLOTS.map((slot) => ({
       variable: `--${bundle}-${slot}` as ThemeVariable,
       label: SLOT_LABELS[slot],
     })),
-    ...(bundle === 'base'
-      ? BASE_ONLY_SLOTS.map((slot) => ({
-          variable: `--base-${slot}` as ThemeVariable,
-          label: SLOT_LABELS[slot],
-        }))
-      : []),
     ...(bundle === 'base' || bundle === 'mount'
       ? BASE_AND_MOUNT_ONLY_SLOTS.map((slot) => ({
           variable: `--${bundle}-${slot}` as ThemeVariable,
+          label: SLOT_LABELS[slot],
+        }))
+      : []),
+    ...(bundle === 'base'
+      ? BASE_ONLY_SLOTS.map((slot) => ({
+          variable: `--base-${slot}` as ThemeVariable,
           label: SLOT_LABELS[slot],
         }))
       : []),

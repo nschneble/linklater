@@ -1,4 +1,5 @@
 import { FOCUS_RING } from '../../lib/styles';
+import ThemeRowContent from '../common/ThemeRowContent';
 import {
   customThemeSrSuffix,
   isCustomThemeConfigured,
@@ -42,35 +43,29 @@ export default function InlineThemeList({
           className={`flex items-center gap-3 w-full px-4 py-3 text-[var(--orbit-text)] text-left ${FOCUS_RING} cursor-pointer`}
           onClick={() => onSelect(theme.id)}
         >
-          <span
-            className="relative shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full"
-            style={{ backgroundColor: theme.accent }}
-          >
-            <i
-              className={`absolute fa-solid ${theme.swatchIcon} text-white text-[0.6rem]`}
-              aria-hidden="true"
-            />
-          </span>
-          <span className="flex-1">
-            {theme.label}
-            {theme.id === 'custom' && (
-              <span className="sr-only">
-                {customThemeSrSuffix(isCustomConfigured)}
-              </span>
-            )}
-          </span>
-          {baseTheme === theme.id && (
-            <i
-              className="fa-solid fa-check text-[var(--orbit-highlight)]"
-              aria-hidden="true"
-            />
-          )}
-          {theme.isAccessible && (
-            <>
-              <i className="fa-solid fa-universal-access" aria-hidden="true" />
-              <span className="sr-only">Accessible theme</span>
-            </>
-          )}
+          <ThemeRowContent
+            label={theme.label}
+            labelSuffix={
+              theme.id === 'custom' && (
+                <span className="sr-only">
+                  {customThemeSrSuffix(isCustomConfigured)}
+                </span>
+              )
+            }
+            swatchIcon={theme.swatchIcon}
+            accent={theme.accent}
+            swatchSize="w-5 h-5"
+            glyphSize="text-[0.6rem]"
+            afterLabel={
+              baseTheme === theme.id && (
+                <i
+                  className="fa-solid fa-check text-[var(--orbit-highlight)]"
+                  aria-hidden="true"
+                />
+              )
+            }
+            isAccessible={theme.isAccessible}
+          />
         </button>
       ))}
     </>
