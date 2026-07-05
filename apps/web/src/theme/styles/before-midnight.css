@@ -64,7 +64,7 @@
   --orbit-highlight-fg: #1c2c38;
   --orbit-highlight-hover: #d4a020;
 
-  --alert-bg: rgb(76 26 14 / 0.5);
+  --alert-bg: #4c1a0e80;
   --alert-border: #d87858;
   --alert-text: #f5c8b8;
   --alert-alt-text: #e8b0a0;
@@ -72,7 +72,7 @@
   --alert-highlight-fg: #1c0a04;
   --alert-highlight-hover: #e08868;
 
-  --warn-bg: rgb(70 50 8 / 0.5);
+  --warn-bg: #46320880;
   --warn-border: #ebb327;
   --warn-text: #f5dc80;
   --warn-alt-text: #f0d090;
@@ -80,7 +80,7 @@
   --warn-highlight-fg: #1c1408;
   --warn-highlight-hover: #f5c440;
 
-  --info-bg: rgb(8 40 50 / 0.5);
+  --info-bg: #08283280;
   --info-border: #88bbb6;
   --info-text: #c8e2e0;
   --info-alt-text: #aad0cc;
@@ -88,7 +88,7 @@
   --info-highlight-fg: #08222a;
   --info-highlight-hover: #a0c8c4;
 
-  --success-bg: rgb(20 50 42 / 0.55);
+  --success-bg: #14322a8c;
   --success-border: #a8e8d0;
   --success-text: #c0e0d4;
   --success-alt-text: #a0d0c0;

@@ -140,22 +140,24 @@ export function luminanceRatio(first: Rgb, second: Rgb): number {
   return lighter / darker;
 }
 
-function parseHex(hex: string): Rgb {
+function parseHex(hex: string): Rgba {
   const normalized = hex.startsWith('#') ? hex.slice(1) : hex;
   const expanded =
-    normalized.length === 3
+    normalized.length === 3 || normalized.length === 4
       ? normalized
           .split('')
           .map((character) => character + character)
           .join('')
       : normalized;
-  if (expanded.length !== 6) {
+  if (expanded.length !== 6 && expanded.length !== 8) {
     throw new Error(`Cannot parse hex color: ${hex}`);
   }
   const red = parseInt(expanded.slice(0, 2), 16);
   const green = parseInt(expanded.slice(2, 4), 16);
   const blue = parseInt(expanded.slice(4, 6), 16);
-  return [red, green, blue];
+  const alpha =
+    expanded.length === 8 ? parseInt(expanded.slice(6, 8), 16) / 255 : 1;
+  return [red, green, blue, alpha];
 }
 
 function parseRgb(value: string): Rgba {
@@ -175,8 +177,7 @@ function parseRgb(value: string): Rgba {
 export function parseColor(value: string): Rgba {
   const trimmed = value.trim();
   if (trimmed.startsWith('#')) {
-    const [red, green, blue] = parseHex(trimmed);
-    return [red, green, blue, 1];
+    return parseHex(trimmed);
   }
   if (trimmed.toLowerCase().startsWith('rgb')) {
     return parseRgb(trimmed);

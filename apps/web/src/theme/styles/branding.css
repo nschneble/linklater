@@ -54,7 +54,7 @@
   --base-highlight-hover: #ffb199;
 
   /* mount = cards (bg = white @ 5% over the navy chrome). */
-  --mount-bg: rgba(255, 255, 255, 0.05);
+  --mount-bg: #ffffff0d;
   --mount-border: #8a7bd0;
   --mount-input-bg: #1a1438;
   --mount-text: #eeeede;
@@ -73,7 +73,7 @@
   --orbit-highlight-hover: #ffb199;
 
   /* alert = rose (bg = rgb(76 5 25 / 0.55) over #0a0812). */
-  --alert-bg: rgb(76 5 25 / 0.55);
+  --alert-bg: #4c05198c;
   --alert-border: #f87171;
   --alert-text: #fca5a5;
   --alert-alt-text: #fecaca;
@@ -82,7 +82,7 @@
   --alert-highlight-hover: #fb7185;
 
   /* warn = amber (bg = rgb(69 26 3 / 0.55) over #0a0812). */
-  --warn-bg: rgb(69 26 3 / 0.55);
+  --warn-bg: #451a038c;
   --warn-border: #f59e0b;
   --warn-text: #fcd34d;
   --warn-alt-text: #fde68a;
@@ -91,7 +91,7 @@
   --warn-highlight-hover: #fbbf24;
 
   /* info = blue (bg = rgb(23 37 84 / 0.55) over #0a0812). */
-  --info-bg: rgb(23 37 84 / 0.55);
+  --info-bg: #1725548c;
   --info-border: #60a5fa;
   --info-text: #93c5fd;
   --info-alt-text: #bfdbfe;
@@ -100,7 +100,7 @@
   --info-highlight-hover: #93c5fd;
 
   /* success = emerald (bg = rgb(6 50 32 / 0.55) over #0a0812). */
-  --success-bg: rgb(6 50 32 / 0.55);
+  --success-bg: #0632208c;
   --success-border: #22c55e;
   --success-text: #86efac;
   --success-alt-text: #bbf7d0;

@@ -90,7 +90,7 @@
   --orbit-highlight-fg: #0d150d;
   --orbit-highlight-hover: #8eb338;
 
-  --alert-bg: rgb(76 20 14 / 0.55);
+  --alert-bg: #4c140e8c;
   --alert-border: #d87858;
   --alert-text: #f5c8b8;
   --alert-alt-text: #e8b0a0;
@@ -98,7 +98,7 @@
   --alert-highlight-fg: #1c0604;
   --alert-highlight-hover: #e08868;
 
-  --warn-bg: rgb(60 44 8 / 0.55);
+  --warn-bg: #3c2c088c;
   --warn-border: #ebb327;
   --warn-text: #f5dc80;
   --warn-alt-text: #f0d090;
@@ -106,7 +106,7 @@
   --warn-highlight-fg: #1c1408;
   --warn-highlight-hover: #f5c440;
 
-  --info-bg: rgb(20 36 64 / 0.55);
+  --info-bg: #1424408c;
   --info-border: #5988b0;
   --info-text: #c8dcf0;
   --info-alt-text: #a8c4e0;
@@ -119,7 +119,7 @@
    * the tritan amber-vs-lime collapse vs --warn-border #ebb327 (axis B
    * border luminance ratio 1.18 → 1.48, clears 1.4 threshold). --alt-text
    * collapses to the same value per M-D1 spec. */
-  --success-bg: rgb(20 50 24 / 0.55);
+  --success-bg: #1432188c;
   --success-border: #d0e8a8;
   --success-text: #d0e8a8;
   --success-alt-text: #d0e8a8;

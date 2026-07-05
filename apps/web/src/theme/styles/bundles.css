@@ -174,7 +174,7 @@
 }
 
 [data-mode='dark'] {
-  --alert-bg: rgb(76 5 25 / 0.4);
+  --alert-bg: #4c051966;
   --alert-border: #fb7185;
   --alert-text: #fda4af;
   --alert-alt-text: #fda4af;
@@ -182,7 +182,7 @@
   --alert-highlight-fg: #2a0810;
   --alert-highlight-hover: #fb7185;
 
-  --warn-bg: rgb(69 26 3 / 0.4);
+  --warn-bg: #451a0366;
   --warn-border: #f59e0b;
   --warn-text: #fcd34d;
   --warn-alt-text: #fde68a;
@@ -190,7 +190,7 @@
   --warn-highlight-fg: #3a1a05;
   --warn-highlight-hover: #fbbf24;
 
-  --info-bg: rgb(23 37 84 / 0.4);
+  --info-bg: #17255466;
   --info-border: #60a5fa;
   --info-text: #93c5fd;
   --info-alt-text: #bfdbfe;
@@ -198,7 +198,7 @@
   --info-highlight-fg: #0a1f3a;
   --info-highlight-hover: #93c5fd;
 
-  --success-bg: rgb(6 78 59 / 0.4);
+  --success-bg: #064e3b66;
   --success-border: #34d399;
   --success-text: #6ee7b7;
   --success-alt-text: #a7f3d0;
@@ -230,7 +230,7 @@
  * theme-independent; promote to `var(--scrim, rgb(0 0 0 / 0.5))` when
  * a theme needs to opt out. */
 @utility scrim {
-  background-color: rgb(0 0 0 / 0.5);
+  background-color: #00000080;
 }
 
 /* Suppress the asset filter under Windows High Contrast / forced-colors.

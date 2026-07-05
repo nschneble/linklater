@@ -53,7 +53,7 @@
   --orbit-highlight-fg: #000000;
   --orbit-highlight-hover: #9bbcd2;
 
-  --alert-bg: rgb(76 12 24 / 0.6);
+  --alert-bg: #4c0c1899;
   --alert-border: #e08090;
   --alert-text: #f4d4d8;
   --alert-alt-text: #f0c4cc;
@@ -64,7 +64,7 @@
   --alert-highlight-fg: #1a0608;
   --alert-highlight-hover: #d05868;
 
-  --warn-bg: rgb(50 36 8 / 0.6);
+  --warn-bg: #32240899;
   --warn-border: #d4a050;
   --warn-text: #f5e4b8;
   --warn-alt-text: #f0d890;
@@ -72,7 +72,7 @@
   --warn-highlight-fg: #1a0e02;
   --warn-highlight-hover: #d8a858;
 
-  --info-bg: rgb(20 36 80 / 0.6);
+  --info-bg: #14245099;
   --info-border: #83acc5;
   --info-text: #d5dcee;
   --info-alt-text: #b8c8e8;
@@ -93,7 +93,7 @@
    * but still SC-1.4.11-compliant border contrast (3.38:1 on bg,
    * 3.87:1 on page-bg). Verified via culori Brettel+CIEDE2000 pre-flight,
    * NOT oklch estimation – see project memory on CVD pre-flight method. */
-  --success-bg: rgb(10 50 30 / 0.6);
+  --success-bg: #0a321e99;
   --success-border: #3a8060;
   --success-text: #c8e8d0;
   --success-alt-text: #a8d4b8;

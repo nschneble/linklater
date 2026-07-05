@@ -110,7 +110,7 @@
    * sunset precedent: punchy hl + dark hl-fg for fill-on-fill
    * alert buttons. Alpha 0.55 standard (page-bg rel lum 0.019 > 0.005
    * threshold). */
-  --alert-bg: rgb(80 22 12 / 0.55);
+  --alert-bg: #50160c8c;
   --alert-border: #f08868;
   --alert-text: #f5c8b8;
   --alert-alt-text: #e8b0a0;
@@ -118,7 +118,7 @@
   --alert-highlight-fg: #1c0608;
   --alert-highlight-hover: #f06868;
 
-  --warn-bg: rgb(82 58 10 / 0.55);
+  --warn-bg: #523a0a8c;
   --warn-border: #ebb327;
   --warn-text: #f5dc80;
   --warn-alt-text: #f0d090;
@@ -127,7 +127,7 @@
   --warn-highlight-hover: #f5c440;
 
   /* info – LAVENDER (Apollo-class PRD break). */
-  --info-bg: rgb(40 28 56 / 0.55);
+  --info-bg: #281c388c;
   --info-border: #b08cd0;
   --info-text: #e0ccf0;
   --info-alt-text: #c8b0e0;
@@ -138,7 +138,7 @@
   /* success – CREAM-MINT (Apollo-class PRD break; before-sunset
    * precedent). High-luminance mint cream outruns warn-gold under
    * tritanopia. */
-  --success-bg: rgb(20 50 30 / 0.55);
+  --success-bg: #14321e8c;
   --success-border: #a8e8d0;
   --success-text: #c0e0d4;
   --success-alt-text: #a0d0c0;

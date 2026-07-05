@@ -24,7 +24,7 @@ export const BRANDING_DEFAULTS: Readonly<Record<string, string>> = {
   '--base-highlight-fg': '#2a0d05',
   '--base-highlight-hover': '#ffb199',
 
-  '--mount-bg': 'rgba(255, 255, 255, 0.05)',
+  '--mount-bg': '#ffffff0d',
   '--mount-border': '#8a7bd0',
   '--mount-input-bg': '#1a1438',
   '--mount-text': '#eeeede',
@@ -41,7 +41,7 @@ export const BRANDING_DEFAULTS: Readonly<Record<string, string>> = {
   '--orbit-highlight-fg': '#2a0d05',
   '--orbit-highlight-hover': '#ffb199',
 
-  '--alert-bg': 'rgb(76 5 25 / 0.55)',
+  '--alert-bg': '#4c05198c',
   '--alert-border': '#f87171',
   '--alert-text': '#fca5a5',
   '--alert-alt-text': '#fecaca',
@@ -49,7 +49,7 @@ export const BRANDING_DEFAULTS: Readonly<Record<string, string>> = {
   '--alert-highlight-fg': '#2a0810',
   '--alert-highlight-hover': '#fb7185',
 
-  '--warn-bg': 'rgb(69 26 3 / 0.55)',
+  '--warn-bg': '#451a038c',
   '--warn-border': '#f59e0b',
   '--warn-text': '#fcd34d',
   '--warn-alt-text': '#fde68a',
@@ -57,7 +57,7 @@ export const BRANDING_DEFAULTS: Readonly<Record<string, string>> = {
   '--warn-highlight-fg': '#3a1a05',
   '--warn-highlight-hover': '#fbbf24',
 
-  '--info-bg': 'rgb(23 37 84 / 0.55)',
+  '--info-bg': '#1725548c',
   '--info-border': '#60a5fa',
   '--info-text': '#93c5fd',
   '--info-alt-text': '#bfdbfe',
@@ -65,7 +65,7 @@ export const BRANDING_DEFAULTS: Readonly<Record<string, string>> = {
   '--info-highlight-fg': '#0a1f3a',
   '--info-highlight-hover': '#93c5fd',
 
-  '--success-bg': 'rgb(6 50 32 / 0.55)',
+  '--success-bg': '#0632208c',
   '--success-border': '#22c55e',
   '--success-text': '#86efac',
   '--success-alt-text': '#bbf7d0',
