@@ -88,20 +88,32 @@ export const MOCK_GLYPHS = {
  * MockNotice's `banner`/`toast` props (MockNotice renders them verbatim).
  */
 export const MOCK_STATUS_GLYPHS = {
+  base: {
+    banner: asemicLine([6, 7, 4, 5], 40),
+    toast: asemicLine([4, 5], 41),
+  },
+  mount: {
+    banner: asemicLine([6, 7, 4, 5], 40),
+    toast: asemicLine([4, 5], 41),
+  },
+  orbit: {
+    banner: asemicLine([6, 7, 4, 5], 40),
+    toast: asemicLine([4, 5], 41),
+  },
   warn: {
-    banner: asemicLine([4, 5, 3, 7, 5, 5, 4], 20),
-    toast: asemicLine([4, 8, 3, 4, 2, 4, 4, 2, 6], 21),
+    banner: asemicLine([4, 5, 3, 4], 20),
+    toast: asemicLine([4, 8, 3, 4, 2], 21),
   },
   info: {
-    banner: asemicLine([3, 4, 1, 4, 2, 7, 2], 22),
-    toast: asemicLine([4, 5, 6, 5, 6], 23),
+    banner: asemicLine([3, 4, 1, 4, 2, 2], 22),
+    toast: asemicLine([4, 5, 6, 6], 23),
   },
   alert: {
-    banner: asemicLine([2, 8, 4, 4, 4], 24),
-    toast: asemicLine([3, 4, 3, 2, 4, 5, 2, 1, 6], 25),
+    banner: asemicLine([2, 8, 4, 4], 24),
+    toast: asemicLine([3, 4, 3, 2, 5, 2, 1], 25),
   },
   success: {
     banner: asemicLine([4, 6], 26),
-    toast: asemicLine([5, 2, 6, 3, 6, 9], 27),
+    toast: asemicLine([5, 2, 6, 3, 6], 27),
   },
 } as const;

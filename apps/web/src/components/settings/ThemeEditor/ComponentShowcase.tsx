@@ -1,13 +1,13 @@
+import MockBanner from './MockBanner';
 import MockHeader from './MockHeader';
 import MockLinkCard from './MockLinkCard';
-import MockMenu from './MockMenu';
-import MockNotice from './MockNotice';
+import MockToast from './MockToast';
 import MockToolbar from './MockToolbar';
 import { MOCK_STATUS_GLYPHS } from './mockGlyphs';
-import { Children, useId } from 'react';
+import { useId } from 'react';
 import type { Bundle } from './useThemeOverrides';
 import type { Mode } from '../../../theme/constants';
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties } from 'react';
 
 interface ComponentShowcaseProps {
   /**
@@ -34,29 +34,6 @@ interface ComponentShowcaseProps {
    * THEME (PRD point 9 inversion).
    */
   contentThemeStyle: CSSProperties;
-}
-
-/**
- * The per-child enter stagger, identical in spirit to the links list: each
- * direct piece of the active bundle's mock animates in with `animate-card-enter`
- * and an inline `animationDelay` of `min(index * 60, 240)ms`. It is CSS-driven,
- * so the global prefers-reduced-motion clamp collapses it to the correct end
- * state (the `both` fill mode lands opacity 1 / translateY 0) for free. The
- * stagger replays whenever the parent remounts the mock via its key.
- */
-function MockStagger({ children }: { children: ReactNode }) {
-  return (
-    <>
-      {Children.map(children, (child, index) => (
-        <div
-          className="animate-card-enter"
-          style={{ animationDelay: `${Math.min(index * 60, 240)}ms` }}
-        >
-          {child}
-        </div>
-      ))}
-    </>
-  );
 }
 
 /**
@@ -101,60 +78,28 @@ const PREVIEW_CHROME = {
  * wraps it in a single aria-hidden container).
  */
 function BundleMock({ bundle }: { bundle: Bundle }) {
-  if (bundle === 'base') {
-    return (
-      <div className="flex-1 pb-4 bg-[var(--base-bg)]">
-        <MockStagger>
-          <MockToolbar />
-        </MockStagger>
-      </div>
-    );
-  }
-  if (bundle === 'mount') {
-    return (
-      <div className="flex-1 p-4 bg-[var(--base-bg)]">
-        <MockStagger>
-          <MockLinkCard />
-        </MockStagger>
-      </div>
-    );
-  }
-  if (bundle === 'orbit') {
-    return (
-      <div className="relative flex-1 bg-[var(--base-bg)]">
-        <MockStagger>
-          <MockHeader />
-        </MockStagger>
-        {/* The open account menu drops from the top-right avatar, overlaying the
-            content the way the real dropdown does — inset so it is never
-            clipped. The menu is the second staggered piece, so it slides in just
-            after the header. */}
-        <div className="absolute right-3 top-12 z-10 animate-card-enter [animation-delay:60ms]">
-          <MockMenu />
-        </div>
-        <div className="h-32" />
-      </div>
-    );
-  }
+  const icon = STATUS_ICONS[bundle];
+  const banner = STATUS_COPY[bundle].banner;
+  const toast = STATUS_COPY[bundle].toast;
+
   return (
-    <div className="flex-1 pt-0 bg-[var(--base-bg)]">
-      <MockStagger>
-        <MockNotice
-          bundle={bundle}
-          icon={STATUS_ICONS[bundle]}
-          banner={STATUS_COPY[bundle].banner}
-          toast={STATUS_COPY[bundle].toast}
-        />
-      </MockStagger>
+    <div className="relative flex-1 pb-3 bg-[var(--base-bg)]">
+      <MockBanner bundle={bundle} icon={icon} text={banner} />
+      <MockHeader muted={bundle !== 'orbit'} />
+      <MockToolbar muted={bundle !== 'base'} />
+      <MockLinkCard muted={bundle !== 'mount'} />
+      <div className="h-[34px]" />
+      <MockToast bundle={bundle} icon={icon} text={toast} />
     </div>
   );
 }
 
-type StatusBundle = 'alert' | 'warn' | 'info' | 'success';
-
-const STATUS_ICONS: Record<StatusBundle, string> = {
+const STATUS_ICONS: Record<Bundle, string> = {
+  base: 'fa-solid fa-cat',
+  mount: 'fa-solid fa-cat',
+  orbit: 'fa-solid fa-cat',
   warn: 'fa-solid fa-triangle-exclamation',
-  info: 'fa-solid fa-lightbulb',
+  info: 'fa-solid fa-circle-info',
   alert: 'fa-solid fa-circle-xmark',
   success: 'fa-solid fa-circle-check',
 };
@@ -162,7 +107,7 @@ const STATUS_ICONS: Record<StatusBundle, string> = {
 // Asemic Old Turkic stand-ins for each status notice's banner + toast lines.
 // They feed MockNotice's props; MockNotice renders them verbatim (no string
 // edit there).
-const STATUS_COPY: Record<StatusBundle, { banner: string; toast: string }> =
+const STATUS_COPY: Record<Bundle, { banner: string; toast: string }> =
   MOCK_STATUS_GLYPHS;
 
 /**

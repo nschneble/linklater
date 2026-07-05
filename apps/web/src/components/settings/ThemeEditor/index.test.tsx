@@ -189,26 +189,31 @@ describe('ThemeEditor mode toggle in the header toolbar', () => {
   });
 });
 
-describe('ThemeEditor live preview reflects the selected bundle (PRD point 4)', () => {
-  it('opens on base (toolbar) and swaps the mock + explanation when a bundle is picked', () => {
+describe('ThemeEditor live preview highlights the selected bundle', () => {
+  it('opens on base and mutes the rest, then swaps the highlight + explanation when a bundle is picked', () => {
     render(<ThemeEditor />);
 
-    // Default active bundle is base — the toolbar mock (its asemic "Add link"
-    // stand-in) + its app-themed explanation show.
+    // The whole app frame renders for every bundle; only the active bundle's
+    // component stays in color. On base the toolbar (its asemic "Add link"
+    // stand-in) is NOT muted, and its app-themed explanation shows.
     const mock = screen.getByTestId('app-mock');
-    expect(within(mock).getByText(MOCK_GLYPHS.addLink)).toBeInTheDocument();
-    expect(screen.getByText(/used for the page itself/i)).toBeInTheDocument();
+    expect(
+      within(mock).getByText(MOCK_GLYPHS.addLink).closest('[data-muted]'),
+    ).toBeNull();
+    expect(screen.getByText(/page defaults/i)).toBeInTheDocument();
 
-    // Picking the mount bundle swaps the preview to the link card. The inner
-    // mock REMOUNTS on a bundle change (its enter animation replays — PRD point
-    // 10), so re-query the live node rather than the now-detached original.
+    // Picking the mount bundle moves the highlight to the link card. The inner
+    // mock REMOUNTS on a bundle change (re-query the live node), the explanation
+    // swaps, and the toolbar — still rendered — is now muted.
     fireEvent.click(screen.getByRole('tab', { name: 'Mount' }));
     expect(
-      screen.getByText(/used for your saved-link cards/i),
+      screen.getByText(/raised components like cards/i),
     ).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('app-mock')).queryByText(MOCK_GLYPHS.addLink),
-    ).toBeNull();
+      within(screen.getByTestId('app-mock'))
+        .getByText(MOCK_GLYPHS.addLink)
+        .closest('[data-muted]'),
+    ).not.toBeNull();
   });
 
   it('keeps a single sr-only "Live preview" h2 and an h1 → "Color Bundles" → "Colors" → "Live preview" outline', () => {

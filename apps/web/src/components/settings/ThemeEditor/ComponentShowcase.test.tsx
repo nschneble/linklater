@@ -3,10 +3,12 @@
  * editor. The mock is a PICTURE of the app, not the app: it must be a single
  * aria-hidden subtree with zero focusable descendants, fronted by an sr-only
  * <h2> "Live preview" plus a VISIBLE, app-themed explanation, BOTH rendered
- * OUTSIDE that subtree. The showcase mirrors the SELECTED bundle only (PRD
- * point 4): each bundle previews the real component it paints. The custom
- * palette is scoped to the aria-hidden mock ALONE (PRD point 9 inversion), so
- * the explanation + heading render in the always-readable app theme.
+ * OUTSIDE that subtree. The showcase renders the WHOLE app frame for every
+ * bundle and keeps only the ACTIVE bundle in color — the components painted by
+ * the other bundles render grayscale (`data-muted`) so the eye lands on the
+ * bundle being edited. The custom palette is scoped to the aria-hidden mock
+ * ALONE (PRD point 9 inversion), so the explanation + heading render in the
+ * always-readable app theme.
  */
 
 import ComponentShowcase, { BUNDLE_EXPLANATIONS } from './ComponentShowcase';
@@ -58,7 +60,7 @@ describe('ComponentShowcase – named live-preview region', () => {
 describe('ComponentShowcase – the explanation is real app UI', () => {
   it('renders a VISIBLE (not sr-only) explanation OUTSIDE the aria-hidden mock', () => {
     renderShowcase('mount');
-    const explanation = screen.getByText(/used for your saved-link cards/i);
+    const explanation = screen.getByText(/raised components like cards/i);
     // Real app UI: NOT visually hidden.
     expect(explanation).not.toHaveClass('sr-only');
     // App-themed: outside the styled, aria-hidden mock subtree.
@@ -69,14 +71,14 @@ describe('ComponentShowcase – the explanation is real app UI', () => {
 
   it('carries no role and no aria-live (the tab self-voices)', () => {
     renderShowcase('success');
-    const explanation = screen.getByText(/used for success toasts/i);
+    const explanation = screen.getByText(/successful toast notifications/i);
     expect(explanation).not.toHaveAttribute('role');
     expect(explanation).not.toHaveAttribute('aria-live');
   });
 
   it('swaps the explanation per selected bundle', () => {
     const { rerender } = renderShowcase('base');
-    expect(screen.getByText(/used for the page itself/i)).toBeInTheDocument();
+    expect(screen.getByText(/page defaults/i)).toBeInTheDocument();
     rerender(
       <ComponentShowcase
         activeBundle="orbit"
@@ -86,7 +88,7 @@ describe('ComponentShowcase – the explanation is real app UI', () => {
       />,
     );
     expect(
-      screen.getByText(/used for the top bar and your account menu/i),
+      screen.getByText(/page header, user menu, and submenus/i),
     ).toBeInTheDocument();
   });
 
@@ -102,33 +104,70 @@ describe('ComponentShowcase – the explanation is real app UI', () => {
   });
 });
 
-describe('ComponentShowcase – per-bundle mock (PRD point 4)', () => {
-  it('previews the link card for the mount bundle', () => {
-    renderShowcase('mount');
-    expect(getMock().outerHTML).toContain('var(--mount-highlight)');
+describe('ComponentShowcase – whole-frame preview with grayscale muting', () => {
+  it('renders the whole app frame (header + toolbar + link card) for every bundle', () => {
+    for (const bundle of BUNDLES) {
+      const { unmount } = renderShowcase(bundle);
+      expect(screen.getByText(MOCK_GLYPHS.wordmark)).toBeInTheDocument();
+      expect(screen.getByText(MOCK_GLYPHS.addLink)).toBeInTheDocument();
+      expect(screen.getByText(MOCK_GLYPHS.linkTitle)).toBeInTheDocument();
+      unmount();
+    }
   });
 
-  it('previews the header + account menu for the orbit bundle', () => {
+  it('keeps the component the active bundle paints in color', () => {
+    // The header paints orbit, so on the orbit bundle its subtree is NOT
+    // muted; the toolbar (base) + link card (mount) are.
     renderShowcase('orbit');
-    expect(screen.getByText(MOCK_GLYPHS.wordmark)).toBeInTheDocument();
-    expect(screen.getByText(MOCK_GLYPHS.loggedInAs)).toBeInTheDocument();
-    expect(screen.getByText(MOCK_GLYPHS.themeName)).toBeInTheDocument();
+    expect(
+      screen.getByText(MOCK_GLYPHS.wordmark).closest('[data-muted]'),
+    ).toBeNull();
+    expect(
+      screen.getByText(MOCK_GLYPHS.addLink).closest('[data-muted]'),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(MOCK_GLYPHS.linkTitle).closest('[data-muted]'),
+    ).not.toBeNull();
   });
 
-  it('previews the toolbar for the base bundle', () => {
+  it('mutes the components the non-active bundles paint', () => {
+    // On the base bundle only the toolbar stays in color; the header (orbit)
+    // and link card (mount) render grayscale.
     renderShowcase('base');
-    expect(screen.getByText(MOCK_GLYPHS.addLink)).toBeInTheDocument();
-    expect(screen.getByText(MOCK_GLYPHS.unread)).toBeInTheDocument();
+    expect(
+      screen.getByText(MOCK_GLYPHS.addLink).closest('[data-muted]'),
+    ).toBeNull();
+    expect(
+      screen.getByText(MOCK_GLYPHS.wordmark).closest('[data-muted]'),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(MOCK_GLYPHS.linkTitle).closest('[data-muted]'),
+    ).not.toBeNull();
   });
 
-  it('previews the matching notice for each status bundle', () => {
-    renderShowcase('success');
+  it('keeps the banner + toast in color only for a status bundle', () => {
+    // The banner + toast paint the active status bundle, so they stay in color
+    // for success but render grayscale for base/mount/orbit.
+    const { unmount } = renderShowcase('success');
     expect(
-      screen.getByText(MOCK_STATUS_GLYPHS.success.banner),
-    ).toBeInTheDocument();
+      screen
+        .getByText(MOCK_STATUS_GLYPHS.success.banner)
+        .closest('[data-muted]'),
+    ).toBeNull();
     expect(
-      screen.getByText(MOCK_STATUS_GLYPHS.success.toast),
-    ).toBeInTheDocument();
+      screen
+        .getByText(MOCK_STATUS_GLYPHS.success.toast)
+        .closest('[data-muted]'),
+    ).toBeNull();
+    unmount();
+
+    renderShowcase('base');
+    expect(
+      screen.getByText(MOCK_STATUS_GLYPHS.base.banner).closest('[data-muted]'),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(MOCK_STATUS_GLYPHS.base.toast).closest('[data-muted]'),
+    ).not.toBeNull();
   });
 });
 
@@ -208,32 +247,40 @@ describe('ComponentShowcase – decorative mock contract (per bundle)', () => {
   });
 });
 
-describe('ComponentShowcase – enter animation (PRD point 10)', () => {
-  // The mock's pieces carry the app's `animate-card-enter` class with a capped
-  // inline stagger delay, exactly like the links list. Reduced-motion safety is
-  // INHERITED from the global prefers-reduced-motion clamp in index.css (it
-  // neutralizes animation-duration + iteration-count on *), so we assert the
-  // CSS-driven mechanism is present and trust the global clamp — no bespoke,
-  // unguarded motion is introduced here.
-  it('animates each mock piece in with animate-card-enter + a capped stagger delay', () => {
+describe('ComponentShowcase – grayscale muting mechanism', () => {
+  // Muting is driven off a `data-muted` DOM attribute plus the Tailwind
+  // `data-muted:grayscale` variant (no JS style ternary), so the muted state
+  // and the filter cannot drift apart. Exactly the components the non-active
+  // bundle paints carry the attribute.
+  it('drives every mute off the data-muted attribute + data-muted:grayscale variant', () => {
     for (const bundle of BUNDLES) {
       const { unmount } = renderShowcase(bundle);
-      const animated = screen
+      const muted = screen
         .getByTestId('app-mock')
-        .querySelectorAll('.animate-card-enter');
-      expect(animated.length).toBeGreaterThan(0);
-      animated.forEach((piece) => {
-        const delay = (piece as HTMLElement).style.animationDelay;
-        // Either an inline capped delay (MockStagger) or the Tailwind
-        // [animation-delay:60ms] utility on the orbit menu — both stay <= 240ms.
-        if (delay) {
-          const milliseconds = Number.parseInt(delay, 10);
-          expect(milliseconds).toBeGreaterThanOrEqual(0);
-          expect(milliseconds).toBeLessThanOrEqual(240);
-        }
+        .querySelectorAll('[data-muted]');
+      // Every non-active piece is muted; at least one always is (the active
+      // bundle only ever paints a subset of the frame).
+      expect(muted.length).toBeGreaterThan(0);
+      muted.forEach((piece) => {
+        expect(piece.className).toContain('data-muted:grayscale');
       });
       unmount();
     }
+  });
+
+  it('mutes four of five frame pieces for a surface bundle, three for a status bundle', () => {
+    // base/mount/orbit each paint one frame piece, leaving four muted; a status
+    // bundle paints both the banner + toast, leaving three muted.
+    const { unmount } = renderShowcase('base');
+    expect(
+      screen.getByTestId('app-mock').querySelectorAll('[data-muted]'),
+    ).toHaveLength(4);
+    unmount();
+
+    renderShowcase('success');
+    expect(
+      screen.getByTestId('app-mock').querySelectorAll('[data-muted]'),
+    ).toHaveLength(3);
   });
 });
 
@@ -368,7 +415,7 @@ describe('ComponentShowcase – asemic font scope', () => {
     const section = container.querySelector('section') as HTMLElement;
     expect(section).not.toHaveClass('app-mock-asemic');
     expect(getLivePreviewHeading()).not.toHaveClass('app-mock-asemic');
-    expect(screen.getByText(/used for your saved-link cards/i)).not.toHaveClass(
+    expect(screen.getByText(/raised components like cards/i)).not.toHaveClass(
       'app-mock-asemic',
     );
     // The marker exists exactly once, on the mock container itself.

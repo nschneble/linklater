@@ -8,9 +8,16 @@ import { MOCK_GLYPHS } from './mockGlyphs';
  * style its orbit surfaces however reads best. The visible copy is asemic Old
  * Turkic (see mockGlyphs) so the aria-hidden mock reads as decoration.
  */
-export default function MockHeader() {
+interface MockHeaderProps {
+  muted?: boolean;
+}
+
+export default function MockHeader({ muted }: MockHeaderProps) {
   return (
-    <div className="flex items-center justify-between px-4 py-2.5 bg-[var(--orbit-bg)] border-b border-[var(--orbit-border)]">
+    <div
+      className="flex items-center justify-between px-4 py-2.5 bg-[var(--orbit-bg)] border-b border-[var(--orbit-border)] data-muted:grayscale data-muted:opacity-10"
+      data-muted={muted || undefined}
+    >
       <div className="flex items-center gap-2">
         <span className="flex items-center justify-center w-6 h-6 bg-[var(--orbit-highlight)] rounded-full">
           <i

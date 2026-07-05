@@ -14,9 +14,16 @@ import { MOCK_GLYPHS } from './mockGlyphs';
  * site name + description (mount-alt-text). The visible copy is asemic Old Turkic
  * (see mockGlyphs) so the aria-hidden mock reads as decoration.
  */
-export default function MockLinkCard() {
+interface MockLinkCardProps {
+  muted?: boolean;
+}
+
+export default function MockLinkCard({ muted }: MockLinkCardProps) {
   return (
-    <div className="relative overflow-visible pl-6 pr-3 py-3 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] border-shadow rounded-r-xl">
+    <div
+      className="relative overflow-visible m-4 pl-6 pr-3 py-3 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] border-shadow rounded-r-xl data-muted:grayscale data-muted:opacity-10"
+      data-muted={muted || undefined}
+    >
       <span className="absolute left-0 top-3 -translate-x-1/2 w-5 h-5 bg-[var(--mount-highlight-hover)] rounded-full" />
 
       <div className="flex flex-row items-center">

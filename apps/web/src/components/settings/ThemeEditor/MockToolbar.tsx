@@ -14,9 +14,16 @@ import { MOCK_GLYPHS } from './mockGlyphs';
  * lift). The visible copy is asemic Old Turkic (see mockGlyphs) so the
  * aria-hidden mock reads as decoration.
  */
-export default function MockToolbar() {
+interface MockToolbarProps {
+  muted?: boolean;
+}
+
+export default function MockToolbar({ muted }: MockToolbarProps) {
   return (
-    <div className="space-y-2.5 px-4 pt-3">
+    <div
+      className="space-y-2.5 px-4 pt-3 data-muted:grayscale data-muted:opacity-10"
+      data-muted={muted || undefined}
+    >
       <span className="block text-[var(--base-text)] text-base font-bold">
         {MOCK_GLYPHS.yourLinks}
       </span>
