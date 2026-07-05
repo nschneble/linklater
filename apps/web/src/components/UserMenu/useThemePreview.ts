@@ -130,10 +130,20 @@ export function useThemePreview(
     const root = document.documentElement;
     const savedsavedCvd = previewCvdValue.current;
     previewCvdValue.current = undefined;
+    // The preview theme currently painted on the document, captured now so the
+    // deferred restore below can tell whether it is still the thing on screen.
+    const previewedTheme = root.dataset.theme;
     // Defer CSS var mutations to rAF so React re-renders first (removing the
     // Theme row highlight instantly) before the 600ms transition is applied.
     resetRafHandle.current = requestAnimationFrame(() => {
       resetRafHandle.current = null;
+      // Bail if an authoritative React repaint replaced the preview between
+      // scheduling and now — e.g. logging out flips the paint to the off-book
+      // `branding` chrome (useThemeState's unauthenticated gate). Restoring the
+      // committed film theme here would stomp `branding` back to that theme,
+      // and because the paint effect's deps never change again, the stale film
+      // theme would then stick across every logged-out auth surface.
+      if (root.dataset.theme !== previewedTheme) return;
       root.style.setProperty('--theme-transition-duration', '600ms');
       root.style.setProperty('--theme-transition-easing', 'ease-out');
       root.dataset.theme = currentBaseTheme;
