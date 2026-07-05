@@ -66,13 +66,14 @@ function MockStagger({ children }: { children: ReactNode }) {
  * app's own voice — concise, truthful, no marketing.
  */
 export const BUNDLE_EXPLANATIONS: Record<Bundle, string> = {
-  base: 'Used for the page itself: the toolbar, search field, and tabs.',
-  mount: 'Used for your saved-link cards and settings panels.',
-  orbit: 'Used for the top bar and your account menu.',
-  alert: 'Used when something breaks, like a link that won’t open.',
-  warn: 'Used for the heads-up banners, like read links on their way out.',
-  info: 'Used for tips and the occasional helpful nudge.',
-  success: 'Used for success toasts, like “Link saved!” and verified badges.',
+  base: 'Page defaults. Covers elements like the page title, search input, and navigation buttons.',
+  mount: 'Used for raised components like cards, panels, and sections.',
+  orbit: 'Used for the page header, user menu, and submenus.',
+  alert:
+    'Used for danger and failure toast notifications and banners. These typically indicate something has gone dreadfully wrong.',
+  warn: 'Used for warning toast notifications, banners, and badges. These typically indicate an action is required.',
+  info: 'Used for informational toast notifications, banners, and badges.',
+  success: 'Used for successful toast notifications and banners.',
 };
 
 /**
