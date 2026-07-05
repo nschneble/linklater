@@ -7,7 +7,10 @@
  * unnoticed.
  */
 
-import ColorRow, { FAILURE_NOTE_DEBOUNCE_MS } from './ColorRow';
+import ColorRow, {
+  buildSwatchStyle,
+  FAILURE_NOTE_DEBOUNCE_MS,
+} from './ColorRow';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TokenContrastFailure } from './contrastResults';
@@ -219,5 +222,58 @@ describe('ColorRow – alpha disables the picker, keeps the text input editable'
 
     expect(screen.getByLabelText('Color picker for Background')).toBeDisabled();
     expect(screen.getByLabelText('Value for Background')).not.toBeDisabled();
+  });
+});
+
+/*
+ * The swatch preview lays the color over a transparency checkerboard so an
+ * alpha value reads as transparent instead of a mystery solid. Opaque values
+ * (alpha FF) fully occlude the checker, so the color layer MUST come first in
+ * `background-image`. The swatch stays decorative — no role/label; the hex
+ * input beside it owns the value — so these assertions target its style/class.
+ */
+describe('ColorRow – swatch shows transparency over a checkerboard', () => {
+  function getSwatch(currentValue: string): HTMLElement {
+    render(
+      <ColorRow
+        label="Background"
+        variable="--alert-bg"
+        currentValue={currentValue}
+        failure={undefined}
+        onOverride={vi.fn()}
+      />,
+    );
+    const picker = screen.getByLabelText('Color picker for Background');
+    const swatch = picker.closest('label')?.querySelector('span');
+    if (!swatch) {
+      throw new Error('swatch span not found');
+    }
+    return swatch as HTMLElement;
+  }
+
+  // The style is unit-tested off the helper: jsdom's CSSOM silently drops a
+  // modern `rgb(r g b / a)` gradient (real browsers accept it), so asserting
+  // through a rendered element's `.style.backgroundImage` is unreliable.
+  it('layers the color over a checkerboard, color first so opaque occludes it', () => {
+    const image = String(buildSwatchStyle('#12345680').backgroundImage);
+    expect(image).toContain('conic-gradient');
+    expect(image).toContain('linear-gradient(#12345680, #12345680)');
+    expect(image.indexOf('linear-gradient')).toBeLessThan(
+      image.indexOf('conic-gradient'),
+    );
+  });
+
+  it('bases the swatch on --mount-input-bg and sizes the checker cells', () => {
+    const style = buildSwatchStyle('#12345680');
+    expect(style.backgroundColor).toBe('var(--mount-input-bg)');
+    expect(style.backgroundSize).toBe('100% 100%, 8px 8px');
+  });
+
+  it('keeps a forced-colors border so the swatch survives High Contrast mode', () => {
+    // Both background layers are stripped in forced-colors; the CanvasText
+    // border is what keeps the swatch a visible box (per a11y review).
+    expect(getSwatch('#12345680').className).toContain(
+      'forced-colors:border-[CanvasText]',
+    );
   });
 });

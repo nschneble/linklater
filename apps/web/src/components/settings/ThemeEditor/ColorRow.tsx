@@ -14,6 +14,32 @@ import type { TokenContrastFailure } from './contrastResults';
  */
 export const FAILURE_NOTE_DEBOUNCE_MS = 400;
 
+/*
+ * A transparency checkerboard, painted from two translucent cell colors so it
+ * self-normalizes over any theme surface (light or dark) instead of glaring
+ * white in dark themes. Composited over `--mount-input-bg` as the base.
+ */
+const SWATCH_CHECKERBOARD =
+  'conic-gradient(' +
+  'rgb(255 255 255 / 0.22) 25%,' +
+  'rgb(0 0 0 / 0.22) 0 50%,' +
+  'rgb(255 255 255 / 0.22) 0 75%,' +
+  'rgb(0 0 0 / 0.22) 0)';
+
+/*
+ * Layers the color on top of the checkerboard so alpha shows through — a
+ * semi-transparent value reveals the pattern, while an opaque value (alpha FF)
+ * fully occludes it, leaving those rows visually unchanged. The color layer
+ * MUST stay first in `background-image` for that occlusion to hold.
+ */
+export function buildSwatchStyle(background: string): React.CSSProperties {
+  return {
+    backgroundColor: 'var(--mount-input-bg)',
+    backgroundImage: `linear-gradient(${background}, ${background}), ${SWATCH_CHECKERBOARD}`,
+    backgroundSize: '100% 100%, 8px 8px',
+  };
+}
+
 interface ColorRowProps {
   /** Human-readable label for this color row (e.g. "Background", "Border"). */
   label: string;
@@ -98,6 +124,7 @@ export default function ColorRow({
   const pickerDisabled = isAlpha;
   const pickerValue = isSixDigitHex(inputValue) ? inputValue : '#000000';
   const swatchBackground = isAlpha ? currentValue : pickerValue;
+  const swatchStyle = buildSwatchStyle(swatchBackground);
   const pickerAriaLabel = `Color picker for ${label}`;
   const textAriaLabel = `Value for ${label}`;
   const failureNoteId = `theme-editor-failure-${variable.replace(/^--/, '')}`;
@@ -122,8 +149,8 @@ export default function ColorRow({
         aria-disabled={pickerDisabled}
       >
         <span
-          className="block w-7 h-7 border border-[var(--mount-border)] rounded-md shadow-sm aria-disabled:opacity-60"
-          style={{ backgroundColor: swatchBackground }}
+          className="block w-7 h-7 border border-[var(--mount-border)] forced-colors:border-[CanvasText] rounded-md shadow-sm aria-disabled:opacity-60"
+          style={swatchStyle}
           aria-disabled={pickerDisabled}
         />
         <input
