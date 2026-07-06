@@ -296,6 +296,63 @@ describe('ResetPasswordPage MFA path', () => {
   });
 });
 
+describe('ResetPasswordPage branding pin', () => {
+  // The reset-password surface must always render in the off-book `branding`
+  // chrome, never a stale film/custom palette from a lingering session. Every
+  // return branch (form, in-flight spinner, MFA) carries `data-theme="branding"`
+  // so the paint can't inherit the document theme. See branding.css.
+  it('renders the form in a branding-scoped wrapper', () => {
+    const { container } = renderPage();
+    expect(container.querySelector('[data-theme="branding"]')).not.toBeNull();
+  });
+
+  it('keeps the in-flight spinner branding-scoped', async () => {
+    let resolveReset: (value: {
+      accessToken: string;
+      refreshToken: string;
+    }) => void = () => {};
+    vi.mocked(apiModule.resetPassword).mockReturnValue(
+      new Promise((resolve) => {
+        resolveReset = resolve;
+      }),
+    );
+    const { container } = renderPage();
+    fillForm();
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    expect(
+      screen.getByRole('status').closest('[data-theme="branding"]'),
+    ).not.toBeNull();
+
+    await act(async () => {
+      resolveReset({ accessToken: 'a', refreshToken: 'r' });
+    });
+  });
+
+  it('keeps the MFA challenge branding-scoped', async () => {
+    vi.mocked(apiModule.resetPassword).mockResolvedValue({
+      mfaToken: 'mfa-tok',
+      mfaMethod: 'totp',
+    });
+    const { container } = renderPage();
+    fillForm();
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: /multi-factor authentication/i }),
+      ).toBeInTheDocument();
+    });
+    expect(container.querySelector('[data-theme="branding"]')).not.toBeNull();
+  });
+});
+
 describe('ResetPasswordPage error path', () => {
   it('shows an error when resetPassword API call rejects', async () => {
     vi.mocked(apiModule.resetPassword).mockRejectedValue(

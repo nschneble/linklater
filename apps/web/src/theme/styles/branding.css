@@ -30,17 +30,38 @@
  * legacy value fails SC 1.4.11 (3:1) against the #14103a top stop (2.81:1);
  * #8a7bd0 clears it (3.35 vs top, 5.49 vs the #0a0812 outer).
  *
- * No --page-gradient-{from,to} slots: the `bg-hit-man` radial reads hardcoded
- * hexes (index.css), and no branding-consuming view paints a card on a
- * `from-[var(--page-gradient-from)]` gradient (those tokens are consumed only
- * by auth/unauthenticated routes under the user's own active theme). Adding
- * them here would be dead tokens AND would trip the card-on-gradient lift
- * design-tripwire for a card relationship branding does not have.
+ * Page-gradient + border-shadow: branding now backs every LOGGED-OUT auth
+ * surface (login, signup, password reset, MFA, verify-login, account-deletion,
+ * extension authorize). `Unauthenticated.tsx` wraps the AuthCard in
+ * `bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]`;
+ * the card (bg --mount-bg) draws its edge with `.border-shadow`, whose #ffffff
+ * tint is otherwise gated to `[data-mode='dark']`. Both token sets are defined
+ * below so the auth card composites correctly instead of leaking to the :root
+ * amber/cream page-gradient fallback (which would collapse card-text contrast
+ * to ~1:1). This monochromatic near-black chrome does NOT separate the card
+ * from the gradient by bg-luminance, so branding is excluded from the non-WCAG
+ * card-on-gradient-lift design tripwire in bundles.contrast.test.ts; the card's
+ * text/border/focus-ring contrast is still WCAG-verified there.
  */
 [data-theme='branding'] {
   /* Universal focus-visible ring, pinned to brand near-white so it clears
    * the navy chrome gradient (16.96 vs #0a0812). */
   --focus-ring: #eeeede;
+
+  /* Logged-out AuthCard wrapper (Unauthenticated.tsx) paints
+   * `bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]`.
+   * Match the bg-hit-man radial stops (top #14103a / outer #0a0812) so the
+   * gradient reads as the brand chrome; omitting these leaks to the :root
+   * amber/cream fallback and collapses --mount-text on the card to ~1:1. */
+  --page-gradient-from: #14103a;
+  --page-gradient-to: #0a0812;
+
+  /* `.border-shadow` (AuthCard + elevated IconButton edge) reads its tint from
+   * `--border-shadow-color`, which border-shadow.css only sets under
+   * `[data-mode='dark']`. Branding is mode-independent, so pin it white here —
+   * otherwise a logged-out visitor in light mode falls to the #000000 default,
+   * invisible on the navy card. */
+  --border-shadow-color: #ffffff;
 
   /* base = page chrome (page bg #0a0812 outer / #14103a top). */
   --base-bg: #0a0812;

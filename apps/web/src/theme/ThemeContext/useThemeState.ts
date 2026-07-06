@@ -38,26 +38,43 @@ import type { CustomTheme } from '../customTheme';
 import type { ThemeContextValue } from './types';
 
 /**
- * The theme shown to unauthenticated visitors whose stored selection is the
- * per-user `custom` theme. Its palette is contract-validated in
- * `bundles.contrast.test.ts` (both modes), unlike the user-authored custom
- * palette, so it is safe to paint behind the login/signup screens.
+ * The off-book `branding` chrome id, painted (as `data-theme='branding'`) for
+ * every unauthenticated visitor regardless of their stored film/custom
+ * selection, so the marketing chrome — never a stale localStorage theme —
+ * backs the logged-out auth surfaces (login, signup, password reset, MFA,
+ * verify-login, account-deletion confirmation, extension authorize).
+ *
+ * It is deliberately NOT a `BaseTheme`: adding it to the `BaseTheme` union,
+ * `THEMES`, or `VALID_BASE_THEME_IDS` would make it user-selectable and break
+ * its invisibility contract (THEMES.md §7, "Do NOT 'fix' branding by
+ * registering it"). It is valid ONLY as a painted `data-theme` attribute value
+ * — never as a stored or selected theme — so it lives here as a standalone
+ * literal that widens only `PaintedTheme`, not the `BaseTheme`-typed selection
+ * handed to consumers.
  */
-const UNAUTHENTICATED_FALLBACK_THEME: BaseTheme = 'scanner-darkly';
+const BRANDING_THEME_ID = 'branding';
+
+/**
+ * A theme id valid as a painted `data-theme` value: any selectable `BaseTheme`,
+ * plus the off-book `branding` chrome forced onto unauthenticated visitors.
+ * Only the painted attribute widens to include branding; the committed
+ * selection and the value reported to consumers stay `BaseTheme`.
+ */
+type PaintedTheme = BaseTheme | typeof BRANDING_THEME_ID;
 
 /**
  * Encapsulates all theme state, layout effects, and action handlers.
  * Consumed by `ThemeProvider`, which passes the returned value into context.
  *
- * @param isAuthenticated - Whether a user session exists. The `custom` theme
- *   renders a per-user palette injected from `localStorage`; for an
+ * @param isAuthenticated - Whether a user session exists. Film themes and the
+ *   per-user `custom` theme are only theirs to show once logged in, so an
  *   unauthenticated visitor (logged out, or a fresh/DB-reset browser holding
- *   stale storage) that palette is not theirs to show and carries no contrast
- *   contract, so it is replaced by `UNAUTHENTICATED_FALLBACK_THEME` on the
- *   auth screens. `localStorage` is left untouched, so the custom selection
- *   restores automatically once the server sync confirms it after login.
- *   Defaults to `true` so direct hook tests and bare `ThemeProvider` mounts
- *   keep their pre-gate behavior.
+ *   stale storage) is always painted in the off-book `branding` chrome
+ *   (`BRANDING_THEME_ID`) on the auth surfaces — never their stored film theme
+ *   or the runtime-injected custom palette. `localStorage` is left untouched,
+ *   so the stored selection restores automatically once the server sync
+ *   confirms it after login. Defaults to `true` so direct hook tests and bare
+ *   `ThemeProvider` mounts keep their authenticated painting behavior.
  */
 export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const [baseTheme, setBaseThemeState] =
@@ -78,28 +95,23 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   // changes. Used by the editor's copy-palette picker to peek at a film theme.
   const [previewTheme, setPreviewTheme] = useState<BaseTheme | null>(null);
 
-  // The theme actually painted. Diverges from the stored `baseTheme` only when
-  // an unauthenticated visitor's stored selection is `custom`, which is gated
-  // to a validated fallback (see the `isAuthenticated` param docs). Everything
-  // that renders the page — the `data-theme` attribute, the custom-token
-  // injection, the value handed to consumers — keys off this, while the
-  // setters and CVD logic keep operating on the raw `baseTheme` so the user's
-  // real selection survives untouched until login restores it.
-  const effectiveBaseTheme: BaseTheme =
-    !isAuthenticated && baseTheme === 'custom'
-      ? UNAUTHENTICATED_FALLBACK_THEME
-      : baseTheme;
-
-  // The theme actually PAINTED on the document. A transient preview wins over
-  // the committed selection but is never persisted, so the data-theme + custom
-  // tokens follow it while consumers keep reading the real `effectiveBaseTheme`.
-  // A preview never bypasses the unauthenticated custom-theme gate: an unauth
-  // visitor can't be painted in the per-user custom palette via a preview
-  // either (the editor is the only caller and is authenticated-only, so this is
-  // a belt-and-suspenders guard).
-  const previewIsGated = !isAuthenticated && previewTheme === 'custom';
-  const paintedTheme: BaseTheme =
-    previewTheme && !previewIsGated ? previewTheme : effectiveBaseTheme;
+  // The theme actually PAINTED on the document (`data-theme`). Unauthenticated
+  // visitors always get the off-book `branding` chrome — their stored film
+  // palettes and the per-user `custom` palette are only theirs to show once a
+  // session exists — so branding wins HERE, before the `=== 'custom'`
+  // token-injection gate below. `branding !== 'custom'`, so no tokens are
+  // injected and no stale/hostile stored custom palette can plant a
+  // low-contrast focus ring on the login controls. The raw `baseTheme`
+  // selection is left untouched (and restores the instant the session
+  // confirms), so nothing here persists.
+  //
+  // When authenticated, a transient preview wins over the committed selection
+  // (the editor's copy-palette picker) but is likewise never persisted. There
+  // is no unauthenticated preview path: the editor is the only caller and is
+  // authenticated-only, and branding short-circuits every unauth paint anyway.
+  const paintedTheme: PaintedTheme = !isAuthenticated
+    ? BRANDING_THEME_ID
+    : (previewTheme ?? baseTheme);
 
   // Ref to always have the current baseTheme available in callbacks
   // without them needing to be recreated on every theme change.
@@ -325,7 +337,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       applyServerCustomThemeEnabled,
       applyServerMode,
       applyServerTheme,
-      baseTheme: effectiveBaseTheme,
+      baseTheme,
       customTheme,
       customThemeEnabled,
       disableCvdMode,
@@ -344,7 +356,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       applyServerCustomThemeEnabled,
       applyServerMode,
       applyServerTheme,
-      effectiveBaseTheme,
+      baseTheme,
       customTheme,
       customThemeEnabled,
       disableCvdMode,

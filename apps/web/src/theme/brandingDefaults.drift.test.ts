@@ -19,9 +19,27 @@ describe('BRANDING_DEFAULTS stays in sync with branding.css', () => {
     extractBlock(BUNDLES_CSS, "[data-theme='branding']"),
   );
 
+  /*
+   * Branding-chrome-only tokens: NOT part of the editable Custom palette
+   * (absent from EDITABLE_VARS/CUSTOM_TOKEN_KEYS), so they are deliberately
+   * excluded from the `BRANDING_DEFAULTS` snapshot. `--page-gradient-{from,to}`
+   * back the logged-out AuthCard wrapper and `--border-shadow-color` pins the
+   * mode-independent card-edge tint; both live only in branding.css. Excluded
+   * from the byte-for-byte comparison so the Custom-fallback snapshot stays
+   * scoped to the injectable palette.
+   */
+  const CHROME_ONLY_KEYS = [
+    '--page-gradient-from',
+    '--page-gradient-to',
+    '--border-shadow-color',
+  ];
+
   it('matches every branding.css token value exactly', () => {
     const fromCss: Record<string, string> = {};
     for (const [key, value] of declarations) {
+      if (CHROME_ONLY_KEYS.includes(`--${key}`)) {
+        continue;
+      }
       fromCss[`--${key}`] = value;
     }
     expect(BRANDING_DEFAULTS).toEqual(fromCss);

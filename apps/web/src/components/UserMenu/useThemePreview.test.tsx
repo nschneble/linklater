@@ -6,7 +6,7 @@
  */
 
 import { act, renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { applyCustomThemeTokens } from '../../theme/customTheme';
 import { useThemePreview } from './useThemePreview';
 import type { CustomTheme } from '../../theme/ThemeContext';
@@ -48,5 +48,67 @@ describe('useThemePreview Custom-token sync', () => {
     expect(document.documentElement.style.getPropertyValue('--base-bg')).toBe(
       '#abcabc',
     );
+  });
+});
+
+describe('useThemePreview reset does not stomp an authoritative repaint', () => {
+  it('no-ops the deferred restore when logout repainted branding first', () => {
+    // Control the reset rAF so the test can interleave a branding repaint
+    // between scheduling and firing — the exact ordering the logout race hits
+    // in a real browser (rAF fires after the unauthenticated branding gate
+    // paints, but the paint effect never re-runs to correct a stomp).
+    let scheduled: FrameRequestCallback | null = null;
+    const rafSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback) => {
+        scheduled = callback;
+        return 1;
+      });
+
+    const { result } = renderHook(() => useThemePreview(null, 'dark'));
+
+    // Hover a theme → preview paints imperatively.
+    act(() => result.current.applyPreview('boyhood'));
+    expect(document.documentElement.dataset.theme).toBe('boyhood');
+
+    // Mouse away → schedules the deferred restore back to the committed theme.
+    act(() => result.current.resetPreview('school-of-rock'));
+
+    // Logout: useThemeState's unauthenticated gate repaints the off-book
+    // branding chrome before the rAF fires.
+    document.documentElement.dataset.theme = 'branding';
+
+    // The deferred restore now fires. It must NOT clobber branding.
+    act(() => {
+      scheduled?.(0);
+    });
+
+    expect(document.documentElement.dataset.theme).toBe('branding');
+
+    rafSpy.mockRestore();
+  });
+
+  it('still restores the committed theme when nothing repainted', () => {
+    let scheduled: FrameRequestCallback | null = null;
+    const rafSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback) => {
+        scheduled = callback;
+        return 1;
+      });
+
+    const { result } = renderHook(() => useThemePreview(null, 'dark'));
+
+    act(() => result.current.applyPreview('boyhood'));
+    act(() => result.current.resetPreview('school-of-rock'));
+
+    // No competing repaint: the preview is still on screen when the rAF fires.
+    act(() => {
+      scheduled?.(0);
+    });
+
+    expect(document.documentElement.dataset.theme).toBe('school-of-rock');
+
+    rafSpy.mockRestore();
   });
 });

@@ -434,8 +434,8 @@ describe('custom theme runtime injection', () => {
   });
 });
 
-describe('unauthenticated custom-theme gate', () => {
-  it('falls back to scanner-darkly and injects no tokens when unauthenticated', () => {
+describe('unauthenticated branding gate', () => {
+  it('paints branding and injects no tokens even when the stored theme is custom', () => {
     window.localStorage.setItem(THEME_STORAGE_KEY, 'custom');
     seedStoredCustomTheme({
       dark: { '--mount-border': '#ff0000', '--base-bg': '#010203' },
@@ -443,14 +443,28 @@ describe('unauthenticated custom-theme gate', () => {
 
     const { result } = renderHook(() => useThemeState(false));
 
-    expect(result.current.baseTheme).toBe('scanner-darkly');
-    expect(root().dataset.theme).toBe('scanner-darkly');
+    // The document paints the off-book branding chrome, never the stored
+    // theme, so the auth screens ignore a stale localStorage selection.
+    expect(root().dataset.theme).toBe('branding');
+    // Branding wins BEFORE the `=== 'custom'` token-injection gate, so no
+    // per-user custom palette is ever injected onto the login controls.
     for (const variable of CUSTOM_TOKEN_KEYS) {
       expect(root().style.getPropertyValue(variable)).toBe('');
     }
+    // The stored selection itself is left untouched so it restores after login.
+    expect(result.current.baseTheme).toBe('custom');
   });
 
-  it('injects the custom palette when authenticated', () => {
+  it('paints branding over a stored film theme too', () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, 'boyhood');
+
+    const { result } = renderHook(() => useThemeState(false));
+
+    expect(root().dataset.theme).toBe('branding');
+    expect(result.current.baseTheme).toBe('boyhood');
+  });
+
+  it('paints the stored theme and injects the custom palette when authenticated', () => {
     window.localStorage.setItem(THEME_STORAGE_KEY, 'custom');
     seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
 
@@ -459,15 +473,6 @@ describe('unauthenticated custom-theme gate', () => {
     expect(result.current.baseTheme).toBe('custom');
     expect(root().dataset.theme).toBe('custom');
     expect(root().style.getPropertyValue('--mount-border')).toBe('#abcabc');
-  });
-
-  it('does not gate the built-in film themes when unauthenticated', () => {
-    window.localStorage.setItem(THEME_STORAGE_KEY, 'boyhood');
-
-    const { result } = renderHook(() => useThemeState(false));
-
-    expect(result.current.baseTheme).toBe('boyhood');
-    expect(root().dataset.theme).toBe('boyhood');
   });
 });
 
@@ -641,8 +646,8 @@ describe('setPreviewTheme', () => {
   it('does not let a preview of custom bypass the unauthenticated gate', () => {
     window.localStorage.setItem(THEME_STORAGE_KEY, 'custom');
     seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
-    // Unauthenticated: the committed custom selection is already gated to the
-    // fallback; a preview of custom must not re-open that door.
+    // Unauthenticated: branding short-circuits every paint; a preview of custom
+    // must not re-open the custom-token injection door.
     const { result } = renderHook(() => useThemeState(false));
 
     act(() => result.current.setPreviewTheme('custom'));

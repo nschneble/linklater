@@ -352,8 +352,11 @@ const FIXTURES: readonly CascadeFixture[] = [
   {
     // OFF-BOOK brand-chrome theme – mode-independent (no [data-mode]). It
     // self-contains a concrete --base-bg, so the per-theme adjacency checks
-    // apply. It declares no --page-gradient-{from,to}, so the card-on-gradient
-    // lift block skips it via its undefined-slot guard.
+    // apply. It now declares --page-gradient-{from,to} (it backs the logged-out
+    // auth surfaces), so the card-on-gradient lift block explicitly excludes it
+    // by label instead: this monochromatic near-black chrome cannot separate
+    // the card from the gradient by bg-luminance, and its card text/border/
+    // focus-ring contrast is covered by the dedicated branding describes below.
     label: 'branding',
     selector: "[data-theme='branding']",
     pageBg: BRANDING_PAGE_BG,
@@ -573,6 +576,175 @@ describe('bundle contrast contract', () => {
             `base-alt-text on ${label} (branding): got ${describeRatio(ratio)}`,
           )
           .toBeGreaterThanOrEqual(AA_NORMAL);
+      });
+    }
+  });
+
+  /*
+   * Branding backs every LOGGED-OUT auth surface, so its cascade MUST declare
+   * the `--page-gradient-{from,to}` stops the `Unauthenticated.tsx` AuthCard
+   * wrapper paints (`bg-gradient-to-b from-[var(--page-gradient-from)]
+   * to-[var(--page-gradient-to)]`). Omitting them leaks to the :root amber/cream
+   * fallback and collapses --mount-text on the card to ~1:1 (accessibility-lead
+   * C1). Presence tripwire — fails loud on absence.
+   */
+  describe('branding page-gradient stops are defined', () => {
+    const declarations = parseDeclarations(
+      extractBlock(BUNDLES_CSS, "[data-theme='branding']"),
+    );
+    for (const stop of ['page-gradient-from', 'page-gradient-to'] as const) {
+      it(`declares --${stop} as a concrete color`, () => {
+        const value = declarations.get(stop);
+        expect(value).toBeDefined();
+        expect(value).not.toContain('var(');
+      });
+    }
+  });
+
+  /*
+   * The logged-out AuthCard (bg --mount-bg = white @5%) composited over BOTH
+   * branding page-gradient stops. Every slot the card and its in-card state
+   * surfaces paint must clear WCAG-AA over the harder (lighter) top stop as
+   * well as the outer stop:
+   *   - card text/alt-text >= 4.5 (SC 1.4.3); card border + focus-ring >= 3
+   *     (SC 1.4.11 / 2.4.7)
+   *   - in-card alert/success text >= 4.5 over the state-bg composited on the
+   *     card; their borders >= 3 over the card AND the page --base-bg.
+   * accessibility-lead C1/M1/M2 gate; mirrors the branding base-alt-text
+   * mechanization. See [[feedback-off-book-theme-contrast-harness]].
+   */
+  describe('branding auth card over page-gradient', () => {
+    const declarations = parseDeclarations(
+      extractBlock(BUNDLES_CSS, "[data-theme='branding']"),
+    );
+    const concrete = (name: string): string => {
+      const value = declarations.get(name);
+      if (value === undefined || value.includes('var(')) {
+        throw new Error(`branding cascade missing concrete --${name}`);
+      }
+      return value;
+    };
+    const mountBg = parseColor(concrete('mount-bg'));
+    const baseBg = resolveFg(parseColor(concrete('base-bg')));
+
+    for (const [stopLabel, stopName] of [
+      ['top stop', 'page-gradient-from'],
+      ['outer stop', 'page-gradient-to'],
+    ] as const) {
+      describe(`${stopLabel}`, () => {
+        const card = compositeOverBg(
+          mountBg,
+          resolveFg(parseColor(concrete(stopName))),
+        );
+
+        const cardPairs: ReadonlyArray<readonly [string, number]> = [
+          ['mount-text', AA_NORMAL],
+          ['mount-alt-text', AA_NORMAL],
+          ['mount-border', AA_NON_TEXT],
+          ['focus-ring', AA_NON_TEXT],
+        ];
+        for (const [slot, threshold] of cardPairs) {
+          it(`--${slot} on the card >= ${threshold}:1`, () => {
+            const ratio = contrastRatio(
+              resolveFg(parseColor(concrete(slot))),
+              card,
+            );
+            expect
+              .soft(
+                ratio,
+                `--${slot} on card (${stopLabel}): ${describeRatio(ratio)}`,
+              )
+              .toBeGreaterThanOrEqual(threshold);
+          });
+        }
+
+        for (const state of ['alert', 'success'] as const) {
+          const stateCard = compositeOverBg(
+            parseColor(concrete(`${state}-bg`)),
+            card,
+          );
+          it(`--${state}-text on its in-card surface >= 4.5:1`, () => {
+            const ratio = contrastRatio(
+              resolveFg(parseColor(concrete(`${state}-text`))),
+              stateCard,
+            );
+            expect
+              .soft(
+                ratio,
+                `--${state}-text on card (${stopLabel}): ${describeRatio(ratio)}`,
+              )
+              .toBeGreaterThanOrEqual(AA_NORMAL);
+          });
+          it(`--${state}-border >= 3:1 over the card and the page --base-bg`, () => {
+            const border = resolveFg(parseColor(concrete(`${state}-border`)));
+            expect
+              .soft(
+                contrastRatio(border, card),
+                `--${state}-border on card (${stopLabel})`,
+              )
+              .toBeGreaterThanOrEqual(AA_NON_TEXT);
+            expect
+              .soft(
+                contrastRatio(border, baseBg),
+                `--${state}-border on base-bg`,
+              )
+              .toBeGreaterThanOrEqual(AA_NON_TEXT);
+          });
+        }
+      });
+    }
+  });
+
+  /*
+   * `--border-shadow-color` pins the mode-independent card-edge tint on the
+   * branding cascade (accessibility-lead M1). border-shadow.css only sets it
+   * under `[data-mode='dark']`, so without this a logged-out visitor in light
+   * mode gets the #000000 fallback — invisible on the navy card.
+   */
+  describe('branding border-shadow-color', () => {
+    const declarations = parseDeclarations(
+      extractBlock(BUNDLES_CSS, "[data-theme='branding']"),
+    );
+    it('is pinned to #ffffff', () => {
+      expect(declarations.get('border-shadow-color')).toBe('#ffffff');
+    });
+  });
+
+  /*
+   * Alert/success source-order pin (accessibility-lead MECH). Branding is
+   * mode-independent, but `bundles.css [data-mode='dark']` also declares
+   * `--alert-bg`/`--success-bg` at the SAME specificity (single attribute
+   * selector). A logged-out visitor can carry data-mode='dark', so which one
+   * wins is decided by CSS source order. branding.css is concatenated AFTER
+   * bundles.css in BUNDLES_CSS, so branding's 0.55-alpha values win over the
+   * dark 0.4-alpha defaults. This pins both that the two are genuinely
+   * different AND that branding is later in source, so the resolved bg is
+   * branding's own. Alpha is encoded as the trailing hex byte: 0.55 -> 8c,
+   * 0.4 -> 66.
+   */
+  describe('branding alert/success bg wins by source order', () => {
+    const brandingIndex = BUNDLES_CSS.indexOf("[data-theme='branding']");
+    const darkModeIndex = BUNDLES_CSS.indexOf("[data-mode='dark']");
+    const brandingDecls = parseDeclarations(
+      extractBlock(BUNDLES_CSS, "[data-theme='branding']"),
+    );
+    const darkDecls = parseDeclarations(
+      extractBlock(BUNDLES_CSS, "[data-mode='dark']"),
+    );
+
+    it('branding cascade is later in source than [data-mode=dark]', () => {
+      expect(brandingIndex).toBeGreaterThan(-1);
+      expect(darkModeIndex).toBeGreaterThan(-1);
+      expect(brandingIndex).toBeGreaterThan(darkModeIndex);
+    });
+
+    for (const state of ['alert', 'success'] as const) {
+      it(`resolves --${state}-bg to branding's 0.55-alpha value, not the dark 0.4-alpha`, () => {
+        const brandingValue = brandingDecls.get(`${state}-bg`);
+        const darkValue = darkDecls.get(`${state}-bg`);
+        expect(brandingValue).toMatch(/^#[0-9a-f]{6}8c$/i);
+        expect(darkValue).toMatch(/^#[0-9a-f]{6}66$/i);
+        expect(brandingValue).not.toBe(darkValue);
       });
     }
   });
@@ -954,6 +1126,18 @@ describe('bundle contrast contract', () => {
 
     for (const fixture of FIXTURES) {
       if (!fixture.checkAdjacency) {
+        continue;
+      }
+      /*
+       * branding declares --page-gradient-{from,to} (it backs the logged-out
+       * auth surfaces) but is EXCLUDED from this non-WCAG design tripwire: its
+       * monochromatic near-black navy chrome is separated from the AuthCard by
+       * the white `.border-shadow`, not by bg-luminance, so the 3.0 perceptual-
+       * lift threshold (premised on a mid-tone film-theme gradient) does not
+       * apply. Branding's card text/border/focus-ring contrast is WCAG-verified
+       * in the 'branding auth card over page-gradient' describe below.
+       */
+      if (fixture.label === 'branding') {
         continue;
       }
       const block = extractBlock(BUNDLES_CSS, fixture.selector);

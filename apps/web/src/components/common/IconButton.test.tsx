@@ -133,13 +133,15 @@ describe('IconButton', () => {
     );
   });
 
-  it('elevated variant uses the border-shadow focus indicator (not ring)', () => {
-    // elevated carries its own card-shadow border affordance for focus
-    // instead of the FOCUS_RING utility – visual hierarchy choice.
+  it('elevated variant carries the universal --focus-ring alongside its border-shadow', () => {
+    // elevated keeps its card-shadow edge AND the FOCUS_RING utility: without
+    // the ring, keyboard focus on the logged-out OAuth buttons ("Continue with
+    // Google/Apple") had no theme-aware indicator outside CVD mode (the
+    // universal 3px outline in index.css is scoped to [data-cvd='on']).
     render(<IconButton variant="elevated">go</IconButton>);
     const button = screen.getByRole('button', { name: 'go' });
     expect(button.className).toContain('border-shadow');
-    expect(button.className).not.toContain(
+    expect(button.className).toContain(
       'focus-visible:ring-[var(--focus-ring)]',
     );
   });
