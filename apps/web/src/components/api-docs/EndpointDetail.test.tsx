@@ -456,4 +456,56 @@ describe('EndpointDetail', () => {
     ).not.toHaveAttribute('hidden');
     expect(screen.getByText('Example request')).toBeInTheDocument();
   });
+
+  it('clamps a stale section index when the tab set shrinks on a same-key rerender, keeping a live panel', async () => {
+    const user = userEvent.setup();
+    const props = {
+      loggedIn: true,
+      serverOrigin: '',
+      token: '',
+      tokenLoading: false,
+      tokenError: null,
+      onStatusMessage: vi.fn(),
+    };
+    const { rerender } = render(
+      <MemoryRouter>
+        <EndpointDetail key="same" endpoint={fullEndpoint()} {...props} />
+      </MemoryRouter>,
+    );
+
+    // Select the third pill (Try It, index 2) so selectedIndex points past what
+    // a single-section endpoint will offer.
+    await user.click(screen.getByRole('tab', { name: 'Try It' }));
+    expect(screen.getByRole('tab', { name: 'Try It' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+
+    // Same key ⇒ selectedIndex (2) survives the rerender, but the new endpoint
+    // offers only the always-present Try It section (no params, body, or
+    // responses). Without the Math.min clamp, index 2 would match no visible
+    // section and every panel would hide (a phantom, blank detail).
+    rerender(
+      <MemoryRouter>
+        <EndpointDetail
+          key="same"
+          endpoint={makeEndpoint({ responses: [] })}
+          {...props}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.queryByRole('tab', { name: 'Request' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('tab', { name: 'Response' }),
+    ).not.toBeInTheDocument();
+
+    // The clamp rescues the stale index (2 → 0), so the surviving Try It panel
+    // stays visible rather than leaving the detail body empty.
+    const tryItPanel = screen.getByRole('tabpanel', { name: 'Try It' });
+    expect(tryItPanel).not.toHaveAttribute('hidden');
+    expect(within(tryItPanel).getByText('Example request')).toBeInTheDocument();
+  });
 });

@@ -136,9 +136,13 @@ export default function EndpointDetail({
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Defensive clamp: if the section set shrinks (e.g. auth changes the tabs)
-  // while a stale `selectedIndex` still points past the new end, fall back to
-  // the last surviving section rather than leaving every panel hidden.
+  // Defensive clamp, NOT currently reachable: the tab set is auth-invariant
+  // (Try It is always present, so auth never shrinks `sections`), and an
+  // endpoint swap remounts this component via its `key`, resetting
+  // `selectedIndex` to 0. The clamp is a pure-defensive stale-index rescue for
+  // a hypothetical future where the section set shrinks on a SAME-key rerender
+  // while `selectedIndex` still points past the new end: it falls back to the
+  // last surviving section rather than leaving every panel hidden.
   const activeIndex = Math.min(selectedIndex, sections.length - 1);
 
   const requestActive = sections.indexOf('request') === activeIndex;
