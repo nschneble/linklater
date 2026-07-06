@@ -115,34 +115,50 @@ export default function ResetPasswordPage() {
     }
   };
 
+  // `data-theme="branding"` pins the reset-password surface to the branding
+  // chrome, matching login/signup. The route is always accessible without auth,
+  // but the paint must never inherit a stale film/custom palette from a
+  // lingering session. Branding defines --page-gradient-from/to and --base-bg
+  // in-block, so the form gradient, the loading spinner, and this MFA branch all
+  // composite brand navy. MfaView paints only a translucent centered card, so
+  // this branch carries its own full-viewport navy gradient (the form branch's
+  // wrapper) rather than relying on the document background behind the card.
   if (isInMfa) {
     return (
-      <MfaView
-        error={mfaError}
-        errorReference={mfaErrorReference}
-        loading={mfaLoading}
-        mfaChallenge={mfaChallenge}
-        mfaCode={mfaCode}
-        mfaInputReference={mfaInputReference}
-        onMfaCodeChange={setMfaCode}
-        onSubmit={handleVerifyOtp}
-        onSwitchToRecovery={() => {
-          setMfaChallenge('recovery');
-          setMfaCode('');
-          setMfaError(null);
-        }}
-        onSwitchToTotp={() => {
-          setMfaChallenge('totp');
-          setMfaCode('');
-          setMfaError(null);
-        }}
-      />
+      <div
+        data-theme="branding"
+        className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]"
+      >
+        <MfaView
+          error={mfaError}
+          errorReference={mfaErrorReference}
+          loading={mfaLoading}
+          mfaChallenge={mfaChallenge}
+          mfaCode={mfaCode}
+          mfaInputReference={mfaInputReference}
+          onMfaCodeChange={setMfaCode}
+          onSubmit={handleVerifyOtp}
+          onSwitchToRecovery={() => {
+            setMfaChallenge('recovery');
+            setMfaCode('');
+            setMfaError(null);
+          }}
+          onSwitchToTotp={() => {
+            setMfaChallenge('totp');
+            setMfaCode('');
+            setMfaError(null);
+          }}
+        />
+      </div>
     );
   }
 
   if (loading) {
     return (
-      <main className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
+      <main
+        data-theme="branding"
+        className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none"
+      >
         <p role="status" aria-live="polite" className="sr-only">
           Resetting your password…
         </p>
@@ -155,7 +171,10 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]">
+    <div
+      data-theme="branding"
+      className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]"
+    >
       <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl select-none">
         <h1 className="mb-2 text-[var(--mount-text)] text-center text-2xl font-bold">
           Reset Password
