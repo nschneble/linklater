@@ -30,9 +30,9 @@ export default function WelcomePanel({
   const baseUrl =
     serverOrigin === '' ? `${window.location.origin}` : serverOrigin;
 
-  // Logged OUT, the page is plain public documentation: no wired-in token, no
-  // "try it live". Logged IN, the welcome panel describes the key that's
-  // already wired into every form and the live "try it out" affordance.
+  // Logged OUT, the page is plain public documentation: no personal token, just
+  // a reference note. Logged IN, the welcome panel explains how to drop the
+  // personal token into the copied cURL command's Authorization header.
   const points: OverviewPoint[] = [
     {
       icon: 'fa-link',
@@ -43,16 +43,16 @@ export default function WelcomePanel({
       icon: 'fa-key',
       term: 'Authentication',
       detail: loggedIn
-        ? 'Your personal key is already wired into every form below – just hit Send. Real requests use Bearer auth: Authorization: Bearer ltk_…'
+        ? 'Every request needs your personal token – drop your own key into the copied command, right after Authorization: Bearer ltk_…'
         : 'A personal access token is required for every request.',
     },
     ...(loggedIn
       ? [
           {
             icon: 'fa-hand-pointer',
-            term: 'Try it live',
+            term: 'Example request',
             detail:
-              'Pick an endpoint on the left to read its parameters and responses – then fire a real request right from the page and watch it come back.',
+              'Pick an endpoint on the left to read its parameters and responses – each one comes with a ready-to-run cURL command you can copy and run in your terminal.',
           },
         ]
       : [

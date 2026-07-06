@@ -60,9 +60,9 @@ export interface NormalizedInfo {
 export interface NormalizedApi {
   info: NormalizedInfo;
   /**
-   * Origin the UI's "try it" affordance should target, derived from the spec
-   * URL (the served document declares no `servers`). Empty string means
-   * same-origin.
+   * Origin the docs point requests at — the URL shown in each cURL example and
+   * the Base URL in `WelcomePanel` — derived from the spec URL (the served
+   * document declares no `servers`). Empty string means same-origin.
    */
   serverOrigin: string;
   endpoints: NormalizedEndpoint[];

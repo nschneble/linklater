@@ -25,8 +25,9 @@ type SchemaMap = Record<string, OpenAPIV3.SchemaObject>;
  * model is self-contained – no consumer needs to know about references.
  *
  * @param document The raw OpenAPI document.
- * @param serverOrigin Origin for "try it" requests (derived from the spec
- *   URL by the fetch layer). Empty string means same-origin.
+ * @param serverOrigin Origin shown in the docs' cURL examples and Base URL
+ *   (derived from the spec URL by the fetch layer). Empty string means
+ *   same-origin.
  */
 export function parseOpenApi(
   document: OpenAPIV3.Document,

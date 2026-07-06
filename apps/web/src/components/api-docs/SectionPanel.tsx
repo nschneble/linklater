@@ -2,18 +2,18 @@ import { FOCUS_RING } from '../../lib/styles';
 import type { ReactNode } from 'react';
 
 /**
- * The tabpanel half of a top-level endpoint section (Request / Response / Try
- * It). A behaviour-neutral extraction of the three formerly-repeated
- * `<div role="tabpanel">` blocks in `EndpointDetail`, giving every section a
- * single place to keep its ARIA + focus semantics consistent.
+ * The tabpanel half of a top-level endpoint section (Request, always present,
+ * and Response, conditional). A behaviour-neutral extraction of the two
+ * formerly-repeated `<div role="tabpanel">` blocks in `EndpointDetail`, giving
+ * every section a single place to keep its ARIA + focus semantics consistent.
  *
  * Renders EXACTLY ONE element – the tabpanel `<div>` – with no wrapping node,
  * because the panels must stay direct SIBLINGS of the `SlidingTabBar`: an
  * extra container between the bar and the panels would let the top-level
  * `useTabNavigation` capture the inner Response sub-tablist. Inactive panels
  * stay MOUNTED and merely `hidden` (a real HTML boolean attribute, never a
- * `className` or style), so typed "try it out" state, the response sub-tab
- * selection, and any in-flight request survive a tab round-trip.
+ * `className` or style), so the Response sub-tab selection survives a tab
+ * round-trip.
  *
  * Focusability is driven off a SINGLE fact – `hasFocusableContent`, computed
  * by the parent per panel, never introspected here – so the `tabIndex` and

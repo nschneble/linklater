@@ -114,11 +114,13 @@ export default function EndpointDetail({
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Defensive clamp for a stale index: an endpoint swap remounts this component
-  // via its `key`, resetting `selectedIndex` to 0, but a SAME-key rerender that
-  // drops the Response section (responses removed) while `selectedIndex` still
-  // points at it would otherwise hide every panel. The clamp falls back to the
-  // last surviving section (Request) instead.
+  // Defensive clamp for a stale index. No path reaches it today: an endpoint
+  // swap remounts this component via its `key`, resetting `selectedIndex` to 0,
+  // and the section set is fixed for a given endpoint. It guards a FUTURE
+  // mutable-spec shape — a SAME-key rerender that dropped the Response section
+  // (responses removed) while `selectedIndex` still pointed at it would
+  // otherwise hide every panel. The clamp falls back to the last surviving
+  // section (Request) instead. Cheap dead-defensive insurance; kept on purpose.
   const activeIndex = Math.min(selectedIndex, sections.length - 1);
 
   const requestActive = sections.indexOf('request') === activeIndex;

@@ -20,10 +20,10 @@ import type { NormalizedEndpoint, NormalizedResponse } from '../../lib/openapi';
  * read-only content (a schema table, a static paragraph, and, when a schema is
  * present, a scrollable example CodeBlock whose `<pre>` is focusable-but-read-
  * only). None of these participate in the tablist's roving tabindex (which
- * lives only on the tab buttons), so the WAI-ARIA tabs model still cannot
- * collide with a form the way `EndpointNav`'s `RequestForm` would. These are
- * alternate VIEWS of one section, not navigation targets (no URL/hash, not
- * bookmarkable) – textbook tabs.
+ * lives only on the tab buttons), so the WAI-ARIA tabs model cannot collide
+ * with an interactive form widget the way a tablist wrapping editable fields
+ * would. These are alternate VIEWS of one section, not navigation targets (no
+ * URL/hash, not bookmarkable) – textbook tabs.
  *
  * Activation is AUTOMATIC (selection follows arrow focus): the panel swap is
  * instantaneous with no network or form state to lose, so there is deliberately

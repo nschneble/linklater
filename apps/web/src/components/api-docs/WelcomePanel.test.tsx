@@ -32,13 +32,13 @@ describe('WelcomePanel', () => {
   it('tailors the auth guidance for a signed-in user', () => {
     render(<WelcomePanel serverOrigin="" loggedIn />);
     expect(
-      screen.getByText(/your personal key is already wired in/i),
+      screen.getByText(/drop your own key into the copied command/i),
     ).toBeInTheDocument();
   });
 
-  it('offers a signed-in user the live "try it live" affordance', () => {
+  it('points a signed-in user at the copy-and-run cURL example', () => {
     render(<WelcomePanel serverOrigin="" loggedIn />);
-    expect(screen.getByText('Try it live')).toBeInTheDocument();
+    expect(screen.getByText('Example request')).toBeInTheDocument();
   });
 
   it('gives a logged-out user static token guidance, not a wired-in key', () => {

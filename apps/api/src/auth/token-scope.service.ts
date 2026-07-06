@@ -23,8 +23,10 @@ interface RateLimit {
 /**
  * Per-token-kind rate limits, deliberately tighter than a normal user token
  * (which is unthrottled at the route level). A human clicking the bookmarklet
- * or the docs "try it out" button stays well under these; an attacker holding
- * a leaked token cannot bulk-saturate the API.
+ * stays well under these; an attacker holding a leaked token cannot
+ * bulk-saturate the API. The API_DOCS limit is retained even though the
+ * in-page explorer that used to spend it was removed – the token is still
+ * auto-provisioned server-side, so its scope stays defined.
  */
 const SCOPE_RATE_LIMITS: Record<SpecialTokenKind, RateLimit> = {
   [TokenKind.BOOKMARKLET]: { ttl: 60_000, limit: 20 },
