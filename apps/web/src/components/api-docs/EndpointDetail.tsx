@@ -1,13 +1,14 @@
+import CodeBlock from '../common/CodeBlock';
 import CurlExample from './CurlExample';
 import MethodBadge from './MethodBadge';
 import ParameterTable from './ParameterTable';
 import RequestForm from './RequestForm';
 import ResponseTabs from './ResponseTabs';
 import SchemaTable from './SchemaTable';
+import SectionPanel from './SectionPanel';
 import SlidingTabBar from '../common/SlidingTabBar';
 import { buildExampleFromSchema } from '../../lib/apiDocs/buildExampleFromSchema';
 import { endpointHeadingId } from './endpointId';
-import { FOCUS_RING } from '../../lib/styles';
 import { useState } from 'react';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
@@ -18,7 +19,9 @@ import type { NormalizedEndpoint } from '../../lib/openapi';
  *
  * The body is split into THREE top-level tab pills (`SlidingTabBar`, hosted on
  * `mount` so the bar lifts to orbit) over three sibling tabpanels:
- *   - **Request**  – the read-only `ParameterTable` + request-body `SchemaTable`.
+ *   - **Request**  – the read-only `ParameterTable`, request-body `SchemaTable`,
+ *     and a static example request-body `CodeBlock` (present only when the
+ *     endpoint has a request body).
  *   - **Response** – the `ResponseTabs` status-code sub-tablist.
  *   - **Try It**   – the copy-ready `CurlExample` (both auth states) plus, when
  *     logged in, the live `RequestForm`.
@@ -133,9 +136,14 @@ export default function EndpointDetail({
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const requestActive = sections.indexOf('request') === selectedIndex;
-  const responseActive = sections.indexOf('response') === selectedIndex;
-  const tryitActive = sections.indexOf('tryit') === selectedIndex;
+  // Defensive clamp: if the section set shrinks (e.g. auth changes the tabs)
+  // while a stale `selectedIndex` still points past the new end, fall back to
+  // the last surviving section rather than leaving every panel hidden.
+  const activeIndex = Math.min(selectedIndex, sections.length - 1);
+
+  const requestActive = sections.indexOf('request') === activeIndex;
+  const responseActive = sections.indexOf('response') === activeIndex;
+  const tryitActive = sections.indexOf('tryit') === activeIndex;
 
   return (
     <section
@@ -178,7 +186,7 @@ export default function EndpointDetail({
       <SlidingTabBar
         ariaLabel="Endpoint sections"
         surface="mount"
-        activeIndex={selectedIndex}
+        activeIndex={activeIndex}
         className="mb-6"
         tabs={sections.map((section, index) => ({
           id: sectionMeta[section].tabId,
@@ -191,19 +199,20 @@ export default function EndpointDetail({
       {/*
        * Panels are SIBLINGS of the tablist (never descendants): nesting one
        * inside the bar would let the top-level `useTabNavigation` capture the
-       * inner Response status tabs. The Request panel holds only read-only
-       * tables, so it takes `tabIndex={0}` to be reachable by keyboard; the
-       * Response and Try It panels omit it because they contain focusable
-       * children.
+       * inner Response status tabs. Each `SectionPanel` drives its own
+       * `tabIndex`/focus ring off `hasFocusableContent`, computed here per
+       * panel: a panel that owns a focusable descendant (the Response
+       * sub-tabs, the Try It Copy button + form, or – once a request body
+       * exists – the Request panel's scrollable example `CodeBlock`) drops the
+       * panel-level tab stop; a body-less Request panel holds only read-only
+       * tables and keeps `tabIndex={0}` so a keyboard user can still reach it.
        */}
       {showRequest && (
-        <div
-          role="tabpanel"
+        <SectionPanel
           id={sectionMeta.request.panelId}
-          aria-labelledby={sectionMeta.request.tabId}
-          hidden={!requestActive}
-          tabIndex={0}
-          className={FOCUS_RING}
+          labelledById={sectionMeta.request.tabId}
+          active={requestActive}
+          hasFocusableContent={exampleBody !== null}
         >
           {endpoint.parameters.length > 0 && (
             <div className="mb-4 last:mb-0">
@@ -222,25 +231,35 @@ export default function EndpointDetail({
               />
             </div>
           )}
-        </div>
+
+          {exampleBody !== null && (
+            <div className="mb-4 last:mb-0">
+              <CodeBlock
+                label="Example request body"
+                code={exampleBody}
+                labelId={`${headingId}-request-example`}
+              />
+            </div>
+          )}
+        </SectionPanel>
       )}
 
       {showResponse && (
-        <div
-          role="tabpanel"
+        <SectionPanel
           id={sectionMeta.response.panelId}
-          aria-labelledby={sectionMeta.response.tabId}
-          hidden={!responseActive}
+          labelledById={sectionMeta.response.tabId}
+          active={responseActive}
+          hasFocusableContent
         >
           <ResponseTabs endpoint={endpoint} />
-        </div>
+        </SectionPanel>
       )}
 
-      <div
-        role="tabpanel"
+      <SectionPanel
         id={sectionMeta.tryit.panelId}
-        aria-labelledby={sectionMeta.tryit.tabId}
-        hidden={!tryitActive}
+        labelledById={sectionMeta.tryit.tabId}
+        active={tryitActive}
+        hasFocusableContent
       >
         <CurlExample
           method={endpoint.method}
@@ -263,7 +282,7 @@ export default function EndpointDetail({
             onStatusMessage={onStatusMessage}
           />
         )}
-      </div>
+      </SectionPanel>
     </section>
   );
 }

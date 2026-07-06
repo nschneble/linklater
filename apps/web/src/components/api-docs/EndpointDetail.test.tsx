@@ -138,6 +138,44 @@ describe('EndpointDetail', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows the "Example request body" code block in the Request panel when a request body exists, and drops the panel tab stop', () => {
+    const { container } = renderDetail(fullEndpoint());
+    const root = endpointHeadingId('get', '/links/{id}');
+
+    // The example block is a labelled, focusable <pre> group carrying the
+    // -request-example id derived from the heading.
+    const example = screen.getByRole('group', { name: 'Example request body' });
+    expect(example).toHaveAttribute(
+      'aria-labelledby',
+      `${root}-request-example`,
+    );
+    expect(example).toHaveTextContent('"url"');
+
+    // With a focusable descendant present, the Request panel itself is no
+    // longer a tab stop.
+    const requestPanel = container.querySelector(`#${root}-panel-request`)!;
+    expect(requestPanel).not.toHaveAttribute('tabindex');
+  });
+
+  it('shows no example block and keeps the Request panel as a tab stop for a body-less endpoint', () => {
+    // Parameters but no request body: the Request tab still appears (showRequest),
+    // but there is no example body to render, so the read-only panel keeps its
+    // own tabIndex=0 so a keyboard user can reach it.
+    const { container } = renderDetail(
+      makeEndpoint({
+        parameters: [{ name: 'limit', location: 'query', required: false }],
+      }),
+    );
+    const root = endpointHeadingId('get', '/links');
+
+    expect(
+      screen.queryByRole('group', { name: 'Example request body' }),
+    ).not.toBeInTheDocument();
+
+    const requestPanel = container.querySelector(`#${root}-panel-request`)!;
+    expect(requestPanel).toHaveAttribute('tabindex', '0');
+  });
+
   it('reveals the picked panel and hides the rest via [hidden] WITHOUT unmounting them', async () => {
     const user = userEvent.setup();
     const { container } = renderDetail(fullEndpoint());
