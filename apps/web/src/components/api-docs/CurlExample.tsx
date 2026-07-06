@@ -1,15 +1,26 @@
 import { buildCurlCommand } from '../../lib/apiDocs/buildCurlCommand';
 import CopyButton from '../common/CopyButton';
+import { FOCUS_RING } from '../../lib/styles';
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * Static "Example request" block: a copy-ready `curl` command for the selected
- * endpoint. Rendered in BOTH auth states – it's reference material, not a live
- * test, so a logged-out (public) visitor sees it too. The command always shows
- * the `ltk_…` token placeholder, never a real token (see `buildCurlCommand`).
+ * Static "Example request (cURL)" block: a copy-ready `curl` command for the
+ * selected endpoint. Rendered in BOTH auth states – it's reference material,
+ * not a live test, so a logged-out (public) visitor sees it too. The command
+ * always shows the `ltk_…` token placeholder, never a real token (see
+ * `buildCurlCommand`). This is the Request tab's universal, auth-stable
+ * reference content: no part of it is ever gated on being signed in.
  *
- * The page section sets `select-none`, so the `<pre>` opts back into selection
- * with `select-text` for manual copying; the Copy button is the primary path.
+ * The `<pre>` matches the shared `CodeBlock` scroll contract: it is the scroll
+ * container for a clipped command, so it carries `tabIndex={0}` plus the shared
+ * focus ring (a keyboard user must be able to focus and scroll it, SC 2.1.1),
+ * `role="group"` (a nameable, non-landmark role) and `aria-labelledby` pointing
+ * at the visible label's id so its accessible name comes from on-screen text
+ * (SC 2.5.3), never a hidden `aria-label`. The label is a plain `<p>`, NOT a
+ * heading, so it stays out of H-key navigation. The page section sets
+ * `select-none`, so the `<pre>` opts back into selection with `select-text`
+ * for manual copying; the Copy button is the primary path.
+ *
  * The button's accessible name stays constant ("Copy cURL command") – the
  * visible `children` is the shorter "Copy" and `label` overrides the spoken
  * name with the longer form (which must start with the visible text per WCAG
@@ -28,12 +39,23 @@ interface CurlExampleProps {
   url: string;
   /** Pretty-printed JSON request body, or `null` for no body. */
   body: string | null;
+  /**
+   * DOM id assigned to the visible label and referenced by the `<pre>`'s
+   * `aria-labelledby`. The caller derives it from a stable root so it stays
+   * disjoint from the tab/panel/response id namespaces.
+   */
+  labelId: string;
 }
 
 /** How long the "copied" icon + the status announcement linger. */
 const COPIED_RESET_MS = 1500;
 
-export default function CurlExample({ method, url, body }: CurlExampleProps) {
+export default function CurlExample({
+  method,
+  url,
+  body,
+  labelId,
+}: CurlExampleProps) {
   const command = buildCurlCommand({ method, url, body });
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState('');
@@ -66,8 +88,11 @@ export default function CurlExample({ method, url, body }: CurlExampleProps) {
   return (
     <div className="mt-4">
       <div className="flex items-center justify-between gap-3 mb-2">
-        <p className="text-[var(--mount-text)] text-sm font-semibold">
-          Example request
+        <p
+          id={labelId}
+          className="text-[var(--mount-text)] text-sm font-semibold"
+        >
+          Example request (cURL)
         </p>
         <CopyButton
           copied={copied}
@@ -77,7 +102,16 @@ export default function CurlExample({ method, url, body }: CurlExampleProps) {
           Copy
         </CopyButton>
       </div>
-      <pre className="max-h-80 overflow-auto px-3 py-2.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs leading-relaxed select-text rounded-lg">
+      <pre
+        role="group"
+        aria-labelledby={labelId}
+        // SC 2.1.1: the <pre> is the scroll container for the clipped command,
+        // so a keyboard user must be able to focus it to scroll. role="group"
+        // is a deliberately non-interactive (non-landmark) nameable role.
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+        tabIndex={0}
+        className={`max-h-80 overflow-auto px-3 py-2.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs leading-relaxed select-text ${FOCUS_RING} rounded-lg`}
+      >
         {command}
       </pre>
       <p role="status" aria-live="polite" className="sr-only">

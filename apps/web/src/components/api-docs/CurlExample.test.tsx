@@ -1,5 +1,5 @@
 /*
- * Tests for CurlExample – the "Example request" cURL block.
+ * Tests for CurlExample – the "Example request (cURL)" block.
  *
  * Contracts pinned here (consumer-owned behavior that stays in CurlExample
  * after the Wave 2 swap to the shared CopyButton; only `copied` + `onCopy`
@@ -26,6 +26,7 @@ const props = {
   method: 'post',
   url: 'https://api.example.com/links',
   body: '{"url":"https://example.com"}',
+  labelId: 'endpoint-post-links-request-curl',
 };
 
 // jsdom has no clipboard; define a writable mock once, then swap the spy
@@ -68,6 +69,20 @@ describe('CurlExample', () => {
   it('names the copy button "Copy cURL command"', () => {
     render(<CurlExample {...props} />);
     expect(copyButton()).toBeInTheDocument();
+  });
+
+  it('exposes the command as a focusable, labelled scroll group named from the visible label', () => {
+    render(<CurlExample {...props} />);
+    // The <pre> matches the shared CodeBlock scroll contract: role=group,
+    // tabIndex 0, and an accessible name sourced from the visible label (via
+    // aria-labelledby to the label's id), never a hidden aria-label.
+    const group = screen.getByRole('group', { name: 'Example request (cURL)' });
+    expect(group.tagName).toBe('PRE');
+    expect(group).toHaveAttribute('tabindex', '0');
+    expect(group).toHaveAttribute('aria-labelledby', props.labelId);
+    expect(document.getElementById(props.labelId)).toHaveTextContent(
+      'Example request (cURL)',
+    );
   });
 
   it('shows the manual-copy fallback when the clipboard write fails', async () => {

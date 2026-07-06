@@ -27,7 +27,10 @@ function makeEndpoint(
   };
 }
 
-/** An endpoint that populates all three sections, so every tab is present. */
+/**
+ * An endpoint that populates both sections plus every Request-panel block
+ * (parameters, request-body schema, example body, and the always-present cURL).
+ */
 function fullEndpoint(
   overrides: Partial<NormalizedEndpoint> = {},
 ): NormalizedEndpoint {
@@ -44,32 +47,16 @@ function fullEndpoint(
 }
 
 interface RenderOptions {
-  loggedIn?: boolean;
   serverOrigin?: string;
-  token?: string;
-  onStatusMessage?: ReturnType<typeof vi.fn>;
 }
 
 function renderDetail(
   endpoint = makeEndpoint(),
-  {
-    loggedIn = true,
-    serverOrigin = '',
-    token = '',
-    onStatusMessage = vi.fn(),
-  }: RenderOptions = {},
+  { serverOrigin = '' }: RenderOptions = {},
 ) {
   return render(
     <MemoryRouter>
-      <EndpointDetail
-        endpoint={endpoint}
-        loggedIn={loggedIn}
-        serverOrigin={serverOrigin}
-        token={token}
-        tokenLoading={false}
-        tokenError={null}
-        onStatusMessage={onStatusMessage}
-      />
+      <EndpointDetail endpoint={endpoint} serverOrigin={serverOrigin} />
     </MemoryRouter>,
   );
 }
@@ -102,25 +89,22 @@ describe('EndpointDetail', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders three section tabs labelled Request, Response, Try It with disjoint panel ids', () => {
+  it('renders exactly two section tabs labelled Request, Response with disjoint panel ids when responses exist', () => {
     renderDetail(fullEndpoint());
     const root = endpointHeadingId('get', '/links/{id}');
     const tablist = screen.getByRole('tablist', { name: 'Endpoint sections' });
 
-    // Only the three top-level pills carry role=tab under this tablist – the
+    // Only the two top-level pills carry role=tab under this tablist – the
     // inner Responses sub-tablist sits in a sibling panel, not inside the bar.
     const tabs = within(tablist).getAllByRole('tab');
-    expect(tabs).toHaveLength(3);
+    expect(tabs).toHaveLength(2);
     expect(tabs[0]).toHaveAccessibleName('Request');
     expect(tabs[1]).toHaveAccessibleName('Response');
-    expect(tabs[2]).toHaveAccessibleName('Try It');
 
     expect(tabs[0]).toHaveAttribute('id', `${root}-tab-request`);
     expect(tabs[0]).toHaveAttribute('aria-controls', `${root}-panel-request`);
     expect(tabs[1]).toHaveAttribute('id', `${root}-tab-response`);
     expect(tabs[1]).toHaveAttribute('aria-controls', `${root}-panel-response`);
-    expect(tabs[2]).toHaveAttribute('id', `${root}-tab-tryit`);
-    expect(tabs[2]).toHaveAttribute('aria-controls', `${root}-panel-tryit`);
   });
 
   it('sizes the section tablist to its content (natural width) rather than full-width', () => {
@@ -158,29 +142,88 @@ describe('EndpointDetail', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows the "Example request body" code block in the Request panel when a request body exists, and drops the panel tab stop', () => {
-    const { container } = renderDetail(fullEndpoint());
+  it('is always present: a param-less, body-less, response-less endpoint still yields a non-empty tablist and a reachable cURL Copy button', () => {
+    // The empty-tablist regression guard: Request is the anchor, so even the
+    // most minimal endpoint keeps one focusable tab and its cURL content.
+    renderDetail(makeEndpoint({ parameters: [], responses: [] }));
+    const tablist = screen.getByRole('tablist', { name: 'Endpoint sections' });
+
+    const tabs = within(tablist).getAllByRole('tab');
+    expect(tabs).toHaveLength(1);
+    expect(tabs[0]).toHaveAccessibleName('Request');
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+
+    // The panel is non-empty and its Copy button is reachable.
+    expect(
+      screen.getByRole('button', { name: /copy curl command/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the cURL example inside the Request panel, never a separate Try It panel', () => {
+    renderDetail(fullEndpoint());
     const root = endpointHeadingId('get', '/links/{id}');
 
-    // The example block is a labelled, focusable <pre> group carrying the
-    // -request-example id derived from the heading.
-    const example = screen.getByRole('group', { name: 'Example request body' });
-    expect(example).toHaveAttribute(
+    // No Try It tab exists any more.
+    expect(
+      screen.queryByRole('tab', { name: 'Try It' }),
+    ).not.toBeInTheDocument();
+
+    // The cURL group + its Copy button live inside the Request panel.
+    const requestPanel = screen.getByRole('tabpanel', { name: 'Request' });
+    expect(requestPanel).toHaveAttribute('id', `${root}-panel-request`);
+    expect(
+      within(requestPanel).getByRole('group', {
+        name: 'Example request (cURL)',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(requestPanel).getByRole('button', {
+        name: /copy curl command/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('gives the two request-panel example blocks distinct accessible names', () => {
+    renderDetail(fullEndpoint());
+    const requestPanel = screen.getByRole('tabpanel', { name: 'Request' });
+    const root = endpointHeadingId('get', '/links/{id}');
+
+    // The JSON body block and the cURL block are both labelled groups with
+    // distinct, non-prefix-colliding names sourced from visible text.
+    const bodyBlock = within(requestPanel).getByRole('group', {
+      name: 'Example request body',
+    });
+    expect(bodyBlock).toHaveAttribute(
       'aria-labelledby',
       `${root}-request-example`,
     );
+
+    const curlBlock = within(requestPanel).getByRole('group', {
+      name: 'Example request (cURL)',
+    });
+    expect(curlBlock).toHaveAttribute(
+      'aria-labelledby',
+      `${root}-request-curl`,
+    );
+  });
+
+  it('drops the Request panel tab stop, its example body and cURL carrying the focus', () => {
+    const { container } = renderDetail(fullEndpoint());
+    const root = endpointHeadingId('get', '/links/{id}');
+
+    const example = screen.getByRole('group', { name: 'Example request body' });
     expect(example).toHaveTextContent('"url"');
 
-    // With a focusable descendant present, the Request panel itself is no
-    // longer a tab stop.
+    // The Request panel always owns focusable descendants (at minimum the cURL
+    // Copy button + scrollable <pre>), so the panel itself is never a tab stop.
     const requestPanel = container.querySelector(`#${root}-panel-request`)!;
     expect(requestPanel).not.toHaveAttribute('tabindex');
   });
 
-  it('shows no example block and keeps the Request panel as a tab stop for a body-less endpoint', () => {
-    // Parameters but no request body: the Request tab still appears (showRequest),
-    // but there is no example body to render, so the read-only panel keeps its
-    // own tabIndex=0 so a keyboard user can reach it.
+  it('keeps the Request panel off the tab order even for a body-less endpoint (cURL carries the focus)', () => {
+    // Parameters but no request body: no example-body block renders, yet the
+    // always-present cURL Copy button + <pre> keep the panel focusable-owning,
+    // so the panel drops its own tabIndex rather than becoming the tab stop.
     const { container } = renderDetail(
       makeEndpoint({
         parameters: [{ name: 'limit', location: 'query', required: false }],
@@ -193,40 +236,40 @@ describe('EndpointDetail', () => {
     ).not.toBeInTheDocument();
 
     const requestPanel = container.querySelector(`#${root}-panel-request`)!;
-    expect(requestPanel).toHaveAttribute('tabindex', '0');
+    expect(requestPanel).not.toHaveAttribute('tabindex');
   });
 
-  it('reveals the picked panel and hides the rest via [hidden] WITHOUT unmounting them', async () => {
+  it('reveals the picked panel and hides the other via [hidden] WITHOUT unmounting it', async () => {
     const user = userEvent.setup();
     const { container } = renderDetail(fullEndpoint());
     const root = endpointHeadingId('get', '/links/{id}');
     const requestPanel = container.querySelector(`#${root}-panel-request`)!;
     const responsePanel = container.querySelector(`#${root}-panel-response`)!;
-    const tryitPanel = container.querySelector(`#${root}-panel-tryit`)!;
 
     // Request is the default selection.
     expect(requestPanel).not.toHaveAttribute('hidden');
     expect(responsePanel).toHaveAttribute('hidden');
-    expect(tryitPanel).toHaveAttribute('hidden');
 
-    await user.click(screen.getByRole('tab', { name: 'Try It' }));
+    await user.click(screen.getByRole('tab', { name: 'Response' }));
 
     expect(requestPanel).toHaveAttribute('hidden');
-    expect(responsePanel).toHaveAttribute('hidden');
-    expect(tryitPanel).not.toHaveAttribute('hidden');
+    expect(responsePanel).not.toHaveAttribute('hidden');
 
-    // The now-hidden Request panel is still mounted (table in the DOM), not
-    // torn down – hidden:true reaches into the collapsed subtree.
+    // The now-hidden Request panel is still mounted (cURL group in the DOM),
+    // not torn down – hidden:true reaches into the collapsed subtree.
     expect(
-      within(requestPanel as HTMLElement).getByRole('table', {
-        name: /parameters/i,
+      within(requestPanel as HTMLElement).getByRole('group', {
+        name: 'Example request (cURL)',
         hidden: true,
       }),
     ).toBeInTheDocument();
   });
 
-  it('auto-selects a 204-only endpoint\'s single response tab so its "No response body" fallback shows', () => {
+  it('auto-selects a 204-only endpoint\'s single response tab so its "No response body" fallback shows once Response is opened', async () => {
+    const user = userEvent.setup();
     renderDetail(makeEndpoint({ responses: [{ statusCode: '204' }] }));
+    // Request is the default anchor, so open Response to reveal its sub-tablist.
+    await user.click(screen.getByRole('tab', { name: 'Response' }));
     expect(screen.getByRole('tab', { name: 'Response 204' })).toHaveAttribute(
       'aria-selected',
       'true',
@@ -234,90 +277,39 @@ describe('EndpointDetail', () => {
     expect(screen.getByText(/No response body\./i)).toBeInTheDocument();
   });
 
-  it('drops the Request tab entirely when there are no parameters and no request body', () => {
-    renderDetail(makeEndpoint());
+  it('drops the Response tab and keeps only the Request tab when there are no responses', () => {
+    // No responses ⇒ a single Request tab survives; index 0 lands on it and its
+    // panel is a rendered, non-hidden panel hosting the cURL example.
+    renderDetail(makeEndpoint({ responses: [] }));
+
     expect(
-      screen.queryByRole('tab', { name: 'Request' }),
+      screen.queryByRole('tab', { name: 'Response' }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Response' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Try It' })).toBeInTheDocument();
-  });
 
-  it('renders a copy-ready cURL example under Try It in both auth states', async () => {
-    const user = userEvent.setup();
-    renderDetail(makeEndpoint(), { loggedIn: false });
-    await user.click(screen.getByRole('tab', { name: 'Try It' }));
-    expect(screen.getByText('Example request')).toBeInTheDocument();
+    const requestTab = screen.getByRole('tab', { name: 'Request' });
+    expect(requestTab).toHaveAttribute('aria-selected', 'true');
+
+    const requestPanel = screen.getByRole('tabpanel', { name: 'Request' });
+    expect(requestPanel).not.toHaveAttribute('hidden');
     expect(
-      screen.getByRole('button', { name: /copy curl command/i }),
+      within(requestPanel).getByRole('group', {
+        name: 'Example request (cURL)',
+      }),
     ).toBeInTheDocument();
-  });
-
-  it('embeds the try-it-out form under Try It when logged in', async () => {
-    const user = userEvent.setup();
-    renderDetail(makeEndpoint(), { loggedIn: true });
-    await user.click(screen.getByRole('tab', { name: 'Try It' }));
-    expect(
-      screen.getByRole('button', { name: /send request/i }),
-    ).toBeInTheDocument();
-  });
-
-  it('omits the try-it-out form when logged out', () => {
-    renderDetail(makeEndpoint(), { loggedIn: false });
-    expect(
-      screen.queryByRole('button', { name: /send request/i }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('keeps typed try-it-out values across a tab round-trip (no redundant re-entry)', async () => {
-    const user = userEvent.setup();
-    renderDetail(fullEndpoint(), { loggedIn: true, token: 'ltk_test' });
-
-    await user.click(screen.getByRole('tab', { name: 'Try It' }));
-    const field = screen.getByRole('textbox', { name: /limit/i });
-    await user.type(field, '42');
-    expect(field).toHaveValue('42');
-
-    // Leave and return – the Try It panel is hidden, never unmounted.
-    await user.click(screen.getByRole('tab', { name: 'Request' }));
-    await user.click(screen.getByRole('tab', { name: 'Try It' }));
-
-    expect(screen.getByRole('textbox', { name: /limit/i })).toHaveValue('42');
-  });
-
-  it('reports the form status upward instead of rendering an inline announcer', async () => {
-    const user = userEvent.setup();
-    const onStatusMessage = vi.fn();
-    renderDetail(makeEndpoint(), { loggedIn: true, onStatusMessage });
-    await user.click(screen.getByRole('tab', { name: 'Try It' }));
-    // With the status hoisted, the only status node in the Try It panel is
-    // CurlExample's (empty) copy-confirmation region – never a form announcer.
-    screen
-      .queryAllByRole('status')
-      .forEach((node) => expect(node).toBeEmptyDOMElement());
-    expect(onStatusMessage).toHaveBeenCalled();
   });
 
   it('resets the section selection to Request when the endpoint is swapped', async () => {
     const user = userEvent.setup();
     // The parent (ApiReference) keys EndpointDetail by slug, so an endpoint
     // swap remounts it; a fresh mount re-initializes the selection to Request.
-    const props = {
-      loggedIn: true,
-      serverOrigin: '',
-      token: '',
-      tokenLoading: false,
-      tokenError: null,
-      onStatusMessage: vi.fn(),
-    };
     const { rerender } = render(
       <MemoryRouter>
-        <EndpointDetail key="a" endpoint={fullEndpoint()} {...props} />
+        <EndpointDetail key="a" endpoint={fullEndpoint()} serverOrigin="" />
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Try It' }));
-    expect(screen.getByRole('tab', { name: 'Try It' })).toHaveAttribute(
+    await user.click(screen.getByRole('tab', { name: 'Response' }));
+    expect(screen.getByRole('tab', { name: 'Response' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
@@ -327,7 +319,7 @@ describe('EndpointDetail', () => {
         <EndpointDetail
           key="b"
           endpoint={fullEndpoint({ path: '/links/{id}/tags' })}
-          {...props}
+          serverOrigin=""
         />
       </MemoryRouter>,
     );
@@ -338,7 +330,7 @@ describe('EndpointDetail', () => {
     );
   });
 
-  it('walks the three top-level pills with Arrow keys via automatic activation, wrapping at both ends', async () => {
+  it('walks the two top-level pills with Arrow keys via automatic activation, wrapping at both ends', async () => {
     const user = userEvent.setup();
     renderDetail(fullEndpoint());
     const sections = screen.getByRole('tablist', { name: 'Endpoint sections' });
@@ -352,11 +344,6 @@ describe('EndpointDetail', () => {
       within(sections).getByRole('tab', { name: 'Response' }),
     ).toHaveAttribute('aria-selected', 'true');
 
-    await user.keyboard('{ArrowRight}');
-    expect(
-      within(sections).getByRole('tab', { name: 'Try It' }),
-    ).toHaveAttribute('aria-selected', 'true');
-
     // Rightward off the last pill wraps back to the first.
     await user.keyboard('{ArrowRight}');
     expect(
@@ -366,7 +353,7 @@ describe('EndpointDetail', () => {
     // Leftward off the first pill wraps to the last.
     await user.keyboard('{ArrowLeft}');
     expect(
-      within(sections).getByRole('tab', { name: 'Try It' }),
+      within(sections).getByRole('tab', { name: 'Response' }),
     ).toHaveAttribute('aria-selected', 'true');
   });
 
@@ -408,9 +395,6 @@ describe('EndpointDetail', () => {
     ).toHaveAttribute('aria-selected', 'true');
     expect(
       within(sections).getByRole('tab', { name: 'Request' }),
-    ).toHaveAttribute('aria-selected', 'false');
-    expect(
-      within(sections).getByRole('tab', { name: 'Try It' }),
     ).toHaveAttribute('aria-selected', 'false');
   });
 
@@ -457,75 +441,48 @@ describe('EndpointDetail', () => {
     ).toHaveAttribute('aria-selected', 'false');
   });
 
-  it('drops the Response tab and auto-selects a rendered Try It panel when there are no responses', () => {
-    // No parameters, no request body, and no responses ⇒ only Try It survives,
-    // and index 0 must land on it (a rendered, non-hidden panel).
-    renderDetail(makeEndpoint({ responses: [] }));
-
-    expect(
-      screen.queryByRole('tab', { name: 'Request' }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('tab', { name: 'Response' }),
-    ).not.toBeInTheDocument();
-
-    const tryItTab = screen.getByRole('tab', { name: 'Try It' });
-    expect(tryItTab).toHaveAttribute('aria-selected', 'true');
-    expect(
-      screen.getByRole('tabpanel', { name: 'Try It' }),
-    ).not.toHaveAttribute('hidden');
-    expect(screen.getByText('Example request')).toBeInTheDocument();
-  });
-
-  it('clamps a stale section index when the tab set shrinks on a same-key rerender, keeping a live panel', async () => {
+  it('clamps a stale section index when the Response section drops on a same-key rerender, keeping the Request panel live', async () => {
     const user = userEvent.setup();
-    const props = {
-      loggedIn: true,
-      serverOrigin: '',
-      token: '',
-      tokenLoading: false,
-      tokenError: null,
-      onStatusMessage: vi.fn(),
-    };
     const { rerender } = render(
       <MemoryRouter>
-        <EndpointDetail key="same" endpoint={fullEndpoint()} {...props} />
+        <EndpointDetail key="same" endpoint={fullEndpoint()} serverOrigin="" />
       </MemoryRouter>,
     );
 
-    // Select the third pill (Try It, index 2) so selectedIndex points past what
-    // a single-section endpoint will offer.
-    await user.click(screen.getByRole('tab', { name: 'Try It' }));
-    expect(screen.getByRole('tab', { name: 'Try It' })).toHaveAttribute(
+    // Select the Response pill (index 1) so selectedIndex points past what a
+    // response-less endpoint will offer.
+    await user.click(screen.getByRole('tab', { name: 'Response' }));
+    expect(screen.getByRole('tab', { name: 'Response' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
 
-    // Same key ⇒ selectedIndex (2) survives the rerender, but the new endpoint
-    // offers only the always-present Try It section (no params, body, or
-    // responses). Without the Math.min clamp, index 2 would match no visible
-    // section and every panel would hide (a phantom, blank detail).
+    // Same key ⇒ selectedIndex (1) survives the rerender, but the new endpoint
+    // offers only the always-present Request section (no responses). Without
+    // the Math.min clamp, index 1 would match no visible section and every
+    // panel would hide (a phantom, blank detail).
     rerender(
       <MemoryRouter>
         <EndpointDetail
           key="same"
           endpoint={makeEndpoint({ responses: [] })}
-          {...props}
+          serverOrigin=""
         />
       </MemoryRouter>,
     );
 
     expect(
-      screen.queryByRole('tab', { name: 'Request' }),
-    ).not.toBeInTheDocument();
-    expect(
       screen.queryByRole('tab', { name: 'Response' }),
     ).not.toBeInTheDocument();
 
-    // The clamp rescues the stale index (2 → 0), so the surviving Try It panel
+    // The clamp rescues the stale index (1 → 0), so the surviving Request panel
     // stays visible rather than leaving the detail body empty.
-    const tryItPanel = screen.getByRole('tabpanel', { name: 'Try It' });
-    expect(tryItPanel).not.toHaveAttribute('hidden');
-    expect(within(tryItPanel).getByText('Example request')).toBeInTheDocument();
+    const requestPanel = screen.getByRole('tabpanel', { name: 'Request' });
+    expect(requestPanel).not.toHaveAttribute('hidden');
+    expect(
+      within(requestPanel).getByRole('group', {
+        name: 'Example request (cURL)',
+      }),
+    ).toBeInTheDocument();
   });
 });
