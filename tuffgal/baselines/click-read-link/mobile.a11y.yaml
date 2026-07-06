@@ -11,7 +11,7 @@
       - menuitem "Your links"
       - menuitem "Settings"
       - menuitem "Switch to light mode"
-      - menuitem "Create a custom theme"
+      - menuitem "Craft your theme"
       - menuitem "Theme A Scanner Darkly"
       - menuitem "Log out"
     - menu "Theme":
@@ -36,23 +36,23 @@
   - searchbox "Search through your links"
   - button "Remove all read links"
   - tabpanel "Read":
-    - paragraph: Test Link 3
-    - paragraph: Docs Reference
-    - paragraph: Reference docs for the platform’s public APIs, covering authentication, idempotency keys, and the conventions every integrator needs.
-    - button "Mark unread"
-    - link "Test Link 3 – Docs Reference, opens in new tab":
-      - /url: https://example.test/read/3
-    - paragraph: Test Link 2
-    - paragraph: Press Daily
-    - paragraph: A long-form essay on the quiet renaissance of typography on the web — how line-height, optical sizing, and tabular numerals reshape reading.
-    - button "Mark unread"
-    - link "Test Link 2 – Press Daily, opens in new tab":
-      - /url: https://example.test/read/2
     - paragraph: Test Link 1
     - paragraph: Slow Software Weekly
     - paragraph: Practical notes on building durable software — concrete examples, minimal jargon, hard-won lessons from teams that ship slowly.
     - button "Mark unread"
     - link "Test Link 1 – Slow Software Weekly, opens in new tab":
       - /url: https://example.test/read/1
+    - paragraph: Test Link 2
+    - paragraph: Press Daily
+    - paragraph: A long-form essay on the quiet renaissance of typography on the web — how line-height, optical sizing, and tabular numerals reshape reading.
+    - button "Mark unread"
+    - link "Test Link 2 – Press Daily, opens in new tab":
+      - /url: https://example.test/read/2
+    - paragraph: Test Link 3
+    - paragraph: Docs Reference
+    - paragraph: Reference docs for the platform’s public APIs, covering authentication, idempotency keys, and the conventions every integrator needs.
+    - button "Mark unread"
+    - link "Test Link 3 – Docs Reference, opens in new tab":
+      - /url: https://example.test/read/3
   - status
   - status

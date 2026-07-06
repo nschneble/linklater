@@ -3,6 +3,13 @@
   "steps": [
     { "kind": "navigate", "path": "/read" },
     {
+      "kind": "waitFor",
+      "hint": {
+        "selector": "#links-list a[aria-label*='Test Link 3']"
+      }
+    },
+    { "kind": "wait", "ms": 700 },
+    {
       "kind": "click",
       "hint": { "role": "link", "text": "Test Link 1" }
     }

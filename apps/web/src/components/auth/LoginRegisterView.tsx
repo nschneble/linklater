@@ -165,18 +165,18 @@ export default function LoginRegisterView({
 
       {(googleSsoEnabled || appleSsoEnabled) && (
         <>
-          <div className="relative my-5">
+          <div className="flex items-center gap-3 my-5">
             <div
-              className="absolute inset-0 flex items-center"
+              className="w-full border-t border-[var(--mount-border)]"
               aria-hidden="true"
-            >
-              <div className="w-full border-t border-[var(--mount-border)]" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="px-3 bg-[var(--mount-bg)] text-[var(--mount-alt-text)] text-xs">
-                or continue with
-              </span>
-            </div>
+            />
+            <span className="shrink-0 text-[var(--mount-alt-text)] text-xs">
+              or continue with
+            </span>
+            <div
+              className="w-full border-t border-[var(--mount-border)]"
+              aria-hidden="true"
+            />
           </div>
 
           <div className="flex flex-col gap-2">

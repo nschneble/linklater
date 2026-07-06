@@ -31,6 +31,20 @@ const FIXED_DATE = '2026-01-01T12:00:00.000Z';
 const FIXED_READ_DATE = '2026-01-02T12:00:00.000Z';
 
 /**
+ * Returns a `createdAt` that is `index` seconds *before* `FIXED_DATE`, so the
+ * three fixture links get strictly-decreasing timestamps in slot order (Test
+ * Link 1 newest, Test Link 3 oldest). The links list sorts by `createdAt desc`
+ * with no secondary key, so identical timestamps left the row order tied and
+ * Postgres returned heap order — nondeterministic across resets. That surfaced
+ * as an intermittent "changed" on the read-list screenshots (rows swapped
+ * between runs, not mid-reflow noise). Distinct timestamps pin the order.
+ */
+function fixtureCreatedAt(index: number): string {
+  const base = new Date(FIXED_DATE).getTime();
+  return new Date(base - index * 1000).toISOString();
+}
+
+/**
  * Truncates every public-schema table other than `_prisma_migrations`, then
  * re-inserts the deterministic test user. Wipes the cached storage state so
  * the first story that produces `logged-in` runs through the real login
@@ -65,6 +79,7 @@ export async function userWithLinksFixture(): Promise<void> {
     id: `fixture-link-000000000000000${index + 1}`,
     metaId: `fixture-meta-000000000000000${index + 1}`,
     url: `https://example.test/${index + 1}`,
+    createdAt: fixtureCreatedAt(index),
   }));
   await applyLinks(links, null);
 }
@@ -80,6 +95,7 @@ export async function userWithReadHistoryFixture(): Promise<void> {
     id: `fixture-read-000000000000000${index + 1}`,
     metaId: `fixture-readmeta-00000000000${index + 1}`,
     url: `https://example.test/read/${index + 1}`,
+    createdAt: fixtureCreatedAt(index),
   }));
   await applyLinks(links, FIXED_READ_DATE);
 }
@@ -93,6 +109,7 @@ interface FixtureLink {
   faviconUrl: string;
   imageUrl: string;
   siteName: string;
+  createdAt: string;
 }
 
 /**
@@ -185,8 +202,8 @@ async function applyLinks(
           INSERT INTO "Link"
             ("id", "url", "userId", "createdAt", "updatedAt", "readAt", "searchVector")
           VALUES
-            ($1, $2, $3, $4, $4, $5,
-             to_tsvector('english', unaccent(coalesce($6, '') || ' ' || $2)))
+            ($1, $2, $3, $4, $5, $6,
+             to_tsvector('english', unaccent(coalesce($7, '') || ' ' || $2)))
           ON CONFLICT ("id") DO UPDATE
             SET "url"          = EXCLUDED."url",
                 "userId"       = EXCLUDED."userId",
@@ -195,7 +212,15 @@ async function applyLinks(
                 "readAt"       = EXCLUDED."readAt",
                 "searchVector" = EXCLUDED."searchVector"
           `,
-          [link.id, link.url, TEST_USER.id, FIXED_DATE, readAt, link.title],
+          [
+            link.id,
+            link.url,
+            TEST_USER.id,
+            link.createdAt,
+            FIXED_DATE,
+            readAt,
+            link.title,
+          ],
         );
         await client.query(
           `

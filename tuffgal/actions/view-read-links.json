@@ -6,12 +6,16 @@
       "kind": "click",
       "hint": { "selector": "#tab-read" }
     },
-    { "kind": "wait", "ms": 600 }
+    {
+      "kind": "waitFor",
+      "hint": {
+        "selector": "#links-list a[aria-label*='Test Link 3']"
+      }
+    },
+    { "kind": "wait", "ms": 700 }
   ],
   "expect": {
-    "anyOf": [
-      { "selector": "#tab-read[aria-selected='true']" }
-    ],
+    "anyOf": [{ "selector": "#tab-read[aria-selected='true']" }],
     "timeoutMs": 15000
   },
   "mask": [{ "selector": "#suggestion-callout-title" }]
