@@ -194,19 +194,30 @@ describe('ResponseTabs', () => {
     expect(panel.className).not.toContain(FOCUS_RING);
   });
 
-  it('shows no example block and keeps the shared panel focusable for a body-less status', async () => {
+  it('round-trips the panel tab stop: gains tabIndex on a body-less status, RE-DROPS it back on a body-bearing one', async () => {
     const user = userEvent.setup();
     render(<ResponseTabs endpoint={makeEndpoint()} />);
-    await user.click(screen.getByRole('tab', { name: '401 Unauthorized' }));
+    const tablist = screen.getByRole('tablist', { name: 'Responses' });
 
+    // Forward: select the body-less 401 ⇒ no example block, and the read-only
+    // "No response body" fallback makes the panel itself the keyboard-reachable
+    // focus stop (tabIndex=0 + the shared ring).
+    await user.click(
+      within(tablist).getByRole('tab', { name: '401 Unauthorized' }),
+    );
     expect(
       screen.queryByRole('group', { name: 'Example response body' }),
     ).not.toBeInTheDocument();
-
-    // A read-only "No response body" fallback ⇒ the panel itself is the
-    // keyboard-reachable focus stop, keeping tabIndex=0 + the shared ring.
     const panel = screen.getByRole('tabpanel');
     expect(panel).toHaveAttribute('tabindex', '0');
     expect(panel.className).toContain(FOCUS_RING);
+
+    // Reverse: click BACK to the body-bearing 200, whose example CodeBlock owns
+    // the focus stop. The panel must RE-DROP its own tabIndex + ring — a "sticky
+    // tabindex" regression (gains tabIndex=0 and never clears) would survive the
+    // forward-only assertion above but fails here.
+    await user.click(within(tablist).getByRole('tab', { name: '200 OK' }));
+    expect(panel).not.toHaveAttribute('tabindex');
+    expect(panel.className).not.toContain(FOCUS_RING);
   });
 });

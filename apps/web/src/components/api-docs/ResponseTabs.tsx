@@ -16,18 +16,24 @@ import type { NormalizedEndpoint, NormalizedResponse } from '../../lib/openapi';
  *
  * This is a TRUE tablist (`role="tablist"`/`tab`/`tabpanel`), unlike the
  * sibling `EndpointNav` which stays plain buttons. The deciding factor is the
- * revealed content: a response detail is 100% read-only (a table or a static
- * paragraph, no focusable widget), so the WAI-ARIA tabs roving-tabindex model
- * cannot collide with a form the way `EndpointNav`'s `RequestForm` would. These
- * are alternate VIEWS of one section, not navigation targets (no URL/hash, not
+ * revealed content: a response detail carries no interactive FORM widget — only
+ * read-only content (a schema table, a static paragraph, and, when a schema is
+ * present, a scrollable example CodeBlock whose `<pre>` is focusable-but-read-
+ * only). None of these participate in the tablist's roving tabindex (which
+ * lives only on the tab buttons), so the WAI-ARIA tabs model still cannot
+ * collide with a form the way `EndpointNav`'s `RequestForm` would. These are
+ * alternate VIEWS of one section, not navigation targets (no URL/hash, not
  * bookmarkable) – textbook tabs.
  *
  * Activation is AUTOMATIC (selection follows arrow focus): the panel swap is
  * instantaneous with no network or form state to lose, so there is deliberately
  * NO focus management – the selected tab keeps focus while the shared panel's
  * `aria-labelledby` updates silently. Roving tabindex keeps the whole tablist a
- * single Tab stop (selected tab `tabIndex={0}`, the rest `-1`); the panel is
- * `tabIndex={0}` so a keyboard user can Tab in to read it.
+ * single Tab stop (selected tab `tabIndex={0}`, the rest `-1`). The panel is
+ * itself the keyboard focus stop (`tabIndex={0}`) ONLY when it holds no
+ * focusable descendant; when a schema's example CodeBlock is present that
+ * `<pre>` is the focus stop and the panel drops its tab stop – see the
+ * `hasFocusableContent` guard below.
  *
  * Selection is color-redundant per SC 1.4.1: the status DIGITS carry the
  * meaning (no 2xx-green/4xx-red coding, following `MethodBadge` precedent), and

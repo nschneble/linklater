@@ -1,9 +1,10 @@
 import type { OpenAPIV3 } from 'openapi-types';
 
 /**
- * Derives a minimal, editable example value from a resolved OpenAPI schema so
- * the "try it out" request-body editor can prefill a sensible JSON skeleton
- * the user only has to tweak rather than author from scratch.
+ * Derives a minimal example value from a resolved OpenAPI schema, used to
+ * prefill both the "try it out" request-body editor (a sensible JSON skeleton
+ * the user only tweaks rather than authors from scratch) and the read-only
+ * response-body example block — example request/response bodies in the API docs.
  *
  * Schemas arriving here are already `$ref`-resolved (see `lib/openapi`), so
  * this never follows references. Resolution order per node:
