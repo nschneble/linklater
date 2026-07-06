@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import userEvent from '@testing-library/user-event';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
 // MethodBadge reads auth to pick brand vs themed paint; stub it so the detail
@@ -278,5 +278,144 @@ describe('EndpointDetail', () => {
       'aria-selected',
       'true',
     );
+  });
+
+  it('walks the three top-level pills with Arrow keys via automatic activation, wrapping at both ends', async () => {
+    const user = userEvent.setup();
+    renderDetail(fullEndpoint());
+    const sections = screen.getByRole('tablist', { name: 'Endpoint sections' });
+
+    // Focus the first (default-selected) pill, then arrow rightward. The nav
+    // hook focuses AND clicks each destination, so selection follows focus.
+    await user.click(within(sections).getByRole('tab', { name: 'Request' }));
+
+    await user.keyboard('{ArrowRight}');
+    expect(
+      within(sections).getByRole('tab', { name: 'Response' }),
+    ).toHaveAttribute('aria-selected', 'true');
+
+    await user.keyboard('{ArrowRight}');
+    expect(
+      within(sections).getByRole('tab', { name: 'Try It' }),
+    ).toHaveAttribute('aria-selected', 'true');
+
+    // Rightward off the last pill wraps back to the first.
+    await user.keyboard('{ArrowRight}');
+    expect(
+      within(sections).getByRole('tab', { name: 'Request' }),
+    ).toHaveAttribute('aria-selected', 'true');
+
+    // Leftward off the first pill wraps to the last.
+    await user.keyboard('{ArrowLeft}');
+    expect(
+      within(sections).getByRole('tab', { name: 'Try It' }),
+    ).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('isolates the nested Responses tablist: arrowing its status tabs cycles them without moving the outer section', async () => {
+    const user = userEvent.setup();
+    renderDetail(
+      fullEndpoint({
+        responses: [{ statusCode: '200' }, { statusCode: '401' }],
+      }),
+    );
+    const sections = screen.getByRole('tablist', { name: 'Endpoint sections' });
+
+    // Reveal the Response section so its nested "Responses" sub-tablist mounts
+    // visibly, then scope every query into the inner tablist to disambiguate
+    // it from the outer pills.
+    await user.click(within(sections).getByRole('tab', { name: 'Response' }));
+    const responses = screen.getByRole('tablist', { name: 'Responses' });
+
+    // The first status tab is selected on render; focus it and arrow inward.
+    expect(
+      within(responses).getByRole('tab', { name: 'Response 200' }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await user.click(
+      within(responses).getByRole('tab', { name: 'Response 200' }),
+    );
+    await user.keyboard('{ArrowRight}');
+
+    // The inner arrow cycled the status tabs …
+    expect(
+      within(responses).getByRole('tab', { name: 'Response 401' }),
+    ).toHaveAttribute('aria-selected', 'true');
+    expect(
+      within(responses).getByRole('tab', { name: 'Response 200' }),
+    ).toHaveAttribute('aria-selected', 'false');
+
+    // … and the OUTER section selection never budged off Response.
+    expect(
+      within(sections).getByRole('tab', { name: 'Response' }),
+    ).toHaveAttribute('aria-selected', 'true');
+    expect(
+      within(sections).getByRole('tab', { name: 'Request' }),
+    ).toHaveAttribute('aria-selected', 'false');
+    expect(
+      within(sections).getByRole('tab', { name: 'Try It' }),
+    ).toHaveAttribute('aria-selected', 'false');
+  });
+
+  it('isolates the outer pills: arrowing the section pills leaves the nested Responses selection untouched', async () => {
+    const user = userEvent.setup();
+    renderDetail(
+      fullEndpoint({
+        responses: [{ statusCode: '200' }, { statusCode: '401' }],
+      }),
+    );
+    const sections = screen.getByRole('tablist', { name: 'Endpoint sections' });
+
+    // Select Response, then move the inner selection off its default so a stale
+    // outer arrow would be detectable.
+    await user.click(within(sections).getByRole('tab', { name: 'Response' }));
+    const responses = screen.getByRole('tablist', { name: 'Responses' });
+    await user.click(
+      within(responses).getByRole('tab', { name: 'Response 401' }),
+    );
+
+    // Refocus an OUTER pill and arrow across the top-level sections.
+    await user.click(within(sections).getByRole('tab', { name: 'Response' }));
+    await user.keyboard('{ArrowLeft}');
+    expect(
+      within(sections).getByRole('tab', { name: 'Request' }),
+    ).toHaveAttribute('aria-selected', 'true');
+
+    // The (now-hidden but still-mounted) Responses tablist kept its 401 pick.
+    const hiddenResponses = screen.getByRole('tablist', {
+      name: 'Responses',
+      hidden: true,
+    });
+    expect(
+      within(hiddenResponses).getByRole('tab', {
+        name: 'Response 401',
+        hidden: true,
+      }),
+    ).toHaveAttribute('aria-selected', 'true');
+    expect(
+      within(hiddenResponses).getByRole('tab', {
+        name: 'Response 200',
+        hidden: true,
+      }),
+    ).toHaveAttribute('aria-selected', 'false');
+  });
+
+  it('drops the Response tab and auto-selects a rendered Try It panel when there are no responses', () => {
+    // No parameters, no request body, and no responses ⇒ only Try It survives,
+    // and index 0 must land on it (a rendered, non-hidden panel).
+    renderDetail(makeEndpoint({ responses: [] }));
+
+    expect(
+      screen.queryByRole('tab', { name: 'Request' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('tab', { name: 'Response' }),
+    ).not.toBeInTheDocument();
+
+    const tryItTab = screen.getByRole('tab', { name: 'Try It' });
+    expect(tryItTab).toHaveAttribute('aria-selected', 'true');
+    expect(
+      screen.getByRole('tabpanel', { name: 'Try It' }),
+    ).not.toHaveAttribute('hidden');
+    expect(screen.getByText('Example request')).toBeInTheDocument();
   });
 });
