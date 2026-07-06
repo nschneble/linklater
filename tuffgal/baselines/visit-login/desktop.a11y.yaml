@@ -8,7 +8,7 @@
   - textbox "Email"
   - text: Password
   - textbox "Password":
-    - /placeholder: Leave blank to use magic link
+    - /placeholder: Leave blank to use a magic link
   - button "Log in with magic link"
 - text: or continue with
 - button "Continue with Google"
