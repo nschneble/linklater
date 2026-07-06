@@ -29,7 +29,13 @@ function schemaNameFromReference(reference: string): string | undefined {
 /**
  * Recursively follows every `$ref` in a schema down to its target in
  * `components.schemas`, producing a self-contained schema with no
- * `ReferenceObject`s left in it.
+ * `ReferenceObject`s left in it. Single- and multi-member `allOf`
+ * compositions are also flattened into one merged object schema (see
+ * {@link flattenAllOf}), so downstream consumers — which understand plain
+ * `type`/`properties` but not composition keywords — see a self-contained
+ * object. This matters for `@nestjs/swagger`'s nullable typed-ref emission
+ * (e.g. `LinkResponseDto.meta`), where a `$ref` is wrapped in `allOf`
+ * alongside sibling `nullable`/`type: 'object'`/`description` keywords.
  *
  * Guards:
  * - A `$ref` whose target is missing (or external) resolves to `undefined`,
@@ -118,5 +124,55 @@ function resolveSchemaChildren(
     }
   }
 
-  return resolved;
+  return flattenAllOf(resolved);
+}
+
+/**
+ * Merges an `allOf` composition into its host schema so consumers see a single
+ * plain object rather than a wrapper whose real shape hides one level down.
+ *
+ * `allOf` is an intersection, so this folds every (already-resolved) member's
+ * `properties` and `required` into the host and pulls in any keyword the host
+ * itself does not set. The host's own keywords win on conflict — its
+ * property-level `description`, `nullable`, and `type` are the authoritative
+ * ones. `oneOf`/`anyOf` are unions, not merges, so they are left untouched.
+ *
+ * The host keeps `nullable: true` where present, but flattening deliberately
+ * does NOT collapse the schema to `null`: the docs render a value's *shape*, so
+ * a nullable object must still expose its populated `properties`.
+ */
+function flattenAllOf(schema: OpenAPIV3.SchemaObject): OpenAPIV3.SchemaObject {
+  const members = schema.allOf as OpenAPIV3.SchemaObject[] | undefined;
+  if (!members || members.length === 0) return schema;
+
+  const merged: OpenAPIV3.SchemaObject = { ...schema };
+  delete merged.allOf;
+  const mergedProperties: Record<string, OpenAPIV3.SchemaObject> = {
+    ...((schema.properties as Record<string, OpenAPIV3.SchemaObject>) ?? {}),
+  };
+  const mergedRequired = new Set(schema.required ?? []);
+
+  for (const member of members) {
+    for (const [key, value] of Object.entries(member)) {
+      if (key === 'properties') {
+        Object.assign(
+          mergedProperties,
+          value as Record<string, OpenAPIV3.SchemaObject>,
+        );
+      } else if (key === 'required') {
+        for (const name of value as string[]) mergedRequired.add(name);
+      } else if (!(key in merged)) {
+        (merged as Record<string, unknown>)[key] = value;
+      }
+    }
+  }
+
+  if (Object.keys(mergedProperties).length > 0) {
+    merged.properties = mergedProperties;
+  }
+  if (mergedRequired.size > 0) {
+    merged.required = [...mergedRequired];
+  }
+
+  return merged;
 }

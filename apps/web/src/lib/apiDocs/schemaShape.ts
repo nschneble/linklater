@@ -6,8 +6,10 @@ import type { OpenAPIV3 } from 'openapi-types';
  * of `components/` so the type-formatting and nesting rules can be unit-tested
  * on their own; the component stays presentational.
  *
- * Schemas arriving here are already `$ref`-resolved (see `lib/openapi`), so
- * these helpers never have to follow references.
+ * Schemas arriving here are already `$ref`-resolved and `allOf`-flattened (see
+ * `lib/openapi`), so these helpers never follow references or unwrap a
+ * composition — a nullable typed-ref property surfaces its `properties`
+ * directly and expands as a normal nested object.
  */
 
 /** Kind of nested rendering a property's schema calls for, if any. */

@@ -1,4 +1,5 @@
 import { describeType, toSchemaRows } from './schemaShape';
+import { resolveSchema } from '../openapi/resolveReference';
 import { describe, expect, it } from 'vitest';
 import type { OpenAPIV3 } from 'openapi-types';
 
@@ -126,5 +127,47 @@ describe('toSchemaRows', () => {
     // rather than recursing into a second nested table.
     const [row] = toSchemaRows(schema, 1);
     expect(row.nested).toEqual({ kind: 'note' });
+  });
+
+  it('expands a nullable typed-ref property once the resolver flattens it', () => {
+    // The `meta` property arrives from @nestjs/swagger as a nullable typed-ref
+    // (`allOf`-wrapped). Before the resolver flattened `allOf`, its `type:
+    // 'object'` had no `properties`, so it rendered as a bare scalar row with
+    // no nested table. Post-flatten it expands like any other nested object.
+    const schemas: Record<string, OpenAPIV3.SchemaObject> = {
+      Meta: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string', nullable: true },
+        },
+      },
+    };
+    const resolved = resolveSchema(
+      {
+        type: 'object',
+        properties: {
+          meta: {
+            nullable: true,
+            type: 'object',
+            description: 'Extracted metadata.',
+            allOf: [{ $ref: '#/components/schemas/Meta' }],
+          },
+        },
+      } as OpenAPIV3.SchemaObject,
+      schemas,
+    );
+
+    const [metaRow] = toSchemaRows(resolved);
+    expect(metaRow.name).toBe('meta');
+    expect(metaRow.typeLabel).toBe('object');
+    expect(metaRow.nested).toMatchObject({
+      kind: 'object',
+      label: 'meta properties',
+    });
+    const nestedSchema = (
+      metaRow.nested as { kind: 'object'; schema: OpenAPIV3.SchemaObject }
+    ).schema;
+    expect(Object.keys(nestedSchema.properties ?? {})).toEqual(['id', 'title']);
   });
 });
