@@ -123,6 +123,26 @@ describe('EndpointDetail', () => {
     expect(tabs[2]).toHaveAttribute('aria-controls', `${root}-panel-tryit`);
   });
 
+  it('sizes the section tablist to its content (natural width) rather than full-width', () => {
+    renderDetail(fullEndpoint());
+    const tablist = screen.getByRole('tablist', { name: 'Endpoint sections' });
+    // Parity with the read/unread link tabs: the bar shrink-wraps to its pills
+    // (w-fit) instead of stretching across the card.
+    expect(tablist).toHaveClass('w-fit');
+    expect(tablist).not.toHaveClass('w-full');
+  });
+
+  it('gives the section pills the shared read/unread pill sizing and typography', () => {
+    renderDetail(fullEndpoint());
+    const tablist = screen.getByRole('tablist', { name: 'Endpoint sections' });
+    // Compact type on the bar; px-3 py-1.5 padding on every pill – the same
+    // geometry the link filter tabs use.
+    expect(tablist).toHaveClass('text-xs');
+    within(tablist)
+      .getAllByRole('tab')
+      .forEach((tab) => expect(tab).toHaveClass('px-3', 'py-1.5'));
+  });
+
   it('selects Request first and reveals its parameter + request-body tables', () => {
     renderDetail(fullEndpoint());
     expect(screen.getByRole('tab', { name: 'Request' })).toHaveAttribute(

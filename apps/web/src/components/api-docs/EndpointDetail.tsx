@@ -191,7 +191,8 @@ export default function EndpointDetail({
         ariaLabel="Endpoint sections"
         surface="mount"
         activeIndex={activeIndex}
-        className="mb-6"
+        className="w-fit mb-6 border-shadow text-xs"
+        tabClassName="px-3 py-1.5"
         tabs={sections.map((section, index) => ({
           id: sectionMeta[section].tabId,
           ariaControls: sectionMeta[section].panelId,
