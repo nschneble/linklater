@@ -9,9 +9,11 @@ import type { NormalizedParameter } from '../../lib/openapi';
  * <th scope="row"> (CONSTRAINT T2). Required-ness is conveyed by TEXT
  * ("Yes" / "No") in the "Required" column, never color alone (CONSTRAINT T3).
  *
- * Parameters never nest, so this stays flat – the column set differs from
- * <SchemaTable> (no nested rows), which is why this is a focused sibling rather
- * than a parameterized SchemaTable. The parameters passed in are already a
+ * Parameters never nest, so this stays flat (no nested rows), and its row-header
+ * label reads "Parameter" rather than SchemaTable's "Property" – those two
+ * differences are why this is a focused sibling rather than a parameterized
+ * SchemaTable, even though both now carry the identical four columns. The
+ * parameters passed in are already a
  * single location (all query OR all path); the caller partitions the endpoint's
  * parameters and picks the location-specific <caption> ("Query Parameters" /
  * "Path Parameters"), so the table carries no per-row location cell – the

@@ -76,7 +76,9 @@ export function resolveSchema(
 /**
  * Walks the resolvable child positions of an inline schema – `properties`,
  * array `items`, `additionalProperties`, and the `allOf`/`oneOf`/`anyOf`
- * composition keywords – replacing each with its resolved form.
+ * composition keywords – replacing each with its resolved form. Its terminal
+ * action then calls {@link flattenAllOf}, folding any `allOf` away entirely so
+ * the returned schema is a single plain object rather than a composition.
  */
 function resolveSchemaChildren(
   schema: OpenAPIV3.SchemaObject,
@@ -133,9 +135,14 @@ function resolveSchemaChildren(
  *
  * `allOf` is an intersection, so this folds every (already-resolved) member's
  * `properties` and `required` into the host and pulls in any keyword the host
- * itself does not set. The host's own keywords win on conflict — its
- * property-level `description`, `nullable`, and `type` are the authoritative
- * ones. `oneOf`/`anyOf` are unions, not merges, so they are left untouched.
+ * itself does not set. Conflict resolution differs by level: TOP-LEVEL keywords
+ * are host-wins (the host keeps any key it already has — its `description`,
+ * `nullable`, and `type` stay authoritative), while WITHIN the merged
+ * `properties` map a same-named member property wins (`Object.assign` order, so
+ * later members also overwrite earlier ones). This is harmless for the
+ * `@nestjs/swagger` nullable-typed-ref case, where the host carries no inline
+ * `properties` and so no property collision can occur. `oneOf`/`anyOf` are
+ * unions, not merges, so they are left untouched.
  *
  * The host keeps `nullable: true` where present, but flattening deliberately
  * does NOT collapse the schema to `null`: the docs render a value's *shape*, so

@@ -18,7 +18,8 @@ import type { NormalizedEndpoint } from '../../lib/openapi';
  *
  * The body is split into up to TWO top-level tab pills (`SlidingTabBar`, hosted
  * on `mount` so the bar lifts to orbit) over sibling tabpanels:
- *   - **Request**  – ALWAYS present. The read-only `ParameterTable` and
+ *   - **Request**  – ALWAYS present. A read-only `ParameterTable` per non-empty
+ *     location group – Query Parameters first, then Path Parameters – plus the
  *     request-body `SchemaTable` (each shown only when the endpoint has them),
  *     a static example request-body `CodeBlock` (only when there is a request
  *     body), and – DOM-last – the copy-ready `CurlExample`. The cURL example is

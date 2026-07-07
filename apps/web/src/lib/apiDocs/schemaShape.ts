@@ -40,8 +40,11 @@ export function describeType(
   if (!schema) return 'unknown';
   if (schema.enum) return 'enum';
   if (schema.type === 'array') {
-    // Arrays render as a bare "array" – the item shape is conveyed by the
-    // nested item table (see `describeNested`), not this compact type label.
+    // Bare "array" is an intentional compact type label (arrays render simply
+    // as "array" by product decision). For an array of OBJECTS the item shape
+    // is still expanded by `describeNested`'s nested item table; for an array
+    // of SCALARS `describeNested` returns null, so there is no nested table and
+    // the element type is deliberately omitted for compactness.
     return 'array';
   }
   if (Array.isArray(schema.type)) return schema.type.join(' | ');

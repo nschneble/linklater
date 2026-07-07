@@ -8,9 +8,10 @@ import type { OpenAPIV3 } from 'openapi-types';
  * that once, up front.
  *
  * Resolved schemas are kept as `OpenAPIV3.SchemaObject` (never
- * `ReferenceObject`): every `$ref` is followed to its target before it lands
- * in this model, so a UI wave can read `type`, `properties`, `items`, and
- * `example` directly.
+ * `ReferenceObject`): every `$ref` is followed to its target AND every `allOf`
+ * is flattened into its host before it lands in this model, so a UI wave can
+ * read `type`, `properties`, `items`, and `example` directly without walking
+ * references or unwrapping a composition.
  */
 
 /** A single path or query parameter, with its schema already resolved. */
