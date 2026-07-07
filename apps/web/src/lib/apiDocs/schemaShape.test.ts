@@ -9,12 +9,20 @@ describe('describeType', () => {
     expect(describeType({ type: 'integer' })).toBe('integer');
   });
 
-  it('labels arrays by their item type', () => {
+  it('labels an array of scalars as a bare "array"', () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: 'array',
       items: { type: 'string' },
     };
-    expect(describeType(schema)).toBe('array of string');
+    expect(describeType(schema)).toBe('array');
+  });
+
+  it('labels an array of objects as a bare "array" too (item shape lives in the nested table)', () => {
+    const schema: OpenAPIV3.SchemaObject = {
+      type: 'array',
+      items: { type: 'object', properties: { name: { type: 'string' } } },
+    };
+    expect(describeType(schema)).toBe('array');
   });
 
   it('falls back to unknown for a missing schema', () => {

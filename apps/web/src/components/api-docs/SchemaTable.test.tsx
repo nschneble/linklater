@@ -37,21 +37,21 @@ describe('SchemaTable', () => {
     expect(rowHeader).toHaveAttribute('scope', 'row');
   });
 
-  it('conveys required-ness as the words Required / Optional (T3)', () => {
+  it('conveys required-ness as the words Yes / No (T3)', () => {
     render(<SchemaTable caption="Request body" schema={objectSchema} />);
 
     const requiredRow = screen
       .getByRole('rowheader', { name: 'url' })
       .closest('tr');
     expect(
-      within(requiredRow as HTMLElement).getByText('Required'),
+      within(requiredRow as HTMLElement).getByText('Yes'),
     ).toBeInTheDocument();
 
     const optionalRow = screen
       .getByRole('rowheader', { name: 'title' })
       .closest('tr');
     expect(
-      within(optionalRow as HTMLElement).getByText('Optional'),
+      within(optionalRow as HTMLElement).getByText('No'),
     ).toBeInTheDocument();
   });
 

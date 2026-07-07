@@ -85,6 +85,18 @@ export default function EndpointDetail({
       )
     : null;
 
+  // Parameters render as location-specific tables whose <caption> conveys the
+  // location, so the per-row "In" column is gone. Partition by location and
+  // render a table only for a non-empty group – query first, then path – so a
+  // captioned table never ships an empty row set. Depends ONLY on the
+  // endpoint's parameters, never auth (SC 3.2.3).
+  const queryParameters = endpoint.parameters.filter(
+    (parameter) => parameter.location === 'query',
+  );
+  const pathParameters = endpoint.parameters.filter(
+    (parameter) => parameter.location === 'path',
+  );
+
   const sectionMeta: Record<
     SectionKey,
     { label: string; tabId: string; panelId: string }
@@ -195,11 +207,20 @@ export default function EndpointDetail({
         active={requestActive}
         hasFocusableContent
       >
-        {endpoint.parameters.length > 0 && (
+        {queryParameters.length > 0 && (
           <div className="mb-4 last:mb-0">
             <ParameterTable
-              caption="Parameters"
-              parameters={endpoint.parameters}
+              caption="Query Parameters"
+              parameters={queryParameters}
+            />
+          </div>
+        )}
+
+        {pathParameters.length > 0 && (
+          <div className="mb-4 last:mb-0">
+            <ParameterTable
+              caption="Path Parameters"
+              parameters={pathParameters}
             />
           </div>
         )}

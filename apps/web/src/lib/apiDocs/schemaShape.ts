@@ -33,15 +33,16 @@ export interface SchemaRow {
   nested: NestedShape;
 }
 
-/** Human-readable type label, e.g. `string`, `array of object`, `integer`. */
+/** Human-readable type label, e.g. `string`, `array`, `integer`. */
 export function describeType(
   schema: OpenAPIV3.SchemaObject | undefined,
 ): string {
   if (!schema) return 'unknown';
   if (schema.enum) return 'enum';
   if (schema.type === 'array') {
-    const items = schema.items as OpenAPIV3.SchemaObject | undefined;
-    return `array of ${describeType(items)}`;
+    // Arrays render as a bare "array" – the item shape is conveyed by the
+    // nested item table (see `describeNested`), not this compact type label.
+    return 'array';
   }
   if (Array.isArray(schema.type)) return schema.type.join(' | ');
   return schema.type ?? 'object';

@@ -142,6 +142,130 @@ describe('EndpointDetail', () => {
     ).toBeInTheDocument();
   });
 
+  it('renders a single "Query Parameters" table with no In column for a query-only endpoint', () => {
+    renderDetail(
+      makeEndpoint({
+        parameters: [
+          { name: 'search', location: 'query', required: false },
+          { name: 'limit', location: 'query', required: true },
+        ],
+      }),
+    );
+
+    const queryTable = screen.getByRole('table', { name: 'Query Parameters' });
+    expect(
+      screen.queryByRole('table', { name: 'Path Parameters' }),
+    ).not.toBeInTheDocument();
+
+    // The In column is gone: only four headers remain, the caption carries the
+    // location instead of a per-row cell.
+    const headers = within(queryTable).getAllByRole('columnheader');
+    expect(headers.map((header) => header.textContent)).toEqual([
+      'Parameter',
+      'Type',
+      'Required',
+      'Description',
+    ]);
+    expect(within(queryTable).queryByText('query')).not.toBeInTheDocument();
+  });
+
+  it('renders a single "Path Parameters" table for a path-only endpoint', () => {
+    renderDetail(
+      makeEndpoint({
+        path: '/links/{id}',
+        parameters: [{ name: 'id', location: 'path', required: true }],
+      }),
+    );
+
+    expect(
+      screen.getByRole('table', { name: 'Path Parameters' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('table', { name: 'Query Parameters' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('splits a mixed endpoint into two sibling tables, Query before Path, each single-location', () => {
+    renderDetail(
+      makeEndpoint({
+        path: '/links/{id}',
+        parameters: [
+          { name: 'id', location: 'path', required: true },
+          { name: 'expand', location: 'query', required: false },
+        ],
+      }),
+    );
+
+    const queryTable = screen.getByRole('table', { name: 'Query Parameters' });
+    const pathTable = screen.getByRole('table', { name: 'Path Parameters' });
+
+    // Query renders BEFORE Path in DOM order.
+    expect(
+      queryTable.compareDocumentPosition(pathTable) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    // Each table holds ONLY its own location's parameter (single-location).
+    expect(
+      within(queryTable).getByRole('rowheader', { name: 'expand' }),
+    ).toBeInTheDocument();
+    expect(
+      within(queryTable).queryByRole('rowheader', { name: 'id' }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(pathTable).getByRole('rowheader', { name: 'id' }),
+    ).toBeInTheDocument();
+    expect(
+      within(pathTable).queryByRole('rowheader', { name: 'expand' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders no parameter table at all when the endpoint has no parameters', () => {
+    renderDetail(makeEndpoint({ parameters: [] }));
+    expect(
+      screen.queryByRole('table', { name: /parameters/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("omits the empty group's table: an all-query endpoint yields exactly one table", () => {
+    // Every parameter is query, so the Path group is empty and its table must
+    // be absent – never a captioned "Path Parameters" table with no rows.
+    renderDetail(
+      makeEndpoint({
+        parameters: [{ name: 'search', location: 'query', required: false }],
+      }),
+    );
+    const parameterTables = screen
+      .getAllByRole('table')
+      .filter((table) => /parameters/i.test(table.textContent ?? ''));
+    expect(parameterTables).toHaveLength(1);
+    expect(parameterTables[0]).toHaveAccessibleName('Query Parameters');
+  });
+
+  it('renders required-ness as Yes / No in the parameter table', () => {
+    renderDetail(
+      makeEndpoint({
+        parameters: [
+          { name: 'search', location: 'query', required: false },
+          { name: 'limit', location: 'query', required: true },
+        ],
+      }),
+    );
+
+    const requiredRow = screen
+      .getByRole('rowheader', { name: 'limit' })
+      .closest('tr');
+    expect(
+      within(requiredRow as HTMLElement).getByText('Yes'),
+    ).toBeInTheDocument();
+    const optionalRow = screen
+      .getByRole('rowheader', { name: 'search' })
+      .closest('tr');
+    expect(
+      within(optionalRow as HTMLElement).getByText('No'),
+    ).toBeInTheDocument();
+  });
+
   it('is always present: a param-less, body-less, response-less endpoint still yields a non-empty tablist and a reachable cURL Copy button', () => {
     // The empty-tablist regression guard: Request is the anchor, so even the
     // most minimal endpoint keeps one focusable tab and its cURL content.

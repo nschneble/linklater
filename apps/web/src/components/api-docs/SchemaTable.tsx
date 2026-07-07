@@ -8,11 +8,11 @@ import type { OpenAPIV3 } from 'openapi-types';
  * region (e.g. "Request body", "200 response body"; CONSTRAINT T2), column
  * headers as <th scope="col">, and each property name as <th scope="row">.
  *
- * Required-ness is conveyed by TEXT ("Required" / "Optional"), never color or
- * an icon alone (CONSTRAINT T3). A nested object or array-of-object renders as
- * a child table one level deep with its own caption (CONSTRAINT T4); anything
- * deeper shows a text note. An empty schema renders a text fallback rather
- * than an empty table (CONSTRAINT T5).
+ * Required-ness is conveyed by TEXT ("Yes" / "No") in the "Required" column,
+ * never color or an icon alone (CONSTRAINT T3). A nested object or
+ * array-of-object renders as a child table one level deep with its own caption
+ * (CONSTRAINT T4); anything deeper shows a text note. An empty schema renders a
+ * text fallback rather than an empty table (CONSTRAINT T5).
  *
  * Reads with horizontal rules only (no per-cell box grid) plus a text
  * hierarchy: column headers and each property NAME (the row header) use the
@@ -99,7 +99,7 @@ function SchemaRowCells({ row, depth }: SchemaRowCellsProps) {
           {row.name}
         </th>
         <td className={`${DATA_CELL} font-mono`}>{row.typeLabel}</td>
-        <td className={DATA_CELL}>{row.required ? 'Required' : 'Optional'}</td>
+        <td className={DATA_CELL}>{row.required ? 'Yes' : 'No'}</td>
         <td className={DATA_CELL}>{row.description ?? ''}</td>
       </tr>
       {row.nested && row.nested.kind === 'note' && (
