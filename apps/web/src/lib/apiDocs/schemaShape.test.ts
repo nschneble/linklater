@@ -107,7 +107,27 @@ describe('toSchemaRows', () => {
     });
   });
 
-  it('caps nesting at one level – deeper objects become a note (T4)', () => {
+  it('still expands a nested object at depth 1 (the array-wrapped item level)', () => {
+    const schema: OpenAPIV3.SchemaObject = {
+      type: 'object',
+      properties: {
+        metadata: {
+          type: 'object',
+          properties: { source: { type: 'string' } },
+        },
+      },
+    };
+
+    // Depth 1 is where an array-of-object item table renders (e.g. paginated
+    // `data[]`); its own object props must still expand, not collapse to a note.
+    const [row] = toSchemaRows(schema, 1);
+    expect(row.nested).toMatchObject({
+      kind: 'object',
+      label: 'metadata properties',
+    });
+  });
+
+  it('caps nesting at two levels – deeper objects become a note (T4)', () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: 'object',
       properties: {
@@ -115,12 +135,12 @@ describe('toSchemaRows', () => {
       },
     };
 
-    // At depth 1, an expandable object resolves to a note rather than a table.
-    const [row] = toSchemaRows(schema, 1);
+    // At depth 2, an expandable object resolves to a note rather than a table.
+    const [row] = toSchemaRows(schema, 2);
     expect(row.nested).toEqual({ kind: 'note' });
   });
 
-  it('caps an array-of-object at one level – deeper becomes a note (T4)', () => {
+  it('caps an array-of-object at two levels – deeper becomes a note (T4)', () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: 'object',
       properties: {
@@ -131,9 +151,9 @@ describe('toSchemaRows', () => {
       },
     };
 
-    // At depth 1, an expandable array-of-object also collapses to a note
-    // rather than recursing into a second nested table.
-    const [row] = toSchemaRows(schema, 1);
+    // At depth 2, an expandable array-of-object also collapses to a note
+    // rather than recursing into a third nested table.
+    const [row] = toSchemaRows(schema, 2);
     expect(row.nested).toEqual({ kind: 'note' });
   });
 
