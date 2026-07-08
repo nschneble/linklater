@@ -32,15 +32,8 @@ export class MetaResponseDto {
   siteName: string | null;
 
   @ApiProperty({
-    example: 'opengraph',
-    description: 'Where the metadata was sourced from.',
-    nullable: true,
-  })
-  source: string | null;
-
-  @ApiProperty({
     example: '2026-05-27T12:00:00.000Z',
-    description: 'When the metadata fetch completed. Null until the job runs.',
+    description: "When this metadata was fetched. Null until it's not.",
     nullable: true,
   })
   fetchedAt: string | null;
@@ -63,7 +56,7 @@ export class LinkResponseDto {
   @ApiPropertyOptional({
     type: () => MetaResponseDto,
     nullable: true,
-    description: 'Extracted metadata. Null until the fetch worker completes.',
+    description: "Link metadata. Null if the metadata hasn't been fetched.",
   })
   meta: MetaResponseDto | null;
 
@@ -75,8 +68,7 @@ export class LinkResponseDto {
 
   @ApiProperty({
     example: null,
-    description:
-      'Timestamp the link was marked read. Null while the link is unread.',
+    description: 'Timestamp for when the link was read. Null if unread.',
     nullable: true,
   })
   readAt: string | null;

@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
+import { META_INCLUDE } from './links.include.js';
 import { PrismaService, Prisma } from '../prisma/index.js';
 import { QueueService, QUEUES } from '../queue/index.js';
 
@@ -38,7 +39,7 @@ export class LinksService {
   async create(userId: string, input: CreateLinkInput) {
     const existing = await this.prisma.link.findFirst({
       where: { userId, url: input.url },
-      include: { meta: true },
+      include: META_INCLUDE,
     });
 
     if (existing) {
@@ -64,7 +65,7 @@ export class LinksService {
       link = await this.prisma.link.create({
         data: { userId, url: input.url },
         omit: { userId: true },
-        include: { meta: true },
+        include: META_INCLUDE,
       });
     } catch (error) {
       // Concurrent POST /links for the same URL: a parallel request won
@@ -76,7 +77,7 @@ export class LinksService {
       ) {
         const racedExisting = await this.prisma.link.findFirst({
           where: { userId, url: input.url },
-          include: { meta: true },
+          include: META_INCLUDE,
         });
         if (racedExisting) {
           return this.resurfaceLink(racedExisting.id);
@@ -111,7 +112,7 @@ export class LinksService {
       where: { id },
       data: { readAt: null, createdAt: new Date() },
       omit: { userId: true },
-      include: { meta: true },
+      include: META_INCLUDE,
     });
   }
 
@@ -150,7 +151,7 @@ export class LinksService {
         where: { id, userId },
         data: { readAt: new Date() },
         omit: { userId: true },
-        include: { meta: true },
+        include: META_INCLUDE,
       });
     } catch (error) {
       return this.mapP2025ToNotFound(error);
@@ -171,7 +172,7 @@ export class LinksService {
         where: { id, userId },
         data: { readAt: null },
         omit: { userId: true },
-        include: { meta: true },
+        include: META_INCLUDE,
       });
     } catch (error) {
       return this.mapP2025ToNotFound(error);

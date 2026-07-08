@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
+import { META_INCLUDE } from './links.include.js';
 import { PrismaService, Prisma } from '../prisma/index.js';
 
 /** Maximum results per page regardless of what the caller requests. */
@@ -73,7 +74,7 @@ export class LinksQueryService {
         take: safeLimit,
         skip: (safePage - 1) * safeLimit,
         omit: { userId: true },
-        include: { meta: true },
+        include: META_INCLUDE,
       }),
       this.prisma.link.count({ where }),
     ]);
@@ -159,7 +160,7 @@ export class LinksQueryService {
     const links = await this.prisma.link.findMany({
       where: { id: { in: ids } },
       omit: { userId: true },
-      include: { meta: true },
+      include: META_INCLUDE,
     });
 
     const orderMap = new Map(ids.map((id, index) => [id, index]));
@@ -180,7 +181,7 @@ export class LinksQueryService {
     const link = await this.prisma.link.findFirst({
       where: { id, userId },
       omit: { userId: true },
-      include: { meta: true },
+      include: META_INCLUDE,
     });
 
     if (!link) throw new NotFoundException('Link not found');
@@ -240,7 +241,6 @@ export class LinksQueryService {
         meta_faviconUrl: string | null;
         meta_imageUrl: string | null;
         meta_siteName: string | null;
-        meta_source: string | null;
         meta_title: string | null;
         meta_createdAt: Date | null;
         meta_updatedAt: Date | null;
@@ -259,7 +259,6 @@ export class LinksQueryService {
         m."faviconUrl" AS "meta_faviconUrl",
         m."imageUrl"   AS "meta_imageUrl",
         m."siteName"   AS "meta_siteName",
-        m.source      AS meta_source,
         m.title       AS meta_title,
         m."createdAt" AS "meta_createdAt",
         m."updatedAt" AS "meta_updatedAt",
@@ -283,7 +282,6 @@ export class LinksQueryService {
             faviconUrl: row.meta_faviconUrl,
             imageUrl: row.meta_imageUrl,
             siteName: row.meta_siteName,
-            source: row.meta_source,
             title: row.meta_title,
             createdAt: row.meta_createdAt!,
             updatedAt: row.meta_updatedAt!,
