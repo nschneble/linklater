@@ -72,6 +72,7 @@ export class LinksQueryService {
         orderBy: { createdAt: 'desc' },
         take: safeLimit,
         skip: (safePage - 1) * safeLimit,
+        omit: { userId: true },
         include: { meta: true },
       }),
       this.prisma.link.count({ where }),
@@ -157,6 +158,7 @@ export class LinksQueryService {
     // we re-sort by the rank order captured in the raw query above.
     const links = await this.prisma.link.findMany({
       where: { id: { in: ids } },
+      omit: { userId: true },
       include: { meta: true },
     });
 
@@ -177,6 +179,7 @@ export class LinksQueryService {
   async findOne(userId: string, id: string) {
     const link = await this.prisma.link.findFirst({
       where: { id, userId },
+      omit: { userId: true },
       include: { meta: true },
     });
 
@@ -228,7 +231,6 @@ export class LinksQueryService {
       {
         id: string;
         url: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
         readAt: Date | null;
@@ -248,7 +250,6 @@ export class LinksQueryService {
       SELECT
         l.id,
         l.url,
-        l."userId",
         l."createdAt",
         l."updatedAt",
         l."readAt",
@@ -293,7 +294,6 @@ export class LinksQueryService {
     return {
       id: row.id,
       url: row.url,
-      userId: row.userId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       readAt: row.readAt,

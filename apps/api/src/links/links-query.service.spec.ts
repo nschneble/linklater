@@ -296,7 +296,6 @@ describe('LinksQueryService', () => {
     const makeRawRow = (overrides = {}) => ({
       id: LINK_ID,
       url: LINK_URL,
-      userId: USER_ID,
       createdAt: new Date(),
       updatedAt: new Date(),
       readAt: null,

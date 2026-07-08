@@ -63,6 +63,7 @@ export class LinksService {
     try {
       link = await this.prisma.link.create({
         data: { userId, url: input.url },
+        omit: { userId: true },
         include: { meta: true },
       });
     } catch (error) {
@@ -109,6 +110,7 @@ export class LinksService {
     return this.prisma.link.update({
       where: { id },
       data: { readAt: null, createdAt: new Date() },
+      omit: { userId: true },
       include: { meta: true },
     });
   }
@@ -147,6 +149,7 @@ export class LinksService {
       return await this.prisma.link.update({
         where: { id, userId },
         data: { readAt: new Date() },
+        omit: { userId: true },
         include: { meta: true },
       });
     } catch (error) {
@@ -167,6 +170,7 @@ export class LinksService {
       return await this.prisma.link.update({
         where: { id, userId },
         data: { readAt: null },
+        omit: { userId: true },
         include: { meta: true },
       });
     } catch (error) {

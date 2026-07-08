@@ -3,8 +3,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 /**
  * Metadata extracted from the link's destination URL (Open Graph tags,
  * title, favicon, image). Populated asynchronously by the metadata-fetch
- * worker, so any field except `id` and `linkId` may be `null` until the
- * fetch completes.
+ * worker, so any field except `id`, `linkId`, `createdAt`, and `updatedAt`
+ * may be `null` until the fetch completes.
  */
 export class MetaResponseDto {
   @ApiProperty({ example: 'clz1abc123' })
@@ -13,32 +13,35 @@ export class MetaResponseDto {
   @ApiProperty({ example: 'clz1xyz456' })
   linkId: string;
 
-  @ApiPropertyOptional({ example: 'Example Domain' })
+  @ApiProperty({ example: 'Example Domain', nullable: true })
   title: string | null;
 
-  @ApiPropertyOptional({
-    example: 'This domain is for use in illustrative examples in documents.',
+  @ApiProperty({
+    example: 'This domain is for use in illustrative examples.',
+    nullable: true,
   })
   description: string | null;
 
-  @ApiPropertyOptional({ example: 'https://example.com/og-image.png' })
+  @ApiProperty({ example: 'https://example.com/og-image.png', nullable: true })
   imageUrl: string | null;
 
-  @ApiPropertyOptional({ example: 'https://example.com/favicon.ico' })
+  @ApiProperty({ example: 'https://example.com/favicon.ico', nullable: true })
   faviconUrl: string | null;
 
-  @ApiPropertyOptional({ example: 'Example' })
+  @ApiProperty({ example: 'Example', nullable: true })
   siteName: string | null;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: 'opengraph',
     description: 'Where the metadata was sourced from.',
+    nullable: true,
   })
   source: string | null;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: '2026-05-27T12:00:00.000Z',
     description: 'When the metadata fetch completed. Null until the job runs.',
+    nullable: true,
   })
   fetchedAt: string | null;
 
@@ -70,10 +73,11 @@ export class LinkResponseDto {
   @ApiProperty({ example: '2026-05-27T12:00:00.000Z' })
   updatedAt: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: null,
     description:
       'Timestamp the link was marked read. Null while the link is unread.',
+    nullable: true,
   })
   readAt: string | null;
 }

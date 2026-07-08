@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * Response shape for POST /links/stumble. `url` is the destination of the
@@ -6,10 +6,11 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
  * unread list is empty the response is `{ url: null }` rather than a 404.
  */
 export class StumbleResponseDto {
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: 'https://example.com/great-article',
     description:
       'The URL of the stumbled link. Null when there are no unread links.',
+    nullable: true,
   })
   url: string | null;
 }
