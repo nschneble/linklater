@@ -1,6 +1,7 @@
 {
   "brands": ["apple", "google", "stumbleupon"],
   "solid": [
+    "angle-right",
     "arrow-left",
     "arrow-right",
     "arrow-rotate-right",
