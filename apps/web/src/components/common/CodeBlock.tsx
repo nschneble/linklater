@@ -51,7 +51,7 @@ export default function CodeBlock({ label, code, labelId }: CodeBlockProps) {
         // heuristic can't see this is a legitimately focusable scroll region.
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
-        className={`max-h-80 overflow-auto px-3 py-2.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs leading-relaxed select-text ${FOCUS_RING} rounded-lg`}
+        className={`overflow-x-auto px-3 py-2.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs leading-relaxed select-text ${FOCUS_RING} rounded-lg`}
       >
         <code>{code}</code>
       </pre>
