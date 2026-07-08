@@ -65,7 +65,7 @@ export default function SchemaRowCells({
       {nestedSchema && (
         <tr id={panelId} hidden={!isExpanded}>
           <td className={`${DATA_CELL} pl-3`}>
-            <div className="pl-3 border-l-2 border-[var(--mount-border)]">
+            <div className="pl-6 border-l-1 border-[var(--mount-border)]">
               <SchemaTable schema={nestedSchema} depth={depth + 1} />
             </div>
           </td>

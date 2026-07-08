@@ -23,16 +23,16 @@ export default function SchemaDisclosureToggle({
   return (
     <button
       type="button"
-      className={`group ${FOCUS_RING} rounded cursor-pointer`}
+      className={`group -ml-6 ${FOCUS_RING} cursor-pointer`}
       aria-expanded={isExpanded}
       aria-controls={panelId}
       onClick={onToggle}
     >
-      {name}
       <i
+        className="fa-solid fa-angle-right mr-1.5 group-aria-expanded:rotate-90 motion-safe:transition-transform"
         aria-hidden="true"
-        className="fa-solid fa-chevron-down ml-1.5 group-aria-expanded:-rotate-180 motion-safe:transition-transform"
       />
+      {name}
     </button>
   );
 }

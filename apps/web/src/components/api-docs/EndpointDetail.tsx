@@ -161,7 +161,7 @@ export default function EndpointDetail({
               {accessibleMethod} {endpoint.path}
             </span>
             <span aria-hidden="true" className="break-all">
-              {endpoint.path}
+              {endpoint.path.substring(1)}
             </span>
           </h3>
         </div>
@@ -209,25 +209,25 @@ export default function EndpointDetail({
         hasFocusableContent
       >
         {queryParameters.length > 0 && (
-          <div className="mb-4 last:mb-0">
+          <div className="mb-6 last:mb-0">
             <ParameterTable
-              caption="Query Parameters"
+              caption="Query parameters"
               parameters={queryParameters}
             />
           </div>
         )}
 
         {pathParameters.length > 0 && (
-          <div className="mb-4 last:mb-0">
+          <div className="mb-6 last:mb-0">
             <ParameterTable
-              caption="Path Parameters"
+              caption="Path parameters"
               parameters={pathParameters}
             />
           </div>
         )}
 
         {endpoint.requestBody && (
-          <div className="mb-4 last:mb-0">
+          <div className="mb-6 last:mb-0">
             <SchemaTable
               caption="Request body"
               schema={endpoint.requestBody.schema}
@@ -236,7 +236,7 @@ export default function EndpointDetail({
         )}
 
         {exampleBody !== null && (
-          <div className="mb-4 last:mb-0">
+          <div className="mb-6 last:mb-0">
             <CodeBlock
               label="Example request body"
               code={exampleBody}

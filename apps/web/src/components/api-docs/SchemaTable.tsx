@@ -32,7 +32,7 @@ export default function SchemaTable({
   const expandSingleTopLevel = depth === 0 && rows.length === 1;
 
   return (
-    <table className="w-full border-collapse text-left">
+    <table className="w-full text-left">
       {caption && (
         <caption className="pb-2 text-[var(--mount-text)] text-sm font-semibold text-left">
           {caption}
