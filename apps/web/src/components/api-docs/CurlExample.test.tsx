@@ -76,12 +76,12 @@ describe('CurlExample', () => {
     // The <pre> matches the shared CodeBlock scroll contract: role=group,
     // tabIndex 0, and an accessible name sourced from the visible label (via
     // aria-labelledby to the label's id), never a hidden aria-label.
-    const group = screen.getByRole('group', { name: 'Example request (cURL)' });
+    const group = screen.getByRole('group', { name: 'Example request' });
     expect(group.tagName).toBe('PRE');
     expect(group).toHaveAttribute('tabindex', '0');
     expect(group).toHaveAttribute('aria-labelledby', props.labelId);
     expect(document.getElementById(props.labelId)).toHaveTextContent(
-      'Example request (cURL)',
+      'Example request',
     );
   });
 

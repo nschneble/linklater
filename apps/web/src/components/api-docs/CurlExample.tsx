@@ -92,15 +92,8 @@ export default function CurlExample({
           id={labelId}
           className="text-[var(--mount-text)] text-sm font-semibold"
         >
-          Example request (cURL)
+          Example request
         </p>
-        <CopyButton
-          copied={copied}
-          onCopy={handleCopy}
-          label="Copy cURL command"
-        >
-          Copy
-        </CopyButton>
       </div>
       <pre
         role="group"
@@ -114,6 +107,15 @@ export default function CurlExample({
       >
         {command}
       </pre>
+      <div className="mt-3">
+        <CopyButton
+          copied={copied}
+          onCopy={handleCopy}
+          label="Copy cURL command"
+        >
+          Copy to Clipboard
+        </CopyButton>
+      </div>
       <p role="status" aria-live="polite" className="sr-only">
         {status}
       </p>

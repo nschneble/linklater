@@ -297,7 +297,7 @@ describe('EndpointDetail', () => {
     expect(requestPanel).toHaveAttribute('id', `${root}-panel-request`);
     expect(
       within(requestPanel).getByRole('group', {
-        name: 'Example request (cURL)',
+        name: 'Example request',
       }),
     ).toBeInTheDocument();
     expect(
@@ -323,7 +323,7 @@ describe('EndpointDetail', () => {
     );
 
     const curlBlock = within(requestPanel).getByRole('group', {
-      name: 'Example request (cURL)',
+      name: 'Example request',
     });
     expect(curlBlock).toHaveAttribute(
       'aria-labelledby',
@@ -383,7 +383,7 @@ describe('EndpointDetail', () => {
     // not torn down – hidden:true reaches into the collapsed subtree.
     expect(
       within(requestPanel as HTMLElement).getByRole('group', {
-        name: 'Example request (cURL)',
+        name: 'Example request',
         hidden: true,
       }),
     ).toBeInTheDocument();
@@ -417,7 +417,7 @@ describe('EndpointDetail', () => {
     expect(requestPanel).not.toHaveAttribute('hidden');
     expect(
       within(requestPanel).getByRole('group', {
-        name: 'Example request (cURL)',
+        name: 'Example request',
       }),
     ).toBeInTheDocument();
   });
@@ -605,7 +605,7 @@ describe('EndpointDetail', () => {
     expect(requestPanel).not.toHaveAttribute('hidden');
     expect(
       within(requestPanel).getByRole('group', {
-        name: 'Example request (cURL)',
+        name: 'Example request',
       }),
     ).toBeInTheDocument();
   });
