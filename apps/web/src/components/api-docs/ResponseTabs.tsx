@@ -101,8 +101,18 @@ export default function ResponseTabs({ endpoint }: ResponseTabsProps) {
   // expandable rows, this predicate must widen to include them.
   const hasFocusableContent = selectedResponse.schema !== undefined;
 
+  const REASON_PHRASES: Record<string, string> = {
+    '200': 'OK',
+    '400': 'Bad Request',
+    '401': 'Unauthorized',
+    '404': 'Not Found',
+  };
+
   return (
-    <div className="mb-4 last:mb-0">
+    <div className="mb-6 last:mb-0">
+      <caption className="pb-2 text-[var(--mount-text)] text-sm font-semibold text-left text-nowrap">
+        HTTP statuses
+      </caption>
       <div
         ref={tablistReference}
         role="tablist"
@@ -123,16 +133,20 @@ export default function ResponseTabs({ endpoint }: ResponseTabsProps) {
               aria-controls={panelId}
               tabIndex={isSelected ? 0 : -1}
               onClick={() => setSelectedIndex(index)}
-              className={`min-h-10 px-3 py-1.5 bg-transparent aria-selected:bg-[var(--orbit-bg)] border border-transparent aria-selected:border-[var(--orbit-border)] text-[var(--base-alt-text)] aria-selected:text-[var(--orbit-text)] text-sm font-medium aria-selected:font-semibold ${FOCUS_RING} rounded-lg motion-safe:[transition:background-color_150ms,color_150ms] cursor-pointer`}
+              className={`min-h-10 px-3 py-1.5 bg-transparent aria-selected:bg-[var(--orbit-bg)] border border-transparent aria-selected:border-[var(--orbit-border)] text-[var(--base-alt-text)] hover:text-[var(--orbit-text)] aria-selected:text-[var(--orbit-text)] text-sm font-medium aria-selected:font-semibold ${FOCUS_RING} rounded-lg motion-safe:[transition:background-color_150ms,color_150ms] cursor-pointer`}
             >
               <span className="sr-only">{responseTabLabel(response)}</span>
               <span aria-hidden="true" className="font-mono">
-                {response.statusCode}
+                {response.statusCode} {REASON_PHRASES[response.statusCode]}
               </span>
             </button>
           );
         })}
       </div>
+
+      <p className="my-6 text-[var(--mount-alt-text)] text-sm">
+        {selectedResponse.description}
+      </p>
 
       <div
         role="tabpanel"
@@ -147,7 +161,7 @@ export default function ResponseTabs({ endpoint }: ResponseTabsProps) {
         {hasFocusableContent ? (
           <>
             <SchemaTable
-              caption={`${selectedResponse.statusCode} response body`}
+              caption="Response body"
               schema={selectedResponse.schema}
             />
             <div className="mt-4">
@@ -163,12 +177,10 @@ export default function ResponseTabs({ endpoint }: ResponseTabsProps) {
             </div>
           </>
         ) : (
-          <p className="text-[var(--mount-text)] text-sm">
-            <span className="font-semibold">
-              {selectedResponse.statusCode} response body:
-            </span>{' '}
-            No response body.
-          </p>
+          <div className="text-[var(--mount-text)] text-sm">
+            <p className="pb-2 font-semibold">Response body</p>
+            <p className="px-3 py-2.5 italic">None</p>
+          </div>
         )}
       </div>
     </div>
