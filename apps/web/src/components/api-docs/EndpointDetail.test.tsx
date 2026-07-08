@@ -142,7 +142,7 @@ describe('EndpointDetail', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders a single "Query Parameters" table with no In column for a query-only endpoint', () => {
+  it('renders a single "Query parameters" table with no column-header row for a query-only endpoint', () => {
     renderDetail(
       makeEndpoint({
         parameters: [
@@ -152,24 +152,24 @@ describe('EndpointDetail', () => {
       }),
     );
 
-    const queryTable = screen.getByRole('table', { name: 'Query Parameters' });
+    const queryTable = screen.getByRole('table', { name: 'Query parameters' });
     expect(
-      screen.queryByRole('table', { name: 'Path Parameters' }),
+      screen.queryByRole('table', { name: 'Path parameters' }),
     ).not.toBeInTheDocument();
 
-    // The In column is gone: only four headers remain, the caption carries the
-    // location instead of a per-row cell.
-    const headers = within(queryTable).getAllByRole('columnheader');
-    expect(headers.map((header) => header.textContent)).toEqual([
-      'Parameter',
-      'Type',
-      'Required',
-      'Description',
-    ]);
+    // The column-header row is gone: each parameter is a lone scope=row header,
+    // and the caption carries the location instead of a per-row "In" cell.
+    expect(within(queryTable).queryAllByRole('columnheader')).toHaveLength(0);
+    expect(
+      within(queryTable).getByRole('rowheader', { name: /^search\?:/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(queryTable).getByRole('rowheader', { name: /^limit:/ }),
+    ).toBeInTheDocument();
     expect(within(queryTable).queryByText('query')).not.toBeInTheDocument();
   });
 
-  it('renders a single "Path Parameters" table for a path-only endpoint', () => {
+  it('renders a single "Path parameters" table for a path-only endpoint', () => {
     renderDetail(
       makeEndpoint({
         path: '/links/{id}',
@@ -178,10 +178,10 @@ describe('EndpointDetail', () => {
     );
 
     expect(
-      screen.getByRole('table', { name: 'Path Parameters' }),
+      screen.getByRole('table', { name: 'Path parameters' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('table', { name: 'Query Parameters' }),
+      screen.queryByRole('table', { name: 'Query parameters' }),
     ).not.toBeInTheDocument();
   });
 
@@ -196,8 +196,8 @@ describe('EndpointDetail', () => {
       }),
     );
 
-    const queryTable = screen.getByRole('table', { name: 'Query Parameters' });
-    const pathTable = screen.getByRole('table', { name: 'Path Parameters' });
+    const queryTable = screen.getByRole('table', { name: 'Query parameters' });
+    const pathTable = screen.getByRole('table', { name: 'Path parameters' });
 
     // Query renders BEFORE Path in DOM order.
     expect(
@@ -205,18 +205,19 @@ describe('EndpointDetail', () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
 
-    // Each table holds ONLY its own location's parameter (single-location).
+    // Each table holds ONLY its own location's parameter (single-location). The
+    // rowheader name inlines the type, so match on the name prefix.
     expect(
-      within(queryTable).getByRole('rowheader', { name: 'expand' }),
+      within(queryTable).getByRole('rowheader', { name: /^expand\?:/ }),
     ).toBeInTheDocument();
     expect(
-      within(queryTable).queryByRole('rowheader', { name: 'id' }),
+      within(queryTable).queryByRole('rowheader', { name: /^id:/ }),
     ).not.toBeInTheDocument();
     expect(
-      within(pathTable).getByRole('rowheader', { name: 'id' }),
+      within(pathTable).getByRole('rowheader', { name: /^id:/ }),
     ).toBeInTheDocument();
     expect(
-      within(pathTable).queryByRole('rowheader', { name: 'expand' }),
+      within(pathTable).queryByRole('rowheader', { name: /^expand/ }),
     ).not.toBeInTheDocument();
   });
 
@@ -229,7 +230,7 @@ describe('EndpointDetail', () => {
 
   it("omits the empty group's table: an all-query endpoint yields exactly one table", () => {
     // Every parameter is query, so the Path group is empty and its table must
-    // be absent – never a captioned "Path Parameters" table with no rows.
+    // be absent – never a captioned "Path parameters" table with no rows.
     renderDetail(
       makeEndpoint({
         parameters: [{ name: 'search', location: 'query', required: false }],
@@ -239,10 +240,10 @@ describe('EndpointDetail', () => {
       .getAllByRole('table')
       .filter((table) => /parameters/i.test(table.textContent ?? ''));
     expect(parameterTables).toHaveLength(1);
-    expect(parameterTables[0]).toHaveAccessibleName('Query Parameters');
+    expect(parameterTables[0]).toHaveAccessibleName('Query parameters');
   });
 
-  it('renders required-ness as Yes / No in the parameter table', () => {
+  it('marks the required parameter without a ? and the optional one with a ?', () => {
     renderDetail(
       makeEndpoint({
         parameters: [
@@ -252,17 +253,16 @@ describe('EndpointDetail', () => {
       }),
     );
 
-    const requiredRow = screen
-      .getByRole('rowheader', { name: 'limit' })
-      .closest('tr');
+    // Required-ness rides on the parameter name: required is bare, optional
+    // gains a trailing "?" (parity with the schema tables).
     expect(
-      within(requiredRow as HTMLElement).getByText('Yes'),
+      screen.getByRole('rowheader', { name: /^limit:/ }),
     ).toBeInTheDocument();
-    const optionalRow = screen
-      .getByRole('rowheader', { name: 'search' })
-      .closest('tr');
     expect(
-      within(optionalRow as HTMLElement).getByText('No'),
+      screen.queryByRole('rowheader', { name: /^limit\?/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('rowheader', { name: /^search\?:/ }),
     ).toBeInTheDocument();
   });
 
@@ -389,7 +389,7 @@ describe('EndpointDetail', () => {
     ).toBeInTheDocument();
   });
 
-  it('auto-selects a 204-only endpoint\'s single response tab so its "No response body" fallback shows once Response is opened', async () => {
+  it('auto-selects a 204-only endpoint\'s single response tab so its "None" fallback shows once Response is opened', async () => {
     const user = userEvent.setup();
     renderDetail(makeEndpoint({ responses: [{ statusCode: '204' }] }));
     // Request is the default anchor, so open Response to reveal its sub-tablist.
@@ -398,7 +398,7 @@ describe('EndpointDetail', () => {
       'aria-selected',
       'true',
     );
-    expect(screen.getByText(/No response body\./i)).toBeInTheDocument();
+    expect(screen.getByText('None')).toBeInTheDocument();
   });
 
   it('drops the Response tab and keeps only the Request tab when there are no responses', () => {

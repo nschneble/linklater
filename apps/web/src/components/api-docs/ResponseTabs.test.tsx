@@ -62,9 +62,9 @@ describe('ResponseTabs', () => {
       screen.getByRole('tab', { name: '401 Unauthorized' }),
     ).toHaveAttribute('aria-selected', 'false');
     expect(
-      screen.getByRole('table', { name: /200 response body/i }),
+      screen.getByRole('table', { name: /response body/i }),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/No response body\./i)).not.toBeInTheDocument();
+    expect(screen.queryByText('None')).not.toBeInTheDocument();
   });
 
   it('auto-selects the single pill of a 204-only endpoint so the fallback shows', () => {
@@ -73,7 +73,7 @@ describe('ResponseTabs', () => {
         endpoint={makeEndpoint({ responses: [{ statusCode: '204' }] })}
       />,
     );
-    expect(screen.getByText(/No response body\./i)).toBeInTheDocument();
+    expect(screen.getByText('None')).toBeInTheDocument();
   });
 
   it('swaps the panel to the clicked response body or fallback', async () => {
@@ -83,9 +83,9 @@ describe('ResponseTabs', () => {
     expect(
       screen.getByRole('tab', { name: '401 Unauthorized' }),
     ).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText(/No response body\./i)).toBeInTheDocument();
+    expect(screen.getByText('None')).toBeInTheDocument();
     expect(
-      screen.queryByRole('table', { name: /200 response body/i }),
+      screen.queryByRole('table', { name: /response body/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -182,7 +182,7 @@ describe('ResponseTabs', () => {
     // Reading order: the response-body table precedes the example block.
     const panel = screen.getByRole('tabpanel');
     const table = within(panel).getByRole('table', {
-      name: /200 response body/i,
+      name: /response body/i,
     });
     expect(
       table.compareDocumentPosition(example) & Node.DOCUMENT_POSITION_FOLLOWING,
@@ -200,7 +200,7 @@ describe('ResponseTabs', () => {
     const tablist = screen.getByRole('tablist', { name: 'Responses' });
 
     // Forward: select the body-less 401 ⇒ no example block, and the read-only
-    // "No response body" fallback makes the panel itself the keyboard-reachable
+    // "None" fallback makes the panel itself the keyboard-reachable
     // focus stop (tabIndex=0 + the shared ring).
     await user.click(
       within(tablist).getByRole('tab', { name: '401 Unauthorized' }),
