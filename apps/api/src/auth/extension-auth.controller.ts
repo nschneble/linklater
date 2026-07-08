@@ -12,6 +12,7 @@ import {
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -36,6 +37,18 @@ export class ExtensionAuthController {
 
   @ApiOperation({ summary: 'Authorize a browser extension (PKCE flow)' })
   @ApiBearerAuth()
+  @ApiQuery({
+    name: 'code_challenge',
+    required: true,
+    description:
+      'PKCE code challenge: base64url-encoded SHA-256 of the verifier.',
+  })
+  @ApiQuery({
+    name: 'redirect_uri',
+    required: true,
+    description:
+      'Extension callback URL the auth code is appended to on redirect.',
+  })
   @ApiResponse({
     status: 302,
     description: 'Redirects to redirect_uri with auth code.',

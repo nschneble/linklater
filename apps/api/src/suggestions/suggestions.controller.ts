@@ -44,6 +44,7 @@ export class SuggestionsController {
   @ApiQuery({
     name: 'count',
     required: false,
+    type: Number,
     description: `Number of suggestions to return (default 3, range ${MIN_COUNT}-${MAX_COUNT}).`,
   })
   @ApiResponse({

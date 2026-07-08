@@ -88,29 +88,31 @@ export class LinksController {
     name: 'search',
     required: false,
     description:
-      'Full-text search over titles, descriptions, and URLs. Accent- and case-insensitive.',
+      'Diacritic and case-insensitive search over titles, descriptions, and URLs.',
   })
   @ApiQuery({
     name: 'read',
     required: false,
-    enum: ['true', 'false'],
     description:
-      'Restrict results to read (`true`) or unread (`false`) links. Omit for both.',
+      'Restrict results to read (true) or unread (false) links. Omit for both.',
+    type: Boolean,
   })
   @ApiQuery({
     name: 'page',
     required: false,
     description: 'Page number, starting at 1. Defaults to 1.',
+    type: Number,
   })
   @ApiQuery({
     name: 'limit',
     required: false,
     description: 'Results per page. Defaults to 10. Capped at 100.',
+    type: Number,
   })
   @ApiResponse({
     status: 200,
     description:
-      'One page of links plus the total count, current page, and page size. When `search` is supplied, results are ordered by relevance; otherwise newest first.',
+      'One page of links plus the total count, current page, and page size. When search is supplied, results are ordered by relevance; otherwise newest first.',
     type: PaginatedLinksResponseDto,
   })
   @ApiUnauthorized()
@@ -150,7 +152,7 @@ export class LinksController {
   @ApiQuery({
     name: 'read',
     required: false,
-    enum: ['true', 'false'],
+    type: Boolean,
     description:
       'Pick from read (`true`) or unread (`false`) links. Defaults to unread.',
   })
