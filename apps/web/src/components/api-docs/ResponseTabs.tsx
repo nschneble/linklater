@@ -110,9 +110,9 @@ export default function ResponseTabs({ endpoint }: ResponseTabsProps) {
 
   return (
     <div className="mb-6 last:mb-0">
-      <caption className="pb-2 text-[var(--mount-text)] text-sm font-semibold text-left text-nowrap">
+      <p className="pb-2 text-[var(--mount-text)] text-sm font-semibold text-left text-nowrap">
         HTTP statuses
-      </caption>
+      </p>
       <div
         ref={tablistReference}
         role="tablist"
