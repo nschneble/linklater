@@ -74,7 +74,7 @@
     - paragraph: Use personal access tokens (PATs) to connect Linklater with external tools and services.
     - heading "API Tokens" [level=3]
     - status: Your new token has been created. It'll only be shown once, so make sure you copy it down before navigating away from this page!
-    - code: ltk_3pUCtnjPNU2xcKiudlHY8cXiGAV1znP-
+    - code: ltk_7WPD3mMqF_XyAru80N7lt8ihtQVNJd5A
     - button "Copy to clipboard"
     - status
     - list:
@@ -86,9 +86,8 @@
           - time: a few seconds ago
         - button "Revoke ci-smoke-test": Revoke
         - paragraph: This token has never been used.
-    - link "View the API documentation in a new tab":
+    - link "View API docs":
       - /url: /docs
-      - text: View the API documentation
   - region "Danger zone":
     - heading "Danger zone" [level=2]
     - paragraph: Beware all ye who enter. Deleting your account will remove all your saved links. This cannot be undone.
