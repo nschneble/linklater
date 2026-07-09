@@ -18,7 +18,7 @@ interface BuildCurlCommandInput {
 }
 
 /** Placeholder the reader replaces with their own `ltk_` token. */
-const TOKEN_PLACEHOLDER = 'YOUR_BEARER_TOKEN';
+const TOKEN_PLACEHOLDER = 'YOUR_API_TOKEN';
 
 export function buildCurlCommand({
   method,
