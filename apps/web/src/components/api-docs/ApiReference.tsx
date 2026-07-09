@@ -8,7 +8,6 @@ import {
   useApiReferenceSelection,
   WELCOME_HEADING_ID,
 } from './useApiReferenceSelection';
-import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useState } from 'react';
 import type { NormalizedApi } from '../../lib/openapi';
 
@@ -35,7 +34,6 @@ type LoadState =
 
 export default function ApiReference({ apiBaseUrl }: ApiReferenceProps) {
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
-  const { user } = useAuth();
 
   useEffect(() => {
     let isActive = true;
@@ -60,7 +58,7 @@ export default function ApiReference({ apiBaseUrl }: ApiReferenceProps) {
         {describeLoadState(loadState)}
       </p>
       {loadState.status === 'ready' ? (
-        <Reference api={loadState.api} loggedIn={user !== null} />
+        <Reference api={loadState.api} />
       ) : (
         <p
           aria-hidden="true"
@@ -83,11 +81,10 @@ export default function ApiReference({ apiBaseUrl }: ApiReferenceProps) {
 
 interface ReferenceProps {
   api: NormalizedApi;
-  loggedIn: boolean;
 }
 
 /** The loaded master-detail layout (only mounted once the spec is ready). */
-function Reference({ api, loggedIn }: ReferenceProps) {
+function Reference({ api }: ReferenceProps) {
   const { selectedSlug, selectedEndpoint, selectEndpoint } =
     useApiReferenceSelection(api.endpoints);
 
@@ -143,7 +140,7 @@ function Reference({ api, loggedIn }: ReferenceProps) {
               serverOrigin={api.serverOrigin}
             />
           ) : (
-            <WelcomePanel serverOrigin={api.serverOrigin} loggedIn={loggedIn} />
+            <WelcomePanel serverOrigin={api.serverOrigin} />
           )}
         </div>
       </div>

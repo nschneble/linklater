@@ -11,10 +11,7 @@ import { WELCOME_HEADING_ID } from './useApiReferenceSelection';
  */
 
 interface WelcomePanelProps {
-  /** Origin requests target; empty string means same-origin as the app. */
   serverOrigin: string;
-  /** Whether a user is signed in – tailors the API-key guidance. */
-  loggedIn: boolean;
 }
 
 interface OverviewPoint {
@@ -23,16 +20,10 @@ interface OverviewPoint {
   detail: string;
 }
 
-export default function WelcomePanel({
-  serverOrigin,
-  loggedIn,
-}: WelcomePanelProps) {
+export default function WelcomePanel({ serverOrigin }: WelcomePanelProps) {
   const baseUrl =
     serverOrigin === '' ? `${window.location.origin}` : serverOrigin;
 
-  // Logged OUT, the page is plain public documentation: no personal token, just
-  // a reference note. Logged IN, the welcome panel explains how to drop the
-  // personal token into the copied cURL command's Authorization header.
   const points: OverviewPoint[] = [
     {
       icon: 'fa-link',
@@ -42,26 +33,13 @@ export default function WelcomePanel({
     {
       icon: 'fa-key',
       term: 'Authentication',
-      detail: loggedIn
-        ? 'Every request needs your personal token – drop your own key into the copied command, right after Authorization: Bearer ltk_…'
-        : 'A personal access token is required for every request.',
+      detail: 'A personal access token is required for every request.',
     },
-    ...(loggedIn
-      ? [
-          {
-            icon: 'fa-hand-pointer',
-            term: 'Example request',
-            detail:
-              'Pick an endpoint on the left to read its parameters and responses – each one comes with a ready-to-run cURL command you can copy and run in your terminal.',
-          },
-        ]
-      : [
-          {
-            icon: 'fa-book-open',
-            term: 'Reference',
-            detail: 'Each item describes its parameters and responses.',
-          },
-        ]),
+    {
+      icon: 'fa-book-open',
+      term: 'Reference',
+      detail: 'Each item describes its parameters and responses.',
+    },
   ];
 
   return (
