@@ -103,6 +103,7 @@ export default function ResponseTabs({ endpoint }: ResponseTabsProps) {
 
   const REASON_PHRASES: Record<string, string> = {
     '200': 'OK',
+    '201': 'Created',
     '400': 'Bad Request',
     '401': 'Unauthorized',
     '404': 'Not Found',

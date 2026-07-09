@@ -10,7 +10,7 @@ export class RandomLinkResponseDto {
   @ApiPropertyOptional({
     type: () => LinkResponseDto,
     nullable: true,
-    description: 'A randomly chosen link, or null when the filter is empty.',
+    description: 'A randomly chosen link, or null.',
   })
   link: LinkResponseDto | null;
 }

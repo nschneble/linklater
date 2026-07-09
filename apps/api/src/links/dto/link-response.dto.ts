@@ -13,22 +13,28 @@ export class MetaResponseDto {
   @ApiProperty({ example: 'clz1xyz456' })
   linkId: string;
 
-  @ApiProperty({ example: 'Example Domain', nullable: true })
+  @ApiProperty({ example: 'Programming Sucks', nullable: true })
   title: string | null;
 
   @ApiProperty({
-    example: 'This domain is for use in illustrative examples.',
+    example: 'All programming teams are constructed by and of crazy people.',
     nullable: true,
   })
   description: string | null;
 
-  @ApiProperty({ example: 'https://example.com/og-image.png', nullable: true })
+  @ApiProperty({
+    example: 'https://www.stilldrinking.org/blog_images/programming-sucks.jpg',
+    nullable: true,
+  })
   imageUrl: string | null;
 
-  @ApiProperty({ example: 'https://example.com/favicon.ico', nullable: true })
+  @ApiProperty({
+    example: 'http://www.stilldrinking.org/favicon.ico',
+    nullable: true,
+  })
   faviconUrl: string | null;
 
-  @ApiProperty({ example: 'Example', nullable: true })
+  @ApiProperty({ example: 'Still Drinking', nullable: true })
   siteName: string | null;
 
   @ApiProperty({
@@ -50,7 +56,7 @@ export class LinkResponseDto {
   @ApiProperty({ example: 'clz1xyz456' })
   id: string;
 
-  @ApiProperty({ example: 'https://example.com/great-article' })
+  @ApiProperty({ example: 'http://www.stilldrinking.org/programming-sucks' })
   url: string;
 
   @ApiPropertyOptional({

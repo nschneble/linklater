@@ -7,9 +7,8 @@ import { ApiProperty } from '@nestjs/swagger';
  */
 export class StumbleResponseDto {
   @ApiProperty({
-    example: 'https://example.com/great-article',
-    description:
-      'The URL of the stumbled link. Null when there are no unread links.',
+    example: 'http://www.stilldrinking.org/programming-sucks',
+    description: 'The URL of the stumbled-upon link, or null.',
     nullable: true,
   })
   url: string | null;

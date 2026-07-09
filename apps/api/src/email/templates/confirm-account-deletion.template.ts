@@ -7,7 +7,7 @@ import { baseHtml } from './base.html.js';
  * Sent when a magic-link-only-no-MFA account requests deletion: the user must
  * click the link to permanently delete the account. The 15-minute expiry must
  * stay in sync with the token expiry set in `AuthService.deleteAccount`.
- * @param url - The fully-qualified confirmation URL with the raw token as a
+ * @param url - The fully qualified confirmation URL with the raw token as a
  *   query parameter.
  * @returns A plain-text string ready to pass to the mail transport's `text`
  *   field.
@@ -22,7 +22,7 @@ export const text = (url: string) =>
  * The 15-minute expiry message must stay in sync with the token expiry set
  * in `AuthService.deleteAccount`. If the expiry changes, update both the
  * body text here and the `text` export above.
- * @param url - The fully-qualified confirmation URL with the raw token as a
+ * @param url - The fully qualified confirmation URL with the raw token as a
  *   query parameter.
  * @param palette - Color values derived from the user's saved theme
  *   preference, used to tint the email to match the app's appearance.
