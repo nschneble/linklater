@@ -1,0 +1,22 @@
+{
+  "action": "intercept-created-api-token",
+  "steps": [
+    {
+      "kind": "intercept",
+      "pattern": "https://localhost:3000/tokens",
+      "method": "POST",
+      "respond": {
+        "status": 201,
+        "body": {
+          "id": "tok-00000000-0000-0000-0000-000000000002",
+          "name": "ci-smoke-test",
+          "prefix": "ltk_stub_cre",
+          "createdAt": "2026-01-10T12:00:00.000Z",
+          "lastUsedAt": null,
+          "rawToken": "ltk_stub_created_token_for_visual_regression"
+        }
+      }
+    }
+  ],
+  "screenshot": false
+}

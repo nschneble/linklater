@@ -3,7 +3,7 @@
 - banner:
   - button "Go to your links": Linklater Save links now, read them later.
   - button "User menu (testing-ui@linklater.test)"
-- main:
+- main "Links":
   - heading "Your links" [level=1]
   - button "Show keyboard shortcuts"
   - paragraph: Add, search, or stumble upon something random.
@@ -19,6 +19,7 @@
     - paragraph: Testing-UI Determinism
     - paragraph: A frozen sample article used by the testing-ui harness so screenshot diffs only flag genuine UI changes.
     - button "Add and read (opens in new tab)": Add and read
+  - status
   - status
 - button "Close shortcuts"
 - dialog "Keyboard shortcuts":

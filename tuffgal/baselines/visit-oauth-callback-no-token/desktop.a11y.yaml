@@ -10,8 +10,6 @@
   - textbox "Password":
     - /placeholder: Leave blank to use a magic link
   - button "Log in with magic link"
-- text: or continue with
-- button "Continue with Google"
 - button "I literally have no idea what my password is"
 - alert:
   - text: We couldn't sign you in. Please try again.

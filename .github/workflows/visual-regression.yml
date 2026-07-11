@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: write # required for the sticky PR comment
+
 jobs:
   visual-regression:
     runs-on: ubuntu-latest
@@ -52,7 +56,7 @@ jobs:
           mkcert -install
           mkdir -p apps/api/certs
           mkcert -key-file apps/api/certs/localhost-key.pem -cert-file apps/api/certs/localhost.pem localhost
-      - uses: nschneble/tuffgal-action@v0
+      - uses: nschneble/tuffgal-action@v1
         with:
           setup-script: tuffgal:setup
           fail-on-changed: true

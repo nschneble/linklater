@@ -3,7 +3,7 @@
 - banner:
   - button "Go to your links": Linklater Save links now, read them later.
   - button "User menu (testing-ui@linklater.test)"
-- main:
+- main "Links":
   - heading "Your links" [level=1]
   - button "Show keyboard shortcuts"
   - paragraph: Add, search, or stumble upon something random.
@@ -23,10 +23,11 @@
     - paragraph: (No title)
     - paragraph: httpforever.com
     - paragraph: http://httpforever.com/
-    - link "(No title) — httpforever.com, opens in new tab":
+    - link "(No title) – httpforever.com, opens in new tab":
       - /url: http://httpforever.com/
   - status:
     - text: Link saved!
     - button "Dismiss"
+  - status
   - status
 - button "Close form"

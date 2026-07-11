@@ -1,6 +1,6 @@
-# Project Configuration
+# Project configuration
 
-## Tech Stack
+## Tech stack
 
 - **Front-end**: React + [Vite](https://vite.dev) + [Tailwind](https://tailwindcss.com) + [Font Awesome](https://fontawesome.com)
 - **Back-end**: [NestJS](https://nestjs.com)
@@ -25,14 +25,14 @@ linklater/
 └─ README.md
 ```
 
-## Key Commands
+## Key commands
 
 ```bash
 # Setup + run
 npm install                                       # Install dependencies
 npm run dev                                       # Start development server
 
-# Linting + Formatting
+# Linting + formatting
 npm run format                                    # Format code using Prettier
 npm run lint                                      # Lint code for consistent style
 npm run lint:migrations                           # Lint migrations using Squawk
@@ -47,12 +47,15 @@ npm run test --workspace @linklater/api           # Test back-end only
 npm run test apps/api/src/path/to/file.spec.ts    # Run a single back-end test file
 npm run test:cov                                  # Run all tests with code coverage
 
-# Tuffgal Visual regression tests
+# Tuffgal (v2) visual regression tests
 npm run dev:test                                  # Run dev server in test mode (TESTING_UI=1)
 npm run tuffgal:setup                             # One-time: create test DB + seed user
-npm run tuffgal                                   # Run every story against baselines
-npm run tuffgal:approve                           # Accept intentional UI changes as new baseline
+npm run tuffgal                                   # Local advisory self-diff vs local git-ignored .cache (reports drift, exits 0)
+npm run tuffgal:approve                           # Refresh LOCAL .cache reference only (does NOT write committed baselines)
 npm run tuffgal:approve -- --desktop --new-only   # Pass Tuffgal flags after `--`
+
+# Committed baselines (tuffgal/baselines) are re-seeded ONLY by CI when a maintainer
+# comments `@tuffgal approve` on the PR. No local command writes them (macOS renders ≠ linux CI)
 
 # Database
 npm run migrate --workspace @linklater/api        # Run migrations + regenerate client

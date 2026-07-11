@@ -10,7 +10,7 @@
     - menuitem "Your links"
     - menuitem "Settings"
     - menuitem "Switch to dark mode"
-    - menuitem "Theme editor"
+    - menuitem "Craft your theme"
     - menuitem "Theme A Scanner Darkly"
     - menu "Theme":
       - menuitemradio "Apollo 10½ Accessible theme"
@@ -21,10 +21,10 @@
       - menuitemradio "Boyhood"
       - menuitemradio "Dazed and Confused"
       - menuitemradio "Hit Man"
-      - menuitemradio "Nouvelle Vague (Noir)"
+      - menuitemradio "Nouvelle Vague"
       - menuitemradio "School of Rock"
     - menuitem "Log out"
-- main:
+- main "Links":
   - heading "Your links" [level=1]
   - button "Show keyboard shortcuts"
   - paragraph: Add, search, or stumble upon something random.
@@ -40,4 +40,5 @@
     - paragraph: Testing-UI Determinism
     - paragraph: A frozen sample article used by the testing-ui harness so screenshot diffs only flag genuine UI changes.
     - button "Add and read (opens in new tab)": Add and read
+  - status
   - status

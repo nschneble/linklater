@@ -2,5 +2,9 @@
   "story": "As a logged-in user, I can regenerate my bookmarklet token.",
   "flow": "use the bookmarklet",
   "needs": ["logged-in"],
-  "actions": [{ "action": "use-bookmarklet" }]
+  "actions": [
+    { "action": "intercept-instant-bookmarklet-token" },
+    { "action": "intercept-regenerated-bookmarklet-token" },
+    { "action": "use-bookmarklet" }
+  ]
 }
