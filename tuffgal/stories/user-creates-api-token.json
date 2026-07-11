@@ -4,6 +4,7 @@
   "needs": ["logged-in"],
   "actions": [
     { "action": "intercept-instant-bookmarklet-token" },
+    { "action": "intercept-created-api-token" },
     {
       "action": "create-api-token",
       "parameters": { "tokenName": "ci-smoke-test" }

@@ -188,7 +188,8 @@ bin/flintest --update
 Visual + accessibility regression coverage is provided by [Tuffgal](https://www.npmjs.com/package/tuffgal):
 
 - Stories live in `tuffgal/stories/`
-- Committed baselines are in `tuffgal/baselines/`
+- Committed baselines live in `tuffgal/baselines/`, but are written only by CI
+- Local `tuffgal/.cache/` holds advisory self-diffs for use during development
 
 ```bash
 # cd /path/to/your/repo
@@ -196,20 +197,27 @@ Visual + accessibility regression coverage is provided by [Tuffgal](https://www.
 # one-time setup to create the test database + seed the test user
 npm run tuffgal:setup
 
-# run the dev server in test mode + run every story against the baselines
+# run the dev server in test mode + self-diffs current renders against local cache
 npm run dev:test
 npm run tuffgal
 
-# accept intentional UI changes as the new baseline
+# refresh local cache to accept current renders (does not touch committed baselines)
 npm run tuffgal:approve
 
 # forward Tuffgal flags after `--`
-npm run tuffgal:approve -- --desktop --new-only  # only new baselines + for one breakpoint
+npm run tuffgal:approve -- --desktop --new-only  # only new renders + for one breakpoint
 npm run tuffgal:approve -- user-logs-in          # single story
 ```
 
 > **Note:** The `--` is required. Without it `npm` keeps the flags for
 > itself instead of forwarding them to `tuffgal approve`.
+
+Updating committed baselines is a PR review step. On a PR, CI captures
+Linux renders and reports new, changed, and deleted stories via a sticky
+comment plus a candidates artifact. A maintainer with write access comments
+`@tuffgal approve` on the PR, and a bot commits the canonical Linux
+baselines + `manifest.json` to the branch. No local command writes
+committed baselines.
 
 ##### Authoring stories
 

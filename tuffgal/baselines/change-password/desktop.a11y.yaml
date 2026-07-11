@@ -38,9 +38,6 @@
         - /placeholder: Leave blank to keep current password
       - status: Password updated
       - button "Save new password" [disabled]
-    - heading "Other ways to log in" [level=3]
-    - text: Google
-    - button "Connect Google"
   - region "Enhanced security":
     - heading "Enhanced security" [level=2]
     - paragraph: Set up and manage multi-factor authentication. That's not overkill for a read-it-later app, right?

@@ -11,7 +11,7 @@
       - menuitem "Your links"
       - menuitem "Settings"
       - menuitem "Switch to light mode"
-      - menuitem "Create a custom theme"
+      - menuitem "Craft your theme"
       - menuitem "Theme A Scanner Darkly"
       - menuitem "Log out"
     - menu "Theme":

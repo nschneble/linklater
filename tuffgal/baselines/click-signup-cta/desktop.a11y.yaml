@@ -10,6 +10,4 @@
   - textbox "Password":
     - /placeholder: Leave blank to use a magic link
   - button "Sign up with magic link"
-- text: or continue with
-- button "Continue with Google"
 - status
