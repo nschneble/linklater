@@ -94,15 +94,7 @@
     - paragraph: Use personal access tokens (PATs) to connect Linklater with external tools and services.
     - heading "API Tokens" [level=3]
     - button "Generate new token"
-    - list:
-      - listitem:
-        - status
-        - paragraph: ci-smoke-test
-        - paragraph:
-          - text: Created
-          - time: a few seconds ago
-        - button "Revoke ci-smoke-test"
-        - paragraph: This token has never been used.
+    - paragraph: You haven't created any tokens
     - link "View the API documentation in a new tab":
       - /url: /docs
       - text: View the API documentation

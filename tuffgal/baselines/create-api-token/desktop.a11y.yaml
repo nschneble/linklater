@@ -71,18 +71,10 @@
     - paragraph: Use personal access tokens (PATs) to connect Linklater with external tools and services.
     - heading "API Tokens" [level=3]
     - status: Your new token has been created. It'll only be shown once, so make sure you copy it down before navigating away from this page!
-    - code: ltk_j_58n-15XOcAYqf70kswn2MSk00C57z1
+    - code: ltk_stub_created_token_for_visual_regression
     - button "Copy to clipboard"
     - status
-    - list:
-      - listitem:
-        - status
-        - paragraph: ci-smoke-test
-        - paragraph:
-          - text: Created
-          - time: a few seconds ago
-        - button "Revoke ci-smoke-test": Revoke
-        - paragraph: This token has never been used.
+    - paragraph: You haven't created any tokens
     - link "View the API documentation in a new tab":
       - /url: /docs
       - text: View the API documentation
