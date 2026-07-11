@@ -188,7 +188,11 @@ bin/flintest --update
 Visual + accessibility regression coverage is provided by [Tuffgal](https://www.npmjs.com/package/tuffgal):
 
 - Stories live in `tuffgal/stories/`
-- Committed baselines are in `tuffgal/baselines/`
+- Committed baselines live in `tuffgal/baselines/`, but are written **only by CI**
+  via the `@tuffgal approve` PR flow (below) — local renders are macOS/CoreText and
+  never match linux/FreeType CI pixel-for-pixel, so CI is the single source of truth
+- Your local `tuffgal/.cache/` (gitignored, per-machine) holds the reference for the
+  advisory self-diff you run while developing
 
 ```bash
 # cd /path/to/your/repo
@@ -196,17 +200,25 @@ Visual + accessibility regression coverage is provided by [Tuffgal](https://www.
 # one-time setup to create the test database + seed the test user
 npm run tuffgal:setup
 
-# run the dev server in test mode + run every story against the baselines
+# run the dev server in test mode + self-diff current renders against your local cache
+# (advisory: reports visual drift in the report/stdout, but exits 0 and never blocks)
 npm run dev:test
 npm run tuffgal
 
-# accept intentional UI changes as the new baseline
+# refresh your LOCAL cache to accept current renders as your reference point
+# (this does NOT touch committed baselines — those are CI-owned; see below)
 npm run tuffgal:approve
 
 # forward Tuffgal flags after `--`
-npm run tuffgal:approve -- --desktop --new-only  # only new baselines + for one breakpoint
+npm run tuffgal:approve -- --desktop --new-only  # only new renders + for one breakpoint
 npm run tuffgal:approve -- user-logs-in          # single story
 ```
+
+Updating **committed** baselines is a PR review step: on a PR, CI captures linux
+renders and reports `new` / `changed` / `deleted` stories via a sticky PR comment
+plus a candidates artifact. A maintainer with write access comments `@tuffgal approve`
+on the PR, and a bot commits the canonical linux baselines + `manifest.json` to the
+PR branch. No local command writes committed baselines.
 
 > **Note:** The `--` is required. Without it `npm` keeps the flags for
 > itself instead of forwarding them to `tuffgal approve`.

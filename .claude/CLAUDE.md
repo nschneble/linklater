@@ -47,12 +47,14 @@ npm run test --workspace @linklater/api           # Test back-end only
 npm run test apps/api/src/path/to/file.spec.ts    # Run a single back-end test file
 npm run test:cov                                  # Run all tests with code coverage
 
-# Tuffgal Visual regression tests
+# Tuffgal Visual regression tests (v2: committed baselines are CI-owned)
 npm run dev:test                                  # Run dev server in test mode (TESTING_UI=1)
 npm run tuffgal:setup                             # One-time: create test DB + seed user
-npm run tuffgal                                   # Run every story against baselines
-npm run tuffgal:approve                           # Accept intentional UI changes as new baseline
+npm run tuffgal                                   # Local advisory self-diff vs local .cache/ (gitignored); reports drift, exits 0
+npm run tuffgal:approve                           # Refresh LOCAL .cache/ reference only — does NOT write committed baselines
 npm run tuffgal:approve -- --desktop --new-only   # Pass Tuffgal flags after `--`
+# Committed baselines (tuffgal/baselines/) are re-seeded ONLY by CI when a maintainer
+# comments `@tuffgal approve` on the PR — no local command writes them (macOS renders ≠ linux CI)
 
 # Database
 npm run migrate --workspace @linklater/api        # Run migrations + regenerate client
