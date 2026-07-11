@@ -1,0 +1,23 @@
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - button "Go to your links": Linklater Save links now, read them later.
+  - button "User menu (testing-ui@linklater.test)"
+- main "Links":
+  - heading "Your links" [level=1]
+  - button "Show keyboard shortcuts"
+  - paragraph: Read links are automatically removed after seven days.
+  - tablist "Links filter":
+    - tab "Unread"
+    - tab "Read" [selected]
+  - button "Remove all read"
+  - searchbox "Search through your links"
+  - tabpanel "Read":
+    - paragraph: Test Link 1
+    - paragraph: Slow Software Weekly
+    - paragraph: Practical notes on building durable software — concrete examples, minimal jargon, hard-won lessons from teams that ship slowly.
+    - button "Mark unread"
+    - link "Test Link 1 – Slow Software Weekly, opens in new tab":
+      - /url: https://example.test/1
+  - status
+  - status
