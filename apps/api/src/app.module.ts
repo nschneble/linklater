@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module.js';
+import { HealthModule } from './health/health.module.js';
 import { LinksModule } from './links/links.module.js';
 import { MetadataModule } from './metadata/metadata.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -33,6 +34,7 @@ import { UsersModule } from './users/users.module.js';
       { name: 'token-create', ttl: 3600000, limit: 20 },
     ]),
     AuthModule,
+    HealthModule,
     LinksModule,
     MetadataModule,
     PrismaModule,
