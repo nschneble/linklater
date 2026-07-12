@@ -6,7 +6,7 @@
 #   2. Publish both to ghcr.io, tagged with the commit SHA + `latest`.
 #   3. SSH to the VPS, pull the images, run `prisma migrate deploy`,           (deploy)
 #      then `docker compose up -d` (migrate BEFORE the new code starts).
-#   4. Poll `GET /health` until it returns 200 before declaring success.
+#   4. Poll `GET /api/health` (the public edge) until it returns 200 before declaring success.
 #
 # Two triggers, two distinct jobs:
 #
@@ -172,7 +172,7 @@ jobs:
       # Deploy over SSH: sync secrets, pull the resolved images, migrate the
       # database BEFORE the new code starts (prisma migrate deploy is written to
       # be forward-compatible with the still-running old version), then roll the
-      # services. Finally poll /health so a container that comes up but cannot
+      # services. Finally poll /api/health (the public edge) so a container that comes up but cannot
       # reach Postgres fails the deploy loudly. See DEPLOYMENT.md.
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1
@@ -212,7 +212,10 @@ jobs:
 
             docker logout "$REGISTRY" || true
 
-            # Poll /health until 200 (or fail the deploy). It returns 200 only
+            # Poll /api/health (the public edge) until 200 (or fail the deploy).
+            # The container HEALTHCHECK polls bare /health directly (the internal
+            # API route is unprefixed; the /api prefix is added by the Caddy
+            # edge). It returns 200 only
             # when the API can reach Postgres, so this catches a boot that comes
             # up but cannot serve. Default the URL from DOMAIN in the env file
             # just written (grep it out rather than sourcing the whole file).
