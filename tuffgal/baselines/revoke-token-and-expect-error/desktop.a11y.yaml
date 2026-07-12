@@ -84,9 +84,8 @@
           - time: a day ago
           - text: .
         - alert: Internal server error
-    - link "View the API documentation in a new tab":
+    - link "View API docs":
       - /url: /docs
-      - text: View the API documentation
   - region "Danger zone":
     - heading "Danger zone" [level=2]
     - paragraph: Beware all ye who enter. Deleting your account will remove all your saved links. This cannot be undone.

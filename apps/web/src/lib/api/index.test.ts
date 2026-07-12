@@ -21,7 +21,6 @@ import {
   ApiError,
   apiFetch,
   createApiToken,
-  getApiDocsToken,
   disableMfa,
   listApiTokens,
   readLink,
@@ -1223,30 +1222,6 @@ describe('revokeApiToken', () => {
     expect(url).toContain('/tokens/tok-1');
     expect((options as { method: string }).method).toBe('DELETE');
     expect(result).toEqual({ success: true });
-  });
-});
-
-describe('getApiDocsToken', () => {
-  it('GETs /tokens/api-docs with Authorization header and returns the raw token', async () => {
-    setStoredToken('my-jwt');
-    const apiDocsToken = {
-      id: 'tok-docs',
-      name: 'API Docs',
-      prefix: 'ltk_aBcDeFgH',
-      createdAt: '2026-01-01T00:00:00.000Z',
-      lastUsedAt: null,
-      rawToken: 'ltk_aBcDeFgHiJkLmNoPqRsTuVwXyZ12',
-    };
-    const fetchMock = mockFetch(apiDocsToken);
-
-    const result = await getApiDocsToken();
-
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain('/tokens/api-docs');
-    expect((options as { method?: string }).method).toBeUndefined();
-    const headers = (options as { headers: Record<string, string> }).headers;
-    expect(headers['Authorization']).toBe('Bearer my-jwt');
-    expect(result).toEqual(apiDocsToken);
   });
 });
 

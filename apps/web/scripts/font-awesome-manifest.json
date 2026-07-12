@@ -1,6 +1,7 @@
 {
   "brands": ["apple", "google", "stumbleupon"],
   "solid": [
+    "angle-right",
     "arrow-left",
     "arrow-right",
     "arrow-rotate-right",
@@ -37,7 +38,6 @@
     "gear",
     "graduation-cap",
     "guitar",
-    "hand-pointer",
     "key",
     "keyboard",
     "link",

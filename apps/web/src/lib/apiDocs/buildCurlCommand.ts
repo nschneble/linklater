@@ -1,12 +1,11 @@
 /**
  * Builds the copy-ready `curl` command shown in each endpoint's "Example
- * request" block. Kept UI-free in `lib/` (not write-gated) so the
+ * request (cURL)" block. Kept UI-free in `lib/` (not write-gated) so the
  * string-assembly + token-placeholder rules can be unit-tested directly.
  *
- * The token is ALWAYS rendered as the `ltk_…` placeholder, NEVER the user's
- * real token (matching the token-security rule in `sendApiRequest`): the cURL
- * block is static documentation a reader copies and fills in themselves, so a
- * real credential must never reach the rendered page.
+ * The token is ALWAYS rendered as the `ltk_…` placeholder, NEVER a real token:
+ * the cURL block is static documentation a reader copies and fills in
+ * themselves, so a real credential must never reach the rendered page.
  */
 
 interface BuildCurlCommandInput {
@@ -19,7 +18,7 @@ interface BuildCurlCommandInput {
 }
 
 /** Placeholder the reader replaces with their own `ltk_` token. */
-const TOKEN_PLACEHOLDER = 'ltk_…';
+const TOKEN_PLACEHOLDER = 'YOUR_API_TOKEN';
 
 export function buildCurlCommand({
   method,

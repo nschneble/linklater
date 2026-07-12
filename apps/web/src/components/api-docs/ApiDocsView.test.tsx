@@ -34,12 +34,6 @@ vi.mock('../../lib/openapi', async (importOriginal) => {
   };
 });
 
-// The "try it out" forms each consume the API-docs token; stub the hook so
-// these header-contract tests need neither the auth provider nor the network.
-vi.mock('./useApiDocsToken', () => ({
-  useApiDocsToken: () => ({ token: '', loading: false, error: null }),
-}));
-
 // Auth drives the visual branch: logged out → brand chrome, logged
 // in → the active theme. Mock it so tests can pick either branch.
 vi.mock('../../auth/AuthContext', () => ({

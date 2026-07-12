@@ -1,18 +1,47 @@
+import CodeBlock from '../common/CodeBlock';
 import CurlExample from './CurlExample';
 import MethodBadge from './MethodBadge';
 import ParameterTable from './ParameterTable';
-import RequestForm from './RequestForm';
 import ResponseTabs from './ResponseTabs';
 import SchemaTable from './SchemaTable';
+import SectionPanel from './SectionPanel';
+import SlidingTabBar from '../common/SlidingTabBar';
 import { buildExampleFromSchema } from '../../lib/apiDocs/buildExampleFromSchema';
 import { endpointHeadingId } from './endpointId';
+import { useState } from 'react';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
 /**
  * The detail half of the master-detail reference: the full documentation for
  * the ONE selected endpoint, rendered as a labelled `<section>` region with
- * the mount-bundle card chrome and header shape of `SettingsGroup`. No
- * disclosure – the selected endpoint's content is always shown.
+ * the mount-bundle card chrome and header shape of `SettingsGroup`.
+ *
+ * The body is split into up to TWO top-level tab pills (`SlidingTabBar`, hosted
+ * on `mount` so the bar lifts to orbit) over sibling tabpanels:
+ *   - **Request**  – ALWAYS present. A read-only `ParameterTable` per non-empty
+ *     location group – Query Parameters first, then Path Parameters – plus the
+ *     request-body `SchemaTable` (each shown only when the endpoint has them),
+ *     a static example request-body `CodeBlock` (only when there is a request
+ *     body), and – DOM-last – the copy-ready `CurlExample`. The cURL example is
+ *     the universal, auth-stable reference content that anchors this panel: it
+ *     always renders a native Copy button, so the Request tab is never empty
+ *     and always reachable, even for a param-less, body-less endpoint.
+ *   - **Response** – the `ResponseTabs` status-code sub-tablist. Suppressed
+ *     (tab AND panel) only when the endpoint documents no responses.
+ *
+ * Request is the always-present ANCHOR, so the tab set only ever grows/shrinks
+ * with the endpoint's RESPONSE shape (`endpoint.responses`), never with auth.
+ * After removing the live "try it out" form, NO rendered node is auth-gated –
+ * that is the SC 3.2.3 guarantee: the tab set (and everything inside it) is
+ * identical logged-in and logged-out. Inactive panels stay MOUNTED and
+ * `hidden`, never unmounted, so the response sub-tab's selection survives a tab
+ * round-trip.
+ *
+ * The top-level tablist is deliberately named "Endpoint sections" – sharing no
+ * word with the inner "Responses" tablist – and its ids live in a `-tab-`/
+ * `-panel-` namespace disjoint from `ResponseTabs`' `-resp-` ids. Each
+ * `useTabNavigation` binds to its OWN container ref, so the two tablist layers
+ * stay independent even though one nests inside the other's panel.
  *
  * The `<h3>` is the sole accessible-name carrier of the method (CONSTRAINT B1):
  * its sr-only text reads "GET /links" – method first – so an AT user hears the
@@ -21,45 +50,26 @@ import type { NormalizedEndpoint } from '../../lib/openapi';
  * (`useApiReferenceSelection`) can move focus here after a swap, landing the
  * user on the new content and letting a screen reader announce the endpoint.
  * Its DOM id (`endpointHeadingId`) is both the region's `aria-labelledby`
- * target AND the deterministic root every "try it out" field id derives from.
+ * target AND the stable root the section tab/panel and example-block ids derive
+ * from.
  *
- * The header shows the FULL request URL (origin + path) so a reader knows
- * exactly what to call, not a bare `/links`; the `<h3>` accessible name stays
- * the concise "GET /links" (method-first, CONSTRAINT B1) while the visible
- * full URL is `aria-hidden`. A copy-ready cURL example sits below the tables in
- * BOTH auth states (it's reference material). The interactive "try it out"
- * `RequestForm` renders ONLY when logged in – a public visitor gets static
- * docs, no live request affordance.
- *
- * Request status is reported UP via `onStatusMessage` to a single page-level
- * live region in the container, so an in-flight announcement survives this
- * component unmounting when the user selects another endpoint.
+ * Selecting a pill is a PURE state change with no focus move (focus stays on
+ * the tab). Endpoint-swap focus (to the `<h3>`) is a disjoint trigger owned by
+ * the parent, which remounts this component via its `key`; that fresh mount
+ * re-initializes the tab selection back to the first section for free.
  */
 
 interface EndpointDetailProps {
   endpoint: NormalizedEndpoint;
-  /** Whether a user is signed in – gates the live "try it out" form. */
-  loggedIn: boolean;
-  /** Origin the "try it out" form targets; empty string means same-origin. */
+  /** Origin the cURL example targets; empty string means same-origin. */
   serverOrigin: string;
-  /** Raw `ltk_` token; empty string ⇒ logged-out. Header-only, never rendered. */
-  token: string;
-  /** True while the token is still loading. */
-  tokenLoading: boolean;
-  /** Token-fetch error, or null. */
-  tokenError: string | null;
-  /** Reports the form's request-status message to the page-level live region. */
-  onStatusMessage: (message: string) => void;
 }
+
+type SectionKey = 'request' | 'response';
 
 export default function EndpointDetail({
   endpoint,
-  loggedIn,
   serverOrigin,
-  token,
-  tokenLoading,
-  tokenError,
-  onStatusMessage,
 }: EndpointDetailProps) {
   const headingId = endpointHeadingId(endpoint.method, endpoint.path);
   const accessibleMethod = endpoint.method.toUpperCase();
@@ -75,6 +85,59 @@ export default function EndpointDetail({
         2,
       )
     : null;
+
+  // Parameters render as location-specific tables whose <caption> conveys the
+  // location, so the per-row "In" column is gone. Partition by location and
+  // render a table only for a non-empty group – query first, then path – so a
+  // captioned table never ships an empty row set. Depends ONLY on the
+  // endpoint's parameters, never auth (SC 3.2.3).
+  const queryParameters = endpoint.parameters.filter(
+    (parameter) => parameter.location === 'query',
+  );
+  const pathParameters = endpoint.parameters.filter(
+    (parameter) => parameter.location === 'path',
+  );
+
+  const sectionMeta: Record<
+    SectionKey,
+    { label: string; tabId: string; panelId: string }
+  > = {
+    request: {
+      label: 'Request',
+      tabId: `${headingId}-tab-request`,
+      panelId: `${headingId}-panel-request`,
+    },
+    response: {
+      label: 'Response',
+      tabId: `${headingId}-tab-response`,
+      panelId: `${headingId}-panel-response`,
+    },
+  };
+
+  // Request is the always-present anchor – it hosts the universal cURL example,
+  // so it is never empty and a param-less/body-less/response-less endpoint
+  // still yields a non-empty tablist with reachable content. Response is
+  // suppressed (tab AND panel) only when the endpoint documents no responses.
+  // `showResponse` references only the response SHAPE, never auth, so the tab
+  // set can never shift with sign-in state (SC 3.2.3).
+  const showResponse = endpoint.responses.length > 0;
+
+  const sections: SectionKey[] = ['request'];
+  if (showResponse) sections.push('response');
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  // Defensive clamp for a stale index. No path reaches it today: an endpoint
+  // swap remounts this component via its `key`, resetting `selectedIndex` to 0,
+  // and the section set is fixed for a given endpoint. It guards a FUTURE
+  // mutable-spec shape — a SAME-key rerender that dropped the Response section
+  // (responses removed) while `selectedIndex` still pointed at it would
+  // otherwise hide every panel. The clamp falls back to the last surviving
+  // section (Request) instead. Cheap dead-defensive insurance; kept on purpose.
+  const activeIndex = Math.min(selectedIndex, sections.length - 1);
+
+  const requestActive = sections.indexOf('request') === activeIndex;
+  const responseActive = sections.indexOf('response') === activeIndex;
 
   return (
     <section
@@ -98,7 +161,7 @@ export default function EndpointDetail({
               {accessibleMethod} {endpoint.path}
             </span>
             <span aria-hidden="true" className="break-all">
-              {endpoint.path}
+              {endpoint.path.substring(1)}
             </span>
           </h3>
         </div>
@@ -114,42 +177,96 @@ export default function EndpointDetail({
         )}
       </header>
 
-      {endpoint.parameters.length > 0 && (
-        <div className="mb-4">
-          <ParameterTable
-            caption="Parameters"
-            parameters={endpoint.parameters}
-          />
-        </div>
-      )}
-
-      {endpoint.requestBody && (
-        <div className="mb-4">
-          <SchemaTable
-            caption="Request body"
-            schema={endpoint.requestBody.schema}
-          />
-        </div>
-      )}
-
-      {endpoint.responses.length > 0 && <ResponseTabs endpoint={endpoint} />}
-
-      <CurlExample method={endpoint.method} url={fullUrl} body={exampleBody} />
+      <SlidingTabBar
+        ariaLabel="Endpoint sections"
+        surface="mount"
+        activeIndex={activeIndex}
+        className="w-fit mb-6 border-shadow text-xs"
+        tabClassName="px-3 py-1.5"
+        tabs={sections.map((section, index) => ({
+          id: sectionMeta[section].tabId,
+          ariaControls: sectionMeta[section].panelId,
+          label: sectionMeta[section].label,
+          onClick: () => setSelectedIndex(index),
+        }))}
+      />
 
       {/*
-       * Live "try it out" is logged-in only. A public visitor gets the static
-       * tables + cURL above and no request affordance (CONSTRAINT §6).
+       * Panels are SIBLINGS of the tablist (never descendants): nesting one
+       * inside the bar would let the top-level `useTabNavigation` capture the
+       * inner Response status tabs. Each `SectionPanel` drives its own
+       * `tabIndex`/focus ring off `hasFocusableContent`. The Request panel is
+       * UNCONDITIONALLY focusable-content-owning: `CurlExample` always renders a
+       * native Copy button (both auth states, every endpoint), so the panel
+       * drops its own tab stop rather than tying the predicate to the tables or
+       * example body (which would go stale on a params-only endpoint). The
+       * Response panel owns the Response sub-tabs.
        */}
-      {loggedIn && (
-        <RequestForm
-          endpoint={endpoint}
-          headingId={headingId}
-          serverOrigin={serverOrigin}
-          token={token}
-          loading={tokenLoading}
-          error={tokenError}
-          onStatusMessage={onStatusMessage}
+      <SectionPanel
+        id={sectionMeta.request.panelId}
+        labelledById={sectionMeta.request.tabId}
+        active={requestActive}
+        hasFocusableContent
+      >
+        {queryParameters.length > 0 && (
+          <div className="mb-6 last:mb-0">
+            <ParameterTable
+              caption="Query parameters"
+              parameters={queryParameters}
+            />
+          </div>
+        )}
+
+        {pathParameters.length > 0 && (
+          <div className="mb-6 last:mb-0">
+            <ParameterTable
+              caption="Path parameters"
+              parameters={pathParameters}
+            />
+          </div>
+        )}
+
+        {endpoint.requestBody && (
+          <div className="mb-6 last:mb-0">
+            <SchemaTable
+              caption="Request body"
+              schema={endpoint.requestBody.schema}
+            />
+          </div>
+        )}
+
+        {exampleBody !== null && (
+          <div className="mb-6 last:mb-0">
+            <CodeBlock
+              label="Example request body"
+              code={exampleBody}
+              labelId={`${headingId}-request-example`}
+            />
+          </div>
+        )}
+
+        {/*
+         * DOM-last so keyboard tab order runs read-only tables → example-body
+         * CodeBlock → cURL Copy button → cURL <pre>. The `-request-curl` label
+         * id stays disjoint from `-request-example` and the tab/panel/resp ids.
+         */}
+        <CurlExample
+          method={endpoint.method}
+          url={fullUrl}
+          body={exampleBody}
+          labelId={`${headingId}-request-curl`}
         />
+      </SectionPanel>
+
+      {showResponse && (
+        <SectionPanel
+          id={sectionMeta.response.panelId}
+          labelledById={sectionMeta.response.tabId}
+          active={responseActive}
+          hasFocusableContent
+        >
+          <ResponseTabs endpoint={endpoint} />
+        </SectionPanel>
       )}
     </section>
   );

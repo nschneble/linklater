@@ -98,9 +98,8 @@ export class TokensController {
     status: 200,
     description:
       "Returns the user's hidden API-docs PAT, creating one if none exists. " +
-      'Like the bookmarklet token, the raw token is returned on every call so ' +
-      'the API docs page can pre-fill the live "try it out" panel across ' +
-      'devices. Auto-provisioned, never expires, and has no regenerate path.',
+      'Like the bookmarklet token, the raw token is returned on every call. ' +
+      'Auto-provisioned server-side, never expires, and has no regenerate path.',
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @Get('api-docs')

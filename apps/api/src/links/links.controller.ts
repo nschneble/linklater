@@ -59,13 +59,13 @@ export class LinksController {
   @ApiResponse({
     status: 201,
     description:
-      'The saved link. Its metadata (title, description, image) is fetched in the background and may be `null` on the first response.',
+      'The newly saved link. Its metadata is fetched in the background and may not be available on the first response.',
     type: LinkResponseDto,
   })
   @ApiResponse({
     status: 400,
     description:
-      'The URL is missing the `http://` or `https://` protocol, points to a private network address, or fails URL parsing.',
+      "Indicates the URL is missing a protocol, points to a private network address, or fails URL parsing, which means it's likely it wasn't a URL at all.",
   })
   @ApiUnauthorized()
   @AllowsBookmarkletToken()
@@ -88,29 +88,31 @@ export class LinksController {
     name: 'search',
     required: false,
     description:
-      'Full-text search over titles, descriptions, and URLs. Accent- and case-insensitive.',
+      'Diacritic and case-insensitive search over titles, descriptions, and URLs.',
   })
   @ApiQuery({
     name: 'read',
     required: false,
-    enum: ['true', 'false'],
     description:
-      'Restrict results to read (`true`) or unread (`false`) links. Omit for both.',
+      'Restrict results to read (true) or unread (false) links. Omit for both.',
+    type: Boolean,
   })
   @ApiQuery({
     name: 'page',
     required: false,
     description: 'Page number, starting at 1. Defaults to 1.',
+    type: Number,
   })
   @ApiQuery({
     name: 'limit',
     required: false,
     description: 'Results per page. Defaults to 10. Capped at 100.',
+    type: Number,
   })
   @ApiResponse({
     status: 200,
     description:
-      'One page of links plus the total count, current page, and page size. When `search` is supplied, results are ordered by relevance; otherwise newest first.',
+      'One page of links plus the total count, current page, and page size. When search is supplied, results are ordered by relevance; otherwise newest first.',
     type: PaginatedLinksResponseDto,
   })
   @ApiUnauthorized()
@@ -146,18 +148,18 @@ export class LinksController {
    * NOTE: `GET /links/random` must be declared before `GET /links/:id`
    * so NestJS does not try to interpret the literal string "random" as an ID.
    */
-  @ApiOperation({ summary: 'Get a random link from the collection' })
+  @ApiOperation({ summary: 'Get a single random link' })
   @ApiQuery({
     name: 'read',
     required: false,
-    enum: ['true', 'false'],
+    type: Boolean,
     description:
-      'Pick from read (`true`) or unread (`false`) links. Defaults to unread.',
+      "Pick randomly from a user's read (true) or unread (false) links. Defaults to unread.",
   })
   @ApiResponse({
     status: 200,
     description:
-      'A randomly chosen link wrapped in `{ link }`. The link is returned as-is – its read state is not changed. `link` is `null` when no links match the filter.',
+      'A randomly chosen link wrapped in a `link` attribute. The link is returned without affecting its read state. `link` is `null` when a random link is unavailable.',
     type: RandomLinkResponseDto,
   })
   @ApiUnauthorized()
@@ -182,12 +184,12 @@ export class LinksController {
    * literal string "stumble" as a link ID.
    */
   @ApiOperation({
-    summary: 'Pick a random unread link, mark it read, return its URL',
+    summary: 'Pick a random unread link, mark it read, and return the URL',
   })
   @ApiResponse({
     status: 200,
     description:
-      'The URL of the freshly stumbled link, wrapped in `{ url }`. The link is already marked read by the time the response returns. `url` is `null` when there are no unread links left.',
+      'The URL of the stumbled-upon link, wrapped in a `url` attribute. The link is already marked read by the time the response returns. `url` is null when there are no unread links.',
     type: StumbleResponseDto,
   })
   @ApiUnauthorized()
@@ -200,10 +202,9 @@ export class LinksController {
   }
 
   /** Returns a single link by its ID, scoped to the authenticated user. */
-  @ApiOperation({ summary: 'Get a single link by ID' })
+  @ApiOperation({ summary: 'Get a single link' })
   @ApiParam({
     name: 'id',
-    description: 'Identifier of the link, as returned in the `id` field.',
     example: 'clz1xyz456',
   })
   @ApiResponse({
@@ -223,7 +224,6 @@ export class LinksController {
   @ApiOperation({ summary: 'Mark a link as read' })
   @ApiParam({
     name: 'id',
-    description: 'Identifier of the link, as returned in the `id` field.',
     example: 'clz1xyz456',
   })
   @ApiResponse({
@@ -244,7 +244,6 @@ export class LinksController {
   @ApiOperation({ summary: 'Mark a link as unread' })
   @ApiParam({
     name: 'id',
-    description: 'Identifier of the link, as returned in the `id` field.',
     example: 'clz1xyz456',
   })
   @ApiResponse({
@@ -272,7 +271,7 @@ export class LinksController {
   @ApiResponse({
     status: 200,
     description:
-      'The number of links removed, wrapped in `{ count }`. `count` is `0` when there were no read links to delete.',
+      'Confirmation that the links were deleted. Returns the number of links deleted wrapped in a `count` attribute. `count` is 0 when there were no read links to delete.',
     type: BulkDeleteResultDto,
   })
   @ApiUnauthorized()
@@ -286,12 +285,11 @@ export class LinksController {
   @ApiOperation({ summary: 'Permanently delete a single link' })
   @ApiParam({
     name: 'id',
-    description: 'Identifier of the link, as returned in the `id` field.',
     example: 'clz1xyz456',
   })
   @ApiResponse({
     status: 200,
-    description: 'Confirmation that the link was deleted: `{ success: true }`.',
+    description: 'Confirmation that the link was deleted.',
     type: DeleteResultDto,
   })
   @ApiUnauthorized()

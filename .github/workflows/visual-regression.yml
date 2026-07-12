@@ -59,3 +59,4 @@ jobs:
       - uses: nschneble/tuffgal-action@v1
         with:
           setup-script: tuffgal:setup
+          fail-on-changed: true

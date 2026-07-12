@@ -10,7 +10,7 @@ import md5 from 'blueimp-md5';
  *
  * @param email - The user's email address.
  * @param size - The desired image dimension in pixels. Defaults to 80.
- * @returns A fully-qualified Gravatar URL.
+ * @returns A fully qualified Gravatar URL.
  */
 export function gravatarUrl(email: string, size = 80): string {
   const normalized = email.trim().toLowerCase();

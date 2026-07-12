@@ -11,7 +11,7 @@ describe('buildCurlCommand', () => {
 
     expect(command).toBe(
       "curl -X GET 'https://api.test/links' \\\n" +
-        "  -H 'Authorization: Bearer ltk_…'",
+        "  -H 'Authorization: Bearer YOUR_API_TOKEN'",
     );
   });
 
@@ -23,7 +23,7 @@ describe('buildCurlCommand', () => {
     });
 
     expect(command).toContain("curl -X POST 'https://api.test/links' \\");
-    expect(command).toContain("  -H 'Authorization: Bearer ltk_…' \\");
+    expect(command).toContain("  -H 'Authorization: Bearer YOUR_API_TOKEN' \\");
     expect(command).toContain("  -H 'Content-Type: application/json' \\");
     expect(command).toContain('  -d \'{\n  "url": ""\n}\'');
   });
@@ -35,7 +35,7 @@ describe('buildCurlCommand', () => {
       body: null,
     });
 
-    expect(command).toContain('ltk_…');
+    expect(command).toContain('YOUR_API_TOKEN');
     expect(command).not.toContain('Bearer ltk_real');
   });
 });

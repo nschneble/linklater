@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
+import { META_INCLUDE } from './links.include.js';
 import { PrismaService, Prisma } from '../prisma/index.js';
 
 /** Maximum results per page regardless of what the caller requests. */
@@ -72,7 +73,8 @@ export class LinksQueryService {
         orderBy: { createdAt: 'desc' },
         take: safeLimit,
         skip: (safePage - 1) * safeLimit,
-        include: { meta: true },
+        omit: { userId: true },
+        include: META_INCLUDE,
       }),
       this.prisma.link.count({ where }),
     ]);
@@ -157,7 +159,8 @@ export class LinksQueryService {
     // we re-sort by the rank order captured in the raw query above.
     const links = await this.prisma.link.findMany({
       where: { id: { in: ids } },
-      include: { meta: true },
+      omit: { userId: true },
+      include: META_INCLUDE,
     });
 
     const orderMap = new Map(ids.map((id, index) => [id, index]));
@@ -177,7 +180,8 @@ export class LinksQueryService {
   async findOne(userId: string, id: string) {
     const link = await this.prisma.link.findFirst({
       where: { id, userId },
-      include: { meta: true },
+      omit: { userId: true },
+      include: META_INCLUDE,
     });
 
     if (!link) throw new NotFoundException('Link not found');
@@ -228,7 +232,6 @@ export class LinksQueryService {
       {
         id: string;
         url: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
         readAt: Date | null;
@@ -238,7 +241,6 @@ export class LinksQueryService {
         meta_faviconUrl: string | null;
         meta_imageUrl: string | null;
         meta_siteName: string | null;
-        meta_source: string | null;
         meta_title: string | null;
         meta_createdAt: Date | null;
         meta_updatedAt: Date | null;
@@ -248,7 +250,6 @@ export class LinksQueryService {
       SELECT
         l.id,
         l.url,
-        l."userId",
         l."createdAt",
         l."updatedAt",
         l."readAt",
@@ -258,7 +259,6 @@ export class LinksQueryService {
         m."faviconUrl" AS "meta_faviconUrl",
         m."imageUrl"   AS "meta_imageUrl",
         m."siteName"   AS "meta_siteName",
-        m.source      AS meta_source,
         m.title       AS meta_title,
         m."createdAt" AS "meta_createdAt",
         m."updatedAt" AS "meta_updatedAt",
@@ -282,7 +282,6 @@ export class LinksQueryService {
             faviconUrl: row.meta_faviconUrl,
             imageUrl: row.meta_imageUrl,
             siteName: row.meta_siteName,
-            source: row.meta_source,
             title: row.meta_title,
             createdAt: row.meta_createdAt!,
             updatedAt: row.meta_updatedAt!,
@@ -293,7 +292,6 @@ export class LinksQueryService {
     return {
       id: row.id,
       url: row.url,
-      userId: row.userId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       readAt: row.readAt,

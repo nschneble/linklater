@@ -93,11 +93,15 @@ export default function ApiDocsView() {
           </Link>
           {!isBrand && (
             <Link
+              className="group flex items-center gap-2 text-[var(--base-subtle-text)] hover:text-[var(--base-text)] text-sm transition duration-200"
               to="/settings"
               state={{ scrollTo: 'integrations' }}
-              className="text-[var(--base-text)] hover:text-[var(--base-highlight)] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--base-bg)] focus-visible:rounded"
             >
-              Manage tokens<span aria-hidden="true">&nbsp;&rarr;</span>
+              Manage tokens
+              <i
+                className="fa-solid fa-arrow-right text-[var(--base-subtle-text)] group-hover:text-[var(--base-text)] text-[0.7rem]"
+                aria-hidden="true"
+              />
             </Link>
           )}
         </nav>

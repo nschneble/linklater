@@ -6,8 +6,8 @@ import { IsPublicUrl } from '../../common/is-public-url.validator.js';
 export class CreateLinkDto {
   @ApiProperty({
     description:
-      'The fully-qualified URL to save. Must include the protocol (http:// or https://).',
-    example: 'https://example.com/great-article',
+      'The fully qualified URL to save. Must include the protocol (e.g. "https://").',
+    example: 'http://www.stilldrinking.org/programming-sucks',
   })
   @IsUrl(
     {

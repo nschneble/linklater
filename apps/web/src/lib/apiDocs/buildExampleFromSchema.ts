@@ -1,12 +1,14 @@
 import type { OpenAPIV3 } from 'openapi-types';
 
 /**
- * Derives a minimal, editable example value from a resolved OpenAPI schema so
- * the "try it out" request-body editor can prefill a sensible JSON skeleton
- * the user only has to tweak rather than author from scratch.
+ * Derives a minimal example value from a resolved OpenAPI schema, used to feed
+ * the static example CodeBlocks in the API docs — the request-body example in
+ * `EndpointDetail` and the response-body example in `ResponseTabs`.
  *
- * Schemas arriving here are already `$ref`-resolved (see `lib/openapi`), so
- * this never follows references. Resolution order per node:
+ * Schemas arriving here are already `$ref`-resolved and `allOf`-flattened (see
+ * `lib/openapi`), so this never follows references and never sees a composition
+ * wrapper — a nullable typed-ref like `meta` arrives as a plain object with its
+ * `properties` in place. Resolution order per node:
  *   1. an explicit `example` on the schema (most authoritative),
  *   2. the first `enum` member,
  *   3. a type-derived placeholder (`''`, `0`, `false`, `[item]`, `{}`).

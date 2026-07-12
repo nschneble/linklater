@@ -125,8 +125,9 @@ model ApiToken {
   kind        TokenKind @default(USER)
   // Plaintext token value. Populated for the retrievable kinds (BOOKMARKLET and
   // API_DOCS) because their consumers must re-read the raw token on every load:
-  // the bookmarklet embeds it in a `javascript:` URL, and the API docs page
-  // pre-fills it into the live "try it out" panel — both across devices.
+  // the bookmarklet embeds it in a `javascript:` URL. The API_DOCS token is
+  // still auto-provisioned server-side, though the former in-page "try it out"
+  // explorer that re-read it was removed (its teardown is deferred).
   // For kind = USER this column is NULL — those tokens follow the standard
   // hash-only / shown-once model. DB compromise of these rows allows saving
   // links as the affected user; the bookmarklet can be regenerated to

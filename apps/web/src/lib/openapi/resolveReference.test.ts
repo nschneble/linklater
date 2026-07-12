@@ -94,7 +94,7 @@ describe('resolveSchema', () => {
     expect(resolved?.additionalProperties).toBe(true);
   });
 
-  it('resolves every member $ref inside an allOf composition', () => {
+  it('flattens an allOf composition into one merged object schema', () => {
     const resolved = resolveSchema(
       {
         allOf: [
@@ -104,10 +104,82 @@ describe('resolveSchema', () => {
       },
       schemas,
     );
-    const members = resolved?.allOf as OpenAPIV3.SchemaObject[];
-    expect(members).toHaveLength(2);
-    expect(members[0].properties?.url).toEqual({ type: 'string' });
-    expect(members[1].properties?.extra).toEqual({ type: 'boolean' });
+    // The members are merged into the parent so downstream consumers (which do
+    // not understand `allOf`) see one plain object with every property present.
+    expect(resolved?.allOf).toBeUndefined();
+    expect(resolved).toMatchObject({ type: 'object' });
+    expect(resolved?.properties?.id).toEqual({ type: 'string' });
+    expect(resolved?.properties?.url).toEqual({ type: 'string' });
+    expect(resolved?.properties?.extra).toEqual({ type: 'boolean' });
+  });
+
+  it('flattens a NestJS nullable typed-ref property (allOf + sibling nullable/type)', () => {
+    // Mirrors exactly what @nestjs/swagger emits for
+    // `@ApiPropertyOptional({ type: () => Meta, nullable: true, description })`:
+    // a `$ref` cannot carry sibling keywords, so it is wrapped in `allOf` while
+    // `nullable`/`type: 'object'`/`description` sit alongside it.
+    const resolved = resolveSchema(
+      {
+        nullable: true,
+        type: 'object',
+        description:
+          'Extracted metadata. Null until the fetch worker completes.',
+        allOf: [{ $ref: '#/components/schemas/Link' }],
+      } as OpenAPIV3.SchemaObject,
+      schemas,
+    );
+    expect(resolved?.allOf).toBeUndefined();
+    // The referenced object's properties surface directly on the merged schema…
+    expect(resolved?.properties?.id).toEqual({ type: 'string' });
+    expect(resolved?.properties?.url).toEqual({ type: 'string' });
+    // …while the wrapper's own keywords are preserved. `nullable` staying true
+    // must NOT collapse the schema to a scalar/null — it stays a populated
+    // object so the docs can render its full shape.
+    expect(resolved).toMatchObject({ type: 'object', nullable: true });
+    expect(resolved?.description).toBe(
+      'Extracted metadata. Null until the fetch worker completes.',
+    );
+  });
+
+  it('keeps the wrapper property-level description over the referenced schema description', () => {
+    const withDescriptions: Record<string, OpenAPIV3.SchemaObject> = {
+      Inner: {
+        type: 'object',
+        description: 'inner description',
+        properties: { value: { type: 'string' } },
+      },
+    };
+    const resolved = resolveSchema(
+      {
+        description: 'wrapper description',
+        allOf: [{ $ref: '#/components/schemas/Inner' }],
+      } as OpenAPIV3.SchemaObject,
+      withDescriptions,
+    );
+    expect(resolved?.description).toBe('wrapper description');
+    expect(resolved?.properties?.value).toEqual({ type: 'string' });
+  });
+
+  it('unions the required lists of the wrapper and its allOf members', () => {
+    const resolved = resolveSchema(
+      {
+        type: 'object',
+        required: ['own'],
+        properties: { own: { type: 'string' } },
+        allOf: [
+          {
+            type: 'object',
+            required: ['merged'],
+            properties: { merged: { type: 'string' } },
+          },
+        ],
+      } as OpenAPIV3.SchemaObject,
+      schemas,
+    );
+    expect(resolved?.allOf).toBeUndefined();
+    expect(new Set(resolved?.required)).toEqual(new Set(['own', 'merged']));
+    expect(resolved?.properties?.own).toBeDefined();
+    expect(resolved?.properties?.merged).toBeDefined();
   });
 
   it('drops unresolvable members from a oneOf composition', () => {

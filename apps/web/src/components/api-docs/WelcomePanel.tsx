@@ -11,10 +11,7 @@ import { WELCOME_HEADING_ID } from './useApiReferenceSelection';
  */
 
 interface WelcomePanelProps {
-  /** Origin requests target; empty string means same-origin as the app. */
   serverOrigin: string;
-  /** Whether a user is signed in – tailors the API-key guidance. */
-  loggedIn: boolean;
 }
 
 interface OverviewPoint {
@@ -23,16 +20,10 @@ interface OverviewPoint {
   detail: string;
 }
 
-export default function WelcomePanel({
-  serverOrigin,
-  loggedIn,
-}: WelcomePanelProps) {
+export default function WelcomePanel({ serverOrigin }: WelcomePanelProps) {
   const baseUrl =
     serverOrigin === '' ? `${window.location.origin}` : serverOrigin;
 
-  // Logged OUT, the page is plain public documentation: no wired-in token, no
-  // "try it live". Logged IN, the welcome panel describes the key that's
-  // already wired into every form and the live "try it out" affordance.
   const points: OverviewPoint[] = [
     {
       icon: 'fa-link',
@@ -42,26 +33,13 @@ export default function WelcomePanel({
     {
       icon: 'fa-key',
       term: 'Authentication',
-      detail: loggedIn
-        ? 'Your personal key is already wired into every form below – just hit Send. Real requests use Bearer auth: Authorization: Bearer ltk_…'
-        : 'A personal access token is required for every request.',
+      detail: 'A personal access token is required for every request.',
     },
-    ...(loggedIn
-      ? [
-          {
-            icon: 'fa-hand-pointer',
-            term: 'Try it live',
-            detail:
-              'Pick an endpoint on the left to read its parameters and responses – then fire a real request right from the page and watch it come back.',
-          },
-        ]
-      : [
-          {
-            icon: 'fa-book-open',
-            term: 'Reference',
-            detail: 'Each item describes its parameters and responses.',
-          },
-        ]),
+    {
+      icon: 'fa-book-open',
+      term: 'Reference',
+      detail: 'Each item describes its parameters and responses.',
+    },
   ];
 
   return (

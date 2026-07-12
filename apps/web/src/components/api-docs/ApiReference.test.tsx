@@ -11,10 +11,6 @@ vi.mock('../../lib/openapi', async (importOriginal) => {
   return { ...actual, fetchOpenApi: () => fetchOpenApiMock() };
 });
 
-vi.mock('./useApiDocsToken', () => ({
-  useApiDocsToken: () => ({ token: '', loading: false, error: null }),
-}));
-
 vi.mock('../../auth/AuthContext', () => ({
   useAuth: () => ({ user: null }),
 }));
@@ -75,11 +71,14 @@ describe('ApiReference', () => {
     ).toBeInTheDocument();
   });
 
-  it('keeps two persistent live regions outside the swapping detail', async () => {
+  it('keeps a single persistent spec-load live region outside the swapping detail', async () => {
     renderReference();
     await screen.findByRole('heading', { level: 3 });
-    // Load-state + request-status regions both present and persistent.
-    expect(screen.getAllByRole('status')).toHaveLength(2);
+    // Only the spec-load-state region lives at this level now – the live "try
+    // it out" form (and the request-status region it fed) has been removed, so
+    // no auth-gated announcer remains. The welcome panel carries no status
+    // region, so the load-state region is the sole status node here.
+    expect(screen.getAllByRole('status')).toHaveLength(1);
   });
 
   it('swaps to an endpoint and moves focus to its heading on selection', async () => {

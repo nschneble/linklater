@@ -8,11 +8,11 @@ export class PaginatedLinksResponseDto {
 
   @ApiProperty({
     example: 42,
-    description: 'Total number of links matching the filter, across all pages.',
+    description: 'Total number of matching links across all pages.',
   })
   total: number;
 
-  @ApiProperty({ example: 1, description: '1-based page number.' })
+  @ApiProperty({ example: 1, description: 'Page number, starting at 1.' })
   page: number;
 
   @ApiProperty({ example: 10, description: 'Results per page.' })

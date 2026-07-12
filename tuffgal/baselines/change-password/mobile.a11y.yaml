@@ -96,9 +96,8 @@
     - heading "API Tokens" [level=3]
     - button "Generate new token"
     - paragraph: You haven't created any tokens
-    - link "View the API documentation in a new tab":
+    - link "View API docs":
       - /url: /docs
-      - text: View the API documentation
   - region "Danger zone":
     - heading "Danger zone" [level=2]
     - paragraph: Beware all ye who enter. Deleting your account will remove all your saved links. This cannot be undone.

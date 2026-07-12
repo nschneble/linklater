@@ -10,10 +10,13 @@ const API_DOCS_TOKEN_NAME = 'API Docs';
  * Manages the single, hidden API-docs token per user.
  *
  * Mirrors `BookmarkletTokensService.getOrCreate`: the raw value is stored in
- * `secretValue` so the API docs page can pre-fill the live "try it out" panel
- * on every load – including from a new device. The token is auto-provisioned
- * on first request, never expires, and is never shown in the user's token
- * list (`TokensService.findAll` filters to `kind = USER`).
+ * `secretValue`. The token is still auto-provisioned server-side on first
+ * request, never expires, and is never shown in the user's token list
+ * (`TokensService.findAll` filters to `kind = USER`). The former in-page "try
+ * it out" explorer that consumed it has been removed – the API docs are now
+ * read-only reference (a cURL example the user copies and runs) – but the
+ * server-side provisioning is retained deliberately; its teardown is a
+ * separate, deferred decision.
  *
  * Unlike the bookmarklet token there is intentionally NO regenerate path: the
  * user decided this token is invisible plumbing, so it is only ever minted
@@ -129,8 +132,7 @@ export class ApiDocsTokensService {
     if (!stored.secretValue) {
       // Every API_DOCS row must have a secretValue populated at creation. A
       // null here means a data-integrity violation – throw so it produces a
-      // visible 500 rather than silently returning an empty token that leaves
-      // the docs "try it out" panel unauthenticated with no error shown.
+      // visible 500 rather than silently returning an empty token record.
       throw new Error(
         `API docs token ${stored.id} is missing secretValue – data integrity violation`,
       );

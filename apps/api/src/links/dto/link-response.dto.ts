@@ -3,8 +3,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 /**
  * Metadata extracted from the link's destination URL (Open Graph tags,
  * title, favicon, image). Populated asynchronously by the metadata-fetch
- * worker, so any field except `id` and `linkId` may be `null` until the
- * fetch completes.
+ * worker, so any field except `id`, `linkId`, `createdAt`, and `updatedAt`
+ * may be `null` until the fetch completes.
  */
 export class MetaResponseDto {
   @ApiProperty({ example: 'clz1abc123' })
@@ -13,32 +13,34 @@ export class MetaResponseDto {
   @ApiProperty({ example: 'clz1xyz456' })
   linkId: string;
 
-  @ApiPropertyOptional({ example: 'Example Domain' })
+  @ApiProperty({ example: 'Programming Sucks', nullable: true })
   title: string | null;
 
-  @ApiPropertyOptional({
-    example: 'This domain is for use in illustrative examples in documents.',
+  @ApiProperty({
+    example: 'All programming teams are constructed by and of crazy people.',
+    nullable: true,
   })
   description: string | null;
 
-  @ApiPropertyOptional({ example: 'https://example.com/og-image.png' })
+  @ApiProperty({
+    example: 'https://www.stilldrinking.org/blog_images/programming-sucks.jpg',
+    nullable: true,
+  })
   imageUrl: string | null;
 
-  @ApiPropertyOptional({ example: 'https://example.com/favicon.ico' })
+  @ApiProperty({
+    example: 'http://www.stilldrinking.org/favicon.ico',
+    nullable: true,
+  })
   faviconUrl: string | null;
 
-  @ApiPropertyOptional({ example: 'Example' })
+  @ApiProperty({ example: 'Still Drinking', nullable: true })
   siteName: string | null;
 
-  @ApiPropertyOptional({
-    example: 'opengraph',
-    description: 'Where the metadata was sourced from.',
-  })
-  source: string | null;
-
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: '2026-05-27T12:00:00.000Z',
-    description: 'When the metadata fetch completed. Null until the job runs.',
+    description: "When this metadata was fetched. Null until it's not.",
+    nullable: true,
   })
   fetchedAt: string | null;
 
@@ -54,13 +56,13 @@ export class LinkResponseDto {
   @ApiProperty({ example: 'clz1xyz456' })
   id: string;
 
-  @ApiProperty({ example: 'https://example.com/great-article' })
+  @ApiProperty({ example: 'http://www.stilldrinking.org/programming-sucks' })
   url: string;
 
   @ApiPropertyOptional({
     type: () => MetaResponseDto,
     nullable: true,
-    description: 'Extracted metadata. Null until the fetch worker completes.',
+    description: "Link metadata. Null if the metadata hasn't been fetched.",
   })
   meta: MetaResponseDto | null;
 
@@ -70,10 +72,10 @@ export class LinkResponseDto {
   @ApiProperty({ example: '2026-05-27T12:00:00.000Z' })
   updatedAt: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: null,
-    description:
-      'Timestamp the link was marked read. Null while the link is unread.',
+    description: 'Timestamp for when the link was read. Null if unread.',
+    nullable: true,
   })
   readAt: string | null;
 }

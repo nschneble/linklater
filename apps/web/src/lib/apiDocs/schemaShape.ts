@@ -6,8 +6,10 @@ import type { OpenAPIV3 } from 'openapi-types';
  * of `components/` so the type-formatting and nesting rules can be unit-tested
  * on their own; the component stays presentational.
  *
- * Schemas arriving here are already `$ref`-resolved (see `lib/openapi`), so
- * these helpers never have to follow references.
+ * Schemas arriving here are already `$ref`-resolved and `allOf`-flattened (see
+ * `lib/openapi`), so these helpers never follow references or unwrap a
+ * composition — a nullable typed-ref property surfaces its `properties`
+ * directly and expands as a normal nested object.
  */
 
 /** Kind of nested rendering a property's schema calls for, if any. */
@@ -31,15 +33,19 @@ export interface SchemaRow {
   nested: NestedShape;
 }
 
-/** Human-readable type label, e.g. `string`, `array of object`, `integer`. */
+/** Human-readable type label, e.g. `string`, `array`, `integer`. */
 export function describeType(
   schema: OpenAPIV3.SchemaObject | undefined,
 ): string {
   if (!schema) return 'unknown';
   if (schema.enum) return 'enum';
   if (schema.type === 'array') {
-    const items = schema.items as OpenAPIV3.SchemaObject | undefined;
-    return `array of ${describeType(items)}`;
+    // Bare "array" is an intentional compact type label (arrays render simply
+    // as "array" by product decision). For an array of OBJECTS the item shape
+    // is still expanded by `describeNested`'s nested item table; for an array
+    // of SCALARS `describeNested` returns null, so there is no nested table and
+    // the element type is deliberately omitted for compactness.
+    return 'array';
   }
   if (Array.isArray(schema.type)) return schema.type.join(' | ');
   return schema.type ?? 'object';
@@ -58,10 +64,18 @@ function isExpandableObject(
 }
 
 /**
+ * How many levels of nesting render as real child tables before deeper shapes
+ * collapse to a "see full schema" note (CONSTRAINT T4). Two levels so a
+ * paginated `data[]` item table (depth 1) can still expand its own object
+ * props (e.g. a link's `meta`) rather than noting them out.
+ */
+const MAX_NESTED_DEPTH = 2;
+
+/**
  * Decides whether a property's schema should render as a nested child table.
- * Capped at one level deep this wave (CONSTRAINT T4): a nested object/array is
- * expanded once; anything deeper resolves to a `note` so the caller renders a
- * "nested object – see full schema" text note instead.
+ * Capped at `MAX_NESTED_DEPTH` levels (CONSTRAINT T4): nested objects/arrays
+ * expand until that depth; anything deeper resolves to a `note` so the caller
+ * renders a "nested object – see full schema" text note instead.
  *
  * @param schema The property's resolved schema.
  * @param depth How many levels of nesting have already been rendered.
@@ -81,12 +95,12 @@ export function describeNested(
       : undefined;
 
   if (isExpandableObject(schema)) {
-    if (depth >= 1) return { kind: 'note' };
+    if (depth >= MAX_NESTED_DEPTH) return { kind: 'note' };
     return { kind: 'object', schema, label: `${name} properties` };
   }
 
   if (isExpandableObject(arrayItems)) {
-    if (depth >= 1) return { kind: 'note' };
+    if (depth >= MAX_NESTED_DEPTH) return { kind: 'note' };
     return {
       kind: 'array',
       schema: arrayItems,

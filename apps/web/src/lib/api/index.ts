@@ -51,15 +51,9 @@ export {
 } from './links';
 export type { Suggestion, SuggestionsResponse } from './suggestions';
 export { getSuggestions } from './suggestions';
-export type {
-  ApiDocsToken,
-  ApiToken,
-  BookmarkletToken,
-  CreatedApiToken,
-} from './tokens';
+export type { ApiToken, BookmarkletToken, CreatedApiToken } from './tokens';
 export {
   createApiToken,
-  getApiDocsToken,
   getBookmarkletToken,
   listApiTokens,
   regenerateBookmarkletToken,

@@ -101,28 +101,3 @@ export function regenerateBookmarkletToken(): Promise<BookmarkletToken> {
     method: 'POST',
   });
 }
-
-/**
- * Hidden API-docs PAT (`kind = API_DOCS` server-side). Like the bookmarklet
- * token, the raw value is returned on every call so the docs page can sign
- * live "try it out" requests on any device or browser reload. Unlike
- * user-created PATs, it is never surfaced in `listApiTokens` – it exists only
- * to authenticate the in-page API explorer.
- */
-export interface ApiDocsToken extends ApiToken {
-  /** Full raw token including the `ltk_` prefix. Unlike `CreatedApiToken`,
-   * this is available on every call to `getApiDocsToken`. */
-  rawToken: string;
-}
-
-/**
- * Returns the authenticated user's hidden API-docs token, minting a new one
- * if none exists yet (lazy provisioning). The endpoint is JWT-guarded, so
- * only call this for a logged-in user.
- * `GET /tokens/api-docs`
- *
- * @returns The API-docs token including its raw value.
- */
-export function getApiDocsToken(): Promise<ApiDocsToken> {
-  return apiFetch<ApiDocsToken>('/tokens/api-docs');
-}

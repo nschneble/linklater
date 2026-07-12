@@ -1,4 +1,5 @@
 import { describeType, toSchemaRows } from './schemaShape';
+import { resolveSchema } from '../openapi/resolveReference';
 import { describe, expect, it } from 'vitest';
 import type { OpenAPIV3 } from 'openapi-types';
 
@@ -8,12 +9,20 @@ describe('describeType', () => {
     expect(describeType({ type: 'integer' })).toBe('integer');
   });
 
-  it('labels arrays by their item type', () => {
+  it('labels an array of scalars as a bare "array"', () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: 'array',
       items: { type: 'string' },
     };
-    expect(describeType(schema)).toBe('array of string');
+    expect(describeType(schema)).toBe('array');
+  });
+
+  it('labels an array of objects as a bare "array" too (item shape lives in the nested table)', () => {
+    const schema: OpenAPIV3.SchemaObject = {
+      type: 'array',
+      items: { type: 'object', properties: { name: { type: 'string' } } },
+    };
+    expect(describeType(schema)).toBe('array');
   });
 
   it('falls back to unknown for a missing schema', () => {
@@ -98,7 +107,27 @@ describe('toSchemaRows', () => {
     });
   });
 
-  it('caps nesting at one level – deeper objects become a note (T4)', () => {
+  it('still expands a nested object at depth 1 (the array-wrapped item level)', () => {
+    const schema: OpenAPIV3.SchemaObject = {
+      type: 'object',
+      properties: {
+        metadata: {
+          type: 'object',
+          properties: { source: { type: 'string' } },
+        },
+      },
+    };
+
+    // Depth 1 is where an array-of-object item table renders (e.g. paginated
+    // `data[]`); its own object props must still expand, not collapse to a note.
+    const [row] = toSchemaRows(schema, 1);
+    expect(row.nested).toMatchObject({
+      kind: 'object',
+      label: 'metadata properties',
+    });
+  });
+
+  it('caps nesting at two levels – deeper objects become a note (T4)', () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: 'object',
       properties: {
@@ -106,12 +135,12 @@ describe('toSchemaRows', () => {
       },
     };
 
-    // At depth 1, an expandable object resolves to a note rather than a table.
-    const [row] = toSchemaRows(schema, 1);
+    // At depth 2, an expandable object resolves to a note rather than a table.
+    const [row] = toSchemaRows(schema, 2);
     expect(row.nested).toEqual({ kind: 'note' });
   });
 
-  it('caps an array-of-object at one level – deeper becomes a note (T4)', () => {
+  it('caps an array-of-object at two levels – deeper becomes a note (T4)', () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: 'object',
       properties: {
@@ -122,9 +151,51 @@ describe('toSchemaRows', () => {
       },
     };
 
-    // At depth 1, an expandable array-of-object also collapses to a note
-    // rather than recursing into a second nested table.
-    const [row] = toSchemaRows(schema, 1);
+    // At depth 2, an expandable array-of-object also collapses to a note
+    // rather than recursing into a third nested table.
+    const [row] = toSchemaRows(schema, 2);
     expect(row.nested).toEqual({ kind: 'note' });
+  });
+
+  it('expands a nullable typed-ref property once the resolver flattens it', () => {
+    // The `meta` property arrives from @nestjs/swagger as a nullable typed-ref
+    // (`allOf`-wrapped). Before the resolver flattened `allOf`, its `type:
+    // 'object'` had no `properties`, so it rendered as a bare scalar row with
+    // no nested table. Post-flatten it expands like any other nested object.
+    const schemas: Record<string, OpenAPIV3.SchemaObject> = {
+      Meta: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string', nullable: true },
+        },
+      },
+    };
+    const resolved = resolveSchema(
+      {
+        type: 'object',
+        properties: {
+          meta: {
+            nullable: true,
+            type: 'object',
+            description: 'Extracted metadata.',
+            allOf: [{ $ref: '#/components/schemas/Meta' }],
+          },
+        },
+      } as OpenAPIV3.SchemaObject,
+      schemas,
+    );
+
+    const [metaRow] = toSchemaRows(resolved);
+    expect(metaRow.name).toBe('meta');
+    expect(metaRow.typeLabel).toBe('object');
+    expect(metaRow.nested).toMatchObject({
+      kind: 'object',
+      label: 'meta properties',
+    });
+    const nestedSchema = (
+      metaRow.nested as { kind: 'object'; schema: OpenAPIV3.SchemaObject }
+    ).schema;
+    expect(Object.keys(nestedSchema.properties ?? {})).toEqual(['id', 'title']);
   });
 });

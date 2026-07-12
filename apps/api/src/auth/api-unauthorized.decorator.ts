@@ -17,6 +17,6 @@ export const ApiUnauthorized = () =>
   applyDecorators(
     ApiResponse({
       status: 401,
-      description: 'Missing or invalid token (JWT or PAT).',
+      description: 'Indicates a missing or invalid token.',
     }),
   );

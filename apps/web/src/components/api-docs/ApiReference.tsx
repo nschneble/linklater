@@ -4,27 +4,22 @@ import EndpointNavCompact from './EndpointNavCompact';
 import WelcomePanel from './WelcomePanel';
 import { endpointHeadingId } from './endpointId';
 import { fetchOpenApi, resolveOpenApiUrl } from '../../lib/openapi';
-import { useApiDocsToken } from './useApiDocsToken';
 import {
   useApiReferenceSelection,
   WELCOME_HEADING_ID,
 } from './useApiReferenceSelection';
-import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useState } from 'react';
 import type { NormalizedApi } from '../../lib/openapi';
 
 /**
  * The master-detail API reference: an endpoint nav on the left, one swapping
  * detail region on the right (mirroring the Settings page). Owns the spec
- * fetch, the hidden-token fetch, the hash-driven selection, and the TWO
- * page-level live regions that must survive the detail swapping.
+ * fetch, the hash-driven selection, and the page-level spec-load live region.
  *
- * Both `role="status"` regions live HERE, outside the swapping detail: the
- * load-state region announces spec loading/ready/error, and the request-status
- * region carries the "try it out" form's announcements UP from the detail (via
- * `onStatusMessage`) so an in-flight request announcement is not cut off when
- * the user selects another endpoint and that form unmounts. The visible UI is
- * aria-hidden from announcement – the regions are the sole announcers.
+ * The single `role="status"` region lives HERE, outside the swapping detail, so
+ * its announcement survives the detail swapping: it announces spec
+ * loading/ready/error. The visible UI is aria-hidden from announcement – the
+ * region is the sole announcer.
  */
 
 interface ApiReferenceProps {
@@ -39,9 +34,6 @@ type LoadState =
 
 export default function ApiReference({ apiBaseUrl }: ApiReferenceProps) {
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
-  const [requestStatus, setRequestStatus] = useState('');
-  const { token, loading: tokenLoading, error: tokenError } = useApiDocsToken();
-  const { user } = useAuth();
 
   useEffect(() => {
     let isActive = true;
@@ -65,18 +57,8 @@ export default function ApiReference({ apiBaseUrl }: ApiReferenceProps) {
       <p role="status" aria-live="polite" className="sr-only">
         {describeLoadState(loadState)}
       </p>
-      <p role="status" aria-live="polite" className="sr-only">
-        {requestStatus}
-      </p>
       {loadState.status === 'ready' ? (
-        <Reference
-          api={loadState.api}
-          loggedIn={user !== null}
-          token={token}
-          tokenLoading={tokenLoading}
-          tokenError={tokenError}
-          onStatusMessage={setRequestStatus}
-        />
+        <Reference api={loadState.api} />
       ) : (
         <p
           aria-hidden="true"
@@ -99,22 +81,10 @@ export default function ApiReference({ apiBaseUrl }: ApiReferenceProps) {
 
 interface ReferenceProps {
   api: NormalizedApi;
-  loggedIn: boolean;
-  token: string;
-  tokenLoading: boolean;
-  tokenError: string | null;
-  onStatusMessage: (message: string) => void;
 }
 
 /** The loaded master-detail layout (only mounted once the spec is ready). */
-function Reference({
-  api,
-  loggedIn,
-  token,
-  tokenLoading,
-  tokenError,
-  onStatusMessage,
-}: ReferenceProps) {
+function Reference({ api }: ReferenceProps) {
   const { selectedSlug, selectedEndpoint, selectEndpoint } =
     useApiReferenceSelection(api.endpoints);
 
@@ -167,15 +137,10 @@ function Reference({
             <EndpointDetail
               key={selectedSlug}
               endpoint={selectedEndpoint}
-              loggedIn={loggedIn}
               serverOrigin={api.serverOrigin}
-              token={token}
-              tokenLoading={tokenLoading}
-              tokenError={tokenError}
-              onStatusMessage={onStatusMessage}
             />
           ) : (
-            <WelcomePanel serverOrigin={api.serverOrigin} loggedIn={loggedIn} />
+            <WelcomePanel serverOrigin={api.serverOrigin} />
           )}
         </div>
       </div>
