@@ -1,0 +1,42 @@
+# Keep the Docker build context small and secret-free. Everything the images
+# need is either a source file tracked in git or produced inside the build
+# stages (dist folders, generated Prisma client, installed node_modules).
+
+# Dependencies — reinstalled inside the build stage with `npm ci`.
+node_modules
+apps/*/node_modules
+
+# Build output — regenerated inside the build stage.
+dist
+apps/*/dist
+apps/api/src/prisma/generated
+
+# Secrets — env files never enter an image (values come from Compose/host env).
+.env
+.env.*
+apps/*/.env
+apps/*/.env.*
+apps/api/certs
+
+# Version control and CI.
+.git
+.github
+.gitignore
+
+# Local-only development and design artifacts.
+local
+screenshots
+*.png
+
+# Tuffgal visual-regression caches, baselines, and setup.
+tuffgal
+.cache
+
+# Editor and OS noise.
+.vscode
+.idea
+.DS_Store
+
+# Markdown docs — not needed inside either image (index.html is not markdown,
+# so this never touches the web app entry point).
+*.md

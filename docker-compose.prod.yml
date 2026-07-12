@@ -1,0 +1,112 @@
+# Production stack for the single-VPS deployment (docs/DEPLOYMENT.md, option 1):
+# Postgres, the NestJS API (which runs pg-boss in-process — no separate worker),
+# and Caddy serving the static web build and terminating TLS on one domain.
+#
+# Secrets are NOT committed. Every ${VAR} below is supplied at deploy time from
+# the host environment or an operator-provided env file kept out of the repo
+# (e.g. `docker compose --env-file /etc/linklater/production.env -f
+# docker-compose.prod.yml up -d`). docs/DEPLOYMENT.md's "Required human actions"
+# section lists every value and which ones the API refuses to start without
+# (JWT_SECRET, TOTP_ENCRYPTION_KEY, DATABASE_URL, APP_URL).
+#
+# Image tags: CI publishes both images to ghcr.io tagged with the commit SHA and
+# `latest` (DEPLOYMENT.md update-deploy flow). IMAGE_TAG selects which to run so
+# rollback is redeploying a prior SHA; it defaults to `latest`.
+#
+# Migrations run at deploy time, before the new API starts, e.g.
+#   docker compose -f docker-compose.prod.yml run --rm api \
+#     sh -c 'cd /app/apps/api && npx prisma migrate deploy'
+# (npm run migrate:deploy also runs `prisma generate`, which is already baked
+# into the image; the bare CLI call is the leaner deploy-time step.)
+
+services:
+  postgres:
+    # postgres:16 matches the CI-tested version. The official image ships the
+    # contrib modules, so the `unaccent` extension the search migration enables
+    # is available without an extra build step.
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # pg_isready gates the API's depends_on so the API never boots against a
+      # Postgres that has not finished initializing.
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  api:
+    # Published by CI to GHCR. Build locally with:
+    #   docker build -f apps/api/Dockerfile -t linklater-api .
+    image: ${API_IMAGE:-ghcr.io/nickschneble/linklater-api}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Core (API exits at startup without these — see main.ts).
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY}
+      APP_URL: ${APP_URL}
+      # Recommended in production: narrow CORS from the default open `*`.
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+      # Optional integrations (absent = feature simply off). See DEPLOYMENT.md.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-}
+      GOOGLE_LINK_CALLBACK_URL: ${GOOGLE_LINK_CALLBACK_URL:-}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
+      APPLE_KEY_ID: ${APPLE_KEY_ID:-}
+      APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
+      APPLE_CALLBACK_URL: ${APPLE_CALLBACK_URL:-}
+      EXTENSION_REDIRECT_URIS: ${EXTENSION_REDIRECT_URIS:-}
+      NODE_ENV: production
+      PORT: '3000'
+    # No published ports: only Caddy reaches the API, over the Compose network.
+    expose:
+      - '3000'
+
+  web:
+    # Caddy image with the static web bundle baked in at /srv (apps/web/Dockerfile).
+    # Build locally with:
+    #   docker build -f apps/web/Dockerfile \
+    #     --build-arg VITE_API_BASE_URL=/api -t linklater-web .
+    image: ${WEB_IMAGE:-ghcr.io/nickschneble/linklater-web}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      # Consumed by the mounted Caddyfile for TLS/vhost. Must resolve to this box.
+      DOMAIN: ${DOMAIN}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      # The production reverse-proxy + TLS config (overrides the image's
+      # self-contained static-only Caddyfile).
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Persist issued certificates and ACME state across restarts so Caddy does
+      # not re-request certificates (and hit Let's Encrypt rate limits) on every
+      # redeploy.
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:
