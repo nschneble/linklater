@@ -9,9 +9,12 @@
 # section lists every value and which ones the API refuses to start without
 # (JWT_SECRET, TOTP_ENCRYPTION_KEY, DATABASE_URL, APP_URL).
 #
-# Image tags: CI publishes both images to ghcr.io tagged with the commit SHA and
-# `latest` (DEPLOYMENT.md update-deploy flow). IMAGE_TAG selects which to run so
-# rollback is redeploying a prior SHA; it defaults to `latest`.
+# Image references: CI publishes both images to ghcr.io tagged with the commit
+# SHA and `latest` (DEPLOYMENT.md update-deploy flow). The deploy workflow passes
+# API_IMAGE / WEB_IMAGE (derived from github.repository_owner) and IMAGE_TAG at
+# deploy time; IMAGE_TAG selects which tag to run, so rollback is redeploying a
+# prior SHA. The ghcr.io/nschneble/* defaults below are only a fallback for a
+# hand-run local compose; the workflow is the source of truth for the owner.
 #
 # Migrations run at deploy time, before the new API starts, e.g.
 #   docker compose -f docker-compose.prod.yml run --rm api \
@@ -44,7 +47,7 @@ services:
   api:
     # Published by CI to GHCR. Build locally with:
     #   docker build -f apps/api/Dockerfile -t linklater-api .
-    image: ${API_IMAGE:-ghcr.io/nickschneble/linklater-api}:${IMAGE_TAG:-latest}
+    image: ${API_IMAGE:-ghcr.io/nschneble/linklater-api}:${IMAGE_TAG:-latest}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -85,7 +88,7 @@ services:
     # Build locally with:
     #   docker build -f apps/web/Dockerfile \
     #     --build-arg VITE_API_BASE_URL=/api -t linklater-web .
-    image: ${WEB_IMAGE:-ghcr.io/nickschneble/linklater-web}:${IMAGE_TAG:-latest}
+    image: ${WEB_IMAGE:-ghcr.io/nschneble/linklater-web}:${IMAGE_TAG:-latest}
     restart: unless-stopped
     depends_on:
       - api

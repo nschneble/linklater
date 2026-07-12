@@ -8,14 +8,23 @@
 #      then `docker compose up -d` (migrate BEFORE the new code starts).
 #   4. Poll `GET /health` until it returns 200 before declaring success.
 #
-# Trigger: manual (`workflow_dispatch`) + version tags (`push: tags: v*`).
-# DEPLOYMENT.md leaves the choice between "push to main" and "gate on a version
-# tag" to the maintainer. For a 1.0 release flow this workflow gates production
-# on an explicit `vX.Y.Z` tag: cutting a release is a deliberate act, not every
-# merge to main, and the commit SHA that each image is tagged with lines up with
-# the tag being released so the DEPLOYMENT.md rollback-by-SHA story stays exact.
-# `workflow_dispatch` covers the first deploy and any ad-hoc redeploy without a
-# new tag (choose the image tag to roll to via the `image_tag` input).
+# Two triggers, two distinct jobs:
+#
+#   * Version tag (`push: tags: v*`) — a RELEASE. Cutting a release is a
+#     deliberate act, not every merge to main. Both jobs run: build-and-push
+#     builds this tag's commit and publishes `:<sha>` + `:latest`, then deploy
+#     rolls the freshly built SHA onto the VPS.
+#
+#   * Manual (`workflow_dispatch`) — a REDEPLOY or ROLLBACK. build-and-push is
+#     SKIPPED (its `if:` gates it to push events), so a dispatch never rebuilds
+#     code and never clobbers `:latest` from an arbitrary ref. deploy still
+#     runs (its `if:` tolerates the skipped build) and rolls the image tag you
+#     name in the required `image_tag` input — typically a prior commit SHA to
+#     roll back, which is already in the registry and immutable. This keeps
+#     DEPLOYMENT.md's "no rebuild needed" rollback contract exact.
+#
+# The `image_tag` input is required on dispatch and is validated against a
+# strict pattern before it reaches `docker compose pull`.
 #
 # ---------------------------------------------------------------------------
 # Required GitHub Actions secrets (Settings -> Secrets and variables -> Actions)
@@ -50,9 +59,8 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: 'Image tag to deploy (commit SHA or `latest`). Use a prior SHA to roll back.'
-        required: false
-        default: latest
+        description: 'Image tag to deploy: a prior commit SHA to roll back, or `latest` for the newest build. Required — there is no default, so a bare dispatch cannot silently roll forward to `latest`.'
+        required: true
   push:
     tags:
       - 'v*'
@@ -74,6 +82,10 @@ env:
 
 jobs:
   build-and-push:
+    # Only a version-tag push builds and publishes images. A manual dispatch is
+    # a redeploy/rollback of an already-published tag, so it skips this job and
+    # never rebuilds HEAD or clobbers `:latest` from an arbitrary ref.
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -123,19 +135,39 @@ jobs:
 
   deploy:
     needs: build-and-push
+    # Run when build-and-push SUCCEEDED (tag push) or was SKIPPED (manual
+    # dispatch), but not when it FAILED. `always()` is required because a job
+    # that `needs:` a skipped job is itself skipped under the implicit
+    # `success()` gate; the result guard then re-excludes the failure path.
+    if: ${{ always() && (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       # The image tag to roll to: the manual input when dispatched, otherwise the
       # commit SHA that this tag build produced. Both are immutable references so
-      # a redeploy is deterministic and a rollback is just a prior SHA.
+      # a redeploy is deterministic and a rollback is just a prior SHA. The tag
+      # flows straight into `docker compose pull`, so validate it against a
+      # strict Docker-tag pattern and fail fast on anything unexpected.
       - name: Resolve image tag
         id: tag
+        env:
+          INPUT_IMAGE_TAG: ${{ github.event.inputs.image_tag }}
         run: |
-          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
-            echo "value=${{ github.event.inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            RESOLVED_TAG="$INPUT_IMAGE_TAG"
+            if [ -z "$RESOLVED_TAG" ]; then
+              echo "::error::image_tag is required on a manual dispatch (a prior SHA to roll back, or \`latest\`)."
+              exit 1
+            fi
           else
-            echo "value=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            RESOLVED_TAG="${{ github.sha }}"
           fi
+
+          if ! printf '%s' "$RESOLVED_TAG" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'; then
+            echo "::error::Invalid image_tag '$RESOLVED_TAG'. Expected a Docker tag: 1-128 chars of [A-Za-z0-9._-], not starting with a separator."
+            exit 1
+          fi
+
+          echo "value=$RESOLVED_TAG" >> "$GITHUB_OUTPUT"
 
       # Deploy over SSH: sync secrets, pull the resolved images, migrate the
       # database BEFORE the new code starts (prisma migrate deploy is written to
@@ -149,7 +181,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          envs: IMAGE_TAG,DEPLOY_PATH,PRODUCTION_ENV,REGISTRY,GHCR_ACTOR,GHCR_TOKEN,HEALTHCHECK_URL
+          envs: IMAGE_TAG,API_IMAGE,WEB_IMAGE,DEPLOY_PATH,PRODUCTION_ENV,REGISTRY,GHCR_ACTOR,GHCR_TOKEN,HEALTHCHECK_URL
           script: |
             set -euo pipefail
             cd "$DEPLOY_PATH"
@@ -163,7 +195,10 @@ jobs:
             # rate-limited-when-anonymous) images.
             echo "$GHCR_TOKEN" | docker login "$REGISTRY" -u "$GHCR_ACTOR" --password-stdin
 
-            export IMAGE_TAG
+            # Forward the image references resolved from github.repository_owner
+            # so the compose file's baked-in defaults are never the source of
+            # truth (they exist only as a last-resort local-build fallback).
+            export IMAGE_TAG API_IMAGE WEB_IMAGE
             COMPOSE="docker compose --env-file production.env -f docker-compose.prod.yml"
 
             # Pull the resolved images.
@@ -199,6 +234,8 @@ jobs:
             exit 1
         env:
           IMAGE_TAG: ${{ steps.tag.outputs.value }}
+          API_IMAGE: ${{ env.API_IMAGE }}
+          WEB_IMAGE: ${{ env.WEB_IMAGE }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
           REGISTRY: ${{ env.REGISTRY }}

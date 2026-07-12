@@ -180,8 +180,9 @@ The reasoning:
 
 A merged pull request reaches production like this:
 
-1. **Merge to `main`.** The deploy workflow triggers on push to `main` (or on a
-   version tag, if you prefer to gate production on explicit releases).
+1. **Cut a version tag.** The deploy workflow builds and publishes images on a
+   version-tag push (`v*`), so production is gated on an explicit release rather
+   than every merge to `main`. Pushing `vX.Y.Z` builds that commit and deploys it.
 2. **Build images.** GitHub Actions builds the API image and the web image. The
    web image is built with the production `VITE_API_BASE_URL` baked in, because
    Vite resolves that variable at build time.
@@ -202,8 +203,11 @@ A merged pull request reaches production like this:
 ### Rollback
 
 Because every image is tagged with its commit SHA, rollback is redeploying the
-previous SHA: point the Compose file at the prior tag and `docker compose up -d`.
-The images are immutable and still in the registry, so no rebuild is needed.
+previous SHA. Run the deploy workflow manually (`workflow_dispatch`) and set the
+required `image_tag` input to the prior SHA. The manual dispatch skips the
+build-and-push job entirely, so it never rebuilds code or overwrites `:latest`;
+it only pulls the image tag you name and rolls the services onto it. The images
+are immutable and still in the registry, so no rebuild is needed.
 
 The one asymmetry to respect: application code rolls back instantly, database
 migrations do not. A migration that only adds columns or tables is safe to leave
@@ -249,8 +253,9 @@ cannot) perform.
   `GOOGLE_*` / `APPLE_*` credentials. Providers are only enabled when their full
   credential set is present, so an un-reconfigured provider is simply off rather
   than broken.
-- **First deploy.** Trigger the deploy workflow once (merge to `main` or run it
-  manually). The first run creates the database, applies all migrations
+- **First deploy.** Trigger the deploy workflow once by pushing a version tag
+  (`vX.Y.Z`), which builds the images and deploys them. The first run creates the
+  database, applies all migrations
   (including the one that enables `unaccent`), and brings the stack up. Confirm
   `GET /health` returns `200` and that you can register an account and run a
   search.
