@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import { CompactLogger } from './common/compact-logger.js';
+import { parseCorsOrigin } from './common/cors-origin.js';
 import { assertTestingUiNotInProduction } from './common/testing-ui.js';
 import { LinksModule } from './links/links.module.js';
 import type { Request, Response, NextFunction } from 'express';
@@ -66,7 +67,9 @@ function validateRequiredEnvVars() {
  * - Chrome Private Network Access header middleware for bookmarklet support
  *   (browsers block public pages from fetching localhost without this header).
  * - CORS with open origin (`*`) by default so the bookmarklet can POST from
- *   any third-party website. Set `CORS_ORIGIN` to restrict this in production.
+ *   any third-party website. Set `CORS_ORIGIN` to restrict this in production;
+ *   it accepts a single origin or a comma-separated list of origins (front-end
+ *   domain plus extension origins), parsed by `parseCorsOrigin`.
  */
 async function bootstrap() {
   validateRequiredEnvVars();
@@ -96,13 +99,17 @@ async function bootstrap() {
   // CORS is intentionally open (`*`) by default so the bookmarklet can POST
   // from any website. In production set `CORS_ORIGIN` to the union of the
   // front-end domain and any extension origins
-  // (`chrome-extension://<id>`, `moz-extension://<id>`, etc.) – bookmarklets
-  // are an Origin-less navigation in modern browsers and keep working under
-  // a restricted CORS policy. `credentials: false` is required when
-  // `origin: '*'` and is harmless under a restricted origin since the API
-  // uses JWT Bearer tokens, not cookies.
+  // (`chrome-extension://<id>`, `moz-extension://<id>`, etc.). `CORS_ORIGIN`
+  // accepts a single origin or a comma-separated list – `parseCorsOrigin`
+  // splits the list into the array form the `cors` middleware matches
+  // per-entry (a raw comma-joined string would be exact-matched as one
+  // literal origin and never match). Bookmarklets are an Origin-less
+  // navigation in modern browsers and keep working under a restricted CORS
+  // policy. `credentials: false` is required when `origin: '*'` and is
+  // harmless under a restricted origin since the API uses JWT Bearer tokens,
+  // not cookies.
   app.enableCors({
-    origin: process.env.CORS_ORIGIN ?? '*',
+    origin: parseCorsOrigin(process.env.CORS_ORIGIN),
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: false,

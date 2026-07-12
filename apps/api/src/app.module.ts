@@ -28,6 +28,9 @@ import { UsersModule } from './users/users.module.js';
       { name: 'auth-disable-mfa', ttl: 900000, limit: 5 },
       // Re-auth gate for recovery code operations
       { name: 'auth-reauth', ttl: 900000, limit: 5 },
+      // PAT creation – JWT-gated, so no brute-force vector, but caps a
+      // compromised or runaway session from spamming token rows (20 / hour)
+      { name: 'token-create', ttl: 3600000, limit: 20 },
     ]),
     AuthModule,
     LinksModule,
