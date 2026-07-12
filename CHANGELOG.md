@@ -6,11 +6,16 @@
 
 ### Added
 
+- Container infrastructure and a tag-push deploy workflow for single-VPS hosting
+- Hosting and deployment decision record
 - Password/MFA confirmation step to delete your account
+- Rate limit on API token creation
 - Reading suggestions on an empty links view
+- Unauthenticated `/health` endpoint for orchestrators and deploy checks
 
 ### Changed
 
+- `CORS_ORIGIN` now accepts a comma-separated list of origins
 - Hide new API token if you immediately revoke it
 - Show a success toast after regenerating the bookmarklet
 - Stop underlining Font Awesome icons in CVD mode

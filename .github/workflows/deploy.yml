@@ -220,9 +220,8 @@ jobs:
               DEPLOY_DOMAIN=$(grep -E '^DOMAIN=' production.env | head -n1 | cut -d= -f2- | tr -d '"')
               HEALTHCHECK_URL="https://${DEPLOY_DOMAIN}/api/health"
             fi
-            HEALTH_URL="$HEALTHCHECK_URL"
             for attempt in $(seq 1 30); do
-              status=$(curl -s -o /dev/null -w '%{http_code}' "$HEALTH_URL" || echo 000)
+              status=$(curl -s -o /dev/null -w '%{http_code}' "$HEALTHCHECK_URL" || echo 000)
               if [ "$status" = "200" ]; then
                 echo "Health check passed (HTTP 200) after ${attempt} attempt(s)."
                 exit 0

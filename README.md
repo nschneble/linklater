@@ -82,7 +82,7 @@ linklater/
 
 ## Deployment
 
-Hosting choices and the production deploy flow are documented in [the deployment decision record](docs/DEPLOYMENT.md).
+Hosting choices and the production deploy flow are documented in [the deployment decision record](docs/DEPLOYMENT.md). In short: pushing a version tag (`vX.Y.Z`) builds the container images, publishes them, and rolls them onto the VPS over SSH.
 
 ## Code health
 

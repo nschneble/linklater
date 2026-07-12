@@ -139,4 +139,6 @@ All environment variables, defaults, and local development notes are in `.env.ex
 
 The OpenAPI spec is served at `/openapi.json`
 
+An unauthenticated `/health` endpoint returns `200` when the database answers a `SELECT 1` and `503` when it does not, so orchestrators and deploy checks can gate on it
+
 Coding patterns, NestJS rules, and migration requirements are documented in `.claude/CLAUDE.md` at the repo root

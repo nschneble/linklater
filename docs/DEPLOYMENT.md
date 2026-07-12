@@ -138,7 +138,9 @@ of Compose files and a Postgres dump.
 
 The implementation waves that follow build exactly this:
 
-- An API `Dockerfile` (Node 22, runs `node dist/main` after `migrate:deploy`).
+- An API `Dockerfile` (Node 22, runs `node dist/main`). Migrations are not run by
+  the image entrypoint; the deploy workflow runs them as a separate one-shot
+  Compose step before the new API starts.
 - A web `Dockerfile` that produces the static build and serves it, with TLS, via
   the proxy.
 - A `docker-compose.prod.yml` wiring Postgres, the API, and the web/proxy
@@ -196,9 +198,11 @@ A merged pull request reaches production like this:
    to roll the API and web services onto the new images. Order matters: migrate
    before the new code starts, because `prisma migrate deploy` is written to be
    forward-compatible with the currently running version.
-5. **Verify.** The workflow polls `GET /health` until it returns `200` before
+5. **Verify.** The workflow polls `GET /api/health` until it returns `200` before
    considering the deploy successful, so a container that comes up but cannot
    reach the database fails the deploy loudly instead of silently serving errors.
+   The probe is reached at `/api/health` from the public edge because Caddy
+   proxies only `/api/*` to the API; everything else is the static web app.
 
 ### Rollback
 
@@ -237,7 +241,9 @@ cannot) perform.
     `openssl rand -hex 32`.
   - `DATABASE_URL`: the connection string for the Postgres container, including a
     strong database password you set (do not ship a default password to
-    production).
+    production). The host is the Compose service name, not `localhost`, because
+    the API reaches Postgres over the Compose network:
+    `postgresql://USER:PASS@postgres:5432/DB`.
   - `APP_URL`: the public origin, for example `https://linklater.example.com`.
     Every transactional email and OAuth redirect embeds this, so an unset or
     wrong value ships dead links to users.
@@ -257,8 +263,9 @@ cannot) perform.
   (`vX.Y.Z`), which builds the images and deploys them. The first run creates the
   database, applies all migrations
   (including the one that enables `unaccent`), and brings the stack up. Confirm
-  `GET /health` returns `200` and that you can register an account and run a
-  search.
+  `GET /api/health` returns `200` (Caddy proxies only `/api/*` to the API, so
+  `https://<your-domain>/api/health` is the public path) and that you can
+  register an account and run a search.
 
 ## Sources
 
