@@ -80,6 +80,10 @@ linklater/
 └─ README.md
 ```
 
+## Deployment
+
+Hosting choices and the production deploy flow are documented in [the deployment decision record](docs/DEPLOYMENT.md).
+
 ## Code health
 
 Linklater's code quality is tracked with [Desloppify](https://github.com/peteromallet/desloppify), which scores each app independently across file health, code quality, duplication, security, and test health.
