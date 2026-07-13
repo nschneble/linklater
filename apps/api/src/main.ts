@@ -5,6 +5,7 @@ import { AppModule } from './app.module.js';
 import { CompactLogger } from './common/compact-logger.js';
 import { parseCorsOrigin } from './common/cors-origin.js';
 import { validateRequiredEnvVars } from './common/required-env.js';
+import { applySecurityHeaders } from './common/security-headers.js';
 import { assertTestingUiNotInProduction } from './common/testing-ui.js';
 import { LinksModule } from './links/links.module.js';
 import type { Request, Response, NextFunction } from 'express';
@@ -38,6 +39,7 @@ function loadHttpsOptions() {
  * Application entry point. Configures and starts the NestJS HTTP server.
  *
  * Global configuration applied here:
+ * - Helmet security headers on every response (see `applySecurityHeaders`).
  * - `ValidationPipe` with `whitelist` and `forbidNonWhitelisted` to reject
  *   unknown DTO fields before they reach the controller.
  * - Chrome Private Network Access header middleware for bookmarklet support
@@ -61,6 +63,10 @@ async function bootstrap() {
   // jobs and Prisma (PrismaService) never releases its pool, dropping
   // connections and redelivering jobs on the next boot.
   app.enableShutdownHooks();
+
+  // First in the middleware chain so every response — including errors from
+  // later middleware — carries the security headers.
+  applySecurityHeaders(app);
 
   app.useGlobalPipes(
     new ValidationPipe({
