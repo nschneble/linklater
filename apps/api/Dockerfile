@@ -43,8 +43,14 @@ COPY apps/api ./apps/api
 # apps/api/src/prisma/generated (gitignored, so absent from the build context)
 # and `nest build` (tsc) compiles it into dist/. Skip the postinstall marker to
 # force a clean generate against the copied schema.
+#
+# The dummy DATABASE_URL exists only because prisma.config.ts resolves
+# env('DATABASE_URL') at config-load time and throws when it is unset;
+# `prisma generate` itself never connects. RUN-scoped, so nothing is baked
+# into the image — deploy-time `prisma migrate deploy` gets the real URL from
+# the Compose environment.
 WORKDIR /app/apps/api
-RUN npx prisma generate
+RUN DATABASE_URL="postgresql://build:build@build:5432/build" npx prisma generate
 
 # Compile the API to apps/api/dist (nest-cli sourceRoot=src, tsconfig
 # outDir=./dist → entry is dist/main.js).
