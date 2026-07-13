@@ -60,9 +60,10 @@ npm run tuffgal:approve -- --desktop --new-only   # Pass Tuffgal flags after `--
 # Database
 npm run migrate --workspace @linklater/api        # Run migrations + regenerate client
 npm run migrate:reset --workspace @linklater/api  # Wipe, re-run migrations + regenerate client
+npm run migrate:deploy --workspace @linklater/api # Production: apply committed migrations + regenerate client (non-interactive)
 ```
 
-> **Note:** `migrate` + `migrate:reset` chain `prisma migrate dev` with `prisma generate`. Prisma 7 `prisma-client` generator need custom `output` path — `migrate dev` alone no auto-regenerate client.
+> **Note:** `migrate`, `migrate:reset` + `migrate:deploy` chain their Prisma command with `prisma generate`. Prisma 7 `prisma-client` generator need custom `output` path — `migrate dev` alone no auto-regenerate client.
 
 ## Third-Party Integrations
 
