@@ -53,16 +53,18 @@ configuration beyond the domain name.
 
 | Aspect        | Detail                                                                                                                                                                                                                                   |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Monthly cost  | Roughly $4 to $6. [Hetzner CX22](https://www.hetzner.com/cloud) (2 vCPU, 4 GB, 40 GB, 20 TB traffic) is about $4.59; a [DigitalOcean basic droplet](https://www.digitalocean.com/pricing/droplets) starts at $4. Verify current pricing. |
+| Monthly cost  | Roughly $6. The real floor for this stack is 2 GB of RAM (Postgres + Node + Caddy do not fit in the 512 MB tier the old "$4 droplet" figure pointed at), and the 2026 DRAM price shock repriced the low end. [InterServer](https://www.interserver.net/vps/) (2 slices: 1 core, 4 GB, 80 GB SSD, US) is $6/month and is the current pick; see `local/docs/VPS-PROVIDER-RESEARCH.md` for how that was chosen. Verify current pricing. |
 | Ops burden    | You own the OS. That means occasional `apt upgrade`, watching disk usage, and reading the odd security advisory. For one app on one box this is minutes per month, not hours.                                                            |
 | Backup story  | `pg_dump` on a cron schedule to a second location (see the backup section). The provider's own snapshots are an optional second layer.                                                                                                   |
 | TLS story     | Automatic. Caddy fetches and renews Let's Encrypt certificates. You point DNS at the box and never touch a certificate again.                                                                                                            |
 | Deploy/update | GitHub Actions builds images, pushes to a registry, then SSHes in to pull and restart. Detailed in the update-deploy section.                                                                                                            |
 | Exit cost     | Lowest of any option. Everything is a Compose file and a Postgres dump. Any Linux box with Docker anywhere runs it. There is no provider-specific glue to unwind.                                                                        |
 
-This is provider-agnostic on purpose. Hetzner and DigitalOcean are named as
-concrete price references, but the setup is "a Linux VM with Docker," which
-every VPS provider sells.
+This is provider-agnostic on purpose. InterServer is named as a concrete price
+reference, but the setup is "a Linux VM with Docker," which every VPS provider
+sells. (Hetzner was the earlier reference; its June 2026 US price adjustment
+roughly tripled the relevant plans, so it no longer fits the budget in a US
+region — the research doc covers the full comparison.)
 
 ### 2. VPS + Coolify or Dokku (self-hosted PaaS layer)
 
@@ -130,8 +132,8 @@ or personal-experiment target; not the production recommendation.
 
 It is the option the project's own rules point at. It is fully self-hosted and
 FOSS end to end (Docker, Postgres, Caddy, Let's Encrypt). It is the cheapest
-option that a personal app can actually rely on, at roughly $4 to $6/month. It
-is provider-agnostic, so a price hike or a bad support experience is a
+option that a personal app can actually rely on, at roughly $6/month for a 4 GB
+box. It is provider-agnostic, so a price hike or a bad support experience is a
 one-evening migration rather than a re-platforming project. And it has the
 lowest exit cost of anything here: the whole production definition is a handful
 of Compose files and a Postgres dump.
@@ -228,8 +230,12 @@ involve accounts, secrets, and DNS that automation should not (and in some cases
 cannot) perform.
 
 - **Provider signup.** Create an account with your chosen VPS provider and
-  provision the smallest instance. Add your SSH public key during creation so
-  the deploy workflow can reach the box.
+  provision the instance (4 GB is the "don't think about it" tier; 2 GB is the
+  floor). Some providers let you add an SSH public key during creation; others
+  (InterServer among them) hand you a root password and you add your key on
+  first login. Either way the deploy workflow reaches the box as a dedicated
+  `deploy` user whose key you install during setup, not as root — see
+  `local/docs/INTERSERVER-SETUP.md`.
 - **Domain and DNS.** Register or reuse a domain and point an `A` record (and
   `AAAA` if you want IPv6) at the VPS IP. Caddy needs the domain resolving to the
   box before it can obtain a certificate.
@@ -271,8 +277,8 @@ cannot) perform.
 
 Pricing and platform state, checked July 2026:
 
-- [Hetzner Cloud pricing](https://www.hetzner.com/cloud)
-- [DigitalOcean droplet pricing](https://www.digitalocean.com/pricing/droplets)
+- [InterServer VPS pricing](https://www.interserver.net/vps/) (current pick)
+- [Hetzner Cloud pricing](https://www.hetzner.com/cloud) and [DigitalOcean droplet pricing](https://www.digitalocean.com/pricing/droplets) (earlier references; see `local/docs/VPS-PROVIDER-RESEARCH.md` for why the pick moved)
 - [GitHub Container Registry documentation](https://docs.github.com/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
 - [Fly.io](https://fly.io), [Railway](https://railway.com), and [Render](https://render.com) pricing pages
 - [Caddy automatic HTTPS](https://caddyserver.com/docs/automatic-https)

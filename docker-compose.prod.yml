@@ -29,12 +29,18 @@ services:
     # is available without an extra build step.
     image: postgres:16
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
       - postgres-data:/var/lib/postgresql/data
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     healthcheck:
       # pg_isready gates the API's depends_on so the API never boots against a
       # Postgres that has not finished initializing.
@@ -52,6 +58,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     environment:
       # Core (API exits at startup without these — see main.ts).
       DATABASE_URL: ${DATABASE_URL}
@@ -78,6 +88,7 @@ services:
       APPLE_CALLBACK_URL: ${APPLE_CALLBACK_URL:-}
       EXTENSION_REDIRECT_URIS: ${EXTENSION_REDIRECT_URIS:-}
       NODE_ENV: production
+      NODE_OPTIONS: '--max-old-space-size=768'
       PORT: '3000'
     # No published ports: only Caddy reaches the API, over the Compose network.
     expose:
