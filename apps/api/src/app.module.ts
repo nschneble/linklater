@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module.js';
+import { HealthModule } from './health/health.module.js';
 import { LinksModule } from './links/links.module.js';
 import { MetadataModule } from './metadata/metadata.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -28,8 +29,12 @@ import { UsersModule } from './users/users.module.js';
       { name: 'auth-disable-mfa', ttl: 900000, limit: 5 },
       // Re-auth gate for recovery code operations
       { name: 'auth-reauth', ttl: 900000, limit: 5 },
+      // PAT creation – JWT-gated, so no brute-force vector, but caps a
+      // compromised or runaway session from spamming token rows (20 / hour)
+      { name: 'token-create', ttl: 3600000, limit: 20 },
     ]),
     AuthModule,
+    HealthModule,
     LinksModule,
     MetadataModule,
     PrismaModule,

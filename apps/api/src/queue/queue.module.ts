@@ -15,7 +15,10 @@ dotenv.config();
         const connectionString = process.env.DATABASE_URL;
         if (!connectionString) throw new Error('DATABASE_URL is not set');
 
-        return new PgBoss(connectionString);
+        return new PgBoss({
+          connectionString: connectionString,
+          max: 5,
+        });
       },
     },
     QueueService,

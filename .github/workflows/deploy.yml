@@ -1,0 +1,246 @@
+# Deploy Linklater to the single-VPS production stack (docs/DEPLOYMENT.md,
+# option 1: one Docker Compose stack behind Caddy). This is the automation that
+# implements DEPLOYMENT.md's "Update-deploy flow" section, step for step:
+#
+#   1. Build the API and web images.                          (build-and-push)
+#   2. Publish both to ghcr.io, tagged with the commit SHA + `latest`.
+#   3. SSH to the VPS, pull the images, run `prisma migrate deploy`,           (deploy)
+#      then `docker compose up -d` (migrate BEFORE the new code starts).
+#   4. Poll `GET /api/health` (the public edge) until it returns 200 before declaring success.
+#
+# Two triggers, two distinct jobs:
+#
+#   * Version tag (`push: tags: v*`) — a RELEASE. Cutting a release is a
+#     deliberate act, not every merge to main. Both jobs run: build-and-push
+#     builds this tag's commit and publishes `:<sha>` + `:latest`, then deploy
+#     rolls the freshly built SHA onto the VPS.
+#
+#   * Manual (`workflow_dispatch`) — a REDEPLOY or ROLLBACK. build-and-push is
+#     SKIPPED (its `if:` gates it to push events), so a dispatch never rebuilds
+#     code and never clobbers `:latest` from an arbitrary ref. deploy still
+#     runs (its `if:` tolerates the skipped build) and rolls the image tag you
+#     name in the required `image_tag` input — typically a prior commit SHA to
+#     roll back, which is already in the registry and immutable. This keeps
+#     DEPLOYMENT.md's "no rebuild needed" rollback contract exact.
+#
+# The `image_tag` input is required on dispatch and is validated against a
+# strict pattern before it reaches `docker compose pull`.
+#
+# ---------------------------------------------------------------------------
+# Required GitHub Actions secrets (Settings -> Secrets and variables -> Actions)
+# ---------------------------------------------------------------------------
+# Infrastructure (this workflow's own inputs):
+#   SSH_HOST        Hostname or IP of the VPS.
+#   SSH_USER        SSH login user on the VPS (must be in the `docker` group).
+#   SSH_KEY         Private SSH key (PEM) whose public half is on the VPS.
+#   SSH_PORT        (optional) SSH port; defaults to 22 if unset.
+#   DEPLOY_PATH     Absolute path on the VPS holding docker-compose.prod.yml +
+#                   Caddyfile (checked out / copied there once, by hand).
+#   PRODUCTION_ENV  The full production env file contents (KEY=value lines) that
+#                   docker-compose.prod.yml reads via --env-file. This bundles
+#                   every application secret DEPLOYMENT.md's "Required human
+#                   actions" section lists so they never touch the repo:
+#                     JWT_SECRET, TOTP_ENCRYPTION_KEY, DATABASE_URL, APP_URL,
+#                     POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, DOMAIN,
+#                     CORS_ORIGIN, and any optional SMTP_* / GOOGLE_* / APPLE_* /
+#                     EXTENSION_REDIRECT_URIS values.
+#
+# GHCR authentication uses the built-in GITHUB_TOKEN (no secret to create); the
+# `packages: write` permission below lets it push to ghcr.io/<owner>/*.
+#
+# HEALTHCHECK_URL   (optional) Public URL to poll after deploy; defaults to
+#                   https://${DOMAIN}/api/health via the PRODUCTION_ENV DOMAIN.
+#                   Override as a repository *variable* (vars) if the health
+#                   probe lives at a different origin.
+
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy: a prior commit SHA to roll back, or `latest` for the newest build. Required — there is no default, so a bare dispatch cannot silently roll forward to `latest`.'
+        required: true
+  push:
+    tags:
+      - 'v*'
+
+# Least privilege: read the repo, write packages (push images to GHCR).
+permissions:
+  contents: read
+  packages: write
+
+# Never let two production deploys race each other onto the same box.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  API_IMAGE: ghcr.io/${{ github.repository_owner }}/linklater-api
+  WEB_IMAGE: ghcr.io/${{ github.repository_owner }}/linklater-web
+
+jobs:
+  build-and-push:
+    # Only a version-tag push builds and publishes images. A manual dispatch is
+    # a redeploy/rollback of an already-published tag, so it skips this job and
+    # never rebuilds HEAD or clobbers `:latest` from an arbitrary ref.
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Both images are tagged with the commit SHA (immutable, rollback target)
+      # and `latest` (what a plain `docker compose up -d` pulls by default), per
+      # DEPLOYMENT.md's publish step.
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ${{ env.API_IMAGE }}:${{ github.sha }}
+            ${{ env.API_IMAGE }}:latest
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+
+      # The web image bakes VITE_API_BASE_URL at build time (Vite resolves it
+      # then, not at runtime). `/api` matches the single-domain Caddy shape where
+      # the web app is served at / and the API is proxied under /api/*.
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_BASE_URL=/api
+          tags: |
+            ${{ env.WEB_IMAGE }}:${{ github.sha }}
+            ${{ env.WEB_IMAGE }}:latest
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+  deploy:
+    needs: build-and-push
+    # Run when build-and-push SUCCEEDED (tag push) or was SKIPPED (manual
+    # dispatch), but not when it FAILED. `always()` is required because a job
+    # that `needs:` a skipped job is itself skipped under the implicit
+    # `success()` gate; the result guard then re-excludes the failure path.
+    if: ${{ always() && (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    steps:
+      # The image tag to roll to: the manual input when dispatched, otherwise the
+      # commit SHA that this tag build produced. Both are immutable references so
+      # a redeploy is deterministic and a rollback is just a prior SHA. The tag
+      # flows straight into `docker compose pull`, so validate it against a
+      # strict Docker-tag pattern and fail fast on anything unexpected.
+      - name: Resolve image tag
+        id: tag
+        env:
+          INPUT_IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            RESOLVED_TAG="$INPUT_IMAGE_TAG"
+            if [ -z "$RESOLVED_TAG" ]; then
+              echo "::error::image_tag is required on a manual dispatch (a prior SHA to roll back, or \`latest\`)."
+              exit 1
+            fi
+          else
+            RESOLVED_TAG="${{ github.sha }}"
+          fi
+
+          if ! printf '%s' "$RESOLVED_TAG" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'; then
+            echo "::error::Invalid image_tag '$RESOLVED_TAG'. Expected a Docker tag: 1-128 chars of [A-Za-z0-9._-], not starting with a separator."
+            exit 1
+          fi
+
+          echo "value=$RESOLVED_TAG" >> "$GITHUB_OUTPUT"
+
+      # Deploy over SSH: sync secrets, pull the resolved images, migrate the
+      # database BEFORE the new code starts (prisma migrate deploy is written to
+      # be forward-compatible with the still-running old version), then roll the
+      # services. Finally poll /api/health (the public edge) so a container that comes up but cannot
+      # reach Postgres fails the deploy loudly. See DEPLOYMENT.md.
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          envs: IMAGE_TAG,API_IMAGE,WEB_IMAGE,DEPLOY_PATH,PRODUCTION_ENV,REGISTRY,GHCR_ACTOR,GHCR_TOKEN,HEALTHCHECK_URL
+          script: |
+            set -euo pipefail
+            cd "$DEPLOY_PATH"
+
+            # Write the production env file (secrets never live on disk in the
+            # repo; this is the operator env file docker-compose.prod.yml reads).
+            umask 077
+            printf '%s\n' "$PRODUCTION_ENV" > production.env
+
+            # Log the VPS's Docker into GHCR so it can pull the (public, but
+            # rate-limited-when-anonymous) images.
+            echo "$GHCR_TOKEN" | docker login "$REGISTRY" -u "$GHCR_ACTOR" --password-stdin
+
+            # Forward the image references resolved from github.repository_owner
+            # so the compose file's baked-in defaults are never the source of
+            # truth (they exist only as a last-resort local-build fallback).
+            export IMAGE_TAG API_IMAGE WEB_IMAGE
+            COMPOSE="docker compose --env-file production.env -f docker-compose.prod.yml"
+
+            # Pull the resolved images.
+            $COMPOSE pull
+
+            # Migrate BEFORE starting the new API code (one-shot container).
+            $COMPOSE run --rm api sh -c 'cd /app/apps/api && npx prisma migrate deploy'
+
+            # Roll the services onto the new images.
+            $COMPOSE up -d
+
+            docker logout "$REGISTRY" || true
+
+            # Poll /api/health (the public edge) until 200 (or fail the deploy).
+            # The container HEALTHCHECK polls bare /health directly (the internal
+            # API route is unprefixed; the /api prefix is added by the Caddy
+            # edge). It returns 200 only
+            # when the API can reach Postgres, so this catches a boot that comes
+            # up but cannot serve. Default the URL from DOMAIN in the env file
+            # just written (grep it out rather than sourcing the whole file).
+            if [ -z "${HEALTHCHECK_URL:-}" ]; then
+              DEPLOY_DOMAIN=$(grep -E '^DOMAIN=' production.env | head -n1 | cut -d= -f2- | tr -d '"')
+              HEALTHCHECK_URL="https://${DEPLOY_DOMAIN}/api/health"
+            fi
+            for attempt in $(seq 1 30); do
+              status=$(curl -s -o /dev/null -w '%{http_code}' "$HEALTHCHECK_URL" || echo 000)
+              if [ "$status" = "200" ]; then
+                echo "Health check passed (HTTP 200) after ${attempt} attempt(s)."
+                exit 0
+              fi
+              echo "Health check attempt ${attempt}: HTTP ${status}; retrying in 5s."
+              sleep 5
+            done
+            echo "Health check never returned 200; deploy failed."
+            exit 1
+        env:
+          IMAGE_TAG: ${{ steps.tag.outputs.value }}
+          API_IMAGE: ${{ env.API_IMAGE }}
+          WEB_IMAGE: ${{ env.WEB_IMAGE }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
+          REGISTRY: ${{ env.REGISTRY }}
+          GHCR_ACTOR: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL }}

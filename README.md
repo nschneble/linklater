@@ -80,26 +80,9 @@ linklater/
 └─ README.md
 ```
 
-## Code health
+## Deployment
 
-Linklater's code quality is tracked with [Desloppify](https://github.com/peteromallet/desloppify), which scores each app independently across file health, code quality, duplication, security, and test health.
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <a href="apps/api/scorecard.png">
-        <img src="apps/api/scorecard.png" alt="apps/api Desloppify scorecard" />
-      </a>
-      <br><sub><em>api</em></sub>
-    </td>
-    <td align="center" width="50%">
-      <a href="apps/web/scorecard.png">
-        <img src="apps/web/scorecard.png" alt="apps/web Desloppify scorecard" />
-      </a>
-      <br><sub><em>web</em></sub>
-    </td>
-  </tr>
-</table>
+Hosting choices and the production deploy flow are documented in [the deployment decision record](docs/DEPLOYMENT.md). In short: pushing a version tag (`vX.Y.Z`) builds the container images, publishes them, and rolls them onto the VPS over SSH.
 
 ## Bookmarklet
 

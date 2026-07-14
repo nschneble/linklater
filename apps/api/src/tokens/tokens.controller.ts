@@ -16,8 +16,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
+import { CustomThrottlerGuard } from '../auth/custom-throttler.guard.js';
 import { JwtAuthGuard, type AuthRequest } from '../auth/index.js';
+import { ThrottleMessage } from '../auth/throttle-message.decorator.js';
 import { ApiDocsTokensService } from './api-docs-tokens.service.js';
 import { BookmarkletTokensService } from './bookmarklet-tokens.service.js';
 import { CreateTokenDto } from './dto/create-token.dto.js';
@@ -45,6 +48,13 @@ export class TokensController {
     description: 'Token created. The raw token value is shown only this once.',
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many token-creation attempts.',
+  })
+  @UseGuards(CustomThrottlerGuard)
+  @Throttle({ 'token-create': { ttl: 3600000, limit: 20 } })
+  @ThrottleMessage('Too many token-creation attempts')
   @Post()
   async create(@Req() request: AuthRequest, @Body() body: CreateTokenDto) {
     const userId = request.user.userId;

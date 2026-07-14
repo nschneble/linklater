@@ -1,10 +1,12 @@
 import { jest } from '@jest/globals';
 
 import { Test, type TestingModule } from '@nestjs/testing';
-import { ApiDocsTokensService } from './api-docs-tokens.service';
-import { BookmarkletTokensService } from './bookmarklet-tokens.service';
-import { TokensController } from './tokens.controller';
-import { TokensService } from './tokens.service';
+import { CustomThrottlerGuard } from '../auth/custom-throttler.guard.js';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { ApiDocsTokensService } from './api-docs-tokens.service.js';
+import { BookmarkletTokensService } from './bookmarklet-tokens.service.js';
+import { TokensController } from './tokens.controller.js';
+import { TokensService } from './tokens.service.js';
 import type { AuthRequest } from '../auth/index.js';
 
 const TOKEN_ID = 'token-1';
@@ -55,7 +57,12 @@ describe('TokensController', () => {
           useValue: apiDocsTokensServiceMock,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(CustomThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<TokensController>(TokensController);
     jest.clearAllMocks();
@@ -80,9 +87,42 @@ describe('TokensController', () => {
       );
       expect(result).toBe(created);
     });
+
+    it('applies CustomThrottlerGuard to cap token-creation spam', () => {
+      const guards: unknown[] = Reflect.getMetadata(
+        '__guards__',
+        TokensController.prototype.create,
+      );
+      expect(guards).toContain(CustomThrottlerGuard);
+    });
+
+    it('uses the token-create throttle bucket (20 / hour)', () => {
+      const ttl = Reflect.getMetadata(
+        'THROTTLER:TTLtoken-create',
+        TokensController.prototype.create,
+      );
+      const limit = Reflect.getMetadata(
+        'THROTTLER:LIMITtoken-create',
+        TokensController.prototype.create,
+      );
+      expect(ttl).toBe(3600000);
+      expect(limit).toBe(20);
+    });
   });
 
   describe('findAll', () => {
+    it('is not throttled (reads should not consume the create bucket)', () => {
+      const guards: unknown[] =
+        Reflect.getMetadata('__guards__', TokensController.prototype.findAll) ??
+        [];
+      const ttl = Reflect.getMetadata(
+        'THROTTLER:TTLtoken-create',
+        TokensController.prototype.findAll,
+      );
+      expect(guards).not.toContain(CustomThrottlerGuard);
+      expect(ttl).toBeUndefined();
+    });
+
     it('delegates to TokensService.findAll with userId', async () => {
       const tokens = [makeApiToken()];
       (tokensServiceMock.findAll as jest.Mock).mockResolvedValue(tokens);

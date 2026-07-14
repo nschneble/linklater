@@ -1,0 +1,36 @@
+# Production reverse proxy for the single-VPS Docker Compose deployment
+# (docs/DEPLOYMENT.md, option 1). One Caddy instance is the whole edge: it
+# terminates TLS with automatically-issued Let's Encrypt certificates, serves
+# the static web bundle, and reverse-proxies the API — all on one domain.
+#
+# DOMAIN is substituted by Caddy from the environment (docker-compose.prod.yml
+# passes it through). Point an A/AAAA record for DOMAIN at the VPS before the
+# first boot so Caddy can complete the ACME challenge.
+#
+# Single-domain shape (DEPLOYMENT.md is silent on path-vs-subdomain, so this
+# follows the doc's "one reverse proxy serves the web build" wording and mirrors
+# the Vite dev proxy):
+#   - the web app is served at /
+#   - the API is reverse-proxied under /api/*
+# The web build is compiled with VITE_API_BASE_URL=/api to match. Because the
+# API's own routes are unprefixed (/health, /auth/*, /openapi.json), the /api
+# prefix is STRIPPED before proxying (handle_path), exactly like the dev proxy's
+# rewrite in apps/web/vite.config.ts.
+
+{$DOMAIN} {
+	encode gzip
+
+	# API: strip the /api prefix, then proxy to the API container. The API
+	# listens on plain HTTP inside the Compose network (TLS terminates here).
+	handle_path /api/* {
+		reverse_proxy api:3000
+	}
+
+	# Everything else is the static single-page app. Unknown paths fall back
+	# to index.html so client-side routes resolve on hard refresh.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -1,6 +1,6 @@
 {
   "name": "@linklater/api",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Linklater is an Instapaper-inspired “read it later” app.",
   "author": "Nick Schneble",
   "private": true,
@@ -10,6 +10,7 @@
     "build": "nest build",
     "dev": "npm run start:dev",
     "migrate": "prisma migrate dev && prisma generate",
+    "migrate:deploy": "prisma migrate deploy && prisma generate",
     "migrate:reset": "prisma migrate reset && prisma generate",
     "start": "nest start",
     "start:debug": "nest start --debug --watch",
@@ -40,6 +41,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "dotenv": "^16.6.1",
+    "helmet": "^8.3.0",
     "nodemailer": "^9.0.1",
     "otplib": "^13.4.0",
     "passport": "^0.7.0",

@@ -1,11 +1,14 @@
 {
   "name": "linklater",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Linklater is an Instapaper-inspired “read it later” app.",
   "author": "Nick Schneble",
   "private": true,
   "license": "CC0-1.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "npm run build --workspace @linklater/api && npm run build --workspace @linklater/web",
     "dev": "concurrently \"npm run dev --workspace @linklater/api\" \"npm run dev --workspace @linklater/web\"",
@@ -34,7 +37,7 @@
     "pg": "^8.11.0",
     "prettier": "^3.7.4",
     "squawk-cli": "^2.52.1",
-    "tuffgal": "0.2.0-alpha.1",
+    "tuffgal": "0.2.0-alpha.2",
     "typescript-eslint": "^8.49.0"
   },
   "overrides": {

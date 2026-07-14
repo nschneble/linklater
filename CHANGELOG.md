@@ -6,11 +6,24 @@
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [1.0.0] - 2026-07-12
+
+### Added
+
+- Container infrastructure and a tag-push deploy workflow for single-VPS hosting
+- Hosting and deployment decision record
 - Password/MFA confirmation step to delete your account
+- Rate limit on API token creation
 - Reading suggestions on an empty links view
+- Unauthenticated `/health` endpoint for orchestrators and deploy checks
 
 ### Changed
 
+- `CORS_ORIGIN` now accepts a comma-separated list of origins
 - Hide new API token if you immediately revoke it
 - Show a success toast after regenerating the bookmarklet
 - Stop underlining Font Awesome icons in CVD mode
@@ -87,7 +100,8 @@ This is a development version bump. Most of the changes are related to refactori
 - Toggle themes based on Richard Linklater's filmography
 - Toggle light and dark mode
 
-[Unreleased]: https://github.com/nschneble/linklater/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/nschneble/linklater/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/nschneble/linklater/releases/tag/v1.0.0
 [0.3.0]: https://github.com/nschneble/linklater/releases/tag/v0.3.0
 [0.2.0]: https://github.com/nschneble/linklater/releases/tag/v0.2.0
 [0.1.0]: https://github.com/nschneble/linklater/releases/tag/v0.1.0
