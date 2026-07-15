@@ -1,4 +1,6 @@
 .DS_Store
+.env.production.example
+
 apps/api/certs/
 local/
 node_modules/
