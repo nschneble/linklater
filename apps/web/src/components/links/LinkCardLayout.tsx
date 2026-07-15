@@ -210,7 +210,7 @@ export default function LinkCardLayout({
 
             {link.readAt && (
               <PrimaryButton
-                className="relative shrink-0 z-30 pointer-events-auto"
+                className="relative shrink-0 ml-auto z-30 pointer-events-auto"
                 onClick={onUnreadClick}
                 aria-label="Mark unread"
               >
