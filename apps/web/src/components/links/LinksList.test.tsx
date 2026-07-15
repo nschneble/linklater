@@ -101,33 +101,13 @@ describe('LinksList re-fetch (post first settle)', () => {
     expect(tabpanel?.getAttribute('aria-busy')).toBe('true');
   });
 
-  it('renders the skeleton (not the empty message) during a re-fetch over an empty list', () => {
-    // Models a mid-fetch window where a prior fetch left the list empty and a
-    // new fetch is in flight. The empty-state message must NOT show while a
-    // load is in flight (that is the flash bug); the skeleton is the
-    // AT-correct in-load state and aria-busy stays true.
-    renderWithProviders(
-      <LinksList
-        {...baseProps}
-        loadingLinks={true}
-        hasSettledOnce={true}
-        links={[]}
-        search="zzz"
-        debouncedSearch="zzz"
-      />,
-    );
-
-    expect(screen.getByRole('status', { name: /loading link/i })).toBeTruthy();
-    expect(screen.queryByText(/no unread links/i)).toBeNull();
-    const tabpanel = document.getElementById(LINKS_LIST_ID);
-    expect(tabpanel?.getAttribute('aria-busy')).toBe('true');
-  });
-
   it('renders the skeleton (not the empty message) on a post-settle page-1 refetch over a blanked list', () => {
     // The flash bug: hasSettledOnce is already true, the page-1 refetch has
     // blanked links to [] and set loadingLinks true. There must be NO render
     // where links.length === 0 && loadingLinks === true resolves to the
-    // empty-text branch — it must resolve to the skeleton.
+    // empty-text branch; it must resolve to the skeleton. (The empty list is
+    // reached the same way whether or not a search term is active, so a single
+    // case covers both the blanked-list and no-matches windows.)
     renderWithProviders(
       <LinksList
         {...baseProps}

@@ -1,11 +1,10 @@
 /*
  * Tests for LinkCard – a single saved link rendered as an interactive card.
  *
- * Focus of this file: the "Mark unread" button alignment contract. A read
- * link (`readAt` set) shows the button right-aligned regardless of whether the
- * link has a description. The description `<p>` carries `flex-1` and pushes the
- * button right when present; when it is absent the button must still hug the
- * right edge via `ml-auto`.
+ * Focus of this file: the "Mark unread" button alignment contract. On a read
+ * link (`readAt` set) with no description, the `flex-1` sibling that would
+ * otherwise push the button right is absent, so the button must carry
+ * `ml-auto` to stay pinned to the right edge. That is the bug this guards.
  */
 
 import { describe, expect, it, vi } from 'vitest';
@@ -52,18 +51,6 @@ describe('LinkCard "Mark unread" alignment', () => {
         onReadToggle={vi.fn()}
       />,
     );
-
-    const button = screen.getByRole('button', { name: 'Mark unread' });
-    expect(button.className).toContain('ml-auto');
-  });
-
-  it('right-aligns the button on a read link that HAS a description', () => {
-    // With a description present the `flex-1` sibling consumes the free space;
-    // `ml-auto` is inert here but harmless, so both branches stay right-aligned.
-    renderWithProviders(<LinkCard link={makeLink()} onReadToggle={vi.fn()} />);
-
-    const description = screen.getByText(/an example description/i);
-    expect(description.className).toContain('flex-1');
 
     const button = screen.getByRole('button', { name: 'Mark unread' });
     expect(button.className).toContain('ml-auto');

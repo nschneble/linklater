@@ -66,19 +66,20 @@ describe('useLinks form auto-close', () => {
     expect(result.current.showLinkForm).toBe(false);
   });
 
-  it('leaves the form open when no successful create occurs', () => {
-    // A failed create never reaches `handleCreated` — LinkForm swallows the
-    // error locally and only calls `onCreated` on success. This guards against
-    // the close wiring drifting onto an always-run path (render/effect), which
-    // would hide the error Alert by collapsing the form.
-    const { result } = renderHook(() => useLinks('unread', ''));
+  it('keeps the form open across re-renders when no create occurs', () => {
+    // `handleCreated` (a successful create) is the sole close trigger; a failed
+    // create never reaches it, since LinkForm swallows the error locally. This
+    // guards against `closeForm` drifting onto an always-run path: re-rendering
+    // the hook runs every render + effect path, so if close were wired there
+    // this re-render would collapse the open form and hide a pending error
+    // Alert. Opening then re-rendering without a create must leave it open.
+    const { result, rerender } = renderHook(() => useLinks('unread', ''));
 
     act(() => result.current.handleToggleForm());
     expect(result.current.showLinkForm).toBe(true);
 
-    // Re-render without a create; the form must stay open.
-    act(() => result.current.handleToggleForm());
-    act(() => result.current.handleToggleForm());
+    // Re-render without a successful create; the form must stay open.
+    rerender();
 
     expect(result.current.showLinkForm).toBe(true);
   });

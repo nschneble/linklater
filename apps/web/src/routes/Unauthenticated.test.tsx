@@ -21,7 +21,7 @@ vi.mock('../components/auth/AuthForm', () => ({
   default: () => <div data-testid="auth-form" />,
 }));
 
-// Stub AppShell — the authenticated `/` → `/unread` redirect target pulls in
+// Stub AppShell. The authenticated `/` → `/unread` redirect target pulls in
 // the full data/theme/auth stack; this suite only asserts the redirect landed.
 vi.mock('../AppShell', () => ({
   default: () => <div data-testid="app-shell" />,

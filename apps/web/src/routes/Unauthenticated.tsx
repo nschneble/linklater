@@ -28,10 +28,12 @@ function UnauthenticatedRedirect() {
 
 export function unauthenticatedRoutes() {
   return [
-    // The public marketing landing page. This explicit `/` route must be
-    // registered so it outranks the catch-all `*` → /login below; without it a
-    // logged-out visitor to the root would be swallowed by the catch-all and
-    // bounced to the auth surface.
+    // The public marketing landing page. React Router ranks matches by path
+    // specificity, not array position, so this explicit `/` route always
+    // outranks the catch-all `*` → /login regardless of order. It must be
+    // registered at all, though: without an explicit `/` route a logged-out
+    // visitor to the root would fall through to the catch-all and bounce to
+    // the auth surface instead of seeing LandingPage.
     <Route key="root" path="/" element={<LandingPage />} />,
 
     ...['forgot-password', 'login', 'signup'].map((key) => (

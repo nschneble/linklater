@@ -51,15 +51,19 @@ interface LinksListProps {
 
 /**
  * Renders the paginated list of link cards. Handles three states:
- * - Initial loading (first ever fetch): single `LinkCardSkeleton`.
- * - Empty: contextual empty-state message (different for unread, read, and search).
+ * - Empty: contextual empty-state message (different for unread, read, and
+ *   search), shown only once a fetch has settled with no items.
+ * - Skeleton: a single `LinkCardSkeleton`, shown whenever the list is empty
+ *   and a fetch is in flight (no settled items yet, or a re-fetch over an
+ *   already-empty list) so the empty message never flashes mid-load.
  * - Populated: a grid of `LinkCard` components with a "Load more" button when
  *   additional pages exist.
  *
- * On re-fetches after the first settle the stale list (or empty state) stays
- * mounted; the loading affordance is AT-only via `aria-busy` on the tabpanel
- * container (WCAG 4.1.3 Status Messages), so sighted users do not see a
- * skeleton flash between keystrokes.
+ * On re-fetches after the first settle a populated list stays mounted; the
+ * loading affordance is AT-only via `aria-busy` on the tabpanel container
+ * (WCAG 4.1.3 Status Messages), so sighted users do not see a skeleton flash
+ * between keystrokes. An empty list is the exception: an in-flight fetch swaps
+ * the empty state out for the skeleton rather than leaving stale empty text.
  *
  * The tabpanel container (`role="tabpanel"`, `aria-labelledby`, `aria-busy`)
  * is rendered once around every branch so that AT state never drops between
@@ -122,10 +126,9 @@ export default function LinksList({
       </>
     );
   } else if (links.length === 0) {
-    // Empty list with a fetch in flight: the very first page-1 load (list
-    // blanked to `[]`) or a re-fetch over an already-empty list. The skeleton
-    // is the AT-correct in-load state; the empty message is gated on
-    // `showEmptyState` above so it never flashes during this window.
+    // Empty list with a fetch in flight (first page-1 load or a re-fetch over
+    // an already-empty list). See the `showEmptyState` gate above for why this
+    // renders the skeleton rather than the empty message.
     containerClass = 'grid grid-cols-1 gap-6 mt-6';
     body = <LinkCardSkeleton />;
   } else {

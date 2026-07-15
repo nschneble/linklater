@@ -43,7 +43,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
   // A successful create is the sole trigger for auto-closing the inline form.
   // `handleCreated` runs only on success (LinkForm swallows failures locally
   // and never calls it), so routing `closeForm` through this wrapper keeps the
-  // form open on error — the error Alert survives — and drives the same
+  // form open on error (the error Alert survives) and drives the same
   // `showLinkForm` boolean, letting focus-return and `aria-expanded` settle
   // themselves on unmount.
   const { handleCreated: handleLinkCreated } = actions;
