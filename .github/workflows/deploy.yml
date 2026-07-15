@@ -205,7 +205,12 @@ jobs:
             $COMPOSE pull
 
             # Migrate BEFORE starting the new API code (one-shot container).
-            $COMPOSE run --rm api sh -c 'cd /app/apps/api && npx prisma migrate deploy'
+            # Run as root: the image drops to USER node for the long-running
+            # service, but node_modules is root-owned, and `prisma migrate
+            # deploy` needs to write its schema engine into @prisma/engines. The
+            # migrate container is ephemeral (migrates, exits); the API service
+            # it rolls up afterward still runs unprivileged as node.
+            $COMPOSE run --rm --user root api sh -c 'cd /app/apps/api && npx prisma migrate deploy'
 
             # Roll the services onto the new images.
             $COMPOSE up -d
