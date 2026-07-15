@@ -83,7 +83,13 @@ export default function LinksList({
   onLoadMore,
 }: LinksListProps) {
   const tabPanelLabelId = filter === 'read' ? 'tab-read' : 'tab-unread';
-  const isInitialLoad = loadingLinks && page === 1 && !hasSettledOnce;
+
+  // The empty-state message may only show once the hook has genuinely settled
+  // with no items and no fetch in flight. While a load is in flight the list
+  // can be blanked to `[]` (the first page-1 fetch) or already be empty from a
+  // prior settle; in those windows the skeleton is the AT-correct in-load
+  // state, so the empty text never flashes before real links render.
+  const showEmptyState = hasSettledOnce && !loadingLinks && links.length === 0;
 
   // Show the discovery callout only when the unread list is genuinely
   // empty – never when an active search just happens to return no
@@ -94,10 +100,7 @@ export default function LinksList({
   let body: ReactNode;
   let containerClass: string;
 
-  if (isInitialLoad) {
-    containerClass = 'grid grid-cols-1 gap-6 mt-6';
-    body = <LinkCardSkeleton />;
-  } else if (links.length === 0) {
+  if (showEmptyState) {
     containerClass =
       'flex flex-col items-center justify-center py-9 text-center animate-fade-in-up';
     body = (
@@ -118,6 +121,13 @@ export default function LinksList({
         {isUnreadEmpty && <SuggestionCallout inNewTab={true} />}
       </>
     );
+  } else if (links.length === 0) {
+    // Empty list with a fetch in flight: the very first page-1 load (list
+    // blanked to `[]`) or a re-fetch over an already-empty list. The skeleton
+    // is the AT-correct in-load state; the empty message is gated on
+    // `showEmptyState` above so it never flashes during this window.
+    containerClass = 'grid grid-cols-1 gap-6 mt-6';
+    body = <LinkCardSkeleton />;
   } else {
     containerClass = 'grid grid-cols-1 gap-6 mt-6 mb-28';
     body = (
