@@ -14,7 +14,7 @@ function AuthFormWrapper() {
   return (
     <div
       data-theme="branding"
-      className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]"
+      className="flex items-start sm:items-center justify-center min-h-screen px-4 pt-16 sm:pt-0 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]"
     >
       <AuthForm />
     </div>

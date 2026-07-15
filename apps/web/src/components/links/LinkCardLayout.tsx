@@ -121,7 +121,7 @@ export default function LinkCardLayout({
     <div
       ref={cardReference}
       aria-busy={!link.meta?.fetchedAt || undefined}
-      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--mount-highlight)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--mount-border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
+      className={`relative overflow-hidden pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--mount-highlight)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--mount-border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
     >
       {link.meta?.fetchedAt ? (
         <div className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none">

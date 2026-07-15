@@ -34,6 +34,36 @@ function makeLink(overrides: Partial<Link> = {}): Link {
   };
 }
 
+describe('LinkCard mobile-overflow containment (WCAG 1.4.10 Reflow)', () => {
+  // The card is a grid item in LinksList's `grid grid-cols-1`. A grid item's
+  // default `min-width: auto` lets a long unbreakable title/URL inflate the
+  // track past the viewport, producing horizontal scroll on mobile. Clipping
+  // the card wrapper (`overflow-hidden`) resets that automatic minimum to 0 so
+  // the card can never grow wider than its track, and also contains the
+  // decorative favicon/skeleton bleed. This guards against a regression back to
+  // `overflow-visible`. A true scrollWidth check needs a real layout engine
+  // (jsdom has none), so this asserts the clipping class as the jsdom-safe
+  // structural oracle; the live 320px measurement lives in the PR notes.
+  it('clips the card wrapper on a fetched link', () => {
+    const { container } = renderWithProviders(
+      <LinkCard link={makeLink()} onReadToggle={vi.fn()} />,
+    );
+
+    const card = container.firstElementChild;
+    expect(card?.className).toContain('overflow-hidden');
+    expect(card?.className).not.toContain('overflow-visible');
+  });
+
+  it('clips the card wrapper while metadata is still loading (skeleton state)', () => {
+    const { container } = renderWithProviders(
+      <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
+    );
+
+    const card = container.firstElementChild;
+    expect(card?.className).toContain('overflow-hidden');
+  });
+});
+
 describe('LinkCard "Mark unread" alignment', () => {
   it('right-aligns the button on a read link that has NO description', () => {
     // A title with a null description yields a falsy displayDescription, so the

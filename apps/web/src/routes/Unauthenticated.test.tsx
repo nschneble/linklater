@@ -79,6 +79,27 @@ describe('unauthenticated auth surfaces are branding-pinned', () => {
   }
 });
 
+describe('auth surface top-aligns the card on mobile', () => {
+  // Centering a short card in `min-h-screen` leaves an oversized top gap on
+  // tall phones, and on a short viewport (soft keyboard open / 200% zoom) it
+  // pushes the card's top off-screen. The wrapper top-aligns with padding on
+  // mobile (`items-start` + `pt-16`) and only restores vertical centering at
+  // `sm`, while keeping `min-h-screen` so the full-height gradient is intact.
+  for (const path of ['/login', '/signup', '/forgot-password']) {
+    it(`top-aligns the card with padding on ${path}, centering only at sm`, () => {
+      const { container } = renderAt(path);
+      const branded = container.querySelector('[data-theme="branding"]');
+
+      expect(branded?.className).toMatch(/items-start/);
+      expect(branded?.className).toMatch(/sm:items-center/);
+      expect(branded?.className).toMatch(/pt-16/);
+      // The full-height gradient must not be shrunk (padding, never a smaller
+      // wrapper or a negative margin).
+      expect(branded?.className).toMatch(/min-h-screen/);
+    });
+  }
+});
+
 describe('root `/` route selects the visitor-appropriate element', () => {
   it('redirects an authenticated visitor to /unread with no landing CTAs', () => {
     renderAuthenticatedAt('/');
