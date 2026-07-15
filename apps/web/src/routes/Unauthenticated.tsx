@@ -1,4 +1,5 @@
 import AuthForm from '../components/auth/AuthForm';
+import LandingPage from '../components/LandingPage';
 import { Navigate, Route, useLocation } from 'react-router-dom';
 
 // `data-theme="branding"` pins the login / signup / forgot-password surface
@@ -27,6 +28,12 @@ function UnauthenticatedRedirect() {
 
 export function unauthenticatedRoutes() {
   return [
+    // The public marketing landing page. This explicit `/` route must be
+    // registered so it outranks the catch-all `*` → /login below; without it a
+    // logged-out visitor to the root would be swallowed by the catch-all and
+    // bounced to the auth surface.
+    <Route key="root" path="/" element={<LandingPage />} />,
+
     ...['forgot-password', 'login', 'signup'].map((key) => (
       <Route key={key} path={`/${key}`} element={<AuthFormWrapper />} />
     )),

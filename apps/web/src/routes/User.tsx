@@ -9,6 +9,12 @@ function UnreadRedirect() {
 
 export function userRoutes() {
   return [
+    // The marketing landing page is logged-out-only; an authenticated visitor
+    // hitting `/` is sent to their home feed. Element selection (not a
+    // useEffect inside LandingPage) means LandingPage never mounts, so the
+    // "Get started" / "Log in" CTAs never flash.
+    <Route key="root-redirect" path="/" element={<UnreadRedirect />} />,
+
     ...['forgot-password', 'login', 'signup'].map((key) => (
       <Route
         key={`${key}-redirect`}
