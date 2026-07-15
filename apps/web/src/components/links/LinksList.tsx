@@ -138,9 +138,13 @@ export default function LinksList({
         {links.map((link, index) => (
           <div
             key={link.id}
-            className={
+            // `min-w-0` resets the grid item's default `min-width: auto` to 0
+            // so a long unbreakable title/URL cannot inflate the track past the
+            // viewport (WCAG 1.4.10 Reflow). The card itself stays
+            // `overflow-visible` so its favicon can straddle the left border.
+            className={`min-w-0 ${
               isClearingRead ? 'animate-card-exit pointer-events-none' : ''
-            }
+            }`}
             style={
               isClearingRead ? { animationDelay: `${index * 40}ms` } : undefined
             }

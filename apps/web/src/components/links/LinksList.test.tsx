@@ -125,6 +125,30 @@ describe('LinksList re-fetch (post first settle)', () => {
   });
 });
 
+describe('LinksList mobile-reflow guard (WCAG 1.4.10)', () => {
+  it('gives each grid item `min-w-0` so a long unbreakable title cannot inflate the track', () => {
+    // The grid item's default `min-width: auto` lets an unbreakable title/URL
+    // grow the `grid grid-cols-1` track past the viewport, producing horizontal
+    // scroll on mobile. `min-w-0` on the map wrapper resets that minimum to 0
+    // WITHOUT clipping (the card stays `overflow-visible`, so the favicon still
+    // straddles the left border). Dropping `min-w-0` reintroduces the overflow,
+    // so this fails if the guard is removed. jsdom has no layout engine, so the
+    // live 320px scrollWidth check lives in the PR notes; this is the structural
+    // oracle for the guard's presence.
+    renderWithProviders(
+      <LinksList
+        {...baseProps}
+        hasSettledOnce={true}
+        links={[makeLink({ id: 'a' })]}
+      />,
+    );
+
+    const tabpanel = document.getElementById(LINKS_LIST_ID);
+    const gridItem = tabpanel?.firstElementChild;
+    expect(gridItem?.className).toContain('min-w-0');
+  });
+});
+
 describe('LinksList settled non-loading states', () => {
   it('renders aria-busy="false" once the fetch has settled', () => {
     renderWithProviders(

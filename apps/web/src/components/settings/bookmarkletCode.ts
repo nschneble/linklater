@@ -7,7 +7,7 @@
  * where a relative `fetch('/api/links')` resolves against the HOST page's
  * origin (e.g. `https://example.com/api/links`) and never reaches Linklater.
  * The Settings page that generates the bookmarklet is served from the
- * Linklater origin — the same origin the API is proxied under — so resolving
+ * Linklater origin (the same origin the API is proxied under), so resolving
  * the base against `window.location.origin` at generation time bakes an
  * absolute URL that works from any page.
  *

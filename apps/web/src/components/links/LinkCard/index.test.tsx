@@ -35,32 +35,34 @@ function makeLink(overrides: Partial<Link> = {}): Link {
 }
 
 describe('LinkCard mobile-overflow containment (WCAG 1.4.10 Reflow)', () => {
-  // The card is a grid item in LinksList's `grid grid-cols-1`. A grid item's
-  // default `min-width: auto` lets a long unbreakable title/URL inflate the
-  // track past the viewport, producing horizontal scroll on mobile. Clipping
-  // the card wrapper (`overflow-hidden`) resets that automatic minimum to 0 so
-  // the card can never grow wider than its track, and also contains the
-  // decorative favicon/skeleton bleed. This guards against a regression back to
-  // `overflow-visible`. A true scrollWidth check needs a real layout engine
-  // (jsdom has none), so this asserts the clipping class as the jsdom-safe
-  // structural oracle; the live 320px measurement lives in the PR notes.
-  it('clips the card wrapper on a fetched link', () => {
+  // The 320px reflow guard lives on the GRID ITEM, not the card: LinksList adds
+  // `min-w-0` to each map wrapper, which resets the grid track's default
+  // `min-width: auto` to 0 so a long unbreakable title/URL cannot inflate it
+  // past the viewport. That guard is asserted in LinksList.test.tsx. The card
+  // wrapper itself must stay `overflow-visible` so its favicon badge (and the
+  // un-fetched accent bar) can straddle the left accent border; clipping it
+  // (`overflow-hidden`) sliced those decorations off, which is the regression
+  // these tests guard against. A true scrollWidth check needs a real layout
+  // engine (jsdom has none), so the live 320px measurement lives in the PR
+  // notes; this asserts the non-clipping class contract as the jsdom-safe oracle.
+  it('keeps the card wrapper overflow-visible on a fetched link (favicon can straddle)', () => {
     const { container } = renderWithProviders(
       <LinkCard link={makeLink()} onReadToggle={vi.fn()} />,
     );
 
     const card = container.firstElementChild;
-    expect(card?.className).toContain('overflow-hidden');
-    expect(card?.className).not.toContain('overflow-visible');
+    expect(card?.className).toContain('overflow-visible');
+    expect(card?.className).not.toContain('overflow-hidden');
   });
 
-  it('clips the card wrapper while metadata is still loading (skeleton state)', () => {
+  it('keeps the card wrapper overflow-visible while metadata is still loading (skeleton accent bar can straddle)', () => {
     const { container } = renderWithProviders(
       <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
     );
 
     const card = container.firstElementChild;
-    expect(card?.className).toContain('overflow-hidden');
+    expect(card?.className).toContain('overflow-visible');
+    expect(card?.className).not.toContain('overflow-hidden');
   });
 });
 

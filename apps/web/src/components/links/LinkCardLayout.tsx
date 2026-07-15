@@ -121,7 +121,7 @@ export default function LinkCardLayout({
     <div
       ref={cardReference}
       aria-busy={!link.meta?.fetchedAt || undefined}
-      className={`relative overflow-hidden pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--mount-highlight)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--mount-border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
+      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--mount-highlight)] border-shadow hover:border-shadow' : 'border-dashed border-[var(--mount-border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
     >
       {link.meta?.fetchedAt ? (
         <div className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none">
@@ -180,9 +180,17 @@ export default function LinkCardLayout({
           )}
 
           <div className="flex flex-col items-start min-w-0 ml-3">
+            {/*
+              `w-full` pins the title to the min-w-0 column so `line-clamp-1`
+              can clip an unbreakable long word. Without it, the parent's
+              `items-start` sizes this <p> to its content width, letting a long
+              title overflow the (now overflow-visible) card and inflate the
+              320px mobile viewport. The sibling site-name <p> below is pinned
+              the same way.
+            */}
             <p
               style={childStyle(1)}
-              className={`text-[var(--mount-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
+              className={`w-full text-[var(--mount-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
             >
               {displayTitle}
             </p>

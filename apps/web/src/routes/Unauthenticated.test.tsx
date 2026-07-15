@@ -85,19 +85,21 @@ describe('auth surface top-aligns the card on mobile', () => {
   // pushes the card's top off-screen. The wrapper top-aligns with padding on
   // mobile (`items-start` + `pt-16`) and only restores vertical centering at
   // `sm`, while keeping `min-h-screen` so the full-height gradient is intact.
-  for (const path of ['/login', '/signup', '/forgot-password']) {
-    it(`top-aligns the card with padding on ${path}, centering only at sm`, () => {
-      const { container } = renderAt(path);
-      const branded = container.querySelector('[data-theme="branding"]');
+  //
+  // AuthFormWrapper is route-independent, so a single route exercises the class
+  // contract; the route -> wrapper mapping is already proven by the
+  // branding-pinned loop above.
+  it('top-aligns the card with padding, centering only at sm', () => {
+    const { container } = renderAt('/login');
+    const branded = container.querySelector('[data-theme="branding"]');
 
-      expect(branded?.className).toMatch(/items-start/);
-      expect(branded?.className).toMatch(/sm:items-center/);
-      expect(branded?.className).toMatch(/pt-16/);
-      // The full-height gradient must not be shrunk (padding, never a smaller
-      // wrapper or a negative margin).
-      expect(branded?.className).toMatch(/min-h-screen/);
-    });
-  }
+    expect(branded?.className).toMatch(/items-start/);
+    expect(branded?.className).toMatch(/sm:items-center/);
+    expect(branded?.className).toMatch(/pt-16/);
+    // The full-height gradient must not be shrunk (padding, never a smaller
+    // wrapper or a negative margin).
+    expect(branded?.className).toMatch(/min-h-screen/);
+  });
 });
 
 describe('root `/` route selects the visitor-appropriate element', () => {
