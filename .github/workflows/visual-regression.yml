@@ -7,7 +7,8 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write # push the per-PR Pages preview to gh-pages
+  pages: write # let the preview auto-enable Pages on first run
   pull-requests: write # required for the sticky PR comment
 
 jobs:
