@@ -10,6 +10,12 @@
 
 ### Fixed
 
+## [1.0.2] - 2026-07-16
+
+### Fixed
+
+- CI API cert timeout causes Tuffgal to fail
+
 ## [1.0.1] - 2026-07-16
 
 ### Fixed
@@ -114,7 +120,8 @@ This is a development version bump. Most of the changes are related to refactori
 - Toggle themes based on Richard Linklater's filmography
 - Toggle light and dark mode
 
-[Unreleased]: https://github.com/nschneble/linklater/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/nschneble/linklater/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/nschneble/linklater/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/nschneble/linklater/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/nschneble/linklater/releases/tag/v1.0.0
 [0.3.0]: https://github.com/nschneble/linklater/releases/tag/v0.3.0
