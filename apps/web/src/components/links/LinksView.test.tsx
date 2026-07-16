@@ -117,6 +117,27 @@ beforeEach(() => {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
+describe('LinksView – add-link form placement', () => {
+  it('top-anchors the form on mobile and restores inline flow on desktop', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ showLinkForm: true }),
+    );
+
+    renderLinksView();
+
+    const dialog = screen.getByRole('dialog', { name: 'Save a link' });
+
+    // Mobile: pinned near the top of the viewport so the iOS software
+    // keyboard (which opens from the bottom) never covers the form and iOS
+    // does not scroll it into the lower-middle of the screen.
+    expect(dialog.className).toContain('fixed');
+    expect(dialog.className).toContain('top-16');
+    // Desktop: back to inline flow directly below the toolbar.
+    expect(dialog.className).toContain('sm:relative');
+    expect(dialog.className).toContain('sm:top-auto');
+  });
+});
+
 describe('LinksView – cross-route pending notice surface', () => {
   it('renders the PendingNoticeAnnouncer toast when usePendingNotice returns a notice', () => {
     vi.mocked(usePendingNotice).mockReturnValue({

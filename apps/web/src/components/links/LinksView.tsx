@@ -147,7 +147,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
           aria-modal="true"
           aria-label="Save a link"
           tabIndex={-1}
-          className="relative z-30 mt-0 animate-fade-in-up"
+          className="fixed sm:relative inset-x-4 sm:inset-x-auto top-16 sm:top-auto z-30 max-h-[calc(100dvh-5rem)] sm:max-h-none overflow-y-auto sm:overflow-visible sm:mt-0 animate-fade-in-up"
         >
           <LinkForm onCreated={view.handleCreated} />
         </div>
