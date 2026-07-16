@@ -35,12 +35,7 @@
     - tab "Read"
   - searchbox "Search through your links"
   - button "Stumble!"
-  - button "Hide form" [expanded]
-  - dialog "Save a link":
-    - text: URL
-    - textbox "URL":
-      - /placeholder: https://example.com/article
-    - button "Save link"
+  - button "Add link"
   - tabpanel "Unread":
     - paragraph: (No title)
     - paragraph: httpforever.com
@@ -52,4 +47,3 @@
     - button "Dismiss"
   - status
   - status
-- button "Close form"
