@@ -51,7 +51,13 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y libnss3-tools
-          curl -fsSL "https://dl.filippo.io/mkcert/latest?for=linux/amd64" -o mkcert
+          # Pin to a GitHub release asset instead of the dl.filippo.io "latest"
+          # redirector, which 500'd and wedged main on 2026-07-16. Retry to ride
+          # out transient CDN blips.
+          MKCERT_VERSION="v1.4.4"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 \
+            "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-amd64" \
+            -o mkcert
           chmod +x mkcert
           sudo mv mkcert /usr/local/bin/mkcert
           mkcert -install
