@@ -1,4 +1,5 @@
 import { FOCUS_RING } from '../../lib/styles';
+import { useRef } from 'react';
 
 /**
  * A single action item within a `role="menu"` container.
@@ -41,6 +42,10 @@ export default function MenuItem({
   className = '',
   'aria-label': ariaLabel,
 }: MenuItemProps) {
+  // Records the pointer type of the most recent pointerdown so the mousedown
+  // handler can gate its focus-retention hack to mouse input only.
+  const lastPointerType = useRef<string | undefined>(undefined);
+
   return (
     <button
       className={`group flex items-center gap-2 w-full pl-2.5 pr-3 py-2 hover:bg-[var(--orbit-highlight)]/80 border-y border-transparent hover:border-[var(--orbit-highlight-hover)]/80 text-[var(--orbit-text)] hover:text-[var(--orbit-highlight-fg)] text-left ${FOCUS_RING} cursor-pointer ${className}`}
@@ -51,11 +56,25 @@ export default function MenuItem({
       onMouseEnter={(event) => {
         event.currentTarget.focus();
       }}
+      onPointerDown={(event) => {
+        lastPointerType.current = event.pointerType;
+      }}
       onMouseDown={(event) => {
         // Prevent the browser from removing focus on mousedown (macOS behaviour:
         // clicking a button that already has programmatic focus fires blur before
         // click, which loses the hover highlight on items that keep the menu open).
-        event.preventDefault();
+        //
+        // Only do this for mouse input. On touch/pen engines, preventDefault on
+        // the synthesized mousedown suppresses the follow-on synthesized click,
+        // so a tap would never fire onClick. An unknown/undefined pointerType is
+        // treated as mouse (older engines fire mousedown without a preceding
+        // pointerdown; modern engines set the ref first).
+        if (
+          lastPointerType.current === undefined ||
+          lastPointerType.current === 'mouse'
+        ) {
+          event.preventDefault();
+        }
       }}
       onClick={onClick}
     >

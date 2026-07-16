@@ -180,9 +180,17 @@ export default function LinkCardLayout({
           )}
 
           <div className="flex flex-col items-start min-w-0 ml-3">
+            {/*
+              `w-full` pins the title to the min-w-0 column so `line-clamp-1`
+              can clip an unbreakable long word. Without it, the parent's
+              `items-start` sizes this <p> to its content width, letting a long
+              title overflow the (now overflow-visible) card and inflate the
+              320px mobile viewport. The sibling site-name <p> below is pinned
+              the same way.
+            */}
             <p
               style={childStyle(1)}
-              className={`text-[var(--mount-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
+              className={`w-full text-[var(--mount-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
             >
               {displayTitle}
             </p>
@@ -210,7 +218,7 @@ export default function LinkCardLayout({
 
             {link.readAt && (
               <PrimaryButton
-                className="relative shrink-0 z-30 pointer-events-auto"
+                className="relative shrink-0 ml-auto z-30 pointer-events-auto"
                 onClick={onUnreadClick}
                 aria-label="Mark unread"
               >

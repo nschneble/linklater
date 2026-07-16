@@ -3,6 +3,7 @@ import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useLinksView } from '../../lib/hooks/useLinksView';
 import { usePendingNotice } from '../../lib/hooks/usePendingNotice';
+import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
 import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
 import Toast from '../common/Toast';
@@ -130,9 +131,14 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
 
       {view.showLinkForm &&
         createPortal(
+          // Redundant mouse-only dismiss affordance. Hidden from assistive
+          // tech (aria-hidden + tabIndex -1) now that the dialog carries a
+          // keyboard-reachable Close button; keyboard dismissal is covered by
+          // Escape (useKeyboardShortcuts) and that button.
           <button
             type="button"
-            aria-label="Close form"
+            aria-hidden="true"
+            tabIndex={-1}
             className="fixed inset-0 z-20 w-full h-full scrim backdrop-blur-sm cursor-default"
             onClick={view.handleToggleForm}
           />,
@@ -145,10 +151,27 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
           ref={dialogReference}
           role="dialog"
           aria-modal="true"
-          aria-label="Save a link"
+          aria-labelledby="save-link-heading"
           tabIndex={-1}
-          className="relative z-30 mt-0 animate-fade-in-up"
+          className="fixed sm:relative inset-x-4 sm:inset-x-auto top-16 sm:top-auto z-30 max-h-[calc(100dvh-5rem)] sm:max-h-none overflow-y-auto sm:overflow-visible sm:mt-0 p-4 bg-[var(--base-bg)] border border-[var(--base-border)] rounded-2xl shadow-lg animate-fade-in-up"
         >
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2
+              id="save-link-heading"
+              className="text-[var(--base-text)] text-base font-semibold"
+            >
+              Save a link
+            </h2>
+            <button
+              type="button"
+              aria-label="Close"
+              className={`flex items-center justify-center w-11 h-11 -mr-2 text-[var(--base-alt-text)] hover:text-[var(--base-text)] active:scale-[0.96] transition-colors cursor-pointer rounded-full ${FOCUS_RING}`}
+              onClick={view.handleToggleForm}
+            >
+              <i className="fa-solid fa-xmark text-sm" aria-hidden="true" />
+            </button>
+          </div>
+
           <LinkForm onCreated={view.handleCreated} />
         </div>
       )}

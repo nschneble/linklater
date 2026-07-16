@@ -257,7 +257,11 @@ cannot) perform.
     verification, password-reset, magic-link, and deletion emails to send.
   - `CORS_ORIGIN` (recommended in production): set it to your front-end origin
     (plus any browser-extension origins). It defaults to open `*` for bookmarklet
-    support, which you should narrow once the domain is known.
+    support, which you should narrow once the domain is known. Caveat: narrowing
+    `CORS_ORIGIN` disables the bookmarklet. Bookmarklet requests originate from
+    whatever arbitrary third-party page the user is on, never the front-end
+    origin, so only `*` admits them; the front-end app and browser-extension
+    origins keep working, the bookmarklet does not.
 - **SSO callback re-registration.** The known-limitations note in the top-level
   `README.md` is explicit that OAuth callback URLs are pinned to localhost in
   development. For production, re-register the callback URLs with each SSO

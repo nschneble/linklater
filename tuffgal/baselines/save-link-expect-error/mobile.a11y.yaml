@@ -37,6 +37,8 @@
   - button "Stumble!"
   - button "Hide form" [expanded]
   - dialog "Save a link":
+    - heading "Save a link" [level=2]
+    - button "Close"
     - text: URL
     - textbox "URL":
       - /placeholder: https://example.com/article
@@ -51,4 +53,3 @@
     - button "Add and read (opens in new tab)": Add and read
   - status
   - status
-- button "Close form"

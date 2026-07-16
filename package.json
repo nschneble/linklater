@@ -1,6 +1,6 @@
 {
   "name": "linklater",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Linklater is an Instapaper-inspired “read it later” app.",
   "author": "Nick Schneble",
   "private": true,
@@ -37,7 +37,7 @@
     "pg": "^8.11.0",
     "prettier": "^3.7.4",
     "squawk-cli": "^2.52.1",
-    "tuffgal": "0.2.0-alpha.2",
+    "tuffgal": "0.2.0-alpha.3",
     "typescript-eslint": "^8.49.0"
   },
   "overrides": {

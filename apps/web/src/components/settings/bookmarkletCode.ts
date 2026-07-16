@@ -1,4 +1,27 @@
 /**
+ * Resolves the configured API base URL to an absolute URL.
+ *
+ * Production bakes a same-origin relative base (`VITE_API_BASE_URL=/api`,
+ * reverse-proxied by Caddy). That works for the web app because it runs on the
+ * Linklater origin, but the bookmarklet runs on arbitrary third-party pages,
+ * where a relative `fetch('/api/links')` resolves against the HOST page's
+ * origin (e.g. `https://example.com/api/links`) and never reaches Linklater.
+ * The Settings page that generates the bookmarklet is served from the
+ * Linklater origin (the same origin the API is proxied under), so resolving
+ * the base against `window.location.origin` at generation time bakes an
+ * absolute URL that works from any page.
+ *
+ * An already-absolute base (split-domain deployments, e.g.
+ * `https://api.example.com`) is origin-qualified and passes through unchanged.
+ */
+function resolveAbsoluteApiUrl(configuredApiUrl: string): string {
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(configuredApiUrl)) {
+    return configuredApiUrl;
+  }
+  return new URL(configuredApiUrl, window.location.origin).href;
+}
+
+/**
  * Builds the minified `javascript:` URL that becomes the bookmarklet's href.
  * Embeds the user's PAT (`token`) inline so the bookmarklet authenticates
  * its `POST /links` call from any page the user clicks it on.
@@ -14,7 +37,9 @@
  * `role="status"` (polite) and error uses `role="alert"` (assertive).
  */
 export function buildBookmarkletCode(token: string): string {
-  const apiUrl = import.meta.env.VITE_API_BASE_URL as string;
+  const apiUrl = resolveAbsoluteApiUrl(
+    import.meta.env.VITE_API_BASE_URL as string,
+  );
   return (
     'javascript:(function(){' +
     'var t=' +

@@ -18,6 +18,8 @@ interface UseLinksFormOptions {
 
 /** Everything exposed by `useLinksForm`. */
 export interface UseLinksFormResult {
+  /** Closes the inline link form. Idempotent when already closed. */
+  closeForm: () => void;
   /** Toggles the inline link form open or closed. */
   handleToggleForm: () => void;
   /** `true` when the inline link form is currently open. */
@@ -47,5 +49,9 @@ export function useLinksForm({
     setShowLinkForm((previous) => !previous);
   }, []);
 
-  return { handleToggleForm, showLinkForm };
+  const closeForm = useCallback(() => {
+    setShowLinkForm(false);
+  }, []);
+
+  return { closeForm, handleToggleForm, showLinkForm };
 }

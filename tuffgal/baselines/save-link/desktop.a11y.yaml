@@ -11,14 +11,8 @@
     - tab "Unread" [selected]
     - tab "Read"
   - button "Stumble!"
-  - button "Hide form" [expanded]: Add link
+  - button "Add link"
   - searchbox "Search through your links"
-  - dialog "Save a link":
-    - text: URL
-    - textbox "URL":
-      - /placeholder: https://example.com/article
-    - paragraph: "Tip: Paste a link anywhere on the page to save it instantly"
-    - button "Save link"
   - tabpanel "Unread":
     - paragraph: (No title)
     - paragraph: httpforever.com
@@ -30,4 +24,3 @@
     - button "Dismiss"
   - status
   - status
-- button "Close form"

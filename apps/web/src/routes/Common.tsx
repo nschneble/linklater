@@ -1,7 +1,6 @@
 import ConfirmAccountDeletionPage from '../components/auth/ConfirmAccountDeletionPage';
 import ExtensionAuthorizePage from '../components/auth/ExtensionAuthorizePage';
 import FailWhalePage from '../components/FailWhalePage';
-import LandingPage from '../components/LandingPage';
 import LogoutPage from '../components/auth/LogoutPage';
 import OAuthCallbackPage from '../components/auth/OAuthCallbackPage';
 import ResetPasswordPage from '../components/auth/ResetPasswordPage';
@@ -45,7 +44,6 @@ function ApiDocsRoute() {
 
 export function commonRoutes() {
   return [
-    <Route key="root" path="/" element={<LandingPage />} />,
     <Route key="api-docs" path="/docs" element={<ApiDocsRoute />} />,
     <Route key="logout" path="/logout" element={<LogoutPage />} />,
     <Route

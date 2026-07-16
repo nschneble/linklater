@@ -93,9 +93,12 @@ async function bootstrap() {
   // accepts a single origin or a comma-separated list – `parseCorsOrigin`
   // splits the list into the array form the `cors` middleware matches
   // per-entry (a raw comma-joined string would be exact-matched as one
-  // literal origin and never match). Bookmarklets are an Origin-less
-  // navigation in modern browsers and keep working under a restricted CORS
-  // policy. `credentials: false` is required when `origin: '*'` and is
+  // literal origin and never match). The bookmarklet's `fetch` sends the host
+  // page's Origin and is therefore a CORS request from arbitrary third-party
+  // pages, so it only succeeds under an open `*` policy; narrowing
+  // `CORS_ORIGIN` to the front-end origin disables the bookmarklet (its
+  // requests never originate from that origin).
+  // `credentials: false` is required when `origin: '*'` and is
   // harmless under a restricted origin since the API uses JWT Bearer tokens,
   // not cookies.
   app.enableCors({

@@ -1,4 +1,5 @@
 import AuthForm from '../components/auth/AuthForm';
+import LandingPage from '../components/LandingPage';
 import { Navigate, Route, useLocation } from 'react-router-dom';
 
 // `data-theme="branding"` pins the login / signup / forgot-password surface
@@ -13,7 +14,7 @@ function AuthFormWrapper() {
   return (
     <div
       data-theme="branding"
-      className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]"
+      className="flex items-start sm:items-center justify-center min-h-screen px-4 pt-16 sm:pt-0 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]"
     >
       <AuthForm />
     </div>
@@ -27,6 +28,14 @@ function UnauthenticatedRedirect() {
 
 export function unauthenticatedRoutes() {
   return [
+    // The public marketing landing page. React Router ranks matches by path
+    // specificity, not array position, so this explicit `/` route always
+    // outranks the catch-all `*` → /login regardless of order. It must be
+    // registered at all, though: without an explicit `/` route a logged-out
+    // visitor to the root would fall through to the catch-all and bounce to
+    // the auth surface instead of seeing LandingPage.
+    <Route key="root" path="/" element={<LandingPage />} />,
+
     ...['forgot-password', 'login', 'signup'].map((key) => (
       <Route key={key} path={`/${key}`} element={<AuthFormWrapper />} />
     )),

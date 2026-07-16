@@ -101,24 +101,51 @@ describe('LinksList re-fetch (post first settle)', () => {
     expect(tabpanel?.getAttribute('aria-busy')).toBe('true');
   });
 
-  it('keeps the empty state mounted with aria-busy="true" during a re-fetch with no prior items', () => {
-    // Models the keystroke that produces no matches and is now mid-fetch
-    // for the next query: the empty state stays mounted, aria-busy flips to
-    // true so AT can announce the loading status.
+  it('renders the skeleton (not the empty message) on a post-settle page-1 refetch over a blanked list', () => {
+    // The flash bug: hasSettledOnce is already true, the page-1 refetch has
+    // blanked links to [] and set loadingLinks true. There must be NO render
+    // where links.length === 0 && loadingLinks === true resolves to the
+    // empty-text branch; it must resolve to the skeleton. (The empty list is
+    // reached the same way whether or not a search term is active, so a single
+    // case covers both the blanked-list and no-matches windows.)
     renderWithProviders(
       <LinksList
         {...baseProps}
         loadingLinks={true}
         hasSettledOnce={true}
         links={[]}
-        search="zzz"
-        debouncedSearch="zzz"
+        page={1}
       />,
     );
 
-    expect(screen.getByText(/no unread links/i)).toBeTruthy();
+    expect(screen.getByRole('status', { name: /loading link/i })).toBeTruthy();
+    expect(screen.queryByText(/no unread links/i)).toBeNull();
     const tabpanel = document.getElementById(LINKS_LIST_ID);
     expect(tabpanel?.getAttribute('aria-busy')).toBe('true');
+  });
+});
+
+describe('LinksList mobile-reflow guard (WCAG 1.4.10)', () => {
+  it('gives each grid item `min-w-0` so a long unbreakable title cannot inflate the track', () => {
+    // The grid item's default `min-width: auto` lets an unbreakable title/URL
+    // grow the `grid grid-cols-1` track past the viewport, producing horizontal
+    // scroll on mobile. `min-w-0` on the map wrapper resets that minimum to 0
+    // WITHOUT clipping (the card stays `overflow-visible`, so the favicon still
+    // straddles the left border). Dropping `min-w-0` reintroduces the overflow,
+    // so this fails if the guard is removed. jsdom has no layout engine, so the
+    // live 320px scrollWidth check lives in the PR notes; this is the structural
+    // oracle for the guard's presence.
+    renderWithProviders(
+      <LinksList
+        {...baseProps}
+        hasSettledOnce={true}
+        links={[makeLink({ id: 'a' })]}
+      />,
+    );
+
+    const tabpanel = document.getElementById(LINKS_LIST_ID);
+    const gridItem = tabpanel?.firstElementChild;
+    expect(gridItem?.className).toContain('min-w-0');
   });
 });
 

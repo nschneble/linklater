@@ -51,15 +51,19 @@ interface LinksListProps {
 
 /**
  * Renders the paginated list of link cards. Handles three states:
- * - Initial loading (first ever fetch): single `LinkCardSkeleton`.
- * - Empty: contextual empty-state message (different for unread, read, and search).
+ * - Empty: contextual empty-state message (different for unread, read, and
+ *   search), shown only once a fetch has settled with no items.
+ * - Skeleton: a single `LinkCardSkeleton`, shown whenever the list is empty
+ *   and a fetch is in flight (no settled items yet, or a re-fetch over an
+ *   already-empty list) so the empty message never flashes mid-load.
  * - Populated: a grid of `LinkCard` components with a "Load more" button when
  *   additional pages exist.
  *
- * On re-fetches after the first settle the stale list (or empty state) stays
- * mounted; the loading affordance is AT-only via `aria-busy` on the tabpanel
- * container (WCAG 4.1.3 Status Messages), so sighted users do not see a
- * skeleton flash between keystrokes.
+ * On re-fetches after the first settle a populated list stays mounted; the
+ * loading affordance is AT-only via `aria-busy` on the tabpanel container
+ * (WCAG 4.1.3 Status Messages), so sighted users do not see a skeleton flash
+ * between keystrokes. An empty list is the exception: an in-flight fetch swaps
+ * the empty state out for the skeleton rather than leaving stale empty text.
  *
  * The tabpanel container (`role="tabpanel"`, `aria-labelledby`, `aria-busy`)
  * is rendered once around every branch so that AT state never drops between
@@ -83,7 +87,13 @@ export default function LinksList({
   onLoadMore,
 }: LinksListProps) {
   const tabPanelLabelId = filter === 'read' ? 'tab-read' : 'tab-unread';
-  const isInitialLoad = loadingLinks && page === 1 && !hasSettledOnce;
+
+  // The empty-state message may only show once the hook has genuinely settled
+  // with no items and no fetch in flight. While a load is in flight the list
+  // can be blanked to `[]` (the first page-1 fetch) or already be empty from a
+  // prior settle; in those windows the skeleton is the AT-correct in-load
+  // state, so the empty text never flashes before real links render.
+  const showEmptyState = hasSettledOnce && !loadingLinks && links.length === 0;
 
   // Show the discovery callout only when the unread list is genuinely
   // empty – never when an active search just happens to return no
@@ -94,10 +104,7 @@ export default function LinksList({
   let body: ReactNode;
   let containerClass: string;
 
-  if (isInitialLoad) {
-    containerClass = 'grid grid-cols-1 gap-6 mt-6';
-    body = <LinkCardSkeleton />;
-  } else if (links.length === 0) {
+  if (showEmptyState) {
     containerClass =
       'flex flex-col items-center justify-center py-9 text-center animate-fade-in-up';
     body = (
@@ -118,6 +125,12 @@ export default function LinksList({
         {isUnreadEmpty && <SuggestionCallout inNewTab={true} />}
       </>
     );
+  } else if (links.length === 0) {
+    // Empty list with a fetch in flight (first page-1 load or a re-fetch over
+    // an already-empty list). See the `showEmptyState` gate above for why this
+    // renders the skeleton rather than the empty message.
+    containerClass = 'grid grid-cols-1 gap-6 mt-6';
+    body = <LinkCardSkeleton />;
   } else {
     containerClass = 'grid grid-cols-1 gap-6 mt-6 mb-28';
     body = (
@@ -125,9 +138,13 @@ export default function LinksList({
         {links.map((link, index) => (
           <div
             key={link.id}
-            className={
+            // `min-w-0` resets the grid item's default `min-width: auto` to 0
+            // so a long unbreakable title/URL cannot inflate the track past the
+            // viewport (WCAG 1.4.10 Reflow). The card itself stays
+            // `overflow-visible` so its favicon can straddle the left border.
+            className={`min-w-0 ${
               isClearingRead ? 'animate-card-exit pointer-events-none' : ''
-            }
+            }`}
             style={
               isClearingRead ? { animationDelay: `${index * 40}ms` } : undefined
             }
