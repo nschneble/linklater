@@ -1,6 +1,6 @@
 {
   "name": "@linklater/api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Linklater is an Instapaper-inspired “read it later” app.",
   "author": "Nick Schneble",
   "private": true,

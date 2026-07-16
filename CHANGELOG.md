@@ -10,6 +10,20 @@
 
 ### Fixed
 
+## [1.0.1] - 2026-07-16
+
+### Fixed
+
+- Add link form stays open after saving a link
+- Bookmarklet fails on literally every page
+- Button taps in the mobile user menu are ignored
+- Logged-in users see marketing page with “Get started” and “Log in” buttons
+- Mark unread button is left-aligned on link cards without descriptions
+- “No un/read links” flashes before links are rendered
+- Top margin on add link form is oversized on mobile
+- Top margin on signup/login auth form is oversized on mobile
+- Viewport overflows on mobile
+
 ## [1.0.0] - 2026-07-12
 
 ### Added
@@ -100,7 +114,8 @@ This is a development version bump. Most of the changes are related to refactori
 - Toggle themes based on Richard Linklater's filmography
 - Toggle light and dark mode
 
-[Unreleased]: https://github.com/nschneble/linklater/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/nschneble/linklater/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/nschneble/linklater/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/nschneble/linklater/releases/tag/v1.0.0
 [0.3.0]: https://github.com/nschneble/linklater/releases/tag/v0.3.0
 [0.2.0]: https://github.com/nschneble/linklater/releases/tag/v0.2.0
