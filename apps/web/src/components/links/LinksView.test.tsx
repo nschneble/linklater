@@ -15,7 +15,7 @@
  */
 
 import LinksView from './LinksView';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -135,6 +135,53 @@ describe('LinksView – add-link form placement', () => {
     // Desktop: back to inline flow directly below the toolbar.
     expect(dialog.className).toContain('sm:relative');
     expect(dialog.className).toContain('sm:top-auto');
+  });
+});
+
+describe('LinksView – add-link form dismissal', () => {
+  it('names the dialog with a visible "Save a link" heading', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ showLinkForm: true }),
+    );
+
+    renderLinksView();
+
+    // The dialog is named via aria-labelledby pointing at the visible <h2>,
+    // so the accessible name resolves from on-screen text.
+    const dialog = screen.getByRole('dialog', { name: 'Save a link' });
+    const heading = screen.getByRole('heading', { name: 'Save a link' });
+    expect(heading.tagName).toBe('H2');
+    expect(dialog).toHaveAttribute('aria-labelledby', heading.id);
+  });
+
+  it('closes the form when the Close button is clicked', () => {
+    const handleToggleForm = vi.fn();
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ showLinkForm: true, handleToggleForm }),
+    );
+
+    renderLinksView();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(handleToggleForm).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the backdrop from assistive tech (keyboard close is Escape + the Close button)', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ showLinkForm: true }),
+    );
+
+    const { baseElement } = renderLinksView();
+
+    // The backdrop is a mouse-only affordance: aria-hidden and out of the tab
+    // order, so it no longer duplicates the Close control for AT users.
+    const scrim = baseElement.querySelector('.scrim');
+    expect(scrim).toHaveAttribute('aria-hidden', 'true');
+    expect(scrim).toHaveAttribute('tabindex', '-1');
+    expect(
+      screen.queryByRole('button', { name: 'Close form' }),
+    ).not.toBeInTheDocument();
   });
 });
 
