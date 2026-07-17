@@ -16,15 +16,15 @@ often.
 The shape of the thing, derived from the code, because it drives every decision
 that follows:
 
-| Piece           | What it is                                                                                                                                                                                                                                                                                                                             |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| API             | NestJS HTTP server, listens on port `3000` (`PORT` override). Speaks plain HTTP in production; TLS terminates at the reverse proxy (see the `loadHttpsOptions` docstring in `apps/api/src/main.ts`).                                                                                                                                     |
-| Web             | React + Vite static build (`tsc -b && vite build`). Compiles to a folder of static files served by any web server.                                                                                                                                                                                                                     |
-| Database        | PostgreSQL. CI pins `postgres:16`; local development uses PostgreSQL 18. The `unaccent` extension is required (accent-insensitive search) and is enabled by a migration, so no manual `CREATE EXTENSION` step is needed on a fresh database.                                                                                             |
+| Piece           | What it is                                                                                                                                                                                                                                                                                                                                                                             |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API             | NestJS HTTP server, listens on port `3000` (`PORT` override). Speaks plain HTTP in production; TLS terminates at the reverse proxy (see the `loadHttpsOptions` docstring in `apps/api/src/main.ts`).                                                                                                                                                                                   |
+| Web             | React + Vite static build (`tsc -b && vite build`). Compiles to a folder of static files served by any web server.                                                                                                                                                                                                                                                                     |
+| Database        | PostgreSQL. CI pins `postgres:16`; local development uses PostgreSQL 18. The `unaccent` extension is required (accent-insensitive search) and is enabled by a migration, so no manual `CREATE EXTENSION` step is needed on a fresh database.                                                                                                                                           |
 | Background jobs | Run **inside the API process** via pg-boss. `QueueService` starts pg-boss on module init and stops it on shutdown (`apps/api/src/queue/queue.service.ts`); recurring jobs (read-link cleanup, RSS suggestions) are registered as pg-boss cron schedules. **There is no separate worker process to deploy or supervise.** pg-boss stores its own state in the same PostgreSQL database. |
-| Email           | SMTP, optional. If the `SMTP_*` variables are unset the app runs fine; transactional email (verification, password reset, magic links, deletion) simply does not send.                                                                                                                                                                 |
-| Health probe    | `GET /health` is unauthenticated and cheap (a single `SELECT 1`). It returns `200` when the database answers and `503` when it does not, so orchestrators and deploy scripts can gate on it.                                                                                                                                            |
-| Migrations      | `npm run migrate:deploy --workspace @linklater/api` runs `prisma migrate deploy && prisma generate`. This is the production-safe, non-interactive migration path.                                                                                                                                                                       |
+| Email           | SMTP, optional. If the `SMTP_*` variables are unset the app runs fine; transactional email (verification, password reset, magic links, deletion) simply does not send.                                                                                                                                                                                                                 |
+| Health probe    | `GET /health` is unauthenticated and cheap (a single `SELECT 1`). It returns `200` when the database answers and `503` when it does not, so orchestrators and deploy scripts can gate on it.                                                                                                                                                                                           |
+| Migrations      | `npm run migrate:deploy --workspace @linklater/api` runs `prisma migrate deploy && prisma generate`. This is the production-safe, non-interactive migration path.                                                                                                                                                                                                                      |
 
 Two consequences drive everything below:
 
@@ -79,13 +79,13 @@ https://my.interserver.net/index.php?choice=none.order_vps&platform=kvm&vpsslice
 
 What to confirm in the order flow:
 
-| Field         | Choose                        | Why                                                                                                             |
-| ------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Platform      | **KVM**                       | Real virtualization, not containers. Required for Docker to behave normally.                                    |
-| Slices        | **2**                         | 1 core / 4 GB / 80 GB SSD / 4 TB transfer. $6/mo.                                                                |
-| OS            | **Ubuntu 24.04 LTS**          | Best Docker support, longest support window, most-trodden path.                                                 |
-| Location      | **Secaucus, NJ** (listed NYC) | InterServer's own datacenter. Their home turf.                                                                  |
-| Control panel | **None**                      | You are running Compose; a cPanel/DirectAdmin/Webuzo panel is dead weight and an extra attack surface.          |
+| Field         | Choose                        | Why                                                                                                    |
+| ------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Platform      | **KVM**                       | Real virtualization, not containers. Required for Docker to behave normally.                           |
+| Slices        | **2**                         | 1 core / 4 GB / 80 GB SSD / 4 TB transfer. $6/mo.                                                      |
+| OS            | **Ubuntu 24.04 LTS**          | Best Docker support, longest support window, most-trodden path.                                        |
+| Location      | **Secaucus, NJ** (listed NYC) | InterServer's own datacenter. Their home turf.                                                         |
+| Control panel | **None**                      | You are running Compose; a cPanel/DirectAdmin/Webuzo panel is dead weight and an extra attack surface. |
 
 Before you pay:
 
@@ -160,7 +160,7 @@ Verify with `free -h`. You should see 2.0Gi of swap, 0B used.
 
 **Read swap correctly:** steady-state usage should sit at ~0. Swap is there to
 absorb transient V8 GC spikes that would otherwise trigger the OOM killer. Swap
-*actively in use* under load is a signal to tune or add a slice, not a resource
+_actively in use_ under load is a signal to tune or add a slice, not a resource
 you are allowed to spend. Under a database workload, active swapping means
 iowait and latency spikes.
 
@@ -182,12 +182,12 @@ ufw enable
 > [!WARNING]
 > **Docker publishes ports by writing iptables rules that bypass UFW.** A
 > `ports:` mapping on your Postgres service would expose it to the internet
-> *even with UFW denying everything*. Two defenses, use both:
+> _even with UFW denying everything_. Two defenses, use both:
 >
 > 1. In `docker-compose.prod.yml`, give Postgres **no `ports:` block at all**.
 >    Only Caddy should publish (`80:80`, `443:443`). Services reach each other by
 >    Compose service name over the internal network.
-> 2. If you ever *do* need to bind a container port for debugging, bind it to
+> 2. If you ever _do_ need to bind a container port for debugging, bind it to
 >    localhost explicitly: `127.0.0.1:5432:5432`, never `5432:5432`.
 
 ### 5. Docker
@@ -227,7 +227,7 @@ failed challenges and, if you retry enough, a Let's Encrypt rate limit.
 
 ## Tune the stack for a 4 GB box
 
-Because Postgres is *sharing* this box with Node, the usual tuning rules that
+Because Postgres is _sharing_ this box with Node, the usual tuning rules that
 assume a dedicated database server need adjusting. Three changes: Postgres
 config, container memory limits, and connection-pool caps.
 
@@ -257,7 +257,7 @@ api:
       limits:
         memory: 1G
   environment:
-    NODE_OPTIONS: "--max-old-space-size=768"
+    NODE_OPTIONS: '--max-old-space-size=768'
 
 postgres:
   deploy:
@@ -267,10 +267,10 @@ postgres:
 ```
 
 **Why the heap cap matters even at 4 GB:** V8 sizes its default max heap at ~50%
-of the container limit, and with *no* limit set, it sees the whole host. So an
+of the container limit, and with _no_ limit set, it sees the whole host. So an
 unconstrained Node process on a 4 GB box lets its heap grow toward ~2 GB before
 GC gets serious, while competing with Postgres, which it does not know exists.
-The cap makes Node's container-awareness work *for* you instead of against you.
+The cap makes Node's container-awareness work _for_ you instead of against you.
 Confirm the limits actually apply under `docker compose up`. Depending on your
 Compose version you may need `mem_limit` rather than `deploy.resources.limits`;
 use whichever takes effect.
@@ -344,7 +344,7 @@ curl -I https://YOUR_DOMAIN/api/health   # expect 200
 
 `docker stats` is the ground truth. The memory budget is an estimate; your actual
 NestJS RSS depends on your dependency tree. If Postgres or Node is sitting close
-to its limit at *idle*, raise the limit or add a slice before it becomes a 2 a.m.
+to its limit at _idle_, raise the limit or add a slice before it becomes a 2 a.m.
 problem. `GET /api/health` returns `200` from the public edge because Caddy
 proxies only `/api/*` to the API; everything else is the static web app. Finish
 by registering an account and running a search.
