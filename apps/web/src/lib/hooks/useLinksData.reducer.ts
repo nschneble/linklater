@@ -11,24 +11,21 @@ export interface FetchParams {
   page: number;
   /** The full-text search query string, or an empty string when not searching. */
   search: string;
-  /**
-   * One-shot limit override for the next fetch. Used by the "less doesn't
-   * need more" rule: when the next page would leave exactly one trailing
-   * item, the override grabs that item in the same request rather than
-   * forcing a follow-up.
-   */
-  limit?: number;
 }
 
 export type FetchParamsAction =
   | { type: 'reset'; filter: LinksFilter; search: string }
-  | { type: 'load-more'; limit?: number };
+  | { type: 'load-more' };
 
 /**
  * Pure reducer for `FetchParams`. `'reset'` replaces filter/search and
  * resets the page to 1, but is a no-op when filter and search haven't
- * changed to avoid redundant fetches. `'load-more'` increments the page #
- * and optionally carries a one-shot limit override for that page.
+ * changed to avoid redundant fetches. `'load-more'` increments the page
+ * number. The per-page `limit` is intentionally never varied: the server
+ * computes its offset as `(page - 1) * limit`, so bumping `limit` on a
+ * later page would multiply into the offset and silently skip a row. The
+ * "less doesn't need more" rule is honored by fetching a trailing item as
+ * its own follow-up page (see the auto-load net in `useLinksFetch`).
  */
 export function fetchParamsReducer(
   state: FetchParams,
@@ -41,6 +38,6 @@ export function fetchParamsReducer(
       }
       return { filter: action.filter, page: 1, search: action.search };
     case 'load-more':
-      return { ...state, page: state.page + 1, limit: action.limit };
+      return { ...state, page: state.page + 1 };
   }
 }
