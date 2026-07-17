@@ -1,0 +1,1005 @@
+:root {
+  color-scheme: dark light;
+
+  --bg: #0a0a0a;
+  --bg-elevated: #111111;
+  --text: #e5e5e5;
+  --text-muted: #a3a3a3;
+  --text-subtle: #8a8a8a;
+  --border: #262626;
+  --border-bright: #404040;
+  --accent: #38bdf8;
+  --img-outline: rgba(255, 255, 255, 0.1);
+
+  --pass: #22c55e;
+  --pass-fg: #052e16;
+  --changed: #facc15;
+  --changed-fg: #1f2937;
+  --failed: #f87171;
+  --failed-fg: #450a0a;
+  --skipped: #a1a1aa;
+  --skipped-fg: #18181b;
+  --new: #38bdf8;
+  --new-fg: #082f49;
+
+  --font-mono:
+    ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fafafa;
+    --bg-elevated: #ffffff;
+    --text: #18181b;
+    --text-muted: #525252;
+    --text-subtle: #6b6b6b;
+    --border: #d4d4d4;
+    --border-bright: #a3a3a3;
+    --accent: #0369a1;
+    --img-outline: rgba(0, 0, 0, 0.1);
+
+    --pass: #15803d;
+    --pass-fg: #ffffff;
+    --changed: #854d0e;
+    --changed-fg: #ffffff;
+    --failed: #b91c1c;
+    --failed-fg: #ffffff;
+    --skipped: #52525b;
+    --skipped-fg: #ffffff;
+    --new: #0369a1;
+    --new-fg: #ffffff;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* The story filter prunes stories, breakpoint groups, and actions by toggling
+   the native `hidden` attribute. Those are layout containers, so a future
+   `display:` rule on `.action`/`.breakpoint-group` would outrank the UA
+   `[hidden]` default and silently resurrect filtered rows as visible and
+   keyboard-focusable. Pin it so `hidden` always wins. */
+[hidden] {
+  display: none !important;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0 1.5rem 4rem;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 0.5rem 1rem;
+  background: var(--bg-elevated);
+  color: var(--text);
+  text-decoration: none;
+  border: 1px solid var(--border-bright);
+  transform: translateY(-200%);
+  transition: transform 0.15s ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.report-header {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 2rem 0 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.report-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.report-meta {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-wrap: pretty;
+}
+
+main {
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+main:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+h2 {
+  margin: 2rem 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-wrap: balance;
+}
+
+/* Environment-mismatch banner, first inside <main>. The "warning" meaning is
+   carried by the heading word + body copy, never by color alone (1.4.1). Body
+   text stays --text (≥4.5:1); the red accent lives only on the left border (a
+   non-text ≥3:1 cue, mirroring .action-error). The list of diverging keys reads
+   as monospace <code> tokens. */
+.env-mismatch {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--failed);
+}
+
+.env-mismatch h2 {
+  margin-top: 0.25rem;
+  color: var(--changed);
+}
+
+.env-mismatch p {
+  margin: 0.5rem 0;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  text-wrap: pretty;
+}
+
+.env-mismatch ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.env-mismatch li {
+  color: var(--changed);
+}
+
+/* Deleted (orphaned-baseline) section, a peer landmark after the stories. */
+.deleted {
+  margin-top: 0.5rem;
+}
+
+.deleted p {
+  margin: 0 0 0.5rem;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  text-wrap: pretty;
+}
+
+.deleted ul {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  list-style: none;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.deleted li {
+  padding: 0.15rem 0;
+  color: var(--text);
+}
+
+.summary {
+  margin-top: 0.5rem;
+}
+
+.summary-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  list-style: none;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.summary-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text);
+}
+
+.summary-item .count {
+  font-weight: 600;
+  color: var(--text-subtle);
+}
+
+/* Each status total is a single-select filter styled as a colorful, button-like
+   pill keyed to its status accent (aligned to the .chip idiom). Its sibling count
+   precedes it outside the button. Default (aria-pressed=false) is an OUTLINE pill:
+   transparent background, status-colored label + 1px status-colored border. Hover
+   adds a faint status tint; pressed becomes a FILLED pill (status background,
+   paired --*-fg label) with bold weight. The 1px solid status border on every
+   state guarantees a perceivable non-text edge (1.4.11); label/fg pairings clear
+   4.5:1 on --bg-elevated in both themes (1.4.3). Pressed is never color-alone
+   (1.4.1): it is the only filled + bold pill, readable without hue. Target size
+   ≥24×24 via min-height/min-width (2.5.8). Stays a <button>: it filters in place,
+   never navigates. */
+.summary-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 24px;
+  min-width: 24px;
+  padding: 0.2rem 0.6rem;
+  line-height: 1.2;
+  border: 1px solid var(--border-bright);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition-property: scale, color, background-color, border-color;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+
+.summary-filter[aria-pressed='true'] {
+  cursor: default;
+  user-select: none;
+  font-weight: 600;
+}
+
+.summary-filter:active {
+  scale: 0.96;
+}
+
+/* Status pills: OUTLINE by default (status label + status border, transparent
+   bg), faint status tint on hover, FILLED on pressed (status bg + paired --*-fg
+   label). The "all" total stays NEUTRAL on every state: --accent equals --new, so
+   tinting "all" blue would falsely imply the "new" filter. Status label + border
+   clear their contrast floors on --bg-elevated in both themes; each status token
+   paired with its --*-fg fill clears 4.5:1. */
+.summary-item[data-status='pass'] .summary-filter {
+  color: var(--pass);
+  border-color: var(--pass);
+}
+
+.summary-item[data-status='pass'] .summary-filter:hover {
+  background: color-mix(in srgb, var(--pass) 15%, transparent);
+}
+
+.summary-item[data-status='pass'] .summary-filter[aria-pressed='true'] {
+  background: var(--pass);
+  color: var(--pass-fg);
+}
+
+.summary-item[data-status='changed'] .summary-filter {
+  color: var(--changed);
+  border-color: var(--changed);
+}
+
+.summary-item[data-status='changed'] .summary-filter:hover {
+  background: color-mix(in srgb, var(--changed) 15%, transparent);
+}
+
+.summary-item[data-status='changed'] .summary-filter[aria-pressed='true'] {
+  background: var(--changed);
+  color: var(--changed-fg);
+}
+
+.summary-item[data-status='failed'] .summary-filter {
+  color: var(--failed);
+  border-color: var(--failed);
+}
+
+.summary-item[data-status='failed'] .summary-filter:hover {
+  background: color-mix(in srgb, var(--failed) 15%, transparent);
+}
+
+.summary-item[data-status='failed'] .summary-filter[aria-pressed='true'] {
+  background: var(--failed);
+  color: var(--failed-fg);
+}
+
+.summary-item[data-status='new'] .summary-filter {
+  color: var(--new);
+  border-color: var(--new);
+}
+
+.summary-item[data-status='new'] .summary-filter:hover {
+  background: color-mix(in srgb, var(--new) 15%, transparent);
+}
+
+.summary-item[data-status='new'] .summary-filter[aria-pressed='true'] {
+  background: var(--new);
+  color: var(--new-fg);
+}
+
+/* "all" stays NEUTRAL — never a status color, never blue. Pressed is a filled
+   neutral pill (it is pressed-by-default at load, so this is the resting view). */
+.summary-item[data-status='all'] .summary-filter {
+  color: var(--text);
+  border-color: var(--border-bright);
+}
+
+.summary-item[data-status='all'] .summary-filter[aria-pressed='true'] {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.summary-filter:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Breakpoint filter — the SECOND, independent single-select filter dimension,
+   rendered below the status totals inside the summary region (only for
+   multi-breakpoint runs). A role="group" row of neutral pills; report.js ANDs it
+   with the status filter. The row sits on the page --bg with a top gap that also
+   guarantees ≥24px vertical spacing between the two pill rows (2.5.8). */
+.breakpoint-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* Neutral pills — no status hue, so the two filter rows read as siblings by
+   geometry, not color. Same pill geometry/radius as the status filter.
+   Default is an OUTLINE pill: transparent bg, --text-muted border (≥3:1 vs --bg
+   in both themes → 1.4.11), --text label (≥4.5:1 → 1.4.3). Hover brightens the
+   border + adds a faint neutral tint. Pressed is a FILLED pill: --text fill,
+   --bg label, bold weight — the ONLY filled + bold pill, so the pressed state is
+   never conveyed by color alone (1.4.1); the inverse fill clears 4.5:1 in both
+   themes. Focus ring is --accent 2px / offset 2px, painted on the page --bg
+   outside the pill — identical to the status filter. Target size ≥24×24 via
+   min-height/min-width (2.5.8). Stays a <button>: it filters in place. */
+.breakpoint-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 24px;
+  min-width: 24px;
+  padding: 0.2rem 0.6rem;
+  line-height: 1.2;
+  border: 1px solid var(--text-muted);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition-property: scale, color, background-color, border-color;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+
+.breakpoint-filter .breakpoint-name {
+  color: inherit;
+  font-weight: inherit;
+  text-transform: none;
+}
+
+.breakpoint-filter .breakpoint-dimensions {
+  color: var(--text-subtle);
+}
+
+.breakpoint-filter:hover:not([aria-pressed='true']) {
+  border-color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.breakpoint-filter[aria-pressed='true'] {
+  cursor: default;
+  user-select: none;
+  font-weight: 600;
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+/* The pressed pill's dimensions ride the inverse fill: --bg on --text is the
+   same ≥4.5:1 pair as the label, so they stay legible. */
+.breakpoint-filter[aria-pressed='true'] .breakpoint-dimensions {
+  color: color-mix(in srgb, var(--bg) 65%, var(--text));
+}
+
+.breakpoint-filter:active {
+  scale: 0.96;
+}
+
+.breakpoint-filter:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--border-bright);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  transition-property: scale, color, border-color;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+
+.chip--toggle:not(:has(input:checked)):not(:has(input:disabled)):hover {
+  color: var(--text);
+  border-color: var(--border-bright);
+}
+
+.chip:active {
+  scale: 0.96;
+}
+
+.chip--toggle:has(input:checked) {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.chip--toggle:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+@supports not (selector(:has(*))) {
+  .chip--toggle:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+}
+
+/* The expand-all / collapse-all pair now lives at the right end of the summary
+   row (the slot the coverage stats vacated), pushed there by margin-left:auto
+   while staying the LAST flex children so DOM order matches the visual order. */
+.story-bulk-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  line-height: 24px;
+  font-size: 0.8125rem;
+}
+
+/* Link-styled verbs ("Expand" / "Collapse") — still <button>s, they act in
+   place. The underline is the affordance; verbs exceed 24px wide intrinsically,
+   so min-height alone carries 2.5.8. */
+.story-bulk-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  vertical-align: middle;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4.5px;
+}
+
+.story-bulk-toggle-button:hover:not(:disabled) {
+  color: var(--accent);
+  text-decoration-thickness: 2px;
+}
+
+.story-bulk-toggle-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Disabled verb: removing the underline is the color-independent cue (no
+   opacity — it can compound below the contrast floor). Disabled controls are
+   1.4.3/1.4.11 exempt, but the state stays perceptible without color. */
+.story-bulk-toggle-button:disabled {
+  color: var(--text-subtle);
+  text-decoration: none;
+  cursor: not-allowed;
+}
+
+.bulk-scope,
+.bulk-sep {
+  color: var(--text-subtle);
+}
+
+.summary-item:has(+ .story-bulk-toggle) .bulk-sep {
+  display: none;
+}
+
+.bulk-scope {
+  cursor: default;
+  margin-inline-start: 0.25rem;
+}
+
+.story-filter-status {
+  margin: 0 0 0.75rem;
+  color: var(--text-subtle);
+  font-size: 0.8125rem;
+}
+
+.stories-empty {
+  margin: 0.5rem 0 0;
+  padding: 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-subtle);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.stories {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.story {
+  padding: 0.875rem 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.story:first-child {
+  border-top: 1px solid transparent;
+}
+
+.story[data-status='failed'] {
+  box-shadow: inset 3px 0 0 var(--failed);
+}
+
+.story[data-status='new'] {
+  box-shadow: inset 3px 0 0 var(--new);
+}
+
+.story[data-status='changed'] {
+  box-shadow: inset 3px 0 0 var(--changed);
+}
+
+.story-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-right: 1.1rem;
+}
+
+.story-marker {
+  font-weight: 600;
+  margin-right: -0.45rem;
+}
+
+.story-file {
+  font-weight: 600;
+}
+
+.story[data-status='pass'] .story-marker,
+.story[data-status='pass'] .story-file {
+  color: var(--pass);
+}
+
+.story[data-status='new'] .story-marker,
+.story[data-status='new'] .story-file {
+  color: var(--new);
+}
+
+.story[data-status='changed'] .story-marker,
+.story[data-status='changed'] .story-file {
+  color: var(--changed);
+}
+
+.story[data-status='failed'] .story-marker,
+.story[data-status='failed'] .story-file {
+  color: var(--failed);
+}
+
+.story-duration {
+  margin-left: auto;
+  color: var(--text-subtle);
+}
+
+.story-prose {
+  margin: 0.25rem 0 0.5rem;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  text-wrap: pretty;
+}
+
+/* `:not([hidden])` on both sides so a filter that hides the first group does
+   not strand its separator on the new first-visible group. */
+.breakpoint-group:not([hidden]) + .breakpoint-group:not([hidden]) {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--border);
+}
+
+.breakpoint-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.breakpoint-name {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.breakpoint-dimensions {
+  color: var(--text-subtle);
+  text-transform: none;
+}
+
+.actions {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.action {
+  padding: 0.15rem 0;
+}
+
+.action:last-child {
+  position: relative;
+}
+
+.action[data-status='failed'] {
+  color: var(--failed);
+}
+
+.action[data-status='changed'] {
+  color: var(--changed);
+}
+
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding-right: 1.1rem;
+}
+
+.action-name {
+  color: var(--text);
+}
+
+.action-duration {
+  margin-left: auto;
+  color: var(--text-subtle);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.5rem;
+  border: 1px solid currentColor;
+  min-width: 5rem;
+}
+
+.status-label {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+}
+
+.status[data-status='pass'] {
+  color: var(--pass);
+}
+
+.status[data-status='changed'] {
+  color: var(--changed);
+}
+
+.status[data-status='failed'] {
+  color: var(--failed);
+}
+
+.status[data-status='skipped'] {
+  color: var(--skipped);
+}
+
+.status[data-status='new'] {
+  color: var(--new);
+}
+
+.action-parameters {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.15rem 0.75rem;
+  margin: 0.25rem 0 0 2.2rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.action-parameters dt {
+  color: var(--text-subtle);
+}
+
+.action-parameters dd {
+  margin: 0;
+}
+
+.action-error {
+  margin: 0.5rem 0 0 2.2rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border-left: 3px solid var(--failed);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+/* Supplementary per-action notes (candidate / a11y-drift). Both plain prose
+   inside li.action; an a11y-only changed row stacks both. Indented to align
+   under the action name (past the status badge), muted like other secondary
+   prose. Stacked cleanly with a small gap when both render. */
+.candidate-note,
+.a11y-drift-note {
+  margin: 0.35rem 0 0 2.2rem;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  text-wrap: pretty;
+}
+
+.candidate-note + .a11y-drift-note {
+  margin-top: 0.15rem;
+}
+
+.a11y-drift-note code {
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+summary.action-row {
+  list-style: none;
+  cursor: pointer;
+  position: relative;
+}
+
+summary.action-row > .action-name {
+  text-decoration: underline;
+  text-underline-offset: 4.5px;
+}
+
+.action[data-status='pass'] summary.action-row:hover > .action-name {
+  color: var(--pass);
+}
+
+.action[data-status='changed'] summary.action-row:hover > .action-name {
+  color: var(--changed);
+}
+
+.action[data-status='failed'] summary.action-row:hover > .action-name {
+  color: var(--failed);
+}
+
+summary.action-row::-webkit-details-marker {
+  display: none;
+}
+
+summary.action-row::after {
+  content: '➤';
+  position: absolute;
+  top: 0;
+  right: 0.4rem;
+  height: 1.55em;
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-subtle);
+  transition: transform 0.15s ease;
+}
+
+details.shots[open] > summary.action-row::after {
+  transform: rotate(90deg);
+}
+
+summary.action-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.shot-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0.5rem 2.2rem;
+  padding: 0;
+  border: 0;
+}
+
+.shot-radio-label {
+  gap: 0.35rem;
+}
+
+.shot-radio-label:has(input:disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.shot-radio-label input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shot-panel {
+  margin-top: 0.5rem;
+  margin-left: 2.2rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.shot-panel img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  outline: 1px solid var(--img-outline);
+  outline-offset: -1px;
+}
+
+.shot-missing {
+  margin: 0;
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-subtle);
+  font-family: var(--font-sans);
+  text-wrap: pretty;
+}
+
+.diff-stats {
+  margin: 0 0 0 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text);
+}
+
+.diff-stats .count {
+  font-weight: 600;
+}
+
+.diff-stats .label {
+  color: var(--text-muted);
+}
+
+.diff-stats .coverage-detail {
+  color: var(--text-subtle);
+}
+
+/* No diff image to show (dimension mismatch). The note IS the primary content
+   of this slot, so it keeps full `--text` weight; italic alone marks the
+   "no data" state. */
+.diff-stats--unavailable .label {
+  font-style: italic;
+}
+
+/* Interactive screenshot viewer (interactiveMode). The radio group + caption
+   sit in this fieldset, which lives OUTSIDE the clipped `.shot-stage`, so the
+   chip focus ring is never clipped by the stage overflow nor painted over
+   screenshot pixels. The chips reuse `.chip--toggle` (border `--border-bright`,
+   `--accent` focus ring) and the same `.shot-radio-label` base styles as the
+   radio-tab viewer — permanently visible, no interactiveMode-specific chip
+   styling. Visible chips are the mouse/touch path to every variant (including
+   Diff, which the press gesture does not cover) and double as the viewer's
+   only visible affordance; the press-and-hold blink-compare in report.js is
+   enhancement on top. */
+.shot-interactive {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0.5rem 2.2rem;
+  padding: 0;
+  border: 0;
+}
+
+/* Persistent caption naming the DISPLAYED variant — the committed one, or the
+   press-and-hold preview while it is held (report.js keeps it in sync). Text on
+   `--text` (≥4.5:1), so the active variant is never conveyed by color alone —
+   it pairs the checked chip's accent border with this readable label.
+   aria-hidden keeps it visual only: the checked radio is the single accessible
+   source of committed state. */
+.shot-caption {
+  margin: 0 0 0 0.25rem;
+  color: var(--text);
+  font-size: 0.8125rem;
+}
+
+.shot-caption-variant {
+  font-weight: 600;
+}
+
+/* The stage clips the screenshot to the viewport height. Its border uses
+   `--border-bright` (3:1 non-text contrast). overflow:hidden only ever clips
+   the image — the controls live in the sibling fieldset above. */
+.shot-stage {
+  margin-top: 0.5rem;
+  margin-left: 2.2rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border-bright);
+  background: var(--bg);
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Scale the screenshot to fit within the viewport height (and the panel width)
+   so a tall capture never forces the page to scroll. width/height:auto preserve
+   the aspect ratio while `max-height` caps it to the viewport. */
+.shot-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 85vh;
+  outline: 1px solid var(--img-outline);
+  outline-offset: -1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skip-link,
+  summary.action-row::after,
+  .chip,
+  .summary-filter,
+  .breakpoint-filter {
+    transition: none;
+  }
+  .chip:active,
+  .summary-filter:active,
+  .breakpoint-filter:active {
+    scale: none;
+  }
+}
