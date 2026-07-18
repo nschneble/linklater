@@ -10,7 +10,7 @@ import { MOCK_GLYPHS } from './mockGlyphs';
  * there are no focusable descendants. Paints every mount slot the real card
  * uses — the accent border (mount-highlight), the favicon badge
  * (mount-highlight-hover), the thumbnail (mount-highlight fill + mount-highlight-fg
- * label, mirroring the real placehold.co image), the title (mount-text), and the
+ * label, mirroring the real inline-SVG placeholder), the title (mount-text), and the
  * site name + description (mount-alt-text). The visible copy is asemic Old Turkic
  * (see mockGlyphs) so the aria-hidden mock reads as decoration.
  */

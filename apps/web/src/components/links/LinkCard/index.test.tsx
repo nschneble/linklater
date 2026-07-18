@@ -66,6 +66,91 @@ describe('LinkCard mobile-overflow containment (WCAG 1.4.10 Reflow)', () => {
   });
 });
 
+describe('LinkCard thumbnail placeholder (local inline SVG, no third party)', () => {
+  it('renders the remote OpenGraph image when meta.imageUrl is present', () => {
+    const { container } = renderWithProviders(
+      <LinkCard
+        link={makeLink({
+          meta: {
+            title: 'Example title',
+            imageUrl: 'https://cdn.example.com/og.png',
+            fetchedAt: new Date().toISOString(),
+          },
+        })}
+        onReadToggle={vi.fn()}
+      />,
+    );
+
+    const image = container.querySelector(
+      'img[src="https://cdn.example.com/og.png"]',
+    );
+    expect(image).not.toBeNull();
+    // With a real image there is no need for the generated placeholder.
+    expect(container.querySelector('svg')).toBeNull();
+  });
+
+  it('renders a locally generated inline-SVG placeholder when there is no imageUrl', () => {
+    const { container } = renderWithProviders(
+      <LinkCard
+        link={makeLink({
+          url: 'https://www.example.com/article',
+          meta: {
+            title: 'Example title',
+            fetchedAt: new Date().toISOString(),
+          },
+        })}
+        onReadToggle={vi.fn()}
+      />,
+    );
+
+    const svg = container.querySelector('svg');
+    expect(svg).not.toBeNull();
+    // Decorative: the anchor carries the accessible name, not this thumbnail.
+    expect(svg?.getAttribute('aria-hidden')).toBe('true');
+    // The hostname (without www.) labels the placeholder.
+    expect(svg?.textContent).toContain('example.com');
+  });
+
+  it('binds the placeholder fills to the mount-highlight CSS vars so it recolors on theme AND mode without JS', () => {
+    const { container } = renderWithProviders(
+      <LinkCard
+        link={makeLink({
+          meta: {
+            title: 'Example title',
+            fetchedAt: new Date().toISOString(),
+          },
+        })}
+        onReadToggle={vi.fn()}
+      />,
+    );
+
+    const svg = container.querySelector('svg');
+    const fill = svg?.querySelector('rect')?.getAttribute('fill');
+    const textFill = svg?.querySelector('text')?.getAttribute('fill');
+    expect(fill).toBe('var(--mount-highlight)');
+    expect(textFill).toBe('var(--mount-highlight-fg)');
+  });
+
+  it('never references the third-party placeholder host in the rendered card', () => {
+    // Host built from parts so this guard does not itself reintroduce the
+    // literal into source (the placeholder is fully local now).
+    const thirdPartyHost = ['placehold', 'co'].join('.');
+    const { container } = renderWithProviders(
+      <LinkCard
+        link={makeLink({
+          meta: {
+            title: 'Example title',
+            fetchedAt: new Date().toISOString(),
+          },
+        })}
+        onReadToggle={vi.fn()}
+      />,
+    );
+
+    expect(container.innerHTML).not.toContain(thirdPartyHost);
+  });
+});
+
 describe('LinkCard "Mark unread" alignment', () => {
   it('right-aligns the button on a read link that has NO description', () => {
     // A title with a null description yields a falsy displayDescription, so the
