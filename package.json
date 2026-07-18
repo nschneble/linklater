@@ -47,14 +47,5 @@
     "multer": "^2.2.0",
     "picomatch": "^4.0.4",
     "webpack": "^5.105.0"
-  },
-  "allowScripts": {
-    "fsevents@2.3.3": true,
-    "fsevents@2.3.2": true,
-    "prisma@7.7.0": true,
-    "unrs-resolver@1.12.2": true,
-    "@prisma/engines@7.7.0": true,
-    "@scarf/scarf@1.4.0": true,
-    "esbuild@0.27.2": true
   }
 }
