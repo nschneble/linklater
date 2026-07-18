@@ -3,6 +3,24 @@ import LoginRegisterView from './LoginRegisterView';
 import MfaView from './MfaView';
 import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
 import { useAuthForm } from './useAuthForm';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
+import type { MfaChallenge, Mode } from './useAuthForm';
+
+/**
+ * The page title for each auth flow. An MFA challenge takes precedence over
+ * `mode` because the MFA view renders on top of the login flow, matching the
+ * render precedence below (WCAG 2.4.2 Page Titled). The "Linklater – X"
+ * en-dash separator matches the app-wide title convention.
+ */
+function authDocumentTitle(
+  mode: Mode,
+  mfaChallenge: MfaChallenge | null,
+): string {
+  if (mfaChallenge) return "Linklater – Verify it's you";
+  if (mode === 'forgot-password') return 'Linklater – Reset password';
+  if (mode === 'register') return 'Linklater – Sign up';
+  return 'Linklater – Log in';
+}
 
 /**
  * Top-level authentication form. Drives login, register, forgot-password, and
@@ -40,6 +58,8 @@ export default function AuthForm() {
     setNotice,
     setPassword,
   } = useAuthForm();
+
+  useDocumentTitle(authDocumentTitle(mode, mfaChallenge));
 
   let view;
   if (mode === 'forgot-password') {

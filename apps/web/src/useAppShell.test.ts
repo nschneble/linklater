@@ -169,6 +169,50 @@ describe('view derived from pathname', () => {
   });
 });
 
+describe('main landmark label tracks the active view', () => {
+  it('labels the links view "Your links"', () => {
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/',
+      search: '',
+      hash: '',
+      state: null,
+      key: 'default',
+    });
+
+    const { result } = renderHook(() => useAppShell());
+
+    expect(result.current.mainLabel).toBe('Your links');
+  });
+
+  it('labels the settings view "Settings"', () => {
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/settings',
+      search: '',
+      hash: '',
+      state: null,
+      key: 'default',
+    });
+
+    const { result } = renderHook(() => useAppShell());
+
+    expect(result.current.mainLabel).toBe('Settings');
+  });
+
+  it('labels the theme-editor view "Theme editor"', () => {
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/editor',
+      search: '',
+      hash: '',
+      state: null,
+      key: 'default',
+    });
+
+    const { result } = renderHook(() => useAppShell());
+
+    expect(result.current.mainLabel).toBe('Theme editor');
+  });
+});
+
 describe('user menu toggle', () => {
   it('opens the user menu when toggled from closed', () => {
     const { result } = renderHook(() => useAppShell());

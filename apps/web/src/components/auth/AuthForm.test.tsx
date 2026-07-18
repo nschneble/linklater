@@ -205,6 +205,38 @@ describe('AuthForm – pending-notice surface', () => {
   });
 });
 
+describe('AuthForm – document title per mode (WCAG 2.4.2)', () => {
+  it('login mode sets the log-in title', () => {
+    vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ mode: 'login' }));
+    renderAuthForm();
+    expect(document.title).toBe('Linklater – Log in');
+  });
+
+  it('register mode sets the sign-up title', () => {
+    vi.mocked(useAuthForm).mockReturnValue(
+      makeHookResult({ mode: 'register' }),
+    );
+    renderAuthForm();
+    expect(document.title).toBe('Linklater – Sign up');
+  });
+
+  it('forgot-password mode sets the reset-password title', () => {
+    vi.mocked(useAuthForm).mockReturnValue(
+      makeHookResult({ mode: 'forgot-password' }),
+    );
+    renderAuthForm();
+    expect(document.title).toBe('Linklater – Reset password');
+  });
+
+  it('an MFA challenge takes precedence over the mode title', () => {
+    vi.mocked(useAuthForm).mockReturnValue(
+      makeHookResult({ mode: 'login', mfaChallenge: 'totp' }),
+    );
+    renderAuthForm();
+    expect(document.title).toBe("Linklater – Verify it's you");
+  });
+});
+
 describe('AuthForm – mode routing branches still render under the refactor', () => {
   it('renders LoginRegisterView when mode is login and no MFA challenge', () => {
     vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ mode: 'login' }));

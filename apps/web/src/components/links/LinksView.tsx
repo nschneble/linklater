@@ -60,8 +60,9 @@ interface LinksViewProps {
  * the announcement; no focus shift to the <main> landmark is performed on
  * notice arrival, since (a) NVDA/JAWS can interrupt a polite live region
  * when focus moves into an unrelated landmark mid-announce, and (b) the
- * <main> landmark already carries `aria-label="Links"` in AppShell so
- * keyboard users get a named landing point via the existing skip link.
+ * <main> landmark already carries a view-specific `aria-label` in AppShell
+ * ("Your links" for this view) so keyboard users get a named landing point
+ * via the existing skip link.
  */
 export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
   const view = useLinksView({ onCloseUserMenu });

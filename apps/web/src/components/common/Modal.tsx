@@ -121,6 +121,20 @@ export default function Modal({
     };
   }, []);
 
+  // The panel portals to document.body, so the rest of the app stays in the
+  // accessibility tree behind the dialog. Mark the app root `inert` for the
+  // dialog's lifetime so AT and Tab cannot reach the background content
+  // (matching the aria-modal contract MobileBottomSheet already enforces).
+  // `inert` also implies aria-hidden, so no separate hiding is needed.
+  useEffect(() => {
+    const appRoot = document.getElementById('root');
+    if (!appRoot) return;
+    appRoot.setAttribute('inert', '');
+    return () => {
+      appRoot.removeAttribute('inert');
+    };
+  }, []);
+
   return createPortal(
     <>
       <button

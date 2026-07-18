@@ -178,6 +178,22 @@ describe('Modal', () => {
     document.body.removeChild(trigger);
   });
 
+  it('marks the app root inert while mounted and restores it on unmount', () => {
+    const root = document.createElement('div');
+    root.id = 'root';
+    document.body.appendChild(root);
+
+    const { unmount } = renderModal();
+    expect(root.hasAttribute('inert')).toBe(true);
+
+    act(() => {
+      unmount();
+    });
+    expect(root.hasAttribute('inert')).toBe(false);
+
+    document.body.removeChild(root);
+  });
+
   it('renders into document.body via portal', () => {
     const { container } = renderModal();
     expect(container.querySelector('[role="dialog"]')).toBeNull();

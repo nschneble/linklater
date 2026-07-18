@@ -21,6 +21,18 @@ function viewFromPath(pathname: string): AppView {
 }
 
 /**
+ * The per-view label shared by the document title and the `<main>` landmark's
+ * `aria-label`. The single `<main>` hosts every view, so the skip link that
+ * lands focus on it must announce the active view (WCAG 2.4.6) rather than a
+ * hard-coded "Links". The `links` value matches the `LinksView` heading text.
+ */
+const VIEW_LABELS: Record<AppView, string> = {
+  links: 'Your links',
+  settings: 'Settings',
+  'theme-editor': 'Theme editor',
+};
+
+/**
  * Controller hook for `AppShell`. Owns the URL-derived view, user-menu open
  * state, desktop-viewport gate, optimistic theme/mode persistence, and the
  * document-title, route-change focus, and global `x`-shortcut effects. The
@@ -87,13 +99,10 @@ export function useAppShell() {
     );
   };
 
+  const mainLabel = VIEW_LABELS[view];
+
   useEffect(() => {
-    const titles: Record<AppView, string> = {
-      links: 'Linklater – Your links',
-      settings: 'Linklater – Settings',
-      'theme-editor': 'Linklater – Theme editor',
-    };
-    document.title = titles[view];
+    document.title = `Linklater – ${VIEW_LABELS[view]}`;
   }, [view]);
 
   // Move focus to the main landmark whenever the user navigates between
@@ -151,6 +160,7 @@ export function useAppShell() {
     handleUserMenuToggle,
     isDesktop,
     logout,
+    mainLabel,
     mainReference,
     markWelcomed,
     navigate,

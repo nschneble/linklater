@@ -78,9 +78,10 @@ export function useLinksView({
   });
 
   useKeyboardShortcuts({
-    // Gated by the device-local preference so a user who disables shortcuts
-    // in Settings gets no single-key handlers (WCAG 2.1.4).
-    enabled: shortcutsEnabled,
+    // Gated by the device-local preference so a user who disables shortcuts in
+    // Settings gets no single-key handlers (WCAG 2.1.4). Named keys (arrows,
+    // Enter, Escape) stay live regardless; they are exempt from 2.1.4.
+    singleKeyShortcutsEnabled: shortcutsEnabled,
     isShortcutsModalOpen: showShortcuts,
     onShowUnread: () => navigate('/unread'),
     onShowRead: () => navigate('/read'),

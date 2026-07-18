@@ -102,6 +102,7 @@ export default function LinkCardLayout({
               <img
                 src={link.meta.faviconUrl}
                 alt=""
+                loading="lazy"
                 className="themed-asset w-8 h-8 bg-white outline outline-black/10 -outline-offset-1 rounded-4xl object-cover"
                 aria-hidden="true"
                 onError={(event) => {
@@ -139,6 +140,7 @@ export default function LinkCardLayout({
                 src={link.meta.imageUrl}
                 alt=""
                 aria-hidden="true"
+                loading="lazy"
                 style={childStyle(3)}
                 className={`themed-asset w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0 bg-white object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
               />

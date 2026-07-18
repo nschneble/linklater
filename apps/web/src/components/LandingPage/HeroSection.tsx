@@ -14,7 +14,7 @@ export default function HeroSection() {
       </div>
       <h1
         id="hero-heading"
-        className="mb-3 bg-gradient-to-br from-[var(--base-text)] to-[var(--base-highlight)] bg-clip-text text-5xl sm:text-6xl text-transparent font-bold tracking-tight select-none"
+        className="mb-3 bg-gradient-to-br from-[var(--base-text)] to-[var(--base-highlight)] bg-clip-text text-5xl sm:text-6xl text-transparent forced-colors:bg-none forced-colors:bg-clip-border forced-colors:[-webkit-background-clip:border-box] forced-colors:text-[CanvasText] font-bold tracking-tight select-none"
       >
         Linklater
       </h1>

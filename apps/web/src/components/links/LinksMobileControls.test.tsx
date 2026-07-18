@@ -44,6 +44,14 @@ describe('LinksMobileControls', () => {
     expect(button.getAttribute('data-surface')).toBe('base');
   });
 
+  it('Add-link trigger advertises the dialog it opens, not disclosure state', () => {
+    render(<LinksMobileControls {...baseProps} />);
+    const button = screen.getByRole('button', { name: /add link/i });
+    expect(button.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(button.hasAttribute('aria-expanded')).toBe(false);
+    expect(button.getAttribute('aria-controls')).toBeTruthy();
+  });
+
   it('on unread tab – renders Stumble + Add link, omits trash entirely', () => {
     render(<LinksMobileControls {...baseProps} />);
     expect(

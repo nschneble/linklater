@@ -109,7 +109,7 @@ export default function ApiDocsView() {
           <h1
             className={
               isBrand
-                ? 'bg-gradient-to-br from-[var(--base-text)] to-[var(--base-highlight)] bg-clip-text text-transparent text-4xl sm:text-5xl font-bold tracking-tight text-balance'
+                ? 'bg-gradient-to-br from-[var(--base-text)] to-[var(--base-highlight)] bg-clip-text text-transparent forced-colors:bg-none forced-colors:bg-clip-border forced-colors:[-webkit-background-clip:border-box] forced-colors:text-[CanvasText] text-4xl sm:text-5xl font-bold tracking-tight text-balance'
                 : 'text-[var(--base-text)] text-4xl sm:text-5xl font-bold tracking-tight text-balance'
             }
           >

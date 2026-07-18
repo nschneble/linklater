@@ -132,31 +132,45 @@ export default function LinksList({
     containerClass = 'grid grid-cols-1 gap-6 mt-6';
     body = <LinkCardSkeleton />;
   } else {
-    containerClass = 'grid grid-cols-1 gap-6 mt-6 mb-28';
+    // The tabpanel container itself carries only spacing; the cards form a
+    // semantic list one level down (WCAG 1.3.1). The container stays a
+    // single-column grid so the list, the load-more skeleton, and the "Load
+    // more" button keep their uniform `gap-6` rhythm.
+    containerClass = 'grid gap-6 mt-6 mb-28';
     body = (
       <>
-        {links.map((link, index) => (
-          <div
-            key={link.id}
-            // `min-w-0` resets the grid item's default `min-width: auto` to 0
-            // so a long unbreakable title/URL cannot inflate the track past the
-            // viewport (WCAG 1.4.10 Reflow). The card itself stays
-            // `overflow-visible` so its favicon can straddle the left border.
-            className={`min-w-0 ${
-              isClearingRead ? 'animate-card-exit pointer-events-none' : ''
-            }`}
-            style={
-              isClearingRead ? { animationDelay: `${index * 40}ms` } : undefined
-            }
-          >
-            <LinkCard
-              link={link}
-              animationDelay={Math.min(index * 60, 240)}
-              isSelected={selectedLinkIndex === index}
-              onReadToggle={onReadToggle}
-            />
-          </div>
-        ))}
+        {/*
+          A tabpanel cannot double as the list, so the cards live in a child
+          `role="list"`. Each map wrapper is a `role="listitem"`. The skeleton
+          and "Load more" button below are deliberately outside the list.
+        */}
+        <div role="list" className="grid grid-cols-1 gap-6">
+          {links.map((link, index) => (
+            <div
+              key={link.id}
+              role="listitem"
+              // `min-w-0` resets the grid item's default `min-width: auto` to 0
+              // so a long unbreakable title/URL cannot inflate the track past the
+              // viewport (WCAG 1.4.10 Reflow). The card itself stays
+              // `overflow-visible` so its favicon can straddle the left border.
+              className={`min-w-0 ${
+                isClearingRead ? 'animate-card-exit pointer-events-none' : ''
+              }`}
+              style={
+                isClearingRead
+                  ? { animationDelay: `${index * 40}ms` }
+                  : undefined
+              }
+            >
+              <LinkCard
+                link={link}
+                animationDelay={Math.min(index * 60, 240)}
+                isSelected={selectedLinkIndex === index}
+                onReadToggle={onReadToggle}
+              />
+            </div>
+          ))}
+        </div>
 
         {loadingLinks && page > 1 && <LinkCardSkeleton />}
 
