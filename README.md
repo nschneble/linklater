@@ -95,7 +95,7 @@ To install, go to **Settings → Bookmarklet** and drag the _Save to Linklater_ 
 ### Prerequisites
 
 - Node 22.x
-- PostgreSQL 18
+- PostgreSQL 16
 - [Mailpit](https://mailpit.axllent.org/)
 
 ### Install dependencies

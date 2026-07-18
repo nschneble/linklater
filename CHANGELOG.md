@@ -14,13 +14,10 @@
 
 ### Fixed
 
-- CI API cert timeout causes Tuffgal to fail
-
-### Fixed
-
 - Add link form stays open after saving a link
 - Bookmarklet fails on literally every page
 - Button taps in the mobile user menu are ignored
+- CI API cert timeout causes Tuffgal to fail
 - Logged-in users see marketing page with “Get started” and “Log in” buttons
 - Mark unread button is left-aligned on link cards without descriptions
 - “No un/read links” flashes before links are rendered
