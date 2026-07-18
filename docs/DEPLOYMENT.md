@@ -25,7 +25,7 @@ that follows:
 | Email           | SMTP, optional. If the `SMTP_*` variables are unset the app runs fine; transactional email (verification, password reset, magic links, deletion) does not send. When SMTP is configured, mail is enqueued on the `email-send` queue and delivered by an in-process pg-boss worker with 3-attempt exponential-backoff retry, so a broken relay produces retry churn and failed `pgboss.job` rows rather than a synchronous request error. |
 | Health probe    | `GET /health` is unauthenticated and cheap (a single `SELECT 1` plus an in-memory read of the pg-boss run state, no extra query). It returns `200` when the database answers and `503` when it does not, so orchestrators and deploy scripts can gate on it. The body also reports the background-job queue state (`queue: 'up' \| 'down'`) for observability, but a stopped queue does not fail the probe (a false-negative that flapped deploys would be worse than the gap).                                                                                                                                                                                                                                             |
 | Migrations      | `npm run migrate:deploy --workspace @linklater/api` runs `prisma migrate deploy && prisma generate`. This is the production-safe, non-interactive migration path.                                                                                                                                                                                                                                                                        |
-| Backups         | A `backup` sidecar container (`scripts/backup-postgres.sh`) takes a nightly `pg_dump -Fc` over the Compose network and writes compressed dumps to the `postgres-backups` volume, retaining 7 daily and 4 weekly. The operator syncs that volume offsite. See [Backups](#backups) for the restore procedure.                                                                                                                                |
+| Backups         | A `backup` sidecar container (`scripts/backup-postgres.sh`) takes a nightly `pg_dump -Fc` over the Compose network and writes compressed dumps to the `postgres-backups` volume, retaining 7 daily and 4 weekly. The operator syncs that volume offsite (S3 via `rclone`/`aws s3 sync`, another host via `rsync`, or an SFTP server via `scripts/sync-backups-offsite.sh.example`). See [Backups](#backups) for the restore procedure.                                                                                                                                |
 
 Two consequences drive everything below:
 
@@ -431,6 +431,14 @@ server version), connects to Postgres over the Compose network with the same
   another machine via `rsync`) so a lost slice is an inconvenience, not a
   data-loss event. This is the one step the repo cannot hold for you, because it
   needs an offsite credential that must not live in the repo.
+- **Offsite via SFTP.** An SFTP server is a fine target, including SFTP-only or
+  chrooted accounts with no remote shell. Copy
+  `scripts/sync-backups-offsite.sh.example` to `sync-backups-offsite.sh`, fill
+  in the two variables, and cron it on the host (it uses rclone's `sftp`
+  backend). Authenticate with a dedicated SSH key, never a password. It defaults
+  to `rclone copy`, which never deletes on the remote; `rclone sync` mirrors
+  instead and propagates a local deletion offsite, so reach for it only if you
+  want the remote to track local state exactly.
 - **On-demand backup.** To take a dump immediately, before a risky change or to
   refresh the offsite copy:
 
