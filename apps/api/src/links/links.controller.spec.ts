@@ -89,13 +89,13 @@ describe('LinksController', () => {
       expect(guards).toContain(CustomThrottlerGuard);
     });
 
-    it('uses the link-create throttle bucket (60 / minute)', () => {
+    it('overrides the default bucket with 60 requests per minute', () => {
       const ttl = Reflect.getMetadata(
-        'THROTTLER:TTLlink-create',
+        'THROTTLER:TTLdefault',
         LinksController.prototype.create,
       );
       const limit = Reflect.getMetadata(
-        'THROTTLER:LIMITlink-create',
+        'THROTTLER:LIMITdefault',
         LinksController.prototype.create,
       );
       expect(ttl).toBe(60000);
@@ -104,12 +104,12 @@ describe('LinksController', () => {
   });
 
   describe('findAll', () => {
-    it('is not throttled by the link-create bucket (reads should not consume it)', () => {
+    it('is not throttled (reads should not consume the create limit)', () => {
       const guards: unknown[] =
         Reflect.getMetadata('__guards__', LinksController.prototype.findAll) ??
         [];
       const ttl = Reflect.getMetadata(
-        'THROTTLER:TTLlink-create',
+        'THROTTLER:TTLdefault',
         LinksController.prototype.findAll,
       );
       expect(guards).not.toContain(CustomThrottlerGuard);

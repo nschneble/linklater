@@ -1,59 +1,34 @@
 /**
- * Named rate-limit buckets for the app, consumed by `ThrottlerModule.forRoot`
- * in `app.module.ts`.
+ * Global rate-limit configuration for the app, consumed by
+ * `ThrottlerModule.forRoot` in `app.module.ts`.
  *
- * IMPORTANT: `@nestjs/throttler` v6 only ever evaluates throttlers that are
- * declared here. A `@Throttle({ 'name': { ttl, limit } })` decorator whose
- * name is NOT in this list is silently ignored — the route falls back to the
- * union of every declared bucket instead of binding its own limit. Every
- * `@Throttle` name used on a controller MUST therefore appear here with the
- * exact ttl/limit its decorator specifies. `throttler.config.spec.ts` locks
- * this invariant both directions (no undeclared decorator, no unused bucket).
+ * `@nestjs/throttler` v6 evaluates every throttler declared here against every
+ * guarded route, applying each one's limit (a route that gives no override for
+ * a given throttler falls back to that throttler's module default). With more
+ * than one named throttler a route therefore binds the union of all of them,
+ * and the tightest bucket trips first, even for a route that only meant to set
+ * its own single limit.
+ *
+ * To give each route exactly one limit, the module declares a single throttler
+ * named 'default'. Every rate-limited route then sets its own ceiling with
+ * `@Throttle({ default: { ttl, limit } })`, which overrides this one bucket for
+ * that route. Because there is only one bucket no union can form, so the route
+ * enforces precisely its declared limit. `throttler.config.spec.ts` boots the
+ * real guard against this config and the real controllers to prove it.
+ *
+ * The values below are only a fallback for a guarded route that carries no
+ * `@Throttle` of its own. Every route guarded by `CustomThrottlerGuard` today
+ * declares an explicit `@Throttle`, so this baseline is a safety net rather
+ * than an active limit. It is a generous per-minute ceiling (60 / minute) so a
+ * route that is guarded but accidentally left un-decorated still cannot be hit
+ * without bound.
  */
-export interface NamedThrottler {
+export interface ThrottlerConfig {
   name: string;
   ttl: number;
   limit: number;
 }
 
-export const THROTTLER_CONFIG: NamedThrottler[] = [
-  // Password + email account flows
-  { name: 'auth-register', ttl: 60000, limit: 5 },
-  { name: 'auth-login', ttl: 60000, limit: 10 },
-  { name: 'auth-refresh', ttl: 60000, limit: 10 },
-  { name: 'auth-forgot-password', ttl: 60000, limit: 3 },
-  { name: 'auth-reset-password', ttl: 60000, limit: 5 },
-  { name: 'auth-verify-email', ttl: 60000, limit: 10 },
-  { name: 'auth-resend-verification', ttl: 60000, limit: 3 },
-  { name: 'auth-request-email-change', ttl: 60000, limit: 3 },
-  { name: 'auth-resend-email-change', ttl: 60000, limit: 3 },
-  { name: 'auth-verify-email-change', ttl: 60000, limit: 10 },
-  // Magic-link (passwordless) flow
-  { name: 'auth-request-magic-link', ttl: 60000, limit: 3 },
-  { name: 'auth-verify-magic-link', ttl: 60000, limit: 10 },
-  // Browser-extension token exchange
-  { name: 'auth-extension-token', ttl: 60000, limit: 20 },
-  // MFA login step 2 – tighter window to slow brute-force on OTP codes
-  { name: 'auth-verify-otp', ttl: 900000, limit: 5 },
-  // MFA setup
-  { name: 'auth-mfa-totp-setup', ttl: 60000, limit: 5 },
-  // MFA TOTP verification during setup – matches the OTP brute-force window
-  { name: 'auth-mfa-totp-verify', ttl: 900000, limit: 5 },
-  // MFA disable – most sensitive action; matches verify-otp window
-  { name: 'auth-disable-mfa', ttl: 900000, limit: 5 },
-  // Re-auth gate for recovery code operations
-  { name: 'auth-reauth', ttl: 900000, limit: 5 },
-  // Account deletion – confirm/cancel the pending deletion window
-  { name: 'auth-account-deletion-confirm', ttl: 900000, limit: 5 },
-  { name: 'auth-account-deletion-cancel', ttl: 900000, limit: 10 },
-  // PAT creation – JWT-gated, so no brute-force vector, but caps a
-  // compromised or runaway session from spamming token rows (20 / hour)
-  { name: 'token-create', ttl: 3600000, limit: 20 },
-  // Link creation – auth-gated, but each new distinct URL enqueues an
-  // outbound-fetch metadata job, so an unthrottled scripted session could
-  // drive unbounded queue growth + outbound-fetch amplification. Generous
-  // enough for real burst-saving from the extension/bookmarklet, but a ceiling
-  // (60 / minute). Special bookmarklet/API_DOCS tokens stay bound by their
-  // tighter per-token limits in TokenScopeService (20 and 30 / minute).
-  { name: 'link-create', ttl: 60000, limit: 60 },
+export const THROTTLER_CONFIG: ThrottlerConfig[] = [
+  { name: 'default', ttl: 60000, limit: 60 },
 ];

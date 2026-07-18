@@ -112,7 +112,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 429, description: 'Too many deletion attempts.' })
   @UseGuards(CustomThrottlerGuard)
-  @Throttle({ 'auth-reauth': { ttl: 900000, limit: 5 } })
+  @Throttle({ default: { ttl: 900000, limit: 5 } })
   @ThrottleMessage('Too many deletion attempts')
   @Delete('me')
   async deleteMe(

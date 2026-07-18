@@ -96,13 +96,13 @@ describe('TokensController', () => {
       expect(guards).toContain(CustomThrottlerGuard);
     });
 
-    it('uses the token-create throttle bucket (20 / hour)', () => {
+    it('overrides the default bucket with 20 requests per hour', () => {
       const ttl = Reflect.getMetadata(
-        'THROTTLER:TTLtoken-create',
+        'THROTTLER:TTLdefault',
         TokensController.prototype.create,
       );
       const limit = Reflect.getMetadata(
-        'THROTTLER:LIMITtoken-create',
+        'THROTTLER:LIMITdefault',
         TokensController.prototype.create,
       );
       expect(ttl).toBe(3600000);
@@ -116,7 +116,7 @@ describe('TokensController', () => {
         Reflect.getMetadata('__guards__', TokensController.prototype.findAll) ??
         [];
       const ttl = Reflect.getMetadata(
-        'THROTTLER:TTLtoken-create',
+        'THROTTLER:TTLdefault',
         TokensController.prototype.findAll,
       );
       expect(guards).not.toContain(CustomThrottlerGuard);

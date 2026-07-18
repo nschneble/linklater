@@ -159,16 +159,10 @@ describe('ExtensionAuthController', () => {
       expect(guards).toContain(CustomThrottlerGuard);
     });
 
-    it('throttle bucket is auth-extension-token with 20 requests per 60 s', () => {
+    it('overrides the default bucket with 20 requests per 60 s', () => {
       const method = ExtensionAuthController.prototype.extensionToken;
-      const ttl = Reflect.getMetadata(
-        THROTTLER_TTL + 'auth-extension-token',
-        method,
-      );
-      const limit = Reflect.getMetadata(
-        THROTTLER_LIMIT + 'auth-extension-token',
-        method,
-      );
+      const ttl = Reflect.getMetadata(THROTTLER_TTL + 'default', method);
+      const limit = Reflect.getMetadata(THROTTLER_LIMIT + 'default', method);
       expect(limit).toBe(20);
       expect(ttl).toBe(60000);
     });

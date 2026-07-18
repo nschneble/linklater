@@ -78,10 +78,14 @@ export class LinksController {
     description:
       "Indicates the URL is missing a protocol, points to a private network address, or fails URL parsing, which means it's likely it wasn't a URL at all.",
   })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many links saved in a short window. Try again shortly.',
+  })
   @ApiUnauthorized()
   @AllowsBookmarkletToken()
   @UseGuards(CustomThrottlerGuard)
-  @Throttle({ 'link-create': { ttl: 60000, limit: 60 } })
+  @Throttle({ default: { ttl: 60000, limit: 60 } })
   @ThrottleMessage('Too many links saved. Try again shortly.')
   @Post()
   async create(@Req() request: AuthRequest, @Body() body: CreateLinkDto) {

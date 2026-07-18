@@ -1,107 +1,159 @@
-import { readdirSync, readFileSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
+import { jest } from '@jest/globals';
+import { Reflector } from '@nestjs/core';
+import { ThrottlerException, ThrottlerStorageService } from '@nestjs/throttler';
+import { CustomThrottlerGuard } from './auth/custom-throttler.guard.js';
+import { AuthController } from './auth/auth.controller.js';
+import { LinksController } from './links/links.controller.js';
 import { THROTTLER_CONFIG } from './throttler.config.js';
+import type { ExecutionContext } from '@nestjs/common';
 
 /**
- * Cross-layer invariant for the rate limiter.
+ * Runtime composition test for the rate limiter.
  *
- * `@nestjs/throttler` v6 only evaluates throttlers declared in
- * `ThrottlerModule.forRoot(...)`. Any `@Throttle({ 'name': { ttl, limit } })`
- * decorator whose name is missing from `THROTTLER_CONFIG` is silently ignored,
- * so the route never binds its intended limit. This spec scans every
- * controller source file for `@Throttle` names + values and asserts they match
- * `THROTTLER_CONFIG` exactly, in both directions:
- *   - every decorator name is declared with matching ttl/limit, and
- *   - every declared bucket is actually used by a decorator (no dead config).
+ * This boots the real `CustomThrottlerGuard` against the real
+ * `THROTTLER_CONFIG` and the real controller handlers, then drives repeated
+ * requests through `canActivate` to prove that each route binds only its own
+ * declared limit. Under the previous multi-bucket config the guard applied
+ * every declared bucket to every route, so the tightest bucket (3 / minute)
+ * capped even routes whose own limit was far higher (POST /links at 60 / minute
+ * was really capped at 3). This test locks in the single-bucket design where a
+ * route enforces precisely the ttl/limit in its own `@Throttle` decorator.
  */
 
-const SOURCE_ROOT = dirname(fileURLToPath(import.meta.url));
+const CLIENT_IP = '203.0.113.7';
 
-interface ThrottleUsage {
-  name: string;
-  ttl: number;
-  limit: number;
-  file: string;
+function makeExecutionContext(
+  controllerClass: unknown,
+  handler: (...unknownArguments: unknown[]) => unknown,
+): ExecutionContext {
+  const request = { ip: CLIENT_IP, ips: [] as string[], headers: {} };
+  const response = { header: () => undefined };
+  return {
+    getHandler: () => handler,
+    getClass: () => controllerClass,
+    switchToHttp: () => ({
+      getRequest: () => request,
+      getResponse: () => response,
+    }),
+  } as unknown as ExecutionContext;
 }
 
-/** Recursively collects every `*.controller.ts` under `directory`. */
-function collectControllerFiles(directory: string): string[] {
-  const files: string[] = [];
-  for (const entry of readdirSync(directory, { withFileTypes: true })) {
-    const fullPath = join(directory, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...collectControllerFiles(fullPath));
-    } else if (
-      entry.name.endsWith('.controller.ts') &&
-      !entry.name.endsWith('.spec.ts')
-    ) {
-      files.push(fullPath);
-    }
-  }
-  return files;
-}
-
-/** Extracts every `@Throttle({ 'name': { ttl, limit } })` usage in the tree. */
-function collectThrottleUsages(): ThrottleUsage[] {
-  const usages: ThrottleUsage[] = [];
-  const pattern =
-    /@Throttle\(\{\s*'([^']+)':\s*\{\s*ttl:\s*(\d+),\s*limit:\s*(\d+)\s*\}\s*\}\)/g;
-  for (const file of collectControllerFiles(SOURCE_ROOT)) {
-    const source = readFileSync(file, 'utf8');
-    for (const match of source.matchAll(pattern)) {
-      usages.push({
-        name: match[1],
-        ttl: Number(match[2]),
-        limit: Number(match[3]),
-        file,
-      });
-    }
-  }
-  return usages;
-}
-
-describe('throttler configuration coherence', () => {
-  const usages = collectThrottleUsages();
-  const configByName = new Map(
-    THROTTLER_CONFIG.map((throttler) => [throttler.name, throttler]),
+async function makeGuard(): Promise<CustomThrottlerGuard> {
+  const storage = new ThrottlerStorageService();
+  const guard = new CustomThrottlerGuard(
+    THROTTLER_CONFIG,
+    storage,
+    new Reflector(),
   );
+  await guard.onModuleInit();
+  return guard;
+}
 
-  it('finds @Throttle decorators to check (guards against a broken scan)', () => {
-    expect(usages.length).toBeGreaterThan(0);
-  });
-
-  it('declares every @Throttle name in THROTTLER_CONFIG with matching ttl/limit', () => {
-    const undeclared: string[] = [];
-    const mismatched: string[] = [];
-    for (const usage of usages) {
-      const declared = configByName.get(usage.name);
-      if (!declared) {
-        undeclared.push(`${usage.name} (used in ${usage.file})`);
-        continue;
+/**
+ * Sends requests through the guard until it throws a `ThrottlerException`,
+ * returning how many were allowed through before the block. `cap` bounds the
+ * loop so a route that never blocks cannot hang the suite.
+ */
+async function countAllowedBeforeBlock(
+  guard: CustomThrottlerGuard,
+  context: ExecutionContext,
+  cap = 500,
+): Promise<number> {
+  let allowed = 0;
+  for (let attempt = 0; attempt < cap; attempt++) {
+    try {
+      await guard.canActivate(context);
+      allowed++;
+    } catch (error) {
+      if (error instanceof ThrottlerException) {
+        return allowed;
       }
-      if (declared.ttl !== usage.ttl || declared.limit !== usage.limit) {
-        mismatched.push(
-          `${usage.name}: decorator ${usage.ttl}/${usage.limit} vs config ${declared.ttl}/${declared.limit}`,
-        );
-      }
+      throw error;
     }
-    expect({ undeclared, mismatched }).toEqual({
-      undeclared: [],
-      mismatched: [],
-    });
+  }
+  return allowed;
+}
+
+describe('throttler runtime composition', () => {
+  const originalTestingUi = process.env.TESTING_UI;
+
+  beforeEach(() => {
+    // The guard skips all throttling under TESTING_UI, which would let every
+    // request through and hide the limits under test.
+    delete process.env.TESTING_UI;
+    jest.useFakeTimers();
   });
 
-  it('does not declare any bucket that no @Throttle decorator uses', () => {
-    const usedNames = new Set(usages.map((usage) => usage.name));
-    const unused = THROTTLER_CONFIG.map((throttler) => throttler.name).filter(
-      (name) => !usedNames.has(name),
+  afterEach(() => {
+    jest.useRealTimers();
+    if (originalTestingUi === undefined) {
+      delete process.env.TESTING_UI;
+    } else {
+      process.env.TESTING_UI = originalTestingUi;
+    }
+  });
+
+  it('declares exactly one throttler bucket named default', () => {
+    expect(THROTTLER_CONFIG).toHaveLength(1);
+    expect(THROTTLER_CONFIG[0].name).toBe('default');
+  });
+
+  it('caps POST /links at its own 60 / minute limit, not the tightest bucket', async () => {
+    const guard = await makeGuard();
+    const context = makeExecutionContext(
+      LinksController,
+      LinksController.prototype.create,
     );
-    expect(unused).toEqual([]);
+
+    const allowed = await countAllowedBeforeBlock(guard, context);
+
+    // The core regression: this route must allow far more than the 3 / minute
+    // that the union of buckets used to impose.
+    expect(allowed).toBeGreaterThan(3);
+    expect(allowed).toBe(60);
   });
 
-  it('has no duplicate names in THROTTLER_CONFIG', () => {
-    const names = THROTTLER_CONFIG.map((throttler) => throttler.name);
-    expect(names).toHaveLength(new Set(names).size);
+  it('caps login at its own 10 / minute limit', async () => {
+    const guard = await makeGuard();
+    const context = makeExecutionContext(
+      AuthController,
+      AuthController.prototype.login,
+    );
+
+    const allowed = await countAllowedBeforeBlock(guard, context);
+
+    expect(allowed).toBe(10);
+  });
+
+  it('caps forgot-password at its own tight 3 / minute limit', async () => {
+    const guard = await makeGuard();
+    const context = makeExecutionContext(
+      AuthController,
+      AuthController.prototype.forgotPassword,
+    );
+
+    const allowed = await countAllowedBeforeBlock(guard, context);
+
+    expect(allowed).toBe(3);
+  });
+
+  it('gives each route an independent counter so one does not exhaust another', async () => {
+    const guard = await makeGuard();
+    const forgotPasswordContext = makeExecutionContext(
+      AuthController,
+      AuthController.prototype.forgotPassword,
+    );
+    const loginContext = makeExecutionContext(
+      AuthController,
+      AuthController.prototype.login,
+    );
+
+    // Exhaust forgot-password (3 / minute).
+    await countAllowedBeforeBlock(guard, forgotPasswordContext);
+
+    // login must still enforce its own full 10 / minute, untouched by the
+    // forgot-password traffic above.
+    const loginAllowed = await countAllowedBeforeBlock(guard, loginContext);
+    expect(loginAllowed).toBe(10);
   });
 });
