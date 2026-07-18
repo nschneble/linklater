@@ -156,7 +156,6 @@ export default function LinkCardLayout({
               */
               <svg
                 aria-hidden="true"
-                role="presentation"
                 viewBox="0 0 240 126"
                 style={childStyle(3)}
                 className={`w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0 rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}

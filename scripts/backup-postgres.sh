@@ -44,6 +44,10 @@ prune() {
 
 run_backup() {
   mkdir -p "$DAILY_DIR" "$WEEKLY_DIR"
+  # Self-heal: a SIGKILL/OOM/host-crash mid-dump can leave an orphaned
+  # ".partial" that the prune (which matches "*.dump") never removes. Sweep any
+  # left behind before starting so they cannot accumulate.
+  find "$DAILY_DIR" -maxdepth 1 -type f -name '*.partial' -delete
   stamp="$(date -u '+%Y-%m-%d')"
   daily_file="${DAILY_DIR}/linklater-${stamp}.dump"
   partial="${daily_file}.partial"

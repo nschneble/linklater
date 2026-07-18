@@ -88,14 +88,16 @@ describe('RssEntryPruneService', () => {
     const findCall = (prismaMock.rssEntry.findMany as jest.Mock).mock
       .calls[0][0] as {
       where: { sourceKey: string };
-      orderBy: { publishedAt: 'desc' };
+      orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }];
       skip: number;
       select: { id: boolean };
     };
     // Ordering newest-first + skipping the newest N is what preserves the
     // rows an active suggestion cycle reads; only older overflow is selected.
+    // The secondary `id` sort makes the boundary deterministic among rows that
+    // share a `publishedAt`.
     expect(findCall.where.sourceKey).toBe('aeon');
-    expect(findCall.orderBy.publishedAt).toBe('desc');
+    expect(findCall.orderBy).toEqual([{ publishedAt: 'desc' }, { id: 'desc' }]);
     expect(findCall.skip).toBe(MAX_ENTRIES_PER_SOURCE);
     expect(findCall.select.id).toBe(true);
 

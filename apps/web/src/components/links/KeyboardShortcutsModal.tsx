@@ -59,6 +59,10 @@ export default function KeyboardShortcutsModal({
           </li>
         ))}
       </ul>
+      <p className="mt-6 text-[var(--orbit-alt-text)] text-xs text-pretty">
+        Prefer no single-key shortcuts? Turn them off in Settings, under
+        Accessibility.
+      </p>
     </Modal>
   );
 }

@@ -6,9 +6,24 @@
 
 ### Added
 
+- Nightly Postgres backups with a documented restore procedure
+- Toggle to disable single-key keyboard shortcuts
+
 ### Changed
 
+- Link cards show a local placeholder instead of loading a third-party image
+- Old RSS suggestion entries are pruned on a schedule
+- Refresh tokens now expire after 14 days
+
 ### Fixed
+
+- Auth emails now send in the background so a slow mail server can't fail sign-up
+- Hardened link-metadata fetching against SSRF (DNS-resolution and redirect checks)
+- Missing security headers on the single-page app
+- Pagination no longer drops a link once you've saved 21 or more
+- Rate limits now apply per route as intended
+- RSS refresh race that could drop a newly fetched entry
+- WCAG 2.1.4 character-key-shortcut conformance, auth page titles, link-list semantics, and other accessibility fixes
 
 ## [1.0.2] - 2026-07-16
 

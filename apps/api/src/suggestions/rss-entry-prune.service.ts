@@ -78,7 +78,10 @@ export class RssEntryPruneService implements OnModuleInit {
     for (const { sourceKey } of sources) {
       const overflow = await this.prisma.rssEntry.findMany({
         where: { sourceKey },
-        orderBy: { publishedAt: 'desc' },
+        // Secondary `id` sort breaks ties among rows sharing a `publishedAt`,
+        // so the retained/overflow boundary is deterministic rather than left
+        // to the database's row order.
+        orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
         skip: MAX_ENTRIES_PER_SOURCE,
         select: { id: true },
       });

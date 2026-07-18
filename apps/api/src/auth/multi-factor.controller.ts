@@ -55,6 +55,7 @@ export class MultiFactorController {
   })
   @ApiResponse({ status: 429, description: 'Too many OTP attempts.' })
   @UseGuards(CustomThrottlerGuard, MfaAuthGuard)
+  // 15-min window: OTP brute-force slowdown
   @Throttle({ default: { ttl: 900000, limit: 5 } })
   @ThrottleMessage('Too many OTP attempts')
   @Post('verify-otp')
@@ -103,6 +104,7 @@ export class MultiFactorController {
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @ApiResponse({ status: 429, description: 'Too many verify attempts.' })
   @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
+  // 15-min window: OTP brute-force slowdown
   @Throttle({ default: { ttl: 900000, limit: 5 } })
   @ThrottleMessage('Too many verify attempts')
   @Post('mfa/totp/verify')
@@ -145,6 +147,7 @@ export class MultiFactorController {
   })
   @ApiResponse({ status: 429, description: 'Too many disable attempts.' })
   @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
+  // 15-min window: credential brute-force slowdown
   @Throttle({ default: { ttl: 900000, limit: 5 } })
   @ThrottleMessage('Too many disable attempts')
   @Delete('mfa')
@@ -172,6 +175,7 @@ export class MultiFactorController {
   })
   @ApiResponse({ status: 429, description: 'Too many re-auth attempts.' })
   @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
+  // 15-min window: credential brute-force slowdown
   @Throttle({ default: { ttl: 900000, limit: 5 } })
   @ThrottleMessage('Too many re-auth attempts')
   @Post('mfa/recovery-codes/regenerate')

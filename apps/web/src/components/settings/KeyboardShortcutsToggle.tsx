@@ -41,8 +41,8 @@ export default function KeyboardShortcutsToggle() {
         >
           Single-key shortcuts like <span className="font-semibold">D</span> to
           stumble or <span className="font-semibold">A</span> to add a link let
-          you move without the mouse. Switch them off if stray keystrokes set
-          them off on their own, which can happen with speech-to-text tools.
+          you move without the mouse. Switch them off if stray keystrokes keep
+          triggering them, which can happen with speech-to-text tools.
         </p>
       </div>
 
@@ -56,7 +56,7 @@ export default function KeyboardShortcutsToggle() {
         onClick={handleToggle}
         className="group relative inline-flex shrink-0 items-center w-11 h-6 mt-0.5 bg-[var(--orbit-bg)] aria-checked:bg-[var(--orbit-highlight)] border border-[var(--orbit-border)] aria-checked:border-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] rounded-full transition-colors duration-200 cursor-pointer"
       >
-        <span className="inline-block h-4 w-4 translate-x-1 group-aria-checked:translate-x-6 bg-white rounded-full shadow-sm transition-transform duration-200" />
+        <span className="inline-block w-4 h-4 translate-x-1 group-aria-checked:translate-x-6 bg-white rounded-full shadow-sm transition-transform duration-200" />
         <span className="sr-only">{shortcutsEnabled ? 'On' : 'Off'}</span>
       </button>
     </div>
