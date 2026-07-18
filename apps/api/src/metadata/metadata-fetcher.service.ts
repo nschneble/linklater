@@ -7,13 +7,19 @@ import {
 import type { LinkMetadata } from './metadata.types.js';
 import * as cheerio from 'cheerio/slim';
 import { isPrivateHost } from '../common/private-host.js';
+import { safeFetch } from '../common/safe-fetch.js';
 
 /**
  * Fetches and parses Open Graph / Twitter Card metadata from a public URL.
  *
  * Responsibilities:
- * - SSRF protection: blocks requests to private/loopback hosts before any
- *   network I/O (`isPrivateHost`).
+ * - SSRF protection: `safeFetch` resolves the host to its IP(s) and validates
+ *   every resolved address against the private ranges before connecting,
+ *   follows redirects manually (re-resolving + re-validating each hop), and
+ *   pins the connection to a validated address to defeat DNS rebinding. A
+ *   cheap `isPrivateHost` literal pre-check also short-circuits obviously
+ *   private literal hosts. This defeats both the DNS-record and the redirect
+ *   SSRF bypasses, not just the original hostname string.
  * - HTTP fetching: 10-second timeout, desktop User-Agent, Content-Type guard,
  *   and a hard cap on body size to protect against hostile payloads
  *   (`fetchMetadata`, `fetchHtml`, `readBodyWithCap`).
@@ -47,6 +53,11 @@ export class MetadataFetcherService {
       return this.emptyMetadata();
     }
 
+    // Cheap literal fast-fail: an obviously-private literal host (loopback,
+    // RFC 1918, etc.) is refused outright and returns pure empty metadata (no
+    // favicon fallback that would point at a private address). DNS-resolving
+    // and redirect-following hosts are additionally guarded inside `fetchHtml`
+    // via `safeFetch`.
     if (isPrivateHost(hostname)) {
       this.logger.warn(`Blocked SSRF attempt to private host: ${url}`);
       return this.emptyMetadata();
@@ -66,9 +77,14 @@ export class MetadataFetcherService {
 
   /**
    * Fetches the HTML of a URL with a 10-second timeout and a desktop
-   * User-Agent string. Returns `null` if the response status is not OK,
-   * the `Content-Type` is not `text/html`, the declared `Content-Length`
-   * exceeds `MAX_HTML_BYTES`, or the streamed body crosses that cap.
+   * User-Agent string. Returns `null` if the SSRF guard blocks the request
+   * (private host at any hop, non-http(s) scheme, redirect cap exceeded), the
+   * network fetch fails, the response status is not OK, the `Content-Type` is
+   * not `text/html`, the declared `Content-Length` exceeds `MAX_HTML_BYTES`,
+   * or the streamed body crosses that cap.
+   *
+   * Redirects are followed by `safeFetch` manually so every hop is re-resolved
+   * and re-validated against the private ranges before connecting.
    *
    * NOTE: The desktop User-Agent is used because many sites return minimal
    * or bot-blocked HTML for non-browser user agents.
@@ -80,9 +96,8 @@ export class MetadataFetcherService {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10_000);
 
-    let response: Response | undefined;
     try {
-      response = await fetch(url, {
+      const response = await safeFetch(url, {
         signal: controller.signal,
         headers: {
           Accept:
@@ -107,6 +122,15 @@ export class MetadataFetcherService {
       }
 
       return await this.readBodyWithCap(response, url);
+    } catch (error) {
+      // An SSRF block (private host / bad scheme / redirect cap) or a network
+      // failure lands here – log and fall back to empty metadata rather than
+      // surfacing the error to the queue worker.
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `Metadata fetch blocked or failed for ${url}: ${message}`,
+      );
+      return null;
     } finally {
       clearTimeout(timeout);
       // Abort guarantees the socket is released even when we bailed early

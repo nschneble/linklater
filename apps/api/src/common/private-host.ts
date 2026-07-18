@@ -1,18 +1,20 @@
 /**
- * Returns `true` for any hostname that resolves to a private, loopback,
- * link-local, or otherwise non-public address. Used by both the DTO
- * validator (SSRF gate at input time) and the metadata fetcher (second
- * line of defence before any network I/O).
+ * Classifies a single IP literal (IPv4, IPv6, or IPv4-mapped IPv6) as private.
+ * Returns `true` for loopback, RFC 1918, link-local, IPv6 unique-local, and the
+ * `0.0.0.0/8` reserved range.
+ *
+ * This is a purely *lexical* check on the address string – it performs NO DNS
+ * resolution. It is the entry point used to validate an address that has
+ * already been resolved (by the SSRF guard in `safe-fetch.ts`) as well as by
+ * `isPrivateHost` below.
  *
  * IPv6 unique-local (fc00::/7) and link-local (fe80::/10) are blocked.
  * IPv4-mapped IPv6 (`::ffff:<ipv4>`) is unwrapped and the embedded IPv4
  * is checked against the private ranges – without this step the loopback
  * and RFC 1918 ranges are reachable through the mapped form.
  */
-export function isPrivateHost(hostname: string): boolean {
-  const lower = hostname.toLowerCase();
-
-  if (lower === 'localhost') return true;
+export function isPrivateAddress(address: string): boolean {
+  const lower = address.toLowerCase();
 
   if (lower === '::1' || lower === '[::1]') return true;
 
@@ -52,4 +54,23 @@ export function isPrivateHost(hostname: string): boolean {
   }
 
   return false;
+}
+
+/**
+ * Purely *lexical* SSRF fast-fail: returns `true` for the `localhost` label and
+ * for any IP literal in a private/loopback/link-local range (via
+ * `isPrivateAddress`). Performs NO DNS resolution, so it CANNOT catch a public
+ * hostname whose DNS record points at a private address – that (and redirect
+ * following) is handled by the resolving guard in `safe-fetch.ts`
+ * (`assertPublicHost` / `safeFetch`), which is the load-bearing SSRF defence.
+ *
+ * Used by the DTO validator as a cheap literal check and by the metadata
+ * fetcher to short-circuit obviously-private literal hosts before any I/O.
+ */
+export function isPrivateHost(hostname: string): boolean {
+  const lower = hostname.toLowerCase();
+
+  if (lower === 'localhost') return true;
+
+  return isPrivateAddress(lower);
 }

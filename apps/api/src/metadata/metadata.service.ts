@@ -9,10 +9,13 @@ import { MetadataFetcherService } from './metadata-fetcher.service.js';
  * the HTTP request that creates the link – the link creation endpoint returns
  * immediately, and metadata appears asynchronously.
  *
- * Security: all outgoing fetch requests are guarded by `isPrivateHost` inside
- * `MetadataFetcherService` to prevent Server-Side Request Forgery (SSRF)
- * attacks where a malicious URL could cause the server to make requests to
- * internal services.
+ * Security: all outgoing fetch requests are guarded by the resolving SSRF
+ * defence in `MetadataFetcherService` (`safeFetch`), which resolves each host
+ * to its IP(s), validates every address against the private ranges, follows
+ * redirects manually with per-hop re-validation, and pins the connection to a
+ * validated address – preventing Server-Side Request Forgery (SSRF) attacks
+ * where a malicious URL (directly, via a DNS record, or via a redirect) could
+ * cause the server to make requests to internal services.
  */
 @Injectable()
 export class MetadataService implements OnModuleInit {
