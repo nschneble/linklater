@@ -58,6 +58,21 @@ describe('QueueService', () => {
     expect(result).toBe(JOB_ID);
   });
 
+  it('forwards send options (e.g. retry policy) to boss.send when provided', async () => {
+    bossMock.send.mockResolvedValue(JOB_ID);
+    const options = { retryLimit: 3, retryDelay: 5, retryBackoff: true };
+
+    const result = await service.send(QUEUE_NAME, { q: 'duck' }, options);
+
+    expect(bossMock.createQueue).toHaveBeenCalledWith(QUEUE_NAME);
+    expect(bossMock.send).toHaveBeenCalledWith(
+      QUEUE_NAME,
+      { q: 'duck' },
+      options,
+    );
+    expect(result).toBe(JOB_ID);
+  });
+
   it('delegates work to boss.work', async () => {
     const handler = jest.fn();
 

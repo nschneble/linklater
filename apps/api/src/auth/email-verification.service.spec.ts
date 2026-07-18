@@ -23,7 +23,7 @@ import { Prisma } from '../prisma/generated/client';
 
 import { EmailVerificationService } from './email-verification.service';
 import { TotpService } from './totp.service';
-import { EmailService } from '../email/email.service';
+import { EmailQueueService } from '../email/email-queue.service';
 import { UserMfaService } from '../users/user-mfa.service';
 import { UserTokensService } from '../users/user-tokens.service';
 import { UsersService } from '../users/users.service';
@@ -69,11 +69,11 @@ describe('EmailVerificationService', () => {
     updateVerificationToken: jest.fn(),
   } as unknown as UserTokensService;
 
-  const emailServiceMock = {
-    sendEmailChangeVerification: jest.fn(),
-    sendPasswordReset: jest.fn(),
-    sendVerification: jest.fn(),
-  } as unknown as EmailService;
+  const emailQueueServiceMock = {
+    enqueueEmailChangeVerification: jest.fn(),
+    enqueuePasswordReset: jest.fn(),
+    enqueueVerification: jest.fn(),
+  } as unknown as EmailQueueService;
 
   const totpServiceMock = {
     verifyCode: jest.fn(),
@@ -86,7 +86,7 @@ describe('EmailVerificationService', () => {
         { provide: UsersService, useValue: usersServiceMock },
         { provide: UserMfaService, useValue: userMfaServiceMock },
         { provide: UserTokensService, useValue: userTokensServiceMock },
-        { provide: EmailService, useValue: emailServiceMock },
+        { provide: EmailQueueService, useValue: emailQueueServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
       ],
     }).compile();
@@ -109,16 +109,16 @@ describe('EmailVerificationService', () => {
       (
         userTokensServiceMock.updateVerificationToken as jest.Mock
       ).mockResolvedValue(undefined);
-      (emailServiceMock.sendVerification as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        emailQueueServiceMock.enqueueVerification as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.sendVerificationEmail(USER_ID);
 
       expect(
         userTokensServiceMock.updateVerificationToken,
       ).toHaveBeenCalledWith(USER_ID, expect.any(String), expect.any(Date));
-      expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
+      expect(emailQueueServiceMock.enqueueVerification).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
         'before-sunrise',
@@ -195,9 +195,9 @@ describe('EmailVerificationService', () => {
       (userTokensServiceMock.updateResetToken as jest.Mock).mockResolvedValue(
         undefined,
       );
-      (emailServiceMock.sendPasswordReset as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        emailQueueServiceMock.enqueuePasswordReset as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.forgotPassword(USER_EMAIL);
 
@@ -206,7 +206,7 @@ describe('EmailVerificationService', () => {
         expect.any(String),
         expect.any(Date),
       );
-      expect(emailServiceMock.sendPasswordReset).toHaveBeenCalledWith(
+      expect(emailQueueServiceMock.enqueuePasswordReset).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
         'hit-man',
@@ -220,7 +220,7 @@ describe('EmailVerificationService', () => {
         service.forgotPassword('unknown@example.com'),
       ).resolves.not.toThrow();
       expect(userTokensServiceMock.updateResetToken).not.toHaveBeenCalled();
-      expect(emailServiceMock.sendPasswordReset).not.toHaveBeenCalled();
+      expect(emailQueueServiceMock.enqueuePasswordReset).not.toHaveBeenCalled();
     });
   });
 
@@ -330,16 +330,16 @@ describe('EmailVerificationService', () => {
       (
         userTokensServiceMock.updateVerificationToken as jest.Mock
       ).mockResolvedValue(undefined);
-      (emailServiceMock.sendVerification as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        emailQueueServiceMock.enqueueVerification as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.resendVerificationEmail(USER_ID);
 
       expect(
         userTokensServiceMock.updateVerificationToken,
       ).toHaveBeenCalledWith(USER_ID, expect.any(String), expect.any(Date));
-      expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
+      expect(emailQueueServiceMock.enqueueVerification).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
         'boyhood',
@@ -371,7 +371,7 @@ describe('EmailVerificationService', () => {
         undefined,
       );
       (
-        emailServiceMock.sendEmailChangeVerification as jest.Mock
+        emailQueueServiceMock.enqueueEmailChangeVerification as jest.Mock
       ).mockResolvedValue(undefined);
 
       await service.resendEmailChange(USER_ID);
@@ -382,11 +382,9 @@ describe('EmailVerificationService', () => {
         expect.any(String),
         expect.any(Date),
       );
-      expect(emailServiceMock.sendEmailChangeVerification).toHaveBeenCalledWith(
-        NEW_EMAIL,
-        expect.any(String),
-        'boyhood',
-      );
+      expect(
+        emailQueueServiceMock.enqueueEmailChangeVerification,
+      ).toHaveBeenCalledWith(NEW_EMAIL, expect.any(String), 'boyhood');
     });
 
     it('throws BadRequestException when no email change is pending', async () => {
@@ -402,7 +400,7 @@ describe('EmailVerificationService', () => {
       );
       expect(userTokensServiceMock.updatePendingEmail).not.toHaveBeenCalled();
       expect(
-        emailServiceMock.sendEmailChangeVerification,
+        emailQueueServiceMock.enqueueEmailChangeVerification,
       ).not.toHaveBeenCalled();
     });
   });
@@ -425,7 +423,7 @@ describe('EmailVerificationService', () => {
         undefined,
       );
       (
-        emailServiceMock.sendEmailChangeVerification as jest.Mock
+        emailQueueServiceMock.enqueueEmailChangeVerification as jest.Mock
       ).mockResolvedValue(undefined);
 
       await service.requestEmailChange(USER_ID, NEW_EMAIL);
@@ -436,7 +434,9 @@ describe('EmailVerificationService', () => {
         expect.any(String),
         expect.any(Date),
       );
-      expect(emailServiceMock.sendEmailChangeVerification).toHaveBeenCalledWith(
+      expect(
+        emailQueueServiceMock.enqueueEmailChangeVerification,
+      ).toHaveBeenCalledWith(
         NEW_EMAIL,
         expect.any(String),
         'dazed-and-confused',
@@ -469,7 +469,7 @@ describe('EmailVerificationService', () => {
         undefined,
       );
       (
-        emailServiceMock.sendEmailChangeVerification as jest.Mock
+        emailQueueServiceMock.enqueueEmailChangeVerification as jest.Mock
       ).mockResolvedValue(undefined);
 
       await expect(
@@ -514,7 +514,7 @@ describe('EmailVerificationService', () => {
         undefined,
       );
       (
-        emailServiceMock.sendEmailChangeVerification as jest.Mock
+        emailQueueServiceMock.enqueueEmailChangeVerification as jest.Mock
       ).mockResolvedValue(undefined);
 
       await expect(
@@ -552,7 +552,7 @@ describe('EmailVerificationService', () => {
         undefined,
       );
       (
-        emailServiceMock.sendEmailChangeVerification as jest.Mock
+        emailQueueServiceMock.enqueueEmailChangeVerification as jest.Mock
       ).mockResolvedValue(undefined);
 
       await expect(

@@ -8,7 +8,7 @@ import {
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import { expiresInMs } from '../common/dates.js';
 import { normalizeRecoveryCode } from '../common/recovery-codes.js';
-import { EmailService } from '../email/index.js';
+import { EmailQueueService } from '../email/index.js';
 import {
   UserMfaService,
   UserTokensService,
@@ -26,7 +26,7 @@ export class EmailVerificationService {
     private readonly usersService: UsersService,
     private readonly userMfaService: UserMfaService,
     private readonly userTokensService: UserTokensService,
-    private readonly emailService: EmailService,
+    private readonly emailQueueService: EmailQueueService,
     private readonly totpService: TotpService,
   ) {}
 
@@ -82,7 +82,7 @@ export class EmailVerificationService {
       tokenHash,
       expiresAt,
     );
-    await this.emailService.sendEmailChangeVerification(
+    await this.emailQueueService.enqueueEmailChangeVerification(
       user.pendingEmail,
       rawToken,
       user.theme,
@@ -101,7 +101,11 @@ export class EmailVerificationService {
       tokenHash,
       expiresAt,
     );
-    await this.emailService.sendPasswordReset(email, rawToken, user.theme);
+    await this.emailQueueService.enqueuePasswordReset(
+      email,
+      rawToken,
+      user.theme,
+    );
   }
 
   async resetPassword(
@@ -165,7 +169,7 @@ export class EmailVerificationService {
       tokenHash,
       expiresAt,
     );
-    await this.emailService.sendEmailChangeVerification(
+    await this.emailQueueService.enqueueEmailChangeVerification(
       newEmail,
       rawToken,
       user.theme,
@@ -224,6 +228,6 @@ export class EmailVerificationService {
       tokenHash,
       expiresAt,
     );
-    await this.emailService.sendVerification(email, rawToken, theme);
+    await this.emailQueueService.enqueueVerification(email, rawToken, theme);
   }
 }

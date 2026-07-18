@@ -10,7 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { sha256Hex } from '../common/crypto-tokens';
 import { MagicLinkService } from './magic-link.service';
-import { EmailService } from '../email/email.service';
+import { EmailQueueService } from '../email/email-queue.service';
 import { UserTokensService } from '../users/user-tokens.service';
 import { UsersService } from '../users/users.service';
 
@@ -43,9 +43,9 @@ describe('MagicLinkService', () => {
     updateMagicLinkToken: jest.fn(),
   } as unknown as UserTokensService;
 
-  const emailServiceMock = {
-    sendMagicLink: jest.fn(),
-  } as unknown as EmailService;
+  const emailQueueServiceMock = {
+    enqueueMagicLink: jest.fn(),
+  } as unknown as EmailQueueService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -53,7 +53,7 @@ describe('MagicLinkService', () => {
         MagicLinkService,
         { provide: UsersService, useValue: usersServiceMock },
         { provide: UserTokensService, useValue: userTokensServiceMock },
-        { provide: EmailService, useValue: emailServiceMock },
+        { provide: EmailQueueService, useValue: emailQueueServiceMock },
       ],
     }).compile();
 
@@ -75,7 +75,7 @@ describe('MagicLinkService', () => {
       ).mockImplementation(async (_id: string, hash: string) => {
         storedHash = hash;
       });
-      (emailServiceMock.sendMagicLink as jest.Mock).mockResolvedValue(
+      (emailQueueServiceMock.enqueueMagicLink as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -89,8 +89,8 @@ describe('MagicLinkService', () => {
       );
 
       // The email must carry the raw 64-char hex token, NOT the hash.
-      const sendCall = (emailServiceMock.sendMagicLink as jest.Mock).mock
-        .calls[0];
+      const sendCall = (emailQueueServiceMock.enqueueMagicLink as jest.Mock)
+        .mock.calls[0];
       const emailedToken = sendCall[1] as string;
       expect(emailedToken).toMatch(/^[0-9a-f]{64}$/);
       expect(emailedToken).not.toBe(storedHash);
@@ -106,7 +106,7 @@ describe('MagicLinkService', () => {
       await service.requestLogin('unknown@example.com');
 
       expect(userTokensServiceMock.updateMagicLinkToken).not.toHaveBeenCalled();
-      expect(emailServiceMock.sendMagicLink).not.toHaveBeenCalled();
+      expect(emailQueueServiceMock.enqueueMagicLink).not.toHaveBeenCalled();
     });
 
     it('stores an expiry approximately 15 minutes in the future', async () => {
@@ -121,7 +121,7 @@ describe('MagicLinkService', () => {
           capturedExpiry = expiresAt;
         },
       );
-      (emailServiceMock.sendMagicLink as jest.Mock).mockResolvedValue(
+      (emailQueueServiceMock.enqueueMagicLink as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -289,7 +289,7 @@ describe('MagicLinkService', () => {
       (
         userTokensServiceMock.updateMagicLinkToken as jest.Mock
       ).mockResolvedValue(undefined);
-      (emailServiceMock.sendMagicLink as jest.Mock).mockResolvedValue(
+      (emailQueueServiceMock.enqueueMagicLink as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -303,7 +303,7 @@ describe('MagicLinkService', () => {
         expect.stringMatching(/^[0-9a-f]{64}$/),
         expect.any(Date),
       );
-      expect(emailServiceMock.sendMagicLink).toHaveBeenCalledWith(
+      expect(emailQueueServiceMock.enqueueMagicLink).toHaveBeenCalledWith(
         USER_EMAIL,
         expect.any(String),
         'scanner-darkly',
@@ -319,7 +319,7 @@ describe('MagicLinkService', () => {
       (
         userTokensServiceMock.updateMagicLinkToken as jest.Mock
       ).mockResolvedValue(undefined);
-      (emailServiceMock.sendMagicLink as jest.Mock).mockResolvedValue(
+      (emailQueueServiceMock.enqueueMagicLink as jest.Mock).mockResolvedValue(
         undefined,
       );
 
@@ -331,7 +331,7 @@ describe('MagicLinkService', () => {
         expect.any(String),
         expect.any(Date),
       );
-      expect(emailServiceMock.sendMagicLink).toHaveBeenCalled();
+      expect(emailQueueServiceMock.enqueueMagicLink).toHaveBeenCalled();
     });
 
     it('silently returns when account creation returns null (race condition)', async () => {
@@ -343,7 +343,7 @@ describe('MagicLinkService', () => {
       await service.requestSignup(USER_EMAIL);
 
       expect(userTokensServiceMock.updateMagicLinkToken).not.toHaveBeenCalled();
-      expect(emailServiceMock.sendMagicLink).not.toHaveBeenCalled();
+      expect(emailQueueServiceMock.enqueueMagicLink).not.toHaveBeenCalled();
     });
   });
 });

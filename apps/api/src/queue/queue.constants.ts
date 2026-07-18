@@ -16,4 +16,11 @@ export const QUEUES = {
   READ_LINK_CLEANUP: 'read-link-cleanup',
   /** Worker job that fetches and stores Open Graph metadata for a newly saved link. */
   METADATA_FETCH: 'metadata-fetch',
+  /**
+   * Worker job that sends a transactional auth email (verification, password
+   * reset, email-change, magic-link, account-deletion). Enqueued off the
+   * request thread so a slow or unavailable SMTP relay never 503s an auth
+   * flow; the worker retries transient SMTP failures.
+   */
+  EMAIL_SEND: 'email-send',
 } as const;

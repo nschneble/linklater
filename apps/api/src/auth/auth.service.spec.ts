@@ -10,7 +10,7 @@ import { EmailVerificationService } from './email-verification.service';
 import { MagicLinkService } from './magic-link.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { TotpService } from './totp.service';
-import { EmailService } from '../email/email.service';
+import { EmailQueueService } from '../email/email-queue.service';
 import { UserMfaService } from '../users/user-mfa.service';
 import { UserOAuthService } from '../users/user-oauth.service';
 import { UserTokensService } from '../users/user-tokens.service';
@@ -85,9 +85,9 @@ describe('AuthService', () => {
     clearAccountDeletionToken: jest.fn(),
   } as unknown as UserTokensService;
 
-  const emailServiceMock = {
-    sendAccountDeletionConfirmation: jest.fn(),
-  } as unknown as EmailService;
+  const emailQueueServiceMock = {
+    enqueueAccountDeletionConfirmation: jest.fn(),
+  } as unknown as EmailQueueService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -105,7 +105,7 @@ describe('AuthService', () => {
         { provide: TotpService, useValue: totpServiceMock },
         { provide: RefreshTokenService, useValue: refreshTokenServiceMock },
         { provide: UserTokensService, useValue: userTokensServiceMock },
-        { provide: EmailService, useValue: emailServiceMock },
+        { provide: EmailQueueService, useValue: emailQueueServiceMock },
       ],
     }).compile();
 
@@ -118,7 +118,7 @@ describe('AuthService', () => {
   });
 
   describe('register', () => {
-    it('creates the user and sends a verification email', async () => {
+    it('creates the user and queues its verification email', async () => {
       const user = { id: USER_ID, email: USER_EMAIL, theme: 'scanner-darkly' };
       (usersServiceMock.create as jest.Mock).mockResolvedValue(user);
       (
@@ -135,6 +135,22 @@ describe('AuthService', () => {
         emailVerificationServiceMock.sendVerificationEmail,
       ).toHaveBeenCalledWith(USER_ID);
       expect(result).toBe(user);
+    });
+
+    it('returns the created user without surfacing a mail-transport failure', async () => {
+      // The verification email is enqueued off the request thread, so an SMTP
+      // outage can no longer 503 the register call and strand an un-emailable
+      // account. sendVerificationEmail only persists the token and enqueues a
+      // job; it never awaits the SMTP send, so register resolves normally.
+      const user = { id: USER_ID, email: USER_EMAIL, theme: 'scanner-darkly' };
+      (usersServiceMock.create as jest.Mock).mockResolvedValue(user);
+      (
+        emailVerificationServiceMock.sendVerificationEmail as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      await expect(service.register(USER_EMAIL, KNOWN_PASSWORD)).resolves.toBe(
+        user,
+      );
     });
   });
 
@@ -1087,7 +1103,7 @@ describe('AuthService', () => {
         userTokensServiceMock.updateAccountDeletionToken,
       ).not.toHaveBeenCalled();
       expect(
-        emailServiceMock.sendAccountDeletionConfirmation,
+        emailQueueServiceMock.enqueueAccountDeletionConfirmation,
       ).not.toHaveBeenCalled();
       expect(result).toEqual({ deleted: true });
     });
@@ -1198,7 +1214,7 @@ describe('AuthService', () => {
         userTokensServiceMock.updateAccountDeletionToken as jest.Mock
       ).mockResolvedValue(undefined);
       (
-        emailServiceMock.sendAccountDeletionConfirmation as jest.Mock
+        emailQueueServiceMock.enqueueAccountDeletionConfirmation as jest.Mock
       ).mockResolvedValue(undefined);
 
       const result = await service.deleteAccount(USER_ID);
@@ -1210,10 +1226,10 @@ describe('AuthService', () => {
         userTokensServiceMock.updateAccountDeletionToken,
       ).toHaveBeenCalledWith(USER_ID, expect.any(String), expect.any(Date));
       expect(
-        emailServiceMock.sendAccountDeletionConfirmation,
+        emailQueueServiceMock.enqueueAccountDeletionConfirmation,
       ).toHaveBeenCalledTimes(1);
       expect(
-        emailServiceMock.sendAccountDeletionConfirmation,
+        emailQueueServiceMock.enqueueAccountDeletionConfirmation,
       ).toHaveBeenCalledWith(USER_EMAIL, expect.any(String), 'scanner-darkly');
       expect(usersServiceMock.deleteById).not.toHaveBeenCalled();
       expect(result).toEqual({ requiresEmailConfirmation: true });
@@ -1234,14 +1250,14 @@ describe('AuthService', () => {
         userTokensServiceMock.updateAccountDeletionToken as jest.Mock
       ).mockResolvedValue(undefined);
       (
-        emailServiceMock.sendAccountDeletionConfirmation as jest.Mock
+        emailQueueServiceMock.enqueueAccountDeletionConfirmation as jest.Mock
       ).mockResolvedValue(undefined);
 
       const result = await service.deleteAccount(USER_ID, KNOWN_PASSWORD);
 
       expect(usersServiceMock.deleteById).not.toHaveBeenCalled();
       expect(
-        emailServiceMock.sendAccountDeletionConfirmation,
+        emailQueueServiceMock.enqueueAccountDeletionConfirmation,
       ).toHaveBeenCalledTimes(1);
       expect(result).toEqual({ requiresEmailConfirmation: true });
     });
@@ -1261,7 +1277,7 @@ describe('AuthService', () => {
         userTokensServiceMock.updateAccountDeletionToken as jest.Mock
       ).mockResolvedValue(undefined);
       (
-        emailServiceMock.sendAccountDeletionConfirmation as jest.Mock
+        emailQueueServiceMock.enqueueAccountDeletionConfirmation as jest.Mock
       ).mockResolvedValue(undefined);
 
       await service.deleteAccount(USER_ID);
@@ -1270,7 +1286,7 @@ describe('AuthService', () => {
         userTokensServiceMock.updateAccountDeletionToken as jest.Mock
       ).mock.calls[0][1] as string;
       const emailedRaw = (
-        emailServiceMock.sendAccountDeletionConfirmation as jest.Mock
+        emailQueueServiceMock.enqueueAccountDeletionConfirmation as jest.Mock
       ).mock.calls[0][1] as string;
       expect(persistedHash).not.toEqual(emailedRaw);
       expect(persistedHash).toMatch(/^[0-9a-f]{64}$/);

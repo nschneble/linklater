@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 
 import { PGBOSS_INSTANCE } from './queue.constants.js';
-import type { PgBoss, Job } from 'pg-boss';
+import type { PgBoss, Job, SendOptions } from 'pg-boss';
 
 /**
  * Thin wrapper around the pg-boss job queue. Provides three operations:
@@ -49,10 +49,20 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
    *
    * @param queue - The name of the queue to send the job to.
    * @param data - The job payload. Must be a plain object.
+   * @param options - Optional pg-boss send options (e.g. `retryLimit`,
+   *   `retryDelay`, `retryBackoff`) applied to this job. Omit for the
+   *   pg-boss defaults (no retries).
    * @returns The job ID assigned by pg-boss, or `null` if the job was deduplicated.
    */
-  async send(queue: string, data: object): Promise<string | null> {
+  async send(
+    queue: string,
+    data: object,
+    options?: SendOptions,
+  ): Promise<string | null> {
     await this.boss.createQueue(queue);
+    if (options) {
+      return this.boss.send(queue, data, options);
+    }
     return this.boss.send(queue, data);
   }
 
