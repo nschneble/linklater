@@ -9,6 +9,7 @@ import BookmarkletSection from './BookmarkletSection';
 import CvdModeToggle from './CvdModeToggle';
 import DangerZone from './DangerZone';
 import IdPsSection from './IdPsSection';
+import KeyboardShortcutsToggle from './KeyboardShortcutsToggle';
 import MultiFactorSection from './MultiFactorSection';
 import SettingsGroup from './SettingsGroup';
 import SettingsLayout from './SettingsLayout';
@@ -172,7 +173,10 @@ export default function SettingsView({
         description="Adjust how Linklater looks and feels."
         activeSection={activeSection}
       >
-        <CvdModeToggle />
+        <div className="space-y-6">
+          <CvdModeToggle />
+          <KeyboardShortcutsToggle />
+        </div>
       </SettingsGroup>
 
       <SettingsGroup

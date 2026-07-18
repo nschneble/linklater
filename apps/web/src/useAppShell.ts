@@ -2,6 +2,7 @@ import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useShortcutsEnabled } from './lib/hooks/useShortcutsEnabled';
 import { useTheme, type BaseTheme } from './theme/ThemeContext';
 import { type AppView } from './lib/navigation';
 
@@ -28,6 +29,7 @@ function viewFromPath(pathname: string): AppView {
 export function useAppShell() {
   const { logout, markWelcomed, user } = useAuth();
   const { setBaseTheme, toggleMode } = useTheme();
+  const shortcutsEnabled = useShortcutsEnabled();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -117,8 +119,13 @@ export function useAppShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
 
-  // Global 'x' shortcut to open/close the user menu from anywhere.
+  // Global 'x' shortcut to open/close the user menu from anywhere. Respects
+  // the same keyboard-shortcuts preference as the links-view handlers, so
+  // disabling shortcuts in Settings turns this off too (WCAG 2.1.4); without
+  // it, 'x' would stay live while the rest were off.
   useEffect(() => {
+    if (!shortcutsEnabled) return;
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key.toLowerCase() !== 'x') return;
@@ -135,7 +142,7 @@ export function useAppShell() {
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [shortcutsEnabled]);
 
   return {
     handleModeToggle,

@@ -1,7 +1,13 @@
 import { useEffect, useRef } from 'react';
 
 interface UseKeyboardShortcutsOptions {
-  /** When `false`, no keyboard events are handled. Use to disable shortcuts while the user is not on the links view. */
+  /**
+   * When `false`, no keyboard events are handled. Driven by two conditions in
+   * `useLinksView`: shortcuts are only live on the links view, and only when
+   * the user's keyboard-shortcuts preference is on. Disabling that preference
+   * turns off every handler here, satisfying WCAG 2.1.4 (Character Key
+   * Shortcuts).
+   */
   enabled: boolean;
   /** Whether the keyboard shortcuts modal is currently open. Needed so `Z` can close it. */
   isShortcutsModalOpen: boolean;
