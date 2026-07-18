@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
 
+import { CustomThrottlerGuard } from '../auth/custom-throttler.guard';
 import { LinksController } from './links.controller';
 import { LinksQueryService } from './links-query.service';
 import { LinksService } from './links.service';
@@ -51,7 +52,12 @@ describe('LinksController', () => {
         // keeps this controller unit test from booting that whole graph.
         { provide: TokenScopeService, useValue: { enforce: jest.fn() } },
       ],
-    }).compile();
+    })
+      // The route-level CustomThrottlerGuard on `create` needs the whole
+      // ThrottlerModule graph; override it so this unit test does not boot it.
+      .overrideGuard(CustomThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<LinksController>(LinksController);
     jest.clearAllMocks();
@@ -75,9 +81,41 @@ describe('LinksController', () => {
       });
       expect(result).toBe(link);
     });
+
+    it('applies CustomThrottlerGuard to cap link-creation spam', () => {
+      const guards: unknown[] =
+        Reflect.getMetadata('__guards__', LinksController.prototype.create) ??
+        [];
+      expect(guards).toContain(CustomThrottlerGuard);
+    });
+
+    it('uses the link-create throttle bucket (60 / minute)', () => {
+      const ttl = Reflect.getMetadata(
+        'THROTTLER:TTLlink-create',
+        LinksController.prototype.create,
+      );
+      const limit = Reflect.getMetadata(
+        'THROTTLER:LIMITlink-create',
+        LinksController.prototype.create,
+      );
+      expect(ttl).toBe(60000);
+      expect(limit).toBe(60);
+    });
   });
 
   describe('findAll', () => {
+    it('is not throttled by the link-create bucket (reads should not consume it)', () => {
+      const guards: unknown[] =
+        Reflect.getMetadata('__guards__', LinksController.prototype.findAll) ??
+        [];
+      const ttl = Reflect.getMetadata(
+        'THROTTLER:TTLlink-create',
+        LinksController.prototype.findAll,
+      );
+      expect(guards).not.toContain(CustomThrottlerGuard);
+      expect(ttl).toBeUndefined();
+    });
+
     it('passes search and read flag parsed from query strings', async () => {
       const paginated = { data: [], limit: 50, page: 1, total: 0 };
       (linksQueryMock.findAll as jest.Mock).mockResolvedValue(paginated);

@@ -48,6 +48,21 @@ describe('QueueService', () => {
     expect(bossMock.stop).toHaveBeenCalledTimes(1);
   });
 
+  it('reports not running before init and running after init', async () => {
+    expect(service.isRunning()).toBe(false);
+
+    await service.onModuleInit();
+
+    expect(service.isRunning()).toBe(true);
+  });
+
+  it('reports not running after destroy', async () => {
+    await service.onModuleInit();
+    await service.onModuleDestroy();
+
+    expect(service.isRunning()).toBe(false);
+  });
+
   it('delegates send to boss.send', async () => {
     bossMock.send.mockResolvedValue(JOB_ID);
 
@@ -82,6 +97,16 @@ describe('QueueService', () => {
     expect(bossMock.work).toHaveBeenCalledWith(QUEUE_NAME, handler);
   });
 
+  it('forwards work options (e.g. concurrency) to boss.work when provided', async () => {
+    const handler = jest.fn();
+    const options = { localConcurrency: 5 };
+
+    await service.work(QUEUE_NAME, handler as never, options);
+
+    expect(bossMock.createQueue).toHaveBeenCalledWith(QUEUE_NAME);
+    expect(bossMock.work).toHaveBeenCalledWith(QUEUE_NAME, options, handler);
+  });
+
   it('delegates schedule to boss.schedule', async () => {
     await service.schedule(QUEUE_NAME, '0 3 * * *');
 
@@ -103,6 +128,20 @@ describe('QueueService', () => {
       '0 3 * * *',
       { key: 'value' },
       {},
+    );
+  });
+
+  it('forwards schedule options (e.g. retry policy) to boss.schedule', async () => {
+    const options = { retryLimit: 3, retryDelay: 60, retryBackoff: true };
+
+    await service.schedule(QUEUE_NAME, '0 3 * * *', undefined, options);
+
+    expect(bossMock.createQueue).toHaveBeenCalledWith(QUEUE_NAME);
+    expect(bossMock.schedule).toHaveBeenCalledWith(
+      QUEUE_NAME,
+      '0 3 * * *',
+      null,
+      options,
     );
   });
 

@@ -49,4 +49,11 @@ export const THROTTLER_CONFIG: NamedThrottler[] = [
   // PAT creation – JWT-gated, so no brute-force vector, but caps a
   // compromised or runaway session from spamming token rows (20 / hour)
   { name: 'token-create', ttl: 3600000, limit: 20 },
+  // Link creation – auth-gated, but each new distinct URL enqueues an
+  // outbound-fetch metadata job, so an unthrottled scripted session could
+  // drive unbounded queue growth + outbound-fetch amplification. Generous
+  // enough for real burst-saving from the extension/bookmarklet, but a ceiling
+  // (60 / minute). Special bookmarklet/API_DOCS tokens stay bound by their
+  // tighter per-token limits in TokenScopeService (20 and 30 / minute).
+  { name: 'link-create', ttl: 60000, limit: 60 },
 ];

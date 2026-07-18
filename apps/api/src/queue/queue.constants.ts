@@ -1,8 +1,24 @@
+import type { SendOptions } from 'pg-boss';
+
 /**
  * Dependency injection token for the pg-boss instance. Using a Symbol rather
  * than a string prevents accidental collisions with other providers.
  */
 export const PGBOSS_INSTANCE = Symbol('PGBOSS_INSTANCE');
+
+/**
+ * Retry policy applied to recurring (cron-scheduled) jobs — the read-link
+ * cleanup and RSS refresh. Without it a transient blip (a database hiccup, a
+ * flaky feed host) fails the tick outright and nothing runs again until the
+ * next cron fire, which can be six hours or a full day away. Three attempts
+ * with exponential backoff starting at 60s retries a transient failure within
+ * minutes while bounding retry churn. Mirrors the email queue's retry approach.
+ */
+export const RECURRING_JOB_RETRY_OPTIONS: SendOptions = {
+  retryLimit: 3,
+  retryDelay: 60,
+  retryBackoff: true,
+};
 
 /**
  * Names of all pg-boss queues used in the application. Centralizing them here

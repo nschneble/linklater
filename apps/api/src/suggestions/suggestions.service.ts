@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { isTestingUi } from '../common/testing-ui.js';
 import { PrismaService } from '../prisma/index.js';
-import { QueueService } from '../queue/index.js';
+import { QueueService, RECURRING_JOB_RETRY_OPTIONS } from '../queue/index.js';
 import { RssAdapter } from './rss-adapter.js';
 import { RssFeedService } from './rss-feed.service.js';
 import { SOURCES, type SourceDefinition } from './sources.js';
@@ -77,7 +77,12 @@ export class SuggestionsService implements OnModuleInit {
       );
       return;
     }
-    await this.queueService.schedule(RSS_REFRESH_QUEUE, RSS_REFRESH_CRON);
+    await this.queueService.schedule(
+      RSS_REFRESH_QUEUE,
+      RSS_REFRESH_CRON,
+      undefined,
+      RECURRING_JOB_RETRY_OPTIONS,
+    );
     await this.queueService.work(RSS_REFRESH_QUEUE, async () => {
       await this.rssFeedService.refreshAll();
     });

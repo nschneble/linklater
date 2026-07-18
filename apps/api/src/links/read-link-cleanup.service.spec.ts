@@ -8,7 +8,7 @@ jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 import { ReadLinkCleanupService } from './read-link-cleanup.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
-import { QUEUES } from '../queue/queue.constants';
+import { QUEUES, RECURRING_JOB_RETRY_OPTIONS } from '../queue/queue.constants';
 import { Test, TestingModule } from '@nestjs/testing';
 
 const WORKER_ID = 'worker-1';
@@ -44,12 +44,14 @@ describe('ReadLinkCleanupService', () => {
     expect(service).toBeDefined();
   });
 
-  it('schedules the read-link-cleanup cron on init', async () => {
+  it('schedules the read-link-cleanup cron with a retry policy on init', async () => {
     await service.onModuleInit();
 
     expect(queueMock.schedule).toHaveBeenCalledWith(
       QUEUES.READ_LINK_CLEANUP,
       '0 3 * * *',
+      undefined,
+      RECURRING_JOB_RETRY_OPTIONS,
     );
   });
 

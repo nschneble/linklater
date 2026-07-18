@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/index.js';
 import { QueueService, QUEUES } from '../queue/index.js';
+import { METADATA_WORKER_CONCURRENCY } from './metadata.constants.js';
 import { MetadataFetcherService } from './metadata-fetcher.service.js';
 
 /**
@@ -28,8 +29,10 @@ export class MetadataService implements OnModuleInit {
   ) {}
 
   /**
-   * Registers the metadata fetch queue worker on application startup.
-   * Jobs are processed one at a time in the order they are dequeued.
+   * Registers the metadata fetch queue worker on application startup. Runs up
+   * to {@link METADATA_WORKER_CONCURRENCY} fetches in parallel (independent
+   * local workers) so that a single slow or hung site cannot stall metadata
+   * for every other queued link.
    */
   async onModuleInit(): Promise<void> {
     await this.queueService.work<{ linkId: string; url: string }>(
@@ -39,6 +42,7 @@ export class MetadataService implements OnModuleInit {
           await this.fetchAndStore(job.data.linkId, job.data.url);
         }
       },
+      { localConcurrency: METADATA_WORKER_CONCURRENCY },
     );
   }
 
