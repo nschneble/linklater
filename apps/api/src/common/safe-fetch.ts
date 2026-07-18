@@ -104,8 +104,12 @@ export async function assertPublicHost(
 /**
  * Builds an undici `lookup` that resolves + validates at connect time, so the
  * connection is pinned to a validated address (closes the DNS-rebind window).
+ *
+ * The `resolver` is injected (same DI seam as `safeFetch`/`assertPublicHost`)
+ * so the load-bearing rebind gate is unit-testable without a live DNS or a
+ * real socket – exported for exactly that purpose.
  */
-const createValidatingLookup =
+export const createValidatingLookup =
   (resolver: HostResolver): LookupFunction =>
   (hostname, options, callback): void => {
     assertPublicHost(hostname, resolver)

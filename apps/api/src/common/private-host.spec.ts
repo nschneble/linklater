@@ -42,8 +42,44 @@ describe('isPrivateHost', () => {
       expect(isPrivateHost('192.168.1.1')).toBe(true);
     });
 
+    it('blocks 100.64.x.x (RFC 6598 CGNAT / shared address space)', () => {
+      expect(isPrivateHost('100.64.0.1')).toBe(true);
+    });
+
+    it('blocks 100.127.255.255 (RFC 6598 upper bound)', () => {
+      expect(isPrivateHost('100.127.255.255')).toBe(true);
+    });
+
+    it('allows 100.63.x.x (just below RFC 6598 range)', () => {
+      expect(isPrivateHost('100.63.255.255')).toBe(false);
+    });
+
+    it('allows 100.128.x.x (just above RFC 6598 range)', () => {
+      expect(isPrivateHost('100.128.0.1')).toBe(false);
+    });
+
+    it('blocks 192.0.0.x (IETF protocol assignments)', () => {
+      expect(isPrivateHost('192.0.0.1')).toBe(true);
+    });
+
+    it('blocks 192.0.0.255 (192.0.0.0/24 upper bound)', () => {
+      expect(isPrivateHost('192.0.0.255')).toBe(true);
+    });
+
+    it('allows 192.0.1.x (just outside 192.0.0.0/24)', () => {
+      expect(isPrivateHost('192.0.1.1')).toBe(false);
+    });
+
     it('blocks 169.254.x.x (link-local)', () => {
       expect(isPrivateHost('169.254.0.1')).toBe(true);
+    });
+
+    it('blocks :: (IPv6 unspecified)', () => {
+      expect(isPrivateHost('::')).toBe(true);
+    });
+
+    it('blocks [::] (bracketed IPv6 unspecified)', () => {
+      expect(isPrivateHost('[::]')).toBe(true);
     });
 
     it('blocks ::1 (IPv6 loopback)', () => {

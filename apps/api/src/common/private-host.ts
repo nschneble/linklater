@@ -1,7 +1,14 @@
 /**
  * Classifies a single IP literal (IPv4, IPv6, or IPv4-mapped IPv6) as private.
- * Returns `true` for loopback, RFC 1918, link-local, IPv6 unique-local, and the
- * `0.0.0.0/8` reserved range.
+ * Returns `true` for the ranges an SSRF blocklist must reject:
+ *   - `0.0.0.0/8` "this host" (routes to loopback on Linux/macOS)
+ *   - `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` (RFC 1918 private)
+ *   - `100.64.0.0/10` (RFC 6598 CGNAT / shared address space)
+ *   - `127.0.0.0/8` (loopback)
+ *   - `169.254.0.0/16` (link-local)
+ *   - `192.0.0.0/24` (IETF protocol assignments)
+ *   - IPv6 `::1` (loopback), `::` (unspecified), `fc00::/7` (unique-local),
+ *     and `fe80::/10` (link-local)
  *
  * This is a purely *lexical* check on the address string – it performs NO DNS
  * resolution. It is the entry point used to validate an address that has
@@ -17,6 +24,11 @@ export function isPrivateAddress(address: string): boolean {
   const lower = address.toLowerCase();
 
   if (lower === '::1' || lower === '[::1]') return true;
+
+  // IPv6 unspecified address – like 0.0.0.0/8, connecting to it routes to a
+  // local service, so block it explicitly rather than relying on a failed
+  // resolution to reject it.
+  if (lower === '::' || lower === '[::]') return true;
 
   // IPv6 unique-local (fc00::/7) and link-local (fe80::/10). Anchored to
   // IPv6 literal syntax (hex segment + colon) so public DNS hostnames
@@ -43,14 +55,18 @@ export function isPrivateAddress(address: string): boolean {
 
   const ipv4 = effective.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (ipv4) {
-    const [, firstOctet, secondOctet] = ipv4.map(Number);
+    const [, firstOctet, secondOctet, thirdOctet] = ipv4.map(Number);
     if (firstOctet === 0) return true; // 0.0.0.0/8 "this host" – routes to loopback on Linux/macOS (SSRF bypass)
     if (firstOctet === 127) return true; // 127.0.0.0/8 loopback
     if (firstOctet === 10) return true; // 10.0.0.0/8 private
+    if (firstOctet === 100 && secondOctet >= 64 && secondOctet <= 127)
+      return true; // 100.64.0.0/10 RFC 6598 CGNAT / shared address space (cloud k8s pod/service IPs)
     if (firstOctet === 169 && secondOctet === 254) return true; // 169.254.0.0/16 link-local
-    if (firstOctet === 192 && secondOctet === 168) return true; // 192.168.0.0/16 private
     if (firstOctet === 172 && secondOctet >= 16 && secondOctet <= 31)
       return true; // 172.16.0.0/12 private
+    if (firstOctet === 192 && secondOctet === 0 && thirdOctet === 0)
+      return true; // 192.0.0.0/24 IETF protocol assignments
+    if (firstOctet === 192 && secondOctet === 168) return true; // 192.168.0.0/16 private
   }
 
   return false;
