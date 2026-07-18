@@ -30,6 +30,48 @@
 	# to index.html so client-side routes resolve on hard refresh.
 	handle {
 		root * /srv
+
+		# Security response headers for the served SPA document + assets.
+		# helmet only reaches responses proxied under /api/* (it runs inside
+		# the API), so without this block the main document and the bundle
+		# ship with no security headers: framable (clickjacking of the
+		# logged-in SPA), no HSTS on first navigation (SSL-strip window until
+		# the browser first hits an /api/* route), and no nosniff on assets.
+		# Scoped to this handle only so it never double-sets headers on the
+		# /api/* responses that helmet already covers. Sent over HTTPS only:
+		# Caddy's :80 -> :443 redirect is generated before this handler runs.
+		#
+		# Values mirror helmet's defaults (apps/api/src/common/
+		# security-headers.ts uses helmet() with defaults) so the two edges
+		# stay coherent, with two deliberate tightenings for the document:
+		# X-Frame-Options DENY + frame-ancestors 'none' (helmet allows
+		# SAMEORIGIN / 'self') because nothing ever needs to frame the SPA.
+		header {
+			# 1 year; matches helmet's default. No `preload` (helmet omits it
+			# too, and preload is an irreversible browser-list commitment).
+			Strict-Transport-Security "max-age=31536000; includeSubDomains"
+			X-Frame-Options "DENY"
+			X-Content-Type-Options "nosniff"
+			Referrer-Policy "no-referrer"
+			# CSP for the SPA document (audit #6 hardening). Every origin the
+			# built app actually uses:
+			#   default-src 'self'      everything same-origin unless widened
+			#   script-src 'self'       one hashed module bundle, no inline JS
+			#   style-src 'self' 'unsafe-inline'  local CSS; 'unsafe-inline'
+			#                           kept for coherence with helmet + as a
+			#                           safety margin (theme tokens are applied
+			#                           via CSSOM setProperty, not <style>, so
+			#                           it is not strictly required today)
+			#   img-src 'self' data: https:  favicons/OG thumbnails + gravatar
+			#                           + placehold.co load from arbitrary
+			#                           https hosts (see wave-11 note)
+			#   font-src 'self' data:   Font Awesome webfonts are local
+			#   connect-src 'self'      API is same-origin (/api)
+			#   frame-ancestors 'none'  no framing (pairs with X-Frame-Options)
+			#   object-src 'none' / base-uri 'self'  standard hardening
+			Content-Security-Policy "default-src 'self'; base-uri 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests"
+		}
+
 		try_files {path} /index.html
 		file_server
 	}
