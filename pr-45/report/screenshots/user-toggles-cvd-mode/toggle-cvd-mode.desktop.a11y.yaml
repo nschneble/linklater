@@ -50,7 +50,7 @@
     - paragraph: Switches to the Apollo 10½ theme and adds distinctive visual non-color cues, including underlined links, striped disabled controls, stronger focus outlines, and selected indicator bars.
     - switch "Color Vision Deficiency (CVD) mode" [checked]: "On"
     - text: Keyboard shortcuts
-    - paragraph: Single-key shortcuts like D to stumble or A to add a link let you move without the mouse. Switch them off if stray keystrokes set them off on their own, which can happen with speech-to-text tools.
+    - paragraph: Single-key shortcuts like D to stumble or A to add a link let you move without the mouse. Switch them off if stray keystrokes keep triggering them, which can happen with speech-to-text tools.
     - switch "Keyboard shortcuts" [checked]: "On"
   - region "Browser bookmarks":
     - heading "Browser bookmarks" [level=2]
