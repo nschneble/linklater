@@ -7,9 +7,11 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
  * user UUID – this intentionally mirrors the JWT standard "sub" claim name
  * while keeping it explicit.
  *
- * NOTE: The JWT is signed with `JWT_SECRET` and expires after 90 days. The
- * 90-day TTL was chosen to match the bookmarklet token lifetime so users
- * rarely need to reinstall the bookmarklet.
+ * NOTE: The JWT is signed with `JWT_SECRET` and is short-lived — it expires
+ * after 1 hour (see `signOptions.expiresIn` in `auth.module.ts`). Sessions
+ * outlive that hour via the longer-lived refresh token, which is rotated on
+ * every use (see `RefreshTokenService`), so a leaked access token is only
+ * usable for a short window.
  */
 interface JwtPayload {
   email: string;

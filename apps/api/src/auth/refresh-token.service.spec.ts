@@ -75,6 +75,21 @@ describe('RefreshTokenService', () => {
       expect(result).toHaveProperty('refreshToken');
       expect(typeof result.refreshToken).toBe('string');
     });
+
+    it('expires the refresh token 14 days out to bound a stolen-token window', async () => {
+      const before = Date.now();
+      await service.issueTokenPair(USER_ID, USER_EMAIL);
+      const after = Date.now();
+
+      const createCall = (prismaServiceMock.refreshToken.create as jest.Mock)
+        .mock.calls[0][0] as { data: { expiresAt: Date } };
+      const lifetimeMs = createCall.data.expiresAt.getTime() - before;
+
+      const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
+      const elapsedMs = after - before;
+      expect(lifetimeMs).toBeGreaterThanOrEqual(fourteenDaysMs);
+      expect(lifetimeMs).toBeLessThanOrEqual(fourteenDaysMs + elapsedMs + 1000);
+    });
   });
 
   describe('refresh', () => {

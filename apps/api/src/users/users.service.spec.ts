@@ -326,6 +326,25 @@ describe('UsersService', () => {
 
       expect(result).toMatchObject({ customTheme });
     });
+
+    it('rejects a customTheme with an unknown token key', async () => {
+      await expect(
+        service.updateMe(USER_ID, {
+          customTheme: { dark: { '--not-a-real-token': '#000000' } },
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prismaMock.user.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects an oversized customTheme payload', async () => {
+      const giant = '#' + 'f'.repeat(20000);
+      await expect(
+        service.updateMe(USER_ID, {
+          customTheme: { dark: { '--base-bg': giant } },
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prismaMock.user.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('findByEmail', () => {
