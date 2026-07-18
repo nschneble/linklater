@@ -7,7 +7,7 @@
 - banner:
   - button "Go to your links": Linklater Save links now, read them later.
   - button "User menu (testing-ui@linklater.test)"
-- main "Links":
+- main "Settings":
   - navigation "Settings sections":
     - list:
       - listitem:

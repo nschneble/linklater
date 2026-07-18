@@ -3,7 +3,7 @@
 - banner:
   - button "Go to your links": Linklater Save links now, read them later.
   - button "User menu (testing-ui@linklater.test)"
-- main "Links":
+- main "Your links":
   - heading "Your links" [level=1]
   - button "Show keyboard shortcuts"
   - paragraph: Add, search, or stumble upon something random.

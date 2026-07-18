@@ -29,7 +29,7 @@
       - menuitemradio "Hit Man"
       - menuitemradio "Nouvelle Vague"
       - menuitemradio "School of Rock"
-- main "Links":
+- main "Settings":
   - link "Skip settings navigation":
     - /url: "#account"
   - heading "Settings" [level=1]
