@@ -27,7 +27,7 @@
       - menuitemradio "Hit Man"
       - menuitemradio "Nouvelle Vague"
       - menuitemradio "School of Rock"
-- main "Links":
+- main "Your links":
   - heading "Your links" [level=1]
   - paragraph: Read links are removed after 7 days.
   - tablist "Links filter":

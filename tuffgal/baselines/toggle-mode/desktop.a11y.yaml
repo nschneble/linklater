@@ -24,7 +24,7 @@
       - menuitemradio "Nouvelle Vague"
       - menuitemradio "School of Rock"
     - menuitem "Log out"
-- main "Links":
+- main "Your links":
   - heading "Your links" [level=1]
   - button "Show keyboard shortcuts"
   - paragraph: Add, search, or stumble upon something random.

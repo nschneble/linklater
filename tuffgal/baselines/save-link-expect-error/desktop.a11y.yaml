@@ -3,7 +3,7 @@
 - banner:
   - button "Go to your links": Linklater Save links now, read them later.
   - button "User menu (testing-ui@linklater.test)"
-- main "Links":
+- main "Your links":
   - heading "Your links" [level=1]
   - button "Show keyboard shortcuts"
   - paragraph: Add, search, or stumble upon something random.
@@ -11,7 +11,7 @@
     - tab "Unread" [selected]
     - tab "Read"
   - button "Stumble!"
-  - button "Hide form" [expanded]: Add link
+  - button "Hide form": Add link
   - searchbox "Search through your links"
   - dialog "Save a link":
     - heading "Save a link" [level=2]

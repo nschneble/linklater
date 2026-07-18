@@ -27,7 +27,7 @@
       - menuitemradio "Hit Man"
       - menuitemradio "Nouvelle Vague"
       - menuitemradio "School of Rock"
-- main "Links":
+- main "Theme editor":
   - heading "Theme editor" [level=1]
   - img "Theme colors meet minimum contrast"
   - paragraph: All changes are saved automatically.
