@@ -67,3 +67,11 @@ jobs:
         with:
           setup-script: tuffgal:setup
           fail-on-changed: true
+        # tuffgal alpha.4 swapped its dev-server readiness probe from a bare TCP
+        # connect to a fetch() GET, and fetch rejects the self-signed mkcert
+        # certs the dev servers serve over HTTPS. Node's fetch trusts only its
+        # bundled CA list, not the system store that mkcert -install writes to,
+        # so the probe never sees a non-5xx response and times out. Turn off TLS
+        # verification for this step only; every URL it touches is localhost.
+        env:
+          NODE_TLS_REJECT_UNAUTHORIZED: '0'
