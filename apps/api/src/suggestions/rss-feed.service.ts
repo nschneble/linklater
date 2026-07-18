@@ -116,6 +116,13 @@ export class RssFeedService {
     );
 
     if (toCreate.length > 0) {
+      // skipDuplicates guards the read-then-partition race: two overlapping
+      // refreshes (the bootstrap refresh racing the scheduled worker, or two
+      // app instances) can both compute the same toCreate set and both insert
+      // the same (sourceKey, url). Without it the unique-constraint collision
+      // (P2002) rejects the whole batch and the source silently misses that
+      // refresh cycle. With it, Postgres skips the colliding rows and inserts
+      // the rest. The happy path with no race still inserts every new entry.
       await this.prisma.rssEntry.createMany({
         data: toCreate.map(({ suggestion, publishedAt }) => ({
           sourceKey: source.key,
@@ -127,6 +134,7 @@ export class RssFeedService {
           publishedAt,
           fetchedAt: now,
         })),
+        skipDuplicates: true,
       });
     }
 

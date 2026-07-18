@@ -30,6 +30,8 @@ export const RECURRING_JOB_RETRY_OPTIONS: SendOptions = {
 export const QUEUES = {
   /** Scheduled job that deletes read links older than seven days. Runs at 03:00 UTC daily. */
   READ_LINK_CLEANUP: 'read-link-cleanup',
+  /** Scheduled job that keeps only the newest entries per RSS source. Runs at 04:00 UTC daily. */
+  RSS_ENTRY_PRUNE: 'rss-entry-prune',
   /** Worker job that fetches and stores Open Graph metadata for a newly saved link. */
   METADATA_FETCH: 'metadata-fetch',
   /**
