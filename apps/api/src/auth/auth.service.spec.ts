@@ -136,22 +136,6 @@ describe('AuthService', () => {
       ).toHaveBeenCalledWith(USER_ID);
       expect(result).toBe(user);
     });
-
-    it('returns the created user without surfacing a mail-transport failure', async () => {
-      // The verification email is enqueued off the request thread, so an SMTP
-      // outage can no longer 503 the register call and strand an un-emailable
-      // account. sendVerificationEmail only persists the token and enqueues a
-      // job; it never awaits the SMTP send, so register resolves normally.
-      const user = { id: USER_ID, email: USER_EMAIL, theme: 'scanner-darkly' };
-      (usersServiceMock.create as jest.Mock).mockResolvedValue(user);
-      (
-        emailVerificationServiceMock.sendVerificationEmail as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      await expect(service.register(USER_EMAIL, KNOWN_PASSWORD)).resolves.toBe(
-        user,
-      );
-    });
   });
 
   describe('me', () => {

@@ -10,14 +10,14 @@
  *   - IPv6 `::1` (loopback), `::` (unspecified), `fc00::/7` (unique-local),
  *     and `fe80::/10` (link-local)
  *
- * This is a purely *lexical* check on the address string – it performs NO DNS
+ * This is a purely *lexical* check on the address string. It performs no DNS
  * resolution. It is the entry point used to validate an address that has
  * already been resolved (by the SSRF guard in `safe-fetch.ts`) as well as by
  * `isPrivateHost` below.
  *
  * IPv6 unique-local (fc00::/7) and link-local (fe80::/10) are blocked.
  * IPv4-mapped IPv6 (`::ffff:<ipv4>`) is unwrapped and the embedded IPv4
- * is checked against the private ranges – without this step the loopback
+ * is checked against the private ranges. Without this step the loopback
  * and RFC 1918 ranges are reachable through the mapped form.
  */
 export function isPrivateAddress(address: string): boolean {
@@ -25,7 +25,7 @@ export function isPrivateAddress(address: string): boolean {
 
   if (lower === '::1' || lower === '[::1]') return true;
 
-  // IPv6 unspecified address – like 0.0.0.0/8, connecting to it routes to a
+  // IPv6 unspecified address (like 0.0.0.0/8): connecting to it routes to a
   // local service, so block it explicitly rather than relying on a failed
   // resolution to reject it.
   if (lower === '::' || lower === '[::]') return true;
@@ -33,10 +33,10 @@ export function isPrivateAddress(address: string): boolean {
   // IPv6 unique-local (fc00::/7) and link-local (fe80::/10). Anchored to
   // IPv6 literal syntax (hex segment + colon) so public DNS hostnames
   // starting with 'fc'/'fd'/'fe8'–'feb' (e.g. fcc.gov, fdic.gov, febreze.com)
-  // are not matched – those contain dots, not colons.
+  // are not matched, as those contain dots, not colons.
   if (/^\[?(?:f[cd][0-9a-f]{0,2}|fe[89ab][0-9a-f]?):/i.test(lower)) return true;
 
-  // IPv4-mapped IPv6 – unwrap and fall through to IPv4 checks below
+  // IPv4-mapped IPv6: unwrap and fall through to IPv4 checks below
   const ipv4MappedDotted = lower.match(
     /^\[?::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\]?$/i,
   );
@@ -56,7 +56,7 @@ export function isPrivateAddress(address: string): boolean {
   const ipv4 = effective.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (ipv4) {
     const [, firstOctet, secondOctet, thirdOctet] = ipv4.map(Number);
-    if (firstOctet === 0) return true; // 0.0.0.0/8 "this host" – routes to loopback on Linux/macOS (SSRF bypass)
+    if (firstOctet === 0) return true; // 0.0.0.0/8 "this host", routes to loopback on Linux/macOS (SSRF bypass)
     if (firstOctet === 127) return true; // 127.0.0.0/8 loopback
     if (firstOctet === 10) return true; // 10.0.0.0/8 private
     if (firstOctet === 100 && secondOctet >= 64 && secondOctet <= 127)
@@ -75,8 +75,8 @@ export function isPrivateAddress(address: string): boolean {
 /**
  * Purely *lexical* SSRF fast-fail: returns `true` for the `localhost` label and
  * for any IP literal in a private/loopback/link-local range (via
- * `isPrivateAddress`). Performs NO DNS resolution, so it CANNOT catch a public
- * hostname whose DNS record points at a private address – that (and redirect
+ * `isPrivateAddress`). Performs no DNS resolution, so it cannot catch a public
+ * hostname whose DNS record points at a private address. That (and redirect
  * following) is handled by the resolving guard in `safe-fetch.ts`
  * (`assertPublicHost` / `safeFetch`), which is the load-bearing SSRF defence.
  *

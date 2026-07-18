@@ -83,6 +83,7 @@ graph TD
     auth --> email
     auth --> tokens
     auth --> users
+    email --> queue
     links --> auth
     links --> queue
     metadata --> queue

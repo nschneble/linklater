@@ -8,7 +8,7 @@ import { assertPublicHost, PrivateHostError } from './safe-fetch.js';
 import type { HostResolver } from './safe-fetch.js';
 
 /**
- * Rejects URLs whose hostname is – or resolves to – a loopback, RFC 1918,
+ * Rejects URLs whose hostname is (or resolves to) a loopback, RFC 1918,
  * link-local, or IPv6 unique-local address. Runs at validation time so
  * private-network URLs are rejected at the DTO layer rather than reaching the
  * fetch worker.
@@ -19,8 +19,8 @@ import type { HostResolver } from './safe-fetch.js';
  * between validation and fetch); the load-bearing SSRF guard is the resolve +
  * pin + manual-redirect logic in `safe-fetch.ts` applied at fetch time.
  *
- * A host that simply fails to resolve (transient DNS error, host currently
- * down) is ALLOWED here – rejecting it would block legitimate links, and the
+ * A host that fails to resolve (transient DNS error, host currently
+ * down) is allowed here. Rejecting it would block legitimate links, and the
  * fetch-time guard will refuse it anyway if it ever resolves to a private
  * address. Only a *confirmed* private resolution is rejected.
  */
@@ -43,7 +43,7 @@ export class IsPublicUrlConstraint implements ValidatorConstraintInterface {
     // Defence-in-depth: reject non-http(s) schemes inside the validator
     // itself. Otherwise `new URL('javascript:alert(1)').hostname` is the
     // empty string, the host check passes, and the validator green-lights the
-    // payload – a footgun if @IsPublicUrl is ever used without a co-located
+    // payload, a footgun if @IsPublicUrl is ever used without a co-located
     // @IsUrl({ protocols: ['http', 'https'] }).
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
       return false;
@@ -54,7 +54,7 @@ export class IsPublicUrlConstraint implements ValidatorConstraintInterface {
       return true;
     } catch (error) {
       // A confirmed private host (literal or resolved) is rejected; any other
-      // failure (unresolvable host) is allowed – the fetch-time guard covers it.
+      // failure (unresolvable host) is allowed. The fetch-time guard covers it.
       return !(error instanceof PrivateHostError);
     }
   }

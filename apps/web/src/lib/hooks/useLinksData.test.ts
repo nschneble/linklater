@@ -49,13 +49,13 @@ function makeBacking(count: number): Link[] {
 }
 
 /**
- * Mocks `getLinks` as an HONEST paginated endpoint: it slices a fixed
+ * Mocks `getLinks` as an honest paginated endpoint: it slices a fixed
  * backing array by `skip = (page - 1) * limit` / `take = limit`, exactly
  * like the server (`links-query.service.ts`). An omitted request `limit`
  * defaults to the server's `DEFAULT_LIMIT` of 10. `reportedTotal` lets a
  * test simulate server/state drift where `total` exceeds the rows that
  * actually exist. Because the offset is honored, bumping the request limit
- * on a later page will visibly skip a row — reproducing the real bug that a
+ * on a later page will visibly skip a row, reproducing the real bug that a
  * hand-authored per-call mock would hide.
  */
 function mockOffsetRespectingEndpoint(
@@ -442,7 +442,7 @@ describe('useLinksData "less doesn\'t need more"', () => {
   it('never drops or duplicates a row when the tail is one item past a full page', async () => {
     // 21 items at the default limit of 10: page 1 loads rows 0–9, load-more
     // loads rows 10–19, leaving exactly one trailing row. The old limit-bump
-    // desynced the server's (page - 1) * limit offset — it skipped row 10 and
+    // desynced the server's (page - 1) * limit offset, so it skipped row 10 and
     // re-served row 20 (a duplicate React key). Honoring the offset here means
     // that regression is now visible.
     const backing = makeBacking(21);
@@ -473,7 +473,7 @@ describe('useLinksData "less doesn\'t need more"', () => {
 
   it('loads every row without an extra fetch when the tail fills the last page exactly', async () => {
     // 20 items at the default limit of 10: two full pages, no trailing item.
-    // The absent-tail direction — the auto-load net must NOT over-fetch.
+    // The absent-tail direction, in which the auto-load net must not over-fetch.
     const backing = makeBacking(20);
     mockOffsetRespectingEndpoint(backing);
 

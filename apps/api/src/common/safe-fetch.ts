@@ -8,19 +8,19 @@ import { isPrivateAddress, isPrivateHost } from './private-host.js';
  *
  * The threat: a saved URL is attacker-controlled. A pattern-only host check
  * (see `isPrivateHost`) is bypassable two ways:
- *   1. DNS bypass – a *public* hostname whose A/AAAA record points at an
+ *   1. DNS bypass: a *public* hostname whose A/AAAA record points at an
  *      internal address (e.g. `169.254.169.254`, `127.0.0.1`, `10.x`).
- *   2. Redirect bypass – a public URL that 3xx-redirects to an internal host.
+ *   2. Redirect bypass: a public URL that 3xx-redirects to an internal host.
  *
- * The load-bearing defence here is to RESOLVE the hostname to its IP(s) and
- * validate EVERY resolved address against the private ranges before connecting,
- * and to follow redirects MANUALLY so each hop is re-resolved, re-validated,
+ * The load-bearing defence here is to resolve the hostname to its IP(s) and
+ * validate every resolved address against the private ranges before connecting,
+ * and to follow redirects manually so each hop is re-resolved, re-validated,
  * and scheme-checked.
  *
  * DNS-rebinding (TOCTOU) is closed by pinning the actual TCP connection to a
  * validated address: `safeAgent` installs a validating `lookup` on undici's
  * connector, so the address undici connects to is resolved and validated at
- * connect time – not a separately-resolved address that could have changed
+ * connect time, not a separately-resolved address that could have changed
  * between the check and the connect. `assertPublicHost` additionally does an
  * eager resolve+validate before each hop for a fast, well-logged early reject.
  */
@@ -68,7 +68,7 @@ const defaultResolver: HostResolver = async (hostname) => {
  *
  * - `localhost` and private IP literals are rejected without any DNS lookup.
  * - A public IP literal is accepted as-is (no DNS lookup needed).
- * - A DNS name is resolved via `resolver`; if it yields no addresses, or ANY
+ * - A DNS name is resolved via `resolver`; if it yields no addresses, or any
  *   resolved address is private, the call rejects.
  *
  * @throws {PrivateHostError} when the host is, or resolves to, a private address.
@@ -82,7 +82,7 @@ export async function assertPublicHost(
     throw new PrivateHostError(hostname);
   }
 
-  // A public IP literal needs no DNS resolution – it is already an address.
+  // A public IP literal needs no DNS resolution. It is already an address.
   if (isIP(hostname) !== 0) {
     return [hostname];
   }
@@ -107,7 +107,7 @@ export async function assertPublicHost(
  *
  * The `resolver` is injected (same DI seam as `safeFetch`/`assertPublicHost`)
  * so the load-bearing rebind gate is unit-testable without a live DNS or a
- * real socket – exported for exactly that purpose.
+ * real socket, exported for exactly that purpose.
  */
 export const createValidatingLookup =
   (resolver: HostResolver): LookupFunction =>
@@ -139,7 +139,7 @@ export const createValidatingLookup =
 
 /**
  * Process-lifetime dispatcher whose connector validates the resolved IP before
- * every TCP connect. Shared (undici pools connections) – no per-request churn.
+ * every TCP connect. Shared (undici pools connections), no per-request churn.
  */
 const safeAgent = new Agent({
   connect: { lookup: createValidatingLookup(defaultResolver) },
@@ -195,7 +195,7 @@ export async function safeFetch(
 
     const location = response.headers.get('location');
     if (!location) {
-      // A 3xx with no Location has nothing to follow – hand it back as-is.
+      // A 3xx with no Location has nothing to follow, so hand it back as-is.
       return response;
     }
 

@@ -111,8 +111,8 @@ export function useLinksFetch(
   }, []);
 
   // The sole mechanism for the "less doesn't need more" rule. Rather than
-  // varying the page limit to grab a trailing item early — which would
-  // desync the server's `(page - 1) * limit` offset and skip a row — we
+  // varying the page limit to grab a trailing item early, which would
+  // desync the server's `(page - 1) * limit` offset and skip a row, we
   // keep the limit constant and load the lone trailing item as its own
   // next page. After any fetch settles, if exactly one item remains
   // unloaded, auto-load it so the user never has to click a
