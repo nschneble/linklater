@@ -120,7 +120,46 @@ services:
       - caddy-data:/data
       - caddy-config:/config
 
+  backup:
+    # Reuse postgres:16 so pg_dump/pg_restore exactly match the server version
+    # (pg_dump must be >= the server). No extra image to pull or tag-pin, and it
+    # ships psql/createdb/dropdb for the restore procedure in DEPLOYMENT.md.
+    image: postgres:16
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          # A logical dump of a personal-scale database is light; this is a
+          # generous ceiling that keeps the sidecar from ever crowding the API.
+          memory: 256M
+    environment:
+      # libpq connection to the postgres service over the Compose network. The
+      # database is never published; this reaches it by service name only, and
+      # reuses the same POSTGRES_* secrets the postgres service is given.
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      # Nightly dump time (UTC hour) and retention windows. Tunable, with the
+      # documented defaults: 7 daily dumps plus 4 weekly dumps.
+      BACKUP_SCHEDULE_HOUR: ${BACKUP_SCHEDULE_HOUR:-3}
+      BACKUP_KEEP_DAILY: ${BACKUP_KEEP_DAILY:-7}
+      BACKUP_KEEP_WEEKLY: ${BACKUP_KEEP_WEEKLY:-4}
+    volumes:
+      # The backup script (read-only) and the dump volume that outlives the
+      # container. The operator syncs postgres-backups offsite (DEPLOYMENT.md).
+      - ./scripts/backup-postgres.sh:/usr/local/bin/backup-postgres.sh:ro
+      - postgres-backups:/backups
+    # Override the postgres image entrypoint: run the backup loop instead of the
+    # database. `docker compose run --rm backup once` appends "once" to take a
+    # single on-demand dump.
+    entrypoint: ['bash', '/usr/local/bin/backup-postgres.sh']
+
 volumes:
   postgres-data:
   caddy-data:
   caddy-config:
+  postgres-backups:
