@@ -150,3 +150,15 @@ describe('useThemeSave', () => {
     expect(updateMe).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('custom-theme token vocabulary', () => {
+  it('mirrors the 53-token count the API guard enforces', () => {
+    // Numeric cross-workspace sync anchor. The API mirror
+    // (apps/api/src/users/custom-theme.spec.ts) asserts
+    // CUSTOM_THEME_TOKEN_KEYS.size === 53. Locking the same absolute count on
+    // the web side means adding or removing a bundle/slot trips a test on BOTH
+    // sides, rather than the web tests passing while the API silently rejects
+    // the new token.
+    expect(EDITABLE_VARS.length).toBe(53);
+  });
+});

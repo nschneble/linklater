@@ -20,7 +20,7 @@ export interface HealthStatus {
  * orchestrators (docker-compose healthchecks, deploy workflows). The check is
  * deliberately cheap: a single `SELECT 1` round-trip that confirms the process
  * can reach and query PostgreSQL, plus an in-memory read of the pg-boss run
- * state — no extra query. Neither touches application tables.
+ * state (no extra query). Neither touches application tables.
  */
 @Injectable()
 export class HealthService {
@@ -34,7 +34,7 @@ export class HealthService {
    * whether the background-job queue is running.
    *
    * The database probe gates the HTTP status: a failure throws `503`. The
-   * queue signal is reported but does NOT fail the probe — a stopped queue
+   * queue signal is reported but does not fail the probe. A stopped queue
    * still surfaces in the body (`queue: 'down'`) for observability without
    * flapping deploys on a transient background-job hiccup, which would be worse
    * than the gap it closes.

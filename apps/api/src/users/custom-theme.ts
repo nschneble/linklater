@@ -7,8 +7,8 @@ import { BadRequestException } from '@nestjs/common';
  * column. The front-end Theme Editor already constrains what it sends, but the
  * API must not trust that: a crafted `PATCH /users/me` can post an arbitrarily
  * large blob or unknown keys. This module caps the payload size and rejects any
- * token key outside the canonical vocabulary. It is intentionally NOT a full
- * schema/color validator — the runtime injection on the client is what
+ * token key outside the canonical vocabulary. It is intentionally not a full
+ * schema/color validator. The runtime injection on the client is what
  * ultimately sandboxes the CSS.
  *
  * The token allow-list mirrors `apps/web/src/theme/customThemeTokens.ts`

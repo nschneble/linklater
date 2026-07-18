@@ -30,7 +30,7 @@ export const MAX_HTML_BYTES = 5 * 1024 * 1024;
  *
  * Connection budget: this stays well within the pool caps documented in
  * docs/DEPLOYMENT.md. pg-boss holds one of its 5 pooled connections only for
- * the brief dequeue/complete round-trips — not while a handler runs — so five
+ * the brief dequeue/complete round-trips (not while a handler runs), so five
  * in-flight handlers do not pin five pg-boss connections. The per-fetch
  * database writes go through Prisma's separate pool (`connection_limit=10`).
  * Both pools sit comfortably under Postgres `max_connections = 50`.
@@ -40,7 +40,7 @@ export const METADATA_WORKER_CONCURRENCY = 5;
 /**
  * Retry policy for enqueued metadata-fetch jobs. The handler already swallows
  * fetch/parse failures and records `fetchedAt` (idempotent) so polling clients
- * stop, meaning these retries only fire when the handler itself throws — for
+ * stop, meaning these retries only fire when the handler itself throws, for
  * example when the database is briefly unreachable mid-write. Three attempts
  * with exponential backoff starting at 30s, mirroring the email queue's policy.
  */

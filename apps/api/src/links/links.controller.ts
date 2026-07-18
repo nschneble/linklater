@@ -86,7 +86,7 @@ export class LinksController {
   @AllowsBookmarkletToken()
   @UseGuards(CustomThrottlerGuard)
   @Throttle({ default: { ttl: 60000, limit: 60 } })
-  @ThrottleMessage('Too many links saved. Try again shortly.')
+  @ThrottleMessage('Too many links saved')
   @Post()
   async create(@Req() request: AuthRequest, @Body() body: CreateLinkDto) {
     const userId = request.user.userId;

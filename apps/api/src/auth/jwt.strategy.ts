@@ -7,7 +7,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
  * user UUID – this intentionally mirrors the JWT standard "sub" claim name
  * while keeping it explicit.
  *
- * NOTE: The JWT is signed with `JWT_SECRET` and is short-lived — it expires
+ * NOTE: The JWT is signed with `JWT_SECRET` and is short-lived. It expires
  * after 1 hour (see `signOptions.expiresIn` in `auth.module.ts`). Sessions
  * outlive that hour via the longer-lived refresh token, which is rotated on
  * every use (see `RefreshTokenService`), so a leaked access token is only

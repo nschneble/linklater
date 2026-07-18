@@ -328,19 +328,12 @@ describe('UsersService', () => {
     });
 
     it('rejects a customTheme with an unknown token key', async () => {
+      // Service-layer test proves only the WIRING: the guard runs and blocks
+      // the write. The individual rejection branches (unknown key, oversized,
+      // prototype pollution) are owned by custom-theme.spec.ts.
       await expect(
         service.updateMe(USER_ID, {
           customTheme: { dark: { '--not-a-real-token': '#000000' } },
-        }),
-      ).rejects.toBeInstanceOf(BadRequestException);
-      expect(prismaMock.user.update).not.toHaveBeenCalled();
-    });
-
-    it('rejects an oversized customTheme payload', async () => {
-      const giant = '#' + 'f'.repeat(20000);
-      await expect(
-        service.updateMe(USER_ID, {
-          customTheme: { dark: { '--base-bg': giant } },
         }),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(prismaMock.user.update).not.toHaveBeenCalled();

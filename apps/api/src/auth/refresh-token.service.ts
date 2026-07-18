@@ -9,8 +9,8 @@ import { PrismaService } from '../prisma/prisma.service.js';
  * browser's localStorage (a deliberate bearer-token design), so an XSS-stolen
  * token is usable until it expires. Rotation (see `refresh`) resets this clock
  * on every use, making expiry a *sliding* window: an actively-used session
- * never logs out, while a stolen-but-idle token — or a session abandoned for
- * longer than this window — becomes worthless. 14 days keeps the theft window
+ * never logs out, while a stolen-but-idle token (or a session abandoned for
+ * longer than this window) becomes worthless. 14 days keeps the theft window
  * short without nagging anyone who returns at least every couple of weeks.
  */
 const REFRESH_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000;

@@ -1,7 +1,7 @@
 # Production reverse proxy for the single-VPS Docker Compose deployment
 # (docs/DEPLOYMENT.md, option 1). One Caddy instance is the whole edge: it
 # terminates TLS with automatically-issued Let's Encrypt certificates, serves
-# the static web bundle, and reverse-proxies the API — all on one domain.
+# the static web bundle, and reverse-proxies the API, all on one domain.
 #
 # DOMAIN is substituted by Caddy from the environment (docker-compose.prod.yml
 # passes it through). Point an A/AAAA record for DOMAIN at the VPS before the
