@@ -27,7 +27,7 @@
       - menuitemradio "Hit Man"
       - menuitemradio "Nouvelle Vague"
       - menuitemradio "School of Rock"
-- main "Links":
+- main "Your links":
   - heading "Your links" [level=1]
   - paragraph: Add, search, or stumble!
   - tablist "Links filter":
@@ -37,10 +37,12 @@
   - button "Stumble!"
   - button "Add link"
   - tabpanel "Unread":
-    - paragraph: Test Link 1
-    - paragraph: Slow Software Weekly
-    - paragraph: Practical notes on building durable software — concrete examples, minimal jargon, hard-won lessons from teams that ship slowly.
-    - link "Test Link 1 – Slow Software Weekly, opens in new tab":
-      - /url: https://example.test/read/1
+    - list:
+      - listitem:
+        - paragraph: Test Link 1
+        - paragraph: Slow Software Weekly
+        - paragraph: Practical notes on building durable software — concrete examples, minimal jargon, hard-won lessons from teams that ship slowly.
+        - link "Test Link 1 – Slow Software Weekly, opens in new tab":
+          - /url: https://example.test/read/1
   - status
   - status

@@ -27,7 +27,7 @@
       - menuitemradio "Hit Man"
       - menuitemradio "Nouvelle Vague"
       - menuitemradio "School of Rock"
-- main "Links":
+- main "Your links":
   - heading "Your links" [level=1]
   - paragraph: Add, search, or stumble!
   - tablist "Links filter":
@@ -35,7 +35,7 @@
     - tab "Read"
   - searchbox "Search through your links"
   - button "Stumble!"
-  - button "Hide form" [expanded]
+  - button "Hide form"
   - dialog "Save a link":
     - heading "Save a link" [level=2]
     - button "Close"

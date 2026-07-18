@@ -27,7 +27,7 @@
       - menuitemradio "Hit Man"
       - menuitemradio "Nouvelle Vague"
       - menuitemradio "School of Rock"
-- main "Links":
+- main "Your links":
   - heading "Your links" [level=1]
   - paragraph: Add, search, or stumble!
   - tablist "Links filter":
@@ -37,11 +37,13 @@
   - button "Stumble!"
   - button "Add link"
   - tabpanel "Unread":
-    - paragraph: (No title)
-    - paragraph: httpforever.com
-    - paragraph: http://httpforever.com/
-    - link "(No title) – httpforever.com, opens in new tab":
-      - /url: http://httpforever.com/
+    - list:
+      - listitem:
+        - paragraph: (No title)
+        - paragraph: httpforever.com
+        - paragraph: http://httpforever.com/
+        - link "(No title) – httpforever.com, opens in new tab":
+          - /url: http://httpforever.com/
   - status:
     - text: Link saved!
     - button "Dismiss"

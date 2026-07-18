@@ -27,7 +27,7 @@
       - menuitemradio "Hit Man"
       - menuitemradio "Nouvelle Vague"
       - menuitemradio "School of Rock"
-- main "Links":
+- main "Your links":
   - heading "Your links" [level=1]
   - paragraph: Add, search, or stumble!
   - tablist "Links filter":
@@ -37,20 +37,24 @@
   - button "Stumble!"
   - button "Add link"
   - tabpanel "Unread":
-    - paragraph: Test Link 1
-    - paragraph: Slow Software Weekly
-    - paragraph: Practical notes on building durable software — concrete examples, minimal jargon, hard-won lessons from teams that ship slowly.
-    - link "Test Link 1 – Slow Software Weekly, opens in new tab":
-      - /url: https://example.test/1
-    - paragraph: Test Link 2
-    - paragraph: Press Daily
-    - paragraph: A long-form essay on the quiet renaissance of typography on the web — how line-height, optical sizing, and tabular numerals reshape reading.
-    - link "Test Link 2 – Press Daily, opens in new tab":
-      - /url: https://example.test/2
-    - paragraph: Test Link 3
-    - paragraph: Docs Reference
-    - paragraph: Reference docs for the platform’s public APIs, covering authentication, idempotency keys, and the conventions every integrator needs.
-    - link "Test Link 3 – Docs Reference, opens in new tab":
-      - /url: https://example.test/3
+    - list:
+      - listitem:
+        - paragraph: Test Link 1
+        - paragraph: Slow Software Weekly
+        - paragraph: Practical notes on building durable software — concrete examples, minimal jargon, hard-won lessons from teams that ship slowly.
+        - link "Test Link 1 – Slow Software Weekly, opens in new tab":
+          - /url: https://example.test/1
+      - listitem:
+        - paragraph: Test Link 2
+        - paragraph: Press Daily
+        - paragraph: A long-form essay on the quiet renaissance of typography on the web — how line-height, optical sizing, and tabular numerals reshape reading.
+        - link "Test Link 2 – Press Daily, opens in new tab":
+          - /url: https://example.test/2
+      - listitem:
+        - paragraph: Test Link 3
+        - paragraph: Docs Reference
+        - paragraph: Reference docs for the platform’s public APIs, covering authentication, idempotency keys, and the conventions every integrator needs.
+        - link "Test Link 3 – Docs Reference, opens in new tab":
+          - /url: https://example.test/3
   - status
   - status
