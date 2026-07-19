@@ -40,7 +40,12 @@
         }
       }
     },
-    { "kind": "navigate", "path": "/unread" }
+    { "kind": "navigate", "path": "/unread" },
+    {
+      "kind": "waitFor",
+      "hint": { "role": "link", "text": "Test Link 1" }
+    },
+    { "kind": "wait", "ms": 900 }
   ],
   "expect": {
     "anyOf": [{ "role": "link", "text": "Test Link 1" }],
