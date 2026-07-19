@@ -13,9 +13,9 @@
   - button "Stumble!"
   - button "Hide form": Add link
   - searchbox "Search through your links"
-  - dialog "Save a link":
-    - heading "Save a link" [level=2]
-    - button "Close"
+  - dialog "Add link":
+    - heading "Add link" [level=2]
+    - button "Close add link"
     - text: URL
     - textbox "URL":
       - /placeholder: https://example.com/article
