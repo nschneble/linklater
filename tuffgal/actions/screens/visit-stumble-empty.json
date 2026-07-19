@@ -7,7 +7,9 @@
       "method": "POST",
       "respond": { "status": 200, "body": { "url": null } }
     },
-    { "kind": "navigate", "path": "/stumble" }
+    { "kind": "navigate", "path": "/stumble" },
+    { "kind": "waitFor", "hint": { "selector": "#suggestion-callout-title" } },
+    { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [

@@ -6,6 +6,7 @@
       "kind": "click",
       "hint": { "role": "tab", "text": "Unread" }
     },
+    { "kind": "waitFor", "hint": { "selector": "#suggestion-callout-title" } },
     { "kind": "wait", "ms": 600 }
   ],
   "expect": {
