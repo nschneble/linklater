@@ -169,6 +169,28 @@ jobs:
 
           echo "value=$RESOLVED_TAG" >> "$GITHUB_OUTPUT"
 
+      # Ship the stack's declarative config to the VPS BEFORE rolling the
+      # services. docker-compose.prod.yml and the files it bind-mounts (Caddyfile,
+      # config/postgresql.conf, scripts/backup-postgres.sh) are read from
+      # DEPLOY_PATH at `compose up` time. Nothing else in this pipeline refreshes
+      # them, so before this step a compose or config change (a new service, an
+      # edited backup script) never reached the box and `up -d` silently ran the
+      # stale file that was hand-copied once at setup. Copying the checked-out
+      # ref's versions keeps config in lockstep with the images built from the
+      # same commit. This is the exact list of paths the compose file mounts; a
+      # future mount added there must be added here too. Dispatch a rollback from
+      # the ref you are rolling back to so its compose matches the older images.
+      - name: Sync compose + config to the VPS
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          source: docker-compose.prod.yml,Caddyfile,config/postgresql.conf,scripts/backup-postgres.sh
+          target: ${{ secrets.DEPLOY_PATH }}
+          overwrite: true
+
       # Deploy over SSH: sync secrets, pull the resolved images, migrate the
       # database BEFORE the new code starts (prisma migrate deploy is written to
       # be forward-compatible with the still-running old version), then roll the
