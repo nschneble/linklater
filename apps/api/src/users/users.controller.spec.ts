@@ -149,7 +149,7 @@ describe('UsersController', () => {
       );
     });
 
-    it('applies JwtAuthGuard and CustomThrottlerGuard with auth-reauth bucket', () => {
+    it('applies JwtAuthGuard and CustomThrottlerGuard with a 5 per 15 min limit', () => {
       const guards: unknown[] = Reflect.getMetadata(
         '__guards__',
         UsersController.prototype.deleteMe,
@@ -157,11 +157,11 @@ describe('UsersController', () => {
       expect(guards).toContain(CustomThrottlerGuard);
 
       const ttl = Reflect.getMetadata(
-        'THROTTLER:TTLauth-reauth',
+        'THROTTLER:TTLdefault',
         UsersController.prototype.deleteMe,
       );
       const limit = Reflect.getMetadata(
-        'THROTTLER:LIMITauth-reauth',
+        'THROTTLER:LIMITdefault',
         UsersController.prototype.deleteMe,
       );
       expect(ttl).toBe(900000);

@@ -4,23 +4,39 @@
 
 ## [Unreleased]
 
+_Nothing just yet_
+
+## [1.1.0] - 2026-07-18
+
 ### Added
+
+- Nightly Postgres backups
+- Toggle to disable keyboard shortcuts
 
 ### Changed
 
+- Link cards show local placeholders (replaces [placehold.co](https://placehold.co/))
+- Old RSS suggestion entries are pruned on a schedule
+- Refresh tokens now expire after 14 days
+
 ### Fixed
+
+- Auth emails now send in the background
+- Hardened link-metadata fetching against SSRF
+- Missing SPA security headers
+- Pagination no longer drops a link once you've saved 21 or more
+- Rate limits now apply per route as intended
+- RSS refresh race that could drop a newly fetched entry
+- WCAG 2.1.4 character-key-shortcut conformance and other a11y fixes
 
 ## [1.0.2] - 2026-07-16
-
-### Fixed
-
-- CI API cert timeout causes Tuffgal to fail
 
 ### Fixed
 
 - Add link form stays open after saving a link
 - Bookmarklet fails on literally every page
 - Button taps in the mobile user menu are ignored
+- CI API cert timeout causes Tuffgal to fail
 - Logged-in users see marketing page with “Get started” and “Log in” buttons
 - Mark unread button is left-aligned on link cards without descriptions
 - “No un/read links” flashes before links are rendered
@@ -118,7 +134,8 @@ This is a development version bump. Most of the changes are related to refactori
 - Toggle themes based on Richard Linklater's filmography
 - Toggle light and dark mode
 
-[Unreleased]: https://github.com/nschneble/linklater/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/nschneble/linklater/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/nschneble/linklater/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/nschneble/linklater/compare/v1.0.0...v1.0.2
 [1.0.0]: https://github.com/nschneble/linklater/releases/tag/v1.0.0
 [0.3.0]: https://github.com/nschneble/linklater/releases/tag/v0.3.0

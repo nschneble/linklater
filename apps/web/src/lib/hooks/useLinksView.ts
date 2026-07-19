@@ -6,6 +6,7 @@ import { useLinkSelection } from './useLinkSelection';
 import { useLinks } from './useLinks';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSearchDebounce } from './useSearchDebounce';
+import { useShortcutsEnabled } from './useShortcutsEnabled';
 import type { UseLinksViewResult } from './useLinksView.types';
 
 export { filterFromPath } from './useLinksView.utils';
@@ -45,6 +46,7 @@ export function useLinksView({
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isClearingRead, setIsClearingRead] = useState(false);
   const searchInputReference = useRef<HTMLInputElement>(null);
+  const shortcutsEnabled = useShortcutsEnabled();
 
   useEffect(() => {
     if (showShortcuts) onCloseUserMenu?.();
@@ -76,7 +78,10 @@ export function useLinksView({
   });
 
   useKeyboardShortcuts({
-    enabled: true,
+    // Gated by the device-local preference so a user who disables shortcuts in
+    // Settings gets no single-key handlers (WCAG 2.1.4). Named keys (arrows,
+    // Enter, Escape) stay live regardless; they are exempt from 2.1.4.
+    singleKeyShortcutsEnabled: shortcutsEnabled,
     isShortcutsModalOpen: showShortcuts,
     onShowUnread: () => navigate('/unread'),
     onShowRead: () => navigate('/read'),

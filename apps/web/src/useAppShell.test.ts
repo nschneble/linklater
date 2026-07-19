@@ -37,6 +37,7 @@ import { useAuth } from './auth/AuthContext';
 import { useTheme } from './theme/ThemeContext';
 import { useAppShell } from './useAppShell';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { setShortcutsEnabled } from './lib/hooks/useShortcutsEnabled';
 
 function makeUser(overrides = {}) {
   return {
@@ -168,6 +169,50 @@ describe('view derived from pathname', () => {
   });
 });
 
+describe('main landmark label tracks the active view', () => {
+  it('labels the links view "Your links"', () => {
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/',
+      search: '',
+      hash: '',
+      state: null,
+      key: 'default',
+    });
+
+    const { result } = renderHook(() => useAppShell());
+
+    expect(result.current.mainLabel).toBe('Your links');
+  });
+
+  it('labels the settings view "Settings"', () => {
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/settings',
+      search: '',
+      hash: '',
+      state: null,
+      key: 'default',
+    });
+
+    const { result } = renderHook(() => useAppShell());
+
+    expect(result.current.mainLabel).toBe('Settings');
+  });
+
+  it('labels the theme-editor view "Theme editor"', () => {
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/editor',
+      search: '',
+      hash: '',
+      state: null,
+      key: 'default',
+    });
+
+    const { result } = renderHook(() => useAppShell());
+
+    expect(result.current.mainLabel).toBe('Theme editor');
+  });
+});
+
 describe('user menu toggle', () => {
   it('opens the user menu when toggled from closed', () => {
     const { result } = renderHook(() => useAppShell());
@@ -207,5 +252,48 @@ describe('user menu toggle', () => {
     });
 
     expect(result.current.showUserMenu).toBe(false);
+  });
+});
+
+describe('global x shortcut respects the keyboard-shortcuts preference', () => {
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  function renderWithMenuTrigger() {
+    const trigger = document.createElement('button');
+    trigger.setAttribute('data-usermenu-trigger', '');
+    const clickSpy = vi.spyOn(trigger, 'click');
+    document.body.appendChild(trigger);
+    renderHook(() => useAppShell());
+    return {
+      clickSpy,
+      cleanup: () => document.body.removeChild(trigger),
+    };
+  }
+
+  function fireX() {
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'x', bubbles: true }),
+    );
+  }
+
+  it('opens the user menu when shortcuts are enabled', () => {
+    const { clickSpy, cleanup } = renderWithMenuTrigger();
+
+    act(() => fireX());
+
+    expect(clickSpy).toHaveBeenCalledOnce();
+    cleanup();
+  });
+
+  it('does nothing when shortcuts are disabled', () => {
+    act(() => setShortcutsEnabled(false));
+    const { clickSpy, cleanup } = renderWithMenuTrigger();
+
+    act(() => fireX());
+
+    expect(clickSpy).not.toHaveBeenCalled();
+    cleanup();
   });
 });

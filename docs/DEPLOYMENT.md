@@ -16,22 +16,26 @@ often.
 The shape of the thing, derived from the code, because it drives every decision
 that follows:
 
-| Piece           | What it is                                                                                                                                                                                                                                                                                                                                                                             |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| API             | NestJS HTTP server, listens on port `3000` (`PORT` override). Speaks plain HTTP in production; TLS terminates at the reverse proxy (see the `loadHttpsOptions` docstring in `apps/api/src/main.ts`).                                                                                                                                                                                   |
-| Web             | React + Vite static build (`tsc -b && vite build`). Compiles to a folder of static files served by any web server.                                                                                                                                                                                                                                                                     |
-| Database        | PostgreSQL. CI pins `postgres:16`; local development uses PostgreSQL 18. The `unaccent` extension is required (accent-insensitive search) and is enabled by a migration, so no manual `CREATE EXTENSION` step is needed on a fresh database.                                                                                                                                           |
-| Background jobs | Run **inside the API process** via pg-boss. `QueueService` starts pg-boss on module init and stops it on shutdown (`apps/api/src/queue/queue.service.ts`); recurring jobs (read-link cleanup, RSS suggestions) are registered as pg-boss cron schedules. **There is no separate worker process to deploy or supervise.** pg-boss stores its own state in the same PostgreSQL database. |
-| Email           | SMTP, optional. If the `SMTP_*` variables are unset the app runs fine; transactional email (verification, password reset, magic links, deletion) simply does not send.                                                                                                                                                                                                                 |
-| Health probe    | `GET /health` is unauthenticated and cheap (a single `SELECT 1`). It returns `200` when the database answers and `503` when it does not, so orchestrators and deploy scripts can gate on it.                                                                                                                                                                                           |
-| Migrations      | `npm run migrate:deploy --workspace @linklater/api` runs `prisma migrate deploy && prisma generate`. This is the production-safe, non-interactive migration path.                                                                                                                                                                                                                      |
+| Piece           | What it is                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API             | NestJS HTTP server, listens on port `3000` (`PORT` override). Speaks plain HTTP in production; TLS terminates at the reverse proxy (see the `loadHttpsOptions` docstring in `apps/api/src/main.ts`).                                                                                                                                                                                                                                                                            |
+| Web             | React + Vite static build (`tsc -b && vite build`). Compiles to a folder of static files served by any web server.                                                                                                                                                                                                                                                                                                                                                              |
+| Database        | PostgreSQL. CI, production, and local development all use `postgres:16`. The `unaccent` extension is required (accent-insensitive search) and is enabled by a migration, so no manual `CREATE EXTENSION` step is needed on a fresh database.                                                                                                                                                                                                                                    |
+| Background jobs | Run **inside the API process** via pg-boss. `QueueService` starts pg-boss on module init and stops it on shutdown (`apps/api/src/queue/queue.service.ts`); recurring jobs (read-link cleanup, RSS suggestion refresh, RSS entry prune) are registered as pg-boss cron schedules. **There is no separate worker process to deploy or supervise.** pg-boss stores its own state in the same PostgreSQL database.                                                                  |
+| Email           | SMTP, optional. If the `SMTP_*` variables are unset the app runs fine; transactional email (verification, password reset, magic links, deletion) does not send. When SMTP is configured, mail is enqueued on the `email-send` queue and delivered by an in-process pg-boss worker with 3-attempt exponential-backoff retry, so a broken relay produces retry churn and failed `pgboss.job` rows rather than a synchronous request error.                                        |
+| Health probe    | `GET /health` is unauthenticated and cheap (a single `SELECT 1` plus an in-memory read of the pg-boss run state, no extra query). It returns `200` when the database answers and `503` when it does not, so orchestrators and deploy scripts can gate on it. The body also reports the background-job queue state (`queue: 'up' \| 'down'`) for observability, but a stopped queue does not fail the probe (a false-negative that flapped deploys would be worse than the gap). |
+| Migrations      | `npm run migrate:deploy --workspace @linklater/api` runs `prisma migrate deploy && prisma generate`. This is the production-safe, non-interactive migration path.                                                                                                                                                                                                                                                                                                               |
+| Backups         | A `backup` sidecar container (`scripts/backup-postgres.sh`) takes a nightly `pg_dump -Fc` over the Compose network and writes compressed dumps to the `postgres-backups` volume, retaining 7 daily and 4 weekly. The operator syncs that volume offsite (S3 via `rclone`/`aws s3 sync`, another host via `rsync`, or an SFTP server via `scripts/sync-backups-offsite.sh.example`). See [Backups](#backups) for the restore procedure.                                          |
 
 Two consequences drive everything below:
 
 1. **One process, one database.** The API is a single stateful-ish service (it
-   owns the pg-boss workers) plus Postgres. There is no queue broker, no cache
-   server, no separate cron container. This is a two-container app plus a static
-   site. It fits comfortably on the smallest sensible VPS.
+   owns the pg-boss workers) plus Postgres. There is no queue broker and no
+   cache server; the recurring jobs run in-process. The only sidecar is a
+   lightweight `backup` companion that stays idle except when it takes a
+   scheduled database dump (see Backups). This is a small stack: the API and
+   Postgres, a static site served by Caddy, and the backup sidecar. It fits
+   comfortably on the smallest sensible VPS.
 2. **The web build bakes in its API URL.** `VITE_API_BASE_URL` is read at build
    time (`import.meta.env.VITE_API_BASE_URL`), not at runtime. The web image
    must be built with the production API URL, so the same image cannot be
@@ -39,10 +43,12 @@ Two consequences drive everything below:
 
 ## The architecture
 
-A single virtual machine running Docker Compose with three services: Postgres,
-the API, and [Caddy](https://caddyserver.com) as the reverse proxy that serves
-the static web build and terminates TLS. Caddy obtains and renews Let's Encrypt
-certificates automatically with zero configuration beyond the domain name.
+A single virtual machine running Docker Compose. Three services sit in the
+request path: Postgres, the API, and [Caddy](https://caddyserver.com) as the
+reverse proxy that serves the static web build and terminates TLS. Caddy obtains
+and renews Let's Encrypt certificates automatically with zero configuration
+beyond the domain name. A fourth `backup` sidecar runs off to the side, taking
+scheduled database dumps (see Backups).
 
 This is fully self-hosted and FOSS end to end (Docker, Postgres, Caddy, Let's
 Encrypt), the cheapest option a personal app can actually rely on, and the one
@@ -60,7 +66,8 @@ What the implementation ships:
 - A web `Dockerfile` that bakes the static build into the Caddy image, so the
   same service serves the static site and terminates TLS.
 - A `docker-compose.prod.yml` wiring Postgres, the API, and the web/proxy
-  service together with a healthcheck on `GET /health`.
+  service together with a healthcheck on `GET /health`, plus a `backup` sidecar
+  that dumps the database on a schedule (see Backups).
 - A GitHub Actions workflow that builds and publishes both images and deploys
   over SSH.
 
@@ -393,30 +400,95 @@ backward-compatible and rollback stays a one-command operation.
 
 ## Backups
 
-**A scheduled `pg_dump` inside the Compose stack, writing compressed dumps to a
-volume, copied offsite, with provider snapshots as an optional second layer.**
+A `backup` companion service in `docker-compose.prod.yml` takes a scheduled
+`pg_dump` of the database, writes compressed dumps to a dedicated volume, and
+prunes the old ones. It reuses the `postgres:16` image (so `pg_dump` matches the
+server version), connects to Postgres over the Compose network with the same
+`POSTGRES_*` secrets, and never exposes the database. The dump logic lives in
+`scripts/backup-postgres.sh`. The service comes up with the rest of the stack on
+`docker compose up -d`, so there is nothing separate to install or supervise.
 
-- **`pg_dump` over provider snapshots as the primary.** A logical dump is
-  portable. It restores onto any Postgres 16 or newer, on any host, which keeps
-  the low exit cost intact. Provider block-storage snapshots are convenient but
-  provider-shaped and useless the day you change providers. Use them as a bonus,
-  not the plan.
-- **Where it runs.** A small companion service or a host cron entry runs
-  `pg_dump` against the Postgres container on a schedule. Nightly is plenty for a
-  personal app; the read-link cleanup job already runs daily, so daily is the
-  natural rhythm. Dumps land compressed on a dedicated volume.
-- **Offsite copy.** A dump that lives only on the same VM disappears with the VM.
-  Sync the dump directory somewhere else (an S3-compatible bucket, or another
-  machine) so a lost slice is an inconvenience, not a data-loss event.
-- **Retention.** Keep 7 daily dumps and 4 weekly dumps. That covers "I noticed
-  the corruption today" and "I noticed it three weeks later" without hoarding.
-  Prune older files as part of the same job.
-- **Restore test.** A backup you have never restored is a rumor. At least once,
-  and after any change to the backup job, restore the latest dump into a
-  throwaway database and confirm the app boots against it and search still works.
-  Search is the one feature that depends on the `unaccent` extension surviving a
-  restore. Write down the restore command next to the backup job so the procedure
-  exists before you need it at 2 a.m.
+- **What it does.** Every night at 03:00 UTC it runs `pg_dump -Fc` (custom
+  format: compressed, and restorable with `pg_restore`) into
+  `/backups/daily/linklater-<date>.dump` on the `postgres-backups` volume. On
+  Mondays it also keeps a copy under `/backups/weekly/`. It retains 7 daily
+  dumps and 4 weekly dumps, pruning older files in the same run. The schedule
+  and retention are tunable through `BACKUP_SCHEDULE_HOUR`, `BACKUP_KEEP_DAILY`,
+  and `BACKUP_KEEP_WEEKLY` in the operator env file; the defaults match this
+  plan.
+- **Why `pg_dump`, not provider snapshots.** A logical dump is portable. It
+  restores onto any Postgres 16 or newer, on any host, which keeps the low exit
+  cost intact. Provider block-storage snapshots are convenient but
+  provider-shaped and useless the day you change providers. Use them as a bonus
+  second layer, not the plan.
+- **Offsite copy (operator action).** The dumps live in the `postgres-backups`
+  Docker volume, on the host at
+  `/var/lib/docker/volumes/<project>_postgres-backups/_data` (the `<project>`
+  prefix is the Compose project name, which defaults to the deploy directory
+  name). They survive container recreation, but a dump that lives only on the
+  same VM disappears with the VM. Set up a periodic sync of that directory to
+  somewhere else (an S3-compatible bucket via `rclone` or `aws s3 sync`, or
+  another machine via `rsync`) so a lost slice is an inconvenience, not a
+  data-loss event. This is the one step the repo cannot hold for you, because it
+  needs an offsite credential that must not live in the repo.
+- **Offsite via SFTP.** An SFTP server is a fine target, including SFTP-only or
+  chrooted accounts with no remote shell. Copy
+  `scripts/sync-backups-offsite.sh.example` to `sync-backups-offsite.sh`, fill
+  in the two variables, and cron it on the host (it uses rclone's `sftp`
+  backend). Authenticate with a dedicated SSH key, never a password. It defaults
+  to `rclone copy`, which never deletes on the remote; `rclone sync` mirrors
+  instead and propagates a local deletion offsite, so reach for it only if you
+  want the remote to track local state exactly.
+- **On-demand backup.** To take a dump immediately, before a risky change or to
+  refresh the offsite copy:
+
+  ```bash
+  docker compose --env-file production.env -f docker-compose.prod.yml \
+    run --rm backup once
+  ```
+
+### Restore
+
+The dumps are `pg_restore` custom-format files. Run restores from the `backup`
+service container, which already mounts the dump volume and ships `pg_restore`,
+`psql`, `createdb`, and `dropdb` with the connection wired up. Override the
+entrypoint with `--entrypoint bash` so you get a shell in the container (the
+service's default entrypoint is the scheduled-backup loop).
+
+**Restore test (do this at least once, and after any change to the backup job).**
+Restore the latest dump into a throwaway database and confirm the data and
+accent-insensitive search survived. Search depends on the `unaccent` extension,
+which the dump recreates:
+
+```bash
+docker compose --env-file production.env -f docker-compose.prod.yml \
+  run --rm --entrypoint bash backup -c '
+    createdb -T template0 linklater_restore_test &&
+    pg_restore -d linklater_restore_test /backups/daily/linklater-<date>.dump &&
+    psql -d linklater_restore_test -c "SELECT count(*) FROM \"Link\";" &&
+    dropdb linklater_restore_test
+  '
+```
+
+**Disaster recovery (rebuild the live database from a dump).** Stop the writers
+first so nothing races the restore, then restore into the production database
+and roll everything back up:
+
+```bash
+COMPOSE="docker compose --env-file production.env -f docker-compose.prod.yml"
+$COMPOSE stop api web
+$COMPOSE run --rm --entrypoint bash backup -c '
+  pg_restore --clean --if-exists --no-owner -d "$PGDATABASE" \
+    /backups/daily/linklater-<date>.dump
+'
+$COMPOSE up -d
+```
+
+On a genuinely empty database (the volume was lost and recreated), drop the
+`--clean --if-exists` flags; there is nothing to clean. Then confirm
+`GET /api/health` returns `200` so you know the API came up against the restored
+data. A backup you have never restored is a rumor, so write the date of your
+last successful restore test somewhere you will see it.
 
 ## Scaling
 

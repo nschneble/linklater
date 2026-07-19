@@ -2,7 +2,11 @@
   "action": "create-api-token",
   "parameters": ["tokenName"],
   "steps": [
-    { "kind": "navigate", "path": "/settings", "waitUntil": "domcontentloaded" },
+    {
+      "kind": "navigate",
+      "path": "/settings",
+      "waitUntil": "domcontentloaded"
+    },
     {
       "kind": "click",
       "hint": { "role": "button", "text": "Generate new token" }
@@ -16,12 +20,10 @@
       "kind": "click",
       "hint": { "role": "button", "text": "Create token" }
     },
-    { "kind": "wait", "ms": 1500 }
+    { "kind": "wait", "ms": 2000 }
   ],
   "expect": {
-    "anyOf": [
-      { "text": "Your new token has been created" }
-    ]
+    "anyOf": [{ "text": "Your new token has been created" }]
   },
   "mask": [
     { "selector": "[aria-label*=\"Personal access token\"]" },

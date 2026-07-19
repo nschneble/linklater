@@ -16,9 +16,9 @@
       "kind": "click",
       "hint": { "role": "button", "text": "Save link" }
     },
-    { "kind": "wait", "ms": 300 },
+    { "kind": "wait", "ms": 600 },
     { "kind": "scroll", "direction": "up", "amount": 5000 },
-    { "kind": "wait", "ms": 300 }
+    { "kind": "wait", "ms": 600 }
   ],
   "expect": {
     "anyOf": [{ "role": "alert" }]

@@ -2,6 +2,7 @@ import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useShortcutsEnabled } from './lib/hooks/useShortcutsEnabled';
 import { useTheme, type BaseTheme } from './theme/ThemeContext';
 import { type AppView } from './lib/navigation';
 
@@ -20,6 +21,18 @@ function viewFromPath(pathname: string): AppView {
 }
 
 /**
+ * The per-view label shared by the document title and the `<main>` landmark's
+ * `aria-label`. The single `<main>` hosts every view, so the skip link that
+ * lands focus on it must announce the active view (WCAG 2.4.6) rather than a
+ * hard-coded "Links". The `links` value matches the `LinksView` heading text.
+ */
+const VIEW_LABELS: Record<AppView, string> = {
+  links: 'Your links',
+  settings: 'Settings',
+  'theme-editor': 'Theme editor',
+};
+
+/**
  * Controller hook for `AppShell`. Owns the URL-derived view, user-menu open
  * state, desktop-viewport gate, optimistic theme/mode persistence, and the
  * document-title, route-change focus, and global `x`-shortcut effects. The
@@ -28,6 +41,7 @@ function viewFromPath(pathname: string): AppView {
 export function useAppShell() {
   const { logout, markWelcomed, user } = useAuth();
   const { setBaseTheme, toggleMode } = useTheme();
+  const shortcutsEnabled = useShortcutsEnabled();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -85,13 +99,10 @@ export function useAppShell() {
     );
   };
 
+  const mainLabel = VIEW_LABELS[view];
+
   useEffect(() => {
-    const titles: Record<AppView, string> = {
-      links: 'Linklater – Your links',
-      settings: 'Linklater – Settings',
-      'theme-editor': 'Linklater – Theme editor',
-    };
-    document.title = titles[view];
+    document.title = `Linklater – ${VIEW_LABELS[view]}`;
   }, [view]);
 
   // Move focus to the main landmark whenever the user navigates between
@@ -117,8 +128,13 @@ export function useAppShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
 
-  // Global 'x' shortcut to open/close the user menu from anywhere.
+  // Global 'x' shortcut to open/close the user menu from anywhere. Respects
+  // the same keyboard-shortcuts preference as the links-view handlers, so
+  // disabling shortcuts in Settings turns this off too (WCAG 2.1.4); without
+  // it, 'x' would stay live while the rest were off.
   useEffect(() => {
+    if (!shortcutsEnabled) return;
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key.toLowerCase() !== 'x') return;
@@ -135,7 +151,7 @@ export function useAppShell() {
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [shortcutsEnabled]);
 
   return {
     handleModeToggle,
@@ -144,6 +160,7 @@ export function useAppShell() {
     handleUserMenuToggle,
     isDesktop,
     logout,
+    mainLabel,
     mainReference,
     markWelcomed,
     navigate,

@@ -5,7 +5,10 @@ jest.mock('../prisma/prisma.service', () => ({
 }));
 jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 
-import { MAX_DESCRIPTION_LENGTH } from './metadata.constants';
+import {
+  MAX_DESCRIPTION_LENGTH,
+  METADATA_WORKER_CONCURRENCY,
+} from './metadata.constants';
 import { MetadataFetcherService } from './metadata-fetcher.service';
 import { MetadataService } from './metadata.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -392,7 +395,7 @@ describe('MetadataService', () => {
     expect(prismaMock.$executeRaw).toHaveBeenCalled();
   });
 
-  it('registers a worker for the METADATA_FETCH queue on init', async () => {
+  it('registers a worker for the METADATA_FETCH queue with concurrency on init', async () => {
     (queueMock.work as jest.Mock).mockResolvedValue(WORKER_ID);
 
     await service.onModuleInit();
@@ -400,6 +403,7 @@ describe('MetadataService', () => {
     expect(queueMock.work).toHaveBeenCalledWith(
       QUEUES.METADATA_FETCH,
       expect.any(Function),
+      { localConcurrency: METADATA_WORKER_CONCURRENCY },
     );
   });
 

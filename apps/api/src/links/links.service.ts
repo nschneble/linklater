@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { META_INCLUDE } from './links.include.js';
+import { METADATA_SEND_OPTIONS } from '../metadata/metadata.constants.js';
 import { PrismaService, Prisma } from '../prisma/index.js';
 import { QueueService, QUEUES } from '../queue/index.js';
 
@@ -49,7 +50,11 @@ export class LinksService {
       // previous fetch attempt failed before producing a `fetchedAt` timestamp).
       if (!existing.meta?.fetchedAt) {
         void this.queueService
-          .send(QUEUES.METADATA_FETCH, { linkId: link.id, url: link.url })
+          .send(
+            QUEUES.METADATA_FETCH,
+            { linkId: link.id, url: link.url },
+            METADATA_SEND_OPTIONS,
+          )
           .catch((error: unknown) => {
             this.logger.error(
               `Failed to enqueue metadata fetch for link ${link.id}: ${String(error)}`,
@@ -89,7 +94,11 @@ export class LinksService {
     // Fire-and-forget: metadata fetching is async and non-critical. Errors are
     // logged but do not affect the HTTP response.
     void this.queueService
-      .send(QUEUES.METADATA_FETCH, { linkId: link.id, url: link.url })
+      .send(
+        QUEUES.METADATA_FETCH,
+        { linkId: link.id, url: link.url },
+        METADATA_SEND_OPTIONS,
+      )
       .catch((error: unknown) => {
         this.logger.error(
           `Failed to enqueue metadata fetch for link ${link.id}: ${String(error)}`,

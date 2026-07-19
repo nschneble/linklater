@@ -57,13 +57,13 @@ describe('AccountDeletionController', () => {
       expect(guards).not.toContain(JwtAuthGuard);
     });
 
-    it('uses the auth-account-deletion-confirm throttle bucket (5 / 15 min)', () => {
+    it('overrides the default bucket with 5 requests per 15 min', () => {
       const ttl = Reflect.getMetadata(
-        'THROTTLER:TTLauth-account-deletion-confirm',
+        'THROTTLER:TTLdefault',
         AccountDeletionController.prototype.confirm,
       );
       const limit = Reflect.getMetadata(
-        'THROTTLER:LIMITauth-account-deletion-confirm',
+        'THROTTLER:LIMITdefault',
         AccountDeletionController.prototype.confirm,
       );
       expect(ttl).toBe(900000);
@@ -94,13 +94,13 @@ describe('AccountDeletionController', () => {
       expect(guards).toContain(CustomThrottlerGuard);
     });
 
-    it('uses the auth-account-deletion-cancel throttle bucket (10 / 15 min)', () => {
+    it('overrides the default bucket with 10 requests per 15 min', () => {
       const ttl = Reflect.getMetadata(
-        'THROTTLER:TTLauth-account-deletion-cancel',
+        'THROTTLER:TTLdefault',
         AccountDeletionController.prototype.cancelPending,
       );
       const limit = Reflect.getMetadata(
-        'THROTTLER:LIMITauth-account-deletion-cancel',
+        'THROTTLER:LIMITdefault',
         AccountDeletionController.prototype.cancelPending,
       );
       expect(ttl).toBe(900000);

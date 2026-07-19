@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/index.js';
 import { QueueService, QUEUES } from '../queue/index.js';
 import { MetadataFetcherService } from './metadata-fetcher.service.js';
+import { METADATA_WORKER_CONCURRENCY } from './metadata.constants.js';
 
 /**
  * Fetches and stores Open Graph / Twitter Card metadata for saved links.
@@ -9,10 +10,13 @@ import { MetadataFetcherService } from './metadata-fetcher.service.js';
  * the HTTP request that creates the link – the link creation endpoint returns
  * immediately, and metadata appears asynchronously.
  *
- * Security: all outgoing fetch requests are guarded by `isPrivateHost` inside
- * `MetadataFetcherService` to prevent Server-Side Request Forgery (SSRF)
- * attacks where a malicious URL could cause the server to make requests to
- * internal services.
+ * Security: all outgoing fetch requests are guarded by the resolving SSRF
+ * defence in `MetadataFetcherService` (`safeFetch`), which resolves each host
+ * to its IP(s), validates every address against the private ranges, follows
+ * redirects manually with per-hop re-validation, and pins the connection to a
+ * validated address – preventing Server-Side Request Forgery (SSRF) attacks
+ * where a malicious URL (directly, via a DNS record, or via a redirect) could
+ * cause the server to make requests to internal services.
  */
 @Injectable()
 export class MetadataService implements OnModuleInit {
@@ -25,8 +29,10 @@ export class MetadataService implements OnModuleInit {
   ) {}
 
   /**
-   * Registers the metadata fetch queue worker on application startup.
-   * Jobs are processed one at a time in the order they are dequeued.
+   * Registers the metadata fetch queue worker on application startup. Runs up
+   * to {@link METADATA_WORKER_CONCURRENCY} fetches in parallel (independent
+   * local workers) so that a single slow or hung site cannot stall metadata
+   * for every other queued link.
    */
   async onModuleInit(): Promise<void> {
     await this.queueService.work<{ linkId: string; url: string }>(
@@ -36,6 +42,7 @@ export class MetadataService implements OnModuleInit {
           await this.fetchAndStore(job.data.linkId, job.data.url);
         }
       },
+      { localConcurrency: METADATA_WORKER_CONCURRENCY },
     );
   }
 

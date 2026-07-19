@@ -8,6 +8,7 @@ import { validateRequiredEnvVars } from './common/required-env.js';
 import { applySecurityHeaders } from './common/security-headers.js';
 import { assertTestingUiNotInProduction } from './common/testing-ui.js';
 import { LinksModule } from './links/links.module.js';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { Request, Response, NextFunction } from 'express';
 import { existsSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -52,10 +53,20 @@ function loadHttpsOptions() {
 async function bootstrap() {
   validateRequiredEnvVars();
   assertTestingUiNotInProduction();
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     httpsOptions: loadHttpsOptions(),
     logger: new CompactLogger(),
   });
+
+  // Trust exactly one reverse-proxy hop. In production Caddy terminates TLS
+  // and forwards to this server, so without this Express reports Caddy's
+  // address as `req.ip` and the rate limiter collapses every client into a
+  // single per-route bucket. `1` makes Express read the client address from
+  // the last `X-Forwarded-For` entry Caddy sets; a value of `true` (trust
+  // all hops) would instead let a client spoof its own address via a forged
+  // header, so it is deliberately avoided. In development there is no proxy,
+  // where this setting is simply inert.
+  app.set('trust proxy', 1);
 
   // Listen for SIGTERM/SIGINT so NestJS fires OnModuleDestroy hooks on
   // shutdown. Container orchestrators send SIGTERM before killing a

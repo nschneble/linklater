@@ -28,7 +28,7 @@ function catalogsFrom({
   return { solid: new Set(solid), brands: new Set(brands) };
 }
 
-const emptyManifest: Manifest = { brands: [], solid: [] };
+const emptyManifest: Manifest = { brands: [], regular: [], solid: [] };
 
 describe('computeNextManifest', () => {
   it('adds new icons routed by single-catalog membership', () => {
@@ -38,27 +38,46 @@ describe('computeNextManifest', () => {
       currentManifest: emptyManifest,
     });
 
-    expect(manifest).toEqual({ brands: ['google'], solid: ['check'] });
+    expect(manifest).toEqual({
+      brands: ['google'],
+      regular: [],
+      solid: ['check'],
+    });
   });
 
   it('preserves family for icons already present in the manifest', () => {
     const { manifest } = computeNextManifest({
       hits: hitsFrom(['fa-apple']),
       catalogs: catalogsFrom({ solid: ['apple'], brands: ['apple'] }),
-      currentManifest: { brands: ['apple'], solid: [] },
+      currentManifest: { brands: ['apple'], regular: [], solid: [] },
     });
 
-    expect(manifest).toEqual({ brands: ['apple'], solid: [] });
+    expect(manifest).toEqual({ brands: ['apple'], regular: [], solid: [] });
+  });
+
+  it('routes icons used with a fa-regular sibling class into regular', () => {
+    const { manifest } = computeNextManifest({
+      hits: hitsFrom(['fa-keyboard']),
+      catalogs: catalogsFrom({ solid: ['keyboard'] }),
+      currentManifest: emptyManifest,
+      regularNames: new Set(['keyboard']),
+    });
+
+    expect(manifest).toEqual({
+      brands: [],
+      regular: ['keyboard'],
+      solid: ['keyboard'],
+    });
   });
 
   it('drops manifest entries no longer referenced in source', () => {
     const { manifest, summary } = computeNextManifest({
       hits: hitsFrom(['fa-check']),
       catalogs: catalogsFrom({ solid: ['check', 'gear'] }),
-      currentManifest: { brands: [], solid: ['check', 'gear'] },
+      currentManifest: { brands: [], regular: [], solid: ['check', 'gear'] },
     });
 
-    expect(manifest).toEqual({ brands: [], solid: ['check'] });
+    expect(manifest).toEqual({ brands: [], regular: [], solid: ['check'] });
     expect(summary.removed.solid).toEqual(['gear']);
   });
 
@@ -69,7 +88,7 @@ describe('computeNextManifest', () => {
       currentManifest: emptyManifest,
     });
 
-    expect(manifest).toEqual({ brands: [], solid: ['check'] });
+    expect(manifest).toEqual({ brands: [], regular: [], solid: ['check'] });
   });
 
   it('sorts each family alphabetically', () => {
@@ -112,7 +131,7 @@ describe('computeNextManifest', () => {
     const { summary } = computeNextManifest({
       hits: hitsFrom(['fa-check', 'fa-gear']),
       catalogs: catalogsFrom({ solid: ['check', 'gear', 'ban'] }),
-      currentManifest: { brands: [], solid: ['ban', 'check'] },
+      currentManifest: { brands: [], regular: [], solid: ['ban', 'check'] },
     });
 
     expect(summary.added.solid).toEqual(['gear']);

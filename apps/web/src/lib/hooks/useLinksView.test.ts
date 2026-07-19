@@ -1,10 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 import { createElement } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 
 import { filterFromPath, useLinksView } from './useLinksView';
+import { setShortcutsEnabled } from './useShortcutsEnabled';
 import type { UseLinksResult } from './types';
 
 /**
@@ -101,5 +102,35 @@ describe('useLinksView', () => {
     await act(async () => {
       resolveDeleteAllRead?.();
     });
+  });
+});
+
+describe('useLinksView keyboard-shortcuts preference', () => {
+  afterEach(() => {
+    window.localStorage.clear();
+    linksStub.handleRandom.mockClear();
+  });
+
+  function fireKey(key: string) {
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key, bubbles: true }),
+    );
+  }
+
+  it('fires the stumble shortcut (d) when shortcuts are enabled', () => {
+    renderHook(() => useLinksView(), { wrapper: wrapperAt('/unread') });
+
+    act(() => fireKey('d'));
+
+    expect(linksStub.handleRandom).toHaveBeenCalledOnce();
+  });
+
+  it('does not fire the stumble shortcut (d) when shortcuts are disabled', () => {
+    act(() => setShortcutsEnabled(false));
+    renderHook(() => useLinksView(), { wrapper: wrapperAt('/unread') });
+
+    act(() => fireKey('d'));
+
+    expect(linksStub.handleRandom).not.toHaveBeenCalled();
   });
 });

@@ -13,6 +13,7 @@ const mockFetchSuccess = () => {
   const encoder = new TextEncoder();
   const bytes = encoder.encode(html);
   global.fetch = jest.fn().mockResolvedValue({
+    status: 200,
     headers: {
       get: (key: string) =>
         key.toLowerCase() === 'content-type' ? 'text/html' : null,
@@ -109,12 +110,16 @@ describe('MetadataFetcherService', () => {
     });
   });
 
+  // These use public IP LITERALS so the SSRF guard never touches DNS – keeping
+  // the fetcher's streaming/parse behaviour deterministic and offline. The
+  // DNS-name resolve-and-validate path (public name -> private IP) is covered
+  // in safe-fetch.spec.ts, where the resolver is injectable.
   describe('SSRF protection – allowed hosts', () => {
     const allowedUrls = [
       ['public IPv4', 'https://93.184.216.34/'],
+      ['public IPv4 (Cloudflare DNS)', 'https://1.1.1.1/'],
       ['172.15.x.x (just outside private range)', 'https://172.15.0.1/'],
       ['172.32.x.x (just outside private range)', 'https://172.32.0.1/'],
-      ['public domain', 'https://example.com/'],
     ] as const;
 
     it.each(allowedUrls)(
@@ -125,6 +130,29 @@ describe('MetadataFetcherService', () => {
         expect(global.fetch).toHaveBeenCalledTimes(1);
       },
     );
+  });
+
+  describe('SSRF protection – redirect bypass', () => {
+    it('does not follow a redirect to a private host', async () => {
+      // First (and only) hop: a public host that 302s to an internal address.
+      // safeFetch must re-validate the redirect target and refuse to connect.
+      global.fetch = jest.fn().mockResolvedValue({
+        status: 302,
+        ok: false,
+        headers: {
+          get: (key: string) =>
+            key.toLowerCase() === 'location' ? 'http://169.254.169.254/' : null,
+        },
+        body: null,
+      }) as unknown as typeof fetch;
+
+      const result = await service.fetchMetadata('https://93.184.216.34/redir');
+
+      // Only the first hop was fetched; the private redirect target was blocked.
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(result.title).toBeNull();
+      expect(result.description).toBeNull();
+    });
   });
 
   describe('fetchMetadata – behavior on blocked host', () => {
@@ -149,6 +177,7 @@ describe('MetadataFetcherService', () => {
       const encoder = new TextEncoder();
       const bytes = encoder.encode(html);
       global.fetch = jest.fn().mockResolvedValue({
+        status: 200,
         headers: {
           get: (key: string) =>
             key.toLowerCase() === 'content-type' ? 'text/html' : null,
@@ -162,8 +191,8 @@ describe('MetadataFetcherService', () => {
         }),
       }) as unknown as typeof fetch;
 
-      const result = await service.fetchMetadata('https://example.com/page');
-      expect(result.faviconUrl).toBe('https://example.com/favicon.ico');
+      const result = await service.fetchMetadata('https://93.184.216.34/page');
+      expect(result.faviconUrl).toBe('https://93.184.216.34/favicon.ico');
     });
   });
 });

@@ -17,11 +17,16 @@ describe('HealthController', () => {
   });
 
   it('delegates to the service and returns its ok status', async () => {
-    healthService.check.mockResolvedValue({ status: 'ok', database: 'up' });
+    healthService.check.mockResolvedValue({
+      status: 'ok',
+      database: 'up',
+      queue: 'up',
+    });
 
     await expect(controller.check()).resolves.toEqual({
       status: 'ok',
       database: 'up',
+      queue: 'up',
     });
     expect(healthService.check).toHaveBeenCalledTimes(1);
   });

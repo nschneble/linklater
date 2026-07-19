@@ -1,0 +1,29 @@
+version: 2
+updates:
+  # npm dependencies. This is an npm workspaces monorepo with a single root
+  # package-lock.json, so `directory: /` covers the root plus apps/*. Omitting
+  # target-branch keeps updates on the default branch (main) without disabling
+  # Dependabot security updates, which setting a non-default target would.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Collapse routine minor/patch bumps into one PR to cut review noise.
+      # Majors still arrive as their own PRs so breaking changes stay isolated.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # GitHub Actions. Keeps the SHA pins current: when an upstream action ships a
+  # new release, Dependabot opens a PR bumping both the pinned SHA and its
+  # trailing version comment. Left ungrouped so each pin bump is reviewed on its
+  # own, matching the supply-chain posture that motivated pinning in the first
+  # place.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

@@ -41,4 +41,15 @@ describe('LinksControls', () => {
     const button = screen.getByRole('button', { name: /add link/i });
     expect(button.getAttribute('data-surface')).toBe('base');
   });
+
+  it('Add-link trigger advertises the dialog it opens, not disclosure state', () => {
+    // The trigger opens a role="dialog" aria-modal panel, so it declares
+    // aria-haspopup="dialog" and must NOT carry aria-expanded (which would
+    // imply an in-place disclosure).
+    render(<LinksControls {...baseProps} />);
+    const button = screen.getByRole('button', { name: /add link/i });
+    expect(button.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(button.hasAttribute('aria-expanded')).toBe(false);
+    expect(button.getAttribute('aria-controls')).toBeTruthy();
+  });
 });

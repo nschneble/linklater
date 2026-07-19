@@ -125,7 +125,7 @@ describe('LinksView – add-link form placement', () => {
 
     renderLinksView();
 
-    const dialog = screen.getByRole('dialog', { name: 'Save a link' });
+    const dialog = screen.getByRole('dialog', { name: 'Add link' });
 
     // Mobile: pinned near the top of the viewport so the iOS software
     // keyboard (which opens from the bottom) never covers the form and iOS
@@ -139,7 +139,7 @@ describe('LinksView – add-link form placement', () => {
 });
 
 describe('LinksView – add-link form dismissal', () => {
-  it('names the dialog with a visible "Save a link" heading', () => {
+  it('names the dialog with a visible "Add link" heading', () => {
     vi.mocked(useLinksView).mockReturnValue(
       makeViewResult({ showLinkForm: true }),
     );
@@ -148,8 +148,8 @@ describe('LinksView – add-link form dismissal', () => {
 
     // The dialog is named via aria-labelledby pointing at the visible <h2>,
     // so the accessible name resolves from on-screen text.
-    const dialog = screen.getByRole('dialog', { name: 'Save a link' });
-    const heading = screen.getByRole('heading', { name: 'Save a link' });
+    const dialog = screen.getByRole('dialog', { name: 'Add link' });
+    const heading = screen.getByRole('heading', { name: 'Add link' });
     expect(heading.tagName).toBe('H2');
     expect(dialog).toHaveAttribute('aria-labelledby', heading.id);
   });
@@ -162,7 +162,7 @@ describe('LinksView – add-link form dismissal', () => {
 
     renderLinksView();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close add link' }));
 
     expect(handleToggleForm).toHaveBeenCalledTimes(1);
   });

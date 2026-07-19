@@ -3,7 +3,7 @@
 - banner:
   - button "Go to your links": Linklater Save links now, read them later.
   - button "User menu (testing-ui@linklater.test)"
-- main "Links":
+- main "Your links":
   - heading "Your links" [level=1]
   - button "Show keyboard shortcuts"
   - paragraph: Add, search, or stumble upon something random.
@@ -14,15 +14,18 @@
   - button "Add link"
   - searchbox "Search through your links"
   - tabpanel "Unread":
-    - paragraph: Test Link 2
-    - paragraph: Press Daily
-    - paragraph: A long-form essay on the quiet renaissance of typography on the web — how line-height, optical sizing, and tabular numerals reshape reading.
-    - link "Test Link 2 – Press Daily, opens in new tab":
-      - /url: https://example.test/2
-    - paragraph: Test Link 3
-    - paragraph: Docs Reference
-    - paragraph: Reference docs for the platform’s public APIs, covering authentication, idempotency keys, and the conventions every integrator needs.
-    - link "Test Link 3 – Docs Reference, opens in new tab":
-      - /url: https://example.test/3
+    - list:
+      - listitem:
+        - paragraph: Test Link 2
+        - paragraph: Press Daily
+        - paragraph: A long-form essay on the quiet renaissance of typography on the web — how line-height, optical sizing, and tabular numerals reshape reading.
+        - link "Test Link 2 – Press Daily, opens in new tab":
+          - /url: https://example.test/2
+      - listitem:
+        - paragraph: Test Link 3
+        - paragraph: Docs Reference
+        - paragraph: Reference docs for the platform’s public APIs, covering authentication, idempotency keys, and the conventions every integrator needs.
+        - link "Test Link 3 – Docs Reference, opens in new tab":
+          - /url: https://example.test/3
   - status
   - status

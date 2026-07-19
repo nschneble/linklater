@@ -103,6 +103,7 @@ const MIGRATED_FILES = [
   'src/components/settings/EmailSettingsForm.tsx',
   'src/components/settings/IdPsSection/ProviderRow.tsx',
   'src/components/settings/IdPsSection/index.tsx',
+  'src/components/settings/KeyboardShortcutsToggle.tsx',
   'src/components/settings/MultiFactorSection/index.tsx',
   'src/components/settings/PasswordSettingsForm/AddPasswordForm.tsx',
   'src/components/settings/PasswordSettingsForm/ChangePasswordForm.tsx',

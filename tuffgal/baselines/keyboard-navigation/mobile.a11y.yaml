@@ -27,7 +27,7 @@
       - menuitemradio "Hit Man"
       - menuitemradio "Nouvelle Vague"
       - menuitemradio "School of Rock"
-- main "Links":
+- main "Your links":
   - heading "Your links" [level=1]
   - paragraph: Add, search, or stumble!
   - tablist "Links filter":
@@ -59,3 +59,6 @@
     - listitem: Stumble! D
     - listitem: Show shortcuts Z
     - listitem: Show user menu X
+  - paragraph:
+    - text: Keyboard shortcuts can be disabled in
+    - button "Accessibility Settings"

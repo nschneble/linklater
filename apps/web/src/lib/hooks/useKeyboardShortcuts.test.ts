@@ -6,7 +6,7 @@ afterEach(() => vi.restoreAllMocks());
 
 function makeOptions(overrides: Record<string, unknown> = {}) {
   return {
-    enabled: true,
+    singleKeyShortcutsEnabled: true,
     isShortcutsModalOpen: false,
     onNavigateNextLink: vi.fn(),
     onNavigatePrevLink: vi.fn(),
@@ -70,13 +70,40 @@ describe('useKeyboardShortcuts', () => {
     expect(options.onToggleShortcuts).toHaveBeenCalledOnce();
   });
 
-  it('ignores keys when enabled is false', () => {
-    const options = makeOptions({ enabled: false });
+  it('single-char shortcuts do nothing when the preference is disabled', () => {
+    const options = makeOptions({ singleKeyShortcutsEnabled: false });
     renderHook(() => useKeyboardShortcuts(options));
     fireKey('1');
+    fireKey('2');
+    fireKey('q');
     fireKey('a');
+    fireKey('d');
+    fireKey('z');
     expect(options.onShowUnread).not.toHaveBeenCalled();
+    expect(options.onShowRead).not.toHaveBeenCalled();
+    expect(options.onSearch).not.toHaveBeenCalled();
     expect(options.onToggleForm).not.toHaveBeenCalled();
+    expect(options.onStumble).not.toHaveBeenCalled();
+    expect(options.onToggleShortcuts).not.toHaveBeenCalled();
+  });
+
+  it('named keys (arrows, Enter, Escape) still fire when the preference is disabled', () => {
+    const onEscape = vi.fn();
+    const options = makeOptions({ singleKeyShortcutsEnabled: false, onEscape });
+    renderHook(() => useKeyboardShortcuts(options));
+    fireKey('ArrowDown');
+    fireKey('ArrowUp');
+    fireKey('ArrowLeft');
+    fireKey('ArrowRight');
+    fireKey('Enter');
+    fireKey('Escape');
+    expect(options.onNavigateNextLink).toHaveBeenCalledOnce();
+    expect(options.onNavigatePrevLink).toHaveBeenCalledOnce();
+    // ArrowLeft → unread, ArrowRight → read.
+    expect(options.onShowUnread).toHaveBeenCalledOnce();
+    expect(options.onShowRead).toHaveBeenCalledOnce();
+    expect(options.onOpenSelectedLink).toHaveBeenCalledOnce();
+    expect(onEscape).toHaveBeenCalledOnce();
   });
 
   it('ignores keys when a modifier key is held', () => {

@@ -9,6 +9,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
+import { RECURRING_JOB_RETRY_OPTIONS } from '../queue/queue.constants';
 import { RssFeedService } from './rss-feed.service';
 import { SuggestionsService } from './suggestions.service';
 import { WikipediaAdapter } from './wikipedia-adapter';
@@ -67,12 +68,14 @@ describe('SuggestionsService', () => {
   });
 
   describe('onModuleInit', () => {
-    it('schedules the recurring RSS refresh on every six hours', async () => {
+    it('schedules the recurring RSS refresh with a retry policy every six hours', async () => {
       await service.onModuleInit();
 
       expect(queueServiceMock.schedule).toHaveBeenCalledWith(
         'rss-refresh',
         '0 */6 * * *',
+        undefined,
+        RECURRING_JOB_RETRY_OPTIONS,
       );
     });
 

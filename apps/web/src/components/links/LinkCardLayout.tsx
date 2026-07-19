@@ -3,7 +3,6 @@ import PrimaryButton from '../common/PrimaryButton';
 import type { Link } from '../../lib/api';
 import { hostnameOf, stripHtml } from '../../lib/strings';
 import { FOCUS_RING } from '../../lib/styles';
-import { useTheme } from '../../theme/ThemeContext';
 
 /**
  * Pure presentation props for `LinkCardLayout`. Interaction callbacks are
@@ -37,30 +36,10 @@ interface LinkCardLayoutProps {
 const CARD_ENTER_CLASS = 'animate-card-enter';
 
 /**
- * Generates a placeholder image URL using placehold.co, colored to match the
- * current theme's mount-highlight pair. Card lives on a mount-host surface,
- * so the bg/fg pair (`--mount-highlight` / `--mount-highlight-fg`) gives
- * the placeholder a coherent fill+foreground against neighboring chrome.
- * Falls back gracefully if CSS variables are not defined.
- */
-function getPlaceholderUrl(url: string) {
-  const style = getComputedStyle(document.documentElement);
-  const highlight = style
-    .getPropertyValue('--mount-highlight')
-    .trim()
-    .replace('#', '');
-  const highlightFg = style
-    .getPropertyValue('--mount-highlight-fg')
-    .trim()
-    .replace('#', '');
-  return `https://placehold.co/240x126/${highlight}/${highlightFg}?text=${hostnameOf(url)}`;
-}
-
-/**
  * Pure visual structure of a link card. Handles all rendering decisions:
  * - Shows a pulsing indicator while metadata is still being fetched (`!meta.fetchedAt`).
  * - Shows the favicon once metadata arrives.
- * - Shows a placeholder image if no `imageUrl` is available.
+ * - Shows a locally generated inline-SVG placeholder when no `imageUrl` is available.
  * - Shows the raw URL as the description when no title is present.
  * - Shows a "Mark as unread" button for read links.
  *
@@ -78,13 +57,6 @@ export default function LinkCardLayout({
   onUnreadClick,
 }: LinkCardLayoutProps) {
   const cardReference = useRef<HTMLDivElement>(null);
-  // included so the placeholder regenerates when the theme changes
-  const { baseTheme } = useTheme();
-  const placeholderUrl = useMemo(
-    () => getPlaceholderUrl(link.url),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [link.url, baseTheme],
-  );
 
   useEffect(() => {
     if (isSelected) {
@@ -130,6 +102,7 @@ export default function LinkCardLayout({
               <img
                 src={link.meta.faviconUrl}
                 alt=""
+                loading="lazy"
                 className="themed-asset w-8 h-8 bg-white outline outline-black/10 -outline-offset-1 rounded-4xl object-cover"
                 aria-hidden="true"
                 onError={(event) => {
@@ -162,16 +135,46 @@ export default function LinkCardLayout({
       <div className="space-y-1">
         <div className="flex flex-row items-center">
           {link.meta?.fetchedAt ? (
-            <img
-              src={link.meta.imageUrl ?? placeholderUrl}
-              alt=""
-              aria-hidden="true"
-              style={childStyle(3)}
-              className={`themed-asset w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0 bg-white object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
-              onError={(event) => {
-                (event.target as HTMLImageElement).src = placeholderUrl;
-              }}
-            />
+            link.meta.imageUrl ? (
+              <img
+                src={link.meta.imageUrl}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                style={childStyle(3)}
+                className={`themed-asset w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0 bg-white object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
+              />
+            ) : (
+              /*
+                Locally generated placeholder: an inline SVG whose fills bind to
+                the mount-highlight pair (fill = --mount-highlight, text =
+                --mount-highlight-fg) so it inherits the WCAG 1.4.3 contrast
+                guarantee pinned in bundles.contrast.test.ts. Because the fills
+                are CSS variables, the placeholder recolors on both theme and
+                light/dark toggle with no JS read. Decorative: aria-hidden, the
+                anchor already carries the card's accessible name.
+              */
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 240 126"
+                style={childStyle(3)}
+                className={`w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0 rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
+              >
+                <rect width="240" height="126" fill="var(--mount-highlight)" />
+                <text
+                  x="120"
+                  y="63"
+                  fill="var(--mount-highlight-fg)"
+                  fontSize="22"
+                  fontWeight="600"
+                  fontFamily="system-ui, sans-serif"
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                >
+                  {hostnameOf(link.url)}
+                </text>
+              </svg>
+            )
           ) : (
             <div
               aria-hidden="true"

@@ -20,13 +20,17 @@ export const paths = {
   srcRoot: resolve(webRoot, 'src'),
   indexHtml: resolve(webRoot, 'index.html'),
   manifestPath: resolve(here, 'font-awesome-manifest.json'),
-  solidCssPath: resolve(
-    webRoot,
-    'public/assets/fontawesome/css/fontawesome.min.css',
-  ),
   brandsCssPath: resolve(
     webRoot,
     'public/assets/fontawesome/css/brands.min.css',
+  ),
+  regularCssPath: resolve(
+    webRoot,
+    'public/assets/fontawesome/css/fontawesome.min.css',
+  ),
+  solidCssPath: resolve(
+    webRoot,
+    'public/assets/fontawesome/css/fontawesome.min.css',
   ),
 };
 
@@ -95,6 +99,8 @@ const SCANNABLE_EXTENSIONS = new Set(['.ts', '.tsx', '.html']);
 // concatenations out while still matching `fa-` after whitespace, `"`, `'`,
 // `` ` ``, `=`, etc. Case-sensitive: FA icon class names are lowercase.
 const FA_TOKEN_PATTERN = /(?:^|[^a-z])(fa-[a-z][a-z0-9-]*)/g;
+
+const FA_REGULAR_CLUSTER_PATTERN = /\bfa-regular((?:\s+fa-[a-z][a-z0-9-]*)+)/g;
 
 // CSS rule shape: `.fa-name1,.fa-name2{...--fa:"\HEX"...}`. Two escape kinds:
 // `\HEX` (1-6 hex digits) and `\X` (any other char, literal).
@@ -182,6 +188,32 @@ export async function scanSources() {
   }
 
   return hits;
+}
+
+export async function scanRegularNames() {
+  const files = await walk(paths.srcRoot);
+  files.push(paths.indexHtml);
+
+  const names = new Set();
+
+  for (const file of files) {
+    const fileSource = await readFile(file, 'utf8');
+    const contents = file.endsWith('.html')
+      ? fileSource
+      : stripComments(fileSource);
+
+    for (const match of contents.matchAll(FA_REGULAR_CLUSTER_PATTERN)) {
+      const trailingTokens = match[1].trim().split(/\s+/);
+      const iconToken = trailingTokens.find(
+        (token) => !NON_ICON_UTILITY_PREFIXES.has(token),
+      );
+      if (iconToken !== undefined) {
+        names.add(iconToken.slice('fa-'.length));
+      }
+    }
+  }
+
+  return names;
 }
 
 export async function loadManifest() {

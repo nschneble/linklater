@@ -13,6 +13,7 @@ export interface Catalogs {
 
 export interface Manifest {
   brands: string[];
+  regular: string[];
   solid: string[];
 }
 
@@ -21,8 +22,9 @@ export interface Paths {
   srcRoot: string;
   indexHtml: string;
   manifestPath: string;
-  solidCssPath: string;
   brandsCssPath: string;
+  regularCssPath: string;
+  solidCssPath: string;
 }
 
 export const paths: Paths;
@@ -31,4 +33,5 @@ export function parseCodepoints(cssFile: string): Promise<Map<string, number>>;
 export function parseIconNames(cssFile: string): Promise<Set<string>>;
 export function loadCatalogs(): Promise<Catalogs>;
 export function scanSources(): Promise<Map<string, ScanHit>>;
+export function scanRegularNames(): Promise<Set<string>>;
 export function loadManifest(): Promise<Manifest>;

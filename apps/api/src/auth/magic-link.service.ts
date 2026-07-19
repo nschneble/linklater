@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import { expiresInMs } from '../common/dates.js';
-import { EmailService } from '../email/index.js';
+import { EmailQueueService } from '../email/index.js';
 import { UserTokensService } from '../users/user-tokens.service.js';
 import { UsersService } from '../users/users.service.js';
 
@@ -18,7 +18,7 @@ export class MagicLinkService {
   constructor(
     private readonly usersService: UsersService,
     private readonly userTokensService: UserTokensService,
-    private readonly emailService: EmailService,
+    private readonly emailQueueService: EmailQueueService,
   ) {}
 
   /**
@@ -42,7 +42,11 @@ export class MagicLinkService {
       tokenHash,
       expiresAt,
     );
-    await this.emailService.sendMagicLink(user.email, rawToken, user.theme);
+    await this.emailQueueService.enqueueMagicLink(
+      user.email,
+      rawToken,
+      user.theme,
+    );
   }
 
   /**
@@ -100,6 +104,6 @@ export class MagicLinkService {
       tokenHash,
       expiresAt,
     );
-    await this.emailService.sendMagicLink(email, rawToken, user.theme);
+    await this.emailQueueService.enqueueMagicLink(email, rawToken, user.theme);
   }
 }

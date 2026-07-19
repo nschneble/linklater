@@ -49,8 +49,13 @@ export class EmailService {
 
   /**
    * Internal helper that wraps nodemailer's `sendMail` w/ error handling.
-   * Converts SMTP failures into a 503 Service Unavailable so the caller
-   * receives a meaningful HTTP error rather than an uncaught exception.
+   * Throws on SMTP failure so the caller can react. Every public send method
+   * is invoked from the `email-send` pg-boss worker
+   * (see {@link EmailQueueService}), never on the request thread, so a thrown
+   * failure surfaces to the worker – which lets pg-boss retry the job – rather
+   * than to an HTTP handler. The exception type stays
+   * `ServiceUnavailableException` for backwards compatibility with callers and
+   * tests that assert on it.
    *
    * @param options - Standard nodemailer `SendMailOptions`.
    *

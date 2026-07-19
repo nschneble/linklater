@@ -22,10 +22,11 @@ export interface UseLinksFetchResult {
 
 /**
  * Owns the `GET /links` query lifecycle: the reducer-driven fetch effect,
- * pagination, the "less doesn't need more" load-more limit override, and the
- * page-1 auto-load safety net. Exposes `setLinks`/`setPagination` so the
- * facade can layer mutation helpers and the visibility refresh over the same
- * list state without a second source of truth.
+ * pagination, and the "less doesn't need more" auto-load net that pulls a
+ * lone trailing item as its own follow-up page. Exposes
+ * `setLinks`/`setPagination` so the facade can layer mutation helpers and
+ * the visibility refresh over the same list state without a second source
+ * of truth.
  *
  * @param filter - `'unread'` or `'read'`.
  * @param search - Full-text search query, or empty string for no filter.
@@ -77,7 +78,6 @@ export function useLinksFetch(
           search: fetchParams.search || undefined,
           read: fetchParams.filter === 'read',
           page: fetchParams.page,
-          limit: fetchParams.limit,
         });
         if (!cancelled) {
           if (fetchParams.page === 1) {
@@ -106,42 +106,16 @@ export function useLinksFetch(
     };
   }, [fetchParams]);
 
-  // Refs so `handleLoadMore` and the auto-load effect can read the latest
-  // counts without having to be recreated on every state change.
-  const linksLengthRef = useRef(links.length);
-  const paginationRef = useRef(pagination);
-  linksLengthRef.current = links.length;
-  paginationRef.current = pagination;
-
-  /**
-   * Computes the optional limit override used to honor the
-   * "less doesn't need more" rule: if the next page at its normal size
-   * would leave exactly one trailing item, request one extra so the
-   * trailing item ships in the same response instead of stranding a
-   * "Load more (1 remaining)" button.
-   */
-  const computeLoadMoreLimit = useCallback((): number | undefined => {
-    const currentPagination = paginationRef.current;
-    if (!currentPagination) return undefined;
-    const loaded = linksLengthRef.current;
-    const remainingAfterNext =
-      currentPagination.total - (loaded + currentPagination.limit);
-    if (remainingAfterNext === 1) {
-      return currentPagination.limit + 1;
-    }
-    return undefined;
+  const handleLoadMore = useCallback(() => {
+    dispatchFetchParams({ type: 'load-more' });
   }, []);
 
-  const handleLoadMore = useCallback(() => {
-    dispatchFetchParams({
-      type: 'load-more',
-      limit: computeLoadMoreLimit(),
-    });
-  }, [computeLoadMoreLimit]);
-
-  // Safety net for the "less doesn't need more" rule on page 1, where we
-  // don't know the total beforehand. After any fetch settles, if exactly
-  // one trailing item remains, auto-load it so the user never sees a
+  // The sole mechanism for the "less doesn't need more" rule. Rather than
+  // varying the page limit to grab a trailing item early, which would
+  // desync the server's `(page - 1) * limit` offset and skip a row, we
+  // keep the limit constant and load the lone trailing item as its own
+  // next page. After any fetch settles, if exactly one item remains
+  // unloaded, auto-load it so the user never has to click a
   // "Load more (1 remaining)" button. Guarded by a "last-fired" key so that
   // a server returning fewer items than its own `total` cannot pull us into
   // a refetch loop.

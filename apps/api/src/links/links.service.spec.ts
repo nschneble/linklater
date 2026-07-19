@@ -23,6 +23,7 @@ import { LinksService } from './links.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 import { QUEUES } from '../queue/queue.constants';
+import { METADATA_SEND_OPTIONS } from '../metadata/metadata.constants';
 import { Prisma } from '../prisma/generated/client';
 
 const JOB_ID = 'job-1';
@@ -102,10 +103,11 @@ describe('LinksService', () => {
       }),
     );
     expect(link.url).toBe(LINK_URL);
-    expect(queueMock.send).toHaveBeenCalledWith(QUEUES.METADATA_FETCH, {
-      linkId: LINK_ID,
-      url: LINK_URL,
-    });
+    expect(queueMock.send).toHaveBeenCalledWith(
+      QUEUES.METADATA_FETCH,
+      { linkId: LINK_ID, url: LINK_URL },
+      METADATA_SEND_OPTIONS,
+    );
   });
 
   it('upserts existing link: clears readAt, moves to top, re-enqueues metadata when not fetched', async () => {
@@ -123,10 +125,11 @@ describe('LinksService', () => {
         data: expect.objectContaining({ readAt: null }),
       }),
     );
-    expect(queueMock.send).toHaveBeenCalledWith(QUEUES.METADATA_FETCH, {
-      linkId: LINK_ID,
-      url: LINK_URL,
-    });
+    expect(queueMock.send).toHaveBeenCalledWith(
+      QUEUES.METADATA_FETCH,
+      { linkId: LINK_ID, url: LINK_URL },
+      METADATA_SEND_OPTIONS,
+    );
     expect(link.readAt).toBeNull();
   });
 

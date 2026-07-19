@@ -144,8 +144,56 @@ describe('LinksList mobile-reflow guard (WCAG 1.4.10)', () => {
     );
 
     const tabpanel = document.getElementById(LINKS_LIST_ID);
-    const gridItem = tabpanel?.firstElementChild;
-    expect(gridItem?.className).toContain('min-w-0');
+    const list = tabpanel?.querySelector('[role="list"]');
+    const listItem = list?.firstElementChild;
+    expect(listItem?.className).toContain('min-w-0');
+  });
+});
+
+describe('LinksList list semantics (WCAG 1.3.1)', () => {
+  it('wraps the populated cards in a role="list" with role="listitem" children', () => {
+    renderWithProviders(
+      <LinksList
+        {...baseProps}
+        hasSettledOnce={true}
+        links={[makeLink({ id: 'a' }), makeLink({ id: 'b' })]}
+      />,
+    );
+
+    const tabpanel = document.getElementById(LINKS_LIST_ID);
+    const list = tabpanel?.querySelector('[role="list"]');
+    expect(list).not.toBeNull();
+    // The grid classes live on the list itself, not the tabpanel container.
+    expect(list?.className).toContain('grid');
+    expect(list?.className).toContain('grid-cols-1');
+
+    const listItems = list?.querySelectorAll('[role="listitem"]');
+    expect(listItems?.length).toBe(2);
+    // The tabpanel keeps its own busy/labelling contract.
+    expect(tabpanel?.getAttribute('role')).toBe('tabpanel');
+  });
+
+  it('keeps the "Load more" button outside the role="list"', () => {
+    renderWithProviders(
+      <LinksList
+        {...baseProps}
+        hasSettledOnce={true}
+        links={[makeLink({ id: 'a' })]}
+        pagination={{ total: 5, limit: 20 }}
+      />,
+    );
+
+    const loadMore = screen.getByRole('button', { name: /load more/i });
+    expect(loadMore.closest('[role="list"]')).toBeNull();
+  });
+
+  it('does not render a role="list" for the empty state', () => {
+    renderWithProviders(
+      <LinksList {...baseProps} hasSettledOnce={true} links={[]} />,
+    );
+
+    const tabpanel = document.getElementById(LINKS_LIST_ID);
+    expect(tabpanel?.querySelector('[role="list"]')).toBeNull();
   });
 });
 

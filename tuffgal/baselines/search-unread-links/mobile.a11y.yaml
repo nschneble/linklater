@@ -27,7 +27,7 @@
       - menuitemradio "Hit Man"
       - menuitemradio "Nouvelle Vague"
       - menuitemradio "School of Rock"
-- main "Links":
+- main "Your links":
   - heading "Your links" [level=1]
   - paragraph: Add, search, or stumble!
   - tablist "Links filter":
@@ -37,10 +37,12 @@
   - button "Stumble!"
   - button "Add link"
   - tabpanel "Unread":
-    - paragraph: Test Link 2
-    - paragraph: Press Daily
-    - paragraph: A long-form essay on the quiet renaissance of typography on the web — how line-height, optical sizing, and tabular numerals reshape reading.
-    - link "Test Link 2 – Press Daily, opens in new tab":
-      - /url: https://example.test/2
+    - list:
+      - listitem:
+        - paragraph: Test Link 2
+        - paragraph: Press Daily
+        - paragraph: A long-form essay on the quiet renaissance of typography on the web — how line-height, optical sizing, and tabular numerals reshape reading.
+        - link "Test Link 2 – Press Daily, opens in new tab":
+          - /url: https://example.test/2
   - status
   - status

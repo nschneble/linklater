@@ -35,6 +35,46 @@ function makePaginated(
   };
 }
 
+/**
+ * Builds a fixed backing array of links with zero-padded, sortable ids
+ * (`link-00`, `link-01`, …) so a dropped or duplicated row is obvious when
+ * comparing the loaded ids against the backing order.
+ */
+function makeBacking(count: number): Link[] {
+  const links: Link[] = [];
+  for (let index = 0; index < count; index += 1) {
+    links.push(makeLink({ id: `link-${String(index).padStart(2, '0')}` }));
+  }
+  return links;
+}
+
+/**
+ * Mocks `getLinks` as an honest paginated endpoint: it slices a fixed
+ * backing array by `skip = (page - 1) * limit` / `take = limit`, exactly
+ * like the server (`links-query.service.ts`). An omitted request `limit`
+ * defaults to the server's `DEFAULT_LIMIT` of 10. `reportedTotal` lets a
+ * test simulate server/state drift where `total` exceeds the rows that
+ * actually exist. Because the offset is honored, bumping the request limit
+ * on a later page will visibly skip a row, reproducing the real bug that a
+ * hand-authored per-call mock would hide.
+ */
+function mockOffsetRespectingEndpoint(
+  backing: Link[],
+  reportedTotal: number = backing.length,
+): void {
+  vi.mocked(apiModule.getLinks).mockImplementation(async (options) => {
+    const limit = options?.limit ?? 10;
+    const page = options?.page ?? 1;
+    const skip = (page - 1) * limit;
+    return {
+      data: backing.slice(skip, skip + limit),
+      total: reportedTotal,
+      page,
+      limit,
+    };
+  });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -71,17 +111,10 @@ describe('fetchParamsReducer', () => {
     expect(next.page).toBe(2);
   });
 
-  it('load-more carries the optional limit override', () => {
-    const state = { filter: 'unread' as const, page: 1, search: '' };
-    const next = fetchParamsReducer(state, { type: 'load-more', limit: 11 });
-    expect(next.page).toBe(2);
-    expect(next.limit).toBe(11);
-  });
-
-  it('load-more without a limit override leaves limit undefined', () => {
-    const state = { filter: 'unread' as const, page: 1, search: '' };
+  it('load-more preserves filter and search while only advancing the page', () => {
+    const state = { filter: 'read' as const, page: 2, search: 'duck' };
     const next = fetchParamsReducer(state, { type: 'load-more' });
-    expect(next.limit).toBeUndefined();
+    expect(next).toEqual({ filter: 'read', page: 3, search: 'duck' });
   });
 });
 
@@ -406,114 +439,83 @@ describe('useLinksData handleLoadMore', () => {
 });
 
 describe('useLinksData "less doesn\'t need more"', () => {
-  it('bumps limit on load-more when the next page would leave 1 trailing item', async () => {
-    const page1a = makeLink({ id: 'p1a' });
-    const page1b = makeLink({ id: 'p1b' });
-    const page2a = makeLink({ id: 'p2a' });
-    const page2b = makeLink({ id: 'p2b' });
-    const trailing = makeLink({ id: 'trailing' });
-
-    vi.mocked(apiModule.getLinks)
-      .mockResolvedValueOnce(
-        makePaginated([page1a, page1b], { total: 5, limit: 2 }),
-      )
-      .mockResolvedValueOnce(
-        makePaginated([page2a, page2b, trailing], {
-          total: 5,
-          limit: 3,
-          page: 2,
-        }),
-      );
+  it('never drops or duplicates a row when the tail is one item past a full page', async () => {
+    // 21 items at the default limit of 10: page 1 loads rows 0–9, load-more
+    // loads rows 10–19, leaving exactly one trailing row. The old limit-bump
+    // desynced the server's (page - 1) * limit offset, so it skipped row 10 and
+    // re-served row 20 (a duplicate React key). Honoring the offset here means
+    // that regression is now visible.
+    const backing = makeBacking(21);
+    mockOffsetRespectingEndpoint(backing);
 
     const { result } = renderHook(() => useLinksData('unread', ''));
 
-    await waitFor(() => expect(result.current.links).toHaveLength(2));
+    await waitFor(() => expect(result.current.links).toHaveLength(10));
 
     await act(async () => {
       result.current.handleLoadMore();
     });
 
-    await waitFor(() => expect(result.current.links).toHaveLength(5));
+    // load-more fills rows 10–19, then the auto-load net pulls the single
+    // trailing row 20 as its own page 3.
+    await waitFor(() => expect(result.current.links).toHaveLength(21));
 
-    // The second call should carry the bumped limit (limit + 1) to grab
-    // the trailing item in the same request.
-    expect(vi.mocked(apiModule.getLinks).mock.calls[1][0]).toEqual(
-      expect.objectContaining({ limit: 3, page: 2 }),
-    );
+    const ids = result.current.links.map((link) => link.id);
+    expect(ids).toEqual(backing.map((link) => link.id));
+    expect(new Set(ids).size).toBe(21);
+
+    // The limit is never bumped: every request keeps the server offset stable
+    // by leaving `limit` unset (the server falls back to its default).
+    for (const call of vi.mocked(apiModule.getLinks).mock.calls) {
+      expect(call[0]?.limit).toBeUndefined();
+    }
   });
 
-  it('does not bump limit when the next page would leave more than 1 remaining', async () => {
-    vi.mocked(apiModule.getLinks)
-      .mockResolvedValueOnce(
-        makePaginated([makeLink({ id: 'p1' })], { total: 10, limit: 2 }),
-      )
-      .mockResolvedValueOnce(
-        makePaginated([makeLink({ id: 'p2' })], {
-          total: 10,
-          limit: 2,
-          page: 2,
-        }),
-      );
+  it('loads every row without an extra fetch when the tail fills the last page exactly', async () => {
+    // 20 items at the default limit of 10: two full pages, no trailing item.
+    // The absent-tail direction, in which the auto-load net must not over-fetch.
+    const backing = makeBacking(20);
+    mockOffsetRespectingEndpoint(backing);
 
     const { result } = renderHook(() => useLinksData('unread', ''));
 
-    await waitFor(() => expect(result.current.links).toHaveLength(1));
+    await waitFor(() => expect(result.current.links).toHaveLength(10));
 
     await act(async () => {
       result.current.handleLoadMore();
     });
 
-    await waitFor(() => expect(result.current.links).toHaveLength(2));
+    await waitFor(() => expect(result.current.links).toHaveLength(20));
 
-    // limit override should be undefined – the second call should not pass
-    // a limit at all.
-    const secondCallArguments = vi.mocked(apiModule.getLinks).mock.calls[1][0];
-    expect(secondCallArguments).toEqual(
-      expect.objectContaining({ page: 2, limit: undefined }),
-    );
-  });
-
-  it('auto-loads the trailing item when page 1 leaves exactly 1 remaining', async () => {
-    const page1a = makeLink({ id: 'p1a' });
-    const page1b = makeLink({ id: 'p1b' });
-    const trailing = makeLink({ id: 'trailing' });
-
-    vi.mocked(apiModule.getLinks)
-      .mockResolvedValueOnce(
-        makePaginated([page1a, page1b], { total: 3, limit: 2 }),
-      )
-      .mockResolvedValueOnce(
-        makePaginated([trailing], { total: 3, limit: 2, page: 2 }),
-      );
-
-    const { result } = renderHook(() => useLinksData('unread', ''));
-
-    // No explicit handleLoadMore call – the hook should auto-fire because
-    // the page-1 response leaves a single trailing item.
-    await waitFor(() => expect(result.current.links).toHaveLength(3));
-
-    expect(result.current.links.map((link) => link.id)).toEqual([
-      'p1a',
-      'p1b',
-      'trailing',
-    ]);
+    const ids = result.current.links.map((link) => link.id);
+    expect(ids).toEqual(backing.map((link) => link.id));
+    expect(new Set(ids).size).toBe(20);
+    // No lone trailing item remains, so no auto-load fires: exactly two pages.
     expect(vi.mocked(apiModule.getLinks)).toHaveBeenCalledTimes(2);
   });
 
-  it('does not loop when the server returns no new items for the auto-fired follow-up', async () => {
-    const page1a = makeLink({ id: 'p1a' });
-    const page1b = makeLink({ id: 'p1b' });
+  it('auto-loads a lone trailing item left by the first page', async () => {
+    // 11 items at the default limit of 10: page 1 leaves exactly one item.
+    // The auto-load net fetches it with no user interaction, keeping the
+    // limit constant across both pages (total ≡ 1 mod page-size boundary).
+    const backing = makeBacking(11);
+    mockOffsetRespectingEndpoint(backing);
 
-    // First call returns 2 items with total=3 (triggers auto-fire). Second
-    // call returns nothing but still claims total=3 (server/state drift).
-    // The auto-fire guard must prevent a re-fire loop.
-    vi.mocked(apiModule.getLinks)
-      .mockResolvedValueOnce(
-        makePaginated([page1a, page1b], { total: 3, limit: 2 }),
-      )
-      .mockResolvedValueOnce(
-        makePaginated([], { total: 3, limit: 2, page: 2 }),
-      );
+    const { result } = renderHook(() => useLinksData('unread', ''));
+
+    await waitFor(() => expect(result.current.links).toHaveLength(11));
+
+    const ids = result.current.links.map((link) => link.id);
+    expect(ids).toEqual(backing.map((link) => link.id));
+    expect(vi.mocked(apiModule.getLinks)).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not loop when the auto-fired follow-up returns no new rows', async () => {
+    // Backing holds 10 rows but the endpoint reports total=11 (server/state
+    // drift). Page 1 returns all 10 with one row still claimed missing, so the
+    // auto-load fires once, gets nothing, and the guard stops a refetch loop.
+    const backing = makeBacking(10);
+    mockOffsetRespectingEndpoint(backing, 11);
 
     const { result } = renderHook(() => useLinksData('unread', ''));
 
@@ -522,7 +524,7 @@ describe('useLinksData "less doesn\'t need more"', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(vi.mocked(apiModule.getLinks)).toHaveBeenCalledTimes(2);
-    expect(result.current.links).toHaveLength(2);
+    expect(result.current.links).toHaveLength(10);
   });
 });
 

@@ -1,8 +1,15 @@
 import { useEffect, useRef } from 'react';
 
 interface UseKeyboardShortcutsOptions {
-  /** When `false`, no keyboard events are handled. Use to disable shortcuts while the user is not on the links view. */
-  enabled: boolean;
+  /**
+   * When `false`, only the single-character shortcuts (1, 2, Q, A, D, Z) are
+   * suppressed, satisfying WCAG 2.1.4 (Character Key Shortcuts). The named
+   * keys (arrows, Enter, and Escape) stay live regardless, because 2.1.4
+   * exempts shortcuts that use only named keys and a keyboard-reliant user
+   * still needs list navigation, open, and dismiss. Driven by the device-local
+   * keyboard-shortcuts preference in `useLinksView`.
+   */
+  singleKeyShortcutsEnabled: boolean;
   /** Whether the keyboard shortcuts modal is currently open. Needed so `Z` can close it. */
   isShortcutsModalOpen: boolean;
   /** Called when ESC is pressed. Only used when a close-able element (e.g. the form) is open. */
@@ -40,15 +47,19 @@ interface UseKeyboardShortcutsOptions {
  * - `ESC`    → Calls `onEscape` if provided
  *
  * When the shortcuts modal is open, only `Z` (close modal) and `ESC` are
- * handled. All other shortcuts are suppressed.
+ * handled. All other shortcuts are suppressed. If the single-key preference is
+ * off, `Z` no longer closes the modal (it is a single-character shortcut), but
+ * Escape and the modal's own close controls still dismiss it.
  *
- * GOTCHA: All callbacks are stored in refs so the `keydown` listener only
- * needs to be attached once, when `enabled` changes. Without refs, the
- * listener would need to be re-registered on every render to pick up fresh
- * callback references.
+ * GOTCHA: All callbacks and the preference flag are stored in refs so the
+ * `keydown` listener is attached exactly once, on mount. The named keys must
+ * stay live even while single-key shortcuts are off, so the listener is never
+ * torn down for the preference; the flag is read from its ref inside the
+ * handler instead. Without refs, the listener would need re-registering on
+ * every render to pick up fresh callback references.
  */
 export function useKeyboardShortcuts({
-  enabled,
+  singleKeyShortcutsEnabled,
   isShortcutsModalOpen,
   onEscape,
   onNavigateNextLink,
@@ -61,6 +72,7 @@ export function useKeyboardShortcuts({
   onToggleForm,
   onToggleShortcuts,
 }: UseKeyboardShortcutsOptions) {
+  const singleKeyShortcutsEnabledReference = useRef(singleKeyShortcutsEnabled);
   const isShortcutsModalOpenReference = useRef(isShortcutsModalOpen);
   const onEscapeReference = useRef(onEscape);
   const onNavigateNextLinkReference = useRef(onNavigateNextLink);
@@ -74,6 +86,7 @@ export function useKeyboardShortcuts({
   const onToggleShortcutsReference = useRef(onToggleShortcuts);
 
   // always keep refs current so the listener uses the latest callbacks
+  singleKeyShortcutsEnabledReference.current = singleKeyShortcutsEnabled;
   isShortcutsModalOpenReference.current = isShortcutsModalOpen;
   onEscapeReference.current = onEscape;
   onNavigateNextLinkReference.current = onNavigateNextLink;
@@ -87,8 +100,6 @@ export function useKeyboardShortcuts({
   onToggleShortcutsReference.current = onToggleShortcuts;
 
   useEffect(() => {
-    if (!enabled) return;
-
     function handleKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
@@ -107,7 +118,13 @@ export function useKeyboardShortcuts({
       if (isTypingField) return;
 
       if (isShortcutsModalOpenReference.current) {
-        if (event.key.toLowerCase() === 'z') {
+        // `Z` is a single-character shortcut, so it only closes the modal when
+        // the preference is on. Escape and the modal's own controls still
+        // dismiss it either way.
+        if (
+          singleKeyShortcutsEnabledReference.current &&
+          event.key.toLowerCase() === 'z'
+        ) {
           event.preventDefault();
           onToggleShortcutsReference.current();
         }
@@ -149,6 +166,10 @@ export function useKeyboardShortcuts({
         }
       }
 
+      // Single-character shortcuts below are the only handlers gated by the
+      // preference (WCAG 2.1.4). The named-key handlers above stay live.
+      if (!singleKeyShortcutsEnabledReference.current) return;
+
       switch (event.key.toLowerCase()) {
         case '1':
           event.preventDefault();
@@ -179,5 +200,5 @@ export function useKeyboardShortcuts({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [enabled]);
+  }, []);
 }

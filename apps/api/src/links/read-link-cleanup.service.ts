@@ -1,6 +1,10 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/index.js';
-import { QueueService, QUEUES } from '../queue/index.js';
+import {
+  QueueService,
+  QUEUES,
+  RECURRING_JOB_RETRY_OPTIONS,
+} from '../queue/index.js';
 
 /** Seven days expressed in milliseconds – the retention period for read links. */
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -26,9 +30,17 @@ export class ReadLinkCleanupService implements OnModuleInit {
   /**
    * Schedules the cleanup cron job and registers its worker on application startup.
    * If the schedule already exists in the pg-boss table it is updated in place.
+   * A transient failure retries within minutes (see
+   * {@link RECURRING_JOB_RETRY_OPTIONS}) rather than waiting a full day for the
+   * next scheduled tick.
    */
   async onModuleInit(): Promise<void> {
-    await this.queueService.schedule(QUEUES.READ_LINK_CLEANUP, '0 3 * * *');
+    await this.queueService.schedule(
+      QUEUES.READ_LINK_CLEANUP,
+      '0 3 * * *',
+      undefined,
+      RECURRING_JOB_RETRY_OPTIONS,
+    );
     await this.queueService.work(QUEUES.READ_LINK_CLEANUP, async () => {
       await this.deleteExpiredReadLinks();
     });

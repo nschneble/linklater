@@ -57,7 +57,7 @@ export default function LinksMobileControls({
             type="button"
             surface="base"
             aria-label={showLinkForm ? 'Hide form' : 'Add link'}
-            aria-expanded={showLinkForm}
+            aria-haspopup="dialog"
             aria-controls={LINK_FORM_ID}
             className="px-2.5!"
             onClick={onToggleForm}

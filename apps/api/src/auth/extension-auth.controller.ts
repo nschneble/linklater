@@ -92,7 +92,7 @@ export class ExtensionAuthController {
     description: 'Too many extension token-exchange attempts.',
   })
   @UseGuards(CustomThrottlerGuard)
-  @Throttle({ 'auth-extension-token': { ttl: 60000, limit: 20 } })
+  @Throttle({ default: { ttl: 60000, limit: 20 } })
   @ThrottleMessage('Too many extension token-exchange attempts')
   @Post('extension/token')
   @HttpCode(200)

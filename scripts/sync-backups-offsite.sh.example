@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+#
+# Offsite sync of the local Postgres backups to an SFTP server (template).
+#
+# Copy this file to sync-backups-offsite.sh, fill in the two variables below,
+# and run it from a host cron a little after the nightly dump. This is the one
+# backup step the repo cannot hold for you (docs/DEPLOYMENT.md "Backups"): it
+# needs an offsite credential, and a credential must never live in the repo.
+# The ".example" copy is safe to commit because it holds no real host, user, or
+# key, only placeholders.
+#
+# This runs on the host as a cron job, not as a compose service. The SSH key it
+# authenticates with belongs on the host next to the dumps, not baked into an
+# image, so there is no new container to add to docker-compose.prod.yml.
+#
+# What it does:
+#   Reads the compressed dumps the "backup" sidecar writes to the
+#   postgres-backups Docker volume and pushes them to a configured rclone
+#   "sftp:" remote. rclone's sftp backend talks straight to an SFTP server, so
+#   it works against SFTP-only or chrooted accounts that have no remote shell
+#   and no remote rsync binary (the case that rsync-over-ssh cannot serve).
+#
+# One-time setup (interactive, once, as the cron user):
+#   1. Install rclone (https://rclone.org/install/).
+#   2. Create the remote:  rclone config
+#        - New remote, name it (this file defaults the name to "offsite-sftp").
+#        - Storage: sftp
+#        - host:  your SFTP server hostname
+#        - user:  the dedicated backup account on that server
+#        - key_file:  the path to a dedicated SSH private key for this job
+#      Authenticate with an SSH key, not a password. Generate a key used only
+#      for this sync, give the account write access to one backup directory and
+#      nothing else, and never reuse a login key here.
+#   3. Confirm the volume path (the "<project>" prefix is your compose project
+#      name, which defaults to the deploy directory name):
+#        ls /var/lib/docker/volumes/ | grep postgres-backups
+#      Set BACKUPS_DIR below to the matching "..._postgres-backups/_data" path.
+#   4. Dry-run once before trusting cron:
+#        rclone copy --dry-run "$BACKUPS_DIR" "$OFFSITE_SFTP_REMOTE"
+#
+# copy vs sync (read before switching the operation below):
+#   This template defaults to "rclone copy": it uploads new and changed files
+#   and never deletes on the remote, so a bad local state (an accidental wipe,
+#   or the daily prune) cannot erase the offsite copy. Pair it with retention on
+#   the offsite side so the remote does not grow forever. "rclone sync" instead
+#   makes the remote mirror the local directory, which means it propagates local
+#   deletions offsite. Only choose sync if you understand that a local deletion
+#   removes the offsite copy too.
+#
+# Example cron line (run at 03:30 UTC, about 30 minutes after the 03:00 UTC
+# dump so the night's backup is already on disk). Edit with "crontab -e":
+#   30 3 * * *  /path/to/sync-backups-offsite.sh >> /var/log/offsite-sync.log 2>&1
+
+set -euo pipefail
+
+# The rclone remote to push to, as "remote:path". Create the "offsite-sftp"
+# remote with "rclone config" (see the setup notes above), then point it at the
+# directory the backup account may write to.
+OFFSITE_SFTP_REMOTE="${OFFSITE_SFTP_REMOTE:-offsite-sftp:linklater-backups}"
+
+# The local backups directory (the postgres-backups volume on the host).
+# Replace "your-project" with the real compose project prefix you confirmed with
+# the "ls ... | grep postgres-backups" step above.
+BACKUPS_DIR="${BACKUPS_DIR:-/var/lib/docker/volumes/your-project_postgres-backups/_data}"
+
+# Operation to run: "copy" (safe default, never deletes offsite) or "sync"
+# (mirrors, and propagates local deletions). See the copy-vs-sync note above.
+RCLONE_OPERATION="${RCLONE_OPERATION:-copy}"
+
+log() {
+  printf '%s offsite-sync: %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$1"
+}
+
+# Preflight: fail loud rather than silently skipping the offsite copy.
+if ! command -v rclone >/dev/null 2>&1; then
+  log "rclone is not installed; install it from https://rclone.org/install/"
+  exit 1
+fi
+
+if [ ! -d "$BACKUPS_DIR" ]; then
+  log "backups directory not found: ${BACKUPS_DIR}"
+  log "confirm the volume path with: ls /var/lib/docker/volumes/ | grep postgres-backups"
+  exit 1
+fi
+
+log "syncing ${BACKUPS_DIR} to ${OFFSITE_SFTP_REMOTE} (${RCLONE_OPERATION})"
+rclone "$RCLONE_OPERATION" "$BACKUPS_DIR" "$OFFSITE_SFTP_REMOTE"
+log "offsite sync complete"

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 
 import { Prisma, PrismaService } from '../prisma/index.js';
+import { assertValidCustomTheme } from './custom-theme.js';
 import { withoutPasswordHash } from './users.utils.js';
 import { VALID_MODES, VALID_THEMES } from './users.constants.js';
 import * as bcrypt from 'bcryptjs';
@@ -163,6 +164,10 @@ export class UsersService {
     }
 
     if (data.customTheme !== undefined) {
+      // The DTO only guarantees the broad `{ dark?, light? }` string-map shape.
+      // Guard against an oversized blob or unknown token keys before persisting
+      // (defense-in-depth; the editor already constrains what it sends).
+      assertValidCustomTheme(data.customTheme);
       // The DTO guarantees a `{ dark?, light? }` map of string→string, which is
       // JSON-safe, but its named-key interface lacks the index signature
       // Prisma's `InputJsonValue` requires — assert across that structural gap.

@@ -10,6 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -22,6 +23,8 @@ import {
 import { AllowsBookmarkletToken } from '../auth/token-scope.decorator.js';
 import { ApiUnauthorized } from '../auth/api-unauthorized.decorator.js';
 import { AnyAuthGuard, type AuthRequest } from '../auth/index.js';
+import { CustomThrottlerGuard } from '../auth/custom-throttler.guard.js';
+import { ThrottleMessage } from '../auth/throttle-message.decorator.js';
 import { LinksQueryService } from './links-query.service.js';
 import { LinksService } from './links.service.js';
 
@@ -54,6 +57,14 @@ export class LinksController {
    * Saves a URL to the authenticated user's collection. If the URL was
    * previously saved and then read, it is marked as unread and moved
    * to the top of the list rather than creating a duplicate.
+   *
+   * Rate-limited (60 / minute) because each new distinct URL enqueues an
+   * outbound-fetch metadata job; the cap bounds queue growth and outbound-fetch
+   * amplification from a scripted session. The route-level `CustomThrottlerGuard`
+   * composes with the controller-level `AnyAuthGuard` (both run). Special
+   * bookmarklet/API_DOCS tokens remain governed by their tighter per-token
+   * limits in `TokenScopeService`; this IP-scoped cap is looser, so it never
+   * makes those limits redundant, and it is the only cap for standard sessions.
    */
   @ApiOperation({ summary: "Save a URL to the current user's collection" })
   @ApiResponse({
@@ -67,8 +78,16 @@ export class LinksController {
     description:
       "Indicates the URL is missing a protocol, points to a private network address, or fails URL parsing, which means it's likely it wasn't a URL at all.",
   })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many links saved in a short window. Try again shortly.',
+  })
   @ApiUnauthorized()
   @AllowsBookmarkletToken()
+  @UseGuards(CustomThrottlerGuard)
+  // 60/min: ceiling on outbound metadata-fetch amplification (bookmarklet/extension burst-save still fits)
+  @Throttle({ default: { ttl: 60000, limit: 60 } })
+  @ThrottleMessage('Too many links saved')
   @Post()
   async create(@Req() request: AuthRequest, @Body() body: CreateLinkDto) {
     const userId = request.user.userId;

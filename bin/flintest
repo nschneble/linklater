@@ -24,12 +24,16 @@ Default runs the project quality gate in order:
 
 Options:
   --update   Run npm update before npm install.
-  --tuffgal  Replace the default chain with the visual regression run that
-             mirrors .github/workflows/visual-regression.yml:
+  --tuffgal  Replace the default chain with a local visual regression run that
+             self-diffs against the per-machine, git-ignored cache:
                npm install
                npx playwright install chromium
                npm run tuffgal:setup
-               npx tuffgal run --manage-servers
+               npx tuffgal run --local --manage-servers
+             Opens the HTML report. When the run finds new or changed stories,
+             it then prompts to approve them into the local cache. Committed
+             baselines (tuffgal/baselines) are still CI-only; approving here
+             only refreshes your local reference so the next run is clean.
   -h, --help Show this help.
 USAGE
 }
@@ -81,7 +85,7 @@ TICK=✓  CROSS=✗  CIRC=○
 
 # ── Layout constants ────────────────────────────────────────────────────────────
 if [[ "$RUN_TUFFGAL" == true ]]; then
-  STEPS=(Install Playwright Database Test)
+  STEPS=(Install Playwright Database Test Report)
 elif [[ "$RUN_UPDATE" == true ]]; then
   STEPS=(Update Install Generate Subset\ FA Format Lint Lint\ Migrations Test Build)
 else
@@ -228,6 +232,29 @@ tuffgal_summary() {
   ' "$results" 2>/dev/null
 }
 
+# Echo "<new> <changed>" from the last run, or nothing when no results.json.
+tuffgal_drift_counts() {
+  local results="$ROOT_DIR/tuffgal/report/results.json"
+  if [[ ! -f "$results" ]]; then
+    return
+  fi
+  node -e '
+    const path = process.argv[1];
+    const totals = JSON.parse(require("fs").readFileSync(path, "utf8")).totals ?? {};
+    process.stdout.write(`${totals.new ?? 0} ${totals.changed ?? 0}`);
+  ' "$results" 2>/dev/null
+}
+
+# Open the HTML report in the default browser (macOS `open`). No-op without a TTY.
+# shellcheck disable=SC2329 # Invoked indirectly via `run_step 4 open_report`.
+open_report() {
+  local report="$ROOT_DIR/tuffgal/report/index.html"
+  if [[ "$TTY_AVAILABLE" != true || ! -f "$report" ]]; then
+    return
+  fi
+  open "$report" >/dev/null 2>&1 || true
+}
+
 # ── Main ────────────────────────────────────────────────────────────────────────
 hide_cursor
 draw_ui
@@ -255,8 +282,11 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
     fi
   fi
 
+  # Local advisory mode self-diffs against the git-ignored per-machine cache and
+  # exits 0 even on drift, so a non-zero exit here is a real failure (crash, dead
+  # server), never "screenshots changed".
   if [[ -z "$FAILED_STEP" ]]; then
-    if ! run_step 3 npx tuffgal run --manage-servers; then
+    if ! run_step 3 npx tuffgal run --local --manage-servers; then
       FAILED_STEP="Test"
       FAILED_OUTPUT="$STEP_OUTPUT"
     fi
@@ -264,15 +294,7 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
 
   TUFFGAL_SUMMARY=$(tuffgal_summary)
 
-  if [[ -z "$FAILED_STEP" ]]; then
-    if [[ -n "$TUFFGAL_SUMMARY" ]]; then
-      set_status "${GRN}${BLD}Visual regression passed${RST}\n  ${DIM}${TUFFGAL_SUMMARY}${RST}"
-    else
-      set_status "${GRN}${BLD}Visual regression passed${RST}"
-    fi
-    [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
-    exit 0
-  else
+  if [[ -n "$FAILED_STEP" ]]; then
     if [[ -n "$TUFFGAL_SUMMARY" ]]; then
       set_status "${RED}${BLD}${FAILED_STEP} failed – see below.${RST} ${DIM}${TUFFGAL_SUMMARY}${RST}"
     else
@@ -284,6 +306,46 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
     printf '\n'
     exit 1
   fi
+
+  # Run succeeded. Surface the HTML report, then offer to fold any drift into the
+  # local cache so the next run comes back clean.
+  run_step 4 open_report
+
+  read -r TUFFGAL_NEW TUFFGAL_CHANGED <<< "$(tuffgal_drift_counts)"
+  TUFFGAL_NEW=${TUFFGAL_NEW:-0}
+  TUFFGAL_CHANGED=${TUFFGAL_CHANGED:-0}
+
+  if [[ -n "$TUFFGAL_SUMMARY" ]]; then
+    set_status "${GRN}${BLD}Visual regression complete${RST}\n  ${DIM}${TUFFGAL_SUMMARY}${RST}"
+  else
+    set_status "${GRN}${BLD}Visual regression complete${RST}"
+  fi
+
+  if [[ "$TTY_AVAILABLE" == true && $(( TUFFGAL_NEW + TUFFGAL_CHANGED )) -gt 0 ]]; then
+    show_cursor
+    printf '\n\n'
+    printf '  %sApprove %s new + %s changed into the local cache?%s [y/N] ' \
+      "$BLD" "$TUFFGAL_NEW" "$TUFFGAL_CHANGED" "$RST"
+    APPROVE_REPLY=""
+    read -r APPROVE_REPLY < /dev/tty || true
+    if [[ "$APPROVE_REPLY" =~ ^[Yy]([Ee][Ss])?$ ]]; then
+      printf '\n'
+      if APPROVE_OUTPUT=$(npx tuffgal approve 2>&1); then
+        printf '  %s%s Local cache refreshed – next run will be clean.%s\n' "$GRN" "$TICK" "$RST"
+      else
+        printf '  %s%s tuffgal approve failed – see below.%s\n\n' "$RED" "$CROSS" "$RST"
+        printf '%s\n' "$APPROVE_OUTPUT" | sed 's/^/  /'
+        printf '\n'
+        exit 1
+      fi
+    else
+      printf '\n  %sLeft as-is. Re-run to re-check, or approve later with npm run tuffgal:approve.%s\n' \
+        "$DIM" "$RST"
+    fi
+  else
+    [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
+  fi
+  exit 0
 fi
 
 # Build step index offset based on whether --update was requested

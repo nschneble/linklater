@@ -41,8 +41,8 @@ jobs:
       VITE_GOOGLE_SSO_ENABLED: 'false'
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -63,7 +63,15 @@ jobs:
           mkcert -install
           mkdir -p apps/api/certs
           mkcert -key-file apps/api/certs/localhost-key.pem -cert-file apps/api/certs/localhost.pem localhost
-      - uses: nschneble/tuffgal-action@v1
+      - uses: nschneble/tuffgal-action@1c4383f368677e1ae4e81c477b9906f1f3849802 # v1.2.1
         with:
           setup-script: tuffgal:setup
           fail-on-changed: true
+        # tuffgal alpha.4 swapped its dev-server readiness probe from a bare TCP
+        # connect to a fetch() GET, and fetch rejects the self-signed mkcert
+        # certs the dev servers serve over HTTPS. Node's fetch trusts only its
+        # bundled CA list, not the system store that mkcert -install writes to,
+        # so the probe never sees a non-5xx response and times out. Turn off TLS
+        # verification for this step only; every URL it touches is localhost.
+        env:
+          NODE_TLS_REJECT_UNAUTHORIZED: '0'

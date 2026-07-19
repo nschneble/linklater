@@ -34,10 +34,10 @@ function isStringRecord(value: unknown): boolean {
  * and `light` keys, each a map of bundle token names (e.g. `--mount-border`) to
  * CSS color strings. Both modes are optional so a partial save is accepted.
  *
- * The exact 52-token set is intentionally NOT enforced here — the front-end
- * Theme Editor is the source of truth for membership. The API stays liberal in
- * what it accepts (Postel's Law) and only guards the broad shape so a malformed
- * blob can never reach the JSON column.
+ * This decorator only guards the broad `{ dark?, light? }` string-map shape so
+ * a malformed blob can never reach the JSON column. The exact token vocabulary
+ * and a payload size cap are enforced separately, server-side, by
+ * `assertValidCustomTheme` in `users/custom-theme.ts`.
  */
 @ValidatorConstraint({ name: 'isCustomThemeShape', async: false })
 class IsCustomThemeShapeConstraint implements ValidatorConstraintInterface {

@@ -12,7 +12,7 @@ import {
   hashRecoveryCodes,
   normalizeRecoveryCode,
 } from '../common/recovery-codes.js';
-import { EmailService } from '../email/email.service.js';
+import { EmailQueueService } from '../email/index.js';
 import {
   UserMfaService,
   UserOAuthService,
@@ -39,7 +39,7 @@ export class AuthService {
     private readonly totpService: TotpService,
     private readonly refreshTokenService: RefreshTokenService,
     private readonly userTokensService: UserTokensService,
-    private readonly emailService: EmailService,
+    private readonly emailQueueService: EmailQueueService,
   ) {}
 
   async register(email: string, password: string) {
@@ -319,7 +319,7 @@ export class AuthService {
         tokenHash,
         expiresAt,
       );
-      await this.emailService.sendAccountDeletionConfirmation(
+      await this.emailQueueService.enqueueAccountDeletionConfirmation(
         user.email,
         rawToken,
         user.theme,

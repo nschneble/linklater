@@ -63,16 +63,10 @@ describe('MagicLinkController', () => {
       expect(guards).toContain(CustomThrottlerGuard);
     });
 
-    it('throttle bucket is auth-request-magic-link with 3 requests per 60 s', () => {
+    it('overrides the default bucket with 3 requests per 60 s', () => {
       const method = MagicLinkController.prototype.requestMagicLink;
-      const ttl = Reflect.getMetadata(
-        THROTTLER_TTL + 'auth-request-magic-link',
-        method,
-      );
-      const limit = Reflect.getMetadata(
-        THROTTLER_LIMIT + 'auth-request-magic-link',
-        method,
-      );
+      const ttl = Reflect.getMetadata(THROTTLER_TTL + 'default', method);
+      const limit = Reflect.getMetadata(THROTTLER_LIMIT + 'default', method);
       expect(limit).toBe(3);
       expect(ttl).toBe(60000);
     });
@@ -103,13 +97,10 @@ describe('MagicLinkController', () => {
       expect(guards).toContain(CustomThrottlerGuard);
     });
 
-    it('throttle bucket is auth-register with 5 requests per 60 s', () => {
+    it('overrides the default bucket with 5 requests per 60 s', () => {
       const method = MagicLinkController.prototype.registerMagicLink;
-      const ttl = Reflect.getMetadata(THROTTLER_TTL + 'auth-register', method);
-      const limit = Reflect.getMetadata(
-        THROTTLER_LIMIT + 'auth-register',
-        method,
-      );
+      const ttl = Reflect.getMetadata(THROTTLER_TTL + 'default', method);
+      const limit = Reflect.getMetadata(THROTTLER_LIMIT + 'default', method);
       expect(limit).toBe(5);
       expect(ttl).toBe(60000);
     });
@@ -138,16 +129,10 @@ describe('MagicLinkController', () => {
       expect(guards).toContain(CustomThrottlerGuard);
     });
 
-    it('throttle bucket is auth-verify-magic-link with 10 requests per 60 s', () => {
+    it('overrides the default bucket with 10 requests per 60 s', () => {
       const method = MagicLinkController.prototype.verifyMagicLink;
-      const ttl = Reflect.getMetadata(
-        THROTTLER_TTL + 'auth-verify-magic-link',
-        method,
-      );
-      const limit = Reflect.getMetadata(
-        THROTTLER_LIMIT + 'auth-verify-magic-link',
-        method,
-      );
+      const ttl = Reflect.getMetadata(THROTTLER_TTL + 'default', method);
+      const limit = Reflect.getMetadata(THROTTLER_LIMIT + 'default', method);
       expect(limit).toBe(10);
       expect(ttl).toBe(60000);
     });

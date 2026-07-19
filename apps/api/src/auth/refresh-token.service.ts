@@ -4,7 +4,16 @@ import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
 import { expiresInMs } from '../common/dates.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
-const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+/**
+ * Absolute lifetime of a single refresh token. The refresh token lives in the
+ * browser's localStorage (a deliberate bearer-token design), so an XSS-stolen
+ * token is usable until it expires. Rotation (see `refresh`) resets this clock
+ * on every use, making expiry a *sliding* window: an actively-used session
+ * never logs out, while a stolen-but-idle token (or a session abandoned for
+ * longer than this window) becomes worthless. 14 days keeps the theft window
+ * short without nagging anyone who returns at least every couple of weeks.
+ */
+const REFRESH_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 /**
  * Owns all refresh-token persistence: issuance, atomic rotation, and bulk
@@ -23,7 +32,7 @@ export class RefreshTokenService {
   async issueTokenPair(userId: string, email: string) {
     const rawRefreshToken = generateHexToken();
     const tokenHash = sha256Hex(rawRefreshToken);
-    const expiresAt = expiresInMs(ONE_YEAR_MS);
+    const expiresAt = expiresInMs(REFRESH_TOKEN_TTL_MS);
 
     await this.prisma.refreshToken.create({
       data: { tokenHash, userId, expiresAt },
@@ -60,7 +69,7 @@ export class RefreshTokenService {
 
       const rawNewRefreshToken = generateHexToken();
       const newTokenHash = sha256Hex(rawNewRefreshToken);
-      const newExpiresAt = expiresInMs(ONE_YEAR_MS);
+      const newExpiresAt = expiresInMs(REFRESH_TOKEN_TTL_MS);
       await transaction.refreshToken.create({
         data: {
           tokenHash: newTokenHash,

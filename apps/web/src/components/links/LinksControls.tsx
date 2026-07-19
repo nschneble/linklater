@@ -56,7 +56,7 @@ export default function LinksControls({
           hidden={filter !== 'unread'}
           onClick={onToggleForm}
           aria-label={showLinkForm ? 'Hide form' : 'Add link'}
-          aria-expanded={showLinkForm}
+          aria-haspopup="dialog"
           aria-controls={LINK_FORM_ID}
         >
           <i className="fa-solid fa-plus text-[0.7rem]" aria-hidden="true" />

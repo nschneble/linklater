@@ -1,1 +1,1 @@
-export { EmailService } from './email.service.js';
+export { EmailQueueService } from './email-queue.service.js';

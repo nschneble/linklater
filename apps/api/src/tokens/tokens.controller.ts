@@ -53,7 +53,8 @@ export class TokensController {
     description: 'Too many token-creation attempts.',
   })
   @UseGuards(CustomThrottlerGuard)
-  @Throttle({ 'token-create': { ttl: 3600000, limit: 20 } })
+  // 20/hour: caps a compromised session spamming token rows
+  @Throttle({ default: { ttl: 3600000, limit: 20 } })
   @ThrottleMessage('Too many token-creation attempts')
   @Post()
   async create(@Req() request: AuthRequest, @Body() body: CreateTokenDto) {

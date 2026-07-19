@@ -3,6 +3,7 @@ import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useLinksView } from '../../lib/hooks/useLinksView';
 import { usePendingNotice } from '../../lib/hooks/usePendingNotice';
+import { useShortcutsEnabled } from '../../lib/hooks/useShortcutsEnabled';
 import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
 import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
@@ -60,12 +61,14 @@ interface LinksViewProps {
  * the announcement; no focus shift to the <main> landmark is performed on
  * notice arrival, since (a) NVDA/JAWS can interrupt a polite live region
  * when focus moves into an unrelated landmark mid-announce, and (b) the
- * <main> landmark already carries `aria-label="Links"` in AppShell so
- * keyboard users get a named landing point via the existing skip link.
+ * <main> landmark already carries a view-specific `aria-label` in AppShell
+ * ("Your links" for this view) so keyboard users get a named landing point
+ * via the existing skip link.
  */
 export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
   const view = useLinksView({ onCloseUserMenu });
   const pendingNotice = usePendingNotice();
+  const shortcutsEnabled = useShortcutsEnabled();
 
   useDocumentTitle(
     view.filter === 'unread'
@@ -89,7 +92,14 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
           aria-label="Show keyboard shortcuts"
           title="Keyboard shortcuts"
         >
-          <i className="fa-solid fa-keyboard text-sm" aria-hidden="true" />
+          {shortcutsEnabled ? (
+            <i className="fa-solid fa-keyboard text-sm" aria-hidden="true" />
+          ) : (
+            <span className="text-sm" aria-hidden="true">
+              <i className="absolute fa-regular fa-keyboard" />
+              <i className="absolute fa-solid fa-slash text-[var(--base-text)]" />
+            </span>
+          )}
         </button>
       </div>
       <p className="text-[var(--base-alt-text)] text-xs">
@@ -153,24 +163,22 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
           aria-modal="true"
           aria-labelledby="save-link-heading"
           tabIndex={-1}
-          className="fixed sm:relative inset-x-4 sm:inset-x-auto top-16 sm:top-auto z-30 max-h-[calc(100dvh-5rem)] sm:max-h-none overflow-y-auto sm:overflow-visible sm:mt-0 p-4 bg-[var(--base-bg)] border border-[var(--base-border)] rounded-2xl shadow-lg animate-fade-in-up"
+          className="fixed sm:relative inset-x-4 sm:inset-x-auto top-16 sm:top-auto z-30 max-h-[calc(100dvh-5rem)] sm:max-h-none overflow-y-auto sm:overflow-visible sm:mt-0 px-6 pt-5.5 pb-6 bg-[var(--base-bg)] border border-[var(--base-border)] border-shadow rounded-xl animate-fade-in-up"
         >
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <h2
-              id="save-link-heading"
-              className="text-[var(--base-text)] text-base font-semibold"
-            >
-              Save a link
-            </h2>
-            <button
-              type="button"
-              aria-label="Close"
-              className={`flex items-center justify-center w-11 h-11 -mr-2 text-[var(--base-alt-text)] hover:text-[var(--base-text)] active:scale-[0.96] transition-colors cursor-pointer rounded-full ${FOCUS_RING}`}
-              onClick={view.handleToggleForm}
-            >
-              <i className="fa-solid fa-xmark text-sm" aria-hidden="true" />
-            </button>
-          </div>
+          <h2
+            id="save-link-heading"
+            className="mb-5 text-[var(--base-text)] text-base font-semibold"
+          >
+            Add link
+          </h2>
+          <button
+            type="button"
+            aria-label="Close add link"
+            className={`absolute top-4 right-4 flex items-center justify-center w-8 h-8 text-[var(--base-alt-text)] hover:text-[var(--base-text)] active:scale-[0.96] transition-colors cursor-pointer rounded-full ${FOCUS_RING}`}
+            onClick={view.handleToggleForm}
+          >
+            <i className="fa-solid fa-xmark text-sm" aria-hidden="true" />
+          </button>
 
           <LinkForm onCreated={view.handleCreated} />
         </div>

@@ -118,6 +118,30 @@ describe('RssFeedService', () => {
       ).not.toHaveBeenCalled();
     });
 
+    it('passes skipDuplicates so a racing duplicate insert does not throw the whole batch', async () => {
+      fetchMock.mockResolvedValueOnce(textResponse(RSS_XML));
+      // Simulate a race: the read-then-partition saw no existing rows, but a
+      // concurrent refresh inserted one of them before this createMany ran.
+      // skipDuplicates lets Postgres skip the colliding row instead of
+      // rejecting the entire insert (P2002) and failing the whole refresh.
+      (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValueOnce([]);
+      (prismaMock.rssEntry.createMany as jest.Mock).mockResolvedValue({
+        count: 1,
+      });
+
+      await service.refreshOne({
+        key: 'aeon',
+        name: 'Aeon',
+        type: 'latest',
+        feedUrl: 'https://aeon.co/feed.rss',
+        siteName: 'Aeon',
+      });
+
+      const createCall = (prismaMock.rssEntry.createMany as jest.Mock).mock
+        .calls[0][0] as { skipDuplicates?: boolean };
+      expect(createCall.skipDuplicates).toBe(true);
+    });
+
     it('issues one updateMany per pre-existing item and skips createMany for them', async () => {
       fetchMock.mockResolvedValueOnce(textResponse(RSS_XML));
       // Both feed URLs already exist → updateMany fires per row, createMany

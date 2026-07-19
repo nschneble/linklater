@@ -22,6 +22,7 @@ import {
   loadCatalogs,
   loadManifest,
   paths,
+  scanRegularNames,
   scanSources,
 } from './fa-scan.mjs';
 
@@ -33,7 +34,12 @@ import {
  * Returns `{ manifest, summary }` on success.
  * Throws on unknown tokens or new ambiguous tokens.
  */
-export function computeNextManifest({ hits, catalogs, currentManifest }) {
+export function computeNextManifest({
+  hits,
+  catalogs,
+  currentManifest,
+  regularNames = new Set(),
+}) {
   const currentFamily = new Map();
   for (const name of currentManifest.solid) currentFamily.set(name, 'solid');
   for (const name of currentManifest.brands) currentFamily.set(name, 'brands');
@@ -77,19 +83,29 @@ export function computeNextManifest({ hits, catalogs, currentManifest }) {
     throw new SyncError('ambiguous', ambiguous);
   }
 
+  const regular = new Set();
+  for (const name of regularNames) {
+    if (catalogs.solid.has(name)) regular.add(name);
+  }
+
+  const currentRegular = currentManifest.regular ?? [];
+
   const manifest = {
     brands: [...next.brands].sort(),
+    regular: [...regular].sort(),
     solid: [...next.solid].sort(),
   };
 
   const removed = {
     brands: currentManifest.brands.filter((name) => !next.brands.has(name)),
+    regular: currentRegular.filter((name) => !regular.has(name)),
     solid: currentManifest.solid.filter((name) => !next.solid.has(name)),
   };
   const added = {
     brands: manifest.brands.filter(
       (name) => !currentManifest.brands.includes(name),
     ),
+    regular: manifest.regular.filter((name) => !currentRegular.includes(name)),
     solid: manifest.solid.filter(
       (name) => !currentManifest.solid.includes(name),
     ),
@@ -143,16 +159,18 @@ async function formatJson(manifest) {
 }
 
 async function main() {
-  const [hits, catalogs, currentManifest] = await Promise.all([
+  const [hits, catalogs, currentManifest, regularNames] = await Promise.all([
     scanSources(),
     loadCatalogs(),
     loadManifest(),
+    scanRegularNames(),
   ]);
 
   const { manifest, summary } = computeNextManifest({
     hits,
     catalogs,
     currentManifest,
+    regularNames,
   });
 
   // Route through prettier so the on-disk file matches the formatter's output
@@ -171,7 +189,7 @@ async function main() {
   await writeFile(paths.manifestPath, serialized);
 
   const lines = ['font-awesome-manifest.json: updated'];
-  for (const family of ['solid', 'brands']) {
+  for (const family of ['solid', 'regular', 'brands']) {
     for (const name of summary.added[family]) {
       lines.push(`  + ${family}/${name}`);
     }
