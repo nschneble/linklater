@@ -10,8 +10,7 @@ import { BOOKMARKLET_SCOPE_KEY } from './token-scope.decorator.js';
 
 /** The two retrievable kinds that carry scope + rate-limit restrictions. */
 type SpecialTokenKind =
-  | typeof TokenKind.BOOKMARKLET
-  | typeof TokenKind.API_DOCS;
+  typeof TokenKind.BOOKMARKLET | typeof TokenKind.API_DOCS;
 
 interface RateLimit {
   /** Sliding window length, in milliseconds. */

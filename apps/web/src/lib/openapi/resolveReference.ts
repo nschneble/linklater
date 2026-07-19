@@ -3,9 +3,7 @@ import type { OpenAPIV3 } from 'openapi-types';
 const LOCAL_SCHEMA_PREFIX = '#/components/schemas/';
 
 type SchemaOrReference =
-  | OpenAPIV3.SchemaObject
-  | OpenAPIV3.ReferenceObject
-  | undefined;
+  OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject | undefined;
 
 type SchemaMap = Record<string, OpenAPIV3.SchemaObject>;
 
