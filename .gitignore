@@ -1,5 +1,6 @@
 .DS_Store
 .env.production.example
+scripts/sync-backups-offsite.sh
 
 apps/api/certs/
 local/
