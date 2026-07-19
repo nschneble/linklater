@@ -117,9 +117,7 @@ function normalizeParameters(
 
 function normalizeRequestBody(
   requestBody:
-    | OpenAPIV3.RequestBodyObject
-    | OpenAPIV3.ReferenceObject
-    | undefined,
+    OpenAPIV3.RequestBodyObject | OpenAPIV3.ReferenceObject | undefined,
   schemas: SchemaMap,
 ): NormalizedRequestBody | undefined {
   if (!requestBody || '$ref' in requestBody) return undefined;
