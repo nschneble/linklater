@@ -1,0 +1,17 @@
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - button "Go to your links": Linklater Save links now, read them later.
+  - button "User menu (testing-ui@linklater.test)"
+- main "Your links":
+  - heading "Your links" [level=1]
+  - button "Show keyboard shortcuts"
+  - paragraph: Read links are automatically removed after seven days.
+  - tablist "Links filter":
+    - tab "Unread"
+    - tab "Read" [selected]
+  - searchbox "Search through your links"
+  - tabpanel "Read":
+    - paragraph: No read links
+  - status
+  - status
