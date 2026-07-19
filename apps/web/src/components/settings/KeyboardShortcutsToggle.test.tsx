@@ -1,8 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import KeyboardShortcutsToggle from './KeyboardShortcutsToggle';
 import { KEYBOARD_SHORTCUTS_KEY } from '../../lib/hooks/useShortcutsEnabled';
+
+function renderToggle() {
+  return render(
+    <MemoryRouter>
+      <KeyboardShortcutsToggle />
+    </MemoryRouter>,
+  );
+}
 
 afterEach(() => {
   window.localStorage.clear();
@@ -10,7 +19,7 @@ afterEach(() => {
 
 describe('KeyboardShortcutsToggle', () => {
   it('renders as a checked switch by default (shortcuts on)', () => {
-    render(<KeyboardShortcutsToggle />);
+    renderToggle();
     const toggle = screen.getByRole('switch');
     expect(toggle).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByText('On')).toBeInTheDocument();
@@ -18,13 +27,13 @@ describe('KeyboardShortcutsToggle', () => {
 
   it('renders unchecked when the stored preference is off', () => {
     window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
-    render(<KeyboardShortcutsToggle />);
+    renderToggle();
     expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'false');
     expect(screen.getByText('Off')).toBeInTheDocument();
   });
 
   it('flips aria-checked and persists off when toggled from on', () => {
-    render(<KeyboardShortcutsToggle />);
+    renderToggle();
     const toggle = screen.getByRole('switch');
 
     fireEvent.click(toggle);
@@ -36,7 +45,7 @@ describe('KeyboardShortcutsToggle', () => {
 
   it('flips aria-checked and persists on when toggled from off', () => {
     window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
-    render(<KeyboardShortcutsToggle />);
+    renderToggle();
     const toggle = screen.getByRole('switch');
 
     fireEvent.click(toggle);
@@ -47,7 +56,7 @@ describe('KeyboardShortcutsToggle', () => {
   });
 
   it('exposes the label and description for assistive tech', () => {
-    render(<KeyboardShortcutsToggle />);
+    renderToggle();
     const toggle = screen.getByRole('switch');
     expect(toggle).toHaveAttribute('aria-labelledby', 'shortcuts-label');
     expect(toggle).toHaveAttribute('aria-describedby', 'shortcuts-description');

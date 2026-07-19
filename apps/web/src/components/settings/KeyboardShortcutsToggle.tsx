@@ -1,8 +1,10 @@
+import LinkButton from '../common/LinkButton';
 import {
   setShortcutsEnabled,
   useShortcutsEnabled,
 } from '../../lib/hooks/useShortcutsEnabled';
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Settings toggle for the app's single-key keyboard shortcuts (WCAG 2.1.4,
@@ -20,6 +22,7 @@ import { useCallback } from 'react';
  */
 export default function KeyboardShortcutsToggle() {
   const shortcutsEnabled = useShortcutsEnabled();
+  const navigate = useNavigate();
 
   const handleToggle = useCallback(() => {
     setShortcutsEnabled(!shortcutsEnabled);
@@ -39,10 +42,16 @@ export default function KeyboardShortcutsToggle() {
           id="shortcuts-description"
           className="text-[var(--mount-alt-text)] text-xs text-pretty"
         >
-          Single-key shortcuts like <span className="font-semibold">D</span> to
-          stumble or <span className="font-semibold">A</span> to add a link let
-          you move without the mouse. Switch them off if stray keystrokes keep
-          triggering them, which can happen with speech-to-text tools.
+          Provides quick keyboard navigation for many actions on the{' '}
+          <LinkButton
+            className="inline-flex"
+            surface="mount"
+            onClick={() => navigate('/unread')}
+          >
+            Your Links
+          </LinkButton>{' '}
+          page, such as <span className="font-semibold">Q</span> to search and{' '}
+          <span className="font-semibold">A</span> to add links.
         </p>
       </div>
 

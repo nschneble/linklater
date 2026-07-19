@@ -23,13 +23,19 @@ import {
   loadCatalogs,
   loadManifest,
   paths,
+  scanRegularNames,
   scanSources,
 } from './fa-scan.mjs';
 
 const manifest = await loadManifest();
 const catalogs = await loadCatalogs();
 const hits = await scanSources();
-const allManifestNames = new Set([...manifest.brands, ...manifest.solid]);
+const regularNames = await scanRegularNames();
+const allManifestNames = new Set([
+  ...manifest.brands,
+  ...manifest.regular,
+  ...manifest.solid,
+]);
 
 describe('font-awesome-manifest.json sync', () => {
   it('every manifest entry is a real Font Awesome Free icon', () => {
@@ -39,12 +45,15 @@ describe('font-awesome-manifest.json sync', () => {
     const missingBrands = manifest.brands.filter(
       (name) => !catalogs.brands.has(name),
     );
+    const missingRegular = manifest.regular.filter(
+      (name) => !catalogs.solid.has(name),
+    );
 
     expect(
-      { missingSolid, missingBrands },
+      { missingSolid, missingBrands, missingRegular },
       'Manifest entries must match a real FA Free icon. Drop unknown entries or ' +
         'fix the name (check FA Free icon catalog).',
-    ).toEqual({ missingSolid: [], missingBrands: [] });
+    ).toEqual({ missingSolid: [], missingBrands: [], missingRegular: [] });
   });
 
   it('every fa-* token in src/ + index.html is in the manifest', () => {
@@ -115,6 +124,20 @@ describe('font-awesome-manifest.json sync', () => {
     ).toEqual([]);
   });
 
+  it('regular manifest entries and `fa-regular` usages stay in sync', () => {
+    const missing = [...regularNames].filter(
+      (name) => !manifest.regular.includes(name),
+    );
+    const unused = manifest.regular.filter((name) => !regularNames.has(name));
+
+    expect(
+      { missing, unused },
+      'Regular icons are detected from `fa-regular fa-NAME` usage in source. ' +
+        'Run `npm run sync-fa` (also chained by `npm run subset-fa`) to bring ' +
+        'the manifest "regular" array back in sync.',
+    ).toEqual({ missing: [], unused: [] });
+  });
+
   // Catch silent-empty regressions (subset-font failure or wrong source path
   // writes a header-only ~700-900 byte file) and manifest-bloat regressions
   // (someone adds half the catalog). Ceilings give 3-4x headroom over current
@@ -124,11 +147,16 @@ describe('font-awesome-manifest.json sync', () => {
       paths.webRoot,
       'public/assets/fontawesome/webfonts/fa-solid-900.woff2',
     );
+    const regularPath = resolve(
+      paths.webRoot,
+      'public/assets/fontawesome/webfonts/fa-regular-400.woff2',
+    );
     const brandsPath = resolve(
       paths.webRoot,
       'public/assets/fontawesome/webfonts/fa-brands-400.woff2',
     );
     const solidBytes = statSync(solidPath).size;
+    const regularBytes = statSync(regularPath).size;
     const brandsBytes = statSync(brandsPath).size;
     const guidance =
       'If this fails after a manifest change, rerun `npm run subset-fa` and ' +
@@ -137,6 +165,8 @@ describe('font-awesome-manifest.json sync', () => {
 
     expect(solidBytes, guidance).toBeGreaterThan(2000);
     expect(solidBytes, guidance).toBeLessThan(25000);
+    expect(regularBytes, guidance).toBeGreaterThan(800);
+    expect(regularBytes, guidance).toBeLessThan(5000);
     expect(brandsBytes, guidance).toBeGreaterThan(800);
     expect(brandsBytes, guidance).toBeLessThan(5000);
   });

@@ -3,6 +3,7 @@ import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useLinksView } from '../../lib/hooks/useLinksView';
 import { usePendingNotice } from '../../lib/hooks/usePendingNotice';
+import { useShortcutsEnabled } from '../../lib/hooks/useShortcutsEnabled';
 import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
 import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
@@ -67,6 +68,7 @@ interface LinksViewProps {
 export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
   const view = useLinksView({ onCloseUserMenu });
   const pendingNotice = usePendingNotice();
+  const shortcutsEnabled = useShortcutsEnabled();
 
   useDocumentTitle(
     view.filter === 'unread'
@@ -90,7 +92,14 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
           aria-label="Show keyboard shortcuts"
           title="Keyboard shortcuts"
         >
-          <i className="fa-solid fa-keyboard text-sm" aria-hidden="true" />
+          {shortcutsEnabled ? (
+            <i className="fa-solid fa-keyboard text-sm" aria-hidden="true" />
+          ) : (
+            <span className="text-sm" aria-hidden="true">
+              <i className="absolute fa-regular fa-keyboard" />
+              <i className="absolute fa-solid fa-slash text-[var(--base-text)]" />
+            </span>
+          )}
         </button>
       </div>
       <p className="text-[var(--base-alt-text)] text-xs">

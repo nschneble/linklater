@@ -1,4 +1,7 @@
+import LinkButton from '../common/LinkButton';
 import Modal from '../common/Modal';
+import { useNavigate } from 'react-router-dom';
+import { useShortcutsEnabled } from '../../lib/hooks/useShortcutsEnabled';
 
 interface KeyboardShortcutsModalProps {
   /** Called when the user presses Escape or clicks the close button or backdrop. */
@@ -24,13 +27,16 @@ const HEADING_ID = 'keyboard-shortcuts-heading';
 /**
  * Modal dialog listing all keyboard shortcuts available in `LinksView`.
  *
- * ARIA wiring, focus management, body-scroll lock, and the close + backdrop
- * buttons are owned by `<Modal>` – see `Modal.tsx`. Lazy-loaded from
- * `LinksView` to keep it out of the initial bundle.
+ * ARIA wiring, focus management, body-scroll lock, and the close +
+ * backdrop buttons are owned by `Modal`. Lazy-loaded from `LinksView` to
+ * keep it out of the initial bundle.
  */
 export default function KeyboardShortcutsModal({
   onClose,
 }: KeyboardShortcutsModalProps) {
+  const navigate = useNavigate();
+  const shortcutsEnabled = useShortcutsEnabled();
+
   return (
     <Modal
       labelledBy={HEADING_ID}
@@ -49,7 +55,10 @@ export default function KeyboardShortcutsModal({
       </h2>
       <ul className="space-y-3">
         {shortcuts.map(({ key, description }) => (
-          <li key={key} className="flex items-center justify-between">
+          <li
+            key={key}
+            className={`flex items-center justify-between ${shortcutsEnabled ? 'opacity-100' : 'opacity-25'}`}
+          >
             <span className="text-[var(--orbit-alt-text)] text-sm">
               {description}
             </span>
@@ -60,8 +69,19 @@ export default function KeyboardShortcutsModal({
         ))}
       </ul>
       <p className="mt-6 text-[var(--orbit-alt-text)] text-xs text-pretty">
-        Prefer no single-key shortcuts? Turn them off in Settings, under
-        Accessibility.
+        Keyboard shortcuts can be
+        {shortcutsEnabled ? ' disabled in ' : ' enabled in '}
+        <LinkButton
+          className="inline-flex"
+          surface="mount"
+          onClick={() =>
+            navigate('/settings', {
+              state: { scrollTo: 'accessibility' },
+            })
+          }
+        >
+          Accessibility Settings
+        </LinkButton>
       </p>
     </Modal>
   );

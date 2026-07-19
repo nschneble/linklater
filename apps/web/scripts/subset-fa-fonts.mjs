@@ -29,9 +29,12 @@ const families = {
     source: resolve(sourceDir, 'fa-brands-400.woff2'),
     output: resolve(outputDir, 'fa-brands-400.woff2'),
   },
+  regular: {
+    cssFile: paths.regularCssPath,
+    source: resolve(sourceDir, 'fa-regular-400.woff2'),
+    output: resolve(outputDir, 'fa-regular-400.woff2'),
+  },
   solid: {
-    // fontawesome.min.css holds the canonical solid icon -> codepoint map.
-    // solid.min.css only registers the family + @font-face.
     cssFile: paths.solidCssPath,
     source: resolve(sourceDir, 'fa-solid-900.woff2'),
     output: resolve(outputDir, 'fa-solid-900.woff2'),

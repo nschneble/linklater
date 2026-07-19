@@ -1,5 +1,6 @@
 {
   "brands": ["apple", "google", "stumbleupon"],
+  "regular": ["keyboard"],
   "solid": [
     "angle-right",
     "arrow-left",
@@ -63,6 +64,7 @@
     "shield-halved",
     "skull",
     "skull-crossbones",
+    "slash",
     "sun",
     "train",
     "trash",
