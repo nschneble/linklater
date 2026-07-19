@@ -163,24 +163,22 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
           aria-modal="true"
           aria-labelledby="save-link-heading"
           tabIndex={-1}
-          className="fixed sm:relative inset-x-4 sm:inset-x-auto top-16 sm:top-auto z-30 max-h-[calc(100dvh-5rem)] sm:max-h-none overflow-y-auto sm:overflow-visible sm:mt-0 p-4 bg-[var(--base-bg)] border border-[var(--base-border)] rounded-2xl shadow-lg animate-fade-in-up"
+          className="fixed sm:relative inset-x-4 sm:inset-x-auto top-16 sm:top-auto z-30 max-h-[calc(100dvh-5rem)] sm:max-h-none overflow-y-auto sm:overflow-visible sm:mt-0 px-6 pt-5.5 pb-6 bg-[var(--base-bg)] border border-[var(--base-border)] border-shadow rounded-xl animate-fade-in-up"
         >
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <h2
-              id="save-link-heading"
-              className="text-[var(--base-text)] text-base font-semibold"
-            >
-              Save a link
-            </h2>
-            <button
-              type="button"
-              aria-label="Close"
-              className={`flex items-center justify-center w-11 h-11 -mr-2 text-[var(--base-alt-text)] hover:text-[var(--base-text)] active:scale-[0.96] transition-colors cursor-pointer rounded-full ${FOCUS_RING}`}
-              onClick={view.handleToggleForm}
-            >
-              <i className="fa-solid fa-xmark text-sm" aria-hidden="true" />
-            </button>
-          </div>
+          <h2
+            id="save-link-heading"
+            className="mb-5 text-[var(--base-text)] text-base font-semibold"
+          >
+            Add link
+          </h2>
+          <button
+            type="button"
+            aria-label="Close add link"
+            className={`absolute top-4 right-4 flex items-center justify-center w-8 h-8 text-[var(--base-alt-text)] hover:text-[var(--base-text)] active:scale-[0.96] transition-colors cursor-pointer rounded-full ${FOCUS_RING}`}
+            onClick={view.handleToggleForm}
+          >
+            <i className="fa-solid fa-xmark text-sm" aria-hidden="true" />
+          </button>
 
           <LinkForm onCreated={view.handleCreated} />
         </div>

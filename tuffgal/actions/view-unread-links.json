@@ -6,7 +6,10 @@
       "kind": "click",
       "hint": { "role": "tab", "text": "Unread" }
     },
-    { "kind": "waitFor", "hint": { "selector": "#suggestion-callout-title" } },
+    {
+      "kind": "waitFor",
+      "hint": { "selector": "#links-list a[aria-label*='Test Link 3']" }
+    },
     { "kind": "wait", "ms": 600 }
   ],
   "expect": {
