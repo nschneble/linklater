@@ -32,7 +32,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/blueimp-md5": "^2.18.2",
     "@types/culori": "^4.0.1",
-    "@types/node": "^24.10.1",
+    "@types/node": "^26.1.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
