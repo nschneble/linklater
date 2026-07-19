@@ -54,7 +54,7 @@
     "reflect-metadata": "^0.2.2",
     "rss-parser": "^3.13.0",
     "rxjs": "^7.8.1",
-    "undici": "^7.28.0"
+    "undici": "^8.7.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
