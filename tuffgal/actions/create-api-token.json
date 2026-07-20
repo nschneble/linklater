@@ -20,7 +20,12 @@
       "kind": "click",
       "hint": { "role": "button", "text": "Create token" }
     },
-    { "kind": "wait", "ms": 2000 }
+    { "kind": "wait", "ms": 2000 },
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Integrations" }
+    },
+    { "kind": "wait", "ms": 1000 }
   ],
   "expect": {
     "anyOf": [{ "text": "Your new token has been created" }]
