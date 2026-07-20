@@ -21,8 +21,11 @@
       "hint": { "role": "button", "text": "Create token" }
     },
     { "kind": "wait", "ms": 2000 },
-    { "kind": "scroll", "direction": "down", "amount": 5000 },
-    { "kind": "wait", "ms": 600 }
+    {
+      "kind": "click",
+      "hint": { "role": "button", "text": "Integrations" }
+    },
+    { "kind": "wait", "ms": 1000 }
   ],
   "expect": {
     "anyOf": [{ "text": "Your new token has been created" }]
