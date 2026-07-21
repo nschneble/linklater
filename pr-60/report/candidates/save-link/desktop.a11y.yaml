@@ -1,0 +1,28 @@
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - button "Go to your links": Linklater Save links now, read them later.
+  - button "User menu (testing-ui@linklater.test)"
+- main "Your links":
+  - heading "Your links" [level=1]
+  - button "Show keyboard shortcuts"
+  - paragraph: Add, search, or stumble upon something random.
+  - tablist "Links filter":
+    - tab "Unread" [selected]
+    - tab "Read"
+  - button "Stumble!"
+  - button "Paste & save"
+  - button "Add link"
+  - searchbox "Search through your links"
+  - tabpanel "Unread":
+    - list:
+      - listitem:
+        - paragraph: (No title)
+        - paragraph: httpforever.com
+        - paragraph: http://httpforever.com/
+        - link "(No title) – httpforever.com, opens in new tab":
+          - /url: http://httpforever.com/
+  - text: Link saved!
+  - button "Dismiss"
+  - status: Link saved!
+  - status
