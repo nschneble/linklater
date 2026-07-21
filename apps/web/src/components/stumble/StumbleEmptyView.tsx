@@ -42,7 +42,7 @@ export default function StumbleEmptyView() {
         onClick={() => navigate('/unread')}
       >
         <i className="fa-solid fa-arrow-left text-xs" aria-hidden="true" />
-        Back to Linklater
+        View reading list
       </IconButton>
     </div>
   );

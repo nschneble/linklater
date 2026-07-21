@@ -1,9 +1,11 @@
 import ConfirmAccountDeletionPage from '../components/auth/ConfirmAccountDeletionPage';
 import ExtensionAuthorizePage from '../components/auth/ExtensionAuthorizePage';
 import FailWhalePage from '../components/FailWhalePage';
+import LoadingIndicator from '../components/common/LoadingIndicator';
 import LogoutPage from '../components/auth/LogoutPage';
 import OAuthCallbackPage from '../components/auth/OAuthCallbackPage';
 import ResetPasswordPage from '../components/auth/ResetPasswordPage';
+import SavePage from '../components/save/SavePage';
 import VerifyEmailChangePage from '../components/verify/VerifyEmailChangePage';
 import VerifyEmailPage from '../components/verify/VerifyEmailPage';
 import VerifyLoginPage from '../components/auth/VerifyLoginPage';
@@ -27,13 +29,7 @@ function ApiDocsRoute() {
           data-theme="branding"
           className="flex items-center justify-center min-h-screen bg-hit-man text-[var(--base-text)] select-none"
         >
-          <p role="status" aria-live="polite" className="sr-only">
-            Loading API docs…
-          </p>
-          <i
-            className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
-            aria-hidden="true"
-          />
+          <LoadingIndicator message="Loading API docs…" />
         </div>
       }
     >
@@ -62,6 +58,11 @@ export function commonRoutes() {
       path="/reset-password"
       element={<ResetPasswordPage />}
     />,
+    // The /save route is PUBLIC so a share-target or extension landing in a
+    // logged-out browser reaches SavePage (which bounces through login and
+    // resumes) instead of being eaten by the authed catch-all. Auth is handled
+    // inside the page.
+    <Route key="save" path="/save" element={<SavePage />} />,
     <Route
       key="verify-email"
       path="/verify-email"

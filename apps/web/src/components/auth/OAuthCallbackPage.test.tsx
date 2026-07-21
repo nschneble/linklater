@@ -81,6 +81,30 @@ describe('OAuthCallbackPage', () => {
     expect(consumePendingNotice()).toBeNull();
   });
 
+  it('navigates to location.state.from on success when present (resume the save)', async () => {
+    window.location.hash = '#token=test-jwt';
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/oauth/callback',
+            state: { from: '/save?url=https%3A%2F%2Fexample.com%2Farticle' },
+          },
+        ]}
+      >
+        <OAuthCallbackPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(
+        '/save?url=https%3A%2F%2Fexample.com%2Farticle',
+        { replace: true },
+      );
+    });
+  });
+
   it('queues oauth-failed and redirects to /login when the hash has no token', async () => {
     window.location.hash = '#error=cancelled';
 

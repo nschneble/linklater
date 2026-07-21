@@ -25,6 +25,21 @@ export interface PaginatedLinks {
   total: number;
 }
 
+/**
+ * Whether a save inserted a brand-new link or brought an existing one back to
+ * the top of the list. Mirrors the backend `CreateLinkResponseDto.status`.
+ */
+export type CreateLinkStatus = 'created' | 'resurfaced';
+
+/**
+ * The `POST /links` response. Extends `Link` with the created-vs-resurfaced
+ * discriminator so callers can vary copy. The field is optional so older
+ * clients and any not-yet-migrated response shape still type-check.
+ */
+export interface CreateLinkResponse extends Link {
+  status?: CreateLinkStatus;
+}
+
 export function getLink(id: string): Promise<Link> {
   return apiFetch<Link>(`/links/${id}`);
 }
@@ -55,8 +70,10 @@ export function getLinks(options?: {
   return apiFetch<PaginatedLinks>(path);
 }
 
-export function createLink(input: { url: string }): Promise<Link> {
-  return apiFetch<Link>('/links', {
+export function createLink(input: {
+  url: string;
+}): Promise<CreateLinkResponse> {
+  return apiFetch<CreateLinkResponse>('/links', {
     body: JSON.stringify(input),
     method: 'POST',
   });

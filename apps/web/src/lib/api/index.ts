@@ -37,7 +37,13 @@ export {
   getStoredRefreshToken,
   setStoredToken,
 } from './core';
-export type { PaginatedLinks, Link, LinkMeta } from './links';
+export type {
+  CreateLinkResponse,
+  CreateLinkStatus,
+  PaginatedLinks,
+  Link,
+  LinkMeta,
+} from './links';
 export {
   createLink,
   deleteAllReadLinks,

@@ -35,7 +35,8 @@ export class LinksService {
    *
    * @param userId - The UUID of the authenticated user.
    * @param input - Contains the URL to save.
-   * @returns The created or resurfaced link with its `meta` relation included.
+   * @returns The created or resurfaced link with its `meta` relation included,
+   *   plus a `status` of `created` or `resurfaced` so the caller can vary copy.
    */
   async create(userId: string, input: CreateLinkInput) {
     const existing = await this.prisma.link.findFirst({
@@ -62,7 +63,7 @@ export class LinksService {
           });
       }
 
-      return link;
+      return { ...link, status: 'resurfaced' as const };
     }
 
     let link;
@@ -85,7 +86,8 @@ export class LinksService {
           include: META_INCLUDE,
         });
         if (racedExisting) {
-          return this.resurfaceLink(racedExisting.id);
+          const resurfaced = await this.resurfaceLink(racedExisting.id);
+          return { ...resurfaced, status: 'resurfaced' as const };
         }
       }
       throw error;
@@ -105,7 +107,7 @@ export class LinksService {
         );
       });
 
-    return link;
+    return { ...link, status: 'created' as const };
   }
 
   /**

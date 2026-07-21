@@ -3,6 +3,7 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
 import Alert from '../common/Alert';
 import IconButton from '../common/IconButton';
+import LoadingIndicator from '../common/LoadingIndicator';
 import StumbleEmptyView from './StumbleEmptyView';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -100,13 +101,7 @@ export default function StumblePage() {
 
   return (
     <main className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
-      <p role="status" aria-live="polite" className="sr-only">
-        Finding a random link…
-      </p>
-      <i
-        className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
-        aria-hidden="true"
-      />
+      <LoadingIndicator message="Finding a random link…" />
     </main>
   );
 }

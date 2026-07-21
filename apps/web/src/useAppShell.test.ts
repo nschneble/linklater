@@ -255,6 +255,42 @@ describe('user menu toggle', () => {
   });
 });
 
+describe('focusMain arrival is honored once then consumed', () => {
+  it('clears focusMain from history state on arrival so a reload cannot re-fire it', () => {
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/unread',
+      search: '',
+      hash: '',
+      state: { focusMain: true },
+      key: 'default',
+    });
+
+    renderHook(() => useAppShell());
+
+    expect(navigateMock).toHaveBeenCalledWith('/unread', {
+      replace: true,
+      state: null,
+    });
+  });
+
+  it('does not re-enter the focus branch on a cold reload once focusMain is cleared', () => {
+    // A reload restores the entry with focusMain already stripped. isFirstRender
+    // is true again on the fresh mount, so the skip-link guard must hold and no
+    // consume navigate fires.
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/unread',
+      search: '',
+      hash: '',
+      state: null,
+      key: 'default',
+    });
+
+    renderHook(() => useAppShell());
+
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+});
+
 describe('global x shortcut respects the keyboard-shortcuts preference', () => {
   afterEach(() => {
     window.localStorage.clear();

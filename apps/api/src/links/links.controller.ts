@@ -33,6 +33,7 @@ import {
   DeleteResultDto,
 } from './dto/delete-result.dto.js';
 import { CreateLinkDto } from './dto/create-link.dto.js';
+import { CreateLinkResponseDto } from './dto/create-link-response.dto.js';
 import { LinkResponseDto } from './dto/link-response.dto.js';
 import { PaginatedLinksResponseDto } from './dto/paginated-links-response.dto.js';
 import { RandomLinkResponseDto } from './dto/random-link-response.dto.js';
@@ -70,8 +71,8 @@ export class LinksController {
   @ApiResponse({
     status: 201,
     description:
-      'The newly saved link. Its metadata is fetched in the background and may not be available on the first response.',
-    type: LinkResponseDto,
+      'The saved link plus a `status` of "created" for a new URL or "resurfaced" when the URL was already saved and got moved to the top. Both cases return 201. Its metadata is fetched in the background and may not be available on the first response.',
+    type: CreateLinkResponseDto,
   })
   @ApiResponse({
     status: 400,

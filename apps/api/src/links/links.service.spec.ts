@@ -103,6 +103,7 @@ describe('LinksService', () => {
       }),
     );
     expect(link.url).toBe(LINK_URL);
+    expect(link.status).toBe('created');
     expect(queueMock.send).toHaveBeenCalledWith(
       QUEUES.METADATA_FETCH,
       { linkId: LINK_ID, url: LINK_URL },
@@ -131,6 +132,7 @@ describe('LinksService', () => {
       METADATA_SEND_OPTIONS,
     );
     expect(link.readAt).toBeNull();
+    expect(link.status).toBe('resurfaced');
   });
 
   it('upserts existing link without re-enqueuing metadata when already fetched', async () => {
@@ -174,6 +176,7 @@ describe('LinksService', () => {
       }),
     );
     expect(link.readAt).toBeNull();
+    expect(link.status).toBe('resurfaced');
   });
 
   it('re-throws the original P2002 when findFirst returns null after the race (row vanished between constraint error and recovery query)', async () => {

@@ -182,7 +182,7 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
 - Contexts: `createContext(undefined)` with custom hook that throws outside provider
 - Form state sequence: clear error → set loading → attempt action → handle result
 - Extract errors: `error instanceof Error ? error.message : 'Something went wrong'`
-- Sort imports alphabetically — within individual imports + across import list. Put `import {}` before `import type {}`.
+- Sort imports alphabetically — within individual imports + across the import list. Sort the list by module path (the specifier string, e.g. `'../lib/api'`), not by the imported name. Put `import {}` before `import type {}`.
 
 ```typescript
 // Example of poor import organization
@@ -191,8 +191,8 @@ import { stumbleLink } from '../lib/api';
 import StumbleEmptyView from './StumbleEmptyView';
 
 // Example of good import organization
-import StumbleEmptyView from './StumbleEmptyView';
 import { stumbleLink } from '../lib/api';
+import StumbleEmptyView from './StumbleEmptyView';
 import { useEffect, useState } from 'react';
 ```
 

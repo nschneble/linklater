@@ -116,15 +116,31 @@ export function useAppShell() {
   // otherwise steal it right back to <main>. Plain `/settings` still
   // focuses <main>.
   useEffect(() => {
+    // An in-app navigation into the shell (e.g. the /save page handing the
+    // user to their reading list) sets `focusMain` so keyboard and
+    // screen-reader users land on <main> instead of the header on arrival
+    // (WCAG 2.4.3). A cold page load keeps the isFirstRender guard: on first
+    // paint the browser has not focused anything meaningful yet, so moving
+    // focus to <main> would skip the skip link.
+    const wantsFocusOnArrival = Boolean(
+      (location.state as { focusMain?: boolean } | null)?.focusMain,
+    );
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      return;
+      if (!wantsFocusOnArrival) return;
     }
     const hasSettingsScrollIntent =
       view === 'settings' &&
       Boolean((location.state as { scrollTo?: string } | null)?.scrollTo);
     if (hasSettingsScrollIntent) return;
     mainReference.current?.focus();
+    // Consume the one-shot focusMain flag so it does not survive into
+    // history.state. Without this a reload would restore the same entry's
+    // state, re-enter this branch past the isFirstRender skip-link guard, and
+    // steal focus to <main> on a cold load the guard was meant to protect.
+    if (wantsFocusOnArrival) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
 

@@ -1,8 +1,8 @@
 import { setPendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
-import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 /**
  * Handles the OAuth redirect back from the API after Google or Apple sign-in.
@@ -26,8 +26,19 @@ import { useNavigate } from 'react-router-dom';
 export default function OAuthCallbackPage() {
   useDocumentTitle('Linklater – Sign in');
   const { loginWithToken } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const hasHandled = useRef(false);
+  // Resume wherever the user was headed before /login (e.g. a /save?url= they
+  // bounced through login to finish), matching useAuthForm's password path. An
+  // OAuth callback is a cold cross-site redirect, so it carries no client-side
+  // location.state and `from` is absent here in practice, defaulting to
+  // /unread; carrying `from` across the provider round trip would need it
+  // threaded through the OAuth `state` parameter.
+  const postLoginDestination = useCallback(
+    () => (location.state as { from?: string })?.from ?? '/unread',
+    [location],
+  );
 
   useEffect(() => {
     if (hasHandled.current) return;
@@ -63,13 +74,13 @@ export default function OAuthCallbackPage() {
     }
 
     loginWithToken(accessToken, refreshToken)
-      .then(() => navigate('/unread', { replace: true }))
+      .then(() => navigate(postLoginDestination(), { replace: true }))
       .catch((error: unknown) => {
         void error;
         setPendingNotice('oauth-failed');
         navigate('/login', { replace: true });
       });
-  }, [loginWithToken, navigate]);
+  }, [loginWithToken, navigate, postLoginDestination]);
 
   // The page is purely transient: spinner while loginWithToken is in flight,
   // then an unconditional redirect (success → /unread, failure → /login).

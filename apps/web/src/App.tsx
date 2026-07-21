@@ -1,3 +1,4 @@
+import PendingSaveDrainer from './components/PendingSaveDrainer';
 import ErrorBoundary from './components/errors/ErrorBoundary';
 import { commonRoutes } from './routes/Common';
 import { unauthenticatedRoutes } from './routes/Unauthenticated';
@@ -94,6 +95,12 @@ export default function App() {
         {commonRoutes()}
         {user ? userRoutes() : unauthenticatedRoutes()}
       </Routes>
+      {/*
+        Drains a pending logged-out save after a cold magic-link / OAuth landing.
+        Mounted only when a user is present so it never runs in the logged-out
+        tree, and outside <Routes> so it survives every authenticated route.
+      */}
+      {user && <PendingSaveDrainer />}
     </ErrorBoundary>
   );
 }

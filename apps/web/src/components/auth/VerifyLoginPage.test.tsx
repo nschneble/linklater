@@ -396,6 +396,81 @@ describe('VerifyLoginPage error paths – redirect to /login with toast', () => 
   });
 });
 
+describe('VerifyLoginPage resumes a saved destination via location.state.from', () => {
+  function renderWithFrom(from: string) {
+    return render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/verify-login',
+            search: '?token=valid-token',
+            state: { from },
+          },
+        ]}
+      >
+        <VerifyLoginPage />
+      </MemoryRouter>,
+    );
+  }
+
+  it('navigates to state.from after a fresh magic-link login when present', async () => {
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      accessToken: 'jwt-abc',
+      refreshToken: 'refresh-abc',
+      userId: 'user-1',
+    });
+
+    await act(async () => {
+      renderWithFrom('/save?url=https%3A%2F%2Fexample.com%2Farticle');
+    });
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(
+        '/save?url=https%3A%2F%2Fexample.com%2Farticle',
+        { replace: true },
+      );
+    });
+  });
+
+  it('navigates to state.from on the same-account branch when present', async () => {
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ user: { userId: 'user-1' } }),
+    );
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      accessToken: 'jwt-abc',
+      refreshToken: 'refresh-abc',
+      userId: 'user-1',
+    });
+
+    await act(async () => {
+      renderWithFrom('/save?url=https%3A%2F%2Fexample.com%2Farticle');
+    });
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(
+        '/save?url=https%3A%2F%2Fexample.com%2Farticle',
+        { replace: true },
+      );
+    });
+  });
+
+  it('still defaults to /unread when no from is present', async () => {
+    vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
+      accessToken: 'jwt-abc',
+      refreshToken: 'refresh-abc',
+      userId: 'user-1',
+    });
+
+    await act(async () => {
+      renderPage();
+    });
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/unread', { replace: true });
+    });
+  });
+});
+
 describe('VerifyLoginPage MFA challenge', () => {
   it('shows MfaView when verifyMagicLink returns an mfaToken', async () => {
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({

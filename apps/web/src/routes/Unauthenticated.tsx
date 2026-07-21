@@ -23,7 +23,12 @@ function AuthFormWrapper() {
 
 function UnauthenticatedRedirect() {
   const location = useLocation();
-  return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  // Keep the search string (e.g. `/save?url=…`) alongside the pathname so the
+  // post-login resume lands the user back on the exact URL they asked for, not
+  // a param-stripped version of it. Dropping the query here would silently
+  // break the /save flow for a logged-out visitor.
+  const from = `${location.pathname}${location.search}`;
+  return <Navigate to="/login" state={{ from }} replace />;
 }
 
 export function unauthenticatedRoutes() {

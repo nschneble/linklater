@@ -82,6 +82,18 @@ describe('LinksController', () => {
       expect(result).toBe(link);
     });
 
+    it('passes the created-vs-resurfaced status through unchanged', async () => {
+      const resurfaced = makeLink({ status: 'resurfaced' });
+      (linksServiceMock.create as jest.Mock).mockResolvedValue(resurfaced);
+
+      const result = await controller.create(makeRequest(), {
+        url: LINK_URL,
+      } as never);
+
+      expect(result).toBe(resurfaced);
+      expect(result.status).toBe('resurfaced');
+    });
+
     it('applies CustomThrottlerGuard to cap link-creation spam', () => {
       const guards: unknown[] =
         Reflect.getMetadata('__guards__', LinksController.prototype.create) ??

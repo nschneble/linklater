@@ -4,9 +4,9 @@ import { revokeAllSessions, verifyMagicLink, verifyOtp } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import MfaView from './MfaView';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 type MfaChallenge = 'totp' | 'recovery';
 
@@ -45,8 +45,19 @@ type MfaChallenge = 'totp' | 'recovery';
 export default function VerifyLoginPage() {
   useDocumentTitle('Linklater – Verifying sign in');
   const [searchParameters] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { loginWithToken, refreshUser, user } = useAuth();
+  // Resume wherever the user was headed before /login (e.g. a /save?url= they
+  // bounced through login to finish), matching useAuthForm's password path so
+  // magic-link and MFA logins don't silently drop the destination. A cold
+  // magic-link entry carries no client-side location.state, so `from` is
+  // absent there and this defaults to /unread; preserving `from` across that
+  // email round trip would need it threaded through the link itself.
+  const postLoginDestination = useCallback(
+    () => (location.state as { from?: string })?.from ?? '/unread',
+    [location],
+  );
   // The verify effect reads `user` once on mount and routes based on
   // whether the magic-link userId matches. Mirror into a ref so the
   // post-await branch sees the value from the moment the effect fired,
@@ -102,7 +113,7 @@ export default function VerifyLoginPage() {
           // but the existing session is still valid – discard the freshly
           // issued tokens rather than rotating the JWT in open tabs.
           setPendingNotice('already-logged-in');
-          navigate('/unread', { replace: true });
+          navigate(postLoginDestination(), { replace: true });
           return;
         }
 
@@ -115,21 +126,21 @@ export default function VerifyLoginPage() {
           await revokeAllSessions();
           await loginWithToken(result.accessToken, result.refreshToken);
           setPendingNotice('account-switched');
-          navigate('/unread', { replace: true });
+          navigate(postLoginDestination(), { replace: true });
           return;
         }
 
         // No prior session – standard fresh login, no toast (the destination
         // is the confirmation that auth succeeded).
         await loginWithToken(result.accessToken, result.refreshToken);
-        navigate('/unread', { replace: true });
+        navigate(postLoginDestination(), { replace: true });
       })
       .catch((error: unknown) => {
         void error;
         setPendingNotice('login-link-invalid');
         navigate('/login', { replace: true });
       });
-  }, [loginWithToken, navigate, searchParameters]);
+  }, [loginWithToken, navigate, postLoginDestination, searchParameters]);
 
   // Focus the MfaView error when it appears. The ref is only attached while
   // the MFA step is mounted, so this is a no-op outside that branch.
@@ -148,7 +159,7 @@ export default function VerifyLoginPage() {
       await verifyOtp(mfaToken, mfaCode, mfaChallenge);
       await refreshUser();
       setMfaCode('');
-      navigate('/unread', { replace: true });
+      navigate(postLoginDestination(), { replace: true });
     } catch (error: unknown) {
       setMfaError(getErrorMessage(error, 'Invalid code'));
       setMfaCode('');
