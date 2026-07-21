@@ -13,6 +13,8 @@ interface LinksToolbarProps {
   isClearingRead: boolean;
   /** Passed to `LinksControls` to conditionally hide the "Remove all" button. */
   links: Link[];
+  /** Marks the "Paste & save" button as busy while its clipboard save runs. */
+  pasting: boolean;
   /** Passed to `LinksControls` to disable the "Stumble!" button. */
   randomLoading: boolean;
   /** The controlled value of the search input. */
@@ -27,6 +29,8 @@ interface LinksToolbarProps {
   onNavigateRead: () => void;
   /** Navigates to the `/unread` route when the Unread tab is clicked. */
   onNavigateUnread: () => void;
+  /** Reads the clipboard and saves the URL it holds into the unread list. */
+  onPasteAndSave: () => Promise<void>;
   /** Called when the user clicks "Stumble!" */
   onRandom: () => Promise<void>;
   /** Called with the new search string on every keystroke. */
@@ -49,6 +53,7 @@ export default function LinksToolbar({
   filter,
   isClearingRead,
   links,
+  pasting,
   randomLoading,
   search,
   searchInputReference,
@@ -56,6 +61,7 @@ export default function LinksToolbar({
   onClearRead,
   onNavigateRead,
   onNavigateUnread,
+  onPasteAndSave,
   onRandom,
   onSearch,
   onToggleForm,
@@ -89,9 +95,11 @@ export default function LinksToolbar({
             filter={filter}
             isClearingRead={isClearingRead}
             linksCount={links.length}
+            pasting={pasting}
             randomLoading={randomLoading}
             showLinkForm={showLinkForm}
             onClearRead={onClearRead}
+            onPasteAndSave={onPasteAndSave}
             onRandom={onRandom}
             onToggleForm={onToggleForm}
           />
@@ -120,9 +128,11 @@ export default function LinksToolbar({
           filter={filter}
           isClearingRead={isClearingRead}
           linksCount={links.length}
+          pasting={pasting}
           randomLoading={randomLoading}
           showLinkForm={showLinkForm}
           onClearRead={onClearRead}
+          onPasteAndSave={onPasteAndSave}
           onRandom={onRandom}
           onToggleForm={onToggleForm}
         />

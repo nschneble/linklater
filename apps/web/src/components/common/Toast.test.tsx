@@ -1,47 +1,83 @@
 /*
  * Tests for Toast – the fixed-position notification.
  *
- * Three contracts pinned here:
- * 1. Variant drives the bundle paint: success → success-highlight,
- *    error → alert-highlight. The dismiss button's focus-visible ring
- *    flips to the corresponding `--{state}-highlight-fg` (Recovery
- *    Option A: the universal `--focus-ring` fails 3:1 against the
+ * The toast is split into two parts: a VISIBLE container (icon + message +
+ * dismiss button, no live-region role) that paints synchronously, and a
+ * separate sr-only announcement region (role/aria-live per variant) that
+ * mounts empty and fills a couple of frames later.
+ *
+ * Contracts pinned here:
+ * 1. Variant drives the bundle paint on the VISIBLE container: success →
+ *    success-highlight, error → alert-highlight. The dismiss button's
+ *    focus-visible ring flips to the corresponding `--{state}-highlight-fg`
+ *    (Recovery Option A: the universal `--focus-ring` fails 3:1 against the
  *    state-highlights on every theme).
- * 2. Variant drives ARIA exposure: success → role="status" /
- *    aria-live="polite", error → role="alert" / aria-live="assertive".
- * 3. Dismiss flow: clicking the close button triggers an exit animation
- *    and fires onDismiss after the 150ms tail.
+ * 2. Variant drives ARIA exposure on the sr-only ANNOUNCE region: success →
+ *    role="status" / aria-live="polite", error → role="alert" /
+ *    aria-live="assertive".
+ * 3. The visible message renders synchronously (no width-jump); the sr-only
+ *    announce region mounts empty and gains the text on a later frame.
+ * 4. Dismiss flow: clicking the close button triggers an exit animation and
+ *    fires onDismiss after the 150ms tail.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import Toast from './Toast';
 
+// The sr-only announce region defers its text by two animation frames
+// (SC 4.1.3). Tests drive those frames manually so message assertions are
+// deterministic and independent of the real clock.
+let pendingFrames: FrameRequestCallback[] = [];
+
+function flushFrames() {
+  act(() => {
+    const frames = pendingFrames;
+    pendingFrames = [];
+    for (const frame of frames) frame(0);
+  });
+}
+
+// The visible container is the parent of the dismiss button; it has no
+// live-region role, so we can't query it via getByRole.
+function getVisibleContainer() {
+  return screen.getByRole('button', { name: 'Dismiss' }).parentElement!;
+}
+
 describe('Toast', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    pendingFrames = [];
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      pendingFrames.push(callback);
+      return pendingFrames.length;
+    });
+    vi.stubGlobal('cancelAnimationFrame', () => {});
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 
-  it('success variant paints success-highlight / success-highlight-fg', () => {
+  it('success variant paints success-highlight / success-highlight-fg and announces politely', () => {
     render(<Toast message="Saved!" onDismiss={() => {}} />);
-    const toast = screen.getByRole('status');
-    expect(toast.className).toContain('bg-[var(--success-highlight)]');
-    expect(toast.className).toContain('text-[var(--success-highlight-fg)]');
-    expect(toast.getAttribute('aria-live')).toBe('polite');
+    const visible = getVisibleContainer();
+    expect(visible.className).toContain('bg-[var(--success-highlight)]');
+    expect(visible.className).toContain('text-[var(--success-highlight-fg)]');
+    expect(screen.getByRole('status').getAttribute('aria-live')).toBe('polite');
   });
 
-  it('error variant paints alert-highlight / alert-highlight-fg', () => {
+  it('error variant paints alert-highlight / alert-highlight-fg and announces assertively', () => {
     render(
       <Toast message="Something broke" onDismiss={() => {}} variant="error" />,
     );
-    const toast = screen.getByRole('alert');
-    expect(toast.className).toContain('bg-[var(--alert-highlight)]');
-    expect(toast.className).toContain('text-[var(--alert-highlight-fg)]');
-    expect(toast.getAttribute('aria-live')).toBe('assertive');
+    const visible = getVisibleContainer();
+    expect(visible.className).toContain('bg-[var(--alert-highlight)]');
+    expect(visible.className).toContain('text-[var(--alert-highlight-fg)]');
+    expect(screen.getByRole('alert').getAttribute('aria-live')).toBe(
+      'assertive',
+    );
   });
 
   it('success variant uses fa-circle-check icon', () => {
@@ -84,10 +120,10 @@ describe('Toast', () => {
   // the interactive dismiss button's outline.
   it('paints a CanvasText border + text fallback in forced-colors mode', () => {
     render(<Toast message="x" onDismiss={() => {}} />);
-    const toast = screen.getByRole('status');
-    expect(toast.className).toContain('forced-colors:border');
-    expect(toast.className).toContain('forced-colors:border-[CanvasText]');
-    expect(toast.className).toContain('forced-colors:text-[CanvasText]');
+    const visible = getVisibleContainer();
+    expect(visible.className).toContain('forced-colors:border');
+    expect(visible.className).toContain('forced-colors:border-[CanvasText]');
+    expect(visible.className).toContain('forced-colors:text-[CanvasText]');
   });
 
   it('clicking dismiss triggers the exit animation and fires onDismiss after 150ms', () => {
@@ -95,10 +131,8 @@ describe('Toast', () => {
     render(<Toast message="x" onDismiss={handleDismiss} />);
     const dismiss = screen.getByRole('button', { name: 'Dismiss' });
     fireEvent.click(dismiss);
-    // exit animation kicks in synchronously
-    expect(screen.getByRole('status').className).toContain(
-      'animate-fade-out-down',
-    );
+    // exit animation kicks in synchronously on the visible container
+    expect(getVisibleContainer().className).toContain('animate-fade-out-down');
     expect(handleDismiss).not.toHaveBeenCalled();
     act(() => {
       vi.advanceTimersByTime(150);
@@ -126,9 +160,50 @@ describe('Toast', () => {
     expect(handleDismiss).toHaveBeenCalledTimes(1);
   });
 
-  it('renders the message text', () => {
+  it('renders the visible message synchronously at mount (no deferred fill)', () => {
     render(<Toast message="Hello world" onDismiss={() => {}} />);
-    expect(screen.getByRole('status').textContent).toContain('Hello world');
+    // No frame flush: the visible text must already be present at first paint
+    // so the toast never reflows mid-animation.
+    expect(getVisibleContainer().textContent).toContain('Hello world');
+  });
+
+  // SC 4.1.3: VoiceOver ignores a live region whose text is present at mount
+  // (no change event). The sr-only announce region must mount empty and gain
+  // its text on a later frame so the screen reader speaks a genuine change.
+  it('mounts the sr-only announce region empty, then fills it on a later frame', () => {
+    render(<Toast message="Link saved!" onDismiss={() => {}} />);
+    const announce = screen.getByRole('status');
+    expect(announce.textContent).not.toContain('Link saved!');
+    flushFrames();
+    flushFrames();
+    expect(announce.textContent).toContain('Link saved!');
+  });
+
+  it('marks the announce region aria-atomic so the whole message is announced', () => {
+    render(<Toast message="x" onDismiss={() => {}} />);
+    expect(screen.getByRole('status').getAttribute('aria-atomic')).toBe('true');
+  });
+
+  it('warning variant announces politely (role=status) and paints warn-highlight', () => {
+    render(
+      <Toast
+        message="No link in clipboard"
+        onDismiss={() => {}}
+        variant="warning"
+      />,
+    );
+    const visible = getVisibleContainer();
+    expect(visible.className).toContain('bg-[var(--warn-highlight)]');
+    expect(visible.className).toContain('text-[var(--warn-highlight-fg)]');
+    expect(screen.getByRole('status').getAttribute('aria-live')).toBe('polite');
+  });
+
+  it('warning variant uses the fa-triangle-exclamation icon', () => {
+    const { container } = render(
+      <Toast message="x" onDismiss={() => {}} variant="warning" />,
+    );
+    expect(container.querySelector('.fa-triangle-exclamation')).toBeTruthy();
+    expect(container.querySelector('.fa-circle-exclamation')).toBeNull();
   });
 
   it('does not extend auto-dismiss when parent re-renders mid-window', () => {

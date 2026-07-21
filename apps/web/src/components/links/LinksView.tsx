@@ -57,8 +57,9 @@ interface LinksViewProps {
  *
  * Cross-route pending notices (FLAG-1) – e.g. arriving on /unread after a
  * verify-email redirect – are consumed via `usePendingNotice` and surfaced
- * by `PendingNoticeAnnouncer` (toast + sr-only mirror). The announcer IS
- * the announcement; no focus shift to the <main> landmark is performed on
+ * by `PendingNoticeAnnouncer`, which renders a `Toast`. The Toast owns the
+ * announcement (via its own sr-only live region); no focus shift to the
+ * <main> landmark is performed on
  * notice arrival, since (a) NVDA/JAWS can interrupt a polite live region
  * when focus moves into an unrelated landmark mid-announce, and (b) the
  * <main> landmark already carries a view-specific `aria-label` in AppShell
@@ -119,6 +120,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         filter={view.filter}
         isClearingRead={view.isClearingRead}
         links={view.links}
+        pasting={view.pasting}
         randomLoading={view.randomLoading}
         search={view.search}
         searchInputReference={view.searchInputReference}
@@ -126,6 +128,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         onClearRead={view.handleClearRead}
         onNavigateRead={view.onNavigateRead}
         onNavigateUnread={view.onNavigateUnread}
+        onPasteAndSave={view.handlePasteAndSave}
         onRandom={view.handleRandom}
         onSearch={view.onSearch}
         onToggleForm={view.handleToggleForm}
@@ -202,6 +205,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       {view.toastMessage && (
         <Toast
           message={view.toastMessage}
+          variant={view.toastVariant}
           onDismiss={view.handleDismissToast}
         />
       )}
@@ -209,9 +213,9 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       {/*
         Polite live region announcing links that arrive via a background
         visibility refresh (e.g. saved via the bookmarklet on another tab).
-        The visual Toast above already carries its own role="status"
-        aria-live="polite", so it is not echoed here – that produced a
-        double SR announcement.
+        The Toast above already announces politely (its own sr-only
+        role="status" region), so the message is not echoed here – that
+        produced a double SR announcement.
       */}
       <span className="sr-only" role="status">
         {view.newLinksAnnouncement}

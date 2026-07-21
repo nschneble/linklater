@@ -16,9 +16,11 @@ export default function LinksMobileControls({
   filter,
   isClearingRead,
   linksCount,
+  pasting,
   randomLoading,
   showLinkForm,
   onClearRead,
+  onPasteAndSave,
   onRandom,
   onToggleForm,
 }: LinksControlsProps) {
@@ -52,6 +54,18 @@ export default function LinksMobileControls({
               className="fa-brands fa-stumbleupon text-[0.7rem]"
               aria-hidden="true"
             />
+          </IconButton>
+          <IconButton
+            variant="elevated"
+            surface="base"
+            aria-label="Paste & save"
+            title="Paste & save"
+            aria-disabled={pasting || undefined}
+            aria-busy={pasting || undefined}
+            className="px-2.5! aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+            onClick={onPasteAndSave}
+          >
+            <i className="fa-solid fa-paste text-[0.7rem]" aria-hidden="true" />
           </IconButton>
           <PrimaryButton
             type="button"

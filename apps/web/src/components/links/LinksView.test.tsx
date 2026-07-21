@@ -4,7 +4,8 @@
  * Coverage:
  *   - When `usePendingNotice` returns a non-null notice, the
  *     `PendingNoticeAnnouncer` renders the toast.
- *   - The sr-only mirror text updates from empty → notice text.
+ *   - The notice announces through exactly one live region (the Toast owns
+ *     announcement; the old external mirror is gone, so no double-announce).
  *   - No focus shift fires on pending-notice arrival – the toast IS the
  *     announcement, and moving focus into <main> mid-announce can
  *     interrupt the polite live region on NVDA/JAWS.
@@ -62,6 +63,7 @@ function makeViewResult(
     handleCreated: vi.fn(),
     handleDismissToast: vi.fn(),
     handleLoadMore: vi.fn(),
+    handlePasteAndSave: vi.fn(),
     handleRandom: vi.fn(),
     handleToggleForm: vi.fn(),
     handleToggleRead: vi.fn(),
@@ -79,6 +81,7 @@ function makeViewResult(
     pagination: { total: 0, hasMore: false } as ReturnType<
       typeof useLinksView
     >['pagination'],
+    pasting: false,
     randomError: null,
     randomLoading: false,
     readError: null,
@@ -91,6 +94,7 @@ function makeViewResult(
     showLinkForm: false,
     showShortcuts: false,
     toastMessage: null,
+    toastVariant: undefined,
     ...overrides,
   };
 }
@@ -195,9 +199,8 @@ describe('LinksView – cross-route pending notice surface', () => {
 
     renderLinksView();
 
-    // The toast paints inside a role="status" element (success variant).
-    // Multiple role="status" elements exist (newLinksAnnouncement,
-    // toast, and the sr-only mirror), so locate by message text instead.
+    // The visible toast text is a synchronous <div>; locate it by message
+    // text (the sr-only announce region is a <span>, excluded by the selector).
     expect(
       screen.getByText('Your email has been verified.', { selector: 'div' }),
     ).toBeInTheDocument();
@@ -212,31 +215,28 @@ describe('LinksView – cross-route pending notice surface', () => {
 
     renderLinksView();
 
-    // The toast element does not exist when notice is null. The sr-only
-    // mirror DOES stay mounted (with empty text) so the empty → populated
-    // transition fires reliably on future updates.
+    // No notice: no toast and no announcing region. The notice surface is the
+    // Toast's `span.sr-only[aria-live]`; scoping to it excludes the unrelated
+    // newLinksAnnouncement span (role="status", no aria-live) and the
+    // SuggestionCallout live region (a <p>, not span.sr-only).
     expect(
       screen.queryByText(/email has been verified/i),
     ).not.toBeInTheDocument();
+    expect(document.querySelector('span.sr-only[aria-live]')).toBeNull();
   });
 
-  it('sr-only mirror text updates from empty to the notice text', () => {
+  it('announces an arriving notice through exactly one live region (no double-announce)', () => {
     const { rerender } = render(
       <MemoryRouter initialEntries={['/unread']}>
         <LinksView />
       </MemoryRouter>,
     );
 
-    // First render: mirror exists but empty (notice = null).
-    const liveRegions = document.querySelectorAll(
-      'span.sr-only[aria-live="polite"][aria-atomic="true"]',
-    );
-    expect(liveRegions.length).toBe(1);
-    expect(liveRegions[0]?.textContent).toBe('');
+    // First render: notice = null, so the notice surface announces nothing.
+    expect(document.querySelector('span.sr-only[aria-live]')).toBeNull();
 
-    // Update the mock to return a notice and rerender. The mirror text
-    // should now contain the notice – the empty → populated transition
-    // is what triggers SR announcement on NVDA/JAWS.
+    // A notice arrives. The Toast mounts and owns the announcement through its
+    // own sr-only live region; there is no second (mirror) region to compete.
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: 'Your account has been deleted.',
       variant: 'success',
@@ -248,12 +248,13 @@ describe('LinksView – cross-route pending notice surface', () => {
       </MemoryRouter>,
     );
 
-    const liveRegionsAfter = document.querySelectorAll(
-      'span.sr-only[aria-live="polite"][aria-atomic="true"]',
-    );
-    expect(liveRegionsAfter[0]?.textContent).toBe(
-      'Your account has been deleted.',
-    );
+    const liveRegions = document.querySelectorAll('span.sr-only[aria-live]');
+    expect(liveRegions).toHaveLength(1);
+    expect(liveRegions[0].getAttribute('role')).toBe('status');
+    expect(liveRegions[0].getAttribute('aria-live')).toBe('polite');
+    expect(
+      screen.getByText('Your account has been deleted.', { selector: 'div' }),
+    ).toBeInTheDocument();
   });
 
   it('does not move focus to <main> on pending-notice arrival (B2)', () => {

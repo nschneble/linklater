@@ -13,12 +13,16 @@ export interface LinksControlsProps {
   isClearingRead: boolean;
   /** Hides the bulk-delete button when there are no read links to delete. */
   linksCount: number;
+  /** Marks the "Paste & save" button as busy while its clipboard save runs. */
+  pasting: boolean;
   /** Disables the random/stumble button while a random fetch is in flight. */
   randomLoading: boolean;
   /** Drives the `aria-expanded` state and label of the form toggle button. */
   showLinkForm: boolean;
   /** Called when the user requests to remove all read links. */
   onClearRead: () => void;
+  /** Reads the clipboard and saves the URL it holds into the unread list. */
+  onPasteAndSave: () => Promise<void>;
   /** Called when the user requests a random link. */
   onRandom: () => Promise<void>;
   /** Toggles the inline link creation form open or closed. */

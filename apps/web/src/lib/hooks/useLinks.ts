@@ -64,6 +64,7 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     handleDeleteAllRead: actions.handleDeleteAllRead,
     handleDismissToast: actions.handleDismissToast,
     handleLoadMore: data.handleLoadMore,
+    handlePasteAndSave: actions.handlePasteAndSave,
     handleRandom: actions.handleRandom,
     handleToggleRead: actions.handleToggleRead,
     handleToggleForm: form.handleToggleForm,
@@ -73,10 +74,12 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     newLinksAnnouncement: data.newLinksAnnouncement,
     page: data.page,
     pagination: data.pagination,
+    pasting: actions.pasting,
     randomError: actions.randomError,
     randomLoading: actions.randomLoading,
     saveError: actions.saveError,
     showLinkForm: form.showLinkForm,
     toastMessage: actions.toastMessage,
+    toastVariant: actions.toastVariant,
   };
 }

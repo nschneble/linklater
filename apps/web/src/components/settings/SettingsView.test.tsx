@@ -127,8 +127,14 @@ describe('SettingsView OAuth-link flash toast', () => {
   it('renders the success Toast after the mount-effect flushes (deferred announce for SR a11y)', async () => {
     renderAt('/settings?linked=google');
 
-    const toast = await screen.findByRole('status');
-    expect(toast.textContent).toContain('Google account connected.');
+    // The toast mounts after the query-param mount-effect flushes, so await
+    // it; the visible text is a synchronous <div> (the sr-only announce region
+    // is a <span>, excluded by the selector).
+    expect(
+      await screen.findByText('Google account connected.', {
+        selector: 'div',
+      }),
+    ).toBeInTheDocument();
   });
 
   it('does not focus the Toast or its dismiss button on arrival (no unsolicited focus shift)', async () => {
@@ -145,8 +151,9 @@ describe('SettingsView OAuth-link flash toast', () => {
   it('falls back to a generic message when the provider code is unknown', async () => {
     renderAt('/settings?linked=plurkmail');
 
-    const toast = await screen.findByRole('status');
-    expect(toast.textContent).toContain('Account connected.');
+    expect(
+      await screen.findByText('Account connected.', { selector: 'div' }),
+    ).toBeInTheDocument();
   });
 
   it('passes the linkError text down to IdPsSection inline Alert (no Toast)', async () => {

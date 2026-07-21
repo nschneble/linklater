@@ -4,7 +4,8 @@
  * Coverage:
  *   - When `useAuthForm` exposes a non-null `notice`, the
  *     `PendingNoticeAnnouncer` renders the toast.
- *   - The sr-only mirror text updates from empty → notice text.
+ *   - The notice announces through exactly one live region (the Toast owns
+ *     announcement; the old external mirror is gone, so no double-announce).
  *   - Mode-routing render branches still work (login, mfa, forgot-password)
  *     under the mocked hook – proves the refactor didn't drop a branch.
  *
@@ -109,6 +110,7 @@ describe('AuthForm – pending-notice surface', () => {
 
     renderAuthForm();
 
+    // The toast paints its visible text synchronously, so read it directly.
     expect(
       screen.getByText('Your account has been deleted.', { selector: 'div' }),
     ).toBeInTheDocument();
@@ -124,7 +126,7 @@ describe('AuthForm – pending-notice surface', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('sr-only mirror text updates from empty to the notice text', () => {
+  it('announces an arriving notice through exactly one polite live region (no double-announce)', () => {
     vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ notice: null }));
 
     const { rerender } = render(
@@ -133,10 +135,8 @@ describe('AuthForm – pending-notice surface', () => {
       </MemoryRouter>,
     );
 
-    const initialMirror = document.querySelector(
-      'span.sr-only[aria-live="polite"][aria-atomic="true"]',
-    );
-    expect(initialMirror?.textContent).toBe('');
+    // No notice: nothing announces.
+    expect(document.querySelector('[aria-live]')).toBeNull();
 
     vi.mocked(useAuthForm).mockReturnValue(
       makeHookResult({
@@ -152,13 +152,18 @@ describe('AuthForm – pending-notice surface', () => {
       </MemoryRouter>,
     );
 
-    const updatedMirror = document.querySelector(
-      'span.sr-only[aria-live="polite"][aria-atomic="true"]',
-    );
-    expect(updatedMirror?.textContent).toBe('Your email has been verified.');
+    // Exactly one live region now: the Toast owns announcement, and the old
+    // external mirror is gone, so there is no second region to double-speak.
+    const liveRegions = document.querySelectorAll('[aria-live]');
+    expect(liveRegions).toHaveLength(1);
+    expect(liveRegions[0].getAttribute('role')).toBe('status');
+    expect(liveRegions[0].getAttribute('aria-live')).toBe('polite');
+    expect(
+      screen.getByText('Your email has been verified.', { selector: 'div' }),
+    ).toBeInTheDocument();
   });
 
-  it('routes an error-variant notice into the alert/assertive mirror shape', () => {
+  it('routes an error-variant notice into a single alert/assertive live region', () => {
     vi.mocked(useAuthForm).mockReturnValue(
       makeHookResult({
         notice: {
@@ -170,15 +175,15 @@ describe('AuthForm – pending-notice surface', () => {
 
     renderAuthForm();
 
-    // Mirror picks up the assertive shape when the notice carries
-    // variant='error'. Without this routing the toast (assertive) and the
-    // mirror (polite) would race on the SR announcement queue with
-    // mismatched priorities.
-    const mirror = document.querySelector(
-      'span.sr-only[role="alert"][aria-live="assertive"][aria-atomic="true"]',
-    );
-    expect(mirror).toBeInTheDocument();
-    expect(mirror?.textContent).toBe('Verification link expired.');
+    // The single live region picks up the assertive shape when the notice
+    // carries variant='error'.
+    const liveRegions = document.querySelectorAll('[aria-live]');
+    expect(liveRegions).toHaveLength(1);
+    expect(liveRegions[0].getAttribute('role')).toBe('alert');
+    expect(liveRegions[0].getAttribute('aria-live')).toBe('assertive');
+    expect(
+      screen.getByText('Verification link expired.', { selector: 'div' }),
+    ).toBeInTheDocument();
   });
 
   it('passes a setNotice-clearing onDismiss to the announcer', () => {

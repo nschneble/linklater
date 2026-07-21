@@ -1,3 +1,4 @@
+import type { ToastVariant } from '../../components/common/Toast';
 import type { Link, PaginatedLinks } from '../api';
 
 /** The two possible views of the links list. */
@@ -17,6 +18,7 @@ export interface UseLinksResult {
   handleDeleteAllRead: () => Promise<void>;
   handleDismissToast: () => void;
   handleLoadMore: () => void;
+  handlePasteAndSave: () => Promise<void>;
   handleRandom: () => Promise<void>;
   handleToggleRead: (link: Link) => Promise<void>;
   handleToggleForm: () => void;
@@ -27,9 +29,11 @@ export interface UseLinksResult {
   newLinksAnnouncement: string;
   page: number;
   pagination: Pick<PaginatedLinks, 'total' | 'limit'> | null;
+  pasting: boolean;
   randomError: string | null;
   randomLoading: boolean;
   saveError: string | null;
   showLinkForm: boolean;
   toastMessage: string | null;
+  toastVariant: ToastVariant | undefined;
 }

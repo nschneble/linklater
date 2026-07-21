@@ -16,9 +16,11 @@ export default function LinksControls({
   filter,
   isClearingRead,
   linksCount,
+  pasting,
   randomLoading,
   showLinkForm,
   onClearRead,
+  onPasteAndSave,
   onRandom,
   onToggleForm,
 }: LinksControlsProps) {
@@ -49,6 +51,25 @@ export default function LinksControls({
           />
           Stumble!
         </IconButton>
+
+        {/*
+          opacity-60 matches the shared DISABLED const so this button dims the
+          same whether it's aria-disabled (pasting) or natively disabled.
+          Folding all six aria-disabled call sites into DISABLED is a separate
+          cleanup (four other sites still hand-write opacity-50).
+        */}
+        <PrimaryButton
+          type="button"
+          surface="base"
+          hidden={filter !== 'unread'}
+          aria-disabled={pasting || undefined}
+          aria-busy={pasting || undefined}
+          className="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+          onClick={onPasteAndSave}
+        >
+          <i className="fa-solid fa-paste text-[0.7rem]" aria-hidden="true" />
+          Paste & save
+        </PrimaryButton>
 
         <PrimaryButton
           type="button"

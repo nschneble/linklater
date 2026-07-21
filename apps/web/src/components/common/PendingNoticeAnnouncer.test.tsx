@@ -1,25 +1,25 @@
-/**
+/*
  * Tests for PendingNoticeAnnouncer.
  *
- * The primitive pairs a conditional `<Toast>` with a pre-mounted sr-only
- * mirror. The mirror's role/aria-live MUST match the toast's variant per
- * a11y-lead – a polite mirror under an assertive toast lets the two regions
- * race on the SR's announcement queue with mismatched priorities.
+ * The primitive is now a thin wrapper over `<Toast>`: the Toast owns the
+ * announcement via its own sr-only live region, so there is exactly ONE
+ * live region here. The old external mirror (a second live region) is gone,
+ * and these tests guard against it coming back and double-announcing.
  *
  * Coverage:
- *   - Mirror is always mounted (empty or populated)
- *   - variant='success' renders the mirror as role="status" aria-live="polite"
- *   - variant='error' renders the mirror as role="alert" aria-live="assertive"
- *   - The Toast is omitted when notice is null
- *   - The Toast paints with the right variant when notice is non-null
+ *   - Exactly one live region, with the right role/politeness per variant
+ *   - variant='success' announces politely (role="status")
+ *   - variant='error' announces assertively (role="alert")
+ *   - The visible Toast paints the right icon for the variant
+ *   - Nothing renders when notice is null
  */
 
 import PendingNoticeAnnouncer from './PendingNoticeAnnouncer';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-describe('PendingNoticeAnnouncer mirror – success variant', () => {
-  it('renders the sr-only mirror with role="status" and aria-live="polite" when variant is success', () => {
+describe('PendingNoticeAnnouncer – success variant', () => {
+  it('announces through exactly one polite live region (no double-announce)', () => {
     render(
       <PendingNoticeAnnouncer
         notice="Your email has been verified."
@@ -28,14 +28,14 @@ describe('PendingNoticeAnnouncer mirror – success variant', () => {
       />,
     );
 
-    const mirror = document.querySelector(
-      'span.sr-only[role="status"][aria-live="polite"][aria-atomic="true"]',
-    );
-    expect(mirror).toBeInTheDocument();
-    expect(mirror?.textContent).toBe('Your email has been verified.');
+    const liveRegions = document.querySelectorAll('[aria-live]');
+    expect(liveRegions).toHaveLength(1);
+    expect(liveRegions[0].getAttribute('role')).toBe('status');
+    expect(liveRegions[0].getAttribute('aria-live')).toBe('polite');
+    expect(liveRegions[0].getAttribute('aria-atomic')).toBe('true');
   });
 
-  it('renders the visible Toast with the success variant (fa-circle-check icon)', () => {
+  it('renders the visible message synchronously with the success icon (fa-circle-check)', () => {
     const { container } = render(
       <PendingNoticeAnnouncer
         notice="Your email has been verified."
@@ -44,7 +44,11 @@ describe('PendingNoticeAnnouncer mirror – success variant', () => {
       />,
     );
 
-    // Success icon is fa-circle-check (vs fa-circle-exclamation for error).
+    // Visible text is present at first paint (no deferred fill on the visible
+    // toast) and targeted by the `div` selector so the sr-only span is excluded.
+    expect(
+      screen.getByText('Your email has been verified.', { selector: 'div' }),
+    ).toBeInTheDocument();
     expect(container.querySelector('.fa-circle-check')).toBeInTheDocument();
     expect(
       container.querySelector('.fa-circle-exclamation'),
@@ -52,8 +56,8 @@ describe('PendingNoticeAnnouncer mirror – success variant', () => {
   });
 });
 
-describe('PendingNoticeAnnouncer mirror – error variant', () => {
-  it('renders the sr-only mirror with role="alert" and aria-live="assertive" when variant is error', () => {
+describe('PendingNoticeAnnouncer – error variant', () => {
+  it('announces through exactly one assertive live region (no double-announce)', () => {
     render(
       <PendingNoticeAnnouncer
         notice="Verification link expired."
@@ -62,14 +66,14 @@ describe('PendingNoticeAnnouncer mirror – error variant', () => {
       />,
     );
 
-    const mirror = document.querySelector(
-      'span.sr-only[role="alert"][aria-live="assertive"][aria-atomic="true"]',
-    );
-    expect(mirror).toBeInTheDocument();
-    expect(mirror?.textContent).toBe('Verification link expired.');
+    const liveRegions = document.querySelectorAll('[aria-live]');
+    expect(liveRegions).toHaveLength(1);
+    expect(liveRegions[0].getAttribute('role')).toBe('alert');
+    expect(liveRegions[0].getAttribute('aria-live')).toBe('assertive');
+    expect(liveRegions[0].getAttribute('aria-atomic')).toBe('true');
   });
 
-  it('renders the visible Toast with the error variant (fa-circle-exclamation icon)', () => {
+  it('renders the visible Toast with the error icon (fa-circle-exclamation)', () => {
     const { container } = render(
       <PendingNoticeAnnouncer
         notice="Verification link expired."
@@ -85,9 +89,9 @@ describe('PendingNoticeAnnouncer mirror – error variant', () => {
   });
 });
 
-describe('PendingNoticeAnnouncer null notice', () => {
-  it('omits the visible Toast when notice is null', () => {
-    render(
+describe('PendingNoticeAnnouncer – null notice', () => {
+  it('renders nothing when notice is null', () => {
+    const { container } = render(
       <PendingNoticeAnnouncer
         notice={null}
         variant="success"
@@ -95,46 +99,9 @@ describe('PendingNoticeAnnouncer null notice', () => {
       />,
     );
 
-    // No icon = no toast (the Toast is the only thing that emits icons here).
+    expect(container).toBeEmptyDOMElement();
+    expect(document.querySelector('[aria-live]')).toBeNull();
     expect(document.querySelector('.fa-circle-check')).not.toBeInTheDocument();
-    expect(
-      document.querySelector('.fa-circle-exclamation'),
-    ).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /dismiss/i })).toBeNull();
-  });
-
-  it('keeps the sr-only mirror mounted (with empty text) when notice is null', () => {
-    render(
-      <PendingNoticeAnnouncer
-        notice={null}
-        variant="success"
-        onDismiss={vi.fn()}
-      />,
-    );
-
-    const mirror = document.querySelector(
-      'span.sr-only[aria-live][aria-atomic="true"]',
-    );
-    expect(mirror).toBeInTheDocument();
-    expect(mirror?.textContent).toBe('');
-  });
-
-  it('mirror still tracks the error variant ARIA shape even when notice is null', () => {
-    render(
-      <PendingNoticeAnnouncer
-        notice={null}
-        variant="error"
-        onDismiss={vi.fn()}
-      />,
-    );
-
-    // The shape is inert (empty text) but pre-mounting with the correct
-    // ARIA shape means the empty → populated transition will fire under
-    // the right politeness if a notice arrives via a state update.
-    const mirror = document.querySelector(
-      'span.sr-only[role="alert"][aria-live="assertive"][aria-atomic="true"]',
-    );
-    expect(mirror).toBeInTheDocument();
-    expect(mirror?.textContent).toBe('');
   });
 });

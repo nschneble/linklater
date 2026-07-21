@@ -130,6 +130,7 @@ export function useLinksView({
     handleCreated: linksResult.handleCreated,
     handleDismissToast: linksResult.handleDismissToast,
     handleLoadMore: linksResult.handleLoadMore,
+    handlePasteAndSave: linksResult.handlePasteAndSave,
     handleRandom: linksResult.handleRandom,
     handleToggleForm: linksResult.handleToggleForm,
     handleToggleRead: linksResult.handleToggleRead,
@@ -145,6 +146,7 @@ export function useLinksView({
     onToggleShortcuts: () => setShowShortcuts((previous) => !previous),
     page: linksResult.page,
     pagination: linksResult.pagination,
+    pasting: linksResult.pasting,
     randomError: linksResult.randomError,
     randomLoading: linksResult.randomLoading,
     readError: linksResult.readError,
@@ -155,5 +157,6 @@ export function useLinksView({
     showLinkForm: linksResult.showLinkForm,
     showShortcuts,
     toastMessage: linksResult.toastMessage,
+    toastVariant: linksResult.toastVariant,
   };
 }

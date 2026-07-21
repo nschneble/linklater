@@ -29,4 +29,23 @@ describe('useToast', () => {
     act(() => result.current.show('Second.'));
     expect(result.current.message).toBe('Second.');
   });
+
+  it('defaults the variant to success when none is given', () => {
+    const { result } = renderHook(() => useToast());
+    act(() => result.current.show('Saved.'));
+    expect(result.current.variant).toBe('success');
+  });
+
+  it('show(message, variant) carries the variant', () => {
+    const { result } = renderHook(() => useToast());
+    act(() => result.current.show('No link in clipboard', 'warning'));
+    expect(result.current.variant).toBe('warning');
+  });
+
+  it('dismiss() clears the variant back to undefined', () => {
+    const { result } = renderHook(() => useToast());
+    act(() => result.current.show('Broke', 'error'));
+    act(() => result.current.dismiss());
+    expect(result.current.variant).toBeUndefined();
+  });
 });

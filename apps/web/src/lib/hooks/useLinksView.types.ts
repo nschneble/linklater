@@ -1,3 +1,4 @@
+import type { ToastVariant } from '../../components/common/Toast';
 import type { LinksFilter } from './types';
 import type { useLinks } from './useLinks';
 
@@ -29,6 +30,7 @@ export interface UseLinksViewResult {
   handleCreated: ReturnType<typeof useLinks>['handleCreated'];
   handleDismissToast: () => void;
   handleLoadMore: () => void;
+  handlePasteAndSave: () => Promise<void>;
   handleRandom: () => Promise<void>;
   handleToggleForm: () => void;
   handleToggleRead: ReturnType<typeof useLinks>['handleToggleRead'];
@@ -39,10 +41,12 @@ export interface UseLinksViewResult {
   newLinksAnnouncement: string;
   page: number;
   pagination: ReturnType<typeof useLinks>['pagination'];
+  pasting: boolean;
   randomError: string | null;
   randomLoading: boolean;
   readError: string | null;
   saveError: string | null;
   showLinkForm: boolean;
   toastMessage: string | null;
+  toastVariant: ToastVariant | undefined;
 }

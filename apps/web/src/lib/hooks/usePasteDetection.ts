@@ -1,3 +1,4 @@
+import { looksLikeUrl } from '../looksLikeUrl';
 import { useEffect, useRef } from 'react';
 
 interface UsePasteDetectionOptions {
@@ -5,15 +6,6 @@ interface UsePasteDetectionOptions {
   enabled?: boolean;
   /** Called with the pasted text when it looks like a URL. */
   onSave: (url: string) => void;
-}
-
-/**
- * Returns `true` when `text` looks like a URL. Used as a quick pre-check
- * before calling `onSave`. We don't fully validate the URL here because
- * `createLink` on the server will reject it if it turns out to be invalid.
- */
-function looksLikeUrl(text: string): boolean {
-  return text.startsWith('http://') || text.startsWith('https://');
 }
 
 /**

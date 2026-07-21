@@ -1,8 +1,10 @@
 import { useCreateLink } from './useCreateLink';
 import { useDeleteAllRead } from './useDeleteAllRead';
+import { usePasteAndSave } from './usePasteAndSave';
 import { useRandomLink } from './useRandomLink';
 import { useToast } from './useToast';
 import { useToggleReadLink } from './useToggleReadLink';
+import type { ToastVariant } from '../../components/common/Toast';
 import type { Link } from '../api';
 import type { LinksFilter } from './types';
 
@@ -31,12 +33,15 @@ export interface UseLinksActionsResult {
   handleDeleteAllRead: () => Promise<void>;
   handleDismissToast: () => void;
   handleDirectSave: (url: string) => Promise<void>;
+  handlePasteAndSave: () => Promise<void>;
   handleToggleRead: (link: Link) => Promise<void>;
   handleRandom: () => Promise<void>;
+  pasting: boolean;
   randomError: string | null;
   randomLoading: boolean;
   saveError: string | null;
   toastMessage: string | null;
+  toastVariant: ToastVariant | undefined;
 }
 
 /**
@@ -90,6 +95,11 @@ export function useLinksActions({
     onRemoveLink: removeLink,
   });
 
+  const { handlePasteAndSave, pasting } = usePasteAndSave({
+    onDirectSave: handleDirectSave,
+    showToast: toast.show,
+  });
+
   return {
     readError,
     deleteError,
@@ -97,11 +107,14 @@ export function useLinksActions({
     handleDeleteAllRead,
     handleDismissToast: toast.dismiss,
     handleDirectSave,
+    handlePasteAndSave,
     handleRandom,
     handleToggleRead,
+    pasting,
     randomError,
     randomLoading,
     saveError,
     toastMessage: toast.message,
+    toastVariant: toast.variant,
   };
 }
