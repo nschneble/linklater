@@ -1,7 +1,9 @@
+import IconButton from '../common/IconButton';
 import { LINKS_LIST_ID } from './LinksList';
 import LinksControls from './LinksControls';
 import LinksMobileControls from './LinksMobileControls';
 import SlidingTabBar from '../common/SlidingTabBar';
+import { useLayoutEffect, useRef } from 'react';
 import type { Link } from '../../lib/api';
 import type { LinksFilter } from '../../lib/hooks/useLinks';
 
@@ -60,6 +62,22 @@ export default function LinksToolbar({
   onSearch,
   onToggleForm,
 }: LinksToolbarProps) {
+  // Tracks whether the clear button currently holds focus. `useSearchDebounce`
+  // resets `search` to '' on filter change (tab switch / back-forward nav),
+  // independent of the clear button's own click handler. If the button holds
+  // focus when that happens, it unmounts and focus silently falls to <body>;
+  // the layout effect below catches it back onto the input.
+  const clearButtonWasFocusedReference = useRef(false);
+
+  // useLayoutEffect (not useEffect) so the focus recovery commits before paint,
+  // avoiding a visible/audible jump to <body>.
+  useLayoutEffect(() => {
+    if (search === '' && clearButtonWasFocusedReference.current) {
+      clearButtonWasFocusedReference.current = false;
+      searchInputReference.current?.focus();
+    }
+  }, [search, searchInputReference]);
+
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-4">
@@ -99,22 +117,45 @@ export default function LinksToolbar({
       </div>
 
       <div className="flex items-center gap-2 mt-3 sm:mt-4 mb-3">
-        <input
-          ref={searchInputReference}
-          className="flex-1 min-w-0 px-3 py-2 bg-[var(--base-input-bg)] border border-[var(--base-border)] text-[var(--base-text)] text-sm placeholder:text-[var(--base-alt-text)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--focus-ring)] rounded-lg"
-          type="search"
-          placeholder={
-            filter === 'unread' ? 'Search unread links' : 'Search read links'
-          }
-          value={search}
-          onChange={(event) => onSearch(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              event.currentTarget.blur();
+        <div className="relative flex-1 min-w-0">
+          <input
+            ref={searchInputReference}
+            className="w-full min-w-0 pl-3 pr-10 py-2 bg-[var(--base-input-bg)] border border-[var(--base-border)] text-[var(--base-text)] text-base sm:text-sm placeholder:text-[var(--base-alt-text)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--focus-ring)] rounded-lg [&::-webkit-search-cancel-button]:appearance-none"
+            type="search"
+            placeholder={
+              filter === 'unread' ? 'Search unread links' : 'Search read links'
             }
-          }}
-          aria-label="Search through your links"
-        />
+            value={search}
+            onChange={(event) => onSearch(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                event.currentTarget.blur();
+              }
+            }}
+            aria-label="Search through your links"
+          />
+
+          {search !== '' && (
+            <IconButton
+              variant="ghost"
+              surface="base"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 py-2!"
+              aria-label="Clear search"
+              onClick={() => {
+                onSearch('');
+                searchInputReference.current?.focus();
+              }}
+              onFocus={() => {
+                clearButtonWasFocusedReference.current = true;
+              }}
+              onBlur={() => {
+                clearButtonWasFocusedReference.current = false;
+              }}
+            >
+              <i className="fa-solid fa-xmark" aria-hidden="true" />
+            </IconButton>
+          )}
+        </div>
 
         <LinksMobileControls
           filter={filter}
