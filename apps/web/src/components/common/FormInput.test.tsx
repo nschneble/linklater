@@ -120,4 +120,11 @@ describe('FormInput', () => {
     expect(className).toContain('focus:ring-2');
     expect(className).toContain('focus:ring-[var(--focus-ring)]');
   });
+
+  it('ships a 16px mobile font to avoid iOS Safari auto-zoom on focus', () => {
+    const { getByRole } = render(<FormInput type="text" aria-label="x" />);
+    const className = getByRole('textbox').className;
+    expect(className).toContain('text-base');
+    expect(className).toContain('sm:text-sm');
+  });
 });
