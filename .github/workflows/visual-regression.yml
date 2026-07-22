@@ -63,7 +63,7 @@ jobs:
           mkcert -install
           mkdir -p apps/api/certs
           mkcert -key-file apps/api/certs/localhost-key.pem -cert-file apps/api/certs/localhost.pem localhost
-      - uses: nschneble/tuffgal-action@305b2d03a8bc3786b96e33d5adb19f0f665b95f0 # v1.4.0
+      - uses: nschneble/tuffgal-action@5f7886e7712107feb0cbd1b787de1d5537d2c3df # v1.4.1
         with:
           setup-script: tuffgal:setup
           fail-on-changed: true
