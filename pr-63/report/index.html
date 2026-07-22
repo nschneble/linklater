@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tuffgal report – July 22, 10:36pm</title>
+    <title>Tuffgal report – July 22, 10:40pm</title>
     <link rel="stylesheet" href="assets/report.css" />
   </head>
   <body>
@@ -12,9 +12,9 @@
     <header class="report-header">
       <h1>Tuffgal report</h1>
       <p class="report-meta">
-        <time datetime="2026-07-22T22:36:24.317Z">July 22, 10:36pm</time>
+        <time datetime="2026-07-22T22:40:51.681Z">July 22, 10:40pm</time>
         <span aria-hidden="true">·</span>
-        <span aria-hidden="true">⏲</span> 121.13s
+        <span aria-hidden="true">⏲</span> 120.71s
       </p>
     </header>
     <main id="main" tabindex="-1">
@@ -31,7 +31,7 @@
 
     
 <li class="summary-item" data-status="pass">
-  <span class="count" id="summary-count-pass">23</span><button type="button" class="summary-filter" data-filter="pass" aria-pressed="false" aria-controls="stories-list" aria-describedby="summary-count-pass"><span class="indicator label">passed</span><span class="sr-only">, show only passed stories</span></button>
+  <span class="count" id="summary-count-pass">10</span><button type="button" class="summary-filter" data-filter="pass" aria-pressed="false" aria-controls="stories-list" aria-describedby="summary-count-pass"><span class="indicator label">passed</span><span class="sr-only">, show only passed stories</span></button>
   <span class="bulk-sep" aria-hidden="true">·</span>
 </li>
 
@@ -43,7 +43,7 @@
 
     
 <li class="summary-item" data-status="changed">
-  <span class="count" id="summary-count-changed">11</span><button type="button" class="summary-filter" data-filter="changed" aria-pressed="false" aria-controls="stories-list" aria-describedby="summary-count-changed"><span class="indicator label">changed</span><span class="sr-only">, show only changed stories</span></button>
+  <span class="count" id="summary-count-changed">24</span><button type="button" class="summary-filter" data-filter="changed" aria-pressed="false" aria-controls="stories-list" aria-describedby="summary-count-changed"><span class="indicator label">changed</span><span class="sr-only">, show only changed stories</span></button>
   <span class="bulk-sep" aria-hidden="true">·</span>
 </li>
 
@@ -87,7 +87,7 @@
     <span class="story-marker" aria-hidden="true">✓</span>
     <span class="sr-only">passed</span>
     <code class="story-file">unauthenticated-user-visits-extension-authorize.json</code>
-    <span class="story-duration">2.47s</span>
+    <span class="story-duration">2.85s</span>
   </div>
   <p class="story-prose">Visiting /extension/authorize while logged out surfaces the sign-in prompt.</p>
   <br/>
@@ -112,7 +112,7 @@
 </span>
 
 <code class="action-name">visit-extension-authorize-unauthenticated</code>
-<span class="action-duration">1.09s</span>
+<span class="action-duration">1.16s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -189,7 +189,7 @@
 </span>
 
 <code class="action-name">visit-extension-authorize-unauthenticated</code>
-<span class="action-duration">1.14s</span>
+<span class="action-duration">1.32s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -248,12 +248,12 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-1" tabindex="-1">
+<li class="story" data-status="changed" id="story-1" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">screen-tour-unauthenticated.json</code>
-    <span class="story-duration">6.14s</span>
+    <span class="story-duration">6.51s</span>
   </div>
   <p class="story-prose">Visual tour of every screen reachable while signed out.</p>
   <br/>
@@ -278,7 +278,7 @@
 </span>
 
 <code class="action-name">visit-landing</code>
-<span class="action-duration">1.20s</span>
+<span class="action-duration">1.21s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -332,19 +332,19 @@
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">visit-login</code>
-<span class="action-duration">662ms</span>
+<span class="action-duration">816ms</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -378,8 +378,21 @@
   Actual
 </label>
 
+<label for="s1-a1-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s1-a1-shot"
+    id="s1-a1-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s1-a1-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s1-a1-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s1-a1-diff-stats"><span class="count">4.48%</span> <span class="label">differs</span> <span class="coverage-detail">· 11,204 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -387,30 +400,30 @@
     src="screenshots/screen-tour-unauthenticated/visit-login.mobile.actual.png"
     alt="Screenshot of visit-login"
     loading="lazy"
-     data-src-baseline="../baselines/visit-login/mobile.png" data-src-actual="screenshots/screen-tour-unauthenticated/visit-login.mobile.actual.png"
+     data-src-baseline="../baselines/visit-login/mobile.png" data-src-actual="screenshots/screen-tour-unauthenticated/visit-login.mobile.actual.png" data-src-diff="screenshots/screen-tour-unauthenticated/visit-login.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">visit-signup</code>
-<span class="action-duration">457ms</span>
+<span class="action-duration">493ms</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -444,8 +457,21 @@
   Actual
 </label>
 
+<label for="s1-a2-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s1-a2-shot"
+    id="s1-a2-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s1-a2-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s1-a2-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s1-a2-diff-stats"><span class="count">3.62%</span> <span class="label">differs</span> <span class="coverage-detail">· 9,061 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -453,30 +479,30 @@
     src="screenshots/screen-tour-unauthenticated/visit-signup.mobile.actual.png"
     alt="Screenshot of visit-signup"
     loading="lazy"
-     data-src-baseline="../baselines/visit-signup/mobile.png" data-src-actual="screenshots/screen-tour-unauthenticated/visit-signup.mobile.actual.png"
+     data-src-baseline="../baselines/visit-signup/mobile.png" data-src-actual="screenshots/screen-tour-unauthenticated/visit-signup.mobile.actual.png" data-src-diff="screenshots/screen-tour-unauthenticated/visit-signup.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">visit-forgot-password</code>
-<span class="action-duration">373ms</span>
+<span class="action-duration">431ms</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -510,8 +536,21 @@
   Actual
 </label>
 
+<label for="s1-a3-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s1-a3-shot"
+    id="s1-a3-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s1-a3-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s1-a3-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s1-a3-diff-stats"><span class="count">1.69%</span> <span class="label">differs</span> <span class="coverage-detail">· 4,222 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -519,14 +558,14 @@
     src="screenshots/screen-tour-unauthenticated/visit-forgot-password.mobile.actual.png"
     alt="Screenshot of visit-forgot-password"
     loading="lazy"
-     data-src-baseline="../baselines/visit-forgot-password/mobile.png" data-src-actual="screenshots/screen-tour-unauthenticated/visit-forgot-password.mobile.actual.png"
+     data-src-baseline="../baselines/visit-forgot-password/mobile.png" data-src-actual="screenshots/screen-tour-unauthenticated/visit-forgot-password.mobile.actual.png" data-src-diff="screenshots/screen-tour-unauthenticated/visit-forgot-password.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
   </ol>
@@ -553,7 +592,7 @@
 </span>
 
 <code class="action-name">visit-landing</code>
-<span class="action-duration">1.38s</span>
+<span class="action-duration">1.48s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -685,7 +724,7 @@
 </span>
 
 <code class="action-name">visit-signup</code>
-<span class="action-duration">586ms</span>
+<span class="action-duration">594ms</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -751,7 +790,7 @@
 </span>
 
 <code class="action-name">visit-forgot-password</code>
-<span class="action-duration">483ms</span>
+<span class="action-duration">479ms</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -815,7 +854,7 @@
     <span class="story-marker" aria-hidden="true">✓</span>
     <span class="sr-only">passed</span>
     <code class="story-file">user-crashes-app-via-failwhale.json</code>
-    <span class="story-duration">4.08s</span>
+    <span class="story-duration">3.92s</span>
   </div>
   <p class="story-prose">Clicking the failwhale crash button triggers the app-root ErrorBoundary fallback.</p>
   <br/>
@@ -840,7 +879,7 @@
 </span>
 
 <code class="action-name">visit-failwhale</code>
-<span class="action-duration">908ms</span>
+<span class="action-duration">809ms</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -906,7 +945,7 @@
 </span>
 
 <code class="action-name">crash-failwhale</code>
-<span class="action-duration">766ms</span>
+<span class="action-duration">890ms</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -983,7 +1022,7 @@
 </span>
 
 <code class="action-name">visit-failwhale</code>
-<span class="action-duration">1.13s</span>
+<span class="action-duration">1.06s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -1049,7 +1088,7 @@
 </span>
 
 <code class="action-name">crash-failwhale</code>
-<span class="action-duration">963ms</span>
+<span class="action-duration">971ms</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -1113,7 +1152,7 @@
     <span class="story-marker" aria-hidden="true">~</span>
     <span class="sr-only">changed</span>
     <code class="story-file">user-logs-in.json</code>
-    <span class="story-duration">4.99s</span>
+    <span class="story-duration">5.02s</span>
   </div>
   <p class="story-prose">As a user, I can log in with email and password.</p>
   <br/>
@@ -1137,7 +1176,7 @@
 </span>
 
 <code class="action-name">intercept-no-links</code>
-<span class="action-duration">8ms</span>
+<span class="action-duration">6ms</span>
 
 </div>
 
@@ -1159,7 +1198,7 @@
 </span>
 
 <code class="action-name">login</code>
-<span class="action-duration">2.25s</span>
+<span class="action-duration">2.40s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -1248,7 +1287,7 @@
 </span>
 
 <code class="action-name">intercept-no-links</code>
-<span class="action-duration">7ms</span>
+<span class="action-duration">3ms</span>
 
 </div>
 
@@ -1270,7 +1309,7 @@
 </span>
 
 <code class="action-name">login</code>
-<span class="action-duration">2.45s</span>
+<span class="action-duration">2.43s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -1329,12 +1368,12 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-4" tabindex="-1">
+<li class="story" data-status="changed" id="story-4" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">user-discovers-linklater.json</code>
-    <span class="story-duration">6.73s</span>
+    <span class="story-duration">7.00s</span>
   </div>
   <p class="story-prose">As a visitor to the marketing page, I can click through to sign up or log in.</p>
   <br/>
@@ -1347,19 +1386,19 @@
   </p>
   <ol class="actions" aria-labelledby="s4-bp0-label">
     
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">click-signup-cta</code>
-<span class="action-duration">1.59s</span>
+<span class="action-duration">1.89s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -1393,8 +1432,21 @@
   Actual
 </label>
 
+<label for="s4-a0-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s4-a0-shot"
+    id="s4-a0-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s4-a0-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s4-a0-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s4-a0-diff-stats"><span class="count">3.62%</span> <span class="label">differs</span> <span class="coverage-detail">· 9,061 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -1402,30 +1454,30 @@
     src="screenshots/user-discovers-linklater/click-signup-cta.mobile.actual.png"
     alt="Screenshot of click-signup-cta"
     loading="lazy"
-     data-src-baseline="../baselines/click-signup-cta/mobile.png" data-src-actual="screenshots/user-discovers-linklater/click-signup-cta.mobile.actual.png"
+     data-src-baseline="../baselines/click-signup-cta/mobile.png" data-src-actual="screenshots/user-discovers-linklater/click-signup-cta.mobile.actual.png" data-src-diff="screenshots/user-discovers-linklater/click-signup-cta.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">click-login-cta</code>
-<span class="action-duration">1.33s</span>
+<span class="action-duration">1.36s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -1459,8 +1511,21 @@
   Actual
 </label>
 
+<label for="s4-a1-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s4-a1-shot"
+    id="s4-a1-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s4-a1-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s4-a1-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s4-a1-diff-stats"><span class="count">4.48%</span> <span class="label">differs</span> <span class="coverage-detail">· 11,204 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -1468,14 +1533,14 @@
     src="screenshots/user-discovers-linklater/click-login-cta.mobile.actual.png"
     alt="Screenshot of click-login-cta"
     loading="lazy"
-     data-src-baseline="../baselines/click-login-cta/mobile.png" data-src-actual="screenshots/user-discovers-linklater/click-login-cta.mobile.actual.png"
+     data-src-baseline="../baselines/click-login-cta/mobile.png" data-src-actual="screenshots/user-discovers-linklater/click-login-cta.mobile.actual.png" data-src-diff="screenshots/user-discovers-linklater/click-login-cta.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
   </ol>
@@ -1502,7 +1567,7 @@
 </span>
 
 <code class="action-name">click-signup-cta</code>
-<span class="action-duration">1.97s</span>
+<span class="action-duration">1.94s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -1568,7 +1633,7 @@
 </span>
 
 <code class="action-name">click-login-cta</code>
-<span class="action-duration">1.52s</span>
+<span class="action-duration">1.50s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -1627,12 +1692,12 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-5" tabindex="-1">
+<li class="story" data-status="changed" id="story-5" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">user-receives-magic-link.json</code>
-    <span class="story-duration">3.98s</span>
+    <span class="story-duration">3.85s</span>
   </div>
   <p class="story-prose">Submitting the login form with the password blank fires a magic-link toast over the same form.</p>
   <br/>
@@ -1656,7 +1721,7 @@
 </span>
 
 <code class="action-name">intercept-noop-magic-link-request</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">2ms</span>
 
 </div>
 
@@ -1666,19 +1731,19 @@
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">request-magic-link</code>
-<span class="action-duration">1.86s</span>
+<span class="action-duration">1.74s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -1712,8 +1777,21 @@
   Actual
 </label>
 
+<label for="s5-a1-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s5-a1-shot"
+    id="s5-a1-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s5-a1-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s5-a1-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s5-a1-diff-stats"><span class="count">4.74%</span> <span class="label">differs</span> <span class="coverage-detail">· 11,864 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -1721,14 +1799,14 @@
     src="screenshots/user-receives-magic-link/request-magic-link.mobile.actual.png"
     alt="Screenshot of request-magic-link"
     loading="lazy"
-     data-src-baseline="../baselines/request-magic-link/mobile.png" data-src-actual="screenshots/user-receives-magic-link/request-magic-link.mobile.actual.png"
+     data-src-baseline="../baselines/request-magic-link/mobile.png" data-src-actual="screenshots/user-receives-magic-link/request-magic-link.mobile.actual.png" data-src-diff="screenshots/user-receives-magic-link/request-magic-link.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
   </ol>
@@ -1754,7 +1832,7 @@
 </span>
 
 <code class="action-name">intercept-noop-magic-link-request</code>
-<span class="action-duration">2ms</span>
+<span class="action-duration">4ms</span>
 
 </div>
 
@@ -1776,7 +1854,7 @@
 </span>
 
 <code class="action-name">request-magic-link</code>
-<span class="action-duration">1.97s</span>
+<span class="action-duration">1.96s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -1835,12 +1913,12 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-6" tabindex="-1">
+<li class="story" data-status="changed" id="story-6" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">user-resets-password.json</code>
-    <span class="story-duration">3.44s</span>
+    <span class="story-duration">3.34s</span>
   </div>
   <p class="story-prose">As a user who forgot their password, I can request a reset link.</p>
   <br/>
@@ -1853,19 +1931,19 @@
   </p>
   <ol class="actions" aria-labelledby="s6-bp0-label">
     
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">reset-password</code>
-<span class="action-duration">1.40s</span>
+<span class="action-duration">1.44s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -1899,8 +1977,21 @@
   Actual
 </label>
 
+<label for="s6-a0-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s6-a0-shot"
+    id="s6-a0-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s6-a0-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s6-a0-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s6-a0-diff-stats"><span class="count">2.05%</span> <span class="label">differs</span> <span class="coverage-detail">· 5,116 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -1908,14 +1999,14 @@
     src="screenshots/user-resets-password/reset-password.mobile.actual.png"
     alt="Screenshot of reset-password"
     loading="lazy"
-     data-src-baseline="../baselines/reset-password/mobile.png" data-src-actual="screenshots/user-resets-password/reset-password.mobile.actual.png"
+     data-src-baseline="../baselines/reset-password/mobile.png" data-src-actual="screenshots/user-resets-password/reset-password.mobile.actual.png" data-src-diff="screenshots/user-resets-password/reset-password.mobile.diff.png"
   />
 </div>
 
 </details>
   <dl class="action-parameters"><dt>email</dt><dd>testing-ui@linklater.test</dd></dl>
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
   </ol>
@@ -1942,7 +2033,7 @@
 </span>
 
 <code class="action-name">reset-password</code>
-<span class="action-duration">1.80s</span>
+<span class="action-duration">1.70s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -2006,7 +2097,7 @@
     <span class="story-marker" aria-hidden="true">✓</span>
     <span class="sr-only">passed</span>
     <code class="story-file">user-visits-failwhale.json</code>
-    <span class="story-duration">2.11s</span>
+    <span class="story-duration">1.95s</span>
   </div>
   <p class="story-prose">Visiting /failwhale surfaces the Easter-egg page with its crash button.</p>
   <br/>
@@ -2031,7 +2122,7 @@
 </span>
 
 <code class="action-name">visit-failwhale</code>
-<span class="action-duration">907ms</span>
+<span class="action-duration">700ms</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -2108,7 +2199,7 @@
 </span>
 
 <code class="action-name">visit-failwhale</code>
-<span class="action-duration">1.06s</span>
+<span class="action-duration">1.07s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -2167,12 +2258,12 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-8" tabindex="-1">
+<li class="story" data-status="changed" id="story-8" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">user-signs-in-with-mfa.json</code>
-    <span class="story-duration">4.54s</span>
+    <span class="story-duration">4.46s</span>
   </div>
   <p class="story-prose">As a TOTP-enrolled user, I can sign in by submitting my password and clearing the MFA challenge.</p>
   <br/>
@@ -2196,7 +2287,7 @@
 </span>
 
 <code class="action-name">intercept-login-mfa-challenge</code>
-<span class="action-duration">6ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -2206,19 +2297,19 @@
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">attempt-login-expect-mfa-challenge</code>
-<span class="action-duration">1.95s</span>
+<span class="action-duration">1.98s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -2252,8 +2343,21 @@
   Actual
 </label>
 
+<label for="s8-a1-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s8-a1-shot"
+    id="s8-a1-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s8-a1-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s8-a1-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s8-a1-diff-stats"><span class="count">1.73%</span> <span class="label">differs</span> <span class="coverage-detail">· 4,329 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -2261,14 +2365,14 @@
     src="screenshots/user-signs-in-with-mfa/attempt-login-expect-mfa-challenge.mobile.actual.png"
     alt="Screenshot of attempt-login-expect-mfa-challenge"
     loading="lazy"
-     data-src-baseline="../baselines/attempt-login-expect-mfa-challenge/mobile.png" data-src-actual="screenshots/user-signs-in-with-mfa/attempt-login-expect-mfa-challenge.mobile.actual.png"
+     data-src-baseline="../baselines/attempt-login-expect-mfa-challenge/mobile.png" data-src-actual="screenshots/user-signs-in-with-mfa/attempt-login-expect-mfa-challenge.mobile.actual.png" data-src-diff="screenshots/user-signs-in-with-mfa/attempt-login-expect-mfa-challenge.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
   </ol>
@@ -2316,7 +2420,7 @@
 </span>
 
 <code class="action-name">attempt-login-expect-mfa-challenge</code>
-<span class="action-duration">2.28s</span>
+<span class="action-duration">2.20s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -2375,10 +2479,10 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-9" tabindex="-1">
+<li class="story" data-status="changed" id="story-9" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">user-visits-oauth-callback-without-token.json</code>
     <span class="story-duration">2.89s</span>
   </div>
@@ -2393,19 +2497,19 @@
   </p>
   <ol class="actions" aria-labelledby="s9-bp0-label">
     
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">visit-oauth-callback-no-token</code>
-<span class="action-duration">1.33s</span>
+<span class="action-duration">1.35s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -2439,8 +2543,21 @@
   Actual
 </label>
 
+<label for="s9-a0-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s9-a0-shot"
+    id="s9-a0-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s9-a0-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s9-a0-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s9-a0-diff-stats"><span class="count">4.48%</span> <span class="label">differs</span> <span class="coverage-detail">· 11,204 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -2448,14 +2565,14 @@
     src="screenshots/user-visits-oauth-callback-without-token/visit-oauth-callback-no-token.mobile.actual.png"
     alt="Screenshot of visit-oauth-callback-no-token"
     loading="lazy"
-     data-src-baseline="../baselines/visit-oauth-callback-no-token/mobile.png" data-src-actual="screenshots/user-visits-oauth-callback-without-token/visit-oauth-callback-no-token.mobile.actual.png"
+     data-src-baseline="../baselines/visit-oauth-callback-no-token/mobile.png" data-src-actual="screenshots/user-visits-oauth-callback-without-token/visit-oauth-callback-no-token.mobile.actual.png" data-src-diff="screenshots/user-visits-oauth-callback-without-token/visit-oauth-callback-no-token.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
   </ol>
@@ -2482,7 +2599,7 @@
 </span>
 
 <code class="action-name">visit-oauth-callback-no-token</code>
-<span class="action-duration">1.38s</span>
+<span class="action-duration">1.40s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -2541,12 +2658,12 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-10" tabindex="-1">
+<li class="story" data-status="changed" id="story-10" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">passwordless-user-adds-password.json</code>
-    <span class="story-duration">4.41s</span>
+    <span class="story-duration">4.39s</span>
   </div>
   <p class="story-prose">As a passwordless user, I can add a password from the Security section.</p>
   <br/>
@@ -2570,7 +2687,7 @@
 </span>
 
 <code class="action-name">intercept-no-api-tokens</code>
-<span class="action-duration">4ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -2591,7 +2708,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">0ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -2612,7 +2729,7 @@
 </span>
 
 <code class="action-name">intercept-me-passwordless</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -2643,19 +2760,19 @@
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">add-password</code>
-<span class="action-duration">1.82s</span>
+<span class="action-duration">1.83s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -2689,8 +2806,21 @@
   Actual
 </label>
 
+<label for="s10-a4-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s10-a4-shot"
+    id="s10-a4-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s10-a4-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s10-a4-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s10-a4-diff-stats"><span class="count">3.69%</span> <span class="label">differs</span> <span class="coverage-detail">· 9,232 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -2698,14 +2828,14 @@
     src="screenshots/passwordless-user-adds-password/add-password.mobile.actual.png"
     alt="Screenshot of add-password"
     loading="lazy"
-     data-src-baseline="../baselines/add-password/mobile.png" data-src-actual="screenshots/passwordless-user-adds-password/add-password.mobile.actual.png"
+     data-src-baseline="../baselines/add-password/mobile.png" data-src-actual="screenshots/passwordless-user-adds-password/add-password.mobile.actual.png" data-src-diff="screenshots/passwordless-user-adds-password/add-password.mobile.diff.png"
   />
 </div>
 
 </details>
   <dl class="action-parameters"><dt>password</dt><dd>newly-set-password-correct-horse</dd></dl>
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
   </ol>
@@ -2731,7 +2861,7 @@
 </span>
 
 <code class="action-name">intercept-no-api-tokens</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">2ms</span>
 
 </div>
 
@@ -2752,7 +2882,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -2773,7 +2903,7 @@
 </span>
 
 <code class="action-name">intercept-me-passwordless</code>
-<span class="action-duration">0ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -2816,7 +2946,7 @@
 </span>
 
 <code class="action-name">add-password</code>
-<span class="action-duration">2.32s</span>
+<span class="action-duration">2.33s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -2875,12 +3005,12 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-11" tabindex="-1">
+<li class="story" data-status="changed" id="story-11" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">user-changes-email.json</code>
-    <span class="story-duration">8.05s</span>
+    <span class="story-duration">8.48s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can change my email address — and if I have MFA enabled, I am prompted for a verification code.</p>
   <br/>
@@ -2956,19 +3086,19 @@
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">change-email</code>
-<span class="action-duration">2.12s</span>
+<span class="action-duration">2.15s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -3002,8 +3132,21 @@
   Actual
 </label>
 
+<label for="s11-a3-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s11-a3-shot"
+    id="s11-a3-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s11-a3-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s11-a3-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s11-a3-diff-stats"><span class="count">2.71%</span> <span class="label">differs</span> <span class="coverage-detail">· 6,777 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -3011,14 +3154,14 @@
     src="screenshots/user-changes-email/change-email.mobile.actual.png"
     alt="Screenshot of change-email"
     loading="lazy"
-     data-src-baseline="../baselines/change-email/mobile.png" data-src-actual="screenshots/user-changes-email/change-email.mobile.actual.png"
+     data-src-baseline="../baselines/change-email/mobile.png" data-src-actual="screenshots/user-changes-email/change-email.mobile.actual.png" data-src-diff="screenshots/user-changes-email/change-email.mobile.diff.png"
   />
 </div>
 
 </details>
   <dl class="action-parameters"><dt>newEmail</dt><dd>moved@linklater.test</dd></dl>
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
 
@@ -3033,7 +3176,7 @@
 </span>
 
 <code class="action-name">intercept-me-mfa-enrolled</code>
-<span class="action-duration">7ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -3054,7 +3197,7 @@
 </span>
 
 <code class="action-name">intercept-email-change-403</code>
-<span class="action-duration">5ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -3064,19 +3207,19 @@
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">change-email-expect-403</code>
-<span class="action-duration">1.54s</span>
+<span class="action-duration">1.94s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -3110,8 +3253,21 @@
   Actual
 </label>
 
+<label for="s11-a6-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s11-a6-shot"
+    id="s11-a6-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s11-a6-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s11-a6-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s11-a6-diff-stats"><span class="count">5.77%</span> <span class="label">differs</span> <span class="coverage-detail">· 14,439 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -3119,14 +3275,14 @@
     src="screenshots/user-changes-email/change-email-expect-403.mobile.actual.png"
     alt="Screenshot of change-email-expect-403"
     loading="lazy"
-     data-src-baseline="../baselines/change-email-expect-403/mobile.png" data-src-actual="screenshots/user-changes-email/change-email-expect-403.mobile.actual.png"
+     data-src-baseline="../baselines/change-email-expect-403/mobile.png" data-src-actual="screenshots/user-changes-email/change-email-expect-403.mobile.actual.png" data-src-diff="screenshots/user-changes-email/change-email-expect-403.mobile.diff.png"
   />
 </div>
 
 </details>
   <dl class="action-parameters"><dt>newEmail</dt><dd>moved@linklater.test</dd></dl>
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
   </ol>
@@ -3152,7 +3308,7 @@
 </span>
 
 <code class="action-name">intercept-no-api-tokens</code>
-<span class="action-duration">4ms</span>
+<span class="action-duration">3ms</span>
 
 </div>
 
@@ -3173,7 +3329,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">0ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -3194,7 +3350,7 @@
 </span>
 
 <code class="action-name">intercept-noop-email-change</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -3216,7 +3372,7 @@
 </span>
 
 <code class="action-name">change-email</code>
-<span class="action-duration">1.99s</span>
+<span class="action-duration">2.05s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -3281,7 +3437,7 @@
 </span>
 
 <code class="action-name">intercept-me-mfa-enrolled</code>
-<span class="action-duration">0ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -3302,7 +3458,7 @@
 </span>
 
 <code class="action-name">intercept-email-change-403</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -3324,7 +3480,7 @@
 </span>
 
 <code class="action-name">change-email-expect-403</code>
-<span class="action-duration">1.97s</span>
+<span class="action-duration">1.92s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -3383,12 +3539,12 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-12" tabindex="-1">
+<li class="story" data-status="changed" id="story-12" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">user-changes-password.json</code>
-    <span class="story-duration">4.98s</span>
+    <span class="story-duration">5.07s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can change my password.</p>
   <br/>
@@ -3412,7 +3568,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">3ms</span>
+<span class="action-duration">2ms</span>
 
 </div>
 
@@ -3422,19 +3578,19 @@
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">change-password</code>
-<span class="action-duration">2.35s</span>
+<span class="action-duration">2.37s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -3468,8 +3624,21 @@
   Actual
 </label>
 
+<label for="s12-a1-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s12-a1-shot"
+    id="s12-a1-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s12-a1-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s12-a1-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s12-a1-diff-stats"><span class="count">17.88%</span> <span class="label">differs</span> <span class="coverage-detail">· 44,711 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -3477,14 +3646,14 @@
     src="screenshots/user-changes-password/change-password.mobile.actual.png"
     alt="Screenshot of change-password"
     loading="lazy"
-     data-src-baseline="../baselines/change-password/mobile.png" data-src-actual="screenshots/user-changes-password/change-password.mobile.actual.png"
+     data-src-baseline="../baselines/change-password/mobile.png" data-src-actual="screenshots/user-changes-password/change-password.mobile.actual.png" data-src-diff="screenshots/user-changes-password/change-password.mobile.diff.png"
   />
 </div>
 
 </details>
   <dl class="action-parameters"><dt>currentPassword</dt><dd>testing-ui-correct-horse</dd><dt>newPassword</dt><dd>battery-staple-1234</dd></dl>
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
   </ol>
@@ -3510,7 +3679,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">4ms</span>
+<span class="action-duration">5ms</span>
 
 </div>
 
@@ -3532,7 +3701,7 @@
 </span>
 
 <code class="action-name">change-password</code>
-<span class="action-duration">2.24s</span>
+<span class="action-duration">2.20s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -3596,7 +3765,7 @@
     <span class="story-marker" aria-hidden="true">~</span>
     <span class="sr-only">changed</span>
     <code class="story-file">screen-tour-authenticated.json</code>
-    <span class="story-duration">17.12s</span>
+    <span class="story-duration">17.01s</span>
   </div>
   <p class="story-prose">Visual tour of every screen reachable while signed in.</p>
   <br/>
@@ -3641,7 +3810,7 @@
 </span>
 
 <code class="action-name">intercept-no-api-tokens</code>
-<span class="action-duration">0ms</span>
+<span class="action-duration">2ms</span>
 
 </div>
 
@@ -3684,7 +3853,7 @@
 </span>
 
 <code class="action-name">visit-unread</code>
-<span class="action-duration">1.55s</span>
+<span class="action-duration">1.63s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -3763,7 +3932,7 @@
 </span>
 
 <code class="action-name">visit-read</code>
-<span class="action-duration">1.59s</span>
+<span class="action-duration">1.54s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -3842,7 +4011,7 @@
 </span>
 
 <code class="action-name">visit-stumble-empty</code>
-<span class="action-duration">1.33s</span>
+<span class="action-duration">1.64s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -3896,19 +4065,19 @@
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">visit-settings</code>
-<span class="action-duration">758ms</span>
+<span class="action-duration">1.24s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -3942,8 +4111,21 @@
   Actual
 </label>
 
+<label for="s13-a6-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s13-a6-shot"
+    id="s13-a6-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s13-a6-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s13-a6-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s13-a6-diff-stats"><span class="count">4.29%</span> <span class="label">differs</span> <span class="coverage-detail">· 10,734 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -3951,14 +4133,14 @@
     src="screenshots/screen-tour-authenticated/visit-settings.mobile.actual.png"
     alt="Screenshot of visit-settings"
     loading="lazy"
-     data-src-baseline="../baselines/visit-settings/mobile.png" data-src-actual="screenshots/screen-tour-authenticated/visit-settings.mobile.actual.png"
+     data-src-baseline="../baselines/visit-settings/mobile.png" data-src-actual="screenshots/screen-tour-authenticated/visit-settings.mobile.actual.png" data-src-diff="screenshots/screen-tour-authenticated/visit-settings.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
 
@@ -3973,7 +4155,7 @@
 </span>
 
 <code class="action-name">visit-settings-api</code>
-<span class="action-duration">1.29s</span>
+<span class="action-duration">1.11s</span>
 
 </div>
 
@@ -3995,7 +4177,7 @@
 </span>
 
 <code class="action-name">visit-editor</code>
-<span class="action-duration">1.78s</span>
+<span class="action-duration">1.16s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -4071,7 +4253,7 @@
 </span>
 
 <code class="action-name">intercept-no-links</code>
-<span class="action-duration">2ms</span>
+<span class="action-duration">4ms</span>
 
 </div>
 
@@ -4092,7 +4274,7 @@
 </span>
 
 <code class="action-name">intercept-no-api-tokens</code>
-<span class="action-duration">0ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -4201,7 +4383,7 @@
 </span>
 
 <code class="action-name">visit-read</code>
-<span class="action-duration">1.66s</span>
+<span class="action-duration">1.63s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -4267,7 +4449,7 @@
 </span>
 
 <code class="action-name">visit-stumble-empty</code>
-<span class="action-duration">1.46s</span>
+<span class="action-duration">1.50s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -4398,7 +4580,7 @@
 </span>
 
 <code class="action-name">visit-settings-api</code>
-<span class="action-duration">1.08s</span>
+<span class="action-duration">1.06s</span>
 
 </div>
 
@@ -4420,7 +4602,7 @@
 </span>
 
 <code class="action-name">visit-editor</code>
-<span class="action-duration">1.53s</span>
+<span class="action-duration">1.49s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -4479,12 +4661,12 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-14" tabindex="-1">
+<li class="story" data-status="changed" id="story-14" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">user-deletes-account.json</code>
-    <span class="story-duration">5.20s</span>
+    <span class="story-duration">5.36s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can start the account deletion flow.</p>
   <br/>
@@ -4508,7 +4690,7 @@
 </span>
 
 <code class="action-name">intercept-no-api-tokens</code>
-<span class="action-duration">2ms</span>
+<span class="action-duration">3ms</span>
 
 </div>
 
@@ -4529,7 +4711,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">0ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -4539,19 +4721,19 @@
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">delete-account</code>
-<span class="action-duration">2.15s</span>
+<span class="action-duration">2.33s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -4585,8 +4767,21 @@
   Actual
 </label>
 
+<label for="s14-a2-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s14-a2-shot"
+    id="s14-a2-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s14-a2-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s14-a2-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s14-a2-diff-stats"><span class="count">4.89%</span> <span class="label">differs</span> <span class="coverage-detail">· 12,238 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -4594,14 +4789,14 @@
     src="screenshots/user-deletes-account/delete-account.mobile.actual.png"
     alt="Screenshot of delete-account"
     loading="lazy"
-     data-src-baseline="../baselines/delete-account/mobile.png" data-src-actual="screenshots/user-deletes-account/delete-account.mobile.actual.png"
+     data-src-baseline="../baselines/delete-account/mobile.png" data-src-actual="screenshots/user-deletes-account/delete-account.mobile.actual.png" data-src-diff="screenshots/user-deletes-account/delete-account.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
   </ol>
@@ -4627,7 +4822,7 @@
 </span>
 
 <code class="action-name">intercept-no-api-tokens</code>
-<span class="action-duration">2ms</span>
+<span class="action-duration">5ms</span>
 
 </div>
 
@@ -4670,7 +4865,7 @@
 </span>
 
 <code class="action-name">delete-account</code>
-<span class="action-duration">2.69s</span>
+<span class="action-duration">2.55s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -4729,12 +4924,12 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-15" tabindex="-1">
+<li class="story" data-status="changed" id="story-15" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">user-resends-verification-email.json</code>
-    <span class="story-duration">3.44s</span>
+    <span class="story-duration">3.39s</span>
   </div>
   <p class="story-prose">As a user whose email is not yet verified, I can resend the verification email from settings.</p>
   <br/>
@@ -4779,7 +4974,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -4800,7 +4995,7 @@
 </span>
 
 <code class="action-name">intercept-me-unverified</code>
-<span class="action-duration">0ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -4831,19 +5026,19 @@
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">resend-verification-email</code>
-<span class="action-duration">1.43s</span>
+<span class="action-duration">1.54s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -4877,8 +5072,21 @@
   Actual
 </label>
 
+<label for="s15-a4-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s15-a4-shot"
+    id="s15-a4-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s15-a4-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s15-a4-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s15-a4-diff-stats"><span class="count">2.98%</span> <span class="label">differs</span> <span class="coverage-detail">· 7,445 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -4886,14 +5094,14 @@
     src="screenshots/user-resends-verification-email/resend-verification-email.mobile.actual.png"
     alt="Screenshot of resend-verification-email"
     loading="lazy"
-     data-src-baseline="../baselines/resend-verification-email/mobile.png" data-src-actual="screenshots/user-resends-verification-email/resend-verification-email.mobile.actual.png"
+     data-src-baseline="../baselines/resend-verification-email/mobile.png" data-src-actual="screenshots/user-resends-verification-email/resend-verification-email.mobile.actual.png" data-src-diff="screenshots/user-resends-verification-email/resend-verification-email.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
   </ol>
@@ -4919,7 +5127,7 @@
 </span>
 
 <code class="action-name">intercept-no-api-tokens</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">3ms</span>
 
 </div>
 
@@ -4940,7 +5148,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -4982,7 +5190,7 @@
 </span>
 
 <code class="action-name">intercept-noop-resend-verification</code>
-<span class="action-duration">0ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -5004,7 +5212,7 @@
 </span>
 
 <code class="action-name">resend-verification-email</code>
-<span class="action-duration">1.79s</span>
+<span class="action-duration">1.61s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -5068,7 +5276,7 @@
     <span class="story-marker" aria-hidden="true">✓</span>
     <span class="sr-only">passed</span>
     <code class="story-file">user-creates-api-token.json</code>
-    <span class="story-duration">9.81s</span>
+    <span class="story-duration">9.74s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can create an API token.</p>
   <br/>
@@ -5092,7 +5300,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">2ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -5113,7 +5321,7 @@
 </span>
 
 <code class="action-name">intercept-created-api-token</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -5135,7 +5343,7 @@
 </span>
 
 <code class="action-name">create-api-token</code>
-<span class="action-duration">4.61s</span>
+<span class="action-duration">4.56s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -5232,7 +5440,7 @@
 </span>
 
 <code class="action-name">intercept-created-api-token</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -5254,7 +5462,7 @@
 </span>
 
 <code class="action-name">create-api-token</code>
-<span class="action-duration">4.61s</span>
+<span class="action-duration">4.71s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -5313,12 +5521,12 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-17" tabindex="-1">
+<li class="story" data-status="changed" id="story-17" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">user-returns-with-stale-session.json</code>
-    <span class="story-duration">4.12s</span>
+    <span class="story-duration">4.17s</span>
   </div>
   <p class="story-prose">As a user returning after my session expired, I open the app and land on the logged-out shell.</p>
   <br/>
@@ -5342,7 +5550,7 @@
 </span>
 
 <code class="action-name">intercept-auth-me-401</code>
-<span class="action-duration">4ms</span>
+<span class="action-duration">6ms</span>
 
 </div>
 
@@ -5352,19 +5560,19 @@
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">visit-authenticated-with-stale-token</code>
-<span class="action-duration">1.78s</span>
+<span class="action-duration">1.83s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -5398,8 +5606,21 @@
   Actual
 </label>
 
+<label for="s17-a1-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s17-a1-shot"
+    id="s17-a1-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s17-a1-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s17-a1-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s17-a1-diff-stats"><span class="count">4.48%</span> <span class="label">differs</span> <span class="coverage-detail">· 11,204 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -5407,14 +5628,14 @@
     src="screenshots/user-returns-with-stale-session/visit-authenticated-with-stale-token.mobile.actual.png"
     alt="Screenshot of visit-authenticated-with-stale-token"
     loading="lazy"
-     data-src-baseline="../baselines/visit-authenticated-with-stale-token/mobile.png" data-src-actual="screenshots/user-returns-with-stale-session/visit-authenticated-with-stale-token.mobile.actual.png"
+     data-src-baseline="../baselines/visit-authenticated-with-stale-token/mobile.png" data-src-actual="screenshots/user-returns-with-stale-session/visit-authenticated-with-stale-token.mobile.actual.png" data-src-diff="screenshots/user-returns-with-stale-session/visit-authenticated-with-stale-token.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
   </ol>
@@ -5440,7 +5661,7 @@
 </span>
 
 <code class="action-name">intercept-auth-me-401</code>
-<span class="action-duration">6ms</span>
+<span class="action-duration">2ms</span>
 
 </div>
 
@@ -5462,7 +5683,7 @@
 </span>
 
 <code class="action-name">visit-authenticated-with-stale-token</code>
-<span class="action-duration">1.94s</span>
+<span class="action-duration">1.89s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -5550,7 +5771,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">5ms</span>
 
 </div>
 
@@ -5614,7 +5835,7 @@
 </span>
 
 <code class="action-name">revoke-token</code>
-<span class="action-duration">1.79s</span>
+<span class="action-duration">1.98s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -5679,7 +5900,7 @@
 </span>
 
 <code class="action-name">intercept-one-api-token</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">2ms</span>
 
 </div>
 
@@ -5722,7 +5943,7 @@
 </span>
 
 <code class="action-name">revoke-token-and-expect-error</code>
-<span class="action-duration">1.83s</span>
+<span class="action-duration">1.82s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -5798,7 +6019,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">3ms</span>
+<span class="action-duration">4ms</span>
 
 </div>
 
@@ -5862,7 +6083,7 @@
 </span>
 
 <code class="action-name">revoke-token</code>
-<span class="action-duration">2.24s</span>
+<span class="action-duration">2.00s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -5927,7 +6148,7 @@
 </span>
 
 <code class="action-name">intercept-one-api-token</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">2ms</span>
 
 </div>
 
@@ -5948,7 +6169,7 @@
 </span>
 
 <code class="action-name">intercept-token-revoke-500</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -5970,7 +6191,7 @@
 </span>
 
 <code class="action-name">revoke-token-and-expect-error</code>
-<span class="action-duration">2.02s</span>
+<span class="action-duration">2.05s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -6034,7 +6255,7 @@
     <span class="story-marker" aria-hidden="true">~</span>
     <span class="sr-only">changed</span>
     <code class="story-file">user-saves-link.json</code>
-    <span class="story-duration">9.50s</span>
+    <span class="story-duration">9.06s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can save a link I found — and if the API is unreachable, I see an error.</p>
   <br/>
@@ -6058,7 +6279,7 @@
 </span>
 
 <code class="action-name">intercept-no-links</code>
-<span class="action-duration">2ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -6080,7 +6301,7 @@
 </span>
 
 <code class="action-name">save-link</code>
-<span class="action-duration">1.64s</span>
+<span class="action-duration">1.73s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -6180,7 +6401,7 @@
 </span>
 
 <code class="action-name">save-link-expect-error</code>
-<span class="action-duration">2.80s</span>
+<span class="action-duration">2.48s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -6228,7 +6449,7 @@
 </label>
 
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s19-a3-diff-stats"><span class="count">0.63%</span> <span class="label">differs</span> <span class="coverage-detail">· 1,576 pixels</span></p>
+  <p class="diff-stats" id="s19-a3-diff-stats"><span class="count">3.51%</span> <span class="label">differs</span> <span class="coverage-detail">· 8,773 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -6269,7 +6490,7 @@
 </span>
 
 <code class="action-name">intercept-no-links</code>
-<span class="action-duration">5ms</span>
+<span class="action-duration">2ms</span>
 
 </div>
 
@@ -6291,7 +6512,7 @@
 </span>
 
 <code class="action-name">save-link</code>
-<span class="action-duration">1.70s</span>
+<span class="action-duration">1.68s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -6356,7 +6577,7 @@
 </span>
 
 <code class="action-name">intercept-links-api</code>
-<span class="action-duration">16ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -6378,7 +6599,7 @@
 </span>
 
 <code class="action-name">save-link-expect-error</code>
-<span class="action-duration">2.92s</span>
+<span class="action-duration">2.77s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -6442,7 +6663,7 @@
     <span class="story-marker" aria-hidden="true">✓</span>
     <span class="sr-only">passed</span>
     <code class="story-file">user-stumbles-suggestion.json</code>
-    <span class="story-duration">3.24s</span>
+    <span class="story-duration">2.95s</span>
   </div>
   <p class="story-prose">As a logged-in user with no unread links, Stumble! lands on a suggestion.</p>
   <br/>
@@ -6467,7 +6688,7 @@
 </span>
 
 <code class="action-name">visit-stumble-empty</code>
-<span class="action-duration">1.43s</span>
+<span class="action-duration">1.30s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -6544,7 +6765,7 @@
 </span>
 
 <code class="action-name">visit-stumble-empty</code>
-<span class="action-duration">1.58s</span>
+<span class="action-duration">1.45s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -6603,12 +6824,12 @@
 </li>
 
 
-<li class="story" data-status="pass" id="story-21" tabindex="-1">
+<li class="story" data-status="changed" id="story-21" tabindex="-1">
   <div class="story-row">
-    <span class="story-marker" aria-hidden="true">✓</span>
-    <span class="sr-only">passed</span>
+    <span class="story-marker" aria-hidden="true">~</span>
+    <span class="sr-only">changed</span>
     <code class="story-file">user-sets-up-mfa.json</code>
-    <span class="story-duration">9.10s</span>
+    <span class="story-duration">8.69s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can enable MFA by adding an authenticator app, verifying my first code, and saving my recovery codes.</p>
   <br/>
@@ -6632,7 +6853,7 @@
 </span>
 
 <code class="action-name">intercept-no-api-tokens</code>
-<span class="action-duration">3ms</span>
+<span class="action-duration">6ms</span>
 
 </div>
 
@@ -6674,7 +6895,7 @@
 </span>
 
 <code class="action-name">intercept-noop-totp-setup</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -6695,7 +6916,7 @@
 </span>
 
 <code class="action-name">intercept-noop-totp-verify</code>
-<span class="action-duration">0ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -6705,19 +6926,19 @@
 </li>
 
 
-<li class="action" data-status="pass">
+<li class="action" data-status="changed">
   
 <details class="shots">
   <summary class="action-row">
     
 
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
+<span class="status" data-status="changed">
+  <span class="sr-only">changed</span>
+  <span class="status-label" aria-hidden="true">changed</span>
 </span>
 
 <code class="action-name">setup-mfa</code>
-<span class="action-duration">1.88s</span>
+<span class="action-duration">1.71s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -6751,8 +6972,21 @@
   Actual
 </label>
 
+<label for="s21-a4-radio-diff" class="chip chip--toggle shot-radio-label">
+  <input
+    type="radio"
+    name="s21-a4-shot"
+    id="s21-a4-radio-diff"
+    value="diff"
+    data-tab="diff" aria-describedby="s21-a4-diff-stats"
+    
+    
+  />
+  Diff
+</label>
+
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s21-a4-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s21-a4-diff-stats"><span class="count">0.61%</span> <span class="label">differs</span> <span class="coverage-detail">· 1,525 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -6760,14 +6994,14 @@
     src="screenshots/user-sets-up-mfa/setup-mfa.mobile.actual.png"
     alt="Screenshot of setup-mfa"
     loading="lazy"
-     data-src-baseline="../baselines/setup-mfa/mobile.png" data-src-actual="screenshots/user-sets-up-mfa/setup-mfa.mobile.actual.png"
+     data-src-baseline="../baselines/setup-mfa/mobile.png" data-src-actual="screenshots/user-sets-up-mfa/setup-mfa.mobile.actual.png" data-src-diff="screenshots/user-sets-up-mfa/setup-mfa.mobile.diff.png"
   />
 </div>
 
 </details>
   
   
-  
+  <p class="candidate-note" role="note">This run's actual screenshot is the proposed new baseline.</p>
 </li>
 
 
@@ -6783,7 +7017,7 @@
 </span>
 
 <code class="action-name">verify-totp-and-reveal-codes</code>
-<span class="action-duration">1.19s</span>
+<span class="action-duration">1.12s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -6818,7 +7052,7 @@
 </label>
 
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s21-a5-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s21-a5-diff-stats"><span class="count">0.12%</span> <span class="label">differs</span> <span class="coverage-detail">· 299 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -6849,7 +7083,7 @@
 </span>
 
 <code class="action-name">copy-recovery-codes</code>
-<span class="action-duration">1.09s</span>
+<span class="action-duration">995ms</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -6884,7 +7118,7 @@
 </label>
 
   <p class="shot-caption" aria-hidden="true">Showing: <span class="shot-caption-variant">Actual</span></p>
-  <p class="diff-stats" id="s21-a6-diff-stats"><span class="count">0%</span> <span class="label">differs</span> <span class="coverage-detail">· 0 pixels</span></p>
+  <p class="diff-stats" id="s21-a6-diff-stats"><span class="count">0.12%</span> <span class="label">differs</span> <span class="coverage-detail">· 299 pixels</span></p>
 </fieldset>
 <div class="shot-stage">
   <img
@@ -6925,7 +7159,7 @@
 </span>
 
 <code class="action-name">intercept-no-api-tokens</code>
-<span class="action-duration">9ms</span>
+<span class="action-duration">7ms</span>
 
 </div>
 
@@ -6946,27 +7180,6 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">6ms</span>
-
-</div>
-
-  
-  
-  
-</li>
-
-
-<li class="action" data-status="pass">
-  
-<div class="action-row">
-  
-
-<span class="status" data-status="pass">
-  <span class="sr-only">passed</span>
-  <span class="status-label" aria-hidden="true">passed</span>
-</span>
-
-<code class="action-name">intercept-noop-totp-setup</code>
 <span class="action-duration">2ms</span>
 
 </div>
@@ -6987,8 +7200,29 @@
   <span class="status-label" aria-hidden="true">passed</span>
 </span>
 
-<code class="action-name">intercept-noop-totp-verify</code>
+<code class="action-name">intercept-noop-totp-setup</code>
 <span class="action-duration">1ms</span>
+
+</div>
+
+  
+  
+  
+</li>
+
+
+<li class="action" data-status="pass">
+  
+<div class="action-row">
+  
+
+<span class="status" data-status="pass">
+  <span class="sr-only">passed</span>
+  <span class="status-label" aria-hidden="true">passed</span>
+</span>
+
+<code class="action-name">intercept-noop-totp-verify</code>
+<span class="action-duration">2ms</span>
 
 </div>
 
@@ -7010,7 +7244,7 @@
 </span>
 
 <code class="action-name">setup-mfa</code>
-<span class="action-duration">1.95s</span>
+<span class="action-duration">1.85s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -7076,7 +7310,7 @@
 </span>
 
 <code class="action-name">verify-totp-and-reveal-codes</code>
-<span class="action-duration">1.31s</span>
+<span class="action-duration">1.28s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -7142,7 +7376,7 @@
 </span>
 
 <code class="action-name">copy-recovery-codes</code>
-<span class="action-duration">1.07s</span>
+<span class="action-duration">1.19s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -7206,7 +7440,7 @@
     <span class="story-marker" aria-hidden="true">✓</span>
     <span class="sr-only">passed</span>
     <code class="story-file">user-toggles-cvd-mode.json</code>
-    <span class="story-duration">4.45s</span>
+    <span class="story-duration">4.26s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can turn on CVD mode.</p>
   <br/>
@@ -7230,7 +7464,7 @@
 </span>
 
 <code class="action-name">intercept-noop-user-patch</code>
-<span class="action-duration">2ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -7251,7 +7485,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">0ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -7273,7 +7507,7 @@
 </span>
 
 <code class="action-name">toggle-cvd-mode</code>
-<span class="action-duration">2.08s</span>
+<span class="action-duration">1.86s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -7349,7 +7583,7 @@
 </span>
 
 <code class="action-name">intercept-noop-user-patch</code>
-<span class="action-duration">2ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -7392,7 +7626,7 @@
 </span>
 
 <code class="action-name">toggle-cvd-mode</code>
-<span class="action-duration">2.10s</span>
+<span class="action-duration">2.19s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -7456,7 +7690,7 @@
     <span class="story-marker" aria-hidden="true">✓</span>
     <span class="sr-only">passed</span>
     <code class="story-file">user-uses-bookmarklet.json</code>
-    <span class="story-duration">4.72s</span>
+    <span class="story-duration">4.29s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can regenerate my bookmarklet token.</p>
   <br/>
@@ -7480,7 +7714,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">3ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -7501,7 +7735,7 @@
 </span>
 
 <code class="action-name">intercept-regenerated-bookmarklet-token</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -7523,7 +7757,7 @@
 </span>
 
 <code class="action-name">use-bookmarklet</code>
-<span class="action-duration">2.02s</span>
+<span class="action-duration">1.77s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -7599,7 +7833,7 @@
 </span>
 
 <code class="action-name">intercept-instant-bookmarklet-token</code>
-<span class="action-duration">2ms</span>
+<span class="action-duration">3ms</span>
 
 </div>
 
@@ -7620,7 +7854,7 @@
 </span>
 
 <code class="action-name">intercept-regenerated-bookmarklet-token</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">0ms</span>
 
 </div>
 
@@ -7642,7 +7876,7 @@
 </span>
 
 <code class="action-name">use-bookmarklet</code>
-<span class="action-duration">2.19s</span>
+<span class="action-duration">2.11s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -7706,7 +7940,7 @@
     <span class="story-marker" aria-hidden="true">~</span>
     <span class="sr-only">changed</span>
     <code class="story-file">user-uses-keyboard.json</code>
-    <span class="story-duration">4.03s</span>
+    <span class="story-duration">3.65s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can navigate using the keyboard.</p>
   <br/>
@@ -7752,7 +7986,7 @@
 </span>
 
 <code class="action-name">keyboard-navigation</code>
-<span class="action-duration">1.76s</span>
+<span class="action-duration">1.63s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -7863,7 +8097,7 @@
 </span>
 
 <code class="action-name">keyboard-navigation</code>
-<span class="action-duration">1.99s</span>
+<span class="action-duration">1.79s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -7927,7 +8161,7 @@
     <span class="story-marker" aria-hidden="true">~</span>
     <span class="sr-only">changed</span>
     <code class="story-file">user-views-unread-links.json</code>
-    <span class="story-duration">4.44s</span>
+    <span class="story-duration">4.34s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can view my unread links.</p>
   <br/>
@@ -7951,7 +8185,7 @@
 </span>
 
 <code class="action-name">intercept-3-unread-links</code>
-<span class="action-duration">8ms</span>
+<span class="action-duration">4ms</span>
 
 </div>
 
@@ -7973,7 +8207,7 @@
 </span>
 
 <code class="action-name">view-unread-links</code>
-<span class="action-duration">1.94s</span>
+<span class="action-duration">1.96s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -8062,7 +8296,7 @@
 </span>
 
 <code class="action-name">intercept-3-unread-links</code>
-<span class="action-duration">2ms</span>
+<span class="action-duration">6ms</span>
 
 </div>
 
@@ -8084,7 +8318,7 @@
 </span>
 
 <code class="action-name">view-unread-links</code>
-<span class="action-duration">2.02s</span>
+<span class="action-duration">1.93s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -8148,7 +8382,7 @@
     <span class="story-marker" aria-hidden="true">~</span>
     <span class="sr-only">changed</span>
     <code class="story-file">user-reads-link.json</code>
-    <span class="story-duration">5.17s</span>
+    <span class="story-duration">5.47s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can click on an unread link to mark it as read.</p>
   <br/>
@@ -8172,7 +8406,7 @@
 </span>
 
 <code class="action-name">intercept-1-read-link</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">2ms</span>
 
 </div>
 
@@ -8194,7 +8428,7 @@
 </span>
 
 <code class="action-name">read-link</code>
-<span class="action-duration">2.17s</span>
+<span class="action-duration">2.25s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -8305,7 +8539,7 @@
 </span>
 
 <code class="action-name">read-link</code>
-<span class="action-duration">2.64s</span>
+<span class="action-duration">2.75s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -8369,7 +8603,7 @@
     <span class="story-marker" aria-hidden="true">~</span>
     <span class="sr-only">changed</span>
     <code class="story-file">user-reads-suggestion.json</code>
-    <span class="story-duration">5.28s</span>
+    <span class="story-duration">5.32s</span>
   </div>
   <p class="story-prose">As a logged-in user with no unread links, I can add and read a suggestion.</p>
   <br/>
@@ -8484,7 +8718,7 @@
 </span>
 
 <code class="action-name">read-suggestion</code>
-<span class="action-duration">2.63s</span>
+<span class="action-duration">2.66s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -8548,7 +8782,7 @@
     <span class="story-marker" aria-hidden="true">~</span>
     <span class="sr-only">changed</span>
     <code class="story-file">user-searches-unread-links.json</code>
-    <span class="story-duration">3.59s</span>
+    <span class="story-duration">3.62s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can search through my unread links to find one quickly.</p>
   <br/>
@@ -8573,7 +8807,7 @@
 </span>
 
 <code class="action-name">search-unread-links</code>
-<span class="action-duration">1.55s</span>
+<span class="action-duration">1.59s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -8664,7 +8898,7 @@
 </span>
 
 <code class="action-name">search-unread-links</code>
-<span class="action-duration">1.79s</span>
+<span class="action-duration">1.78s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -8729,7 +8963,7 @@
     <span class="story-marker" aria-hidden="true">~</span>
     <span class="sr-only">changed</span>
     <code class="story-file">user-stumbles-unread.json</code>
-    <span class="story-duration">3.37s</span>
+    <span class="story-duration">3.29s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can Stumble! upon an unread link.</p>
   <br/>
@@ -8753,7 +8987,7 @@
 </span>
 
 <code class="action-name">intercept-3-unread-links</code>
-<span class="action-duration">2ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -8796,7 +9030,7 @@
 </span>
 
 <code class="action-name">stumble-unread</code>
-<span class="action-duration">1.50s</span>
+<span class="action-duration">1.46s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -8928,7 +9162,7 @@
 </span>
 
 <code class="action-name">stumble-unread</code>
-<span class="action-duration">1.61s</span>
+<span class="action-duration">1.58s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -8992,7 +9226,7 @@
     <span class="story-marker" aria-hidden="true">~</span>
     <span class="sr-only">changed</span>
     <code class="story-file">user-revisits-read-links.json</code>
-    <span class="story-duration">12.65s</span>
+    <span class="story-duration">12.60s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can revisit my read links, re-open one, and mark another back as unread.</p>
   <br/>
@@ -9017,7 +9251,7 @@
 </span>
 
 <code class="action-name">view-read-links</code>
-<span class="action-duration">1.56s</span>
+<span class="action-duration">1.59s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -9265,7 +9499,7 @@
 </span>
 
 <code class="action-name">view-read-links</code>
-<span class="action-duration">1.69s</span>
+<span class="action-duration">1.67s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -9331,7 +9565,7 @@
 </span>
 
 <code class="action-name">click-read-link</code>
-<span class="action-duration">1.51s</span>
+<span class="action-duration">1.48s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -9397,7 +9631,7 @@
 </span>
 
 <code class="action-name">unread-link</code>
-<span class="action-duration">3.18s</span>
+<span class="action-duration">3.21s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -9461,7 +9695,7 @@
     <span class="story-marker" aria-hidden="true">~</span>
     <span class="sr-only">changed</span>
     <code class="story-file">user-empties-read-history.json</code>
-    <span class="story-duration">3.70s</span>
+    <span class="story-duration">3.71s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can remove all my read links and see the empty state.</p>
   <br/>
@@ -9486,7 +9720,7 @@
 </span>
 
 <code class="action-name">empty-read-history</code>
-<span class="action-duration">1.53s</span>
+<span class="action-duration">1.54s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -9576,7 +9810,7 @@
 </span>
 
 <code class="action-name">empty-read-history</code>
-<span class="action-duration">1.92s</span>
+<span class="action-duration">1.93s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -9640,7 +9874,7 @@
     <span class="story-marker" aria-hidden="true">✓</span>
     <span class="sr-only">passed</span>
     <code class="story-file">user-registers.json</code>
-    <span class="story-duration">2.80s</span>
+    <span class="story-duration">2.72s</span>
   </div>
   <p class="story-prose">As a new user, I can create an account.</p>
   <br/>
@@ -9658,7 +9892,7 @@
 </span>
 
 <code class="action-name">register</code>
-<span class="action-duration">2.70s</span>
+<span class="action-duration">2.62s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -9720,7 +9954,7 @@
     <span class="story-marker" aria-hidden="true">✓</span>
     <span class="sr-only">passed</span>
     <code class="story-file">user-uses-user-menu.json</code>
-    <span class="story-duration">7.85s</span>
+    <span class="story-duration">7.91s</span>
   </div>
   <p class="story-prose">As a logged-in user, I can use the user menu to toggle light/dark mode, change my theme, and log out.</p>
   <br/>
@@ -9737,7 +9971,7 @@
 </span>
 
 <code class="action-name">intercept-no-links</code>
-<span class="action-duration">3ms</span>
+<span class="action-duration">1ms</span>
 
 </div>
 
@@ -9780,7 +10014,7 @@
 </span>
 
 <code class="action-name">toggle-mode</code>
-<span class="action-duration">2.25s</span>
+<span class="action-duration">2.73s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -9846,7 +10080,7 @@
 </span>
 
 <code class="action-name">change-theme</code>
-<span class="action-duration">2.98s</span>
+<span class="action-duration">2.67s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
@@ -9911,7 +10145,7 @@
 </span>
 
 <code class="action-name">intercept-noop-logout</code>
-<span class="action-duration">1ms</span>
+<span class="action-duration">3ms</span>
 
 </div>
 
@@ -9933,7 +10167,7 @@
 </span>
 
 <code class="action-name">log-out</code>
-<span class="action-duration">2.36s</span>
+<span class="action-duration">2.34s</span>
 
     <span class="sr-only">toggle screenshots</span>
   </summary>
