@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import PrimaryButton from '../common/PrimaryButton';
 import type { Link } from '../../lib/api';
+import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
 import { hostnameOf, stripHtml } from '../../lib/strings';
 import { FOCUS_RING } from '../../lib/styles';
 
@@ -42,6 +43,10 @@ const CARD_ENTER_CLASS = 'animate-card-enter';
  * - Shows a locally generated inline-SVG placeholder when no `imageUrl` is available.
  * - Shows the raw URL as the description when no title is present.
  * - Shows a "Mark as unread" button for read links.
+ * - Shows an inert, `aria-disabled` overlay in place of the real link when
+ *   `link.url` fails `isSafeRedirectUrl` (a legacy non-http(s) row) – `href`
+ *   never carries the unsafe value, and click/keyboard activation no-ops,
+ *   so the URL can never reach the browser via this card.
  *
  * The card is interactive via a native `<a>` overlay that covers the entire
  * card surface. The "Mark as unread" button sits at a higher z-index so its
@@ -73,12 +78,15 @@ export default function LinkCardLayout({
     };
   }
 
+  const isLinkSafe = isSafeRedirectUrl(link.url);
   const hasTitle = Boolean(link.meta?.title);
   const displayTitle = link.meta?.title ?? '(No title)';
   const rawDescription = hasTitle ? link.meta?.description : link.url;
-  const displayDescription = rawDescription
-    ? stripHtml(rawDescription)
-    : rawDescription;
+  const displayDescription = !isLinkSafe
+    ? "This link can't be opened – the saved address isn't safe to open."
+    : rawDescription
+      ? stripHtml(rawDescription)
+      : rawDescription;
   const displaySiteName = useMemo(
     () =>
       link.meta?.siteName
@@ -87,7 +95,9 @@ export default function LinkCardLayout({
     [link.meta?.siteName, link.url],
   );
 
-  const cardAriaLabel = `${displayTitle} – ${displaySiteName}, opens in new tab`;
+  const cardAriaLabel = isLinkSafe
+    ? `${displayTitle} – ${displaySiteName}, opens in new tab`
+    : `${displayTitle} – ${displaySiteName}, link unavailable`;
 
   return (
     <div
@@ -239,12 +249,19 @@ export default function LinkCardLayout({
       </div>
 
       <a
-        href={link.url}
-        target="_blank"
-        rel="noreferrer"
+        href={isLinkSafe ? link.url : '#'}
+        target={isLinkSafe ? '_blank' : undefined}
+        rel={isLinkSafe ? 'noreferrer' : undefined}
         aria-label={cardAriaLabel}
-        onClick={onCardActivate}
-        className={`absolute inset-0 z-10 ${FOCUS_RING} rounded-r-xl cursor-pointer`}
+        aria-disabled={isLinkSafe ? undefined : true}
+        onClick={(event) => {
+          if (!isLinkSafe) {
+            event.preventDefault();
+            return;
+          }
+          onCardActivate(event);
+        }}
+        className={`absolute inset-0 z-10 ${FOCUS_RING} rounded-r-xl cursor-pointer aria-disabled:cursor-not-allowed`}
       />
     </div>
   );

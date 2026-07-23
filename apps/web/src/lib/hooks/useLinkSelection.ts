@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Link } from '../api';
+import { isSafeRedirectUrl } from '../safe-redirect-url';
 import type { LinksFilter } from './types';
 
 interface UseLinkSelectionOptions {
@@ -63,6 +64,9 @@ export function useLinkSelection({
     if (selectedLinkIndex === null) return;
     const link = links[selectedLinkIndex];
     if (!link) return;
+    // A legacy non-http(s) row (see isSafeRedirectUrl) never opens – matches
+    // LinkCardLayout's card-click guard for the same URL.
+    if (!isSafeRedirectUrl(link.url)) return;
     window.open(link.url, '_blank', 'noreferrer');
     if (!link.readAt) {
       onToggleRead(link);
