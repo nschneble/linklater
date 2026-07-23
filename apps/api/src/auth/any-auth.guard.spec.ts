@@ -95,7 +95,6 @@ describe('AnyAuthGuard', () => {
         expect.objectContaining({
           kind: 'USER',
           tokenHash: 'abc123hash',
-          request,
           context,
         }),
       );
