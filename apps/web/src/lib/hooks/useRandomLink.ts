@@ -1,4 +1,5 @@
 import { readLink, getRandomLink } from '../api';
+import { isSafeRedirectUrl } from '../safe-redirect-url';
 import { useCallback, useState } from 'react';
 
 interface UseRandomLinkOptions {
@@ -45,6 +46,10 @@ export function useRandomLink({
       const { link } = await getRandomLink();
       if (!link) {
         onNoLinks?.();
+      } else if (!isSafeRedirectUrl(link.url)) {
+        // Legacy non-http(s) row (see isSafeRedirectUrl) – matches
+        // LinkCardLayout's card-click guard for the same URL.
+        setRandomError("This link can't be opened – try again for another.");
       } else {
         window.open(link.url, '_blank', 'noopener,noreferrer');
         try {

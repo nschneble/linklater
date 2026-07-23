@@ -71,6 +71,28 @@ describe('useRandomLink', () => {
     expect(onDecrementTotal).toHaveBeenCalledOnce();
   });
 
+  it('does not open a legacy non-http(s) link, sets randomError, and does not mark it read', async () => {
+    const link = makeLink({ url: 'javascript:alert(1)' });
+    vi.mocked(apiModule.getRandomLink).mockResolvedValue({ link });
+
+    const onRemoveLink = vi.fn();
+    const onDecrementTotal = vi.fn();
+
+    const { result } = renderHook(() =>
+      useRandomLink({ onDecrementTotal, onRemoveLink }),
+    );
+
+    await act(() => result.current.handleRandom());
+
+    expect(window.open).not.toHaveBeenCalled();
+    expect(apiModule.readLink).not.toHaveBeenCalled();
+    expect(onRemoveLink).not.toHaveBeenCalled();
+    expect(onDecrementTotal).not.toHaveBeenCalled();
+    expect(result.current.randomError).toBe(
+      "This link can't be opened – try again for another.",
+    );
+  });
+
   it('calls onNoLinks when no link is returned and does not set randomError', async () => {
     vi.mocked(apiModule.getRandomLink).mockResolvedValue({ link: null });
 

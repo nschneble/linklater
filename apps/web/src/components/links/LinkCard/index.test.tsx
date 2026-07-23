@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import LinkCard from './index';
 import { ThemeProvider } from '../../../theme/ThemeContext';
 import type { Link } from '../../../lib/api';
@@ -148,6 +148,64 @@ describe('LinkCard thumbnail placeholder (local inline SVG, no third party)', ()
     );
 
     expect(container.innerHTML).not.toContain(thirdPartyHost);
+  });
+});
+
+describe('LinkCard unsafe-URL guard (CWE-79)', () => {
+  it('renders a real, safe anchor for a normal http(s) link', () => {
+    renderWithProviders(
+      <LinkCard
+        link={makeLink({ url: 'https://example.com/article' })}
+        onReadToggle={vi.fn()}
+      />,
+    );
+
+    const anchor = screen.getByRole('link', { name: /opens in new tab/ });
+    expect(anchor).toHaveAttribute('href', 'https://example.com/article');
+    expect(anchor).toHaveAttribute('target', '_blank');
+    expect(anchor).toHaveAttribute('rel', 'noreferrer');
+    expect(anchor).not.toHaveAttribute('aria-disabled');
+  });
+
+  it('never puts a legacy non-http(s) URL in href, and marks the anchor aria-disabled', () => {
+    renderWithProviders(
+      <LinkCard
+        link={makeLink({ url: 'javascript:alert(document.cookie)' })}
+        onReadToggle={vi.fn()}
+      />,
+    );
+
+    const anchor = screen.getByRole('link', { name: /link unavailable/ });
+    expect(anchor).toHaveAttribute('href', '#');
+    expect(anchor.getAttribute('href')).not.toContain('javascript:');
+    expect(anchor).toHaveAttribute('aria-disabled', 'true');
+    expect(anchor).not.toHaveAttribute('target');
+    expect(anchor).not.toHaveAttribute('rel');
+  });
+
+  it('shows a visible explanation and does not mark the link read when the URL is unsafe', () => {
+    const onReadToggle = vi.fn();
+    renderWithProviders(
+      <LinkCard
+        link={makeLink({
+          url: 'javascript:alert(1)',
+          readAt: null,
+          meta: { title: 'Example title', fetchedAt: new Date().toISOString() },
+        })}
+        onReadToggle={onReadToggle}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "This link can't be opened – the saved address isn't safe to open.",
+      ),
+    ).toBeInTheDocument();
+
+    const anchor = screen.getByRole('link', { name: /link unavailable/ });
+    fireEvent.click(anchor);
+
+    expect(onReadToggle).not.toHaveBeenCalled();
   });
 });
 
