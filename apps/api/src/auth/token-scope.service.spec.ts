@@ -6,10 +6,8 @@ import { Reflector } from '@nestjs/core';
 import { TokenScopeService } from './token-scope.service';
 import { TokenKind } from '../prisma/index';
 import type { ExecutionContext } from '@nestjs/common';
-import type { Request } from 'express';
 import type { ThrottlerStorage } from '@nestjs/throttler';
 
-const APP_URL = 'https://app.example.com';
 const TOKEN_HASH = 'abc123hash';
 
 function makeContext() {
@@ -19,16 +17,11 @@ function makeContext() {
   } as unknown as ExecutionContext;
 }
 
-function makeRequest(origin?: string) {
-  return { headers: origin ? { origin } : {} } as unknown as Request;
-}
-
 function makeStorageRecord(isBlocked: boolean) {
   return { totalHits: 1, timeToExpire: 60, isBlocked, timeToBlockExpire: 0 };
 }
 
 describe('TokenScopeService', () => {
-  const originalAppUrl = process.env.APP_URL;
   const originalTestingUi = process.env.TESTING_UI;
 
   let reflector: Reflector;
@@ -37,7 +30,6 @@ describe('TokenScopeService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.APP_URL = APP_URL;
     delete process.env.TESTING_UI;
 
     reflector = {
@@ -50,7 +42,6 @@ describe('TokenScopeService', () => {
   });
 
   afterAll(() => {
-    process.env.APP_URL = originalAppUrl;
     process.env.TESTING_UI = originalTestingUi;
   });
 
@@ -60,7 +51,6 @@ describe('TokenScopeService', () => {
         kind: TokenKind.USER,
         tokenHash: TOKEN_HASH,
         context: makeContext(),
-        request: makeRequest(),
       });
 
       expect(reflector.getAllAndOverride).not.toHaveBeenCalled();
@@ -77,7 +67,6 @@ describe('TokenScopeService', () => {
           kind: TokenKind.BOOKMARKLET,
           tokenHash: TOKEN_HASH,
           context: makeContext(),
-          request: makeRequest(),
         }),
       ).resolves.toBeUndefined();
 
@@ -92,7 +81,6 @@ describe('TokenScopeService', () => {
           kind: TokenKind.BOOKMARKLET,
           tokenHash: TOKEN_HASH,
           context: makeContext(),
-          request: makeRequest(),
         }),
       ).rejects.toThrow(ForbiddenException);
 
@@ -101,54 +89,31 @@ describe('TokenScopeService', () => {
     });
   });
 
+  // The API_DOCS token authorizes no route (see the class docstring) – it
+  // used to be gated by an Origin header equality check, which any
+  // non-browser client can spoof (CWE-346); rejecting unconditionally closes
+  // that regardless of what the caller claims as its Origin.
   describe('API_DOCS tokens', () => {
-    it('allows a request whose Origin matches APP_URL', async () => {
+    it('rejects every request with ForbiddenException, regardless of Origin', async () => {
       await expect(
         service.enforce({
           kind: TokenKind.API_DOCS,
           tokenHash: TOKEN_HASH,
           context: makeContext(),
-          request: makeRequest(APP_URL),
-        }),
-      ).resolves.toBeUndefined();
-
-      expect(storage.increment).toHaveBeenCalledTimes(1);
-    });
-
-    it('rejects a request from a different origin', async () => {
-      await expect(
-        service.enforce({
-          kind: TokenKind.API_DOCS,
-          tokenHash: TOKEN_HASH,
-          context: makeContext(),
-          request: makeRequest('https://evil.example.com'),
         }),
       ).rejects.toThrow(ForbiddenException);
       expect(storage.increment).not.toHaveBeenCalled();
     });
 
-    it('rejects a request with no Origin header (e.g. curl)', async () => {
+    it('never consults the reflector – there is no route to be scoped to', async () => {
       await expect(
         service.enforce({
           kind: TokenKind.API_DOCS,
           tokenHash: TOKEN_HASH,
           context: makeContext(),
-          request: makeRequest(),
         }),
       ).rejects.toThrow(ForbiddenException);
-    });
-
-    it('fails closed when APP_URL is unset', async () => {
-      delete process.env.APP_URL;
-
-      await expect(
-        service.enforce({
-          kind: TokenKind.API_DOCS,
-          tokenHash: TOKEN_HASH,
-          context: makeContext(),
-          request: makeRequest(APP_URL),
-        }),
-      ).rejects.toThrow(ForbiddenException);
+      expect(reflector.getAllAndOverride).not.toHaveBeenCalled();
     });
   });
 
@@ -164,7 +129,6 @@ describe('TokenScopeService', () => {
           kind: TokenKind.BOOKMARKLET,
           tokenHash: TOKEN_HASH,
           context: makeContext(),
-          request: makeRequest(),
         }),
       ).rejects.toThrow(ThrottlerException);
     });
@@ -176,7 +140,6 @@ describe('TokenScopeService', () => {
         kind: TokenKind.BOOKMARKLET,
         tokenHash: TOKEN_HASH,
         context: makeContext(),
-        request: makeRequest(),
       });
 
       const key = (storage.increment as jest.Mock).mock.calls[0][0];
@@ -191,7 +154,6 @@ describe('TokenScopeService', () => {
         kind: TokenKind.BOOKMARKLET,
         tokenHash: TOKEN_HASH,
         context: makeContext(),
-        request: makeRequest(),
       });
 
       expect(storage.increment).not.toHaveBeenCalled();

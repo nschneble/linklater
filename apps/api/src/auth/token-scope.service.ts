@@ -2,7 +2,6 @@ import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ThrottlerException, ThrottlerStorage } from '@nestjs/throttler';
 import type { ExecutionContext } from '@nestjs/common';
-import type { Request } from 'express';
 
 import { isTestingUi } from '../common/testing-ui.js';
 import { TokenKind } from '../prisma/index.js';
@@ -38,11 +37,28 @@ const SCOPE_RATE_LIMITS: Record<SpecialTokenKind, RateLimit> = {
  *
  * - BOOKMARKLET: usable only on routes marked `@AllowsBookmarkletToken()`
  *   (just `POST /links`). Anything else is a 403.
- * - API_DOCS: usable only from the app's own origin (the docs page is the one
- *   place that embeds it), so a copy pasted into curl or another site is inert.
+ * - API_DOCS: usable on NO route. The in-page "try it out" explorer that
+ *   used to spend it against the live API was removed; nothing on the docs
+ *   page consumes or displays it either (the cURL example there hardcodes a
+ *   `YOUR_API_TOKEN` placeholder, never the real value – see
+ *   `CurlExample.tsx`). The token is retained purely as auto-provisioned
+ *   server-side plumbing whose teardown is a separate, deferred decision
+ *   (see `ApiDocsTokensService`'s docstring). This used to be gated by an
+ *   `Origin` header equality check, but `Origin`
+ *   is a plain request header any non-browser client (curl, a script) can
+ *   set to whatever value it likes – it enforced nothing, and once past it
+ *   the token authenticated exactly like a full-access USER token (CWE-346).
+ *   Rejecting unconditionally is the honest version of the same route-scope
+ *   shape BOOKMARKLET already uses, just with an allowed-route set that's
+ *   currently empty because nothing needs this token to call a real API
+ *   route today. If a future feature needs scoped API_DOCS access, extend
+ *   it the same way BOOKMARKLET is scoped – a route-level decorator +
+ *   reflector check – not another header check.
  *
- * Both kinds are additionally rate-limited per token. The standard USER token
- * is unaffected and passes straight through.
+ * Both kinds are additionally rate-limited per token (the API_DOCS limit is
+ * unreachable today since the token is rejected before rate limiting runs,
+ * but stays correct if route-scoping is ever added for it). The standard
+ * USER token is unaffected and passes straight through.
  */
 @Injectable()
 export class TokenScopeService {
@@ -60,14 +76,13 @@ export class TokenScopeService {
     kind: TokenKind;
     tokenHash: string;
     context: ExecutionContext;
-    request: Request;
   }): Promise<void> {
-    const { kind, tokenHash, context, request } = input;
+    const { kind, tokenHash, context } = input;
 
     if (kind === TokenKind.BOOKMARKLET) {
       this.assertBookmarkletRoute(context);
     } else if (kind === TokenKind.API_DOCS) {
-      this.assertDocsOrigin(request);
+      this.rejectApiDocsToken();
     } else {
       return;
     }
@@ -87,30 +102,16 @@ export class TokenScopeService {
     }
   }
 
-  private assertDocsOrigin(request: Request): void {
-    const appOrigin = this.appOrigin();
-    if (!appOrigin || request.headers.origin !== appOrigin) {
-      throw new ForbiddenException(
-        'The API docs token only works from the documentation page',
-      );
-    }
-  }
-
   /**
-   * The app's frontend origin (scheme + host + port), derived from `APP_URL`.
-   * Returns `null` when `APP_URL` is unset or unparseable so the docs-origin
-   * check fails closed rather than letting the token through unguarded.
+   * The API_DOCS token has no route to be scoped to (see the class
+   * docstring) – always rejects. `never` return type so a future call site
+   * that expects this to sometimes pass fails to compile instead of
+   * silently no-op-ing.
    */
-  private appOrigin(): string | null {
-    const appUrl = process.env.APP_URL;
-    if (!appUrl) {
-      return null;
-    }
-    try {
-      return new URL(appUrl).origin;
-    } catch {
-      return null;
-    }
+  private rejectApiDocsToken(): never {
+    throw new ForbiddenException(
+      'The API docs token cannot be used to call the API',
+    );
   }
 
   private async assertWithinRateLimit(

@@ -53,7 +53,6 @@ export class AnyAuthGuard extends AuthGuard('jwt') {
         kind: validated.kind,
         tokenHash: validated.tokenHash,
         context,
-        request,
       });
 
       const { userId, email } = validated;
