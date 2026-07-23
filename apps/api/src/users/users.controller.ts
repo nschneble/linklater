@@ -57,7 +57,7 @@ export class UsersController {
 
   /**
    * Updates the current user's account settings. Accepts any combination of
-   * `password`, `theme`, `mode`, `cvdMode`, `customTheme`, and
+   * `password`, `theme`, `mode`, `cvdMode`, `dyslexicFont`, `customTheme`, and
    * `customThemeEnabled` – all fields are optional. Changing the password
    * requires `currentPassword` as well.
    */

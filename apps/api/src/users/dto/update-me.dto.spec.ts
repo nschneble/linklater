@@ -66,6 +66,26 @@ describe('UpdateMeDto', () => {
     expect(cvdErrors.length).toBeGreaterThan(0);
   });
 
+  it('accepts dyslexicFont: true', async () => {
+    const errors = await validate(makeDto({ dyslexicFont: true }));
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts dyslexicFont: false', async () => {
+    const errors = await validate(makeDto({ dyslexicFont: false }));
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a non-boolean dyslexicFont value', async () => {
+    const errors = await validate(
+      makeDto({ dyslexicFont: 'yes' as unknown as boolean }),
+    );
+    const dyslexicFontErrors = errors.filter(
+      (error) => error.property === 'dyslexicFont',
+    );
+    expect(dyslexicFontErrors.length).toBeGreaterThan(0);
+  });
+
   it('accepts a customTheme with both dark and light maps', async () => {
     const errors = await validate(
       makeDto({
