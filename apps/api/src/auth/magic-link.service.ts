@@ -76,7 +76,12 @@ export class MagicLinkService {
       throw new BadRequestException('This login link has already been used');
     }
     if (!user.emailVerifiedAt) {
-      await this.usersService.markEmailVerified(user.id);
+      // Possessing the token proves control of the inbox, but a password may
+      // have been set on this row by someone else before that proof existed
+      // (account-pre-hijacking) – invalidate it, and every session it could
+      // have minted, in the same breath as marking verified. See
+      // `UsersService.verifyEmailAndInvalidateStalePassword`.
+      await this.usersService.verifyEmailAndInvalidateStalePassword(user.id);
     }
     return user;
   }

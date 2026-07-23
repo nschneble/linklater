@@ -158,6 +158,7 @@ describe('AuthService', () => {
         magicLinkTokenExpiresAt: null,
         accountDeletionToken: null,
         accountDeletionTokenExpiresAt: null,
+        tokenVersion: 3,
       });
 
       const result = await service.me(USER_ID);
@@ -173,6 +174,7 @@ describe('AuthService', () => {
       expect(result).not.toHaveProperty('magicLinkToken');
       expect(result).not.toHaveProperty('accountDeletionToken');
       expect(result).not.toHaveProperty('accountDeletionTokenExpiresAt');
+      expect(result).not.toHaveProperty('tokenVersion');
     });
 
     it('returns accountDeletionPending true when an unexpired deletion token is set', async () => {
@@ -339,6 +341,7 @@ describe('AuthService', () => {
         id: USER_ID,
         email: USER_EMAIL,
         totpEnabledAt: null,
+        tokenVersion: 0,
       });
       (refreshTokenServiceMock.issueTokenPair as jest.Mock).mockResolvedValue({
         accessToken: SIGNED_TOKEN,
@@ -351,6 +354,7 @@ describe('AuthService', () => {
       expect(refreshTokenServiceMock.issueTokenPair).toHaveBeenCalledWith(
         USER_ID,
         USER_EMAIL,
+        0,
       );
       expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
       expect(result).toHaveProperty('refreshToken');
@@ -405,6 +409,7 @@ describe('AuthService', () => {
         id: USER_ID,
         email: USER_EMAIL,
         totpEnabledAt: null,
+        tokenVersion: 0,
       });
 
       const result = await service.resetPassword('reset-token', NEW_PASSWORD);
@@ -416,6 +421,7 @@ describe('AuthService', () => {
       expect(refreshTokenServiceMock.issueTokenPair).toHaveBeenCalledWith(
         USER_ID,
         USER_EMAIL,
+        0,
       );
       expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
     });

@@ -75,6 +75,17 @@ describe('UsersService', () => {
       update: jest.fn(),
       updateMany: jest.fn(),
     },
+    refreshToken: {
+      deleteMany: jest.fn(),
+    },
+    extensionAuthCode: {
+      deleteMany: jest.fn(),
+    },
+    $transaction: jest
+      .fn()
+      .mockImplementation(async (operations: Promise<unknown>[]) =>
+        Promise.all(operations),
+      ),
   } as unknown as PrismaService;
 
   beforeEach(async () => {
@@ -544,6 +555,42 @@ describe('UsersService', () => {
       expect(prismaMock.user.update).toHaveBeenCalledWith({
         where: { id: USER_ID },
         data: { emailVerifiedAt: expect.any(Date) },
+      });
+    });
+  });
+
+  describe('verifyEmailAndInvalidateStalePassword', () => {
+    it('sets emailVerifiedAt, nulls passwordHash, and bumps tokenVersion, atomically with revoking every outstanding session', async () => {
+      (prismaMock.user.update as jest.Mock).mockReturnValue(
+        Promise.resolve(makeUser()),
+      );
+      (prismaMock.refreshToken.deleteMany as jest.Mock).mockReturnValue(
+        Promise.resolve({ count: 1 }),
+      );
+      (prismaMock.extensionAuthCode.deleteMany as jest.Mock).mockReturnValue(
+        Promise.resolve({ count: 0 }),
+      );
+
+      await service.verifyEmailAndInvalidateStalePassword(USER_ID);
+
+      // All three writes must be handed to $transaction together – splitting
+      // the tokenVersion bump from the session revocation reopens a race
+      // where an in-flight refresh() reads the new version before the old
+      // refresh token is deleted (see the method's docstring).
+      expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: {
+          emailVerifiedAt: expect.any(Date),
+          passwordHash: null,
+          tokenVersion: { increment: 1 },
+        },
+      });
+      expect(prismaMock.refreshToken.deleteMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID },
+      });
+      expect(prismaMock.extensionAuthCode.deleteMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID },
       });
     });
   });

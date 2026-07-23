@@ -46,9 +46,15 @@ export class OAuthAccountService {
       // Auto-verification here is safe because we matched the user *by* this
       // email – the provider's verified-email assertion applies to the same
       // address. The link-from-Settings path (`linkOAuthAccountToUser` below)
-      // gates auto-verify on an equality check for the same reason.
+      // gates auto-verify on an equality check for the same reason. A
+      // password set on this row before now was never proven to belong to
+      // this email's real owner, so it's invalidated in the same breath as
+      // marking verified (account-pre-hijacking closure – see
+      // `UsersService.verifyEmailAndInvalidateStalePassword`).
       if (!existingUser.emailVerifiedAt) {
-        await this.usersService.markEmailVerified(existingUser.id);
+        await this.usersService.verifyEmailAndInvalidateStalePassword(
+          existingUser.id,
+        );
       }
       return { userId: existingUser.id, email: existingUser.email };
     }
@@ -75,6 +81,14 @@ export class OAuthAccountService {
         }
         const raceUser = await this.usersService.findByEmail(email);
         if (raceUser) {
+          // Same pre-hijack window as the merge branch above, reached via
+          // the narrow concurrent-registration race instead of a normal
+          // lookup – same closure applies.
+          if (!raceUser.emailVerifiedAt) {
+            await this.usersService.verifyEmailAndInvalidateStalePassword(
+              raceUser.id,
+            );
+          }
           return { userId: raceUser.id, email: raceUser.email };
         }
       }

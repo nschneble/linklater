@@ -78,7 +78,7 @@ export class ExtensionAuthService implements OnModuleInit {
     const codeHash = sha256Hex(rawCode);
     const stored = await this.prisma.extensionAuthCode.findUnique({
       where: { codeHash },
-      include: { user: { select: { email: true } } },
+      include: { user: { select: { email: true, tokenVersion: true } } },
     });
 
     if (!stored || stored.expiresAt < new Date()) {
@@ -96,6 +96,7 @@ export class ExtensionAuthService implements OnModuleInit {
     return this.refreshTokenService.issueTokenPair(
       stored.userId,
       stored.user.email,
+      stored.user.tokenVersion,
     );
   }
 }
