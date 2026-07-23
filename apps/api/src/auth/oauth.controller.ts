@@ -22,6 +22,10 @@ import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { OAuthAccountService } from './oauth-account.service.js';
+import {
+  createOAuthCallbackGuard,
+  createOAuthInitiateGuard,
+} from './oauth-csrf.guard.js';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**
@@ -39,28 +43,28 @@ export class OAuthController {
   ) {}
 
   @ApiOperation({ summary: 'Initiate Google OAuth sign-in' })
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(createOAuthInitiateGuard('google'))
   @Get('google')
   async googleAuth() {
     // Passport redirects to Google – no body needed
   }
 
   @ApiOperation({ summary: 'Google OAuth callback' })
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(createOAuthCallbackGuard('google'))
   @Get('google/callback')
   async googleCallback(@Req() request: AuthRequest, @Res() response: Response) {
     await this.completeOAuthLogin(request, response);
   }
 
   @ApiOperation({ summary: 'Initiate Apple Sign In' })
-  @UseGuards(AuthGuard('apple'))
+  @UseGuards(createOAuthInitiateGuard('apple'))
   @Get('apple')
   async appleAuth() {
     // Passport redirects to Apple – no body needed
   }
 
   @ApiOperation({ summary: 'Apple Sign In callback' })
-  @UseGuards(AuthGuard('apple'))
+  @UseGuards(createOAuthCallbackGuard('apple'))
   @Post('apple/callback')
   async appleCallback(@Req() request: AuthRequest, @Res() response: Response) {
     await this.completeOAuthLogin(request, response);

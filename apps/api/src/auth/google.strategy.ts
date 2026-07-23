@@ -18,6 +18,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: process.env.GOOGLE_CALLBACK_URL,
       scope: ['email', 'profile'],
+      // `state: false` opts out of passport-oauth2's session-backed state
+      // store (this app has no session middleware) – NOT out of CSRF
+      // protection. The route guards (`createOAuthInitiateGuard`/
+      // `createOAuthCallbackGuard` in `oauth-csrf.guard.ts`) supply and
+      // verify a cookie-bound state value per request instead.
       state: false,
     });
   }
