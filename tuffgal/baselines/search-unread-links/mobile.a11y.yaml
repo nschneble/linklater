@@ -34,6 +34,7 @@
     - tab "Unread" [selected]
     - tab "Read"
   - searchbox "Search through your links": Test Link 2
+  - button "Clear search"
   - button "Stumble!"
   - button "Add link"
   - tabpanel "Unread":
