@@ -9,13 +9,13 @@
     { "kind": "wait", "ms": 600 },
     {
       "kind": "read",
-      "hint": { "selector": "html[data-dyslexic-font=\"on\"]" }
+      "hint": { "selector": "html[data-dyslexic-font='on']" }
     }
   ],
   "expect": {
     "anyOf": [
       {
-        "selector": "[role=\"switch\"][aria-labelledby=\"dyslexic-font-label\"][aria-checked=\"true\"]"
+        "selector": "[role='switch'][aria-labelledby='dyslexic-font-label'][aria-checked='true']"
       }
     ]
   }

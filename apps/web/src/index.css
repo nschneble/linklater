@@ -259,10 +259,12 @@ body {
  * !important, so a user's own text-spacing override still wins.
  */
 [data-dyslexic-font='on'] {
-  --default-font-family: 'OpenDyslexic', ui-sans-serif, system-ui, sans-serif,
-    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --default-font-family:
+    'OpenDyslexic', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --font-sans: 'OpenDyslexic', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'OpenDyslexic Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
+  --font-mono:
+    'OpenDyslexic Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
     'Liberation Mono', monospace;
   letter-spacing: 0.05em;
   word-spacing: 0.08em;
