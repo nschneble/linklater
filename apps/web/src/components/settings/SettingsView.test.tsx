@@ -55,6 +55,10 @@ vi.mock('./CvdModeToggle', () => ({
   default: () => null,
 }));
 
+vi.mock('./DyslexicFontToggle', () => ({
+  default: () => null,
+}));
+
 vi.mock('./KeyboardShortcutsToggle', () => ({
   default: () => null,
 }));

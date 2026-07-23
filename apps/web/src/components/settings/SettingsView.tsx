@@ -8,6 +8,7 @@ import ApiTokensSection from './ApiTokensSection';
 import BookmarkletSection from './BookmarkletSection';
 import CvdModeToggle from './CvdModeToggle';
 import DangerZone from './DangerZone';
+import DyslexicFontToggle from './DyslexicFontToggle';
 import IdPsSection from './IdPsSection';
 import KeyboardShortcutsToggle from './KeyboardShortcutsToggle';
 import MultiFactorSection from './MultiFactorSection';
@@ -175,6 +176,7 @@ export default function SettingsView({
       >
         <div className="space-y-6">
           <CvdModeToggle />
+          <DyslexicFontToggle />
           <KeyboardShortcutsToggle />
         </div>
       </SettingsGroup>
