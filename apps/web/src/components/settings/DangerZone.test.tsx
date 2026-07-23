@@ -48,6 +48,7 @@ function makeUser(overrides: Partial<User> = {}): User {
   return {
     connectedProviders: [],
     cvdMode: false,
+    dyslexicFont: false,
     email: 'test@example.com',
     emailVerifiedAt: null,
     hasPassword: false,

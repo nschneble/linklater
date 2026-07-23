@@ -165,7 +165,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   // Toggles the `data-dyslexic-font="on"` attribute the OpenDyslexic override
   // block in index.css keys off. `dataset.dyslexicFont` writes the kebab-cased
   // `data-dyslexic-font` attribute, matching that block's `[data-dyslexic-font
-  // ='on']` selector. Unlike CVD mode this is a pure attribute toggle — it does
+  // ='on']` selector. Unlike CVD mode this is a pure attribute toggle: it does
   // not switch the active color theme.
   useLayoutEffect(() => {
     if (isDyslexicFont) {
@@ -351,8 +351,8 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
 
   // Enabling/disabling the dyslexic font is a self-contained attribute toggle:
   // it writes only its own `localStorage` key + timestamp (the App.tsx race
-  // guard reads the timestamp) and never touches the active theme, so — unlike
-  // `enableCvdMode`/`disableCvdMode` — it returns nothing for callers to fold
+  // guard reads the timestamp) and never touches the active theme, so (unlike
+  // `enableCvdMode`/`disableCvdMode`) it returns nothing for callers to fold
   // into a server PATCH's `theme` field.
   const enableDyslexicFont = useCallback(() => {
     setIsDyslexicFont(true);

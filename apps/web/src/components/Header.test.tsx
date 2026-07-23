@@ -40,6 +40,7 @@ function makeUser(overrides: Partial<User> = {}): User {
     customTheme: null,
     customThemeEnabled: false,
     cvdMode: false,
+    dyslexicFont: false,
     email: 'current@example.com',
     emailVerifiedAt: '2024-01-01T00:00:00.000Z',
     hasPassword: true,

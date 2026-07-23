@@ -148,7 +148,7 @@ graph TD
 | Touch API client behavior               | `src/lib/api/`                                         |
 | Tweak email / login verification pages  | `src/components/verify/`                               |
 | Tweak the menu navigation               | `src/components/UserMenu/`                             |
-| Wire up CVD / accessibility CSS         | `src/index.css`, `src/theme/ThemeContext/`             |
+| Wire up CVD / dyslexic-font CSS         | `src/index.css`, `src/theme/ThemeContext/`             |
 
 ## A few explanations
 
@@ -156,4 +156,4 @@ Environment variables are documented in `.env.example`
 
 The API reference is available at `/docs` when the app is running
 
-The CVD accessibility hook (`data-cvd="on"`) is implemented in `src/theme/ThemeContext/` and drives a set of global CSS rules defined in `src/index.css`
+The CVD (`data-cvd="on"`) and dyslexic-font (`data-dyslexic-font="on"`) accessibility hooks are implemented in `src/theme/ThemeContext/` and drive global CSS rules defined in `src/index.css`

@@ -1,4 +1,5 @@
 import Alert from '../common/Alert';
+import SettingSwitch from './SettingSwitch';
 import { updateMe } from '../../lib/api';
 import { useCallback, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
@@ -45,42 +46,22 @@ export default function CvdModeToggle() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 space-y-1">
-          <label
-            id="cvd-label"
-            htmlFor="cvd-toggle"
-            className="block text-[var(--mount-text)] text-sm font-medium cursor-pointer"
-          >
-            Color Vision Deficiency (CVD) mode
-          </label>
-          <p
-            id="cvd-description"
-            className="text-[var(--mount-alt-text)] text-xs text-pretty"
-          >
+      <SettingSwitch
+        id="cvd"
+        label="Color Vision Deficiency (CVD) mode"
+        description={
+          <>
             Switches to the{' '}
             <span className="font-semibold">Apollo 10½ theme</span> and adds
             distinctive visual non-color cues, including underlined links,
             striped disabled controls, stronger focus outlines, and selected
             indicator bars.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          id="cvd-toggle"
-          role="switch"
-          aria-checked={isCvdMode}
-          aria-labelledby="cvd-label"
-          aria-describedby="cvd-description"
-          disabled={loading}
-          onClick={handleToggle}
-          className="group relative inline-flex shrink-0 items-center w-11 h-6 mt-0.5 bg-[var(--orbit-bg)] aria-checked:bg-[var(--orbit-highlight)] border border-[var(--orbit-border)] aria-checked:border-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] rounded-full transition-colors duration-200 cursor-pointer"
-        >
-          <span className="inline-block h-4 w-4 translate-x-1 group-aria-checked:translate-x-6 bg-white rounded-full shadow-sm transition-transform duration-200" />
-          <span className="sr-only">{isCvdMode ? 'On' : 'Off'}</span>
-        </button>
-      </div>
+          </>
+        }
+        checked={isCvdMode}
+        disabled={loading}
+        onToggle={handleToggle}
+      />
 
       {error && <Alert variant="error">{error}</Alert>}
     </div>

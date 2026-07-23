@@ -112,6 +112,7 @@ const MIGRATED_FILES = [
   'src/components/settings/SettingsLayout.tsx',
   'src/components/settings/SettingsSectionNav.tsx',
   'src/components/settings/SettingsView.tsx',
+  'src/components/settings/SettingSwitch.tsx',
   'src/components/settings/ThemeEditor/BundleTabs.tsx',
   'src/components/settings/ThemeEditor/ColorEditor.tsx',
   'src/components/settings/ThemeEditor/ColorRow.tsx',

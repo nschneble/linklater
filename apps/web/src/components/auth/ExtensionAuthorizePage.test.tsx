@@ -19,6 +19,7 @@ vi.mock('../../auth/AuthContext', () => ({
     user: {
       connectedProviders: [],
       cvdMode: false,
+      dyslexicFont: false,
       email: 'alice@example.com',
       emailVerifiedAt: '2026-01-01T00:00:00.000Z',
       hasPassword: true,

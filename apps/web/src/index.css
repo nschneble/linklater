@@ -46,10 +46,10 @@
 }
 
 /*
- * Self-hosted OpenDyslexic — the reading-aid typeface for the Accessibility
- * "Dyslexic font" toggle. The sans faces (SIL OFL 1.1 — see
+ * Self-hosted OpenDyslexic, the reading-aid typeface for the Accessibility
+ * "Dyslexic font" toggle. The sans faces (SIL OFL 1.1, see
  * public/fonts/LICENSE-OpenDyslexic.txt) ship Regular + Bold as woff2. The Mono
- * face (CC BY 3.0 + Bitstream Vera — see public/fonts/LICENSE-OpenDyslexicMono.txt)
+ * face (CC BY 3.0 + Bitstream Vera, see public/fonts/LICENSE-OpenDyslexicMono.txt)
  * only ever shipped a single Regular build as .otf, so there is no bold Mono
  * face; the browser synthesizes bold for monospace emphasis. These families are
  * referenced ONLY inside the [data-dyslexic-font='on'] block below, so the files
@@ -244,8 +244,8 @@ body {
 
 /*
  * Dyslexic-font accessibility toggle. Like [data-cvd='on'], this attribute is
- * set on <html> (matched here unqualified) and this block is unlayered — outside
- * @layer — so it beats Tailwind's layered styles regardless of specificity.
+ * set on <html> (matched here unqualified) and this block is unlayered (outside
+ * @layer), so it beats Tailwind's layered styles regardless of specificity.
  *
  * It overrides Tailwind's font custom properties rather than font-family on a
  * selector, so both Preflight's body rule (var(--default-font-family, ...)) and

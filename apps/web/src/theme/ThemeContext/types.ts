@@ -70,8 +70,8 @@ export interface ThemeContextValue {
   /**
    * Enables the OpenDyslexic font override: sets `data-dyslexic-font="on"` on
    * the document root and persists the preference to `localStorage` with a
-   * timestamp. Independent of the active color theme — enabling it does not
-   * switch themes, so (unlike `enableCvdMode`) it returns nothing.
+   * timestamp. Independent of the active color theme, so enabling it does not
+   * switch themes; unlike `enableCvdMode`, it returns nothing.
    */
   enableDyslexicFont: () => void;
   /**
