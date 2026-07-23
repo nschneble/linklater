@@ -13,6 +13,7 @@
   - button "Stumble!"
   - button "Add link"
   - searchbox "Search through your links": Test Link 2
+  - button "Clear search"
   - tabpanel "Unread":
     - list:
       - listitem:
