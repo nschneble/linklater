@@ -68,6 +68,21 @@ export interface ThemeContextValue {
   /** Whether CVD mode is currently active. */
   isCvdMode: boolean;
   /**
+   * Enables the OpenDyslexic font override: sets `data-dyslexic-font="on"` on
+   * the document root and persists the preference to `localStorage` with a
+   * timestamp. Independent of the active color theme — enabling it does not
+   * switch themes, so (unlike `enableCvdMode`) it returns nothing.
+   */
+  enableDyslexicFont: () => void;
+  /**
+   * Disables the OpenDyslexic font override: removes `data-dyslexic-font` from
+   * the document root and records the change in `localStorage`. Returns
+   * nothing for the same reason as `enableDyslexicFont`.
+   */
+  disableDyslexicFont: () => void;
+  /** Whether the OpenDyslexic font override is currently active. */
+  isDyslexicFont: boolean;
+  /**
    * The user's editable Custom theme (`{ dark, light }` token maps), or
    * `null` when the user has never saved one. Its tokens are injected onto
    * `document.documentElement` as inline CSS custom properties while the

@@ -51,6 +51,7 @@ beforeEach(() => {
     writable: true,
   });
   delete document.documentElement.dataset.cvd;
+  delete document.documentElement.dataset.dyslexicFont;
   document.documentElement.dataset.theme = 'scanner-darkly';
   document.documentElement.dataset.mode = 'dark';
   document.documentElement.removeAttribute('style');
@@ -58,6 +59,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete document.documentElement.dataset.cvd;
+  delete document.documentElement.dataset.dyslexicFont;
 });
 
 describe('initial state', () => {
@@ -75,6 +77,26 @@ describe('initial state', () => {
     window.localStorage.setItem('linklater_cvd_mode', 'on');
     const { result } = renderHook(() => useThemeState());
     expect(result.current.isCvdMode).toBe(true);
+  });
+
+  it('defaults isDyslexicFont to false when dyslexic_font is not set', () => {
+    const { result } = renderHook(() => useThemeState());
+    expect(result.current.isDyslexicFont).toBe(false);
+  });
+
+  it('initialises isDyslexicFont to true when dyslexic_font is "on" in storage', () => {
+    window.localStorage.setItem('linklater_dyslexic_font', 'on');
+    const { result } = renderHook(() => useThemeState());
+    expect(result.current.isDyslexicFont).toBe(true);
+  });
+
+  it('sets data-dyslexic-font="on" on mount when dyslexic_font is stored "on"', () => {
+    window.localStorage.setItem('linklater_dyslexic_font', 'on');
+    renderHook(() => useThemeState());
+    expect(document.documentElement.dataset.dyslexicFont).toBe('on');
+    expect(document.documentElement.getAttribute('data-dyslexic-font')).toBe(
+      'on',
+    );
   });
 });
 
@@ -339,6 +361,101 @@ describe('disableCvdMode', () => {
     });
 
     expect(returned).toBe('school-of-rock');
+  });
+});
+
+describe('enableDyslexicFont', () => {
+  it('sets isDyslexicFont true and data-dyslexic-font="on"', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.enableDyslexicFont();
+    });
+
+    expect(result.current.isDyslexicFont).toBe(true);
+    expect(document.documentElement.dataset.dyslexicFont).toBe('on');
+    expect(document.documentElement.getAttribute('data-dyslexic-font')).toBe(
+      'on',
+    );
+  });
+
+  it('persists the flag and a timestamp to localStorage', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.enableDyslexicFont();
+    });
+
+    expect(window.localStorage.getItem('linklater_dyslexic_font')).toBe('on');
+    expect(
+      window.localStorage.getItem('linklater_dyslexic_font_updated_at'),
+    ).not.toBeNull();
+  });
+
+  it('does not switch the active base theme', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.setBaseTheme('boyhood');
+    });
+    act(() => {
+      result.current.enableDyslexicFont();
+    });
+
+    expect(result.current.baseTheme).toBe('boyhood');
+  });
+});
+
+describe('disableDyslexicFont', () => {
+  it('sets isDyslexicFont false and removes the data-dyslexic-font attribute', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.enableDyslexicFont();
+    });
+    expect(document.documentElement.dataset.dyslexicFont).toBe('on');
+
+    act(() => {
+      result.current.disableDyslexicFont();
+    });
+
+    expect(result.current.isDyslexicFont).toBe(false);
+    expect(document.documentElement.dataset.dyslexicFont).toBeUndefined();
+    expect(document.documentElement.hasAttribute('data-dyslexic-font')).toBe(
+      false,
+    );
+  });
+
+  it('persists the off flag and a timestamp to localStorage', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.enableDyslexicFont();
+    });
+    act(() => {
+      result.current.disableDyslexicFont();
+    });
+
+    expect(window.localStorage.getItem('linklater_dyslexic_font')).toBe('off');
+    expect(
+      window.localStorage.getItem('linklater_dyslexic_font_updated_at'),
+    ).not.toBeNull();
+  });
+
+  it('does not restore or change the active base theme', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.setBaseTheme('boyhood');
+    });
+    act(() => {
+      result.current.enableDyslexicFont();
+    });
+    act(() => {
+      result.current.disableDyslexicFont();
+    });
+
+    expect(result.current.baseTheme).toBe('boyhood');
   });
 });
 

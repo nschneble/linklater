@@ -31,6 +31,7 @@ export type MagicLinkVerifyResponse =
  */
 export interface MeResponse {
   cvdMode: boolean;
+  dyslexicFont: boolean;
   /**
    * The user's editable Custom theme as stored in the `customTheme` JSON
    * column — a `{ dark, light }` map of bundle token names to CSS color

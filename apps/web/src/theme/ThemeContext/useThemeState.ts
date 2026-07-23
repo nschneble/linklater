@@ -26,6 +26,8 @@ import {
   CUSTOM_THEME_UPDATED_AT_KEY,
   CVD_MODE_KEY,
   CVD_UPDATED_AT_KEY,
+  DYSLEXIC_FONT_KEY,
+  DYSLEXIC_FONT_UPDATED_AT_KEY,
   MODE_STORAGE_KEY,
   MODE_UPDATED_AT_KEY,
   PRE_CVD_THEME_KEY,
@@ -82,6 +84,9 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const [mode, setModeState] = useState<Mode>(getInitialMode);
   const [isCvdMode, setIsCvdMode] = useState<boolean>(
     () => readLocalStorage(CVD_MODE_KEY) === 'on',
+  );
+  const [isDyslexicFont, setIsDyslexicFont] = useState<boolean>(
+    () => readLocalStorage(DYSLEXIC_FONT_KEY) === 'on',
   );
   const [customTheme, setCustomThemeState] = useState<CustomTheme | null>(
     readStoredCustomTheme,
@@ -156,6 +161,19 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       delete document.documentElement.dataset.cvd;
     }
   }, [isCvdMode]);
+
+  // Toggles the `data-dyslexic-font="on"` attribute the OpenDyslexic override
+  // block in index.css keys off. `dataset.dyslexicFont` writes the kebab-cased
+  // `data-dyslexic-font` attribute, matching that block's `[data-dyslexic-font
+  // ='on']` selector. Unlike CVD mode this is a pure attribute toggle — it does
+  // not switch the active color theme.
+  useLayoutEffect(() => {
+    if (isDyslexicFont) {
+      document.documentElement.dataset.dyslexicFont = 'on';
+    } else {
+      delete document.documentElement.dataset.dyslexicFont;
+    }
+  }, [isDyslexicFont]);
 
   const setBaseTheme = useCallback(
     (theme: BaseTheme) => {
@@ -331,6 +349,29 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
     return previousTheme;
   }, []);
 
+  // Enabling/disabling the dyslexic font is a self-contained attribute toggle:
+  // it writes only its own `localStorage` key + timestamp (the App.tsx race
+  // guard reads the timestamp) and never touches the active theme, so — unlike
+  // `enableCvdMode`/`disableCvdMode` — it returns nothing for callers to fold
+  // into a server PATCH's `theme` field.
+  const enableDyslexicFont = useCallback(() => {
+    setIsDyslexicFont(true);
+    window.localStorage.setItem(DYSLEXIC_FONT_KEY, 'on');
+    window.localStorage.setItem(
+      DYSLEXIC_FONT_UPDATED_AT_KEY,
+      Date.now().toString(),
+    );
+  }, []);
+
+  const disableDyslexicFont = useCallback(() => {
+    setIsDyslexicFont(false);
+    window.localStorage.setItem(DYSLEXIC_FONT_KEY, 'off');
+    window.localStorage.setItem(
+      DYSLEXIC_FONT_UPDATED_AT_KEY,
+      Date.now().toString(),
+    );
+  }, []);
+
   return useMemo(
     () => ({
       applyServerCustomTheme,
@@ -341,8 +382,11 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       customTheme,
       customThemeEnabled,
       disableCvdMode,
+      disableDyslexicFont,
       enableCvdMode,
+      enableDyslexicFont,
       isCvdMode,
+      isDyslexicFont,
       mode,
       setBaseTheme,
       setCustomTheme,
@@ -360,8 +404,11 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       customTheme,
       customThemeEnabled,
       disableCvdMode,
+      disableDyslexicFont,
       enableCvdMode,
+      enableDyslexicFont,
       isCvdMode,
+      isDyslexicFont,
       mode,
       setBaseTheme,
       setCustomTheme,

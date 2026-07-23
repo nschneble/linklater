@@ -8,6 +8,8 @@ import { useTheme } from './theme/ThemeContext';
 import {
   CVD_MODE_KEY,
   CVD_UPDATED_AT_KEY,
+  DYSLEXIC_FONT_KEY,
+  DYSLEXIC_FONT_UPDATED_AT_KEY,
   RECENT_LOCAL_CHANGE_MS,
   readLocalStorage,
 } from './theme/storage';
@@ -23,6 +25,9 @@ export default function App() {
     enableCvdMode,
     disableCvdMode,
     isCvdMode,
+    enableDyslexicFont,
+    disableDyslexicFont,
+    isDyslexicFont,
   } = useTheme();
 
   // Syncs server-side theme and mode preferences into ThemeContext after
@@ -74,6 +79,30 @@ export default function App() {
       }
     }
   }, [user, isCvdMode, enableCvdMode, disableCvdMode]);
+
+  // Syncs the dyslexic-font preference from the server with the same 30s
+  // local-change guard as the CVD sync above. Independent of theme, so there
+  // is no applyServerTheme interaction to guard against here.
+
+  useEffect(() => {
+    if (!user) return;
+
+    const updatedAt = parseInt(
+      readLocalStorage(DYSLEXIC_FONT_UPDATED_AT_KEY) ?? '0',
+      10,
+    );
+    if (Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS) return;
+
+    if (user.dyslexicFont && !isDyslexicFont) {
+      enableDyslexicFont();
+    } else if (!user.dyslexicFont && isDyslexicFont) {
+      // Only disable if the local state disagrees AND there was no recent local write
+      const localState = readLocalStorage(DYSLEXIC_FONT_KEY);
+      if (localState !== 'on') {
+        disableDyslexicFont();
+      }
+    }
+  }, [user, isDyslexicFont, enableDyslexicFont, disableDyslexicFont]);
 
   if (loading) {
     return (

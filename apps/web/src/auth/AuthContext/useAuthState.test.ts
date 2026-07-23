@@ -33,9 +33,11 @@ const makeUser = (
     pendingEmail: string | null;
     welcomedAt: string | null;
     customTheme: unknown;
+    dyslexicFont: boolean;
   }> = {},
 ) => ({
   cvdMode: false,
+  dyslexicFont: false,
   connectedProviders: [],
   customTheme: null as unknown,
   email: 'user@example.com',
@@ -356,6 +358,38 @@ describe('markWelcomed', () => {
       expect.any(Error),
     );
     expect(result.current.user?.welcomedAt).not.toBeNull();
+  });
+});
+
+describe('mapMeToUser dyslexicFont passthrough', () => {
+  it('maps a false server dyslexicFont onto the user', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockResolvedValue(
+      makeUser({ dyslexicFont: false }),
+    );
+
+    const { result } = renderHook(() => useAuthState());
+
+    await waitFor(() =>
+      expect(result.current.user?.email).toBe('user@example.com'),
+    );
+
+    expect(result.current.user?.dyslexicFont).toBe(false);
+  });
+
+  it('maps a true server dyslexicFont onto the user', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockResolvedValue(
+      makeUser({ dyslexicFont: true }),
+    );
+
+    const { result } = renderHook(() => useAuthState());
+
+    await waitFor(() =>
+      expect(result.current.user?.email).toBe('user@example.com'),
+    );
+
+    expect(result.current.user?.dyslexicFont).toBe(true);
   });
 });
 
