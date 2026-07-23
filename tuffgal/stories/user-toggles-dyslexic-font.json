@@ -1,0 +1,10 @@
+{
+  "story": "As a logged-in user, I can turn on the OpenDyslexic font.",
+  "flow": "turn on OpenDyslexic font",
+  "needs": ["logged-in"],
+  "actions": [
+    { "action": "intercept-noop-user-patch" },
+    { "action": "intercept-instant-bookmarklet-token" },
+    { "action": "toggle-dyslexic-font" }
+  ]
+}
