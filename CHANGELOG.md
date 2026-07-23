@@ -6,6 +6,12 @@
 
 _Nothing just yet_
 
+## [1.2.1] - 2026-07-23
+
+### Fixed
+
+- Fix deploy script that I apparently broke at some point (SHAME)
+
 ## [1.2.0] - 2026-07-22
 
 ### Fixed
@@ -142,7 +148,8 @@ This is a development version bump. Most of the changes are related to refactori
 - Toggle themes based on Richard Linklater's filmography
 - Toggle light and dark mode
 
-[Unreleased]: https://github.com/nschneble/linklater/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/nschneble/linklater/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/nschneble/linklater/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/nschneble/linklater/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/nschneble/linklater/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/nschneble/linklater/compare/v1.0.0...v1.0.2
