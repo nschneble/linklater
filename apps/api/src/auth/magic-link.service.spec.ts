@@ -35,6 +35,7 @@ describe('MagicLinkService', () => {
     createWithoutPassword: jest.fn(),
     findByEmail: jest.fn(),
     markEmailVerified: jest.fn(),
+    verifyEmailAndInvalidateStalePassword: jest.fn(),
   } as unknown as UsersService;
 
   const userTokensServiceMock = {
@@ -229,7 +230,7 @@ describe('MagicLinkService', () => {
       );
     });
 
-    it('calls markEmailVerified when the user email is not yet verified', async () => {
+    it('invalidates a stale password when the user email is not yet verified', async () => {
       const futureExpiry = new Date(Date.now() + 15 * 60 * 1000);
       const user = makeUser({
         emailVerifiedAt: null,
@@ -243,16 +244,19 @@ describe('MagicLinkService', () => {
       (
         userTokensServiceMock.consumeMagicLinkToken as jest.Mock
       ).mockResolvedValue(true);
-      (usersServiceMock.markEmailVerified as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        usersServiceMock.verifyEmailAndInvalidateStalePassword as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.verifyToken(RAW_TOKEN);
 
-      expect(usersServiceMock.markEmailVerified).toHaveBeenCalledWith(USER_ID);
+      expect(
+        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+      ).toHaveBeenCalledWith(USER_ID);
+      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
     });
 
-    it('does not call markEmailVerified when the email is already verified', async () => {
+    it('does not invalidate the password when the email is already verified', async () => {
       const futureExpiry = new Date(Date.now() + 15 * 60 * 1000);
       const user = makeUser({
         emailVerifiedAt: new Date(),
@@ -269,7 +273,9 @@ describe('MagicLinkService', () => {
 
       await service.verifyToken(RAW_TOKEN);
 
-      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
+      expect(
+        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+      ).not.toHaveBeenCalled();
     });
   });
 

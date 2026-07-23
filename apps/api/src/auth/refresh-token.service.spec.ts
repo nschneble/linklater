@@ -60,11 +60,12 @@ describe('RefreshTokenService', () => {
 
   describe('issueTokenPair', () => {
     it('creates a refresh token row and returns an accessToken and refreshToken', async () => {
-      const result = await service.issueTokenPair(USER_ID, USER_EMAIL);
+      const result = await service.issueTokenPair(USER_ID, USER_EMAIL, 0);
 
       expect(jwtServiceMock.sign).toHaveBeenCalledWith({
         subject: USER_ID,
         email: USER_EMAIL,
+        tokenVersion: 0,
       });
       expect(prismaServiceMock.refreshToken.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -76,9 +77,17 @@ describe('RefreshTokenService', () => {
       expect(typeof result.refreshToken).toBe('string');
     });
 
+    it('signs the current tokenVersion so a later bump invalidates this token', async () => {
+      await service.issueTokenPair(USER_ID, USER_EMAIL, 3);
+
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ tokenVersion: 3 }),
+      );
+    });
+
     it('expires the refresh token 14 days out to bound a stolen-token window', async () => {
       const before = Date.now();
-      await service.issueTokenPair(USER_ID, USER_EMAIL);
+      await service.issueTokenPair(USER_ID, USER_EMAIL, 0);
       const after = Date.now();
 
       const createCall = (prismaServiceMock.refreshToken.create as jest.Mock)
@@ -102,7 +111,7 @@ describe('RefreshTokenService', () => {
         id: 'rt-1',
         userId: USER_ID,
         expiresAt: new Date(Date.now() + 1000 * 60 * 60),
-        user: { id: USER_ID, email: USER_EMAIL },
+        user: { id: USER_ID, email: USER_EMAIL, tokenVersion: 0 },
       });
 
       (
@@ -134,7 +143,7 @@ describe('RefreshTokenService', () => {
         id: 'rt-1',
         userId: USER_ID,
         expiresAt: new Date(Date.now() + 1000 * 60 * 60),
-        user: { id: USER_ID, email: USER_EMAIL },
+        user: { id: USER_ID, email: USER_EMAIL, tokenVersion: 0 },
       });
       (
         prismaServiceMock.refreshToken.deleteMany as jest.Mock
@@ -163,7 +172,7 @@ describe('RefreshTokenService', () => {
         id: 'rt-1',
         userId: USER_ID,
         expiresAt: new Date(Date.now() - 1000),
-        user: { id: USER_ID, email: USER_EMAIL },
+        user: { id: USER_ID, email: USER_EMAIL, tokenVersion: 0 },
       });
 
       await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
@@ -178,7 +187,7 @@ describe('RefreshTokenService', () => {
         id: 'rt-1',
         userId: USER_ID,
         expiresAt: new Date(Date.now() + 1000 * 60 * 60),
-        user: { id: USER_ID, email: USER_EMAIL },
+        user: { id: USER_ID, email: USER_EMAIL, tokenVersion: 0 },
       });
       (
         prismaServiceMock.refreshToken.deleteMany as jest.Mock

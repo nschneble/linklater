@@ -41,6 +41,7 @@ describe('OAuthAccountService', () => {
     findByEmail: jest.fn(),
     findById: jest.fn(),
     markEmailVerified: jest.fn(),
+    verifyEmailAndInvalidateStalePassword: jest.fn(),
   } as unknown as UsersService;
 
   const userOAuthServiceMock = {
@@ -144,9 +145,14 @@ describe('OAuthAccountService', () => {
         userOAuthServiceMock.createOAuthUserAndLink,
       ).not.toHaveBeenCalled();
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
+      // Already-verified account: a legitimately-set password must survive
+      // linking a second provider – no invalidation.
+      expect(
+        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+      ).not.toHaveBeenCalled();
     });
 
-    it('sets emailVerifiedAt when auto-linking an unverified account', async () => {
+    it('invalidates a stale password when auto-linking an unverified account', async () => {
       (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
         null,
       );
@@ -158,9 +164,9 @@ describe('OAuthAccountService', () => {
       (userOAuthServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );
-      (usersServiceMock.markEmailVerified as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        usersServiceMock.verifyEmailAndInvalidateStalePassword as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.findOrCreateOAuthUser(
         OAUTH_PROVIDER,
@@ -168,7 +174,10 @@ describe('OAuthAccountService', () => {
         USER_EMAIL,
       );
 
-      expect(usersServiceMock.markEmailVerified).toHaveBeenCalledWith(USER_ID);
+      expect(
+        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+      ).toHaveBeenCalledWith(USER_ID);
+      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
     });
 
     it('creates a new user and OAuth account atomically when no match exists', async () => {
@@ -226,7 +235,11 @@ describe('OAuthAccountService', () => {
         .mockResolvedValueOnce(null);
       (usersServiceMock.findByEmail as jest.Mock)
         .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ id: USER_ID, email: USER_EMAIL });
+        .mockResolvedValueOnce({
+          id: USER_ID,
+          email: USER_EMAIL,
+          emailVerifiedAt: new Date(),
+        });
       (
         userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
       ).mockRejectedValue(makeP2002());
@@ -238,6 +251,39 @@ describe('OAuthAccountService', () => {
       );
 
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
+      expect(
+        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('invalidates a stale password on the P2002 race-recovered user when unverified', async () => {
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+      (usersServiceMock.findByEmail as jest.Mock)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: USER_ID,
+          email: USER_EMAIL,
+          emailVerifiedAt: null,
+        });
+      (
+        userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
+      ).mockRejectedValue(makeP2002());
+      (
+        usersServiceMock.verifyEmailAndInvalidateStalePassword as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      const result = await service.findOrCreateOAuthUser(
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        USER_EMAIL,
+      );
+
+      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
+      expect(
+        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+      ).toHaveBeenCalledWith(USER_ID);
     });
 
     it('re-throws non-P2002 errors from createOAuthUserAndLink', async () => {

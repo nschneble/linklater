@@ -57,6 +57,7 @@ export class AuthService {
         totpVerifiedAt: _totpVerifiedAt,
         magicLinkToken: _magicLinkToken,
         magicLinkTokenExpiresAt: _magicLinkTokenExpiresAt,
+        tokenVersion: _tokenVersion,
         accountDeletionToken,
         accountDeletionTokenExpiresAt,
         ...rest
@@ -122,7 +123,11 @@ export class AuthService {
       );
       return { mfaToken, mfaMethod: 'totp' as const };
     }
-    return this.refreshTokenService.issueTokenPair(userId, user.email);
+    return this.refreshTokenService.issueTokenPair(
+      userId,
+      user.email,
+      user.tokenVersion,
+    );
   }
 
   async refresh(rawRefreshToken: string) {
@@ -196,7 +201,11 @@ export class AuthService {
       const isValid = await this.totpService.verifyCode(user, code);
       if (!isValid) throw new UnauthorizedException('Invalid TOTP code');
       await this.userMfaService.clearMfaNonce(userId);
-      return this.refreshTokenService.issueTokenPair(userId, user.email);
+      return this.refreshTokenService.issueTokenPair(
+        userId,
+        user.email,
+        user.tokenVersion,
+      );
     }
 
     if (method === 'recovery') {
@@ -205,7 +214,11 @@ export class AuthService {
 
       await this.userMfaService.verifyAndConsumeRecoveryCode(userId, code);
       await this.userMfaService.clearMfaNonce(userId);
-      return this.refreshTokenService.issueTokenPair(userId, user.email);
+      return this.refreshTokenService.issueTokenPair(
+        userId,
+        user.email,
+        user.tokenVersion,
+      );
     }
 
     throw new UnauthorizedException('Invalid OTP');

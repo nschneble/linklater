@@ -31,6 +31,13 @@ model User {
   resetToken        String? @unique
   verificationToken String? @unique
 
+  // Bumped whenever an outstanding access token must be force-invalidated
+  // before its natural 1h expiry (e.g. a password set before the account's
+  // email was ever verified is invalidated out from under a still-live
+  // session — see `verifyEmailAndInvalidateStalePassword`). `JwtStrategy`
+  // rejects any token whose embedded version doesn't match the current value.
+  tokenVersion Int @default(0)
+
   emailVerifiedAt            DateTime?
   pendingEmailTokenExpiresAt DateTime?
   resetTokenExpiresAt        DateTime?

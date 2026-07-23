@@ -29,7 +29,7 @@ export class RefreshTokenService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async issueTokenPair(userId: string, email: string) {
+  async issueTokenPair(userId: string, email: string, tokenVersion: number) {
     const rawRefreshToken = generateHexToken();
     const tokenHash = sha256Hex(rawRefreshToken);
     const expiresAt = expiresInMs(REFRESH_TOKEN_TTL_MS);
@@ -38,7 +38,11 @@ export class RefreshTokenService {
       data: { tokenHash, userId, expiresAt },
     });
 
-    const accessToken = this.jwtService.sign({ subject: userId, email });
+    const accessToken = this.jwtService.sign({
+      subject: userId,
+      email,
+      tokenVersion,
+    });
     return { accessToken, refreshToken: rawRefreshToken };
   }
 
@@ -80,6 +84,7 @@ export class RefreshTokenService {
       const accessToken = this.jwtService.sign({
         subject: stored.userId,
         email: stored.user.email,
+        tokenVersion: stored.user.tokenVersion,
       });
       return { accessToken, refreshToken: rawNewRefreshToken };
     });
