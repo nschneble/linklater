@@ -6,6 +6,14 @@
 
 _Nothing just yet_
 
+## [1.2.0] - 2026-07-22
+
+### Fixed
+
+- The page remains zoomed-in after the search input loses focus on mobile
+- The page zooms in when the search input gains focus on mobile
+- You cannot easily clear the search input on mobile
+
 ## [1.1.0] - 2026-07-18
 
 ### Added
@@ -134,7 +142,8 @@ This is a development version bump. Most of the changes are related to refactori
 - Toggle themes based on Richard Linklater's filmography
 - Toggle light and dark mode
 
-[Unreleased]: https://github.com/nschneble/linklater/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/nschneble/linklater/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/nschneble/linklater/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/nschneble/linklater/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/nschneble/linklater/compare/v1.0.0...v1.0.2
 [1.0.0]: https://github.com/nschneble/linklater/releases/tag/v1.0.0
