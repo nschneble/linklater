@@ -55,8 +55,8 @@ export default function DyslexicFontToggle() {
     <div className="space-y-4">
       <SettingSwitch
         id="dyslexic-font"
-        label="OpenDyslexic font"
-        description="Switches the app's interface font to OpenDyslexic, a typeface designed for readers with dyslexia. It uses heavier strokes and more distinctive letter shapes than the default font (for example, asymmetric b/d/p/q)."
+        label="OpenDyslexic typeface"
+        description="Switches the app's interface font to OpenDyslexic, a typeface designed for readers with dyslexia. It features heavier strokes and more distinctive letter shapes."
         checked={isDyslexicFont}
         disabled={loading}
         onToggle={handleToggle}
