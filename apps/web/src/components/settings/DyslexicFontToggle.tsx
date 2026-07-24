@@ -56,6 +56,7 @@ export default function DyslexicFontToggle() {
       <SettingSwitch
         id="dyslexic-font"
         label="OpenDyslexic typeface"
+        labelClassName="dyslexic-font-preview"
         description="Switches the app's interface font to OpenDyslexic, a typeface designed for readers with dyslexia. It features heavier strokes and more distinctive letter shapes."
         checked={isDyslexicFont}
         disabled={loading}

@@ -7,6 +7,8 @@ interface SettingSwitchProps {
   label: string;
   /** Supporting copy below the label; plain text or inline markup. */
   description: ReactNode;
+  /** Extra classes merged onto the label, e.g. a font-preview override. */
+  labelClassName?: string;
   /** Current on/off state, mapped to `aria-checked`. */
   checked: boolean;
   /** Blocks interaction while an async persist is in flight. */
@@ -31,6 +33,7 @@ export default function SettingSwitch({
   checked,
   disabled,
   onToggle,
+  labelClassName,
 }: SettingSwitchProps) {
   return (
     <div className="flex items-start justify-between gap-4">
@@ -38,13 +41,13 @@ export default function SettingSwitch({
         <label
           id={`${id}-label`}
           htmlFor={`${id}-toggle`}
-          className="block text-[var(--mount-text)] text-sm font-medium cursor-pointer"
+          className={`block text-[var(--mount-text)] text-sm font-medium cursor-pointer ${labelClassName ?? ''}`}
         >
           {label}
         </label>
         <p
           id={`${id}-description`}
-          className="text-[var(--mount-alt-text)] text-xs text-pretty"
+          className="bg-red-800 text-[var(--mount-alt-text)] text-xs text-pretty"
         >
           {description}
         </p>
