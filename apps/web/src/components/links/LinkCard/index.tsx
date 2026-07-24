@@ -1,8 +1,6 @@
 import LinkCardLayout from '../LinkCardLayout';
 import type { Link } from '../../../lib/api';
 
-export { default as LinkCardSkeleton } from './LinkCardSkeleton';
-
 interface LinkCardProps {
   /** The link data to display. */
   link: Link;

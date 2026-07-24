@@ -56,7 +56,6 @@ const MIGRATED_FILES = [
   'src/components/errors/NotFoundView.tsx',
   'src/components/links/KeyboardShortcutsModal.tsx',
   'src/components/links/LinkCard/index.tsx',
-  'src/components/links/LinkCard/LinkCardSkeleton.tsx',
   'src/components/links/LinkCardLayout.tsx',
   'src/components/links/LinkForm.tsx',
   'src/components/links/LinksControls.tsx',

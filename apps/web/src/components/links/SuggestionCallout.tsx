@@ -191,7 +191,6 @@ export default function SuggestionCallout({
             ? "Couldn't load suggestions right now."
             : `How about something from ${sourceName}?`}
       </p>
-      {loading && <SuggestionCalloutSkeleton />}
       {!loading && !fetchFailed && suggestion && (
         <div className="mt-2 mx-auto w-full max-w-md pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-shadow hover:border-shadow rounded-xl text-left">
           <p
@@ -238,22 +237,5 @@ export default function SuggestionCallout({
         </div>
       )}
     </>
-  );
-}
-
-function SuggestionCalloutSkeleton() {
-  return (
-    <div
-      className="mt-6 mx-auto w-full max-w-md pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-shadow hover:border-shadow rounded-xl text-left animate-pulse"
-      aria-hidden="true"
-      aria-busy="true"
-    >
-      <div className="w-10/12 h-5 mb-1 bg-[var(--mount-text)]/50 rounded-xs"></div>
-      <div className="flex flex-col items-start gap-1 mb-3">
-        <div className="w-11/12 h-[13px] bg-[var(--mount-alt-text)]/50 rounded-xs"></div>
-        <div className="w-9/12 h-[13px] bg-[var(--mount-alt-text)]/50 rounded-xs"></div>
-      </div>
-      <div className="w-[129.5px] h-[31px] bg-[var(--mount-highlight)]/50 border-shadow rounded-full"></div>
-    </div>
   );
 }

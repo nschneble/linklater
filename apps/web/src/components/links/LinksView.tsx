@@ -190,7 +190,6 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         isClearingRead={view.isClearingRead}
         links={view.links}
         loadingLinks={view.loadingLinks}
-        page={view.page}
         pagination={view.pagination}
         search={view.search}
         debouncedSearch={view.debouncedSearch}
