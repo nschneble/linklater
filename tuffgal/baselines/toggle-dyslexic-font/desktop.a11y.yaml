@@ -30,12 +30,7 @@
       - text: testing-ui@linklater.test Verified New email
       - textbox "New email":
         - /placeholder: Leave blank to keep testing-ui@linklater.test
-        - text: moved@linklater.test
-      - text: Authenticator or recovery code
-      - textbox "Authenticator or recovery code":
-        - /placeholder: Required to confirm email change
-      - alert: A verification code is required to change your email
-      - button "Change email address"
+      - button "Change email address" [disabled]
     - form "Password":
       - heading "Password" [level=3]
       - text: New password
@@ -45,9 +40,9 @@
   - region "Enhanced security":
     - heading "Enhanced security" [level=2]
     - paragraph: Set up and manage multi-factor authentication. That's not overkill for a read-it-later app, right?
-    - text: Authenticator app Enabled
-    - button "Generate new recovery codes"
-    - button "Disable MFA"
+    - paragraph: MFA is currently off.
+    - button "Add authenticator app"
+    - text: Recommended
   - region "Accessibility":
     - heading "Accessibility" [level=2]
     - paragraph: Adjust how Linklater looks and feels.
@@ -56,7 +51,7 @@
     - switch "Color Vision Deficiency (CVD) mode": "Off"
     - text: OpenDyslexic typeface
     - paragraph: Switches the app's interface font to OpenDyslexic, a typeface designed for readers with dyslexia. It features heavier strokes and more distinctive letter shapes.
-    - switch "OpenDyslexic typeface": "Off"
+    - switch "OpenDyslexic typeface" [checked]: "On"
     - text: Keyboard shortcuts
     - paragraph:
       - text: Provides quick keyboard navigation for many actions on the

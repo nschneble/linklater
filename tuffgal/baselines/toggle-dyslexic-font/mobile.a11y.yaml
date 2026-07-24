@@ -3,8 +3,35 @@
 - banner:
   - button "Go to your links": Linklater Save links now, read them later.
   - button "User menu (testing-ui@linklater.test)"
+  - dialog "User menu":
+    - menu "User menu":
+      - group "Logged in as":
+        - paragraph: Logged in as
+        - paragraph: testing-ui@linklater.test
+      - menuitem "Your links"
+      - menuitem "Settings"
+      - menuitem "Switch to light mode"
+      - menuitem "Craft your theme"
+      - menuitem "Theme A Scanner Darkly"
+      - menuitem "Log out"
+    - menu "Theme":
+      - menuitem "Back to main menu"
+      - paragraph: Themes
+      - menuitemradio "Apollo 10½ Accessible theme"
+      - menuitemradio "A Scanner Darkly" [checked]
+      - menuitemradio "Before Sunrise"
+      - menuitemradio "Before Sunset"
+      - menuitemradio "Before Midnight"
+      - menuitemradio "Boyhood"
+      - menuitemradio "Dazed and Confused"
+      - menuitemradio "Hit Man"
+      - menuitemradio "Nouvelle Vague"
+      - menuitemradio "School of Rock"
 - main "Settings":
-  - navigation "Settings sections":
+  - link "Skip settings navigation":
+    - /url: "#account"
+  - heading "Settings" [level=1]
+  - navigation "Settings sections (compact)":
     - list:
       - listitem:
         - button "Account"
@@ -18,10 +45,6 @@
         - button "Integrations"
       - listitem:
         - button "Danger"
-    - button "Back to top"
-  - link "Skip settings navigation":
-    - /url: "#account"
-  - heading "Settings" [level=1]
   - region "Account":
     - heading "Account" [level=2]
     - paragraph: Manage your email address, password, and any identity providers (IdPs) you've connected.
@@ -30,12 +53,7 @@
       - text: testing-ui@linklater.test Verified New email
       - textbox "New email":
         - /placeholder: Leave blank to keep testing-ui@linklater.test
-        - text: moved@linklater.test
-      - text: Authenticator or recovery code
-      - textbox "Authenticator or recovery code":
-        - /placeholder: Required to confirm email change
-      - alert: A verification code is required to change your email
-      - button "Change email address"
+      - button "Change email address" [disabled]
     - form "Password":
       - heading "Password" [level=3]
       - text: New password
@@ -45,9 +63,9 @@
   - region "Enhanced security":
     - heading "Enhanced security" [level=2]
     - paragraph: Set up and manage multi-factor authentication. That's not overkill for a read-it-later app, right?
-    - text: Authenticator app Enabled
-    - button "Generate new recovery codes"
-    - button "Disable MFA"
+    - paragraph: MFA is currently off.
+    - button "Add authenticator app"
+    - text: Recommended
   - region "Accessibility":
     - heading "Accessibility" [level=2]
     - paragraph: Adjust how Linklater looks and feels.
@@ -56,7 +74,7 @@
     - switch "Color Vision Deficiency (CVD) mode": "Off"
     - text: OpenDyslexic typeface
     - paragraph: Switches the app's interface font to OpenDyslexic, a typeface designed for readers with dyslexia. It features heavier strokes and more distinctive letter shapes.
-    - switch "OpenDyslexic typeface": "Off"
+    - switch "OpenDyslexic typeface" [checked]: "On"
     - text: Keyboard shortcuts
     - paragraph:
       - text: Provides quick keyboard navigation for many actions on the
@@ -92,3 +110,4 @@
     - heading "Danger zone" [level=2]
     - paragraph: Beware all ye who enter. Deleting your account will remove all your saved links. This cannot be undone.
     - button "Delete my account"
+  - button "Back to top"
