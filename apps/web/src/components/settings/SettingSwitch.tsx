@@ -47,7 +47,7 @@ export default function SettingSwitch({
         </label>
         <p
           id={`${id}-description`}
-          className="bg-red-800 text-[var(--mount-alt-text)] text-xs text-pretty"
+          className="text-[var(--mount-alt-text)] text-xs text-pretty"
         >
           {description}
         </p>
