@@ -4,7 +4,7 @@
     { "kind": "navigate", "path": "/settings", "waitUntil": "domcontentloaded" },
     {
       "kind": "click",
-      "hint": { "role": "switch", "text": "OpenDyslexic font" }
+      "hint": { "role": "switch", "text": "OpenDyslexic typeface" }
     },
     { "kind": "wait", "ms": 600 },
     {
