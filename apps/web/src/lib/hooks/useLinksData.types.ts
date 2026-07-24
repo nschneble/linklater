@@ -19,10 +19,11 @@ export interface UseLinksDataResult {
   handleLoadMore: () => void;
   /**
    * `true` after the very first fetch has settled (success or failure). Used
-   * by the view layer to suppress the skeleton flash on subsequent
-   * filter/search re-fetches – once the user has seen real content, we keep
+   * by the view layer to keep stale content in place on subsequent
+   * filter/search re-fetches: once the user has seen real content, we keep
    * the stale list mounted until the new response arrives instead of clearing
-   * back to a skeleton on every keystroke.
+   * it back to blank on every keystroke. It also gates the empty-state message
+   * so that message never flashes before the first fetch has settled.
    */
   hasSettledOnce: boolean;
   links: Link[];

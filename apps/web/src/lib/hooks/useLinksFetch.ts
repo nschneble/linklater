@@ -63,7 +63,8 @@ export function useLinksFetch(
 
     // Only blank the list on the very first page-1 fetch. After the user has
     // seen real content once, keep the stale list mounted across re-fetches
-    // so search/filter changes don't flash a skeleton between keystrokes.
+    // so search/filter changes leave the previous results in place between
+    // keystrokes instead of clearing back to blank.
     // `setLinks(result.data)` below still overwrites the list on settle, so
     // an empty result still transitions to the empty state.
     if (fetchParams.page === 1 && !hasSettledOnceReference.current) {

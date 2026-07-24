@@ -13,8 +13,8 @@ Twelve flat tokens have been retired:
 
 - `--bg-input` – form input backgrounds now live on the bundle
   slots `--base-input-bg` and `--mount-input-bg`. See Section 2.
-- `--bg-elevated` – over-card surfaces (drop-downs, skeletons,
-  inactive tab fills) now lift one tier via `--orbit-bg`. See Section 2.
+- `--bg-elevated` – over-card surfaces (drop-downs, inactive tab
+  fills) now lift one tier via `--orbit-bg`. See Section 2.
 - `--bg`, `--bg-surface`, `--text-subtle`, `--border` – fully
   superseded by the `--base-*` / `--mount-*` / `--orbit-*` bundle slots.
 - `--text`, `--text-muted` – page-chrome text now lives on
