@@ -1,7 +1,7 @@
 import { setPendingNotice, type PendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 
 /**
  * Props that configure the per-flow notice keys and verifying-state copy.

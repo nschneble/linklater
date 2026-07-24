@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useKeyboardShortcuts } from './useKeyboardShortcuts';
 import { useLinkSelection } from './useLinkSelection';
 import { useLinks } from './useLinks';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { useSearchDebounce } from './useSearchDebounce';
 import { useShortcutsEnabled } from './useShortcutsEnabled';
 import type { UseLinksViewResult } from './useLinksView.types';

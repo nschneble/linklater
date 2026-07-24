@@ -7,7 +7,7 @@ import PrimaryButton from '../../common/PrimaryButton';
 import ApiTokensList from '../ApiTokensList';
 import { useApiTokens } from './useApiTokens';
 import type { FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 /**
  * Settings section for managing personal access tokens (PATs).

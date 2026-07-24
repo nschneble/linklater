@@ -1,13 +1,13 @@
 /**
  * Unit tests for useAuthForm.
  *
- * react-router-dom, AuthContext, and the API module are all mocked at the
+ * react-router, AuthContext, and the API module are all mocked at the
  * module boundary so the hook can be exercised in isolation without a real
  * router or network layer.
  */
 
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FormEvent } from 'react';
 

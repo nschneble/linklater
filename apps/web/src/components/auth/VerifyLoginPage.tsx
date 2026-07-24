@@ -6,7 +6,7 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import MfaView from './MfaView';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 
 type MfaChallenge = 'totp' | 'recovery';
 

@@ -1,6 +1,6 @@
 import AuthForm from '../components/auth/AuthForm';
 import LandingPage from '../components/LandingPage';
-import { Navigate, Route, useLocation } from 'react-router-dom';
+import { Navigate, Route, useLocation } from 'react-router';
 
 // `data-theme="branding"` pins the login / signup / forgot-password surface
 // (and the MFA sub-view AuthForm renders inside it) to the off-book branding

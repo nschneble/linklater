@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import IconButton from '../common/IconButton';
 import PixelArtGhost from './PixelArtGhost';
 import SuggestionCallout from '../links/SuggestionCallout';

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 
 /**
  * One-shot deferred read of "flash" query params (e.g. `?linked=…`,

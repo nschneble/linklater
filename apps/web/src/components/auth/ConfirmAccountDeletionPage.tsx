@@ -3,7 +3,7 @@ import { setPendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 
 /**
  * Handles the `/account/confirm-deletion?token=…` route. Reached by clicking

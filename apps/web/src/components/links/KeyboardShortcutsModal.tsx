@@ -1,6 +1,6 @@
 import LinkButton from '../common/LinkButton';
 import Modal from '../common/Modal';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useShortcutsEnabled } from '../../lib/hooks/useShortcutsEnabled';
 
 interface KeyboardShortcutsModalProps {

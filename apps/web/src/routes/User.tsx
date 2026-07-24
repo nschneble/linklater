@@ -1,5 +1,5 @@
 import AppShell from '../AppShell';
-import { Navigate, Route } from 'react-router-dom';
+import { Navigate, Route } from 'react-router';
 import NotFoundView from '../components/errors/NotFoundView';
 import StumblePage from '../components/stumble/StumblePage';
 

@@ -15,7 +15,7 @@
 
 import AuthForm from './AuthForm';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRef } from 'react';
 import type { RefObject } from 'react';

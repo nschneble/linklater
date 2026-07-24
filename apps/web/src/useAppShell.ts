@@ -1,7 +1,7 @@
 import { updateMe } from './lib/api';
 import { useAuth } from './auth/AuthContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { useShortcutsEnabled } from './lib/hooks/useShortcutsEnabled';
 import { useTheme, type BaseTheme } from './theme/ThemeContext';
 import { type AppView } from './lib/navigation';
