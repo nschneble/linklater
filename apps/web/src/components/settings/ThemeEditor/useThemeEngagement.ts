@@ -5,7 +5,7 @@ import {
   isCustomThemeConfigured,
   type CustomTheme,
 } from '../../../theme/customTheme';
-import { readThemeTokens } from './themeProbe';
+import { buildThemeSeed } from './buildThemeSeed';
 import { useCustomThemeEngagement } from './useCustomThemeEngagement';
 import type { BaseTheme, Mode } from '../../../theme/constants';
 import type { ThemeVariable } from './useThemeOverrides';
@@ -15,7 +15,7 @@ interface UseThemeEngagementOptions {
   baseTheme: BaseTheme;
   /** The committed custom palette (or `null` when never configured). */
   customTheme: CustomTheme | null;
-  /** Whether custom is currently on — the state a failed engage rolls back to. */
+  /** Whether custom is currently on, the state a failed engage rolls back to. */
   customThemeEnabled: boolean;
   /** Which mode's palette the editor is currently editing (local to the editor). */
   editorMode: Mode;
@@ -31,7 +31,7 @@ interface EngageFromEditArguments {
   /** The slot's new value. */
   value: string;
   /**
-   * The full post-edit snapshot `{ ...colorValues, [variable]: value }` — the
+   * The full post-edit snapshot `{ ...colorValues, [variable]: value }`, the
    * fresh seed source when no saved palette exists. Passed explicitly (not
    * re-probed) so the just-made edit is never dropped mid-drag.
    */
@@ -46,7 +46,7 @@ interface EngageFromRandomArguments {
   /**
    * Applies the palette to the live preview swatches. Runs INSIDE the mutex
    * guard, so a second rapid click while one engage is in flight does nothing at
-   * all — not even visually. (Contrast the edit path, whose `setOverride` visual
+   * all, not even visually. (Contrast the edit path, whose `setOverride` visual
    * apply runs on every drag-burst tick because the caller runs it OUTSIDE this
    * guarded entry point.)
    */
@@ -77,7 +77,7 @@ export interface UseThemeEngagementResult {
 /**
  * Owns the Theme Editor's whole go-custom orchestration: the shared re-entrancy
  * mutex, the seed builder both engage paths share, and the two engage entry
- * points themselves — so `ThemeEditor` (index.tsx) is left as view + wiring.
+ * points themselves, so `ThemeEditor` (index.tsx) is left as view + wiring.
  *
  * The two paths deliberately keep DIFFERENT mutex shapes (an asymmetry this hook
  * preserves rather than unifies):
@@ -91,7 +91,7 @@ export interface UseThemeEngagementResult {
  *
  * The mutex reset lives in `commitEngagement`'s `finally` (in
  * `useCustomThemeEngagement`), so a failed engage re-arms it. Announce strings +
- * the error toast stay caller-supplied (`onSuccess` / `onError`) — this hook owns
+ * the error toast stay caller-supplied (`onSuccess` / `onError`). This hook owns
  * WHEN an engage fires, never WHAT it says.
  */
 export function useThemeEngagement({
@@ -105,7 +105,7 @@ export function useThemeEngagement({
 }: UseThemeEngagementOptions): UseThemeEngagementResult {
   // Guards the engage-on-first-edit + engage-on-randomize paths: a native color
   // picker fires a burst of `onChange`s during a single drag, and the enabled
-  // flag only commits between events — this stops two of them firing two engage
+  // flag only commits between events, so this stops two of them firing two engage
   // PATCHes. Reset in `commitEngagement`'s `finally` so a settled (or failed)
   // engage always re-arms it.
   const engagingReference = useRef(false);
@@ -119,21 +119,12 @@ export function useThemeEngagement({
     onError,
   });
 
-  // The seed both engage paths assemble identically: the edited mode carries the
-  // caller's edited tokens; the OTHER mode keeps its saved tokens (re-engage
-  // after a revert) or is probed fresh off the current theme. The random palette
-  // + a color edit only ever touch `editorMode`, so the other mode is preserved.
+  // Seeds both engage paths (see `buildThemeSeed`): the edited mode carries the
+  // caller's tokens, the other mode is preserved. Memoized so the two engage
+  // callbacks below keep stable identities across renders.
   const buildSeed = useCallback(
-    (editedModeTokens: Record<string, string>): CustomTheme => {
-      const otherMode: Mode = editorMode === 'dark' ? 'light' : 'dark';
-      const otherModeTokens = isCustomThemeConfigured(customTheme)
-        ? { ...(customTheme?.[otherMode] ?? {}) }
-        : readThemeTokens(baseTheme, otherMode);
-      return {
-        dark: editorMode === 'dark' ? editedModeTokens : otherModeTokens,
-        light: editorMode === 'light' ? editedModeTokens : otherModeTokens,
-      };
-    },
+    (editedModeTokens: Record<string, string>): CustomTheme =>
+      buildThemeSeed(editedModeTokens, baseTheme, customTheme, editorMode),
     [baseTheme, customTheme, editorMode],
   );
 
@@ -144,12 +135,12 @@ export function useThemeEngagement({
       postEditValues,
       onSuccess,
     }: EngageFromEditArguments) => {
-      // The guard absorbs a color picker's drag burst — the caller has already
+      // The guard absorbs a color picker's drag burst. The caller has already
       // applied the visual edit for this tick.
       if (engagingReference.current) return;
       engagingReference.current = true;
 
-      // The edited mode's slots — either the edited slot merged into the saved
+      // The edited mode's slots: either the edited slot merged into the saved
       // palette (re-engage after a revert) or the full post-edit snapshot
       // (fresh).
       const editedModeTokens = isCustomThemeConfigured(customTheme)

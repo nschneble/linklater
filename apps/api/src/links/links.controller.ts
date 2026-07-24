@@ -115,7 +115,7 @@ export class LinksController {
     name: 'read',
     required: false,
     description:
-      'Restrict results to read (true) or unread (false) links. Omit for both.',
+      'Restrict results to read (true) or unread (false) links. Omit for both. Non-boolean values are rejected with 400.',
     type: Boolean,
   })
   @ApiQuery({
@@ -162,7 +162,7 @@ export class LinksController {
     required: false,
     type: Boolean,
     description:
-      "Pick randomly from a user's read (true) or unread (false) links. Defaults to unread.",
+      "Pick randomly from a user's read (true) or unread (false) links. Defaults to unread. Non-boolean values are rejected with 400.",
   })
   @ApiResponse({
     status: 200,

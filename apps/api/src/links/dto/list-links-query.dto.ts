@@ -8,6 +8,7 @@ import {
   Min,
 } from 'class-validator';
 import { MAX_LIMIT } from '../links-query.service.js';
+import { toOptionalBoolean } from './query-transforms.js';
 
 /**
  * Validated query parameters for `GET /links`. Query strings always arrive as
@@ -23,11 +24,7 @@ export class ListLinksQueryDto {
   @IsOptional()
   search?: string;
 
-  @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return value;
-  })
+  @Transform(toOptionalBoolean)
   @IsBoolean()
   @IsOptional()
   read?: boolean;

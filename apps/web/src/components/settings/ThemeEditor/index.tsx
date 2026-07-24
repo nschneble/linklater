@@ -212,7 +212,7 @@ export default function ThemeEditor() {
   // edits debounce-save. `setOverride` runs on EVERY drag-burst tick so the
   // swatch always tracks the drag; `engageFromEdit` owns the mutex that collapses
   // the burst into a single engage PATCH.
-  function editTokens(
+  function handleOverride(
     variable: Parameters<typeof setOverride>[0],
     value: string,
   ) {
@@ -228,13 +228,6 @@ export default function ThemeEditor() {
     } else {
       scheduleSave();
     }
-  }
-
-  function handleOverride(
-    variable: Parameters<typeof setOverride>[0],
-    value: string,
-  ) {
-    editTokens(variable, value);
   }
 
   const toastView = useMemo(() => resolveToast(toast.message), [toast.message]);
