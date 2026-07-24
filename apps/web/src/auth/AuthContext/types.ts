@@ -14,6 +14,8 @@ export interface User {
   }>;
   /** When `true`, CVD mode is enabled on the server. */
   cvdMode: boolean;
+  /** When `true`, the OpenDyslexic font override is enabled on the server. */
+  dyslexicFont: boolean;
   /**
    * The user's editable Custom theme (`{ dark, light }` token maps), or
    * `null` when the user has never saved one. Normalized from the raw server

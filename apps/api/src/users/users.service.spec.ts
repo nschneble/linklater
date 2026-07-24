@@ -48,6 +48,7 @@ const PENDING_EMAIL = 'pending.email@addy.com';
 
 const makeUser = (overrides = {}) => ({
   cvdMode: false,
+  dyslexicFont: false,
   customTheme: null,
   customThemeEnabled: false,
   createdAt: new Date(),
@@ -273,6 +274,18 @@ describe('UsersService', () => {
       expect(prismaMock.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ cvdMode: true }),
+        }),
+      );
+    });
+
+    it('updates dyslexicFont when provided', async () => {
+      (prismaMock.user.update as jest.Mock).mockResolvedValue(makeUser());
+
+      await service.updateMe(USER_ID, { dyslexicFont: true });
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ dyslexicFont: true }),
         }),
       );
     });

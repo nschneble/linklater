@@ -42,6 +42,7 @@ import { setShortcutsEnabled } from './lib/hooks/useShortcutsEnabled';
 function makeUser(overrides = {}) {
   return {
     cvdMode: false,
+    dyslexicFont: false,
     connectedProviders: [],
     email: 'user@example.com',
     emailVerifiedAt: '2024-01-01T00:00:00Z',

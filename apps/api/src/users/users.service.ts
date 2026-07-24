@@ -21,6 +21,8 @@ export { VALID_MODES, VALID_THEMES };
 export interface UpdateMeInput {
   /** Toggles the color-vision-deficient mode flag. */
   cvdMode?: boolean;
+  /** Toggles the dyslexia-friendly font flag. */
+  dyslexicFont?: boolean;
   /**
    * The user's editable Custom theme: a per-mode map of bundle token names to
    * CSS color strings. Persisted verbatim to the `customTheme` JSON column.
@@ -99,8 +101,8 @@ export class UsersService {
 
   /**
    * Updates the current user's account settings. Any combination of
-   * `password`, `theme`, `mode`, `cvdMode`, and `customTheme` may be changed in
-   * a single call.
+   * `password`, `theme`, `mode`, `cvdMode`, `dyslexicFont`, and `customTheme`
+   * may be changed in a single call.
    *
    * Changing the password requires `currentPassword` for verification.
    * Theme and mode values are validated against their respective allow-lists.
@@ -115,6 +117,7 @@ export class UsersService {
   async updateMe(id: string, data: UpdateMeInput) {
     const updateData: {
       cvdMode?: boolean;
+      dyslexicFont?: boolean;
       customTheme?: Prisma.InputJsonValue;
       customThemeEnabled?: boolean;
       passwordHash?: string;
@@ -161,6 +164,10 @@ export class UsersService {
 
     if (data.cvdMode !== undefined) {
       updateData.cvdMode = data.cvdMode;
+    }
+
+    if (data.dyslexicFont !== undefined) {
+      updateData.dyslexicFont = data.dyslexicFont;
     }
 
     if (data.customTheme !== undefined) {

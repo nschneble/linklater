@@ -6,6 +6,7 @@ export function updateMe(input: {
   customTheme?: CustomTheme;
   customThemeEnabled?: boolean;
   cvdMode?: boolean;
+  dyslexicFont?: boolean;
   mode?: string;
   password?: string;
   theme?: string;

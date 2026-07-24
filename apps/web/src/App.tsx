@@ -4,11 +4,13 @@ import { unauthenticatedRoutes } from './routes/Unauthenticated';
 import { userRoutes } from './routes/User';
 import { useAuth } from './auth/AuthContext';
 import { useEffect } from 'react';
+import { useServerBooleanPrefSync } from './theme/useServerBooleanPrefSync';
 import { useTheme } from './theme/ThemeContext';
 import {
   CVD_MODE_KEY,
   CVD_UPDATED_AT_KEY,
-  RECENT_LOCAL_CHANGE_MS,
+  DYSLEXIC_FONT_KEY,
+  DYSLEXIC_FONT_UPDATED_AT_KEY,
   readLocalStorage,
 } from './theme/storage';
 import { Routes } from 'react-router-dom';
@@ -23,19 +25,17 @@ export default function App() {
     enableCvdMode,
     disableCvdMode,
     isCvdMode,
+    enableDyslexicFont,
+    disableDyslexicFont,
+    isDyslexicFont,
   } = useTheme();
 
   // Syncs server-side theme and mode preferences into ThemeContext after
-  // login. Without this, a user who changed their theme on one device
-  // would see the old theme on another device until they changed it.
-  // applyServerTheme/applyServerMode skip the update if the user made a
-  // local change w/in the last 30s (optimistic race-condition guard).
-
-  // Skip applyServerTheme entirely when CVD mode is active (server/local).
-  // The CVD sync effect is the source of truth for which theme is active.
-  // applyServerTheme would otherwise stomp the Apollo 10½ theme on a
-  // cold-load device.
-
+  // login, so a theme change on one device shows up on another. The
+  // applyServer* helpers skip the update when the user made a local change in
+  // the last 30s (optimistic race guard). applyServerTheme is skipped entirely
+  // while CVD mode is active (server or local): the CVD sync below owns the
+  // active theme and would otherwise stomp Apollo 10½ on a cold-load device.
   useEffect(() => {
     if (!user) return;
     const localCvdOn = readLocalStorage(CVD_MODE_KEY) === 'on';
@@ -54,26 +54,24 @@ export default function App() {
     isCvdMode,
   ]);
 
-  // Syncs CVD mode from the server with a 30s local-change guard. If the
-  // user toggled CVD mode within the last 30s, skip the server sync to
-  // avoid overwriting an optimistic update.
-
-  useEffect(() => {
-    if (!user) return;
-
-    const updatedAt = parseInt(readLocalStorage(CVD_UPDATED_AT_KEY) ?? '0', 10);
-    if (Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS) return;
-
-    if (user.cvdMode && !isCvdMode) {
-      enableCvdMode();
-    } else if (!user.cvdMode && isCvdMode) {
-      // Only disable if the local state disagrees AND there was no recent local write
-      const localState = readLocalStorage(CVD_MODE_KEY);
-      if (localState !== 'on') {
-        disableCvdMode();
-      }
-    }
-  }, [user, isCvdMode, enableCvdMode, disableCvdMode]);
+  // Syncs CVD mode and the dyslexic font from the server, each with a 30s
+  // local-change guard that skips the sync right after an optimistic toggle.
+  // CVD mode also swaps the active color theme; the dyslexic font is
+  // theme-independent, so it has no applyServerTheme interaction to guard.
+  useServerBooleanPrefSync(
+    user?.cvdMode,
+    isCvdMode,
+    enableCvdMode,
+    disableCvdMode,
+    { updatedAtKey: CVD_UPDATED_AT_KEY, valueKey: CVD_MODE_KEY },
+  );
+  useServerBooleanPrefSync(
+    user?.dyslexicFont,
+    isDyslexicFont,
+    enableDyslexicFont,
+    disableDyslexicFont,
+    { updatedAtKey: DYSLEXIC_FONT_UPDATED_AT_KEY, valueKey: DYSLEXIC_FONT_KEY },
+  );
 
   if (loading) {
     return (

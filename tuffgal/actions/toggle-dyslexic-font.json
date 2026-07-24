@@ -1,0 +1,22 @@
+{
+  "action": "toggle-dyslexic-font",
+  "steps": [
+    { "kind": "navigate", "path": "/settings", "waitUntil": "domcontentloaded" },
+    {
+      "kind": "click",
+      "hint": { "role": "switch", "text": "OpenDyslexic typeface" }
+    },
+    { "kind": "wait", "ms": 600 },
+    {
+      "kind": "read",
+      "hint": { "selector": "html[data-dyslexic-font='on']" }
+    }
+  ],
+  "expect": {
+    "anyOf": [
+      {
+        "selector": "[role='switch'][aria-labelledby='dyslexic-font-label'][aria-checked='true']"
+      }
+    ]
+  }
+}

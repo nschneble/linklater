@@ -17,11 +17,11 @@
 
 /*
  * Self-hosted "Noto Sans Old Turkic" (SIL OFL 1.1 — see public/fonts/OFL.txt).
- * The only @font-face in the app; everything else is a system/Tailwind default
- * or Font Awesome (loaded via index.html). Used solely by the theme editor's
- * decorative, aria-hidden app mock to render asemic Old Turkic glyphs. The
- * unicode-range is the assigned block, so spaces fall through to the Latin
- * fallback below and the font is never fetched for real UI text.
+ * Used solely by the theme editor's decorative, aria-hidden app mock to render
+ * asemic Old Turkic glyphs. The unicode-range is the assigned block, so spaces
+ * fall through to the Latin fallback below and the font is never fetched for
+ * real UI text. (The other @font-face declarations in this file are the
+ * OpenDyslexic faces below, gated behind the accessibility toggle.)
  */
 @font-face {
   font-family: 'Noto Sans Old Turkic';
@@ -43,6 +43,52 @@
  */
 .app-mock-asemic {
   font-family: 'Noto Sans Old Turkic', ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Renders the Accessibility settings label naming the OpenDyslexic
+ * typeface IN that typeface, so the user can preview the typeface before
+ * switching it on.
+ */
+.dyslexic-font-preview {
+  font-family:
+    'OpenDyslexic', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-size-adjust: 0.47;
+  letter-spacing: -0.1em;
+  word-spacing: -0.25em;
+}
+
+/*
+ * Self-hosted OpenDyslexic typeface for the Accessibility "Dyslexic font"
+ * toggle. The sans faces ship Regular + Bold as woff2. The Mono face only
+ * ever shipped a single Regular build as .otf, so there is no bold Mono
+ * face. The sans family is also referenced unconditionally by
+ * .dyslexic-font-preview. The mono face stays gated to
+ * [data-dyslexic-font='on'].
+ */
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: normal;
+  font-display: swap;
+  src: url('/fonts/OpenDyslexic-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: bold;
+  font-display: swap;
+  src: url('/fonts/OpenDyslexic-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'OpenDyslexic Mono';
+  font-style: normal;
+  font-weight: normal;
+  font-display: swap;
+  src: url('/fonts/OpenDyslexicMono-Regular.otf') format('opentype');
 }
 
 body {
@@ -206,4 +252,53 @@ body {
    *     positioned --{lift}-text "pill"). Bar paints over --mount-text or
    *     --orbit-text (the pill color). Not mechanized; visual lift only. */
   box-shadow: inset 3px 0 0 var(--base-highlight);
+}
+
+/*
+ * Dyslexic-font accessibility toggle. Like [data-cvd='on'], this attribute is
+ * set on <html> (matched here unqualified) and this block is unlayered (outside
+ * @layer), so it beats Tailwind's layered styles regardless of specificity.
+ *
+ * It overrides Tailwind's font custom properties rather than font-family on a
+ * selector, so both Preflight's body rule (var(--default-font-family, ...)) and
+ * every .font-sans / .font-mono utility resolve to OpenDyslexic at runtime.
+ * Font Awesome icons and .app-mock-asemic set font-family explicitly on
+ * themselves, which beats an inherited custom-property change, so they need no
+ * :not() guards for that. font-size-adjust below is a real inherited property
+ * though, not a custom-property lookup — self-set font-family doesn't block
+ * it, so both get an explicit font-size-adjust: none reset below.
+ *
+ * The letter/word/line spacing gives dyslexic readers extra tracking. Values
+ * stay below the WCAG 1.4.12 text-spacing reference ceiling and use no
+ * !important, so a user's own text-spacing override still wins. Font Awesome
+ * icons are lone glyphs in an empty <i>, so these don't reach them either way.
+ *
+ * font-size-adjust: 0.47 matches OpenDyslexic's used size to this app's
+ * default sans stack — its em-square otherwise renders ~20% larger at the
+ * same font-size. See .dyslexic-font-preview above for the full rationale;
+ * kept in sync with that value.
+ */
+[data-dyslexic-font='on'] {
+  --default-font-family:
+    'OpenDyslexic', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans: 'OpenDyslexic', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    'OpenDyslexic Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
+    'Liberation Mono', monospace;
+  font-size-adjust: 0.47;
+  letter-spacing: -0.1em;
+  word-spacing: -0.25em;
+}
+
+[data-dyslexic-font='on'] .fa,
+[data-dyslexic-font='on'] .fa-brands,
+[data-dyslexic-font='on'] .fa-classic,
+[data-dyslexic-font='on'] .fa-regular,
+[data-dyslexic-font='on'] .fa-solid,
+[data-dyslexic-font='on'] .fab,
+[data-dyslexic-font='on'] .far,
+[data-dyslexic-font='on'] .fas,
+[data-dyslexic-font='on'] .app-mock-asemic {
+  font-size-adjust: none;
 }

@@ -149,6 +149,15 @@ export class UpdateMeDto {
 
   @ApiPropertyOptional({
     description:
+      'When true, renders the interface in a dyslexia-friendly typeface to improve reading accessibility.',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  dyslexicFont?: boolean;
+
+  @ApiPropertyOptional({
+    description:
       "The user's editable Custom theme: a per-mode (`dark`/`light`) map of bundle token names to CSS color strings. Both modes are optional.",
     type: CustomThemeDto,
   })

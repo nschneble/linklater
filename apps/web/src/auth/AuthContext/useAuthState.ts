@@ -60,6 +60,7 @@ export function narrowMode(mode: string): Mode {
 function mapMeToUser(me: MeResponse): User {
   return {
     cvdMode: me.cvdMode,
+    dyslexicFont: me.dyslexicFont,
     customTheme: normalizeCustomTheme(me.customTheme),
     customThemeEnabled: me.customThemeEnabled,
     connectedProviders: me.connectedProviders,

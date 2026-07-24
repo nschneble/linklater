@@ -12,6 +12,14 @@ export const CVD_MODE_KEY = 'linklater_cvd_mode';
 export const PRE_CVD_THEME_KEY = 'linklater_pre_cvd_theme';
 /** Timestamp written when CVD mode is toggled; used as race guard in App.tsx. */
 export const CVD_UPDATED_AT_KEY = 'linklater_cvd_updated_at';
+/** Whether the OpenDyslexic font override is explicitly on. */
+export const DYSLEXIC_FONT_KEY = 'linklater_dyslexic_font';
+/**
+ * Timestamp written when the dyslexic-font override is toggled; used as the
+ * race guard in App.tsx, mirroring `CVD_UPDATED_AT_KEY`.
+ */
+export const DYSLEXIC_FONT_UPDATED_AT_KEY =
+  'linklater_dyslexic_font_updated_at';
 /**
  * `localStorage` key for the user's editable Custom theme: a JSON-encoded
  * `{ dark, light }` map of bundle token names to CSS color strings.
