@@ -1,6 +1,6 @@
 import OAuthCallbackPage from './OAuthCallbackPage';
 import { consumePendingNotice } from '../../lib/pendingNotice';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,11 +11,9 @@ vi.mock('../../auth/AuthContext', () => ({
   useAuth: () => ({ loginWithToken }),
 }));
 
-vi.mock('react-router-dom', async () => {
+vi.mock('react-router', async () => {
   const actual =
-    await vi.importActual<typeof import('react-router-dom')>(
-      'react-router-dom',
-    );
+    await vi.importActual<typeof import('react-router')>('react-router');
   return {
     ...actual,
     useNavigate: () => navigate,

@@ -3,7 +3,7 @@ import PrimaryButton from '../common/PrimaryButton';
 import { FOCUS_RING } from '../../lib/styles';
 import { useAuth } from '../../auth/AuthContext';
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 
 type Status = 'idle' | 'authorizing';
 

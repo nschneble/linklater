@@ -11,7 +11,7 @@
 
 import { commonRoutes } from './Common';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Routes, useLocation } from 'react-router-dom';
+import { MemoryRouter, Routes, useLocation } from 'react-router';
 import { unauthenticatedRoutes } from './Unauthenticated';
 import { userRoutes } from './User';
 import { describe, expect, it, vi } from 'vitest';

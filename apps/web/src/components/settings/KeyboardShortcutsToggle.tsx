@@ -5,7 +5,7 @@ import {
 } from '../../lib/hooks/useShortcutsEnabled';
 import SettingSwitch from './SettingSwitch';
 import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 /**
  * Settings toggle for the app's single-key keyboard shortcuts (WCAG 2.1.4,

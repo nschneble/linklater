@@ -13,7 +13,7 @@ import {
   DYSLEXIC_FONT_UPDATED_AT_KEY,
   readLocalStorage,
 } from './theme/storage';
-import { Routes } from 'react-router-dom';
+import { Routes } from 'react-router';
 
 export default function App() {
   const { user, loading } = useAuth();

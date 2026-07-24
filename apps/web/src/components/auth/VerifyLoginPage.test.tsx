@@ -21,7 +21,7 @@
 
 import VerifyLoginPage from './VerifyLoginPage';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
@@ -42,11 +42,9 @@ vi.mock('../../auth/AuthContext', () => ({
 
 const navigate = vi.fn();
 
-vi.mock('react-router-dom', async () => {
+vi.mock('react-router', async () => {
   const actual =
-    await vi.importActual<typeof import('react-router-dom')>(
-      'react-router-dom',
-    );
+    await vi.importActual<typeof import('react-router')>('react-router');
   return {
     ...actual,
     useNavigate: () => navigate,

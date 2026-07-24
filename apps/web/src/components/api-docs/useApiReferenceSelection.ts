@@ -1,6 +1,6 @@
 import { endpointHeadingId, endpointSlug } from './endpointId';
 import { useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
 /**

@@ -2,7 +2,7 @@ import { setPendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 /**
  * Handles the OAuth redirect back from the API after Google or Apple sign-in.

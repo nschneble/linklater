@@ -9,7 +9,7 @@ import LinkButton from '../common/LinkButton';
 import MfaView from './MfaView';
 import PrimaryButton from '../common/PrimaryButton';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 
 type MfaChallenge = 'totp' | 'recovery';
 

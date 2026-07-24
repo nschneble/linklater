@@ -1,6 +1,6 @@
 import Modal, { type ModalControl } from '../common/Modal';
 import PrimaryButton from '../common/PrimaryButton';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useRef } from 'react';
 
 interface WelcomeModalProps {

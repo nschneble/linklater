@@ -13,7 +13,7 @@ import { getErrorMessage } from '../../lib/errors';
 import { capitalizeFirst } from '../../lib/strings';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 
 export type Mode = 'login' | 'register' | 'forgot-password';
 export type MfaChallenge = 'totp' | 'recovery';

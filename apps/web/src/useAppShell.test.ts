@@ -7,7 +7,7 @@
  * test coverage.
  *
  * Dependencies are mocked at the module boundary:
- * - react-router-dom (useLocation, useNavigate)
+ * - react-router (useLocation, useNavigate)
  * - auth/AuthContext (useAuth)
  * - theme/ThemeContext (useTheme)
  * - lib/api (updateMe)
@@ -24,7 +24,7 @@ vi.mock('./theme/ThemeContext', () => ({
   useTheme: vi.fn(),
 }));
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useLocation: vi.fn(),
   useNavigate: vi.fn(),
 }));
@@ -36,7 +36,7 @@ vi.mock('./lib/api', () => ({
 import { useAuth } from './auth/AuthContext';
 import { useTheme } from './theme/ThemeContext';
 import { useAppShell } from './useAppShell';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { setShortcutsEnabled } from './lib/hooks/useShortcutsEnabled';
 
 function makeUser(overrides = {}) {

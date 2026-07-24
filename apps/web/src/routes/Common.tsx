@@ -8,7 +8,7 @@ import VerifyEmailChangePage from '../components/verify/VerifyEmailChangePage';
 import VerifyEmailPage from '../components/verify/VerifyEmailPage';
 import VerifyLoginPage from '../components/auth/VerifyLoginPage';
 import { lazy, Suspense } from 'react';
-import { Route } from 'react-router-dom';
+import { Route } from 'react-router';
 
 // ApiDocsView is lazy-loaded because the custom docs UI plus the OpenAPI
 // parse layer form a self-contained chunk only /docs visitors need; keeping

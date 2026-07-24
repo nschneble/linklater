@@ -18,7 +18,7 @@ import { LINK_ERROR_MESSAGES, LINKED_MESSAGES } from './oauthFlashMessages';
 import { setActiveSettingsSection } from './settingsScroll';
 import { useSettingsActiveSection } from './useSettingsActiveSection';
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import type { SettingsSection } from './settingsSections';
 
 interface FlashMessages {
