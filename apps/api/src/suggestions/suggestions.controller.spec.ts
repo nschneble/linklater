@@ -5,11 +5,9 @@ jest.mock('../prisma/prisma.service', () => ({
 }));
 jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 
-import {
-  BadRequestException,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { ServiceUnavailableException } from '@nestjs/common';
 
+import { DEFAULT_COUNT } from './dto/suggestions-query.dto.js';
 import { SuggestionsController } from './suggestions.controller.js';
 import { SuggestionsService } from './suggestions.service.js';
 import type { AuthRequest } from '../auth/auth-request.type.js';
@@ -44,29 +42,37 @@ describe('SuggestionsController', () => {
     );
   });
 
-  it('defaults count to 3 when no query string is provided', async () => {
+  // `count` coercion, defaulting, and range validation now live in
+  // SuggestionsQueryDto (see suggestions-query.dto.spec.ts). The controller
+  // receives an already-validated DTO, so these tests only prove delegation.
+  const makeQuery = (count = DEFAULT_COUNT) => ({ count });
+
+  it('forwards the default count through to the service', async () => {
     suggestionsServiceMock.getSuggestions.mockResolvedValueOnce({
       sourceName: 'Aeon',
       suggestions: [aSuggestion(), aSuggestion(), aSuggestion()],
     });
 
-    const result = await controller.getSuggestions(authRequest());
+    const result = await controller.getSuggestions(
+      authRequest(),
+      makeQuery() as never,
+    );
 
     expect(suggestionsServiceMock.getSuggestions).toHaveBeenCalledWith(
-      3,
+      DEFAULT_COUNT,
       TEST_USER_ID,
     );
     expect(result.sourceName).toBe('Aeon');
     expect(result.suggestions).toHaveLength(3);
   });
 
-  it('forwards a valid count value through to the service', async () => {
+  it('forwards a validated count value through to the service', async () => {
     suggestionsServiceMock.getSuggestions.mockResolvedValueOnce({
       sourceName: 'Wikipedia',
       suggestions: [aSuggestion()],
     });
 
-    await controller.getSuggestions(authRequest(), '1');
+    await controller.getSuggestions(authRequest(), makeQuery(1) as never);
 
     expect(suggestionsServiceMock.getSuggestions).toHaveBeenCalledWith(
       1,
@@ -80,37 +86,22 @@ describe('SuggestionsController', () => {
       suggestions: [aSuggestion()],
     });
 
-    await controller.getSuggestions(authRequest('user-42'));
+    await controller.getSuggestions(
+      authRequest('user-42'),
+      makeQuery() as never,
+    );
 
     expect(suggestionsServiceMock.getSuggestions).toHaveBeenCalledWith(
-      3,
+      DEFAULT_COUNT,
       'user-42',
     );
-  });
-
-  it('rejects a count of zero', async () => {
-    await expect(
-      controller.getSuggestions(authRequest(), '0'),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects a count above the maximum', async () => {
-    await expect(
-      controller.getSuggestions(authRequest(), '99'),
-    ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects a non-numeric count', async () => {
-    await expect(
-      controller.getSuggestions(authRequest(), 'notanumber'),
-    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('throws 503 when the service returns null', async () => {
     suggestionsServiceMock.getSuggestions.mockResolvedValueOnce(null);
 
     await expect(
-      controller.getSuggestions(authRequest()),
+      controller.getSuggestions(authRequest(), makeQuery() as never),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 });
