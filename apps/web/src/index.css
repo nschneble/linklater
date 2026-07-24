@@ -54,8 +54,9 @@
   font-family:
     'OpenDyslexic', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  font-size-adjust: 0.45;
-  letter-spacing: var(--tracking-tighter);
+  font-size-adjust: 0.47;
+  letter-spacing: -0.1em;
+  word-spacing: -0.25em;
 }
 
 /*
@@ -285,7 +286,6 @@ body {
   --font-mono:
     'OpenDyslexic Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
     'Liberation Mono', monospace;
-  /* line-height: 1.5; */
   font-size-adjust: 0.47;
   letter-spacing: -0.1em;
   word-spacing: -0.25em;
