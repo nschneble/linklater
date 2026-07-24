@@ -33,7 +33,7 @@ import { SuggestionsService } from '../suggestions/suggestions.service';
  * This is a `*.spec.ts` (not an `.e2e-spec.ts`) on purpose: CI runs the
  * `npm run test` suite but not `test:e2e`, so the guard only has teeth here.
  * It boots a real HTTP server (mirroring `security-headers.spec.ts`) with the
- * two controllers, stubbed services, and permissive guards — guards run before
+ * two controllers, stubbed services, and permissive guards, which run before
  * pipes, so without the overrides every request would 401/429 before
  * validation. The `ValidationPipe` options are kept byte-identical to
  * `apps/api/src/main.ts`, so this exercises the transform + validation the
