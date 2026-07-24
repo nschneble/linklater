@@ -72,9 +72,9 @@
     - text: Color Vision Deficiency (CVD) mode
     - paragraph: Switches to the Apollo 10½ theme and adds distinctive visual non-color cues, including underlined links, striped disabled controls, stronger focus outlines, and selected indicator bars.
     - switch "Color Vision Deficiency (CVD) mode" [checked]: "On"
-    - text: OpenDyslexic font
-    - paragraph: Switches the app's interface font to OpenDyslexic, a typeface designed for readers with dyslexia. It uses heavier strokes and more distinctive letter shapes than the default font (for example, asymmetric b/d/p/q).
-    - switch "OpenDyslexic font": "Off"
+    - text: OpenDyslexic typeface
+    - paragraph: Switches the app's interface font to OpenDyslexic, a typeface designed for readers with dyslexia. It features heavier strokes and more distinctive letter shapes.
+    - switch "OpenDyslexic typeface": "Off"
     - text: Keyboard shortcuts
     - paragraph:
       - text: Provides quick keyboard navigation for many actions on the
