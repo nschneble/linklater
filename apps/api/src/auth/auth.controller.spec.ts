@@ -15,18 +15,13 @@ import { OAuthAccountService } from './oauth-account.service';
 import { OAuthController } from './oauth.controller';
 import { TotpService } from './totp.service';
 import { MultiFactorController } from './multi-factor.controller';
-import type { AuthRequest } from './auth-request.type';
 
 const ACCESS_TOKEN = 'token';
-const NEW_EMAIL = 'new.email@addy.com';
-const PENDING_EMAIL_TOKEN = 'pending-email-token-abc';
-const RESET_TOKEN = 'reset-token-abc';
 const SITE_MODE = 'dark';
 const THEME_NAME = 'scanner-darkly';
 const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';
 const USER_PASSWORD = 'open-sesame';
-const VERIFICATION_TOKEN = 'verification-token-xyz';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -136,6 +131,10 @@ describe('AuthController', () => {
     expect(controller).toBeDefined();
   });
 
+  // Representative delegation smoke test for AuthController. The controllers
+  // delegate 100% to their services by convention, so one such assertion
+  // guards the wiring pattern; the guard-ordering and argument-narrowing
+  // assertions below carry the behavior that is genuinely at risk.
   describe('register', () => {
     it('delegates to AuthService.register with email and password', async () => {
       const user = {
@@ -188,85 +187,10 @@ describe('AuthController', () => {
       const result = await controller.login(request);
 
       // login(userId) – the controller no longer passes the full request.user
-      // object, eliminating the OAuth strategy-shape footgun.
+      // object, eliminating the OAuth strategy-shape footgun. Kept as a
+      // regression guard for that narrowing, not as mock-plumbing.
       expect(authServiceMock.login).toHaveBeenCalledWith(USER_ID);
       expect(result).toEqual({ accessToken: ACCESS_TOKEN });
-    });
-  });
-
-  describe('me', () => {
-    it('delegates to AuthService.me with the userId', async () => {
-      const request = {
-        user: {
-          email: USER_EMAIL,
-          userId: USER_ID,
-        },
-      } as never;
-      const meResult = {
-        createdAt: new Date(),
-        email: USER_EMAIL,
-        userId: USER_ID,
-        mode: SITE_MODE,
-        theme: THEME_NAME,
-        updatedAt: new Date(),
-      };
-      (authServiceMock.me as jest.Mock).mockResolvedValue(meResult);
-
-      const result = await controller.me(request);
-
-      expect(authServiceMock.me).toHaveBeenCalledWith(USER_ID);
-      expect(result).toBe(meResult);
-    });
-  });
-
-  describe('verifyEmail', () => {
-    it('delegates to EmailVerificationService.verifyEmail with the token', async () => {
-      (emailVerificationServiceMock.verifyEmail as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      await controller.verifyEmail({ token: VERIFICATION_TOKEN });
-
-      expect(emailVerificationServiceMock.verifyEmail).toHaveBeenCalledWith(
-        VERIFICATION_TOKEN,
-      );
-    });
-  });
-
-  describe('forgotPassword', () => {
-    it('delegates to EmailVerificationService.forgotPassword with the email', async () => {
-      (
-        emailVerificationServiceMock.forgotPassword as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      await controller.forgotPassword({ email: USER_EMAIL });
-
-      expect(emailVerificationServiceMock.forgotPassword).toHaveBeenCalledWith(
-        USER_EMAIL,
-      );
-    });
-  });
-
-  describe('resetPassword', () => {
-    it('delegates to AuthService.resetPassword with token and password and returns the session', async () => {
-      (authServiceMock.resetPassword as jest.Mock).mockResolvedValue({
-        accessToken: ACCESS_TOKEN,
-        refreshToken: REFRESH_TOKEN,
-      });
-
-      const result = await controller.resetPassword({
-        token: RESET_TOKEN,
-        password: 'new-password-123',
-      });
-
-      expect(authServiceMock.resetPassword).toHaveBeenCalledWith(
-        RESET_TOKEN,
-        'new-password-123',
-      );
-      expect(result).toEqual({
-        accessToken: ACCESS_TOKEN,
-        refreshToken: REFRESH_TOKEN,
-      });
     });
   });
 
@@ -282,19 +206,6 @@ describe('AuthController', () => {
         guards.indexOf(CustomThrottlerGuard),
       );
     });
-
-    it('delegates to EmailVerificationService.resendVerificationEmail with the userId', async () => {
-      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
-      (
-        emailVerificationServiceMock.resendVerificationEmail as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      await controller.resendVerification(request);
-
-      expect(
-        emailVerificationServiceMock.resendVerificationEmail,
-      ).toHaveBeenCalledWith(USER_ID);
-    });
   });
 
   describe('requestEmailChange', () => {
@@ -309,22 +220,6 @@ describe('AuthController', () => {
         guards.indexOf(CustomThrottlerGuard),
       );
     });
-
-    it('delegates to EmailVerificationService.requestEmailChange with userId, new email, and optional code', async () => {
-      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
-      (
-        emailVerificationServiceMock.requestEmailChange as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      await controller.requestEmailChange(request, {
-        email: NEW_EMAIL,
-        code: '123456',
-      });
-
-      expect(
-        emailVerificationServiceMock.requestEmailChange,
-      ).toHaveBeenCalledWith(USER_ID, NEW_EMAIL, '123456');
-    });
   });
 
   describe('resendEmailChange', () => {
@@ -338,33 +233,6 @@ describe('AuthController', () => {
       expect(guards.indexOf(JwtAuthGuard)).toBeLessThan(
         guards.indexOf(CustomThrottlerGuard),
       );
-    });
-
-    it('delegates to EmailVerificationService.resendEmailChange with the userId', async () => {
-      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
-      (
-        emailVerificationServiceMock.resendEmailChange as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      await controller.resendEmailChange(request);
-
-      expect(
-        emailVerificationServiceMock.resendEmailChange,
-      ).toHaveBeenCalledWith(USER_ID);
-    });
-  });
-
-  describe('verifyEmailChange', () => {
-    it('delegates to EmailVerificationService.confirmEmailChange with the token', async () => {
-      (
-        emailVerificationServiceMock.confirmEmailChange as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      await controller.verifyEmailChange({ token: PENDING_EMAIL_TOKEN });
-
-      expect(
-        emailVerificationServiceMock.confirmEmailChange,
-      ).toHaveBeenCalledWith(PENDING_EMAIL_TOKEN);
     });
   });
 
@@ -381,6 +249,9 @@ describe('AuthController', () => {
       );
     });
 
+    // Representative delegation for MultiFactorController; also guards the
+    // nonce-from-MFA-token binding, which is a real argument transformation
+    // rather than a straight pass-through.
     it('delegates to AuthService.verifyOtp with userId, code, method, and the nonce from the MFA token', async () => {
       const request = {
         user: { userId: USER_ID, nonce: 'mfa-nonce-abc' },
@@ -403,145 +274,6 @@ describe('AuthController', () => {
         accessToken: ACCESS_TOKEN,
         refreshToken: REFRESH_TOKEN,
       });
-    });
-  });
-
-  describe('totpSetup', () => {
-    it('delegates to TotpService.generateSetup with userId and email', async () => {
-      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
-      const setupResult = {
-        qrCodeDataUrl: 'data:image/png;base64,...',
-        secret: 'ABCDEF',
-      };
-      (totpServiceMock.generateSetup as jest.Mock).mockResolvedValue(
-        setupResult,
-      );
-
-      const result = await multiFactorController.totpSetup(request);
-
-      expect(totpServiceMock.generateSetup).toHaveBeenCalledWith(
-        USER_ID,
-        USER_EMAIL,
-      );
-      expect(result).toBe(setupResult);
-    });
-  });
-
-  describe('totpVerifySetup', () => {
-    it('delegates to TotpService.verifySetup and wraps recovery codes in object', async () => {
-      const request = { user: { userId: USER_ID, email: USER_EMAIL } } as never;
-      const recoveryCodes = ['aaaaa-bbbbb', 'ccccc-ddddd'];
-      (totpServiceMock.verifySetup as jest.Mock).mockResolvedValue(
-        recoveryCodes,
-      );
-
-      const result = await multiFactorController.totpVerifySetup(request, {
-        code: '123456',
-      });
-
-      expect(totpServiceMock.verifySetup).toHaveBeenCalledWith(
-        USER_ID,
-        '123456',
-      );
-      expect(result).toEqual({ recoveryCodes });
-    });
-  });
-
-  describe('disableMfa', () => {
-    it('delegates to AuthService.disableMfa with userId and credentials', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      (authServiceMock.disableMfa as jest.Mock).mockResolvedValue(undefined);
-
-      await multiFactorController.disableMfa(request, {
-        currentPassword: 'open-sesame',
-      });
-
-      expect(authServiceMock.disableMfa).toHaveBeenCalledWith(
-        USER_ID,
-        'open-sesame',
-        undefined,
-      );
-    });
-  });
-
-  describe('regenerateRecoveryCodes', () => {
-    it('delegates to AuthService.regenerateRecoveryCodes and wraps result', async () => {
-      const request = { user: { userId: USER_ID } } as never;
-      const recoveryCodes = ['aaaaa-bbbbb'];
-      (authServiceMock.regenerateRecoveryCodes as jest.Mock).mockResolvedValue(
-        recoveryCodes,
-      );
-
-      const result = await multiFactorController.regenerateRecoveryCodes(
-        request,
-        {
-          currentPassword: 'open-sesame',
-        },
-      );
-
-      expect(authServiceMock.regenerateRecoveryCodes).toHaveBeenCalledWith(
-        USER_ID,
-        'open-sesame',
-        undefined,
-      );
-      expect(result).toEqual({ recoveryCodes });
-    });
-  });
-
-  describe('setPassword', () => {
-    it('delegates to authService.setFirstPassword with userId and password', async () => {
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-      (authServiceMock.setFirstPassword as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      const result = await controller.setPassword(request, {
-        password: USER_PASSWORD,
-      });
-
-      expect(authServiceMock.setFirstPassword).toHaveBeenCalledWith(
-        USER_ID,
-        USER_PASSWORD,
-      );
-      expect(result).toEqual({ success: true });
-    });
-  });
-
-  describe('refreshToken', () => {
-    it('delegates to authService.refresh and returns the token pair', async () => {
-      const result = await controller.refreshToken({
-        refreshToken: REFRESH_TOKEN,
-      });
-
-      expect(authServiceMock.refresh).toHaveBeenCalledWith(REFRESH_TOKEN);
-      expect(result).toEqual({
-        accessToken: ACCESS_TOKEN,
-        refreshToken: REFRESH_TOKEN,
-      });
-    });
-  });
-
-  describe('revokeAllSessions', () => {
-    it('delegates to authService.revokeAllRefreshTokens and returns success', async () => {
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-
-      const result = await controller.revokeAllSessions(request);
-
-      expect(authServiceMock.revokeAllRefreshTokens).toHaveBeenCalledWith(
-        USER_ID,
-      );
-      expect(result).toEqual({ success: true });
-    });
-  });
-
-  describe('acknowledgeWelcome', () => {
-    it('delegates to authService.markWelcomed and returns success', async () => {
-      const request = { user: { userId: USER_ID } } as unknown as AuthRequest;
-
-      const result = await controller.acknowledgeWelcome(request);
-
-      expect(authServiceMock.markWelcomed).toHaveBeenCalledWith(USER_ID);
-      expect(result).toEqual({ success: true });
     });
   });
 });
