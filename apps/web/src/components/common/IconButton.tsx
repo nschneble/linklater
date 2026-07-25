@@ -1,10 +1,10 @@
-import type { ButtonHTMLAttributes, Ref } from 'react';
 import {
   DISABLED,
   FOCUS_RING,
   FOCUS_RING_DANGER,
   FOCUS_RING_DANGER_FILLED,
 } from '../../lib/styles';
+import type { ButtonHTMLAttributes, Ref } from 'react';
 
 /**
  * Small pill-shaped button used for secondary actions throughout the app.

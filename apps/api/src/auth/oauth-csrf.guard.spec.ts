@@ -2,13 +2,13 @@ import { jest } from '@jest/globals';
 import passport from 'passport';
 
 import { UnauthorizedException } from '@nestjs/common';
-import type { ExecutionContext } from '@nestjs/common';
-
 import {
   createOAuthCallbackGuard,
   createOAuthInitiateGuard,
 } from './oauth-csrf.guard';
+
 import { OAUTH_STATE_COOKIE_NAME } from './oauth-state-cookie';
+import type { ExecutionContext } from '@nestjs/common';
 
 const makeContext = (request: object, response: object) =>
   ({

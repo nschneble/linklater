@@ -1,5 +1,5 @@
-import type { RefObject } from 'react';
 import { useEffect } from 'react';
+import type { RefObject } from 'react';
 
 /**
  * Marker attribute the consumer spreads onto the button that should receive

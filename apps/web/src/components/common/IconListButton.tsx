@@ -1,5 +1,5 @@
-import type { ButtonHTMLAttributes } from 'react';
 import { DISABLED, FOCUS_RING } from '../../lib/styles';
+import type { ButtonHTMLAttributes } from 'react';
 
 /**
  * Full-width row button for vertical lists (e.g. the Settings sidebar).

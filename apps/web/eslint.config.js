@@ -5,6 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactPlugin from 'eslint-plugin-react';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
+import typeImportsAfterValue from '../../eslint-rules/type-imports-after-value.mjs';
 import vitest from 'eslint-plugin-vitest';
 
 export default tseslint.config(
@@ -34,6 +35,11 @@ export default tseslint.config(
     },
     plugins: {
       'jsx-a11y': jsxA11y,
+      local: {
+        rules: {
+          'type-imports-after-value': typeImportsAfterValue,
+        },
+      },
       react: reactPlugin,
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
@@ -42,6 +48,7 @@ export default tseslint.config(
     rules: {
       ...jsxA11y.configs.recommended.rules,
       ...vitest.configs.recommended.rules,
+      'local/type-imports-after-value': 'error',
       'jsx-a11y/label-has-associated-control': [
         'error',
         { controlComponents: ['FormInput'], assert: 'either', depth: 2 },

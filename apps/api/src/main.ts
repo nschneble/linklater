@@ -10,11 +10,11 @@ import {
   validateRequiredEnvVars,
 } from './common/index.js';
 import { LinksModule } from './links/links.module.js';
-import type { NestExpressApplication } from '@nestjs/platform-express';
-import type { Request, Response, NextFunction } from 'express';
 import { existsSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import type { Request, Response, NextFunction } from 'express';
 
 /**
  * Attempts to load local HTTPS certificates for development. In production

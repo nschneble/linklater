@@ -14,8 +14,8 @@ import {
   pairsForBundle,
   pairsTouchingToken,
 } from './contrastResults';
-import type { ContrastPair, ContrastResults } from './contrastResults';
 import { BUNDLES, EDITABLE_VARS, VAR_GROUPS } from './useThemeOverrides';
+import type { ContrastPair, ContrastResults } from './contrastResults';
 
 /** Every contract pair the live checker evaluates: per-bundle plus focus ring. */
 function allContractPairs(): ContrastPair[] {

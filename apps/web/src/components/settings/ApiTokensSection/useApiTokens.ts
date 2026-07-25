@@ -8,8 +8,8 @@ import {
 import { getErrorMessage } from '../../../lib/errors';
 import { useTransientState } from '../../../lib/hooks/useTransientState';
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
 import { useReanchorOnLoad } from '../useReanchorOnLoad';
+import type { FormEvent } from 'react';
 
 /**
  * All state and handlers for `ApiTokensSection`.

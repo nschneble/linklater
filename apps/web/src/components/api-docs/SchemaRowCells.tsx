@@ -1,7 +1,7 @@
-import type { SchemaRow } from '../../lib/apiDocs/schemaShape';
 import SchemaDisclosureToggle from './SchemaDisclosureToggle';
 import SchemaTable from './SchemaTable';
 import { useId, useState } from 'react';
+import type { SchemaRow } from '../../lib/apiDocs/schemaShape';
 
 const CELL_BASE = 'px-3 py-2.5 text-sm align-top';
 const NAME_CELL = `${CELL_BASE} text-[var(--mount-text)] font-mono font-normal`;

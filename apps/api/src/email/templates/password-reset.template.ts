@@ -1,5 +1,5 @@
-import type { EmailPalette } from '../email-palette.js';
 import { baseHtml } from './base.html.js';
+import type { EmailPalette } from '../email-palette.js';
 
 export const text = (url: string) =>
   `Reset your Linklater password by visiting: ${url}\n\nThis link expires in 1 hour.`;

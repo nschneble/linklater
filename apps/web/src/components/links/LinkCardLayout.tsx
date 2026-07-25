@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
 import PrimaryButton from '../common/PrimaryButton';
-import type { Link } from '../../lib/api';
 import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
 import { hostnameOf, stripHtml } from '../../lib/strings';
 import { FOCUS_RING } from '../../lib/styles';
+import type { Link } from '../../lib/api';
 
 /**
  * Pure presentation props for `LinkCardLayout`. Interaction callbacks are

@@ -12,8 +12,8 @@ import { useAuth } from '../../auth/AuthContext';
 import { getErrorMessage } from '../../lib/errors';
 import { capitalizeFirst } from '../../lib/strings';
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import type { FormEvent } from 'react';
 
 export type Mode = 'login' | 'register' | 'forgot-password';
 export type MfaChallenge = 'totp' | 'recovery';

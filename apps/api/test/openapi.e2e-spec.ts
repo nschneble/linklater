@@ -2,12 +2,12 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ExecutionContext, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import type { Request, Response } from 'express';
-
 import { AnyAuthGuard } from '../src/auth/any-auth.guard.js';
+
 import { LinksController } from '../src/links/links.controller.js';
 import { LinksQueryService } from '../src/links/links-query.service.js';
 import { LinksService } from '../src/links/links.service.js';
+import type { Request, Response } from 'express';
 
 /**
  * E2E smoke test for the public OpenAPI spec served at `GET /openapi.json`.

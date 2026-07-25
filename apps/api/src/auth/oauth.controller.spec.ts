@@ -3,12 +3,12 @@ import { jest } from '@jest/globals';
 import { ConflictException, Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthGuard } from '@nestjs/passport';
-import type { Response } from 'express';
-
 import { AuthService } from './auth.service';
+
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { OAuthAccountService } from './oauth-account.service';
 import { OAuthController } from './oauth.controller';
+import type { Response } from 'express';
 import type { AuthRequest } from './auth-request.type';
 
 const ACCESS_TOKEN = 'access-token-abc';

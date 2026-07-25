@@ -7,15 +7,15 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import type { Request } from 'express';
-
 import { AnyAuthGuard } from '../auth/any-auth.guard';
+
 import { CustomThrottlerGuard } from '../auth/custom-throttler.guard';
 import { LinksController } from './links.controller';
 import { LinksQueryService } from './links-query.service';
 import { LinksService } from './links.service';
 import { SuggestionsController } from '../suggestions/suggestions.controller';
 import { SuggestionsService } from '../suggestions/suggestions.service';
+import type { Request } from 'express';
 
 /**
  * Proves the query-validation WIRING for the three list endpoints that bind a

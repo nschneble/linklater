@@ -1,5 +1,5 @@
-import type { EmailPalette } from '../email-palette.js';
 import { baseHtml } from './base.html.js';
+import type { EmailPalette } from '../email-palette.js';
 
 export const text = (url: string) =>
   `Confirm your new Linklater email address by visiting: ${url}\n\nThis link expires in 24 hours.`;

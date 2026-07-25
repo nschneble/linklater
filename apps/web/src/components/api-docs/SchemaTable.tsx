@@ -1,6 +1,6 @@
-import type { OpenAPIV3 } from 'openapi-types';
 import SchemaRowCells from './SchemaRowCells';
 import { toSchemaRows } from '../../lib/apiDocs/schemaShape';
+import type { OpenAPIV3 } from 'openapi-types';
 
 interface SchemaTableProps {
   caption?: string;

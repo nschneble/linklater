@@ -17,12 +17,12 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { Response } from 'express';
 import { CustomThrottlerGuard } from './custom-throttler.guard.js';
 import { ExtensionAuthService } from './extension-auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { ThrottleMessage } from './throttle-message.decorator.js';
 import { ExtensionTokenDto } from './dto/extension-token.dto.js';
+import type { Response } from 'express';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**

@@ -15,10 +15,10 @@
  * also gets a smoke check so screen reader exposure does not drift.
  */
 
-import type { SlidingTab } from './SlidingTabBar';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import SlidingTabBar from './SlidingTabBar';
+import type { SlidingTab } from './SlidingTabBar';
 
 function makeTabs(overrides: Partial<SlidingTab>[] = []): SlidingTab[] {
   const defaults: SlidingTab[] = [
