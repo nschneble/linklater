@@ -141,6 +141,16 @@ describe('DangerZone credentialed branch (hasPassword: true)', () => {
     expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
   });
 
+  // M2: ReauthForm focusOnMount lands keyboard users in the password field
+  // the instant the form reveals, instead of leaving focus on the (now
+  // unmounted) trigger and dropping to <body>.
+  it('opening reauth autofocuses the current-password field (focusOnMount)', () => {
+    renderDangerZone();
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    expect(screen.getByLabelText(/current password/i)).toHaveFocus();
+  });
+
   it('does not render the MFA code field for password-only accounts', () => {
     renderDangerZone();
     fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
@@ -237,6 +247,37 @@ describe('DangerZone credentialed branch (hasPassword: true)', () => {
       screen.getByRole('button', { name: /delete my account/i }),
     ).toBeInTheDocument();
   });
+
+  // M1: closeReauth schedules triggerReference.current?.focus() on a
+  // requestAnimationFrame so focus lands after the idle trigger remounts.
+  // waitFor polls past the rAF tick (real timers, jsdom rAF is a macrotask).
+  it('cancel returns focus to the trigger button (rAF-scheduled)', async () => {
+    renderDangerZone();
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /delete my account/i }),
+      ).toHaveFocus();
+    });
+  });
+
+  it('Escape returns focus to the trigger button (rAF-scheduled)', async () => {
+    renderDangerZone();
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    act(() => {
+      fireEvent.keyDown(document, { key: 'Escape' });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /delete my account/i }),
+      ).toHaveFocus();
+    });
+  });
 });
 
 describe('DangerZone credentialed branch (MFA-only: hasPassword=false, multiFactorMethod=totp)', () => {
@@ -258,6 +299,17 @@ describe('DangerZone credentialed branch (MFA-only: hasPassword=false, multiFact
     expect(
       screen.queryByLabelText(/current password/i),
     ).not.toBeInTheDocument();
+  });
+
+  // M2: focusOnMount falls through to the code field when there is no
+  // password input to claim focus first.
+  it('opening reauth autofocuses the code field (focusOnMount)', () => {
+    renderDangerZone();
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    expect(
+      screen.getByLabelText(/authenticator or recovery code/i),
+    ).toHaveFocus();
   });
 
   it('submitting the reauth form with a code calls deleteMe with that code', async () => {
@@ -357,6 +409,29 @@ describe('DangerZone email-confirm branch (magic-link-only: hasPassword=false, n
     });
   });
 
+  // M4: CheckYourEmailPanel's tabIndex={-1} section pulls focus on mount so
+  // the success announcement is the focused element right after the
+  // email-confirm transition, not a stranded <body>.
+  it('the "Check your email" panel receives focus on the email-confirm transition', async () => {
+    vi.mocked(apiModule.deleteMe).mockResolvedValue({
+      success: true,
+      requiresEmailConfirmation: true,
+    });
+    renderDangerZone();
+
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('region', { name: /account deletion link sent/i }),
+      ).toHaveFocus();
+    });
+  });
+
   it('renders the email-sent panel on mount when the server flag is already pending', () => {
     setupStatefulAuth(true);
     renderDangerZone();
@@ -439,6 +514,44 @@ describe('DangerZone email-confirm branch (magic-link-only: hasPassword=false, n
       expect(
         screen.getByRole('button', { name: /delete my account/i }),
       ).toBeInTheDocument();
+    });
+  });
+
+  // M3: the never-mind path runs while ActionGuard is unmounted, so
+  // EmailConfirmDeleteFlow's own shouldFocusTriggerOnIdle effect returns
+  // focus to the trigger after refreshUser() flips the server flag and the
+  // idle trigger remounts.
+  it('"Never mind" returns focus to the trigger after the panel unmounts', async () => {
+    vi.mocked(apiModule.deleteMe).mockResolvedValue({
+      success: true,
+      requiresEmailConfirmation: true,
+    });
+    renderDangerZone();
+
+    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/account deletion link sent/i),
+      ).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: /never mind, i want to keep my account/i,
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /delete my account/i }),
+      ).toHaveFocus();
     });
   });
 });

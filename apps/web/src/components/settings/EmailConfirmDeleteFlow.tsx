@@ -109,6 +109,18 @@ export default function EmailConfirmDeleteFlow({
         runConfirm,
       }) =>
         !confirming ? (
+          // Two independent focus-return paths converge on this element, so
+          // it needs BOTH wirings:
+          //   - id={triggerId}: ActionGuard's own effect refocuses via
+          //     getElementById(triggerId) when the confirm row closes
+          //     (cancel / Escape / no-error success) while ActionGuard is
+          //     mounted.
+          //   - ref={triggerReference}: the never-mind path fires from
+          //     CheckYourEmailPanel, when ActionGuard is NOT mounted, so this
+          //     component's shouldFocusTriggerOnIdle effect refocuses via the
+          //     ref instead.
+          // Removing either drops a distinct keyboard/screen-reader
+          // focus-return.
           <IconButton
             id={triggerId}
             ref={triggerReference}
