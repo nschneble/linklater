@@ -26,6 +26,12 @@ interface LinksListProps {
    */
   hasSettledOnce: boolean;
   /**
+   * When `true`, marks the tabpanel root inert so the list is excluded from tab
+   * order and the accessibility tree while the inline "Save a link" dialog is
+   * open (WCAG 2.4.3 Focus Order).
+   */
+  inert?: boolean;
+  /**
    * When `true`, all cards play an exit animation (`animate-card-exit`)
    * to signal that the "delete all read" action is in progress.
    */
@@ -78,6 +84,7 @@ interface LinksListProps {
 export default function LinksList({
   filter,
   hasSettledOnce,
+  inert,
   isClearingRead,
   links,
   loadingLinks,
@@ -233,6 +240,7 @@ export default function LinksList({
       role="tabpanel"
       aria-labelledby={tabPanelLabelId}
       aria-busy={loadingLinks}
+      inert={inert}
       className={containerClass}
     >
       {body}

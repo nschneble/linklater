@@ -78,9 +78,20 @@ export default function LinksToolbar({
     }
   }, [search, searchInputReference]);
 
+  // Both toolbar rows are flat children of `<main>` and sit behind the inline
+  // "Save a link" dialog when it is open. Derive `inert` from the
+  // `showLinkForm` prop this component already owns so the toolbar drops out of
+  // the tab order and accessibility tree while the dialog traps focus (WCAG
+  // 2.4.3), matching the "component derives its own inert from state it owns"
+  // pattern in `BottomSheetMainPanel`.
+  const inert = showLinkForm ? true : undefined;
+
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-4">
+      <div
+        className="flex flex-col sm:flex-row sm:items-center gap-3 mt-4"
+        inert={inert}
+      >
         <SlidingTabBar
           ariaLabel="Links filter"
           activeIndex={filter === 'read' ? 1 : 0}
@@ -116,7 +127,7 @@ export default function LinksToolbar({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 mt-3 sm:mt-4 mb-3">
+      <div className="flex items-center gap-2 mt-3 sm:mt-4 mb-3" inert={inert}>
         <div className="relative flex-1 min-w-0">
           <input
             ref={searchInputReference}

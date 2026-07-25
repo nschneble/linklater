@@ -21,12 +21,19 @@ import { createPortal } from 'react-dom';
  * five separate error states surfaced by `useLinksView` (save, read, random,
  * delete, fetch).
  */
-function ViewError({ message }: { message: string | null }) {
+function ViewError({
+  message,
+  inert,
+}: {
+  message: string | null;
+  inert?: boolean;
+}) {
   if (!message) return null;
   return (
     <Alert
       className="mt-2 animate-fade-in-up"
       icon="fa-triangle-exclamation"
+      inert={inert}
       variant="error"
     >
       {message}
@@ -98,7 +105,10 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-1">
+      <div
+        className="flex items-center justify-between mb-1"
+        inert={view.showLinkForm ? true : undefined}
+      >
         <h1 className="text-lg font-semibold">Your links</h1>
         <button
           type="button"
@@ -117,7 +127,10 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
           )}
         </button>
       </div>
-      <p className="text-[var(--base-alt-text)] text-xs">
+      <p
+        className="text-[var(--base-alt-text)] text-xs"
+        inert={view.showLinkForm ? true : undefined}
+      >
         <span className="hidden sm:inline-flex">
           {view.filter === 'read'
             ? 'Read links are automatically removed after seven days.'
@@ -146,7 +159,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         onToggleForm={view.handleToggleForm}
       />
 
-      <ViewError message={view.error} />
+      <ViewError message={view.error} inert={view.showLinkForm} />
 
       {view.showShortcuts && (
         <Suspense>
@@ -202,6 +215,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       <LinksList
         filter={view.filter}
         hasSettledOnce={view.hasSettledOnce}
+        inert={view.showLinkForm}
         isClearingRead={view.isClearingRead}
         links={view.links}
         loadingLinks={view.loadingLinks}
@@ -213,6 +227,20 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         onLoadMore={view.handleLoadMore}
       />
 
+      {/*
+        The inline dialog inerts its background siblings (heading, description,
+        toolbar, error, list) while `showLinkForm` is open, but Toast and the
+        live regions below are deliberately left non-inert: `inert` implies
+        `aria-hidden`, and screen readers do not announce `aria-live` updates on
+        elements outside the accessibility tree (WCAG 4.1.3). Leaving Toast
+        reachable while the focus trap is active is safe ONLY because
+        `toastMessage` and `showLinkForm` never co-occur: `useLinks.ts`'s
+        `handleCreated` calls `handleLinkCreated(link)` (sets `toastMessage`) and
+        `closeForm()` (clears `showLinkForm`) synchronously in the same batched
+        commit. If a future change to `useLinks.ts` breaks that invariant, the
+        Toast's Dismiss button would become browse-mode reachable while Tab is
+        trapped in the dialog. Re-verify the invariant before touching this.
+      */}
       {view.toastMessage && (
         <Toast
           announce={false}

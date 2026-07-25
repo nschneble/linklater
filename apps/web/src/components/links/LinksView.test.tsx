@@ -229,6 +229,101 @@ describe('LinksView – in-session toast announcement (Fix #7)', () => {
   });
 });
 
+describe('LinksView – background inert while the add-link dialog is open (Fix #8)', () => {
+  it('marks the background siblings inert when the dialog is open', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ showLinkForm: true, error: 'Could not save link' }),
+    );
+
+    const { container } = renderLinksView();
+
+    // `inert` implies `aria-hidden`, so the inerted background is invisible to
+    // role queries. Locate these host elements structurally instead.
+
+    // Heading row (holds the "Your links" h1 + shortcuts toggle).
+    const heading = container.querySelector('h1');
+    expect(heading?.parentElement).toHaveAttribute('inert');
+
+    // Description paragraph.
+    const description = screen
+      .getByText('Add, search, or stumble upon something random.')
+      .closest('p');
+    expect(description).toHaveAttribute('inert');
+
+    // Both LinksToolbar rows: the tab bar row and the search-input row each
+    // sit under an inert ancestor.
+    const tablist = container.querySelector('[role="tablist"]');
+    expect(tablist?.closest('[inert]')).not.toBeNull();
+    const searchInput = container.querySelector('input[type="search"]');
+    expect(searchInput?.closest('[inert]')).not.toBeNull();
+
+    // The error Alert's rendered <p>.
+    expect(container.querySelector('[role="alert"]')).toHaveAttribute('inert');
+
+    // The links list tabpanel root.
+    expect(container.querySelector('#links-list')).toHaveAttribute('inert');
+  });
+
+  it('keeps the dialog and its contents interactive (not inert) while open', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ showLinkForm: true }),
+    );
+
+    renderLinksView();
+
+    // The dialog itself must never be inert – that was the exact regression the
+    // #root-inerting mechanism would have caused when ported to this
+    // non-portaled dialog.
+    const dialog = screen.getByRole('dialog', { name: 'Add link' });
+    expect(dialog).not.toHaveAttribute('inert');
+    expect(dialog.closest('[inert]')).toBeNull();
+
+    const closeButton = screen.getByRole('button', { name: 'Close add link' });
+    expect(closeButton.closest('[inert]')).toBeNull();
+  });
+
+  it('never inerts the toast or the cross-cutting live regions, even alongside an open dialog', () => {
+    // `toastMessage` and `showLinkForm` never co-occur in production (see the
+    // guarding comment in LinksView), but force both here to prove the toast
+    // and live regions stay in the accessibility tree regardless: `inert`
+    // implies `aria-hidden`, which would silence their `aria-live` updates.
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ showLinkForm: true, toastMessage: 'Link saved!' }),
+    );
+
+    renderLinksView();
+
+    const toastRegion = screen.getByTestId('toast-announcement');
+    expect(toastRegion).not.toHaveAttribute('inert');
+    expect(toastRegion.closest('[inert]')).toBeNull();
+
+    // The visual Toast card is not behind an inert ancestor either.
+    const toastCards = screen.getAllByText('Link saved!', { selector: 'div' });
+    for (const card of toastCards) {
+      expect(card.closest('[inert]')).toBeNull();
+    }
+  });
+
+  it('leaves every sibling non-inert when the dialog is closed', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ showLinkForm: false, error: 'Could not save link' }),
+    );
+
+    renderLinksView();
+
+    const heading = screen.getByRole('heading', {
+      name: 'Your links',
+      level: 1,
+    });
+    expect(heading.parentElement).not.toHaveAttribute('inert');
+    expect(screen.getByRole('tabpanel')).not.toHaveAttribute('inert');
+    expect(screen.getByRole('alert')).not.toHaveAttribute('inert');
+    expect(
+      screen.getByRole('tablist', { name: 'Links filter' }).closest('[inert]'),
+    ).toBeNull();
+  });
+});
+
 describe('LinksView – cross-route pending notice surface', () => {
   it('renders the PendingNoticeAnnouncer toast when usePendingNotice returns a notice', () => {
     vi.mocked(usePendingNotice).mockReturnValue({

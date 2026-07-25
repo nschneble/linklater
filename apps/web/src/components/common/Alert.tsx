@@ -23,6 +23,12 @@ interface AlertProps {
   icon?: string;
   /** Stable `id` so inputs can reference this alert via `aria-describedby`. */
   id?: string;
+  /**
+   * When `true`, marks the rendered `<p>` inert (non-interactive and hidden
+   * from assistive tech). Used by callers that live behind a modal dialog so
+   * the alert is excluded from the background while the dialog is open.
+   */
+  inert?: boolean;
   /** Forwarded to the underlying `<p>` so callers can `.focus()` the alert. */
   ref?: Ref<HTMLParagraphElement>;
   /**
@@ -60,6 +66,7 @@ export default function Alert({
   className = '',
   icon,
   id,
+  inert,
   ref,
   tabIndex,
   variant,
@@ -68,7 +75,7 @@ export default function Alert({
   // `aria-describedby` pointing at `id` is never a dangling reference, but
   // hide it visually and from assistive technology.
   if (!children) {
-    return <p id={id} aria-hidden="true" className="sr-only" />;
+    return <p id={id} inert={inert} aria-hidden="true" className="sr-only" />;
   }
 
   const resolvedIcon = icon ?? defaultIcons[variant];
@@ -77,6 +84,7 @@ export default function Alert({
     <p
       id={id}
       ref={ref}
+      inert={inert}
       tabIndex={tabIndex}
       className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] ${variantClasses[variant]} ${className}`}
       role={variantRoles[variant]}
