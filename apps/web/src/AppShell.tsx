@@ -38,6 +38,7 @@ export default function AppShell() {
     <div className="min-h-screen bg-[var(--base-bg)] text-[var(--base-text)] select-none">
       <a
         href="#main-content"
+        inert={shell.isSaveLinkDialogOpen}
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-sm focus:font-semibold focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none focus:rounded-lg"
       >
         Skip to main content
@@ -46,6 +47,7 @@ export default function AppShell() {
         <div
           className="px-4 py-2 bg-[var(--warn-bg)] border-b border-[var(--warn-border)] text-center"
           role="status"
+          inert={shell.isSaveLinkDialogOpen}
         >
           <p className="text-[var(--warn-text)] text-xs font-medium">
             <i
@@ -65,6 +67,7 @@ export default function AppShell() {
       )}
 
       <Header
+        inert={shell.isSaveLinkDialogOpen}
         isUserMenuOpen={shell.showUserMenu}
         onUserMenuToggle={shell.handleUserMenuToggle}
         onUserMenuClose={shell.handleUserMenuClose}
@@ -95,7 +98,10 @@ export default function AppShell() {
               <ThemeEditor />
             </Suspense>
           ) : (
-            <LinksView onCloseUserMenu={shell.handleUserMenuClose} />
+            <LinksView
+              onCloseUserMenu={shell.handleUserMenuClose}
+              onLinkFormOpenChange={shell.handleLinkFormOpenChange}
+            />
           )}
         </ErrorBoundary>
       </main>

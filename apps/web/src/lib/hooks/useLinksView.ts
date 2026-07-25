@@ -18,6 +18,14 @@ interface UseLinksViewOptions {
    * any other menus (e.g. the user menu).
    */
   onCloseUserMenu?: () => void;
+  /**
+   * Called whenever the inline save-link dialog's open state changes, so
+   * `AppShell` can `inert` its own chrome (Header, verification banner, skip
+   * link) that sits outside the dialog's subtree while it is open. The
+   * cleanup fires `false` on unmount so navigating away (which swaps out
+   * `LinksView`) never leaves that chrome stuck inert.
+   */
+  onLinkFormOpenChange?: (isOpen: boolean) => void;
 }
 
 /**
@@ -38,6 +46,7 @@ interface UseLinksViewOptions {
  */
 export function useLinksView({
   onCloseUserMenu,
+  onLinkFormOpenChange,
 }: UseLinksViewOptions = {}): UseLinksViewResult {
   const location = useLocation();
   const navigate = useNavigate();
@@ -64,6 +73,17 @@ export function useLinksView({
 
   const { search, debouncedSearch, setSearch } = useSearchDebounce(filter);
   const linksResult = useLinks(filter, debouncedSearch);
+
+  // Report the save-link dialog's open state up to AppShell so it can `inert`
+  // its own chrome (Header, banner, skip link) outside the dialog's subtree.
+  // The cleanup resets to `false` on unmount: AppShell swaps views via a
+  // ternary rather than keeping LinksView mounted, so without this reset,
+  // navigating away with the dialog open would leave that chrome permanently
+  // inert on the next view.
+  useEffect(() => {
+    onLinkFormOpenChange?.(linksResult.showLinkForm);
+    return () => onLinkFormOpenChange?.(false);
+  }, [linksResult.showLinkForm, onLinkFormOpenChange]);
 
   const {
     selectedLinkIndex,

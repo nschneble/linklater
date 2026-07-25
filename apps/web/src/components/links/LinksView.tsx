@@ -46,6 +46,7 @@ const KeyboardShortcutsModal = lazy(() => import('./KeyboardShortcutsModal'));
 
 interface LinksViewProps {
   onCloseUserMenu?: () => void;
+  onLinkFormOpenChange?: (isOpen: boolean) => void;
 }
 
 /**
@@ -72,8 +73,11 @@ interface LinksViewProps {
  * ("Your links" for this view) so keyboard users get a named landing point
  * via the existing skip link.
  */
-export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
-  const view = useLinksView({ onCloseUserMenu });
+export default function LinksView({
+  onCloseUserMenu,
+  onLinkFormOpenChange,
+}: LinksViewProps = {}) {
+  const view = useLinksView({ onCloseUserMenu, onLinkFormOpenChange });
   const pendingNotice = usePendingNotice();
   const shortcutsEnabled = useShortcutsEnabled();
 

@@ -13,6 +13,14 @@ interface HeaderProps {
   view: AppView;
   /** Whether the user menu dropdown is open. Owned by `AppShell`. */
   isUserMenuOpen: boolean;
+  /**
+   * When `true`, marks the whole header (and its `UserMenu` / mobile bottom
+   * sheet descendants) inert. Set by `AppShell` while the links view's
+   * `aria-modal` save-link dialog is open so the header chrome, which lives
+   * outside that dialog's subtree, cannot be reached by click-through or
+   * assistive-tech browse mode (WCAG 2.4.3 / 4.1.2).
+   */
+  inert?: boolean;
   /** Called when the avatar button is clicked to toggle the menu. */
   onUserMenuToggle: () => void;
   /** Called to imperatively close the menu. */
@@ -44,6 +52,7 @@ export default function Header({
   user,
   view,
   isUserMenuOpen,
+  inert,
   onUserMenuToggle,
   onUserMenuClose,
   onLogout,
@@ -96,7 +105,10 @@ export default function Header({
   }, [isUserMenuOpen, onUserMenuClose]);
 
   return (
-    <header className="bg-[var(--orbit-bg)] border-b border-[var(--orbit-border)]">
+    <header
+      inert={inert}
+      className="bg-[var(--orbit-bg)] border-b border-[var(--orbit-border)]"
+    >
       <div className="flex items-center justify-between max-w-4xl mx-auto px-4 py-3">
         <button
           type="button"

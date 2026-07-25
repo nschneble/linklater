@@ -256,6 +256,39 @@ describe('user menu toggle', () => {
   });
 });
 
+describe('save-link dialog open state (drives AppShell chrome inerting)', () => {
+  it('defaults to closed', () => {
+    const { result } = renderHook(() => useAppShell());
+
+    expect(result.current.isSaveLinkDialogOpen).toBe(false);
+  });
+
+  it('opens when handleLinkFormOpenChange is called with true', () => {
+    const { result } = renderHook(() => useAppShell());
+
+    act(() => {
+      result.current.handleLinkFormOpenChange(true);
+    });
+
+    expect(result.current.isSaveLinkDialogOpen).toBe(true);
+  });
+
+  it('closes when handleLinkFormOpenChange is called with false', () => {
+    const { result } = renderHook(() => useAppShell());
+
+    act(() => {
+      result.current.handleLinkFormOpenChange(true);
+    });
+    expect(result.current.isSaveLinkDialogOpen).toBe(true);
+
+    act(() => {
+      result.current.handleLinkFormOpenChange(false);
+    });
+
+    expect(result.current.isSaveLinkDialogOpen).toBe(false);
+  });
+});
+
 describe('global x shortcut respects the keyboard-shortcuts preference', () => {
   afterEach(() => {
     window.localStorage.clear();

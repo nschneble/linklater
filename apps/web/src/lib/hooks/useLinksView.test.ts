@@ -105,6 +105,52 @@ describe('useLinksView', () => {
   });
 });
 
+describe('useLinksView save-link dialog reporting (onLinkFormOpenChange)', () => {
+  afterEach(() => {
+    linksStub.showLinkForm = false;
+  });
+
+  it('reports the dialog open state on mount and whenever it changes', () => {
+    const onLinkFormOpenChange = vi.fn();
+    const { rerender } = renderHook(
+      () => useLinksView({ onLinkFormOpenChange }),
+      { wrapper: wrapperAt('/unread') },
+    );
+
+    // Mounted with the dialog closed → reports false.
+    expect(onLinkFormOpenChange).toHaveBeenCalledWith(false);
+
+    onLinkFormOpenChange.mockClear();
+    // Open the dialog and re-render: the effect dep flips false → true.
+    linksStub.showLinkForm = true;
+    act(() => rerender());
+
+    expect(onLinkFormOpenChange).toHaveBeenCalledWith(true);
+  });
+
+  it('resets to false on unmount so navigating away never leaves chrome inert', () => {
+    // AppShell swaps LinksView out via a ternary (it is not kept mounted), so
+    // navigating away with the dialog open unmounts this hook. Without the
+    // cleanup, isSaveLinkDialogOpen would stay stuck true and permanently
+    // inert the Header/banner on the next view.
+    linksStub.showLinkForm = true;
+    const onLinkFormOpenChange = vi.fn();
+    const { unmount } = renderHook(
+      () => useLinksView({ onLinkFormOpenChange }),
+      {
+        wrapper: wrapperAt('/unread'),
+      },
+    );
+
+    expect(onLinkFormOpenChange).toHaveBeenCalledWith(true);
+    onLinkFormOpenChange.mockClear();
+
+    act(() => unmount());
+
+    expect(onLinkFormOpenChange).toHaveBeenCalledWith(false);
+  });
+});
+
 describe('useLinksView keyboard-shortcuts preference', () => {
   afterEach(() => {
     window.localStorage.clear();
