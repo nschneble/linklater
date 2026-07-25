@@ -23,12 +23,12 @@ export function toOptionalBoolean({ value }: TransformFnParams): unknown {
  * which lets each caller pick its own omission behavior: pass nothing to leave
  * the field `undefined` (so `@IsOptional()`/service defaults apply, as on
  * `page`/`limit`) or pass a concrete fallback (as `count` does with
- * `DEFAULT_COUNT`). Shared across the integer query params so their coercion
- * can never drift.
+ * `DEFAULT_COUNT`). Shared across the integer query parameters so their
+ * coercion can never drift.
  */
 export function toOptionalInteger(
   defaultValue?: number,
-): (params: TransformFnParams) => unknown {
+): (parameters: TransformFnParams) => unknown {
   return ({ value }: TransformFnParams): unknown => {
     if (value === undefined) return defaultValue;
     return Number.parseInt(String(value), 10);
