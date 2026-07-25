@@ -44,6 +44,26 @@ describe('Toast', () => {
     expect(toast.getAttribute('aria-live')).toBe('assertive');
   });
 
+  it('announce=false renders a purely visual card with no live-region ARIA', () => {
+    const { container } = render(
+      <Toast message="Link saved!" onDismiss={() => {}} announce={false} />,
+    );
+    // No role="status"/"alert" and no aria-live: the parent owns the
+    // announcement via a separate always-mounted region.
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+    const card = container.firstElementChild;
+    expect(card?.getAttribute('aria-live')).toBeNull();
+    // The visible message + dismiss button still render.
+    expect(card?.textContent).toContain('Link saved!');
+    expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
+  });
+
+  it('defaults announce to true (owns its own polite live region)', () => {
+    render(<Toast message="Saved!" onDismiss={() => {}} />);
+    expect(screen.getByRole('status').getAttribute('aria-live')).toBe('polite');
+  });
+
   it('success variant uses fa-circle-check icon', () => {
     const { container } = render(
       <Toast message="x" onDismiss={() => {}} variant="success" />,

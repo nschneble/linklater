@@ -10,7 +10,7 @@ export const MAX_LIMIT = 100;
 export const DEFAULT_LIMIT = 10;
 
 /** Parameters accepted by the `findAll` method. */
-export interface LinksQuery {
+export interface LinksQueryInput {
   /** When `true`, return only read links. When `false`, return only unread links. Omit to return all. */
   read?: boolean;
   /** Results per page (clamped to 1–100). */
@@ -44,7 +44,7 @@ export class LinksQueryService {
    * @param query - Filtering, pagination, and search parameters.
    * @returns `{ data, total, page, limit }` where `data` is the current page of results.
    */
-  async findAll(userId: string, query: LinksQuery) {
+  async findAll(userId: string, query: LinksQueryInput) {
     const { search, read, page = 1, limit = DEFAULT_LIMIT } = query;
     const safeLimit = Math.min(Math.max(limit, 1), MAX_LIMIT);
     const safePage = Math.max(page, 1);

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { MutableRefObject, RefObject } from 'react';
 import {
   applyCustomThemeTokens,
   clearCustomThemeTokens,
@@ -10,6 +9,7 @@ import {
   type CustomTheme,
   type Mode,
 } from '../../theme/ThemeContext';
+import type { MutableRefObject, RefObject } from 'react';
 
 interface UseThemePreviewResult {
   /** ref attached to the flyout `div` – pass to `ThemeSubmenu`

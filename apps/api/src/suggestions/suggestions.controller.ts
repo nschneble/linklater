@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Controller,
   Get,
   Query,
@@ -16,11 +15,14 @@ import {
 } from '@nestjs/swagger';
 
 import { AnyAuthGuard, type AuthRequest } from '../auth/index.js';
+import {
+  DEFAULT_COUNT,
+  MAX_COUNT,
+  MIN_COUNT,
+  SuggestionsQueryDto,
+} from './dto/suggestions-query.dto.js';
 import { SuggestionsResponseDto } from './dto/suggestions-response.dto.js';
 import { SuggestionsService } from './suggestions.service.js';
-
-const MIN_COUNT = 1;
-const MAX_COUNT = 5;
 
 /**
  * Read-only endpoint that powers the Stumble empty state and the unread
@@ -45,7 +47,7 @@ export class SuggestionsController {
     name: 'count',
     required: false,
     type: Number,
-    description: `Number of suggestions to return (default 3, range ${MIN_COUNT}-${MAX_COUNT}).`,
+    description: `Number of suggestions to return (default ${DEFAULT_COUNT}, range ${MIN_COUNT}-${MAX_COUNT}).`,
   })
   @ApiResponse({
     status: 200,
@@ -63,27 +65,18 @@ export class SuggestionsController {
   @Get()
   async getSuggestions(
     @Req() request: AuthRequest,
-    @Query('count') countParameter?: string,
+    @Query() query: SuggestionsQueryDto,
   ): Promise<SuggestionsResponseDto> {
-    const count = this.parseCount(countParameter);
     const userId = request.user.userId;
-    const result = await this.suggestionsService.getSuggestions(count, userId);
+    const result = await this.suggestionsService.getSuggestions(
+      query.count,
+      userId,
+    );
     if (!result) {
       throw new ServiceUnavailableException(
         'No suggestions are available right now.',
       );
     }
     return result;
-  }
-
-  private parseCount(raw: string | undefined): number {
-    if (raw === undefined) return 3;
-    const parsed = Number.parseInt(raw, 10);
-    if (!Number.isFinite(parsed) || parsed < MIN_COUNT || parsed > MAX_COUNT) {
-      throw new BadRequestException(
-        `count must be an integer between ${MIN_COUNT} and ${MAX_COUNT}.`,
-      );
-    }
-    return parsed;
   }
 }

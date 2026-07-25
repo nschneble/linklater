@@ -34,7 +34,9 @@ import {
 } from './dto/delete-result.dto.js';
 import { CreateLinkDto } from './dto/create-link.dto.js';
 import { LinkResponseDto } from './dto/link-response.dto.js';
+import { ListLinksQueryDto } from './dto/list-links-query.dto.js';
 import { PaginatedLinksResponseDto } from './dto/paginated-links-response.dto.js';
+import { RandomLinkQueryDto } from './dto/random-link-query.dto.js';
 import { RandomLinkResponseDto } from './dto/random-link-response.dto.js';
 import { StumbleResponseDto } from './dto/stumble-response.dto.js';
 
@@ -113,19 +115,21 @@ export class LinksController {
     name: 'read',
     required: false,
     description:
-      'Restrict results to read (true) or unread (false) links. Omit for both.',
+      'Restrict results to read (true) or unread (false) links. Omit for both. Non-boolean values are rejected with 400.',
     type: Boolean,
   })
   @ApiQuery({
     name: 'page',
     required: false,
-    description: 'Page number, starting at 1. Defaults to 1.',
+    description:
+      'Page number as a positive integer. Defaults to 1. Values below 1 or non-integers are rejected with 400.',
     type: Number,
   })
   @ApiQuery({
     name: 'limit',
     required: false,
-    description: 'Results per page. Defaults to 10. Capped at 100.',
+    description:
+      'Results per page. Defaults to 10. Must be an integer between 1 and 100; out-of-range or non-integer values are rejected with 400.',
     type: Number,
   })
   @ApiResponse({
@@ -138,25 +142,10 @@ export class LinksController {
   @Get()
   async findAll(
     @Req() request: AuthRequest,
-    @Query('search') search?: string,
-    @Query('read') read?: string,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query() query: ListLinksQueryDto,
   ) {
     const userId = request.user.userId;
-
-    // Query params arrive as strings – coerce to typed values before passing
-    // to the service, which expects booleans and numbers.
-    let readFlag: boolean | undefined;
-    if (read === 'true') readFlag = true;
-    if (read === 'false') readFlag = false;
-
-    return this.linksQuery.findAll(userId, {
-      search,
-      read: readFlag,
-      page: page ? parseInt(page, 10) : undefined,
-      limit: limit ? parseInt(limit, 10) : undefined,
-    });
+    return this.linksQuery.findAll(userId, query);
   }
 
   /**
@@ -173,7 +162,7 @@ export class LinksController {
     required: false,
     type: Boolean,
     description:
-      "Pick randomly from a user's read (true) or unread (false) links. Defaults to unread.",
+      "Pick randomly from a user's read (true) or unread (false) links. Defaults to unread. Non-boolean values are rejected with 400.",
   })
   @ApiResponse({
     status: 200,
@@ -183,13 +172,12 @@ export class LinksController {
   })
   @ApiUnauthorized()
   @Get('random')
-  async random(@Req() request: AuthRequest, @Query('read') read?: string) {
+  async random(
+    @Req() request: AuthRequest,
+    @Query() query: RandomLinkQueryDto,
+  ) {
     const userId = request.user.userId;
-
-    let readFlag = false;
-    if (read === 'true') readFlag = true;
-
-    const link = await this.linksQuery.getRandom(userId, readFlag);
+    const link = await this.linksQuery.getRandom(userId, query.read);
     return { link };
   }
 

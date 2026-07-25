@@ -42,7 +42,7 @@ export interface UseCustomThemeEngagementResult {
 
 /**
  * Extracts the one optimistic-commit envelope the Theme Editor's two engage
- * handlers (`engageCustomTheme`, `engageFromRandom`) both share verbatim. Each
+ * handlers (`engageFromEdit`, `engageFromRandom`) both share verbatim. Each
  * caller keeps its own seed derivation + success side effects; this owns only
  * the rollback contract, so the two can never drift on how a failed PATCH
  * recovers.

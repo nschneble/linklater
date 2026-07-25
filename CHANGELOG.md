@@ -6,6 +6,16 @@
 
 _Nothing just yet_
 
+## [1.3.0] - 2026-07-25
+
+### Added
+
+- OpenDyslexic typeface to Accessibility settings
+
+### Removed
+
+- Link and suggestion card skeleton loaders
+
 ## [1.2.1] - 2026-07-23
 
 ### Fixed
@@ -148,7 +158,8 @@ This is a development version bump. Most of the changes are related to refactori
 - Toggle themes based on Richard Linklater's filmography
 - Toggle light and dark mode
 
-[Unreleased]: https://github.com/nschneble/linklater/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/nschneble/linklater/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/nschneble/linklater/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/nschneble/linklater/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/nschneble/linklater/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/nschneble/linklater/compare/v1.0.2...v1.1.0

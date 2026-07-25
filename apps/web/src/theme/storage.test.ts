@@ -1,8 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  hasRecentLocalChange,
   MODE_STORAGE_KEY,
+  persistWithTimestamp,
   readLocalStorage,
+  RECENT_LOCAL_CHANGE_MS,
   THEME_STORAGE_KEY,
+  THEME_UPDATED_AT_KEY,
 } from './storage';
 
 describe('readLocalStorage', () => {
@@ -36,5 +40,58 @@ describe('readLocalStorage', () => {
     } finally {
       globalThis.window = originalWindow;
     }
+  });
+});
+
+describe('hasRecentLocalChange', () => {
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('returns true when the timestamp is within the guard window', () => {
+    window.localStorage.setItem(THEME_UPDATED_AT_KEY, String(Date.now()));
+    expect(hasRecentLocalChange(THEME_UPDATED_AT_KEY)).toBe(true);
+  });
+
+  it('returns false once the timestamp is older than the guard window', () => {
+    window.localStorage.setItem(
+      THEME_UPDATED_AT_KEY,
+      String(Date.now() - RECENT_LOCAL_CHANGE_MS - 1),
+    );
+    expect(hasRecentLocalChange(THEME_UPDATED_AT_KEY)).toBe(false);
+  });
+
+  it('returns false when no timestamp has been stored', () => {
+    expect(hasRecentLocalChange(THEME_UPDATED_AT_KEY)).toBe(false);
+  });
+});
+
+describe('persistWithTimestamp', () => {
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('writes the value under valueKey and a timestamp under updatedAtKey', () => {
+    const before = Date.now();
+    persistWithTimestamp({
+      valueKey: THEME_STORAGE_KEY,
+      value: 'boyhood',
+      updatedAtKey: THEME_UPDATED_AT_KEY,
+    });
+
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('boyhood');
+
+    const stamped = Number(window.localStorage.getItem(THEME_UPDATED_AT_KEY));
+    expect(stamped).toBeGreaterThanOrEqual(before);
+    expect(stamped).toBeLessThanOrEqual(Date.now());
+  });
+
+  it('stamps a fresh time inside the guard window', () => {
+    persistWithTimestamp({
+      valueKey: THEME_STORAGE_KEY,
+      value: 'boyhood',
+      updatedAtKey: THEME_UPDATED_AT_KEY,
+    });
+    expect(hasRecentLocalChange(THEME_UPDATED_AT_KEY)).toBe(true);
   });
 });

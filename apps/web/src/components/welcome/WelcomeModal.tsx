@@ -20,7 +20,7 @@ const DESCRIPTION_ID = 'welcome-description';
  * ARIA wiring, focus management, body-scroll lock, and the close + backdrop
  * buttons are owned by `<Modal>` – see `Modal.tsx`. The bookmarklet and
  * Stumble actions navigate away on click, so we suppress focus restoration
- * (via `controlRef.current?.skipRestore()`) before closing; the trigger
+ * (via `controlReference.current?.skipRestore()`) before closing; the trigger
  * that opened the modal may no longer be in the tab order after the route
  * change, and `SettingsView` moves focus to the target section instead.
  *
@@ -46,7 +46,7 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
       onClose={onClose}
       closeLabel="Close welcome"
       backdropLabel="Dismiss welcome dialog"
-      controlRef={controlReference}
+      controlReference={controlReference}
     >
       <div className="space-y-8">
         <div className="space-y-1 text-center">

@@ -39,7 +39,7 @@ export default function StumblePage() {
     };
   }, []);
 
-  const tryStumble = useCallback(() => {
+  const handleStumble = useCallback(() => {
     setState('loading');
     stumbleLink()
       .then((result) => {
@@ -65,8 +65,8 @@ export default function StumblePage() {
   }, []);
 
   useEffect(() => {
-    tryStumble();
-  }, [tryStumble]);
+    handleStumble();
+  }, [handleStumble]);
 
   // Move keyboard focus onto the retry button when the error state appears
   // so a keyboard-only user can recover without hunting for it.
@@ -89,7 +89,7 @@ export default function StumblePage() {
           ref={retryButtonReference}
           variant="elevated"
           surface="base"
-          onClick={tryStumble}
+          onClick={handleStumble}
         >
           <i className="fa-solid fa-arrows-rotate text-xs" aria-hidden="true" />
           Try another link

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { Link } from '../api';
 import { isSafeRedirectUrl } from '../safe-redirect-url';
+import type { Link } from '../api';
 import type { LinksFilter } from './types';
 
 interface UseLinkSelectionOptions {

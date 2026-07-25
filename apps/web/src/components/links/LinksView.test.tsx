@@ -15,7 +15,7 @@
  */
 
 import LinksView from './LinksView';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -185,6 +185,133 @@ describe('LinksView – add-link form dismissal', () => {
   });
 });
 
+describe('LinksView – in-session toast announcement (Fix #7)', () => {
+  it('mirrors toastMessage into the dedicated live region so the announcement is not missed', async () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ toastMessage: 'Link saved!' }),
+    );
+
+    renderLinksView();
+
+    const region = screen.getByTestId('toast-announcement');
+    // The announcement now lands through the shared clear-then-set driver on
+    // the next tick (a 0ms timer) so a repeat message still re-fires the polite
+    // region; await the mirror rather than asserting a synchronous update. The
+    // generic role/aria-live/aria-atomic region contract is proven once in
+    // ToastAnnouncer.test.tsx; this asserts only the LinksView-specific wiring
+    // that `useLinksView().toastMessage` flows into the mirror text.
+    await waitFor(() => expect(region.textContent).toBe('Link saved!'));
+  });
+
+  it('keeps the dedicated region mounted (and empty) when no toast is showing', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ toastMessage: null }),
+    );
+
+    renderLinksView();
+
+    const region = screen.getByTestId('toast-announcement');
+    expect(region.textContent).toBe('');
+  });
+});
+
+describe('LinksView – background inert while the add-link dialog is open (Fix #8)', () => {
+  it('marks the background siblings inert when the dialog is open', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ showLinkForm: true, error: 'Could not save link' }),
+    );
+
+    const { container } = renderLinksView();
+
+    // `inert` implies `aria-hidden`, so the inerted background is invisible to
+    // role queries. Locate these host elements structurally instead.
+
+    // Heading row (holds the "Your links" h1 + shortcuts toggle).
+    const heading = container.querySelector('h1');
+    expect(heading?.parentElement).toHaveAttribute('inert');
+
+    // Description paragraph.
+    const description = screen
+      .getByText('Add, search, or stumble upon something random.')
+      .closest('p');
+    expect(description).toHaveAttribute('inert');
+
+    // Both LinksToolbar rows: the tab bar row and the search-input row each
+    // sit under an inert ancestor.
+    const tablist = container.querySelector('[role="tablist"]');
+    expect(tablist?.closest('[inert]')).not.toBeNull();
+    const searchInput = container.querySelector('input[type="search"]');
+    expect(searchInput?.closest('[inert]')).not.toBeNull();
+
+    // The error Alert's rendered <p>.
+    expect(container.querySelector('[role="alert"]')).toHaveAttribute('inert');
+
+    // The links list tabpanel root.
+    expect(container.querySelector('#links-list')).toHaveAttribute('inert');
+  });
+
+  it('keeps the dialog and its contents interactive (not inert) while open', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ showLinkForm: true }),
+    );
+
+    renderLinksView();
+
+    // The dialog itself must never be inert – that was the exact regression the
+    // #root-inerting mechanism would have caused when ported to this
+    // non-portaled dialog.
+    const dialog = screen.getByRole('dialog', { name: 'Add link' });
+    expect(dialog).not.toHaveAttribute('inert');
+    expect(dialog.closest('[inert]')).toBeNull();
+
+    const closeButton = screen.getByRole('button', { name: 'Close add link' });
+    expect(closeButton.closest('[inert]')).toBeNull();
+  });
+
+  it('never inerts the toast or the cross-cutting live regions, even alongside an open dialog', () => {
+    // `toastMessage` and `showLinkForm` CAN co-occur in production (saving a
+    // link shows the toast and closes the form; re-opening the form within the
+    // toast's 5s window flips `showLinkForm` back on without clearing the
+    // toast). Force both here to prove the toast and live regions stay in the
+    // accessibility tree regardless: `inert` implies `aria-hidden`, which would
+    // silence their `aria-live` updates (see the guarding comment in LinksView).
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ showLinkForm: true, toastMessage: 'Link saved!' }),
+    );
+
+    renderLinksView();
+
+    const toastRegion = screen.getByTestId('toast-announcement');
+    expect(toastRegion).not.toHaveAttribute('inert');
+    expect(toastRegion.closest('[inert]')).toBeNull();
+
+    // The visual Toast card is not behind an inert ancestor either.
+    const toastCards = screen.getAllByText('Link saved!', { selector: 'div' });
+    for (const card of toastCards) {
+      expect(card.closest('[inert]')).toBeNull();
+    }
+  });
+
+  it('leaves every sibling non-inert when the dialog is closed', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ showLinkForm: false, error: 'Could not save link' }),
+    );
+
+    renderLinksView();
+
+    const heading = screen.getByRole('heading', {
+      name: 'Your links',
+      level: 1,
+    });
+    expect(heading.parentElement).not.toHaveAttribute('inert');
+    expect(screen.getByRole('tabpanel')).not.toHaveAttribute('inert');
+    expect(screen.getByRole('alert')).not.toHaveAttribute('inert');
+    expect(
+      screen.getByRole('tablist', { name: 'Links filter' }).closest('[inert]'),
+    ).toBeNull();
+  });
+});
+
 describe('LinksView – cross-route pending notice surface', () => {
   it('renders the PendingNoticeAnnouncer toast when usePendingNotice returns a notice', () => {
     vi.mocked(usePendingNotice).mockReturnValue({
@@ -227,9 +354,11 @@ describe('LinksView – cross-route pending notice surface', () => {
       </MemoryRouter>,
     );
 
-    // First render: mirror exists but empty (notice = null).
+    // First render: mirror exists but empty (notice = null). Scope past the
+    // dedicated in-session toast region (data-testid="toast-announcement"),
+    // which shares the same sr-only polite/atomic shape.
     const liveRegions = document.querySelectorAll(
-      'span.sr-only[aria-live="polite"][aria-atomic="true"]',
+      'span.sr-only[aria-live="polite"][aria-atomic="true"]:not([data-testid])',
     );
     expect(liveRegions.length).toBe(1);
     expect(liveRegions[0]?.textContent).toBe('');
@@ -249,7 +378,7 @@ describe('LinksView – cross-route pending notice surface', () => {
     );
 
     const liveRegionsAfter = document.querySelectorAll(
-      'span.sr-only[aria-live="polite"][aria-atomic="true"]',
+      'span.sr-only[aria-live="polite"][aria-atomic="true"]:not([data-testid])',
     );
     expect(liveRegionsAfter[0]?.textContent).toBe(
       'Your account has been deleted.',

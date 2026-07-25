@@ -1,10 +1,10 @@
 /*
- * Tests for `useAnnouncer` — the theme editor's single polite live region
- * driver. The load-bearing property is the clear-then-set re-trigger: an
- * IDENTICAL consecutive message must still re-announce (two saves in a row both
- * "Your theme saved." otherwise stay silent, since a live region only fires on
- * a text-node change). The message is also read at fire time, so a reason set
- * just before the count bump wins over the prior closure.
+ * Tests for `useAnnouncer`, the theme editor's thin adapter over the shared
+ * `useReannounce` live-region driver. The clear-then-set re-trigger, identical
+ * consecutive re-announce, idle sentinel, and read-at-fire-time semantics are
+ * owned and proved by `useReannounce` (see useReannounce.test.ts); this file
+ * only proves the wrapper wires `savedCount`/`savedMessage` through with the
+ * editor's 50ms delay.
  */
 
 import { act, renderHook } from '@testing-library/react';
@@ -20,70 +20,21 @@ afterEach(() => {
 });
 
 describe('useAnnouncer', () => {
-  it('renders nothing before the first save (count 0)', () => {
-    const { result } = renderHook(() => useAnnouncer(0, 'Your theme saved.'));
-    expect(result.current).toBe('');
-  });
-
-  it('announces the message once a save settles', () => {
+  it('delegates to useReannounce, announcing the message after the 50ms delay', () => {
     const { result, rerender } = renderHook(
       ({ count, message }) => useAnnouncer(count, message),
       { initialProps: { count: 0, message: 'Your theme saved.' } },
     );
 
     rerender({ count: 1, message: 'Your theme saved.' });
-    act(() => {
-      vi.advanceTimersByTime(50);
-    });
 
-    expect(result.current).toBe('Your theme saved.');
-  });
-
-  it('re-announces an IDENTICAL consecutive message via clear-then-set', () => {
-    const { result, rerender } = renderHook(
-      ({ count, message }) => useAnnouncer(count, message),
-      { initialProps: { count: 1, message: 'Your theme saved.' } },
-    );
-
-    act(() => {
-      vi.advanceTimersByTime(50);
-    });
-    expect(result.current).toBe('Your theme saved.');
-
-    // A second save with the SAME message bumps the count: the region must
-    // clear to '' first so the re-set is a genuine text-node change.
-    rerender({ count: 2, message: 'Your theme saved.' });
+    // Cleared immediately on the count bump; the message only lands once the
+    // wrapper's 50ms delay elapses.
     expect(result.current).toBe('');
-
     act(() => {
       vi.advanceTimersByTime(50);
     });
+
     expect(result.current).toBe('Your theme saved.');
-  });
-
-  it('reads the latest message at fire time via the ref, NOT a stale closure', () => {
-    const { result, rerender } = renderHook(
-      ({ count, message }) => useAnnouncer(count, message),
-      { initialProps: { count: 0, message: 'Your theme saved.' } },
-    );
-
-    // Bump the count with message A — this fires the effect (clear + schedule
-    // the 50ms timer) while message A is current.
-    rerender({ count: 1, message: 'Your theme saved.' });
-
-    // Now change the message to B while the count STAYS FIXED, so the effect
-    // does NOT re-run (its only dep is savedCount). The pending timer is still
-    // the one scheduled under message A — only the ref has moved on. This is
-    // what isolates a ref READ from a closure CAPTURE: a closure-captured
-    // message would still announce A here.
-    rerender({ count: 1, message: 'Reverted to previous colors.' });
-
-    act(() => {
-      vi.advanceTimersByTime(50);
-    });
-
-    // The ref read wins: the timer announces the LATEST message (B), proving the
-    // effect didn't capture message A at scheduling time.
-    expect(result.current).toBe('Reverted to previous colors.');
   });
 });

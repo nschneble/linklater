@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import tseslint from 'typescript-eslint';
+import typeImportsAfterValue from '../../eslint-rules/type-imports-after-value.mjs';
 
 export default tseslint.config(
   {
@@ -22,11 +23,19 @@ export default tseslint.config(
       parser: tseslint.parser,
       sourceType: 'module',
     },
+    plugins: {
+      local: {
+        rules: {
+          'type-imports-after-value': typeImportsAfterValue,
+        },
+      },
+    },
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      'local/type-imports-after-value': 'error',
     },
   },
 );

@@ -18,7 +18,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { OAuthAccountService } from './oauth-account.service.js';
@@ -26,6 +25,7 @@ import {
   createOAuthCallbackGuard,
   createOAuthInitiateGuard,
 } from './oauth-csrf.guard.js';
+import type { Response } from 'express';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**

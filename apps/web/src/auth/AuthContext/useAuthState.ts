@@ -10,12 +10,12 @@ import {
   resendVerificationEmail as apiResendVerificationEmail,
   setStoredToken,
 } from '../../lib/api';
-import type { MeResponse } from '../../lib/api';
 import { VALID_BASE_THEME_IDS } from '../../theme/constants';
-import type { BaseTheme, Mode } from '../../theme/constants';
 import { normalizeCustomTheme } from '../../theme/customTheme';
-import type { AuthContextValue, User } from './types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { MeResponse } from '../../lib/api';
+import type { BaseTheme, Mode } from '../../theme/constants';
+import type { AuthContextValue, User } from './types';
 
 const VISIBILITY_REFRESH_MIN_INTERVAL_MS = 2000;
 

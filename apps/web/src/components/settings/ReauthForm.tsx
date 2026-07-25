@@ -1,10 +1,10 @@
 import { useEffect, useId, useRef } from 'react';
-import type { FormEvent } from 'react';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import { formatTotpCode } from '../../lib/totpCode';
+import type { FormEvent } from 'react';
 
 // The code field accepts either a 6-digit TOTP code or a 17-char recovery
 // code ("XXXXX-XXXXX-XXXXX", alphabet excludes 0/1/I/O/l). We detect which

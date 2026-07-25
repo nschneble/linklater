@@ -19,7 +19,7 @@ export default function VerifyEmailPage() {
       signedInNotice="email-verified"
       signedOutNotice="email-verified-please-sign-in"
       invalidNotice="verification-link-invalid"
-      verifyFn={verifyEmail}
+      onVerify={verifyEmail}
       onSuccess={refreshUser}
     />
   );

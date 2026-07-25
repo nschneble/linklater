@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 /**
- * One-shot deferred read of "flash" query params (e.g. `?linked=…`,
+ * One-shot deferred read of "flash" query parameters (e.g. `?linked=…`,
  * `?link_error=…`) – the post-redirect breadcrumbs that drive a Toast or
  * inline Alert and then need to disappear from the URL.
  *
- * Returns `null` on first render; runs `read(params)` once inside a
- * mount-effect, stores the parsed result, and strips `paramKeys` from
+ * Returns `null` on first render; runs `read(parameters)` once inside a
+ * mount-effect, stores the parsed result, and strips `parameterKeys` from
  * the URL via `setSearchParameters({}, { replace: true })`. The stored
  * result remains stable across re-renders; consumers spread it into
  * their own state in an effect (so dismissal is a local concern).
@@ -16,7 +16,7 @@ import { useSearchParams } from 'react-router';
  *
  * NVDA and JAWS only announce an `aria-live` region when its content
  * transitions empty → populated. Content present on first paint is treated
- * as part of page load and skipped. Reading the params synchronously in a
+ * as part of page load and skipped. Reading the parameters synchronously in a
  * `useState` initializer would put the message in the DOM on the first
  * commit and silently break the announcement. Deferring guarantees the
  * empty → populated edge required for SR a11y.
@@ -31,16 +31,16 @@ import { useSearchParams } from 'react-router';
  * # Why this is idempotent under StrictMode
  *
  * The URL is itself the consumed sentinel. StrictMode double-invokes
- * mount-effects; on the second invocation `read(params)` runs against the
+ * mount-effects; on the second invocation `read(parameters)` runs against the
  * already-stripped URL and returns whatever the consumer's reader returns
  * for "no flash present" (typically `null` or all-null fields). The
  * second `setSearchParameters({}, ...)` is short-circuited by
  * react-router against an already-empty query. Same idiom as
  * `usePendingNotice`'s sessionStorage clear.
  */
-export function useFlashQueryParams<T>(
-  read: (params: URLSearchParams) => T | null,
-  paramKeys: readonly string[],
+export function useFlashQueryParameters<T>(
+  read: (parameters: URLSearchParams) => T | null,
+  parameterKeys: readonly string[],
 ): T | null {
   const [searchParameters, setSearchParameters] = useSearchParams();
   const [flash, setFlash] = useState<T | null>(null);
@@ -50,7 +50,7 @@ export function useFlashQueryParams<T>(
     if (result !== null) {
       setFlash(result);
     }
-    const hasAnyKey = paramKeys.some((key) => searchParameters.get(key));
+    const hasAnyKey = parameterKeys.some((key) => searchParameters.get(key));
     if (hasAnyKey) {
       setSearchParameters({}, { replace: true });
     }

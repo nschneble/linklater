@@ -1,5 +1,5 @@
-import type { ButtonHTMLAttributes, Ref } from 'react';
 import { DISABLED, FOCUS_RING } from '../../lib/styles';
+import type { ButtonHTMLAttributes, Ref } from 'react';
 
 /**
  * Primary call-to-action button. Defaults to `type="submit"` so it can be

@@ -123,8 +123,9 @@ export default function ApiDocsView() {
       </header>
 
       <main
-        className="max-w-5xl mx-auto px-4 sm:px-6 pb-16 select-none"
+        className="max-w-5xl mx-auto px-4 sm:px-6 pb-16 focus:outline-none select-none"
         id="api-docs"
+        tabIndex={-1}
         aria-labelledby="api-docs-heading"
       >
         <h2 className="sr-only" id="api-docs-heading">

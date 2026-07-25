@@ -1,5 +1,5 @@
-import type { EmailPalette } from '../email-palette.js';
 import { baseHtml } from './base.html.js';
+import type { EmailPalette } from '../email-palette.js';
 
 /**
  * Generates the plain-text body for a magic-link login email.

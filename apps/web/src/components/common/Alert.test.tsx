@@ -66,4 +66,27 @@ describe('Alert', () => {
     expect(placeholder?.getAttribute('aria-hidden')).toBe('true');
     expect(placeholder?.className).toContain('sr-only');
   });
+
+  it('forwards inert to the rendered alert when set', () => {
+    const { getByRole } = render(
+      <Alert variant="error" inert>
+        Boom
+      </Alert>,
+    );
+    expect(getByRole('alert', { hidden: true })).toHaveAttribute('inert');
+  });
+
+  it('forwards inert to the empty placeholder branch when set', () => {
+    const { container } = render(
+      <Alert variant="error" id="form-error" inert>
+        {null}
+      </Alert>,
+    );
+    expect(container.querySelector('#form-error')).toHaveAttribute('inert');
+  });
+
+  it('omits inert by default so existing callers are unaffected', () => {
+    const { getByRole } = render(<Alert variant="error">Boom</Alert>);
+    expect(getByRole('alert')).not.toHaveAttribute('inert');
+  });
 });

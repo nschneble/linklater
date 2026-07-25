@@ -55,7 +55,9 @@ function makeUser(overrides: Partial<User> = {}): User {
   };
 }
 
-function renderHeader(overrides: { isUserMenuOpen?: boolean } = {}) {
+function renderHeader(
+  overrides: { isUserMenuOpen?: boolean; inert?: boolean } = {},
+) {
   const onUserMenuClose = vi.fn();
   const props = {
     isUserMenuOpen: true,
@@ -169,5 +171,23 @@ describe('Header outside-interaction handling', () => {
     );
 
     expect(sheet?.className).toContain('overflow-x-hidden');
+  });
+});
+
+describe('Header inert while the save-link dialog traps focus', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('marks the header element inert when inert is true', () => {
+    const { container } = renderHeader({ inert: true });
+
+    expect(container.querySelector('header')).toHaveAttribute('inert');
+  });
+
+  it('leaves the header interactive when inert is false', () => {
+    const { container } = renderHeader({ inert: false });
+
+    expect(container.querySelector('header')).not.toHaveAttribute('inert');
   });
 });

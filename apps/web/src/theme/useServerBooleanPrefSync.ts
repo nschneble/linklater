@@ -1,4 +1,4 @@
-import { RECENT_LOCAL_CHANGE_MS, readLocalStorage } from './storage';
+import { hasRecentLocalChange, readLocalStorage } from './storage';
 import { useEffect } from 'react';
 
 interface ServerBooleanPrefStorageKeys {
@@ -32,8 +32,7 @@ export function useServerBooleanPrefSync(
   useEffect(() => {
     if (serverValue === undefined) return;
 
-    const updatedAt = parseInt(readLocalStorage(updatedAtKey) ?? '0', 10);
-    if (Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS) return;
+    if (hasRecentLocalChange(updatedAtKey)) return;
 
     if (serverValue && !isEnabled) {
       enable();

@@ -151,6 +151,20 @@ describe('LinkCard thumbnail placeholder (local inline SVG, no third party)', ()
   });
 });
 
+describe('LinkCard thumbnail skeleton (metadata still loading)', () => {
+  it('renders the decorative skeleton block while metadata has not been fetched', () => {
+    const { container } = renderWithProviders(
+      <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
+    );
+
+    const skeleton = container.querySelector(
+      'div.bg-\\[var\\(--orbit-bg\\)\\]',
+    );
+    expect(skeleton).not.toBeNull();
+    expect(skeleton?.getAttribute('aria-hidden')).toBe('true');
+  });
+});
+
 describe('LinkCard unsafe-URL guard (CWE-79)', () => {
   it('renders a real, safe anchor for a normal http(s) link', () => {
     renderWithProviders(
@@ -227,7 +241,87 @@ describe('LinkCard "Mark unread" alignment', () => {
       />,
     );
 
-    const button = screen.getByRole('button', { name: 'Mark unread' });
+    const button = screen.getByRole('button', { name: /^Mark unread/ });
     expect(button.className).toContain('ml-auto');
+  });
+});
+
+describe('LinkCard "Mark unread" accessible name (WCAG 2.5.3 Label in Name)', () => {
+  it('keeps "Mark unread" as the leading substring so it matches the visible label', () => {
+    renderWithProviders(<LinkCard link={makeLink()} onReadToggle={vi.fn()} />);
+
+    const button = screen.getByRole('button', { name: /^Mark unread/ });
+    // Visible text on desktop is "Mark unread"; SC 2.5.3 requires the visible
+    // label to be a leading substring of the accessible name.
+    expect(button.getAttribute('aria-label')).toMatch(/^Mark unread/);
+  });
+
+  it('gives two different links two distinct accessible names', () => {
+    const { unmount } = renderWithProviders(
+      <LinkCard
+        link={makeLink({
+          url: 'https://example.com',
+          meta: {
+            title: 'First article',
+            description: null,
+            fetchedAt: new Date().toISOString(),
+          },
+        })}
+        onReadToggle={vi.fn()}
+      />,
+    );
+
+    const firstLabel = screen
+      .getByRole('button', { name: /^Mark unread/ })
+      .getAttribute('aria-label');
+    expect(firstLabel).toContain('First article');
+    expect(firstLabel).toContain('example.com');
+
+    unmount();
+
+    renderWithProviders(
+      <LinkCard
+        link={makeLink({
+          url: 'https://different.org',
+          meta: {
+            title: 'Second article',
+            description: null,
+            fetchedAt: new Date().toISOString(),
+          },
+        })}
+        onReadToggle={vi.fn()}
+      />,
+    );
+
+    const secondLabel = screen
+      .getByRole('button', { name: /^Mark unread/ })
+      .getAttribute('aria-label');
+    expect(secondLabel).toContain('Second article');
+    expect(secondLabel).toContain('different.org');
+    expect(secondLabel).not.toBe(firstLabel);
+  });
+
+  it('falls back to both the "(No title)" placeholder and the site name so shared-fallback links still differ', () => {
+    renderWithProviders(
+      <LinkCard
+        link={makeLink({
+          url: 'https://news.example.org/story',
+          meta: {
+            title: undefined,
+            description: null,
+            fetchedAt: new Date().toISOString(),
+          },
+        })}
+        onReadToggle={vi.fn()}
+      />,
+    );
+
+    const label = screen
+      .getByRole('button', { name: /^Mark unread/ })
+      .getAttribute('aria-label');
+    // Title is unknown, but the site name still disambiguates from another
+    // "(No title)" link on a different host.
+    expect(label).toContain('(No title)');
+    expect(label).toContain('news.example.org');
   });
 });

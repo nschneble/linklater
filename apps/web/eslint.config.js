@@ -5,6 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactPlugin from 'eslint-plugin-react';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
+import typeImportsAfterValue from '../../eslint-rules/type-imports-after-value.mjs';
 import vitest from 'eslint-plugin-vitest';
 
 export default tseslint.config(
@@ -34,6 +35,11 @@ export default tseslint.config(
     },
     plugins: {
       'jsx-a11y': jsxA11y,
+      local: {
+        rules: {
+          'type-imports-after-value': typeImportsAfterValue,
+        },
+      },
       react: reactPlugin,
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
@@ -46,6 +52,7 @@ export default tseslint.config(
         'error',
         { controlComponents: ['FormInput'], assert: 'either', depth: 2 },
       ],
+      'local/type-imports-after-value': 'error',
       'react/react-in-jsx-scope': 'off',
       'react-hooks/exhaustive-deps': 'warn',
       'react-hooks/rules-of-hooks': 'error',
@@ -72,10 +79,16 @@ export default tseslint.config(
       sourceType: 'module',
     },
     plugins: {
+      local: {
+        rules: {
+          'type-imports-after-value': typeImportsAfterValue,
+        },
+      },
       vitest,
     },
     rules: {
       ...vitest.configs.recommended.rules,
+      'local/type-imports-after-value': 'error',
       'vitest/no-focused-tests': 'error',
       // Vitest supports `expect(value, message)` but the plugin's
       // `valid-expect` rule enforces Jest's one-argument shape and the

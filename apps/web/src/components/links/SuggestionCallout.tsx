@@ -1,9 +1,9 @@
 import Alert from '../common/Alert';
 import PrimaryButton from '../common/PrimaryButton';
 import { createLink, getSuggestions, readLink } from '../../lib/api';
-import type { Suggestion } from '../../lib/api';
 import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Suggestion } from '../../lib/api';
 import type { ReactNode } from 'react';
 
 interface SuggestionCalloutProps {

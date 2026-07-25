@@ -49,6 +49,13 @@ export function useAppShell() {
   const mainReference = useRef<HTMLElement>(null);
   const isFirstRender = useRef(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  // Tracks whether LinksView's inline save-link dialog (an `aria-modal`
+  // `role="dialog"`) is open. LinksView reports its open state up via
+  // `handleLinkFormOpenChange`; AppShell uses this to `inert` its own chrome
+  // (skip link, verification banner, Header) that lives OUTSIDE the dialog's
+  // subtree, so the dialog's modality holds against click-through and
+  // SR-browse-mode reach (WCAG 2.4.3 / 4.1.2).
+  const [isSaveLinkDialogOpen, setIsSaveLinkDialogOpen] = useState(false);
   // The WelcomeModal pitches the bookmarklet, which can't be dragged to a
   // bookmarks bar on touch devices. Gate it to >=md viewports so mobile
   // users aren't shown irrelevant onboarding. A user who first lands on
@@ -79,6 +86,10 @@ export function useAppShell() {
     [],
   );
   const handleUserMenuClose = useCallback(() => setShowUserMenu(false), []);
+  const handleLinkFormOpenChange = useCallback(
+    (isOpen: boolean) => setIsSaveLinkDialogOpen(isOpen),
+    [],
+  );
 
   // Optimistic update: the theme switches immediately without waiting for
   // the server response.
@@ -154,11 +165,13 @@ export function useAppShell() {
   }, [shortcutsEnabled]);
 
   return {
+    handleLinkFormOpenChange,
     handleModeToggle,
     handleThemeSelect,
     handleUserMenuClose,
     handleUserMenuToggle,
     isDesktop,
+    isSaveLinkDialogOpen,
     logout,
     mainLabel,
     mainReference,

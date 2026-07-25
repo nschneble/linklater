@@ -52,6 +52,14 @@ interface ToastProps {
    *   alert-highlight fill, 6s auto-dismiss (vs 5s for success).
    */
   variant?: 'success' | 'warning' | 'error';
+  /**
+   * When `true` (default) the toast owns its own live region (`role` +
+   * `aria-live` per `variant`) and announces itself. Set `false` to render a
+   * purely visual card with no ARIA live semantics – used when the parent
+   * announces the same message through a separate, always-mounted live region
+   * so a conditionally-mounted toast doesn't miss the first announcement.
+   */
+  announce?: boolean;
 }
 
 const variantIcons: Record<NonNullable<ToastProps['variant']>, string> = {
@@ -87,10 +95,29 @@ const variantDismissDelayMs: Record<
   error: 6000,
 };
 
+const variantAriaLive: Record<
+  NonNullable<ToastProps['variant']>,
+  'assertive' | 'polite'
+> = {
+  success: 'polite',
+  warning: 'polite',
+  error: 'assertive',
+};
+
+const variantRole: Record<
+  NonNullable<ToastProps['variant']>,
+  'alert' | 'status'
+> = {
+  success: 'status',
+  warning: 'status',
+  error: 'alert',
+};
+
 export default function Toast({
   message,
   onDismiss,
   variant = 'success',
+  announce = true,
 }: ToastProps) {
   const [exiting, setExiting] = useState(false);
 
@@ -104,18 +131,26 @@ export default function Toast({
   const onDismissReference = useRef(onDismiss);
   onDismissReference.current = onDismiss;
 
-  const dismiss = useCallback(() => {
+  const handleDismiss = useCallback(() => {
     setExiting(true);
     setTimeout(() => onDismissReference.current(), 150);
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(dismiss, variantDismissDelayMs[variant]);
+    const timer = setTimeout(handleDismiss, variantDismissDelayMs[variant]);
     return () => clearTimeout(timer);
-  }, [dismiss, variant]);
+  }, [handleDismiss, variant]);
 
-  const ariaLive = variant === 'error' ? 'assertive' : 'polite';
-  const role = variant === 'error' ? 'alert' : 'status';
+  // When `announce` is false the card carries no live-region semantics – the
+  // parent owns the announcement via a separate, always-mounted region.
+  // Otherwise the variant drives both the politeness and the role via the
+  // lookup records above (mirrors `variantIcons`/`variantContainerClasses`).
+  let ariaLive: 'assertive' | 'polite' | undefined;
+  let role: 'alert' | 'status' | undefined;
+  if (announce) {
+    ariaLive = variantAriaLive[variant];
+    role = variantRole[variant];
+  }
 
   // Focus indicator on the dismiss button is `--{state}-highlight-fg` (the
   // bundle's own highlight-fg) rather than the universal `--focus-ring`.
@@ -143,7 +178,7 @@ export default function Toast({
       <button
         type="button"
         aria-label="Dismiss"
-        onClick={dismiss}
+        onClick={handleDismiss}
         className={`p-1.5 -m-1.5 ml-0.5 opacity-60 hover:opacity-100 transition-opacity active:scale-[0.96] cursor-pointer focus-visible:outline-none focus-visible:ring-2 ${variantDismissRingClasses[variant]} forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded-full`}
       >
         <i className="fa-solid fa-xmark text-xs" aria-hidden="true" />

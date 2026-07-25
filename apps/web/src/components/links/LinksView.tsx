@@ -7,7 +7,7 @@ import { useShortcutsEnabled } from '../../lib/hooks/useShortcutsEnabled';
 import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
 import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
-import Toast from '../common/Toast';
+import ToastAnnouncer from '../common/ToastAnnouncer';
 import LinkForm from './LinkForm';
 import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';
@@ -20,12 +20,19 @@ import { createPortal } from 'react-dom';
  * five separate error states surfaced by `useLinksView` (save, read, random,
  * delete, fetch).
  */
-function ViewError({ message }: { message: string | null }) {
+function ViewError({
+  message,
+  inert,
+}: {
+  message: string | null;
+  inert?: boolean;
+}) {
   if (!message) return null;
   return (
     <Alert
       className="mt-2 animate-fade-in-up"
       icon="fa-triangle-exclamation"
+      inert={inert}
       variant="error"
     >
       {message}
@@ -39,6 +46,7 @@ const KeyboardShortcutsModal = lazy(() => import('./KeyboardShortcutsModal'));
 
 interface LinksViewProps {
   onCloseUserMenu?: () => void;
+  onLinkFormOpenChange?: (isOpen: boolean) => void;
 }
 
 /**
@@ -65,8 +73,11 @@ interface LinksViewProps {
  * ("Your links" for this view) so keyboard users get a named landing point
  * via the existing skip link.
  */
-export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
-  const view = useLinksView({ onCloseUserMenu });
+export default function LinksView({
+  onCloseUserMenu,
+  onLinkFormOpenChange,
+}: LinksViewProps = {}) {
+  const view = useLinksView({ onCloseUserMenu, onLinkFormOpenChange });
   const pendingNotice = usePendingNotice();
   const shortcutsEnabled = useShortcutsEnabled();
 
@@ -83,7 +94,10 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-1">
+      <div
+        className="flex items-center justify-between mb-1"
+        inert={view.showLinkForm}
+      >
         <h1 className="text-lg font-semibold">Your links</h1>
         <button
           type="button"
@@ -102,7 +116,10 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
           )}
         </button>
       </div>
-      <p className="text-[var(--base-alt-text)] text-xs">
+      <p
+        className="text-[var(--base-alt-text)] text-xs"
+        inert={view.showLinkForm}
+      >
         <span className="hidden sm:inline-flex">
           {view.filter === 'read'
             ? 'Read links are automatically removed after seven days.'
@@ -131,7 +148,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         onToggleForm={view.handleToggleForm}
       />
 
-      <ViewError message={view.error} />
+      <ViewError message={view.error} inert={view.showLinkForm} />
 
       {view.showShortcuts && (
         <Suspense>
@@ -187,6 +204,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       <LinksList
         filter={view.filter}
         hasSettledOnce={view.hasSettledOnce}
+        inert={view.showLinkForm}
         isClearingRead={view.isClearingRead}
         links={view.links}
         loadingLinks={view.loadingLinks}
@@ -198,12 +216,36 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
         onLoadMore={view.handleLoadMore}
       />
 
-      {view.toastMessage && (
-        <Toast
-          message={view.toastMessage}
-          onDismiss={view.handleDismissToast}
-        />
-      )}
+      {/*
+        In-session toast messages ("Link saved!"). ToastAnnouncer pairs the
+        visual Toast with its always-mounted sr-only live mirror (see its
+        docstring for the announce={false}-plus-mirror rationale). It owns its
+        own channel, separate from newLinksAnnouncement below (background-refresh
+        arrivals) and PendingNoticeAnnouncer (cross-route notices), so they
+        never race or double-announce.
+
+        The inline dialog inerts its background siblings (heading, description,
+        toolbar, error, list) while `showLinkForm` is open. ToastAnnouncer is
+        deliberately, unconditionally left non-inert: `inert` implies
+        `aria-hidden`, and screen readers do not announce `aria-live` updates on
+        elements outside the accessibility tree (WCAG 4.1.3). This is safe by
+        design and does NOT rest on any assumption about whether a toast happens
+        to be visible while the dialog is open. `toastMessage` and `showLinkForm`
+        CAN in fact be true at the same time: saving a link shows the toast and
+        closes the form, and re-opening the form via `handleToggleForm`
+        (`useLinksForm.ts`) within the toast's 5s window flips `showLinkForm`
+        back on without clearing the toast (`useToast.ts` has no auto-timeout on
+        the message itself). That co-occurrence is the CORRECT behavior, not a
+        regression to guard against: a visible toast must stay reachable and
+        announceable throughout, dialog open or not. The sibling test in
+        `LinksView.test.tsx` forces both flags true and asserts the toast and
+        live regions remain in the accessibility tree.
+      */}
+      <ToastAnnouncer
+        message={view.toastMessage}
+        onDismiss={view.handleDismissToast}
+        testId="toast-announcement"
+      />
 
       {/*
         Polite live region announcing links that arrive via a background

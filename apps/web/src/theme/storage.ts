@@ -56,3 +56,43 @@ export function readLocalStorage(key: string): string | null {
     return null;
   }
 }
+
+/**
+ * Returns `true` when the preference tracked by `updatedAtKey` was changed
+ * locally within the last `RECENT_LOCAL_CHANGE_MS`. The server-sync effects in
+ * `useThemeState` (`applyServer*`) and `useServerBooleanPrefSync` call this to
+ * skip a server value that would otherwise stomp a just-made optimistic local
+ * change.
+ */
+export function hasRecentLocalChange(updatedAtKey: string): boolean {
+  const updatedAt = parseInt(readLocalStorage(updatedAtKey) ?? '0', 10);
+  return Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS;
+}
+
+interface PersistWithTimestampInput {
+  valueKey: string;
+  value: string;
+  updatedAtKey: string;
+}
+
+/**
+ * Persists a preference `value` under `valueKey` and stamps the current time
+ * under `updatedAtKey`, so the `hasRecentLocalChange` guard can later suppress
+ * a stale server sync. Only user-initiated setters write the timestamp; the
+ * `applyServer*` syncs write the value alone (via a bare `setItem`) so they
+ * never reset their own guard window.
+ *
+ * Takes a named-argument object rather than three positional `string`s. With
+ * all three parameters sharing the `string` type, positional arguments let a
+ * caller silently transpose the two key slots (`valueKey`/`updatedAtKey`) or
+ * drop the value into a key slot without any type error. Naming each slot at
+ * the call site makes that transposition unexpressible.
+ */
+export function persistWithTimestamp({
+  valueKey,
+  value,
+  updatedAtKey,
+}: PersistWithTimestampInput): void {
+  window.localStorage.setItem(valueKey, value);
+  window.localStorage.setItem(updatedAtKey, Date.now().toString());
+}

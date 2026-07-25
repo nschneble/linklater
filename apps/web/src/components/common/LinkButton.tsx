@@ -1,5 +1,5 @@
-import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import { FOCUS_RING } from '../../lib/styles';
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 
 /**
  * Inline link-style button for lightweight in-page actions (e.g. "Back to

@@ -1,5 +1,5 @@
-import type { NormalizedParameter } from '../../lib/openapi';
 import { describeType } from '../../lib/apiDocs/schemaShape';
+import type { NormalizedParameter } from '../../lib/openapi';
 
 interface ParameterTableProps {
   caption: string;

@@ -3,7 +3,7 @@ import { getErrorMessage } from '../../lib/errors';
 import { useToast } from '../../lib/hooks/useToast';
 import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
-import Toast from '../common/Toast';
+import ToastAnnouncer from '../common/ToastAnnouncer';
 import BookmarkletRegenerateButton from './BookmarkletRegenerateButton';
 import { buildBookmarkletCode } from './bookmarkletCode';
 import { useEffect, useRef, useState } from 'react';
@@ -118,9 +118,17 @@ export default function BookmarkletSection() {
         Your auth token is embedded in this bookmarklet. It never expires, but
         it can be regenerated if someone else gains access to it.
       </p>
-      {toast.message && (
-        <Toast message={toast.message} onDismiss={toast.dismiss} />
-      )}
+      {/*
+        In-session toast messages (e.g. "Bookmarklet regenerated"). See
+        ToastAnnouncer's docstring for the announce={false}-plus-mirror
+        rationale. Its testId keeps this a distinct channel from the
+        "Generating your bookmarklet…" loading-status paragraph above.
+      */}
+      <ToastAnnouncer
+        message={toast.message}
+        onDismiss={toast.dismiss}
+        testId="bookmarklet-toast-announcement"
+      />
     </div>
   );
 }

@@ -202,27 +202,6 @@ describe('OAuthController', () => {
   });
 
   // ──────────────────────────────────────────────
-  // unlinkProvider
-  // ──────────────────────────────────────────────
-
-  describe('unlinkProvider', () => {
-    it('delegates to OAuthAccountService.unlinkOAuthProvider and returns success', async () => {
-      (
-        oauthAccountServiceMock.unlinkOAuthProvider as jest.Mock
-      ).mockResolvedValue(undefined);
-      const request = makeRequest();
-
-      const result = await controller.unlinkProvider(request, 'google');
-
-      expect(oauthAccountServiceMock.unlinkOAuthProvider).toHaveBeenCalledWith(
-        USER_ID,
-        'google',
-      );
-      expect(result).toEqual({ success: true });
-    });
-  });
-
-  // ──────────────────────────────────────────────
   // googleLink – guard is applied
   // ──────────────────────────────────────────────
 

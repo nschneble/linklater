@@ -1,5 +1,5 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { FOCUS_RING } from '../../lib/styles';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 /**
  * A single tab within a `role="tablist"` container.

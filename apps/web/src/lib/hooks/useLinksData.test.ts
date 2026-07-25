@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchParamsReducer, useLinksData } from './useLinksData';
+import { fetchParametersReducer, useLinksData } from './useLinksData';
 import { findNewLinks, formatNewLinksAnnouncement } from './linksData.utils';
 import type { Link, PaginatedLinks } from '../api';
 
@@ -84,10 +84,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('fetchParamsReducer', () => {
+describe('fetchParametersReducer', () => {
   it('reset changes filter and resets page to 1', () => {
     const state = { filter: 'unread' as const, page: 3, search: '' };
-    const next = fetchParamsReducer(state, {
+    const next = fetchParametersReducer(state, {
       type: 'reset',
       filter: 'read',
       search: '',
@@ -97,7 +97,7 @@ describe('fetchParamsReducer', () => {
 
   it('reset returns same reference when filter and search are unchanged', () => {
     const state = { filter: 'unread' as const, page: 2, search: 'hello' };
-    const next = fetchParamsReducer(state, {
+    const next = fetchParametersReducer(state, {
       type: 'reset',
       filter: 'unread',
       search: 'hello',
@@ -107,13 +107,13 @@ describe('fetchParamsReducer', () => {
 
   it('load-more increments page', () => {
     const state = { filter: 'unread' as const, page: 1, search: '' };
-    const next = fetchParamsReducer(state, { type: 'load-more' });
+    const next = fetchParametersReducer(state, { type: 'load-more' });
     expect(next.page).toBe(2);
   });
 
   it('load-more preserves filter and search while only advancing the page', () => {
     const state = { filter: 'read' as const, page: 2, search: 'duck' };
-    const next = fetchParamsReducer(state, { type: 'load-more' });
+    const next = fetchParametersReducer(state, { type: 'load-more' });
     expect(next).toEqual({ filter: 'read', page: 3, search: 'duck' });
   });
 });

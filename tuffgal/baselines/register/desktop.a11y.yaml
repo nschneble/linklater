@@ -25,6 +25,7 @@
     - button "Add and read (opens in new tab)": Add and read
   - status
   - status
+  - status
 - button "Dismiss welcome dialog"
 - dialog "Welcome to Linklater!":
   - button "Close welcome"

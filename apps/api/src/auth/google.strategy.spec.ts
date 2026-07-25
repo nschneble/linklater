@@ -1,0 +1,114 @@
+import { jest } from '@jest/globals';
+
+// Required env vars must be set before GoogleStrategy is imported because the
+// constructor reads them eagerly (same pattern as google-link.strategy.spec.ts).
+process.env.GOOGLE_CLIENT_ID = 'test-client-id';
+process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
+process.env.GOOGLE_CALLBACK_URL = 'http://localhost/auth/google/callback';
+
+import { GoogleStrategy } from './google.strategy';
+import { OAuthAccountService } from './oauth-account.service';
+
+const GOOGLE_PROFILE_ID = 'google-profile-456';
+const PROVIDER_EMAIL = 'test@example.com';
+
+function makeProfile(email: string | null = PROVIDER_EMAIL) {
+  return {
+    id: GOOGLE_PROFILE_ID,
+    emails: email !== null ? [{ value: email }] : [],
+    provider: 'google',
+    displayName: 'Test User',
+  };
+}
+
+describe('GoogleStrategy', () => {
+  let strategy: GoogleStrategy;
+
+  const oauthAccountServiceMock = {
+    findOrCreateOAuthUser: jest.fn(),
+  } as unknown as OAuthAccountService;
+
+  beforeEach(() => {
+    strategy = new GoogleStrategy(oauthAccountServiceMock);
+    jest.clearAllMocks();
+  });
+
+  it('should be defined', () => {
+    expect(strategy).toBeDefined();
+  });
+
+  describe('constructor env var guards', () => {
+    it('throws when GOOGLE_CLIENT_ID is not set', () => {
+      const original = process.env.GOOGLE_CLIENT_ID;
+      delete process.env.GOOGLE_CLIENT_ID;
+
+      try {
+        expect(() => new GoogleStrategy(oauthAccountServiceMock)).toThrow(
+          'GOOGLE_CLIENT_ID must be set',
+        );
+      } finally {
+        process.env.GOOGLE_CLIENT_ID = original;
+      }
+    });
+
+    it('throws when GOOGLE_CLIENT_SECRET is not set', () => {
+      const original = process.env.GOOGLE_CLIENT_SECRET;
+      delete process.env.GOOGLE_CLIENT_SECRET;
+
+      try {
+        expect(() => new GoogleStrategy(oauthAccountServiceMock)).toThrow(
+          'GOOGLE_CLIENT_SECRET must be set',
+        );
+      } finally {
+        process.env.GOOGLE_CLIENT_SECRET = original;
+      }
+    });
+
+    it('throws when GOOGLE_CALLBACK_URL is not set', () => {
+      const original = process.env.GOOGLE_CALLBACK_URL;
+      delete process.env.GOOGLE_CALLBACK_URL;
+
+      try {
+        expect(() => new GoogleStrategy(oauthAccountServiceMock)).toThrow(
+          'GOOGLE_CALLBACK_URL must be set',
+        );
+      } finally {
+        process.env.GOOGLE_CALLBACK_URL = original;
+      }
+    });
+  });
+
+  describe('validate', () => {
+    it('delegates to findOrCreateOAuthUser with the extracted email for a valid profile', async () => {
+      const delegateResult = { userId: 'user-1', email: PROVIDER_EMAIL };
+      (
+        oauthAccountServiceMock.findOrCreateOAuthUser as jest.Mock
+      ).mockResolvedValue(delegateResult);
+
+      const result = await strategy.validate(
+        'ignored-access-token',
+        'ignored-refresh-token',
+        makeProfile(),
+      );
+
+      expect(
+        oauthAccountServiceMock.findOrCreateOAuthUser,
+      ).toHaveBeenCalledWith('google', GOOGLE_PROFILE_ID, PROVIDER_EMAIL);
+      expect(result).toBe(delegateResult);
+    });
+
+    it('throws when the profile has no email and does not call findOrCreateOAuthUser', async () => {
+      await expect(
+        strategy.validate(
+          'ignored-access-token',
+          'ignored-refresh-token',
+          makeProfile(null),
+        ),
+      ).rejects.toThrow('No email returned from Google');
+
+      expect(
+        oauthAccountServiceMock.findOrCreateOAuthUser,
+      ).not.toHaveBeenCalled();
+    });
+  });
+});

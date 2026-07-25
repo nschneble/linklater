@@ -1,17 +1,5 @@
-import {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-} from 'react';
+import { useCallback, useMemo, useState, type CSSProperties } from 'react';
 import { useTheme } from '../../../theme/ThemeContext';
-import {
-  collectTokens,
-  CUSTOM_TOKEN_KEYS,
-  isCustomThemeConfigured,
-  type CustomTheme,
-} from '../../../theme/customTheme';
 import { THEMES, type Mode } from '../../../theme/constants';
 import ColorEditor from './ColorEditor';
 import ComponentShowcase from './ComponentShowcase';
@@ -24,8 +12,8 @@ import { readThemeTokens } from './themeProbe';
 import { BUNDLES, type Bundle } from './useThemeOverrides';
 import { pairsTouchingToken, useContrastResults } from './contrastResults';
 import { useAnnouncer } from './useAnnouncer';
-import { useCustomThemeEngagement } from './useCustomThemeEngagement';
 import { useThemeCopy } from './useThemeCopy';
+import { useThemeEngagement } from './useThemeEngagement';
 import { useThemeOverrides } from './useThemeOverrides';
 import { useThemeSave } from './useThemeSave';
 import { useToast } from '../../../lib/hooks/useToast';
@@ -117,7 +105,6 @@ export default function ThemeEditor() {
     useThemeOverrides(editorMode);
 
   const editingEnabled = customThemeEnabled;
-  const isCustomConfigured = isCustomThemeConfigured(customTheme);
   const baseThemeLabel =
     THEMES.find((theme) => theme.id === baseTheme)?.label ?? baseTheme;
 
@@ -130,11 +117,6 @@ export default function ThemeEditor() {
     ? `Already using ${baseThemeLabel}'s colors. Edit a color or Randomize to start a custom theme.`
     : `${baseThemeLabel} is already active, so there's nothing to copy. Edit a color or Randomize to change it.`;
 
-  // Guards the engage-on-first-edit path: a native color picker fires a burst
-  // of `onChange`s during a single drag, and the enabled flag only commits
-  // between events — this stops two of them firing two engage PATCHes.
-  const engagingReference = useRef(false);
-
   const { save } = useThemeSave(editorMode);
   const toast = useToast();
 
@@ -142,12 +124,16 @@ export default function ThemeEditor() {
     () => toast.show('custom-theme-toggle-failed'),
     [toast],
   );
-  const { commitEngagement } = useCustomThemeEngagement({
+  // The whole go-custom orchestration (shared re-entrancy mutex, seed building,
+  // both engage paths) lives in `useThemeEngagement`; this component only wires
+  // the two call sites with their announce strings + visual-apply step.
+  const { engageFromEdit, engageFromRandom } = useThemeEngagement({
+    baseTheme,
     customTheme,
     customThemeEnabled,
+    editorMode,
     setCustomTheme,
     setCustomThemeEnabled,
-    engagingReference,
     onError: onEngageError,
   });
 
@@ -178,118 +164,34 @@ export default function ThemeEditor() {
     onSaveFailed,
   });
 
-  // The first edit IS going custom: seed the palette from the POST-EDIT values,
-  // enable, persist, and announce once. The edited mode is seeded from the
-  // explicit post-edit map { ...colorValues, [variable]: value } (NOT a fresh
-  // `readThemeTokens` probe — that would drop the just-made edit and snap the
-  // open color picker back mid-drag); the other mode is probed off the current
-  // theme. When a saved palette already exists (the user reverted earlier), the
-  // edit merges into it so re-engaging restores their colors (a11y brief §4).
-  //
-  // `commitEngagement` fires this PATCH DIRECTLY, outside `useThemeAutoSave`'s
-  // in-flight serialization, because it must atomically carry BOTH the enable
-  // flag and the freshly-probed seed AND own the optimistic rollback — none of
-  // which the serialized current-mode `save` path models. Not racy in practice:
-  // engage is the FIRST edit, while any scheduled save can only be armed by a
-  // LATER edit (custom is now on) and won't flush until 700ms after, by which
-  // point this PATCH has long since landed.
-  const engageCustomTheme = useCallback(
-    async (
-      variable: Parameters<typeof setOverride>[0],
-      value: string,
-      postEditValues: Record<Parameters<typeof setOverride>[0], string>,
-    ) => {
-      const otherMode: Mode = editorMode === 'dark' ? 'light' : 'dark';
-      // The edited mode's slots — either the edited slot merged into the saved
-      // palette (re-engage after a revert) or the full post-edit snapshot
-      // (fresh).
-      const editedModeTokens = isCustomConfigured
-        ? {
-            ...(customTheme?.[editorMode] ?? {}),
-            [variable]: value,
-          }
-        : collectTokens(
-            CUSTOM_TOKEN_KEYS,
-            (key) => postEditValues[key as Parameters<typeof setOverride>[0]],
-          );
-      // The other mode keeps its saved tokens (re-engage) or is probed fresh.
-      const otherModeTokens = isCustomConfigured
-        ? { ...(customTheme?.[otherMode] ?? {}) }
-        : readThemeTokens(baseTheme, otherMode);
-
-      const seeded: CustomTheme = {
-        dark: editorMode === 'dark' ? editedModeTokens : otherModeTokens,
-        light: editorMode === 'light' ? editedModeTokens : otherModeTokens,
-      };
-
-      await commitEngagement({ enabled: true, customTheme: seeded }, () =>
-        announce('Your theme is on and saved.'),
-      );
-    },
-    [
-      announce,
-      baseTheme,
-      commitEngagement,
-      customTheme,
-      editorMode,
-      isCustomConfigured,
-    ],
-  );
-
-  // Randomize while custom is OFF is ALSO a way to go custom (PRD point 11) —
-  // equal to editing a color or copying a theme. It generates a WCAG-AA palette
-  // for `editorMode` ONLY (HARD scope: cross-bundle pairs are only guaranteed
-  // within one generated mode) and, like `engageCustomTheme`, PRESERVES the
-  // other mode: a returning user's saved other-mode palette is kept (re-engage),
-  // else the other mode is probed fresh off the current theme. It enables +
-  // seeds BOTH modes, loads the editor overrides, persists in ONE direct PATCH,
-  // and announces ONCE through the polite region.
-  const engageFromRandom = useCallback(
-    async (palette: Record<Parameters<typeof setOverride>[0], string>) => {
-      if (engagingReference.current) return;
-      engagingReference.current = true;
-
-      const otherMode: Mode = editorMode === 'dark' ? 'light' : 'dark';
-      // Keep the other mode's saved tokens (re-engage) or probe them fresh —
-      // the random palette only ever touches `editorMode` (§3).
-      const otherModeTokens = isCustomConfigured
-        ? { ...(customTheme?.[otherMode] ?? {}) }
-        : readThemeTokens(baseTheme, otherMode);
-      const seeded: CustomTheme = {
-        dark: editorMode === 'dark' ? palette : otherModeTokens,
-        light: editorMode === 'light' ? palette : otherModeTokens,
-      };
-
-      loadOverrides(palette);
-      await commitEngagement({ enabled: true, customTheme: seeded }, () => {
-        announce('Your theme is on. Random palette applied and saved.');
-      });
-    },
-    [
-      announce,
-      baseTheme,
-      commitEngagement,
-      customTheme,
-      editorMode,
-      isCustomConfigured,
-      loadOverrides,
-    ],
-  );
-
   // Randomize dispatcher: while custom is already on it is a copy-over
-  // (`handleApplyRandom`); while off it goes custom (`engageFromRandom`).
-  // Either way the palette is generated ONCE for the current editor mode and the
-  // OTHER mode is left untouched (HARD scope: cross-bundle pairs are only
-  // guaranteed within one mode's generated palette).
+  // (`handleApplyRandom`); while off it goes custom (`engageFromRandom`), which
+  // loads the palette into the preview INSIDE its mutex guard (a rapid second
+  // click is a full no-op) and announces once after the PATCH lands. Either way
+  // the palette is generated ONCE for the current editor mode and the OTHER mode
+  // is left untouched (HARD scope: cross-bundle pairs are only guaranteed within
+  // one mode's generated palette).
   const handleRandomize = useCallback(() => {
     const palette = generateRandomPalette(editorMode);
     setRandomizeNonce((current) => current + 1);
     if (customThemeEnabled) {
       handleApplyRandom(palette);
     } else {
-      void engageFromRandom(palette);
+      engageFromRandom({
+        palette,
+        applyPaletteToPreview: () => loadOverrides(palette),
+        onSuccess: () =>
+          announce('Your theme is on. Random palette applied and saved.'),
+      });
     }
-  }, [customThemeEnabled, editorMode, engageFromRandom, handleApplyRandom]);
+  }, [
+    announce,
+    customThemeEnabled,
+    editorMode,
+    engageFromRandom,
+    handleApplyRandom,
+    loadOverrides,
+  ]);
 
   // The single toolbar copy action: overwrite the live palette with the
   // CURRENTLY ACTIVE film theme's current-mode colors. It is a no-op — and
@@ -307,28 +209,25 @@ export default function ThemeEditor() {
   }, [applyPalette, baseTheme, baseThemeLabel, customThemeEnabled, editorMode]);
 
   // Apply an edit to a slot: the first edit goes custom (engaging once), later
-  // edits debounce-save.
-  function editTokens(
+  // edits debounce-save. `setOverride` runs on EVERY drag-burst tick so the
+  // swatch always tracks the drag; `engageFromEdit` owns the mutex that collapses
+  // the burst into a single engage PATCH.
+  function handleOverride(
     variable: Parameters<typeof setOverride>[0],
     value: string,
   ) {
     const postEditValues = { ...colorValues, [variable]: value };
     setOverride(variable, value);
     if (!customThemeEnabled) {
-      // First edit — go custom. The guard absorbs a color picker's drag burst.
-      if (engagingReference.current) return;
-      engagingReference.current = true;
-      void engageCustomTheme(variable, value, postEditValues);
+      engageFromEdit({
+        variable,
+        value,
+        postEditValues,
+        onSuccess: () => announce('Your theme is on and saved.'),
+      });
     } else {
       scheduleSave();
     }
-  }
-
-  function handleOverride(
-    variable: Parameters<typeof setOverride>[0],
-    value: string,
-  ) {
-    editTokens(variable, value);
   }
 
   const toastView = useMemo(() => resolveToast(toast.message), [toast.message]);

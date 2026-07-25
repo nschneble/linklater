@@ -5,8 +5,8 @@ import { getErrorMessage } from '../../lib/errors';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import MfaView from './MfaView';
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
+import type { FormEvent } from 'react';
 
 type MfaChallenge = 'totp' | 'recovery';
 

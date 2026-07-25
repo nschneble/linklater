@@ -7,7 +7,7 @@ import type { Link } from '../api';
 import type { LinksFilter } from './types';
 import type { UseLinksDataResult } from './useLinksData.types';
 
-export { fetchParamsReducer } from './useLinksData.reducer';
+export { fetchParametersReducer } from './useLinksData.reducer';
 export type { UseLinksDataResult } from './useLinksData.types';
 
 /**

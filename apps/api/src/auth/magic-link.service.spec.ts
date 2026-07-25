@@ -8,7 +8,7 @@ jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { sha256Hex } from '../common/crypto-tokens';
+import { sha256Hex } from '../common/index';
 import { MagicLinkService } from './magic-link.service';
 import { EmailQueueService } from '../email/email-queue.service';
 import { UserTokensService } from '../users/user-tokens.service';

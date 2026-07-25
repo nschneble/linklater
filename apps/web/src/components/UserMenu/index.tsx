@@ -78,24 +78,44 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
   const menuReference = useRef<HTMLDivElement | null>(null);
   const openedByKeyboard = useRef(false);
 
-  useMenuNavigation(menuReference, () => {
-    onClose();
-    avatarReference.current?.focus();
-  });
+  useMenuNavigation(
+    menuReference,
+    () => {
+      onClose();
+      avatarReference.current?.focus();
+    },
+    // Escape returns focus to the avatar; Tab must NOT (it would steal focus
+    // back from the browser's native next-element target). SC 2.4.3.
+    { onTabClose: onClose },
+  );
 
-  const closeFlyout = () => {
-    setShowThemeSubmenu(false);
+  // Discards an in-flight theme preview, restoring the committed base theme.
+  // No-op when nothing is being previewed.
+  const resetPreviewIfActive = () => {
     if (previewTheme !== null) {
       resetPreview(baseTheme);
     }
+  };
+
+  const closeFlyout = () => {
+    setShowThemeSubmenu(false);
+    resetPreviewIfActive();
     menuReference.current
       ?.querySelector<HTMLElement>('[aria-haspopup="menu"]')
       ?.focus();
   };
 
+  // Tab must NOT refocus the theme-row trigger (it would fight the browser's
+  // native next-element target). SC 2.4.3.
+  const closeFlyoutOnTab = () => {
+    setShowThemeSubmenu(false);
+    resetPreviewIfActive();
+  };
+
   useMenuNavigation(flyoutReference, closeFlyout, {
     itemSelector: '[data-submenu-item]',
     onArrowLeft: closeFlyout,
+    onTabClose: closeFlyoutOnTab,
   });
 
   // resets submenu when main menu closes; moves focus into menu on open
@@ -122,18 +142,22 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
     onClose();
   };
 
+  // Keeps the local avatar ref in sync while honoring whatever ref shape the
+  // parent forwarded (callback or object).
+  const mergeAvatarReference = (node: HTMLButtonElement | null) => {
+    avatarReference.current = node;
+    if (typeof forwardedReference === 'function') {
+      forwardedReference(node);
+    } else if (forwardedReference) {
+      forwardedReference.current = node;
+    }
+  };
+
   return (
     <div className="relative">
       <button
         className={`group flex items-center gap-2 p-1.5 bg-[var(--orbit-bg)] border-shadow hover:border-shadow ${FOCUS_RING} rounded-4xl transition cursor-pointer`}
-        ref={(node) => {
-          avatarReference.current = node;
-          if (typeof forwardedReference === 'function') {
-            forwardedReference(node);
-          } else if (forwardedReference) {
-            forwardedReference.current = node;
-          }
-        }}
+        ref={mergeAvatarReference}
         type="button"
         data-usermenu-trigger
         onClick={(event) => {
@@ -194,9 +218,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
             className="relative"
             onMouseEnter={handleThemeRowEnter}
             onMouseLeave={(event) => {
-              if (previewTheme !== null) {
-                resetPreview(baseTheme);
-              }
+              resetPreviewIfActive();
               if (
                 menuReference.current?.contains(event.relatedTarget as Node)
               ) {
@@ -217,16 +239,12 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
               flyoutReference={flyoutReference}
               onTriggerBlur={() => {
                 setShowThemeSubmenu(false);
-                if (previewTheme !== null) {
-                  resetPreview(baseTheme);
-                }
+                resetPreviewIfActive();
               }}
               onFlyoutBlur={(relatedTarget) => {
                 if (!themeRowReference.current?.contains(relatedTarget)) {
                   setShowThemeSubmenu(false);
-                  if (previewTheme !== null) {
-                    resetPreview(baseTheme);
-                  }
+                  resetPreviewIfActive();
                 }
               }}
               onTriggerClick={handleThemeRowEnter}

@@ -24,6 +24,10 @@ graph TD
         email --> email_tmpl
     end
 
+    subgraph Health["Health"]
+        health["src/health/"]
+    end
+
     subgraph Links["Links"]
         links["src/links/"]
         links_dto["src/links/dto/"]
@@ -72,6 +76,7 @@ graph TD
     end
 
     app --> auth
+    app --> health
     app --> links
     app --> metadata
     app --> queue
@@ -95,6 +100,7 @@ graph TD
 
     classDef authStyle fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
     classDef emailStyle fill:#fef9c3,stroke:#ca8a04,color:#422006
+    classDef healthStyle fill:#fee2e2,stroke:#dc2626,color:#450a0a
     classDef linksStyle fill:#dcfce7,stroke:#16a34a,color:#14532d
     classDef metaStyle fill:#ede9fe,stroke:#7c3aed,color:#2e1065
     classDef queueStyle fill:#ffedd5,stroke:#ea580c,color:#431407
@@ -107,6 +113,7 @@ graph TD
 
     class auth,auth_dto authStyle
     class email,email_tmpl emailStyle
+    class health healthStyle
     class links,links_dto linksStyle
     class metadata metaStyle
     class queue queueStyle
@@ -127,6 +134,7 @@ graph TD
 | Add or change an auth flow            | `src/auth/`                                  |
 | Adjust user profile                   | `src/users/`                                 |
 | Change link CRUD or search            | `src/links/`                                 |
+| Check the health/readiness endpoint   | `src/health/`                                |
 | Edit PAT lifecycle                    | `src/tokens/`                                |
 | Edit shared utils                     | `src/common/`                                |
 | Edit suggested links (RSS feeds)      | `src/suggestions/`                           |

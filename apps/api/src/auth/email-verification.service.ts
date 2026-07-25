@@ -5,9 +5,12 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
-import { expiresInMs } from '../common/dates.js';
-import { normalizeRecoveryCode } from '../common/recovery-codes.js';
+import {
+  expiresInMs,
+  generateHexToken,
+  normalizeRecoveryCode,
+  sha256Hex,
+} from '../common/index.js';
 import { EmailQueueService } from '../email/index.js';
 import {
   UserMfaService,

@@ -4,10 +4,9 @@ import {
   MAX_HTML_BYTES,
   MAX_URL_LENGTH,
 } from './metadata.constants.js';
-import type { LinkMetadata } from './metadata.types.js';
 import * as cheerio from 'cheerio/slim';
-import { isPrivateHost } from '../common/private-host.js';
-import { safeFetch } from '../common/safe-fetch.js';
+import { isPrivateHost, safeFetch } from '../common/index.js';
+import type { LinkMetadata } from './metadata.types.js';
 
 /**
  * Fetches and parses Open Graph / Twitter Card metadata from a public URL.

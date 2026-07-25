@@ -1,4 +1,5 @@
 import { formatRelativeTimeFuzzy } from '../../../lib/dates';
+import { actionGuardInitialFocusProps } from '../../../lib/hooks/useFocusFirstButton';
 import ActionGuard from '../../common/ActionGuard';
 import IconButton from '../../common/IconButton';
 import type { ApiTokenRowProps } from './types';
@@ -33,7 +34,7 @@ export default function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
         }) => (
           <>
             <div className="flex items-start gap-3">
-              <div className="flex flex-col items-start min-w-0 flex-1">
+              <div className="flex flex-col items-start flex-1 min-w-0">
                 <p className="text-[var(--orbit-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1">
                   {token.name}
                 </p>
@@ -78,6 +79,7 @@ export default function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
                       {pending ? 'Revoking…' : 'Yes, revoke'}
                     </IconButton>
                     <IconButton
+                      {...actionGuardInitialFocusProps}
                       aria-label={`Cancel revoke ${token.name}`}
                       variant="ghost"
                       surface="orbit"

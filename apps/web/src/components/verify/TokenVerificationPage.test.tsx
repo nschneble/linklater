@@ -88,7 +88,7 @@ function makeAuthContext(user: User | null) {
 
 interface RenderOptions {
   search?: string;
-  verifyFn?: ReturnType<typeof vi.fn>;
+  onVerify?: ReturnType<typeof vi.fn>;
   onSuccess?: ReturnType<typeof vi.fn>;
   verifyingText?: string;
   signedInNotice?: PendingNotice;
@@ -98,7 +98,7 @@ interface RenderOptions {
 
 function renderPage(options: RenderOptions = {}) {
   const search = options.search ?? '?token=valid-token';
-  const verifyFn = options.verifyFn ?? vi.fn().mockResolvedValue(undefined);
+  const onVerify = options.onVerify ?? vi.fn().mockResolvedValue(undefined);
   return render(
     <MemoryRouter initialEntries={[`/verify-email${search}`]}>
       <TokenVerificationPage
@@ -108,7 +108,7 @@ function renderPage(options: RenderOptions = {}) {
           options.signedOutNotice ?? 'email-verified-please-sign-in'
         }
         invalidNotice={options.invalidNotice ?? 'verification-link-invalid'}
-        verifyFn={verifyFn}
+        onVerify={onVerify}
         onSuccess={options.onSuccess}
       />
     </MemoryRouter>,
@@ -126,9 +126,9 @@ beforeEach(() => {
 
 describe('TokenVerificationPage verifying state', () => {
   it('renders a polite sr-only status message while the API call is in flight', () => {
-    const verifyFn = vi.fn().mockReturnValue(new Promise(() => {}));
+    const onVerify = vi.fn().mockReturnValue(new Promise(() => {}));
 
-    renderPage({ verifyFn, verifyingText: 'Verifying your email…' });
+    renderPage({ onVerify, verifyingText: 'Verifying your email…' });
 
     const status = screen.getByRole('status');
     expect(status).toBeInTheDocument();
@@ -140,9 +140,9 @@ describe('TokenVerificationPage verifying state', () => {
   });
 
   it('does not render any card heading during the verifying state', () => {
-    const verifyFn = vi.fn().mockReturnValue(new Promise(() => {}));
+    const onVerify = vi.fn().mockReturnValue(new Promise(() => {}));
 
-    renderPage({ verifyFn, verifyingText: 'Confirming your new email…' });
+    renderPage({ onVerify, verifyingText: 'Confirming your new email…' });
 
     expect(screen.queryByRole('heading')).not.toBeInTheDocument();
   });
@@ -155,15 +155,15 @@ describe('TokenVerificationPage success path – signed-in user', () => {
     vi.mocked(useAuth).mockReturnValue(makeAuthContext(makeUser()));
   });
 
-  it('calls verifyFn with the token from the URL', async () => {
-    const verifyFn = vi.fn().mockResolvedValue(undefined);
+  it('calls onVerify with the token from the URL', async () => {
+    const onVerify = vi.fn().mockResolvedValue(undefined);
 
     await act(async () => {
-      renderPage({ verifyFn, search: '?token=tok-abc-123' });
+      renderPage({ onVerify, search: '?token=tok-abc-123' });
     });
 
     await waitFor(() => {
-      expect(verifyFn).toHaveBeenCalledWith('tok-abc-123');
+      expect(onVerify).toHaveBeenCalledWith('tok-abc-123');
     });
   });
 
@@ -208,7 +208,7 @@ describe('TokenVerificationPage success path – signed-in user', () => {
       renderPage({ onSuccess });
     });
 
-    // Let the verifyFn().then() callback run up to the awaited onSuccess call,
+    // Let the onVerify().then() callback run up to the awaited onSuccess call,
     // which is now pending on resolveOnSuccess.
     await waitFor(() => {
       expect(onSuccess).toHaveBeenCalled();
@@ -302,12 +302,12 @@ describe('TokenVerificationPage success path – signed-out user', () => {
 
 describe('TokenVerificationPage error paths – redirect to /login with toast', () => {
   it('queues the invalidNotice + navigates to /login when no token is present', async () => {
-    const verifyFn = vi.fn();
+    const onVerify = vi.fn();
 
     await act(async () => {
       renderPage({
         search: '',
-        verifyFn,
+        onVerify,
         invalidNotice: 'verification-link-invalid',
       });
     });
@@ -318,14 +318,14 @@ describe('TokenVerificationPage error paths – redirect to /login with toast', 
       );
     });
     expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
-    expect(verifyFn).not.toHaveBeenCalled();
+    expect(onVerify).not.toHaveBeenCalled();
   });
 
-  it('queues the invalidNotice + navigates to /login when verifyFn rejects', async () => {
-    const verifyFn = vi.fn().mockRejectedValue(new Error('Token expired'));
+  it('queues the invalidNotice + navigates to /login when onVerify rejects', async () => {
+    const onVerify = vi.fn().mockRejectedValue(new Error('Token expired'));
 
     await act(async () => {
-      renderPage({ verifyFn, invalidNotice: 'verification-link-invalid' });
+      renderPage({ onVerify, invalidNotice: 'verification-link-invalid' });
     });
 
     await waitFor(() => {
@@ -337,10 +337,10 @@ describe('TokenVerificationPage error paths – redirect to /login with toast', 
   });
 
   it('queues the invalidNotice + navigates to /login when a non-Error is thrown', async () => {
-    const verifyFn = vi.fn().mockRejectedValue('boom');
+    const onVerify = vi.fn().mockRejectedValue('boom');
 
     await act(async () => {
-      renderPage({ verifyFn, invalidNotice: 'verification-link-invalid' });
+      renderPage({ onVerify, invalidNotice: 'verification-link-invalid' });
     });
 
     await waitFor(() => {
@@ -352,10 +352,10 @@ describe('TokenVerificationPage error paths – redirect to /login with toast', 
   });
 
   it('uses the email-change-link-invalid key for the email-change flow', async () => {
-    const verifyFn = vi.fn().mockRejectedValue(new Error('expired'));
+    const onVerify = vi.fn().mockRejectedValue(new Error('expired'));
 
     await act(async () => {
-      renderPage({ verifyFn, invalidNotice: 'email-change-link-invalid' });
+      renderPage({ onVerify, invalidNotice: 'email-change-link-invalid' });
     });
 
     await waitFor(() => {
@@ -367,10 +367,10 @@ describe('TokenVerificationPage error paths – redirect to /login with toast', 
   });
 
   it('does not render the legacy error card (no alert role, no help text, no back button)', async () => {
-    const verifyFn = vi.fn().mockRejectedValue(new Error('expired'));
+    const onVerify = vi.fn().mockRejectedValue(new Error('expired'));
 
     await act(async () => {
-      renderPage({ verifyFn });
+      renderPage({ onVerify });
     });
 
     await waitFor(() => {

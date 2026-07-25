@@ -1,5 +1,5 @@
 /**
- * Tests for useFlashQueryParams, the deferred-read + URL-strip flash hook.
+ * Tests for useFlashQueryParameters, the deferred-read + URL-strip flash hook.
  *
  * The "NOT in the DOM synchronously on first paint" half of the SR-announce
  * contract is held by construction: the hook initializes its internal state
@@ -18,7 +18,7 @@ import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 
-import { useFlashQueryParams } from './useFlashQueryParams';
+import { useFlashQueryParameters } from './useFlashQueryParameters';
 
 function wrapperAt(path: string) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -30,16 +30,19 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('useFlashQueryParams', () => {
+describe('useFlashQueryParameters', () => {
   it('returns the reader result once the mount-effect flushes', async () => {
     const read = vi.fn((parameters: URLSearchParams) => {
       const flag = parameters.get('flag');
       return flag ? { flag } : null;
     });
 
-    const { result } = renderHook(() => useFlashQueryParams(read, ['flag']), {
-      wrapper: wrapperAt('/here?flag=on'),
-    });
+    const { result } = renderHook(
+      () => useFlashQueryParameters(read, ['flag']),
+      {
+        wrapper: wrapperAt('/here?flag=on'),
+      },
+    );
 
     await waitFor(() => {
       expect(result.current).toEqual({ flag: 'on' });
@@ -53,7 +56,7 @@ describe('useFlashQueryParams', () => {
     });
 
     const { result, rerender } = renderHook(
-      () => useFlashQueryParams(read, ['flag']),
+      () => useFlashQueryParameters(read, ['flag']),
       { wrapper: wrapperAt('/here') },
     );
 
@@ -67,9 +70,12 @@ describe('useFlashQueryParams', () => {
       return flag ? { flag } : null;
     });
 
-    const { rerender } = renderHook(() => useFlashQueryParams(read, ['flag']), {
-      wrapper: wrapperAt('/here?flag=on'),
-    });
+    const { rerender } = renderHook(
+      () => useFlashQueryParameters(read, ['flag']),
+      {
+        wrapper: wrapperAt('/here?flag=on'),
+      },
+    );
 
     await waitFor(() => {
       expect(read).toHaveBeenCalledTimes(1);
@@ -85,7 +91,7 @@ describe('useFlashQueryParams', () => {
       return flag ? { flag } : null;
     });
 
-    renderHook(() => useFlashQueryParams(read, ['flag']), {
+    renderHook(() => useFlashQueryParameters(read, ['flag']), {
       wrapper: wrapperAt('/here?flag=on'),
     });
 
@@ -100,7 +106,7 @@ describe('useFlashQueryParams', () => {
     const read = vi.fn(() => null);
 
     const { result, rerender } = renderHook(
-      () => useFlashQueryParams(read, ['unused']),
+      () => useFlashQueryParameters(read, ['unused']),
       { wrapper: wrapperAt('/here?unused=value') },
     );
 
