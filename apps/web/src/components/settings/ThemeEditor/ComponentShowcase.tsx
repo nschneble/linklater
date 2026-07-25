@@ -156,7 +156,7 @@ export default function ComponentShowcase({
       </h2>
 
       <div
-        className="flex flex-col w-full min-h-90 bg-[var(--base-bg)] border shadow-xl rounded-2xl overflow-hidden"
+        className="flex flex-col w-full min-h-90 bg-[var(--base-bg)] border rounded-2xl shadow-xl overflow-hidden"
         style={{ borderColor: PREVIEW_CHROME.frameBorder }}
       >
         <div
@@ -179,7 +179,7 @@ export default function ComponentShowcase({
           </div>
 
           <div
-            className="flex flex-row items-center h-6 px-12 border shadow-xl rounded-4xl"
+            className="flex flex-row items-center h-6 px-12 border rounded-4xl shadow-xl"
             style={{ borderColor: PREVIEW_CHROME.pillBorder }}
           >
             <span className="text-white text-xs">Preview</span>

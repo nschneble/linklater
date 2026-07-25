@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { ThrottlerException, ThrottlerStorage } from '@nestjs/throttler';
 import type { ExecutionContext } from '@nestjs/common';
 
-import { isTestingUi } from '../common/testing-ui.js';
+import { isTestingUi } from '../common/index.js';
 import { TokenKind } from '../prisma/index.js';
 import { BOOKMARKLET_SCOPE_KEY } from './token-scope.decorator.js';
 

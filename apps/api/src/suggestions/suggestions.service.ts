@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
-import { isTestingUi } from '../common/testing-ui.js';
+import { isTestingUi } from '../common/index.js';
 import { PrismaService } from '../prisma/index.js';
 import { QueueService, RECURRING_JOB_RETRY_OPTIONS } from '../queue/index.js';
 import { RssAdapter } from './rss-adapter.js';

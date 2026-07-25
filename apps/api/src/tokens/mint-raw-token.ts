@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 
-import { sha256Hex } from '../common/crypto-tokens.js';
+import { sha256Hex } from '../common/index.js';
 
 /** The prefix prepended to every personal access token. Used by `AnyAuthGuard`
  * to distinguish PATs from JWTs without decoding the token. */

@@ -81,7 +81,7 @@ export default function TotpSetupView({
       <img
         src={qrCodeDataUrl}
         alt=""
-        className="w-40 h-40 rounded border border-[var(--mount-border)]"
+        className="w-40 h-40 border border-[var(--mount-border)] rounded"
       />
       <code
         aria-label="TOTP secret"

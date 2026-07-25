@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'crypto';
-import { generateHexToken } from '../common/crypto-tokens.js';
+import { generateHexToken } from '../common/index.js';
 import type { Request, Response } from 'express';
 
 /** Name of the double-submit CSRF cookie set by `issueOAuthState`. */

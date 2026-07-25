@@ -2,11 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
-import { CompactLogger } from './common/compact-logger.js';
-import { parseCorsOrigin } from './common/cors-origin.js';
-import { validateRequiredEnvVars } from './common/required-env.js';
-import { applySecurityHeaders } from './common/security-headers.js';
-import { assertTestingUiNotInProduction } from './common/testing-ui.js';
+import {
+  applySecurityHeaders,
+  assertTestingUiNotInProduction,
+  CompactLogger,
+  parseCorsOrigin,
+  validateRequiredEnvVars,
+} from './common/index.js';
 import { LinksModule } from './links/links.module.js';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { Request, Response, NextFunction } from 'express';

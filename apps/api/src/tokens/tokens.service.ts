@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { sha256Hex } from '../common/crypto-tokens.js';
+import { sha256Hex } from '../common/index.js';
 import { Prisma, TokenKind } from '../prisma/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { mintRawToken } from './mint-raw-token.js';

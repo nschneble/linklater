@@ -18,7 +18,8 @@ Most curious adults come across dozens of interesting articles on any given day.
 
 As a user, you can:
 
-- Create an account with passwords, magic links, and/or Google SSO
+- Create an account with passwords, magic links, and/or Google or Apple SSO
+- Secure your account with two-factor authentication (TOTP + recovery codes)
 - Save links in-app or using the handy [bookmarklet](#bookmarklet)
 - Search and [stumble!](https://en.wikipedia.org/wiki/StumbleUpon)
 - Preview themes based on Richard Linklater's filmography
@@ -107,12 +108,12 @@ npm install
 
 ### Set environment variables
 
-You'll need to set the database url, JWT secret, app url, and SMTP values on the back-end, and the API's base url on the front-end for Vite to access.
+You'll need to set the database url, JWT secret, app url, TOTP encryption key, and SMTP values on the back-end, and the API's base url on the front-end for Vite to access.
 
 ```bash
 # cd /path/to/your/repo
 
-# set DATABASE_URL, JWT_SECRET, APP_URL, SMTP_*
+# set DATABASE_URL, JWT_SECRET, APP_URL, TOTP_ENCRYPTION_KEY, SMTP_*
 cp apps/api/.env.example apps/api/.env
 
 # set VITE_API_BASE_URL
@@ -301,5 +302,5 @@ bin/dev --public
 
 #### Known limitations
 
-- Google SSO won't work; OAuth callback URLs are pinned to localhost
+- Google and Apple SSO won't work; OAuth callback URLs are pinned to localhost
 - The bookmarklet generated on the Settings page won't work

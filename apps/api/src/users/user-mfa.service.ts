@@ -3,7 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import {
   findMatchingRecoveryCode,
   normalizeRecoveryCode,
-} from '../common/recovery-codes.js';
+} from '../common/index.js';
 import { PrismaService } from '../prisma/index.js';
 
 /**

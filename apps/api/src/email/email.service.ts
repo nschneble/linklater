@@ -4,7 +4,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { isTestingUi } from '../common/testing-ui.js';
+import { isTestingUi } from '../common/index.js';
 import { resolveEmailPalette } from './email-palette.js';
 import * as ConfirmAccountDeletionTemplate from './templates/confirm-account-deletion.template.js';
 import * as EmailChangeTemplate from './templates/email-change.template.js';

@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { generateHexToken, sha256Hex } from '../common/crypto-tokens.js';
-import { expiresInMs } from '../common/dates.js';
+import { expiresInMs, generateHexToken, sha256Hex } from '../common/index.js';
 import { EmailQueueService } from '../email/index.js';
 import { UserTokensService } from '../users/user-tokens.service.js';
 import { UsersService } from '../users/users.service.js';

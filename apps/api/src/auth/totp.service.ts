@@ -6,11 +6,12 @@ import {
 } from '@nestjs/common';
 import { generateSecret, generateURI, verify } from 'otplib';
 import QRCode from 'qrcode';
-import { decrypt, encrypt } from '../common/crypto.js';
 import {
+  decrypt,
+  encrypt,
   generateRecoveryCodes,
   hashRecoveryCodes,
-} from '../common/recovery-codes.js';
+} from '../common/index.js';
 import { UserMfaService } from '../users/index.js';
 import { UsersService } from '../users/users.service.js';
 
