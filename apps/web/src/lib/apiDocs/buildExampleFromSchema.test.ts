@@ -90,7 +90,7 @@ describe('buildExampleFromSchema', () => {
       },
     };
     // Exactly the shape @nestjs/swagger emits (see schema-object-factory).
-    const nullableTypedRef = {
+    const nullableTypedReference = {
       nullable: true,
       type: 'object',
       description: 'Extracted metadata. Null until the fetch worker completes.',
@@ -98,7 +98,7 @@ describe('buildExampleFromSchema', () => {
     } as OpenAPIV3.SchemaObject;
 
     it('renders the fully-populated object once the resolver flattens it', () => {
-      const resolved = resolveSchema(nullableTypedRef, schemas);
+      const resolved = resolveSchema(nullableTypedReference, schemas);
       expect(buildExampleFromSchema(resolved)).toEqual({
         id: 'clz1abc123',
         title: 'Example Domain',
@@ -107,7 +107,7 @@ describe('buildExampleFromSchema', () => {
     });
 
     it('renders a populated object, not null, despite nullable: true', () => {
-      const resolved = resolveSchema(nullableTypedRef, schemas);
+      const resolved = resolveSchema(nullableTypedReference, schemas);
       const example = buildExampleFromSchema(resolved);
       expect(example).not.toBeNull();
       expect(example).toMatchObject({ id: 'clz1abc123' });

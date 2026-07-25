@@ -30,11 +30,11 @@ export default function EndpointNavCompact({
   selectedSlug,
   onSelect,
 }: EndpointNavCompactProps) {
-  const activeChipRef = useRef<HTMLButtonElement>(null);
+  const activeChipReference = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (selectedSlug === '') return;
-    activeChipRef.current?.scrollIntoView({
+    activeChipReference.current?.scrollIntoView({
       inline: 'nearest',
       block: 'nearest',
     });
@@ -57,7 +57,7 @@ export default function EndpointNavCompact({
           return (
             <li key={slug} className="shrink-0 snap-start">
               <button
-                ref={isSelected ? activeChipRef : undefined}
+                ref={isSelected ? activeChipReference : undefined}
                 type="button"
                 aria-current={isSelected ? 'page' : undefined}
                 onClick={() => onSelect(slug)}

@@ -40,7 +40,7 @@ interface TokenVerificationPageProps {
    * `?token=` query parameter. Should resolve on success and reject with
    * an error on failure.
    */
-  verifyFn: (token: string) => Promise<void>;
+  onVerify: (token: string) => Promise<void>;
   /**
    * Called immediately after a successful verification, before the user
    * navigates away. Use to refresh stale auth state (e.g. re-fetch the
@@ -52,7 +52,7 @@ interface TokenVerificationPageProps {
 
 /**
  * Generic full-page token verification UI. Reads `?token=` from the URL,
- * calls `verifyFn`, and unconditionally redirects (replace) to `/unread`
+ * calls `onVerify`, and unconditionally redirects (replace) to `/unread`
  * (signed-in success), `/login` (signed-out success), or `/login` (any
  * failure). The destination page consumes the queued notice via
  * `usePendingNotice` and surfaces it as a toast + sr-only mirror.
@@ -71,7 +71,7 @@ export default function TokenVerificationPage({
   signedInNotice,
   signedOutNotice,
   invalidNotice,
-  verifyFn,
+  onVerify,
   onSuccess,
 }: TokenVerificationPageProps) {
   const [searchParameters] = useSearchParams();
@@ -80,7 +80,7 @@ export default function TokenVerificationPage({
   const hasVerified = useRef(false);
 
   // Mirror `user` into a ref so the auth-state branch inside the
-  // verifyFn().then() callback reads the LATEST value rather than the
+  // onVerify().then() callback reads the LATEST value rather than the
   // render-time closure. Today's verify endpoints don't issue session
   // cookies (apps/api/src/auth/auth.controller.ts), so the closure is
   // safe by accident – this ref makes correctness independent of that
@@ -103,7 +103,7 @@ export default function TokenVerificationPage({
       return;
     }
 
-    verifyFn(token)
+    onVerify(token)
       .then(async () => {
         // Refresh auth state BEFORE queuing the notice + navigating so the
         // destination page renders against the latest user profile (e.g.
@@ -127,7 +127,7 @@ export default function TokenVerificationPage({
     searchParameters,
     signedInNotice,
     signedOutNotice,
-    verifyFn,
+    onVerify,
   ]);
 
   return (

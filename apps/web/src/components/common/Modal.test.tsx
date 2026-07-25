@@ -37,7 +37,7 @@ function renderModal({
       closeLabel="Close test dialog"
       backdropLabel="Dismiss test dialog"
       panelClassName={panelClassName}
-      controlRef={controlReference}
+      controlReference={controlReference}
     >
       <h2 id={HEADING_ID} tabIndex={-1} data-modal-initial-focus>
         Heading
@@ -156,7 +156,7 @@ describe('Modal', () => {
     document.body.removeChild(trigger);
   });
 
-  it('skipRestore via controlRef suppresses focus return on unmount', () => {
+  it('skipRestore via controlReference suppresses focus return on unmount', () => {
     const trigger = document.createElement('button');
     trigger.textContent = 'Trigger';
     document.body.appendChild(trigger);

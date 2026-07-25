@@ -1,4 +1,4 @@
-import { fetchParamsReducer } from './useLinksData.reducer';
+import { fetchParametersReducer } from './useLinksData.reducer';
 import { getLinks, type Link, type PaginatedLinks } from '../api';
 import { getErrorMessage } from '../errors';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
@@ -48,14 +48,17 @@ export function useLinksFetch(
   // fetch on first settle and produce an unwanted double-request.
   const hasSettledOnceReference = useRef(false);
 
-  const [fetchParams, dispatchFetchParams] = useReducer(fetchParamsReducer, {
-    filter,
-    page: 1,
-    search,
-  });
+  const [fetchParameters, dispatchFetchParameters] = useReducer(
+    fetchParametersReducer,
+    {
+      filter,
+      page: 1,
+      search,
+    },
+  );
 
   useEffect(() => {
-    dispatchFetchParams({ type: 'reset', filter, search });
+    dispatchFetchParameters({ type: 'reset', filter, search });
   }, [filter, search]);
 
   useEffect(() => {
@@ -67,7 +70,7 @@ export function useLinksFetch(
     // keystrokes instead of clearing back to blank.
     // `setLinks(result.data)` below still overwrites the list on settle, so
     // an empty result still transitions to the empty state.
-    if (fetchParams.page === 1 && !hasSettledOnceReference.current) {
+    if (fetchParameters.page === 1 && !hasSettledOnceReference.current) {
       setLinks([]);
     }
     setLoadingLinks(true);
@@ -76,12 +79,12 @@ export function useLinksFetch(
       setFetchError(null);
       try {
         const result = await getLinks({
-          search: fetchParams.search || undefined,
-          read: fetchParams.filter === 'read',
-          page: fetchParams.page,
+          search: fetchParameters.search || undefined,
+          read: fetchParameters.filter === 'read',
+          page: fetchParameters.page,
         });
         if (!cancelled) {
-          if (fetchParams.page === 1) {
+          if (fetchParameters.page === 1) {
             setLinks(result.data);
           } else {
             setLinks((previous) => [...previous, ...result.data]);
@@ -105,10 +108,10 @@ export function useLinksFetch(
     return () => {
       cancelled = true;
     };
-  }, [fetchParams]);
+  }, [fetchParameters]);
 
   const handleLoadMore = useCallback(() => {
-    dispatchFetchParams({ type: 'load-more' });
+    dispatchFetchParameters({ type: 'load-more' });
   }, []);
 
   // The sole mechanism for the "less doesn't need more" rule. Rather than
@@ -130,7 +133,7 @@ export function useLinksFetch(
     const key = `${links.length}:${pagination.total}`;
     if (lastAutoFireKeyRef.current === key) return;
     lastAutoFireKeyRef.current = key;
-    dispatchFetchParams({ type: 'load-more' });
+    dispatchFetchParameters({ type: 'load-more' });
   }, [loadingLinks, pagination, links.length]);
 
   return {
@@ -139,7 +142,7 @@ export function useLinksFetch(
     hasSettledOnce,
     links,
     loadingLinks,
-    page: fetchParams.page,
+    page: fetchParameters.page,
     pagination,
     setLinks,
     setPagination,

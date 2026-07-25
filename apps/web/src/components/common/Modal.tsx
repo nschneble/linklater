@@ -6,7 +6,7 @@ import { useFocusTrap } from '../../lib/hooks/useFocusTrap';
 import type { ReactNode, RefObject } from 'react';
 
 /**
- * Imperative handle exposed to consumers via `controlRef`.
+ * Imperative handle exposed to consumers via `controlReference`.
  */
 export interface ModalControl {
   /**
@@ -56,10 +56,10 @@ interface ModalProps {
   panelClassName?: string;
   /**
    * Imperative handle exposing `skipRestore`. Consumers that navigate
-   * away on action call `controlRef.current?.skipRestore()` before
+   * away on action call `controlReference.current?.skipRestore()` before
    * `onClose()` so focus is not restored to a stale/unmounted trigger.
    */
-  controlRef?: RefObject<ModalControl | null>;
+  controlReference?: RefObject<ModalControl | null>;
   /**
    * Dialog body. The consumer renders the heading with `id={labelledBy}`
    * + `tabIndex={-1}` + `data-modal-initial-focus`, the description (if
@@ -80,7 +80,7 @@ const DEFAULT_PANEL_SIZING = 'max-w-md p-7 rounded-2xl';
  *  - close (X) button at top-right of the panel
  *  - focus trap within the panel
  *  - focus return to the previously focused element on unmount
- *    (suppressed via `controlRef.current?.skipRestore()`)
+ *    (suppressed via `controlReference.current?.skipRestore()`)
  *  - initial focus on the consumer-marked `[data-modal-initial-focus]`
  *    element (typically the heading)
  *  - body scroll lock while mounted
@@ -96,13 +96,13 @@ export default function Modal({
   closeLabel,
   backdropLabel,
   panelClassName,
-  controlRef,
+  controlReference,
   children,
 }: ModalProps) {
   const panelReference = useRef<HTMLDivElement>(null);
 
   const { skipRestore } = useFocusReturn(true);
-  useImperativeHandle(controlRef, () => ({ skipRestore }), [skipRestore]);
+  useImperativeHandle(controlReference, () => ({ skipRestore }), [skipRestore]);
 
   useFocusTrap(panelReference, { onEscape: onClose });
 

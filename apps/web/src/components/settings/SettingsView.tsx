@@ -1,5 +1,5 @@
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
-import { useFlashQueryParams } from '../../lib/hooks/useFlashQueryParams';
+import { useFlashQueryParameters } from '../../lib/hooks/useFlashQueryParameters';
 import { useToast } from '../../lib/hooks/useToast';
 import Toast from '../common/Toast';
 import StumbleSection from '../stumble/StumbleSection';
@@ -58,13 +58,13 @@ export default function SettingsView({
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Flash messages from `?linked=…` / `?link_error=…`. `useFlashQueryParams`
+  // Flash messages from `?linked=…` / `?link_error=…`. `useFlashQueryParameters`
   // owns the deferred-read + URL-strip dance (see its WHY block for the
   // SR-announce, no-deps, and StrictMode rationale). The hook returns
   // `null` synchronously on first paint, then the parsed flash once,
   // stable thereafter – preserving the empty → populated transition NVDA
   // and JAWS need to announce the Toast.
-  const flash = useFlashQueryParams(readOAuthFlashMessages, [
+  const flash = useFlashQueryParameters(readOAuthFlashMessages, [
     'linked',
     'link_error',
   ]);

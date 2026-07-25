@@ -131,15 +131,15 @@ export default function Toast({
   const onDismissReference = useRef(onDismiss);
   onDismissReference.current = onDismiss;
 
-  const dismiss = useCallback(() => {
+  const handleDismiss = useCallback(() => {
     setExiting(true);
     setTimeout(() => onDismissReference.current(), 150);
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(dismiss, variantDismissDelayMs[variant]);
+    const timer = setTimeout(handleDismiss, variantDismissDelayMs[variant]);
     return () => clearTimeout(timer);
-  }, [dismiss, variant]);
+  }, [handleDismiss, variant]);
 
   // When `announce` is false the card carries no live-region semantics – the
   // parent owns the announcement via a separate, always-mounted region.
@@ -178,7 +178,7 @@ export default function Toast({
       <button
         type="button"
         aria-label="Dismiss"
-        onClick={dismiss}
+        onClick={handleDismiss}
         className={`p-1.5 -m-1.5 ml-0.5 opacity-60 hover:opacity-100 transition-opacity active:scale-[0.96] cursor-pointer focus-visible:outline-none focus-visible:ring-2 ${variantDismissRingClasses[variant]} forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded-full`}
       >
         <i className="fa-solid fa-xmark text-xs" aria-hidden="true" />

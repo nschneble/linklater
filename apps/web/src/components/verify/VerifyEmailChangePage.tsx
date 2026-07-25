@@ -19,7 +19,7 @@ export default function VerifyEmailChangePage() {
       signedInNotice="email-change-verified"
       signedOutNotice="email-change-verified-please-sign-in"
       invalidNotice="email-change-link-invalid"
-      verifyFn={verifyEmailChange}
+      onVerify={verifyEmailChange}
       onSuccess={refreshUser}
     />
   );
