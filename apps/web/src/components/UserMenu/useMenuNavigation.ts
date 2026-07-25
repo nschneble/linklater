@@ -44,7 +44,8 @@ interface UseMenuNavigationOptions {
  * so it only fires when focus is inside the menu.
  *
  * @param containerReference - Ref to the container element.
- * @param onClose - Called when Escape (or Tab in `'close'` mode) is pressed.
+ * @param onClose - Called when Escape is pressed, or on Tab in `'close'` mode
+ *   when `onTabClose` is not provided.
  * @param options - See `UseMenuNavigationOptions`.
  *
  * @sideEffects
