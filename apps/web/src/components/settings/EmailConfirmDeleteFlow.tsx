@@ -3,6 +3,7 @@ import Alert from '../common/Alert';
 import { cancelPendingAccountDeletion, deleteMe } from '../../lib/api';
 import IconButton from '../common/IconButton';
 import LinkButton from '../common/LinkButton';
+import { actionGuardInitialFocusProps } from '../../lib/hooks/useFocusFirstButton';
 import { setPendingNotice } from '../../lib/pendingNotice';
 import { useCallback, useEffect, useRef } from 'react';
 import type { User } from '../../auth/AuthContext';
@@ -159,6 +160,7 @@ export default function EmailConfirmDeleteFlow({
                   --text-muted, similar effect). Do not "fix" by adding an
                   explicit surface override here. */}
               <IconButton
+                {...actionGuardInitialFocusProps}
                 variant="ghost"
                 disabled={pending}
                 onClick={closeConfirm}

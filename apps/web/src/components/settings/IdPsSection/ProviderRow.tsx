@@ -1,3 +1,4 @@
+import { actionGuardInitialFocusProps } from '../../../lib/hooks/useFocusFirstButton';
 import ActionGuard from '../../common/ActionGuard';
 import IconButton from '../../common/IconButton';
 import type { ProviderRowProps } from './types';
@@ -84,6 +85,7 @@ export default function ProviderRow({
                 {pending ? 'Disconnecting…' : 'Yes, disconnect'}
               </IconButton>
               <IconButton
+                {...actionGuardInitialFocusProps}
                 aria-label={`Cancel disconnect ${label}`}
                 variant="ghost"
                 disabled={pending}

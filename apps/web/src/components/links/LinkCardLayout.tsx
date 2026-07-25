@@ -233,7 +233,7 @@ export default function LinkCardLayout({
               <PrimaryButton
                 className="relative shrink-0 ml-auto z-30 pointer-events-auto"
                 onClick={onUnreadClick}
-                aria-label="Mark unread"
+                aria-label={`Mark unread – ${displayTitle} – ${displaySiteName}`}
               >
                 <span className="hidden sm:inline-flex">Mark unread</span>
                 <span className="inline-flex sm:hidden">

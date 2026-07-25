@@ -1,4 +1,5 @@
 import { formatRelativeTimeFuzzy } from '../../../lib/dates';
+import { actionGuardInitialFocusProps } from '../../../lib/hooks/useFocusFirstButton';
 import ActionGuard from '../../common/ActionGuard';
 import IconButton from '../../common/IconButton';
 import type { ApiTokenRowProps } from './types';
@@ -78,6 +79,7 @@ export default function ApiTokenRow({ onRevoke, token }: ApiTokenRowProps) {
                       {pending ? 'Revoking…' : 'Yes, revoke'}
                     </IconButton>
                     <IconButton
+                      {...actionGuardInitialFocusProps}
                       aria-label={`Cancel revoke ${token.name}`}
                       variant="ghost"
                       surface="orbit"

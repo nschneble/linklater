@@ -4,6 +4,7 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useLinksView } from '../../lib/hooks/useLinksView';
 import { usePendingNotice } from '../../lib/hooks/usePendingNotice';
 import { useShortcutsEnabled } from '../../lib/hooks/useShortcutsEnabled';
+import { useTransientState } from '../../lib/hooks/useTransientState';
 import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
 import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
@@ -12,7 +13,7 @@ import LinkForm from './LinkForm';
 import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';
 import { LINK_FORM_ID } from './constants';
-import { lazy, Suspense, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 /**
@@ -80,6 +81,20 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
 
   useFocusTrap(dialogReference);
   useFocusReturn(view.showLinkForm);
+
+  // Dedicated live region for in-session toast messages (e.g. "Link saved!").
+  // The visual Toast below is conditionally mounted, which lets NVDA/JAWS miss
+  // its first announcement; this always-mounted region does the announcing
+  // instead (Toast renders `announce={false}`). Mirrors view.toastMessage into
+  // local state and clears it after the 5s success auto-dismiss window so a
+  // repeat "Link saved!" re-announces (same pattern as ActionGuard).
+  const [toastAnnouncement, setToastAnnouncement] = useState('');
+  useEffect(() => {
+    if (view.toastMessage) {
+      setToastAnnouncement(view.toastMessage);
+    }
+  }, [view.toastMessage]);
+  useTransientState(toastAnnouncement, '', setToastAnnouncement, 5000);
 
   return (
     <>
@@ -200,10 +215,29 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
 
       {view.toastMessage && (
         <Toast
+          announce={false}
           message={view.toastMessage}
           onDismiss={view.handleDismissToast}
         />
       )}
+
+      {/*
+        Dedicated, always-mounted live region for in-session toast messages.
+        Separate from newLinksAnnouncement below (background-refresh arrivals)
+        and from PendingNoticeAnnouncer (cross-route notices); each owns its
+        own channel so they never race or double-announce. The visual Toast
+        above renders `announce={false}`, so this region is the sole announcer
+        for "Link saved!"-style messages.
+      */}
+      <span
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="toast-announcement"
+      >
+        {toastAnnouncement}
+      </span>
 
       {/*
         Polite live region announcing links that arrive via a background

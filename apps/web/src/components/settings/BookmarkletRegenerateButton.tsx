@@ -1,3 +1,4 @@
+import { actionGuardInitialFocusProps } from '../../lib/hooks/useFocusFirstButton';
 import ActionGuard from '../common/ActionGuard';
 import IconButton from '../common/IconButton';
 
@@ -68,6 +69,7 @@ export default function BookmarkletRegenerateButton({
                   {pending ? 'Regenerating…' : 'Yes, regenerate'}
                 </IconButton>
                 <IconButton
+                  {...actionGuardInitialFocusProps}
                   variant="ghost"
                   disabled={pending}
                   onClick={closeConfirm}

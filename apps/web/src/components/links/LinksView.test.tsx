@@ -185,6 +185,50 @@ describe('LinksView – add-link form dismissal', () => {
   });
 });
 
+describe('LinksView – in-session toast announcement (Fix #7)', () => {
+  it('mirrors toastMessage into the dedicated live region so the announcement is not missed', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ toastMessage: 'Link saved!' }),
+    );
+
+    renderLinksView();
+
+    const region = screen.getByTestId('toast-announcement');
+    expect(region.textContent).toBe('Link saved!');
+    expect(region.getAttribute('role')).toBe('status');
+    expect(region.getAttribute('aria-live')).toBe('polite');
+    expect(region.getAttribute('aria-atomic')).toBe('true');
+  });
+
+  it('renders the visual Toast card without its own live-region semantics (parent announces instead)', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ toastMessage: 'Link saved!' }),
+    );
+
+    renderLinksView();
+
+    // The visual card still shows the text but carries announce={false}, so it
+    // is not itself a role="status" live region – the dedicated span is.
+    const cards = screen.getAllByText('Link saved!', { selector: 'div' });
+    expect(cards.length).toBeGreaterThan(0);
+    for (const card of cards) {
+      expect(card.getAttribute('role')).toBeNull();
+      expect(card.getAttribute('aria-live')).toBeNull();
+    }
+  });
+
+  it('keeps the dedicated region mounted (and empty) when no toast is showing', () => {
+    vi.mocked(useLinksView).mockReturnValue(
+      makeViewResult({ toastMessage: null }),
+    );
+
+    renderLinksView();
+
+    const region = screen.getByTestId('toast-announcement');
+    expect(region.textContent).toBe('');
+  });
+});
+
 describe('LinksView – cross-route pending notice surface', () => {
   it('renders the PendingNoticeAnnouncer toast when usePendingNotice returns a notice', () => {
     vi.mocked(usePendingNotice).mockReturnValue({
@@ -227,9 +271,11 @@ describe('LinksView – cross-route pending notice surface', () => {
       </MemoryRouter>,
     );
 
-    // First render: mirror exists but empty (notice = null).
+    // First render: mirror exists but empty (notice = null). Scope past the
+    // dedicated in-session toast region (data-testid="toast-announcement"),
+    // which shares the same sr-only polite/atomic shape.
     const liveRegions = document.querySelectorAll(
-      'span.sr-only[aria-live="polite"][aria-atomic="true"]',
+      'span.sr-only[aria-live="polite"][aria-atomic="true"]:not([data-testid])',
     );
     expect(liveRegions.length).toBe(1);
     expect(liveRegions[0]?.textContent).toBe('');
@@ -249,7 +295,7 @@ describe('LinksView – cross-route pending notice surface', () => {
     );
 
     const liveRegionsAfter = document.querySelectorAll(
-      'span.sr-only[aria-live="polite"][aria-atomic="true"]',
+      'span.sr-only[aria-live="polite"][aria-atomic="true"]:not([data-testid])',
     );
     expect(liveRegionsAfter[0]?.textContent).toBe(
       'Your account has been deleted.',

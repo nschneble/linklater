@@ -1,15 +1,23 @@
 import { useRef } from 'react';
 import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
-import { useFocusFirstButton } from './useFocusFirstButton';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  ACTION_GUARD_INITIAL_FOCUS_ATTRIBUTE,
+  actionGuardInitialFocusProps,
+  useFocusFirstButton,
+} from './useFocusFirstButton';
 
+// The destructive button renders FIRST in DOM order; the safe button renders
+// second and carries the marker. This mirrors the real ActionGuard consumers
+// (`[Yes/destructive, Cancel/safe]`) so the test proves focus follows the
+// marker, not DOM order.
 function Harness({ isActive }: { isActive: boolean }) {
   const reference = useRef<HTMLDivElement>(null);
   useFocusFirstButton(reference, isActive);
   return (
     <div ref={reference}>
-      <button>First</button>
-      <button>Second</button>
+      <button>Yes, delete</button>
+      <button {...actionGuardInitialFocusProps}>Cancel</button>
     </div>
   );
 }
@@ -19,10 +27,16 @@ function waitForAnimationFrame(): Promise<void> {
 }
 
 describe('useFocusFirstButton', () => {
-  it('focuses the first button inside the ref when isActive is true', async () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('focuses the marked button, not the first button in DOM order, when isActive is true', async () => {
     const { getByText } = render(<Harness isActive={true} />);
     await waitForAnimationFrame();
-    expect(document.activeElement).toBe(getByText('First'));
+    expect(document.activeElement).toBe(getByText('Cancel'));
+    // The first (destructive) button must NOT receive focus.
+    expect(document.activeElement).not.toBe(getByText('Yes, delete'));
   });
 
   it('does not focus anything when isActive is false', async () => {
@@ -32,27 +46,37 @@ describe('useFocusFirstButton', () => {
     expect(document.activeElement).toBe(previousActive);
   });
 
-  it('focuses the first button when isActive flips from false to true', async () => {
+  it('focuses the marked button when isActive flips from false to true', async () => {
     const { rerender, getByText } = render(<Harness isActive={false} />);
     await waitForAnimationFrame();
-    expect(document.activeElement).not.toBe(getByText('First'));
+    expect(document.activeElement).not.toBe(getByText('Cancel'));
 
     rerender(<Harness isActive={true} />);
     await waitForAnimationFrame();
-    expect(document.activeElement).toBe(getByText('First'));
+    expect(document.activeElement).toBe(getByText('Cancel'));
   });
 
-  it('does nothing when the ref contains no button', async () => {
-    function NoButton({ isActive }: { isActive: boolean }) {
+  it('spreads the marker attribute onto the safe button', () => {
+    const { getByText } = render(<Harness isActive={false} />);
+    expect(
+      getByText('Cancel').hasAttribute(ACTION_GUARD_INITIAL_FOCUS_ATTRIBUTE),
+    ).toBe(true);
+  });
+
+  it('does not throw and warns in dev when no marked button is present', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    function NoMarker({ isActive }: { isActive: boolean }) {
       const reference = useRef<HTMLDivElement>(null);
       useFocusFirstButton(reference, isActive);
       return (
         <div ref={reference}>
-          <span>no button here</span>
+          <button>unmarked</button>
         </div>
       );
     }
-    expect(() => render(<NoButton isActive={true} />)).not.toThrow();
+    expect(() => render(<NoMarker isActive={true} />)).not.toThrow();
     await waitForAnimationFrame();
+    expect(warn).toHaveBeenCalledOnce();
   });
 });

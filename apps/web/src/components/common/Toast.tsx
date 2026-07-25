@@ -52,6 +52,14 @@ interface ToastProps {
    *   alert-highlight fill, 6s auto-dismiss (vs 5s for success).
    */
   variant?: 'success' | 'warning' | 'error';
+  /**
+   * When `true` (default) the toast owns its own live region (`role` +
+   * `aria-live` per `variant`) and announces itself. Set `false` to render a
+   * purely visual card with no ARIA live semantics – used when the parent
+   * announces the same message through a separate, always-mounted live region
+   * so a conditionally-mounted toast doesn't miss the first announcement.
+   */
+  announce?: boolean;
 }
 
 const variantIcons: Record<NonNullable<ToastProps['variant']>, string> = {
@@ -91,6 +99,7 @@ export default function Toast({
   message,
   onDismiss,
   variant = 'success',
+  announce = true,
 }: ToastProps) {
   const [exiting, setExiting] = useState(false);
 
@@ -114,8 +123,14 @@ export default function Toast({
     return () => clearTimeout(timer);
   }, [dismiss, variant]);
 
-  const ariaLive = variant === 'error' ? 'assertive' : 'polite';
-  const role = variant === 'error' ? 'alert' : 'status';
+  // When `announce` is false the card carries no live-region semantics – the
+  // parent owns the announcement via a separate, always-mounted region.
+  const ariaLive = !announce
+    ? undefined
+    : variant === 'error'
+      ? 'assertive'
+      : 'polite';
+  const role = !announce ? undefined : variant === 'error' ? 'alert' : 'status';
 
   // Focus indicator on the dismiss button is `--{state}-highlight-fg` (the
   // bundle's own highlight-fg) rather than the universal `--focus-ring`.
