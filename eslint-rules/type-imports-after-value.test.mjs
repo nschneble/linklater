@@ -37,8 +37,7 @@ ruleTester.run('type-imports-after-value', rule, {
     // Single import: nothing to order.
     { code: "import type { Kind } from 'kind';" },
     // A blank line is a group boundary: a type import ending the first group is
-    // NOT flagged against a value import that opens the next group. This is the
-    // exact case wave 11's flattening bug corrupted.
+    // NOT flagged against a value import that opens the next group.
     {
       code: [
         "import { value } from 'value';",

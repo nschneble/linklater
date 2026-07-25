@@ -1,11 +1,11 @@
-import { useCallback, useRef } from 'react';
+import { buildThemeSeed } from './buildThemeSeed';
 import {
   collectTokens,
   CUSTOM_TOKEN_KEYS,
   isCustomThemeConfigured,
   type CustomTheme,
 } from '../../../theme/customTheme';
-import { buildThemeSeed } from './buildThemeSeed';
+import { useCallback, useRef } from 'react';
 import { useCustomThemeEngagement } from './useCustomThemeEngagement';
 import type { BaseTheme, Mode } from '../../../theme/constants';
 import type { ThemeVariable } from './useThemeOverrides';

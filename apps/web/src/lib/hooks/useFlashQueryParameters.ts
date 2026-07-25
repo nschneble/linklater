@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 /**
- * One-shot deferred read of "flash" query params (e.g. `?linked=…`,
+ * One-shot deferred read of "flash" query parameters (e.g. `?linked=…`,
  * `?link_error=…`) – the post-redirect breadcrumbs that drive a Toast or
  * inline Alert and then need to disappear from the URL.
  *
@@ -16,7 +16,7 @@ import { useSearchParams } from 'react-router';
  *
  * NVDA and JAWS only announce an `aria-live` region when its content
  * transitions empty → populated. Content present on first paint is treated
- * as part of page load and skipped. Reading the params synchronously in a
+ * as part of page load and skipped. Reading the parameters synchronously in a
  * `useState` initializer would put the message in the DOM on the first
  * commit and silently break the announcement. Deferring guarantees the
  * empty → populated edge required for SR a11y.

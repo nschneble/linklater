@@ -79,10 +79,16 @@ export default tseslint.config(
       sourceType: 'module',
     },
     plugins: {
+      local: {
+        rules: {
+          'type-imports-after-value': typeImportsAfterValue,
+        },
+      },
       vitest,
     },
     rules: {
       ...vitest.configs.recommended.rules,
+      'local/type-imports-after-value': 'error',
       'vitest/no-focused-tests': 'error',
       // Vitest supports `expect(value, message)` but the plugin's
       // `valid-expect` rule enforces Jest's one-argument shape and the

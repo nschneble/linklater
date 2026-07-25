@@ -200,7 +200,7 @@ export default function LinkCardLayout({
                 src={link.meta.faviconUrl}
                 alt=""
                 loading="lazy"
-                className="themed-asset object-cover w-8 h-8 bg-white outline outline-black/10 -outline-offset-1 rounded-4xl"
+                className="themed-asset w-8 h-8 bg-white object-cover outline outline-black/10 -outline-offset-1 rounded-4xl"
                 aria-hidden="true"
                 onError={(event) => {
                   (event.target as HTMLImageElement).style.display = 'none';
