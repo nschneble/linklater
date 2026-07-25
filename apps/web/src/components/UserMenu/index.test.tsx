@@ -105,7 +105,7 @@ describe('UserMenu theme flyout focus management', () => {
     fireEvent.keyDown(firstItem, { key: 'Tab' });
 
     // Tab routes through `closeFlyoutOnTab`, which does state cleanup only and
-    // never calls `.focus()` — so focus is left where it was for the browser's
+    // never calls `.focus()`. Focus is left where it was for the browser's
     // native Tab advance, not snapped back to the trigger.
     expect(document.activeElement).not.toBe(getThemeTrigger());
   });

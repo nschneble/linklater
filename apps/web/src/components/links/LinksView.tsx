@@ -4,11 +4,10 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useLinksView } from '../../lib/hooks/useLinksView';
 import { usePendingNotice } from '../../lib/hooks/usePendingNotice';
 import { useShortcutsEnabled } from '../../lib/hooks/useShortcutsEnabled';
-import { useToastAnnouncement } from '../../lib/hooks/useToastAnnouncement';
 import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
 import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
-import Toast from '../common/Toast';
+import ToastAnnouncer from '../common/ToastAnnouncer';
 import LinkForm from './LinkForm';
 import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';
@@ -88,13 +87,6 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
 
   useFocusTrap(dialogReference);
   useFocusReturn(view.showLinkForm);
-
-  // Dedicated live region for in-session toast messages (e.g. "Link saved!").
-  // The visual Toast below is conditionally mounted, which lets NVDA/JAWS miss
-  // its first announcement; the always-mounted region below does the
-  // announcing instead (Toast renders `announce={false}`). See
-  // useToastAnnouncement for the mirror-and-auto-clear mechanics.
-  const toastAnnouncement = useToastAnnouncement(view.toastMessage);
 
   return (
     <>
@@ -221,48 +213,35 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       />
 
       {/*
-        The inline dialog inerts its background siblings (heading, description,
-        toolbar, error, list) while `showLinkForm` is open. Toast and the live
-        regions below are deliberately, unconditionally left non-inert: `inert`
-        implies `aria-hidden`, and screen readers do not announce `aria-live`
-        updates on elements outside the accessibility tree (WCAG 4.1.3). This is
-        safe by design and does NOT rest on any assumption about whether a toast
-        happens to be visible while the dialog is open. `toastMessage` and
-        `showLinkForm` CAN in fact be true at the same time: saving a link shows
-        the toast and closes the form, and re-opening the form via
-        `handleToggleForm` (`useLinksForm.ts`) within the toast's 5s window
-        flips `showLinkForm` back on without clearing the toast (`useToast.ts`
-        has no auto-timeout on the message itself). That co-occurrence is the
-        CORRECT behavior, not a regression to guard against: a visible toast
-        must stay reachable and announceable throughout, dialog open or not.
-        The sibling test in `LinksView.test.tsx` forces both flags true and
-        asserts the toast and live regions remain in the accessibility tree.
-      */}
-      {view.toastMessage && (
-        <Toast
-          announce={false}
-          message={view.toastMessage}
-          onDismiss={view.handleDismissToast}
-        />
-      )}
+        In-session toast messages ("Link saved!"). ToastAnnouncer pairs the
+        visual Toast with its always-mounted sr-only live mirror (see its
+        docstring for the announce={false}-plus-mirror rationale). It owns its
+        own channel, separate from newLinksAnnouncement below (background-refresh
+        arrivals) and PendingNoticeAnnouncer (cross-route notices), so they
+        never race or double-announce.
 
-      {/*
-        Dedicated, always-mounted live region for in-session toast messages.
-        Separate from newLinksAnnouncement below (background-refresh arrivals)
-        and from PendingNoticeAnnouncer (cross-route notices); each owns its
-        own channel so they never race or double-announce. The visual Toast
-        above renders `announce={false}`, so this region is the sole announcer
-        for "Link saved!"-style messages.
+        The inline dialog inerts its background siblings (heading, description,
+        toolbar, error, list) while `showLinkForm` is open. ToastAnnouncer is
+        deliberately, unconditionally left non-inert: `inert` implies
+        `aria-hidden`, and screen readers do not announce `aria-live` updates on
+        elements outside the accessibility tree (WCAG 4.1.3). This is safe by
+        design and does NOT rest on any assumption about whether a toast happens
+        to be visible while the dialog is open. `toastMessage` and `showLinkForm`
+        CAN in fact be true at the same time: saving a link shows the toast and
+        closes the form, and re-opening the form via `handleToggleForm`
+        (`useLinksForm.ts`) within the toast's 5s window flips `showLinkForm`
+        back on without clearing the toast (`useToast.ts` has no auto-timeout on
+        the message itself). That co-occurrence is the CORRECT behavior, not a
+        regression to guard against: a visible toast must stay reachable and
+        announceable throughout, dialog open or not. The sibling test in
+        `LinksView.test.tsx` forces both flags true and asserts the toast and
+        live regions remain in the accessibility tree.
       */}
-      <span
-        className="sr-only"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        data-testid="toast-announcement"
-      >
-        {toastAnnouncement}
-      </span>
+      <ToastAnnouncer
+        message={view.toastMessage}
+        onDismiss={view.handleDismissToast}
+        testId="toast-announcement"
+      />
 
       {/*
         Polite live region announcing links that arrive via a background

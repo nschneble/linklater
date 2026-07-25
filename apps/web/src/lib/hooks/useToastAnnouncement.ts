@@ -1,6 +1,6 @@
 import { useReannounce } from './useReannounce';
 import { useTransientState } from './useTransientState';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 /**
  * Bridges a conditionally-mounted `<Toast>` to an always-mounted live region.
@@ -42,15 +42,17 @@ export function useToastAnnouncement(
 
   const announcement = useReannounce(trigger, pendingMessage, 0);
 
-  useTransientState(
-    announcement,
-    '',
-    () => {
-      setPendingMessage('');
-      setTrigger((current) => current + 1);
-    },
-    ms,
-  );
+  // Stable identity is load-bearing: `useTransientState` lists its `setter` in
+  // the effect deps, so a fresh inline arrow every render would reschedule the
+  // `ms` auto-clear timer on each host re-render (LinksView/SettingsView
+  // re-render often), holding stale toast text in the region well past the
+  // window. Both setters are stable, so an empty dependency array is correct.
+  const clearAnnouncement = useCallback(() => {
+    setPendingMessage('');
+    setTrigger((current) => current + 1);
+  }, []);
+
+  useTransientState(announcement, '', clearAnnouncement, ms);
 
   return announcement;
 }

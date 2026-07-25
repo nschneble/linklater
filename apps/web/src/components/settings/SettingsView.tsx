@@ -1,8 +1,7 @@
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useFlashQueryParameters } from '../../lib/hooks/useFlashQueryParameters';
 import { useToast } from '../../lib/hooks/useToast';
-import { useToastAnnouncement } from '../../lib/hooks/useToastAnnouncement';
-import Toast from '../common/Toast';
+import ToastAnnouncer from '../common/ToastAnnouncer';
 import StumbleSection from '../stumble/StumbleSection';
 import AccountSettingsForm from './AccountSettingsForm';
 import ApiTokensSection from './ApiTokensSection';
@@ -70,10 +69,6 @@ export default function SettingsView({
     'link_error',
   ]);
   const toast = useToast();
-  // The visual Toast below is conditionally mounted, which lets NVDA/JAWS miss
-  // its first announcement; the always-mounted sr-only region does the
-  // announcing instead (Toast renders `announce={false}`).
-  const toastAnnouncement = useToastAnnouncement(toast.message);
   const [linkError, setLinkError] = useState<string | null>(null);
   useEffect(() => {
     if (!flash) return;
@@ -224,29 +219,16 @@ export default function SettingsView({
           aria-hidden="true"
         />
       </div>
-      {toast.message && (
-        <Toast
-          announce={false}
-          message={toast.message}
-          onDismiss={toast.dismiss}
-        />
-      )}
-
       {/*
-        Always-mounted live region that announces in-session toast messages
-        (e.g. "Google account connected."). The visual Toast above renders
-        `announce={false}`, so this region is the sole announcer – a
-        conditionally-mounted Toast can miss its first announcement.
+        In-session toast messages (e.g. "Google account connected."). See
+        ToastAnnouncer's docstring for why the visual Toast renders
+        `announce={false}` and an always-mounted mirror does the announcing.
       */}
-      <span
-        className="sr-only"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        data-testid="toast-announcement"
-      >
-        {toastAnnouncement}
-      </span>
+      <ToastAnnouncer
+        message={toast.message}
+        onDismiss={toast.dismiss}
+        testId="toast-announcement"
+      />
     </SettingsLayout>
   );
 }

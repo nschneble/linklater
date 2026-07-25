@@ -50,8 +50,8 @@ describe('useToastAnnouncement', () => {
     rerender({ message: 'Link saved!' });
 
     // The region must clear to '' first so the re-set is a real text-node
-    // change — the buggy local-mirror bailed out here and left 'Link saved!'
-    // in place, so no second announcement ever fired.
+    // change. A naive `setState(sameString)` mirror would bail out here and
+    // leave 'Link saved!' in place, so no second announcement would ever fire.
     expect(result.current).toBe('');
 
     act(() => {
@@ -97,6 +97,47 @@ describe('useToastAnnouncement', () => {
 
     act(() => {
       vi.advanceTimersByTime(5000);
+    });
+    expect(result.current).toBe('');
+  });
+
+  it('clears after the ORIGINAL ms window despite unrelated host re-renders mid-window', () => {
+    // `nonce` is not read by the hook; bumping it only forces the host to
+    // re-render, mimicking LinksView/SettingsView re-rendering often while a
+    // toast is showing. The auto-clear timer must NOT reschedule on those
+    // re-renders, or stale toast text lingers past the documented window.
+    const { result, rerender } = renderHook(
+      ({ message }: { message: string | null; nonce: number }) =>
+        useToastAnnouncement(message, 5000),
+      { initialProps: { message: 'Link saved!' as string | null, nonce: 0 } },
+    );
+
+    // The message lands after the (0ms) clear-then-set settles; the single
+    // 5000ms auto-clear timer starts here.
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+    expect(result.current).toBe('Link saved!');
+
+    // Part-way through the window, the host re-renders twice for reasons
+    // unrelated to the toast (the message prop is unchanged).
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    act(() => {
+      rerender({ message: 'Link saved!', nonce: 1 });
+    });
+    act(() => {
+      rerender({ message: 'Link saved!', nonce: 2 });
+    });
+    expect(result.current).toBe('Link saved!');
+
+    // Advance just past the ORIGINAL 5000ms clear time (2000 + 3001). With a
+    // stable clear callback the one timer still fires on its original
+    // schedule. With an unstable inline arrow each re-render rescheduled a
+    // fresh 5000ms timer, so the region would still show 'Link saved!' here.
+    act(() => {
+      vi.advanceTimersByTime(3001);
     });
     expect(result.current).toBe('');
   });
