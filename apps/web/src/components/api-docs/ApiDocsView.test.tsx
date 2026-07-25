@@ -193,6 +193,25 @@ describe('ApiDocsView a11y contract', () => {
     expect(main).toHaveAttribute('id', 'api-docs');
   });
 
+  it('makes the skip-link target <main> focusable so activating it lands focus (SC 2.4.1)', () => {
+    renderApiDocs();
+
+    const skipLink = screen.getByRole('link', {
+      name: 'Skip to API documentation',
+    });
+    const main = screen.getByRole('main', { name: 'API documentation' });
+
+    // The skip link targets the main landmark by fragment id.
+    expect(skipLink).toHaveAttribute('href', `#${main.id}`);
+    // tabIndex=-1 turns the non-interactive landmark into a valid focus
+    // target: without it, activating the skip link scrolls but strands
+    // keyboard focus. A bare <main> cannot hold programmatic focus in jsdom,
+    // so this focus round-trip is a genuine oracle for the fix.
+    expect(main).toHaveAttribute('tabindex', '-1');
+    main.focus();
+    expect(main).toHaveFocus();
+  });
+
   it('shows only the back link when logged out (no token management)', () => {
     mockAuth(null);
     renderApiDocs();

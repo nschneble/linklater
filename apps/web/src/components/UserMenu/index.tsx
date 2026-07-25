@@ -78,10 +78,16 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
   const menuReference = useRef<HTMLDivElement | null>(null);
   const openedByKeyboard = useRef(false);
 
-  useMenuNavigation(menuReference, () => {
-    onClose();
-    avatarReference.current?.focus();
-  });
+  useMenuNavigation(
+    menuReference,
+    () => {
+      onClose();
+      avatarReference.current?.focus();
+    },
+    // Escape returns focus to the avatar; Tab must NOT (it would steal focus
+    // back from the browser's native next-element target). SC 2.4.3.
+    { onTabClose: onClose },
+  );
 
   const closeFlyout = () => {
     setShowThemeSubmenu(false);

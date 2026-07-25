@@ -2,7 +2,7 @@ import type { RefObject } from 'react';
 import { useEffect } from 'react';
 
 export const FOCUSABLE_SELECTOR =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 interface UseFocusTrapOptions {
   onEscape?: () => void;
@@ -32,8 +32,9 @@ export function useFocusTrap(
 
       if (event.key !== 'Tab') return;
 
-      const focusable =
-        element!.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+      const focusable = Array.from(
+        element!.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      ).filter((focusableElement) => !focusableElement.closest('[inert]'));
       if (focusable.length === 0) return;
 
       const first = focusable[0];

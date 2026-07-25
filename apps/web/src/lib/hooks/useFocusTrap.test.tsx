@@ -122,6 +122,47 @@ describe('useFocusTrap', () => {
     expect(onEscape).not.toHaveBeenCalled();
   });
 
+  it('excludes a disabled button from the computed focusable set', () => {
+    const { getByText, getByTestId } = render(
+      <ContainerWithTrap>
+        <button>First</button>
+        <button>Real Last</button>
+        <button disabled>Disabled</button>
+      </ContainerWithTrap>,
+    );
+
+    const first = getByText('First');
+    const realLast = getByText('Real Last');
+    realLast.focus();
+
+    // With the disabled button excluded, 'Real Last' is the last focusable, so
+    // Tab wraps forward to the first. If the disabled button were counted, Tab
+    // from 'Real Last' (now a middle element) would not wrap.
+    pressKey(getByTestId('trap'), 'Tab');
+    expect(document.activeElement).toBe(first);
+  });
+
+  it('excludes elements inside an inert subtree from the computed focusable set', () => {
+    const { getByText, getByTestId } = render(
+      <ContainerWithTrap>
+        <button>First</button>
+        <button>Real Last</button>
+        <div inert>
+          <button>Inert</button>
+        </div>
+      </ContainerWithTrap>,
+    );
+
+    const first = getByText('First');
+    const realLast = getByText('Real Last');
+    realLast.focus();
+
+    // The inert descendant is filtered out, so 'Real Last' is the last
+    // focusable and Tab wraps forward to the first.
+    pressKey(getByTestId('trap'), 'Tab');
+    expect(document.activeElement).toBe(first);
+  });
+
   it('detaches the listener when the ref unmounts', () => {
     const reference = createRef<HTMLDivElement>();
     function Wrapper({ open }: { open: boolean }) {

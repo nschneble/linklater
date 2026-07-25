@@ -16,6 +16,15 @@ interface UseMenuNavigationOptions {
    *   to an inert subtree would land on `<body>`.
    */
   tabBehavior?: 'close' | 'trap';
+  /**
+   * Called instead of `onClose` when Tab closes the menu (`'close'` mode).
+   * Defaults to `onClose` when omitted. Lets a caller close the menu on Tab
+   * WITHOUT the focus-management side effects it wants on Escape: Escape
+   * should return focus to the trigger, but Tab must let the browser's native
+   * focus-advance land on the next page element rather than snapping back to
+   * the trigger (SC 2.4.3).
+   */
+  onTabClose?: () => void;
 }
 
 /**
@@ -51,6 +60,7 @@ export function useMenuNavigation(
     itemSelector = '[role="menuitem"],[role="menuitemradio"]',
     onArrowLeft,
     tabBehavior = 'close',
+    onTabClose,
   } = options;
 
   useEffect(() => {
@@ -92,8 +102,10 @@ export function useMenuNavigation(
       if (event.key === 'Tab') {
         if (tabBehavior === 'close') {
           // Closes the menu and lets focus move naturally to the next
-          // page-level element.
-          onClose();
+          // page-level element. `onTabClose` (falling back to `onClose`)
+          // deliberately omits any refocus-the-trigger side effect so the
+          // browser's native Tab target is preserved.
+          (onTabClose ?? onClose)();
           return;
         }
 
@@ -140,5 +152,12 @@ export function useMenuNavigation(
 
     container.addEventListener('keydown', handleKeyDown);
     return () => container.removeEventListener('keydown', handleKeyDown);
-  }, [containerReference, onClose, itemSelector, onArrowLeft, tabBehavior]);
+  }, [
+    containerReference,
+    onClose,
+    itemSelector,
+    onArrowLeft,
+    tabBehavior,
+    onTabClose,
+  ]);
 }
