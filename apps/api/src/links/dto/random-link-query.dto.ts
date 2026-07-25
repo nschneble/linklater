@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional } from 'class-validator';
-import { toOptionalBoolean } from './query-transforms.js';
+import { toOptionalBoolean } from '../../common/index.js';
 
 /**
  * Validated query parameters for `GET /links/random`. `read` arrives as a raw

@@ -5,6 +5,7 @@ export { decrypt, encrypt } from './crypto.js';
 export { expiresInMs } from './dates.js';
 export { IsPublicUrl } from './is-public-url.validator.js';
 export { isPrivateHost } from './private-host.js';
+export { toOptionalBoolean, toOptionalInteger } from './query-transforms.js';
 export {
   findMatchingRecoveryCode,
   generateRecoveryCodes,

@@ -1,7 +1,7 @@
-import { toOptionalInteger } from './query-transforms.js';
+import { toOptionalBoolean, toOptionalInteger } from './query-transforms.js';
 import type { TransformFnParams } from 'class-transformer';
 
-// The transform only reads `value`, so a minimal params object is enough to
+// The transforms only read `value`, so a minimal params object is enough to
 // exercise every branch of the coercion.
 function makeParams(value: unknown): TransformFnParams {
   return { value } as unknown as TransformFnParams;
@@ -31,5 +31,23 @@ describe('toOptionalInteger', () => {
   it('yields NaN for a non-numeric value so @IsInt can reject it', () => {
     const transform = toOptionalInteger();
     expect(transform(makeParams('abc'))).toBeNaN();
+  });
+});
+
+describe('toOptionalBoolean', () => {
+  it("coerces the literal 'true' to boolean true", () => {
+    expect(toOptionalBoolean(makeParams('true'))).toBe(true);
+  });
+
+  it("coerces the literal 'false' to boolean false", () => {
+    expect(toOptionalBoolean(makeParams('false'))).toBe(false);
+  });
+
+  it('passes a non-boolean value through unchanged so @IsBoolean can reject it', () => {
+    expect(toOptionalBoolean(makeParams('maybe'))).toBe('maybe');
+  });
+
+  it('passes an absent value through unchanged (undefined)', () => {
+    expect(toOptionalBoolean(makeParams(undefined))).toBeUndefined();
   });
 });

@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsInt, Max, Min } from 'class-validator';
-import { toOptionalInteger } from '../../links/dto/query-transforms.js';
+import { toOptionalInteger } from '../../common/index.js';
 
 /** Smallest number of suggestions a caller may request. */
 export const MIN_COUNT = 1;
