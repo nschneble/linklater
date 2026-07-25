@@ -1,7 +1,8 @@
 import { buildCurlCommand } from '../../lib/apiDocs/buildCurlCommand';
 import CopyButton from '../common/CopyButton';
 import { FOCUS_RING } from '../../lib/styles';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
+import { useTransientState } from '../../lib/hooks/useTransientState';
 
 /**
  * Static "Example request (cURL)" block: a copy-ready `curl` command for the
@@ -26,10 +27,13 @@ import { useEffect, useRef, useState } from 'react';
  * name with the longer form (which must start with the visible text per WCAG
  * 2.5.3, mechanized in `CopyButton`). The icon
  * swap (copy → check) is the sighted confirmation and a scoped polite
- * `role="status"` announces success to assistive tech. The status text clears
- * after a beat so a repeat copy is a genuine '' → message transition and
- * re-announces; both timers are cleared on unmount (this component unmounts on
- * every endpoint swap).
+ * `role="status"` announces success to assistive tech. The success
+ * confirmation is transient: the check icon and its polite-region announcement
+ * both clear after a beat (via the shared `useTransientState` hook, which also
+ * cancels its pending timer on unmount, since this component unmounts on every
+ * endpoint swap), so a repeat copy is a genuine '' → message transition and
+ * re-announces. The manual-copy fallback is an instruction, so it persists
+ * until the next attempt.
  */
 
 interface CurlExampleProps {
@@ -58,32 +62,29 @@ export default function CurlExample({
 }: CurlExampleProps) {
   const command = buildCurlCommand({ method, url, body });
   const [copied, setCopied] = useState(false);
-  const [status, setStatus] = useState('');
-  const iconTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const statusTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  useEffect(() => {
-    return () => {
-      clearTimeout(iconTimer.current);
-      clearTimeout(statusTimer.current);
-    };
-  }, []);
+  // The check icon and the success announcement both linger COPIED_RESET_MS
+  // then revert; the hook also cancels its pending timer on unmount.
+  useTransientState(copied, false, setCopied, COPIED_RESET_MS);
 
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(command);
+      setErrorMessage('');
       setCopied(true);
-      setStatus('Copied to clipboard.');
-      clearTimeout(iconTimer.current);
-      clearTimeout(statusTimer.current);
-      iconTimer.current = setTimeout(() => setCopied(false), COPIED_RESET_MS);
-      // Clear the status so the NEXT copy re-announces ('' → message); a polite
-      // region is silent when the text node doesn't change.
-      statusTimer.current = setTimeout(() => setStatus(''), COPIED_RESET_MS);
     } catch {
-      setStatus('Couldn’t copy. Select the command and copy it manually.');
+      setErrorMessage(
+        'Couldn’t copy. Select the command and copy it manually.',
+      );
     }
   }
+
+  // The success confirmation is derived from `copied` so it clears in lockstep
+  // with the icon, making the NEXT copy a genuine '' → message transition that
+  // re-announces (a polite region is silent when the text node doesn't change).
+  // The manual-copy fallback takes precedence and persists until the next copy.
+  const status = errorMessage || (copied ? 'Copied to clipboard.' : '');
 
   return (
     <div className="mt-4">
