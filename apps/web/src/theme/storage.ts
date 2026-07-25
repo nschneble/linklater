@@ -69,6 +69,12 @@ export function hasRecentLocalChange(updatedAtKey: string): boolean {
   return Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS;
 }
 
+interface PersistWithTimestampInput {
+  valueKey: string;
+  value: string;
+  updatedAtKey: string;
+}
+
 /**
  * Persists a preference `value` under `valueKey` and stamps the current time
  * under `updatedAtKey`, so the `hasRecentLocalChange` guard can later suppress
@@ -82,12 +88,6 @@ export function hasRecentLocalChange(updatedAtKey: string): boolean {
  * drop the value into a key slot without any type error. Naming each slot at
  * the call site makes that transposition unexpressible.
  */
-interface PersistWithTimestampInput {
-  valueKey: string;
-  value: string;
-  updatedAtKey: string;
-}
-
 export function persistWithTimestamp({
   valueKey,
   value,

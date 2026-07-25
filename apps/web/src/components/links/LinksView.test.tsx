@@ -196,28 +196,11 @@ describe('LinksView – in-session toast announcement (Fix #7)', () => {
     const region = screen.getByTestId('toast-announcement');
     // The announcement now lands through the shared clear-then-set driver on
     // the next tick (a 0ms timer) so a repeat message still re-fires the polite
-    // region; await the mirror rather than asserting a synchronous update.
+    // region; await the mirror rather than asserting a synchronous update. The
+    // generic role/aria-live/aria-atomic region contract is proven once in
+    // ToastAnnouncer.test.tsx; this asserts only the LinksView-specific wiring
+    // that `useLinksView().toastMessage` flows into the mirror text.
     await waitFor(() => expect(region.textContent).toBe('Link saved!'));
-    expect(region.getAttribute('role')).toBe('status');
-    expect(region.getAttribute('aria-live')).toBe('polite');
-    expect(region.getAttribute('aria-atomic')).toBe('true');
-  });
-
-  it('renders the visual Toast card without its own live-region semantics (parent announces instead)', () => {
-    vi.mocked(useLinksView).mockReturnValue(
-      makeViewResult({ toastMessage: 'Link saved!' }),
-    );
-
-    renderLinksView();
-
-    // The visual card still shows the text but carries announce={false}, so it
-    // is not itself a role="status" live region – the dedicated span is.
-    const cards = screen.getAllByText('Link saved!', { selector: 'div' });
-    expect(cards.length).toBeGreaterThan(0);
-    for (const card of cards) {
-      expect(card.getAttribute('role')).toBeNull();
-      expect(card.getAttribute('aria-live')).toBeNull();
-    }
   });
 
   it('keeps the dedicated region mounted (and empty) when no toast is showing', () => {

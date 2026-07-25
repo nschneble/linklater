@@ -68,9 +68,9 @@ describe('ToastAnnouncer', () => {
       />,
     );
 
-    // No visual card (its dismiss button is the tell) ...
+    // No visual card (its dismiss button is the tell) …
     expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
-    // ... but the live region stays mounted and empty so a later message still
+    // … but the live region stays mounted and empty so a later message still
     // produces an empty → populated transition.
     const region = screen.getByTestId('toast-announcement');
     expect(region).toHaveAttribute('role', 'status');

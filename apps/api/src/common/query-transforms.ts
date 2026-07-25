@@ -5,7 +5,7 @@ import type { TransformFnParams } from 'class-transformer';
  * Query parameters always arrive as strings, so the literal `'true'`/`'false'`
  * map to their boolean; any other value passes through unchanged so a following
  * `@IsBoolean()` rejects it with a `400 Bad Request`. Shared by the `read`
- * param on `GET /links` and `GET /links/random` so their coercion can never
+ * parameter on `GET /links` and `GET /links/random` so their coercion can never
  * drift.
  */
 export function toOptionalBoolean({ value }: TransformFnParams): unknown {
