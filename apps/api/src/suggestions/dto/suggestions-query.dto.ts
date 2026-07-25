@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsInt, Max, Min } from 'class-validator';
+import { toOptionalInteger } from '../../links/dto/query-transforms.js';
 
 /** Smallest number of suggestions a caller may request. */
 export const MIN_COUNT = 1;
@@ -17,9 +18,7 @@ export const DEFAULT_COUNT = 3;
  * rejected with a `400 Bad Request` by the global `ValidationPipe`.
  */
 export class SuggestionsQueryDto {
-  @Transform(({ value }) =>
-    value === undefined ? DEFAULT_COUNT : Number.parseInt(String(value), 10),
-  )
+  @Transform(toOptionalInteger(DEFAULT_COUNT))
   @IsInt()
   @Min(MIN_COUNT)
   @Max(MAX_COUNT)
