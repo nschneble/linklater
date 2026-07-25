@@ -151,6 +151,20 @@ describe('LinkCard thumbnail placeholder (local inline SVG, no third party)', ()
   });
 });
 
+describe('LinkCard thumbnail skeleton (metadata still loading)', () => {
+  it('renders the decorative skeleton block while metadata has not been fetched', () => {
+    const { container } = renderWithProviders(
+      <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
+    );
+
+    const skeleton = container.querySelector(
+      'div.bg-\\[var\\(--orbit-bg\\)\\]',
+    );
+    expect(skeleton).not.toBeNull();
+    expect(skeleton?.getAttribute('aria-hidden')).toBe('true');
+  });
+});
+
 describe('LinkCard unsafe-URL guard (CWE-79)', () => {
   it('renders a real, safe anchor for a normal http(s) link', () => {
     renderWithProviders(
