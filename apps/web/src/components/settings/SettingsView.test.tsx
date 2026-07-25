@@ -127,10 +127,11 @@ describe('SettingsView OAuth-link flash toast', () => {
   // mount-effect then flips state via `toast.show`, `useToastAnnouncement`
   // mirrors it into the region, and the empty → populated transition that
   // NVDA/JAWS require is observable by watching the region's text content.
-  // The visual Toast carries `announce={false}` and therefore has no `role` or
-  // `aria-live` of its own – asserted directly below.
+  // The generic announce={false} card + mirror-region ARIA contract is proven
+  // in ToastAnnouncer.test.tsx; this suite only asserts the provider-code →
+  // message mapping SettingsView layers on top.
 
-  it('announces the success message via the mirror region, not the Toast (announce={false})', async () => {
+  it('maps the linked provider code to its success message in the mirror region', async () => {
     renderAt('/settings?linked=google');
 
     const region = screen.getByTestId('toast-announcement');
@@ -139,12 +140,6 @@ describe('SettingsView OAuth-link flash toast', () => {
     await waitFor(() =>
       expect(region).toHaveTextContent('Google account connected.'),
     );
-
-    // Direction check: the visual Toast card owns no live-region semantics.
-    const dismiss = screen.getByRole('button', { name: 'Dismiss' });
-    const card = dismiss.closest('div');
-    expect(card).not.toHaveAttribute('role');
-    expect(card).not.toHaveAttribute('aria-live');
   });
 
   it('does not focus the Toast or its dismiss button on arrival (no unsolicited focus shift)', async () => {

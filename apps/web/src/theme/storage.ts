@@ -82,15 +82,17 @@ export function hasRecentLocalChange(updatedAtKey: string): boolean {
  * drop the value into a key slot without any type error. Naming each slot at
  * the call site makes that transposition unexpressible.
  */
+interface PersistWithTimestampInput {
+  valueKey: string;
+  value: string;
+  updatedAtKey: string;
+}
+
 export function persistWithTimestamp({
   valueKey,
   value,
   updatedAtKey,
-}: {
-  valueKey: string;
-  value: string;
-  updatedAtKey: string;
-}): void {
+}: PersistWithTimestampInput): void {
   window.localStorage.setItem(valueKey, value);
   window.localStorage.setItem(updatedAtKey, Date.now().toString());
 }

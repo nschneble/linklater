@@ -1,5 +1,5 @@
 /**
- * Integration test for AppShell's chrome-inerting round-trip (Fix #9).
+ * Integration test for AppShell's chrome-inerting round-trip.
  *
  * The links view's inline save-link dialog is `aria-modal`, but the Header,
  * the email-verification banner, and the skip link live OUTSIDE the dialog's

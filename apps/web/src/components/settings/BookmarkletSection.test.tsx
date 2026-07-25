@@ -65,30 +65,15 @@ beforeEach(() => {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('BookmarkletSection toast announcement', () => {
-  it('renders the visual Toast with announce={false} (no role/aria-live on the card)', async () => {
-    render(<BookmarkletSection />);
-
-    // Wait for the token to resolve so the regenerate control mounts.
-    const regenerate = await screen.findByRole('button', {
-      name: 'Regenerate',
-    });
-    fireEvent.click(regenerate);
-
-    const dismiss = await screen.findByRole('button', { name: 'Dismiss' });
-    const card = dismiss.closest('div');
-    expect(card).toHaveTextContent('Bookmarklet regenerated');
-    expect(card).not.toHaveAttribute('role');
-    expect(card).not.toHaveAttribute('aria-live');
-  });
-
-  it('mirrors a shown toast message into the always-mounted announcement region', async () => {
+  it('mirrors a regenerate result into its own announcement region', async () => {
+    // The generic announce={false} card + mirror-region ARIA contract is
+    // proven in ToastAnnouncer.test.tsx; this asserts only BookmarkletSection's
+    // own wiring: a regenerate result flows into its named mirror channel.
     render(<BookmarkletSection />);
 
     // The mirror is present from first paint, empty until a toast fires.
     const region = screen.getByTestId('bookmarklet-toast-announcement');
     expect(region).toBeEmptyDOMElement();
-    expect(region).toHaveAttribute('role', 'status');
-    expect(region).toHaveAttribute('aria-live', 'polite');
 
     const regenerate = await screen.findByRole('button', {
       name: 'Regenerate',
