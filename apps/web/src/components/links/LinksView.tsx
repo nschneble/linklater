@@ -101,13 +101,14 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       setToastAnnouncement(view.toastMessage);
     }
   }, [view.toastMessage]);
+  // 5000 matches Toast's success-variant auto-dismiss window (5s).
   useTransientState(toastAnnouncement, '', setToastAnnouncement, 5000);
 
   return (
     <>
       <div
         className="flex items-center justify-between mb-1"
-        inert={view.showLinkForm ? true : undefined}
+        inert={view.showLinkForm}
       >
         <h1 className="text-lg font-semibold">Your links</h1>
         <button
@@ -129,7 +130,7 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
       </div>
       <p
         className="text-[var(--base-alt-text)] text-xs"
-        inert={view.showLinkForm ? true : undefined}
+        inert={view.showLinkForm}
       >
         <span className="hidden sm:inline-flex">
           {view.filter === 'read'
@@ -229,17 +230,21 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
 
       {/*
         The inline dialog inerts its background siblings (heading, description,
-        toolbar, error, list) while `showLinkForm` is open, but Toast and the
-        live regions below are deliberately left non-inert: `inert` implies
-        `aria-hidden`, and screen readers do not announce `aria-live` updates on
-        elements outside the accessibility tree (WCAG 4.1.3). Leaving Toast
-        reachable while the focus trap is active is safe ONLY because
-        `toastMessage` and `showLinkForm` never co-occur: `useLinks.ts`'s
-        `handleCreated` calls `handleLinkCreated(link)` (sets `toastMessage`) and
-        `closeForm()` (clears `showLinkForm`) synchronously in the same batched
-        commit. If a future change to `useLinks.ts` breaks that invariant, the
-        Toast's Dismiss button would become browse-mode reachable while Tab is
-        trapped in the dialog. Re-verify the invariant before touching this.
+        toolbar, error, list) while `showLinkForm` is open. Toast and the live
+        regions below are deliberately, unconditionally left non-inert: `inert`
+        implies `aria-hidden`, and screen readers do not announce `aria-live`
+        updates on elements outside the accessibility tree (WCAG 4.1.3). This is
+        safe by design and does NOT rest on any assumption about whether a toast
+        happens to be visible while the dialog is open. `toastMessage` and
+        `showLinkForm` CAN in fact be true at the same time: saving a link shows
+        the toast and closes the form, and re-opening the form via
+        `handleToggleForm` (`useLinksForm.ts`) within the toast's 5s window
+        flips `showLinkForm` back on without clearing the toast (`useToast.ts`
+        has no auto-timeout on the message itself). That co-occurrence is the
+        CORRECT behavior, not a regression to guard against: a visible toast
+        must stay reachable and announceable throughout, dialog open or not.
+        The sibling test in `LinksView.test.tsx` forces both flags true and
+        asserts the toast and live regions remain in the accessibility tree.
       */}
       {view.toastMessage && (
         <Toast

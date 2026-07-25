@@ -95,6 +95,24 @@ const variantDismissDelayMs: Record<
   error: 6000,
 };
 
+const variantAriaLive: Record<
+  NonNullable<ToastProps['variant']>,
+  'assertive' | 'polite'
+> = {
+  success: 'polite',
+  warning: 'polite',
+  error: 'assertive',
+};
+
+const variantRole: Record<
+  NonNullable<ToastProps['variant']>,
+  'alert' | 'status'
+> = {
+  success: 'status',
+  warning: 'status',
+  error: 'alert',
+};
+
 export default function Toast({
   message,
   onDismiss,
@@ -125,12 +143,14 @@ export default function Toast({
 
   // When `announce` is false the card carries no live-region semantics – the
   // parent owns the announcement via a separate, always-mounted region.
-  const ariaLive = !announce
-    ? undefined
-    : variant === 'error'
-      ? 'assertive'
-      : 'polite';
-  const role = !announce ? undefined : variant === 'error' ? 'alert' : 'status';
+  // Otherwise the variant drives both the politeness and the role via the
+  // lookup records above (mirrors `variantIcons`/`variantContainerClasses`).
+  let ariaLive: 'assertive' | 'polite' | undefined;
+  let role: 'alert' | 'status' | undefined;
+  if (announce) {
+    ariaLive = variantAriaLive[variant];
+    role = variantRole[variant];
+  }
 
   // Focus indicator on the dismiss button is `--{state}-highlight-fg` (the
   // bundle's own highlight-fg) rather than the universal `--focus-ring`.

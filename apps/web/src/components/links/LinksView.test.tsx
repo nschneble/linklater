@@ -283,10 +283,12 @@ describe('LinksView – background inert while the add-link dialog is open (Fix 
   });
 
   it('never inerts the toast or the cross-cutting live regions, even alongside an open dialog', () => {
-    // `toastMessage` and `showLinkForm` never co-occur in production (see the
-    // guarding comment in LinksView), but force both here to prove the toast
-    // and live regions stay in the accessibility tree regardless: `inert`
-    // implies `aria-hidden`, which would silence their `aria-live` updates.
+    // `toastMessage` and `showLinkForm` CAN co-occur in production (saving a
+    // link shows the toast and closes the form; re-opening the form within the
+    // toast's 5s window flips `showLinkForm` back on without clearing the
+    // toast). Force both here to prove the toast and live regions stay in the
+    // accessibility tree regardless: `inert` implies `aria-hidden`, which would
+    // silence their `aria-live` updates (see the guarding comment in LinksView).
     vi.mocked(useLinksView).mockReturnValue(
       makeViewResult({ showLinkForm: true, toastMessage: 'Link saved!' }),
     );
