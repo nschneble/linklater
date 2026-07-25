@@ -1,11 +1,11 @@
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ThrottlerException, ThrottlerStorage } from '@nestjs/throttler';
-import { isTestingUi } from '../common/index.js';
+import type { ExecutionContext } from '@nestjs/common';
 
+import { isTestingUi } from '../common/index.js';
 import { TokenKind } from '../prisma/index.js';
 import { BOOKMARKLET_SCOPE_KEY } from './token-scope.decorator.js';
-import type { ExecutionContext } from '@nestjs/common';
 
 /** The two retrievable kinds that carry scope + rate-limit restrictions. */
 type SpecialTokenKind =

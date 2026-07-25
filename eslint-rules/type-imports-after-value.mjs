@@ -1,17 +1,37 @@
 /**
  * Local ESLint rule: require declaration-level `import type { ... }` statements
- * to appear after value `import` statements within the same contiguous import
- * block.
+ * to appear after value `import` statements within the same import group.
  *
  * Encodes the project convention (see `.claude/CLAUDE.md`, React Patterns):
  * "Put `import {}` before `import type {}`."
  *
- * The autofix performs a stable partition: it swaps an offending `import type`
- * declaration with the value import that follows it, preserving the original
- * relative order of value imports and of type imports. Because type-only
- * declarations are elided at compile time, moving them relative to value
- * imports never changes runtime behavior.
+ * An "import group" is a run of consecutive `import` declarations with no blank
+ * line between them. A blank line is treated as an intentional group separator
+ * (e.g. external packages vs. local files), so each blank-line-separated group
+ * is partitioned independently and a group boundary is never crossed. Any other
+ * (non-import) statement also ends the current group.
+ *
+ * The autofix performs a stable partition within a single group: value imports
+ * keep their relative order, type imports keep their relative order, and the
+ * type imports are moved as a block below the value imports. Each import moves
+ * together with the leading own-line comments attached to it, so a comment
+ * describing a type import stays with that import rather than being stranded on
+ * a neighbour. The whole group is rewritten in one fix, so the reorder settles
+ * in a single autofix pass regardless of how many type imports are misplaced.
+ *
+ * Because type-only declarations are elided at compile time, moving them
+ * relative to value imports never changes runtime behavior.
+ *
+ * Rationale for a hand-authored rule over an off-the-shelf plugin: none of
+ * `eslint-plugin-import`, `eslint-plugin-simple-import-sort`, `perfectionist`,
+ * or `@typescript-eslint/consistent-type-imports` is installed, and none can
+ * express this narrow "value before type, order otherwise untouched" constraint
+ * without also re-sorting imports by module path — churn this repo does not
+ * want. A ~90-line local rule avoids pulling in a broad import-sorting
+ * dependency for one narrow ordering guarantee.
  */
+
+const BLANK_LINE = /\n[ \t]*\n/;
 
 /** @type {import('eslint').Rule.RuleModule} */
 const rule = {
@@ -19,7 +39,7 @@ const rule = {
     type: 'layout',
     docs: {
       description:
-        'Require declaration-level `import type` statements to appear after value imports within the same import block.',
+        'Require declaration-level `import type` statements to appear after value imports within the same import group.',
     },
     fixable: 'code',
     schema: [],
@@ -31,44 +51,123 @@ const rule = {
   create(context) {
     const sourceCode = context.sourceCode;
 
+    // True when the comment is the first non-whitespace token on its own line
+    // (so it is a leading comment rather than a trailing comment on the
+    // previous import's line).
+    const startsOwnLine = (comment) => {
+      const lineStart =
+        sourceCode.text.lastIndexOf('\n', comment.range[0] - 1) + 1;
+      return sourceCode.text.slice(lineStart, comment.range[0]).trim() === '';
+    };
+
+    // The text span that should move with an import: the declaration plus any
+    // leading own-line comments directly above it (no blank line between).
+    const getBlock = (node) => {
+      const comments = sourceCode.getCommentsBefore(node);
+      let start = node.range[0];
+
+      for (let index = comments.length - 1; index >= 0; index--) {
+        const comment = comments[index];
+        const between = sourceCode.text.slice(comment.range[1], start);
+
+        if (BLANK_LINE.test(between)) {
+          break;
+        }
+        if (!startsOwnLine(comment)) {
+          break;
+        }
+        start = comment.range[0];
+      }
+
+      return {
+        start,
+        end: node.range[1],
+        text: sourceCode.text.slice(start, node.range[1]),
+      };
+    };
+
+    const checkGroup = (group) => {
+      if (group.length < 2) {
+        return;
+      }
+
+      let lastValueIndex = -1;
+      for (let index = 0; index < group.length; index++) {
+        if (group[index].importKind !== 'type') {
+          lastValueIndex = index;
+        }
+      }
+
+      // Every type import positioned before the final value import is misplaced.
+      const misplaced = [];
+      for (let index = 0; index < lastValueIndex; index++) {
+        if (group[index].importKind === 'type') {
+          misplaced.push(group[index]);
+        }
+      }
+
+      if (misplaced.length === 0) {
+        return;
+      }
+
+      const blocks = group.map(getBlock);
+      const valueText = blocks.filter(
+        (_, index) => group[index].importKind !== 'type',
+      );
+      const typeText = blocks.filter(
+        (_, index) => group[index].importKind === 'type',
+      );
+      const orderedText = [...valueText, ...typeText]
+        .map((block) => block.text)
+        .join('\n');
+      const groupStart = blocks[0].start;
+      const groupEnd = blocks[blocks.length - 1].end;
+
+      // Report every misplaced type import for visibility, but attach the
+      // single group-rewriting fix to the first report only so the autofix
+      // applies once (no overlapping fixes, no extra passes).
+      misplaced.forEach((node, reportIndex) => {
+        context.report({
+          node,
+          messageId: 'typeBeforeValue',
+          fix:
+            reportIndex === 0
+              ? (fixer) =>
+                  fixer.replaceTextRange([groupStart, groupEnd], orderedText)
+              : undefined,
+        });
+      });
+    };
+
     return {
       Program(program) {
-        let run = [];
+        let group = [];
+        let previousImport = null;
 
-        const checkRun = () => {
-          for (let index = 0; index < run.length - 1; index++) {
-            const current = run[index];
-            const next = run[index + 1];
+        for (const node of program.body) {
+          if (node.type !== 'ImportDeclaration') {
+            checkGroup(group);
+            group = [];
+            previousImport = null;
+            continue;
+          }
 
-            if (current.importKind === 'type' && next.importKind === 'value') {
-              context.report({
-                node: current,
-                messageId: 'typeBeforeValue',
-                fix(fixer) {
-                  const currentText = sourceCode.getText(current);
-                  const nextText = sourceCode.getText(next);
-
-                  return [
-                    fixer.replaceText(current, nextText),
-                    fixer.replaceText(next, currentText),
-                  ];
-                },
-              });
+          if (previousImport) {
+            const between = sourceCode.text.slice(
+              previousImport.range[1],
+              node.range[0],
+            );
+            if (BLANK_LINE.test(between)) {
+              checkGroup(group);
+              group = [];
             }
           }
 
-          run = [];
-        };
-
-        for (const node of program.body) {
-          if (node.type === 'ImportDeclaration') {
-            run.push(node);
-          } else {
-            checkRun();
-          }
+          group.push(node);
+          previousImport = node;
         }
 
-        checkRun();
+        checkGroup(group);
       },
     };
   },

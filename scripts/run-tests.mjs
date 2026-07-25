@@ -9,6 +9,10 @@
 //
 // Jest in apps/api uses `rootDir: "src"`, so we translate the repo-relative
 // path into an api/src-relative path before handing it to Jest.
+//
+// The `eslint-rules/` directory lives at the repo root, outside both
+// workspaces, so its specs run on Node's built-in test runner as an extra step
+// during a full (no-path) run.
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -98,6 +102,11 @@ async function runAllWorkspaces() {
       { env: { ...process.env, LINKLATER_FAILED_TESTS_OUTPUT: webOutputPath } },
     );
 
+    const ruleTestsExitCode = await runCommand('node', [
+      '--test',
+      'eslint-rules/**/*.test.mjs',
+    ]);
+
     printConsolidatedBlock([
       {
         label: 'api',
@@ -111,7 +120,7 @@ async function runAllWorkspaces() {
       },
     ]);
 
-    return apiExitCode !== 0 ? apiExitCode : webExitCode;
+    return apiExitCode || webExitCode || ruleTestsExitCode;
   } finally {
     rmSync(tempDirectory, { force: true, recursive: true });
   }
@@ -133,10 +142,14 @@ async function runSingleFile(rawPath) {
 
   if (normalizedPath.startsWith('apps/web/')) {
     const webRelativePath = normalizedPath.slice('apps/web/'.length);
-    return runCommand(
-      'npm',
-      ['run', 'test', '--workspace', '@linklater/web', '--', webRelativePath],
-    );
+    return runCommand('npm', [
+      'run',
+      'test',
+      '--workspace',
+      '@linklater/web',
+      '--',
+      webRelativePath,
+    ]);
   }
 
   if (normalizedPath.startsWith('apps/api/')) {
@@ -148,10 +161,14 @@ async function runSingleFile(rawPath) {
       return 1;
     }
     const apiRelativePath = normalizedPath.slice(apiSrcPrefix.length);
-    return runCommand(
-      'npm',
-      ['run', 'test', '--workspace', '@linklater/api', '--', apiRelativePath],
-    );
+    return runCommand('npm', [
+      'run',
+      'test',
+      '--workspace',
+      '@linklater/api',
+      '--',
+      apiRelativePath,
+    ]);
   }
 
   console.error(

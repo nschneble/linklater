@@ -1,11 +1,11 @@
 import { jest } from '@jest/globals';
+import type { Request, Response } from 'express';
+
 import {
   OAUTH_STATE_COOKIE_NAME,
   consumeOAuthState,
   issueOAuthState,
 } from './oauth-state-cookie';
-
-import type { Request, Response } from 'express';
 
 const makeResponse = () =>
   ({

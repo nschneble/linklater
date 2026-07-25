@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { applySecurityHeaders } from './security-headers.js';
-
 import type { INestApplication } from '@nestjs/common';
+
+import { applySecurityHeaders } from './security-headers.js';
 
 describe('applySecurityHeaders', () => {
   let app: INestApplication;

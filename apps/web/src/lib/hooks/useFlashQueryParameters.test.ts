@@ -16,9 +16,9 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { createElement } from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useFlashQueryParameters } from './useFlashQueryParameters';
-
 import type { ReactNode } from 'react';
+
+import { useFlashQueryParameters } from './useFlashQueryParameters';
 
 function wrapperAt(path: string) {
   return function Wrapper({ children }: { children: ReactNode }) {

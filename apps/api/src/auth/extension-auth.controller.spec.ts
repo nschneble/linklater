@@ -2,12 +2,12 @@ import { jest } from '@jest/globals';
 
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CustomThrottlerGuard } from './custom-throttler.guard';
+import type { Response } from 'express';
 
+import { CustomThrottlerGuard } from './custom-throttler.guard';
 import { ExtensionAuthController } from './extension-auth.controller';
 import { ExtensionAuthService } from './extension-auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import type { Response } from 'express';
 import type { AuthRequest } from './auth-request.type';
 
 // The @Throttle decorator stores metadata directly on the method function

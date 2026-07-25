@@ -2,10 +2,10 @@ import { act, renderHook } from '@testing-library/react';
 import { createElement } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { filterFromPath, useLinksView } from './useLinksView';
-
-import { setShortcutsEnabled } from './useShortcutsEnabled';
 import type { ReactNode } from 'react';
+
+import { filterFromPath, useLinksView } from './useLinksView';
+import { setShortcutsEnabled } from './useShortcutsEnabled';
 import type { UseLinksResult } from './types';
 
 /**

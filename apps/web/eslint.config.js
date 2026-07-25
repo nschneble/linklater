@@ -48,11 +48,11 @@ export default tseslint.config(
     rules: {
       ...jsxA11y.configs.recommended.rules,
       ...vitest.configs.recommended.rules,
-      'local/type-imports-after-value': 'error',
       'jsx-a11y/label-has-associated-control': [
         'error',
         { controlComponents: ['FormInput'], assert: 'either', depth: 2 },
       ],
+      'local/type-imports-after-value': 'error',
       'react/react-in-jsx-scope': 'off',
       'react-hooks/exhaustive-deps': 'warn',
       'react-hooks/rules-of-hooks': 'error',
