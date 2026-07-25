@@ -73,7 +73,11 @@ describe('persistWithTimestamp', () => {
 
   it('writes the value under valueKey and a timestamp under updatedAtKey', () => {
     const before = Date.now();
-    persistWithTimestamp(THEME_STORAGE_KEY, 'boyhood', THEME_UPDATED_AT_KEY);
+    persistWithTimestamp({
+      valueKey: THEME_STORAGE_KEY,
+      value: 'boyhood',
+      updatedAtKey: THEME_UPDATED_AT_KEY,
+    });
 
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('boyhood');
 
@@ -83,7 +87,11 @@ describe('persistWithTimestamp', () => {
   });
 
   it('stamps a fresh time inside the guard window', () => {
-    persistWithTimestamp(THEME_STORAGE_KEY, 'boyhood', THEME_UPDATED_AT_KEY);
+    persistWithTimestamp({
+      valueKey: THEME_STORAGE_KEY,
+      value: 'boyhood',
+      updatedAtKey: THEME_UPDATED_AT_KEY,
+    });
     expect(hasRecentLocalChange(THEME_UPDATED_AT_KEY)).toBe(true);
   });
 });

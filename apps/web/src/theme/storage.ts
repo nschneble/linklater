@@ -73,14 +73,24 @@ export function hasRecentLocalChange(updatedAtKey: string): boolean {
  * Persists a preference `value` under `valueKey` and stamps the current time
  * under `updatedAtKey`, so the `hasRecentLocalChange` guard can later suppress
  * a stale server sync. Only user-initiated setters write the timestamp; the
- * `applyServer*` syncs write the value alone so they never reset their own
- * guard window.
+ * `applyServer*` syncs write the value alone (via a bare `setItem`) so they
+ * never reset their own guard window.
+ *
+ * Takes a named-argument object rather than three positional `string`s. With
+ * all three parameters sharing the `string` type, positional arguments let a
+ * caller silently transpose the two key slots (`valueKey`/`updatedAtKey`) or
+ * drop the value into a key slot without any type error. Naming each slot at
+ * the call site makes that transposition unexpressible.
  */
-export function persistWithTimestamp(
-  valueKey: string,
-  value: string,
-  updatedAtKey: string,
-): void {
+export function persistWithTimestamp({
+  valueKey,
+  value,
+  updatedAtKey,
+}: {
+  valueKey: string;
+  value: string;
+  updatedAtKey: string;
+}): void {
   window.localStorage.setItem(valueKey, value);
   window.localStorage.setItem(updatedAtKey, Date.now().toString());
 }

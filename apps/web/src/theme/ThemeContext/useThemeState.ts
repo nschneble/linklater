@@ -179,7 +179,11 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const setBaseTheme = useCallback(
     (theme: BaseTheme) => {
       setBaseThemeState(theme);
-      persistWithTimestamp(THEME_STORAGE_KEY, theme, THEME_UPDATED_AT_KEY);
+      persistWithTimestamp({
+        valueKey: THEME_STORAGE_KEY,
+        value: theme,
+        updatedAtKey: THEME_UPDATED_AT_KEY,
+      });
 
       // If the user manually switches away from Apollo while CVD mode
       // is on, clear CVD mode so the two don't become out-of-sync.
@@ -226,7 +230,11 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
     (newMode: Mode) => {
       applyModeTransition();
       setModeState(newMode);
-      persistWithTimestamp(MODE_STORAGE_KEY, newMode, MODE_UPDATED_AT_KEY);
+      persistWithTimestamp({
+        valueKey: MODE_STORAGE_KEY,
+        value: newMode,
+        updatedAtKey: MODE_UPDATED_AT_KEY,
+      });
     },
     [applyModeTransition],
   );
@@ -235,7 +243,11 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
     applyModeTransition();
     setModeState((current) => {
       const next = current === 'light' ? 'dark' : 'light';
-      persistWithTimestamp(MODE_STORAGE_KEY, next, MODE_UPDATED_AT_KEY);
+      persistWithTimestamp({
+        valueKey: MODE_STORAGE_KEY,
+        value: next,
+        updatedAtKey: MODE_UPDATED_AT_KEY,
+      });
       return next;
     });
   }, [applyModeTransition]);
@@ -248,11 +260,11 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
 
   const setCustomTheme = useCallback((nextCustomTheme: CustomTheme) => {
     setCustomThemeState(nextCustomTheme);
-    persistWithTimestamp(
-      CUSTOM_THEME_STORAGE_KEY,
-      JSON.stringify(nextCustomTheme),
-      CUSTOM_THEME_UPDATED_AT_KEY,
-    );
+    persistWithTimestamp({
+      valueKey: CUSTOM_THEME_STORAGE_KEY,
+      value: JSON.stringify(nextCustomTheme),
+      updatedAtKey: CUSTOM_THEME_UPDATED_AT_KEY,
+    });
   }, []);
 
   const applyServerCustomTheme = useCallback(
@@ -273,11 +285,11 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
 
   const setCustomThemeEnabled = useCallback((enabled: boolean) => {
     setCustomThemeEnabledState(enabled);
-    persistWithTimestamp(
-      CUSTOM_THEME_ENABLED_KEY,
-      enabled ? 'on' : 'off',
-      CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
-    );
+    persistWithTimestamp({
+      valueKey: CUSTOM_THEME_ENABLED_KEY,
+      value: enabled ? 'on' : 'off',
+      updatedAtKey: CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
+    });
   }, []);
 
   const applyServerCustomThemeEnabled = useCallback((enabled: boolean) => {
@@ -301,12 +313,16 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       window.localStorage.setItem(PRE_CVD_THEME_KEY, current);
     }
     setBaseThemeState(CVD_BASE_THEME);
-    persistWithTimestamp(
-      THEME_STORAGE_KEY,
-      CVD_BASE_THEME,
-      THEME_UPDATED_AT_KEY,
-    );
-    persistWithTimestamp(CVD_MODE_KEY, 'on', CVD_UPDATED_AT_KEY);
+    persistWithTimestamp({
+      valueKey: THEME_STORAGE_KEY,
+      value: CVD_BASE_THEME,
+      updatedAtKey: THEME_UPDATED_AT_KEY,
+    });
+    persistWithTimestamp({
+      valueKey: CVD_MODE_KEY,
+      value: 'on',
+      updatedAtKey: CVD_UPDATED_AT_KEY,
+    });
     setIsCvdMode(true);
     return CVD_BASE_THEME;
   }, []);
@@ -318,12 +334,16 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
         ? (stored as BaseTheme)
         : 'scanner-darkly';
     setBaseThemeState(previousTheme);
-    persistWithTimestamp(
-      THEME_STORAGE_KEY,
-      previousTheme,
-      THEME_UPDATED_AT_KEY,
-    );
-    persistWithTimestamp(CVD_MODE_KEY, 'off', CVD_UPDATED_AT_KEY);
+    persistWithTimestamp({
+      valueKey: THEME_STORAGE_KEY,
+      value: previousTheme,
+      updatedAtKey: THEME_UPDATED_AT_KEY,
+    });
+    persistWithTimestamp({
+      valueKey: CVD_MODE_KEY,
+      value: 'off',
+      updatedAtKey: CVD_UPDATED_AT_KEY,
+    });
     window.localStorage.removeItem(PRE_CVD_THEME_KEY);
     setIsCvdMode(false);
     return previousTheme;
@@ -336,16 +356,20 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   // into a server PATCH's `theme` field.
   const enableDyslexicFont = useCallback(() => {
     setIsDyslexicFont(true);
-    persistWithTimestamp(DYSLEXIC_FONT_KEY, 'on', DYSLEXIC_FONT_UPDATED_AT_KEY);
+    persistWithTimestamp({
+      valueKey: DYSLEXIC_FONT_KEY,
+      value: 'on',
+      updatedAtKey: DYSLEXIC_FONT_UPDATED_AT_KEY,
+    });
   }, []);
 
   const disableDyslexicFont = useCallback(() => {
     setIsDyslexicFont(false);
-    persistWithTimestamp(
-      DYSLEXIC_FONT_KEY,
-      'off',
-      DYSLEXIC_FONT_UPDATED_AT_KEY,
-    );
+    persistWithTimestamp({
+      valueKey: DYSLEXIC_FONT_KEY,
+      value: 'off',
+      updatedAtKey: DYSLEXIC_FONT_UPDATED_AT_KEY,
+    });
   }, []);
 
   return useMemo(
