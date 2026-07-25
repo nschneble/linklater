@@ -15,7 +15,7 @@
  */
 
 import LinksView from './LinksView';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -186,7 +186,7 @@ describe('LinksView – add-link form dismissal', () => {
 });
 
 describe('LinksView – in-session toast announcement (Fix #7)', () => {
-  it('mirrors toastMessage into the dedicated live region so the announcement is not missed', () => {
+  it('mirrors toastMessage into the dedicated live region so the announcement is not missed', async () => {
     vi.mocked(useLinksView).mockReturnValue(
       makeViewResult({ toastMessage: 'Link saved!' }),
     );
@@ -194,7 +194,10 @@ describe('LinksView – in-session toast announcement (Fix #7)', () => {
     renderLinksView();
 
     const region = screen.getByTestId('toast-announcement');
-    expect(region.textContent).toBe('Link saved!');
+    // The announcement now lands through the shared clear-then-set driver on
+    // the next tick (a 0ms timer) so a repeat message still re-fires the polite
+    // region; await the mirror rather than asserting a synchronous update.
+    await waitFor(() => expect(region.textContent).toBe('Link saved!'));
     expect(region.getAttribute('role')).toBe('status');
     expect(region.getAttribute('aria-live')).toBe('polite');
     expect(region.getAttribute('aria-atomic')).toBe('true');
