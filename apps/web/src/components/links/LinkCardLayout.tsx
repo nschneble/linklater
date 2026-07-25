@@ -124,7 +124,6 @@ function CardThumbnail({
  * Pure visual structure of a link card. Handles all rendering decisions:
  * - Shows a pulsing indicator while metadata is still being fetched (`!meta.fetchedAt`).
  * - Shows the favicon once metadata arrives.
- * - Shows a locally generated inline-SVG placeholder when no `imageUrl` is available.
  * - Shows the raw URL as the description when no title is present.
  * - Shows a "Mark as unread" button for read links.
  * - Shows an inert, `aria-disabled` overlay in place of the real link when
