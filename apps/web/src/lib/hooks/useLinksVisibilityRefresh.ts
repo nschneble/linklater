@@ -1,6 +1,7 @@
 import { getLinks, type Link } from '../api';
 import { findNewLinks, formatNewLinksAnnouncement } from './linksData.utils';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useReannounce } from './useReannounce';
 import type { MutableRefObject } from 'react';
 import type { PaginatedLinks } from '../api';
 
@@ -32,10 +33,13 @@ interface UseLinksVisibilityRefreshOptions {
  *   response could overwrite the later state.
  * - Newly-arrived items are announced via the returned `newLinksAnnouncement`
  *   string – the caller binds it to a pre-mounted `role="status"` live region.
- * - The clear-then-set microtask pattern ensures repeat-count announcements
- *   re-fire even when the message text is identical.
- * - The 5s TTL clears the announcement so a follow-up refresh that yields the
- *   same count still triggers a fresh announcement (aria-live fires on change).
+ * - The shared `useReannounce` hook drives the clear-then-set re-trigger, so a
+ *   repeat refresh yielding the same count still re-fires even though the
+ *   message text is identical (a live region only fires on a text change). Each
+ *   arrival bumps a monotonic `announceToken`; the message it should speak is
+ *   held in `pendingMessage` and read at fire time.
+ * - The 5s TTL empties the announcement so the live region doesn't leave a
+ *   stale count in the DOM for a screen reader that reaches it later.
  *
  * @returns `newLinksAnnouncement` – empty string when nothing to announce.
  */
@@ -45,7 +49,14 @@ export function useLinksVisibilityRefresh({
   paginationReference,
   onRefreshed,
 }: UseLinksVisibilityRefreshOptions): string {
-  const [newLinksAnnouncement, setNewLinksAnnouncement] = useState('');
+  // The clear-then-set re-announce lives in the shared `useReannounce` hook:
+  // each arrival bumps `announceToken` (so an identical consecutive count still
+  // re-fires), and `pendingMessage` carries the text the hook reads at fire
+  // time. `announceToken` is state (not a ref) so a repeat bump with an
+  // unchanged message still forces the render that re-runs the hook's effect.
+  const [announceToken, setAnnounceToken] = useState(0);
+  const [pendingMessage, setPendingMessage] = useState('');
+  const newLinksAnnouncement = useReannounce(announceToken, pendingMessage, 0);
   const lastVisibilityRefreshReference = useRef(0);
   const activeTokenReference = useRef(0);
 
@@ -66,13 +77,12 @@ export function useLinksVisibilityRefresh({
 
       if (additions.length > 0) {
         onRefreshed(additions, { total: result.total, limit: result.limit });
-        // Clear-then-set on a microtask so re-announcement fires even if
-        // the message text is identical to the previous one.
-        setNewLinksAnnouncement('');
-        setTimeout(() => {
-          if (token !== activeTokenReference.current) return;
-          setNewLinksAnnouncement(formatNewLinksAnnouncement(additions.length));
-        }, 0);
+        // Hand the message + a fresh token to `useReannounce`, which owns the
+        // clear-then-set so an identical consecutive count still re-fires. The
+        // bump happens on the same tick as the (already-passed) staleness check
+        // above, so a stale in-flight refresh can't fire a phantom announcement.
+        setPendingMessage(formatNewLinksAnnouncement(additions.length));
+        setAnnounceToken((current) => current + 1);
       } else {
         onRefreshed([], { total: result.total, limit: result.limit });
       }
@@ -115,12 +125,15 @@ export function useLinksVisibilityRefresh({
     };
   }, [enabled, runVisibilityRefresh]);
 
-  // Clear the announcement after TTL so a follow-up refresh yielding the
-  // same count still fires a new aria-live announcement (only text changes trigger it).
+  // Empty the announcement after the TTL so the live region doesn't leave a
+  // stale count in the DOM. Clearing goes through the same trigger/message
+  // inputs `useReannounce` owns: blank the pending message, then bump the token
+  // so the hook re-runs and settles the region back to ''.
   useEffect(() => {
     if (!newLinksAnnouncement) return;
     const timeoutId = setTimeout(() => {
-      setNewLinksAnnouncement('');
+      setPendingMessage('');
+      setAnnounceToken((current) => current + 1);
     }, NEW_LINKS_ANNOUNCEMENT_TTL_MS);
     return () => clearTimeout(timeoutId);
   }, [newLinksAnnouncement]);
