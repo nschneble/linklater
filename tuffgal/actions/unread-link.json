@@ -5,7 +5,7 @@
     {
       "kind": "click",
       "hint": {
-        "selector": "#links-list > div:first-child button[aria-label='Mark unread']"
+        "selector": "#links-list > div:first-child button[aria-label^='Mark unread']"
       }
     },
     { "kind": "wait", "ms": 1000 },
