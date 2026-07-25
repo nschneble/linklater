@@ -105,9 +105,17 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
       ?.focus();
   };
 
+  // Tab must NOT refocus the theme-row trigger (it would fight the browser's
+  // native next-element target). SC 2.4.3.
+  const closeFlyoutOnTab = () => {
+    setShowThemeSubmenu(false);
+    resetPreviewIfActive();
+  };
+
   useMenuNavigation(flyoutReference, closeFlyout, {
     itemSelector: '[data-submenu-item]',
     onArrowLeft: closeFlyout,
+    onTabClose: closeFlyoutOnTab,
   });
 
   // resets submenu when main menu closes; moves focus into menu on open
