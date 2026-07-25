@@ -123,7 +123,7 @@ export function useLinksFetch(
   // "Load more (1 remaining)" button. Guarded by a "last-fired" key so that
   // a server returning fewer items than its own `total` cannot pull us into
   // a refetch loop.
-  const lastAutoFireKey = useRef<string | null>(null);
+  const lastAutoFireKeyReference = useRef<string | null>(null);
   useEffect(() => {
     if (loadingLinks) return;
     if (!pagination) return;
@@ -131,8 +131,8 @@ export function useLinksFetch(
     const remaining = pagination.total - links.length;
     if (remaining !== 1) return;
     const key = `${links.length}:${pagination.total}`;
-    if (lastAutoFireKey.current === key) return;
-    lastAutoFireKey.current = key;
+    if (lastAutoFireKeyReference.current === key) return;
+    lastAutoFireKeyReference.current = key;
     dispatchFetchParameters({ type: 'load-more' });
   }, [loadingLinks, pagination, links.length]);
 

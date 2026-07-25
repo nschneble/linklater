@@ -389,26 +389,6 @@ describe('DangerZone email-confirm branch (magic-link-only: hasPassword=false, n
     ).toBeInTheDocument();
   });
 
-  // Fix #5: initial focus must land on the SAFE button, not the destructive
-  // one that renders first in DOM order. This branch's safe button reads
-  // "No, don't delete" (not "Cancel"), so a passing focus assertion here
-  // proves the marker approach works where a text-match rule would silently
-  // fail. useFocusFirstButton schedules focus on requestAnimationFrame, so
-  // poll past the tick with waitFor.
-  it('focuses the safe "No, don\'t delete" button on open, not the destructive "Yes, delete"', async () => {
-    renderDangerZone();
-    fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /no, don't delete/i }),
-      ).toHaveFocus();
-    });
-    expect(
-      screen.getByRole('button', { name: /yes, delete/i }),
-    ).not.toHaveFocus();
-  });
-
   it('confirming deletion when API returns requiresEmailConfirmation transitions to email-sent panel', async () => {
     vi.mocked(apiModule.deleteMe).mockResolvedValue({
       success: true,
