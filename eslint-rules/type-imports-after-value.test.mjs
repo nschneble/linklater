@@ -120,5 +120,32 @@ ruleTester.run('type-imports-after-value', rule, {
       ].join('\n'),
       errors: [{ messageId: 'typeBeforeValue' }],
     },
+    // A trailing same-line `//` comment on a type import survives the reorder,
+    // travelling with its declaration rather than being silently deleted (the
+    // gap between blocks that the whole-group replace would otherwise drop).
+    {
+      code: [
+        "import type { Kind } from 'kind'; // KEEPME trailing",
+        "import { value } from 'value';",
+      ].join('\n'),
+      output: [
+        "import { value } from 'value';",
+        "import type { Kind } from 'kind'; // KEEPME trailing",
+      ].join('\n'),
+      errors: [{ messageId: 'typeBeforeValue' }],
+    },
+    // The same guarantee holds for a trailing same-line block `/* */` comment,
+    // including a suppression comment whose loss would change lint behaviour.
+    {
+      code: [
+        "import type { Kind } from 'kind'; /* KEEPME trailing */",
+        "import { value } from 'value';",
+      ].join('\n'),
+      output: [
+        "import { value } from 'value';",
+        "import type { Kind } from 'kind'; /* KEEPME trailing */",
+      ].join('\n'),
+      errors: [{ messageId: 'typeBeforeValue' }],
+    },
   ],
 });

@@ -14,10 +14,11 @@
  * The autofix performs a stable partition within a single group: value imports
  * keep their relative order, type imports keep their relative order, and the
  * type imports are moved as a block below the value imports. Each import moves
- * together with the leading own-line comments attached to it, so a comment
- * describing a type import stays with that import rather than being stranded on
- * a neighbour. The whole group is rewritten in one fix, so the reorder settles
- * in a single autofix pass regardless of how many type imports are misplaced.
+ * together with the leading own-line comments attached to it and any trailing
+ * comment on its own line, so a comment describing a type import stays with
+ * that import rather than being stranded on a neighbour or dropped. The whole
+ * group is rewritten in one fix, so the reorder settles in a single autofix
+ * pass regardless of how many type imports are misplaced.
  *
  * Because type-only declarations are elided at compile time, moving them
  * relative to value imports never changes runtime behavior.
@@ -61,13 +62,18 @@ const rule = {
     };
 
     // The text span that should move with an import: the declaration plus any
-    // leading own-line comments directly above it (no blank line between).
+    // leading own-line comments directly above it (no blank line between) and
+    // any trailing comment on the same line as the declaration's end. Trailing
+    // same-line comments and leading own-line comments are mutually exclusive
+    // (a comment either shares the preceding import's line or starts its own),
+    // so a comment is captured by exactly one block and travels with the import
+    // it annotates through the reorder rather than being stranded or deleted.
     const getBlock = (node) => {
-      const comments = sourceCode.getCommentsBefore(node);
+      const before = sourceCode.getCommentsBefore(node);
       let start = node.range[0];
 
-      for (let index = comments.length - 1; index >= 0; index--) {
-        const comment = comments[index];
+      for (let index = before.length - 1; index >= 0; index--) {
+        const comment = before[index];
         const between = sourceCode.text.slice(comment.range[1], start);
 
         if (BLANK_LINE.test(between)) {
@@ -79,10 +85,25 @@ const rule = {
         start = comment.range[0];
       }
 
+      const after = sourceCode.getCommentsAfter(node);
+      let end = node.range[1];
+
+      for (const comment of after) {
+        const between = sourceCode.text.slice(end, comment.range[0]);
+
+        // The first newline marks the end of the declaration's own line: any
+        // comment beyond it begins its own line and belongs to the next block
+        // as a leading comment, not to this one as a trailing comment.
+        if (between.includes('\n')) {
+          break;
+        }
+        end = comment.range[1];
+      }
+
       return {
         start,
-        end: node.range[1],
-        text: sourceCode.text.slice(start, node.range[1]),
+        end,
+        text: sourceCode.text.slice(start, end),
       };
     };
 
