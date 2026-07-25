@@ -225,4 +225,19 @@ describe('LinksController', () => {
       expect(result).toEqual({ url: null });
     });
   });
+
+  describe('remove', () => {
+    // findOne/read/unread/remove each take (userId, id): two same-typed string
+    // arguments, so one representative delegation test guards the argument
+    // order (tsc cannot catch a (userId, id) -> (id, userId) transposition).
+    it('delegates to LinksService.remove with userId then id', async () => {
+      const deleted = { id: LINK_ID };
+      (linksServiceMock.remove as jest.Mock).mockResolvedValue(deleted);
+
+      const result = await controller.remove(makeRequest(), LINK_ID);
+
+      expect(linksServiceMock.remove).toHaveBeenCalledWith(USER_ID, LINK_ID);
+      expect(result).toBe(deleted);
+    });
+  });
 });
