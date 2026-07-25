@@ -31,9 +31,10 @@ import {
   MODE_STORAGE_KEY,
   MODE_UPDATED_AT_KEY,
   PRE_CVD_THEME_KEY,
-  RECENT_LOCAL_CHANGE_MS,
   THEME_STORAGE_KEY,
   THEME_UPDATED_AT_KEY,
+  hasRecentLocalChange,
+  persistWithTimestamp,
   readLocalStorage,
 } from '../storage';
 import type { CustomTheme } from '../customTheme';
@@ -178,8 +179,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const setBaseTheme = useCallback(
     (theme: BaseTheme) => {
       setBaseThemeState(theme);
-      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-      window.localStorage.setItem(THEME_UPDATED_AT_KEY, Date.now().toString());
+      persistWithTimestamp(THEME_STORAGE_KEY, theme, THEME_UPDATED_AT_KEY);
 
       // If the user manually switches away from Apollo while CVD mode
       // is on, clear CVD mode so the two don't become out-of-sync.
@@ -226,8 +226,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
     (newMode: Mode) => {
       applyModeTransition();
       setModeState(newMode);
-      window.localStorage.setItem(MODE_STORAGE_KEY, newMode);
-      window.localStorage.setItem(MODE_UPDATED_AT_KEY, Date.now().toString());
+      persistWithTimestamp(MODE_STORAGE_KEY, newMode, MODE_UPDATED_AT_KEY);
     },
     [applyModeTransition],
   );
@@ -236,41 +235,29 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
     applyModeTransition();
     setModeState((current) => {
       const next = current === 'light' ? 'dark' : 'light';
-      window.localStorage.setItem(MODE_STORAGE_KEY, next);
-      window.localStorage.setItem(MODE_UPDATED_AT_KEY, Date.now().toString());
+      persistWithTimestamp(MODE_STORAGE_KEY, next, MODE_UPDATED_AT_KEY);
       return next;
     });
   }, [applyModeTransition]);
 
   const applyServerTheme = useCallback((theme: BaseTheme) => {
-    const updatedAt = parseInt(
-      readLocalStorage(THEME_UPDATED_AT_KEY) ?? '0',
-      10,
-    );
-    if (Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS) return;
+    if (hasRecentLocalChange(THEME_UPDATED_AT_KEY)) return;
     setBaseThemeState(theme);
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, []);
 
   const setCustomTheme = useCallback((nextCustomTheme: CustomTheme) => {
     setCustomThemeState(nextCustomTheme);
-    window.localStorage.setItem(
+    persistWithTimestamp(
       CUSTOM_THEME_STORAGE_KEY,
       JSON.stringify(nextCustomTheme),
-    );
-    window.localStorage.setItem(
       CUSTOM_THEME_UPDATED_AT_KEY,
-      Date.now().toString(),
     );
   }, []);
 
   const applyServerCustomTheme = useCallback(
     (serverCustomTheme: CustomTheme | null) => {
-      const updatedAt = parseInt(
-        readLocalStorage(CUSTOM_THEME_UPDATED_AT_KEY) ?? '0',
-        10,
-      );
-      if (Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS) return;
+      if (hasRecentLocalChange(CUSTOM_THEME_UPDATED_AT_KEY)) return;
       setCustomThemeState(serverCustomTheme);
       if (serverCustomTheme) {
         window.localStorage.setItem(
@@ -286,22 +273,15 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
 
   const setCustomThemeEnabled = useCallback((enabled: boolean) => {
     setCustomThemeEnabledState(enabled);
-    window.localStorage.setItem(
+    persistWithTimestamp(
       CUSTOM_THEME_ENABLED_KEY,
       enabled ? 'on' : 'off',
-    );
-    window.localStorage.setItem(
       CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
-      Date.now().toString(),
     );
   }, []);
 
   const applyServerCustomThemeEnabled = useCallback((enabled: boolean) => {
-    const updatedAt = parseInt(
-      readLocalStorage(CUSTOM_THEME_ENABLED_UPDATED_AT_KEY) ?? '0',
-      10,
-    );
-    if (Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS) return;
+    if (hasRecentLocalChange(CUSTOM_THEME_ENABLED_UPDATED_AT_KEY)) return;
     setCustomThemeEnabledState(enabled);
     window.localStorage.setItem(
       CUSTOM_THEME_ENABLED_KEY,
@@ -310,11 +290,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   }, []);
 
   const applyServerMode = useCallback((serverMode: Mode) => {
-    const updatedAt = parseInt(
-      readLocalStorage(MODE_UPDATED_AT_KEY) ?? '0',
-      10,
-    );
-    if (Date.now() - updatedAt < RECENT_LOCAL_CHANGE_MS) return;
+    if (hasRecentLocalChange(MODE_UPDATED_AT_KEY)) return;
     setModeState(serverMode);
     window.localStorage.setItem(MODE_STORAGE_KEY, serverMode);
   }, []);
@@ -325,10 +301,12 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       window.localStorage.setItem(PRE_CVD_THEME_KEY, current);
     }
     setBaseThemeState(CVD_BASE_THEME);
-    window.localStorage.setItem(THEME_STORAGE_KEY, CVD_BASE_THEME);
-    window.localStorage.setItem(THEME_UPDATED_AT_KEY, Date.now().toString());
-    window.localStorage.setItem(CVD_MODE_KEY, 'on');
-    window.localStorage.setItem(CVD_UPDATED_AT_KEY, Date.now().toString());
+    persistWithTimestamp(
+      THEME_STORAGE_KEY,
+      CVD_BASE_THEME,
+      THEME_UPDATED_AT_KEY,
+    );
+    persistWithTimestamp(CVD_MODE_KEY, 'on', CVD_UPDATED_AT_KEY);
     setIsCvdMode(true);
     return CVD_BASE_THEME;
   }, []);
@@ -340,10 +318,12 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
         ? (stored as BaseTheme)
         : 'scanner-darkly';
     setBaseThemeState(previousTheme);
-    window.localStorage.setItem(THEME_STORAGE_KEY, previousTheme);
-    window.localStorage.setItem(THEME_UPDATED_AT_KEY, Date.now().toString());
-    window.localStorage.setItem(CVD_MODE_KEY, 'off');
-    window.localStorage.setItem(CVD_UPDATED_AT_KEY, Date.now().toString());
+    persistWithTimestamp(
+      THEME_STORAGE_KEY,
+      previousTheme,
+      THEME_UPDATED_AT_KEY,
+    );
+    persistWithTimestamp(CVD_MODE_KEY, 'off', CVD_UPDATED_AT_KEY);
     window.localStorage.removeItem(PRE_CVD_THEME_KEY);
     setIsCvdMode(false);
     return previousTheme;
@@ -356,19 +336,15 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   // into a server PATCH's `theme` field.
   const enableDyslexicFont = useCallback(() => {
     setIsDyslexicFont(true);
-    window.localStorage.setItem(DYSLEXIC_FONT_KEY, 'on');
-    window.localStorage.setItem(
-      DYSLEXIC_FONT_UPDATED_AT_KEY,
-      Date.now().toString(),
-    );
+    persistWithTimestamp(DYSLEXIC_FONT_KEY, 'on', DYSLEXIC_FONT_UPDATED_AT_KEY);
   }, []);
 
   const disableDyslexicFont = useCallback(() => {
     setIsDyslexicFont(false);
-    window.localStorage.setItem(DYSLEXIC_FONT_KEY, 'off');
-    window.localStorage.setItem(
+    persistWithTimestamp(
+      DYSLEXIC_FONT_KEY,
+      'off',
       DYSLEXIC_FONT_UPDATED_AT_KEY,
-      Date.now().toString(),
     );
   }, []);
 
