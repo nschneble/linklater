@@ -10,6 +10,7 @@ import {
 } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { getErrorMessage } from '../../lib/errors';
+import { useTransientState } from '../../lib/hooks/useTransientState';
 import { capitalizeFirst } from '../../lib/strings';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
@@ -30,17 +31,6 @@ export function useAuthForm() {
 
   const emailReference = useRef<HTMLInputElement>(null);
   const errorReference = useRef<HTMLParagraphElement>(null);
-  // WARN-4: timeout ids for post-magic-link / post-forgot-password
-  // success-state holds. The submit button and toast must stay in sync –
-  // both render the "sent!" success state for the toast's 5000ms auto-
-  // dismiss window. The refs let the mode-change effect cancel pending
-  // releases if the user navigates away first.
-  const magicLinkSentJustNowReference = useRef<ReturnType<
-    typeof setTimeout
-  > | null>(null);
-  const forgotPasswordSentJustNowReference = useRef<ReturnType<
-    typeof setTimeout
-  > | null>(null);
   const mfaInputReference = useRef<HTMLInputElement>(null);
   const passwordReference = useRef<HTMLInputElement>(null);
 
@@ -84,6 +74,20 @@ export function useAuthForm() {
   const [notice, setNotice] = useState<FormNotice | null>(null);
   const [password, setPassword] = useState('');
 
+  // WARN-4: hold the submit button and toast in their "sent!" success state
+  // for the toast's 5000ms auto-dismiss window so the two surfaces never
+  // disagree, then auto-release. useTransientState schedules the release and
+  // cancels the pending timer on unmount or on a fresh transition. The
+  // mode-change effect below flips each flag back to false, which cancels a
+  // pending release when the user navigates away before it fires.
+  useTransientState(magicLinkSentJustNow, false, setMagicLinkSentJustNow, 5000);
+  useTransientState(
+    forgotPasswordSentJustNow,
+    false,
+    setForgotPasswordSentJustNow,
+    5000,
+  );
+
   function resolveMode(): Mode {
     if (location.pathname === '/signup') return 'register';
     if (location.pathname === '/forgot-password') return 'forgot-password';
@@ -102,14 +106,6 @@ export function useAuthForm() {
   // fire in declaration order – see
   // [[feedback-peek-before-consume-effect-order]].
   useEffect(() => {
-    if (magicLinkSentJustNowReference.current !== null) {
-      clearTimeout(magicLinkSentJustNowReference.current);
-      magicLinkSentJustNowReference.current = null;
-    }
-    if (forgotPasswordSentJustNowReference.current !== null) {
-      clearTimeout(forgotPasswordSentJustNowReference.current);
-      forgotPasswordSentJustNowReference.current = null;
-    }
     setPassword('');
     setError(null);
     setLoading(false);
@@ -192,10 +188,6 @@ export function useAuthForm() {
         // to the finally reset.
         setLoading(false);
         setMagicLinkSentJustNow(true);
-        magicLinkSentJustNowReference.current = setTimeout(() => {
-          setMagicLinkSentJustNow(false);
-          magicLinkSentJustNowReference.current = null;
-        }, 5000);
         return;
       }
 
@@ -222,10 +214,6 @@ export function useAuthForm() {
         });
         setLoading(false);
         setForgotPasswordSentJustNow(true);
-        forgotPasswordSentJustNowReference.current = setTimeout(() => {
-          setForgotPasswordSentJustNow(false);
-          forgotPasswordSentJustNowReference.current = null;
-        }, 5000);
         return;
       }
 
