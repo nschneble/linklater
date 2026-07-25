@@ -1,6 +1,7 @@
 import { getBookmarkletToken, regenerateBookmarkletToken } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useToast } from '../../lib/hooks/useToast';
+import { useToastAnnouncement } from '../../lib/hooks/useToastAnnouncement';
 import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
 import Toast from '../common/Toast';
@@ -22,6 +23,11 @@ export default function BookmarkletSection() {
   const [rawToken, setRawToken] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const toast = useToast();
+  // The visual Toast below is conditionally mounted, which lets NVDA/JAWS miss
+  // its first announcement; the always-mounted sr-only region does the
+  // announcing instead (Toast renders `announce={false}`). Separate channel
+  // from the loading-status paragraph above.
+  const toastAnnouncement = useToastAnnouncement(toast.message);
 
   useEffect(() => {
     let cancelled = false;
@@ -119,8 +125,29 @@ export default function BookmarkletSection() {
         it can be regenerated if someone else gains access to it.
       </p>
       {toast.message && (
-        <Toast message={toast.message} onDismiss={toast.dismiss} />
+        <Toast
+          announce={false}
+          message={toast.message}
+          onDismiss={toast.dismiss}
+        />
       )}
+
+      {/*
+        Always-mounted live region that announces in-session toast messages
+        (e.g. "Bookmarklet regenerated"). The visual Toast above renders
+        `announce={false}`, so this region is the sole announcer. Distinct
+        from the "Generating your bookmarklet…" loading-status paragraph
+        above – a separate message channel, kept as its own DOM node.
+      */}
+      <span
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="bookmarklet-toast-announcement"
+      >
+        {toastAnnouncement}
+      </span>
     </div>
   );
 }

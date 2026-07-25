@@ -1,10 +1,17 @@
 /**
  * Tests for SettingsView, scoped to flash-message route-level state seeding.
  *
- * The Toast announcing `?linked=…` must surface AFTER a mount-effect – not on
- * synchronous first render. NVDA/JAWS only announce an `aria-live` region
- * when content transitions empty → populated; content present on first paint
- * is treated as page load and skipped (see `usePendingNotice.ts` comment).
+ * The `?linked=…` announcement is NOT carried by the Toast itself: the Toast
+ * renders `announce={false}` (no `role`/`aria-live`), and an always-mounted
+ * sr-only `role="status"` mirror region does the announcing. Mounting that
+ * region unconditionally is the fix – a conditionally-mounted Toast can be
+ * absent from the accessibility tree at the exact moment its message first
+ * appears, so NVDA/JAWS miss it. Deferring the message past first paint is
+ * still necessary (screen readers only announce an `aria-live` region when its
+ * content transitions empty → populated; content present on first paint reads
+ * as page load and is skipped – see `usePendingNotice.ts`), but deferral alone
+ * on a conditionally-mounted Toast is not sufficient, which is the
+ * misconception this suite previously encoded.
  *
  * Deep children (SettingsLayout, AccountSettingsForm, every other section)
  * are mocked to keep this test focused on the orchestrator's behavior.
@@ -114,32 +121,36 @@ beforeEach(() => {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('SettingsView OAuth-link flash toast', () => {
-  // The "NOT in the DOM synchronously on first paint" half of the F6
-  // contract is held by construction: `toastMessage` is initialized to
-  // `null` via `useState`, so the first commit cannot render the Toast.
-  // The mount-effect then flips state, and the empty → populated
-  // transition that NVDA/JAWS require is observable via the deferred
-  // `findByRole('status')` in the next test.
-  //
-  // A DOM-level synchronous peek BEFORE the `findByRole` await is not
-  // achievable here: RTL's `render()` flushes mount-effects inside its
-  // internal `act()` before returning, so by the time test code sees
-  // the result the toast is already in the DOM. The structural
-  // argument above (useState initialized to `null`) is the load-bearing
-  // proof for this half of the contract.
+  // The always-mounted sr-only mirror region (data-testid="toast-announcement")
+  // is in the DOM from first paint, but empty: `toast.message` is initialized
+  // to `null` via `useToast`, so the first commit renders no message. The
+  // mount-effect then flips state via `toast.show`, `useToastAnnouncement`
+  // mirrors it into the region, and the empty → populated transition that
+  // NVDA/JAWS require is observable by watching the region's text content.
+  // The visual Toast carries `announce={false}` and therefore has no `role` or
+  // `aria-live` of its own – asserted directly below.
 
-  it('renders the success Toast after the mount-effect flushes (deferred announce for SR a11y)', async () => {
+  it('announces the success message via the mirror region, not the Toast (announce={false})', async () => {
     renderAt('/settings?linked=google');
 
-    const toast = await screen.findByRole('status');
-    expect(toast.textContent).toContain('Google account connected.');
+    const region = screen.getByTestId('toast-announcement');
+    // Empty → populated is the transition SRs need; the region is present the
+    // whole time, so only its content changes.
+    await waitFor(() =>
+      expect(region).toHaveTextContent('Google account connected.'),
+    );
+
+    // Direction check: the visual Toast card owns no live-region semantics.
+    const dismiss = screen.getByRole('button', { name: 'Dismiss' });
+    const card = dismiss.closest('div');
+    expect(card).not.toHaveAttribute('role');
+    expect(card).not.toHaveAttribute('aria-live');
   });
 
   it('does not focus the Toast or its dismiss button on arrival (no unsolicited focus shift)', async () => {
     renderAt('/settings?linked=google');
 
-    await screen.findByRole('status');
-    const dismiss = screen.getByRole('button', { name: 'Dismiss' });
+    const dismiss = await screen.findByRole('button', { name: 'Dismiss' });
     // User did not initiate focus; the Toast must render with no focus
     // side-effect. The dismiss button is naturally Tab-reachable.
     expect(document.activeElement).not.toBe(dismiss);
@@ -149,8 +160,8 @@ describe('SettingsView OAuth-link flash toast', () => {
   it('falls back to a generic message when the provider code is unknown', async () => {
     renderAt('/settings?linked=plurkmail');
 
-    const toast = await screen.findByRole('status');
-    expect(toast.textContent).toContain('Account connected.');
+    const region = screen.getByTestId('toast-announcement');
+    await waitFor(() => expect(region).toHaveTextContent('Account connected.'));
   });
 
   it('passes the linkError text down to IdPsSection inline Alert (no Toast)', async () => {
@@ -161,7 +172,10 @@ describe('SettingsView OAuth-link flash toast', () => {
 
     const error = screen.getByRole('alert');
     expect(error.textContent).toContain('That account is already linked');
-    expect(screen.queryByRole('status')).toBeNull();
+    // No toast: the always-mounted mirror region stays empty and no Toast
+    // card mounts (its dismiss button is the tell).
+    expect(screen.getByTestId('toast-announcement')).toBeEmptyDOMElement();
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
   });
 
   it('renders neither toast nor error when the URL has no flash params', async () => {
@@ -169,21 +183,21 @@ describe('SettingsView OAuth-link flash toast', () => {
 
     await act(async () => {});
 
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByTestId('toast-announcement')).toBeEmptyDOMElement();
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('clears the toast when the dismiss button is clicked', async () => {
+  it('removes the visual Toast when the dismiss button is clicked', async () => {
     renderAt('/settings?linked=google');
 
-    const toast = await screen.findByRole('status');
-    expect(toast).toBeTruthy();
-
-    const dismiss = screen.getByRole('button', { name: 'Dismiss' });
+    const dismiss = await screen.findByRole('button', { name: 'Dismiss' });
     fireEvent.click(dismiss);
 
+    // The Toast card unmounts after its exit animation; the always-mounted
+    // mirror region is unaffected (it clears on its own transient timer).
     await waitFor(() => {
-      expect(screen.queryByRole('status')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
     });
   });
 });

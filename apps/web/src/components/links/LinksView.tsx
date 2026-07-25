@@ -4,7 +4,7 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useLinksView } from '../../lib/hooks/useLinksView';
 import { usePendingNotice } from '../../lib/hooks/usePendingNotice';
 import { useShortcutsEnabled } from '../../lib/hooks/useShortcutsEnabled';
-import { useTransientState } from '../../lib/hooks/useTransientState';
+import { useToastAnnouncement } from '../../lib/hooks/useToastAnnouncement';
 import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
 import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
@@ -13,7 +13,7 @@ import LinkForm from './LinkForm';
 import LinksList from './LinksList';
 import LinksToolbar from './LinksToolbar';
 import { LINK_FORM_ID } from './constants';
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 /**
@@ -91,18 +91,10 @@ export default function LinksView({ onCloseUserMenu }: LinksViewProps = {}) {
 
   // Dedicated live region for in-session toast messages (e.g. "Link saved!").
   // The visual Toast below is conditionally mounted, which lets NVDA/JAWS miss
-  // its first announcement; this always-mounted region does the announcing
-  // instead (Toast renders `announce={false}`). Mirrors view.toastMessage into
-  // local state and clears it after the 5s success auto-dismiss window so a
-  // repeat "Link saved!" re-announces (same pattern as ActionGuard).
-  const [toastAnnouncement, setToastAnnouncement] = useState('');
-  useEffect(() => {
-    if (view.toastMessage) {
-      setToastAnnouncement(view.toastMessage);
-    }
-  }, [view.toastMessage]);
-  // 5000 matches Toast's success-variant auto-dismiss window (5s).
-  useTransientState(toastAnnouncement, '', setToastAnnouncement, 5000);
+  // its first announcement; the always-mounted region below does the
+  // announcing instead (Toast renders `announce={false}`). See
+  // useToastAnnouncement for the mirror-and-auto-clear mechanics.
+  const toastAnnouncement = useToastAnnouncement(view.toastMessage);
 
   return (
     <>
