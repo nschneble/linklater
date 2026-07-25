@@ -44,8 +44,8 @@
         - paragraph: http://httpforever.com/
         - link "(No title) – httpforever.com, opens in new tab":
           - /url: http://httpforever.com/
-  - status:
-    - text: Link saved!
-    - button "Dismiss"
+  - text: Link saved!
+  - button "Dismiss"
+  - status: Link saved!
   - status
   - status
