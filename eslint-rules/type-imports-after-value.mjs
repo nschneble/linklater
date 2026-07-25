@@ -26,8 +26,8 @@
  * `eslint-plugin-import`, `eslint-plugin-simple-import-sort`, `perfectionist`,
  * or `@typescript-eslint/consistent-type-imports` is installed, and none can
  * express this narrow "value before type, order otherwise untouched" constraint
- * without also re-sorting imports by module path — churn this repo does not
- * want. A ~90-line local rule avoids pulling in a broad import-sorting
+ * without also re-sorting imports by module path, which is churn this repo does
+ * not want. A small local rule avoids pulling in a broad import-sorting
  * dependency for one narrow ordering guarantee.
  */
 
