@@ -17,6 +17,7 @@
     "generate:email-palette": "node scripts/generate-email-palette.mjs",
     "lint": "npm run lint --workspace @linklater/api && npm run lint --workspace @linklater/web",
     "lint:migrations": "squawk 'apps/api/prisma/migrations/**/*.sql'",
+    "postinstall": "patch-package",
     "test": "node scripts/run-tests.mjs",
     "test:cov": "npm run test:cov --workspace @linklater/api && npm run test:cov --workspace @linklater/web",
     "tuffgal": "tuffgal run",
@@ -34,6 +35,7 @@
     "concurrently": "^10.0.3",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
+    "patch-package": "^8.0.1",
     "pg": "^8.11.0",
     "prettier": "^3.9.5",
     "squawk-cli": "^2.60.0",
@@ -42,6 +44,7 @@
   },
   "overrides": {
     "@hono/node-server": "^2.0.5",
+    "brace-expansion@<5.0.8": "5.0.8",
     "@nestjs/swagger": {
       "js-yaml": "^5.2.2"
     },
