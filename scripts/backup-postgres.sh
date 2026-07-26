@@ -22,6 +22,15 @@ SCHEDULE_HOUR="${BACKUP_SCHEDULE_HOUR:-3}"
 KEEP_DAILY="${BACKUP_KEEP_DAILY:-7}"
 KEEP_WEEKLY="${BACKUP_KEEP_WEEKLY:-4}"
 
+# When BACKUP_ENCRYPTION_PASSPHRASE is set, every dump is piped straight
+# through openssl (AES-256-CBC, PBKDF2) before touching disk, so the offsite
+# copies hold no plaintext user data and the privacy policy's "encrypted
+# backups" statement holds (docs/PRIVACY.md, Data Retention). openssl reads
+# the passphrase from the environment (`-pass env:`), never from argv where
+# `ps` could see it. When unset the script still backs up — a missing backup
+# is worse than an unencrypted one — but warns on every run.
+ENCRYPTION_PASSPHRASE="${BACKUP_ENCRYPTION_PASSPHRASE:-}"
+
 log() {
   printf '%s backup: %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$1"
 }
@@ -32,10 +41,10 @@ prune() {
   # Dumps are named by ISO date, which sorts chronologically. Delete the oldest
   # ones so only the newest "keep" survive. Counting first (rather than
   # "head -n -N") keeps this portable to any POSIX head.
-  count="$(find "$directory" -maxdepth 1 -type f -name '*.dump' | wc -l | tr -d ' ')"
+  count="$(find "$directory" -maxdepth 1 -type f \( -name '*.dump' -o -name '*.dump.enc' \) | wc -l | tr -d ' ')"
   remove=$(( count - keep ))
   if [ "$remove" -gt 0 ]; then
-    find "$directory" -maxdepth 1 -type f -name '*.dump' | sort | head -n "$remove" | while read -r stale; do
+    find "$directory" -maxdepth 1 -type f \( -name '*.dump' -o -name '*.dump.enc' \) | sort | head -n "$remove" | while read -r stale; do
       rm -f "$stale"
       log "pruned $(basename "$stale")"
     done
@@ -49,14 +58,32 @@ run_backup() {
   # left behind before starting so they cannot accumulate.
   find "$DAILY_DIR" -maxdepth 1 -type f -name '*.partial' -delete
   stamp="$(date -u '+%Y-%m-%d')"
-  daily_file="${DAILY_DIR}/linklater-${stamp}.dump"
+  if [ -n "$ENCRYPTION_PASSPHRASE" ]; then
+    daily_file="${DAILY_DIR}/linklater-${stamp}.dump.enc"
+  else
+    daily_file="${DAILY_DIR}/linklater-${stamp}.dump"
+  fi
   partial="${daily_file}.partial"
 
   log "starting dump of ${PGDATABASE} on ${PGHOST}"
   # -Fc: custom format (compressed, restorable with pg_restore). Write to a
   # temp file first so an interrupted dump never leaves a truncated file that
-  # looks like a good backup.
-  if ! pg_dump -Fc -f "$partial"; then
+  # looks like a good backup. With encryption on, the dump streams through
+  # openssl so plaintext never touches the volume; `set -o pipefail` (from
+  # `set -euo pipefail` above) makes a mid-pipe pg_dump failure fail the
+  # whole command.
+  if [ -n "$ENCRYPTION_PASSPHRASE" ]; then
+    dump_ok=0
+    pg_dump -Fc \
+      | openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+          -pass env:BACKUP_ENCRYPTION_PASSPHRASE -out "$partial" \
+      || dump_ok=1
+  else
+    log "WARNING: BACKUP_ENCRYPTION_PASSPHRASE is not set; writing an UNENCRYPTED dump"
+    dump_ok=0
+    pg_dump -Fc -f "$partial" || dump_ok=1
+  fi
+  if [ "$dump_ok" -ne 0 ]; then
     log "pg_dump failed; leaving previous backups untouched"
     rm -f "$partial"
     return 1
@@ -67,7 +94,7 @@ run_backup() {
   # On the first backup of each week (Monday), keep a weekly copy so a
   # slow-to-notice corruption is still recoverable weeks later.
   if [ "$(date -u '+%u')" = "1" ]; then
-    cp "$daily_file" "${WEEKLY_DIR}/linklater-${stamp}.dump"
+    cp "$daily_file" "${WEEKLY_DIR}/$(basename "$daily_file")"
     log "wrote weekly copy for ${stamp}"
   fi
 

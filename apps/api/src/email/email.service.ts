@@ -10,6 +10,7 @@ import * as ConfirmAccountDeletionTemplate from './templates/confirm-account-del
 import * as EmailChangeTemplate from './templates/email-change.template.js';
 import * as MagicLinkTemplate from './templates/magic-link.template.js';
 import * as PasswordResetTemplate from './templates/password-reset.template.js';
+import * as PolicyUpdateTemplate from './templates/policy-update.template.js';
 import * as VerificationTemplate from './templates/verification.template.js';
 
 /**
@@ -205,6 +206,28 @@ export class EmailService {
       subject: 'Confirm your Linklater account deletion',
       text: ConfirmAccountDeletionTemplate.text(url),
       html: ConfirmAccountDeletionTemplate.html(url, palette),
+    });
+  }
+
+  /**
+   * Sends a one-time notice that the privacy policy is changing (the policy
+   * itself promises email notice before material changes take effect). The
+   * link points at the public /privacy page — no token involved.
+   *
+   * @param email - The recipient's email address.
+   * @param effectiveDate - Human-readable date the new policy takes effect.
+   * @param theme - The user's saved theme name; falls back to scanner-darkly.
+   */
+  async sendPolicyUpdate(email: string, effectiveDate: string, theme?: string) {
+    const url = `${process.env.APP_URL}/privacy`;
+    const palette = resolveEmailPalette(theme ?? 'scanner-darkly');
+
+    await this.send({
+      from: this.from,
+      to: email,
+      subject: 'The Linklater privacy policy is changing',
+      text: PolicyUpdateTemplate.text(url, effectiveDate),
+      html: PolicyUpdateTemplate.html(url, effectiveDate, palette),
     });
   }
 }

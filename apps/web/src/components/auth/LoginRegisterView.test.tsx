@@ -13,6 +13,7 @@
 
 import LoginRegisterView from './LoginRegisterView';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRef } from 'react';
 import type { RefObject } from 'react';
@@ -41,23 +42,27 @@ function renderView(props: Props = {}) {
   const passwordReference =
     createRef<HTMLInputElement | null>() as RefObject<HTMLInputElement | null>;
 
+  // MemoryRouter because the register-mode privacy link renders a router
+  // <Link>, which needs a router context even when the test never clicks it.
   return render(
-    <LoginRegisterView
-      email={props.email ?? ''}
-      emailReference={emailReference}
-      error={props.error ?? null}
-      errorReference={errorReference}
-      loading={props.loading ?? false}
-      magicLinkSentJustNow={props.magicLinkSentJustNow ?? false}
-      mode={props.mode ?? 'login'}
-      onEmailChange={props.onEmailChange ?? vi.fn()}
-      onForgotPassword={props.onForgotPassword ?? vi.fn()}
-      onModeChange={props.onModeChange ?? vi.fn()}
-      onPasswordChange={props.onPasswordChange ?? vi.fn()}
-      onSubmit={props.onSubmit ?? vi.fn()}
-      password={props.password ?? ''}
-      passwordReference={passwordReference}
-    />,
+    <MemoryRouter>
+      <LoginRegisterView
+        email={props.email ?? ''}
+        emailReference={emailReference}
+        error={props.error ?? null}
+        errorReference={errorReference}
+        loading={props.loading ?? false}
+        magicLinkSentJustNow={props.magicLinkSentJustNow ?? false}
+        mode={props.mode ?? 'login'}
+        onEmailChange={props.onEmailChange ?? vi.fn()}
+        onForgotPassword={props.onForgotPassword ?? vi.fn()}
+        onModeChange={props.onModeChange ?? vi.fn()}
+        onPasswordChange={props.onPasswordChange ?? vi.fn()}
+        onSubmit={props.onSubmit ?? vi.fn()}
+        password={props.password ?? ''}
+        passwordReference={passwordReference}
+      />
+    </MemoryRouter>,
   );
 }
 
@@ -163,6 +168,31 @@ describe('LoginRegisterView forgot password link', () => {
     );
 
     expect(onForgotPassword).toHaveBeenCalled();
+  });
+});
+
+describe('LoginRegisterView privacy policy link', () => {
+  it('renders a reachable privacy policy link in register mode, opening in a new tab', () => {
+    renderView({ mode: 'register' });
+
+    const privacyLink = screen.getByRole('link', {
+      name: /privacy policy\s*\(opens in new tab\)/i,
+    });
+    expect(privacyLink).toHaveAttribute('href', '/privacy');
+    expect(privacyLink).toHaveAttribute('target', '_blank');
+    expect(privacyLink).toHaveAttribute('rel', 'noreferrer');
+    expect(privacyLink).not.toHaveAttribute('tabindex');
+  });
+
+  it('hides the privacy policy link from focus and AT in login mode', () => {
+    renderView({ mode: 'login' });
+
+    // aria-hidden + inert on the wrapper removes it from the accessibility
+    // tree, so query the raw DOM to assert the ghost-focus guards.
+    const privacyLink = screen.getByText('Privacy policy').closest('a');
+    expect(privacyLink).toHaveAttribute('tabindex', '-1');
+    expect(privacyLink?.closest('[aria-hidden="true"]')).not.toBeNull();
+    expect(privacyLink?.closest('[inert]')).not.toBeNull();
   });
 });
 

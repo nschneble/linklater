@@ -16,6 +16,12 @@ import { Route } from 'react-router';
 // Scalar embed) means everyone else never downloads it.
 const ApiDocsView = lazy(() => import('../components/api-docs'));
 
+// Lazy for the same reason as ApiDocsView: react-markdown plus the policy
+// text form a chunk only /privacy visitors need.
+const PrivacyPolicyPage = lazy(
+  () => import('../components/privacy/PrivacyPolicyPage'),
+);
+
 // The API docs are PUBLIC (logged-out renders the marketing brand chrome;
 // logged-in renders the user's active theme), so the route lives here in the
 // common table rather than the logged-in-only one.
@@ -42,9 +48,36 @@ function ApiDocsRoute() {
   );
 }
 
+// The privacy policy is PUBLIC for the same reason as the API docs (and
+// CalOPPA requires it be reachable without an account), so it lives in the
+// common table too.
+function PrivacyPolicyRoute() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          data-theme="branding"
+          className="flex items-center justify-center min-h-screen bg-hit-man text-[var(--base-text)] select-none"
+        >
+          <p role="status" aria-live="polite" className="sr-only">
+            Loading privacy policy…
+          </p>
+          <i
+            className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+            aria-hidden="true"
+          />
+        </div>
+      }
+    >
+      <PrivacyPolicyPage />
+    </Suspense>
+  );
+}
+
 export function commonRoutes() {
   return [
     <Route key="api-docs" path="/docs" element={<ApiDocsRoute />} />,
+    <Route key="privacy" path="/privacy" element={<PrivacyPolicyRoute />} />,
     <Route key="logout" path="/logout" element={<LogoutPage />} />,
     <Route
       key="confirm-account-deletion"

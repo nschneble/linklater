@@ -26,6 +26,7 @@ describe('EmailQueueService', () => {
     sendEmailChangeVerification: jest.fn(),
     sendMagicLink: jest.fn(),
     sendPasswordReset: jest.fn(),
+    sendPolicyUpdate: jest.fn(),
     sendVerification: jest.fn(),
   } as unknown as EmailService;
 
@@ -98,6 +99,22 @@ describe('EmailQueueService', () => {
         { kind: 'account-deletion', email: EMAIL, token: TOKEN, theme: THEME },
         RETRY_OPTIONS,
       );
+    });
+
+    it('enqueues a policy-update job with the effective date instead of a token', async () => {
+      await service.enqueuePolicyUpdate(EMAIL, 'August 15, 2026', THEME);
+
+      expect(queueServiceMock.send).toHaveBeenCalledWith(
+        QUEUES.EMAIL_SEND,
+        {
+          kind: 'policy-update',
+          email: EMAIL,
+          effectiveDate: 'August 15, 2026',
+          theme: THEME,
+        },
+        RETRY_OPTIONS,
+      );
+      expect(emailServiceMock.sendPolicyUpdate).not.toHaveBeenCalled();
     });
 
     it('resolves even when the underlying transport would fail', async () => {
@@ -200,7 +217,22 @@ describe('EmailQueueService', () => {
           },
         },
       ]);
+      await handler!([
+        {
+          data: {
+            kind: 'policy-update',
+            email: EMAIL,
+            effectiveDate: 'August 15, 2026',
+            theme: THEME,
+          },
+        },
+      ]);
 
+      expect(emailServiceMock.sendPolicyUpdate).toHaveBeenCalledWith(
+        EMAIL,
+        'August 15, 2026',
+        THEME,
+      );
       expect(emailServiceMock.sendVerification).toHaveBeenCalledWith(
         EMAIL,
         TOKEN,

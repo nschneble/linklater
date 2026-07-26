@@ -1,3 +1,5 @@
+import { Link } from 'react-router';
+
 interface FooterLinkProps {
   href: string;
   label: string;
@@ -8,10 +10,23 @@ interface FooterLinkProps {
   newTab?: boolean;
 }
 
+const footerLinkClassName =
+  'text-[var(--base-subtle-text)] hover:text-[var(--base-text)] text-xs transition duration-200';
+
 function FooterLink({ href, label, newTab = false }: FooterLinkProps) {
+  // In-app destinations navigate client-side; everything else is a plain
+  // anchor. Same class string either way so the treatment stays uniform.
+  if (href.startsWith('/')) {
+    return (
+      <Link className={footerLinkClassName} to={href}>
+        {label}
+      </Link>
+    );
+  }
+
   return (
     <a
-      className="text-[var(--base-subtle-text)] hover:text-[var(--base-text)] text-xs transition duration-200"
+      className={footerLinkClassName}
       href={href}
       rel={newTab ? 'noreferrer' : undefined}
       target={newTab ? '_blank' : undefined}
@@ -23,8 +38,10 @@ function FooterLink({ href, label, newTab = false }: FooterLinkProps) {
 }
 
 /**
- * Footer for the public landing page. Renders three links:
- * About (creator's site), GitHub (source code), and Contact (email).
+ * Footer for the public landing page. Renders four links:
+ * About (creator's site), GitHub (source code), Contact (email), and the
+ * privacy policy (in-app route; CalOPPA wants it conspicuous on the
+ * homepage).
  */
 export default function FooterSection() {
   return (
@@ -46,6 +63,9 @@ export default function FooterSection() {
               href="mailto:linklater@fancyenchiladas.net"
               label="Contact"
             />
+          </li>
+          <li>
+            <FooterLink href="/privacy" label="Privacy" />
           </li>
         </ul>
       </nav>

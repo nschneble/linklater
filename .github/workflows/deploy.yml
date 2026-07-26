@@ -42,6 +42,8 @@
 #                   actions" section lists so they never touch the repo:
 #                     JWT_SECRET, TOTP_ENCRYPTION_KEY, DATABASE_URL, APP_URL,
 #                     POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, DOMAIN,
+#                     BACKUP_ENCRYPTION_PASSPHRASE (backup-at-rest encryption;
+#                     keep a copy off the VPS or the dumps are unrestorable),
 #                     CORS_ORIGIN, and any optional SMTP_* / GOOGLE_* / APPLE_* /
 #                     EXTENSION_REDIRECT_URIS values.
 #

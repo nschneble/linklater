@@ -12,12 +12,13 @@ export type EmailJobKind =
   | 'email-change'
   | 'magic-link'
   | 'password-reset'
+  | 'policy-update'
   | 'verification';
 
 /**
- * Payload carried on an `email-send` job. Holds the already-rendered
- * recipient, the raw single-use token, and the recipient's theme – the exact
- * arguments the matching `EmailService.send*` method needs.
+ * Payload carried on a token-bearing `email-send` job. Holds the
+ * already-rendered recipient, the raw single-use token, and the recipient's
+ * theme – the exact arguments the matching `EmailService.send*` method needs.
  *
  * NOTE ON THE RAW TOKEN: the token is a short-lived secret whose SHA-256 hash
  * is what lives in the `User` row; the raw value only exists in memory at
@@ -27,12 +28,26 @@ export type EmailJobKind =
  * (near-immediately) and archived, and the token itself expires in 15 minutes
  * to 24 hours depending on kind.
  */
-export interface EmailJob {
-  kind: EmailJobKind;
+export interface TokenEmailJob {
+  kind: Exclude<EmailJobKind, 'policy-update'>;
   email: string;
   token: string;
   theme?: string;
 }
+
+/**
+ * Payload for the privacy-policy change notice. Carries the human-readable
+ * effective date instead of a token – the email links to the public /privacy
+ * page, so there is no secret to transport.
+ */
+export interface PolicyUpdateEmailJob {
+  kind: 'policy-update';
+  email: string;
+  effectiveDate: string;
+  theme?: string;
+}
+
+export type EmailJob = TokenEmailJob | PolicyUpdateEmailJob;
 
 /**
  * Retry policy for the email queue. Transient SMTP failures (relay briefly
@@ -123,6 +138,15 @@ export class EmailQueueService implements OnModuleInit {
     await this.enqueue({ kind: 'account-deletion', email, token, theme });
   }
 
+  /** Enqueues a one-time privacy-policy change notice. */
+  async enqueuePolicyUpdate(
+    email: string,
+    effectiveDate: string,
+    theme?: string,
+  ): Promise<void> {
+    await this.enqueue({ kind: 'policy-update', email, effectiveDate, theme });
+  }
+
   private async enqueue(job: EmailJob): Promise<void> {
     await this.queueService.send(QUEUES.EMAIL_SEND, job, EMAIL_SEND_OPTIONS);
   }
@@ -164,13 +188,23 @@ export class EmailQueueService implements OnModuleInit {
           job.theme,
         );
         return;
+      case 'policy-update':
+        await this.emailService.sendPolicyUpdate(
+          job.email,
+          job.effectiveDate,
+          job.theme,
+        );
+        return;
       default: {
         // Exhaustiveness guard: an unknown kind means a job was enqueued by
         // code the worker does not understand. Log and swallow rather than
-        // retry forever – a bad discriminator will never become valid.
-        const unknownKind: never = job.kind;
+        // retry forever – a bad discriminator will never become valid. Only
+        // the kind is logged, never the payload (it carries the recipient).
+        const unknownJob: never = job;
         this.logger.error(
-          `Dropping email-send job with unknown kind: ${String(unknownKind)}`,
+          `Dropping email-send job with unknown kind: ${String(
+            (unknownJob as { kind?: unknown }).kind,
+          )}`,
         );
       }
     }

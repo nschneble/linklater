@@ -73,6 +73,35 @@ describe('EmailService', () => {
     });
   });
 
+  describe('sendPolicyUpdate', () => {
+    const EFFECTIVE_DATE = 'August 15, 2026';
+
+    it('sends to the correct recipient with the policy-update subject', async () => {
+      await service.sendPolicyUpdate(USER_EMAIL, EFFECTIVE_DATE);
+
+      expect(sendMailMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: USER_EMAIL,
+          subject: 'The Linklater privacy policy is changing',
+        }),
+      );
+    });
+
+    it('includes the effective date and the /privacy link in the body', async () => {
+      process.env.APP_URL = 'https://app.example.com';
+
+      await service.sendPolicyUpdate(USER_EMAIL, EFFECTIVE_DATE);
+
+      const [mailOptions] = sendMailMock.mock.calls[0] as [
+        { text: string; html: string },
+      ];
+      expect(mailOptions.text).toContain(EFFECTIVE_DATE);
+      expect(mailOptions.text).toContain('https://app.example.com/privacy');
+      expect(mailOptions.html).toContain(EFFECTIVE_DATE);
+      expect(mailOptions.html).toContain('https://app.example.com/privacy');
+    });
+  });
+
   describe('sendPasswordReset', () => {
     it('sends to the correct recipient with the reset subject', async () => {
       await service.sendPasswordReset(USER_EMAIL, RESET_TOKEN);
