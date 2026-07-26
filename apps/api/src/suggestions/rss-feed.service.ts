@@ -209,7 +209,7 @@ export class RssFeedService {
     source: SourceDefinition,
   ): Suggestion | null {
     const url = item.link?.trim();
-    const title = item.title?.trim();
+    const title = this.stripHtml(item.title);
     if (!url || !title) return null;
 
     const description =
