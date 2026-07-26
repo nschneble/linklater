@@ -1,0 +1,140 @@
+# Reminder gate for privacy policy edits (docs/PRIVACY.md).
+#
+# The policy promises registered users email notice BEFORE material changes
+# take effect, and the notice is sent by a human running the announce script
+# (docs/DEPLOYMENT.md, "Announcing a privacy policy change"). This check
+# automates the detection half of that contract so the human half cannot be
+# forgotten — it never sends anything itself:
+#
+#   * Effective date bumped   -> sticky PR comment with the announce runbook
+#                                checklist (this is the "material change
+#                                declared" signal).
+#   * Effective date same     -> sticky PR comment noting the edit is being
+#                                treated as non-material (no announce needed).
+#   * "Last updated" not      -> FAIL. Whatever the edit was, the dateline
+#     bumped                     must move; it is the page's only freshness
+#                                signal.
+#
+# Runs only on PRs that touch the policy, so it costs nothing the rest of the
+# time. Comment upsert is marker-based (not --edit-last) so it can never
+# clobber another bot's comment (e.g. the Tuffgal approve flow).
+
+name: Privacy policy check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/PRIVACY.md'
+
+permissions:
+  contents: read
+  pull-requests: write # upsert the sticky reminder comment
+
+jobs:
+  policy-notice:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Compare policy datelines against the base branch
+        id: dates
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+
+          # The merge-ref checkout has the PR's version; fetch the base commit
+          # so both sides of the comparison exist locally.
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+
+          extract_field() {
+            # Pulls "**<field>:** <value>" out of the policy front matter.
+            # Returns empty (not an error) when the field or file is missing.
+            grep -m1 "^\*\*$1:\*\*" | sed -E "s/^\*\*$1:\*\* *//" || true
+          }
+
+          base_content="$(git show "$BASE_SHA:docs/PRIVACY.md" 2>/dev/null || true)"
+          head_effective="$(extract_field 'Effective date' < docs/PRIVACY.md)"
+          head_updated="$(extract_field 'Last updated' < docs/PRIVACY.md)"
+          base_effective="$(printf '%s' "$base_content" | extract_field 'Effective date')"
+          base_updated="$(printf '%s' "$base_content" | extract_field 'Last updated')"
+
+          if [ -z "$head_effective" ] || [ -z "$head_updated" ]; then
+            echo "::error file=docs/PRIVACY.md::The policy must keep its '**Effective date:**' and '**Last updated:**' lines — the /privacy page and this check both key off them."
+            exit 1
+          fi
+
+          {
+            echo "base_exists=$([ -n "$base_content" ] && echo true || echo false)"
+            echo "head_effective=$head_effective"
+            echo "base_effective=$base_effective"
+            echo "head_updated=$head_updated"
+            echo "base_updated=$base_updated"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upsert the reminder comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_EXISTS: ${{ steps.dates.outputs.base_exists }}
+          HEAD_EFFECTIVE: ${{ steps.dates.outputs.head_effective }}
+          BASE_EFFECTIVE: ${{ steps.dates.outputs.base_effective }}
+        run: |
+          set -euo pipefail
+
+          MARKER='<!-- privacy-policy-check -->'
+
+          {
+            echo "$MARKER"
+            echo "## Privacy policy edit detected"
+            echo
+            if [ "$BASE_EXISTS" = "false" ]; then
+              echo "This PR adds the policy for the first time (effective **${HEAD_EFFECTIVE}**). Nothing to announce — there are no users under an older version."
+            elif [ "$HEAD_EFFECTIVE" != "$BASE_EFFECTIVE" ]; then
+              echo "The effective date moved (**${BASE_EFFECTIVE}** -> **${HEAD_EFFECTIVE}**), which declares a **material change**. The policy promises users email notice before that date, so after this merges and deploys:"
+              echo
+              echo "- [ ] Dry-run the recipient count:"
+              echo "      \`docker compose -f docker-compose.prod.yml run --rm api node dist/scripts/announce-policy-update.js --effective-date \"${HEAD_EFFECTIVE}\" --dry-run\`"
+              echo "- [ ] Send for real (drop \`--dry-run\`), **before ${HEAD_EFFECTIVE}**"
+              echo
+              echo "Runbook: docs/DEPLOYMENT.md → \"Announcing a privacy policy change\"."
+              # Flag a date that is not comfortably in the future. GNU date on
+              # the runner parses the human-readable form; skip the hint when
+              # it cannot.
+              if effective_epoch=$(date -d "$HEAD_EFFECTIVE" +%s 2>/dev/null); then
+                if [ "$effective_epoch" -le "$(date -d '+7 days' +%s)" ]; then
+                  echo
+                  echo "> [!WARNING]"
+                  echo "> The new effective date is less than a week out (or already past). Users are owed notice *before* it; consider pushing the date."
+                fi
+              fi
+            else
+              echo "The effective date did not move, so this edit is being treated as **non-material** (typo/clarification) — no user announcement is required, only the \"Last updated\" bump."
+              echo
+              echo "If this PR actually changes what data is collected, who it is shared with, retention, or user rights: bump the **Effective date** to a future date and re-push, and this comment will switch to the announce checklist."
+            fi
+          } > comment.md
+
+          existing_id=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" | head -n1)
+
+          if [ -n "$existing_id" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${existing_id}" -F body=@comment.md > /dev/null
+          else
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file comment.md
+          fi
+
+      - name: Require a "Last updated" bump
+        env:
+          BASE_EXISTS: ${{ steps.dates.outputs.base_exists }}
+          HEAD_UPDATED: ${{ steps.dates.outputs.head_updated }}
+          BASE_UPDATED: ${{ steps.dates.outputs.base_updated }}
+        run: |
+          set -euo pipefail
+          if [ "$BASE_EXISTS" = "true" ] && [ "$HEAD_UPDATED" = "$BASE_UPDATED" ]; then
+            echo "::error file=docs/PRIVACY.md::docs/PRIVACY.md changed but '**Last updated:**' still says '${HEAD_UPDATED}'. Bump it — it is the page's only freshness signal."
+            exit 1
+          fi
+          echo "Last updated: '${BASE_UPDATED}' -> '${HEAD_UPDATED}'."

@@ -25,7 +25,7 @@ that follows:
 | Email           | SMTP, optional. If the `SMTP_*` variables are unset the app runs fine; transactional email (verification, password reset, magic links, deletion) does not send. When SMTP is configured, mail is enqueued on the `email-send` queue and delivered by an in-process pg-boss worker with 3-attempt exponential-backoff retry, so a broken relay produces retry churn and failed `pgboss.job` rows rather than a synchronous request error.                                        |
 | Health probe    | `GET /health` is unauthenticated and cheap (a single `SELECT 1` plus an in-memory read of the pg-boss run state, no extra query). It returns `200` when the database answers and `503` when it does not, so orchestrators and deploy scripts can gate on it. The body also reports the background-job queue state (`queue: 'up' \| 'down'`) for observability, but a stopped queue does not fail the probe (a false-negative that flapped deploys would be worse than the gap). |
 | Migrations      | `npm run migrate:deploy --workspace @linklater/api` runs `prisma migrate deploy && prisma generate`. This is the production-safe, non-interactive migration path.                                                                                                                                                                                                                                                                                                               |
-| Backups         | A `backup` sidecar container (`scripts/backup-postgres.sh`) takes a nightly `pg_dump -Fc` over the Compose network and writes compressed, AES-256-encrypted dumps to the `postgres-backups` volume, retaining 7 daily and 4 weekly. The operator syncs that volume offsite (S3 via `rclone`/`aws s3 sync`, another host via `rsync`, or an SFTP server via `scripts/sync-backups-offsite.sh.example`). See [Backups](#backups) for the restore procedure.                                          |
+| Backups         | A `backup` sidecar container (`scripts/backup-postgres.sh`) takes a nightly `pg_dump -Fc` over the Compose network and writes compressed, AES-256-encrypted dumps to the `postgres-backups` volume, retaining 7 daily and 4 weekly. The operator syncs that volume offsite (S3 via `rclone`/`aws s3 sync`, another host via `rsync`, or an SFTP server via `scripts/sync-backups-offsite.sh.example`). See [Backups](#backups) for the restore procedure.                       |
 
 Two consequences drive everything below:
 
@@ -426,6 +426,13 @@ docker compose -f docker-compose.prod.yml run --rm api \
 
 SMTP must be configured or the queued jobs will just churn through their
 retries and fail.
+
+You do not have to remember any of this unprompted: the "Privacy policy
+check" workflow watches every PR that touches `docs/PRIVACY.md` and posts a
+sticky comment — the announce checklist above when the effective date moves
+(a material change), or a "treated as non-material" note when it does not.
+It also fails the PR if the policy changed without a "Last updated" bump.
+Detection is automated; sending the notice stays a human decision.
 
 ## Backups
 
