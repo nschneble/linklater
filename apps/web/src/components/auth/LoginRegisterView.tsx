@@ -5,7 +5,7 @@ import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import SlidingTabBar from '../common/SlidingTabBar';
 import AuthCard from './AuthCard';
-import { Link } from 'react-router';
+import { useNavigate } from 'react-router';
 import type { FormEvent, RefObject } from 'react';
 
 const googleSsoEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true';
@@ -61,6 +61,8 @@ export default function LoginRegisterView({
   password,
   passwordReference,
 }: LoginRegisterViewProps) {
+  const navigate = useNavigate();
+
   return (
     <AuthCard>
       <h1 className="mb-2 text-[var(--mount-text)] text-center text-3xl font-bold text-balance">
@@ -224,44 +226,17 @@ export default function LoginRegisterView({
         </>
       )}
 
-      <div
-        aria-hidden={mode !== 'login' ? true : undefined}
-        inert={mode !== 'login' ? true : undefined}
-        className="flex flex-col items-center gap-2 mt-4 text-center transition-opacity duration-200 aria-hidden:opacity-0 aria-hidden:pointer-events-none"
-      >
-        <LinkButton
-          tabIndex={mode !== 'login' ? -1 : undefined}
-          onClick={onForgotPassword}
-        >
-          I literally have no idea what my password is
-        </LinkButton>
-      </div>
-
-      {/* Register-only counterpart to the forgot-password affordance above:
-          the CalOPPA point-of-collection privacy link. Same hide mechanics
-          (aria-hidden + inert + tabIndex -1) so it can never take ghost focus
-          in login mode. Both blocks stay in flow when faded (opacity, not
-          removal), so the card height never shifts across the tab switch.
-          New tab on purpose – same-tab navigation would throw away whatever
-          the visitor already typed into the form. */}
-      <div
-        aria-hidden={mode !== 'register' ? true : undefined}
-        inert={mode !== 'register' ? true : undefined}
-        className="flex flex-col items-center gap-2 mt-4 text-center transition-opacity duration-200 aria-hidden:opacity-0 aria-hidden:pointer-events-none"
-      >
-        <p className="text-[var(--mount-alt-text)] text-xs">
-          Wondering where your email goes?{' '}
-          <Link
-            className="text-[var(--mount-text)] underline underline-offset-2 decoration-1 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] rounded-xs"
-            rel="noreferrer"
-            tabIndex={mode !== 'register' ? -1 : undefined}
-            target="_blank"
-            to="/privacy"
-          >
-            Privacy policy
-            <span className="sr-only"> (opens in new tab)</span>
-          </Link>
-        </p>
+      <div className="flex flex-col items-center mt-4 text-center transition-opacity duration-200 aria-hidden:opacity-0 aria-hidden:pointer-events-none">
+        {mode === 'login' && (
+          <LinkButton onClick={onForgotPassword}>
+            I literally have no idea what my password is
+          </LinkButton>
+        )}
+        {mode === 'register' && (
+          <LinkButton onClick={() => navigate('/privacy')}>
+            Read our privacy policy
+          </LinkButton>
+        )}
       </div>
     </AuthCard>
   );

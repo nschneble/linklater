@@ -3,21 +3,12 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Link } from 'react-router';
 import { policyMarkdownComponents } from './policyMarkdownComponents';
+import { rehypeBreakTags } from './rehypeBreakTags';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 
 /**
- * The privacy policy, rendered from the canonical `docs/PRIVACY.md` (imported
- * raw at build time, so the repo document and this page can never drift).
- *
- * Mirrors ApiDocsView's two-way public chrome: logged OUT pins the off-book
- * `branding` theme over the brand navy; logged IN inherits the user's active
- * theme from the `<html>` token cascade. See ApiDocsView for the full
- * reasoning — including why the skip link and brand h1 carry their exact
- * class lists.
- *
- * One deliberate departure from ApiDocsView: no `select-none` on `<main>`.
- * This is a legal document; readers must be able to select and copy it.
+ * The privacy policy.
  */
 export default function PrivacyPolicyPage() {
   useDocumentTitle('Linklater – Privacy policy');
@@ -71,6 +62,7 @@ export default function PrivacyPolicyPage() {
       >
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeBreakTags]}
           components={policyMarkdownComponents}
         >
           {privacyPolicyMarkdown}

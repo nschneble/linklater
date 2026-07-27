@@ -1,59 +1,30 @@
-# Deploy Linklater to the single-VPS production stack (docs/DEPLOYMENT.md,
-# option 1: one Docker Compose stack behind Caddy). This is the automation that
-# implements DEPLOYMENT.md's "Update-deploy flow" section, step for step:
+# Deploys Linklater to a single VPS production stack.
 #
-#   1. Build the API and web images.                          (build-and-push)
-#   2. Publish both to ghcr.io, tagged with the commit SHA + `latest`.
-#   3. SSH to the VPS, pull the images, run `prisma migrate deploy`,           (deploy)
-#      then `docker compose up -d` (migrate BEFORE the new code starts).
-#   4. Poll `GET /api/health` (the public edge) until it returns 200 before declaring success.
+#   1. Builds the API and web images
+#   2. Publishes both to ghcr.io, tagged with the commit SHA + `latest`
+#   3. SSHs to the VPS, pulls the images, runs all Prisma migrations,
+#      and then brings up the Docker container
+#   4. Polls the `/api/health` endpoint until it returns 200
 #
-# Two triggers, two distinct jobs:
+# Required GitHub Repository secrets
+#  (Settings → Security and quality → Secrets and variables → Actions)
 #
-#   * Version tag (`push: tags: v*`) — a RELEASE. Cutting a release is a
-#     deliberate act, not every merge to main. Both jobs run: build-and-push
-#     builds this tag's commit and publishes `:<sha>` + `:latest`, then deploy
-#     rolls the freshly built SHA onto the VPS.
+# Required GitHub Repository secrets:
 #
-#   * Manual (`workflow_dispatch`) — a REDEPLOY or ROLLBACK. build-and-push is
-#     SKIPPED (its `if:` gates it to push events), so a dispatch never rebuilds
-#     code and never clobbers `:latest` from an arbitrary ref. deploy still
-#     runs (its `if:` tolerates the skipped build) and rolls the image tag you
-#     name in the required `image_tag` input — typically a prior commit SHA to
-#     roll back, which is already in the registry and immutable. This keeps
-#     DEPLOYMENT.md's "no rebuild needed" rollback contract exact.
+#   SSH_HOST        VPS hostname or IP address
+#   SSH_PORT        SSH port (optional, defaults to 22)
+#   SSH_USER        SSH user on the VPS (must be in `docker` group)
+#   SSH_KEY         Private SSH key matching the public key on the VPS
+#   DEPLOY_PATH     Absolute path on the VPS
+#   PRODUCTION_ENV  Full list of environment variables as key-value pairs
 #
-# The `image_tag` input is required on dispatch and is validated against a
-# strict pattern before it reaches `docker compose pull`.
+#                   APP_URL, BACKUP_ENCRYPTION_PASSPHRASE, CORS_ORIGIN,
+#                   DATABASE_URL, DOMAIN, JWT_SECRET, POSTGRES_DB,
+#                   POSTGRES_PASSWORD, POSTGRES_USER, SMTP_FROM, SMTP_HOST,
+#                   SMTP_PASS, SMTP_PORT, SMTP_SECURE, SMTP_USER,
+#                   TOTP_ENCRYPTION_KEY
 #
-# ---------------------------------------------------------------------------
-# Required GitHub Actions secrets (Settings -> Secrets and variables -> Actions)
-# ---------------------------------------------------------------------------
-# Infrastructure (this workflow's own inputs):
-#   SSH_HOST        Hostname or IP of the VPS.
-#   SSH_USER        SSH login user on the VPS (must be in the `docker` group).
-#   SSH_KEY         Private SSH key (PEM) whose public half is on the VPS.
-#   SSH_PORT        (optional) SSH port; defaults to 22 if unset.
-#   DEPLOY_PATH     Absolute path on the VPS holding docker-compose.prod.yml +
-#                   Caddyfile (checked out / copied there once, by hand).
-#   PRODUCTION_ENV  The full production env file contents (KEY=value lines) that
-#                   docker-compose.prod.yml reads via --env-file. This bundles
-#                   every application secret DEPLOYMENT.md's "Required human
-#                   actions" section lists so they never touch the repo:
-#                     JWT_SECRET, TOTP_ENCRYPTION_KEY, DATABASE_URL, APP_URL,
-#                     POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, DOMAIN,
-#                     BACKUP_ENCRYPTION_PASSPHRASE (backup-at-rest encryption;
-#                     keep a copy off the VPS or the dumps are unrestorable),
-#                     CORS_ORIGIN, and any optional SMTP_* / GOOGLE_* / APPLE_* /
-#                     EXTENSION_REDIRECT_URIS values.
-#
-# GHCR authentication uses the built-in GITHUB_TOKEN (no secret to create); the
-# `packages: write` permission below lets it push to ghcr.io/<owner>/*.
-#
-# HEALTHCHECK_URL   (optional) Public URL to poll after deploy; defaults to
-#                   https://${DOMAIN}/api/health via the PRODUCTION_ENV DOMAIN.
-#                   Override as a repository *variable* (vars) if the health
-#                   probe lives at a different origin.
+#                   Optional: GOOGLE_*, APPLE_*, EXTENSION_REDIRECT_URIS
 
 name: Deploy
 
@@ -61,18 +32,16 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: 'Image tag to deploy: a prior commit SHA to roll back, or `latest` for the newest build. Required — there is no default, so a bare dispatch cannot silently roll forward to `latest`.'
+        description: 'The image tag to deploy. Can be a prior commit SHA to roll back or `latest` for the newest build. Required. There is no default so a bare dispatch cannot silently roll forward to `latest`.'
         required: true
   push:
     tags:
       - 'v*'
 
-# Least privilege: read the repo, write packages (push images to GHCR).
 permissions:
   contents: read
   packages: write
 
-# Never let two production deploys race each other onto the same box.
 concurrency:
   group: deploy-production
   cancel-in-progress: false
@@ -84,9 +53,6 @@ env:
 
 jobs:
   build-and-push:
-    # Only a version-tag push builds and publishes images. A manual dispatch is
-    # a redeploy/rollback of an already-published tag, so it skips this job and
-    # never rebuilds HEAD or clobbers `:latest` from an arbitrary ref.
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
@@ -103,9 +69,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Both images are tagged with the commit SHA (immutable, rollback target)
-      # and `latest` (what a plain `docker compose up -d` pulls by default), per
-      # DEPLOYMENT.md's publish step.
       - name: Build and push API image
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
@@ -118,9 +81,6 @@ jobs:
           cache-from: type=gha,scope=api
           cache-to: type=gha,scope=api,mode=max
 
-      # The web image bakes VITE_API_BASE_URL at build time (Vite resolves it
-      # then, not at runtime). `/api` matches the single-domain Caddy shape where
-      # the web app is served at / and the API is proxied under /api/*.
       - name: Build and push web image
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
@@ -137,21 +97,12 @@ jobs:
 
   deploy:
     needs: build-and-push
-    # Run when build-and-push SUCCEEDED (tag push) or was SKIPPED (manual
-    # dispatch), but not when it FAILED. `always()` is required because a job
-    # that `needs:` a skipped job is itself skipped under the implicit
-    # `success()` gate; the result guard then re-excludes the failure path.
     if: ${{ always() && (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # The image tag to roll to: the manual input when dispatched, otherwise the
-      # commit SHA that this tag build produced. Both are immutable references so
-      # a redeploy is deterministic and a rollback is just a prior SHA. The tag
-      # flows straight into `docker compose pull`, so validate it against a
-      # strict Docker-tag pattern and fail fast on anything unexpected.
       - name: Resolve image tag
         id: tag
         env:
@@ -160,7 +111,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             RESOLVED_TAG="$INPUT_IMAGE_TAG"
             if [ -z "$RESOLVED_TAG" ]; then
-              echo "::error::image_tag is required on a manual dispatch (a prior SHA to roll back, or \`latest\`)."
+              echo "::error::An image_tag is required on a manual dispatch. Either a prior SHA to roll back to, or \`latest\`."
               exit 1
             fi
           else
@@ -174,17 +125,6 @@ jobs:
 
           echo "value=$RESOLVED_TAG" >> "$GITHUB_OUTPUT"
 
-      # Ship the stack's declarative config to the VPS BEFORE rolling the
-      # services. docker-compose.prod.yml and the files it bind-mounts (Caddyfile,
-      # config/postgresql.conf, scripts/backup-postgres.sh) are read from
-      # DEPLOY_PATH at `compose up` time. Nothing else in this pipeline refreshes
-      # them, so before this step a compose or config change (a new service, an
-      # edited backup script) never reached the box and `up -d` silently ran the
-      # stale file that was hand-copied once at setup. Copying the checked-out
-      # ref's versions keeps config in lockstep with the images built from the
-      # same commit. This is the exact list of paths the compose file mounts; a
-      # future mount added there must be added here too. Dispatch a rollback from
-      # the ref you are rolling back to so its compose matches the older images.
       - name: Sync compose + config to the VPS
         uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
         with:
@@ -196,11 +136,6 @@ jobs:
           target: ${{ secrets.DEPLOY_PATH }}
           overwrite: true
 
-      # Deploy over SSH: sync secrets, pull the resolved images, migrate the
-      # database BEFORE the new code starts (prisma migrate deploy is written to
-      # be forward-compatible with the still-running old version), then roll the
-      # services. Finally poll /api/health (the public edge) so a container that comes up but cannot
-      # reach Postgres fails the deploy loudly. See DEPLOYMENT.md.
       - name: Deploy to VPS
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
@@ -213,44 +148,28 @@ jobs:
             set -euo pipefail
             cd "$DEPLOY_PATH"
 
-            # Write the production env file (secrets never live on disk in the
-            # repo; this is the operator env file docker-compose.prod.yml reads).
-            umask 077
+            # writes the production env file
             printf '%s\n' "$PRODUCTION_ENV" > production.env
 
-            # Log the VPS's Docker into GHCR so it can pull the (public, but
-            # rate-limited-when-anonymous) images.
+            # logs the VPS's Docker into GHCR so it can pull the images
             echo "$GHCR_TOKEN" | docker login "$REGISTRY" -u "$GHCR_ACTOR" --password-stdin
 
-            # Forward the image references resolved from github.repository_owner
-            # so the compose file's baked-in defaults are never the source of
-            # truth (they exist only as a last-resort local-build fallback).
+            # forwards the resolved image references
             export IMAGE_TAG API_IMAGE WEB_IMAGE
             COMPOSE="docker compose --env-file production.env -f docker-compose.prod.yml"
 
-            # Pull the resolved images.
+            # pulls the resolved images
             $COMPOSE pull
 
-            # Migrate BEFORE starting the new API code (one-shot container).
-            # Run as root: the image drops to USER node for the long-running
-            # service, but node_modules is root-owned, and `prisma migrate
-            # deploy` needs to write its schema engine into @prisma/engines. The
-            # migrate container is ephemeral (migrates, exits); the API service
-            # it rolls up afterward still runs unprivileged as node.
+            # run migrations
             $COMPOSE run --rm --user root api sh -c 'cd /app/apps/api && npx prisma migrate deploy'
 
-            # Roll the services onto the new images.
+            # rolls the services onto the new images
             $COMPOSE up -d
 
             docker logout "$REGISTRY" || true
 
-            # Poll /api/health (the public edge) until 200 (or fail the deploy).
-            # The container HEALTHCHECK polls bare /health directly (the internal
-            # API route is unprefixed; the /api prefix is added by the Caddy
-            # edge). It returns 200 only
-            # when the API can reach Postgres, so this catches a boot that comes
-            # up but cannot serve. Default the URL from DOMAIN in the env file
-            # just written (grep it out rather than sourcing the whole file).
+            # polls /api/health until 200 or fails the deploy
             if [ -z "${HEALTHCHECK_URL:-}" ]; then
               DEPLOY_DOMAIN=$(grep -E '^DOMAIN=' production.env | head -n1 | cut -d= -f2- | tr -d '"')
               HEALTHCHECK_URL="https://${DEPLOY_DOMAIN}/api/health"
@@ -261,10 +180,10 @@ jobs:
                 echo "Health check passed (HTTP 200) after ${attempt} attempt(s)."
                 exit 0
               fi
-              echo "Health check attempt ${attempt}: HTTP ${status}; retrying in 5s."
+              echo "Health check attempt ${attempt}: HTTP ${status}. Retrying in 5s."
               sleep 5
             done
-            echo "Health check never returned 200; deploy failed."
+            echo "Health check never returned 200. Deploy failed."
             exit 1
         env:
           IMAGE_TAG: ${{ steps.tag.outputs.value }}

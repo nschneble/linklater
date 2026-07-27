@@ -100,6 +100,18 @@ describe('PrivacyPolicyPage', () => {
     }
   });
 
+  it('renders <br/> in table cells as a real line break, not literal text', () => {
+    renderPage(null);
+
+    const region = screen.getByRole('region', {
+      name: 'How we use your information',
+    });
+    const table = within(region).getByRole('table');
+
+    expect(table.textContent).not.toContain('<br/>');
+    expect(table.querySelectorAll('td br').length).toBeGreaterThan(0);
+  });
+
   it('underlines in-content links and leaves external links same-tab', () => {
     renderPage(null);
 

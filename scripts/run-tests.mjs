@@ -1,20 +1,18 @@
 #!/usr/bin/env node
+
 // Routes `npm run test [path...]` to the correct workspace test runner.
 //
-// - No path: runs the api and web test suites back-to-back (both run even when
-//   the first fails), then prints a single consolidated block of failed test
-//   files tagged by workspace.
-// - Paths under `apps/web/`: runs Vitest against those files in the web workspace.
-// - Paths under `apps/api/`: runs Jest against those files in the api workspace.
-// - Paths can mix both workspaces; each workspace's runner runs once with all
-//   of its matched files.
+// - No path: Runs the api and web test suites back-to-back
+// - Paths under `apps/web/`: Runs Vitest against files in web workspace
+// - Paths under `apps/api/`: Runs Jest against files in api workspace
+// - Paths can mix both workspaces
 //
-// Jest in apps/api uses `rootDir: "src"`, so we translate the repo-relative
+// Jest in apps/api uses `rootDir: "src"` so we translate the repo-relative
 // path into an api/src-relative path before handing it to Jest.
 //
-// The `eslint-rules/` directory lives at the repo root, outside both
-// workspaces, so its specs run on Node's built-in test runner as an extra step
-// during a full (no-path) run.
+// The `eslint-rules/` directory lives at the repo root, outside of both
+// workspaces, so its specs run on Node's built-in test runner as an extra
+// step during a full (no-path) run.
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -129,7 +127,6 @@ async function runAllWorkspaces() {
 }
 
 function normalizePath(rawPath) {
-  // Strip a leading `./` and convert backslashes so Windows-style input works.
   return rawPath.replace(/\\/g, '/').replace(/^\.\//, '');
 }
 

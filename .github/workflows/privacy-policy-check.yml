@@ -1,23 +1,18 @@
-# Reminder gate for privacy policy edits (docs/PRIVACY.md).
+# Reminder gate for privacy policy edits.
 #
-# The policy promises registered users email notice BEFORE material changes
-# take effect, and the notice is sent by a human running the announce script
-# (docs/DEPLOYMENT.md, "Announcing a privacy policy change"). This check
-# automates the detection half of that contract so the human half cannot be
-# forgotten — it never sends anything itself:
+# The policy promises registered users notice by email before any material
+# changes take effect. The notice is sent manually by running an
+# announcement script. This check automates the detection half of that
+# contract so it's easy to remember when notice needs to be sent.
 #
-#   * Effective date bumped   -> sticky PR comment with the announce runbook
-#                                checklist (this is the "material change
-#                                declared" signal).
-#   * Effective date same     -> sticky PR comment noting the edit is being
-#                                treated as non-material (no announce needed).
-#   * "Last updated" not      -> FAIL. Whatever the edit was, the dateline
-#     bumped                     must move; it is the page's only freshness
-#                                signal.
+# Workflow behavior:
 #
-# Runs only on PRs that touch the policy, so it costs nothing the rest of the
-# time. Comment upsert is marker-based (not --edit-last) so it can never
-# clobber another bot's comment (e.g. the Tuffgal approve flow).
+#   Effective date bumped    Sticky PR comment w/ the announce runbook
+#   Effective date same      Sticky PR comment noting no announce needed
+#   Last updated not bumped  FAIL (the dateline must move)
+#
+# Only runs only on PRs that touch the policy. The comment upsert is
+# marker-based so it can never clobber another bot's comment.
 
 name: Privacy policy check
 
@@ -37,20 +32,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Compare policy datelines against the base branch
+      - name: Compare policy dateline against the base branch
         id: dates
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
 
-          # The merge-ref checkout has the PR's version; fetch the base commit
-          # so both sides of the comparison exist locally.
+          # fetches the policy from the base branch
           git fetch --no-tags --depth=1 origin "$BASE_SHA"
 
           extract_field() {
-            # Pulls "**<field>:** <value>" out of the policy front matter.
-            # Returns empty (not an error) when the field or file is missing.
+            # pulls "**<field>:** <value>" out of the policy frontmatter
             grep -m1 "^\*\*$1:\*\*" | sed -E "s/^\*\*$1:\*\* *//" || true
           }
 
@@ -61,7 +54,7 @@ jobs:
           base_updated="$(printf '%s' "$base_content" | extract_field 'Last updated')"
 
           if [ -z "$head_effective" ] || [ -z "$head_updated" ]; then
-            echo "::error file=docs/PRIVACY.md::The policy must keep its '**Effective date:**' and '**Last updated:**' lines — the /privacy page and this check both key off them."
+            echo "::error file=The policy must keep its **Effective date:** and **Last updated:** datelines."
             exit 1
           fi
 
@@ -91,29 +84,28 @@ jobs:
             echo "## Privacy policy edit detected"
             echo
             if [ "$BASE_EXISTS" = "false" ]; then
-              echo "This PR adds the policy for the first time (effective **${HEAD_EFFECTIVE}**). Nothing to announce — there are no users under an older version."
+              echo "This PR adds a policy for the first time, effective **${HEAD_EFFECTIVE}**. Nothing to announce since there aren't any users on an older version."
             elif [ "$HEAD_EFFECTIVE" != "$BASE_EFFECTIVE" ]; then
-              echo "The effective date moved (**${BASE_EFFECTIVE}** -> **${HEAD_EFFECTIVE}**), which declares a **material change**. The policy promises users email notice before that date, so after this merges and deploys:"
+              echo "Material change detected. The effective date has moved from **${BASE_EFFECTIVE}** to **${HEAD_EFFECTIVE}**. The policy promises users notice by email before that date, so after this is merged and deployed:"
               echo
               echo "- [ ] Dry-run the recipient count:"
               echo "      \`docker compose -f docker-compose.prod.yml run --rm api node dist/scripts/announce-policy-update.js --effective-date \"${HEAD_EFFECTIVE}\" --dry-run\`"
               echo "- [ ] Send for real (drop \`--dry-run\`), **before ${HEAD_EFFECTIVE}**"
               echo
-              echo "Runbook: docs/DEPLOYMENT.md → \"Announcing a privacy policy change\"."
-              # Flag a date that is not comfortably in the future. GNU date on
-              # the runner parses the human-readable form; skip the hint when
-              # it cannot.
+              echo "**Runbook:** docs/DEPLOYMENT.md → \"Announcing a privacy policy change\"."
+
+              # checks if the effective date is uncomfortably soon
               if effective_epoch=$(date -d "$HEAD_EFFECTIVE" +%s 2>/dev/null); then
                 if [ "$effective_epoch" -le "$(date -d '+7 days' +%s)" ]; then
                   echo
                   echo "> [!WARNING]"
-                  echo "> The new effective date is less than a week out (or already past). Users are owed notice *before* it; consider pushing the date."
+                  echo "> The new effective date is less than a week out, or already past. Users are owed notice *beforehand*. Consider pushing the date."
                 fi
               fi
             else
-              echo "The effective date did not move, so this edit is being treated as **non-material** (typo/clarification) — no user announcement is required, only the \"Last updated\" bump."
+              echo "The effective date didn't move, so no user announcement is required. Only the \"Last updated\" bump."
               echo
-              echo "If this PR actually changes what data is collected, who it is shared with, retention, or user rights: bump the **Effective date** to a future date and re-push, and this comment will switch to the announce checklist."
+              echo "If this PR actually changes what data is collected, who it's shared with, retention, or user rights: bump the **Effective date** to a future date and re-push, and this comment will switch to the announce checklist."
             fi
           } > comment.md
 
@@ -134,7 +126,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$BASE_EXISTS" = "true" ] && [ "$HEAD_UPDATED" = "$BASE_UPDATED" ]; then
-            echo "::error file=docs/PRIVACY.md::docs/PRIVACY.md changed but '**Last updated:**' still says '${HEAD_UPDATED}'. Bump it — it is the page's only freshness signal."
+            echo "::error file=docs/PRIVACY.md::docs/PRIVACY.md changed but '**Last updated:**' still says '${HEAD_UPDATED}'. Bump it."
             exit 1
           fi
           echo "Last updated: '${BASE_UPDATED}' -> '${HEAD_UPDATED}'."

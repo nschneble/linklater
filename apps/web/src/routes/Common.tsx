@@ -10,21 +10,12 @@ import VerifyLoginPage from '../components/auth/VerifyLoginPage';
 import { lazy, Suspense } from 'react';
 import { Route } from 'react-router';
 
-// ApiDocsView is lazy-loaded because the custom docs UI plus the OpenAPI
-// parse layer form a self-contained chunk only /docs visitors need; keeping
-// it out of the main bundle (which no longer carries the retired ~300KB
-// Scalar embed) means everyone else never downloads it.
 const ApiDocsView = lazy(() => import('../components/api-docs'));
 
-// Lazy for the same reason as ApiDocsView: react-markdown plus the policy
-// text form a chunk only /privacy visitors need.
 const PrivacyPolicyPage = lazy(
   () => import('../components/privacy/PrivacyPolicyPage'),
 );
 
-// The API docs are PUBLIC (logged-out renders the marketing brand chrome;
-// logged-in renders the user's active theme), so the route lives here in the
-// common table rather than the logged-in-only one.
 function ApiDocsRoute() {
   return (
     <Suspense
@@ -48,9 +39,8 @@ function ApiDocsRoute() {
   );
 }
 
-// The privacy policy is PUBLIC for the same reason as the API docs (and
-// CalOPPA requires it be reachable without an account), so it lives in the
-// common table too.
+// CalOPPA requires allowing users to access the privacy policy without
+// needing to create an account.
 function PrivacyPolicyRoute() {
   return (
     <Suspense
