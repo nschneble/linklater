@@ -31,13 +31,19 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 
+# patch-package patches must exist before `npm ci` runs the postinstall hook,
+# or the install completes with the patches silently unapplied.
+COPY patches ./patches
+
 # Workspace-aware install (dev deps included: vite, tailwind, and tsc are all
 # devDependencies and required to build).
 RUN npm ci
 
 # Copy the web app and compile it to apps/web/dist (Vite's default outDir; not
-# overridden in vite.config.ts).
+# overridden in vite.config.ts). The privacy policy lives outside apps/web and
+# is bundled into the app (PrivacyPolicyPage imports it with ?raw).
 COPY apps/web ./apps/web
+COPY docs/PRIVACY.md ./docs/PRIVACY.md
 WORKDIR /app/apps/web
 RUN npm run build
 

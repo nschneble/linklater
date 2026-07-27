@@ -9,6 +9,7 @@
  *   - The form always renders – no interstitial branch
  *   - Mode-change tabs wire up correctly (login / sign up labels visible)
  *   - Forgot-password link present in login mode
+ *   - Privacy policy link present in register mode, navigating to /privacy
  */
 
 import LoginRegisterView from './LoginRegisterView';
@@ -16,6 +17,17 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRef } from 'react';
 import type { RefObject } from 'react';
+
+const navigate = vi.fn();
+
+vi.mock('react-router', async () => {
+  const actual =
+    await vi.importActual<typeof import('react-router')>('react-router');
+  return {
+    ...actual,
+    useNavigate: () => navigate,
+  };
+});
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -163,6 +175,32 @@ describe('LoginRegisterView forgot password link', () => {
     );
 
     expect(onForgotPassword).toHaveBeenCalled();
+  });
+});
+
+describe('LoginRegisterView privacy policy link', () => {
+  it('renders the privacy policy link in register mode', () => {
+    renderView({ mode: 'register' });
+    expect(
+      screen.getByRole('button', { name: /read our privacy policy/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('navigates to /privacy when the link is clicked', () => {
+    renderView({ mode: 'register' });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /read our privacy policy/i }),
+    );
+
+    expect(navigate).toHaveBeenCalledWith('/privacy');
+  });
+
+  it('does not render the privacy policy link in login mode', () => {
+    renderView({ mode: 'login' });
+    expect(
+      screen.queryByRole('button', { name: /read our privacy policy/i }),
+    ).not.toBeInTheDocument();
   });
 });
 

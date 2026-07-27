@@ -5,6 +5,7 @@ import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import SlidingTabBar from '../common/SlidingTabBar';
 import AuthCard from './AuthCard';
+import { useNavigate } from 'react-router';
 import type { FormEvent, RefObject } from 'react';
 
 const googleSsoEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true';
@@ -60,6 +61,8 @@ export default function LoginRegisterView({
   password,
   passwordReference,
 }: LoginRegisterViewProps) {
+  const navigate = useNavigate();
+
   return (
     <AuthCard>
       <h1 className="mb-2 text-[var(--mount-text)] text-center text-3xl font-bold text-balance">
@@ -223,17 +226,17 @@ export default function LoginRegisterView({
         </>
       )}
 
-      <div
-        aria-hidden={mode !== 'login' ? true : undefined}
-        inert={mode !== 'login' ? true : undefined}
-        className="flex flex-col items-center gap-2 mt-4 text-center transition-opacity duration-200 aria-hidden:opacity-0 aria-hidden:pointer-events-none"
-      >
-        <LinkButton
-          tabIndex={mode !== 'login' ? -1 : undefined}
-          onClick={onForgotPassword}
-        >
-          I literally have no idea what my password is
-        </LinkButton>
+      <div className="flex flex-col items-center mt-4 text-center transition-opacity duration-200 aria-hidden:opacity-0 aria-hidden:pointer-events-none">
+        {mode === 'login' && (
+          <LinkButton onClick={onForgotPassword}>
+            I literally have no idea what my password is
+          </LinkButton>
+        )}
+        {mode === 'register' && (
+          <LinkButton onClick={() => navigate('/privacy')}>
+            Read our privacy policy
+          </LinkButton>
+        )}
       </div>
     </AuthCard>
   );

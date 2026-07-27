@@ -22,6 +22,19 @@
 # (npm run migrate:deploy also runs `prisma generate`, which is already baked
 # into the image; the bare CLI call is the leaner deploy-time step.)
 
+# Container stdout is the only place logs land (no service writes files):
+# Caddy has no `log` directive, so there are no access logs, and the API's
+# CompactLogger emits lifecycle lines, not per-request entries. Without this
+# block Docker's json-file driver keeps that stream forever; the caps bound it
+# to ~30MB per service and make the privacy policy's "rolling basis,
+# automatically overwritten, never archived" retention statement true by
+# construction (docs/PRIVACY.md, Data Retention).
+x-bounded-logging: &bounded-logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
 services:
   postgres:
     # postgres:16 matches the CI-tested version. The official image ships the
@@ -29,6 +42,7 @@ services:
     # is available without an extra build step.
     image: postgres:16
     restart: unless-stopped
+    logging: *bounded-logging
     deploy:
       resources:
         limits:
@@ -55,6 +69,7 @@ services:
     #   docker build -f apps/api/Dockerfile -t linklater-api .
     image: ${API_IMAGE:-ghcr.io/nschneble/linklater-api}:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    logging: *bounded-logging
     depends_on:
       postgres:
         condition: service_healthy
@@ -101,6 +116,7 @@ services:
     #     --build-arg VITE_API_BASE_URL=/api -t linklater-web .
     image: ${WEB_IMAGE:-ghcr.io/nschneble/linklater-web}:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    logging: *bounded-logging
     depends_on:
       - api
     environment:
@@ -126,6 +142,7 @@ services:
     # ships psql/createdb/dropdb for the restore procedure in DEPLOYMENT.md.
     image: postgres:16
     restart: unless-stopped
+    logging: *bounded-logging
     depends_on:
       postgres:
         condition: service_healthy
@@ -148,6 +165,12 @@ services:
       BACKUP_SCHEDULE_HOUR: ${BACKUP_SCHEDULE_HOUR:-3}
       BACKUP_KEEP_DAILY: ${BACKUP_KEEP_DAILY:-7}
       BACKUP_KEEP_WEEKLY: ${BACKUP_KEEP_WEEKLY:-4}
+      # Dump-at-rest encryption (AES-256 via openssl). Set it — the privacy
+      # policy's "encrypted backups" statement depends on it, and the script
+      # warns on every run it takes an unencrypted dump. Losing this
+      # passphrase makes every backup unrestorable, so keep a copy somewhere
+      # that survives the VPS (see DEPLOYMENT.md "Required human actions").
+      BACKUP_ENCRYPTION_PASSPHRASE: ${BACKUP_ENCRYPTION_PASSPHRASE:-}
     volumes:
       # The backup script (read-only) and the dump volume that outlives the
       # container. The operator syncs postgres-backups offsite (DEPLOYMENT.md).

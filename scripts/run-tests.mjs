@@ -1,18 +1,18 @@
 #!/usr/bin/env node
-// Routes `npm run test [path]` to the correct workspace test runner.
+
+// Routes `npm run test [path...]` to the correct workspace test runner.
 //
-// - No path: runs the api and web test suites back-to-back (both run even when
-//   the first fails), then prints a single consolidated block of failed test
-//   files tagged by workspace.
-// - Path under `apps/web/`: runs Vitest against that file in the web workspace.
-// - Path under `apps/api/`: runs Jest against that file in the api workspace.
+// - No path: Runs the api and web test suites back-to-back
+// - Paths under `apps/web/`: Runs Vitest against files in web workspace
+// - Paths under `apps/api/`: Runs Jest against files in api workspace
+// - Paths can mix both workspaces
 //
-// Jest in apps/api uses `rootDir: "src"`, so we translate the repo-relative
+// Jest in apps/api uses `rootDir: "src"` so we translate the repo-relative
 // path into an api/src-relative path before handing it to Jest.
 //
-// The `eslint-rules/` directory lives at the repo root, outside both
-// workspaces, so its specs run on Node's built-in test runner as an extra step
-// during a full (no-path) run.
+// The `eslint-rules/` directory lives at the repo root, outside of both
+// workspaces, so its specs run on Node's built-in test runner as an extra
+// step during a full (no-path) run.
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -20,7 +20,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const repoRoot = resolve(import.meta.dirname, '..');
-const testTarget = process.argv[2];
+const testTargets = process.argv.slice(2);
 
 function runCommand(command, commandArguments, options = {}) {
   return new Promise((resolvePromise, rejectPromise) => {
@@ -127,58 +127,75 @@ async function runAllWorkspaces() {
 }
 
 function normalizePath(rawPath) {
-  // Strip a leading `./` and convert backslashes so Windows-style input works.
   return rawPath.replace(/\\/g, '/').replace(/^\.\//, '');
 }
 
-async function runSingleFile(rawPath) {
-  const normalizedPath = normalizePath(rawPath);
-  const absolutePath = resolve(repoRoot, normalizedPath);
+async function runFiles(rawPaths) {
+  const webRelativePaths = [];
+  const apiRelativePaths = [];
 
-  if (!existsSync(absolutePath)) {
-    console.error(`Test file not found: ${rawPath}`);
+  for (const rawPath of rawPaths) {
+    const normalizedPath = normalizePath(rawPath);
+    const absolutePath = resolve(repoRoot, normalizedPath);
+
+    if (!existsSync(absolutePath)) {
+      console.error(`Test file not found: ${rawPath}`);
+      return 1;
+    }
+
+    if (normalizedPath.startsWith('apps/web/')) {
+      webRelativePaths.push(normalizedPath.slice('apps/web/'.length));
+      continue;
+    }
+
+    if (normalizedPath.startsWith('apps/api/')) {
+      const apiSrcPrefix = 'apps/api/src/';
+      if (!normalizedPath.startsWith(apiSrcPrefix)) {
+        console.error(
+          `API tests must live under apps/api/src/. Received: ${rawPath}`,
+        );
+        return 1;
+      }
+      apiRelativePaths.push(normalizedPath.slice(apiSrcPrefix.length));
+      continue;
+    }
+
+    console.error(
+      `Path must start with apps/web/ or apps/api/. Received: ${rawPath}`,
+    );
     return 1;
   }
 
-  if (normalizedPath.startsWith('apps/web/')) {
-    const webRelativePath = normalizedPath.slice('apps/web/'.length);
-    return runCommand('npm', [
-      'run',
-      'test',
-      '--workspace',
-      '@linklater/web',
-      '--',
-      webRelativePath,
-    ]);
-  }
+  let exitCode = 0;
 
-  if (normalizedPath.startsWith('apps/api/')) {
-    const apiSrcPrefix = 'apps/api/src/';
-    if (!normalizedPath.startsWith(apiSrcPrefix)) {
-      console.error(
-        `API tests must live under apps/api/src/. Received: ${rawPath}`,
-      );
-      return 1;
-    }
-    const apiRelativePath = normalizedPath.slice(apiSrcPrefix.length);
-    return runCommand('npm', [
+  if (apiRelativePaths.length > 0) {
+    exitCode ||= await runCommand('npm', [
       'run',
       'test',
       '--workspace',
       '@linklater/api',
       '--',
-      apiRelativePath,
+      ...apiRelativePaths,
     ]);
   }
 
-  console.error(
-    `Path must start with apps/web/ or apps/api/. Received: ${rawPath}`,
-  );
-  return 1;
+  if (webRelativePaths.length > 0) {
+    exitCode ||= await runCommand('npm', [
+      'run',
+      'test',
+      '--workspace',
+      '@linklater/web',
+      '--',
+      ...webRelativePaths,
+    ]);
+  }
+
+  return exitCode;
 }
 
-const exitCode = testTarget
-  ? await runSingleFile(testTarget)
-  : await runAllWorkspaces();
+const exitCode =
+  testTargets.length > 0
+    ? await runFiles(testTargets)
+    : await runAllWorkspaces();
 
 process.exit(exitCode);

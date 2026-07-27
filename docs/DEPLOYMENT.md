@@ -25,7 +25,7 @@ that follows:
 | Email           | SMTP, optional. If the `SMTP_*` variables are unset the app runs fine; transactional email (verification, password reset, magic links, deletion) does not send. When SMTP is configured, mail is enqueued on the `email-send` queue and delivered by an in-process pg-boss worker with 3-attempt exponential-backoff retry, so a broken relay produces retry churn and failed `pgboss.job` rows rather than a synchronous request error.                                        |
 | Health probe    | `GET /health` is unauthenticated and cheap (a single `SELECT 1` plus an in-memory read of the pg-boss run state, no extra query). It returns `200` when the database answers and `503` when it does not, so orchestrators and deploy scripts can gate on it. The body also reports the background-job queue state (`queue: 'up' \| 'down'`) for observability, but a stopped queue does not fail the probe (a false-negative that flapped deploys would be worse than the gap). |
 | Migrations      | `npm run migrate:deploy --workspace @linklater/api` runs `prisma migrate deploy && prisma generate`. This is the production-safe, non-interactive migration path.                                                                                                                                                                                                                                                                                                               |
-| Backups         | A `backup` sidecar container (`scripts/backup-postgres.sh`) takes a nightly `pg_dump -Fc` over the Compose network and writes compressed dumps to the `postgres-backups` volume, retaining 7 daily and 4 weekly. The operator syncs that volume offsite (S3 via `rclone`/`aws s3 sync`, another host via `rsync`, or an SFTP server via `scripts/sync-backups-offsite.sh.example`). See [Backups](#backups) for the restore procedure.                                          |
+| Backups         | A `backup` sidecar container (`scripts/backup-postgres.sh`) takes a nightly `pg_dump -Fc` over the Compose network and writes compressed, AES-256-encrypted dumps to the `postgres-backups` volume, retaining 7 daily and 4 weekly. The operator syncs that volume offsite (S3 via `rclone`/`aws s3 sync`, another host via `rsync`, or an SFTP server via `scripts/sync-backups-offsite.sh.example`). See [Backups](#backups) for the restore procedure.                       |
 
 Two consequences drive everything below:
 
@@ -319,6 +319,13 @@ automation should not (and in some cases cannot) perform.
     wrong value ships dead links to users.
   - `SMTP_*` (optional): host, port, credentials, and from-address if you want
     verification, password-reset, magic-link, and deletion emails to send.
+  - `BACKUP_ENCRYPTION_PASSPHRASE`: a long random string
+    (`openssl rand -base64 32`). The nightly dumps are AES-256-encrypted with
+    it before touching disk; without it the backup sidecar still runs but
+    warns on every run that dumps are unencrypted, and the privacy policy's
+    "encrypted backups" statement stops being true. Store a copy OFF the VPS
+    (password manager) — the whole point of a backup is surviving the box,
+    and an encrypted dump without its passphrase is noise.
   - `CORS_ORIGIN` (recommended in production): set it to your front-end origin
     (plus any browser-extension origins). It defaults to open `*` for bookmarklet
     support, which you should narrow once the domain is known. **Caveat:**
@@ -398,6 +405,35 @@ about). A destructive migration is not, which is why the database conventions in
 `NOT VALID`-then-`VALIDATE` shape that Squawk enforces. Keep migrations
 backward-compatible and rollback stays a one-command operation.
 
+### Announcing a privacy policy change
+
+`docs/PRIVACY.md` promises registered users email notice before material
+policy changes take effect, so a material policy edit is a two-step deploy:
+update the markdown (the `/privacy` page renders it directly), then — before
+the stated effective date — fan out the notice to every verified account:
+
+```bash
+# Sanity-check the recipient count first
+docker compose -f docker-compose.prod.yml run --rm api \
+  node dist/scripts/announce-policy-update.js \
+  --effective-date "August 15, 2026" --dry-run
+
+# Then enqueue for real (delivery rides the email-send queue with retries)
+docker compose -f docker-compose.prod.yml run --rm api \
+  node dist/scripts/announce-policy-update.js \
+  --effective-date "August 15, 2026"
+```
+
+SMTP must be configured or the queued jobs will just churn through their
+retries and fail.
+
+You do not have to remember any of this unprompted: the "Privacy policy
+check" workflow watches every PR that touches `docs/PRIVACY.md` and posts a
+sticky comment — the announce checklist above when the effective date moves
+(a material change), or a "treated as non-material" note when it does not.
+It also fails the PR if the policy changed without a "Last updated" bump.
+Detection is automated; sending the notice stays a human decision.
+
 ## Backups
 
 A `backup` companion service in `docker-compose.prod.yml` takes a scheduled
@@ -410,12 +446,20 @@ server version), connects to Postgres over the Compose network with the same
 
 - **What it does.** Every night at 03:00 UTC it runs `pg_dump -Fc` (custom
   format: compressed, and restorable with `pg_restore`) into
-  `/backups/daily/linklater-<date>.dump` on the `postgres-backups` volume. On
-  Mondays it also keeps a copy under `/backups/weekly/`. It retains 7 daily
+  `/backups/daily/linklater-<date>.dump.enc` on the `postgres-backups` volume.
+  On Mondays it also keeps a copy under `/backups/weekly/`. It retains 7 daily
   dumps and 4 weekly dumps, pruning older files in the same run. The schedule
   and retention are tunable through `BACKUP_SCHEDULE_HOUR`, `BACKUP_KEEP_DAILY`,
   and `BACKUP_KEEP_WEEKLY` in the operator env file; the defaults match this
   plan.
+- **Encryption at rest.** With `BACKUP_ENCRYPTION_PASSPHRASE` set (see
+  Required human actions), the dump streams through
+  `openssl enc -aes-256-cbc -pbkdf2 -iter 200000` on its way to disk — the
+  volume and every offsite copy hold ciphertext only, which is what lets the
+  privacy policy claim encrypted backups. Without the variable the script
+  still takes (unencrypted, `.dump`-suffixed) backups and logs a warning on
+  every run. Pre-encryption `.dump` files age out of retention within ~35
+  days of enabling it.
 - **Why `pg_dump`, not provider snapshots.** A logical dump is portable. It
   restores onto any Postgres 16 or newer, on any host, which keeps the low exit
   cost intact. Provider block-storage snapshots are convenient but
@@ -464,11 +508,17 @@ which the dump recreates:
 docker compose --env-file production.env -f docker-compose.prod.yml \
   run --rm --entrypoint bash backup -c '
     createdb -T template0 linklater_restore_test &&
-    pg_restore -d linklater_restore_test /backups/daily/linklater-<date>.dump &&
+    openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+      -pass env:BACKUP_ENCRYPTION_PASSPHRASE \
+      -in /backups/daily/linklater-<date>.dump.enc \
+      | pg_restore -d linklater_restore_test &&
     psql -d linklater_restore_test -c "SELECT count(*) FROM \"Link\";" &&
     dropdb linklater_restore_test
   '
 ```
+
+(For a legacy unencrypted `.dump`, skip the `openssl` stage and pass the file
+to `pg_restore` directly.)
 
 **Disaster recovery (rebuild the live database from a dump).** Stop the writers
 first so nothing races the restore, then restore into the production database
@@ -478,8 +528,10 @@ and roll everything back up:
 COMPOSE="docker compose --env-file production.env -f docker-compose.prod.yml"
 $COMPOSE stop api web
 $COMPOSE run --rm --entrypoint bash backup -c '
-  pg_restore --clean --if-exists --no-owner -d "$PGDATABASE" \
-    /backups/daily/linklater-<date>.dump
+  openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+    -pass env:BACKUP_ENCRYPTION_PASSPHRASE \
+    -in /backups/daily/linklater-<date>.dump.enc \
+    | pg_restore --clean --if-exists --no-owner -d "$PGDATABASE"
 '
 $COMPOSE up -d
 ```

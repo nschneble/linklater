@@ -30,6 +30,19 @@ const RSS_XML = `<?xml version="1.0" encoding="UTF-8"?>
   </channel>
 </rss>`;
 
+const RSS_XML_WITH_STYLED_TITLE = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Sample Feed</title>
+    <item>
+      <title><![CDATA[Why the <i>Cyclospora</i> Outbreak Is Hard to Pin Down]]></title>
+      <link>https://example.com/styled-title</link>
+      <description>Some description.</description>
+      <pubDate>Wed, 28 May 2026 12:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>`;
+
 const ATOM_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>Sample Atom</title>
@@ -116,6 +129,28 @@ describe('RssFeedService', () => {
       expect(
         prismaMock.rssEntry.updateMany as jest.Mock,
       ).not.toHaveBeenCalled();
+    });
+
+    it('strips embedded style tags out of item titles', async () => {
+      fetchMock.mockResolvedValueOnce(textResponse(RSS_XML_WITH_STYLED_TITLE));
+      (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValueOnce([]);
+      (prismaMock.rssEntry.createMany as jest.Mock).mockResolvedValue({
+        count: 1,
+      });
+
+      await service.refreshOne({
+        key: 'nautilus',
+        name: 'Nautilus',
+        type: 'latest',
+        feedUrl: 'https://nautil.us/feed.rss',
+        siteName: 'Nautilus',
+      });
+
+      const createCall = (prismaMock.rssEntry.createMany as jest.Mock).mock
+        .calls[0][0] as { data: Array<{ title: string }> };
+      expect(createCall.data[0].title).toBe(
+        'Why the Cyclospora Outbreak Is Hard to Pin Down',
+      );
     });
 
     it('passes skipDuplicates so a racing duplicate insert does not throw the whole batch', async () => {

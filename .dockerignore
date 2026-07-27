@@ -38,5 +38,7 @@ tuffgal
 .DS_Store
 
 # Markdown docs — not needed inside either image (index.html is not markdown,
-# so this never touches the web app entry point).
+# so this never touches the web app entry point). Exception: the privacy policy
+# is bundled into the web app (PrivacyPolicyPage imports it with ?raw).
 *.md
+!docs/PRIVACY.md

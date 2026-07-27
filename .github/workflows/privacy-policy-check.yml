@@ -1,0 +1,132 @@
+# Reminder gate for privacy policy edits.
+#
+# The policy promises registered users notice by email before any material
+# changes take effect. The notice is sent manually by running an
+# announcement script. This check automates the detection half of that
+# contract so it's easy to remember when notice needs to be sent.
+#
+# Workflow behavior:
+#
+#   Effective date bumped    Sticky PR comment w/ the announce runbook
+#   Effective date same      Sticky PR comment noting no announce needed
+#   Last updated not bumped  FAIL (the dateline must move)
+#
+# Only runs only on PRs that touch the policy. The comment upsert is
+# marker-based so it can never clobber another bot's comment.
+
+name: Privacy policy check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/PRIVACY.md'
+
+permissions:
+  contents: read
+  pull-requests: write # upsert the sticky reminder comment
+
+jobs:
+  policy-notice:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Compare policy dateline against the base branch
+        id: dates
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+
+          # fetches the policy from the base branch
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+
+          extract_field() {
+            # pulls "**<field>:** <value>" out of the policy frontmatter
+            grep -m1 "^\*\*$1:\*\*" | sed -E "s/^\*\*$1:\*\* *//" || true
+          }
+
+          base_content="$(git show "$BASE_SHA:docs/PRIVACY.md" 2>/dev/null || true)"
+          head_effective="$(extract_field 'Effective date' < docs/PRIVACY.md)"
+          head_updated="$(extract_field 'Last updated' < docs/PRIVACY.md)"
+          base_effective="$(printf '%s' "$base_content" | extract_field 'Effective date')"
+          base_updated="$(printf '%s' "$base_content" | extract_field 'Last updated')"
+
+          if [ -z "$head_effective" ] || [ -z "$head_updated" ]; then
+            echo "::error file=The policy must keep its **Effective date:** and **Last updated:** datelines."
+            exit 1
+          fi
+
+          {
+            echo "base_exists=$([ -n "$base_content" ] && echo true || echo false)"
+            echo "head_effective=$head_effective"
+            echo "base_effective=$base_effective"
+            echo "head_updated=$head_updated"
+            echo "base_updated=$base_updated"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upsert the reminder comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_EXISTS: ${{ steps.dates.outputs.base_exists }}
+          HEAD_EFFECTIVE: ${{ steps.dates.outputs.head_effective }}
+          BASE_EFFECTIVE: ${{ steps.dates.outputs.base_effective }}
+        run: |
+          set -euo pipefail
+
+          MARKER='<!-- privacy-policy-check -->'
+
+          {
+            echo "$MARKER"
+            echo "## Privacy policy edit detected"
+            echo
+            if [ "$BASE_EXISTS" = "false" ]; then
+              echo "This PR adds a policy for the first time, effective **${HEAD_EFFECTIVE}**. Nothing to announce since there aren't any users on an older version."
+            elif [ "$HEAD_EFFECTIVE" != "$BASE_EFFECTIVE" ]; then
+              echo "Material change detected. The effective date has moved from **${BASE_EFFECTIVE}** to **${HEAD_EFFECTIVE}**. The policy promises users notice by email before that date, so after this is merged and deployed:"
+              echo
+              echo "- [ ] Dry-run the recipient count:"
+              echo "      \`docker compose -f docker-compose.prod.yml run --rm api node dist/scripts/announce-policy-update.js --effective-date \"${HEAD_EFFECTIVE}\" --dry-run\`"
+              echo "- [ ] Send for real (drop \`--dry-run\`), **before ${HEAD_EFFECTIVE}**"
+              echo
+              echo "**Runbook:** docs/DEPLOYMENT.md → \"Announcing a privacy policy change\"."
+
+              # checks if the effective date is uncomfortably soon
+              if effective_epoch=$(date -d "$HEAD_EFFECTIVE" +%s 2>/dev/null); then
+                if [ "$effective_epoch" -le "$(date -d '+7 days' +%s)" ]; then
+                  echo
+                  echo "> [!WARNING]"
+                  echo "> The new effective date is less than a week out, or already past. Users are owed notice *beforehand*. Consider pushing the date."
+                fi
+              fi
+            else
+              echo "The effective date didn't move, so no user announcement is required. Only the \"Last updated\" bump."
+              echo
+              echo "If this PR actually changes what data is collected, who it's shared with, retention, or user rights: bump the **Effective date** to a future date and re-push, and this comment will switch to the announce checklist."
+            fi
+          } > comment.md
+
+          existing_id=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" | head -n1)
+
+          if [ -n "$existing_id" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${existing_id}" -F body=@comment.md > /dev/null
+          else
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file comment.md
+          fi
+
+      - name: Require a "Last updated" bump
+        env:
+          BASE_EXISTS: ${{ steps.dates.outputs.base_exists }}
+          HEAD_UPDATED: ${{ steps.dates.outputs.head_updated }}
+          BASE_UPDATED: ${{ steps.dates.outputs.base_updated }}
+        run: |
+          set -euo pipefail
+          if [ "$BASE_EXISTS" = "true" ] && [ "$HEAD_UPDATED" = "$BASE_UPDATED" ]; then
+            echo "::error file=docs/PRIVACY.md::docs/PRIVACY.md changed but '**Last updated:**' still says '${HEAD_UPDATED}'. Bump it."
+            exit 1
+          fi
+          echo "Last updated: '${BASE_UPDATED}' -> '${HEAD_UPDATED}'."

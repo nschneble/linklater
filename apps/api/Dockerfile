@@ -31,6 +31,10 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 
+# patch-package patches must exist before `npm ci` runs the postinstall hook,
+# or the install completes with the patches silently unapplied.
+COPY patches ./patches
+
 # Workspace-aware install of every dependency (dev deps included: the Nest CLI
 # and Prisma CLI are needed to build). `--ignore-scripts` is deliberately NOT
 # used because Prisma's postinstall is required.

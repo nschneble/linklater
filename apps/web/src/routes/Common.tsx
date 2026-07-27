@@ -10,15 +10,12 @@ import VerifyLoginPage from '../components/auth/VerifyLoginPage';
 import { lazy, Suspense } from 'react';
 import { Route } from 'react-router';
 
-// ApiDocsView is lazy-loaded because the custom docs UI plus the OpenAPI
-// parse layer form a self-contained chunk only /docs visitors need; keeping
-// it out of the main bundle (which no longer carries the retired ~300KB
-// Scalar embed) means everyone else never downloads it.
 const ApiDocsView = lazy(() => import('../components/api-docs'));
 
-// The API docs are PUBLIC (logged-out renders the marketing brand chrome;
-// logged-in renders the user's active theme), so the route lives here in the
-// common table rather than the logged-in-only one.
+const PrivacyPolicyPage = lazy(
+  () => import('../components/privacy/PrivacyPolicyPage'),
+);
+
 function ApiDocsRoute() {
   return (
     <Suspense
@@ -42,9 +39,35 @@ function ApiDocsRoute() {
   );
 }
 
+// CalOPPA requires allowing users to access the privacy policy without
+// needing to create an account.
+function PrivacyPolicyRoute() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          data-theme="branding"
+          className="flex items-center justify-center min-h-screen bg-hit-man text-[var(--base-text)] select-none"
+        >
+          <p role="status" aria-live="polite" className="sr-only">
+            Loading privacy policy…
+          </p>
+          <i
+            className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+            aria-hidden="true"
+          />
+        </div>
+      }
+    >
+      <PrivacyPolicyPage />
+    </Suspense>
+  );
+}
+
 export function commonRoutes() {
   return [
     <Route key="api-docs" path="/docs" element={<ApiDocsRoute />} />,
+    <Route key="privacy" path="/privacy" element={<PrivacyPolicyRoute />} />,
     <Route key="logout" path="/logout" element={<LogoutPage />} />,
     <Route
       key="confirm-account-deletion"
