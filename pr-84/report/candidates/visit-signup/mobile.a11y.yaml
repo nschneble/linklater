@@ -10,8 +10,5 @@
   - textbox "Password":
     - /placeholder: Leave blank to use a magic link
   - button "Sign up with magic link"
-- paragraph:
-  - text: Wondering where your email goes?
-  - link "Privacy policy (opens in new tab)":
-    - /url: /privacy
+- button "Read our privacy policy"
 - status

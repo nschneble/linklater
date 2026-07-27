@@ -31,3 +31,6 @@
       - listitem:
         - link "Contact":
           - /url: mailto:linklater@fancyenchiladas.net
+      - listitem:
+        - link "Privacy":
+          - /url: /privacy
