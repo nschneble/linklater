@@ -1,9 +1,11 @@
+import { Agent } from 'undici';
 import { jest } from '@jest/globals';
 import { type LookupFunction } from 'node:net';
 
 import {
   assertPublicHost,
   createValidatingLookup,
+  defaultFetchImpl,
   PrivateHostError,
   safeFetch,
 } from './safe-fetch.js';
@@ -296,5 +298,47 @@ describe('safeFetch', () => {
         fetchImpl: fetchImpl as never,
       }),
     ).rejects.toThrow(/too many redirects/i);
+  });
+});
+
+describe('defaultFetchImpl', () => {
+  it('dispatches through an undici Agent without a cross-version handler failure', async () => {
+    // Regression guard for the metadata-fetch outage. safeFetch pins the TCP
+    // connect through an undici `Agent` dispatcher (`safeAgent`), so its default
+    // fetch MUST come from the same `undici` instance as that Agent. A
+    // dispatcher built by one `undici` major is rejected by a `fetch` from
+    // another with `InvalidArgumentError: invalid onRequestStart method`, which
+    // fails every request. Node's built-in global `fetch` is a separately
+    // versioned `undici` bundled in the runtime, so dispatching `safeAgent`
+    // through it broke all metadata fetches once `undici` was bumped to a major
+    // the deploy runtime did not ship.
+    //
+    // The connector below fails fast with a marker instead of opening a socket,
+    // so no network is touched. Reaching the connector proves the fetch/Agent
+    // pair is compatible; a handler-validation failure rejects before the
+    // connector ever runs.
+    const agent = new Agent({
+      connect(_options, callback) {
+        callback(new Error('connector-reached'), null);
+      },
+    });
+
+    try {
+      const rejection = await defaultFetchImpl('http://public.example/', {
+        dispatcher: agent,
+      }).then(
+        () => {
+          throw new Error('expected the fetch to reject');
+        },
+        (error: unknown) => error,
+      );
+
+      const cause = (rejection as { cause?: unknown }).cause;
+      const causeMessage =
+        cause instanceof Error ? cause.message : String(cause);
+      expect(causeMessage).toBe('connector-reached');
+    } finally {
+      await agent.close();
+    }
   });
 });

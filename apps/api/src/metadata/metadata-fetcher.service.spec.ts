@@ -1,7 +1,26 @@
 import { jest } from '@jest/globals';
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { MetadataFetcherService } from './metadata-fetcher.service';
+import type { MetadataFetcherService } from './metadata-fetcher.service';
+
+// safeFetch dispatches through `undici`'s own `fetch` so its dispatcher (an
+// `undici` Agent) and the fetch come from one `undici` instance (see
+// safe-fetch.ts). Mock that module – in ESM that means `unstable_mockModule`
+// plus a dynamic import of the module under test – and forward its `fetch` to
+// `global.fetch`, which these tests already drive, so every existing
+// `global.fetch` expectation stays intact.
+const undiciFetchMock = jest.fn();
+jest.unstable_mockModule('undici', () => ({
+  Agent: class {},
+  fetch: undiciFetchMock,
+}));
+undiciFetchMock.mockImplementation(
+  (input: string | URL | Request, init?: RequestInit) =>
+    global.fetch(input, init),
+);
+
+const { MetadataFetcherService: MetadataFetcherServiceClass } =
+  await import('./metadata-fetcher.service');
 
 /**
  * Builds a minimal fetch mock that returns a valid HTML response. Used to
@@ -42,10 +61,10 @@ describe('MetadataFetcherService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MetadataFetcherService],
+      providers: [MetadataFetcherServiceClass],
     }).compile();
 
-    service = module.get<MetadataFetcherService>(MetadataFetcherService);
+    service = module.get<MetadataFetcherService>(MetadataFetcherServiceClass);
     jest.clearAllMocks();
   });
 
