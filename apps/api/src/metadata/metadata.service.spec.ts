@@ -15,6 +15,20 @@ jest.mock('../prisma/prisma.service', () => ({
 }));
 jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 
+// `safeFetch` runs an EAGER `assertPublicHost` before it ever calls the fetch
+// impl, and for a DNS-name host that does a real `node:dns/promises` lookup.
+// In a network-restricted sandbox that lookup throws `ENOTFOUND`, so `safeFetch`
+// rejects before the mocked fetch runs and every DNS-name test sees empty
+// metadata – a false failure that looks exactly like a broken fetch mock. Stub
+// the resolver to hand back a fixed PUBLIC IP for name hosts so the suite is
+// green identically under sandbox and networked execution. The SSRF-block tests
+// are unaffected: `isPrivateHost`'s literal pre-check rejects private hosts
+// (e.g. `192.168.1.1`) before any DNS lookup runs, so this stub never turns a
+// private host into a public one.
+jest.unstable_mockModule('node:dns/promises', () => ({
+  lookup: jest.fn(async () => [{ address: '93.184.216.34', family: 4 }]),
+}));
+
 // safeFetch dispatches through `undici`'s own `fetch` so its dispatcher (an
 // `undici` Agent) and the fetch come from one `undici` instance (see
 // safe-fetch.ts). Mock that module – in ESM that means `unstable_mockModule`

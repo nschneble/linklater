@@ -1,4 +1,4 @@
-import { Agent } from 'undici';
+import { Agent, fetch as undiciFetch } from 'undici';
 import { jest } from '@jest/globals';
 import { type LookupFunction } from 'node:net';
 
@@ -340,5 +340,18 @@ describe('defaultFetchImpl', () => {
     } finally {
       await agent.close();
     }
+  });
+
+  it("is undici's own exported fetch, not Node's global fetch", () => {
+    // Version-INDEPENDENT guard. The connector-reachability test above only
+    // bites when the runtime's built-in `undici` and this package's pinned
+    // `undici` differ in major (the outage's actual precondition); on a Node
+    // whose built-in `undici` matches the pinned one, it passes even if the
+    // default fetch were reverted to the global. This reference check fails
+    // deterministically the moment `defaultFetchImpl` is sourced from anything
+    // other than the pinned `undici`'s own `fetch`, on every Node/undici combo.
+    // The `as unknown as FetchImpl` cast in safe-fetch.ts is type-only, so the
+    // runtime reference is undici's `fetch` unchanged.
+    expect(defaultFetchImpl).toBe(undiciFetch);
   });
 });
