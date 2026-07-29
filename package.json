@@ -39,7 +39,7 @@
     "pg": "^8.11.0",
     "prettier": "^3.9.5",
     "squawk-cli": "^2.60.0",
-    "tuffgal": "0.2.0-alpha.4",
+    "tuffgal": "0.2.0-alpha.5",
     "typescript-eslint": "^8.64.0"
   },
   "overrides": {
