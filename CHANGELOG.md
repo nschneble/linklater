@@ -6,6 +6,12 @@
 
 _Nothing just yet_
 
+## [1.4.2] - 2026-07-29
+
+### Fixed
+
+- Link card has a pulsing dashed border while fetching metadata
+
 ## [1.4.1] - 2026-07-29
 
 ### Fixed
@@ -179,7 +185,8 @@ This is a development version bump. Most of the changes are related to refactori
 - Toggle themes based on Richard Linklater's filmography
 - Toggle light and dark mode
 
-[Unreleased]: https://github.com/nschneble/linklater/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/nschneble/linklater/compare/v1.4.2...HEAD
+[1.4.2]: https://github.com/nschneble/linklater/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/nschneble/linklater/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/nschneble/linklater/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/nschneble/linklater/compare/v1.2.1...v1.3.0

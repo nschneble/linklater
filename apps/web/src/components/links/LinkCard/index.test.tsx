@@ -165,6 +165,25 @@ describe('LinkCard thumbnail skeleton (metadata still loading)', () => {
   });
 });
 
+describe('LinkCard pending-state accent edge (no dashed flicker)', () => {
+  // The pulsing accent overlay bar sits directly over the card's 4px left
+  // border. When that border was `border-dashed border-[var(--mount-border)]`,
+  // the dashed pattern showed through the overlay at each pulse trough,
+  // reading as a segmented edge that looked desynced from the plain favicon
+  // circle. The fix keeps a SOLID `--mount-border` edge so nothing textured
+  // shows through. The contrast suite verifies the token math but not the
+  // border STYLE, so this className guard is the only thing pinning the fix.
+  it('keeps the left edge solid (never border-dashed) while metadata loads', () => {
+    const { container } = renderWithProviders(
+      <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
+    );
+
+    const card = container.firstElementChild;
+    expect(card?.className).not.toContain('border-dashed');
+    expect(card?.className).toContain('border-[var(--mount-border)]');
+  });
+});
+
 describe('LinkCard unsafe-URL guard (CWE-79)', () => {
   it('renders a real, safe anchor for a normal http(s) link', () => {
     renderWithProviders(
