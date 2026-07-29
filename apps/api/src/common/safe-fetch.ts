@@ -1,6 +1,6 @@
 import { isIP, type LookupFunction } from 'node:net';
 import { lookup as dnsLookup } from 'node:dns/promises';
-import { Agent } from 'undici';
+import { Agent, fetch as undiciFetch } from 'undici';
 import { isPrivateAddress, isPrivateHost } from './private-host.js';
 
 /**
@@ -145,6 +145,21 @@ const safeAgent = new Agent({
   connect: { lookup: createValidatingLookup(defaultResolver) },
 });
 
+/**
+ * The fetch implementation `safeFetch` dispatches through by default.
+ *
+ * It MUST come from the same `undici` instance as `safeAgent`: a dispatcher
+ * built by one `undici` major is rejected by a `fetch` from another
+ * (`InvalidArgumentError: invalid onRequestStart method`), which surfaces as a
+ * failed fetch for every request. Node's built-in global `fetch` is a
+ * *separately versioned* `undici` bundled inside the runtime, so dispatching
+ * `safeAgent` through it breaks whenever the runtime's `undici` and this
+ * package's declared `undici` dependency drift across a major — as they did
+ * once `undici` was bumped to v8 while the deploy runtime still shipped v6/v7.
+ * Using `undici`'s own `fetch` pins both halves to the locked dependency.
+ */
+export const defaultFetchImpl = undiciFetch as unknown as FetchImpl;
+
 /** Returns `true` for an http(s) 3xx redirect that carries a `Location`. */
 const isRedirect = (status: number): boolean => status >= 300 && status < 400;
 
@@ -165,7 +180,7 @@ export async function safeFetch(
     signal,
     headers,
     resolver = defaultResolver,
-    fetchImpl = fetch as unknown as FetchImpl,
+    fetchImpl = defaultFetchImpl,
   } = options;
 
   let currentUrl = url;

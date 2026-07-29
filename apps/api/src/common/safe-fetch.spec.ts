@@ -1,9 +1,11 @@
+import { Agent, fetch as undiciFetch } from 'undici';
 import { jest } from '@jest/globals';
 import { type LookupFunction } from 'node:net';
 
 import {
   assertPublicHost,
   createValidatingLookup,
+  defaultFetchImpl,
   PrivateHostError,
   safeFetch,
 } from './safe-fetch.js';
@@ -296,5 +298,60 @@ describe('safeFetch', () => {
         fetchImpl: fetchImpl as never,
       }),
     ).rejects.toThrow(/too many redirects/i);
+  });
+});
+
+describe('defaultFetchImpl', () => {
+  it('dispatches through an undici Agent without a cross-version handler failure', async () => {
+    // Regression guard for the metadata-fetch outage. safeFetch pins the TCP
+    // connect through an undici `Agent` dispatcher (`safeAgent`), so its default
+    // fetch MUST come from the same `undici` instance as that Agent. A
+    // dispatcher built by one `undici` major is rejected by a `fetch` from
+    // another with `InvalidArgumentError: invalid onRequestStart method`, which
+    // fails every request. Node's built-in global `fetch` is a separately
+    // versioned `undici` bundled in the runtime, so dispatching `safeAgent`
+    // through it broke all metadata fetches once `undici` was bumped to a major
+    // the deploy runtime did not ship.
+    //
+    // The connector below fails fast with a marker instead of opening a socket,
+    // so no network is touched. Reaching the connector proves the fetch/Agent
+    // pair is compatible; a handler-validation failure rejects before the
+    // connector ever runs.
+    const agent = new Agent({
+      connect(_options, callback) {
+        callback(new Error('connector-reached'), null);
+      },
+    });
+
+    try {
+      const rejection = await defaultFetchImpl('http://public.example/', {
+        dispatcher: agent,
+      }).then(
+        () => {
+          throw new Error('expected the fetch to reject');
+        },
+        (error: unknown) => error,
+      );
+
+      const cause = (rejection as { cause?: unknown }).cause;
+      const causeMessage =
+        cause instanceof Error ? cause.message : String(cause);
+      expect(causeMessage).toBe('connector-reached');
+    } finally {
+      await agent.close();
+    }
+  });
+
+  it("is undici's own exported fetch, not Node's global fetch", () => {
+    // Version-INDEPENDENT guard. The connector-reachability test above only
+    // bites when the runtime's built-in `undici` and this package's pinned
+    // `undici` differ in major (the outage's actual precondition); on a Node
+    // whose built-in `undici` matches the pinned one, it passes even if the
+    // default fetch were reverted to the global. This reference check fails
+    // deterministically the moment `defaultFetchImpl` is sourced from anything
+    // other than the pinned `undici`'s own `fetch`, on every Node/undici combo.
+    // The `as unknown as FetchImpl` cast in safe-fetch.ts is type-only, so the
+    // runtime reference is undici's `fetch` unchanged.
+    expect(defaultFetchImpl).toBe(undiciFetch);
   });
 });

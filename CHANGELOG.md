@@ -6,6 +6,12 @@
 
 _Nothing just yet_
 
+## [1.4.1] - 2026-07-29
+
+### Fixed
+
+- Broken link metadata fetch
+
 ## [1.4.0] - 2026-07-25
 
 ### Added
@@ -173,7 +179,8 @@ This is a development version bump. Most of the changes are related to refactori
 - Toggle themes based on Richard Linklater's filmography
 - Toggle light and dark mode
 
-[Unreleased]: https://github.com/nschneble/linklater/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/nschneble/linklater/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/nschneble/linklater/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/nschneble/linklater/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/nschneble/linklater/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/nschneble/linklater/compare/v1.2.0...v1.2.1
