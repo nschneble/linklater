@@ -35,7 +35,7 @@ jobs:
       pull-requests: write # react + reply on the comment
       actions: read # download the candidates artifact from the PR run
     steps:
-      - uses: nschneble/tuffgal-action/approve@7fa2ca8f9935aed8f35865637c00d7c9bcdb348e # v1.5.0
+      - uses: nschneble/tuffgal-action/approve@642c5b7001ea635922481f27130354cca58edba7 # v1.6.0
         with:
           working-directory: .
           # baselines-path: tuffgal/baselines
