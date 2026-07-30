@@ -1,7 +1,7 @@
 import { fetchParametersReducer } from './useLinksData.reducer';
 import { getLinks, type Link, type PaginatedLinks } from '../api';
 import { getErrorMessage } from '../errors';
-import { mergeSettledMetadata } from './linksData.utils';
+import { findNewLinks, mergeSettledMetadata } from './linksData.utils';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { LinksFilter } from './types';
@@ -98,7 +98,17 @@ export function useLinksFetch(
           if (fetchParameters.page === 1) {
             setLinks((previous) => mergeSettledMetadata(result.data, previous));
           } else {
-            setLinks((previous) => [...previous, ...result.data]);
+            // Append only rows not already loaded. Between page loads the list
+            // can shift under the server's `(page - 1) * limit` offset (a
+            // create's prependLink moves every row down one), so a later page
+            // can re-serve a row already on screen. Filtering by id keeps each
+            // card, its React key, and its pending-poll entry unique, and keeps
+            // `links.length` an honest count for the trailing-item math below.
+            // Incoming order is preserved for the genuinely new rows.
+            setLinks((previous) => [
+              ...previous,
+              ...findNewLinks(result.data, previous),
+            ]);
           }
           setPagination({ total: result.total, limit: result.limit });
         }

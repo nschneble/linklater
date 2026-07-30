@@ -434,6 +434,42 @@ describe('useLinksData handleLoadMore', () => {
     ]);
   });
 
+  it('appends only rows a later page has not already served', async () => {
+    // A create between page loads shifts every row down one under the
+    // server's `(page - 1) * limit` offset, so page 2 can re-serve a row
+    // already on screen. Append must drop the re-served copy: the list gains
+    // only the genuinely new rows, each id (and its React key and pending-poll
+    // entry) stays unique, and the new rows keep their incoming order.
+    const existing = makeLink({ id: 'link-a' });
+    const reserved = makeLink({ id: 'link-a' });
+    const newB = makeLink({ id: 'link-b' });
+    const newC = makeLink({ id: 'link-c' });
+
+    vi.mocked(apiModule.getLinks)
+      .mockResolvedValueOnce(makePaginated([existing], { total: 10 }))
+      .mockResolvedValueOnce(
+        makePaginated([reserved, newB, newC], { total: 10, page: 2 }),
+      );
+
+    const { result } = renderHook(() => useLinksData('unread', ''));
+
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+
+    await act(async () => {
+      result.current.handleLoadMore();
+    });
+
+    await waitFor(() =>
+      expect(result.current.links.some((link) => link.id === 'link-c')).toBe(
+        true,
+      ),
+    );
+
+    const ids = result.current.links.map((link) => link.id);
+    expect(ids).toEqual(['link-a', 'link-b', 'link-c']);
+    expect(new Set(ids).size).toBe(3);
+  });
+
   it('increments page number after load-more', async () => {
     vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([]));
 

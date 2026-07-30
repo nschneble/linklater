@@ -77,8 +77,9 @@ export function usePendingMetadataPolling(
   // The live pending set, refreshed every render. The polling loop reads this
   // ref so it always targets the current links, and the timer never restarts
   // just because an unrelated list update re-rendered the hook. No dedup here:
-  // upstream list state keeps ids unique (prependLink drops any prior copy),
-  // so a link can appear in the rendered list at most once.
+  // upstream list state keeps ids unique (a create's prependLink drops any
+  // prior copy, and a later page appends only ids not already loaded), so a
+  // link can appear in the rendered list at most once.
   const pendingIds = links.filter(isMetadataPending).map((link) => link.id);
   const pendingIdsReference = useRef(pendingIds);
   pendingIdsReference.current = pendingIds;
