@@ -30,7 +30,9 @@ const MAX_POLLS_PER_TICK = 3;
  * Because a tick re-arms the shared timer only once its whole Promise.all
  * settles, one such stall would freeze the rotation for every other pending
  * card. Aborting at this deadline bounds the stall: the abort rejects like any
- * other request error and the next tick schedules normally.
+ * other request error and the next tick schedules normally. The signal bounds
+ * the poll request itself; a 401 that sends apiFetch through a token refresh
+ * runs that refresh leg without the signal, so it sits outside this bound.
  *
  * The value sits above any healthy round-trip (a slow mobile connection
  * included, so a working-but-slow poll is not falsely aborted and left to

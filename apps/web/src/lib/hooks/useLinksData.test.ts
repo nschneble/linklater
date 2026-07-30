@@ -467,7 +467,6 @@ describe('useLinksData handleLoadMore', () => {
 
     const ids = result.current.links.map((link) => link.id);
     expect(ids).toEqual(['link-a', 'link-b', 'link-c']);
-    expect(new Set(ids).size).toBe(3);
   });
 
   it('increments page number after load-more', async () => {
