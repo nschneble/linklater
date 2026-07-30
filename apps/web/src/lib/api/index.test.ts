@@ -493,6 +493,141 @@ describe('apiFetch', () => {
 });
 
 // ---------------------------------------------------------------------------
+// apiFetch – token-refresh deadline
+// ---------------------------------------------------------------------------
+
+describe('apiFetch token-refresh deadline', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('aborts a hung refresh at its deadline and clears the session as an unreachable server would', async () => {
+    vi.useFakeTimers();
+    setStoredToken('expired-jwt', 'valid-refresh');
+
+    globalThis.fetch = vi.fn(
+      (input: RequestInfo | URL, options?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('/auth/refresh')) {
+          // A socket that never answers on its own. The promise settles only
+          // once the refresh's own deadline aborts it.
+          return new Promise((_resolve, reject) => {
+            options?.signal?.addEventListener('abort', () =>
+              reject(
+                new DOMException('The operation was aborted', 'AbortError'),
+              ),
+            );
+          });
+        }
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+        });
+      },
+    ) as unknown as typeof fetch;
+
+    // Attach the rejection handler before advancing so the abort-driven
+    // rejection is never briefly flagged unhandled while time moves.
+    const caught = apiFetch('/test').catch((error: unknown) => error);
+    // Nothing resolves the refresh until its 10s deadline fires (see
+    // REFRESH_DEADLINE_MS in core.ts).
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    const error = await caught;
+    expect(error).toBeInstanceOf(ApiError);
+    // The caller sees the original 401, not a refresh-specific error.
+    expect((error as ApiError).status).toBe(401);
+    // The timed-out refresh takes the network-error path: tokens dropped, no
+    // silent hang for every awaiter.
+    expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
+  });
+
+  it('clears the session identically when the refresh fetch rejects with a network error', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/auth/refresh')) {
+        return Promise.reject(new TypeError('Failed to fetch'));
+      }
+      return Promise.resolve({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      });
+    }) as unknown as typeof fetch;
+
+    await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
+    // Baseline for the deadline test above: a refresh that cannot complete
+    // drops the tokens. The timed-out refresh must land here, not on a session
+    // rejection.
+    expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
+  });
+
+  it('lets a slow refresh that answers before the deadline complete the retry', async () => {
+    vi.useFakeTimers();
+    setStoredToken('expired-jwt', 'valid-refresh');
+
+    let testCalls = 0;
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/auth/refresh')) {
+        // Answers at 9s: slow, but inside the 10s deadline, so it must not be
+        // aborted.
+        return new Promise((resolve) => {
+          setTimeout(
+            () =>
+              resolve({
+                ok: true,
+                status: 200,
+                text: () =>
+                  Promise.resolve(
+                    JSON.stringify({
+                      accessToken: 'new-jwt',
+                      refreshToken: 'new-refresh',
+                    }),
+                  ),
+                json: () =>
+                  Promise.resolve({
+                    accessToken: 'new-jwt',
+                    refreshToken: 'new-refresh',
+                  }),
+              }),
+            9_000,
+          );
+        });
+      }
+      testCalls += 1;
+      if (testCalls === 1) {
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ id: 'result' })),
+      });
+    }) as unknown as typeof fetch;
+
+    const pending = apiFetch<{ id: string }>('/test');
+    await vi.advanceTimersByTimeAsync(9_000);
+
+    await expect(pending).resolves.toEqual({ id: 'result' });
+    expect(getStoredToken()).toBe('new-jwt');
+    expect(getStoredRefreshToken()).toBe('new-refresh');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Auth endpoints
 // ---------------------------------------------------------------------------
 

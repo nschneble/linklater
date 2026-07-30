@@ -50,14 +50,44 @@ async function parseError(response: Response): Promise<ApiError> {
 
 let inFlightRefresh: Promise<boolean> | null = null;
 
+/**
+ * Deadline for the token-refresh fetch. apiFetch imposes no timeout of its own,
+ * and every 401'd caller awaits this single shared refresh, so a refresh hung
+ * on a dead network (a mid-request socket stall) would hold every awaiter open
+ * until the browser's socket-level timeout, which can run to minutes. Callers
+ * that carry their own per-request deadline still could not escape it: the
+ * metadata poller's deadline bounds its poll but explicitly does not cover the
+ * refresh leg it triggers. Bounding the refresh here is the only place that
+ * leg gets a limit.
+ *
+ * An abort rejects the fetch exactly as an unreachable server would, so a
+ * timed-out refresh follows the same catch below as any network failure (drop
+ * the tokens) rather than being read as the server rejecting the refresh
+ * token. Held at 10s to match the poller's per-request deadline: comfortably
+ * above a healthy round-trip on a slow connection, well under the socket
+ * timeout it stands in for. AbortSignal.timeout is deliberately avoided; its
+ * internal timer is not driven by the test suite's fake timers.
+ */
+const REFRESH_DEADLINE_MS = 10_000;
+
 async function performTokenRefresh(): Promise<boolean> {
   if (!getStoredRefreshToken()) return false;
+
+  // The refresh owns this deadline. It is never wired to a caller's signal: one
+  // caller aborting its own request must not tear down the shared refresh that
+  // every other 401'd caller is awaiting.
+  const deadlineController = new AbortController();
+  const deadlineTimeoutId = setTimeout(
+    () => deadlineController.abort(),
+    REFRESH_DEADLINE_MS,
+  );
 
   try {
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken: getStoredRefreshToken() }),
+      signal: deadlineController.signal,
     });
 
     if (!response.ok) {
@@ -72,8 +102,12 @@ async function performTokenRefresh(): Promise<boolean> {
     setStoredToken(data.accessToken, data.refreshToken);
     return true;
   } catch {
+    // A network failure and a deadline abort both land here: the refresh could
+    // not complete, so drop the stored tokens as an unreachable server would.
     clearStoredToken();
     return false;
+  } finally {
+    clearTimeout(deadlineTimeoutId);
   }
 }
 
