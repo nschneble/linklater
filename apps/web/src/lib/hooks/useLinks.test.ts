@@ -10,10 +10,6 @@ vi.mock('../api', () => ({
   deleteAllReadLinks: vi.fn(),
 }));
 
-vi.mock('./useMetadataPolling', () => ({
-  useMetadataPolling: vi.fn(),
-}));
-
 /**
  * `useLinksData` owns the fetch lifecycle. Stub it so `useLinks` can be
  * exercised in isolation without hitting the network or a router.

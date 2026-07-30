@@ -1,7 +1,6 @@
 import { createLink, type Link } from '../api';
 import { getErrorMessage } from '../errors';
 import { useCallback, useRef, useState } from 'react';
-import { useMetadataPolling } from './useMetadataPolling';
 import type { LinksFilter } from './types';
 
 interface UseCreateLinkOptions {
@@ -13,15 +12,16 @@ interface UseCreateLinkOptions {
   // called after a successful create so the caller can show a toast
   onSaved: () => void;
   prependLink: (link: Link) => void;
-  updateLink: (link: Link) => void;
 }
 
 export interface UseCreateLinkResult {
   /**
    * Called by `LinkForm` / paste detection after a successful create.
-   * Prepends the new link, starts metadata polling, increments the total,
-   * and notifies the caller. No-ops when the read tab is active, since newly
-   * created links should not appear there.
+   * Prepends the new link, increments the total, and notifies the caller.
+   * No-ops when the read tab is active, since newly created links should not
+   * appear there. Metadata polling is not started here: the prepended link
+   * lands in list state and `usePendingMetadataPolling` (wired at
+   * `useLinksData`) picks it up from there.
    */
   handleCreated: (link: Link) => void;
   /**
@@ -33,11 +33,13 @@ export interface UseCreateLinkResult {
 }
 
 /**
- * Owns the link-creation flow: prepending a new link, kicking off metadata
- * polling for it, and the direct-save path used by paste detection.
+ * Owns the link-creation flow: prepending a new link and the direct-save path
+ * used by paste detection.
  *
- * When a link is created, polling starts for the link's id and stops when the
- * server reports that metadata has been fetched (`meta.fetchedAt` is set).
+ * A created link is prepended into list state; metadata polling is no longer
+ * this hook's concern. `usePendingMetadataPolling` (wired at `useLinksData`)
+ * derives its pending set from list state, so the prepended link is picked up
+ * and settled from there once the server reports its metadata fetched.
  *
  * @param options - Mutation helpers and current state from `useLinksData`.
  * @returns Create handlers and the save error state for the view layer.
@@ -48,7 +50,6 @@ export function useCreateLink({
   links,
   onSaved,
   prependLink,
-  updateLink,
 }: UseCreateLinkOptions): UseCreateLinkResult {
   // GOTCHA: links and onSaved are stored in refs so handleCreated always reads
   // the latest values without including them in its dependency array. Adding
@@ -61,15 +62,7 @@ export function useCreateLink({
   const onSavedReference = useRef(onSaved);
   onSavedReference.current = onSaved;
 
-  const [pendingMetaLinkId, setPendingMetaLinkId] = useState<string | null>(
-    null,
-  );
   const [saveError, setSaveError] = useState<string | null>(null);
-
-  useMetadataPolling(pendingMetaLinkId, (updatedLink) => {
-    updateLink(updatedLink);
-    setPendingMetaLinkId(null);
-  });
 
   const handleCreated = useCallback(
     (link: Link) => {
@@ -77,7 +70,6 @@ export function useCreateLink({
       const isNew = !linksReference.current.some((item) => item.id === link.id);
       if (isNew) adjustTotal(1);
       prependLink(link);
-      setPendingMetaLinkId(link.id);
       onSavedReference.current();
     },
     [filter, adjustTotal, prependLink],

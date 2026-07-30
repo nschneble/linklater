@@ -7,6 +7,20 @@ vi.mock('../api', () => ({
   getLinks: vi.fn(),
 }));
 
+// Stub the metadata poller for the whole suite so it never fires real timers
+// or `getLink` requests; one wiring test below asserts it is driven correctly.
+let capturedPollingLinks: Link[] | null = null;
+let capturedOnSettled: ((link: Link) => void) | null = null;
+
+vi.mock('./usePendingMetadataPolling', () => ({
+  usePendingMetadataPolling: vi.fn(
+    (links: Link[], onSettled: (link: Link) => void) => {
+      capturedPollingLinks = links;
+      capturedOnSettled = onSettled;
+    },
+  ),
+}));
+
 import * as apiModule from '../api';
 
 function makeLink(overrides: Partial<Link> = {}): Link {
@@ -707,6 +721,32 @@ describe('useLinksData settled metadata survives a page-1 refetch (C3)', () => {
     await waitFor(() =>
       expect(result.current.links[0].meta?.fetchedAt).toBe(settledAt),
     );
+    expect(result.current.links[0].meta?.title).toBe('Ready');
+  });
+});
+
+describe('useLinksData pending metadata polling wiring', () => {
+  it('drives the poller with the current links and settles a link via updateLink', async () => {
+    const pending = makeLink({ id: 'x', meta: null });
+    vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([pending]));
+
+    const { result } = renderHook(() => useLinksData('unread', ''));
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+
+    // The poller is handed the rendered links, including the pending one.
+    expect(capturedPollingLinks?.map((link) => link.id)).toEqual(['x']);
+    expect(capturedOnSettled).not.toBeNull();
+
+    // Its onSettled callback is `updateLink`: settling 'x' writes it into
+    // state, so a settled poll result lands on the list (constraint 6 / C3).
+    const settledAt = '2026-07-29T00:00:00.000Z';
+    act(() =>
+      capturedOnSettled!(
+        makeLink({ id: 'x', meta: { title: 'Ready', fetchedAt: settledAt } }),
+      ),
+    );
+
+    expect(result.current.links[0].meta?.fetchedAt).toBe(settledAt);
     expect(result.current.links[0].meta?.title).toBe('Ready');
   });
 });
