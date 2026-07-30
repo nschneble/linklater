@@ -451,6 +451,29 @@ describe('apiFetch', () => {
     expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
   });
 
+  it('clears the dead access token when a 401 finds no refresh token to renew it', async () => {
+    // An access token with no refresh token alongside it: a 401 proves the
+    // access token is spent, and nothing exists to refresh it with, so it is
+    // dead for good. It must be cleared rather than left to linger across
+    // reloads granting nothing.
+    setStoredToken('dead-jwt');
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: () => Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+    }) as unknown as typeof fetch;
+    globalThis.fetch = fetchMock;
+
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+    // The original 401 still reaches the caller unchanged.
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(401);
+    // The dead access token is gone.
+    expect(getStoredToken()).toBeNull();
+    // Only the original request ran; no refresh leg fired.
+    expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
+  });
+
   it('dedupes concurrent refreshes – two parallel 401s share one /auth/refresh call', async () => {
     setStoredToken('expired-jwt', 'valid-refresh');
 

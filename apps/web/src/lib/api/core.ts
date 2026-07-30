@@ -72,7 +72,17 @@ let inFlightRefresh: Promise<boolean> | null = null;
 const REFRESH_DEADLINE_MS = 10_000;
 
 async function performTokenRefresh(): Promise<boolean> {
-  if (!getStoredRefreshToken()) return false;
+  if (!getStoredRefreshToken()) {
+    // Only a 401 on an authenticated request reaches this function (see the
+    // refresh condition in apiFetch). With no refresh token there is nothing to
+    // renew with, so the access token the server just rejected is dead for
+    // good: no path exists to revive it. Clear it. Left in place it would
+    // grant nothing yet survive every reload, staying stuck until a fresh
+    // login overwrote it. This is the no-refresh-token twin of the 401/403
+    // clear below, where a present refresh token is the thing proven spent.
+    clearStoredToken();
+    return false;
+  }
 
   // The refresh owns this deadline. It is never wired to a caller's signal: one
   // caller aborting its own request must not tear down the shared refresh that
