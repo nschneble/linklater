@@ -7,12 +7,45 @@
  * `ml-auto` to stay pinned to the right edge. That is the bug this guards.
  */
 
-import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { compile } from 'tailwindcss';
+import { describe, expect, it, vi } from 'vitest';
 import LinkCard from './index';
 import { ThemeProvider } from '../../../theme/ThemeContext';
 import type { Link } from '../../../lib/api';
 import type { ReactElement } from 'react';
+
+const requireFromHere = createRequire(import.meta.url);
+const WEB_SRC = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+
+/**
+ * Resolves `@import "tailwindcss";` (and every relative sub-import in
+ * index.css) off disk so the compiler registers core variants/utilities AND
+ * the app's own `@theme` tokens and `@keyframes`. Mirrors the helper in
+ * SettingSwitch.test.tsx, but is pointed at the real index.css so the
+ * `--animate-meta-pulse-*` tokens exist during compilation.
+ */
+function loadStylesheet(id: string, base: string) {
+  const path =
+    id === 'tailwindcss'
+      ? resolve(
+          dirname(requireFromHere.resolve('tailwindcss/package.json')),
+          'index.css',
+        )
+      : resolve(base, id);
+  return { base: dirname(path), content: readFileSync(path, 'utf8'), path };
+}
+
+/** Compiles the app's real index.css plus a set of utility classes. */
+async function compileIndexCss(classes: string[]): Promise<string> {
+  const indexCss = readFileSync(resolve(WEB_SRC, 'index.css'), 'utf8');
+  const compiler = await compile(indexCss, { base: WEB_SRC, loadStylesheet });
+  return compiler.build(classes);
+}
 
 function renderWithProviders(ui: ReactElement) {
   return render(<ThemeProvider>{ui}</ThemeProvider>);
@@ -39,12 +72,13 @@ describe('LinkCard mobile-overflow containment (WCAG 1.4.10 Reflow)', () => {
   // `min-w-0` to each map wrapper, which resets the grid track's default
   // `min-width: auto` to 0 so a long unbreakable title/URL cannot inflate it
   // past the viewport. That guard is asserted in LinksList.test.tsx. The card
-  // wrapper itself must stay `overflow-visible` so its favicon badge (and the
-  // un-fetched accent bar) can straddle the left accent border; clipping it
-  // (`overflow-hidden`) sliced those decorations off, which is the regression
-  // these tests guard against. A true scrollWidth check needs a real layout
-  // engine (jsdom has none), so the live 320px measurement lives in the PR
-  // notes; this asserts the non-clipping class contract as the jsdom-safe oracle.
+  // wrapper itself must stay `overflow-visible` so its favicon badge (fetched)
+  // and the pending badge circle (still loading) can straddle the left accent
+  // border; clipping it (`overflow-hidden`) sliced those decorations off, which
+  // is the regression these tests guard against. A true scrollWidth check needs
+  // a real layout engine (jsdom has none), so the live 320px measurement lives
+  // in the PR notes; this asserts the non-clipping class contract as the
+  // jsdom-safe oracle.
   it('keeps the card wrapper overflow-visible on a fetched link (favicon can straddle)', () => {
     const { container } = renderWithProviders(
       <LinkCard link={makeLink()} onReadToggle={vi.fn()} />,
@@ -55,7 +89,7 @@ describe('LinkCard mobile-overflow containment (WCAG 1.4.10 Reflow)', () => {
     expect(card?.className).not.toContain('overflow-hidden');
   });
 
-  it('keeps the card wrapper overflow-visible while metadata is still loading (skeleton accent bar can straddle)', () => {
+  it('keeps the card wrapper overflow-visible while metadata is still loading (pending badge circle can straddle)', () => {
     const { container } = renderWithProviders(
       <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
     );
@@ -165,22 +199,116 @@ describe('LinkCard thumbnail skeleton (metadata still loading)', () => {
   });
 });
 
-describe('LinkCard pending-state accent edge (no dashed flicker)', () => {
-  // The pulsing accent overlay bar sits directly over the card's 4px left
-  // border. When that border was `border-dashed border-[var(--mount-border)]`,
-  // the dashed pattern showed through the overlay at each pulse trough,
-  // reading as a segmented edge that looked desynced from the plain favicon
-  // circle. The fix keeps a SOLID `--mount-border` edge so nothing textured
-  // shows through. The contrast suite verifies the token math but not the
-  // border STYLE, so this className guard is the only thing pinning the fix.
-  it('keeps the left edge solid (never border-dashed) while metadata loads', () => {
+describe('LinkCard pending-state pulse (color animation, no opacity flicker)', () => {
+  // The old pending indicator was an `animate-pulse` overlay whose translucent
+  // `w-1 -translate-x-full` bar sat over the card's opaque left border. At each
+  // opacity trough the bar blended with the differently colored layers beneath
+  // it, so the left edge flickered between unpredictable seam colors. The fix
+  // removes the overlay entirely and animates COLOR instead: the card's own
+  // border-color (via the `aria-busy:` variant) and the placeholder badge's
+  // background-color. Nothing translucent stacks over the border, so there is
+  // nothing left to blend. These guards pin both halves of the fix: the pulse
+  // classes are present ONLY while pending, and the flicker mechanism (opacity
+  // pulse + stacked bar) is structurally gone, not merely restyled.
+  it('drives the pending edge off aria-busy with the color-pulse variants (never border-dashed)', () => {
     const { container } = renderWithProviders(
       <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
     );
 
     const card = container.firstElementChild;
+    expect(card?.getAttribute('aria-busy')).toBe('true');
     expect(card?.className).not.toContain('border-dashed');
-    expect(card?.className).toContain('border-[var(--mount-border)]');
+    // Static resting border is --mount-highlight; the aria-busy variant retargets
+    // it to --mount-border and runs the border color-pulse while metadata loads.
+    expect(card?.className).toContain('border-[var(--mount-highlight)]');
+    expect(card?.className).toContain('aria-busy:border-[var(--mount-border)]');
+    expect(card?.className).toContain('aria-busy:animate-meta-pulse-border');
+  });
+
+  it('removes the opacity-pulse overlay and the stacked left-edge bar', () => {
+    const { container } = renderWithProviders(
+      <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
+    );
+
+    // The flicker mechanism itself is gone: no opacity pulse anywhere on the
+    // card, and no `-translate-x-full` bar element stacked on the border.
+    expect(container.innerHTML).not.toContain('animate-pulse');
+    expect(container.innerHTML).not.toContain('-translate-x-full');
+  });
+
+  it('renders the placeholder badge as a standalone element that pulses its background color', () => {
+    const { container } = renderWithProviders(
+      <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
+    );
+
+    const badge = container.querySelector('span.animate-meta-pulse-bg');
+    expect(badge).not.toBeNull();
+    // The badge ring is now static and opaque (--mount-bg): zero translucency
+    // remains in the pending state.
+    expect(badge?.className).toContain('ring-2');
+    expect(badge?.className).toContain('ring-[var(--mount-bg)]');
+  });
+
+  it('carries NONE of the pending pulse once metadata has been fetched', () => {
+    const { container } = renderWithProviders(
+      <LinkCard link={makeLink()} onReadToggle={vi.fn()} />,
+    );
+
+    const card = container.firstElementChild;
+    // Reverse of the pending case: no aria-busy attribute (so the aria-busy:
+    // variants stay inert), the border-shadow pair is applied, and the pulsing
+    // badge element is absent from the DOM entirely.
+    expect(card?.getAttribute('aria-busy')).toBeNull();
+    expect(card?.className).toContain('border-shadow');
+    expect(container.querySelector('.animate-meta-pulse-bg')).toBeNull();
+  });
+
+  // jsdom cannot run animations or resolve `@theme` tokens, so a className
+  // substring check alone would never prove the utilities compile to the right
+  // rules. This compiles the app's real index.css (so the `--animate-meta-pulse-*`
+  // tokens and `@keyframes` exist) through the Tailwind pipeline and asserts the
+  // resulting CSS, per the project rule to prove variants/utilities via real
+  // `compile`, not string matches.
+  it('compiles the pending pulse keyframes, tokens, and aria-busy variants', async () => {
+    const css = await compileIndexCss([
+      'aria-busy:animate-meta-pulse-border',
+      'aria-busy:border-[var(--mount-border)]',
+      'border-[var(--mount-highlight)]',
+      'animate-meta-pulse-bg',
+    ]);
+    const flattened = css.replace(/\s+/g, ' ');
+
+    // Border keyframe animates border-color between the mount border and
+    // highlight endpoints (progressive enhancement on top of the badge).
+    expect(flattened).toContain(
+      '@keyframes meta-pulse-border { 0%, 100% { border-color: var(--mount-border); } 50% { border-color: var(--mount-highlight); } }',
+    );
+
+    // Badge keyframe animates background-color between --mount-bg and
+    // --mount-highlight: the a11y-gate Condition 1 in-bundle >=3:1 pair that
+    // carries the visible motion in every theme cascade and custom theme.
+    expect(flattened).toContain(
+      '@keyframes meta-pulse-bg { 0%, 100% { background-color: var(--mount-bg); } 50% { background-color: var(--mount-highlight); } }',
+    );
+
+    // Both tokens share the exact same 2s ease-in-out cadence (so border and
+    // badge breathe in sync) with NO fill mode (so the reduced-motion clamp
+    // rests on the static base classes, not the 50% peak).
+    expect(flattened).toContain(
+      '--animate-meta-pulse-border: meta-pulse-border 2s ease-in-out infinite;',
+    );
+    expect(flattened).toContain(
+      '--animate-meta-pulse-bg: meta-pulse-bg 2s ease-in-out infinite;',
+    );
+
+    // The aria-busy variants compile to rules gated on the aria-busy DOM
+    // attribute, so the border retarget and the pulse only apply while pending.
+    expect(flattened).toContain(
+      '.aria-busy\\:animate-meta-pulse-border[aria-busy="true"] { animation: var(--animate-meta-pulse-border); }',
+    );
+    expect(flattened).toContain(
+      '.aria-busy\\:border-\\[var\\(--mount-border\\)\\][aria-busy="true"] { border-color: var(--mount-border); }',
+    );
   });
 });
 

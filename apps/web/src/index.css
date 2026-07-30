@@ -160,12 +160,43 @@ body {
   }
 }
 
+/* Pending-metadata pulse for link cards. Animates COLOR (the card's own
+   border-color, the placeholder badge's background-color) instead of opacity.
+   An opacity pulse stacked over the card's opaque left border blended to
+   unpredictable seam colors at every trough; a color animation has nothing
+   translucent to blend. Both keyframes share the 2s ease-in-out cadence in
+   @theme below so the border and badge breathe on the same clock. No fill mode
+   by design: the global prefers-reduced-motion clamp collapses these to one
+   0.01ms iteration that must rest on the static base classes (border
+   --mount-border, badge --mount-highlight); `forwards` would pin the 50% peak. */
+@keyframes meta-pulse-border {
+  0%,
+  100% {
+    border-color: var(--mount-border);
+  }
+  50% {
+    border-color: var(--mount-highlight);
+  }
+}
+
+@keyframes meta-pulse-bg {
+  0%,
+  100% {
+    background-color: var(--mount-bg);
+  }
+  50% {
+    background-color: var(--mount-highlight);
+  }
+}
+
 @theme {
   --animate-fade-in-up: fade-in-up 180ms ease-out both;
   --animate-card-enter: card-enter 400ms ease-out both;
   --animate-dice-roll: dice-roll 600ms ease-out;
   --animate-card-exit: card-exit 280ms ease-in forwards;
   --animate-fade-out-down: fade-out-down 150ms ease-in forwards;
+  --animate-meta-pulse-border: meta-pulse-border 2s ease-in-out infinite;
+  --animate-meta-pulse-bg: meta-pulse-bg 2s ease-in-out infinite;
 }
 
 /* Brand page surface – theme-independent navy radial on the marketing
