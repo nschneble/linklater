@@ -73,7 +73,7 @@ function CardThumbnail({
     return (
       <div
         aria-hidden="true"
-        className="w-[60px] sm:w-[120px] h-[31.5px] sm:h-[63px] shrink-0 rounded-md bg-[var(--orbit-bg)]"
+        className="w-[60px] sm:w-[120px] h-[31.5px] sm:h-[63px] shrink-0 bg-[var(--mount-border)] border border-transparent rounded-md"
       />
     );
   }
@@ -125,10 +125,35 @@ function CardThumbnail({
 }
 
 /**
+ * Pure presentation props for `SkeletonBar`.
+ */
+interface SkeletonBarProps {
+  /** Width and height utility classes sizing this bar. */
+  className: string;
+}
+
+/**
+ * One placeholder bar in a card's loading skeleton. Purely decorative: the card
+ * announces its loading state through `aria-busy`, so the bar carries no text
+ * and stays `aria-hidden` – a visually hidden "Loading" string or a live region
+ * here would double-announce. The transparent border resolves to a visible
+ * outline under forced-colors, where the background fill is flattened away.
+ */
+function SkeletonBar({ className }: SkeletonBarProps) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`block ${className} bg-[var(--mount-border)] border border-transparent rounded-sm`}
+    />
+  );
+}
+
+/**
  * Pure visual structure of a link card. Handles all rendering decisions:
- * - Shows a pulsing indicator while metadata is still being fetched (`!meta.fetchedAt`).
- * - Shows the favicon once metadata arrives.
- * - Shows the raw URL as the description when no title is present.
+ * - Shows loading skeletons (title + description bars) and a "loading details"
+ *   accessible name while metadata is still being fetched (`isMetadataPending`).
+ * - Shows the favicon, title, and description once metadata arrives.
+ * - Shows the raw URL as the description for a settled link that never got a title.
  * - Shows a "Mark as unread" button for read links.
  * - Shows an inert, `aria-disabled` overlay in place of the real link when
  *   `link.url` fails `isSafeRedirectUrl` (a legacy non-http(s) row) – `href`
@@ -166,6 +191,7 @@ export default function LinkCardLayout({
   }
 
   const isLinkSafe = isSafeRedirectUrl(link.url);
+  const isPending = isMetadataPending(link);
   const hasTitle = Boolean(link.meta?.title);
   const displayTitle = link.meta?.title ?? '(No title)';
   const rawDescription = hasTitle ? link.meta?.description : link.url;
@@ -173,6 +199,10 @@ export default function LinkCardLayout({
   if (!isLinkSafe) {
     displayDescription =
       "This link can't be opened – the saved address isn't safe to open.";
+  } else if (isPending) {
+    // The description slot renders a skeleton while metadata loads, so there is
+    // no text to show here yet.
+    displayDescription = null;
   } else if (rawDescription) {
     displayDescription = stripHtml(rawDescription);
   } else {
@@ -186,9 +216,18 @@ export default function LinkCardLayout({
     [link.meta?.siteName, link.url],
   );
 
-  const cardAriaLabel = isLinkSafe
-    ? `${displayTitle} – ${displaySiteName}, opens in new tab`
-    : `${displayTitle} – ${displaySiteName}, link unavailable`;
+  // The anchor name and the "Mark unread" label read from one subject so they
+  // can never describe the same card differently. While loading the title is
+  // unknown, so the subject is just the site name; the anchor adds a "loading
+  // details" hint that the button label omits. It flips to the real title in
+  // the same render fetchedAt arrives, with no cached state.
+  const nameSubject = isPending
+    ? displaySiteName
+    : `${displayTitle} – ${displaySiteName}`;
+  const openHint = isLinkSafe ? 'opens in new tab' : 'link unavailable';
+  const cardAriaLabel = isPending
+    ? `${nameSubject} – loading details, ${openHint}`
+    : `${nameSubject}, ${openHint}`;
 
   return (
     <div
@@ -253,20 +292,31 @@ export default function LinkCardLayout({
           />
 
           <div className="flex flex-col items-start min-w-0 ml-3">
-            {/*
-              `w-full` pins the title to the min-w-0 column so `line-clamp-1`
-              can clip an unbreakable long word. Without it, the parent's
-              `items-start` sizes this <p> to its content width, letting a long
-              title overflow the (now overflow-visible) card and inflate the
-              320px mobile viewport. The sibling site-name <p> below is pinned
-              the same way.
-            */}
-            <p
-              style={childStyle(1)}
-              className={`w-full text-[var(--mount-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
-            >
-              {displayTitle}
-            </p>
+            {isPending ? (
+              // The wrapper pins the same text-sm line box as the settled title
+              // so the loading-to-settled swap shifts no geometry.
+              <div
+                style={childStyle(1)}
+                className={`flex items-center w-full h-5 ${CARD_ENTER_CLASS}`}
+              >
+                <SkeletonBar className="w-3/5 h-3.5" />
+              </div>
+            ) : (
+              /*
+                `w-full` pins the title to the min-w-0 column so `line-clamp-1`
+                can clip an unbreakable long word. Without it, the parent's
+                `items-start` sizes this <p> to its content width, letting a long
+                title overflow the (now overflow-visible) card and inflate the
+                320px mobile viewport. The sibling site-name <p> below is pinned
+                the same way.
+              */
+              <p
+                style={childStyle(1)}
+                className={`w-full text-[var(--mount-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
+              >
+                {displayTitle}
+              </p>
+            )}
 
             {/* --*-subtle-text is BASE-only by design; mount hints collapse to alt-text */}
             <p
@@ -278,7 +328,7 @@ export default function LinkCardLayout({
           </div>
         </div>
 
-        {(displayDescription || link.readAt) && (
+        {(isPending || displayDescription || link.readAt) && (
           <div
             style={childStyle(2)}
             className={`relative flex items-start gap-3 overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS} z-20 pointer-events-none`}
@@ -289,11 +339,23 @@ export default function LinkCardLayout({
               </p>
             )}
 
+            {/* The safety warning is real content and outranks the skeleton, so
+                a loading, unsafe link shows the warning, never placeholder bars. */}
+            {isPending && isLinkSafe && (
+              <div
+                aria-hidden="true"
+                className="flex flex-col flex-1 gap-2 min-w-0"
+              >
+                <SkeletonBar className="w-full h-3" />
+                <SkeletonBar className="w-4/5 h-3" />
+              </div>
+            )}
+
             {link.readAt && (
               <PrimaryButton
                 className="relative shrink-0 ml-auto z-30 pointer-events-auto"
                 onClick={onUnreadClick}
-                aria-label={`Mark unread – ${displayTitle} – ${displaySiteName}`}
+                aria-label={`Mark unread – ${nameSubject}`}
               >
                 <span className="hidden sm:inline-flex">Mark unread</span>
                 <span className="inline-flex sm:hidden">
