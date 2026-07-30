@@ -190,7 +190,16 @@ export default function LinkCardLayout({
     <div
       ref={cardReference}
       aria-busy={!link.meta?.fetchedAt || undefined}
-      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 ${link.meta?.fetchedAt ? 'border-[var(--mount-highlight)] border-shadow hover:border-shadow' : 'border-[var(--mount-border)]'} rounded-r-xl ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
+      /*
+        border-shadow / hover:border-shadow are hand-written UNLAYERED classes
+        in theme/styles/border-shadow.css, so no `aria-busy:` variant can reach
+        them. They stay a conditional keyed off the SAME `link.meta?.fetchedAt`
+        expression that drives aria-busy, so the two states can never drift.
+        They are withheld while pending on purpose: their unlayered box-shadow
+        would otherwise outrank the layered selection `ring-2` and swallow the
+        selection outline.
+      */
+      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] aria-busy:border-[var(--mount-border)] rounded-r-xl ${link.meta?.fetchedAt ? 'border-shadow hover:border-shadow' : ''} aria-busy:animate-meta-pulse-border ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
     >
       {link.meta?.fetchedAt ? (
         <div className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none">
@@ -222,10 +231,9 @@ export default function LinkCardLayout({
       ) : (
         <div
           aria-hidden="true"
-          className="absolute inset-0 pointer-events-none animate-pulse z-20"
+          className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none"
         >
-          <div className="absolute top-0 bottom-0 left-0 -translate-x-full w-1 bg-[var(--mount-highlight)]" />
-          <span className="absolute left-0 top-4 -translate-x-1/2 z-10 block w-8 h-8 bg-[var(--mount-highlight)] ring-2 ring-[var(--mount-bg)] rounded-2xl" />
+          <span className="block w-8 h-8 bg-[var(--mount-highlight)] ring-2 ring-[var(--mount-bg)] rounded-2xl animate-meta-pulse-bg" />
         </div>
       )}
 

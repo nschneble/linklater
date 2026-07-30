@@ -1355,9 +1355,12 @@ describe('bundle contrast contract', () => {
    * own bg; these four pairs cover the consumer geometries where a highlight
    * slot lives on a foreign host. SC 1.4.11 (3:1) per pair.
    *
-   *   1. mount-highlight on base-bg – LinkCardLayout loading-bar geometry
-   *      (`-translate-x-full` shifts the bar off the card's left edge so it
-   *      paints on the page, not on the card's mount-bg). LinkCardLayout.tsx:157-158.
+   *   1. mount-highlight on base-bg – LinkCardLayout's left accent edge. The
+   *      card's `border-l-4` rests on --mount-highlight when fetched, and the
+   *      pending color-pulse peaks on --mount-highlight at 50%. That border's
+   *      outer edge sits against the page's base-bg (and the placeholder badge,
+   *      shifted `-translate-x-1/2`, straddles half onto that same base-bg),
+   *      not the card's mount-bg. LinkCardLayout.tsx.
    *   2. orbit-highlight on mount-bg – CvdModeToggle aria-checked capsule
    *      bg painted inside a SettingsGroup mount-host. CvdModeToggle.tsx:78.
    *   3. base-highlight on mount-bg – SettingsGroup data-active=true border
