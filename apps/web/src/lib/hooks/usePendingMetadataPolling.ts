@@ -1,4 +1,9 @@
 import { getLink } from '../api';
+import { isMetadataPending, isMetadataSettled } from './linksData.utils';
+import {
+  nextInterval,
+  selectPollBatch,
+} from './usePendingMetadataPolling.utils';
 import { useEffect, useRef } from 'react';
 import type { Link } from '../api';
 
@@ -27,14 +32,13 @@ const MAX_POLLS_PER_TICK = 3;
  *
  * Polling strategy:
  * - One shared timer drives the whole pending set, not one timer per link.
- * - The first poll fires 2s after a link joins the set; each later tick doubles
- *   the interval up to a 16s cap.
+ * - Each tick doubles the back-off between polls up to a ceiling (see
+ *   INITIAL_INTERVAL_MS / MAX_INTERVAL_MS for the values).
  * - A tick polls at most MAX_POLLS_PER_TICK links, advancing a round-robin
- *   cursor so a set larger than the cap still cycles every link through and no
- *   pending card is ever starved.
- * - A newly joined id resets the interval back to 2s, so a just-saved link
- *   settles as quickly as it did under the old per-link poller instead of
- *   waiting out a mature interval left over from earlier links.
+ *   cursor so no pending card is ever starved.
+ * - A newly joined id resets the interval to its initial value, so a just-saved
+ *   link settles within the initial interval instead of waiting out a mature
+ *   interval left over from earlier links.
  * - Polling continues at the capped interval for as long as any pending link is
  *   rendered. There is no give-up: a slow metadata job (a pg-boss retry can
  *   land well past a minute) still gets caught, and a failed request just backs
@@ -59,10 +63,10 @@ export function usePendingMetadataPolling(
 
   // The live pending set, refreshed every render. The polling loop reads this
   // ref so it always targets the current links, and the timer never restarts
-  // just because an unrelated list update re-rendered the hook.
-  const pendingIds = links
-    .filter((link) => !link.meta?.fetchedAt)
-    .map((link) => link.id);
+  // just because an unrelated list update re-rendered the hook. No dedup here:
+  // upstream list state keeps ids unique (prependLink drops any prior copy),
+  // so a link can appear in the rendered list at most once.
+  const pendingIds = links.filter(isMetadataPending).map((link) => link.id);
   const pendingIdsReference = useRef(pendingIds);
   pendingIdsReference.current = pendingIds;
 
@@ -106,8 +110,8 @@ export function usePendingMetadataPolling(
     let timeoutId: ReturnType<typeof setTimeout>;
 
     function scheduleNext() {
-      intervalReference.current = Math.min(
-        intervalReference.current * 2,
+      intervalReference.current = nextInterval(
+        intervalReference.current,
         MAX_INTERVAL_MS,
       );
       timeoutId = setTimeout(poll, intervalReference.current);
@@ -117,13 +121,12 @@ export function usePendingMetadataPolling(
       const ids = pendingIdsReference.current;
       if (ids.length === 0) return;
 
-      const count = Math.min(MAX_POLLS_PER_TICK, ids.length);
-      const start = cursorReference.current % ids.length;
-      const batch: string[] = [];
-      for (let offset = 0; offset < count; offset += 1) {
-        batch.push(ids[(start + offset) % ids.length]);
-      }
-      cursorReference.current += count;
+      const { batch, nextCursor } = selectPollBatch(
+        ids,
+        cursorReference.current,
+        MAX_POLLS_PER_TICK,
+      );
+      cursorReference.current = nextCursor;
 
       Promise.all(
         batch.map((id) =>
@@ -132,7 +135,7 @@ export function usePendingMetadataPolling(
               // Only a settled poll writes state. Dropping a still-pending copy
               // avoids a pointless re-render and keeps a card the client
               // already settled from reverting to its skeleton.
-              if (link.meta?.fetchedAt) {
+              if (isMetadataSettled(link)) {
                 onSettledReference.current(link);
               }
             })

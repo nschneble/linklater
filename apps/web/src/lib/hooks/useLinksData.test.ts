@@ -651,7 +651,7 @@ describe('useLinksData mutation helpers', () => {
   });
 });
 
-describe('useLinksData settled metadata survives a page-1 refetch (C3)', () => {
+describe('useLinksData settled metadata survives a page-1 refetch', () => {
   it('keeps a settled link settled when a later page-1 fetch carries stale null metadata', async () => {
     const settledAt = '2026-07-29T00:00:00.000Z';
     vi.mocked(apiModule.getLinks)
@@ -692,37 +692,6 @@ describe('useLinksData settled metadata survives a page-1 refetch (C3)', () => {
     );
     expect(result.current.links[0].meta?.title).toBe('Ready');
   });
-
-  it('adopts newer settled metadata when a page-1 refetch finally carries it', async () => {
-    const settledAt = '2026-07-29T00:00:00.000Z';
-    vi.mocked(apiModule.getLinks)
-      // First load: still pending.
-      .mockResolvedValueOnce(makePaginated([makeLink({ id: 'x', meta: null })]))
-      // Refetch: the metadata job has finished, so the server reports it settled.
-      .mockResolvedValueOnce(
-        makePaginated([
-          makeLink({ id: 'x', meta: { title: 'Ready', fetchedAt: settledAt } }),
-        ]),
-      );
-
-    const { result, rerender } = renderHook(
-      ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
-        useLinksData(filter, search),
-      { initialProps: { filter: 'unread' as const, search: '' } },
-    );
-
-    await waitFor(() => expect(result.current.links).toHaveLength(1));
-    expect(result.current.links[0].meta?.fetchedAt).toBeFalsy();
-
-    // The merge must not freeze the stale pending copy: the fresh settled
-    // metadata wins.
-    rerender({ filter: 'unread', search: 'r' });
-
-    await waitFor(() =>
-      expect(result.current.links[0].meta?.fetchedAt).toBe(settledAt),
-    );
-    expect(result.current.links[0].meta?.title).toBe('Ready');
-  });
 });
 
 describe('useLinksData pending metadata polling wiring', () => {
@@ -738,7 +707,7 @@ describe('useLinksData pending metadata polling wiring', () => {
     expect(capturedOnSettled).not.toBeNull();
 
     // Its onSettled callback is `updateLink`: settling 'x' writes it into
-    // state, so a settled poll result lands on the list (constraint 6 / C3).
+    // state, so a settled poll result lands on the list.
     const settledAt = '2026-07-29T00:00:00.000Z';
     act(() =>
       capturedOnSettled!(

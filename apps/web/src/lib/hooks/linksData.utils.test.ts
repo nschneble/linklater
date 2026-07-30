@@ -1,6 +1,8 @@
 import {
   findNewLinks,
   formatNewLinksAnnouncement,
+  isMetadataPending,
+  isMetadataSettled,
   mergeSettledMetadata,
 } from './linksData.utils';
 import { describe, expect, it } from 'vitest';
@@ -25,6 +27,26 @@ function settledMeta(overrides: Partial<LinkMeta> = {}): LinkMeta {
     ...overrides,
   };
 }
+
+describe('isMetadataSettled / isMetadataPending', () => {
+  it('treats a link with a fetchedAt stamp as settled', () => {
+    const link = makeLink({ meta: settledMeta() });
+    expect(isMetadataSettled(link)).toBe(true);
+    expect(isMetadataPending(link)).toBe(false);
+  });
+
+  it('treats null metadata as pending', () => {
+    const link = makeLink({ meta: null });
+    expect(isMetadataSettled(link)).toBe(false);
+    expect(isMetadataPending(link)).toBe(true);
+  });
+
+  it('treats a meta object without fetchedAt as pending', () => {
+    const link = makeLink({ meta: { title: 'Loading', fetchedAt: null } });
+    expect(isMetadataSettled(link)).toBe(false);
+    expect(isMetadataPending(link)).toBe(true);
+  });
+});
 
 describe('findNewLinks', () => {
   it('returns only links not present in existing', () => {

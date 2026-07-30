@@ -1,6 +1,20 @@
 import type { Link } from '../api';
 
 /**
+ * A link is settled once its metadata job has finished and stamped
+ * `meta.fetchedAt`. Everything before that (`meta` null, or present but without
+ * `fetchedAt`) still counts as pending.
+ */
+export function isMetadataSettled(link: Link): boolean {
+  return Boolean(link.meta?.fetchedAt);
+}
+
+/** A link whose metadata has not been fetched yet (still showing a skeleton). */
+export function isMetadataPending(link: Link): boolean {
+  return !isMetadataSettled(link);
+}
+
+/**
  * Picks out links from `incoming` that don't already appear in `existing`,
  * keyed by id. Pure – safe to call inside a setter callback to avoid races.
  */
@@ -40,11 +54,11 @@ export function mergeSettledMetadata(
     existing.map((link): [string, Link] => [link.id, link]),
   );
   return incoming.map((link) => {
-    if (link.meta?.fetchedAt) {
+    if (isMetadataSettled(link)) {
       return link;
     }
     const previous = existingById.get(link.id);
-    if (previous?.meta?.fetchedAt) {
+    if (previous && isMetadataSettled(previous)) {
       return { ...link, meta: previous.meta };
     }
     return link;
