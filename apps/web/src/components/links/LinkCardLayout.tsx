@@ -48,17 +48,17 @@ interface CardThumbnailProps {
   url: string;
   /** OpenGraph image URL when metadata provided one. */
   imageUrl?: string | null;
-  /** Timestamp metadata finished fetching, or nullish while still loading. */
-  fetchedAt?: string | null;
+  /** Whether the link's metadata is still pending (drives the skeleton). */
+  isPending: boolean;
   /** Staggered card-enter animation style threaded from the parent card. */
   style: React.CSSProperties;
 }
 
 /**
  * Decorative thumbnail region of a link card. Three mutually exclusive states:
- * - Not-yet-fetched (`!fetchedAt`): a skeleton block.
- * - Fetched with an `imageUrl`: the remote OpenGraph image.
- * - Fetched without an `imageUrl`: a locally generated inline-SVG placeholder.
+ * - Pending (`isPending`): a skeleton block.
+ * - Settled with an `imageUrl`: the remote OpenGraph image.
+ * - Settled without an `imageUrl`: a locally generated inline-SVG placeholder.
  *
  * All three are `aria-hidden` because the card's accessible name comes from the
  * anchor overlay, not this image.
@@ -66,10 +66,10 @@ interface CardThumbnailProps {
 function CardThumbnail({
   url,
   imageUrl,
-  fetchedAt,
+  isPending,
   style,
 }: CardThumbnailProps) {
-  if (!fetchedAt) {
+  if (isPending) {
     return (
       <div
         aria-hidden="true"
@@ -133,11 +133,13 @@ interface SkeletonBarProps {
 }
 
 /**
- * One placeholder bar in a card's loading skeleton. Purely decorative: the card
- * announces its loading state through `aria-busy`, so the bar carries no text
- * and stays `aria-hidden` – a visually hidden "Loading" string or a live region
- * here would double-announce. The transparent border resolves to a visible
- * outline under forced-colors, where the background fill is flattened away.
+ * One placeholder bar in a card's loading skeleton. Purely decorative: the
+ * loading state is announced by the anchor's "loading details" accessible name,
+ * not by `aria-busy` (assistive tech gives aria-busy on a plain element weak
+ * support), so the bar carries no text and stays `aria-hidden` – a visually
+ * hidden "Loading" string or a live region here would double-announce. The
+ * transparent border resolves to a visible outline under forced-colors, where
+ * the background fill is flattened away.
  */
 function SkeletonBar({ className }: SkeletonBarProps) {
   return (
@@ -225,9 +227,17 @@ export default function LinkCardLayout({
     ? displaySiteName
     : `${displayTitle} – ${displaySiteName}`;
   const openHint = isLinkSafe ? 'opens in new tab' : 'link unavailable';
-  const cardAriaLabel = isPending
-    ? `${nameSubject} – loading details, ${openHint}`
-    : `${nameSubject}, ${openHint}`;
+  let cardAriaLabel: string;
+  if (!isPending) {
+    cardAriaLabel = `${nameSubject}, ${openHint}`;
+  } else if (nameSubject) {
+    cardAriaLabel = `${nameSubject} – loading details, ${openHint}`;
+  } else {
+    // While loading the subject is only the site name, which is empty for a
+    // hostname-less URL (a `javascript:` row parses to an empty hostname). Drop
+    // the leading "site – " so the name never opens on a dangling dash.
+    cardAriaLabel = `loading details, ${openHint}`;
+  }
 
   return (
     <div
@@ -287,7 +297,7 @@ export default function LinkCardLayout({
           <CardThumbnail
             url={link.url}
             imageUrl={link.meta?.imageUrl}
-            fetchedAt={link.meta?.fetchedAt}
+            isPending={isPending}
             style={childStyle(3)}
           />
 

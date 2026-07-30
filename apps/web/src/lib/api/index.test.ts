@@ -574,49 +574,58 @@ describe('apiFetch token-refresh deadline', () => {
     setStoredToken('expired-jwt', 'valid-refresh');
 
     let testCalls = 0;
-    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input.toString();
-      if (url.includes('/auth/refresh')) {
-        // Answers at 9s: slow, but inside the 10s deadline, so it must not be
-        // aborted.
-        return new Promise((resolve) => {
-          setTimeout(
-            () =>
-              resolve({
-                ok: true,
-                status: 200,
-                text: () =>
-                  Promise.resolve(
-                    JSON.stringify({
+    globalThis.fetch = vi.fn(
+      (input: RequestInfo | URL, options?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('/auth/refresh')) {
+          // Answers at 9s: slow, but inside the 10s deadline, so it must not be
+          // aborted. It still rejects on abort (mirroring the hung-refresh mock
+          // above), so a deadline that fired too early would abort this leg
+          // rather than let the 9s answer sail through unnoticed.
+          return new Promise((resolve, reject) => {
+            options?.signal?.addEventListener('abort', () =>
+              reject(
+                new DOMException('The operation was aborted', 'AbortError'),
+              ),
+            );
+            setTimeout(
+              () =>
+                resolve({
+                  ok: true,
+                  status: 200,
+                  text: () =>
+                    Promise.resolve(
+                      JSON.stringify({
+                        accessToken: 'new-jwt',
+                        refreshToken: 'new-refresh',
+                      }),
+                    ),
+                  json: () =>
+                    Promise.resolve({
                       accessToken: 'new-jwt',
                       refreshToken: 'new-refresh',
                     }),
-                  ),
-                json: () =>
-                  Promise.resolve({
-                    accessToken: 'new-jwt',
-                    refreshToken: 'new-refresh',
-                  }),
-              }),
-            9_000,
-          );
-        });
-      }
-      testCalls += 1;
-      if (testCalls === 1) {
+                }),
+              9_000,
+            );
+          });
+        }
+        testCalls += 1;
+        if (testCalls === 1) {
+          return Promise.resolve({
+            ok: false,
+            status: 401,
+            text: () =>
+              Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+          });
+        }
         return Promise.resolve({
-          ok: false,
-          status: 401,
-          text: () =>
-            Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+          ok: true,
+          status: 200,
+          text: () => Promise.resolve(JSON.stringify({ id: 'result' })),
         });
-      }
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        text: () => Promise.resolve(JSON.stringify({ id: 'result' })),
-      });
-    }) as unknown as typeof fetch;
+      },
+    ) as unknown as typeof fetch;
 
     const pending = apiFetch<{ id: string }>('/test');
     await vi.advanceTimersByTimeAsync(9_000);

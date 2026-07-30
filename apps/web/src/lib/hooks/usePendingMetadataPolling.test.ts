@@ -799,6 +799,59 @@ describe('usePendingMetadataPolling', () => {
       expect(polledIds()).toHaveLength(2);
     });
 
+    it('resets the back-off on refocus even while a batch is in flight, so the settling batch re-arms promptly', async () => {
+      // The refocus resets the interval before the in-flight guard decides
+      // whether to arm. If that reset sat inside the guard it would be skipped
+      // whenever a batch is in flight, and the settling batch would re-arm off
+      // the stale matured interval instead of the initial one. Mature the
+      // back-off to the 16s cap, hang a batch in flight, refocus mid-flight,
+      // then settle it: the next poll must arm off the reset interval (2s base,
+      // so 4s after the doubling), not the matured 16s left over from before.
+      let releaseHang: () => void = () => {};
+      let hangNext = false;
+      vi.mocked(apiModule.getLink).mockImplementation(() => {
+        if (hangNext) {
+          // Once matured, this poll hangs in flight until the test settles it,
+          // so the refocus lands while a batch is running.
+          return new Promise<Link>((resolve) => {
+            releaseHang = () => resolve(makeLink('a'));
+          });
+        }
+        // A miss keeps 'a' pending, so the back-off doubles toward the 16s cap.
+        return Promise.resolve(makeLink('a'));
+      });
+
+      renderPolling([makeLink('a')]);
+
+      // Mature the interval to the 16s cap through repeated misses.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60000);
+      });
+
+      // The next poll hangs, leaving a batch in flight at the matured interval.
+      hangNext = true;
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      const countBeforeResume = polledIds().length;
+
+      // Hide, then refocus while the batch is still in flight. The resume resets
+      // the back-off but skips arming (the in-flight batch re-arms itself).
+      await act(async () => {
+        fireVisibility('hidden');
+        fireVisibility('visible');
+      });
+
+      // Settle the batch visible and advance one reset-interval doubling (2s
+      // base -> 4s). A poll fires here only if the resume reset the interval;
+      // had it stayed at the matured 16s cap, nothing would fire until 16s.
+      await act(async () => {
+        releaseHang();
+        await vi.advanceTimersByTimeAsync(4000);
+      });
+      expect(polledIds()).toHaveLength(countBeforeResume + 1);
+    });
+
     it('detaches the visibility listener on unmount so a later refocus polls nothing', async () => {
       // The teardown's removeEventListener is what unpins the listener. Drop it
       // and a visibilitychange after unmount runs the stale resume path, which

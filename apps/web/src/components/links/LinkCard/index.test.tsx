@@ -592,6 +592,25 @@ describe('LinkCard loading safety precedence', () => {
       /loading details, link unavailable/,
     );
   });
+
+  it('drops the empty site name from a loading, unsafe link with no hostname (no leading dash)', () => {
+    // `new URL('javascript:...').hostname` is '', so the site-name subject is
+    // empty. The loading name must not open on a dangling "– " with no subject.
+    renderWithProviders(
+      <LinkCard
+        link={makeLink({
+          url: 'javascript:alert(1)',
+          readAt: null,
+          meta: null,
+        })}
+        onReadToggle={vi.fn()}
+      />,
+    );
+
+    const label = screen.getByRole('link').getAttribute('aria-label');
+    expect(label).toBe('loading details, link unavailable');
+    expect(label).not.toMatch(/^\s*–/);
+  });
 });
 
 describe('LinkCard unsafe-URL guard (CWE-79)', () => {

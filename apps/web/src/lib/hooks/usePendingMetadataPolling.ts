@@ -192,7 +192,11 @@ export function usePendingMetadataPolling(
       if (ids.length === 0) return;
       // A batch is already in flight: a firing timer or a resume must not stack
       // a second on top of it. The in-flight batch's own re-arm resumes the
-      // rotation when it settles, so skipping here loses no rotation.
+      // rotation when it settles, so skipping here loses no rotation. No current
+      // path reaches this with a batch in flight (every arm site fires while the
+      // flag is false and clears the prior timer, so the resume path carries the
+      // flap behavior); it is kept as defense in depth so a future arm site
+      // cannot silently stack a second batch.
       if (batchInFlight) return;
 
       const { batch, nextCursor } = selectPollBatch(
