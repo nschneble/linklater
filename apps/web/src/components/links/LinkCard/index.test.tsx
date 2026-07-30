@@ -585,6 +585,12 @@ describe('LinkCard loading safety precedence', () => {
 
     const row = container.querySelector('.leading-4');
     expect(row?.querySelector(BAR_SELECTOR)).toBeNull();
+
+    // The anchor still reads as loading, and as unavailable rather than
+    // opening in a new tab.
+    expect(screen.getByRole('link').getAttribute('aria-label')).toMatch(
+      /loading details, link unavailable/,
+    );
   });
 });
 
