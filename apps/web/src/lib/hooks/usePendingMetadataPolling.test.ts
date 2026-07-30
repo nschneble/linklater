@@ -716,6 +716,89 @@ describe('usePendingMetadataPolling', () => {
       expect(polledIds()).toHaveLength(1);
     });
 
+    it('does not start a second batch when the tab flaps while one is in flight', async () => {
+      // A batch runs up to the 10s request deadline. Each refocus resets the
+      // back-off and arms a prompt poll; flapping faster than the batch settles
+      // fired successive poll() runs, each dispatching another batch on top of
+      // the one still in flight. The in-flight guard holds it to one: a refocus
+      // (or a firing timer) while a batch is in flight starts no second batch.
+      vi.mocked(apiModule.getLink).mockImplementation(
+        (_id, signal) =>
+          // Hangs until its deadline aborts it; never settles on its own.
+          new Promise<Link>((_resolve, reject) => {
+            signal?.addEventListener('abort', () =>
+              reject(
+                new DOMException('The operation was aborted', 'AbortError'),
+              ),
+            );
+          }),
+      );
+
+      renderPolling([makeLink('a')]);
+
+      // First poll fires at 2s; its request hangs, so the batch stays in flight.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(polledIds()).toHaveLength(1);
+
+      // Flap repeatedly while the batch is still in flight, advancing 2s after
+      // each refocus so any leaked resume timer would fire a second poll. Stay
+      // under the 10s deadline so the first batch is provably still pending.
+      await act(async () => {
+        for (let round = 0; round < 4; round += 1) {
+          fireVisibility('hidden');
+          fireVisibility('visible');
+          await vi.advanceTimersByTimeAsync(2000);
+        }
+      });
+      expect(polledIds()).toHaveLength(1);
+
+      // Past the 10s deadline the hung request aborts, the batch settles, and
+      // the rotation resumes: the guard bounds concurrency without stalling.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10000);
+      });
+      expect(polledIds().length).toBeGreaterThan(1);
+    });
+
+    it('clears the in-flight guard when a batch settles hidden so a later refocus resumes', async () => {
+      // A batch in flight when the tab hides must clear the guard when it
+      // settles, even though it parks rather than re-arms. Otherwise the guard
+      // would survive and block every poll after the next refocus.
+      let resolvePoll: () => void = () => {};
+      vi.mocked(apiModule.getLink).mockImplementation(
+        () =>
+          new Promise<Link>((resolve) => {
+            resolvePoll = () => resolve(makeLink('a'));
+          }),
+      );
+
+      renderPolling([makeLink('a')]);
+
+      // First poll fires; its request is left in flight (batch in flight).
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(polledIds()).toHaveLength(1);
+
+      // Hide, then settle the in-flight batch while hidden: it parks (no
+      // re-arm) but must still release the guard.
+      await act(async () => {
+        fireVisibility('hidden');
+        resolvePoll();
+        await vi.advanceTimersByTimeAsync(120000);
+      });
+      expect(polledIds()).toHaveLength(1);
+
+      // Refocus: with the guard cleared, the resume arms and the next poll fires.
+      await act(async () => {
+        fireVisibility('visible');
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(polledIds()).toHaveLength(2);
+    });
+
     it('detaches the visibility listener on unmount so a later refocus polls nothing', async () => {
       // The teardown's removeEventListener is what unpins the listener. Drop it
       // and a visibilitychange after unmount runs the stale resume path, which
