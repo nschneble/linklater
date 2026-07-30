@@ -46,10 +46,23 @@ const MAX_POLLS_PER_TICK = 3;
  * - Only a poll that comes back settled writes state. A still-pending copy is
  *   dropped, both to avoid a pointless re-render and to keep a card the client
  *   already settled from reverting to its skeleton.
+ * - Polling pauses while the tab is hidden (`document.visibilityState`): the
+ *   timer is parked so a backgrounded tab issues no requests, and a poll in
+ *   flight when the tab hides does not reschedule. On return to visible the
+ *   back-off resets to its initial value and one poll is armed promptly, so a
+ *   long-hidden tab settles without waiting out a matured interval. Pausing
+ *   idles the transport only; it writes no state, so a rendered card keeps its
+ *   pending skeleton (and `aria-busy`) while hidden. An empty pending set has
+ *   no listener attached, so visibility changes are no-ops.
  *
  * GOTCHA: `onSettled` is read through a ref so the polling loop always calls the
  * latest closure without `onSettled` sitting in the effect's dependency array,
  * which would tear down and restart the timer on every render.
+ *
+ * GOTCHA: the visibility listener lives inside the same effect closure as the
+ * timer so pause and resume share the one `timeoutId`. Every arm clears the
+ * prior handle first, which is what keeps a hidden/visible flap (even with a
+ * poll in flight) from leaving two live timers.
  *
  * @param links - The rendered links; any entry missing `meta.fetchedAt` is polled.
  * @param onSettled - Called with the fresh link once `meta.fetchedAt` is present.
@@ -107,14 +120,22 @@ export function usePendingMetadataPolling(
     // Per-run flag so a poll resolving after this effect was torn down (a
     // membership change or unmount) can never schedule a stale timer.
     let cancelled = false;
-    let timeoutId: ReturnType<typeof setTimeout>;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    // Arm the single shared timer, always clearing any prior handle first. That
+    // clear is what makes a resume and an in-flight poll's reschedule converge
+    // on one timer instead of leaving two live during a hidden/visible flap.
+    function arm(delayMs: number) {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(poll, delayMs);
+    }
 
     function scheduleNext() {
       intervalReference.current = nextInterval(
         intervalReference.current,
         MAX_INTERVAL_MS,
       );
-      timeoutId = setTimeout(poll, intervalReference.current);
+      arm(intervalReference.current);
     }
 
     function poll() {
@@ -145,17 +166,41 @@ export function usePendingMetadataPolling(
         ),
       ).then(() => {
         if (cancelled) return;
+        // A tab hidden mid-request must not resume polling when the request
+        // lands: leave the timer parked until a visibilitychange re-arms it.
+        if (document.visibilityState === 'hidden') return;
         if (pendingIdsReference.current.length > 0) {
           scheduleNext();
         }
       });
     }
 
-    timeoutId = setTimeout(poll, intervalReference.current);
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'hidden') {
+        // Pause: park the timer. No state write, so a rendered card keeps its
+        // pending skeleton while the tab is backgrounded.
+        clearTimeout(timeoutId);
+        timeoutId = undefined;
+      } else {
+        // Resume: reset the back-off and arm one prompt poll so a long-hidden
+        // tab does not wait out a matured interval after refocus.
+        intervalReference.current = INITIAL_INTERVAL_MS;
+        arm(INITIAL_INTERVAL_MS);
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Defer the first poll while mounted hidden; the listener above resumes it
+    // once the tab becomes visible.
+    if (document.visibilityState !== 'hidden') {
+      arm(intervalReference.current);
+    }
 
     return () => {
       cancelled = true;
       clearTimeout(timeoutId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [pendingKey]);
 }

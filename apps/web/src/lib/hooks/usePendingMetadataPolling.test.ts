@@ -44,13 +44,33 @@ function renderPolling(
   );
 }
 
+/**
+ * Overrides jsdom's `document.visibilityState` (a prototype getter) so the
+ * polling hook's visibility branch can be exercised. Reset to 'visible' around
+ * every test so an override never leaks into a sibling.
+ */
+function setVisibility(state: 'visible' | 'hidden') {
+  Object.defineProperty(document, 'visibilityState', {
+    configurable: true,
+    get: () => state,
+  });
+}
+
+/** Flips visibility and dispatches the event the hook listens for. */
+function fireVisibility(state: 'visible' | 'hidden') {
+  setVisibility(state);
+  document.dispatchEvent(new Event('visibilitychange'));
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.clearAllMocks();
+  setVisibility('visible');
 });
 
 afterEach(() => {
   vi.useRealTimers();
+  setVisibility('visible');
 });
 
 describe('usePendingMetadataPolling', () => {
@@ -396,5 +416,227 @@ describe('usePendingMetadataPolling', () => {
       await vi.advanceTimersByTimeAsync(2000);
     });
     expect(polledIds()).toHaveLength(2);
+  });
+
+  describe('visibility awareness', () => {
+    it('does not schedule any poll while mounted in a hidden tab', async () => {
+      // A backgrounded tab must make no metadata requests: the timer stays
+      // parked, so advancing well past the 16s cap still fires nothing.
+      vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
+      setVisibility('hidden');
+
+      renderPolling([makeLink('a')]);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(120000);
+      });
+
+      expect(apiModule.getLink).not.toHaveBeenCalled();
+    });
+
+    it('defers the first poll until a hidden-mounted tab becomes visible', async () => {
+      vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
+      setVisibility('hidden');
+
+      renderPolling([makeLink('a')]);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60000);
+      });
+      expect(apiModule.getLink).not.toHaveBeenCalled();
+
+      // On return to visible the deferred first poll arms and fires promptly
+      // (within the initial 2s), not after the matured interval.
+      await act(async () => {
+        fireVisibility('visible');
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(apiModule.getLink).toHaveBeenCalledWith('a');
+    });
+
+    it('stops polling once the tab hides and resumes when it returns', async () => {
+      vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
+
+      renderPolling([makeLink('a')]);
+
+      // One poll fires while visible.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(polledIds()).toHaveLength(1);
+
+      // Hidden: no further polls, even far past the 16s cap.
+      await act(async () => {
+        fireVisibility('hidden');
+        await vi.advanceTimersByTimeAsync(120000);
+      });
+      expect(polledIds()).toHaveLength(1);
+
+      // Visible again: polling resumes.
+      await act(async () => {
+        fireVisibility('visible');
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(polledIds()).toHaveLength(2);
+    });
+
+    it('resets the back-off to the initial interval on refocus (a11y C4)', async () => {
+      // A long-hidden tab must not wait out a matured 16s interval after
+      // refocus: the first poll on return fires within the initial 2s.
+      vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
+
+      renderPolling([makeLink('a')]);
+
+      // Mature the interval to the 16s cap through repeated misses.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60000);
+      });
+      const countBeforeHide = polledIds().length;
+
+      // Hidden across a long stretch: nothing polls.
+      await act(async () => {
+        fireVisibility('hidden');
+        await vi.advanceTimersByTimeAsync(60000);
+      });
+      expect(polledIds()).toHaveLength(countBeforeHide);
+
+      // Refocus arms one poll at the reset 2s interval, not the matured 16s.
+      await act(async () => {
+        fireVisibility('visible');
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(polledIds()).toHaveLength(countBeforeHide + 1);
+    });
+
+    it('writes no state on a visibility transition itself (a11y C2)', async () => {
+      // Pausing is transport idling, not abandonment: hiding then showing runs
+      // no request and settles nothing, so a rendered card keeps its skeleton
+      // (aria-busy stays true, driven by the untouched data model).
+      vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
+      const onSettled = vi.fn();
+
+      renderPolling([makeLink('a')], onSettled);
+
+      await act(async () => {
+        fireVisibility('hidden');
+        fireVisibility('visible');
+      });
+
+      expect(apiModule.getLink).not.toHaveBeenCalled();
+      expect(onSettled).not.toHaveBeenCalled();
+    });
+
+    it('treats visibility changes as no-ops when nothing is pending', async () => {
+      const onSettled = vi.fn();
+
+      renderPolling([settled('a')], onSettled);
+
+      await act(async () => {
+        fireVisibility('hidden');
+        fireVisibility('visible');
+        await vi.advanceTimersByTimeAsync(60000);
+      });
+
+      expect(apiModule.getLink).not.toHaveBeenCalled();
+      expect(onSettled).not.toHaveBeenCalled();
+    });
+
+    it('keeps a single timer through a rapid hidden/visible flap', async () => {
+      // Each transition shares the one timer handle, so flapping must not leave
+      // two live timers that would double the poll rate after refocus.
+      vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
+
+      renderPolling([makeLink('a')]);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(polledIds()).toHaveLength(1);
+
+      // Flap several times, ending visible.
+      await act(async () => {
+        for (let round = 0; round < 5; round += 1) {
+          fireVisibility('hidden');
+          fireVisibility('visible');
+        }
+      });
+
+      // A single armed timer fires exactly one poll at the reset 2s interval.
+      // A leaked second timer would fire an extra poll in the same window.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(polledIds()).toHaveLength(2);
+    });
+
+    it('does not double-schedule when the tab flaps while a poll is in flight', async () => {
+      // The real single-timer hazard: a request still in flight when the tab
+      // flaps. The resume arms a timer and the in-flight resolve reschedules;
+      // both must converge on one handle, not leave two live timers.
+      let resolvePoll: () => void = () => {};
+      vi.mocked(apiModule.getLink).mockImplementation(
+        () =>
+          new Promise<Link>((resolve) => {
+            resolvePoll = () => resolve(makeLink('a'));
+          }),
+      );
+
+      renderPolling([makeLink('a')]);
+
+      // First poll fires; its request is left in flight.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(polledIds()).toHaveLength(1);
+
+      // Flap hidden/visible while the request is pending, then let it resolve.
+      await act(async () => {
+        fireVisibility('hidden');
+        fireVisibility('visible');
+        resolvePoll();
+      });
+
+      // The in-flight poll completed and backed off to 4s, and the resume's
+      // 2s timer was superseded rather than left live: nothing fires at +2s.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(polledIds()).toHaveLength(1);
+
+      // The single 4s timer then fires the next poll.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(polledIds()).toHaveLength(2);
+    });
+
+    it('does not resume polling when an in-flight request lands after the tab hides', async () => {
+      // A request in flight when the tab hides must not reschedule on resolve:
+      // the poll loop stays parked until a visibilitychange re-arms it.
+      let resolvePoll: () => void = () => {};
+      vi.mocked(apiModule.getLink).mockImplementation(
+        () =>
+          new Promise<Link>((resolve) => {
+            resolvePoll = () => resolve(makeLink('a'));
+          }),
+      );
+
+      renderPolling([makeLink('a')]);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(polledIds()).toHaveLength(1);
+
+      // Hide the tab, then resolve the in-flight request.
+      await act(async () => {
+        fireVisibility('hidden');
+        resolvePoll();
+        await vi.advanceTimersByTimeAsync(120000);
+      });
+
+      // No reschedule happened while hidden.
+      expect(polledIds()).toHaveLength(1);
+    });
   });
 });

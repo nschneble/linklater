@@ -819,6 +819,43 @@ describe('visibility refresh', () => {
     expect(result.current.newLinksAnnouncement).toBe('');
   });
 
+  it('does not announce when a refocus only settles an existing pending card (a11y C5)', async () => {
+    // Both hooks fire on the same refocus. The poller settles an existing card
+    // in place while the visibility refresh re-fetches page 1 and finds the
+    // same link, now carrying metadata. A settle on an existing id is not a new
+    // arrival, so `findNewLinks` yields nothing and the live region must stay
+    // silent: no phantom "new links added" for a card the user already had.
+    const settledAt = '2026-07-29T00:00:00.000Z';
+    const settledMeta = { title: 'Ready', fetchedAt: settledAt };
+
+    vi.mocked(apiModule.getLinks).mockResolvedValueOnce(
+      makePaginated([makeLink({ id: 'x', meta: null })]),
+    );
+    const { result } = renderHook(() => useLinksData('unread', ''));
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+
+    // The refocus refetch returns the same link, now settled.
+    vi.mocked(apiModule.getLinks).mockResolvedValueOnce(
+      makePaginated([makeLink({ id: 'x', meta: settledMeta })]),
+    );
+
+    await act(async () => {
+      fireVisibilityChange('visible');
+    });
+
+    // The poller settles the same card on the same refocus.
+    act(() => capturedOnSettled!(makeLink({ id: 'x', meta: settledMeta })));
+
+    await waitFor(() =>
+      expect(vi.mocked(apiModule.getLinks).mock.calls.length).toBeGreaterThan(
+        1,
+      ),
+    );
+
+    expect(result.current.newLinksAnnouncement).toBe('');
+    expect(result.current.links[0].meta?.fetchedAt).toBe(settledAt);
+  });
+
   it('silently swallows refresh errors without setting fetchError', async () => {
     vi.mocked(apiModule.getLinks).mockResolvedValueOnce(
       makePaginated([makeLink({ id: 'a' })]),
