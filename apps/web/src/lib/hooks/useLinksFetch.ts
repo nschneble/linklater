@@ -1,6 +1,7 @@
 import { fetchParametersReducer } from './useLinksData.reducer';
 import { getLinks, type Link, type PaginatedLinks } from '../api';
 import { getErrorMessage } from '../errors';
+import { mergeSettledMetadata } from './linksData.utils';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { LinksFilter } from './types';
@@ -27,6 +28,12 @@ export interface UseLinksFetchResult {
  * `setLinks`/`setPagination` so the facade can layer mutation helpers and
  * the visibility refresh over the same list state without a second source
  * of truth.
+ *
+ * On a page-1 settle the response is merged over the current list via
+ * `mergeSettledMetadata` rather than replacing it outright: incoming still
+ * wins ordering, membership, and every other field, but stale null metadata
+ * cannot overwrite a card the client already settled, so a search/filter
+ * refetch never reverts a settled card to its loading skeleton.
  *
  * @param filter - `'unread'` or `'read'`.
  * @param search - Full-text search query, or empty string for no filter.
@@ -68,8 +75,12 @@ export function useLinksFetch(
     // seen real content once, keep the stale list mounted across re-fetches
     // so search/filter changes leave the previous results in place between
     // keystrokes instead of clearing back to blank.
-    // `setLinks(result.data)` below still overwrites the list on settle, so
-    // an empty result still transitions to the empty state.
+    // On settle the page-1 branch below merges the response over the current
+    // list (mergeSettledMetadata) instead of replacing it wholesale: a
+    // response that predates the metadata job carries a null meta.fetchedAt,
+    // and a blind replace would revert an already-settled card to its
+    // skeleton. An empty result still clears the list, since incoming wins
+    // membership.
     if (fetchParameters.page === 1 && !hasSettledOnceReference.current) {
       setLinks([]);
     }
@@ -85,7 +96,7 @@ export function useLinksFetch(
         });
         if (!cancelled) {
           if (fetchParameters.page === 1) {
-            setLinks(result.data);
+            setLinks((previous) => mergeSettledMetadata(result.data, previous));
           } else {
             setLinks((previous) => [...previous, ...result.data]);
           }

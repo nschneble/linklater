@@ -1,7 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchParametersReducer, useLinksData } from './useLinksData';
-import { findNewLinks, formatNewLinksAnnouncement } from './linksData.utils';
 import type { Link, PaginatedLinks } from '../api';
 
 vi.mock('../api', () => ({
@@ -638,47 +637,77 @@ describe('useLinksData mutation helpers', () => {
   });
 });
 
-describe('findNewLinks', () => {
-  it('returns only links not present in existing', () => {
-    const existing = [makeLink({ id: 'a' }), makeLink({ id: 'b' })];
-    const incoming = [
-      makeLink({ id: 'a' }),
-      makeLink({ id: 'c' }),
-      makeLink({ id: 'd' }),
-    ];
-    expect(findNewLinks(incoming, existing).map((link) => link.id)).toEqual([
-      'c',
-      'd',
-    ]);
+describe('useLinksData settled metadata survives a page-1 refetch (C3)', () => {
+  it('keeps a settled link settled when a later page-1 fetch carries stale null metadata', async () => {
+    const settledAt = '2026-07-29T00:00:00.000Z';
+    vi.mocked(apiModule.getLinks)
+      // First page-1 load: the link is still pending (no fetchedAt yet).
+      .mockResolvedValueOnce(makePaginated([makeLink({ id: 'x', meta: null })]))
+      // A search keystroke fires a fresh page-1 fetch. A response that predates
+      // the metadata job finishing still reports meta: null for the link.
+      .mockResolvedValueOnce(
+        makePaginated([makeLink({ id: 'x', meta: null })]),
+      );
+
+    const { result, rerender } = renderHook(
+      ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
+        useLinksData(filter, search),
+      { initialProps: { filter: 'unread' as const, search: '' } },
+    );
+
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+
+    // The metadata poller settles the card in place.
+    act(() =>
+      result.current.updateLink(
+        makeLink({ id: 'x', meta: { title: 'Ready', fetchedAt: settledAt } }),
+      ),
+    );
+    expect(result.current.links[0].meta?.fetchedAt).toBe(settledAt);
+
+    // The refetch settles with stale null metadata. The merge must keep the
+    // settled meta so a link card's aria-busy (derived from !meta.fetchedAt)
+    // never flips false -> true and the card never reverts to its skeleton.
+    rerender({ filter: 'unread', search: 'r' });
+    await waitFor(() =>
+      expect(vi.mocked(apiModule.getLinks)).toHaveBeenCalledTimes(2),
+    );
+
+    await waitFor(() =>
+      expect(result.current.links[0].meta?.fetchedAt).toBe(settledAt),
+    );
+    expect(result.current.links[0].meta?.title).toBe('Ready');
   });
 
-  it('returns empty array when all incoming links already exist', () => {
-    const existing = [makeLink({ id: 'a' }), makeLink({ id: 'b' })];
-    const incoming = [makeLink({ id: 'a' }), makeLink({ id: 'b' })];
-    expect(findNewLinks(incoming, existing)).toEqual([]);
-  });
+  it('adopts newer settled metadata when a page-1 refetch finally carries it', async () => {
+    const settledAt = '2026-07-29T00:00:00.000Z';
+    vi.mocked(apiModule.getLinks)
+      // First load: still pending.
+      .mockResolvedValueOnce(makePaginated([makeLink({ id: 'x', meta: null })]))
+      // Refetch: the metadata job has finished, so the server reports it settled.
+      .mockResolvedValueOnce(
+        makePaginated([
+          makeLink({ id: 'x', meta: { title: 'Ready', fetchedAt: settledAt } }),
+        ]),
+      );
 
-  it('returns all incoming links when existing is empty', () => {
-    const incoming = [makeLink({ id: 'a' }), makeLink({ id: 'b' })];
-    expect(findNewLinks(incoming, []).map((link) => link.id)).toEqual([
-      'a',
-      'b',
-    ]);
-  });
-});
+    const { result, rerender } = renderHook(
+      ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
+        useLinksData(filter, search),
+      { initialProps: { filter: 'unread' as const, search: '' } },
+    );
 
-describe('formatNewLinksAnnouncement', () => {
-  it('returns singular form for count of 1', () => {
-    expect(formatNewLinksAnnouncement(1)).toBe('1 new link added');
-  });
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+    expect(result.current.links[0].meta?.fetchedAt).toBeFalsy();
 
-  it('returns plural form for counts greater than 1', () => {
-    expect(formatNewLinksAnnouncement(2)).toBe('2 new links added');
-    expect(formatNewLinksAnnouncement(10)).toBe('10 new links added');
-  });
+    // The merge must not freeze the stale pending copy: the fresh settled
+    // metadata wins.
+    rerender({ filter: 'unread', search: 'r' });
 
-  it('returns plural form for count of 0', () => {
-    expect(formatNewLinksAnnouncement(0)).toBe('0 new links added');
+    await waitFor(() =>
+      expect(result.current.links[0].meta?.fetchedAt).toBe(settledAt),
+    );
+    expect(result.current.links[0].meta?.title).toBe('Ready');
   });
 });
 
