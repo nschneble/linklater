@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
 import PrimaryButton from '../common/PrimaryButton';
+import {
+  isMetadataPending,
+  isMetadataSettled,
+} from '../../lib/hooks/linksData.utils';
 import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
 import { hostnameOf, stripHtml } from '../../lib/strings';
 import { FOCUS_RING } from '../../lib/styles';
@@ -189,19 +193,21 @@ export default function LinkCardLayout({
   return (
     <div
       ref={cardReference}
-      aria-busy={!link.meta?.fetchedAt || undefined}
+      aria-busy={isMetadataPending(link) || undefined}
       /*
         border-shadow / hover:border-shadow are hand-written UNLAYERED classes
         in theme/styles/border-shadow.css, so no `aria-busy:` variant can reach
-        them. They stay a conditional keyed off the SAME `link.meta?.fetchedAt`
-        expression that drives aria-busy, so the two states can never drift.
-        They are withheld while pending on purpose: their unlayered box-shadow
-        would otherwise outrank the layered selection `ring-2` and swallow the
+        them. They stay a conditional keyed off `isMetadataSettled`, while
+        aria-busy keys off `isMetadataPending`. Those two predicates are
+        complementary by construction in linksData.utils.ts, so the settled
+        border and the pending aria-busy can never drift. The classes are
+        withheld while pending on purpose: their unlayered box-shadow would
+        otherwise outrank the layered selection `ring-2` and swallow the
         selection outline.
       */
-      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] aria-busy:border-[var(--mount-border)] rounded-r-xl ${link.meta?.fetchedAt ? 'border-shadow hover:border-shadow' : ''} aria-busy:animate-meta-pulse-border ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
+      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] aria-busy:border-[var(--mount-border)] rounded-r-xl ${isMetadataSettled(link) ? 'border-shadow hover:border-shadow' : ''} aria-busy:animate-meta-pulse-border ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
     >
-      {link.meta?.fetchedAt ? (
+      {isMetadataSettled(link) ? (
         <div className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none">
           <span className="relative flex items-center justify-center">
             {link.meta?.faviconUrl ? (
