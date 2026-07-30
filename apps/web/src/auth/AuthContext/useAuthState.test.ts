@@ -91,9 +91,47 @@ describe('initial state – stored token present', () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it('clears the token and sets user to null when getMe fails', async () => {
-    vi.mocked(apiModule.getStoredToken).mockReturnValue('expired-jwt');
-    vi.mocked(apiModule.getMe).mockRejectedValue(new Error('Unauthorized'));
+  it.each([
+    ['a network error', new TypeError('Failed to fetch')],
+    [
+      'a 5xx server fault',
+      Object.assign(new Error('Bad gateway'), {
+        name: 'ApiError',
+        status: 502,
+      }),
+    ],
+  ])(
+    'keeps the stored token when hydration fails with %s',
+    async (_description, failure) => {
+      vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+      vi.mocked(apiModule.getMe).mockRejectedValue(failure);
+
+      const { result } = renderHook(() => useAuthState());
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      // A transient fault on the very first getMe must not drop the session:
+      // core clears the token only on a server-confirmed auth rejection, so
+      // the token survives here for the next reload to retry.
+      expect(apiModule.clearStoredToken).not.toHaveBeenCalled();
+      expect(result.current.user).toBeNull();
+    },
+  );
+
+  it('lands logged out when the session is genuinely dead', async () => {
+    // Core clears the token during the failed getMe (a rejected refresh), so
+    // by the catch the token is gone. The visitor is logged out as before.
+    vi.mocked(apiModule.getStoredToken)
+      .mockReturnValueOnce('expired-jwt')
+      .mockReturnValue(null);
+    vi.mocked(apiModule.getMe).mockRejectedValue(
+      Object.assign(new Error('Unauthorized'), {
+        name: 'ApiError',
+        status: 401,
+      }),
+    );
 
     const { result } = renderHook(() => useAuthState());
 
@@ -101,8 +139,29 @@ describe('initial state – stored token present', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(apiModule.clearStoredToken).toHaveBeenCalled();
     expect(result.current.user).toBeNull();
+  });
+
+  it('recovers on a later hydration after a transient mount failure', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe)
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValue(makeUser());
+
+    const { result } = renderHook(() => useAuthState());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+    expect(result.current.user).toBeNull();
+    expect(apiModule.clearStoredToken).not.toHaveBeenCalled();
+
+    // The surviving token lets the next hydration succeed.
+    await act(async () => {
+      await result.current.refreshUser();
+    });
+
+    expect(result.current.user?.email).toBe('user@example.com');
   });
 });
 

@@ -1,6 +1,5 @@
 import {
   acknowledgeWelcome as apiAcknowledgeWelcome,
-  clearStoredToken,
   getMe,
   getStoredToken,
   login as apiLogin,
@@ -100,7 +99,16 @@ export function useAuthState(): AuthContextValue {
         setUser(mapMeToUser(me));
       } catch (error) {
         console.error('Failed to fetch current user', error);
-        clearStoredToken();
+        // Leave the stored token alone on a failed hydration. The token is the
+        // verdict: performTokenRefresh (lib/api/core) clears it only when
+        // /auth/refresh answered 401 or 403, the one server-confirmed
+        // dead-session signal, so if it is already gone the session really
+        // ended and the logged-out view shows because user stays null. If it
+        // survives, the failure was transient (a 5xx, a timeout, a network
+        // blip, or a plain non-auth error) and the token stays put so the next
+        // reload can retry. Reclearing it here would drop a live session on a
+        // passing fault, which is the cold-load gap this closes; core owns the
+        // clear, exactly as refreshUser below defers to it.
       } finally {
         setLoading(false);
       }
