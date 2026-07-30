@@ -819,7 +819,7 @@ describe('visibility refresh', () => {
     expect(result.current.newLinksAnnouncement).toBe('');
   });
 
-  it('does not announce when a refocus only settles an existing pending card (a11y C5)', async () => {
+  it('does not announce when a refocus only settles an existing pending card', async () => {
     // Both hooks fire on the same refocus. The poller settles an existing card
     // in place while the visibility refresh re-fetches page 1 and finds the
     // same link, now carrying metadata. A settle on an existing id is not a new

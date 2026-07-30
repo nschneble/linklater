@@ -480,7 +480,7 @@ describe('usePendingMetadataPolling', () => {
       expect(polledIds()).toHaveLength(2);
     });
 
-    it('resets the back-off to the initial interval on refocus (a11y C4)', async () => {
+    it('resets the back-off to the initial interval on refocus', async () => {
       // A long-hidden tab must not wait out a matured 16s interval after
       // refocus: the first poll on return fires within the initial 2s.
       vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
@@ -508,7 +508,7 @@ describe('usePendingMetadataPolling', () => {
       expect(polledIds()).toHaveLength(countBeforeHide + 1);
     });
 
-    it('writes no state on a visibility transition itself (a11y C2)', async () => {
+    it('writes no state on a visibility transition itself', async () => {
       // Pausing is transport idling, not abandonment: hiding then showing runs
       // no request and settles nothing, so a rendered card keeps its skeleton
       // (aria-busy stays true, driven by the untouched data model).
@@ -637,6 +637,25 @@ describe('usePendingMetadataPolling', () => {
 
       // No reschedule happened while hidden.
       expect(polledIds()).toHaveLength(1);
+    });
+
+    it('detaches the visibility listener on unmount so a later refocus polls nothing', async () => {
+      // The teardown's removeEventListener is what unpins the listener. Drop it
+      // and a visibilitychange after unmount runs the stale resume path, which
+      // arms a timer and polls getLink for a hook nobody renders. Unmount, fire
+      // a refocus, and let the initial interval elapse: a live listener polls.
+      vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
+
+      const { unmount } = renderPolling([makeLink('a')]);
+
+      unmount();
+
+      await act(async () => {
+        fireVisibility('visible');
+        await vi.advanceTimersByTimeAsync(5000);
+      });
+
+      expect(apiModule.getLink).not.toHaveBeenCalled();
     });
   });
 });
