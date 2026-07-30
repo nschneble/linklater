@@ -24,6 +24,26 @@ const MAX_INTERVAL_MS = 16_000;
 const MAX_POLLS_PER_TICK = 3;
 
 /**
+ * Per-request deadline for a metadata poll. apiFetch imposes no timeout of its
+ * own, so a hung socket (a dead network mid-request) would leave a getLink
+ * pending until the browser's socket-level timeout, which can run to minutes.
+ * Because a tick re-arms the shared timer only once its whole Promise.all
+ * settles, one such stall would freeze the rotation for every other pending
+ * card. Aborting at this deadline bounds the stall: the abort rejects like any
+ * other request error and the next tick schedules normally.
+ *
+ * The value sits above any healthy round-trip (a slow mobile connection
+ * included, so a working-but-slow poll is not falsely aborted and left to
+ * retry) yet well under the socket timeout it stands in for. It exceeds the
+ * initial poll interval, but the loop tolerates that: the re-arm is gated on
+ * the batch settling, so steady-state ticks never overlap; every schedule
+ * routes through the single clear-first `arm`; and a duplicate or late result
+ * is dropped by the `isMetadataSettled` guard. A deadline longer than the
+ * interval therefore cannot pile up unbounded concurrent polls.
+ */
+const REQUEST_DEADLINE_MS = 10_000;
+
+/**
  * Polls `GET /links/:id` for every rendered link whose metadata has not been
  * fetched yet (`!meta.fetchedAt`), settling each one in place as its metadata
  * lands. The pending set is derived from list state rather than a caller-owned
@@ -36,6 +56,9 @@ const MAX_POLLS_PER_TICK = 3;
  *   INITIAL_INTERVAL_MS / MAX_INTERVAL_MS for the values).
  * - A tick polls at most MAX_POLLS_PER_TICK links, advancing a round-robin
  *   cursor so no pending card is ever starved.
+ * - Each poll carries a client-side deadline (see REQUEST_DEADLINE_MS): a hung
+ *   request is aborted so one stalled socket cannot freeze the shared timer's
+ *   rotation for every other pending card.
  * - A newly joined id resets the interval to its initial value, so a just-saved
  *   link settles within the initial interval instead of waiting out a mature
  *   interval left over from earlier links.
@@ -151,20 +174,33 @@ export function usePendingMetadataPolling(
       cursorReference.current = nextCursor;
 
       Promise.all(
-        batch.map((id) =>
-          getLink(id)
-            .then((link) => {
-              // Only a settled poll writes state. Dropping a still-pending copy
-              // avoids a pointless re-render and keeps a card the client
-              // already settled from reverting to its skeleton.
-              if (isMetadataSettled(link)) {
-                onSettledReference.current(link);
-              }
-            })
-            // A failed request is not terminal: swallow it and let the next
-            // tick retry, so a rendered pending card is never abandoned.
-            .catch(() => {}),
-        ),
+        batch.map((id) => {
+          // Bound each poll with a client-side deadline so one hung request
+          // cannot wedge the whole batch (see REQUEST_DEADLINE_MS). The timer
+          // is cleared the moment the request settles so a healthy poll never
+          // fires a pointless abort.
+          const deadlineController = new AbortController();
+          const deadlineTimeoutId = setTimeout(
+            () => deadlineController.abort(),
+            REQUEST_DEADLINE_MS,
+          );
+          return (
+            getLink(id, deadlineController.signal)
+              .then((link) => {
+                // Only a settled poll writes state. Dropping a still-pending copy
+                // avoids a pointless re-render and keeps a card the client
+                // already settled from reverting to its skeleton.
+                if (isMetadataSettled(link)) {
+                  onSettledReference.current(link);
+                }
+              })
+              // A failed or timed-out request is not terminal: swallow it and let
+              // the next tick retry, so a rendered pending card is never
+              // abandoned.
+              .catch(() => {})
+              .finally(() => clearTimeout(deadlineTimeoutId))
+          );
+        }),
       ).then(() => {
         if (cancelled) return;
         // A tab hidden mid-request must not resume polling when the request

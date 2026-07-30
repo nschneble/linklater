@@ -93,7 +93,12 @@ describe('usePendingMetadataPolling', () => {
       await vi.advanceTimersByTimeAsync(2000);
     });
 
-    expect(apiModule.getLink).toHaveBeenCalledWith('a');
+    // The poll carries a deadline signal alongside the id (see the request
+    // deadline suite for why); assert both so the additive arg is documented.
+    expect(apiModule.getLink).toHaveBeenCalledWith(
+      'a',
+      expect.any(AbortSignal),
+    );
   });
 
   it('calls onSettled when a poll returns settled metadata', async () => {
@@ -418,6 +423,75 @@ describe('usePendingMetadataPolling', () => {
     expect(polledIds()).toHaveLength(2);
   });
 
+  describe('request deadline', () => {
+    it('keeps polling the other pending links after one request stalls past its deadline', async () => {
+      // apiFetch has no timeout, so a hung request used to block the whole
+      // Promise.all and freeze the rotation until the browser's socket-level
+      // timeout (minutes). Each poll now carries a client-side deadline: the
+      // stalled request aborts and the rotation continues for every other card.
+      vi.mocked(apiModule.getLink).mockImplementation((id, signal) => {
+        if (id === 'stalled') {
+          // Never settles on its own; only the deadline's abort rejects it.
+          return new Promise<Link>((resolve, reject) => {
+            signal?.addEventListener('abort', () =>
+              reject(
+                new DOMException('The operation was aborted', 'AbortError'),
+              ),
+            );
+          });
+        }
+        return Promise.resolve(makeLink(id));
+      });
+
+      renderPolling([makeLink('stalled'), makeLink('b')]);
+
+      // First tick fires; the stalled request hangs, so without a deadline the
+      // batch's Promise.all never settles and no further tick is scheduled.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      const countAfterFirstTick = polledIds().length;
+
+      // Past the 10s deadline and the next back-off: the stalled request aborts,
+      // the batch settles, and the rotation schedules and fires the next tick.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(14000);
+      });
+      expect(polledIds().length).toBeGreaterThan(countAfterFirstTick);
+    });
+
+    it('settles nothing from a poll that times out, even if it resolves late', async () => {
+      // A timed-out poll is a plain dropped error: it must write no state. Even
+      // if the underlying request would have resolved settled afterwards, the
+      // abort already rejected it, so an aborted promise stays rejected and the
+      // late resolution is a no-op (dropped like any stale result).
+      vi.mocked(apiModule.getLink).mockImplementation(
+        (id, signal) =>
+          new Promise<Link>((resolve, reject) => {
+            // Would resolve settled well after its deadline...
+            setTimeout(() => resolve(settled(id)), 30000);
+            // ...but the deadline aborts it first.
+            signal?.addEventListener('abort', () =>
+              reject(
+                new DOMException('The operation was aborted', 'AbortError'),
+              ),
+            );
+          }),
+      );
+      const onSettled = vi.fn();
+
+      renderPolling([makeLink('a')], onSettled);
+
+      // Past the first poll (2s), its 10s deadline, and where the late resolve
+      // (30s) would have landed: the timed-out poll never settles the card.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(32000);
+      });
+
+      expect(onSettled).not.toHaveBeenCalled();
+    });
+  });
+
   describe('visibility awareness', () => {
     it('does not schedule any poll while mounted in a hidden tab', async () => {
       // A backgrounded tab must make no metadata requests: the timer stays
@@ -451,7 +525,10 @@ describe('usePendingMetadataPolling', () => {
         fireVisibility('visible');
         await vi.advanceTimersByTimeAsync(2000);
       });
-      expect(apiModule.getLink).toHaveBeenCalledWith('a');
+      expect(apiModule.getLink).toHaveBeenCalledWith(
+        'a',
+        expect.any(AbortSignal),
+      );
     });
 
     it('stops polling once the tab hides and resumes when it returns', async () => {
