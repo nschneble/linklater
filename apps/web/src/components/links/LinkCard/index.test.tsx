@@ -246,10 +246,11 @@ describe('LinkCard pending-state pulse (color animation, no opacity flicker)', (
 
     const badge = container.querySelector('span.animate-meta-pulse-bg');
     expect(badge).not.toBeNull();
-    // The badge ring is now static and opaque (--mount-bg): zero translucency
-    // remains in the pending state.
-    expect(badge?.className).toContain('ring-2');
-    expect(badge?.className).toContain('ring-[var(--mount-bg)]');
+    // A solid dot that pulses its own background between the mount border and
+    // highlight — no translucent ring, so nothing flickers and it never sinks
+    // into the card the way a --mount-bg trough did.
+    expect(badge?.className).toContain('bg-[var(--mount-highlight)]');
+    expect(badge?.className).not.toContain('ring');
   });
 
   it('carries NONE of the pending pulse once metadata has been fetched', () => {
@@ -287,11 +288,11 @@ describe('LinkCard pending-state pulse (color animation, no opacity flicker)', (
       '@keyframes meta-pulse-border { 0%, 100% { border-color: var(--mount-border); } 50% { border-color: var(--mount-highlight); } }',
     );
 
-    // Badge keyframe animates background-color between --mount-bg and
-    // --mount-highlight: an in-bundle >=3:1 pair that carries the visible
-    // motion in every theme cascade and custom theme.
+    // Badge keyframe animates background-color between --mount-border and
+    // --mount-highlight: the SAME >=3:1 pair the border pulse breathes, so the
+    // circle tracks the border instead of sinking into --mount-bg at each trough.
     expect(flattened).toContain(
-      '@keyframes meta-pulse-bg { 0%, 100% { background-color: var(--mount-bg); } 50% { background-color: var(--mount-highlight); } }',
+      '@keyframes meta-pulse-bg { 0%, 100% { background-color: var(--mount-border); } 50% { background-color: var(--mount-highlight); } }',
     );
 
     // Both tokens share the exact same 2s ease-in-out cadence (so border and

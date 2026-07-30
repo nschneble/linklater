@@ -182,7 +182,7 @@ body {
 @keyframes meta-pulse-bg {
   0%,
   100% {
-    background-color: var(--mount-bg);
+    background-color: var(--mount-border);
   }
   50% {
     background-color: var(--mount-highlight);

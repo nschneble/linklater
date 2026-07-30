@@ -288,7 +288,7 @@ export default function LinkCardLayout({
           aria-hidden="true"
           className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none"
         >
-          <span className="block w-8 h-8 bg-[var(--mount-highlight)] ring-2 ring-[var(--mount-bg)] rounded-2xl animate-meta-pulse-bg" />
+          <span className="block w-8 h-8 bg-[var(--mount-highlight)] rounded-2xl animate-meta-pulse-bg" />
         </div>
       )}
 
