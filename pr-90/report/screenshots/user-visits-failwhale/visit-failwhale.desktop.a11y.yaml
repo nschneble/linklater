@@ -1,0 +1,7 @@
+- link "Skip to main content":
+  - /url: "#main-content"
+- main:
+  - heading "You found the failwhale!" [level=1]
+  - paragraph: This is a dead end on purpose. Press the button below and Linklater will throw a render error so you can see the app's error screen firsthand.
+  - button "Crash this page on purpose"
+  - paragraph: Triggers the app's error screen. Reload the page to recover.

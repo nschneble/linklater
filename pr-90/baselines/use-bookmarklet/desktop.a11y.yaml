@@ -1,0 +1,93 @@
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - button "Go to your links": Linklater Save links now, read them later.
+  - button "User menu (testing-ui@linklater.test)"
+- main "Settings":
+  - navigation "Settings sections":
+    - list:
+      - listitem:
+        - button "Account"
+      - listitem:
+        - button "Security"
+      - listitem:
+        - button "Accessibility"
+      - listitem:
+        - button "Bookmarks"
+      - listitem:
+        - button "Integrations"
+      - listitem:
+        - button "Danger"
+    - button "Back to top"
+  - link "Skip settings navigation":
+    - /url: "#account"
+  - heading "Settings" [level=1]
+  - region "Account":
+    - heading "Account" [level=2]
+    - paragraph: Manage your email address, password, and any identity providers (IdPs) you've connected.
+    - form "Email":
+      - heading "Email" [level=3]
+      - text: testing-ui@linklater.test Verified New email
+      - textbox "New email":
+        - /placeholder: Leave blank to keep testing-ui@linklater.test
+      - button "Change email address" [disabled]
+    - form "Password":
+      - heading "Password" [level=3]
+      - text: New password
+      - textbox "New password":
+        - /placeholder: Leave blank to keep current password
+      - button "Save new password" [disabled]
+  - region "Enhanced security":
+    - heading "Enhanced security" [level=2]
+    - paragraph: Set up and manage multi-factor authentication. That's not overkill for a read-it-later app, right?
+    - paragraph: MFA is currently off.
+    - button "Add authenticator app"
+    - text: Recommended
+  - region "Accessibility":
+    - heading "Accessibility" [level=2]
+    - paragraph: Adjust how Linklater looks and feels.
+    - text: Color Vision Deficiency (CVD) mode
+    - paragraph: Switches to the Apollo 10½ theme and adds distinctive visual non-color cues, including underlined links, striped disabled controls, stronger focus outlines, and selected indicator bars.
+    - switch "Color Vision Deficiency (CVD) mode": "Off"
+    - text: OpenDyslexic typeface
+    - paragraph: Switches the app's interface font to OpenDyslexic, a typeface designed for readers with dyslexia. It features heavier strokes and more distinctive letter shapes.
+    - switch "OpenDyslexic typeface": "Off"
+    - text: Keyboard shortcuts
+    - paragraph:
+      - text: Provides quick keyboard navigation for many actions on the
+      - button "Your Links"
+      - text: page, such as Q to search and A to add links.
+    - switch "Keyboard shortcuts" [checked]: "On"
+  - region "Browser bookmarks":
+    - heading "Browser bookmarks" [level=2]
+    - paragraph: Save and stumble upon links right from your bookmarks bar.
+    - heading "Bookmarklet" [level=3]
+    - status
+    - button "Regenerate bookmarklet token": Regenerate
+    - paragraph: Drag this button to your bookmarks bar. Click it on any page to save the link directly to Linklater.
+    - status
+    - link "Save to Linklater – drag to your bookmarks bar, or click on any page to save that link":
+      - /url: "javascript:(function(){var t=\"ltk_bookmarklet_regen_stub_for_visual_regression\",a=\"https://localhost:3000\";function n(m,k){var e=document.createElement('div');e.textContent=m;e.setAttribute('role',k?'status':'alert');e.setAttribute('aria-live',k?'polite':'assertive');e.style.cssText='position:fixed;top:16px;right:16px;padding:12px 18px;border-radius:8px;font:600 14px/1 system-ui;z-index:2147483647;box-shadow:0 4px 16px rgba(0,0,0,.35);transition:opacity .3s;color:'+(k?'#020617':'#fff')+';background:'+(k?'#34d399':'#ef4444');document.body.appendChild(e);setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.remove()},350)},2500)}fetch(a+'/links',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({url:location.href})}).then(function(r){r.ok?n('✓ Saved to Linklater',true):r.text().then(function(m){var p;try{p=JSON.parse(m).message;if(p&&p.join)p=p.join(', ')}catch(_){}n('⚠ '+(p||m||'Error saving link'),false)})}).catch(function(){n('⚠ Could not reach Linklater',false)})})();"
+      - text: Save to Linklater
+    - paragraph: Your auth token is embedded in this bookmarklet. It never expires, but it can be regenerated if someone else gains access to it.
+    - text: Bookmarklet regenerated
+    - button "Dismiss"
+    - status: Bookmarklet regenerated
+    - heading "Stumble!" [level=3]
+    - paragraph: Drag this button to your bookmarks bar. Click it to automatically open a random unread link from your collection.
+    - link "Drag this Stumble! button to your bookmarks bar. Click it to automatically open a random unread link from your collection.":
+      - /url: /stumble
+      - text: Stumble!
+  - region "Third-party integrations":
+    - heading "Third-party integrations" [level=2]
+    - paragraph: Use personal access tokens (PATs) to connect Linklater with external tools and services.
+    - heading "API Tokens" [level=3]
+    - button "Generate new token"
+    - paragraph: You haven't created any tokens
+    - link "View API docs":
+      - /url: /docs
+  - region "Danger zone":
+    - heading "Danger zone" [level=2]
+    - paragraph: Beware all ye who enter. Deleting your account will remove all your saved links. This cannot be undone.
+    - button "Delete my account"
+  - status
