@@ -61,12 +61,13 @@ let inFlightRefresh: Promise<boolean> | null = null;
  * leg gets a limit.
  *
  * An abort rejects the fetch exactly as an unreachable server would, so a
- * timed-out refresh follows the same catch below as any network failure (drop
- * the tokens) rather than being read as the server rejecting the refresh
- * token. Held at 10s to match the poller's per-request deadline: comfortably
- * above a healthy round-trip on a slow connection, well under the socket
- * timeout it stands in for. AbortSignal.timeout is deliberately avoided; its
- * internal timer is not driven by the test suite's fake timers.
+ * timed-out refresh follows the same catch below as any network failure: this
+ * request fails, but the stored tokens survive because a refresh that never
+ * answered has not proven the session dead. Held at 10s to match the poller's
+ * per-request deadline: comfortably above a healthy round-trip on a slow
+ * connection, well under the socket timeout it stands in for.
+ * AbortSignal.timeout is deliberately avoided; its internal timer is not
+ * driven by the test suite's fake timers.
  */
 const REFRESH_DEADLINE_MS = 10_000;
 
@@ -91,7 +92,15 @@ async function performTokenRefresh(): Promise<boolean> {
     });
 
     if (!response.ok) {
-      clearStoredToken();
+      // Only a server-answered auth rejection proves the refresh token is
+      // spent. A 401 or 403 ends the session; every other status (a 5xx
+      // server fault, most often) is transient, so the tokens stay put for a
+      // later request to retry. Keeping them adds no exposure since they were
+      // already stored: only the server's own rejection settles that the
+      // session is dead.
+      if (response.status === 401 || response.status === 403) {
+        clearStoredToken();
+      }
       return false;
     }
 
@@ -102,9 +111,10 @@ async function performTokenRefresh(): Promise<boolean> {
     setStoredToken(data.accessToken, data.refreshToken);
     return true;
   } catch {
-    // A network failure and a deadline abort both land here: the refresh could
-    // not complete, so drop the stored tokens as an unreachable server would.
-    clearStoredToken();
+    // A network failure or a deadline abort means the refresh never reached a
+    // verdict, so the session is not proven dead. Leave the stored tokens in
+    // place: the triggering request still fails, but a later one can retry.
+    // Keeping them adds no exposure since they were already stored.
     return false;
   } finally {
     clearTimeout(deadlineTimeoutId);

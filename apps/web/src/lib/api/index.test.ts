@@ -325,6 +325,119 @@ describe('apiFetch', () => {
     expect(getStoredRefreshToken()).toBeNull();
   });
 
+  it('clears tokens and throws when the refresh endpoint answers 403', async () => {
+    setStoredToken('expired-jwt', 'forbidden-refresh');
+
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        text: () => Promise.resolve(JSON.stringify({ message: 'Forbidden' })),
+      }) as unknown as typeof fetch;
+
+    await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
+    // A 403 is the server answering that the refresh token may not be used:
+    // the session is genuinely dead, so the tokens go with the 401 above.
+    expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
+  });
+
+  it('keeps the stored tokens when the refresh endpoint answers 500', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Server error' })),
+      }) as unknown as typeof fetch;
+
+    await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
+    // A 5xx is a server-side fault, not a spent session: the tokens survive so
+    // a later request can retry the refresh.
+    expect(getStoredToken()).toBe('expired-jwt');
+    expect(getStoredRefreshToken()).toBe('valid-refresh');
+  });
+
+  it('recovers on a later request after a transient refresh failure leaves the tokens intact', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        // First request → 401
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        // Refresh → 500 (transient); the tokens must survive untouched
+        ok: false,
+        status: 500,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Server error' })),
+      });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(apiFetch('/first')).rejects.toBeInstanceOf(ApiError);
+    expect(getStoredToken()).toBe('expired-jwt');
+    expect(getStoredRefreshToken()).toBe('valid-refresh');
+
+    (fetchMock as unknown as Mock)
+      .mockResolvedValueOnce({
+        // Second request → 401
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        // Refresh → 200; the surviving refresh token now rotates cleanly
+        ok: true,
+        status: 200,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              accessToken: 'fresh-jwt',
+              refreshToken: 'fresh-refresh',
+            }),
+          ),
+        json: () =>
+          Promise.resolve({
+            accessToken: 'fresh-jwt',
+            refreshToken: 'fresh-refresh',
+          }),
+      })
+      .mockResolvedValueOnce({
+        // Retry → 200
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ id: 'recovered' })),
+      });
+
+    await expect(apiFetch<{ id: string }>('/second')).resolves.toEqual({
+      id: 'recovered',
+    });
+    expect(getStoredToken()).toBe('fresh-jwt');
+    expect(getStoredRefreshToken()).toBe('fresh-refresh');
+  });
+
   it('does not retry when no refresh token is stored', async () => {
     setStoredToken('expired-jwt');
     const fetchMock = vi.fn().mockResolvedValue({
@@ -501,7 +614,7 @@ describe('apiFetch token-refresh deadline', () => {
     vi.useRealTimers();
   });
 
-  it('aborts a hung refresh at its deadline and clears the session as an unreachable server would', async () => {
+  it('keeps the stored tokens when a hung refresh aborts at its deadline', async () => {
     vi.useFakeTimers();
     setStoredToken('expired-jwt', 'valid-refresh');
 
@@ -539,13 +652,13 @@ describe('apiFetch token-refresh deadline', () => {
     expect(error).toBeInstanceOf(ApiError);
     // The caller sees the original 401, not a refresh-specific error.
     expect((error as ApiError).status).toBe(401);
-    // The timed-out refresh takes the network-error path: tokens dropped, no
-    // silent hang for every awaiter.
-    expect(getStoredToken()).toBeNull();
-    expect(getStoredRefreshToken()).toBeNull();
+    // A deadline abort is a transient failure: this request fails, but the
+    // refresh never reached a verdict, so the tokens survive for a later retry.
+    expect(getStoredToken()).toBe('expired-jwt');
+    expect(getStoredRefreshToken()).toBe('valid-refresh');
   });
 
-  it('clears the session identically when the refresh fetch rejects with a network error', async () => {
+  it('keeps the stored tokens when the refresh fetch rejects with a network error', async () => {
     setStoredToken('expired-jwt', 'valid-refresh');
 
     globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
@@ -562,11 +675,10 @@ describe('apiFetch token-refresh deadline', () => {
     }) as unknown as typeof fetch;
 
     await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
-    // Baseline for the deadline test above: a refresh that cannot complete
-    // drops the tokens. The timed-out refresh must land here, not on a session
-    // rejection.
-    expect(getStoredToken()).toBeNull();
-    expect(getStoredRefreshToken()).toBeNull();
+    // Same class as the deadline abort above: a refresh that never reached the
+    // server leaves the tokens in place rather than reading it as a rejection.
+    expect(getStoredToken()).toBe('expired-jwt');
+    expect(getStoredRefreshToken()).toBe('valid-refresh');
   });
 
   it('lets a slow refresh that answers before the deadline complete the retry', async () => {
