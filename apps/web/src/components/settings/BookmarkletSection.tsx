@@ -43,7 +43,7 @@ export default function BookmarkletSection() {
 
   const code = rawToken ? buildBookmarkletCode(rawToken) : null;
 
-  // GOTCHA: React sanitizes javascript: hrefs; setAttribute bypasses it
+  // React sanitizes javascript: hrefs; setAttribute bypasses it
   // https://github.com/facebook/react/issues/16382
   useEffect(() => {
     if (!bookmarkletReference.current || !code) return;
@@ -51,8 +51,6 @@ export default function BookmarkletSection() {
   }, [code]);
 
   const loading = rawToken === null && !loadError;
-
-  // token resolves post-paint and grows this section; re-anchor active one
   useReanchorOnLoad(!loading);
 
   return (

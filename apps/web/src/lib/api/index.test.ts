@@ -63,10 +63,6 @@ import {
   verifyTotpSetup,
 } from '.';
 
-// ---------------------------------------------------------------------------
-// helpers
-// ---------------------------------------------------------------------------
-
 function mockFetch(body: unknown, status = 200): Mock {
   const mock = vi.fn().mockResolvedValue({
     ok: status >= 200 && status < 300,
@@ -105,10 +101,6 @@ function mockFetchEmptyBody(status = 200): Mock {
   return mock;
 }
 
-// ---------------------------------------------------------------------------
-// setup / teardown
-// ---------------------------------------------------------------------------
-
 beforeEach(() => {
   localStorage.clear();
   clearStoredToken();
@@ -118,10 +110,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
 });
-
-// ---------------------------------------------------------------------------
-// token helpers
-// ---------------------------------------------------------------------------
 
 describe('token helpers', () => {
   it('getStoredToken returns null when no token is set', () => {
@@ -156,10 +144,6 @@ describe('token helpers', () => {
     expect(localStorage.getItem('linklater_refresh_token')).toBeNull();
   });
 });
-
-// ---------------------------------------------------------------------------
-// apiFetch - core helper
-// ---------------------------------------------------------------------------
 
 describe('apiFetch', () => {
   it('attaches Content-Type application/json header', async () => {
@@ -623,10 +607,6 @@ describe('apiFetch', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// apiFetch - token-refresh deadline
-// ---------------------------------------------------------------------------
-
 describe('apiFetch token-refresh deadline', () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -757,10 +737,6 @@ describe('apiFetch token-refresh deadline', () => {
     expect(getStoredRefreshToken()).toBe('new-refresh');
   });
 });
-
-// ---------------------------------------------------------------------------
-// auth endpoints
-// ---------------------------------------------------------------------------
 
 describe('register', () => {
   it('POSTs to /auth/register without an Authorization header', async () => {
@@ -1007,10 +983,6 @@ describe('resetPassword', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// link endpoints
-// ---------------------------------------------------------------------------
-
 describe('getLink', () => {
   it('GETs /links/:id', async () => {
     const fetchMock = mockFetch({ id: 'link-1', url: 'https://example.com' });
@@ -1184,10 +1156,6 @@ describe('deleteMe', () => {
     expect((options as { method: string }).method).toBe('DELETE');
   });
 });
-
-// ---------------------------------------------------------------------------
-// MFA endpoints
-// ---------------------------------------------------------------------------
 
 describe('setupTotp', () => {
   it('POSTs to /auth/mfa/totp/setup with auth', async () => {

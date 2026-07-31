@@ -260,7 +260,6 @@ function deriveBundle(
     deriveForeground(bundleBgHex, 4.5, mode, (textHue + 20) % 360, 0.03),
   );
 
-  // border/highlight ≥3.0 vs bg; card-bundle border also clears --base-bg
   const borderHue = (textHue + 40) % 360;
   if (CARD_BUNDLES.includes(bundle)) {
     setSlot(
@@ -285,7 +284,6 @@ function deriveBundle(
     );
   }
 
-  // highlight = dark accent + white text: clears ≥3 vs bg, ≥4.5 for fg
   const highlightHue = (textHue + 200) % 360;
   const { highlight, highlightHover, highlightFg } = deriveHighlightTriple(
     bundleBgHex,

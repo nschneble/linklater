@@ -65,10 +65,6 @@ export interface CustomTheme {
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ---------------------------------------------------------------------------
-  // Core user CRUD
-  // ---------------------------------------------------------------------------
-
   /**
    * Creates a new user account. Hashes the password with bcrypt at cost 12
    * before storing it.
@@ -245,10 +241,6 @@ export class UsersService {
   async deleteById(id: string) {
     await this.prisma.user.delete({ where: { id } });
   }
-
-  // ---------------------------------------------------------------------------
-  // Password / email persistence
-  // ---------------------------------------------------------------------------
 
   /**
    * Replaces the user's password hash and clears the reset token. Called

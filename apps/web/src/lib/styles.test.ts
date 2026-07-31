@@ -114,7 +114,6 @@ describe('FOCUS_RING_DANGER_FILLED', () => {
   });
 
   it('uses --alert-highlight-fg (NOT --alert-highlight) for the ring color', () => {
-    // ring in --alert-highlight is invisible on that fill; -fg is 4.5:1 (2.4.7)
     expect(FOCUS_RING_DANGER_FILLED).toContain(
       'focus-visible:ring-[var(--alert-highlight-fg)]',
     );

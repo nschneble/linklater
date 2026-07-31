@@ -36,14 +36,14 @@ export default function IconListButton({
     ? 'opacity-0 scale-95 pointer-events-none'
     : 'opacity-100 scale-100';
 
-  // skip DISABLED when hidden: disabled:opacity-60 outranks opacity-0
+  // skip disabled when hidden (disabled:opacity-60 outranks opacity-0)
   const disabledClasses = hidden ? '' : DISABLED;
 
   return (
     <button
       className={`group flex items-center gap-2.5 w-full min-h-10 px-3 py-2 hover:bg-[var(--mount-bg)] aria-[current]:bg-[var(--orbit-bg)] aria-[current]:ring-1 aria-[current]:ring-[var(--orbit-border)] text-[var(--base-alt-text)] hover:text-[var(--base-text)] aria-[current]:text-[var(--orbit-text)] text-sm font-medium aria-[current]:font-semibold ${FOCUS_RING} rounded-lg motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] cursor-pointer ${disabledClasses} ${visibilityClasses} ${className}`}
       type="button"
-      // GOTCHA: disabled makes it non-focusable, so aria-hidden is safe for AT
+      // disabled + aria-hidden hide from AT; disabled already blocks focus
       disabled={hidden || disabled}
       aria-hidden={hidden || undefined}
       tabIndex={hidden ? -1 : undefined}

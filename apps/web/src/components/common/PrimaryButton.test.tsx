@@ -65,7 +65,6 @@ describe('PrimaryButton', () => {
   it('hidden=true suppresses the disabled:opacity-60 rule so opacity-0 wins specificity', () => {
     render(<PrimaryButton hidden>secret</PrimaryButton>);
     const button = screen.getByRole('button', { hidden: true });
-    // DISABLED applies disabled:opacity-60; must be ABSENT when hidden
     expect(button.className).not.toContain('disabled:opacity-60');
   });
 
@@ -85,7 +84,6 @@ describe('PrimaryButton', () => {
   });
 
   it('defaults to type="submit" – drops inside a <form> without extra wiring', () => {
-    // differs from IconButton/LinkButton default; a flip breaks <form>s
     render(<PrimaryButton>send</PrimaryButton>);
     expect(
       screen.getByRole('button', { name: 'send' }).getAttribute('type'),
@@ -93,7 +91,6 @@ describe('PrimaryButton', () => {
   });
 
   it('does not reference legacy --accent tokens (migration anti-regression)', () => {
-    // sister to LinkButton.test.tsx:65: no legacy flat --accent tokens
     const { rerender } = render(<PrimaryButton>save</PrimaryButton>);
     let button = screen.getByRole('button', { name: 'save' });
     expect(button.className).not.toContain('var(--accent)');

@@ -70,7 +70,6 @@ export default function MfaView({
           {isRecovery ? 'Recovery code' : 'Authenticator code'}
         </label>
         {!isRecovery && (
-          // --*-subtle-text is BASE-only; mount hints use alt-text
           <p
             className="text-[var(--mount-alt-text)] text-xs"
             id="mfa-totp-code-hint"

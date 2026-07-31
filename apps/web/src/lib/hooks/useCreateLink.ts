@@ -51,7 +51,7 @@ export function useCreateLink({
   onSaved,
   prependLink,
 }: UseCreateLinkOptions): UseCreateLinkResult {
-  // GOTCHA: refs keep handleCreated stable; no paste-listener re-register
+  // refs keep handleCreated stable; no paste-listener re-register
   const linksReference = useRef(links);
   linksReference.current = links;
   const onSavedReference = useRef(onSaved);

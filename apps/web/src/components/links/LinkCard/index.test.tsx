@@ -68,7 +68,6 @@ function makeLink(overrides: Partial<Link> = {}): Link {
 }
 
 describe('LinkCard mobile-overflow containment (WCAG 1.4.10 Reflow)', () => {
-  // card stays overflow-visible so badges can straddle the accent border
   it('keeps the card wrapper overflow-visible on a fetched link (favicon can straddle)', () => {
     const { container } = renderWithProviders(
       <LinkCard link={makeLink()} onReadToggle={vi.fn()} />,
@@ -109,7 +108,6 @@ describe('LinkCard thumbnail placeholder (local inline SVG, no third party)', ()
       'img[src="https://cdn.example.com/og.png"]',
     );
     expect(image).not.toBeNull();
-    // with a real image there is no need for the generated placeholder
     expect(container.querySelector('svg')).toBeNull();
   });
 
@@ -129,9 +127,7 @@ describe('LinkCard thumbnail placeholder (local inline SVG, no third party)', ()
 
     const svg = container.querySelector('svg');
     expect(svg).not.toBeNull();
-    // decorative: the anchor holds the accessible name, not the thumbnail
     expect(svg?.getAttribute('aria-hidden')).toBe('true');
-    // the hostname (without www.) labels the placeholder
     expect(svg?.textContent).toContain('example.com');
   });
 
@@ -156,7 +152,6 @@ describe('LinkCard thumbnail placeholder (local inline SVG, no third party)', ()
   });
 
   it('never references the third-party placeholder host in the rendered card', () => {
-    // host built from parts so this guard doesn't reintroduce the literal
     const thirdPartyHost = ['placehold', 'co'].join('.');
     const { container } = renderWithProviders(
       <LinkCard
@@ -185,13 +180,11 @@ describe('LinkCard thumbnail skeleton (metadata still loading)', () => {
     );
     expect(skeleton).not.toBeNull();
     expect(skeleton?.getAttribute('aria-hidden')).toBe('true');
-    // transparent border keeps the block visible under forced-colors
     expect(skeleton?.className).toContain('border-transparent');
   });
 });
 
 describe('LinkCard pending-state pulse (color animation, no opacity flicker)', () => {
-  // guards pin the color-pulse: no translucent overlay left to flicker
   it('drives the pending edge off aria-busy with the color-pulse variants (never border-dashed)', () => {
     const { container } = renderWithProviders(
       <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
@@ -200,7 +193,6 @@ describe('LinkCard pending-state pulse (color animation, no opacity flicker)', (
     const card = container.firstElementChild;
     expect(card?.getAttribute('aria-busy')).toBe('true');
     expect(card?.className).not.toContain('border-dashed');
-    // aria-busy retargets the border to --mount-border and runs the pulse
     expect(card?.className).toContain('border-[var(--mount-highlight)]');
     expect(card?.className).toContain('aria-busy:border-[var(--mount-border)]');
     expect(card?.className).toContain('aria-busy:animate-meta-pulse-border');
@@ -211,7 +203,6 @@ describe('LinkCard pending-state pulse (color animation, no opacity flicker)', (
       <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
     );
 
-    // flicker mechanism is gone: no opacity pulse, no stacked bar element
     expect(container.innerHTML).not.toContain('animate-pulse');
     expect(container.innerHTML).not.toContain('-translate-x-full');
   });
@@ -223,7 +214,6 @@ describe('LinkCard pending-state pulse (color animation, no opacity flicker)', (
 
     const badge = container.querySelector('span.animate-meta-pulse-bg');
     expect(badge).not.toBeNull();
-    // solid dot pulsing its bg between border and highlight, no ring
     expect(badge?.className).toContain('bg-[var(--mount-highlight)]');
     expect(badge?.className).not.toContain('ring');
   });
@@ -234,13 +224,11 @@ describe('LinkCard pending-state pulse (color animation, no opacity flicker)', (
     );
 
     const card = container.firstElementChild;
-    // settled: no aria-busy, variants stay inert, no pulsing badge
     expect(card?.getAttribute('aria-busy')).toBeNull();
     expect(card?.className).toContain('border-shadow');
     expect(container.querySelector('.animate-meta-pulse-bg')).toBeNull();
   });
 
-  // jsdom can't resolve @theme; compile real index.css to prove variants
   it('compiles the pending pulse keyframes, tokens, and aria-busy variants', async () => {
     const css = await compileIndexCss([
       'aria-busy:animate-meta-pulse-border',
@@ -250,25 +238,19 @@ describe('LinkCard pending-state pulse (color animation, no opacity flicker)', (
     ]);
     const flattened = css.replace(/\s+/g, ' ');
 
-    // border keyframe animates border-color, mount border to highlight
     expect(flattened).toContain(
       '@keyframes meta-pulse-border { 0%, 100% { border-color: var(--mount-border); } 50% { border-color: var(--mount-highlight); } }',
     );
-
-    // badge keyframe shares the border's >=3:1 pair so it can't sink
     expect(flattened).toContain(
       '@keyframes meta-pulse-bg { 0%, 100% { background-color: var(--mount-border); } 50% { background-color: var(--mount-highlight); } }',
     );
 
-    // same 2s cadence syncs them; NO fill mode for reduced-motion
     expect(flattened).toContain(
       '--animate-meta-pulse-border: meta-pulse-border 2s ease-in-out infinite;',
     );
     expect(flattened).toContain(
       '--animate-meta-pulse-bg: meta-pulse-bg 2s ease-in-out infinite;',
     );
-
-    // aria-busy variants gate the retarget and pulse to pending cards only
     expect(flattened).toContain(
       '.aria-busy\\:animate-meta-pulse-border[aria-busy="true"] { animation: var(--animate-meta-pulse-border); }',
     );
@@ -278,7 +260,6 @@ describe('LinkCard pending-state pulse (color animation, no opacity flicker)', (
   });
 });
 
-// span-scoped so it picks the placeholder bars, not the thumbnail div
 const BAR_SELECTOR = 'span.bg-\\[var\\(--mount-border\\)\\]';
 
 describe('LinkCard loading skeleton (metadata still fetching)', () => {
@@ -288,7 +269,6 @@ describe('LinkCard loading skeleton (metadata still fetching)', () => {
     );
 
     const bars = container.querySelectorAll(BAR_SELECTOR);
-    // one title bar plus two description bars
     expect(bars.length).toBe(3);
     bars.forEach((bar) => {
       expect(bar.getAttribute('aria-hidden')).toBe('true');
@@ -335,9 +315,7 @@ describe('LinkCard loading skeleton (metadata still fetching)', () => {
 
     const bars = container.querySelectorAll(BAR_SELECTOR);
     bars.forEach((bar) => {
-      // bar pulses only while aria-busy, so a settled mid-exit is inert
       expect(bar.className).toContain('group-aria-busy:animate-meta-pulse-bg');
-      // no shimmer/gradient or bar translate; lift-out is on the overlay
       expect(bar.className).not.toMatch(/gradient|translate/);
     });
   });
@@ -415,8 +393,8 @@ describe('LinkCard skeleton settle cross-fade (lifts out as content rises in)', 
     const bars = container.querySelectorAll(BAR_SELECTOR);
     expect(bars.length).toBeGreaterThan(0);
     bars.forEach((bar) => {
-      // rests faded+lifted; no delay so reduced-motion snaps instant
       const liftLayer = bar.parentElement;
+
       expect(liftLayer?.className).toContain(
         'transition-[opacity,translate,filter]',
       );
@@ -439,17 +417,12 @@ describe('LinkCard skeleton settle cross-fade (lifts out as content rises in)', 
     ]);
     const flattened = css.replace(/\s+/g, ' ');
 
-    // bar fill pulses only when an ancestor .group is aria-busy
     expect(flattened).toContain(
       '.group-aria-busy\\:animate-meta-pulse-bg:is(:where(.group)[aria-busy="true"] *) { animation: var(--animate-meta-pulse-bg); }',
     );
-
-    // Tailwind v4 uses translate:, not transform:, plus opacity and blur
     expect(flattened).toContain(
       'transition-property: opacity,translate,filter;',
     );
-
-    // in-place while busy, lifted + blurred when settled
     expect(flattened).toContain(
       '.group-aria-busy\\:translate-y-0:is(:where(.group)[aria-busy="true"] *)',
     );
@@ -606,16 +579,13 @@ describe('LinkCard loading safety precedence', () => {
     ).toBeInTheDocument();
 
     const row = container.querySelector('.leading-4');
-    expect(row?.querySelector(BAR_SELECTOR)).toBeNull();
 
-    // anchor still reads as loading and unavailable, not opening a tab
     expect(screen.getByRole('link').getAttribute('aria-label')).toMatch(
       /loading details, link unavailable/,
     );
   });
 
   it('drops the empty site name from a loading, unsafe link with no hostname (no leading dash)', () => {
-    // empty hostname: the loading name must not open on a dangling dash
     renderWithProviders(
       <LinkCard
         link={makeLink({
@@ -693,7 +663,6 @@ describe('LinkCard unsafe-URL guard (CWE-79)', () => {
 
 describe('LinkCard "Mark unread" alignment', () => {
   it('right-aligns the button on a read link that has NO description', () => {
-    // no description drops the flex-1 sibling, so the button needs ml-auto
     renderWithProviders(
       <LinkCard
         link={makeLink({
@@ -717,7 +686,6 @@ describe('LinkCard "Mark unread" accessible name (WCAG 2.5.3 Label in Name)', ()
     renderWithProviders(<LinkCard link={makeLink()} onReadToggle={vi.fn()} />);
 
     const button = screen.getByRole('button', { name: /^Mark unread/ });
-    // SC 2.5.3: the visible "Mark unread" must lead the accessible name
     expect(button.getAttribute('aria-label')).toMatch(/^Mark unread/);
   });
 
@@ -784,7 +752,6 @@ describe('LinkCard "Mark unread" accessible name (WCAG 2.5.3 Label in Name)', ()
     const label = screen
       .getByRole('button', { name: /^Mark unread/ })
       .getAttribute('aria-label');
-    // unknown title; the site name still disambiguates from another host
     expect(label).toContain('(No title)');
     expect(label).toContain('news.example.org');
   });

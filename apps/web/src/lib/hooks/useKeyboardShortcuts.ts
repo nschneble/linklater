@@ -51,12 +51,8 @@ interface UseKeyboardShortcutsOptions {
  * off, `Z` no longer closes the modal (it is a single-character shortcut), but
  * Escape and the modal's own close controls still dismiss it.
  *
- * GOTCHA: All callbacks and the preference flag are stored in refs so the
- * `keydown` listener is attached exactly once, on mount. The named keys must
- * stay live even while single-key shortcuts are off, so the listener is never
- * torn down for the preference; the flag is read from its ref inside the
- * handler instead. Without refs, the listener would need re-registering on
- * every render to pick up fresh callback references.
+ * All callbacks + the preference flag are stored in refs so the `keydown`
+ * listener is attached exactly once, on mount.
  */
 export function useKeyboardShortcuts({
   singleKeyShortcutsEnabled,

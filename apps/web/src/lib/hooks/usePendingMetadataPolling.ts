@@ -90,17 +90,6 @@ const REQUEST_DEADLINE_MS = 10_000;
  *   empty pending set has no listener attached, so visibility changes are
  *   no-ops.
  *
- * GOTCHA: `onSettled` is read through a ref so the polling loop always calls the
- * latest closure without `onSettled` sitting in the effect's dependency array,
- * which would tear down and restart the timer on every render.
- *
- * GOTCHA: the visibility listener lives inside the same effect closure as the
- * timer so pause and resume share the one `timeoutId`. Every arm clears the
- * prior handle first, which is what keeps a hidden/visible flap (even with a
- * poll in flight) from leaving two live timers. The resume also skips arming
- * while a batch is in flight, so a rapid flap starts no second batch on top of
- * the one still running.
- *
  * @param links - The rendered links; any entry missing `meta.fetchedAt` is polled.
  * @param onSettled - Called with the fresh link once `meta.fetchedAt` is present.
  */

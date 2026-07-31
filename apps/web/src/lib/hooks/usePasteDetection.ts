@@ -31,7 +31,7 @@ export function usePasteDetection({
   enabled = true,
   onSave,
 }: UsePasteDetectionOptions): void {
-  // GOTCHA: onSave in a ref keeps it out of deps; else the listener re-binds
+  // onSave in a ref keeps it out of deps; else the listener re-binds
   const onSaveReference = useRef(onSave);
   onSaveReference.current = onSave;
 

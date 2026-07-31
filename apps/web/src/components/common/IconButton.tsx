@@ -110,7 +110,7 @@ export default function IconButton({
     ? 'opacity-0 scale-95 pointer-events-none'
     : 'opacity-100 scale-100';
 
-  // skip DISABLED when hidden: disabled:opacity-60 outranks opacity-0
+  // skip disabled when hidden (disabled:opacity-60 outranks opacity-0)
   const disabledClasses = hidden ? '' : DISABLED;
 
   return (
@@ -118,7 +118,7 @@ export default function IconButton({
       className={`inline-flex items-center justify-center gap-1.5 text-xs rounded-full cursor-pointer ${disabledClasses} active:scale-[0.96] transition duration-200 ${variantClassesByHost[surface][variant]} ${visibilityClasses} ${className}`}
       type="button"
       data-surface={surface}
-      // GOTCHA: disabled + aria-hidden hide the button from AT; disabled already blocks focus
+      // disabled + aria-hidden hide from AT; disabled already blocks focus
       disabled={hidden || disabled}
       aria-hidden={hidden || undefined}
       tabIndex={hidden ? -1 : undefined}

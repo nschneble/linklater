@@ -199,7 +199,6 @@ describe('IconButton', () => {
   it('hidden=true suppresses the disabled:opacity-60 rule so opacity-0 wins specificity', () => {
     render(<IconButton hidden>secret</IconButton>);
     const button = screen.getByRole('button', { hidden: true });
-    // DISABLED applies disabled:opacity-60 – must be ABSENT when hidden
     expect(button.className).not.toContain('disabled:opacity-60');
   });
 
