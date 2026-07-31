@@ -69,7 +69,6 @@ export function useLinksActions({
     links,
     onSaved: () => toast.show('Link saved!'),
     prependLink,
-    updateLink,
   });
 
   const { handleToggleRead, readError } = useToggleReadLink({

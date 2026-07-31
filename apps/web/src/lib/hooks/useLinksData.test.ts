@@ -1,11 +1,24 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchParametersReducer, useLinksData } from './useLinksData';
-import { findNewLinks, formatNewLinksAnnouncement } from './linksData.utils';
 import type { Link, PaginatedLinks } from '../api';
 
 vi.mock('../api', () => ({
   getLinks: vi.fn(),
+}));
+
+// Stub the metadata poller for the whole suite so it never fires real timers
+// or `getLink` requests; one wiring test below asserts it is driven correctly.
+let capturedPollingLinks: Link[] | null = null;
+let capturedOnSettled: ((link: Link) => void) | null = null;
+
+vi.mock('./usePendingMetadataPolling', () => ({
+  usePendingMetadataPolling: vi.fn(
+    (links: Link[], onSettled: (link: Link) => void) => {
+      capturedPollingLinks = links;
+      capturedOnSettled = onSettled;
+    },
+  ),
 }));
 
 import * as apiModule from '../api';
@@ -421,6 +434,41 @@ describe('useLinksData handleLoadMore', () => {
     ]);
   });
 
+  it('appends only rows a later page has not already served', async () => {
+    // A create between page loads shifts every row down one under the
+    // server's `(page - 1) * limit` offset, so page 2 can re-serve a row
+    // already on screen. Append must drop the re-served copy: the list gains
+    // only the genuinely new rows, each id (and its React key and pending-poll
+    // entry) stays unique, and the new rows keep their incoming order.
+    const existing = makeLink({ id: 'link-a' });
+    const reserved = makeLink({ id: 'link-a' });
+    const newB = makeLink({ id: 'link-b' });
+    const newC = makeLink({ id: 'link-c' });
+
+    vi.mocked(apiModule.getLinks)
+      .mockResolvedValueOnce(makePaginated([existing], { total: 10 }))
+      .mockResolvedValueOnce(
+        makePaginated([reserved, newB, newC], { total: 10, page: 2 }),
+      );
+
+    const { result } = renderHook(() => useLinksData('unread', ''));
+
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+
+    await act(async () => {
+      result.current.handleLoadMore();
+    });
+
+    await waitFor(() =>
+      expect(result.current.links.some((link) => link.id === 'link-c')).toBe(
+        true,
+      ),
+    );
+
+    const ids = result.current.links.map((link) => link.id);
+    expect(ids).toEqual(['link-a', 'link-b', 'link-c']);
+  });
+
   it('increments page number after load-more', async () => {
     vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([]));
 
@@ -638,47 +686,72 @@ describe('useLinksData mutation helpers', () => {
   });
 });
 
-describe('findNewLinks', () => {
-  it('returns only links not present in existing', () => {
-    const existing = [makeLink({ id: 'a' }), makeLink({ id: 'b' })];
-    const incoming = [
-      makeLink({ id: 'a' }),
-      makeLink({ id: 'c' }),
-      makeLink({ id: 'd' }),
-    ];
-    expect(findNewLinks(incoming, existing).map((link) => link.id)).toEqual([
-      'c',
-      'd',
-    ]);
-  });
+describe('useLinksData settled metadata survives a page-1 refetch', () => {
+  it('keeps a settled link settled when a later page-1 fetch carries stale null metadata', async () => {
+    const settledAt = '2026-07-29T00:00:00.000Z';
+    vi.mocked(apiModule.getLinks)
+      // First page-1 load: the link is still pending (no fetchedAt yet).
+      .mockResolvedValueOnce(makePaginated([makeLink({ id: 'x', meta: null })]))
+      // A search keystroke fires a fresh page-1 fetch. A response that predates
+      // the metadata job finishing still reports meta: null for the link.
+      .mockResolvedValueOnce(
+        makePaginated([makeLink({ id: 'x', meta: null })]),
+      );
 
-  it('returns empty array when all incoming links already exist', () => {
-    const existing = [makeLink({ id: 'a' }), makeLink({ id: 'b' })];
-    const incoming = [makeLink({ id: 'a' }), makeLink({ id: 'b' })];
-    expect(findNewLinks(incoming, existing)).toEqual([]);
-  });
+    const { result, rerender } = renderHook(
+      ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
+        useLinksData(filter, search),
+      { initialProps: { filter: 'unread' as const, search: '' } },
+    );
 
-  it('returns all incoming links when existing is empty', () => {
-    const incoming = [makeLink({ id: 'a' }), makeLink({ id: 'b' })];
-    expect(findNewLinks(incoming, []).map((link) => link.id)).toEqual([
-      'a',
-      'b',
-    ]);
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+
+    // The metadata poller settles the card in place.
+    act(() =>
+      result.current.updateLink(
+        makeLink({ id: 'x', meta: { title: 'Ready', fetchedAt: settledAt } }),
+      ),
+    );
+    expect(result.current.links[0].meta?.fetchedAt).toBe(settledAt);
+
+    // The refetch settles with stale null metadata. The merge must keep the
+    // settled meta so a link card's aria-busy (derived from !meta.fetchedAt)
+    // never flips false -> true and the card never reverts to its skeleton.
+    rerender({ filter: 'unread', search: 'r' });
+    await waitFor(() =>
+      expect(vi.mocked(apiModule.getLinks)).toHaveBeenCalledTimes(2),
+    );
+
+    await waitFor(() =>
+      expect(result.current.links[0].meta?.fetchedAt).toBe(settledAt),
+    );
+    expect(result.current.links[0].meta?.title).toBe('Ready');
   });
 });
 
-describe('formatNewLinksAnnouncement', () => {
-  it('returns singular form for count of 1', () => {
-    expect(formatNewLinksAnnouncement(1)).toBe('1 new link added');
-  });
+describe('useLinksData pending metadata polling wiring', () => {
+  it('drives the poller with the current links and settles a link via updateLink', async () => {
+    const pending = makeLink({ id: 'x', meta: null });
+    vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([pending]));
 
-  it('returns plural form for counts greater than 1', () => {
-    expect(formatNewLinksAnnouncement(2)).toBe('2 new links added');
-    expect(formatNewLinksAnnouncement(10)).toBe('10 new links added');
-  });
+    const { result } = renderHook(() => useLinksData('unread', ''));
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
 
-  it('returns plural form for count of 0', () => {
-    expect(formatNewLinksAnnouncement(0)).toBe('0 new links added');
+    // The poller is handed the rendered links, including the pending one.
+    expect(capturedPollingLinks?.map((link) => link.id)).toEqual(['x']);
+    expect(capturedOnSettled).not.toBeNull();
+
+    // Its onSettled callback is `updateLink`: settling 'x' writes it into
+    // state, so a settled poll result lands on the list.
+    const settledAt = '2026-07-29T00:00:00.000Z';
+    act(() =>
+      capturedOnSettled!(
+        makeLink({ id: 'x', meta: { title: 'Ready', fetchedAt: settledAt } }),
+      ),
+    );
+
+    expect(result.current.links[0].meta?.fetchedAt).toBe(settledAt);
+    expect(result.current.links[0].meta?.title).toBe('Ready');
   });
 });
 
@@ -779,6 +852,43 @@ describe('visibility refresh', () => {
 
     expect(result.current.links).toHaveLength(1);
     expect(result.current.newLinksAnnouncement).toBe('');
+  });
+
+  it('does not announce when a refocus only settles an existing pending card', async () => {
+    // Both hooks fire on the same refocus. The poller settles an existing card
+    // in place while the visibility refresh re-fetches page 1 and finds the
+    // same link, now carrying metadata. A settle on an existing id is not a new
+    // arrival, so `findNewLinks` yields nothing and the live region must stay
+    // silent: no phantom "new links added" for a card the user already had.
+    const settledAt = '2026-07-29T00:00:00.000Z';
+    const settledMeta = { title: 'Ready', fetchedAt: settledAt };
+
+    vi.mocked(apiModule.getLinks).mockResolvedValueOnce(
+      makePaginated([makeLink({ id: 'x', meta: null })]),
+    );
+    const { result } = renderHook(() => useLinksData('unread', ''));
+    await waitFor(() => expect(result.current.links).toHaveLength(1));
+
+    // The refocus refetch returns the same link, now settled.
+    vi.mocked(apiModule.getLinks).mockResolvedValueOnce(
+      makePaginated([makeLink({ id: 'x', meta: settledMeta })]),
+    );
+
+    await act(async () => {
+      fireVisibilityChange('visible');
+    });
+
+    // The poller settles the same card on the same refocus.
+    act(() => capturedOnSettled!(makeLink({ id: 'x', meta: settledMeta })));
+
+    await waitFor(() =>
+      expect(vi.mocked(apiModule.getLinks).mock.calls.length).toBeGreaterThan(
+        1,
+      ),
+    );
+
+    expect(result.current.newLinksAnnouncement).toBe('');
+    expect(result.current.links[0].meta?.fetchedAt).toBe(settledAt);
   });
 
   it('silently swallows refresh errors without setting fetchError', async () => {

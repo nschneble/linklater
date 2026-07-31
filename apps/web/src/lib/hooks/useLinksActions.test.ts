@@ -25,17 +25,6 @@ vi.mock('./useRandomLink', () => ({
   }),
 }));
 
-/** Captured callback from the most recent useMetadataPolling call. */
-let capturedOnSettled: ((link: Link) => void) | null = null;
-
-vi.mock('./useMetadataPolling', () => ({
-  useMetadataPolling: vi.fn(
-    (_linkId: string | null, onSettled: (link: Link) => void) => {
-      capturedOnSettled = onSettled;
-    },
-  ),
-}));
-
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.restoreAllMocks());
 
@@ -155,23 +144,6 @@ describe('useLinksActions', () => {
     await act(() => result.current.handleDeleteAllRead());
 
     expect(result.current.deleteError).toBe('Failed to delete read links');
-  });
-
-  it('metadata polling callback updates the link and clears pendingMetaLinkId', () => {
-    const options = makeOptions();
-    renderHook(() => useLinksActions(options));
-
-    const updatedLink = makeLink({
-      id: 'link-meta',
-      url: 'https://updated.com',
-    });
-
-    act(() => {
-      expect(capturedOnSettled).not.toBeNull();
-      capturedOnSettled!(updatedLink);
-    });
-
-    expect(options.updateLink).toHaveBeenCalledWith(updatedLink);
   });
 
   it('handleCreated is a no-op when the read tab is active', () => {

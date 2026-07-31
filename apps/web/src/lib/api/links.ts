@@ -25,8 +25,12 @@ export interface PaginatedLinks {
   total: number;
 }
 
-export function getLink(id: string): Promise<Link> {
-  return apiFetch<Link>(`/links/${id}`);
+// `signal` is optional so a caller can put a deadline on the request: the
+// metadata poller aborts a stalled poll so one hung socket cannot wedge its
+// rotation. apiFetch forwards it to the underlying fetch. Every other caller
+// omits it and the request runs to completion.
+export function getLink(id: string, signal?: AbortSignal): Promise<Link> {
+  return apiFetch<Link>(`/links/${id}`, { signal });
 }
 
 export function getLinks(options?: {

@@ -7,10 +7,6 @@ vi.mock('../api', () => ({
   createLink: vi.fn(),
 }));
 
-vi.mock('./useMetadataPolling', () => ({
-  useMetadataPolling: vi.fn(),
-}));
-
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.restoreAllMocks());
 
@@ -33,7 +29,6 @@ function makeOptions(overrides: object = {}) {
     links: [],
     onSaved: vi.fn(),
     prependLink: vi.fn(),
-    updateLink: vi.fn(),
     ...overrides,
   };
 }

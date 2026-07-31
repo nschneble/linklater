@@ -3,6 +3,7 @@ import { useCallback, useRef } from 'react';
 import { useLinksFetch } from './useLinksFetch';
 import { useLinksMutations } from './useLinksMutations';
 import { useLinksVisibilityRefresh } from './useLinksVisibilityRefresh';
+import { usePendingMetadataPolling } from './usePendingMetadataPolling';
 import type { Link } from '../api';
 import type { LinksFilter } from './types';
 import type { UseLinksDataResult } from './useLinksData.types';
@@ -49,6 +50,13 @@ export function useLinksData(
     resetTotal,
     updateLink,
   } = useLinksMutations({ setLinks, setPagination });
+
+  // Poll metadata for every rendered link that is still pending
+  // (`!meta.fetchedAt`), settling each in place via `updateLink`. Deriving the
+  // pending set from list state (rather than a per-create slot) means links
+  // that arrive pending by any route are covered: a fresh save, a burst of
+  // saves, a mid-job reload, pagination, or a visibility prepend.
+  usePendingMetadataPolling(links, updateLink);
 
   // Soft refresh on tab return. When the user saves a link via the
   // bookmarklet on another tab and switches back, we want the unread list

@@ -8,9 +8,17 @@ _Nothing just yet_
 
 ## [1.4.3] - 2026-07-29
 
+### Changed
+
+- Link card placeholder shows loading bars instead of title/description
+
 ### Fixed
 
+- A stale page-one refetch can revert a settled card
 - Link card pulsing border and favicon placeholder are out of sync
+- Metadata polling is cleared on settle and not list-derived
+- Metadata polling is not visibility-aware
+- Token refresh is not transient-safe
 
 ## [1.4.2] - 2026-07-29
 

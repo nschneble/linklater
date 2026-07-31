@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react';
 import PrimaryButton from '../common/PrimaryButton';
+import {
+  isMetadataPending,
+  isMetadataSettled,
+} from '../../lib/hooks/linksData.utils';
+import { useSkeletonPresence } from '../../lib/hooks/useSkeletonPresence';
 import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
 import { hostnameOf, stripHtml } from '../../lib/strings';
 import { FOCUS_RING } from '../../lib/styles';
@@ -34,46 +39,81 @@ interface LinkCardLayoutProps {
   onUnreadClick: (event: React.MouseEvent) => void;
 }
 
-const CARD_ENTER_CLASS = 'animate-card-enter';
+// `animate-none` under prefers-reduced-motion drops the card-enter keyframe
+// entirely: the global clamp zeroes animation-duration but NOT animation-delay,
+// so without this a staggered element would sit blank for its delay before
+// snapping in. Removing the animation lets it rest on its natural visible state.
+const CARD_ENTER_CLASS = 'animate-card-enter motion-reduce:animate-none';
+
+// How long the skeleton stays mounted after metadata settles so its lift-out
+// transition can play before React unmounts it. Matches the transition duration
+// in SKELETON_LIFT.
+const SKELETON_EXIT_MS = 300;
+
+// Inner skeleton layer: rests lifted-out-and-faded (the settled state) and drops
+// into place while the card is aria-busy. A transition (not a keyframe) keeps the
+// settle interruptible if a refetch re-pends the card; no transition-delay, so
+// the reduced-motion clamp collapses it to an instant, blank-free swap.
+const SKELETON_LIFT =
+  'transition-[opacity,translate,filter] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ' +
+  'opacity-0 -translate-y-1.5 blur-[2px] ' +
+  'group-aria-busy:opacity-100 group-aria-busy:translate-y-0 group-aria-busy:blur-[0px]';
 
 /**
- * Pure presentation props for `CardThumbnail`.
+ * Pure presentation props for `SkeletonOverlay`.
  */
-interface CardThumbnailProps {
+interface SkeletonOverlayProps {
+  /** Staggered card-enter style threaded from the parent card. */
+  style: React.CSSProperties;
+  /** Layout classes positioning the bars/block within the slot. */
+  className?: string;
+  /** The skeleton bars or block for this slot. */
+  children: React.ReactNode;
+}
+
+/**
+ * A slot's loading skeleton, stacked over the (still-absent) real content. The
+ * outer layer plays the staggered card-enter on first paint so the skeleton
+ * rides the same intro as a settled card; the inner layer holds the lift-out
+ * transition that plays when the card settles and `aria-busy` clears, so the
+ * skeleton fades and lifts away while the real content rises in beneath it. The
+ * whole overlay is `aria-hidden` – the anchor carries the "loading details"
+ * accessible name, and no focusable ever lives inside it.
+ */
+function SkeletonOverlay({
+  style,
+  className = '',
+  children,
+}: SkeletonOverlayProps) {
+  return (
+    <div
+      aria-hidden="true"
+      style={style}
+      className={`absolute inset-0 ${CARD_ENTER_CLASS}`}
+    >
+      <div className={`${SKELETON_LIFT} ${className}`}>{children}</div>
+    </div>
+  );
+}
+
+/**
+ * Pure presentation props for `ThumbnailContent`.
+ */
+interface ThumbnailContentProps {
   /** The link URL, used to label the locally generated placeholder. */
   url: string;
   /** OpenGraph image URL when metadata provided one. */
   imageUrl?: string | null;
-  /** Timestamp metadata finished fetching, or nullish while still loading. */
-  fetchedAt?: string | null;
-  /** Staggered card-enter animation style threaded from the parent card. */
+  /** Staggered card-enter style threaded from the parent card. */
   style: React.CSSProperties;
 }
 
 /**
- * Decorative thumbnail region of a link card. Three mutually exclusive states:
- * - Not-yet-fetched (`!fetchedAt`): a skeleton block.
- * - Fetched with an `imageUrl`: the remote OpenGraph image.
- * - Fetched without an `imageUrl`: a locally generated inline-SVG placeholder.
- *
- * All three are `aria-hidden` because the card's accessible name comes from the
- * anchor overlay, not this image.
+ * The settled thumbnail: the remote OpenGraph image when metadata provided one,
+ * otherwise a locally generated inline-SVG placeholder. Both are `aria-hidden`
+ * because the card's accessible name comes from the anchor overlay.
  */
-function CardThumbnail({
-  url,
-  imageUrl,
-  fetchedAt,
-  style,
-}: CardThumbnailProps) {
-  if (!fetchedAt) {
-    return (
-      <div
-        aria-hidden="true"
-        className="w-[60px] sm:w-[120px] h-[31.5px] sm:h-[63px] shrink-0 rounded-md bg-[var(--orbit-bg)]"
-      />
-    );
-  }
-
+function ThumbnailContent({ url, imageUrl, style }: ThumbnailContentProps) {
   if (imageUrl) {
     return (
       <img
@@ -82,7 +122,7 @@ function CardThumbnail({
         aria-hidden="true"
         loading="lazy"
         style={style}
-        className={`themed-asset w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0 bg-white object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
+        className={`themed-asset w-full h-full bg-white object-cover rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
       />
     );
   }
@@ -101,7 +141,7 @@ function CardThumbnail({
       aria-hidden="true"
       viewBox="0 0 240 126"
       style={style}
-      className={`w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0 rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
+      className={`w-full h-full rounded-md outline outline-1 outline-black/10 -outline-offset-1 ${CARD_ENTER_CLASS}`}
     >
       <rect width="240" height="126" fill="var(--mount-highlight)" />
       <text
@@ -121,10 +161,88 @@ function CardThumbnail({
 }
 
 /**
+ * Pure presentation props for `CardThumbnail`.
+ */
+interface CardThumbnailProps {
+  /** The link URL, used to label the locally generated placeholder. */
+  url: string;
+  /** OpenGraph image URL when metadata provided one. */
+  imageUrl?: string | null;
+  /** Whether the link's metadata is still pending (hides the real thumbnail). */
+  isPending: boolean;
+  /** Whether the loading skeleton should render (through its lift-out exit). */
+  renderSkeleton: boolean;
+  /** Staggered card-enter animation style threaded from the parent card. */
+  style: React.CSSProperties;
+}
+
+/**
+ * Decorative thumbnail region of a link card. A fixed-size box holds two stacked
+ * layers: the real thumbnail (once settled) and a loading skeleton block that
+ * pulses while pending and lifts out on settle. The box keeps its size in both
+ * states so the swap shifts no geometry.
+ */
+function CardThumbnail({
+  url,
+  imageUrl,
+  isPending,
+  renderSkeleton,
+  style,
+}: CardThumbnailProps) {
+  return (
+    <div className="relative w-[60px] sm:w-[120px] h-[32px] sm:h-[63px] shrink-0">
+      {!isPending && (
+        <ThumbnailContent url={url} imageUrl={imageUrl} style={style} />
+      )}
+
+      {renderSkeleton && (
+        <SkeletonOverlay style={style} className="h-full">
+          <div
+            aria-hidden="true"
+            className="w-full h-full bg-[var(--mount-border)] border border-transparent rounded-md group-aria-busy:animate-meta-pulse-bg"
+          />
+        </SkeletonOverlay>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Pure presentation props for `SkeletonBar`.
+ */
+interface SkeletonBarProps {
+  /** Width and height utility classes sizing this bar. */
+  className: string;
+}
+
+/**
+ * One placeholder bar in a card's loading skeleton. Purely decorative: the
+ * loading state is announced by the anchor's "loading details" accessible name,
+ * not by `aria-busy` (assistive tech gives aria-busy on a plain element weak
+ * support), so the bar carries no text and stays `aria-hidden` – a visually
+ * hidden "Loading" string or a live region here would double-announce. It pulses
+ * its fill between the mount border and highlight ONLY while the card is
+ * aria-busy (`group-aria-busy:`), so a settled card mid-exit carries no running
+ * animation. The transparent border resolves to a visible outline under
+ * forced-colors, where the background fill is flattened away.
+ */
+function SkeletonBar({ className }: SkeletonBarProps) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`block ${className} bg-[var(--mount-border)] border border-transparent rounded-sm group-aria-busy:animate-meta-pulse-bg`}
+    />
+  );
+}
+
+/**
  * Pure visual structure of a link card. Handles all rendering decisions:
- * - Shows a pulsing indicator while metadata is still being fetched (`!meta.fetchedAt`).
- * - Shows the favicon once metadata arrives.
- * - Shows the raw URL as the description when no title is present.
+ * - Shows loading skeletons (thumbnail + title + description) and a "loading
+ *   details" accessible name while metadata is still being fetched
+ *   (`isMetadataPending`). The skeletons pulse while pending and lift out as the
+ *   real content rises in when metadata settles.
+ * - Shows the favicon, title, and description once metadata arrives.
+ * - Shows the raw URL as the description for a settled link that never got a title.
  * - Shows a "Mark as unread" button for read links.
  * - Shows an inert, `aria-disabled` overlay in place of the real link when
  *   `link.url` fails `isSafeRedirectUrl` (a legacy non-http(s) row) – `href`
@@ -162,6 +280,10 @@ export default function LinkCardLayout({
   }
 
   const isLinkSafe = isSafeRedirectUrl(link.url);
+  const isPending = isMetadataPending(link);
+  // Keeps the skeleton in the DOM through its lift-out exit after metadata
+  // settles; a card that mounts already settled never renders one.
+  const renderSkeleton = useSkeletonPresence(isPending, SKELETON_EXIT_MS);
   const hasTitle = Boolean(link.meta?.title);
   const displayTitle = link.meta?.title ?? '(No title)';
   const rawDescription = hasTitle ? link.meta?.description : link.url;
@@ -169,6 +291,10 @@ export default function LinkCardLayout({
   if (!isLinkSafe) {
     displayDescription =
       "This link can't be opened – the saved address isn't safe to open.";
+  } else if (isPending) {
+    // The description slot renders a skeleton while metadata loads, so there is
+    // no text to show here yet.
+    displayDescription = null;
   } else if (rawDescription) {
     displayDescription = stripHtml(rawDescription);
   } else {
@@ -182,26 +308,48 @@ export default function LinkCardLayout({
     [link.meta?.siteName, link.url],
   );
 
-  const cardAriaLabel = isLinkSafe
-    ? `${displayTitle} – ${displaySiteName}, opens in new tab`
-    : `${displayTitle} – ${displaySiteName}, link unavailable`;
+  // The anchor name and the "Mark unread" label read from one subject so they
+  // can never describe the same card differently. While loading the title is
+  // unknown, so the subject is just the site name; the anchor adds a "loading
+  // details" hint that the button label omits. It flips to the real title in
+  // the same render fetchedAt arrives, with no cached state.
+  const nameSubject = isPending
+    ? displaySiteName
+    : `${displayTitle} – ${displaySiteName}`;
+  const openHint = isLinkSafe ? 'opens in new tab' : 'link unavailable';
+  let cardAriaLabel: string;
+  if (!isPending) {
+    cardAriaLabel = `${nameSubject}, ${openHint}`;
+  } else if (nameSubject) {
+    cardAriaLabel = `${nameSubject} – loading details, ${openHint}`;
+  } else {
+    // While loading the subject is only the site name, which is empty for a
+    // hostname-less URL (a `javascript:` row parses to an empty hostname). Drop
+    // the leading "site – " so the name never opens on a dangling dash.
+    cardAriaLabel = `loading details, ${openHint}`;
+  }
 
   return (
     <div
       ref={cardReference}
-      aria-busy={!link.meta?.fetchedAt || undefined}
+      aria-busy={isMetadataPending(link) || undefined}
       /*
+        `group` lets the skeleton layers key their pulse and lift-out off this
+        card's aria-busy attribute via `group-aria-busy:` variants.
+
         border-shadow / hover:border-shadow are hand-written UNLAYERED classes
         in theme/styles/border-shadow.css, so no `aria-busy:` variant can reach
-        them. They stay a conditional keyed off the SAME `link.meta?.fetchedAt`
-        expression that drives aria-busy, so the two states can never drift.
-        They are withheld while pending on purpose: their unlayered box-shadow
-        would otherwise outrank the layered selection `ring-2` and swallow the
+        them. They stay a conditional keyed off `isMetadataSettled`, while
+        aria-busy keys off `isMetadataPending`. Those two predicates are
+        complementary by construction in linksData.utils.ts, so the settled
+        border and the pending aria-busy can never drift. The classes are
+        withheld while pending on purpose: their unlayered box-shadow would
+        otherwise outrank the layered selection `ring-2` and swallow the
         selection outline.
       */
-      className={`relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] aria-busy:border-[var(--mount-border)] rounded-r-xl ${link.meta?.fetchedAt ? 'border-shadow hover:border-shadow' : ''} aria-busy:animate-meta-pulse-border ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
+      className={`group relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] aria-busy:border-[var(--mount-border)] rounded-r-xl ${isMetadataSettled(link) ? 'border-shadow hover:border-shadow' : ''} aria-busy:animate-meta-pulse-border ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
     >
-      {link.meta?.fetchedAt ? (
+      {isMetadataSettled(link) ? (
         <div className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none">
           <span className="relative flex items-center justify-center">
             {link.meta?.faviconUrl ? (
@@ -233,7 +381,7 @@ export default function LinkCardLayout({
           aria-hidden="true"
           className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none"
         >
-          <span className="block w-8 h-8 bg-[var(--mount-highlight)] ring-2 ring-[var(--mount-bg)] rounded-2xl animate-meta-pulse-bg" />
+          <span className="block w-8 h-8 bg-[var(--mount-highlight)] rounded-2xl animate-meta-pulse-bg" />
         </div>
       )}
 
@@ -242,25 +390,44 @@ export default function LinkCardLayout({
           <CardThumbnail
             url={link.url}
             imageUrl={link.meta?.imageUrl}
-            fetchedAt={link.meta?.fetchedAt}
+            isPending={isPending}
+            renderSkeleton={renderSkeleton}
             style={childStyle(3)}
           />
 
           <div className="flex flex-col items-start min-w-0 ml-3">
             {/*
-              `w-full` pins the title to the min-w-0 column so `line-clamp-1`
-              can clip an unbreakable long word. Without it, the parent's
-              `items-start` sizes this <p> to its content width, letting a long
-              title overflow the (now overflow-visible) card and inflate the
-              320px mobile viewport. The sibling site-name <p> below is pinned
-              the same way.
+              Title slot: a fixed text-sm line box so the skeleton bar and the
+              settled title share one geometry and the swap shifts nothing. The
+              settled title rises in (card-enter) as the skeleton lifts out.
             */}
-            <p
-              style={childStyle(1)}
-              className={`w-full text-[var(--mount-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
-            >
-              {displayTitle}
-            </p>
+            <div className="relative w-full h-5">
+              {!isPending && (
+                /*
+                  `w-full` pins the title to the min-w-0 column so `line-clamp-1`
+                  can clip an unbreakable long word. Without it, the parent's
+                  `items-start` sizes this <p> to its content width, letting a long
+                  title overflow the (now overflow-visible) card and inflate the
+                  320px mobile viewport. The sibling site-name <p> below is pinned
+                  the same way.
+                */
+                <p
+                  style={childStyle(1)}
+                  className={`w-full text-[var(--mount-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}
+                >
+                  {displayTitle}
+                </p>
+              )}
+
+              {renderSkeleton && (
+                <SkeletonOverlay
+                  style={childStyle(1)}
+                  className="flex items-center h-full"
+                >
+                  <SkeletonBar className="w-3/5 h-3.5" />
+                </SkeletonOverlay>
+              )}
+            </div>
 
             {/* --*-subtle-text is BASE-only by design; mount hints collapse to alt-text */}
             <p
@@ -272,22 +439,34 @@ export default function LinkCardLayout({
           </div>
         </div>
 
-        {(displayDescription || link.readAt) && (
-          <div
-            style={childStyle(2)}
-            className={`relative flex items-start gap-3 overflow-hidden h-8 mt-2 leading-4 ${CARD_ENTER_CLASS} z-20 pointer-events-none`}
-          >
+        {(renderSkeleton || displayDescription || link.readAt) && (
+          <div className="relative flex items-start gap-3 overflow-hidden h-8 mt-2 leading-4 z-20 pointer-events-none">
             {displayDescription && (
-              <p className="flex-1 min-w-0 text-[var(--mount-alt-text)] text-xs text-pretty tracking-tight sm:tracking-normal line-clamp-2">
+              <p
+                style={childStyle(2)}
+                className={`flex-1 min-w-0 text-[var(--mount-alt-text)] text-xs text-pretty tracking-tight sm:tracking-normal line-clamp-2 ${CARD_ENTER_CLASS}`}
+              >
                 {displayDescription}
               </p>
+            )}
+
+            {/* The safety warning is real content and outranks the skeleton, so
+                a loading, unsafe link shows the warning, never placeholder bars. */}
+            {renderSkeleton && isLinkSafe && (
+              <SkeletonOverlay
+                style={childStyle(2)}
+                className="flex flex-col justify-center gap-2 h-full"
+              >
+                <SkeletonBar className="w-full h-3" />
+                <SkeletonBar className="w-4/5 h-3" />
+              </SkeletonOverlay>
             )}
 
             {link.readAt && (
               <PrimaryButton
                 className="relative shrink-0 ml-auto z-30 pointer-events-auto"
                 onClick={onUnreadClick}
-                aria-label={`Mark unread – ${displayTitle} – ${displaySiteName}`}
+                aria-label={`Mark unread – ${nameSubject}`}
               >
                 <span className="hidden sm:inline-flex">Mark unread</span>
                 <span className="inline-flex sm:hidden">
