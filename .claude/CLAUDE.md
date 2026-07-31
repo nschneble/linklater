@@ -38,6 +38,7 @@ npm run lint                                      # Lint code for consistent sty
 npm run lint:migrations                           # Lint migrations using Squawk
 npm run lint --workspace @linklater/web           # Lint front-end only
 npm run lint --workspace @linklater/api           # Lint back-end only
+npm run typecheck --workspace @linklater/api      # Type-check back-end only
 
 # Testing
 npm run test                                      # Run all tests
