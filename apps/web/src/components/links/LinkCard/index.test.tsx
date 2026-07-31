@@ -579,6 +579,7 @@ describe('LinkCard loading safety precedence', () => {
     ).toBeInTheDocument();
 
     const row = container.querySelector('.leading-4');
+    expect(row?.querySelector(BAR_SELECTOR)).toBeNull();
 
     expect(screen.getByRole('link').getAttribute('aria-label')).toMatch(
       /loading details, link unavailable/,
