@@ -39,10 +39,8 @@
   - tabpanel "Unread":
     - list:
       - listitem:
-        - paragraph: (No title)
         - paragraph: httpforever.com
-        - paragraph: http://httpforever.com/
-        - link "(No title) – httpforever.com, opens in new tab":
+        - link "httpforever.com – loading details, opens in new tab":
           - /url: http://httpforever.com/
   - text: Link saved!
   - button "Dismiss"
